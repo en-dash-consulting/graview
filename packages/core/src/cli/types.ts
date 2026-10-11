@@ -32,8 +32,11 @@ export function fieldType(spec: FieldSpec): string {
       return "number";
     case "boolean":
       return "boolean";
+    case "image":
+    case "file":
+      return "FileValue";
     case "list":
-      return spec.of === "number" ? "readonly number[]" : "readonly string[]";
+      return spec.of === "number" ? "readonly number[]" : spec.of === "image" || spec.of === "file" ? "readonly FileValue[]" : "readonly string[]";
     default:
       return "string";
   }
@@ -45,6 +48,8 @@ const HOLDS: Partial<Record<FieldSpec["type"], string>> = {
   datetime: "A date and time, as ISO 8601.",
   url: "A web address.",
   email: "An email address.",
+  image: "A picture the host stored: its href a path on the host.",
+  file: "A file the host stored: its href a path on the host.",
 };
 
 /** A field's comment: its description, the words it is shown by, and what a string of its type holds. */
@@ -79,6 +84,7 @@ export function documentTypes(document: GraviewDocument, from = "the document"):
     `/*\n * The types of "${document.name.replace(/\*\//g, "*\\/")}"${document.version === undefined ? "" : ` (version ${document.version})`}, written by \`graview types ${from}\`.\n` +
       ` * Do not edit: change the document and run it again. Read a store through\n` +
       ` * them with \`typedReader<Types>(store)\` from "@graview/core/typed".\n */\n` +
+      (Object.values(document.kinds).some((spec) => Object.values(spec.fields).some((f) => /^(image|file)$/.test(f.of ?? f.type))) ? `import type { FileValue } from "@graview/core";\n` : "") +
       `import type { TypedReader } from "@graview/core/typed";\n`,
   );
   for (const [kind, spec] of Object.entries(document.kinds)) {

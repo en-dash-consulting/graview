@@ -1,4 +1,5 @@
-import { formFields, labelOf, pluralOf, type AnySchema, type FormField, type GraviewApp, type Principal, type Store } from "@graview/core";
+import { labelOf, pluralOf, type AnySchema, type GraviewApp, type Principal, type Store } from "@graview/core";
+import { formFields, type FormField } from "@graview/core/forms";
 import type { HostAi, HostTurn, TurnMessage } from "./ai.js";
 import { createToolRuntime } from "./agent/tools.js";
 import type { ChatContext, ChatReply } from "./conversation.js";

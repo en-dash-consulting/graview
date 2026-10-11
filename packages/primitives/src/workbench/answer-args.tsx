@@ -2,6 +2,7 @@ import { argumentWords, edgeWords, humanizeField, labelOf, nounOf, tellApart, ty
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraview } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
+import { FilesControl } from "../files-door.js";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 
@@ -150,6 +151,7 @@ export function AnswerArgs({
    * outstanding one is answered.
    */
   const several = shape.type === "several";
+  const fileShape = shape.type === "file" ? shape : shape.type === "several" && shape.of.type === "file" ? shape.of : undefined;
   /* Several of something typed rather than chosen: one field, its entries separated by commas. */
   const listed = several && choices.length === 0;
 
@@ -230,7 +232,13 @@ export function AnswerArgs({
         />
       ) : null}
 
-      {choices.length > 0 ? (
+      {fileShape ? (
+        /* A picture or a document is answered by putting it there: the host's upload, then the act (FR-163). */
+        <div style={{ display: "grid", gap: 4 }}>
+          <FilesControl value={undefined} onChange={(next) => answer(next)} several={shape.type === "several"} image={fileShape.image === true} label={words.label} />
+          {skip}
+        </div>
+      ) : choices.length > 0 ? (
         <div
           role="group"
           aria-labelledby={promptId}

@@ -1,4 +1,4 @@
-import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
+import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -114,6 +114,12 @@ export interface PageContext<S extends AnySchema> {
    * answers alone, and an open question is told AI isn't on here.
    */
   readonly ai?: HostAi;
+  /**
+   * THE HOST'S FILES (FR-163): where a picture or a document put on a
+   * record from these pages is sent. Unsaid, the provider around them
+   * says, and without one a file field's editor says this host takes none.
+   */
+  readonly files?: HostFiles;
   /**
    * The app these pages are of, for the provider under them when `views`
    * is given: the seat's tools and a host's turn describe its places with

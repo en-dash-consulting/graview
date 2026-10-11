@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { describeArg, formFields, isoDate } from "../../src/index.js";
+import { describeArg, isoDate } from "../../src/index.js";
+import { formFields } from "../../src/forms.js";
 
 /**
  * A TIME OF DAY IS ASKED FOR. The gauntlet's workshops start at

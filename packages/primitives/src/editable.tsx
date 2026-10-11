@@ -1,9 +1,11 @@
 import { fieldWords, humanizeField as humanize, pageSections, readableFields, valueWords, type AnySchema } from "@graview/core";
+import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
 import type { EditableField } from "@graview/tools";
 import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
 import { TextBody } from "./text-body.js";
+import { FileField } from "./files-door.js";
 
 /**
  * One field's value, changeable where it is shown when something can change
@@ -306,7 +308,9 @@ export function Fields<S extends AnySchema>({
   const rows = readableFields(node, definition, { limit, said: shown }).filter(
     (field) => !hide.includes(field.key),
   );
-  if (rows.length === 0) return null;
+  // A file field that holds nothing yet is still where one is put (FR-163): drawn when an act may write it.
+  const empty = fileFieldsOf(definition).filter((key) => !hide.includes(key) && !rows.some((row) => row.key === key) && !(definition?.display?.hide ?? []).includes(key));
+  if (rows.length === 0 && empty.length === 0) return null;
 
   /*
    * IN THE SECTIONS THE KIND'S PAGE DECLARES (FR-148): its first fields,
@@ -320,7 +324,9 @@ export function Fields<S extends AnySchema>({
         const list = (
           <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "auto 1fr", gap: "5px 16px", alignContent: "start", minWidth: 0 }}>
             {section.fields.map((field) =>
-              field.long ? (
+              field.files ? (
+                <FileField key={field.key} nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} files={field.files} labelStyle={LABEL} style={{ marginTop: 6 }} />
+              ) : field.long ? (
                 <LongValue<S> key={field.key} nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} value={field.value} labelStyle={LABEL} style={{ gridColumn: "1 / -1", marginTop: 6 }} />
               ) : (
                 <div key={field.key} style={{ display: "contents" }}>
@@ -344,6 +350,13 @@ export function Fields<S extends AnySchema>({
           </div>
         );
       })}
+      {empty.length > 0 ? (
+        <dl style={{ margin: 0, display: "grid", gap: 10, minWidth: 0 }}>
+          {empty.map((key) => (
+            <FileField key={key} nodeId={node.id} field={key} label={labels[key] ?? fieldWords(definition, key)} files={[]} labelStyle={LABEL} />
+          ))}
+        </dl>
+      ) : null}
     </div>
   );
 }

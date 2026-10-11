@@ -1,5 +1,5 @@
-import { faviconHref, pagesTitle, sceneTitle, type AnySchema } from "@graview/core";
-import { Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
+import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles } from "@graview/core";
+import { HostFilesContext, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
@@ -105,6 +105,11 @@ export interface ShellProps<S extends AnySchema> {
    * top, toasts at its foot — and said aloud.
    */
   readonly notices?: NoticeBoard;
+  /**
+   * THE HOST'S FILES (FR-163), when the provider around the shell was not
+   * handed them: where a picture or a document put on a record is sent.
+   */
+  readonly files?: HostFiles;
 }
 
 export function Shell<S extends AnySchema>({
@@ -125,6 +130,7 @@ export function Shell<S extends AnySchema>({
   signature = false,
   ask = "field",
   notices,
+  files,
 }: ShellProps<S>) {
   const { brand, views, store } = useGraview<S>();
   const { view, go } = useNavigation();
@@ -158,7 +164,7 @@ export function Shell<S extends AnySchema>({
         current: home ? view.focusId === home && !view.overview : Boolean(view.overview),
       };
 
-  return (
+  const drawn = (
     <NoticeBoardContext.Provider value={board}>
     <div ref={shell} style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       {syncUrl ? <UrlSync /> : null}
@@ -252,4 +258,5 @@ export function Shell<S extends AnySchema>({
     </div>
     </NoticeBoardContext.Provider>
   );
+  return files ? <HostFilesContext.Provider value={files}>{drawn}</HostFilesContext.Provider> : drawn;
 }

@@ -6,9 +6,11 @@ import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
 import { EMPTY_GRAPH, formatMoney, formatValue, type Money, type TemplatePart } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
-import { fieldSpecOf } from "./to-document.js";
+import { fieldSpecOf } from "./field-spec.js";
 import { FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
 import { capitalize } from "../capital.js";
+import { filesOf, isImage, type FileValue } from "../schema/files.js";
+import { fileWords } from "../schema/file-fields.js";
 
 /*
  * BLOCKS, RESOLVED — what a list of blocks says, worked out once, for every
@@ -43,6 +45,8 @@ type UnkeyedSpec =
   | { readonly t: "title"; readonly parts: Parsed<readonly TemplatePart[]> }
   | { readonly t: "text" | "badge"; readonly parts: Parsed<readonly TemplatePart[]>; readonly tone?: Tone }
   | { readonly t: "field"; readonly field: string; readonly as?: (typeof VIEW_FIELD_FORMATS)[number]; readonly currency?: string; readonly label?: string }
+  /** A record's pictures or documents (FR-162): the first, small, or each of them. */
+  | { readonly t: "image"; readonly field: string; readonly as: "thumb" | "gallery"; readonly label?: string }
   /** A figure's and a meter's label is a template, read like a headline (FR-99). */
   | { readonly t: "progress"; readonly value: Parsed<Expr>; readonly max: Parsed<Expr>; readonly label?: Parsed<readonly TemplatePart[]> }
   | { readonly t: "group"; readonly blocks: readonly SpecBlock[]; readonly direction: "row" | "column" }
@@ -161,6 +165,8 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
           const as = (VIEW_FIELD_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as (typeof VIEW_FIELD_FORMATS)[number]) : undefined;
           return { t, field: String(block["field"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label } : {}) };
         }
+        case "image":
+          return { t, field: String(block["image"]), as: block["as"] === "gallery" ? "gallery" : "thumb", ...(label ? { label } : {}) };
         case "progress": {
           const p = (block["progress"] ?? {}) as { value?: unknown; max?: unknown };
           return { t, value: expr(p.value), max: expr(p.max), ...(label ? { label: template(label) } : {}) };
@@ -178,7 +184,7 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
 }
 
 /** The sorts of block after a list, a headline and a figure that works a number out, in the order a block that says two is read. */
-const SORTS = ["title", "text", "badge", "field", "progress", "group", "when", "divider", "figure"] as const;
+const SORTS = ["title", "text", "badge", "field", "image", "progress", "group", "when", "divider", "figure"] as const;
 
 // ── resolving ───────────────────────────────────────────────────────────────
 
@@ -212,6 +218,8 @@ type Unkeyed =
   | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly problem?: string }
   | { readonly t: "badge"; readonly text: string; readonly tone: ViewTone; readonly problem?: string }
   | { readonly t: "field"; readonly field: string; readonly label: string; readonly text: string; readonly href?: string; readonly problem?: string }
+  /** A record's files, as the block shows them: `text` names them, for whoever cannot see them. */
+  | { readonly t: "image"; readonly field: string; readonly label: string; readonly as: "thumb" | "gallery"; readonly files: readonly FileValue[]; readonly text: string; readonly problem?: string }
   | { readonly t: "progress"; readonly label: string; readonly value?: number; readonly max?: number; readonly text: string; readonly problem?: string }
   | { readonly t: "group"; readonly direction: "row" | "column"; readonly blocks: readonly ResolvedBlock[] }
   /** A condition: what it shows, when it holds; nothing when it does not or cannot be judged. */
@@ -301,6 +309,7 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
   if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today);
   if (spec?.type === "enum" && typeof value === "string") return valueWords(ctx.definition, key, value);
   if (typeof value === "number") return value.toLocaleString("en-US");
+  if (filesOf(value).length > 0) return filesOf(value).map(fileWords).join(", ");
   if (Array.isArray(value)) return value.map((one) => String(one)).join(", ");
   if (typeof value === "object") return NOTHING;
   return String(value);
@@ -347,6 +356,13 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       const href = ctx.fields[block.field]?.type === "url" && block.as === undefined ? safeHref(raw) : undefined;
       const text = safely(() => fieldText(block.field, raw, ctx, block.as, block.currency)) ?? NOTHING;
       return withProblem({ t: "field", field: block.field, label, text, ...(href ? { href } : {}) }, problem);
+    }
+    case "image": {
+      const label = block.label ?? fieldWords(ctx.definition, block.field);
+      const files = ctx.node && Object.hasOwn(ctx.node, block.field) ? filesOf(ctx.node[block.field]) : [];
+      const shown = block.as === "thumb" ? files.filter(isImage).slice(0, 1) : files;
+      const base = { t: "image" as const, field: block.field, label, as: block.as, files: shown, text: shown.length > 0 ? shown.map(fileWords).join(", ") : NOTHING };
+      return ctx.node ? base : { ...base, problem: `"${block.field}" names a field, and these blocks are about no one record` };
     }
     case "progress": {
       const value = judge(block.value, ctx);
@@ -454,6 +470,7 @@ export function whatBlocksSay(blocks: readonly SpecBlock[], resolved: readonly R
       if (!one) return;
       switch (block.t) {
         case "field":
+        case "image":
           fields.add(block.field);
           return;
         case "title":
@@ -560,7 +577,7 @@ function groupsOf(nodes: readonly AnyGraphNode[], group: { readonly by: string; 
 
 /** Whether a block takes more than one line: a list, a headline or a figure, or a group or condition holding one. */
 export function isTallBlock(block: SpecBlock): boolean {
-  if (block.t === "list" || block.t === "headline" || block.t === "number") return true;
+  if (block.t === "list" || block.t === "headline" || block.t === "number" || (block.t === "image" && block.as === "gallery")) return true;
   if (block.t === "group") return block.blocks.some(isTallBlock);
   if (block.t === "when") return block.show.some(isTallBlock);
   return false;

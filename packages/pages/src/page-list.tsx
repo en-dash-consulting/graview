@@ -1,4 +1,4 @@
-import { ArrangeBar, pageSays } from "@graview/primitives/pages";
+import { ArrangeBar, FileThumb, pageSays } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement } from "@graview/core/arrange";
 import {
   describeSearched,
@@ -14,7 +14,7 @@ import {
   type Condition,
   type NodeOfSchema,
 } from "@graview/core";
-import { withComputed } from "@graview/core/blocks";
+import { firstPicture, withComputed } from "@graview/core/blocks";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import { useId, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -249,6 +249,9 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const said = glance(read as Record<string, unknown>, definition, label);
     // Found by the words in a field rather than the name: say which, as the Find box does.
     const why = typed.words ? matchNode(definition, node, typed.words) : undefined;
+    // Its first picture, small, beside its name (FR-162).
+    const picture = firstPicture(node as Record<string, unknown>, definition);
+    const thumb = picture ? <FileThumb file={picture} size={large ? 32 : 56} style={large ? { alignSelf: "center" } : { gridRow: "span 3" }} /> : null;
     // A large list is read down a column: each record one line, its glance at the line's end.
     return (
       <li
@@ -258,8 +261,9 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             ? { display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 0, padding: "5px 0", borderTop: "1px solid var(--graview-edge)", overflowWrap: "anywhere" }
             : {
                 display: "grid",
-                // One track no wider than the page, and a long unbroken value (an email) breaks inside it (W-175).
-                gridTemplateColumns: "minmax(0, 1fr)",
+                // One track no wider than the page, and a long unbroken value (an email) breaks inside it (W-175); its picture, when it has one, beside it.
+                gridTemplateColumns: thumb ? "auto minmax(0, 1fr)" : "minmax(0, 1fr)",
+                columnGap: 14,
                 gap: 2,
                 padding: "14px 0",
                 borderTop: "1px solid var(--graview-edge)",
@@ -267,6 +271,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
               }
         }
       >
+        {thumb}
         <Link
           to={recordPath(store.schema, kind, node.id)}
           style={large ? { ...plain, flex: "1 1 14rem", minWidth: 0, fontSize: "1rem", fontWeight: 600, lineHeight: 1.35 } : { ...plain, fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, lineHeight: 1.3 }}

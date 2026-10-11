@@ -2,9 +2,9 @@ import type { GraviewApp } from "../app.js";
 import type { InvariantDefinition } from "../invariants/types.js";
 import type { Policy } from "../permissions/types.js";
 import type { AnySchema } from "../schema/schema.js";
-import { descriptionOf } from "../schema/zod.js";
 import { error, warning, type Finding } from "./findings.js";
 import { documentOf } from "./remembered.js";
+import { fieldOf } from "./field-spec.js";
 import { FORMAT, FORMAT_VERSION, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
 
 /**
@@ -27,76 +27,6 @@ export interface ToDocumentResult {
 }
 
 export { documentOf, rememberDocument } from "./remembered.js";
-
-type ZodLike = { readonly _zod?: { readonly def?: Record<string, unknown> } };
-const defOf = (schema: unknown): Record<string, unknown> | undefined => (schema as ZodLike | undefined)?._zod?.def;
-
-const DATE = /^\^\\d\{4\}-\\d\{2\}-\\d\{2\}\$$/;
-
-/** One zod field as a document field, or why it cannot be one. */
-function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { readonly why: string } {
-  let def = defOf(schema);
-  let required = true;
-  let fallback: unknown;
-  for (let depth = 0; def && depth < 4; depth++) {
-    if (def["type"] === "optional" || def["type"] === "nullable") required = false;
-    else if (def["type"] === "default") {
-      required = false;
-      fallback = def["defaultValue"];
-    } else break;
-    def = defOf(def["innerType"]);
-  }
-  if (!def) return { why: "it is not a zod field" };
-  const description = descriptionOf(schema);
-  const base = { ...(required ? { required: true } : {}), ...(fallback !== undefined ? { default: fallback } : {}), ...(description ? { description } : {}) };
-  const checks = ((def["checks"] as readonly ZodLike[] | undefined) ?? []).map((check) => defOf(check));
-  switch (def["type"]) {
-    case "string": {
-      const format = def["format"];
-      if (format === "email") return { spec: { type: "email", ...base } };
-      if (format === "url") return { spec: { type: "url", ...base } };
-      if (format === "date") return { spec: { type: "date", ...base } };
-      if (format === "datetime") return { spec: { type: "datetime", ...base } };
-      if (checks.some((check) => check?.["format"] === "regex" && DATE.test(String((check?.["pattern"] as RegExp | undefined)?.source ?? "")))) return { spec: { type: "date", ...base } };
-      return { spec: { type: "string", ...base } };
-    }
-    case "number": {
-      // Its range, where the declaration bounds it inclusively (FR-114): `.min(1).max(5)`, `.multipleOf(0.5)`.
-      const range: { min?: number; max?: number; step?: number } = {};
-      for (const check of checks) {
-        const value = check?.["value"];
-        if (typeof value !== "number") continue;
-        if (check?.["check"] === "greater_than" && check["inclusive"]) range.min = Math.max(range.min ?? value, value);
-        else if (check?.["check"] === "less_than" && check["inclusive"]) range.max = Math.min(range.max ?? value, value);
-        else if (check?.["check"] === "multiple_of") range.step = value;
-      }
-      return { spec: { type: checks.some((check) => check?.["format"] === "safeint" || check?.["format"] === "int") ? "integer" : "number", ...range, ...base } };
-    }
-    case "boolean":
-      return { spec: { type: "boolean", ...base } };
-    case "enum": {
-      const options = Object.keys((def["entries"] as Record<string, unknown> | undefined) ?? {});
-      return options.length > 0 ? { spec: { type: "enum", options, ...base } } : { why: "it is an enum with no options" };
-    }
-    case "array": {
-      const element = defOf(def["element"]);
-      const of = element?.["type"] === "number" ? "number" : element?.["type"] === "string" ? "string" : undefined;
-      return of ? { spec: { type: "list", of, ...base } } : { why: `it is a list of ${String(element?.["type"] ?? "something")}, and a document lists words, numbers or dates` };
-    }
-    default:
-      return { why: `it is a ${String(def["type"])}, which a document has no field type for` };
-  }
-}
-
-/**
- * What one declared field is, in the document's words — `url`, `date`,
- * `enum` and the rest — or undefined when a document has no word for it.
- * A view spec reads it to know which values may be a link and which a date.
- */
-export function fieldSpecOf(field: unknown): FieldSpec | undefined {
-  const read = fieldOf(field);
-  return "spec" in read ? read.spec : undefined;
-}
 
 /** Write an app as a declaration document, naming every surface the document cannot say. */
 export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentResult {

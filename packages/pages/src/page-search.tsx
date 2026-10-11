@@ -1,6 +1,5 @@
 import {
   describeSearched,
-  formFields,
   nounOf,
   search,
   withArticle,
@@ -10,6 +9,7 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
+import { formFields } from "@graview/core/forms";
 import type { Affordance } from "@graview/tools";
 import { useGraviewIfAny, useSeatTalkState, type SeatTalk } from "@graview/react/provider";
 import { Link, useSearchParams } from "react-router-dom";

@@ -2,7 +2,6 @@ import {
   brokenWords,
   pluralOf,
   argumentWords,
-  formFields,
   humanizeField,
   nounOf,
   tellApart,
@@ -12,7 +11,6 @@ import {
   violationsTouching,
   withArticle,
   type AnySchema,
-  type FormField,
   type GraviewApp,
   type Hit,
   type AppPlace,
@@ -20,6 +18,7 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
+import { formFields, type FormField } from "@graview/core/forms";
 import type { HostAi } from "./ai.js";
 import { validateProposals, type Completion, type ProposedCall } from "./intelligence.js";
 import type { OfferedQuestion } from "./questions.js";

@@ -1,10 +1,11 @@
-import { describeNode, humanizeField, isWithheld, pageSections, type AnySchema, type Violation } from "@graview/core";
-import { DefaultViewElsewhere, EditableValue, LongValue, pageSays, useLined } from "@graview/primitives/pages";
+import { describeNode, fieldWords, humanizeField, isWithheld, pageSections, type AnySchema, type Violation } from "@graview/core";
+import { DefaultViewElsewhere, EditableValue, FileField, FileRow, LongValue, pageSays, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useRef, useState } from "react";
 import { rankedRepairs, recordFacts } from "./facts.js";
+import { fileFieldsOf } from "@graview/core/blocks";
 import { DerivedForm } from "./form.js";
 import { pluralSlug, recordPath } from "./registry.js";
 import { SceneLink, type PageContext, useStoreTick } from "./page-context.js";
@@ -108,6 +109,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * to be done but what it offers. Any other view sits above all of those.
    */
   const whole = PageView !== undefined && replacesPage(ownPage);
+  // A file field that holds nothing yet is where one is put (FR-163): drawn where the face changes values in place and an act may write it.
+  const unfilled = inPlace ? fileFieldsOf(definition).filter((key) => !fields.some((field) => field.key === key) && !said?.fields.has(key) && !(definition?.display?.hide ?? []).includes(key)) : [];
 
   return (
     <PageMain context={context}>
@@ -181,7 +184,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
-      {!whole && fields.length > 0 ? (
+      {!whole && (fields.length > 0 || unfilled.length > 0) ? (
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-fields">
           <h2 style={h2}>The facts</h2>
           {/*
@@ -202,7 +205,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                 }}
               >
                 {section.fields.map((field) =>
-                  field.long ? (
+                  field.files ? (
+                    inPlace ? (
+                      <FileField key={field.key} nodeId={id} field={field.key} label={field.label} files={field.files} labelStyle={{ ...eyebrow, fontSize: "0.75rem" }} style={{ gap: 4 }} />
+                    ) : (
+                      <FileRow key={field.key} nodeId={id} field={field.key} label={field.label} files={field.files} labelStyle={{ ...eyebrow, fontSize: "0.75rem" }} style={{ gap: 4 }} />
+                    )
+                  ) : field.long ? (
                     <LongValue<S>
                       key={field.key}
                       nodeId={id}
@@ -235,6 +244,13 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               <div key={index}>{list}</div>
             );
           })}
+          {unfilled.length > 0 ? (
+            <dl style={{ margin: 0, display: "grid", gap: 14 }}>
+              {unfilled.map((key) => (
+                <FileField key={key} nodeId={id} field={key} label={fieldWords(definition, key)} files={[]} labelStyle={{ ...eyebrow, fontSize: "0.75rem" }} style={{ gap: 4 }} />
+              ))}
+            </dl>
+          ) : null}
         </section>
       ) : null}
 

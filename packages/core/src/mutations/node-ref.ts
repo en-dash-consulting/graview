@@ -1,6 +1,7 @@
 import { z as classic } from "zod";
 import * as z from "../schema/zod.js";
 import { defOf } from "../schema/zod.js";
+import { fileKindOf } from "../schema/files.js";
 
 /**
  * WHERE A NODE REFERENCE KEEPS ITS KINDS: on the schema itself, under a
@@ -137,6 +138,8 @@ export type ArgShape =
    * installation the framework ships.
    */
   | { readonly type: "several"; readonly of: ArgShape }
+  /** A picture or a document the host stores (FR-162), put on the record by its upload (FR-163); `image` where only a picture will do. */
+  | { readonly type: "file"; readonly image?: true }
   | { readonly type: "unknown" };
 
 /** Unwraps optional/default/nullable so a wrapped field still describes itself. */
@@ -173,6 +176,9 @@ export function describeArg(schema: unknown): ArgShape {
   const checks = checksOf(field);
 
   if (type === "enum") return { type: "choice", options: Object.keys(def?.entries ?? {}) };
+
+  const file = fileKindOf(field);
+  if (file) return file === "image" ? { type: "file", image: true } : { type: "file" };
 
   if (type === "boolean") return { type: "boolean" };
 

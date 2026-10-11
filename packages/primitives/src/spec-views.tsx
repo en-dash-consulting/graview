@@ -8,6 +8,7 @@ import { RecordHeadContext } from "./record-head.js";
 import { KindFigure } from "./figure.js";
 import { Panel } from "./primitives/index.js";
 import { hasShape, TextBody } from "./text-body.js";
+import { FilesBlock } from "./files-door.js";
 
 /*
  * VIEWS AS DATA, DRAWN (FR-03).
@@ -153,6 +154,13 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
           </span>
         </span>
       );
+    case "image":
+      // A record's pictures (FR-162): its first, small, or a gallery of each, opening full size.
+      return block.files.length > 0 ? (
+        <span className="graview-spec-image" data-graview-field={block.field} data-graview-image={block.as}>
+          <FilesBlock files={block.files} label={block.label} as={block.as} />
+        </span>
+      ) : null;
     case "progress":
       if (block.value === undefined || block.max === undefined) {
         return (

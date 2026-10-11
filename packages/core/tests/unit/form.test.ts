@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { formFields, formComplete, isoDate, nodeRef } from "../../src/index.js";
+import { isoDate, nodeRef } from "../../src/index.js";
+import { formFields, formComplete } from "../../src/forms.js";
 
 /**
  * Forms derive from the mutation's own declaration — the whole tree, not

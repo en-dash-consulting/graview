@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import { defOf } from "../schema/zod.js";
+import { fileKindOf } from "../schema/files.js";
 import { describeArg, nodeRefKinds, unwrap } from "./node-ref.js";
 
 /**
@@ -33,6 +34,8 @@ export type FormField =
       }[];
     }
   | { readonly control: "list"; readonly name: string; readonly optional: boolean; readonly item: FormField }
+  /** A picture or a document, put on the record by the host's upload (FR-162, FR-163); a list of them is a `list` of these. */
+  | { readonly control: "file"; readonly name: string; readonly optional: boolean; readonly image?: true }
   | { readonly control: "opaque"; readonly name: string; readonly optional: boolean };
 
 export interface ScalarField {
@@ -80,6 +83,9 @@ export function formField(name: string, schema: unknown): FormField {
   if (kinds) return { control: "node", name, optional, kinds };
 
   if (type === "boolean") return { control: "boolean", name, optional };
+
+  const file = fileKindOf(field);
+  if (file) return { control: "file", name, optional, ...(file === "image" ? { image: true as const } : {}) };
 
   if (type === "object") {
     const shape = field.shape ?? {};

@@ -26,6 +26,7 @@ import {
 import { refTo } from "../mutations/node-ref.js";
 import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
+import { fileSchema } from "../schema/files.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
@@ -221,7 +222,11 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.enum(spec.options as [string, ...string[]]);
       break;
     case "list":
-      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/)) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
+      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/)) : spec.of === "image" || spec.of === "file" ? fileSchema(spec.of) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
+      break;
+    case "image":
+    case "file":
+      schema = fileSchema(spec.type);
       break;
     case "url":
       schema = z.url();

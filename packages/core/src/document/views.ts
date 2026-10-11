@@ -1,9 +1,7 @@
 import { analyzeExpr } from "./expr/analyze.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
 import { error, warning, type Finding } from "./findings.js";
-import type { AnySchema } from "../schema/schema.js";
 import type { GraviewDocument } from "./schema.js";
-import { fieldSpecOf } from "./to-document.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, TemplateError } from "./template-parse.js";
 
@@ -68,6 +66,8 @@ type OneBlock =
   | { readonly text: string; readonly tone?: ToneSpec }
   | { readonly badge: string; readonly tone?: ToneSpec }
   | { readonly field: string; readonly as?: ViewFieldFormat; readonly currency?: string; readonly label?: string }
+  /** A record's pictures (FR-162): the first, small (`thumb`), or every one, each opening full size (`gallery`). */
+  | { readonly image: string; readonly as?: "thumb" | "gallery"; readonly label?: string }
   | { readonly progress: { readonly value: string; readonly max: string }; readonly label?: string }
   | { readonly group: readonly ViewBlock[]; readonly direction?: "row" | "column" }
   | { readonly when: string; readonly show: readonly ViewBlock[] }
@@ -95,6 +95,7 @@ const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
   text: ["tone"],
   badge: ["tone"],
   field: ["as", "currency", "label"],
+  image: ["as", "label"],
   progress: ["label"],
   group: ["direction"],
   when: ["show"],
@@ -104,7 +105,10 @@ const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
 };
 const BLOCK_TYPES = Object.keys(BLOCK_KEYS);
 const SHAPES =
-  '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "currency"?, "label"?}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
+  '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "currency"?, "label"?}, {"image": "photos", "as"?: "thumb"|"gallery"}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
+
+/** Whether a field holds pictures or documents: an `image` or `file`, or a list of them (FR-162). */
+export const holdsFiles = (spec: { readonly type: string; readonly of?: string } | undefined): boolean => /^(image|file)$/.test(spec?.of ?? spec?.type ?? "");
 
 /** The view specs of a document that has been read, by kind; empty when it has none. The home view is no kind's: see `homeOf`. */
 export function viewsOf(document: GraviewDocument): Readonly<Record<string, ViewSpecs>> {
@@ -122,10 +126,12 @@ export function homeOf(document: GraviewDocument): HomeView | undefined {
  * has a figure. Read from a document's kind or from a declared schema, so
  * the two are held to one vocabulary.
  */
-interface KindNames {
+export interface KindNames {
   readonly field: (name: string) => boolean;
   readonly relation: (name: string) => boolean;
   readonly figure: boolean;
+  /** Whether a field holds pictures or documents (FR-162): what an `image` block shows. */
+  readonly files?: (name: string) => boolean;
   /** A choice field's choices, in the order they are declared; undefined for any other name. */
   readonly choices?: (name: string) => readonly string[] | undefined;
   /** Where a relation leads: its target kinds, or every kind. */
@@ -133,7 +139,7 @@ interface KindNames {
 }
 
 /** What every kind holds, for a list's records: the kinds a walk or a sweep reaches. */
-interface Vocabulary {
+export interface Vocabulary {
   readonly namesOf: (kind: string) => KindNames | undefined;
   /** The kinds that declare a relation. */
   readonly sources: (edge: string) => readonly string[];
@@ -152,7 +158,7 @@ interface Scope {
 
 const NO_RECORD: KindNames = { field: () => false, relation: () => false, figure: false };
 const about = (scope: Scope) => scope.kind ?? "the home";
-const own = (record: object | undefined, key: string) => record !== undefined && Object.hasOwn(record, key);
+export const own = (record: object | undefined, key: string) => record !== undefined && Object.hasOwn(record, key);
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -255,13 +261,17 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
       template(value, `${path}.${type}`, scope);
       if ("tone" in raw) tone(raw["tone"], `${path}.tone`, scope);
       return;
+    // A field, or a field's pictures and documents (FR-162).
+    case "image":
     case "field": {
-      if (typeof value !== "string" || !scope.spec.field(value)) {
+      const image = type === "image";
+      if (typeof value !== "string" || !(image ? scope.spec.files?.(value) : scope.spec.field(value))) {
         const edge = typeof value === "string" && scope.spec.relation(value);
-        scope.findings.push(error("view-field", `${path}.field`, `${scope.kind} has no field ${typeof value === "string" ? `"${value}"` : "by that name"}`, edge ? `"${value}" is a relation; show it with {"text": "{${value}.name}"}` : undefined));
+        scope.findings.push(error(`view-${type}`, `${path}.${type}`, `${scope.kind} has no ${image ? "image or file " : ""}field ${typeof value === "string" ? `"${value}"` : "by that name"}`, edge ? `"${value}" is a relation; show it with {"text": "{${value}.name}"}` : undefined));
       }
-      if ("as" in raw && !(VIEW_FIELD_FORMATS as readonly unknown[]).includes(raw["as"])) scope.findings.push(error("view-format", `${path}.as`, `"${String(raw["as"])}" is not a way to show a field`, `use one of ${VIEW_FIELD_FORMATS.join(", ")}`));
-      currency(raw, path, scope, "field");
+      const ways: readonly unknown[] = image ? ["thumb", "gallery"] : VIEW_FIELD_FORMATS;
+      if ("as" in raw && !ways.includes(raw["as"])) scope.findings.push(error("view-format", `${path}.as`, `"${String(raw["as"])}" is not a way to show ${image ? "pictures" : "a field"}`, `use one of ${ways.join(", ")}`));
+      if (!image) currency(raw, path, scope, "field");
       if ("label" in raw) label(raw["label"], `${path}.label`, scope);
       return;
     }
@@ -509,7 +519,7 @@ export function viewBraces(views: unknown, at: string, home?: unknown, lenses?: 
     if (typeof value === "string" && /[{}]/.test(value)) found.push(warning("view-braces", path, `${what} is words, not a template, so "${value}" would be drawn with its braces`, 'say it without braces, or say the value in a text block: {"text": "… {name} …"}'));
   };
   eachBlock(views, at, home, lenses, (raw, at) => {
-    if ("field" in raw) words(raw["label"], `${at}.label`, "a field's label");
+    if ("field" in raw || "image" in raw) words(raw["label"], `${at}.label`, "a field's label");
     if ("list" in raw) {
       const headings = isObject(raw["group"]) ? raw["group"]["headings"] : undefined;
       if (isObject(headings)) for (const [choice, heading] of Object.entries(headings)) words(heading, `${at}.group.headings.${choice}`, "a group's heading");
@@ -545,7 +555,7 @@ export function viewKeys(views: unknown, at: string, home?: unknown, lenses?: un
 }
 
 /** Blocks about no one record — the home, a blocks lens — checked at `at`. */
-function subjectless(list: unknown, at: string, vocabulary: Vocabulary, kinds: ReadonlySet<string>, edges: ReadonlySet<string>, findings: Finding[], what: string): void {
+export function subjectless(list: unknown, at: string, vocabulary: Vocabulary, kinds: ReadonlySet<string>, edges: ReadonlySet<string>, findings: Finding[], what: string): void {
   const scope: Scope = { kind: null, spec: NO_RECORD, kinds, edges, vocabulary, findings, count: 0 };
   if (Array.isArray(list) && list.length === 0) findings.push(error("view-shape", at, `${what} has no blocks`, 'give it one: {"headline": "…"}'));
   blocks(list, at, 1, scope);
@@ -553,7 +563,7 @@ function subjectless(list: unknown, at: string, vocabulary: Vocabulary, kinds: R
 }
 
 /** The lenses drawn from blocks, by their index in `lenses`: their blocks, checked where they are written. */
-function blockLenses(lenses: unknown, vocabulary: Vocabulary, kinds: ReadonlySet<string>, edges: ReadonlySet<string>, findings: Finding[]): void {
+export function blockLenses(lenses: unknown, vocabulary: Vocabulary, kinds: ReadonlySet<string>, edges: ReadonlySet<string>, findings: Finding[]): void {
   if (!Array.isArray(lenses)) return;
   lenses.forEach((lens, index) => {
     if (!isObject(lens) || lens["name"] !== "blocks" || !isObject(lens["options"]) || !("blocks" in lens["options"])) return;
@@ -570,7 +580,7 @@ function blockLenses(lenses: unknown, vocabulary: Vocabulary, kinds: ReadonlySet
 }
 
 /** Every kind's specs, checked against what each kind holds, at `<at>.<kind>.<slot>`; and a list of blocks at `<at>.home`, the home view. */
-function validateAll(
+export function validateAll(
   specsByKind: unknown,
   at: string,
   namesOf: (kind: string) => KindNames | undefined,
@@ -626,6 +636,7 @@ export function validateViews(document: GraviewDocument): Finding[] {
           field: (n) => own(spec.fields, n) || own(spec.computed, n),
           relation: (n) => own(spec.edges, n),
           figure: spec.figure !== undefined,
+          files: (n) => own(spec.fields, n) && holdsFiles(spec.fields[n]),
           choices: (n) => (own(spec.fields, n) && spec.fields[n]!.type === "enum" ? spec.fields[n]!.options : undefined),
           targets: (n) => (own(spec.edges, n) ? spec.edges![n]!.to : undefined),
         }
@@ -634,54 +645,5 @@ export function validateViews(document: GraviewDocument): Finding[] {
   const vocabulary: Vocabulary = { namesOf, sources: (edge) => Object.keys(document.kinds).filter((kind) => own(document.kinds[kind]!.edges, edge)) };
   const findings = validateAll(document.views, "views", namesOf, kinds, edges, "document", vocabulary);
   blockLenses(document.lenses, vocabulary, kinds, edges, findings);
-  return findings;
-}
-
-type DeclaredKind = { readonly fields?: { readonly shape?: Readonly<Record<string, unknown>> }; readonly edges?: Readonly<Record<string, { readonly to?: readonly string[] | "*" }>>; readonly figure?: string; readonly computed?: Readonly<Record<string, unknown>> };
-
-/**
- * Findings about a declaration's view specs (FR-03), each at
- * `viewSpecs.<kind>.<slot>.<block>`: the vocabulary a document's `views`
- * is held to, read against the declared schema — its fields, its relations,
- * and its figures (the kind's own, or the brand's). With `home`, the
- * declaration's home view at `home.<block>`; with `lenses`, the blocks of
- * each lens drawn from blocks at `lenses.<i>.options.blocks` (FR-81).
- */
-export function validateViewSpecs(
-  schema: AnySchema,
-  specs: unknown,
-  options: {
-    readonly figures?: Readonly<Record<string, string>>;
-    readonly at?: string;
-    readonly home?: unknown;
-    readonly lenses?: unknown;
-  } = {},
-): Finding[] {
-  const declared = schema.kinds as readonly string[];
-  const kinds = new Set(declared);
-  const definitionOf = (kind: string) => schema.tryDefinition(kind) as DeclaredKind | undefined;
-  const edges = new Set(declared.flatMap((kind) => Object.keys(definitionOf(kind)?.edges ?? {})));
-  const namesOf = (kind: string): KindNames | undefined => {
-    if (!kinds.has(kind)) return undefined;
-    const definition = definitionOf(kind);
-    const fields = definition?.fields?.shape ?? {};
-    const relations = definition?.edges ?? {};
-    const computed = definition?.computed ?? {};
-    return {
-      field: (n) => n !== "id" && n !== "kind" && (own(fields, n) || own(computed, n)),
-      relation: (n) => own(relations, n),
-      figure: definition?.figure !== undefined || options.figures?.[kind] !== undefined,
-      choices: (n) => {
-        if (!own(fields, n)) return undefined;
-        const spec = fieldSpecOf(fields[n]);
-        return spec?.type === "enum" ? spec.options : undefined;
-      },
-      targets: (n) => (own(relations, n) ? relations[n]!.to : undefined),
-    };
-  };
-  const vocabulary: Vocabulary = { namesOf, sources: (edge) => declared.filter((kind) => own(definitionOf(kind)?.edges, edge)) };
-  const findings = validateAll(specs, options.at ?? "viewSpecs", namesOf, kinds, edges, "app", vocabulary);
-  if (options.home !== undefined) subjectless(options.home, "home", vocabulary, kinds, edges, findings, "the home");
-  blockLenses(options.lenses, vocabulary, kinds, edges, findings);
   return findings;
 }

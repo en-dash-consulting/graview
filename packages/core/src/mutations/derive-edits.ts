@@ -1,4 +1,5 @@
 import * as z from "../schema/zod.js";
+import { filesOf } from "../schema/files.js";
 import { labelOf } from "../schema/define-node.js";
 import { fieldWords, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -197,7 +198,8 @@ export function deriveEditMutations<S extends AnySchema>(
             const format = display?.format?.[field];
             let said: string;
             try {
-              said = format ? String(format(value)) : JSON.stringify(value);
+              // Files by their names (FR-162), never the host's addresses.
+              said = format ? String(format(value)) : filesOf(value).length > 0 ? filesOf(value).map((file) => file.name).join(", ") : JSON.stringify(value);
             } catch {
               said = JSON.stringify(value);
             }
@@ -302,7 +304,9 @@ export function deriveRemoveMutations<S extends AnySchema>(
       describe: (args, graph) => {
         const id = (args as { id: string }).id;
         const node = graph.getNode(id);
-        return `Remove ${node ? labelOf(definition, node) : id}`;
+        // What files go with it (FR-162): the host decides what becomes of their bytes.
+        const files = node ? Object.values(node).flatMap(filesOf).length : 0;
+        return `Remove ${node ? labelOf(definition, node) : id}${files ? ` and its ${files} file${files > 1 ? "s" : ""}` : ""}`;
       },
       apply(ctx, args) {
         ctx.removeNode((args as { id: string }).id);

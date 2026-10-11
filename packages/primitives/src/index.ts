@@ -48,6 +48,8 @@ export type { ArrangeBarProps } from "./arrange-bar.js";
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
 export { EditableTitle, EditableValue, Fields, humanize, LongValue } from "./editable.js";
+// A record's pictures and documents (FR-162, FR-163): drawn, and put there through the host's files.
+export { FileField, FileRow, FilesBlock, FilesControl, FileThumb } from "./files-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 // The seat: an ask field at the picture's foot that grows into the conversation when asked.
 export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";

@@ -1,5 +1,6 @@
 import { nodeRefArgs, placeSlug, requiredRolesOf } from "@graview/core";
-import { computedOf, documentOf, fieldSpecOf } from "@graview/core/document";
+import { computedOf, documentOf } from "@graview/core/document";
+import { fieldSpecOf } from "@graview/core/blocks";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";

@@ -14,7 +14,7 @@ this package serves lists, records, forms, problems and history as ordinary link
 - **The page registry mirrors the view registry.** `(kind × page-type) → component`,
   defaults overridable per cell; the shell, home and problems pages are themselves
   registrations (`registry.surface(...)`).
-- **Forms are derived.** `formFields` (in `@graview/core`) walks a mutation's zod input into
+- **Forms are derived.** `formFields` (in `@graview/core/forms`) walks a mutation's zod input into
   a control tree — scalars, dates, node pickers over real candidates, nested objects,
   discriminated unions as a type picker plus that arm's fields, arrays as repeatable rows —
   and `DerivedForm` renders it. Nothing renderable is hand-written; anything unrenderable
