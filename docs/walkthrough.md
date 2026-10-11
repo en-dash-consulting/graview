@@ -387,8 +387,11 @@ the version with a migration and reload against the old store.
 
 True when:
 - Edits survive a reload; "start fresh" empties them; the rail says so.
-- The migration runs once, is in the log with its author and intent, and is
-  undoable.
+- The migration runs once, and is in the log with its author and intent.
+  It is not undoable, and says why in its own words: since FR-27 undo does
+  not reach back across a change of declaration, and taking the upgrade
+  itself back would write the old declaration's values into the new one
+  (W-185).
 
 ### H · On somebody else's page
 
