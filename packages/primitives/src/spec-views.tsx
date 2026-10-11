@@ -1,8 +1,8 @@
 import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
-import { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
-import { shapesOfSchema, type FieldSpec, type KindShape, type ViewSlot, type ViewSpecsByKind } from "@graview/core/document";
+import { blockContextFor, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
+import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
 import { useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { createContext, useContext, type MouseEvent, type ReactNode } from "react";
+import { createContext, Suspense, useContext, type ComponentType, type MouseEvent, type ReactNode } from "react";
 import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
 import { KindFigure } from "./figure.js";
@@ -62,7 +62,52 @@ export interface AlreadySaid {
 export const SaidAround = createContext<AlreadySaid | null>(null);
 const sameWords = (a: string, b: string) => a.trim().toLowerCase().replace(/[_-]+/g, " ") === b.trim().toLowerCase().replace(/[_-]+/g, " ");
 
+/*
+ * A FACE CLAIMS A BLOCK BY ITS KEY. A product that draws a few of a view's
+ * blocks its own way — a change's rewrites as a timeline, the rest as
+ * declared — says which by key, view by view, and the framework draws every
+ * other block. A key is the declaration's (`"key": "rewrites"`) or derived
+ * from the block's sort and place (`list.2`), never from its words: a title
+ * said differently is still the block the face claimed.
+ */
+
+/** What a claimed block is drawn with: the block worked out, the record it is about (null on the home), and the framework's own drawing of it, to wrap or leave out. */
+export interface BlockSlotProps {
+  readonly block: ResolvedBlock;
+  readonly node: AnyGraphNode | null;
+  readonly drawn: ReactNode;
+}
+export type BlockSlotComponent = ComponentType<BlockSlotProps>;
+/**
+ * A face's claims, by view — `"home"`, or a kind's `"<kind>.page"`,
+ * `"<kind>.card"` or `"<kind>.row"`, as `describe_place` names them — and in
+ * each, by block key. A component may be `lazy`: the framework's drawing
+ * stands in until it arrives.
+ */
+export type ClaimedSlots = Readonly<Record<string, Readonly<Record<string, BlockSlotComponent>>>>;
+export const BlockSlots = createContext<ClaimedSlots | null>(null);
+
+/**
+ * THE VIEW BEING DRAWN: its kind's picture, and the blocks a face claims in
+ * it. Each view says its own, so a record a list draws inside another view
+ * answers to its own view's claims and draws its own picture.
+ */
+const Drawing = createContext<{ readonly figure?: (() => ReactNode) | undefined; readonly slots?: Readonly<Record<string, BlockSlotComponent>> | undefined; readonly node: AnyGraphNode | null } | null>(null);
+
 function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
+  const drawing = useContext(Drawing);
+  const Claim = drawing?.slots?.[block.key];
+  const drawn = <Drawn block={block} />;
+  return Claim ? (
+    <Suspense fallback={drawn}>
+      <Claim block={block} node={drawing!.node} drawn={drawn} />
+    </Suspense>
+  ) : (
+    drawn
+  );
+}
+
+function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
   const said = useContext(SaidAround);
   const under = useContext(HeadingsUnder);
   const homeLine = useContext(HomeLine);
@@ -166,10 +211,9 @@ function Resolved({ block }: { readonly block: ResolvedBlock }): ReactNode {
   }
 }
 
-/** The kind's picture, where the context has one to draw. */
-const Figure = createContext<(() => ReactNode) | undefined>(undefined);
+/** The kind's picture, where the view has one to draw. */
 function SpecFigure() {
-  const figure = useContext(Figure);
+  const figure = useContext(Drawing)?.figure;
   return figure ? (
     <span className="graview-spec-figure" aria-hidden="true">
       {figure()}
@@ -181,10 +225,19 @@ function ResolvedBlocks({ blocks }: { readonly blocks: readonly ResolvedBlock[] 
   return blocks.map((block, i) => <Resolved key={i} block={block} />);
 }
 
-/** Blocks, drawn for one record — or for none. Pure: everything they read is in `ctx`. */
-export function SpecBlocks({ blocks, ctx }: { readonly blocks: readonly SpecBlock[]; readonly ctx: SpecContext }): ReactNode {
-  const resolved = resolveBlocks(blocks, ctx);
-  return ctx.figure ? <Figure.Provider value={ctx.figure}><ResolvedBlocks blocks={resolved} /></Figure.Provider> : <ResolvedBlocks blocks={resolved} />;
+/** Resolved blocks, drawn as `view` — `"home"`, `"<kind>.page"` — whose blocks a face claims by key (`BlockSlots`). */
+function Viewed({ blocks, ctx, view }: { readonly blocks: readonly ResolvedBlock[]; readonly ctx: SpecContext; readonly view: string | undefined }): ReactNode {
+  const slots = useContext(BlockSlots)?.[view!];
+  return (
+    <Drawing.Provider value={{ figure: ctx.figure, slots, node: ctx.node }}>
+      <ResolvedBlocks blocks={blocks} />
+    </Drawing.Provider>
+  );
+}
+
+/** Blocks, drawn for one record — or for none — as `view`. Pure: everything they read is in `ctx`. */
+export function SpecBlocks({ blocks, ctx, view }: { readonly blocks: readonly SpecBlock[]; readonly ctx: SpecContext; readonly view?: string }): ReactNode {
+  return <Viewed blocks={resolveBlocks(blocks, ctx)} ctx={ctx} view={view} />;
 }
 
 // ── figures and lists (FR-81, FR-82) ────────────────────────────────────────
@@ -226,9 +279,6 @@ export const HeadingsUnder = createContext(0);
  * it first. Given only where the home is the page.
  */
 export const HomeLine = createContext<ReactNode>(null);
-
-/** The steps a list or a figure about no one record may take: it sweeps whole kinds. */
-const SWEEP_BUDGET = 5_000;
 
 function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode; readonly as: "card" | "row"; readonly depth: number; readonly said?: AlreadySaid | null }) {
   const { store, views } = useGraview();
@@ -330,20 +380,8 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
 export function SpecPlace({ blocks, heading = 2, firstHeading, slot }: { readonly blocks: readonly SpecBlock[]; readonly heading?: number; readonly firstHeading?: number; readonly slot: "home" | "place" }) {
   const { store, brand } = useGraview();
   useGraph();
-  const ctx: SpecContext = {
-    node: null,
-    graph: store.graph as unknown as GraphReader,
-    schema: store.schema as AnySchema,
-    kinds: shapesFor(store.schema as AnySchema),
-    fields: {},
-    // The store's own day where it names one: a draft's "due this week" means the week the app's rules mean.
-    today: store.today() ?? today(),
-    // The app's currency and locale are its brand's (FR-100).
-    ...(brand ? { money: brand } : {}),
-    heading,
-    ...(firstHeading !== undefined ? { firstHeading } : {}),
-    budget: SWEEP_BUDGET,
-  };
+  // As `resolveFor` reads them: the store's own day, the brand's money (FR-100), a page's budget — blocks about no record sweep whole kinds.
+  const ctx: SpecContext = blockContextFor(store, null, null, { heading, firstHeading, money: brand });
   // The app's line goes under the home's headline when it has one (`HomeLine`), else first.
   const line = useContext(HomeLine);
   const headed = blocks.some((block) => block.t === "headline");
@@ -351,54 +389,25 @@ export function SpecPlace({ blocks, heading = 2, firstHeading, slot }: { readonl
     <div className={`graview-spec graview-spec-${slot}`} data-graview-spec={slot}>
       {line !== null && !headed ? line : null}
       <HomeLine.Provider value={headed ? line : null}>
-        <SpecBlocks blocks={blocks} ctx={ctx} />
+        <SpecBlocks blocks={blocks} ctx={ctx} view={slot} />
       </HomeLine.Provider>
     </div>
   );
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
-
-const SHAPES = new WeakMap<object, Map<string, KindShape>>();
-const FIELDS = new WeakMap<object, Map<string, Readonly<Record<string, FieldSpec>>>>();
-
-/** What each kind holds, for names and hops: read once per schema. */
-function shapesFor(schema: AnySchema): Map<string, KindShape> {
-  let shapes = SHAPES.get(schema);
-  if (!shapes) SHAPES.set(schema, (shapes = shapesOfSchema(schema)));
-  return shapes;
-}
-
-/** A kind's fields in the document's words, read once per schema. */
-function fieldsFor(schema: AnySchema, kind: string): Readonly<Record<string, FieldSpec>> {
-  let byKind = FIELDS.get(schema);
-  if (!byKind) FIELDS.set(schema, (byKind = new Map()));
-  let fields = byKind.get(kind);
-  if (!fields) byKind.set(kind, (fields = fieldSpecsOf(schema, kind)));
-  return fields;
-}
-
-/** The drawing context for a record, from the provider every view is drawn under. */
-export function useSpecContext(node: AnyGraphNode): SpecContext {
+/** The drawing context for a record's view (its card unless said), from the provider every view is drawn under: what `resolveFor` reads, and the kind's picture. */
+export function useSpecContext(node: AnyGraphNode, slot: ViewSlot = "card"): SpecContext {
   const { store, brand } = useGraview();
   const schema = store.schema as AnySchema;
-  const definition = schema.tryDefinition(node.kind) as SpecContext["definition"];
   return {
-    node,
-    graph: store.graph as unknown as GraphReader,
-    schema,
-    kinds: shapesFor(schema),
-    fields: fieldsFor(schema, node.kind),
-    ...(definition ? { definition } : {}),
-    today: store.today() ?? today(),
-    ...(brand ? { money: brand } : {}),
+    ...blockContextFor(store, null, node, { slot, money: brand }),
     figure: () => <KindFigure kind={node.kind} schema={schema} {...(brand ? { brand } : {})} size={22} />,
   };
 }
 
 /** One slot of a spec, drawn for one record. */
 export function SpecView({ slot, blocks, node, selected }: { readonly slot: ViewSlot; readonly blocks: readonly SpecBlock[]; readonly node: AnyGraphNode; readonly selected?: boolean }) {
-  const ctx = useSpecContext(node);
+  const ctx = useSpecContext(node, slot);
   return (
     <div
       className={`graview-spec graview-spec-${slot}`}
@@ -408,7 +417,7 @@ export function SpecView({ slot, blocks, node, selected }: { readonly slot: View
       {...(slot === "row" && blocks.some(isTallBlock) ? { "data-graview-tall": "" } : {})}
       {...(selected ? { "data-selected": "" } : {})}
     >
-      <SpecBlocks blocks={blocks} ctx={slot === "page" ? { ...ctx, heading: 2 } : ctx} />
+      <SpecBlocks blocks={blocks} ctx={ctx} view={`${node.kind}.${slot}`} />
     </div>
   );
 }
@@ -421,7 +430,7 @@ function SpecCard({ blocks, node, selected, flagged }: { readonly blocks: readon
   return (
     <Panel {...(titled ? { title: (resolveBlocks([first], ctx)[0] as { text: string }).text } : {})} selected={selected} tone={flagged ? "warning" : "muted"} fit>
       <div className="graview-spec graview-spec-card" data-graview-spec="card" data-graview-kind={node.kind}>
-        <SpecBlocks blocks={titled ? rest : blocks} ctx={ctx} />
+        <SpecBlocks blocks={titled ? rest : blocks} ctx={ctx} view={`${node.kind}.card`} />
       </div>
     </Panel>
   );
@@ -442,28 +451,20 @@ function SpecCard({ blocks, node, selected, flagged }: { readonly blocks: readon
  */
 function SpecPage<S extends AnySchema>({ blocks, props }: { readonly blocks: readonly SpecBlock[]; readonly props: ViewProps<S> }) {
   const node = props.node as AnyGraphNode;
-  const ctx = useSpecContext(node);
+  // Drawn once: read under a page's budget, as `resolveFor` and `describe_place` read it.
+  const ctx = useSpecContext(node, "page");
   const elsewhere = useDefaultElsewhere();
-  const resolved = resolveBlocks(blocks, { ...ctx, heading: 2 });
+  const resolved = resolveBlocks(blocks, ctx);
   const said = whatBlocksSay(blocks, resolved);
-  if (elsewhere) {
-    // The record page's own heading is the record's name: a page title saying it again is not drawn under it.
-    const named = said.title !== undefined && said.title === labelOf(ctx.schema?.tryDefinition(node.kind), node);
-    return (
-      <div className="graview-spec graview-spec-page" data-graview-spec="page" data-graview-kind={node.kind}>
-        <Figure.Provider value={ctx.figure}>
-          <ResolvedBlocks blocks={named ? resolved.slice(1) : resolved} />
-        </Figure.Provider>
-      </div>
-    );
-  }
+  // Elsewhere, the record page's own heading is the record's name: a page title saying it again is not drawn under it.
+  // Here, the page's title is the record's head (`RecordHeadContext`).
+  const titled = said.title !== undefined && (!elsewhere || said.title === labelOf(ctx.schema?.tryDefinition(node.kind), node));
   const body = (
     <div className="graview-spec graview-spec-page" data-graview-spec="page" data-graview-kind={node.kind}>
-      <Figure.Provider value={ctx.figure}>
-        <ResolvedBlocks blocks={said.title !== undefined ? resolved.slice(1) : resolved} />
-      </Figure.Provider>
+      <Viewed blocks={titled ? resolved.slice(1) : resolved} ctx={ctx} view={`${node.kind}.page`} />
     </div>
   );
+  if (elsewhere) return body;
   return (
     <RecordHeadContext.Provider value={{ nodeId: node.id, ...(said.title !== undefined ? { title: said.title } : {}), body, fields: said.fields, records: said.records }}>
       <DefaultView<S> {...props} />
@@ -517,23 +518,13 @@ export function registerViewSpecs<S extends AnySchema>(registry: ReactViewRegist
       const blocks = compileBlocks(slots.row);
       const Row: ViewComponent<S> = (props: ViewProps<S>) => (props.node ? <SpecRow blocks={blocks} node={props.node as AnyGraphNode} selected={props.selected} /> : null);
       // What the row says, so a list that draws it can add the glance's other facts and not repeat its own.
-      (Row as SaysWhat).says = (node, graph) => {
-        const at = schema as AnySchema;
-        const definition = at.tryDefinition(node.kind) as SpecContext["definition"];
-        const ctx: BlockContext = { node, graph, schema: at, kinds: shapesFor(at), fields: fieldsFor(at, node.kind), ...(definition ? { definition } : {}), today: today(), heading: 2 };
-        return whatBlocksSay(blocks, resolveBlocks(blocks, ctx));
-      };
+      (Row as SaysWhat).says = (node, graph) => whatBlocksSay(blocks, resolveBlocks(blocks, blockContextFor({ graph, schema }, null, node, { slot: "row" })));
       registry.register(at, { cardinality: "one", fidelity: "glyph" }, Row);
     }
     if (slots.page) {
       const blocks = compileBlocks(slots.page);
       const Page: ViewComponent<S> = (props: ViewProps<S>) => (props.node ? <SpecPage<S> blocks={blocks} props={props} /> : null);
-      (Page as SaysWhat).says = (node, graph) => {
-        const at = schema as AnySchema;
-        const definition = at.tryDefinition(node.kind) as SpecContext["definition"];
-        const ctx: BlockContext = { node, graph, schema: at, kinds: shapesFor(at), fields: fieldsFor(at, node.kind), ...(definition ? { definition } : {}), today: today(), heading: 2 };
-        return whatBlocksSay(blocks, resolveBlocks(blocks, ctx));
-      };
+      (Page as SaysWhat).says = (node, graph) => whatBlocksSay(blocks, resolveBlocks(blocks, blockContextFor({ graph, schema }, null, node)));
       registry.register(at, { cardinality: "one", fidelity: "full" }, Page);
     }
   }

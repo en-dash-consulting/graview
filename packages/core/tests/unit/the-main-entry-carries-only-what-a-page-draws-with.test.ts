@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import * as arrange from "../../src/arrange.js";
 import * as blocks from "../../src/blocks.js";
 import * as check from "../../src/check.js";
+import * as describePlaces from "../../src/describe.js";
 import * as document from "../../src/document/index.js";
 import * as figures from "../../src/figures.js";
 import * as main from "../../src/index.js";
@@ -19,7 +20,8 @@ import * as scene from "../../src/scene.js";
  */
 const OFF_THE_PAGE = {
   "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement"] },
-  "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "whatBlocksSay", "computedNames", "computedValues", "withComputed"] },
+  "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "whatBlocksSay", "computedNames", "computedValues", "withComputed", "blockContextFor", "CARD_BUDGET", "PAGE_BUDGET"] },
+  "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "statusColumns"] },
   "@graview/core/check": { from: check, names: ["checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt"] },
   "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "toIso", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail"] },
   "@graview/core/figures": { from: figures, names: ["FIGURES", "FIGURE_NAMES", "figureBrief", "figureFaults", "figureSvg"] },

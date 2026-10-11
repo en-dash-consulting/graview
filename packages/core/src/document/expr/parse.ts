@@ -77,7 +77,7 @@ function tokenize(source: string): Token[] {
       while (i < source.length && /[A-Za-z0-9_]/.test(source[i]!)) i++;
       const word = source.slice(start, i);
       // An OWN entry: "constructor" is a name, not an operator inherited from Object.
-      const op = Object.prototype.hasOwnProperty.call(WORD_OPERATORS, word) ? WORD_OPERATORS[word] : undefined;
+      const op = Object.hasOwn(WORD_OPERATORS, word) ? WORD_OPERATORS[word] : undefined;
       tokens.push(op ? { k: "op", v: op, at: start } : { k: "id", v: word, at: start });
       continue;
     }

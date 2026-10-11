@@ -121,9 +121,9 @@ describe("LifeLogics' coverage meter is one declared figure", () => {
   });
 
   it("says, for each package, how many of the client's needs its offers answer, counted once each", () => {
-    expect(drawn(owner, "pkg-start")).toEqual({ t: "number", text: "3", label: "of the 5 things they need, answered" });
-    expect(drawn(owner, "pkg-whole")).toEqual({ t: "number", text: "4", label: "of the 5 things they need, answered" });
-    expect(drawn(owner, "pkg-later")).toEqual({ t: "number", text: "0", label: "of the 5 things they need, answered" });
+    expect(drawn(owner, "pkg-start")).toEqual({ key: "number.1", t: "number", text: "3", label: "of the 5 things they need, answered" });
+    expect(drawn(owner, "pkg-whole")).toEqual({ key: "number.1", t: "number", text: "4", label: "of the 5 things they need, answered" });
+    expect(drawn(owner, "pkg-later")).toEqual({ key: "number.1", t: "number", text: "0", label: "of the 5 things they need, answered" });
   });
 
   /*
@@ -145,9 +145,9 @@ describe("LifeLogics' coverage meter is one declared figure", () => {
     // The workshop's answers and the suite's flaky tests are notes this seat may not see: only the slow releases are reached.
     expect(ids(on("out(out('includes'), 'answers')", "pkg-whole", { principal: engineers, document: narrowed }))).toEqual(["note-slow"]);
     expect(on("count(out(first(all('party') where role == 'client'), 'needs'))", null, { principal: engineers, document: narrowed })).toBe(1);
-    expect(drawn(engineers, "pkg-whole", narrowed)).toEqual({ t: "number", text: "1", label: "of the 1 things they need, answered" });
+    expect(drawn(engineers, "pkg-whole", narrowed)).toEqual({ key: "number.1", t: "number", text: "1", label: "of the 1 things they need, answered" });
     // The owner, on the same document, is told of all of it.
-    expect(drawn(owner, "pkg-whole", narrowed)).toEqual({ t: "number", text: "4", label: "of the 5 things they need, answered" });
+    expect(drawn(owner, "pkg-whole", narrowed)).toEqual({ key: "number.1", t: "number", text: "4", label: "of the 5 things they need, answered" });
   });
 });
 

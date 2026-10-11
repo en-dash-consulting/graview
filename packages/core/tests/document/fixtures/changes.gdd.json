@@ -1,0 +1,42 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The changes",
+  "description": "Changes to a codebase, each with the tasks that make it up.",
+  "kinds": {
+    "change": {
+      "noun": "change",
+      "plural": "changes",
+      "fields": { "label": { "type": "string", "required": true } },
+      "edges": { "has": { "to": ["task"], "cardinality": "many", "description": "the tasks it is made of", "inverse": "the change it is part of" } }
+    },
+    "task": {
+      "noun": "task",
+      "plural": "tasks",
+      "fields": {
+        "label": { "type": "string", "required": true },
+        "status": { "type": "enum", "options": ["open", "done"], "default": "open", "required": true }
+      }
+    }
+  },
+  "acts": {
+    "add-change": { "title": "Add a change", "creates": "change", "description": "Start a change." },
+    "add-task": { "title": "Add a task", "creates": "task", "description": "A piece of a change." }
+  },
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "views": {
+    "change": {
+      "card": [{ "title": "{label}" }, { "figure": "count(out('has'))", "label": "tasks", "key": "count" }],
+      "page": [
+        { "headline": "{label}" },
+        { "text": "{count(out('has') where status == 'done')} of {count(out('has'))} done", "key": "progress" },
+        { "title": "Still open", "key": "open-heading" },
+        { "list": "out('has') where status == 'open'", "sort": "label", "as": "row", "key": "open" },
+        { "title": "Done" },
+        { "list": "out('has') where status == 'done'", "sort": "label", "as": "row" }
+      ]
+    },
+    "home": [{ "headline": "Changes" }, { "list": "all('change')", "as": "card", "key": "changes" }]
+  }
+}

@@ -70,7 +70,7 @@ These are pinned by tests, not by convention:
   (`checkApp`, `compileDocument`, `describeApp`) lives on
   `@graview/core/check`, the city and `sceneThumbnail` on `/scene`, the
   shipped drawings on `/figures`, a view's block resolver on `/blocks`,
-  a status board's reach on `/describe`, and arranging a list on `/arrange`
+  a status board's reach and `resolveFor` on `/describe`, and arranging a list on `/arrange`
   (`packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts`).
   A page its host hands a compiled app imports `@graview/core/compiled`
   and nothing from `/document` up front, which would bring the compiler

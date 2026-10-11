@@ -62,10 +62,10 @@ export function respellDocument<T>(document: T, respellings: readonly Respelling
 /** The value with `one` respelled under `steps`, copied only along the path it changed. */
 function respellAt(value: unknown, steps: readonly string[], one: Respelling, at: string, respelled: string[]): unknown {
   if (steps.length === 0) {
-    if (!isRecord(value) || !Object.prototype.hasOwnProperty.call(value, one.was)) return value;
+    if (!isRecord(value) || !Object.hasOwn(value, one.was)) return value;
     respelled.push(`${at}${one.was}`);
     const { [one.was]: old, ...rest } = value;
-    return Object.prototype.hasOwnProperty.call(value, one.now) ? rest : { ...rest, [one.now]: old };
+    return Object.hasOwn(value, one.now) ? rest : { ...rest, [one.now]: old };
   }
   if (!isRecord(value)) return value;
   const [step, ...more] = steps as [string, ...string[]];

@@ -255,7 +255,7 @@ export function edgeWords(
   direction: "out" | "in",
 ): string {
   const edges = schema.tryDefinition(ownerKind)?.edges as Readonly<Record<string, { readonly description?: string; readonly inverse?: string }>> | undefined;
-  const declared = edges && Object.prototype.hasOwnProperty.call(edges, edgeKind) ? edges[edgeKind] : undefined;
+  const declared = edges && Object.hasOwn(edges, edgeKind) ? edges[edgeKind] : undefined;
   const said = direction === "out" ? declared?.description : declared?.inverse;
   return said ?? humanizeField(edgeKind).toLowerCase();
 }
@@ -265,7 +265,7 @@ export function fieldWords(
   key: string,
 ): string {
   // A computed field's own label is its words too (FR-83), where the display does not say otherwise.
-  const computed = definition?.computed && Object.prototype.hasOwnProperty.call(definition.computed, key) ? definition.computed[key] : undefined;
+  const computed = definition?.computed && Object.hasOwn(definition.computed, key) ? definition.computed[key] : undefined;
   return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? humanizeField(key);
 }
 
