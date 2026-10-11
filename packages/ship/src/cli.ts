@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
+import { readSnapshot } from "@graview/core/snapshot";
 import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter } from "./file-adapter.js";
 import { LIVE_PATH } from "./live.js";
@@ -80,12 +81,13 @@ export async function backendFrom(argv: readonly string[], cwd = process.cwd()):
   return { adapter: createFileAdapter(data), where: data, ...(seed ? { seed } : {}) };
 }
 
+/** A seed file in either snapshot format: the line format with its header, or an old `{ nodes, edges }`. */
 function readSeed(file: string): GraphSnapshot {
-  const parsed = JSON.parse(readFileSync(file, "utf8")) as Partial<GraphSnapshot>;
-  if (!Array.isArray(parsed.nodes) || !Array.isArray(parsed.edges)) {
-    throw new Error(`${file} is not a graph snapshot: it needs "nodes" and "edges" arrays.`);
+  try {
+    return readSnapshot(readFileSync(file, "utf8")).snapshot as GraphSnapshot;
+  } catch (error) {
+    throw new Error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
   }
-  return parsed as GraphSnapshot;
 }
 
 /** The entry module, or the reason it is not one — said before anything is opened. */

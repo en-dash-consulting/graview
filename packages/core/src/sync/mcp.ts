@@ -1,0 +1,274 @@
+import type { RemoteAck, RemoteChange, RemoteSystem, RemoteWrite } from "./types.js";
+
+/**
+ * A REMOTE THAT SPEAKS MCP — the tools another system already serves, called
+ * by name, as the sync's transport.
+ *
+ * Three pieces, each usable alone. `mcpClient` calls a streamable-HTTP MCP
+ * endpoint (a session, JSON or an event stream back, one retry when the
+ * server forgot the session) and only the tools it was allowed. `mcpDoor` is
+ * the narrow way a page reaches it: a server route that holds the token,
+ * answers only its own origin's JSON, and passes only the allowed tools —
+ * and `doorClient` is the page's side of it. `mcpRemote` turns calls into a
+ * `RemoteSystem` the engine runs.
+ *
+ * Nothing here imports a `node:` builtin: the client runs in Node or a page,
+ * and the door takes any request and response shaped like Node's.
+ */
+
+/** Calls one tool by name and resolves to what it answered: its text, parsed as JSON when it is JSON. */
+export type ToolCall = (name: string, args: Record<string, unknown>) => Promise<unknown>;
+
+type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
+
+/**
+ * THE TOOLS A SYNC MAY CALL, and the sentence for one it may not. A sync
+ * needs a handful of a server's tools; every other one stays out of reach,
+ * whoever asks.
+ */
+export function allowTools(names: Iterable<string>): (name: string) => string | undefined {
+  const allowed = [...new Set(names)];
+  return (name) =>
+    allowed.includes(name) ? undefined : `${name} is not a tool this sync uses (it uses ${allowed.join(", ")}).`;
+}
+
+export interface McpClientOptions {
+  /** The server's MCP endpoint. */
+  readonly url: string;
+  /** The tools this client may call; any other is refused before it is sent. */
+  readonly allow: Iterable<string>;
+  /** Headers each request carries — a token read when it is needed, never handed to a page. */
+  readonly headers?: () => Record<string, string> | Promise<Record<string, string>>;
+  readonly fetch?: Fetch;
+  /** Who is calling, as `initialize` says it. */
+  readonly clientInfo?: { readonly name: string; readonly version: string };
+}
+
+interface RpcAnswer {
+  readonly result?: { readonly content?: readonly { readonly type: string; readonly text?: string }[]; readonly isError?: boolean };
+  readonly error?: { readonly message?: string };
+}
+
+/** A JSON-RPC answer, from a JSON body or the last `data:` line of an event stream. */
+async function readAnswer(response: Response): Promise<RpcAnswer> {
+  const text = await response.text();
+  if (response.headers.get("content-type")?.includes("text/event-stream")) {
+    const data = text
+      .split("\n")
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.slice(5).trim())
+      .filter(Boolean);
+    return data.length > 0 ? (JSON.parse(data[data.length - 1]!) as RpcAnswer) : {};
+  }
+  return text ? (JSON.parse(text) as RpcAnswer) : {};
+}
+
+/** Calls an MCP server's tools over streamable HTTP. */
+export function mcpClient(options: McpClientOptions): ToolCall {
+  const send = options.fetch ?? ((input, init) => fetch(input, init));
+  const refuse = allowTools(options.allow);
+  let session: string | undefined;
+  let opening: Promise<string | undefined> | undefined;
+  let id = 0;
+
+  const headers = async (extra: Record<string, string> = {}): Promise<Record<string, string>> => ({
+    "content-type": "application/json",
+    accept: "application/json, text/event-stream",
+    ...(await options.headers?.()),
+    ...(session ? { "mcp-session-id": session } : {}),
+    ...extra,
+  });
+
+  const open = async (): Promise<string | undefined> => {
+    const init = await send(options.url, {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: ++id,
+        method: "initialize",
+        params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: options.clientInfo ?? { name: "graview-sync", version: "1" } },
+      }),
+    });
+    if (!init.ok) throw new Error(`The MCP server answered ${init.status} when the sync introduced itself.`);
+    const opened = init.headers.get("mcp-session-id") ?? undefined;
+    await init.text();
+    await send(options.url, {
+      method: "POST",
+      headers: await headers(opened ? { "mcp-session-id": opened } : {}),
+      body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+    });
+    return opened;
+  };
+
+  const call = async (name: string, args: Record<string, unknown>, retry: boolean): Promise<unknown> => {
+    const refusal = refuse(name);
+    if (refusal) throw new Error(refusal);
+    if (session === undefined) session = await (opening ??= open().finally(() => (opening = undefined)));
+    const response = await send(options.url, {
+      method: "POST",
+      headers: await headers(),
+      body: JSON.stringify({ jsonrpc: "2.0", id: ++id, method: "tools/call", params: { name, arguments: args } }),
+    });
+    if ((response.status === 404 || response.status === 400) && retry && session !== undefined) {
+      // The server restarted and forgot the session: open another, once.
+      session = undefined;
+      await response.text();
+      return call(name, args, false);
+    }
+    if (!response.ok) throw new Error(`The MCP server answered ${response.status} to ${name}.`);
+    const answer = await readAnswer(response);
+    if (answer.error) throw new Error(answer.error.message ?? `The MCP server refused ${name}.`);
+    const text = answer.result?.content?.find((part) => part.type === "text")?.text ?? "";
+    if (answer.result?.isError) throw new Error(text || `${name} failed.`);
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      return text;
+    }
+  };
+
+  return (name, args) => call(name, args, true);
+}
+
+/** The headers a door reads, as Node's `IncomingMessage` has them. */
+export type DoorHeaders = Readonly<Record<string, string | readonly string[] | undefined>>;
+
+/**
+ * WHETHER A REQUEST CAME FROM THIS SERVER'S OWN PAGES: no `Sec-Fetch-Site`
+ * other than same-origin (or none, for curl), and an `Origin`, when there is
+ * one, naming this host. A page on another origin can fire a request at a
+ * local server; it cannot make the browser say it came from here.
+ */
+export function sameOrigin(headers: DoorHeaders): boolean {
+  const site = headers["sec-fetch-site"];
+  if (typeof site === "string" && site !== "same-origin" && site !== "none") return false;
+  const origin = headers["origin"];
+  if (typeof origin !== "string") return true;
+  try {
+    return new URL(origin).host === headers["host"];
+  } catch {
+    return false;
+  }
+}
+
+/** A request and a response, as Node's `http` (and Vite's and Connect's middleware) hands them. */
+export interface DoorRequest {
+  readonly method?: string;
+  readonly url?: string;
+  readonly headers: DoorHeaders;
+  on(event: "data", listener: (chunk: unknown) => void): unknown;
+  on(event: "end", listener: () => void): unknown;
+}
+export interface DoorResponse {
+  statusCode: number;
+  setHeader(name: string, value: string): unknown;
+  end(body: string): unknown;
+}
+
+export interface McpDoorOptions {
+  /** Where the door answers. Default `/graview/mcp`. */
+  readonly path?: string;
+  /** What reaches the server — usually an `mcpClient` holding the token. */
+  readonly call: ToolCall;
+  /** The tools a page may ask for through the door. */
+  readonly allow: Iterable<string>;
+}
+
+/**
+ * THE DOOR A PAGE REACHES A TOOL SERVER THROUGH, as server middleware.
+ *
+ * The page never holds the token and never names the endpoint: it posts
+ * `{ name, arguments }` here and gets `{ ok, result | error }` back. What
+ * passes is as narrow as the sync needs — a POST, `application/json`, from
+ * this server's own origin, naming an allowed tool — and every refusal says
+ * which of those it was.
+ */
+export function mcpDoor(options: McpDoorOptions): (request: DoorRequest, response: DoorResponse, next: () => void) => void {
+  const path = options.path ?? "/graview/mcp";
+  const refuse = allowTools(options.allow);
+  const answer = (response: DoorResponse, status: number, body: unknown) => {
+    response.statusCode = status;
+    response.setHeader("content-type", "application/json");
+    response.end(JSON.stringify(body));
+  };
+  return (request, response, next) => {
+    if ((request.url ?? "").split("?")[0] !== path) return next();
+    if (request.method !== "POST") return answer(response, 405, { ok: false, error: "Refused: the door takes a POST." });
+    if (!sameOrigin(request.headers)) return answer(response, 403, { ok: false, error: "Refused: not from this page's own origin." });
+    const type = request.headers["content-type"];
+    if (typeof type !== "string" || !type.includes("application/json")) {
+      return answer(response, 415, { ok: false, error: "Refused: send application/json." });
+    }
+    let text = "";
+    request.on("data", (chunk) => (text += String(chunk)));
+    request.on("end", () => {
+      void (async () => {
+        let asked: { name?: unknown; arguments?: unknown };
+        try {
+          asked = JSON.parse(text || "{}") as typeof asked;
+        } catch {
+          return answer(response, 400, { ok: false, error: "Refused: the body is not JSON." });
+        }
+        if (typeof asked.name !== "string") return answer(response, 400, { ok: false, error: "Refused: name the tool." });
+        const refusal = refuse(asked.name);
+        if (refusal) return answer(response, 403, { ok: false, error: `Refused: ${refusal}` });
+        try {
+          const args = asked.arguments && typeof asked.arguments === "object" ? (asked.arguments as Record<string, unknown>) : {};
+          answer(response, 200, { ok: true, result: await options.call(asked.name, args) });
+        } catch (error) {
+          answer(response, 200, { ok: false, error: error instanceof Error ? error.message : String(error) });
+        }
+      })();
+    });
+  };
+}
+
+/** The page's side of an `mcpDoor`: the same calls, posted to the door on this page's own origin. */
+export function doorClient(options: { readonly path?: string; readonly base?: string; readonly fetch?: Fetch } = {}): ToolCall {
+  const send = options.fetch ?? ((input, init) => fetch(input, init));
+  const at = `${options.base ?? ""}${options.path ?? "/graview/mcp"}`;
+  return async (name, args) => {
+    const response = await send(at, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name, arguments: args }) });
+    const body = (await response.json().catch(() => ({ ok: false, error: `The door answered ${response.status}.` }))) as {
+      ok?: boolean;
+      result?: unknown;
+      error?: string;
+    };
+    if (!body.ok) throw new Error(body.error ?? `The door refused ${name}.`);
+    return body.result;
+  };
+}
+
+export interface McpRemoteOptions {
+  /** Names the remote. */
+  readonly name: string;
+  /** How a call reaches the tools: `mcpClient` in Node, `doorClient` in a page. */
+  readonly call: ToolCall;
+  /** Everything that changed since `cursor`, read with the tools. */
+  pull(call: ToolCall, cursor?: string): Promise<{ readonly changes: readonly RemoteChange[]; readonly cursor: string }>;
+  /**
+   * One write, made with the tools, and the version it produced. Whatever it
+   * throws is that write's refusal, in its own words; the rest still go.
+   */
+  push(call: ToolCall, write: RemoteWrite): Promise<{ readonly id: string; readonly version: string }>;
+}
+
+/** A `RemoteSystem` over a tool server: one write at a time, each refused alone. */
+export function mcpRemote(options: McpRemoteOptions): RemoteSystem {
+  return {
+    name: options.name,
+    pull: (cursor) => options.pull(options.call, cursor),
+    async push(writes) {
+      const acks: RemoteAck[] = [];
+      for (const write of writes) {
+        try {
+          acks.push({ localId: write.localId, ...(await options.push(options.call, write)) });
+        } catch (error) {
+          acks.push({ localId: write.localId, id: write.id ?? "", version: "", error: error instanceof Error ? error.message : String(error) });
+        }
+      }
+      return acks;
+    },
+  };
+}

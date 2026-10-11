@@ -241,23 +241,7 @@ export type { SystemStack } from "./theme/fonts.js";
 export { accentProblem, documentSchemes, passingShade } from "./theme/accent.js";
 export type { AccentRefusal } from "./theme/accent.js";
 export type { IsoFace, IsoShade, IsoWash, ResolvedShape, ResolvedTypography } from "./theme/look.js";
-export { googleCalendar, googleCalendarMapping } from "./sync/google-calendar.js";
-export type { Fetcher, GoogleCalendarOptions } from "./sync/google-calendar.js";
-export { syncConflictInvariant, SYNC_CONFLICTS } from "./sync/conflict.js";
-export type { SyncConflictOptions } from "./sync/conflict.js";
-export { SyncEngine } from "./sync/engine.js";
-export type { SyncConflict, SyncOptions, SyncReport } from "./sync/engine.js";
-export { EMPTY_SYNC_STATE, systemAuthor } from "./sync/types.js";
-export type {
-  RemoteAck,
-  RemoteChange,
-  RemoteLink,
-  RemoteSystem,
-  RemoteWrite,
-  ResourceMapping,
-  SyncMapping,
-  SyncState,
-} from "./sync/types.js";
+// Two-way sync (the engine, its mappings and transports) is `@graview/core/sync`'s: a page draws without it.
 export {
   checkpoint,
   checkpointOn,
