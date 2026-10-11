@@ -415,7 +415,17 @@ describe("a remote that speaks MCP", () => {
     expect(refused.body.error).toContain("remove_item is not a tool this sync uses");
     expect(reached).toEqual(["get_item"]);
 
+    // A type that only mentions JSON is not JSON: a page on another site may send `text/plain` without asking first.
+    expect((await knock({ "content-type": "text/plain; x=application/json" }, { name: "get_item" })).status).toBe(415);
+    // A rebinding page names its own host, and the browser agrees with it: a host this server is not is refused.
+    expect((await knock({ ...json, host: "evil.example:5173", origin: "http://evil.example:5173" }, { name: "get_item" })).status).toBe(403);
+    expect((await knock(json, { name: "get_item", arguments: { padding: "x".repeat(1_100_000) } })).status).toBe(413);
+
     expect(sameOrigin({ host: "localhost:5173", origin: "http://localhost:5173" })).toBe(true);
+    expect(sameOrigin({ host: "127.0.0.1:5173", origin: "http://127.0.0.1:5173" })).toBe(true);
+    expect(sameOrigin({ host: "app.localhost:5173" })).toBe(true);
+    expect(sameOrigin({ host: "evil.example:5173", origin: "http://evil.example:5173" })).toBe(false);
+    expect(sameOrigin({ host: "tasks.internal:5173", origin: "http://tasks.internal:5173" }, ["tasks.internal"])).toBe(true);
     expect(allowTools(["a"])("b")).toBe("b is not a tool this sync uses (it uses a).");
   });
 

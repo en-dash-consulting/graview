@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { Duplex } from "node:stream";
 import type { AnySchema, Operation } from "@graview/core";
+import { sameOrigin } from "@graview/core/sync";
 import { createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE, type AdapterStoreHandlerOptions, type StoreHandler } from "./handler.js";
 import type { OpenedStore } from "./open-store.js";
 import { LIVE_PATH, LIVE_SUBPROTOCOL } from "./live.js";
@@ -30,6 +31,14 @@ export interface ServeOptions<S extends AnySchema> extends AdapterStoreHandlerOp
    * serves its page and the document beside the store's own routes.
    */
   readonly answer?: (request: Request) => Response | undefined | Promise<Response | undefined>;
+  /**
+   * Answer only pages on this server's own origin, at a host that is this
+   * machine (`sameOrigin` from `@graview/core/sync`) — the live wire too.
+   * How `graview preview`, which believes the seat its own page names, keeps
+   * another site's page, or one that rebinds its name here, out of that seat.
+   * Off by default: a store an embed reaches is reached from other origins.
+   */
+  readonly ownOrigin?: boolean;
 }
 
 export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, "close" | "opened"> {
@@ -41,10 +50,17 @@ export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, 
 }
 
 export async function serveStore<S extends AnySchema>(options: ServeOptions<S>): Promise<ServedStore<S>> {
-  const { port: wanted, host, answer, ...rest } = options;
+  const { port: wanted, host, answer, ownOrigin = false, ...rest } = options;
   const handler = await createStoreHandler(rest);
+  const NOT_OURS = JSON.stringify({ error: "Refused: not from this server's own page.", reason: "forbidden" });
+  const refused = (incoming: IncomingMessage) => ownOrigin && !sameOrigin(incoming.headers);
 
   const server = createServer((incoming, outgoing) => {
+    if (refused(incoming)) {
+      outgoing.writeHead(403, { "content-type": "application/json", "content-length": Buffer.byteLength(NOT_OURS) });
+      outgoing.end(NOT_OURS);
+      return;
+    }
     void requestOf(incoming)
       .then(async (request) => (answer ? await answer(request) : undefined) ?? handler.handle(request))
       .then((response) => write(outgoing, response))
@@ -64,6 +80,10 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     stream.on("error", () => {});
     const path = new URL(incoming.url ?? "/", "http://localhost").pathname;
     const key = incoming.headers["sec-websocket-key"];
+    if (refused(incoming)) {
+      stream.end(`HTTP/1.1 403 Forbidden\r\nContent-Type: application/json\r\nContent-Length: ${Buffer.byteLength(NOT_OURS)}\r\nConnection: close\r\n\r\n${NOT_OURS}`);
+      return;
+    }
     if (path !== LIVE_PATH || typeof key !== "string" || String(incoming.headers.upgrade).toLowerCase() !== "websocket") {
       stream.end("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
       return;

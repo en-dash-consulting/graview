@@ -78,8 +78,13 @@ function fieldsFor(schema: AnySchema, kind: string): Readonly<Record<string, Fie
  * (`store.seenBy`); null reads it as it is handed, which inside a
  * `GraviewProvider` is already the seat's.
  */
-export function blockContextFor(source: BlockSource, principal: Principal | null, node: { readonly id: string; readonly kind: string } | null, options: BlockContextOptions = {}): BlockContext {
+export function blockContextFor(source: BlockSource, principal: Principal | null, given: { readonly id: string; readonly kind: string } | null, options: BlockContextOptions = {}): BlockContext {
+  if (principal && typeof (source as Partial<Store<AnySchema>>).seenBy !== "function") {
+    throw new TypeError("blockContextFor: a seat is read from a store (its `seenBy`); a bare { graph, schema } is read as it is handed, with no principal");
+  }
   const seen = principal ? (source as Store<AnySchema>).seenBy(principal) : source;
+  // THE RECORD AS THE SEAT SEES IT, whichever copy was handed in: one it may not see is no record at all, and a field it may not read is cleared.
+  const node = principal && given ? (((seen.graph as GraphReader).getNode(given.id) as { readonly id: string; readonly kind: string } | undefined) ?? null) : given;
   const schema = seen.schema;
   const definition = node && schema.tryDefinition(node.kind);
   const once = !node || (options.slot ?? "page") === "page";

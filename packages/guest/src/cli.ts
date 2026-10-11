@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Store, type AnySchema, type Principal } from "@graview/core";
 import { loadApp } from "@graview/core/cli";
+import { readSnapshot } from "@graview/core/snapshot";
 import type { WorkerViewManifest } from "./host/manifest.js";
 import { runWorkerViewHeadless } from "./headless/index.js";
 import { nodeIsolate } from "./headless/node.js";
@@ -52,7 +53,8 @@ export async function view(argv: readonly string[]): Promise<number> {
     schema: app.schema as AnySchema,
     mutations: (app.mutations ?? []) as never,
     ...(app.policy ? { policy: app.policy } : {}),
-    ...(seedAt ? { snapshot: readJson(seedAt) as never } : {}),
+    // Either snapshot format, as `serve --seed` reads it.
+    ...(seedAt ? { snapshot: readSnapshot(readFileSync(resolve(process.cwd(), seedAt), "utf8")).snapshot as never } : {}),
   });
   const roles = (flag(argv, "--roles") ?? "").split(",").map((role) => role.trim()).filter(Boolean);
   const as = flag(argv, "--as");

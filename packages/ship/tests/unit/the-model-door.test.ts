@@ -20,10 +20,10 @@ const respond = () => {
   } as never;
   return { sent, res };
 };
-const request = (method: string, body?: string, origin?: string) =>
+const request = (method: string, body?: string, origin?: string, host = "localhost:5193") =>
   ({
     method,
-    headers: { host: "localhost:5193", ...(origin ? { origin } : {}) },
+    headers: { host, ...(origin ? { origin } : {}) },
     on: (event: string, handler: (chunk?: Buffer) => void) => {
       if (event === "data" && body) handler(Buffer.from(body));
       if (event === "end") handler();
@@ -111,6 +111,14 @@ describe("the model door", () => {
     const upstream = answered("no");
     const { sent, res } = respond();
     await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY }, fetch: upstream })(request("POST", '{"prompt":"hi"}', "https://elsewhere.test"), res);
+    expect(sent.status).toBe(403);
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it("answers no page that names another host, as a page rebinding its own name to this machine does", async () => {
+    const upstream = answered("no");
+    const { sent, res } = respond();
+    await aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY }, fetch: upstream })(request("POST", '{"prompt":"hi"}', "http://evil.test:5193", "evil.test:5193"), res);
     expect(sent.status).toBe(403);
     expect(upstream).not.toHaveBeenCalled();
   });

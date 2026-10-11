@@ -1,5 +1,6 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { request } from "node:http";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { previewPrincipal, servePreview, type Preview } from "../../src/serve-preview.js";
@@ -52,6 +53,29 @@ describe("a document previewed with no product", () => {
   it("leaves the store's own routes to the store, seeded", async () => {
     const state = (await (await fetch(`${preview.url}/graview/state`, { headers: seatHeaders(preview.principal) })).json()) as { snapshot: { nodes: unknown[] } };
     expect(state.snapshot.nodes.length).toBe(ORG_SEED.nodes.length);
+  });
+
+  it("answers only its own page on this machine: not another site's, and not one that rebinds its name here", async () => {
+    const knock = (headers: Record<string, string>, path = "/graview/state", method = "GET") =>
+      new Promise<number>((resolve, reject) => {
+        const asked = request(`${preview.url}${path}`, { method, headers: { ...seatHeaders(preview.principal), ...headers } }, (answer) => {
+          answer.resume();
+          resolve(answer.statusCode ?? 0);
+        });
+        asked.on("error", reject);
+        asked.end();
+      });
+    const port = new URL(preview.url).port;
+    expect(await knock({})).toBe(200);
+    expect(await knock({ origin: preview.url })).toBe(200);
+    expect(await knock({ origin: "https://elsewhere.example" })).toBe(403);
+    expect(await knock({ "sec-fetch-site": "cross-site" })).toBe(403);
+    expect(await knock({ host: `evil.example:${port}`, origin: `http://evil.example:${port}` })).toBe(403);
+    expect(await knock({ host: `evil.example:${port}` }, "/graview/document")).toBe(403);
+  });
+
+  it("will not believe seat headers on an address other machines reach, unless told the network is trusted", async () => {
+    await expect(servePreview({ document: ORG, page, host: "0.0.0.0" })).rejects.toThrow(/seat/);
   });
 
   it("refuses a document that does not compile, saying why, and a page that was never built", async () => {

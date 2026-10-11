@@ -121,6 +121,22 @@ describe("the scene's way back", () => {
     await act(async () => void store.undo(batch, { author: nina }));
     expect(offered(board)).toBeUndefined();
   });
+
+  it("goes when the scene goes — a face switch on a board that outlives it — so it never takes back an act made after", async () => {
+    const store = fresh();
+    const board = createNoticeBoard();
+    await scene(store, board);
+    await renameTo(store, "Later");
+    const toast = offered(board);
+    expect(toast).toBeDefined();
+    await unmounts.pop()!();
+    await act(async () => vi.dynamicImportSettled());
+    expect(offered(board)).toBeUndefined();
+    // Pressed anyway, from a copy somebody kept, it takes back only the act it offered.
+    await renameTo(store, "On the pages face", "i2");
+    await act(async () => toast!.action!.onSelect());
+    expect(store.graph.getNode("i2")?.label).toBe("On the pages face");
+  });
 });
 
 /* jsdom keeps no pointer and no keyboard of its own: what the browser would say — held or not — is said here. */

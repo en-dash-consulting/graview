@@ -23,11 +23,14 @@ export function SceneWayBack() {
   const { store, principal } = useGraview<AnySchema>();
   const board = useContext(NoticeBoardContext);
   const mark = useRef<HTMLSpanElement>(null);
+  // Set only as the scene unmounts: a new store, seat or board starts the way back again without taking the offer down.
+  const gone = useRef(false);
+  useEffect(() => () => void (gone.current = true), []);
   useEffect(() => {
     const seen = store.batches().length;
     const going = door().then((module) => module.sceneWay(store, principal, board, seen, mark.current), () => undefined);
-    // Gone before it arrived, it stops as it starts.
-    return () => void going.then((stop) => stop?.());
+    // Gone before it arrived, it stops as it starts; read once the door is in, by when an unmount has said so.
+    return () => void going.then((stop) => stop?.(gone.current));
   }, [store, principal, board]);
   return <span ref={mark} hidden />;
 }

@@ -10,6 +10,7 @@ import { defineNode } from "./schema/define-node.js";
 import type { GraphSnapshot } from "./graph/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import { Store } from "./store.js";
+import { readSnapshot } from "./snapshot.js";
 import { compileDocument } from "./document/compile-checked.js";
 import { sayFindings, type Finding as DocumentFinding } from "./document/findings.js";
 
@@ -300,13 +301,22 @@ export interface DocumentFiles {
 
 const readJsonAt = (path: string | URL): unknown => JSON.parse(readFileSync(typeof path === "string" ? resolvePath(process.cwd(), path) : path, "utf8"));
 
+/** A seed as `serve --seed` reads it: the snapshot's line format, or an old `{ nodes, edges }` file. */
+function readSeed(path: string | URL): GraphSnapshot {
+  const text = readFileSync(typeof path === "string" ? resolvePath(process.cwd(), path) : path, "utf8");
+  try {
+    return readSnapshot(text).snapshot;
+  } catch {
+    throw new Error(`${String(path)} is not a graph snapshot: it needs "nodes" and "edges" arrays, or a snapshot header line.`);
+  }
+}
+
 export function compileDocumentFiles(document: string | URL, options: { readonly seed?: string | URL; readonly today?: () => string } = {}): DocumentFiles {
   const read = readJsonAt(document);
   const compiled = compileDocument(read, options.today ? { today: options.today } : {});
   if (!compiled.ok) throw new Error(`${String(document)} does not compile:\n${sayFindings(compiled.findings)}`);
   const app = compiled.app as GraviewApp;
-  const seed = options.seed === undefined ? undefined : (readJsonAt(options.seed) as GraphSnapshot);
-  if (seed !== undefined && (!Array.isArray(seed.nodes) || !Array.isArray(seed.edges))) throw new Error(`${String(options.seed)} is not a graph snapshot: it needs "nodes" and "edges" arrays.`);
+  const seed = options.seed === undefined ? undefined : readSeed(options.seed);
   return {
     app,
     document: read,

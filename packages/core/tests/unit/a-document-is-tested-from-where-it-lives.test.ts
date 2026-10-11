@@ -1,7 +1,8 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { writeSnapshot } from "../../src/snapshot.js";
 import { compileDocumentFiles } from "../../src/testing.js";
 
 /**
@@ -20,6 +21,19 @@ describe("a document tested from where it lives", () => {
     const one = opened.store();
     expect(one.graph.allNodes().length).toBe(opened.seed?.nodes.length);
     expect(opened.store()).not.toBe(one);
+  });
+
+  it("reads a seed in the snapshot's line format as well as an old { nodes, edges } file", () => {
+    const dir = mkdtempSync(join(tmpdir(), "graview-files-"));
+    try {
+      const old = JSON.parse(readFileSync(ORG_SEED, "utf8"));
+      writeFileSync(join(dir, "seed.snapshot"), writeSnapshot(old));
+      const opened = compileDocumentFiles(ORG, { seed: join(dir, "seed.snapshot") });
+      expect(opened.seed?.nodes.length).toBe(old.nodes.length);
+      expect(opened.store().graph.allNodes().length).toBe(old.nodes.length);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("refuses a document that does not compile, saying why", () => {
