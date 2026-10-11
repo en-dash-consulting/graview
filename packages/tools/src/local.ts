@@ -1,5 +1,5 @@
 import { DECISION_BRIDGE_PATH, type AnySchema, type IntelligenceProviderDeclaration } from "@graview/core";
-import { aiVia, NO_AI_SAID, type HostAi } from "./ai.js";
+import { NO_AI_SAID, type HostAi } from "./ai.js";
 import { graphResponder, llmResponder, type ChatReply, type Responder } from "./conversation.js";
 import { completionDecide } from "./decide.js";
 import type { Completion } from "./intelligence.js";
@@ -11,6 +11,13 @@ import { jevDecide, type Decide } from "./providers/jev.js";
  * with it (FR-57). This file is the models themselves, and the one
  * responder that puts the graph in front of them.
  */
+
+/**
+ * What a change a model proposed is recorded as coming through, in the op
+ * log. Here rather than in `./ai.ts`, which every page carries up front:
+ * only a seat a model answers asks it.
+ */
+export const aiVia = (ai: HostAi): string => `ai:${ai.name ?? (ai.complete || ai.turn ? "model" : "on-device")}`;
 
 /* ------------------------------------------------------------- adapters */
 
@@ -226,7 +233,8 @@ export function localCompletion(
 /**
  * THE MODEL THE HOST GAVE, as one completion — or `undefined`, so a caller
  * can say what it will do INSTEAD (draw from a template, answer from the
- * graph). The host's `complete` first; a model in the reader's browser
+ * graph). The host's `complete` first; else its `turn`, handed the prompt
+ * as one message and no tools; a model in the reader's browser
  * only when the host turned `onDevice` on, warmed on first use and
  * throwing while cold, which callers already treat as "say what happened".
  */
@@ -242,7 +250,10 @@ interface TalkingModel {
 }
 
 function talkingModel(ai: HostAi, hooks: { readonly onStatus?: (status: LocalStatus) => void }): TalkingModel | undefined {
-  if (ai.complete) return { complete: ai.complete, ready: () => true, warm: () => Promise.resolve(), failed: () => null };
+  const turn = ai.turn;
+  const complete: Completion | undefined =
+    ai.complete ?? (turn ? (prompt) => turn({ system: "", messages: [{ role: "user", content: prompt }], tools: [], call: async () => ({ error: "No tools here." }) }) : undefined);
+  if (complete) return { complete, ready: () => true, warm: () => Promise.resolve(), failed: () => null };
   if (!ai.onDevice) return undefined;
   const model = typeof ai.onDevice === "object" ? ai.onDevice.model : undefined;
   const local = localCompletion({ ...(model ? { model } : {}), ...(hooks.onStatus ? { onStatus: hooks.onStatus } : {}) });
@@ -303,7 +314,8 @@ export function seatResponder<S extends AnySchema>(
       return known.unsure ? { ...known, say: ai.withoutModel ?? NO_AI_SAID } : known;
     };
   }
-  const modeled = llmResponder<S>({ complete: talking.complete });
+  /* A host's turn reads before it answers (FR-160), and is preferred to its completion. */
+  const modeled = llmResponder<S>({ complete: talking.complete, ...(ai.turn ? { turn: ai.turn } : {}) });
   const via = aiVia(ai);
   return async (store, text, context) => {
     const known = await floor(store, text, context);

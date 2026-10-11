@@ -74,6 +74,20 @@ describe("the model door", () => {
     expect(sent.body).not.toContain(KEY);
   });
 
+  it("forwards one step of a seat's turn — its framing, messages and read tools — and answers with the content and why it stopped, so the page runs the reads (FR-160)", async () => {
+    const blocks = [{ type: "tool_use", id: "t1", name: "get_node", input: { id: "Bloom & Co" } }];
+    const upstream = vi.fn(async (_url: string, _init: { method: string; headers: Record<string, string>; body: string }) => ({ status: 200, text: async () => JSON.stringify({ content: blocks, stop_reason: "tool_use" }) }));
+    const handler = aiDevProxyHandler({ env: { ANTHROPIC_API_KEY: KEY }, fetch: upstream });
+    const tools = [{ name: "get_node", description: "Read one node.", input_schema: { type: "object" } }];
+    const step = { system: "You are the seat.", messages: [{ role: "user", content: "what did we pay the florist?" }], tools, tool_choice: { type: "none" } };
+    const { sent, res } = respond();
+    await handler(request("POST", JSON.stringify(step)), res);
+    expect(JSON.parse(upstream.mock.calls[0]![1].body)).toMatchObject({ model: "claude-sonnet-5-5", ...step });
+    expect(sent.status).toBe(200);
+    expect(JSON.parse(sent.body!)).toEqual({ content: blocks, stop_reason: "tool_use" });
+    expect(sent.body).not.toContain(KEY);
+  });
+
   it("passes a refused key back as a refusal in words, without the key", async () => {
     const upstream = vi.fn(async () => ({ status: 401, text: async () => JSON.stringify({ error: { message: `invalid x-api-key ${KEY}` } }) }));
     const { sent, res } = respond();

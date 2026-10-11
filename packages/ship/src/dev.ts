@@ -458,6 +458,12 @@ export function decisionBridge(options: DecisionBridgeOptions = {}): DevServerPl
  * alone. GET says whether a key is there — and, when it is not, how to set
  * one, so the seat of a dev build can say so (`aiThroughDevServer`).
  *
+ * A SEAT'S TURN (FR-160) posts `{ system, messages, tools, tool_choice? }`
+ * instead: one step of the tool loop the page runs, forwarded as it is
+ * with the model added, and answered with `{ content, stop_reason }` so
+ * the page can run the reads the model asked for, as the person, and post
+ * the next step. The door holds no state between steps.
+ *
  * A DEV-SERVER plugin only (`apply: "serve"`): a build never carries it, its
  * probe 404s on a static host, and the seat there says only what any
  * product's says. Same-origin only, and the key is never in a response, a
@@ -531,9 +537,11 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
       return;
     }
     try {
-      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown };
-      if (typeof ask.prompt !== "string" || ask.prompt.trim().length === 0) {
-        sendJson(res, 400, { error: "A request is { prompt }." });
+      const ask = JSON.parse(await readBody(req, options.limitBytes ?? AI_DEFAULTS.limitBytes, "prompt")) as { prompt?: unknown; system?: unknown; messages?: unknown; tools?: unknown; tool_choice?: unknown };
+      /* A turn's step: the conversation so far, the seat's read tools, and its framing. */
+      const step = Array.isArray(ask.messages) && ask.messages.length > 0;
+      if (!step && (typeof ask.prompt !== "string" || ask.prompt.trim().length === 0)) {
+        sendJson(res, 400, { error: "A request is { prompt }, or a turn's { system, messages, tools }." });
         return;
       }
       const current = CURRENT.test(model);
@@ -549,7 +557,13 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
         body: JSON.stringify({
           model,
           max_tokens: options.maxTokens ?? AI_DEFAULTS.maxTokens,
-          messages: [{ role: "user", content: ask.prompt }],
+          ...(step
+            ? {
+                ...(typeof ask.system === "string" && ask.system.length > 0 ? { system: ask.system } : {}),
+                messages: ask.messages,
+                ...(Array.isArray(ask.tools) && ask.tools.length > 0 ? { tools: ask.tools, ...(ask.tool_choice ? { tool_choice: ask.tool_choice } : {}) } : {}),
+              }
+            : { messages: [{ role: "user", content: ask.prompt }] }),
           // A seat's answer is a few sentences: a low effort is quick and enough.
           ...(current ? { output_config: { effort: "low" }, fallbacks: "default" } : {}),
         }),
@@ -569,6 +583,10 @@ export function aiDevProxyHandler(options: AiDevProxyOptions = {}) {
       }
       if (reply.stop_reason === "refusal") {
         sendJson(res, 502, { error: "The model declined to answer that." });
+        return;
+      }
+      if (step) {
+        sendJson(res, 200, { content: reply.content ?? [], stop_reason: reply.stop_reason ?? null });
         return;
       }
       const text = (reply.content ?? [])

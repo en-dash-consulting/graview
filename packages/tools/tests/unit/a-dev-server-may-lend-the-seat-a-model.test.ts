@@ -17,13 +17,16 @@ const places = placesOf(todoApp);
 const json = (status: number, body: unknown) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
 
 describe("the seat's model, through the dev server", () => {
-  it("a door holding a key lends a model, and each prompt goes through the door", async () => {
+  it("a door holding a key lends a model, and each step of the seat's turn goes through the door", async () => {
     const door = vi.fn(async (_path: string, init?: { method?: string; body?: string }) =>
-      init?.method === "POST" ? json(200, { text: '{"say": "Start with the deposit.", "proposals": []}' }) : json(200, { configured: true, model: "claude-sonnet-5-5", name: "claude" }),
+      init?.method === "POST"
+        ? json(200, { content: [{ type: "text", text: '{"say": "Start with the deposit.", "proposals": []}' }], stop_reason: "end_turn" })
+        : json(200, { configured: true, model: "claude-sonnet-5-5", name: "claude" }),
     );
     const ai = await aiThroughDevServer({ fetch: door });
     expect(ai.name).toBe("claude");
     expect(ai.complete).toBeDefined();
+    expect(ai.turn).toBeDefined();
     const reply = await seatResponder<AnySchema>(ai)(store(), "what should I do first?", { places });
     expect(reply.say).toContain("Start with the deposit");
     expect(reply.via).toBe("ai:claude");

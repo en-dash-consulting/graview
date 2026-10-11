@@ -19,15 +19,9 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
+import type { HostAi } from "./ai.js";
 import type { SeatMove, SeatOffer } from "./go.js";
-import {
-  droppedProposals,
-  firstJsonObject,
-  resolveProposal,
-  validateProposals,
-  type Completion,
-  type ProposedCall,
-} from "./intelligence.js";
+import { validateProposals, type Completion, type ProposedCall } from "./intelligence.js";
 import type { OfferedQuestion } from "./questions.js";
 
 /**
@@ -732,199 +726,23 @@ function answerFrom(
  * the same validation gate as every other model use. The reply contract is
  * JSON — something to say, calls to propose — and an unparseable answer
  * degrades to words with no proposals rather than to guesses.
+ *
+ * GIVEN A TURN, IT READS BEFORE IT ANSWERS (FR-160). A prompt can carry
+ * the acts, the names and the connections, never every record's fields,
+ * so "which vendors are unpaid" asked of a completion is answered "the
+ * prompt does not say". A host's `turn` gets the same framing as its
+ * system, the conversation as messages, and the seat's read tools as the
+ * person: its model reads what it needs, and its last text is read here
+ * exactly as a completion's is. Preferred over `complete` when both are
+ * given; one of the two is.
  */
 export function llmResponder<S extends AnySchema>(options: {
-  readonly complete: Completion;
+  readonly complete?: Completion;
+  readonly turn?: HostAi["turn"];
   readonly may?: readonly string[];
 }): Responder<S> {
-  return async (store, text, context = {}) => {
-    /*
-     * EACH ACT WITH WHAT IT TAKES. Listed by name and description alone, a
-     * model proposed `add-plot` with no label and no beds, and the person
-     * was handed a form for what they had just said in words. The same
-     * form fields the menu asks with, said as a signature.
-     */
-    const argument = (field: FormField): string => {
-      const type =
-        field.control === "node"
-          ? `name of ${field.kinds.includes("*") ? "anything" : field.kinds.join(" or ")}`
-          : field.control === "choice"
-            ? (field.options ?? []).map((option) => JSON.stringify(option)).join(" | ")
-            : field.control === "date"
-              ? field.time
-                ? "YYYY-MM-DDTHH:MM"
-                : "YYYY-MM-DD"
-              : field.control === "text" || field.control === "number" || field.control === "boolean"
-                ? field.control
-                : "value";
-      return `${field.name}${field.optional ? "?" : ""}: ${type}`;
-    };
-    const mutations = store
-      .allMutations()
-      .map(
-        (mutation) =>
-          `- ${mutation.name}(${formFields(mutation.input).map(argument).join(", ")}): ${mutation.description ?? mutation.title ?? ""}`,
-      )
-      .join("\n");
-    /*
-     * WHAT IS ACTUALLY IN HERE, BY NAME.
-     *
-     * A model that cannot see the names cannot use them: asked to add a
-     * field to Meal it answers `{"kind": "Meal"}` and hopes, because the
-     * prompt listed the acts and never the things. A bounded sample per
-     * kind is enough to name anything a sentence is likely to mention, and
-     * `resolveProposal` turns whichever name it picks into the id.
-     */
-    const shape = (store.schema.kinds as readonly string[])
-      .filter((kind) => !store.modules.disabledKinds.has(kind))
-      .map((kind) => {
-        const definition = store.schema.tryDefinition(kind);
-        const members = store.graph.nodesOfKind(kind);
-        const names = members
-          .slice(0, 12)
-          .map((node) => labelOf(definition, node))
-          .join(", ");
-        return `- ${kind} (${pluralOf(store.schema, kind)}, ${members.length}): ${names}${members.length > 12 ? ", …" : ""}`;
-      })
-      .join("\n");
-    /*
-     * HOW THINGS ARE CONNECTED. A model told "move it to Erin" can only
-     * answer from connections it can see; a bounded list is enough for the
-     * graphs a conversation is held over.
-     */
-    const nameOf = (id: string): string => {
-      const node = store.graph.getNode(id);
-      return node ? labelOf(store.schema.tryDefinition(node.kind), node) : id;
-    };
-    const edges = [...store.graph.allEdges()];
-    const connections = edges
-      .slice(0, 40)
-      .map((edge) => `- ${nameOf(edge.from)} —${edge.kind}→ ${nameOf(edge.to)}`)
-      .join("\n");
-    const selected = (context.selection ?? [])
-      .map((id) => {
-        const node = store.graph.getNode(id);
-        return node ? `${id} (${labelOf(store.schema.tryDefinition(node.kind), node)})` : id;
-      })
-      .join(", ");
-    const history = (context.history ?? [])
-      .slice(-8)
-      .map((turn) => `${turn.role === "person" ? "Person" : "You"}: ${turn.text}`)
-      .join("\n");
-    const trouble = store
-      .violations()
-      .map((violation) => `- ${violation.message}`)
-      .join("\n");
-    /*
-     * The floor's reading, offered as a starting point rather than a rule.
-     * "Keep it, correct it, or split it" is the instruction that turns one
-     * loose sentence into the two or three acts it actually described.
-     */
-    const reading = (context.reading ?? [])
-      .map((proposal) => `- ${proposal.mutation} ${JSON.stringify(proposal.args)}`)
-      .join("\n");
-    const keptKinds = store.kindsKeptFrom(context.principal);
-    const places = (context.places ?? []).filter((place) => place.kind === null || !keptKinds.has(place.kind)).map((place) => place.title);
-    const prompt = [
-      [
-        "You are the seat of a typed context graph. You answer questions about it and turn requests for change into proposals of its declared mutations, which the person reviews and applies.",
-        "- Fill every argument a mutation takes. Refer to things by their exact name as listed below.",
-        "- When a request needs something that does not exist yet, propose creating it first, then refer to it by the name you gave it. Choose sensible names and numbers rather than leaving them out.",
-        '- "it", "that" and "this" mean what the conversation or the selection points at.',
-        '- "say" is one short sentence in plain words. Do not restate the proposals in it; they are shown beneath it.',
-        "- A question gets an answer and no proposals.",
-      ].join("\n"),
-      `Today is ${new Date().toISOString().slice(0, 10)}.`,
-      `Mutations:\n${mutations}`,
-      shape ? `What is in the graph now:\n${shape}` : "",
-      connections ? `How they are connected:\n${connections}${edges.length > 40 ? "\n- …" : ""}` : "",
-      reading
-        ? `A first reading of this request, worked out from the graph:\n${reading}\nKeep it, correct it, or split it into several — one proposal per distinct change the person described.`
-        : "Where a request describes several changes, answer with several proposals — one per distinct change.",
-      trouble ? `Currently broken:\n${trouble}` : "Nothing is broken.",
-      selected ? `Selected right now (what "this" means): ${selected}` : "Nothing is selected.",
-      /*
-       * THE PLACES, so an answer can take the person to one. A model names
-       * where to go; the seat reads that name again as an ask under the
-       * same sight, so a move a model proposes is one the graph alone could
-       * have made.
-       */
-      places.length > 0 ? `Places in the app: ${places.join(", ")}.` : "",
-      history ? `Conversation so far:\n${history}` : "",
-      `Person: ${text}`,
-      'To take the person somewhere, put a place\'s title or a thing\'s exact name in "go".',
-      'Answer ONLY JSON: {"say": string, "proposals": [{"mutation": string, "args": object, "why": string}], "go"?: [string]}.',
-    ]
-      .filter(Boolean)
-      .join("\n\n");
-    const answer = await options.complete(prompt);
-    const read = firstJsonObject(answer);
-    /*
-     * A bare array IS the list of proposals — the shape a model reaches for
-     * about as often as the one it was asked for.
-     */
-    const parsed = (Array.isArray(read) ? { proposals: read as ProposedCall[] } : read) as
-      | { say?: string; proposals?: ProposedCall[]; go?: unknown; moves?: unknown }
-      | undefined;
-    /*
-     * A PERSON IS NEVER SHOWN THE PLUMBING.
-     *
-     * The contract is JSON, and the old fallback put the raw answer in the
-     * bubble when it would not parse — so a model that closed one brace too
-     * many produced a chat message reading `{"say": "Yes", "proposals":
-     * [{"mutation": "add-field", …}]}}`. `firstJsonObject` reads the object
-     * the model meant; where there is no object at all, a model that was
-     * asked for JSON and wrote prose is answering in the wrong shape, and
-     * saying so is better than pasting it.
-     */
-    if (!parsed || typeof parsed !== "object") {
-      const prose = answer.trim();
-      const looksLikeJson = prose.startsWith("{") || prose.startsWith("[");
-      return {
-        say:
-          prose.length > 0 && !looksLikeJson
-            ? prose
-            : "The answer came back in a shape I could not read. Ask again in other words.",
-        proposals: [],
-      };
-    }
-    /*
-     * And a model names things the way a person does — "Meal", not
-     * `declared:meal` — so a label that means exactly one node is read as
-     * that node before the gate sees it.
-     */
-    const offered = (parsed.proposals ?? []).map((proposal) => resolveProposal(store, proposal));
-    const kept = validateProposals(store, offered, options.may);
-    /*
-     * WHAT THE GATE TOOK OUT IS SAID OUT LOUD. A model that answers "Sure"
-     * and names an act this app does not have used to leave a sentence with
-     * nothing under it: no proposal, no refusal, no way to tell whether the
-     * seat had understood. Silence is the one answer that cannot be acted
-     * on.
-     */
-    const dropped = droppedProposals(store, offered, options.may);
-    const unknown = dropped.filter((one) => one.why === "unknown").map((one) => one.proposal.mutation);
-    const barred = dropped.filter((one) => one.why === "not-allowed").map((one) => one.proposal.mutation);
-    const aside = [
-      unknown.length > 0
-        ? `It also suggested ${unknown.map((name) => `"${name}"`).join(", ")}, which this app has no act for.`
-        : "",
-      barred.length > 0
-        ? `${barred.map((name) => `"${name}"`).join(", ")} is not something this seat may run.`
-        : "",
-      kept.length === 0 && offered.length > 0 ? "Nothing it suggested can be applied here." : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-    const said = typeof parsed.say === "string" && parsed.say.length > 0 ? parsed.say : "";
-    const named = [parsed.go, parsed.moves].flatMap((one) => (Array.isArray(one) ? one : typeof one === "string" ? [one] : []));
-    const moves = named.length > 0 ? (await import("./go.js")).movesFromNames(store, named, context) : [];
-    return {
-      say: [said || moves.map((move) => move.said).join(" "), aside].filter(Boolean).join(" ") || "…",
-      proposals: kept,
-      ...(moves.length > 0 ? { moves } : {}),
-    };
-  };
+  /* The framing, the turn and the reading are fetched with the first ask a model answers (`./seat-model.ts`). */
+  return async (store, text, context = {}) => (await import("./seat-model.js")).answerWithModel(options, store, text, context);
 }
 
 /** A day alone, as the record holds it: `YYYY-MM-DD`. */

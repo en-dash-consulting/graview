@@ -162,7 +162,13 @@ path to the store:
   `mount`/`<Embed>`'s `ai`) gives open questions a model; no reader picks
   one. With none, an open question hears that AI isn't on here; a model's
   answer carries a quiet "Answered with AI", its proposals logged `via:
-  "ai:<name>"`. `ai.decide` (`jevDecide`) answers typed decisions;
+  "ai:<name>"`. **Give `ai.turn` and the model reads before it answers**
+  (FR-160): the seat hands it its framing, the conversation and its read
+  tools as the person (`call` refuses any write, an unseen record, and
+  every call past twelve); the host loops and returns the last text.
+  `turnThroughMessages(post)` is that loop over one Messages request at a
+  time; `complete` alone answers from the prompt, which holds no record's
+  fields. `ai.decide` (`jevDecide`) answers typed decisions;
   `onDevice: true` runs a model in the browser. **Your own responder goes
   in through the shell**: `<Shell chat={{ respond }} />`,
   which hands it to the ask field. A proposal is one line with "Do it" and

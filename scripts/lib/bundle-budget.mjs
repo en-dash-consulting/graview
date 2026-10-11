@@ -483,8 +483,12 @@ export const BUDGETS = [
     // Raised in the review after 0.1.20: the routed face says where its reader is (FR-155) and draws what has happened on its
     // bar (FR-152), the seat's tools fetch the words before any answer (FR-159), and a seat is told a line over what it sees
     // (FR-55). 2_082 / 1_668 more than main. Measured at 1_701_696 / 535_214.
-    minified: 1_702_100,
-    gzipped: 535_500,
+    // Raised when the seat came to read before it answers (FR-160): the turn a host's model takes with the seat's read
+    // tools, and the seat's model — its framing and the reading of its answer — left the faces for a chunk of its own,
+    // fetched when a model first answers, so each face is about 3.9 KB smaller before it draws and every face is one chunk
+    // more. 2_018 / 1_650 more than main (1_701_927 / 535_310). Measured at 1_703_945 / 536_960.
+    minified: 1_704_300,
+    gzipped: 537_150,
     load: "all",
   },
   {
