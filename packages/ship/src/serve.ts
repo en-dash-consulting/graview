@@ -24,6 +24,12 @@ export interface ServeOptions<S extends AnySchema> extends AdapterStoreHandlerOp
   readonly port?: number;
   /** The address to listen on. Every interface when absent. */
   readonly host?: string;
+  /**
+   * Asked first, for every request that is not the live wire: a response
+   * answers it, `undefined` hands it to the store. How `graview preview`
+   * serves its page and the document beside the store's own routes.
+   */
+  readonly answer?: (request: Request) => Response | undefined | Promise<Response | undefined>;
 }
 
 export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, "close" | "opened"> {
@@ -35,12 +41,12 @@ export interface ServedStore<S extends AnySchema> extends Omit<StoreHandler<S>, 
 }
 
 export async function serveStore<S extends AnySchema>(options: ServeOptions<S>): Promise<ServedStore<S>> {
-  const { port: wanted, host, ...rest } = options;
+  const { port: wanted, host, answer, ...rest } = options;
   const handler = await createStoreHandler(rest);
 
   const server = createServer((incoming, outgoing) => {
     void requestOf(incoming)
-      .then(handler.handle)
+      .then(async (request) => (answer ? await answer(request) : undefined) ?? handler.handle(request))
       .then((response) => write(outgoing, response))
       .catch((error: unknown) => {
         const text = JSON.stringify({ error: error instanceof Error ? error.message : String(error) });

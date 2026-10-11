@@ -64,6 +64,8 @@ Write, close, reopen, and read: the graph must survive the round trip and the pe
 
 1. **A host serving document apps compiles once, on the server.** Send `serializeCompiled(compileDocument(document))` beside the document, and build the app in the page with `appFromOrCompile({ compiled, document })` from `@graview/core/compiled` — never `@graview/core/document`, which brings the compiler back into the first chunk. A compiled app of another format (`graview-compiled@1` today), or made from another document than the one beside it, is not built and the document is compiled instead; `pnpm verify hosted` says what the page carries.
 
+1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where — and `graview shots … --places home,overview --out shots` photographs named places headless (Playwright is yours to install). Prove a change to an emitted document with these, not hand-written screenshots. In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
+
 ### The boundary
 
 Anything ONE deployment needs belongs in ship: the op log, the snapshot, migrating on open, the wire, a principal on every apply, the seed at first install, content steps, and the agent's door. Tenancy, provisioning, deploy-to-URL, billing, quotas and fleet upgrades belong to the operator of many — a separate service consuming ship like any customer, with its own `seatOf` mapping people and keys to principals. The concern table is in `@graview/ship`'s README; a third party can stand up their own host from it without forking anything.

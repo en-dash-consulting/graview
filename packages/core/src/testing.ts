@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve as resolvePath } from "node:path";
 import { z } from "zod";
 import { defineApp, type GraviewApp } from "./app.js";
 import { declareInstallation } from "./installation.js";
@@ -6,6 +8,10 @@ import { nodeRef } from "./mutations/node-ref.js";
 import { createSchema } from "./schema/schema.js";
 import { defineNode } from "./schema/define-node.js";
 import type { GraphSnapshot } from "./graph/types.js";
+import type { AnySchema } from "./schema/schema.js";
+import { Store } from "./store.js";
+import { compileDocument } from "./document/compile-checked.js";
+import { sayFindings, type Finding as DocumentFinding } from "./document/findings.js";
 
 /**
  * A DECLARATION BUILT TO BE AWKWARD.
@@ -266,4 +272,53 @@ export function awkwardGraph(app: GraviewApp, options: number | AwkwardGraphOpti
     }
   }
   return { nodes: nodes as never, edges: [] };
+}
+
+/**
+ * A PRODUCT'S DOCUMENT AND SEED, COMPILED FROM WHERE THEY LIVE.
+ *
+ * A product whose declaration is a document (n-dx's emitted one, a hosted
+ * app's) tested it by copying it into `tests/fixtures` and holding the copy
+ * to the original with a drift test of its own. Read from its path instead,
+ * there is no copy to drift: the document compiled with the checker (a
+ * refusal throws, saying every finding), the seed read beside it, and a
+ * fresh store over both — the app's own acts, rules and policy, in memory —
+ * each time `store()` is asked. Paths are relative to the working
+ * directory, or a `file:` URL (`new URL("../app.graview.json", import.meta.url)`).
+ */
+export interface DocumentFiles {
+  readonly app: GraviewApp;
+  /** The document as read. */
+  readonly document: unknown;
+  /** The seed as read, when one was named. */
+  readonly seed?: GraphSnapshot;
+  /** What the checker said of a document it compiled: warnings and notes. */
+  readonly findings: readonly DocumentFinding[];
+  /** A fresh store over the seed, every call. */
+  store(): Store<AnySchema>;
+}
+
+const readJsonAt = (path: string | URL): unknown => JSON.parse(readFileSync(typeof path === "string" ? resolvePath(process.cwd(), path) : path, "utf8"));
+
+export function compileDocumentFiles(document: string | URL, options: { readonly seed?: string | URL; readonly today?: () => string } = {}): DocumentFiles {
+  const read = readJsonAt(document);
+  const compiled = compileDocument(read, options.today ? { today: options.today } : {});
+  if (!compiled.ok) throw new Error(`${String(document)} does not compile:\n${sayFindings(compiled.findings)}`);
+  const app = compiled.app as GraviewApp;
+  const seed = options.seed === undefined ? undefined : (readJsonAt(options.seed) as GraphSnapshot);
+  if (seed !== undefined && (!Array.isArray(seed.nodes) || !Array.isArray(seed.edges))) throw new Error(`${String(options.seed)} is not a graph snapshot: it needs "nodes" and "edges" arrays.`);
+  return {
+    app,
+    document: read,
+    ...(seed ? { seed } : {}),
+    findings: compiled.findings,
+    store: () =>
+      new Store<AnySchema>({
+        schema: app.schema as AnySchema,
+        mutations: (app.mutations ?? []) as never,
+        invariants: (app.invariants ?? []) as never,
+        ...(seed ? { snapshot: structuredClone(seed) as never } : {}),
+        ...(app.policy ? { policy: app.policy as never } : {}),
+      }),
+  };
 }

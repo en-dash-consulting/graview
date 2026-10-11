@@ -78,6 +78,14 @@ graview docs <entry> [--out <dir>] [--views <module>]
 
 Writes llms.txt and agents.md next to the entry, or into <dir>.
 
+## graview doctor
+
+```text
+graview doctor [<dir>] [--document <file>] [--json]
+```
+
+Says whether the product in <dir> (default .) is on one Graview release: every graview and @graview/* pin in its package.json the same version, its lockfile and its node_modules holding that version, each declaration document's formatVersion one the installed core reads, and react beside react-dom at one version (React refuses a mismatched pair at startup, and the page is blank). Each problem is said with its fix; exits 1 on any.
+
 ## graview figure
 
 ```text
@@ -94,6 +102,14 @@ graview lens <name> --roles a,b,c [--binds fields|entities] [--dir <dir>]
 
 Writes a lens that compiles: the role check that fails loudly, the createXLens factory, three fidelities, pick targets — and beside it a REUSE TEST in a domain the app is not about, red until you make the claim true. If you cannot make it pass, you wrote a view, and a view is a legitimate thing to have written.
 
+## graview preview
+
+```text
+graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
+```
+
+[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the document declares, unless --as or --roles say who.
+
 ## graview serve
 
 ```text
@@ -104,6 +120,14 @@ graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <fil
 ```
 
 [--host <address>] [--trust-seat-headers] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it; on any other --host it will not start unless
+
+## graview shots
+
+```text
+graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
+```
+
+[--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene] Photographs places headless to PNGs, <place>-<scheme>-<width>.png in <dir> (default ./shots): each place by its address word or title (the home, overview, a lens's name, a kind's plural) or a path such as /tasks/t1; every place when none is named. Needs Playwright, which you install beside the project (npm i -D playwright, then npx playwright install chromium).
 
 ## graview skills
 

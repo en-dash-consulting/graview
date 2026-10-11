@@ -1320,7 +1320,9 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <h3>Supported browsers</h3>
 <p>Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and degrades to a clean cut where that is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (<code>attachRenderer</code> from <code>@graview/render/gpu</code>; there is no URL switch) — never a requirement.</p>
 <h3>Then find out whether it worked</h3>
-<div class="code" data-scroller><pre><code class="language-sh">pnpm verify        # typecheck, tests, build, graview check</code></pre></div>
+<div class="code" data-scroller><pre><code class="language-sh">pnpm verify        # typecheck, tests, build, graview check
+graview doctor     # one Graview release in pins, lockfile, node_modules, documents; React's pair</code></pre></div>
+<p>Run the project's own <code>graview</code>, not <code>npx -y graview@&lt;pin&gt;</code>: inside a pnpm workspace that already holds the release, npx finds no bin (<code>sh: graview: command not found</code>).</p>
 <p>Report the real output. On a new app the useful early findings are <code>mutation-untitled</code>, <code>mutation-undescribed</code>, <code>edge-without-inverse</code> and <code>required-invariant-unregistered</code> — things that look fine until somebody reads the interface or an agent reads a tool schema.</p>
 <h3>What the check cannot see</h3>
 <ul>

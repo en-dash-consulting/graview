@@ -37,6 +37,14 @@ const FORBIDDEN = [
 /** Things that must BE there, or the package does not work when installed. */
 const REQUIRED = [/(^|\/)dist\/index\.js$/, /(^|\/)dist\/index\.d\.ts$/, /(^|\/)README\.md$/];
 
+/*
+ * What one package must carry besides: `graview preview` and `graview
+ * shots` serve a page built into the CLI's own tarball
+ * (scripts/build-preview-page.mjs), and a tarball packed before it was
+ * built previews nothing.
+ */
+const REQUIRED_IN = { graview: [/^dist\/preview\/index\.html$/, /^dist\/preview\/page\.js$/] };
+
 const packDir = mkdtempSync(join(tmpdir(), "graview-pack-"));
 const report = { at: new Date().toISOString(), packages: {} };
 let failures = 0;
@@ -86,7 +94,7 @@ for (const name of readdirSync(packagesDir).sort()) {
       if (rule.pattern.test(file)) forbidden.push({ file, why: rule.why });
     }
   }
-  const missing = REQUIRED.filter((rule) => !files.some((file) => rule.test(file))).map(String);
+  const missing = [...REQUIRED, ...(REQUIRED_IN[manifest.name] ?? [])].filter((rule) => !files.some((file) => rule.test(file))).map(String);
 
   /*
    * Every path an `exports` map promises has to exist in the tarball. An

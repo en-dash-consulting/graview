@@ -13,7 +13,7 @@
  *
  * Writes docs/smoke.json.
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -323,6 +323,41 @@ process.stdout.write(JSON.stringify(result));
   const out = run("node", ["out/run.js"], app);
   report.result = JSON.parse(out);
   report.steps.ran = true;
+
+  /*
+   * THE COMMAND LINE AS INSTALLED: `graview preview` serves the page the
+   * `graview` tarball carries (dist/preview), over a document and a seed,
+   * with nothing of the workspace in reach; and `graview doctor` reads the
+   * project it was installed into. Port 0: the system's choice, so no port
+   * of the harnesses' block is taken.
+   */
+  const bin = resolve(app, "node_modules/.bin/graview");
+  const fixtures = resolve(repoRoot, "packages/core/tests/document/fixtures");
+  const previewing = spawn(bin, ["preview", resolve(fixtures, "org.gdd.json"), "--seed", resolve(fixtures, "org.seed.json"), "--port", "0"], { cwd: app, stdio: ["ignore", "pipe", "pipe"] });
+  try {
+    const url = await new Promise((found, failed) => {
+      let said = "";
+      const timer = setTimeout(() => failed(new Error(`graview preview did not start:\n${said}`)), 30_000);
+      const hear = (chunk) => {
+        said += chunk;
+        const at = /on (http:\/\/\S+)/.exec(said)?.[1];
+        if (at) (clearTimeout(timer), found(at));
+      };
+      previewing.stdout.on("data", hear);
+      previewing.stderr.on("data", hear);
+      previewing.on("exit", () => failed(new Error(`graview preview exited:\n${said}`)));
+    });
+    const page = await (await fetch(`${url}/places/overview`)).text();
+    const script = await fetch(`${url}/page.js`);
+    const handed = await (await fetch(`${url}/graview/document`)).json();
+    report.preview = { page: page.includes('id="graview-app"'), script: script.ok && (script.headers.get("content-type") ?? "").includes("javascript"), compiled: handed.compiled !== undefined };
+  } finally {
+    previewing.kill();
+  }
+  report.steps.previewed = report.preview.page && report.preview.script && report.preview.compiled;
+  const doctor = spawnSync(bin, ["doctor", "--json"], { cwd: app, encoding: "utf8" });
+  report.doctor = { status: doctor.status, findings: JSON.parse(doctor.stdout || "{}").findings };
+  report.steps.doctored = doctor.status === 0;
 } catch (error) {
   // `tsc` writes its diagnostics to stdout, not stderr, and an empty stderr
   // reported as "the error" is how a failure becomes invisible.
@@ -341,6 +376,9 @@ report.verdict = {
   // The exports map resolves for `tsc` with no path mapping in sight.
   typesResolveWithoutPathMapping: report.steps.typechecked === true,
   runsAtRuntime: report.steps.ran === true,
+  // The CLI as installed: the page `graview preview` serves rides in its tarball, and `graview doctor` reads the project it is in.
+  thePreviewPageShipsWithTheCli: report.steps.previewed === true,
+  theDoctorFindsOneRelease: report.steps.doctored === true,
   // And the app it built is a real one, not an import smoke screen.
   theCheckerPasses: r.checkOk === true,
   theInvariantFired: r.violations === 1,
