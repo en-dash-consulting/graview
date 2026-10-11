@@ -60,5 +60,3 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Three harnesses are failing on main and nobody is being told](./three-harnesses-are-failing-on-main.md) | completed |
 | [Two product repos drifted off the framework without anything saying so](./two-product-repos-drifted-off-the.md) | completed |
 | [verify-site fails inside the chain and passes on its own](./verify-site-fails-inside-the-chain-and.md) | completed |
-
-
