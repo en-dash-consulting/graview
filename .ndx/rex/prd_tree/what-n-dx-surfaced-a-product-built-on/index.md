@@ -21,7 +21,7 @@ lastModified: "2026-10-11T08:00:00.000Z"
 | [A kind can say which field is its natural time and which its author](./a-kind-can-say-which-field-is-its.md) | completed |
 | [A published JSON Schema per version, and a typed defineDocument builder](./a-published-json-schema-per-version.md) | completed |
 | [A responder given an unsighted store puts only what its seat sees in the system prompt](./a-responder-given-an-unsighted-store.md) | pending |
-| [A rule that reads a fact() is judged and worded over what the seat sees](./a-rule-that-reads-a-fact-is-judged-and.md) | pending |
+| [A rule that reads a fact() is judged and worded over what the seat sees](./a-rule-that-reads-a-fact-is-judged-and.md) | completed |
 | [A snapshot says when it was made and what it holds, and can load by kind](./a-snapshot-says-when-it-was-made-and.md) | completed |
 | [describe_place in a host turn knows the app, so it describes lens places](./describe-place-in-a-host-turn-knows.md) | pending |
 | [Each blocks lens claims BlockSlots under its own view name](./each-blocks-lens-claims-blockslots.md) | pending |
