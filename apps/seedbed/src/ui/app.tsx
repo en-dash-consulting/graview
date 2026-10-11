@@ -148,6 +148,7 @@ export function SeedbedApp({
       {...(principal ? { principal } : {})}
       {...(ai ? { ai } : {})}
       settings={seedbedApp.settings ?? []}
+      app={(studio ?? seedbedApp) as never}
     >
       <Shell<S>
         standing="Every rule holds"

@@ -234,7 +234,8 @@ function serveOne(primitive: Primitive, moment: Moment, judge: ServedJudge, by: 
     const edge = (primitive as { edge: GraphEdge }).edge;
     const served = judge.edgeClean(edge) && endServed(edge.from) && endServed(edge.to);
     moment.apply(primitive);
-    return served ? { primitives: [primitive], faithful: true } : { primitives: [], faithful: false };
+    // A link the seat is not served is no part of what it folds: left out, it leaves the op as the seat would have seen it without the link (FR-55).
+    return { primitives: served ? [primitive] : [], faithful: true };
   }
   const was = moment.node(id);
   const before = was ? judge.served(was, moment.writerOf(id)) : undefined;

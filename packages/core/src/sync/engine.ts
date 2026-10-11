@@ -408,6 +408,31 @@ export class SyncEngine<S extends AnySchema> {
     let links: Record<string, RemoteLink> = { ...this.state.links };
     let cursor = this.state.cursor;
 
+    /*
+     * A HELD FIELD ONLY THE REMOTE CHANGED is no conflict: ours is back at
+     * the value both last agreed — a delete taken back leaves it there, or
+     * somebody put it back — so theirs lands here, as their news would
+     * have, and is agreed. Nothing is sent for it.
+     */
+    const landing = new Map<string, Record<string, unknown>>();
+    for (const [key, conflict] of held) {
+      const node = this.options.store.graph.getNode(conflict.localId) as Record<string, unknown> | undefined;
+      const link = links[conflict.localId];
+      const mapping = link && this.mappingFor(link.resource);
+      if ("deleted" in conflict || !node || !mapping || !same(mappedValues(node, mapping)[conflict.field], conflict.base)) continue;
+      landing.set(conflict.localId, { ...landing.get(conflict.localId), [conflict.field]: conflict.theirs });
+      held.delete(key);
+    }
+    for (const [localId, fields] of landing) {
+      const link = links[localId]!;
+      this.options.store.apply(this.options.applyInbound({ localId, kind: this.mappingFor(link.resource)!.kind, fields }), {
+        author: systemAuthor(this.options.mapping.system),
+        intent: `${this.options.mapping.system}: ${Object.keys(fields).join(", ")}`,
+      });
+      links[localId] = { ...link, fields: { ...link.fields, ...fields } };
+      applied.push(localId);
+    }
+
     // --------------------------------------------------------------- inbound
     try {
       const result = await this.options.remote.pull(cursor);

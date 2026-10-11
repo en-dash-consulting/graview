@@ -56,12 +56,12 @@ describe("a served seat and its page", () => {
     const handler = await createStoreHandler({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
     const words = (store: Pick<Store<AnySchema>, "violations">) => store.violations().map((violation) => violation.message);
     // The store's own judgment counts three.
-    expect(words(handler.store)).toEqual(["3 proposed, and at most two may be", "Nothing proposed — fact (proposed) 3 ≥ 1"]);
+    expect(words(handler.store)).toEqual(["3 proposed, and at most two may be", "Nothing proposed — proposed 3 ≥ 1"]);
     // The page, holding what the guest is sent, and the store reading for the guest, count one.
     const response = await handler.handle(new Request("https://store.example/graview/state", { headers: { "content-type": "application/json", ...seatHeaders(guest) } }));
     const state = (await response.json()) as { snapshot: unknown };
     const page = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], snapshot: state.snapshot as never });
-    expect(words(page)).toEqual(["Nothing proposed — fact (proposed) 1 ≥ 1"]);
+    expect(words(page)).toEqual(["Nothing proposed — proposed 1 ≥ 1"]);
     expect(words(handler.store.seenBy(guest))).toEqual(words(page));
   });
 });

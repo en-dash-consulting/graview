@@ -541,6 +541,7 @@ function Launcher() {
       initialView={HOME}
       scheme={scheme}
       settings={launcherApp.settings ?? []}
+      app={launcherApp}
     >
       <LivenessProvider>
         <Desk scheme={scheme} onScheme={changeScheme} />

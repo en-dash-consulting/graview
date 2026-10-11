@@ -19,6 +19,7 @@ import { finishedLine } from "../invariants/line.js";
 import { dayAsRead, ISO_DAY } from "../days.js";
 import { evaluateExpr, NodeSet, type EvalContext, type Value } from "./expr/evaluate.js";
 import type { BinaryOp, Expr } from "./expr/parse.js";
+import { computedOf } from "./computed.js";
 import { formatMoney, type Formatter, type Money, type TemplatePart } from "./template.js";
 
 /** The most of a text value a line says, its end cut to "…". */
@@ -102,6 +103,8 @@ function reader(words: LineWords) {
   const fieldName = (kind: Kind, key: string): string =>
     relation(kind, key) ? humanizeField(key).toLowerCase() : inLine(fieldWords(definition(kind) as Parameters<typeof fieldWords>[0], key));
   const plural = (kind: string): string => inLine(pluralOf(schema, kind));
+  // A fact by the words it is shown by, or its name in words: "proposals in play", "open work".
+  const factName = (fact: string): string => inLine(computedOf(schema as never).get(fact)?.label ?? humanizeField(fact));
   const noun = (kind: string): string => inLine(nounOf(definition(kind), kind));
   const formatOf = (kind: Kind, key: string): FieldFormat | undefined => {
     const declared = kind === null ? undefined : words.formatOf?.(kind, key);
@@ -139,7 +142,7 @@ function reader(words: LineWords) {
     return value(/^[a-z][a-z0-9]*([-_][a-z0-9]+)*$/.test(said) ? said.replace(/[-_]+/g, " ") : said);
   };
 
-  return { definition, relation, farOf, nearOf, fieldName, plural, noun, formatOf, valueWords };
+  return { definition, relation, farOf, nearOf, fieldName, plural, noun, factName, formatOf, valueWords };
 }
 
 type Reader = ReturnType<typeof reader>;
@@ -341,6 +344,10 @@ function call(e: Extract<Expr, { t: "call" }>, kind: Kind, r: Reader): Parts {
     case "all": {
       const of = quoted(0);
       return [name(of ? r.plural(of) : "everything")];
+    }
+    case "fact": {
+      const of = quoted(0);
+      return [name(of ? r.factName(of) : "fact")];
     }
     case "count":
       return [word("number of"), ...set(0)];

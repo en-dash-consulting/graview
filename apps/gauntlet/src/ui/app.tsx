@@ -53,6 +53,7 @@ export function GauntletApp({
       scheme={scheme}
       brand={gauntletBrand}
       settings={gauntletApp.settings ?? []}
+      app={gauntletApp}
       principal={openingSeat()}
       seats={SEATS}
     >

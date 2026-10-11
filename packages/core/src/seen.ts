@@ -3,7 +3,6 @@ import type { GraphNodeBase } from "./graph/types.js";
 import type { Primitive } from "./graph/primitives.js";
 import type { AnyGraphNode, GraphEdge, GraphSnapshot } from "./graph/types.js";
 import type { InvariantDefinition, Violation } from "./invariants/types.js";
-import { linedOver } from "./invariants/engine.js";
 import { batchesOf, undoneIn, type LogReading } from "./ops/log.js";
 import { checkUndo } from "./ops/undo.js";
 import type { Batch, Operation } from "./ops/types.js";
@@ -485,20 +484,25 @@ export function answerSeenBy<
   if (answer.writes) out["writes"] = answer.writes.filter(lens.shows);
   if (answer.intent !== undefined && namesUnseen(answer.intent, lens.sees)) out["intent"] = WITHHELD_INTENT;
   /*
-   * THE RULES IT BROKE OR MENDED, AS THE SEAT JUDGES THEM (FR-55): judged
-   * over the whole graph, before the change or after it, a rule's line or
-   * sentence may count or name records this seat may not see. A change
-   * made, what it broke and what stands after it are judged again over
-   * what the seat sees now; what it mended, and a preview's, are said by
-   * their titles where the rule reads beyond its subject. The words are
-   * `@graview/core/lines`', which a seat's tools load before they answer.
+   * THE RULES IT BROKE OR MENDED, AS THE SEAT JUDGES THEM (FR-55). Judged
+   * over the whole graph, whether a rule that counts, sweeps or walks was
+   * broken or mended depends on records this seat may not see, and its
+   * title alone says so. So they are judged again over the seat's own
+   * world: what it is served now, and that world with the change it is
+   * served taken back — or, for a preview, put on. The judging is
+   * `@graview/core/lines`', which a seat's tools load before they answer;
+   * without it, nothing judged over the whole graph is said.
    */
-  for (const key of ["introduces", "resolves", "violationsAfter"] as const) {
-    const violations = answer[key];
-    if (violations) out[key] = linedOver(key !== "resolves" && answer.ops ? seenBy(store as never, principal).graph : null, store.allInvariants() as never, violations.filter((violation) => violationShown(lens, has, violation)), true);
-  }
+  if (answer.violationsAfter) Object.assign(out, judgedForASeat ? judgedForASeat(store as never, seenBy(store as never, principal), !!answer.ops, (out["primitives"] ?? []) as readonly Primitive[]) : { introduces: [], resolves: [], violationsAfter: [] });
   return out as A;
 }
+
+/** A change's problems as a seat judges them over its own world: `@graview/core/lines` hands it over as it loads. */
+type SeatJudged = (store: Store<AnySchema>, seat: Store<AnySchema>, made: boolean, served: readonly Primitive[]) => Record<"introduces" | "resolves" | "violationsAfter", Violation[]>;
+let judgedForASeat: SeatJudged | undefined;
+
+/** Hands `answerSeenBy` what judges a change's problems over a seat's world. */
+export const answersJudgedWith = (judge: SeatJudged): void => void (judgedForASeat = judge);
 
 /** A log reading over a seat's redacted ops, for `checkUndo`. */
 export function readingOf(ops: readonly Operation[], epochs: LogReading["epochs"]): LogReading {

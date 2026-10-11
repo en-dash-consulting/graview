@@ -263,9 +263,11 @@ describe("a rule says its shape", () => {
       // …which a guest, who sees the venue and none of its vendors, never reads.
       const guest = store.seenBy({ kind: "human", id: "g", roles: ["guest"] });
       expect(said(guest.violations())).not.toContain("$7,000");
-      // An act's answer to such a seat carries no line at all: worked out over the whole graph, before or after.
+      // An act's answer to such a seat is judged and lined over the seat's own world, before and after: never the whole graph's values.
       const answer = store.preview({ name: "edit-category", args: { id: "c1", budget: 4000 } } as never, undefined, { author: { kind: "human", id: "g", roles: ["guest"] } });
-      for (const one of answerSeenBy(store, { kind: "human", id: "g", roles: ["guest"] }, answer).violationsAfter) expect(one.line).toBeUndefined();
+      const told = answerSeenBy(store, { kind: "human", id: "g", roles: ["guest"] }, answer);
+      expect(JSON.stringify(told)).not.toContain("7,000");
+      expect(said(told.violationsAfter)).not.toContain("$");
     });
 
     it("a long text is said as its start, so a message carries a value and not a field's whole contents", () => {
