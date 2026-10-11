@@ -11,7 +11,7 @@ import { EMPTY_VIEW, kindCardId, layout } from "../../src/index.js";
  * districts the layout places from altitude — the same plots, walked in the
  * same order — in the hue the Scene's ground paints them. Asked here, of the
  * layout function the Scene runs, with the order computed the way the
- * Scene's root computes it (`scene-root.tsx`: `beginning` over the store's
+ * Scene computes it (`scene-options.ts`: `beginning` over the store's
  * own acts).
  */
 const fixture = (name: string) =>

@@ -1,5 +1,6 @@
 import type { GraviewApp } from "../../app.js";
 import type { AnySchema } from "../../schema/schema.js";
+import type { AnyMutationDefinition } from "../../mutations/types.js";
 
 /**
  * `note` is a QUESTION ASKED OUT LOUD, not a problem.
@@ -13,8 +14,17 @@ import type { AnySchema } from "../../schema/schema.js";
  * the warnings that matter. So they have their own voice: counted, printed,
  * and never a failure.
  */
-import type { Finding } from "../check.js";
-import type { AnyMutationDefinition } from "../../mutations/types.js";
+export type Severity = "error" | "warning" | "note";
+
+export interface Finding {
+  readonly severity: Severity;
+  readonly code: string;
+  /** Where the problem is, in terms an agent can act on. */
+  readonly where: string;
+  readonly message: string;
+  /** The concrete edit that would fix it. */
+  readonly fix: string;
+}
 
 /**
  * WHAT EVERY CHECK IS HANDED: the app, what it declares by name, and the

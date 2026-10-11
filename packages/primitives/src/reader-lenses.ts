@@ -1,5 +1,4 @@
 import type { AnySchema } from "@graview/core";
-import type { KeptLens } from "./declared-lens-doors.js";
 
 /**
  * YOUR LENSES — a view the seat drew and a reader kept, in an app whose
@@ -11,6 +10,15 @@ import type { KeptLens } from "./declared-lens-doors.js";
  * default, and never written into the declaration: the `add-lens` edit
  * goes to the host (`onKeepLens`) as well, for whoever does write it.
  */
+
+/** A lens as an `add-lens` edit says it: what a reader keeps, and what the seat hands its host. */
+export interface KeptLens {
+  readonly title: string;
+  readonly lens: string;
+  readonly on: string;
+  readonly bindings?: Readonly<Record<string, unknown>>;
+  readonly options?: Readonly<Record<string, unknown>>;
+}
 
 /** The name an app's kept lenses are held under: the same one its conversation is. */
 export const readerLensesKey = (app: string): string => `graview:lenses:${app}`;

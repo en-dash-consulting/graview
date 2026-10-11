@@ -258,7 +258,8 @@ export type { FieldSection } from "./schema/define-node.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColor, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
-export type { ConnectorKit, ConnectorRoute, Kit, KitContrastFinding, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/kit.js";
+export type { KitContrastFinding } from "./theme/kit.js";
+export type { ConnectorKit, ConnectorRoute, Kit, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/types.js";
 export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, SCENE_LAYERS } from "./theme/layers.js";
 export type { Layer } from "./theme/layers.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
@@ -328,9 +329,10 @@ export {
 } from "./places.js";
 // A place's address under a host's base path, and back (FR-106).
 export { addressOf, basePathOf, pathWithin } from "./address.js";
-export type { AppPlace, DeclaredLenses, DrawnLens, Opening, PagesArrangement, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
+export type { AppPlace, DeclaredLenses, DrawnLens, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
 export type {
   Cardinality,
+  PagesArrangement,
   Fidelity,
   ViewCell,
   ViewRegistration,

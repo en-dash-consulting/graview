@@ -9,7 +9,7 @@ import type { Primitive } from "./graph/primitives.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { ViewRegistry } from "./views/types.js";
 import type { HomeView, ViewSpecsByKind } from "./document/views.js";
-import type { PagesArrangement } from "./places.js";
+import type { PagesArrangement } from "./views/types.js";
 
 /**
  * Everything one application declares, in one object. `graview check` and

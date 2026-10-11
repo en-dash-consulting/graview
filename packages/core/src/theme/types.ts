@@ -1,4 +1,3 @@
-import type { KitOverrides } from "./kit.js";
 /**
  * The token contract, declared in core so it can be CHECKED.
  *
@@ -208,3 +207,72 @@ export const TEXT_PAIRS: readonly TextPair[] = [
   // same — a panel outline nobody can see is a panel with no edge.
   { ink: "edgeBright", on: "panel", over: "ground", requires: 3, where: "a lit edge" },
 ];
+
+/*
+ * THE KIT'S SHAPE: what `kit.ts` resolves and draws from, and what a brand
+ * may say of it. Here with the theme's other types, so a brand's `kit`
+ * names its type without the theme reaching back into the kit.
+ */
+
+/** How a connector travels between its two ends. */
+export type ConnectorRoute = "curve" | "straight" | "orthogonal";
+export type KitStrokePattern = "solid" | "dashed" | "dotted" | "double" | "tapered";
+export type KitEndCap = "none" | "arrow" | "dot" | "bar";
+
+export interface ConnectorKit {
+  /** The path's shape. One strategy per name; adding one is one case. */
+  readonly route: ConnectorRoute;
+  /** Drawn at all. An edge kind a brand keeps quiet is still selectable from the inspector. */
+  readonly visible: boolean;
+  /** An explicit CSS color; absent, the kind's own hue. */
+  readonly color?: string;
+  readonly pattern?: KitStrokePattern;
+  readonly width?: number;
+  readonly cap?: KitEndCap;
+  readonly opacity?: number;
+}
+
+export interface Kit {
+  readonly connectors: {
+    /** Every edge kind, unless `byEdge` says otherwise. */
+    readonly all: ConnectorKit;
+    /** Per edge kind: color, visibility, pattern — whatever this kind wants differently. */
+    readonly byEdge: Readonly<Record<string, Partial<ConnectorKit>>>;
+  };
+  /** The words over a neighborhood: the edge's own reading. */
+  readonly captions: { readonly visible: boolean };
+  /** The fine square measure under the scene on the ground. */
+  readonly grid: { readonly visible: boolean; readonly size: number };
+  /** The isometric lattice the ground becomes from altitude. */
+  readonly lattice: { readonly visible: boolean; readonly size: number };
+  /** The kind's name astride a focused card. */
+  readonly tags: { readonly visible: boolean };
+  /**
+   * How loud a connector is when it is not the one being looked at.
+   *
+   * `rest` is what an unlit line keeps while NOTHING is lit — the quiet
+   * weight every relation in the picture carries at once. `dim` is what it
+   * keeps while something else IS lit: 0 vanishes, 1 does not recede. They
+   * are two different questions, and one number could not answer both —
+   * a resting opacity low enough to be calm made a selection's own lines
+   * barely brighter than the crowd, and one high enough to show the crowd
+   * left twenty lines shouting over the two a person had just chosen.
+   */
+  readonly emphasis: { readonly rest: number; readonly dim: number };
+  /** The glyph a broken rule leaves on what it names. */
+  readonly marks: { readonly flag: string };
+}
+
+/** A brand's say: any part of the kit, the rest as shipped. */
+export interface KitOverrides {
+  readonly connectors?: {
+    readonly all?: Partial<ConnectorKit>;
+    readonly byEdge?: Readonly<Record<string, Partial<ConnectorKit>>>;
+  };
+  readonly captions?: Partial<Kit["captions"]>;
+  readonly grid?: Partial<Kit["grid"]>;
+  readonly lattice?: Partial<Kit["lattice"]>;
+  readonly tags?: Partial<Kit["tags"]>;
+  readonly emphasis?: Partial<Kit["emphasis"]>;
+  readonly marks?: Partial<Kit["marks"]>;
+}
