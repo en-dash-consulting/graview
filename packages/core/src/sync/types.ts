@@ -46,6 +46,26 @@ export interface ResourceMapping {
     Record<string, (value: unknown, node: Record<string, unknown>) => unknown>
   >;
   readonly decode?: Readonly<Record<string, (value: unknown) => unknown>>;
+  /**
+   * THE REMOTE OWNS THESE. Inbound changes land; nothing here is ever sent,
+   * and a local act that would write a record of the kind is refused with
+   * `because` once the engine guards the store (`SyncEngine.guard`) — the
+   * sentence a person reads, so it names who does own it ("sourcevision:
+   * re-run the analysis to change the zones").
+   */
+  readonly readonly?: boolean;
+  /** Why a read-only resource is not written from here, as a person reads it. */
+  readonly because?: string;
+  /**
+   * OUR FIELD THAT HOLDS THE REMOTE'S VERSION of a record, when the graph
+   * was made from the remote (a projection, an import, a seed). A node that
+   * carries one and has no link is linked at it when the engine is made, so
+   * the first run pushes nothing it did not have to and an unchanged pull
+   * is an echo, not news.
+   */
+  readonly version?: string;
+  /** Our field that holds the remote's id, for those links. Absent: the node's own id. */
+  readonly remoteId?: string;
 }
 
 export interface SyncMapping {
@@ -115,6 +135,11 @@ export interface SyncState {
   readonly links: Readonly<Record<string, RemoteLink>>;
   /** Writes that have not reached the remote yet. */
   readonly outbox: readonly RemoteWrite[];
+  /**
+   * Conflicts waiting for somebody to choose (the `report` policy). A field
+   * held here is not sent until `resolve` says which side stands.
+   */
+  readonly conflicts?: readonly SyncConflict[];
 }
 
 export interface RemoteLink {
@@ -136,6 +161,14 @@ export const EMPTY_SYNC_STATE: SyncState = { links: {}, outbox: [] };
 export function systemAuthor(system: string): Author {
   return { kind: "system", id: system };
 }
+
+/**
+ * WHAT A CONFLICT BECOMES, decided once for the engine: `report` holds both
+ * sides and sends neither until somebody chooses (`resolve`); `theirs` takes
+ * the remote's value through the ordinary inbound act; `ours` keeps ours and
+ * sends it. Every one of them is said in the report.
+ */
+export type ConflictPolicy = "report" | "theirs" | "ours";
 
 /** One field, changed on both sides since the last time they agreed. */
 export interface SyncConflict {

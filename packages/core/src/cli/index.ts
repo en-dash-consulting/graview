@@ -14,6 +14,7 @@ import { create, CREATE_USAGE } from "./create.js";
 import { describeApp } from "./describe.js";
 import { describePlace } from "../document/describe-place.js";
 import { Store } from "../store.js";
+import { readSnapshot } from "../snapshot.js";
 import { generateAgentsMd, generateLlmsTxt } from "./docs.js";
 import { figureBrief, figureFaults, FIGURE_NAMES, FIGURES } from "../schema/figures.js";
 import { scaffoldLens, validateLensOptions, type LensScaffoldOptions } from "../scaffold/lens.js";
@@ -272,7 +273,7 @@ export async function main(argv: string[]): Promise<number> {
       if (place !== undefined) {
         // One place, as one seat sees it, over the seed it is handed (FR-89).
         const seedFile = flag(argv, "--seed");
-        const snapshot = seedFile ? JSON.parse(readFileSync(resolve(seedFile), "utf8")) : undefined;
+        const snapshot = seedFile ? readSnapshot(readFileSync(resolve(seedFile), "utf8")).snapshot : undefined;
         const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(snapshot ? { snapshot } : {}) });
         const width = Number(flag(argv, "--width") ?? "1440");
         const principal = role ? { kind: "human" as const, id: flag(argv, "--id") ?? role, roles: [role] } : { kind: "system" as const, id: "graview-describe" };

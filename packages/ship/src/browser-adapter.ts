@@ -1,4 +1,4 @@
-import type { Operation, PersistenceAdapter } from "@graview/core";
+import type { Operation, PersistenceAdapter, Principal } from "@graview/core";
 import type { GraphSnapshot } from "./snapshot.js";
 import type { StoredMeta } from "./meta.js";
 
@@ -102,6 +102,29 @@ function pageStorage(): StorageLike {
     );
   }
   return found;
+}
+
+/** Where a page keeps who its reader is: `rememberedPrincipal` reads it. */
+export const PRINCIPAL_KEY = "graview:principal";
+
+/**
+ * WHO THIS PAGE'S READER IS, as the browser remembers them: the name kept
+ * under `graview:principal`, or `fallback` ("reader") when none is kept or
+ * storage is locked away. Handed to the store (`openStore`'s
+ * `storeOptions: { principal }`, or `new Store({ principal })`), it is who
+ * every act on the page is attributed to — over a memory adapter seeded
+ * from a snapshot as much as over this one.
+ */
+export function rememberedPrincipal(
+  options: { readonly storage?: StorageLike; readonly key?: string; readonly fallback?: string; readonly roles?: readonly string[] } = {},
+): Principal {
+  let id: string | null = null;
+  try {
+    id = (options.storage ?? pageStorage()).getItem(options.key ?? PRINCIPAL_KEY);
+  } catch {
+    // Storage locked away is a reader with no name, not a page that fails.
+  }
+  return { kind: "human", id: id || (options.fallback ?? "reader"), ...(options.roles ? { roles: options.roles } : {}) };
 }
 
 /**

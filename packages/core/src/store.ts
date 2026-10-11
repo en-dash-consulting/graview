@@ -125,6 +125,13 @@ export interface StoreOptions<S extends AnySchema> {
    * wall in the same way, and an app should not have to remember.
    */
   readonly intelligence?: readonly IntelligenceProviderDeclaration[];
+  /**
+   * WHO ACTS WHEN A CHANGE NAMES NOBODY: the reader of this page, so what
+   * they do is attributed to them in the log rather than to "a person".
+   * An apply or an undo that names its author still says its own. Absent,
+   * a person with no name.
+   */
+  readonly principal?: Author | Principal;
 }
 
 export interface ApplyOptions {
@@ -416,6 +423,7 @@ export class Store<S extends AnySchema> {
   readonly intelligence: readonly IntelligenceProviderDeclaration[];
   /** What each declared agent may do, by provider name. */
   private readonly may = new Map<string, ReadonlySet<string>>();
+  private readonly by: Author | Principal;
   private readonly declaredModules: ModuleMap | undefined;
   private readonly startingModules: readonly string[] | undefined;
   /** The projection, and the log it was read from: its length and its last op. */
@@ -445,6 +453,7 @@ export class Store<S extends AnySchema> {
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
     this.policy = options.policy;
+    this.by = options.principal ?? HUMAN;
     this.intelligence = options.intelligence ?? [];
     for (const provider of options.intelligence ?? []) {
       if (provider.may) this.may.set(provider.name, new Set(provider.may));
@@ -478,25 +487,21 @@ export class Store<S extends AnySchema> {
     tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
     const horizon = options.horizon !== undefined ? { horizon: options.horizon } : {};
-    if (options.log && options.snapshot) {
-      // Hydrate: the graph as stored, the history as recorded.
-      this.log = OperationLog.from(options.log, options.epochs, horizon);
-      this.graph = Graph.from(options.schema, options.snapshot, {
-        validate: options.validate ?? true,
-      });
-    } else if (options.log) {
+    const validate = { validate: this.validate };
+    if (options.log) {
+      // Hydrate: the history as recorded, and the graph as stored — or, with none stored, folded from the history.
       this.log = OperationLog.from(options.log, options.epochs, horizon);
       const last = this.log.lastEpoch();
-      this.graph = this.log.fold(options.schema, { validate: options.validate ?? true, ...(last ? { from: last } : {}) });
+      this.graph = options.snapshot
+        ? Graph.from(options.schema, options.snapshot, validate)
+        : this.log.fold(options.schema, { ...validate, ...(last ? { from: last } : {}) });
     } else {
       this.log = OperationLog.from(
         [],
         options.epochs ?? (options.snapshot ? [{ seq: options.horizon ?? 0, base: options.snapshot }] : []),
         horizon,
       );
-      this.graph = Graph.from(options.schema, options.snapshot ?? { nodes: [], edges: [] }, {
-        validate: options.validate ?? true,
-      });
+      this.graph = Graph.from(options.schema, options.snapshot ?? { nodes: [], edges: [] }, validate);
     }
 
     /*
@@ -1112,7 +1117,7 @@ export class Store<S extends AnySchema> {
    */
   private applying(calls: readonly MutationCall[], options: ApplyOptions, context?: InvariantContext): ApplyResult<S> {
     const batch = options.batch ?? this.mintBatch("batch");
-    const author = options.author ?? HUMAN;
+    const author = options.author ?? this.by;
     const ops: Operation[] = [];
     const allPrimitives: Primitive[] = [];
     const reads = new Set<string>();
@@ -1378,7 +1383,7 @@ export class Store<S extends AnySchema> {
    */
   applyPrimitives(primitives: readonly Primitive[], options: ApplyOptions = {}): ApplyResult<S> {
     const batch = options.batch ?? this.mintBatch("batch");
-    const author = options.author ?? HUMAN;
+    const author = options.author ?? this.by;
     const before = this.violations();
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
@@ -1482,7 +1487,7 @@ export class Store<S extends AnySchema> {
   /** `undo` itself, kept apart for the same reason as `applying`. */
   private undoing(batchIds: string | readonly string[], options: ApplyOptions): ApplyResult<S> {
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
-    const author = options.author ?? HUMAN;
+    const author = options.author ?? this.by;
     /*
      * JUDGED FIRST AS THIS SEAT SEES THE LOG (FR-16, FR-02). A change it
      * may not see is not its to take back, and when one stands in the way
