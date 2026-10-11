@@ -1,5 +1,6 @@
 import { fieldWriters, labelOf, type AnySchema, type NodeOfSchema, type Store } from "@graview/core";
 import { dayOf, daysBetween, minutesOf } from "./calendar-dates.js";
+import { withNaturalTime } from "./natural-time.js";
 import { CALENDAR_REQUIRED_ROLES, type CalendarBindings, type PlacedEntry, holds } from "./calendar-options.js";
 
 
@@ -29,7 +30,7 @@ export function placeOnCalendar<S extends AnySchema>(
   bindings: CalendarBindings,
   schema?: S,
 ): PlacedEntry | null {
-  const roles = bindings[node.kind];
+  const roles = withNaturalTime(bindings[node.kind], schema?.tryDefinition(node.kind));
   if (!roles) return null;
   const record = node as Record<string, unknown>;
   const declared = schema?.tryDefinition(node.kind)?.fields.shape as Record<string, unknown> | undefined;

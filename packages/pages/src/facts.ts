@@ -83,7 +83,6 @@ export function recordFacts<S extends AnySchema>(
     const otherId = direction === "out" ? edge.to : edge.from;
     const other = store.graph.getNode(otherId);
     if (!other) continue;
-    const key = `${edge.kind}|${direction}`;
     /*
      * The caption, from the end that declared the edge — its `description`
      * read from the declaring side, its `inverse` read from the other end,
@@ -97,6 +96,13 @@ export function recordFacts<S extends AnySchema>(
     )?.[edge.kind];
     const description =
       direction === "in" ? (declaration?.inverse ?? declaration?.description) : declaration?.description;
+    /*
+     * ONE GROUP PER READING, not per relation name: a relation several kinds
+     * declare is worded by each at its own end, so a change lists "the tasks
+     * inside it" and "the changes inside it" apart, under each kind's words,
+     * and kinds that say it alike are listed together.
+     */
+    const key = `${edge.kind}|${direction}|${description ?? ""}`;
     const group =
       groups.get(key) ??
       (() => {

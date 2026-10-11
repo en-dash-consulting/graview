@@ -132,6 +132,14 @@ export const KindSpec = z.strictObject({
    * or `{ expr, label?, description? }`. Never written by an act.
    */
   computed: z.optional(z.record(z.string(), ComputedSpec).check(z.refine((c: Record<string, unknown>) => Object.keys(c).length <= 20, "a kind works out at most 20 computed fields"))),
+  /**
+   * Which field fills which role (the definition's `fieldRoles`): `when`, a
+   * record's natural time, which lists open newest first by and a timeline
+   * or calendar draws at when its lens binds no start; `who`, its author,
+   * which a glance says; and any a lens binds by name (`start`, `end`,
+   * `column`, `order`).
+   */
+  fieldRoles: z.optional(z.record(z.string(), z.string())),
   /** The name this kind had in the previous version: its records move. */
   renamedFrom: z.optional(z.string().check(z.regex(NAME))),
 });
@@ -304,6 +312,13 @@ export const DocumentSpec = z.strictObject({
       z.refine((k: Record<string, unknown>) => Object.keys(k).length > 0, "a document declares at least one kind"),
       z.refine((k: Record<string, unknown>) => Object.keys(k).length <= 40, "a document declares at most 40 kinds"),
     ),
+  /**
+   * FACTS OF THE WHOLE GRAPH: a name and a rule-language expression with no
+   * record as its subject — `"mapProposed": "every(all('area'), proposed)"`
+   * — or `{ expr, label?, description? }`. Read anywhere the language is, as
+   * `fact('mapProposed')`; worked out on demand under the language's budget.
+   */
+  computed: z.optional(z.record(z.string(), ComputedSpec)),
   acts: z.optional(z.record(name("act"), ActSpec)),
   rules: z.optional(z.record(name("rule"), RuleSpec)),
   roles: z.optional(z.array(name("role"))),

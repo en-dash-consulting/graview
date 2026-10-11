@@ -148,7 +148,9 @@ function groupsFor(
     // The edge is declared by whichever kind it leaves, wherever you are
     // reading it from.
     const owner = direction === "out" ? focus.kind : other.kind;
-    const key = `${edge.kind}:${direction}`;
+    // One group per reading: kinds that word a shared relation their own way are listed apart, under each one's words.
+    const caption = captionOf(store.schema, owner, edge.kind, direction);
+    const key = `${edge.kind}:${direction}:${caption.label}`;
     const group =
       byKey.get(key) ??
       ({
@@ -162,7 +164,7 @@ function groupsFor(
          * declaration's `inverse` when it has one, and the edge kind in plain
          * words when it does not — which says less and is at least not wrong.
          */
-        ...captionOf(store.schema, owner, edge.kind, direction),
+        ...caption,
         ids: [],
       } satisfies Group);
     if (!group.ids.includes(otherId)) group.ids.push(otherId);

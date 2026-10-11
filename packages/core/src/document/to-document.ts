@@ -119,6 +119,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       display?: { glance?: readonly string[]; page?: { fields?: readonly string[]; groups?: readonly { title: string; fields: readonly string[] }[] } };
       defaults?: Readonly<Record<string, unknown>>;
       computed?: KindSpec["computed"];
+      fieldRoles?: Readonly<Record<string, string>>;
     };
     const at = `kinds.${kind}`;
     const fields: Record<string, FieldSpec> = {};
@@ -161,6 +162,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       ...(Object.keys(edges).length > 0 ? { edges: edges as KindSpec["edges"] } : {}),
       // Computed fields are already data: an expression and its words (FR-83).
       ...(definition?.computed && Object.keys(definition.computed).length > 0 ? { computed: structuredClone(definition.computed) } : {}),
+      ...(definition?.fieldRoles ? { fieldRoles: { ...definition.fieldRoles } } : {}),
     } as KindSpec;
   }
 
@@ -210,6 +212,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     name: app.name,
     ...(app.version ? { version: app.version } : {}),
     kinds,
+    ...(schema.computed ? { computed: structuredClone(schema.computed) } : {}),
     ...(Object.keys(rules).length > 0 ? { rules } : {}),
     ...(policy?.roles ? { roles: [...policy.roles] } : {}),
     ...(policy ? { policy: { grants, ...(policy.sees ? { sees: policy.sees.map((sight) => ({ ...sight })) } : {}) } } : {}),

@@ -122,10 +122,14 @@ function skills() {
   });
 }
 
-/** The checker's source: `check.ts` and the families it asks, in `check/`. */
+/** The checker's source: `check.ts` and the families it asks, in `check/`, and the roles and facts it judges with a document's checked compile. */
 function checkerSource() {
   const dir = at("packages/core/src/cli/check");
-  return [readFileSync(at("packages/core/src/cli/check.ts"), "utf8"), ...readdirSync(dir).map((name) => readFileSync(at("packages/core/src/cli/check", name), "utf8"))].join("\n");
+  return [
+    readFileSync(at("packages/core/src/cli/check.ts"), "utf8"),
+    ...readdirSync(dir).map((name) => readFileSync(at("packages/core/src/cli/check", name), "utf8")),
+    readFileSync(at("packages/core/src/document/facts-and-roles.ts"), "utf8"),
+  ].join("\n");
 }
 
 /**

@@ -153,9 +153,9 @@ the reuse test beside it, red on purpose.
 
 `defineNode("shift", { fieldRoles: { start: "from" } })` is what everything
 that is NOT a lens reads: the graph's own responder answering "when is it",
-the generated docs. A lens reads `bindings` and only `bindings`. Neither
-overrides the other, because neither is looking at the other — so bind the
-lens, and declare `fieldRoles` because the rest of the app wants them too.
+the generated docs. A lens reads `bindings`, but a timeline or calendar
+binding no `start` draws at the kind's natural time, `fieldRoles.when`
+(also in a document). Bind the lens; declare `fieldRoles` for the rest.
 
 `graview check` NOTES it when the two disagree about one role. Often that is
 a mistake; sometimes it is right, because a role name belongs to a lens and

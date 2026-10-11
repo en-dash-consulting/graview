@@ -33,14 +33,15 @@ agent tool that walks the graph.
      edges: {
        // One edge, two readings: the fixture's page says who is in the
        // team; the player's page says which fixtures they are picked for.
+       // Kinds sharing an edge name word their own end.
        "picked-for": {
          to: ["player"],
          description: "who is in the team",
          inverse: "the fixtures they are picked for",
        },
      },
-     // Lets a lens ask for "the start time" without knowing your field names.
-     fieldRoles: { start: "kickOff" },
+     // Its time (`who`: its author): lists, glances, timelines read it.
+     fieldRoles: { when: "kickOff" },
    });
    ```
 
@@ -180,7 +181,8 @@ from the record alone (no graph is in hand). Templates say counts in words: `{n 
 `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C").
 The check refuses a cycle (`computed-cycle`), a name that is already a field
 (`computed-clash`) and work that grows with the cube of the graph
-(`computed-cost`, a warning at the square).
+(`computed-cost`, a warning at the square). A document's top-level
+`computed` holds facts of the whole graph, read as `fact('name')`.
 
 ## Then find out whether it worked
 
@@ -195,11 +197,9 @@ Report **the actual output**, including warnings. What it catches here:
 
 - `edge-target-undeclared` — an edge to a kind nobody declared
 - `edge-without-inverse` — a relation with words for one of its two readings
-- `edge-name-shared` — one edge name declared on two kinds in two sets of
-  words (`by` on a song and on an album); every surface treats a name as ONE
-  relation, so name each its own
 - `act-without-far-end-reading` — an act offered on an end it has no words for
-- `field-role-missing-field` — a role pointing at a field that is not there
+- `field-role-missing-field`, `field-role-ill-typed` — a role naming no field;
+  a `when` no date, a `who` no name
 - `required-invariant-unregistered` — `requiresInvariant` naming no rule
 - `mutation-untitled` / `mutation-undescribed` — a verb nobody can read
 

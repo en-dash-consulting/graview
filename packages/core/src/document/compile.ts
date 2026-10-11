@@ -1,7 +1,7 @@
 import { brandOf } from "./brand.js";
 import { ActRefusal } from "../refused.js";
 import { analyzeExpr } from "./expr/analyze.js";
-import type { KindShape } from "./expr/evaluate.js";
+import { GRAPH_FACTS, type KindShape } from "./expr/evaluate.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
 import { error, hasErrors, warning, type Finding } from "./findings.js";
 import {
@@ -18,7 +18,7 @@ import { parseTemplate, TemplateError } from "./template-parse.js";
 import { upgradeDocument } from "./upgrade.js";
 import { homeOf, validateViews, viewsOf } from "./views.js";
 import { farEnd } from "./far-end.js";
-import { computedOf, parsedComputed, validateComputed, workedOutAlone } from "./computed.js";
+import { parsedComputed, workedOutAlone } from "./computed.js";
 import { pageFieldFindings } from "./page-fields.js";
 import {
   build,
@@ -148,6 +148,8 @@ export function kindShapes(document: GraviewDocument): Map<string, KindShape> {
       ...(computed ? { computed } : {}),
     });
   }
+  const facts = parsedComputed(document);
+  if (facts) shapes.set(GRAPH_FACTS, { computed: facts } as KindShape);
   return shapes;
 }
 
@@ -352,12 +354,7 @@ function validate(document: GraviewDocument): Finding[] {
     });
   }
   findings.push(...validateViews(document));
-  findings.push(
-    ...validateComputed(
-      new Map(Object.entries(document.kinds).map(([kind, spec]) => [kind, { fields: new Set(Object.keys(spec.fields)), edges: new Set(Object.keys(spec.edges ?? {})), computed: computedOf(spec) }])),
-      (kind, name) => `kinds.${kind}.computed.${name}`,
-    ),
-  );
+  // A kind's computed fields are judged with the checker (`computedFindings`): one a page cannot work out is refused where it is read, not built wrong.
   return findings;
 }
 
@@ -562,6 +559,7 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
     document,
     findings,
     kinds,
+    ...(document.computed ? { facts: [...(parsedComputed(document) ?? [])] } : {}),
     edges: [...edges].map(([name, { from, to, cardinality }]): readonly [string, EdgePlan] => [name, { from, to, cardinality }]),
     acts,
     rules,

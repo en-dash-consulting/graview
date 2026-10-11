@@ -85,7 +85,8 @@ export function bandAggregateWords(id: string, schema: AnySchema): string | null
     first === "raised"
       ? null
       : (() => {
-          const declared = schema.definitions.map((one) => one.edges[first]).find(Boolean);
+          // Read in the band's own kind's words where it declares the relation: kinds may word a shared one their own way.
+          const declared = definition?.edges[first] ?? schema.definitions.map((one) => one.edges[first]).find(Boolean);
           const said = second === "in" ? declared?.inverse : declared?.description;
           return (said ?? humanizeField(first)).toLowerCase();
         })();
