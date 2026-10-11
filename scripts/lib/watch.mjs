@@ -140,9 +140,62 @@ function watchInPage() {
       .pop();
     report("breaks-at-width", `the page scrolls sideways by ${over}px at ${root.clientWidth} wide (text ${getComputedStyle(root).fontSize})${widest ? `, reached by ${describe(widest)}` : ""}`, `${location.pathname}|${root.clientWidth}|${getComputedStyle(root).fontSize}`);
   };
+  /*
+   * A TARGET A FINGER CAN HIT (WCAG 2.5.8). The class's table named a
+   * target-size rule as its check from the first walk to the eighth, and
+   * the watch had none: a district's "open" measured 22 pixels at a phone's
+   * width, beside the next district's name. A control under 24 pixels either
+   * way is a problem when a 24-pixel circle at its center reaches another
+   * control — the standard's own spacing exception — unless it is a link
+   * inside a sentence or the browser's own box.
+   */
+  const CONTROL = "a[href],button,select,input:not([type=hidden]):not([type=checkbox]):not([type=radio]),[role=button],[role=link],[role=menuitem],[role=tab],[role=option]";
+  const small = () => {
+    const boxes = [];
+    for (const el of document.querySelectorAll(CONTROL)) {
+      if (el.closest("[hidden],[aria-hidden='true'],[inert]") || !visible(el)) continue;
+      const style = getComputedStyle(el);
+      if (style.pointerEvents === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) continue;
+      const box = el.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) continue;
+      /*
+       * A record a lens draws at a size its data decides — fifteen minutes
+       * on a week's timeline, two shifts sharing a day — is the standard's
+       * "essential" exception: drawn larger, it would say something untrue.
+       */
+      if (el.matches("[data-graview-pick]") && el.closest('[data-graview-view^="aggregate:"]')) continue;
+      // A link that is a word in a sentence is the standard's own exception.
+      if (el.tagName === "A" && style.display === "inline" && (el.parentElement?.textContent ?? "").trim().length > (el.textContent ?? "").trim().length + 1) continue;
+      /*
+       * Its size as laid out, not as the scene happens to be zoomed: a
+       * record in the picture is drawn smaller at altitude and larger
+       * nearer, and that is the reader's zoom, which no control decides. A
+       * control is held to the size it was given.
+       */
+      const own = el instanceof HTMLElement && el.offsetWidth > 0 ? { width: el.offsetWidth, height: el.offsetHeight } : box;
+      boxes.push({ el, box, own });
+    }
+    const said = (el) => (el.getAttribute("aria-label") ?? el.textContent ?? "").trim();
+    for (const { el, box, own } of boxes) {
+      if (own.width >= 23.5 && own.height >= 23.5) continue;
+      // The standard's "equivalent": the same thing, by the same name, is a full-size control elsewhere on the page.
+      if (boxes.some(({ el: other, own: theirs }) => other !== el && theirs.width >= 23.5 && theirs.height >= 23.5 && said(other) && said(other) === said(el))) continue;
+      const x = box.left + box.width / 2;
+      const y = box.top + box.height / 2;
+      // Its 24-pixel circle meets another control — or, when that one is small too, that one's circle.
+      const crowded = boxes.find(({ el: other, box: near, own: theirs }) => {
+        if (other === el || other.contains(el) || el.contains(other)) return false;
+        if (theirs.width < 23.5 || theirs.height < 23.5) return (near.left + near.width / 2 - x) ** 2 + (near.top + near.height / 2 - y) ** 2 < 576;
+        return Math.max(near.left - x, 0, x - near.right) ** 2 + Math.max(near.top - y, 0, y - near.bottom) ** 2 < 144;
+      });
+      if (!crowded) continue;
+      report("target-too-small", `${describe(el)} is ${Math.round(own.width)}×${Math.round(own.height)} pixels at ${document.documentElement.clientWidth} wide, within 12 pixels of ${describe(crowded.el)}`, `${location.pathname}|${describe(el)}|${document.documentElement.clientWidth}`);
+    }
+  };
   const scan = () => {
     queued = false;
     sideways();
+    small();
     if ((!pattern && unsaid.size === 0 && !unseen) || !document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const work = (deadline) => {

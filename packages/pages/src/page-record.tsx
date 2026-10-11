@@ -134,7 +134,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   <Link to={pathOfPlace(context, place)} style={link}>
                     {place.title}
                   </Link>{" "}
-                  <SceneLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet }} title={`${place.title}, in the scene`}>
+                  <SceneLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet, display: "inline-block", minWidth: 24, textAlign: "center" }} title={`${place.title}, in the scene`}>
                     ↗
                   </SceneLink>
                 </span>

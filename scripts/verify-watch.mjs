@@ -98,6 +98,21 @@ await settle();
 checks.aPageThatScrollsSidewaysIsCaught = takeViolations().some((v) => v.rule === "breaks-at-width");
 await page.setViewportSize({ width: 1280, height: 800 });
 
+/*
+ * target-too-small: two 22-pixel controls side by side — the districts'
+ * "open" at a phone's width, the eighth walk — and none where the same small
+ * control stands alone, or is a link in a sentence.
+ */
+await show(`<main><span><button style="all:unset;width:22px;height:22px;display:inline-block">open</button><button style="all:unset;width:22px;height:22px;display:inline-block">open</button></span></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+const crowded = takeViolations().filter((v) => v.rule === "target-too-small");
+await show(`<main><button style="all:unset;width:22px;height:22px;display:inline-block">open</button><p style="margin-top:40px">Read <a href="#more">more</a> about it.</p></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+const alone = takeViolations().filter((v) => v.rule === "target-too-small");
+checks.aTargetTooSmallIsCaught = crowded.length > 0 && alone.length === 0;
+
 /* offered-then-refused: the store refused a press. */
 await show(`<main><button>Close the deal</button></main>`);
 await page.evaluate(() => window.__graviewWatch.refused({ mutation: "close-deal", kind: "deal", message: "Not permitted", author: "user-priya" }));
