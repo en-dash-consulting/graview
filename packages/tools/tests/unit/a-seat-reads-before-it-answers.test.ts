@@ -193,6 +193,12 @@ describe("a turn over the Messages API", () => {
     expect(step.mock.calls[2]![0].tool_choice).toEqual({ type: "none" });
   });
 
+  it("sends no system at all when the turn has none, so a route that forwards it as it is is not refused an empty one", async () => {
+    const step = vi.fn(async (_request: MessagesStepRequest) => ({ content: [{ type: "text", text: "Hello." }], stop_reason: "end_turn" }));
+    await turnThroughMessages(step)({ system: "", messages: [{ role: "user", content: "hi" }], tools: [], call: async () => null });
+    expect(step.mock.calls[0]![0]).not.toHaveProperty("system");
+  });
+
   it("is what a dev server's door lends: each step posted through the door, the reads run in the page", async () => {
     const posted: Record<string, unknown>[] = [];
     const door = vi.fn(async (_path: string, init?: { method?: string; body?: string }) => {
