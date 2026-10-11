@@ -1,7 +1,7 @@
 import { defineInvariant } from "../invariants/engine.js";
 import type { InvariantDefinition, Violation } from "../invariants/types.js";
 import type { AnySchema } from "../schema/schema.js";
-import type { SyncConflict } from "./types.js";
+import type { FieldConflict, SyncConflict } from "./types.js";
 
 /** Where an app threads the run's conflicts into invariant evaluation. */
 export const SYNC_CONFLICTS = "syncConflicts";
@@ -17,7 +17,7 @@ export interface SyncConflictOptions {
    */
   readonly mutation: string;
   /** Builds that mutation's arguments for one conflict. */
-  argsFor(conflict: SyncConflict): Record<string, unknown>;
+  argsFor(conflict: FieldConflict): Record<string, unknown>;
 }
 
 /**
@@ -52,7 +52,8 @@ export function syncConflictInvariant<S extends AnySchema>(
         const node = graph.getNode(conflict.localId) as
           | ({ id: string } & Record<string, unknown>)
           | undefined;
-        if (!node) continue;
+        // A record deleted here has no node to name; the report holds it, and `resolve` chooses.
+        if (!node || conflict.deleted) continue;
         const name = typeof node["label"] === "string" ? node["label"] : node.id;
         violations.push({
           invariant: `sync-conflict:${options.system}`,
