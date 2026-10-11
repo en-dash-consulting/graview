@@ -26,7 +26,7 @@ import {
 import { refTo } from "../mutations/node-ref.js";
 import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
-import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape, type Value } from "./expr/evaluate.js";
+import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
@@ -136,6 +136,8 @@ export interface CompiledApp {
   /** What compiling it said — notes and warnings, never an error. */
   readonly findings: readonly Finding[];
   readonly kinds: Readonly<Record<string, KindPlan>>;
+  /** The whole graph's facts (the document's top-level `computed`), parsed, in declaration order. */
+  readonly facts?: readonly (readonly [string, Expr])[];
   readonly edges: readonly (readonly [string, EdgePlan])[];
   readonly acts: Readonly<Record<string, ActPlan>>;
   readonly rules: Readonly<Record<string, RulePlan>>;
@@ -232,6 +234,11 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
   return optional ? z.optional(schema) : schema;
 }
 
+/** A call naming a record that is not there: the call as sent is wrong (`invalid`), not the act. */
+const noRecord = (id: string): never => {
+  throw new ActRefusal(`there is no record "${id}"`, "invalid");
+};
+
 const argSchema = (arg: ArgPlan): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
 
 /*
@@ -309,9 +316,11 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     shapes.set(kind, {
       fields: new Set(Object.keys(spec.fields)),
       edges: new Map(Object.entries(spec.edges ?? {}).map(([name, e]) => [name, e.cardinality ?? "many"])),
-      ...(computed ? { computed: new Map(computed.map(([name, expr]) => [name, expr])) } : {}),
+      ...(computed ? { computed: new Map(computed) } : {}),
     });
   }
+  // No record is of the whole graph's shape: it is its facts alone.
+  if (plan.facts) shapes.set(GRAPH_FACTS, { computed: new Map(plan.facts) } as Partial<KindShape> as KindShape);
   // What `{x | money}` says in a label, a sentence or a refusal: the app's currency and locale (FR-100).
   const money = moneyOf(document);
 
@@ -328,28 +337,21 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     ]);
     // Defaults stay out of the zod schema (hydration must not invent values) and ride beside it, for a repair to read.
     const defaults = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.default !== undefined).map(([n, f]) => [n, f.default]));
-    const edgeDecls = Object.fromEntries(
-      Object.entries(spec.edges ?? {}).map(([n, e]) => [
-        n,
-        {
-          to: e.to,
-          ...(e.cardinality ? { cardinality: e.cardinality } : {}),
-          ...(e.description ? { description: e.description } : {}),
-          ...(e.inverse ? { inverse: e.inverse } : {}),
-          ...(e.appendOnly ? { appendOnly: e.appendOnly } : {}),
-        },
-      ]),
-    );
+    // A relation as the kind declares it, less the name it had in the version before, which is the migration's.
+    const edgeDecls = Object.fromEntries(Object.entries(spec.edges ?? {}).map(([n, { renamedFrom: _, ...e }]) => [n, e]));
+    // What the definition says as the document says it, where it is said.
+    const said = <K extends "plural" | "noun" | "description" | "figure" | "fieldRoles" | "lifecycle">(key: K) => (spec[key] ? { [key]: spec[key] } : {});
     return defineNode(kind, {
       fields: z.object(shape) as never,
       edges: edgeDecls,
-      ...(spec.plural ? { plural: spec.plural } : {}),
-      ...(spec.noun ? { noun: spec.noun } : {}),
-      ...(spec.description ? { description: spec.description } : {}),
+      ...said("plural"),
+      ...said("noun"),
+      ...said("description"),
       ...(labelParts ? { label: (node: { id: string }) => renderTemplate(labelParts, { node: node as AnyGraphNode, kinds: shapes, today: today(), money }) || node.id } : {}),
       ...(describeParts ? { describe: (node: { id: string }) => renderTemplate(describeParts, { node: node as AnyGraphNode, kinds: shapes, today: today(), money }) } : {}),
-      ...(spec.lifecycle ? { lifecycle: { field: spec.lifecycle.field, retired: spec.lifecycle.retired } } : {}),
-      ...(spec.figure ? { figure: spec.figure } : {}),
+      ...said("lifecycle"),
+      ...said("figure"),
+      ...said("fieldRoles"),
       ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
       ...(Object.keys(labels).length > 0 || spec.glance || spec.page
         ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
@@ -357,7 +359,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
     } as never);
   });
-  const schema = createSchema(definitions as never);
+  const schema = createSchema(definitions as never, document.computed);
 
   function labelFor(node: AnyGraphNode): string {
     const definition = (schema as unknown as { tryDefinition(kind: string): { label?: (n: unknown) => string } | undefined }).tryDefinition(node.kind);
@@ -400,7 +402,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           const graph = context.graph as unknown as GraphReader;
           const subjectId = typeof input[SUBJECT_ARG] === "string" ? (input[SUBJECT_ARG] as string) : undefined;
           const subject = subjectId ? graph.getNode(subjectId) : undefined;
-          if (subjectId && !subject) throw new ActRefusal(`there is no record "${subjectId}"`, "invalid");
+          if (subjectId && !subject) noRecord(subjectId);
           if (subject && subjectKinds.length > 0 && !subjectKinds.includes(subject.kind)) throw new ActRefusal(`"${title}" acts on ${subjectKinds.join(" or ")}, not on ${withArticle(subject.kind)}`, "invalid");
           const bindings: Record<string, Value> = {};
           for (const [k, v] of Object.entries(input)) if (v !== undefined) bindings[k] = v as Value;
@@ -417,6 +419,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             }
           }
           const made = new Map<string, string>();
+          // A record is there when the graph has it or this act has just made it.
+          const there = (id: string) => graph.has(id) || [...made.values()].includes(id);
           /*
            * A LINK IS SEVERED ONCE (FR-156). Every effect reads the graph as
            * it stood before the act, so `replaces` and a cardinality-one
@@ -464,8 +468,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               const kind = "connect" in effect ? effect.connect : effect.sever;
               const from = String(resolve(effect.from, undefined) ?? "");
               const to = String(resolve(effect.to, undefined) ?? "");
-              if (!graph.has(from) && ![...made.values()].includes(from)) throw new ActRefusal(`there is no record "${from}"`, "invalid");
-              if (!graph.has(to) && ![...made.values()].includes(to)) throw new ActRefusal(`there is no record "${to}"`, "invalid");
+              if (!there(from)) noRecord(from);
+              if (!there(to)) noRecord(to);
               if ("connect" in effect) {
                 if (edges.get(kind)?.cardinality === "one") for (const existing of graph.out(from, kind)) if (existing.id !== to) sever({ kind, from, to: existing.id });
                 if (!graph.out(from, kind).some((n) => n.id === to)) context.addEdge({ kind, from, to });
@@ -475,7 +479,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             } else if ("set" in effect) {
               const targetId = String(resolve(effect.target ?? "$subject", undefined) ?? "");
               const target = graph.getNode(targetId);
-              if (!target && ![...made.values()].includes(targetId)) throw new ActRefusal(`there is no record "${targetId}"`, "invalid");
+              if (!target && !there(targetId)) noRecord(targetId);
               const patch: Record<string, unknown> = {};
               for (const [field, value] of Object.entries(effect.set)) {
                 const v = resolve(value, target);
@@ -484,7 +488,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
               if (Object.keys(patch).length > 0) context.patchNode(targetId, patch);
             } else if ("remove" in effect) {
               const id = String(resolve(effect.remove, undefined) ?? "");
-              if (!graph.has(id)) throw new ActRefusal(`there is no record "${id}"`, "invalid");
+              if (!graph.has(id)) noRecord(id);
               context.removeNode(id);
             } else if ("replace" in effect && subject) {
               // The subject's links of each relation, at its own end, severed — all but the one being made (FR-115).

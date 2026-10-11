@@ -174,12 +174,14 @@ type RoleNames<D> = Get<D, "roles"> extends readonly (infer R)[] ? R & string : 
  */
 type Named<Given, Declared> = [Given] extends [Declared] ? unknown : { readonly "is not declared; the document declares": Declared };
 
-/** Every key the format does not have, refused: `{ "fieldRoles": … }` is a compile error, not a run-time one. */
+/** Every key the format does not have, refused: `{ "roles": … }` on a kind is a compile error, not a run-time one. */
 type NoOther<T, Shape> = { readonly [P in Exclude<keyof T, keyof Shape>]: { readonly "is not a key the Graview document format has here": P } };
 
 type CheckedKind<D, K extends string, S = KindOf<D, K>> = NoOther<S, z.input<typeof KindSpec>> & {
   readonly fields: { readonly [F in Keys<Get<S, "fields">>]: NoOther<Get<Get<S, "fields">, F>, z.input<typeof FieldSpec>> };
   readonly glance?: readonly (FieldNames<D, K> | ComputedNames<D, K>)[];
+  /** Which field fills each role: a field the kind has (or its `label`). */
+  readonly fieldRoles?: { readonly [R in Keys<Get<S, "fieldRoles">>]: Named<Get<Get<S, "fieldRoles">, R>, FieldNames<D, K> | "label"> };
   readonly lifecycle?: { readonly field: Named<Get<Get<S, "lifecycle">, "field">, FieldNames<D, K>> };
   readonly page?: {
     readonly fields?: readonly (FieldNames<D, K> | ComputedNames<D, K>)[];

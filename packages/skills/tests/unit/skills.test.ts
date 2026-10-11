@@ -12,6 +12,8 @@ const checkSource = [
   ...readdirSync(checkDir).map((name) => readFileSync(resolve(checkDir, name), "utf8")),
   // What a declared lens and the arrangement are found wanting by (FR-79, FR-80): decided in one place, reported by the check.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/places.ts"), "utf8"),
+  // What a kind's field roles are found wanting by: decided in one place, for the check and a document's checked compile alike.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/facts-and-roles.ts"), "utf8"),
 ].join("\n");
 
 /**

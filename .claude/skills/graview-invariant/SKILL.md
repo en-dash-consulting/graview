@@ -98,7 +98,11 @@ with `-` — LifeLogics' coverage is one figure,
 `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step
 read from what the seat may see. (Inside a template's braces, a `|` within
 brackets joins; the last bar outside them is the formatter's.) A kind's
-`computed` fields read like stored ones. Every evaluation
+`computed` fields read like stored ones, and `fact('name')` reads a fact of
+the whole graph — a document's top-level `computed`, like `"mapProposed":
+"every(all('area'), proposed)"` — so a rule over the graph, a block and a
+face's own screen say it once (`factValues` from `@graview/core/blocks`;
+`describe_place` on the home lists them). Every evaluation
 has a step budget: a rule that reads too much is `over-budget`, never a hang.
 
 The same language works out what a document's act sets, so a repair can be

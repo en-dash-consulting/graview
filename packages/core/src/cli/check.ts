@@ -31,7 +31,6 @@ import {
   checkPolicy,
   checkProviders,
   checkReadings,
-  checkEdgeNamesAgree,
   checkRoutes,
   checkSettings,
   checkShippedLenses,
@@ -103,7 +102,6 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkAccents(ctx);
   checkModules(ctx);
   checkReadings(ctx);
-  checkEdgeNamesAgree(ctx);
   checkActsFromEnds(ctx, writtenByAModel);
   checkUnmakeable(ctx);
   checkEditableFields(ctx);

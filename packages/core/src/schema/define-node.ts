@@ -371,7 +371,9 @@ export function readableFields(
    * a record's page, what its page chose (`display.page`); then the fields
    * as the kind declares them, its computed ones after.
    */
-  const chosen = options.glance ? (display?.glance ?? []) : pageOrder(display?.page);
+  // Unchosen, a glance leads with who made the record and when, where the kind's roles say (`fieldRoles.who`, `.when`).
+  const roles = definition?.fieldRoles;
+  const chosen = options.glance ? (display?.glance ?? [roles?.["who"], roles?.["when"]].filter((key): key is string => !!key)) : pageOrder(display?.page);
   const keys = [...new Set([...chosen, ...declaredOrder(definition), ...Object.keys(node)])].filter((key) => Object.hasOwn(node, key));
   const entries = keys.map((key) => [key, node[key]] as const);
   for (const [key, value] of entries) {

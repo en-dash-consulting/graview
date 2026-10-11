@@ -12,7 +12,7 @@ import { isGraviewTemplate } from "../../src/document/graview-template.js";
  * `DocumentSpec` at build time (`@graview/core/document.schema.json`), so an
  * editor that reads a document's `$schema` says what `graview check` would:
  * every document the compiler reads validates, and a key the compiler
- * refuses — n-dx's `fieldRoles` among them — fails both.
+ * refuses — a kind's `roles`, which are its `fieldRoles`, among them — fails both.
  */
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const version = (JSON.parse(readFileSync(join(repo, "packages/core/package.json"), "utf8")) as { version: string }).version;
@@ -41,10 +41,18 @@ describe("the document's JSON Schema", () => {
     for (const { file, document } of read) expect(schemaReads(document), `${file}: ${JSON.stringify(validate.errors?.slice(0, 3))}`).toBe(true);
   });
 
-  it("refuses an unknown key wherever the compiler does — n-dx's fieldRoles on a kind, and one on a field, a relation, an act, a rule and the document", () => {
+  it("reads a document's facts of the whole graph and a kind's field roles, as the compiler does", () => {
+    const base = clone(documents.find(({ file }) => file.endsWith("/tasks.gdd.json"))!.document) as any;
+    base.computed = { open: { expr: "count(all('task'))", label: "Open" }, any: "count(all('task')) > 0" };
+    base.kinds.task.fieldRoles = { who: "label" };
+    expect(compilerReads(base)).toBe(true);
+    expect(schemaReads(base), JSON.stringify(validate.errors?.slice(0, 3))).toBe(true);
+  });
+
+  it("refuses an unknown key wherever the compiler does — a kind's roles (its fieldRoles are the key), and one on a field, a relation, an act, a rule and the document", () => {
     const base = documents.find(({ file }) => file.endsWith("/tasks.gdd.json"))!.document;
     const unknown: [string, (d: any) => void][] = [
-      ["a kind", (d) => (d.kinds.task.fieldRoles = { title: "label" })],
+      ["a kind", (d) => (d.kinds.task.roles = { when: "label" })],
       ["a field", (d) => (d.kinds.task.fields.label.choices = ["a"])],
       ["a relation", (d) => (d.kinds.task.edges["assigned-to"].target = "person")],
       ["an act", (d) => (d.acts.assign.connect = "assigned-to")],

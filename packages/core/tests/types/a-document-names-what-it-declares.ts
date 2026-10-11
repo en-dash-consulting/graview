@@ -19,6 +19,7 @@ export const tasks = defineDocument({
         points: { type: "integer" },
       },
       glance: ["status", "points"],
+      fieldRoles: { who: "label" },
       lifecycle: { field: "status", retired: ["done"] },
       edges: { assignedTo: { to: ["person"], cardinality: "one" } },
     },
@@ -28,6 +29,7 @@ export const tasks = defineDocument({
     assign: { on: "task", connects: "assignedTo" },
     "add-task": { creates: "task", writes: ["label"] },
   },
+  computed: { open: "count(all('task') where status != 'done')" },
   rules: { "a-task-has-points": { over: "task", require: "points != null", repairs: [{ act: "edit-task" }] } },
   roles: ["owner"],
   policy: { grants: [{ roles: ["owner"], mutations: "*" }] },
@@ -43,8 +45,8 @@ defineDocument({
   kinds: {
     task: {
       fields: { label: { type: "string" } },
-      // @ts-expect-error — `fieldRoles` is not a key of a kind (n-dx's, refused at run time before this).
-      fieldRoles: { title: "label" },
+      // @ts-expect-error — `roles` is not a key of a kind: the fields that fill its roles are its `fieldRoles`.
+      roles: { when: "label" },
     },
   },
 });
@@ -58,6 +60,8 @@ defineDocument({
       fields: { label: { type: "string" } },
       // @ts-expect-error — a glance says a field the kind has.
       glance: ["title"],
+      // @ts-expect-error — a role names a field the kind has.
+      fieldRoles: { when: "dueOn" },
       // @ts-expect-error — an edge reaches a kind the document declares.
       edges: { assignedTo: { to: ["persn"] } },
     },

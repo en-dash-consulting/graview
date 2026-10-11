@@ -238,7 +238,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
       ) : null}
 
       {(whole ? [] : links).map((group) => (
-        <section key={`${group.edgeKind}|${group.direction}`} style={{ ...rule, display: "grid", gap: 10 }}>
+        <section key={`${group.edgeKind}|${group.direction}|${group.description ?? ""}`} style={{ ...rule, display: "grid", gap: 10 }}>
           {/*
             * THE EYEBROW SAYS WHAT IS LISTED, NOT WHICH WAY THE EDGE WAS
             * DECLARED.

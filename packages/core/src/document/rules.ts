@@ -5,7 +5,7 @@
  */
 import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, type GraphReader, type InvariantDefinition, type Violation } from "../index.js";
 
-import { evaluateExpr, ExprBudgetError, ExprEvalError, type KindShape } from "./expr/evaluate.js";
+import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape } from "./expr/evaluate.js";
 import { parseExpr } from "./expr/parse.js";
 import { renderTemplate } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
@@ -30,6 +30,9 @@ export function shapesOfSchema(schema: AnySchema): Map<string, KindShape> {
       ...(computed ? { computed } : {}),
     });
   }
+  // And the whole graph's facts, which `fact('<name>')` reads: no record is of this shape.
+  const facts = parsedComputed(schema);
+  if (facts) shapes.set(GRAPH_FACTS, { computed: facts } as KindShape);
   return shapes;
 }
 

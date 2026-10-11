@@ -21,6 +21,7 @@ import {
   titleOf,
 } from "./calendar-options.js";
 import { actThatMoves } from "./calendar-placing.js";
+import { withNaturalTime } from "./natural-time.js";
 import { entriesOn, placeOnCalendar } from "./calendar-placing.js";
 import { type CalendarCell, finerThan, spanOf } from "./calendar-spans.js";
 
@@ -210,7 +211,7 @@ function CalendarView<S extends AnySchema>({
   const moveTo = (id: string, cell: CalendarCell, grain: CalendarGrain) => {
     const node = store.graph.getNode(id);
     if (!node) return;
-    const roles = options.bindings[node.kind as string];
+    const roles = withNaturalTime(options.bindings[node.kind as string], store.schema.tryDefinition(node.kind as string));
     if (!roles) return;
     const act = actThatMoves(store, node.kind as string, roles.start);
     if (!act) {

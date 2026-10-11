@@ -1311,6 +1311,12 @@ class Editor {
       spec.glance = spec.glance.map((name: string) => (name === field ? to : name));
       touched.push(`${kind}'s glance`);
     }
+    // A role it filled, it fills under its new name.
+    for (const [role, named] of Object.entries((spec.fieldRoles ?? {}) as Record<string, string>)) {
+      if (named !== field) continue;
+      spec.fieldRoles[role] = to;
+      touched.push(`${kind}'s ${role}`);
+    }
     if (pageNames(spec.page, field)) {
       spec.page = renamedOnPage(spec.page, field, to);
       touched.push(`${kind}'s page`);
@@ -1415,6 +1421,13 @@ class Editor {
         gone.push(`${kind}'s glance`);
       }
     }
+    // A role it filled is unsaid: nothing else is that kind's time or author.
+    for (const [role, named] of Object.entries((spec.fieldRoles ?? {}) as Record<string, string>)) {
+      if (named !== field) continue;
+      delete spec.fieldRoles[role];
+      gone.push(`${kind}'s ${role}`);
+    }
+    if (spec.fieldRoles && Object.keys(spec.fieldRoles).length === 0) delete spec.fieldRoles;
     // Its page shows the fields that are left; one that showed only this one goes back to the declared order.
     if (pageNames(spec.page, field)) {
       const page = withoutOnPage(spec.page, field);
@@ -1589,6 +1602,14 @@ class Editor {
         spec.computed[name] = typeof c === "string" ? next : { ...c, expr: next };
         touched.push(`${kind}'s ${name}`);
       }
+    }
+    // The whole graph's facts: read from no one record, renamed in the tree.
+    for (const [name, c] of Object.entries(doc.computed ?? {}) as [string, Doc][]) {
+      const was = typeof c === "string" ? c : c.expr;
+      const next = exprAt(was, new Set())!;
+      if (next === was) continue;
+      doc.computed[name] = typeof c === "string" ? next : { ...c, expr: next };
+      touched.push(`the app's ${name}`);
     }
 
     // Acts: what they act on and make, the fields they write, guards, refusals, computed values.
@@ -1769,6 +1790,13 @@ class Editor {
         if (exprMentions(doc, typeof c === "string" ? c : c.expr, new Set([kind]), r)) gone.push(...this.dropComputed(kind, name));
       }
     }
+    // A fact of the whole graph worked out from it cannot be worked out, and goes.
+    for (const [name, c] of Object.entries(doc.computed ?? {}) as [string, Doc][]) {
+      if (!exprMentions(doc, typeof c === "string" ? c : c.expr, new Set(), r)) continue;
+      delete doc.computed[name];
+      gone.push(`the app's ${name}`);
+    }
+    if (doc.computed && Object.keys(doc.computed).length === 0) delete doc.computed;
     for (const [name, act] of Object.entries(doc.acts ?? {}) as [string, Doc][]) {
       const on = subjectKinds(act);
       let uses = exprMentions(doc, act.allowedWhen, on, r) || templateMentions(doc, act.refusal, on, r);

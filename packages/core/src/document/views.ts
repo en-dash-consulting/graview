@@ -357,7 +357,15 @@ function listedKinds(expr: Expr, scope: Scope): readonly string[] | undefined {
         if (e.fn === "out") return word !== undefined && scope.kind !== null ? targetsFrom([scope.kind], word) : undefined;
         if (e.fn === "in") {
           const relation = walked ?? word;
-          const sources = relation !== undefined ? scope.vocabulary.sources(relation) : [];
+          // The kinds whose relation reaches where the walk starts: in('under') from a change, the kinds that declare it to a change.
+          const from = walked !== undefined ? visit(first!) : scope.kind !== null ? [scope.kind] : undefined;
+          const sources =
+            relation !== undefined
+              ? scope.vocabulary.sources(relation).filter((kind) => {
+                  const to = scope.vocabulary.namesOf(kind)?.targets?.(relation);
+                  return !from || to === "*" || from.some((one) => to?.includes(one));
+                })
+              : [];
           return sources.length > 0 ? sources : undefined;
         }
         if ((e.fn === "sort" || e.fn === "first") && first) return visit(first);

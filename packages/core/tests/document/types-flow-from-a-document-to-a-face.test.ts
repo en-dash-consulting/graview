@@ -123,9 +123,9 @@ describe("graview types", () => {
       expect(readFileSync(out, "utf8")).toBe(documentTypes(tasks, join(here, "fixtures/tasks.gdd.json").slice(process.cwd().length + 1)));
       expect(String(write.mock.calls.at(-1)?.[0])).toMatch(/wrote .*document\.d\.ts — 2 kinds and 1 relation/);
       const broken = join(scratch, "broken.json");
-      writeFileSync(broken, JSON.stringify(renamed((d) => (d.kinds.task.fieldRoles = {}))));
+      writeFileSync(broken, JSON.stringify(renamed((d) => (d.kinds.task.roles = {}))));
       expect(await main(["types", broken])).toBe(1);
-      expect(String(complain.mock.calls.at(-1)?.[0])).toContain('"fieldRoles" is not part of a Graview document here');
+      expect(String(complain.mock.calls.at(-1)?.[0])).toContain('"roles" is not part of a Graview document here');
     } finally {
       write.mockRestore();
       complain.mockRestore();

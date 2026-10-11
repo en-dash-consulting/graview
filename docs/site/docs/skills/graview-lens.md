@@ -58,7 +58,7 @@ Start it with the scaffolder — `graview lens grounds-map --roles regions,marke
 
 ### Roles live in two places, and they do different jobs
 
-`defineNode("shift", { fieldRoles: { start: "from" } })` is what everything that is NOT a lens reads: the graph's own responder answering "when is it", the generated docs. A lens reads `bindings` and only `bindings`. Neither overrides the other, because neither is looking at the other — so bind the lens, and declare `fieldRoles` because the rest of the app wants them too.
+`defineNode("shift", { fieldRoles: { start: "from" } })` is what everything that is NOT a lens reads: the graph's own responder answering "when is it", the generated docs. A lens reads `bindings`, but a timeline or calendar binding no `start` draws at the kind's natural time, `fieldRoles.when` (also in a document). Bind the lens; declare `fieldRoles` for the rest.
 
 `graview check` NOTES it when the two disagree about one role. Often that is a mistake; sometimes it is right, because a role name belongs to a lens and `fieldRoles` has one namespace for all of them: a rota means the hour a shift starts by `start`, and its calendar means the day. Look once, then decide.
 

@@ -638,9 +638,9 @@ describe("what the checker says out loud without failing", () => {
   });
 });
 
-describe("one edge name is one relation", () => {
+describe("one edge name, each kind's own words", () => {
   const artist = defineNode("artist", { fields: z.object({ label: z.string() }) });
-  it("refuses one name declared on two kinds in two sets of words", () => {
+  it("lets each kind that declares a shared relation word its own end of it: every surface lists each reading apart", () => {
     const song = defineNode("song", {
       fields: z.object({ label: z.string() }),
       edges: { by: { to: ["artist"], description: "the artist whose song it is", inverse: "their songs" } },
@@ -650,19 +650,7 @@ describe("one edge name is one relation", () => {
       edges: { by: { to: ["artist"], description: "the artist whose release it is", inverse: "their releases" } },
     });
     const app = defineApp({ name: "test", schema: createSchema([song, album, artist]), mutations: [] });
-    const finding = checkApp(app).findings.find((f) => f.code === "edge-name-shared")!;
-    expect(finding.severity).toBe("error");
-    expect(finding.message).toContain("their songs");
-    expect(finding.message).toContain("their releases");
-    expect(finding.fix).toContain("its own name");
-  });
-
-  it("is quiet when every declaration says the same thing", () => {
-    const words = { to: ["artist"] as ["artist"], description: "who made it", inverse: "what they made" };
-    const song = defineNode("song", { fields: z.object({ label: z.string() }), edges: { by: words } });
-    const album = defineNode("album", { fields: z.object({ label: z.string() }), edges: { by: words } });
-    const app = defineApp({ name: "test", schema: createSchema([song, album, artist]), mutations: [] });
-    expect(findings(app)).not.toContain("error:edge-name-shared");
+    expect(findings(app).filter((finding) => finding.endsWith(":edge-name-shared"))).toEqual([]);
   });
 
   it("allows each declaring kind its own targets", () => {
