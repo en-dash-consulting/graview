@@ -480,20 +480,21 @@ export function FrameNotices({ rootRef, board }: { readonly rootRef: { readonly 
 
 /** What the provider under every face is handed from the options, beside the store and the views. */
 export function providerProps<S extends AnySchema>(props: FrameOptions<S>, presence: PresenceChannel | undefined, brand: Brand | undefined) {
+  /* Each as given: the provider takes an unsaid one as its own default. */
   return {
-    ...(brand ? { brand } : {}),
-    ...(props.principal ? { principal: props.principal } : {}),
+    brand,
+    principal: props.principal,
     /* The seats, so every surface under the provider names a seat as it was offered (W-114). */
-    ...(props.seats ? { seats: props.seats } : {}),
-    ...(presence ? { presence } : {}),
-    ...(props.people ? { people: props.people } : {}),
-    ...(props.memory ? { memory: props.memory } : {}),
-    ...(props.presenceTtlMs !== undefined ? { presenceTtlMs: props.presenceTtlMs } : {}),
-    ...(props.onKeepLens ? { onKeepLens: props.onKeepLens } : {}),
-    ...(props.ai ? { ai: props.ai } : {}),
-    /* The reader's own text size and motion, on somebody else's page
-       too: the answer lives on the browser, not on the installation. */
-    settings: props.app.settings ?? [],
+    seats: props.seats,
+    presence,
+    people: props.people,
+    memory: props.memory,
+    presenceTtlMs: props.presenceTtlMs,
+    onKeepLens: props.onKeepLens,
+    ai: props.ai,
+    /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
+       reader settings: the reader's own text size and motion, on somebody else's page too. */
+    app: props.app,
   };
 }
 

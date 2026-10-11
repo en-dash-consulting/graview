@@ -181,6 +181,7 @@ export function ${ids.AppComponent}({
       scheme={scheme}
       brand={${ids.brandVar}}
       settings={${ids.appVar}.settings ?? []}
+      app={${ids.appVar}}
     >
       <Shell<S>
         standing="Everything is in order"
@@ -549,6 +550,7 @@ if (window.location.pathname.startsWith("/pages")) {
          */
         views: views(),
         settings: ${ids.appVar}.settings ?? [],
+        app: ${ids.appVar},
       }}
       // Your own pages over the derived ones: see ui/pages.tsx.
       registry={pages()}
