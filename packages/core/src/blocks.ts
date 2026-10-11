@@ -13,3 +13,5 @@ export { compileBlocks, fieldSpecsOf, isTallBlock, resolveBlocks, safeHref, sayN
 export type { BlockContext, BlocksSaid, ResolvedBlock, ResolvedList, SpecBlock } from "./document/blocks.js";
 export { computedNames, computedValues, withComputed } from "./document/computed-values.js";
 export type { ComputedRecord, ComputedValues, PlainComputed } from "./document/computed-values.js";
+export { blockContextFor, CARD_BUDGET, PAGE_BUDGET } from "./document/block-context.js";
+export type { BlockContextOptions, BlockSource } from "./document/block-context.js";

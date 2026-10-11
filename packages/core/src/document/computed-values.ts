@@ -35,7 +35,8 @@ export interface ComputedValues {
 }
 
 const SHAPES = new WeakMap<object, Map<string, KindShape>>();
-function shapesFor(schema: AnySchema): Map<string, KindShape> {
+/** What every kind of a schema holds, read once per schema. */
+export function shapesFor(schema: AnySchema): Map<string, KindShape> {
   let shapes = SHAPES.get(schema);
   if (!shapes) SHAPES.set(schema, (shapes = shapesOfSchema(schema)));
   return shapes;

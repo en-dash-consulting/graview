@@ -18,3 +18,13 @@ export { describePlace, placeText } from "./document/describe-place.js";
 export { columnActs, columnMoves, columnOf, columnReach, columnSteps, statusColumns } from "./columns.js";
 export type { ColumnMove, ColumnReach, StatusColumn } from "./columns.js";
 export type { DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceOptions, DescribePlaceResult, PlaceDescription } from "./document/describe-place.js";
+/*
+ * A record's declared blocks — or the home's — resolved over what a seat
+ * may see exactly as the faces and the describer resolve them: one call for
+ * a product's own face. Here, beside the describer that goes through it,
+ * and not on `@graview/core/blocks`, which the faces import as they draw:
+ * they hold their blocks parsed and read them in `blockContextFor`'s
+ * context, and need no lookup of a declaration's views.
+ */
+export { resolveFor } from "./document/resolve-for.js";
+export type { DeclaredBlocks, ResolveForOptions } from "./document/resolve-for.js";

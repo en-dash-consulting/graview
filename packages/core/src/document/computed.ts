@@ -185,7 +185,7 @@ export function workedOutAlone(definition: { readonly fields: ReadonlySet<string
   const shape = analyzeExpr(expr);
   if (shape.edges.length > 0 || shape.sweeps.length > 0 || [...shape.functions].some((fn) => fn === "out" || fn === "in" || fn === "all")) return false;
   const fields = definition!.fields;
-  const isField = (n: string) => (fields instanceof Set ? fields.has(n) : Object.prototype.hasOwnProperty.call(fields, n));
+  const isField = (n: string) => (fields instanceof Set ? fields.has(n) : Object.hasOwn(fields, n));
   const next = new Set([...seen, name]);
   return [...shape.names].every((n) => isField(n) || workedOutAlone(definition, n, next));
 }

@@ -48,7 +48,7 @@ export type ShippedLensName = keyof typeof SHIPPED_LENSES;
 /** The shipped lenses' names, in the order the table gives them. */
 export const SHIPPED_LENS_NAMES = Object.keys(SHIPPED_LENSES) as readonly ShippedLensName[];
 
-export const isShippedLens = (name: string): name is ShippedLensName => Object.prototype.hasOwnProperty.call(SHIPPED_LENSES, name);
+export const isShippedLens = (name: string): name is ShippedLensName => Object.hasOwn(SHIPPED_LENSES, name);
 
 /** The roles a lens requires: its own declaration's, or the shipped lens's when it names none. */
 export function requiredRolesOf(lens: LensDeclaration): readonly string[] {

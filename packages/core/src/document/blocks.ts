@@ -30,8 +30,16 @@ import { capitalize } from "../capital.js";
 type Parsed<T> = T | null;
 type Tone = ViewTone | { readonly expr: Parsed<Expr> };
 
-/** A block, parsed: templates and expressions are read once, when the blocks are registered. */
-export type SpecBlock =
+/**
+ * A block, parsed: templates and expressions are read once, when the blocks
+ * are registered — each with its KEY, what a face claims it by (`BlockSlots`):
+ * the `key` the declaration gives it, or one derived from its sort and its
+ * place among the blocks of that sort beside it (`list.2`, the second list;
+ * `group.1.text.1`, the first text in the first group). Never from its
+ * words, so a title said differently is the same block to a face.
+ */
+export type SpecBlock = UnkeyedSpec & { readonly key: string };
+type UnkeyedSpec =
   | { readonly t: "title"; readonly parts: Parsed<readonly TemplatePart[]> }
   | { readonly t: "text" | "badge"; readonly parts: Parsed<readonly TemplatePart[]>; readonly tone?: Tone }
   | { readonly t: "field"; readonly field: string; readonly as?: (typeof VIEW_FIELD_FORMATS)[number]; readonly currency?: string; readonly label?: string }
@@ -81,7 +89,7 @@ const MAX_DEPTH = 4;
  * every other expression; an order by a choice field's declared choices is
  * done after, from the declaration.
  */
-function listOf(block: Record<string, unknown>): SpecBlock {
+function listOf(block: Record<string, unknown>): UnkeyedSpec {
   const source = typeof block["list"] === "string" ? safely(() => parseExpr(block["list"] as string)) : null;
   const sort = block["sort"];
   const by = typeof sort === "string" ? sort : sort && typeof sort === "object" && typeof (sort as { by?: unknown }).by === "string" ? (sort as { by: string }).by : undefined;
@@ -113,10 +121,12 @@ function listOf(block: Record<string, unknown>): SpecBlock {
 /**
  * Parse a spec's blocks. A spec `graview check` passed parses cleanly; a
  * part that does not is said as "—", and a block outside the vocabulary is
- * not drawn at all.
+ * not drawn at all. Each keeps its key (`SpecBlock`); a nested block's
+ * derived key is said after its parent's, `within`.
  */
-export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[], depth = 1): readonly SpecBlock[] {
+export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[], depth = 1, within = ""): readonly SpecBlock[] {
   if (!Array.isArray(blocks) || depth > MAX_DEPTH) return [];
+  const counted: Record<string, number> = {};
   return (blocks as readonly unknown[]).flatMap((raw): SpecBlock[] => {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
     const block = raw as Record<string, unknown>;
@@ -124,33 +134,51 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
     const expr = (source: unknown) => (typeof source === "string" ? safely(() => parseExpr(source)) : null);
     const tone = toneOf(block["tone"]);
     const label = typeof block["label"] === "string" ? block["label"] : undefined;
-    const has = (key: string) => Object.prototype.hasOwnProperty.call(block, key);
+    const has = (key: string) => Object.hasOwn(block, key);
     const currency = typeof block["currency"] === "string" && /^[A-Z]{3}$/.test(block["currency"]) ? block["currency"] : undefined;
-    // A list first: its `group` is how it is grouped, not a group block.
-    if (has("list")) return [listOf(block)];
-    if (has("headline")) return [{ t: "headline", parts: template(block["headline"]) }];
-    if (has("figure") && typeof block["figure"] === "string") {
-      const as = (FIGURE_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as FigureFormat) : undefined;
-      return [{ t: "number", value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label: template(label) } : {}) }];
-    }
-    if (has("title")) return [{ t: "title", parts: template(block["title"]) }];
-    if (has("text")) return [{ t: "text", parts: template(block["text"]), ...(tone ? { tone } : {}) }];
-    if (has("badge")) return [{ t: "badge", parts: template(block["badge"]), ...(tone ? { tone } : {}) }];
-    if (has("field")) {
-      const as = (VIEW_FIELD_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as (typeof VIEW_FIELD_FORMATS)[number]) : undefined;
-      return [{ t: "field", field: String(block["field"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label } : {}) }];
-    }
-    if (has("progress")) {
-      const p = (block["progress"] ?? {}) as { value?: unknown; max?: unknown };
-      return [{ t: "progress", value: expr(p.value), max: expr(p.max), ...(label ? { label: template(label) } : {}) }];
-    }
-    if (has("group")) return [{ t: "group", blocks: compileBlocks(block["group"] as readonly unknown[], depth + 1), direction: block["direction"] === "row" ? "row" : "column" }];
-    if (has("when")) return [{ t: "when", when: expr(block["when"]), show: compileBlocks(block["show"] as readonly unknown[], depth + 1) }];
-    if (has("divider")) return [{ t: "divider" }];
-    if (has("figure")) return [{ t: "figure" }];
-    return [];
+    // What the block is — a list first: its `group` is how it is grouped, not a group block.
+    const t = has("list") ? "list" : has("headline") ? "headline" : typeof block["figure"] === "string" ? "number" : SORTS.find(has);
+    if (!t) return [];
+    // Its key: its own, or its sort and its place among its siblings of that sort — counted either way, so naming one never moves another's.
+    const n = (counted[t] = (counted[t] ?? 0) + 1);
+    const own = block["key"];
+    const key = typeof own === "string" && own ? own : `${within}${t}.${n}`;
+    const one = ((): UnkeyedSpec => {
+      switch (t) {
+        case "list":
+          return listOf(block);
+        case "number": {
+          const as = (FIGURE_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as FigureFormat) : undefined;
+          return { t, value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label: template(label) } : {}) };
+        }
+        case "headline":
+        case "title":
+          return { t, parts: template(block[t]) };
+        case "text":
+        case "badge":
+          return { t, parts: template(block[t]), ...(tone ? { tone } : {}) };
+        case "field": {
+          const as = (VIEW_FIELD_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as (typeof VIEW_FIELD_FORMATS)[number]) : undefined;
+          return { t, field: String(block["field"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label } : {}) };
+        }
+        case "progress": {
+          const p = (block["progress"] ?? {}) as { value?: unknown; max?: unknown };
+          return { t, value: expr(p.value), max: expr(p.max), ...(label ? { label: template(label) } : {}) };
+        }
+        case "group":
+          return { t, blocks: compileBlocks(block["group"] as readonly unknown[], depth + 1, `${key}.`), direction: block["direction"] === "row" ? "row" : "column" };
+        case "when":
+          return { t, when: expr(block["when"]), show: compileBlocks(block["show"] as readonly unknown[], depth + 1, `${key}.`) };
+        default:
+          return { t };
+      }
+    })();
+    return [{ ...one, key } as SpecBlock];
   });
 }
+
+/** The sorts of block after a list, a headline and a figure that works a number out, in the order a block that says two is read. */
+const SORTS = ["title", "text", "badge", "field", "progress", "group", "when", "divider", "figure"] as const;
 
 // ── resolving ───────────────────────────────────────────────────────────────
 
@@ -160,7 +188,7 @@ export interface BlockContext {
   readonly node: AnyGraphNode | null;
   /** The level a headline is said at here, and the first top-level one where it is the page's own heading (the home's h1). */
   readonly heading?: number;
-  readonly firstHeading?: number;
+  readonly firstHeading?: number | undefined;
   /** The steps each expression may take; more for blocks that sweep whole kinds. */
   readonly budget?: number;
   /** The graph the blocks read: for a seat, what that seat may see. Without it, a hop says "—". */
@@ -171,14 +199,15 @@ export interface BlockContext {
   /** The kind's declared fields, in the document's words: which may be a link, which is a date. */
   readonly fields: Readonly<Record<string, FieldSpec>>;
   /** How the declaration says a field and its values (`display.labels`, `display.format`). */
-  readonly definition?: Parameters<typeof valueWords>[0];
+  readonly definition?: Parameters<typeof valueWords>[0] | undefined;
   readonly today: string;
   /** The app's currency and locale (`brand.currency`, `brand.locale`): what money is said in where a block names no currency (FR-100). */
-  readonly money?: Money;
+  readonly money?: Money | undefined;
 }
 
-/** A block worked out: what a face draws and a describer says. `problem` is what could not be worked out, in words. */
-export type ResolvedBlock =
+/** A block worked out: what a face draws and a describer says, under its block's key (`SpecBlock`). `problem` is what could not be worked out, in words. */
+export type ResolvedBlock = (Unkeyed | ResolvedList) & { readonly key: string };
+type Unkeyed =
   | { readonly t: "title"; readonly text: string; readonly problem?: string }
   | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly problem?: string }
   | { readonly t: "badge"; readonly text: string; readonly tone: ViewTone; readonly problem?: string }
@@ -191,8 +220,7 @@ export type ResolvedBlock =
   /** The kind's picture: drawn by a face, said by nothing. */
   | { readonly t: "figure" }
   | { readonly t: "headline"; readonly level: number; readonly text: string; readonly problem?: string }
-  | { readonly t: "number"; readonly text: string; readonly label?: string; readonly problem?: string }
-  | ResolvedList;
+  | { readonly t: "number"; readonly text: string; readonly label?: string; readonly problem?: string };
 
 /** A list worked out: its records in order, a few, under a heading per choice — read from the graph the context was handed. */
 export interface ResolvedList {
@@ -288,7 +316,7 @@ export function sayNumber(value: string | number | boolean, as: FigureFormat | u
 
 const withProblem = <T extends object>(block: T, problem: string | undefined): T => (problem ? { ...block, problem } : block);
 
-function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): ResolvedBlock {
+function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeyed | ResolvedList {
   switch (block.t) {
     case "title": {
       const said = say(block.parts, ctx);
@@ -315,7 +343,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Resolv
         const judged = judge({ t: "ident", name: block.field, at: 0 }, ctx);
         if (!judged.ok) problem = judged.problem;
         else raw = judged.value !== null && typeof judged.value === "object" ? formatValue(judged.value, undefined, ctx.today) : judged.value;
-      } else raw = Object.prototype.hasOwnProperty.call(ctx.node, block.field) ? ctx.node[block.field] : undefined;
+      } else raw = Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : undefined;
       const href = ctx.fields[block.field]?.type === "url" && block.as === undefined ? safeHref(raw) : undefined;
       const text = safely(() => fieldText(block.field, raw, ctx, block.as, block.currency)) ?? NOTHING;
       return withProblem({ t: "field", field: block.field, label, text, ...(href ? { href } : {}) }, problem);
@@ -362,7 +390,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Resolv
 /** Blocks worked out for one record — or for none. Pure: everything they read is in `ctx`. */
 export function resolveBlocks(blocks: readonly SpecBlock[], ctx: BlockContext): readonly ResolvedBlock[] {
   const first = blocks.findIndex((block) => block.t === "headline");
-  return blocks.map((block, i) => resolveOne(block, ctx, i === first));
+  return blocks.map((block, i) => ({ ...resolveOne(block, ctx, i === first), key: block.key }) as ResolvedBlock);
 }
 
 /** What a record's blocks said, once worked out: what a view drawn around them must not say again (FR-141). */
@@ -494,11 +522,11 @@ function resolveList(block: Extract<SpecBlock, { t: "list" }>, ctx: BlockContext
 /** A choice field's choices on a kind, in the order they are declared; empty when it is not one. */
 function choicesOf(schema: AnySchema, kind: string, field: string): readonly string[] {
   const shape = (schema.tryDefinition(kind) as { fields?: { shape?: Record<string, unknown> } } | undefined)?.fields?.shape;
-  const spec = shape && Object.prototype.hasOwnProperty.call(shape, field) ? fieldSpecOf(shape[field]) : undefined;
+  const spec = shape && Object.hasOwn(shape, field) ? fieldSpecOf(shape[field]) : undefined;
   return spec?.type === "enum" ? (spec.options ?? []) : [];
 }
 
-const valueOf = (node: AnyGraphNode, field: string): unknown => (Object.prototype.hasOwnProperty.call(node, field) ? node[field] : undefined);
+const valueOf = (node: AnyGraphNode, field: string): unknown => (Object.hasOwn(node, field) ? node[field] : undefined);
 
 /** Records in the order a choice field's choices are declared; a value among none of them last, in the order given. */
 function inChoiceOrder(nodes: readonly AnyGraphNode[], field: string, schema: AnySchema): readonly AnyGraphNode[] {
