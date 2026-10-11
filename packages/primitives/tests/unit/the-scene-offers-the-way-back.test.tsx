@@ -134,7 +134,7 @@ describe("the scene's way back", () => {
     expect(offered(board)).toBeUndefined();
     // Pressed anyway, from a copy somebody kept, it takes back only the act it offered.
     await renameTo(store, "On the pages face", "i2");
-    await act(async () => toast!.action!.onSelect());
+    await act(async () => void toast!.action!.onSelect!());
     expect(store.graph.getNode("i2")?.label).toBe("On the pages face");
   });
 });

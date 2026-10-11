@@ -1264,15 +1264,15 @@ if (location.pathname.startsWith("/pages")) {
 <li><code>/&lt;plural&gt;/&lt;id&gt;</code> — a record: its facts, changed where they stand, its relations in the declaration's words, what can be done, what happened.</li>
 <li><code>/problems</code> — every broken rule with its repairs.</li>
 </ul>
-<p>The app bar, one row over any shell (<code>barAbove</code>): the name, the switch (Scene, Pages; <code>pages: { scene, pages }</code> renames them), the place you are on — whose list holds the home, the Lists, the Pictures (on a wide bar they stand, the rest under More) — Find, standing, person.</p>
+<p>The app bar, one row over any shell (<code>barAbove</code>): the name, the switch (Scene, Pages; <code>pages: { scene, pages }</code> renames them), the place you are on — whose list holds the home, the Lists, the Pictures (on a wide bar they stand, the rest under More; an empty kind folds into More) — Find, standing, person. A shell with a rail of its own says <code>surface("shell", Shell, { without: ["places"] })</code>: the bar keeps all that and names no place.</p>
 <p><strong>Arrange it, declared</strong>: <code>pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }</code>. <code>order</code> sorts gallery, nav, city; <code>hide</code> drops kinds from the home only; <code>first</code> (place, kind or <code>"home"</code>) opens both faces; <code>primary</code> stands on the bar. <code>placesOf(app)</code> lists them.</p>
 <p><strong>Home as data</strong> (FR-81): <code>home</code>, blocks as in <code>graview-node-kind</code> (<code>views.home</code>), replaces this body, and the app opens on it (FR-136).</p>
 <p><strong>Hand it <code>views</code></strong> (the scene's registry, plus <code>settings</code>/<code>presence</code>) — <code>graview create</code> does — and the face puts the scene's provider under its routes, which buys three things at once:</p>
 <ul>
 <li><code>/places</code>, <code>/places/&lt;as&gt;</code> — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.</li>
 <li><code>/map</code> — <code>kindMap(store)</code>: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to, arranged in the shared words (<code>?sort=due:desc</code>, <code>?filter=done:false</code>, <code>?group=due:month</code>, <code>?q=tape</code>) a lens carries in its fragment, so an arrangement is a link; <code>?by=</code>, <code>?&lt;edge&gt;=&lt;id&gt;</code>, <code>?with=</code> and <code>?past=1</code> still land. A record links back.</li>
-<li><code>/search?q=</code> — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell that places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> says where, one that does not gets them drawn around it, and <code>surface("shell", Shell, { without: ["find"] })</code> goes without.</li>
-<li><strong>The assistant</strong>, on every route: the scene's own ask field and its conversation, the ROUTE what "this" means. A line and a few questions before anyone types; proposals apply through the same runtime, attributed and undoable, withheld ones struck through. Open questions are listed on <code>/problems</code>; the model behind them is the host's <code>ai</code>.</li>
+<li><code>/search?q=</code> — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> where it wants them, else they are drawn around it (<code>without: ["find"]</code> goes without).</li>
+<li><strong>The assistant</strong>, on every route: the scene's ask field, the ROUTE what "this" means. Proposals apply through the same runtime, attributed and undoable, withheld ones struck through; open questions are on <code>/problems</code>; the model is the host's <code>ai</code>.</li>
 </ul>
 <p>Everything a page shows is a derivation the scene uses too: <code>recordFacts</code>, <code>deriveAffordances</code>, <code>store.permits</code>. <strong>A page never decides what an act is or who may take it</strong> — it strikes through what the seat may not, and says why. A record's facts, <code>computed</code> ones too, read in declared order or as the kind's <code>display.page</code> groups them; prose keeps its paragraphs, full width.</p>
 <p><strong>On a phone this face is the answer.</strong> <code>Shell</code> carries <code>pagesHref</code>.</p>
@@ -1297,6 +1297,7 @@ function PlotPage({ context }: { context: PageContext&lt;S&gt; }) {
 export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
   .register("plot", "record", PlotPage)
   .route("/survey", SurveyDesk);   // about nothing in the schema</code></pre></div>
+<p><strong>Claim a declared block, keep the rest.</strong> A block may say <code>"key": "rewrites"</code> (unsaid, its sort and place: <code>list.2</code>); <code>&lt;BlockSlots.Provider value={{ "change.page": { rewrites: Timeline } }}&gt;</code> draws yours for it and every other block as declared. Never pick a block by its title's words.</p>
 <p><code>.route(path, Component)</code> gives a page that is NOT about a kind an address — onboarding, settings, import — matched before <code>/:plural</code>. <strong>Every <code>to</code> is basename-relative</strong> (<code>to="/survey"</code>, never <code>to="/pages/survey"</code>), and so is <code>initialPath</code>, so a test renders the hrefs a browser will.</p>
 <p>Rules for a page at this rung:</p>
 <ol>
@@ -1305,8 +1306,8 @@ export const pages = createPageRegistry&lt;S, PageComponent&lt;S&gt;&gt;(schema)
 <li><strong><code>pageStyles</code></strong> for the parts you did not design, so one custom page still reads as the same face as the derived ones.</li>
 <li><strong>Prefill, never wire.</strong> <code>DerivedForm</code> with <code>prefilled</code> is how a record offers an act about itself; the form asks for the rest.</li>
 <li><strong>Read permission before drawing an act.</strong> `store.permits({ name, args }, principal)<code>, struck through with </code>verdict.refusal.message`. A form that refuses on submit is the bug this prevents.</li>
-<li><strong>Link to a PICTURE, not only to a node.</strong> <code>spatialHref(id)</code> opens the scene on one thing; <code>placeHref(as)</code> — <code>/#view=the-grounds</code>, the title through <code>placeSlug</code> — opens it on one named place, group in focus, not on a default view that says "press The grounds".</li>
-<li><strong>Take the act LIST from the derivation, not from the mutations.</strong> <code>recordFacts(store, id, { principal }).actions</code> is the same <code>AffordanceSet</code> the scene's strip reads: <code>affordances</code> are the acts that can actually act here, each with its <code>args</code> already decided and its <code>open</code> questions left, and <code>withheld</code> are the ones this seat may not take, with the reason. Filtering <code>store.allMutations()</code> is not equivalent: it offers acts with nothing to act on. A <strong>list</strong> page asks it of a kind instead — <code>kindFacts(store, kind, { principal }).actions</code>, the acts that can BEGIN it.</li>
+<li><strong>Link to a PICTURE, not only to a node.</strong> <code>spatialHref(id)</code> opens the scene on one thing; <code>placeHref(as)</code> (<code>/#view=the-grounds</code>) on one named place, group in focus.</li>
+<li><strong>Take the act LIST from the derivation, not from the mutations.</strong> <code>recordFacts(store, id, { principal }).actions</code> is the <code>AffordanceSet</code> the scene's strip reads: <code>affordances</code> can act here, <code>args</code> decided and <code>open</code> questions left; <code>withheld</code> are this seat's refusals, with the reason. Filtering <code>store.allMutations()</code> offers acts with nothing to act on. A <strong>list</strong> page asks it of a kind instead — <code>kindFacts(store, kind, { principal }).actions</code>, the acts that can BEGIN it.</li>
 </ol>
 <h3>Rung two: a product design</h3>
 <p>The registry has three surfaces and two page types, and replacing all of them is a product:</p>
@@ -1334,7 +1335,7 @@ pnpm test                                               # render every page you 
 <h3>What the check cannot see</h3>
 <ul>
 <li>Whether the design's words are the domain's. The derived pages use the declaration's <code>description</code> and <code>inverse</code>; a design that writes its own sentences must keep them true as the declaration changes.</li>
-<li>Whether a page still offers everything the seat may do. Listing acts by NAME misses the one declared after it was written; scanning the mutations offers acts that cannot act. <code>facts.actions</code> is neither — but only a person can see whether the page gives them room.</li>
+<li>Whether a page gives every act <code>facts.actions</code> offers room: only a person can see that.</li>
 </ul>
     </section>
 
