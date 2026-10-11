@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
+import { declaredLenses, Store, type AnySchema, type GraviewApp, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { EMPTY_VIEW } from "@graview/layout";
 import { BlockSlots, declaredViews, type BlockSlotProps, type ClaimedSlots } from "@graview/primitives";
@@ -7,6 +7,7 @@ import { GraviewProvider, type ViewComponent } from "@graview/react";
 import { lazy, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { declaredLensView } from "../../src/declared-lenses.js";
 import { homeView } from "../../src/home-view.js";
 
 /**
@@ -100,6 +101,37 @@ describe("a face claims a block by its key", () => {
     expect(html).toContain('data-face="count"');
     const page = home({ "change.page": { count: () => <b data-face="count">many</b> } });
     expect(page).not.toContain('data-face="count"');
+  });
+
+  it("claims a blocks lens's blocks under its own address: two lenses that say one key each draw their own", () => {
+    const twoLenses = structuredClone(changes);
+    twoLenses.lenses = [
+      { name: "blocks", title: "Open work", on: "change", options: { blocks: [{ headline: "Open work", key: "top" }, { text: "{count(all('task') where status == 'open')} open" }] } },
+      { name: "blocks", title: "Shipped work", on: "change", options: { blocks: [{ headline: "Shipped work", key: "top" }, { text: "{count(all('task') where status == 'done')} done" }] } },
+    ];
+    const again = compileDocument(twoLenses, { today: () => "2026-10-10" });
+    if (!again.ok) throw new Error(JSON.stringify(again.findings.filter((f) => f.severity === "error")));
+    const lenses = declaredLenses(again.app as GraviewApp<AnySchema>).drawn;
+    expect(lenses.map((lens) => lens.as)).toEqual(["open-work", "shipped-work"]);
+    const claims: ClaimedSlots = {
+      "open-work": { top: () => <h2 data-face="open">Still to do</h2> },
+      "shipped-work": { top: () => <h2 data-face="shipped">Out the door</h2> },
+    };
+    const [open, shipped] = lenses.map((lens) => {
+      const Lens = declaredLensView(lens) as ViewComponent<AnySchema>;
+      return draw(<Lens cardinality="many" fidelity="full" mode="fullscreen" selected={false} />, claims);
+    });
+    expect(open).toContain('data-face="open"');
+    expect(open).not.toContain('data-face="shipped"');
+    expect(text(open!)).toContain("60 open");
+    expect(shipped).toContain('data-face="shipped"');
+    expect(shipped).not.toContain('data-face="open"');
+    expect(text(shipped!)).toContain("38 done");
+    // A claim under the old shared name reaches no lens.
+    const unclaimed = draw(<>{lenses.map((lens) => { const Lens = declaredLensView(lens) as ViewComponent<AnySchema>; return <Lens key={lens.as} cardinality="many" fidelity="full" mode="fullscreen" selected={false} />; })}</>, { place: { top: () => <b data-face="place">claimed</b> } });
+    expect(unclaimed).not.toContain('data-face="place"');
+    expect(text(unclaimed)).toContain("Open work");
+    expect(text(unclaimed)).toContain("Shipped work");
   });
 
   it("draws the framework's drawing while a claimed part is still on its way", () => {
