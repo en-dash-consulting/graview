@@ -163,7 +163,9 @@ function commands() {
     .exec(readFileSync(at("packages/core/src/cli/create.ts"), "utf8"))?.[1] ?? "";
   const serve = /export const SERVE_USAGE = `([\s\S]*?)\n`;/
     .exec(readFileSync(at("packages/ship/src/cli.ts"), "utf8"))?.[1] ?? "";
-  const whole = [body.replace("${CREATE_USAGE}", create), serve].join("\n").replace(/\\`/g, "`");
+  const doctor = /export const DOCTOR_USAGE = `([\s\S]*?)\n`;/
+    .exec(readFileSync(at("packages/core/src/cli/doctor.ts"), "utf8"))?.[1] ?? "";
+  const whole = [body.replace("${CREATE_USAGE}", create).replace("${DOCTOR_USAGE}", doctor), serve].join("\n").replace(/\\`/g, "`");
 
   /* Each command starts at its own `graview <name>` line, two spaces in. */
   const out = [];
@@ -634,7 +636,7 @@ async function build() {
 
   files.set("cli.html", shell({ path: "cli.html",
     title: "The CLI", here: "cli.html",
-    blurb: "graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
+    blurb: "graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">The CLI</h1>\n` +
@@ -734,6 +736,10 @@ async function build() {
         `        <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>The routed face, from the derived pages to a design of your own.</span></a></li>\n` +
         `        <li><a href="skills/graview-ship.html"><strong>graview-ship</strong><span>Persistence, migrations, export and health, self-hosted or behind a service.</span></a></li>\n` +
         `      </ul>`) +
+      section("one-release", "One release, run from the project",
+        `      <p>Every <code>@graview/*</code> package and <code>graview</code> are one release: pin them all to the same version, and run <code>graview doctor</code> when something will not start — it says a pin, a lockfile, an install or a document that is on another release, and a <code>react</code> beside a <code>react-dom</code> of another version, which React refuses at startup with a blank page.</p>\n` +
+        `      <p>Run the project's own <code>graview</code> (<code>node_modules/.bin/graview</code>, <code>pnpm exec graview</code>) rather than <code>npx -y graview@&lt;version&gt;</code>: inside a pnpm workspace that already holds that release in its hidden hoist, npx skips the install, finds no bin and says <code>sh: graview: command not found</code>.</p>\n` +
+        `      <p>Holding only a document and a snapshot, <code>graview preview app.json --seed seed.json</code> draws the scene and Pages over them with nothing built, and <code>graview shots</code> photographs its places.</p>`) +
       section("checkout", "Working on the framework itself",
         `      <p>A product can consume a checkout of the framework by path instead of a registry, the way the first-party examples do: build the framework, then <code>pnpm graview create ../my-app --link .</code>. The project resolves every <code>@graview/*</code> import into the checkout's <code>dist/</code>, and its dev server rebuilds when the framework does.</p>\n` +
         `      <div class="term" data-scroller aria-label="Commands to work on the framework itself">` +
@@ -854,7 +860,7 @@ async function build() {
         `        <li><a href="demos.html"><strong>Live demos</strong><span>Every surface of the garden, running on the page, and the example apps.</span></a></li>\n` +
         `        <li><a href="packages.html"><strong>Packages (${pkgs.length})</strong><span>What each ships and what each exports.</span></a></li>\n` +
         `        <li><a href="skills.html"><strong>Skills (${sks.length})</strong><span>What your assistant reads before it writes.</span></a></li>\n` +
-        `        <li><a href="cli.html"><strong>The CLI</strong><span>create, check, docs, describe, lens, figure, serve, skills.</span></a></li>\n` +
+        `        <li><a href="cli.html"><strong>The CLI</strong><span>create, check, types, docs, describe, lens, figure, serve, skills.</span></a></li>\n` +
         `        <li><a href="checks.html"><strong>What check says (${codes.length})</strong><span>Every finding, and how loudly.</span></a></li>\n` +
         `        <li><a href="stability.html"><strong>Stability</strong><span>What a version may change, and what a host can hold it to.</span></a></li>\n` +
         `        <li><a href="../progression.html"><strong>The garden, grown</strong><span>${CHAPTERS[0].toUpperCase() + CHAPTERS.slice(1)} live chapters, from one kind to a product.</span></a></li>\n` +

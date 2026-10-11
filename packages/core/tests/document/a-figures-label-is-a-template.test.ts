@@ -41,7 +41,7 @@ describe("a figure's label says the record it is about", () => {
     const schema = app.schema as AnySchema;
     const node = store.graph.getNode("pkg-whole")!;
     const [figure, meter] = resolveBlocks(compileBlocks([NAMED, METER]), { node, graph: store.graph as never, schema, kinds: shapesOfSchema(schema), fields: fieldSpecsOf(schema, "package"), today: "2026-10-05" });
-    expect(figure).toEqual({ t: "number", text: "$69,300", label: "The whole thing, net" });
+    expect(figure).toEqual({ key: "number.1", t: "number", text: "$69,300", label: "The whole thing, net" });
     expect(meter).toMatchObject({ t: "progress", label: "four of The whole thing's offers", text: "4 of 4" });
   });
 
@@ -50,7 +50,7 @@ describe("a figure's label says the record it is about", () => {
     const store = storeOf(app);
     const schema = app.schema as AnySchema;
     const [figure] = resolveBlocks(compileBlocks([{ figure: "net", as: "money", currency: "USD", label: "After the discount" }]), { node: store.graph.getNode("pkg-start")!, graph: store.graph as never, schema, kinds: shapesOfSchema(schema), fields: {}, today: "2026-10-05" });
-    expect(figure).toEqual({ t: "number", text: "$21,000", label: "After the discount" });
+    expect(figure).toEqual({ key: "number.1", t: "number", text: "$21,000", label: "After the discount" });
   });
 
   it("describePlace says the label the face draws", () => {

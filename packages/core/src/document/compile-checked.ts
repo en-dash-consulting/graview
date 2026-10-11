@@ -3,7 +3,7 @@ import { actFindings } from "./act-findings.js";
 import { brandFindings } from "./brand-check.js";
 import { compileDocumentWithoutCheck, frameworkPath, inDocumentWords, readDocument, type CompiledDocument, type CompileOptions, type RefusedDocument } from "./compile.js";
 import { hasErrors, type Finding } from "./findings.js";
-import { viewBraces } from "./views.js";
+import { viewBraces, viewKeys } from "./views.js";
 
 /*
  * THE CHECKED COMPILE, in a module of its own: `compile.ts` is what a page
@@ -26,7 +26,8 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   }
   const { app, document } = compiled;
   // What the brand may hold (FR-124): a mark that could act or load, a face from off the list.
-  const own = [...actFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {})];
+  // A block's key is its own in its view: a face claims it by that key.
+  const own = [...actFindings(document), ...brandFindings(document.brand, options.fonts ? { fonts: options.fonts } : {}), ...viewKeys(document.views, "views", undefined, document.lenses)];
   if (hasErrors(own)) return { ok: false, findings: [...compiled.findings, ...own] };
   // Braces in a block's plain words (FR-99): asked here, with the checker, and not of a page that compiles without it.
   // The checker's sentence for an accent (FR-126) says what the compile's did, and more: once is enough.

@@ -15,7 +15,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 - [Getting started](https://graview.dev/docs/getting-started.md): From nothing to a running product on Graview, and the loop from there: declare, check, look, declare more.
 - [Concepts](https://graview.dev/docs/concepts.md): The ideas behind a Graview app: one declaration, and the seven things in it — kinds and edges, acts, rules that repair, lenses, who may do what, and the seat for a model.
 - [Working with a model](https://graview.dev/docs/agents.md): The declaration is the interface a person uses and the interface a model uses. What a model gets, how it is narrowed, and what it reads before it writes.
-- [The CLI](https://graview.dev/docs/cli.md): graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.
+- [The CLI](https://graview.dev/docs/cli.md): graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.
 - [What check says](https://graview.dev/docs/checks.md): Every one of the 88 things graview check can tell you, and how loudly.
 - [Stability](https://graview.dev/docs/stability.md): What a Graview version may change on the five surfaces a host holds it to — ops, stored formats, the wire, the declaration and the tool names — and how a host reads what a build ships.
 - [Documentation](https://graview.dev/docs/index.md): Graview's documentation: the concepts, the packages, the skills, the CLI and everything the checker can say.
@@ -26,7 +26,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 - [@graview/core](https://graview.dev/docs/packages/core.md): The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.
 - [create-graview](https://graview.dev/docs/packages/create-graview.md): Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.
 - [@graview/embed](https://graview.dev/docs/packages/embed.md): Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.
-- [graview](https://graview.dev/docs/packages/graview.md): The Graview command line: start a product, check its declaration, write its agent docs, serve its store, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.
+- [graview](https://graview.dev/docs/packages/graview.md): The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.
 - [@graview/guest](https://graview.dev/docs/packages/guest.md): Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.
 - [@graview/layout](https://graview.dev/docs/packages/layout.md): Where every node goes: three planes, one pure function of the graph and the view state.
 - [@graview/pages](https://graview.dev/docs/packages/pages.md): The traditional face: a routed webapp derived from the same declaration that drives the scene.

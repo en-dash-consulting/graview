@@ -1,5 +1,5 @@
 import { documentOf } from "../../document/to-document.js";
-import { validateViewSpecs, viewBraces } from "../../document/views.js";
+import { validateViewSpecs, viewBraces, viewKeys } from "../../document/views.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
 
@@ -24,7 +24,8 @@ export function checkViewSpecs<S extends AnySchema>(ctx: CheckContext<S>): void 
     ...(blockLenses ? { lenses: app.lenses } : {}),
   });
   // Braces in a block's plain words (FR-99); a document's are said by compileDocument, at its own paths.
-  if (!documentOf(app)) findings.push(...viewBraces(app.viewSpecs, "viewSpecs", app.home, app.lenses));
+  // And each block's key its own in its view, so a face claims one block by it.
+  if (!documentOf(app)) findings.push(...viewBraces(app.viewSpecs, "viewSpecs", app.home, app.lenses), ...viewKeys(app.viewSpecs, "viewSpecs", app.home, app.lenses));
   for (const finding of findings) {
     add({
       severity: finding.severity,

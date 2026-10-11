@@ -186,6 +186,15 @@ own rehearsal (`pnpm smoke`) does exactly this from packed tarballs —
    on the dev server — the door holds the token, takes only its own
    origin's JSON, and only the allowed tools.
 
+9. **Look at a document with no product.** `graview preview <document.json>
+   --seed <snapshot.json>` is `serve` with Graview's own faces over the
+   store — the scene and Pages, in memory unless `--data` says where — and
+   `graview shots … --places home,overview --out shots` photographs named
+   places headless (Playwright is yours to install). Prove a change to an
+   emitted document with these, not hand-written screenshots. In a test,
+   `compileDocumentFiles(path, { seed })` from `@graview/core/testing`
+   reads the document where it lives — no fixture copy to drift.
+
 ## The boundary
 
 Anything ONE deployment needs belongs in ship: the op log, the snapshot,

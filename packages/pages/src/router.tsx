@@ -398,7 +398,7 @@ export function PagesRoutes<S extends AnySchema>({
   const inside: PageContext<S> = own ? { ...under, framed: true } : context;
   /* The own bar's Find slot, where the face's root puts the one Find box (an embed's bar keeps its own). */
   const [barFind, setBarFind] = useState<BarFind | null>(null);
-  const told = useMemo(() => ({ onFind: setBarFind, find: !(registry?.without().has("find") ?? false) }), [registry]);
+  const told = useMemo(() => ({ onFind: setBarFind, find: !(registry?.without().has("find") ?? false), places: !(registry?.without().has("places") ?? false) }), [registry]);
   const routes = (
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
     <FaceRoot context={context} registry={registry}>

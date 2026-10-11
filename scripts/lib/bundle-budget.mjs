@@ -483,12 +483,15 @@ export const BUDGETS = [
     // Raised in the review after 0.1.20: the routed face says where its reader is (FR-155) and draws what has happened on its
     // bar (FR-152), the seat's tools fetch the words before any answer (FR-159), and a seat is told a line over what it sees
     // (FR-55). 2_082 / 1_668 more than main. Measured at 1_701_696 / 535_214.
+    // Raised by what n-dx surfaced, together: a block's key and the slots a face claims by it, an empty kind folding into
+    // More, a shell keeping its bar without its places, and the embed's bar redrawn as the graph changes; the sync and
+    // the snapshot left the first load for entries of their own. Measured at 1_701_975 / 535_578.
     // Raised when the seat came to read before it answers (FR-160): the turn a host's model takes with the seat's read
     // tools, and the seat's model — its framing and the reading of its answer — left the faces for a chunk of its own,
     // fetched when a model first answers, so each face is about 3.9 KB smaller before it draws and every face is one chunk
-    // more. 2_018 / 1_650 more than main (1_701_927 / 535_310). Measured at 1_703_945 / 536_960.
-    minified: 1_704_300,
-    gzipped: 537_150,
+    // more. MEASURE_DELTA
+    minified: 1_702_400,
+    gzipped: 535_900,
     load: "all",
   },
   {
@@ -572,8 +575,9 @@ export const BUDGETS = [
     // Raised with the pages face's by FR-159, a showing's name as drawn and FR-154, together. Measured at 1_565_769 / 478_533.
     // And by who is here on the bar (FR-155): 98 more gzipped. Measured at 1_565_646 / 478_631.
     // And by the review after 0.1.20, with the pages face's: 1_664 / 1_446 more than main. Measured at 1_565_087 / 480_013.
+    // And by what n-dx surfaced (a block's key and its claimed slots, an empty kind folding): measured at 1_565_358 / 480_308.
     minified: 1_566_100,
-    gzipped: 480_300,
+    gzipped: 480_600,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

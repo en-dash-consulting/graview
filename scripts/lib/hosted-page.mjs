@@ -321,7 +321,7 @@ export const COMPILER_MODULES = [
 ];
 
 /** zod's ~50 translated message packs, resolved to English alone (Cloud's `englishOnly`). */
-const englishOnly = {
+export const englishOnly = {
   name: "zod-english-only",
   setup(b) {
     b.onResolve({ filter: /\/locales\/index\.js$/ }, (args) => {
@@ -336,7 +336,7 @@ const englishOnly = {
 };
 
 /** The shell carries no studio, not even unopened (Cloud's `noStudio`). */
-const noStudio = {
+export const noStudio = {
   name: "no-studio",
   setup(b) {
     b.onResolve({ filter: /^@graview\/studio$/ }, () => ({ path: "no-studio", namespace: "no-studio" }));
@@ -353,7 +353,7 @@ const leaveDoorsShut = {
 };
 
 /** `@graview/*` from the workspace's sources, with the package's `sideEffects` as its tarball declares it. */
-function workspaceSources(repo) {
+export function workspaceSources(repo) {
   return {
     name: "workspace-sources",
     setup(b) {

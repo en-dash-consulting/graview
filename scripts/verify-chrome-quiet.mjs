@@ -268,11 +268,17 @@ async function buildHost() {
         if (asked.get("box")) document.getElementById("app").style.cssText = "position:relative;width:" + Number(asked.get("box")) + "px;height:560px;margin:24px auto 0";
         const compiled = compileDocumentWithoutCheck(document_, { today: () => "2026-10-02" });
         if (!compiled.ok) throw new Error("the document did not compile");
-        const withIds = (seed) => ({ nodes: seed.nodes, edges: seed.edges.map((edge, i) => ({ id: edge.id ?? "e" + i, ...edge })) });
+        /* "empty=<kind>": the seed with none of that kind, nor what connects to it (an empty kind folds into More). */
+        const empty = asked.get("empty");
+        const gone = (seed) => new Set(seed.nodes.filter((node) => node.kind === empty).map((node) => node.id));
+        const withIds = (seed) => ({ nodes: seed.nodes.filter((node) => !gone(seed).has(node.id)), edges: seed.edges.filter((edge) => !gone(seed).has(edge.from) && !gone(seed).has(edge.to)).map((edge, i) => ({ id: edge.id ?? "e" + i, ...edge })) });
+        /* "places=0": a shell with a rail of its own, which keeps the bar and goes without its places; fetched only when asked, so no other page carries the pages up front. */
+        const railed = asked.get("places") === "0" ? { pages: (await import("@graview/pages")).createPageRegistry(compiled.app.schema).surface("shell", ({ children }) => children, { without: ["places"] }) } : {};
         /* A brand whose body face is a wide display face: what the place tiles are measured in (FR-118). */
         const wide = asked.get("font") === "wide" ? { brand: { ...(compiled.app.brand ?? {}), name: compiled.app.name, typography: { body: ${JSON.stringify(WIDE_FONT)} } } } : {};
         window.__handle = mount(document.getElementById("app"), {
           ...wide,
+          ...railed,
           app: compiled.app,
           seed: withIds(isWorkshop ? workshopSeed : isOrg ? orgSeed : vendors.seed),
           /* "none": the face is the app's to choose — its home view, else the scene (FR-136). */
@@ -444,7 +450,7 @@ function measure() {
 const BAR_HELPERS = `${[barControls, linesOf, theSwitch, saysOverview, placesSaid].map(String).join("\n")}\nObject.assign(window, { barControls, linesOf, theSwitch, saysOverview, placesSaid });`;
 const host = await buildHost();
 const errors = [];
-const results = { standing: [], standingResized: [], standingPresses: [], heldAcross: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [], wayBack: [] };
+const results = { standing: [], standingResized: [], emptyKinds: [], railed: [], standingPresses: [], heldAcross: [], quickPicks: [], boxes: [], boxSwitches: [], firstFrames: [], screens: [], tiles: [], skillRows: [], boards: [], marquees: [], problemCounts: [], problemsByKeyboard: [], notices: [], bars: [], switchPresses: [], deskBars: [], twoPresses: [], repeats: [], homes: [], workshopLists: [], wayBack: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -522,6 +528,42 @@ try {
             }
             results.standingResized.push({ engine, scheme, face, seen });
             await close();
+          }
+        }
+        /*
+         * An empty kind folds into More until it has a record: the workshop with no decisions, at 1920, then its first
+         * decision. And a shell with a rail of its own keeps the bar without its places, on both faces. In the first scheme.
+         */
+        if (scheme === SCHEMES[0]) {
+          const { page, close } = await open("doc=workshop&face=pages&heading=1&empty=decision", { width: 1920, height: 800 });
+          const row = () =>
+            page.evaluate(() => ({
+              standing: [...document.querySelectorAll('[data-testid="app-places-standing"] [data-place-path]')].filter((one) => !one.closest('[data-testid="app-places"]')).map((one) => one.getAttribute("data-place-path")),
+              folded: [...document.querySelectorAll('[data-testid="app-places"] [data-place-path]')].map((one) => one.getAttribute("data-place-path")),
+            }));
+          const before = await row();
+          await page.evaluate((author) => window.__handle.store.apply({ name: "add-decision", args: { name: "Meet on Thursdays" } }, { author }), OWNER);
+          await page.waitForTimeout(800);
+          results.emptyKinds.push({ engine, before, after: await row() });
+          await close();
+          for (const face of ["pages", "graview"]) {
+            const railed = await open(`doc=workshop&face=${face}&heading=1&places=0`, { width: 1280, height: 800 });
+            results.railed.push({
+              engine,
+              face,
+              ...(await railed.page.evaluate(() => {
+                const bar = document.querySelector('[data-testid="app-bar"]');
+                return {
+                  bar: Boolean(bar),
+                  switch: Boolean(bar?.querySelector('[data-testid="app-faces"]')),
+                  find: Boolean(bar?.querySelector('[data-testid="app-find"] input')),
+                  standing: Boolean(bar?.querySelector('[data-testid="standing"]')),
+                  person: Boolean(bar?.querySelector('[data-testid="profile-button"]')),
+                  places: document.querySelectorAll('[data-place-path], [data-testid="app-places-open"]').length,
+                };
+              })),
+            });
+            await railed.close();
           }
         }
       }
@@ -1003,6 +1045,39 @@ try {
     anEntryHeldFromBeforeTheListOpenedIsTheOnePressedAfter: {
       seen: results.heldAcross,
       ok: results.heldAcross.length === results.standingPresses.length + engines.length * SCHEMES.length * 2 && results.heldAcross.some((one) => one.held) && results.heldAcross.every((one) => (one.opener === false || (one.held !== null && one.replaced === 0 && one.pressed && one.landed))),
+    },
+    /*
+     * AN EMPTY KIND FOLDS INTO MORE UNTIL IT HAS A RECORD (n-dx's projection
+     * said "Constraints" beside the work on a tree with none): the workshop
+     * with no decisions stands Home, its dates, its deliverables and their
+     * picture at 1920, the decisions and their picture in More; the first
+     * decision brings both back to the row.
+     */
+    anEmptyKindFoldsIntoMoreUntilItHasARecord: {
+      seen: results.emptyKinds,
+      ok:
+        results.emptyKinds.length === engines.length &&
+        results.emptyKinds.every(
+          ({ before, after }) =>
+            before.standing.length >= 3 &&
+            !before.standing.includes("/decisions") &&
+            !before.standing.some((path) => path.startsWith("/places/what-the-workshop")) &&
+            before.folded.includes("/decisions") &&
+            after.standing.includes("/decisions") &&
+            after.standing.some((path) => path.startsWith("/places/what-the-workshop")),
+        ),
+    },
+    /*
+     * A SHELL WITH A RAIL OF ITS OWN KEEPS THE BAR WITHOUT ITS PLACES
+     * (`without: ["places"]`): the switch, Find, the standing and the person
+     * on both faces, and no place of the pages named on the bar; the scene's
+     * pictures are the scene's, and stay.
+     */
+    aShellWithItsOwnRailKeepsTheBarWithoutItsPlaces: {
+      seen: results.railed,
+      ok:
+        results.railed.length === engines.length * 2 &&
+        results.railed.every((one) => one.bar && one.switch && one.find && one.standing && one.person && (one.face === "pages" ? one.places === 0 : one.places > 0)),
     },
     aPictureChosenFromTheBarIsWhatTheSceneShows: {
       seen: results.standingPresses.filter((one) => one.face !== "pages").map(({ engine, scheme, where, inView }) => ({ engine, scheme, where, inView })),

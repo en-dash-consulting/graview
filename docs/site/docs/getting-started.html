@@ -1296,6 +1296,12 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
         <li><a href="skills/graview-ship.html"><strong>graview-ship</strong><span>Persistence, migrations, export and health, self-hosted or behind a service.</span></a></li>
       </ul>
     </section>
+    <section id="one-release" aria-labelledby="h-one-release">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-one-release">One release, run from the project</h2></div>
+      <p>Every <code>@graview/*</code> package and <code>graview</code> are one release: pin them all to the same version, and run <code>graview doctor</code> when something will not start — it says a pin, a lockfile, an install or a document that is on another release, and a <code>react</code> beside a <code>react-dom</code> of another version, which React refuses at startup with a blank page.</p>
+      <p>Run the project's own <code>graview</code> (<code>node_modules/.bin/graview</code>, <code>pnpm exec graview</code>) rather than <code>npx -y graview@&lt;version&gt;</code>: inside a pnpm workspace that already holds that release in its hidden hoist, npx skips the install, finds no bin and says <code>sh: graview: command not found</code>.</p>
+      <p>Holding only a document and a snapshot, <code>graview preview app.json --seed seed.json</code> draws the scene and Pages over them with nothing built, and <code>graview shots</code> photographs its places.</p>
+    </section>
     <section id="checkout" aria-labelledby="h-checkout">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-checkout">Working on the framework itself</h2></div>
       <p>A product can consume a checkout of the framework by path instead of a registry, the way the first-party examples do: build the framework, then <code>pnpm graview create ../my-app --link .</code>. The project resolves every <code>@graview/*</code> import into the checkout's <code>dist/</code>, and its dev server rebuilds when the framework does.</p>
