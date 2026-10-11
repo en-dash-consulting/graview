@@ -229,6 +229,23 @@ export const addWorkshop = defineMutation("add-workshop", {
   },
 });
 
+/*
+ * AN ACT THAT MAKES SOMETHING FROM A RECORD, told a name the record also
+ * has: the workshop's `title` is not the talk's (W-180). Renaming a talk in
+ * place must never spin a workshop off it.
+ */
+export const spinOff = defineMutation("spin-off", {
+  title: "Spin off a workshop",
+  description: "Turn a talk into a hands-on workshop of its own.",
+  creates: ["workshop"],
+  subject: { kinds: ["talk"], arg: "talkId" },
+  input: z.object({ talkId: nodeRef(["talk"]), title: z.string().min(1).max(160), startsAt: dateTime, capacity: z.number().int().min(1).max(500) }),
+  describe: (args, graph) => `Spin ${args.title} off ${nameOf(graph, args.talkId)}`,
+  apply(ctx, args) {
+    ctx.addNode({ id: ctx.freshId(args.title, "workshop"), kind: "workshop", label: args.title, startsAt: args.startsAt, capacity: args.capacity, status: "planned" });
+  },
+});
+
 export const cancelWorkshop = defineMutation("cancel-workshop", {
   title: "Cancel it",
   description: "Cancel a workshop. It leaves the timetable, never the record.",
@@ -297,10 +314,11 @@ export const addRoom = defineMutation("add-room", {
   title: "Add a room",
   description: "Add a room the conference may use.",
   creates: ["room"],
-  input: z.object({ building: z.string().min(1).max(80), name: z.string().min(1).max(120), seats: z.number().int().min(1).max(5000) }),
+  // A box nobody need tick: a room with a step is a room, and the form must send that as a no (W-177).
+  input: z.object({ building: z.string().min(1).max(80), name: z.string().min(1).max(120), seats: z.number().int().min(1).max(5000), stepFree: z.boolean() }),
   describe: (args) => `Add ${roomKind.label!({ id: "", ...args } as never)}`,
   apply(ctx, args) {
-    ctx.addNode({ id: ctx.freshId(args.name, "room"), kind: "room", building: args.building, name: args.name, seats: args.seats });
+    ctx.addNode({ id: ctx.freshId(args.name, "room"), kind: "room", building: args.building, name: args.name, seats: args.seats, stepFree: args.stepFree });
   },
 });
 
@@ -357,6 +375,6 @@ export const mutations = [
   addPresenter, removePresenter, reassignProposer,
   tag, untag,
   addSession, holdIn, chair,
-  addWorkshop, cancelWorkshop, lead, unlead,
+  addWorkshop, spinOff, cancelWorkshop, lead, unlead,
   addSpeaker, checkIn, addRoom, addTopic, addStaff, lookAfter, stopLookingAfter,
 ];

@@ -164,10 +164,21 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", he
   const { store, principal } = useGraview<S>();
   const nodes = useGraph();
   /* Without the kinds kept from this seat: a stranger is not told the store has no test drives. */
+  /*
+   * Nor the kinds it sees only its own of, or none of (W-183): a member with
+   * no holds of their own, in a library with twenty, was shown "Holds none
+   * yet" under "what has to exist before the rest of it can" as the home
+   * page — and a visitor "Members none yet" over 280 of them. What exists
+   * there is not this seat's to count, and their own first is on the
+   * kind's own page.
+   */
   const chain = useMemo(() => {
     const whole = chainOf(store);
     const kept = store.kindsKeptFrom(principal);
-    return kept.size === 0 ? whole : { ...whole, order: whole.order.filter((entry) => !kept.has(entry.kind)) };
+    const sights = store.policy?.sees ?? [];
+    const roles: readonly string[] = principal?.roles ?? [];
+    const partly = (kind: string) => sights.length > 0 && !sights.some((sight) => !sight.own && sight.kinds.includes(kind) && (sight.roles === "*" || roles.some((role) => sight.roles.includes(role))));
+    return { ...whole, order: whole.order.filter((entry) => !kept.has(entry.kind) && !partly(entry.kind)) };
   }, [store, principal]);
   const counts = useMemo(() => {
     const found: Record<string, number> = {};

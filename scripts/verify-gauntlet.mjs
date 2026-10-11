@@ -202,6 +202,17 @@ async function landings(browser) {
       await page.close();
     }
   }
+  /*
+   * THE NARROWEST PHONE AT A READER'S LARGEST TEXT (W-189): the bar's
+   * person was pushed 23 pixels past the edge of every page of the tool
+   * library at 320 wide and 32px text. The watch judges the sideways scroll;
+   * this is the state for it to judge.
+   */
+  const narrow = await newPage(browser, 320, "light");
+  await open(narrow, "/pages", { scheme: "light", seat: SEATS[0].id });
+  await narrow.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
+  await narrow.waitForTimeout(1200);
+  await narrow.close();
 }
 
 /* ---------------------------------------------------------- the scene */

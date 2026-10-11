@@ -129,6 +129,24 @@ describe("a store whose log spans two declaration versions", () => {
     expect(() => opened.store.undo(planted.batch)).toThrow(CHANGE);
     opened.close();
   });
+
+  /*
+   * THE UPGRADE ITSELF is not standing in its own way (W-185): asked to take
+   * back migration 1→2, the store said it "was done before the declaration
+   * changed (migration 1→2 …)" — the change named as what came after it.
+   */
+  it("says why the upgrade itself is not taken back, without naming it as its own obstacle", async () => {
+    const adapter = createFileAdapter(scratch());
+    const { opened } = await spanningTwoVersions(adapter);
+    const upgrade = opened.store.log.all().find((op) => op.author.id === "ship:migration")!;
+    const check = opened.store.canUndo(upgrade.batch);
+    expect(check.ok).toBe(false);
+    if (!check.ok) {
+      expect(check.message).toContain("it changed the declaration, and undo does not reach back");
+      expect(check.message).not.toContain("done before the declaration changed");
+    }
+    opened.close();
+  });
 });
 
 describe("the epochs a store begins with", () => {

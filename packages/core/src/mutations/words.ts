@@ -33,11 +33,11 @@ export function argumentWords(
     const declared = definition.display?.labels?.[name];
     return {
       // A kind's `label` is its name: "Label *" is the field's key, not a word for it.
-      label: declared ?? (name === "label" ? "Name" : fieldWords(definition, name)),
+      label: declared ?? fieldWords(definition, name),
       option: (value) => (format ? format(value) : humanizeField(value)),
     };
   }
-  return { label: name === "label" ? "Name" : humanizeField(name), option: (value) => humanizeField(value) };
+  return { label: fieldWords(undefined, name), option: (value) => humanizeField(value) };
 }
 
 /** Arguments a mutation refused, each with where it was and what was wrong. */

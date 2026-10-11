@@ -189,7 +189,8 @@ function Control<S extends AnySchema>({
     spec.control === "node" && !spec.kinds.includes("*")
       ? spec.kinds.map((kind) => humanizeField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
       : words(spec.name).label;
-  const title = named + (spec.optional ? "" : " *");
+  // A box is always answered — unticked is a no — so it is never marked as one that must be.
+  const title = named + (spec.optional || spec.control === "boolean" ? "" : " *");
 
   switch (spec.control) {
     case "text":
