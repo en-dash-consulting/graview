@@ -36,6 +36,10 @@
     "./keep": {
       "types": "./dist/keep.d.ts",
       "default": "./dist/keep.js"
+    },
+    "./turn": {
+      "types": "./dist/turn.d.ts",
+      "default": "./dist/turn.js"
     }
   },
   "scripts": {

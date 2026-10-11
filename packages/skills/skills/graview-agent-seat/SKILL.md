@@ -166,9 +166,9 @@ path to the store:
   (FR-160): the seat hands it its framing, the conversation and its read
   tools as the person (`call` refuses any write, an unseen record, and
   every call past twelve); the host loops and returns the last text.
-  `turnThroughMessages(post)` is that loop over one Messages request at a
-  time; `complete` alone answers from the prompt, which holds no record's
-  fields. `ai.decide` (`jevDecide`) answers typed decisions;
+  `turnThroughMessages(post)` (`@graview/tools/turn`, the loop alone) is
+  that loop over one Messages request at a time; `complete` alone
+  answers from the prompt, which holds no record's fields. `ai.decide` (`jevDecide`) answers typed decisions;
   `onDevice: true` runs a model in the browser. **Your own responder goes
   in through the shell**: `<Shell chat={{ respond }} />`,
   which hands it to the ask field. A proposal is one line with "Do it" and

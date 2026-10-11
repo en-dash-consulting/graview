@@ -484,6 +484,7 @@ export default defineConfig({
       "@graview/tools/go": framework("tools/src/go.ts"),
       "@graview/tools/draft": framework("tools/src/draft.ts"),
       "@graview/tools/keep": framework("tools/src/keep.ts"),
+      "@graview/tools/turn": framework("tools/src/turn.ts"),
       "@graview/tools": framework("tools/src/index.ts"),
       "@graview/render/gpu": framework("render/src/gpu.ts"),
       "@graview/render": framework("render/src/index.ts"),
