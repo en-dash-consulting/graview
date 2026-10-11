@@ -158,6 +158,9 @@ interface Judgments {
   readonly unnamed?: Set<string>;
 }
 
+/** Nothing judged yet. */
+const fresh = (): Judgments => ({ judged: new Map(), shown: new Map() });
+
 /** A seat's lens, and a way to pin it over judgments the caller keeps. */
 function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens; readonly pinWith: (memo: Judgments) => SeatLens } {
   const optional = optionalIn(store.schema);
@@ -247,7 +250,7 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
       ...(timeline ? { timeline } : {}),
       hides: () => hidesFrom(store, principal),
       // A pinned lens is already of one moment: pinning it again is itself.
-      pin: pinned ? () => lens : () => pinWith({ judged: new Map(), shown: new Map() }),
+      pin: pinned ? () => lens : () => pinWith(fresh()),
     };
     return lens;
   };
@@ -330,8 +333,7 @@ export function logSeenBy(store: Judged, principal: Principal): readonly Operati
   const length = (store.log as { readonly length?: number }).length ?? all.length;
   const horizon = length - all.length;
   const off = [...turnedOff(store, principal)].sort().join("\u0000");
-  const judged = isSystem(principal) ? principal : actingAs(principal);
-  const key = `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
+  const key = seatKey(principal);
   let seats = SERVED_LOGS.get(store.log);
   if (!seats) SERVED_LOGS.set(store.log, (seats = new Map()));
   const held = seats.get(key);
@@ -343,7 +345,7 @@ export function logSeenBy(store: Judged, principal: Principal): readonly Operati
     if (held.length === length) return held.ops;
     const added = all.slice(held.length - horizon);
     // Judged afresh, to compare with what serving the old ops read.
-    const now = pinWith({ judged: new Map(), shown: new Map() });
+    const now = pinWith(fresh());
     let still = true;
     const touched = touchedIds(added);
     for (const id of touched) {
@@ -371,7 +373,7 @@ export function logSeenBy(store: Judged, principal: Principal): readonly Operati
       return ops;
     }
   }
-  const judgments: Judgments = { judged: new Map(), shown: new Map(), unnamed };
+  const judgments: Judgments = { ...fresh(), unnamed };
   const ops = redact(all, pinWith(judgments));
   seats.set(key, { horizon, off, length, last: all.at(-1), ops, judgments });
   return ops;
@@ -408,7 +410,7 @@ export function answerSeenBy<
     readonly violationsAfter?: readonly Violation[];
     readonly ops?: readonly Operation[];
   },
->(store: Judged, principal: Principal, answer: A): A {
+>(store: Judged & { allInvariants(): readonly InvariantDefinition[] }, principal: Principal, answer: A): A {
   if (!hidesFrom(store, principal)) return answer;
   const lens = seatLens(store, principal);
   const has = (id: string) => store.graph.getNode(id) !== undefined || recordsOf(store.log).kindOf(id) !== undefined;
@@ -482,10 +484,18 @@ export function answerSeenBy<
   if (answer.reads) out["reads"] = answer.reads.filter((id) => lens.shows(id) && has(id));
   if (answer.writes) out["writes"] = answer.writes.filter(lens.shows);
   if (answer.intent !== undefined && namesUnseen(answer.intent, lens.sees)) out["intent"] = WITHHELD_INTENT;
+  /*
+   * THE RULES IT BROKE OR MENDED, AS THE SEAT JUDGES THEM (FR-55): judged
+   * over the whole graph, before the change or after it, a rule's line or
+   * sentence may count or name records this seat may not see. A change
+   * made, what it broke and what stands after it are judged again over
+   * what the seat sees now; what it mended, and a preview's, are said by
+   * their titles where the rule reads beyond its subject. The words are
+   * `@graview/core/lines`', which a seat's tools load before they answer.
+   */
   for (const key of ["introduces", "resolves", "violationsAfter"] as const) {
     const violations = answer[key];
-    // Without their lines: worked out over the whole graph, before the change or after it, a line may name records this seat may not see (FR-55).
-    if (violations) out[key] = linedOver(null, [], violations.filter((violation) => violationShown(lens, has, violation)));
+    if (violations) out[key] = linedOver(key !== "resolves" && answer.ops ? seenBy(store as never, principal).graph : null, store.allInvariants() as never, violations.filter((violation) => violationShown(lens, has, violation)), true);
   }
   return out as A;
 }
@@ -496,6 +506,12 @@ export function readingOf(ops: readonly Operation[], epochs: LogReading["epochs"
 }
 
 const VIEWS = new WeakMap<object, Map<string, unknown>>();
+
+/** A seat, keyed by the seat the policy judges: an agent for Nick is not the same agent alone. */
+function seatKey(principal: Principal): string {
+  const judged = isSystem(principal) ? principal : actingAs(principal);
+  return `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
+}
 
 const bound = (target: object, prop: PropertyKey): unknown => {
   const value = Reflect.get(target, prop, target);
@@ -517,9 +533,7 @@ const bound = (target: object, prop: PropertyKey): unknown => {
 export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principal): Store<S> {
   // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
   if (!hidesFrom(store, principal)) return store;
-  // Keyed by the seat the policy judges: an agent for Nick is not the same agent alone.
-  const judged = isSystem(principal) ? principal : actingAs(principal);
-  const key = `${principal.kind}|${judged.id ?? ""}|${(judged.roles ?? []).join(",")}|${principal.onBehalfOf ? "for" : ""}`;
+  const key = seatKey(principal);
   let views = VIEWS.get(store);
   if (!views) VIEWS.set(store, (views = new Map()));
   const held = views.get(key);
@@ -570,6 +584,8 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
     const creators = Object.fromEntries(Object.entries(epoch.creators).filter(([id, maker]) => kept.has(id) && !namesUnseen(maker, lens.sees)));
     return { ...epoch, base, creators };
   };
+  /** An epoch as this seat is served it, when there is one. */
+  const servedIf = <E extends Parameters<typeof servedEpoch>[0]>(epoch: E | undefined) => epoch && servedEpoch(epoch);
   /*
    * THE LOG, REDACTED RATHER THAN GAPPED (FR-16): every op in its place,
    * and one that touched what this seat may not see withheld — so the log
@@ -584,11 +600,13 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "getNode":
           return (id: string) => served(target.getNode(id));
         case "has":
-          return (id: string) => seenId(id);
+          return seenId;
         case "allNodes":
           return () => pinned().servedAll(target.allNodes());
         case "nodesOfKind":
           return (kind: never) => pinned().servedAll(target.nodesOfKind(kind));
+        case "count":
+          return (kind: never) => pinned().servedAll(target.nodesOfKind(kind)).length;
         case "allEdges":
           return () => target.allEdges().filter(pinned().seenEdge);
         case "edgesOfKind":
@@ -620,8 +638,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           };
         case "size": {
           const now = pinned();
-          const nodes = target.allNodes().filter((node) => now.seenNode(node as never)).length;
-          return { nodes, edges: target.allEdges().filter(now.seenEdge).length };
+          return { nodes: now.servedAll(target.allNodes()).length, edges: target.allEdges().filter(now.seenEdge).length };
         }
         default:
           return bound(target, prop);
@@ -641,12 +658,9 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return () => [...ops()];
         // Each epoch's base as this seat is served it, so its log folds from there to what it is served (FR-55).
         case "epochs":
-          return () => target.epochs().map((epoch) => servedEpoch(epoch));
+          return () => target.epochs().map(servedEpoch);
         case "lastEpoch":
-          return () => {
-            const epoch = target.lastEpoch();
-            return epoch && servedEpoch(epoch);
-          };
+          return () => servedIf(target.lastEpoch());
         case "live":
           return () => {
             const all = ops();
@@ -673,16 +687,22 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
         case "log":
           return log;
         case "snapshot":
-          return () => (graph as unknown as { snapshot(): unknown }).snapshot();
+          // The graph's own, as this seat is served it: the proxy hands a function that needs no `this`.
+          return (graph as unknown as { snapshot(): unknown }).snapshot;
         case "batches":
           return batches;
         // Judged over what this seat sees, so the sentence never names a change it may not (FR-16).
         case "canUndo":
           return (batchIds: string | readonly string[]) => checkUndo(reading(), typeof batchIds === "string" ? [batchIds] : batchIds);
+        /*
+         * JUDGED OVER WHAT THIS SEAT SEES, its lines and its facts with it,
+         * as a page served only what its seat sees judges (FR-55): over the
+         * whole graph, a rule that counts what the seat may not see is
+         * broken, and says "3 proposed", to a seat that sees one. A record it
+         * may not see never makes, mends or words one of its problems.
+         */
         case "violations":
-          // Each line said again over what this seat sees: a line over the whole graph may name records it may not (FR-55).
-          return (...args: Parameters<Store<S>["violations"]>) =>
-            linedOver(graph, target.allInvariants() as readonly InvariantDefinition<AnySchema>[], target.violations(...args).filter((violation) => violationShown(lens, (id) => full.has(id), violation)));
+          return (context?: Parameters<Store<S>["violations"]>[0]) => target.violations(context, graph).filter((violation) => violationShown(lens, (id) => full.has(id), violation));
         // What no longer fits, about records this seat is served and naming none it may not see (FR-55).
         case "findings":
           return () =>
@@ -701,10 +721,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return principal;
         // A checkpoint taken through the seat's view is the one it is served.
         case "checkpoint":
-          return (...args: Parameters<Store<S>["checkpoint"]>) => {
-            const epoch = target.checkpoint(...args);
-            return epoch && servedEpoch(epoch);
-          };
+          return (...args: Parameters<Store<S>["checkpoint"]>) => servedIf(target.checkpoint(...args));
         default:
           return bound(target, prop);
       }

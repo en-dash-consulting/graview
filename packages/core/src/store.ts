@@ -962,9 +962,12 @@ export class Store<S extends AnySchema> {
     return typeof pinned === "string" && /^\d{4}-\d{2}-\d{2}$/.test(pinned) ? pinned : undefined;
   }
 
-  /** Current violations, evaluated fresh — nothing is cached or stale. */
-  violations(context?: InvariantContext): Violation[] {
-    return evaluate(this.graph, this.allInvariants(), {
+  /**
+   * Current violations, evaluated fresh — nothing is cached or stale. `over`
+   * judges them over another reading of this graph: a seat's (FR-55).
+   */
+  violations(context?: InvariantContext, over: Graph<S> = this.graph): Violation[] {
+    return evaluate(over, this.allInvariants(), {
       ...this.invariantOptions,
       ...(context === undefined ? {} : { context }),
     });

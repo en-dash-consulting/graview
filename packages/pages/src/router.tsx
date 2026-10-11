@@ -519,6 +519,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.people ? { people: context.people } : {})}
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
+      {...(context.app ? { app: context.app } : {})}
     >
       {routed}
       <PageAsk context={context} />

@@ -76,7 +76,17 @@ const dropZone = bound.defineMutation("drop-zone", {
   },
 });
 
-const OWNED = "sourcevision owns the zones: re-run the analysis to change them.";
+const addTask = bound.defineMutation("add-task", {
+  title: "Add a task",
+  description: "Add a task.",
+  creates: ["task"],
+  input: z.object({ id: z.string(), title: z.string(), status: z.string() }),
+  apply(ctx, args) {
+    ctx.addNode({ id: args.id, kind: "task", title: args.title, status: args.status });
+  },
+});
+
+const OWNED ="sourcevision owns the zones: re-run the analysis to change them.";
 const mapping: SyncMapping = {
   system: "n-dx",
   resources: [
@@ -88,7 +98,7 @@ const mapping: SyncMapping = {
 const projected = () =>
   new Store({
     schema,
-    mutations: [retitle, rezone, dropTask, dropZone],
+    mutations: [retitle, rezone, dropTask, dropZone, addTask],
     snapshot: {
       nodes: [
         { id: "t1", kind: "task", title: "Write it", status: "pending", lastModified: "v1" },
@@ -286,6 +296,16 @@ describe("a delete of a synced record", () => {
     expect(report.state.links["t1"]).toBeUndefined();
   });
 
+  it("is sent when it was made before the engine was, from the version the record was projected with", async () => {
+    const store = projected();
+    const from = remote();
+    store.apply({ name: "retitle", args: { id: "t1", title: "Renamed" } });
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const report = await engine(store, from).run();
+    expect(from.sent).toEqual([[{ resource: "task", id: "t1", localId: "t1", deleted: true }]]);
+    expect(report.pushed).toEqual(["t1"]);
+  });
+
   it("is refused once with the remote's reason, not on every pass", async () => {
     const store = projected();
     const from = remote([], (write) => (write.deleted ? "The projection never deletes: remove it in n-dx." : undefined));
@@ -331,7 +351,7 @@ function fakeServer() {
   let sessions = 0;
   let forget = false;
   const fetch = async (_url: string, init?: RequestInit): Promise<Response> => {
-    const body = JSON.parse(String(init?.body)) as { method: string; params?: { name: string; arguments: unknown } };
+    const body = JSON.parse(String(init?.body)) as { id?: number; method: string; params?: { name: string; arguments: unknown } };
     const session = (init?.headers as Record<string, string>)["mcp-session-id"];
     if (body.method === "initialize") return new Response("{}", { headers: { "mcp-session-id": `s${++sessions}` } });
     if (body.method === "notifications/initialized") return new Response("", { status: 202 });
@@ -341,7 +361,7 @@ function fakeServer() {
     }
     calls.push(body.params!);
     const text = JSON.stringify({ id: "t1", lastModified: "v9", session });
-    return new Response(`event: message\ndata: ${JSON.stringify({ result: { content: [{ type: "text", text }] } })}\n\n`, {
+    return new Response(`event: message\ndata: ${JSON.stringify({ jsonrpc: "2.0", id: body.id, result: { content: [{ type: "text", text }] } })}\n\n`, {
       headers: { "content-type": "text/event-stream" },
     });
   };
@@ -358,6 +378,49 @@ describe("a remote that speaks MCP", () => {
 
     server.forgetNext();
     expect(await call("edit_item", { id: "t1", title: "x" })).toMatchObject({ session: "s2" });
+  });
+
+  it("reads the reply whose id matches its request from a stream that interleaves other messages", async () => {
+    const reply = (id: number, text: string) => JSON.stringify({ jsonrpc: "2.0", id, result: { content: [{ type: "text", text }] } });
+    const fetch = async (_url: string, init?: RequestInit): Promise<Response> => {
+      const body = JSON.parse(String(init?.body)) as { id?: number; method: string };
+      if (body.method === "initialize") return new Response("{}", { headers: { "mcp-session-id": "s1" } });
+      if (body.method === "notifications/initialized") return new Response("", { status: 202 });
+      const ours = reply(body.id!, '{"title":"ours"}');
+      const stream = [
+        ": a comment the stream may carry",
+        `data: ${JSON.stringify({ jsonrpc: "2.0", method: "notifications/progress", params: { progress: 1 } })}`,
+        "",
+        `data: ${JSON.stringify({ jsonrpc: "2.0", id: 99, method: "ping" })}`,
+        "",
+        `data: ${reply(body.id! + 100, '{"title":"not ours"}')}`,
+        "",
+        // The reply itself, its JSON split across two data lines (rejoined with a newline, which JSON reads as space).
+        "event: message",
+        `data: ${ours.slice(0, ours.indexOf('"result"'))}`,
+        `data:${ours.slice(ours.indexOf('"result"'))}`,
+        "",
+        `data: ${JSON.stringify({ jsonrpc: "2.0", method: "notifications/message", params: { level: "info" } })}`,
+        "",
+      ].join("\r\n");
+      return new Response(stream, { headers: { "content-type": "text/event-stream" } });
+    };
+    const call = mcpClient({ url: "http://hub/mcp/rex", allow: ["get_item"], fetch });
+    expect(await call("get_item", { id: "t1" })).toEqual({ title: "ours" });
+  });
+
+  it("says when an answer carries no reply to its request, rather than reading another one", async () => {
+    const fetch = async (_url: string, init?: RequestInit): Promise<Response> => {
+      const body = JSON.parse(String(init?.body)) as { id?: number; method: string };
+      if (body.method === "initialize") return new Response("{}", { headers: { "mcp-session-id": "s1" } });
+      if (body.method === "notifications/initialized") return new Response("", { status: 202 });
+      const other = JSON.stringify({ jsonrpc: "2.0", id: body.id! + 1, result: { content: [{ type: "text", text: "{}" }] } });
+      return new Response(`data: ${other}\n\ndata: ${JSON.stringify({ jsonrpc: "2.0", method: "notifications/progress" })}\n\n`, {
+        headers: { "content-type": "text/event-stream" },
+      });
+    };
+    const call = mcpClient({ url: "http://hub/mcp/rex", allow: ["get_item"], fetch });
+    await expect(call("get_item", { id: "t1" })).rejects.toThrow("The MCP server sent no reply to get_item.");
   });
 
   it("is a RemoteSystem: each write made with the tools, each refusal its own", async () => {
@@ -541,5 +604,137 @@ describe("the engine keeps to its policy at the edges", () => {
     expect(sync.snapshot.conflicts).toBeUndefined();
     sync.resolve(first.conflicts[0]!, "theirs");
     expect(titleOf(store)).toBe("Ours");
+  });
+});
+
+describe("a record deleted here that the remote edited", () => {
+  const restoring = (store: Store<typeof schema>, from: RemoteSystem, conflicts?: ConflictPolicy) =>
+    new SyncEngine({
+      store,
+      mapping,
+      remote: from,
+      ...(conflicts ? { conflicts } : {}),
+      applyInbound: ({ localId, fields }) => ({ name: "retitle", args: { id: localId, ...fields } }),
+      createInbound: ({ id, fields }) => ({ name: "add-task", args: { id: `${id}-again`, title: fields["title"], status: fields["status"] } }),
+    });
+  const deletes = (from: { sent: RemoteWrite[][] }) => from.sent.flat().filter((write) => write.deleted);
+
+  it("report (the default): is held as a conflict, and the delete is not sent past the edit", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    const sync = engine(store, from);
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const report = await sync.run();
+    expect(report.conflicts).toEqual([
+      { localId: "t1", deleted: true, theirs: { title: "Theirs", status: "pending" }, base: { title: "Write it", status: "pending" } },
+    ]);
+    expect(deletes(from)).toEqual([]);
+    expect((await sync.run()).conflicts).toHaveLength(1);
+    expect(deletes(from)).toEqual([]);
+  });
+
+  it("resolve keeps ours: the delete goes on the next run", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    const sync = engine(store, from);
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const [conflict] = (await sync.run()).conflicts;
+    sync.resolve(conflict!, "ours");
+    const after = await sync.run();
+    expect(after.conflicts).toEqual([]);
+    expect(deletes(from)).toEqual([{ resource: "task", id: "t1", localId: "t1", deleted: true }]);
+    expect(after.state.links["t1"]).toBeUndefined();
+  });
+
+  it("resolve keeps theirs: the record is made again with the remote's values, linked, and nothing is sent", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    const sync = restoring(store, from);
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const [conflict] = (await sync.run()).conflicts;
+    sync.resolve(conflict!, "theirs");
+    expect(titleOf(store, "t1-again")).toBe("Theirs");
+    expect(sync.snapshot.links["t1-again"]).toMatchObject({ id: "t1", version: "v2" });
+    expect(sync.snapshot.conflicts).toBeUndefined();
+    await sync.run();
+    expect(from.sent).toEqual([]);
+  });
+
+  it("theirs: the record is made again in the same pass and the report says so; without createInbound the remote keeps it and nothing is sent", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const report = await restoring(store, from, "theirs").run();
+    expect(report.resolved).toEqual([
+      { localId: "t1", deleted: true, theirs: { title: "Theirs", status: "pending" }, base: { title: "Write it", status: "pending" }, took: "theirs" },
+    ]);
+    expect(report.applied).toEqual(["t1-again"]);
+    expect(titleOf(store, "t1-again")).toBe("Theirs");
+    expect(from.sent).toEqual([]);
+
+    const bare = projected();
+    const from2 = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    bare.apply({ name: "drop-task", args: { id: "t1" } });
+    const kept = await engine(bare, from2, "theirs").run();
+    expect(kept.resolved.map((settled) => settled.took)).toEqual(["theirs"]);
+    expect(kept.state.links["t1"]).toBeUndefined();
+    expect(from2.sent).toEqual([]);
+  });
+
+  it("ours: the delete is sent in the same pass, and the report says so", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const report = await engine(store, from, "ours").run();
+    expect(report.resolved.map((settled) => [settled.localId, settled.took])).toEqual([["t1", "ours"]]);
+    expect(deletes(from)).toEqual([{ resource: "task", id: "t1", localId: "t1", deleted: true }]);
+  });
+
+  it("is not a conflict when the remote's news changes nothing they agreed: the delete goes", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Write it")] }]);
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const report = await engine(store, from).run();
+    expect(report.conflicts).toEqual([]);
+    expect(deletes(from)).toHaveLength(1);
+  });
+
+  it("is nobody's to choose once the remote deletes it too, and nothing is said gone", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }, { changes: [{ resource: "task", id: "t1", version: "v3", deleted: true }] }]);
+    const sync = engine(store, from);
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    await sync.run();
+    const after = await sync.run();
+    expect(after.conflicts).toEqual([]);
+    expect(after.gone).toEqual([]);
+    expect(after.state.links["t1"]).toBeUndefined();
+    expect(from.sent).toEqual([]);
+  });
+
+  it("holds a delete of a record already held in conflict, rather than sending it", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    const sync = engine(store, from);
+    store.apply({ name: "retitle", args: { id: "t1", title: "Ours" } });
+    await sync.run();
+    store.apply({ name: "drop-task", args: { id: "t1" } });
+    const after = await sync.run();
+    expect(after.conflicts).toEqual([
+      { localId: "t1", deleted: true, theirs: { title: "Theirs", status: "pending" }, base: { title: "Write it", status: "pending" } },
+    ]);
+    expect(deletes(from)).toEqual([]);
+  });
+
+  it("holds field by field once the delete is taken back, never sending ours over their edit", async () => {
+    const store = projected();
+    const from = remote([{ changes: [theirTitle("v2", "Theirs")] }]);
+    const sync = engine(store, from);
+    const dropped = store.apply({ name: "drop-task", args: { id: "t1" } });
+    await sync.run();
+    store.undo(dropped.batch);
+    const after = await sync.run();
+    expect(after.conflicts).toEqual([{ localId: "t1", field: "title", ours: "Write it", theirs: "Theirs", base: "Write it" }]);
+    expect(from.sent).toEqual([]);
   });
 });

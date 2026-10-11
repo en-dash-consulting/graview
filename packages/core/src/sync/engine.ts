@@ -9,6 +9,7 @@ import {
   EMPTY_SYNC_STATE,
   systemAuthor,
   type ConflictPolicy,
+  type DeletedConflict,
   type RemoteAck,
   type RemoteLink,
   type RemoteSystem,
@@ -20,9 +21,7 @@ import {
 } from "./types.js";
 
 /** A conflict the engine's policy settled, and the side it took. */
-export interface SettledConflict extends SyncConflict {
-  readonly took: "ours" | "theirs";
-}
+export type SettledConflict = SyncConflict & { readonly took: "ours" | "theirs" };
 
 /**
  * What a run of the engine did, stated as facts rather than a count.
@@ -111,7 +110,9 @@ function remoteFields(
 }
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
-const heldKey = (localId: string, field: string) => `${localId}\u0000${field}`;
+/** Where a conflict is held: by node and field, and a record deleted here by node alone. */
+const heldKey = (localId: string, field = "") => `${localId}\u0000${field}`;
+const keyOf = (conflict: SyncConflict) => heldKey(conflict.localId, conflict.field);
 
 export interface SyncOptions<S extends AnySchema> {
   readonly store: Store<S>;
@@ -121,8 +122,10 @@ export interface SyncOptions<S extends AnySchema> {
    * What a field both sides changed becomes. `report` (the default) holds
    * it — neither side is sent or taken until `resolve` says which stands;
    * `theirs` takes the remote's value through `applyInbound`, as any inbound
-   * change lands; `ours` keeps ours and sends it in the same pass. The
-   * report says each one it settled, and which side it took.
+   * change lands; `ours` keeps ours and sends it in the same pass. A record
+   * deleted here that the remote edited is one too: held under `report`,
+   * made again under `theirs` (`createInbound`), deleted there under `ours`.
+   * The report says each one it settled, and which side it took.
    */
   readonly conflicts?: ConflictPolicy;
   /**
@@ -142,7 +145,10 @@ export interface SyncOptions<S extends AnySchema> {
    * and the report says so (`gone`).
    */
   removeInbound?(call: { readonly localId: string; readonly kind: string }): { readonly name: string; readonly args: Record<string, unknown> } | null;
-  /** Called for a remote record we have never seen. Return null to ignore it. */
+  /**
+   * Called for a remote record we have never seen, and to make again one
+   * deleted here when its conflict takes theirs. Return null to ignore it.
+   */
   createInbound?(change: {
     readonly resource: string;
     readonly id: string;
@@ -234,16 +240,29 @@ export class SyncEngine<S extends AnySchema> {
      * so the change is sent rather than taken for what the remote holds.
      */
     const before = new Map<string, Record<string, unknown>>();
+    // And a record deleted here before then is linked as it was, so the delete is sent (or held against the remote's edit).
+    const removed = new Map<string, Record<string, unknown>>();
     for (const op of this.options.store.log.all()) {
       if (op.author.kind === "system" && op.author.id === this.options.mapping.system) continue;
       for (const primitive of op.primitives) {
+        if (primitive.op === "remove-node") {
+          const node = primitive.node as unknown as Record<string, unknown>;
+          if (!removed.has(node["id"] as string)) removed.set(node["id"] as string, node);
+        }
         if (primitive.op !== "patch-node") continue;
         const was = before.get(primitive.id) ?? {};
         for (const [field, value] of Object.entries(primitive.before ?? {})) if (!Object.hasOwn(was, field)) was[field] = value;
         before.set(primitive.id, was);
       }
     }
-    for (const [localId, { node: now, mapping }] of this.participants()) {
+    const graph = this.options.store.graph;
+    const participants = this.participants();
+    for (const [localId, node] of removed) {
+      if (graph.getNode(localId)) continue;
+      const mapping = this.mappingFor(node["kind"] as string);
+      if (mapping && mapping.kind === node["kind"] && (!mapping.match || mapping.match(node))) participants.set(localId, { node, mapping });
+    }
+    for (const [localId, { node: now, mapping }] of participants) {
       const node = { ...now, ...before.get(localId) };
       const version = mapping.version ? node[mapping.version] : undefined;
       if ((typeof version !== "string" && typeof version !== "number") || version === "") continue;
@@ -260,7 +279,7 @@ export class SyncEngine<S extends AnySchema> {
 
   /** The fields held in conflict, by node and field. */
   private held(): Map<string, SyncConflict> {
-    return new Map((this.state.conflicts ?? []).map((conflict) => [heldKey(conflict.localId, conflict.field), conflict]));
+    return new Map((this.state.conflicts ?? []).map((conflict) => [keyOf(conflict), conflict]));
   }
 
   /**
@@ -273,17 +292,50 @@ export class SyncEngine<S extends AnySchema> {
     if (conflicts.length === 0) return;
     const graph = this.options.store.graph as GraphReader<NodeOfSchema<S>>;
     let links = this.state.links;
-    const still = conflicts.filter((conflict) => {
+    let changed = false;
+    const still = new Map<string, SyncConflict>();
+    for (const conflict of conflicts) {
       const node = graph.getNode(conflict.localId) as Record<string, unknown> | undefined;
       const link = links[conflict.localId];
       const mapping = link ? this.mappingFor(link.resource) : undefined;
-      if (!node || !link || !mapping || !same(mappedValues(node, mapping)[conflict.field], conflict.theirs)) return true;
+      if (!link || !mapping) {
+        still.set(keyOf(conflict), conflict);
+        continue;
+      }
+      if (!node && !conflict.deleted) {
+        /*
+         * A RECORD HELD IN CONFLICT, DELETED HERE, is a delete of a record
+         * the remote edited: the delete is held too, not sent past the edit.
+         */
+        const key = heldKey(conflict.localId);
+        const was = still.get(key) as DeletedConflict | undefined;
+        still.set(key, { localId: conflict.localId, deleted: true, base: link.fields, theirs: { ...link.fields, ...was?.theirs, [conflict.field]: conflict.theirs } });
+        changed = true;
+        continue;
+      }
+      if (node && conflict.deleted) {
+        /*
+         * BACK HERE (the delete taken back): what it holds against what the
+         * remote made of it is held field by field, never sent over the edit.
+         */
+        const ours = mappedValues(node, mapping);
+        for (const [field, theirs] of Object.entries(conflict.theirs)) {
+          if (same(ours[field], theirs)) links = { ...links, [conflict.localId]: { ...links[conflict.localId]!, fields: { ...links[conflict.localId]!.fields, [field]: theirs } } };
+          else still.set(heldKey(conflict.localId, field), { localId: conflict.localId, field, ours: ours[field], theirs, base: conflict.base[field] });
+        }
+        changed = true;
+        continue;
+      }
+      if (!node || conflict.deleted || !same(mappedValues(node, mapping)[conflict.field], conflict.theirs)) {
+        still.set(keyOf(conflict), conflict);
+        continue;
+      }
       links = { ...links, [conflict.localId]: { ...link, fields: { ...link.fields, [conflict.field]: conflict.theirs } } };
-      return false;
-    });
-    if (still.length === conflicts.length) return;
+      changed = true;
+    }
+    if (!changed) return;
     const { conflicts: _was, ...rest } = this.state;
-    this.state = { ...rest, links, ...(still.length > 0 ? { conflicts: still } : {}) };
+    this.state = { ...rest, links, ...(still.size > 0 ? { conflicts: [...still.values()] } : {}) };
   }
 
   /**
@@ -326,9 +378,10 @@ export class SyncEngine<S extends AnySchema> {
     }
     // Something we had linked and no longer have is a deletion, and saying so
     // is better than leaving an orphan on the remote forever. A record the
-    // remote owns is not deleted there from here: `run` refuses it, once.
+    // remote owns is not deleted there from here: `run` refuses it, once. A
+    // delete held against the remote's edit waits for `resolve`.
     for (const [localId, link] of Object.entries(this.state.links)) {
-      if (seen.has(localId) || this.mappingFor(link.resource)?.readonly) continue;
+      if (seen.has(localId) || this.mappingFor(link.resource)?.readonly || held.has(heldKey(localId))) continue;
       writes.push({ resource: link.resource, id: link.id, localId, deleted: true });
     }
     return writes;
@@ -429,7 +482,31 @@ export class SyncEngine<S extends AnySchema> {
           links = rest;
           continue;
         }
-        if (!node) continue;
+        if (!node) {
+          /*
+           * DELETED HERE, EDITED THERE. A record the remote owns is refused
+           * below; one whose news changes nothing we agreed lets the delete
+           * go; otherwise the delete and the edit are a conflict like any
+           * other, and go where the policy says.
+           */
+          const record = { ...link.fields, ...ourFields(change.fields ?? {}, mapping) };
+          if (mapping.readonly) continue;
+          links[localId] = { ...link, version: change.version };
+          if (Object.keys(record).every((field) => same(record[field], link.fields[field]))) continue;
+          for (const key of [...held.keys()]) if (held.get(key)!.localId === localId) held.delete(key);
+          const conflict: DeletedConflict = { localId, deleted: true, theirs: record, base: link.fields };
+          if (policy === "report") {
+            held.set(heldKey(localId), conflict);
+            continue;
+          }
+          resolved.push({ ...conflict, took: policy });
+          if (policy === "theirs") {
+            const made = this.restore(links, localId, record);
+            links = made.links;
+            if (made.id) applied.push(made.id);
+          }
+          continue;
+        }
         const theirs = ourFields(change.fields ?? {}, mapping);
         const ours = mappedValues(node, mapping);
 
@@ -618,6 +695,30 @@ export class SyncEngine<S extends AnySchema> {
   }
 
   /**
+   * MAKES A RECORD DELETED HERE AGAIN with the remote's values, through
+   * `createInbound` as any record new to us lands, and links what it made
+   * where the old one was. Without `createInbound` the remote keeps its
+   * record and this one stays deleted, unlinked: nothing is sent for it.
+   */
+  private restore(
+    links: Record<string, RemoteLink>,
+    localId: string,
+    record: Readonly<Record<string, unknown>>,
+  ): { links: Record<string, RemoteLink>; id?: string } {
+    const { [localId]: link, ...rest } = links;
+    const mapping = link ? this.mappingFor(link.resource) : undefined;
+    if (!link || !mapping) return { links: rest };
+    const created = this.options.createInbound?.({ resource: link.resource, id: link.id, fields: remoteFields(record, mapping) });
+    if (!created) return { links: rest };
+    const result = this.options.store.apply(created, {
+      author: systemAuthor(this.options.mapping.system),
+      intent: `${this.options.mapping.system}: restored ${link.resource}`,
+    });
+    const id = String(created.args["id"] ?? result.writes[0] ?? "");
+    return id ? { links: { ...rest, [id]: { ...link, fields: record } }, id } : { links: rest };
+  }
+
+  /**
    * Accepts one side of a conflict, and agrees the base so it stops being one.
    *
    * `theirs` writes their value through the ordinary inbound mutation, so it
@@ -626,12 +727,27 @@ export class SyncEngine<S extends AnySchema> {
    * the field is no longer held.
    */
   resolve(conflict: SyncConflict, take: "ours" | "theirs"): void {
+    this.release();
     const link = this.state.links[conflict.localId];
     if (!link) return;
     // One a later pull already settled, or that holds another value since, is not this one to choose: choosing it would agree on a value neither side holds.
-    if (!same(this.held().get(heldKey(conflict.localId, conflict.field))?.theirs, conflict.theirs)) return;
+    if (!same(this.held().get(keyOf(conflict))?.theirs, conflict.theirs)) return;
     const mapping = this.mappingFor(link.resource);
     if (!mapping) return;
+
+    if (conflict.deleted) {
+      /*
+       * A RECORD DELETED HERE AND EDITED THERE: `ours` lets the delete go on
+       * the next run; `theirs` makes the record again with the remote's
+       * values, linked at the version that edit made.
+       */
+      const held = this.held();
+      held.delete(keyOf(conflict));
+      const links = take === "theirs" ? this.restore(this.state.links, conflict.localId, conflict.theirs).links : this.state.links;
+      const { conflicts: _was, ...rest } = this.state;
+      this.state = { ...rest, ...this.heldState(held), links };
+      return;
+    }
 
     if (take === "theirs") {
       this.options.store.apply(

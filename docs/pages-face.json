@@ -1,12 +1,12 @@
 {
-  "at": "2026-10-04T15:10:20.665Z",
+  "at": "2026-10-11T18:04:25.511Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true,
+      "labeledInputs": true,
       "bigEnoughToHit": []
     },
     "homeIndexesKinds": true,
@@ -14,7 +14,7 @@
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true,
+      "labeledInputs": true,
       "bigEnoughToHit": []
     },
     "listLinksRecords": true,
@@ -22,7 +22,7 @@
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true,
+      "labeledInputs": true,
       "bigEnoughToHit": []
     },
     "recordSaysItsFacts": {
@@ -82,9 +82,225 @@
       },
       "ok": true
     },
+    "aListsFirstRecordStandsNearTheTopOfThePage": {
+      "within": {
+        "desk": 210,
+        "phone": 240
+      },
+      "seen": [
+        {
+          "app": "todo",
+          "path": "/pages/tasks",
+          "width": 1440,
+          "under": 48,
+          "seatFromTheFoot": 16,
+          "relatedRepeats": [],
+          "first": 248,
+          "fromTop": 200,
+          "lines": 1,
+          "selects": 0,
+          "count": "10 of 12 tasks",
+          "countedInAnEyebrow": false,
+          "scrolls": false,
+          "end": {
+            "end": 761,
+            "feet": [
+              846
+            ],
+            "last": "button act-open-add-task",
+            "ok": true
+          }
+        },
+        {
+          "app": "todo",
+          "path": "/pages/reasons",
+          "width": 1440,
+          "under": 48,
+          "seatFromTheFoot": 16,
+          "relatedRepeats": [],
+          "first": 214,
+          "fromTop": 166,
+          "lines": 1,
+          "selects": 0,
+          "count": "1 reason",
+          "countedInAnEyebrow": false,
+          "scrolls": false,
+          "end": {
+            "end": 277,
+            "feet": [
+              846
+            ],
+            "last": "li record-row",
+            "ok": true
+          }
+        },
+        {
+          "app": "todo",
+          "path": "/pages/tasks",
+          "width": 390,
+          "under": 93,
+          "seatFromTheFoot": 16,
+          "relatedRepeats": [],
+          "first": 332,
+          "fromTop": 239,
+          "lines": 1,
+          "selects": 0,
+          "count": "10 of 12 tasks",
+          "countedInAnEyebrow": false,
+          "scrolls": false,
+          "end": {
+            "end": 715,
+            "feet": [
+              790
+            ],
+            "last": "button act-open-add-task",
+            "ok": true
+          }
+        },
+        {
+          "app": "todo",
+          "path": "/pages/reasons",
+          "width": 390,
+          "under": 93,
+          "seatFromTheFoot": 16,
+          "relatedRepeats": [],
+          "first": 272,
+          "fromTop": 179,
+          "lines": 1,
+          "selects": 0,
+          "count": "1 reason",
+          "countedInAnEyebrow": false,
+          "scrolls": false,
+          "end": {
+            "end": 364,
+            "feet": [
+              790
+            ],
+            "last": "li record-row",
+            "ok": true
+          }
+        }
+      ],
+      "ok": true
+    },
+    "noSelectArrangesAList": {
+      "seen": [
+        {
+          "path": "/pages/tasks",
+          "width": 1440,
+          "lines": 1,
+          "selects": 0
+        },
+        {
+          "path": "/pages/reasons",
+          "width": 1440,
+          "lines": 1,
+          "selects": 0
+        },
+        {
+          "path": "/pages/tasks",
+          "width": 390,
+          "lines": 1,
+          "selects": 0
+        },
+        {
+          "path": "/pages/reasons",
+          "width": 390,
+          "lines": 1,
+          "selects": 0
+        }
+      ],
+      "ok": true
+    },
+    "everyWayToArrangeAListIsReachedByTheKeyboard": {
+      "seen": [
+        {
+          "width": 1440,
+          "words": [
+            "sort",
+            "group",
+            "add"
+          ],
+          "seen": [
+            {
+              "word": "sort",
+              "reached": true,
+              "entries": 13,
+              "visited": 13,
+              "closed": true,
+              "onTrigger": true
+            },
+            {
+              "word": "group",
+              "reached": true,
+              "entries": 7,
+              "visited": 7,
+              "closed": true,
+              "onTrigger": true
+            },
+            {
+              "word": "add",
+              "reached": true,
+              "entries": 44,
+              "visited": 44,
+              "closed": true,
+              "onTrigger": true
+            }
+          ],
+          "ok": true
+        },
+        {
+          "width": 390,
+          "words": [
+            "all"
+          ],
+          "seen": [
+            {
+              "word": "all",
+              "reached": true,
+              "entries": 64,
+              "visited": 64,
+              "closed": true,
+              "onTrigger": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "anArrangedAddressOpensTheListArranged": {
+      "seen": {
+        "sort": "due",
+        "sortSaid": "Sorted by due, latest first",
+        "group": "due",
+        "groupSaid": "Grouped by due, a month each",
+        "headings": [
+          "August 2026 3",
+          "September 2026 6",
+          "No due 3"
+        ]
+      },
+      "ok": true
+    },
+    "aShortListIsReadNotArranged": {
+      "seen": [
+        {
+          "width": 1440,
+          "count": "1 reason",
+          "controls": 0
+        },
+        {
+          "width": 390,
+          "count": "1 reason",
+          "controls": 0
+        }
+      ],
+      "ok": true
+    },
     "anEmptyStateSaysWhatToDoNext": {
-      "said": "Nothing here is called “zzzz”.Clear the search",
-      "away": 1,
+      "said": "Nothing here is called “zzzz”. Tasks. Show every one",
+      "away": 3,
       "ok": true
     },
     "theWordsFindItOnAPage": {
@@ -158,11 +374,11 @@
     "recordLinksItsStop": true,
     "placesIndex": {
       "cards": [
-        "/pages/places/who-may-do-what",
         "/pages/places/the-lists",
-        "/pages/places/the-month",
         "/pages/places/what-is-left",
-        "/pages/places/the-week"
+        "/pages/places/the-month",
+        "/pages/places/the-week",
+        "/pages/places/who-may-do-what"
       ],
       "inert": true,
       "drawn": true,
@@ -170,26 +386,28 @@
     },
     "navMirrorsTheBar": {
       "nav": [
-        "Who may do what",
-        "The lists",
+        "Home",
+        "Lists",
+        "Tasks",
         "The month",
-        "What is left",
         "The week",
-        "Today",
-        "Lists3",
-        "Tasks10",
-        "Rules3",
-        "Reasons1",
-        "People2",
-        "Invitations1",
-        "Problems2"
+        "Rules",
+        "Reasons",
+        "People",
+        "Invitations",
+        "The lists",
+        "What is left",
+        "Who may do what",
+        "Connections"
       ],
+      "outsideTheBar": [],
       "ok": true
     },
     "placePage": {
       "present": true,
       "picks": 9,
-      "stop": "/#view=the-week",
+      "asList": "/pages/tasks",
+      "repeats": false,
       "noSideScroll": true,
       "ok": true
     },
@@ -201,39 +419,38 @@
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true,
+      "labeledInputs": true,
       "bigEnoughToHit": []
     },
     "phonePlace": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true,
+      "labeledInputs": true,
       "bigEnoughToHit": []
     },
     "theAssistantIsOnThePage": {
-      "subject": "t-deposit",
-      "said": "Pay the deposit",
+      "said": "\"Pay the deposit\" was due 28 Aug 2026.",
       "offers": [
-        "What's wrong?",
-        "Tell me about Pay the deposit",
-        "What is here?"
+        "What's wrong with Pay the deposit?",
+        "Tasks due this week",
+        "Show tasks as a board by day"
       ],
       "ok": true
     },
     "aGroundedQuestionIsAnswered": {
-      "answered": "2 problems: \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\"; \"Pay the deposit\" was due 2026-08-28. The repairs below come from the rules",
+      "answered": "Went to Pay the deposit. Pay the deposit — a task (not finished, due 28 Aug 2026, day Tue). The list it is on: Today. Why this is here: The landlord holds the d",
       "ok": true
     },
     "aProposalAppliesFromThePage": {
-      "said": " on: Today. Why this is here: The landlord holds the date for 48 hours once the deposit…. Trouble: \"Pay the deposit\" was due 2026-08-28.Finish \"Pay the deposit\"",
+      "said": "hy this is here: The landlord holds the date for 48 hours once the deposit…. Trouble: \"Pay the deposit\" was due 28 Aug 2026.Finish \"Pay the deposit\"Do itNot now",
       "ok": true
     },
     "phoneAsk": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true,
+      "labeledInputs": true,
       "bigEnoughToHit": []
     },
     "theMapSaysHowItFitsTogether": {
@@ -265,14 +482,157 @@
       "related": "/pages/plots?tended-by=june",
       "path": "/pages/plots?tended-by=june",
       "rows": 1,
-      "note": "Only the plots tended by June · All plots",
+      "note": "Who looks after it: June×",
+      "ok": true
+    },
+    "theDerivedListArrangesOnOneQuietLine": {
+      "heads": [
+        {
+          "width": 1440,
+          "under": 48,
+          "seatFromTheFoot": 16,
+          "relatedRepeats": [],
+          "first": 241,
+          "fromTop": 193,
+          "lines": 1,
+          "selects": 0,
+          "count": "1 planting",
+          "countedInAnEyebrow": false,
+          "scrolls": false
+        },
+        {
+          "width": 390,
+          "under": 93,
+          "seatFromTheFoot": 16,
+          "relatedRepeats": [],
+          "first": 298,
+          "fromTop": 205,
+          "lines": 1,
+          "selects": 0,
+          "count": "1 planting",
+          "countedInAnEyebrow": false,
+          "scrolls": false
+        }
+      ],
+      "keys": {
+        "words": [
+          "sort",
+          "group",
+          "add"
+        ],
+        "seen": [
+          {
+            "word": "sort",
+            "reached": true,
+            "entries": 8,
+            "visited": 8,
+            "closed": true,
+            "onTrigger": true
+          },
+          {
+            "word": "group",
+            "reached": true,
+            "entries": 5,
+            "visited": 5,
+            "closed": true,
+            "onTrigger": true
+          },
+          {
+            "word": "add",
+            "reached": true,
+            "entries": 18,
+            "visited": 18,
+            "closed": true,
+            "onTrigger": true
+          }
+        ],
+        "ok": true
+      },
+      "ok": true
+    },
+    "aLargeListHasAWayThrough": {
+      "seen": [
+        {
+          "width": 1440,
+          "sort": "Sorted by released, latest first",
+          "years": [
+            "2026",
+            "2025",
+            "2024",
+            "2023"
+          ],
+          "rows": 479,
+          "saysWhoseAndWhen": true,
+          "placeholder": "Narrow…",
+          "placeholderFits": true,
+          "selects": 0,
+          "eyebrow": false,
+          "indexCut": false,
+          "jumped": 65
+        },
+        {
+          "width": 1280,
+          "sort": "Sorted by released, latest first",
+          "years": [
+            "2026",
+            "2025",
+            "2024",
+            "2023"
+          ],
+          "rows": 479,
+          "saysWhoseAndWhen": true,
+          "placeholder": "Narrow…",
+          "placeholderFits": true,
+          "selects": 0,
+          "eyebrow": false,
+          "indexCut": false,
+          "jumped": 65
+        },
+        {
+          "width": 390,
+          "sort": "Sorted by released, latest first",
+          "years": [
+            "2026",
+            "2025",
+            "2024",
+            "2023"
+          ],
+          "rows": 479,
+          "saysWhoseAndWhen": true,
+          "placeholder": "Narrow…",
+          "placeholderFits": null,
+          "selects": 0,
+          "eyebrow": false,
+          "indexCut": false,
+          "jumped": 64
+        }
+      ],
+      "ok": true
+    },
+    "aShortPageKeepsTheAskFieldAtTheWindowsFoot": {
+      "seen": [
+        {
+          "width": 1440,
+          "seatFromTheFoot": 16,
+          "paperEndsAt": 900,
+          "window": 900,
+          "scrolls": false
+        },
+        {
+          "width": 390,
+          "seatFromTheFoot": 16,
+          "paperEndsAt": 844,
+          "window": 844,
+          "scrolls": false
+        }
+      ],
       "ok": true
     },
     "phoneMap": {
       "noSideScroll": true,
       "hasH1": true,
       "namedLinks": true,
-      "labelledInputs": true,
+      "labeledInputs": true,
       "bigEnoughToHit": []
     },
     "theLandingIsAGallery": {
@@ -283,8 +643,9 @@
         "kindCards": 2,
         "narrowest": 566,
         "rows": 4,
+        "barLines": 1,
+        "barHeight": 48,
         "drawn": true,
-        "navRows": 1,
         "noSideScroll": true,
         "readmeGone": true
       },
@@ -295,8 +656,9 @@
         "kindCards": 2,
         "narrowest": 350,
         "rows": 8,
+        "barLines": 1,
+        "barHeight": 48,
         "drawn": true,
-        "navRows": 1,
         "noSideScroll": true,
         "readmeGone": true
       },
@@ -307,25 +669,32 @@
         "kindCards": 4,
         "narrowest": 566,
         "rows": 2,
+        "barLines": 1,
+        "barHeight": 48,
         "drawn": true,
-        "navRows": 1,
         "noSideScroll": true,
         "readmeGone": true
       },
       "ok": true
     },
     "aNewPageOpensAtItsTop": {
-      "pressedFrom": 1568,
+      "pressedFrom": 1370,
       "landedAt": {
         "path": "/pages/rules",
         "scrollY": 0
       },
-      "cameBackTo": 1568,
+      "cameBackTo": 1370,
       "ok": true
     },
-    "theNavIsOneRow": {
-      "desk": 1,
-      "phone": 1,
+    "theBarIsOneRow": {
+      "desk": {
+        "lines": 1,
+        "height": 48
+      },
+      "phone": {
+        "lines": 1,
+        "height": 48
+      },
       "ok": true
     },
     "aPageDrawsWithWhatThePictureNeeds": {
@@ -334,6 +703,8 @@
         "fillsItsColumn": true,
         "named": true,
         "factsInTheDocument": true,
+        "somethingIsLeft": true,
+        "daysSaidAsRead": true,
         "noSidewaysPage": true
       },
       "drawnAt1280": {
@@ -341,8 +712,11 @@
         "fillsItsColumn": true,
         "named": true,
         "factsInTheDocument": true,
+        "somethingIsLeft": true,
+        "daysSaidAsRead": true,
         "noSidewaysPage": true
       },
+      "onTheSceneSomethingIsLeft": true,
       "noCaptureOnAnyRoute": true,
       "routesChecked": 7
     }

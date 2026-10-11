@@ -41,7 +41,7 @@ import type { CheckContext } from "./context.js";
 type Source = string;
 
 /** The kinds an expression reads, standing on `from`: swept, walked to, or read by a relation's name. */
-function kindsRead(expr: Expr, from: readonly string[], schema: AnySchema, into: Map<string, Source>, why: Source): void {
+export function kindsRead(expr: Expr, from: readonly string[], schema: AnySchema, into: Map<string, Source>, why: Source): void {
   const definition = (kind: string) => schema.tryDefinition(kind) as { edges?: Record<string, { to?: readonly string[] | "*" }> } | undefined;
   const targets = (kinds: readonly string[], edge: string): string[] =>
     kinds.flatMap((kind) => {
