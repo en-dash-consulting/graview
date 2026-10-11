@@ -634,7 +634,7 @@ async function build() {
 
   files.set("cli.html", shell({ path: "cli.html",
     title: "The CLI", here: "cli.html",
-    blurb: "graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
+    blurb: "graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
     body:
       `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
       `      <h1 id="h-what">The CLI</h1>\n` +
@@ -854,7 +854,7 @@ async function build() {
         `        <li><a href="demos.html"><strong>Live demos</strong><span>Every surface of the garden, running on the page, and the example apps.</span></a></li>\n` +
         `        <li><a href="packages.html"><strong>Packages (${pkgs.length})</strong><span>What each ships and what each exports.</span></a></li>\n` +
         `        <li><a href="skills.html"><strong>Skills (${sks.length})</strong><span>What your assistant reads before it writes.</span></a></li>\n` +
-        `        <li><a href="cli.html"><strong>The CLI</strong><span>create, check, docs, describe, lens, figure, serve, skills.</span></a></li>\n` +
+        `        <li><a href="cli.html"><strong>The CLI</strong><span>create, check, types, docs, describe, lens, figure, serve, skills.</span></a></li>\n` +
         `        <li><a href="checks.html"><strong>What check says (${codes.length})</strong><span>Every finding, and how loudly.</span></a></li>\n` +
         `        <li><a href="stability.html"><strong>Stability</strong><span>What a version may change, and what a host can hold it to.</span></a></li>\n` +
         `        <li><a href="../progression.html"><strong>The garden, grown</strong><span>${CHAPTERS[0].toUpperCase() + CHAPTERS.slice(1)} live chapters, from one kind to a product.</span></a></li>\n` +

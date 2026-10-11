@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The CLI — Graview docs</title>
-<meta name="description" content="graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.">
+<meta name="description" content="graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="The CLI — Graview docs">
-<meta property="og:description" content="graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.">
+<meta property="og:description" content="graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/cli.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/cli.html#article",
    "headline": "The CLI — Graview docs",
-   "description": "graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
+   "description": "graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.",
    "url": "https://graview.dev/docs/cli.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1330,6 +1330,11 @@ graview skills path            where the skill files live</code></pre></div>
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-sync">graview sync</h2></div>
       <div class="code" data-scroller aria-label="graview sync, usage"><pre><code class="language-text">graview sync-seed &lt;entry&gt; --seed &lt;file&gt; [--data &lt;dir&gt; | --sqlite &lt;file&gt;]</code></pre></div>
       <p>[--apply] [--prune] [--json] Diffs the bootstrap seed against the live store and says, as content steps, what would bring the store in step with it: records put, fields patched, ties made. Prints and exits by default; --apply lands the steps as one logged, undoable operation; --prune also drops what the seed no longer has. The seed itself is only ever read at first install — this is how default content moves afterwards, in place of deleting the store.</p>
+    </section>
+    <section id="cli-types" aria-labelledby="h-cli-types">
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-cli-types">graview types</h2></div>
+      <div class="code" data-scroller aria-label="graview types, usage"><pre><code class="language-text">graview types &lt;document.json&gt; [--out &lt;file.d.ts&gt;]</code></pre></div>
+      <p>Writes the document's kinds, fields and relations as TypeScript: each kind's record with its fields' own types (an enum's options as a union), and the Types that typedReader (@graview/core/typed) reads a store through — so a renamed field or relation fails tsc in the product that reads it. To stdout, or to --out.</p>
     </section>
 
   </main>

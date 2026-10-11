@@ -123,8 +123,16 @@ graview sync-seed <entry> --seed <file> [--data <dir> | --sqlite <file>]
 
 [--apply] [--prune] [--json] Diffs the bootstrap seed against the live store and says, as content steps, what would bring the store in step with it: records put, fields patched, ties made. Prints and exits by default; --apply lands the steps as one logged, undoable operation; --prune also drops what the seed no longer has. The seed itself is only ever read at first install — this is how default content moves afterwards, in place of deleting the store.
 
+## graview types
+
+```text
+graview types <document.json> [--out <file.d.ts>]
+```
+
+Writes the document's kinds, fields and relations as TypeScript: each kind's record with its fields' own types (an enum's options as a union), and the Types that typedReader (@graview/core/typed) reads a store through — so a renamed field or relation fails tsc in the product that reads it. To stdout, or to --out.
+
 ---
 
-graview create, check, docs, describe, lens, figure, serve and skills — what each reads and what each says.
+graview create, check, types, docs, describe, lens, figure, serve and skills — what each reads and what each says.
 
 The page: https://graview.dev/docs/cli.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
