@@ -20,5 +20,5 @@ acceptanceCriteria:
   - "The hosted page's first load is no heavier and no hosted-page budget is raised: the seat's model is a chunk fetched when a model first answers"
 description: "HostAi.complete(prompt) → string was one round trip over a prompt that carries the acts, twelve names a kind, forty connections, the broken rules, the selection and the places, and no record's fields, so 'what did we pay the florist' was answered 'the prompt does not say'. Cloud stood in a server-side read-only tool loop (INTERIM(FR-160) in workers/cloud/src/seat.ts) that repeated the seat's framing and could not see the selection or the history. A turn hands the host's model the seat's own read surface as the person, and the reads run where the seat is."
 lastModified: "2026-10-11T04:00:00.000Z"
-resolution: "Shipped in #206: HostAi.turn, HostTurn and TurnMessage, turnThroughMessages, the dev door's turn step, and the seat's model as a chunk fetched when a model first answers (593 484 bytes up front, 64 fewer)."
+resolution: "Shipped in #206: HostAi.turn, HostTurn and TurnMessage, turnThroughMessages, the dev door's turn step, and the seat's model as a chunk fetched when a model first answers (593 183 bytes up front, 64 fewer than main)."
 ---

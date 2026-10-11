@@ -489,9 +489,9 @@ export const BUDGETS = [
     // Raised when the seat came to read before it answers (FR-160): the turn a host's model takes with the seat's read
     // tools, and the seat's model — its framing and the reading of its answer — left the faces for a chunk of its own,
     // fetched when a model first answers, so each face is about 3.9 KB smaller before it draws and every face is one chunk
-    // more. MEASURE_DELTA
-    minified: 1_702_400,
-    gzipped: 535_900,
+    // more. 2_018 / 1_637 more than main (1_701_975 / 535_578). Measured at 1_703_993 / 537_215.
+    minified: 1_704_400,
+    gzipped: 537_400,
     load: "all",
   },
   {
