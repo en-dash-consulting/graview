@@ -598,8 +598,10 @@ export const BUDGETS = [
     // time and its author: the studio carries the checker, and the checker now judges a fact as a computed field and a
     // role against its field's type (`facts-and-roles.ts`, `computedFindings`), less the one-relation-one-wording refusal
     // and a kind's computed fields judged twice. 2_809 / 1_199 more than main. Measured at 1_568_167 / 481_507.
+    // Gzipped only, when the checker's fact-rule warning (#216) met each blocks lens claiming under its own address and
+    // the bar counting per kind: 17 bytes over together. Measured at 1_566_803 / 481_617.
     minified: 1_568_300,
-    gzipped: 481_600,
+    gzipped: 481_800,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
