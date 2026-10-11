@@ -1,6 +1,6 @@
 import * as z from "../schema/zod.js";
 import { labelOf } from "../schema/define-node.js";
-import { humanizeField, nounOf } from "../schema/define-node.js";
+import { fieldWords, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { nodeRefArgs, refTo } from "./node-ref.js";
@@ -165,7 +165,7 @@ export function deriveEditMutations<S extends AnySchema>(
     if (fields.length === 0) continue;
     const shape = definition.fields.shape as unknown as Record<string, z.ZodMiniType>;
     const noun = nounOf(definition, kind);
-    const said = fields.map((field) => humanizeField(field).toLowerCase());
+    const said = fields.map((field) => fieldWords(definition, field).toLowerCase());
     derived.push({
       name,
       derived: { kind, act: "edit" },
@@ -201,7 +201,7 @@ export function deriveEditMutations<S extends AnySchema>(
             } catch {
               said = JSON.stringify(value);
             }
-            return `${quietly(display?.labels?.[field] ?? humanizeField(field))} → ${said}`;
+            return `${quietly(fieldWords(definition, field))} → ${said}`;
           });
         return `Change ${label}: ${changes.join(", ") || "nothing"}`;
       },

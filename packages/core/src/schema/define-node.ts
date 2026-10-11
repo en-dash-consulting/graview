@@ -266,7 +266,8 @@ export function fieldWords(
 ): string {
   // A computed field's own label is its words too (FR-83), where the display does not say otherwise.
   const computed = definition?.computed && Object.hasOwn(definition.computed, key) ? definition.computed[key] : undefined;
-  return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? humanizeField(key);
+  // A kind's `label` is its name: the log said "Change Woodworking: label → …" of a shelf renamed (W-184).
+  return definition?.display?.labels?.[key] ?? (typeof computed === "object" ? computed.label : undefined) ?? (key === "label" ? "Name" : humanizeField(key));
 }
 
 /*
