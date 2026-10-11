@@ -27,10 +27,10 @@ lastModified: "2026-10-11T08:00:00.000Z"
 | [Each blocks lens claims BlockSlots under its own view name](./each-blocks-lens-claims-blockslots.md) | pending |
 | [graview doctor says when a product's Graview pins or React pair disagree](./graview-doctor-says-when-a-product-s.md) | completed |
 | [graview preview and graview shots: the default faces on a document and a snapshot, in a browser or headless](./graview-preview-and-graview-shots-the.md) | completed |
-| [mcpClient reads the reply that matches its request from an event stream](./mcpclient-reads-the-reply-that-matches.md) | pending |
+| [mcpClient reads the reply that matches its request from an event stream](./mcpclient-reads-the-reply-that-matches.md) | completed |
 | [resolveFor(store, principal, node): one call resolves a record's declared blocks as the scene and describe_place do](./resolvefor-store-principal-node-one.md) | completed |
 | [SyncEngine: conflict policy, read-only resources, seeded links, an MCP remote, a seat and deletes](./syncengine-conflict-policy-read-only.md) | completed |
 | [The bar demotes an empty kind and can keep itself without its navigation](./the-bar-demotes-an-empty-kind-and-can.md) | completed |
 | [The FrameBar counts without walking every node on each change](./the-framebar-counts-without-walking.md) | pending |
 | [Types flow from a document to a face](./types-flow-from-a-document-to-a-face.md) | completed |
-| [Under report, a local delete and a remote edit become a conflict](./under-report-a-local-delete-and-a.md) | pending |
+| [Under report, a local delete and a remote edit become a conflict](./under-report-a-local-delete-and-a.md) | completed |

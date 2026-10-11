@@ -174,11 +174,32 @@ export function systemAuthor(system: string): Author {
 export type ConflictPolicy = "report" | "theirs" | "ours";
 
 /** One field, changed on both sides since the last time they agreed. */
-export interface SyncConflict {
+export interface FieldConflict {
   readonly localId: string;
   readonly field: string;
   readonly ours: unknown;
   readonly theirs: unknown;
   /** What both sides last agreed it was. */
   readonly base: unknown;
+  readonly deleted?: undefined;
 }
+
+/**
+ * A RECORD DELETED HERE THAT THE REMOTE EDITED since they last agreed.
+ * Neither the delete nor the edit is the engine's to drop: taking theirs
+ * restores the record with the remote's values (through `createInbound`),
+ * taking ours sends the delete.
+ */
+export interface DeletedConflict {
+  readonly localId: string;
+  readonly deleted: true;
+  /** The remote's record now, in our field names. */
+  readonly theirs: Readonly<Record<string, unknown>>;
+  /** What both sides last agreed the record held. */
+  readonly base: Readonly<Record<string, unknown>>;
+  readonly field?: undefined;
+  readonly ours?: undefined;
+}
+
+/** What both sides changed since they last agreed: one field, or a record deleted here and edited there. */
+export type SyncConflict = FieldConflict | DeletedConflict;
