@@ -166,6 +166,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The scene from a page that is nothing lands where the scene opens (FR-157)](./the-scene-from-a-page-that-is-nothing.md) | completed |
 | [The scene has its place control in the bar (FR-144)](./the-scene-has-its-place-control-in-the.md) | completed |
 | [The scene is a place, not a mode (FR-132)](./the-scene-is-a-place-not-a-mode-fr-132.md) | completed |
+| [The seat reads before it answers: a host can hand it a turn with tools (FR-160)](./the-seat-reads-before-it-answers-a.md) | completed |
 | [The seat view serves an op that names a record that isn't there (FR-67)](./the-seat-view-serves-an-op-that-names.md) | completed |
 | [The server pushes that the declaration changed, and a remote client reopens on it (FR-43)](./the-server-pushes-that-the-declaration.md) | completed |
 | [The store a host drives: a real clock, its own sentences kept, previews of several calls, host ops appended, typed undo refusals](./the-store-a-host-drives-a-real-clock.md) | completed |
