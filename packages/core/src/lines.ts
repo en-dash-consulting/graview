@@ -17,6 +17,8 @@ import type { KindShape } from "./document/expr/evaluate.js";
 import { brokenLineOf, formatsSaid, ruleLineOf, type LineWords } from "./document/rule-line.js";
 import { shapesOfSchema } from "./document/rules.js";
 import { judgedWith } from "./invariants/engine.js";
+import { readsBeyondItsSubject } from "./document/rule-reads.js";
+import { daysAsRead } from "./days.js";
 
 export { brokenLineOf, ruleLineOf } from "./document/rule-line.js";
 export { problemWords, ruleLineWords, ruleSpacing, ruleSpoken, ruleText } from "./invariants/line.js";
@@ -98,7 +100,40 @@ export function withLines<V extends Violation>(
  * store handler and a seat's tools do.
  */
 export function judgeWithLines(): void {
-  judgedWith((graph, invariants, violations) => (graph ? withLines({ graph, schema: graph.schema, allInvariants: () => invariants }, violations) : violations.map(unlined)));
+  judgedWith((graph, invariants, violations, answered) =>
+    answered ? answeredTo(graph, invariants, violations) : graph ? withLines({ graph, schema: graph.schema, allInvariants: () => invariants }, violations) : violations.map(unlined),
+  );
+}
+
+/**
+ * A CHANGE'S PROBLEMS, AS ONE SEAT MAY BE TOLD THEM (FR-55), without their
+ * lines. The store judged them over the whole graph, before the change and
+ * after it, where a rule that reads a fact, sweeps a kind or walks a
+ * relation may count or name records the seat may not see. Handed the
+ * seat's reading of the graph as it stands — the graph after a change
+ * made — each is judged again over it: one the seat would not find broken
+ * is left out, and one it would says the seat's own sentence. Handed none —
+ * what a change mended, what a preview would do — a rule that reads beyond
+ * its subject is said by its title. A rule written as a function is not
+ * read without a graph, and says what it said.
+ */
+export function answeredTo<V extends Violation>(graph: GraphReader | null, invariants: readonly InvariantDefinition[], violations: readonly V[]): V[] {
+  const rules = new Map(invariants.map((rule) => [rule.name, rule]));
+  return violations.flatMap((said): V[] => {
+    const violation = unlined(said);
+    const rule = rules.get(violation.invariant);
+    if (!rule || (violation.status && violation.status !== "violated")) return [violation];
+    const titled = { ...violation, message: violation.label };
+    if (!graph) return [rule.shape && readsBeyondItsSubject(rule.shape) ? titled : violation];
+    const subject = violation.subjectId === undefined ? undefined : graph.getNode(violation.subjectId);
+    if (violation.subjectId !== undefined && !subject) return [];
+    try {
+      const again = (rule.evaluate as (args: unknown) => Violation[])({ graph, subject, context: {} }).find((one) => one.subjectId === violation.subjectId);
+      return again ? [{ ...violation, message: daysAsRead(again.message), nodeIds: again.nodeIds, repairs: again.repairs }] : [];
+    } catch {
+      return [titled];
+    }
+  });
 }
 
 /** A violation as judged before its line was worked out: no line, and the message its rule said. */

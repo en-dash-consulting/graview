@@ -101,9 +101,6 @@ export function slug(label: string): string {
  * primitives it would emit plus the causal read set. Applying is the op
  * log's job — keeping the two apart is what makes preview-as-diff free.
  */
-/** Where a refusal thrown by an act's own body carries the ids it had read: see `compileMutation`. */
-export const READ_BEFORE_REFUSING = Symbol("graview.readBeforeRefusing");
-
 export function compileMutation<S extends AnySchema>(
   graph: Graph<S>,
   definition: AnyMutationDefinition<S>,
@@ -117,12 +114,16 @@ export function compileMutation<S extends AnySchema>(
      */
     readonly keepUnchanged?: (value: unknown) => boolean;
     /**
-     * THE GRAPH THE SENTENCE IS WORDED FROM (FR-55): the author's view, so a
-     * record the author may not see is named only by what the author wrote
-     * — the id as given — exactly as one that does not exist. Absent, the
-     * graph the act runs on.
+     * THE GRAPH THE ACT READS (FR-55): its author's view. Its body, its
+     * guard, its refusal and its sentence read only what the author may
+     * see, so a record kept from the author is to the act exactly what one
+     * that does not exist is — not counted, quoted or copied, and no answer
+     * differs for it. What it writes lands on the whole graph, and the
+     * framework's bookkeeping reads the whole graph: a removed record's
+     * links and fields, a patch's prior values, a single source's other
+     * links, an id already taken. Absent, the graph itself.
      */
-    readonly describeWith?: GraphReader<NodeOfSchema<S>>;
+    readonly seen?: GraphReader<NodeOfSchema<S>>;
   } = {},
 ): CompiledMutation {
   /*
@@ -163,9 +164,11 @@ export function compileMutation<S extends AnySchema>(
   }
   const args = parsed.data as Record<string, unknown>;
 
-  const reader = new TrackedReader<NodeOfSchema<S>>(graph);
+  const reader = new TrackedReader<NodeOfSchema<S>>(options.seen ?? graph);
   const primitives: Primitive[] = [];
   const minted = new Set<string>();
+  // An id any record holds, seen or not: a minted id never lands on one.
+  const held = (id: string) => reader.has(id) || graph.has(id) || minted.has(id);
 
   const context: MutationContext<S> = {
     graph: reader,
@@ -177,7 +180,7 @@ export function compileMutation<S extends AnySchema>(
       primitives.push({ op: "add-node", node });
     },
     removeNode(id) {
-      const node = reader.getNode(id);
+      const node = reader.getNode(id) && graph.getNode(id);
       if (!node) throw new MissingRecordError(id, `Cannot remove missing node "${id}"`);
       const touching = new Map<string, GraphEdge>();
       for (const edge of graph.outEdges(id)) touching.set(edgeId(edge), edge);
@@ -190,7 +193,7 @@ export function compileMutation<S extends AnySchema>(
       primitives.push({ op: "remove-node", node });
     },
     patchNode(id, fields) {
-      const node = reader.getNode(id);
+      const node = reader.getNode(id) && graph.getNode(id);
       if (!node) throw new MissingRecordError(id, `Cannot patch missing node "${id}"`);
       const before: Record<string, unknown> = {};
       const after: Record<string, unknown> = {};
@@ -221,7 +224,7 @@ export function compileMutation<S extends AnySchema>(
     },
     freshId(label, prefix) {
       if (requested !== undefined && !minted.has(requested)) {
-        if (reader.has(requested)) {
+        if (held(requested)) {
           throw new GraphError(
             `Id "${requested}" is already taken`,
             `"${definition.name}" was asked to make a node with that id, and the graph has one. Pick another, or leave id out and let the act mint one.`,
@@ -231,25 +234,14 @@ export function compileMutation<S extends AnySchema>(
         return requested;
       }
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);
-      if (!reader.has(base) && !minted.has(base)) {
-        minted.add(base);
-        return base;
-      }
-      let n = 2;
-      while (reader.has(`${base}-${n}`) || minted.has(`${base}-${n}`)) n++;
-      const id = `${base}-${n}`;
+      let id = base;
+      for (let n = 2; held(id); n++) id = `${base}-${n}`;
       minted.add(id);
       return id;
     },
   };
 
-  try {
-    definition.apply(context, args);
-  } catch (error) {
-    // What it had read when it refused, so a store can tell whether its sentence may name what its caller may not see (FR-55).
-    if (error !== null && typeof error === "object") Object.defineProperty(error, READ_BEFORE_REFUSING, { value: reader.reads(), configurable: true });
-    throw error;
-  }
+  definition.apply(context, args);
 
   const writes = new Set<string>();
   for (const primitive of primitives) {
@@ -270,7 +262,7 @@ export function compileMutation<S extends AnySchema>(
   }
 
   // Its own reader, so what the sentence read is known apart from what the act read (FR-55).
-  const wording = new TrackedReader<NodeOfSchema<S>>(options.describeWith ?? graph);
+  const wording = new TrackedReader<NodeOfSchema<S>>(options.seen ?? graph);
   const intent =
     definition.describe?.(args, wording) ??
     `${definition.name}(${Object.entries(args)

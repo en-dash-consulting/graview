@@ -109,6 +109,12 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   private readonly ranks = new Map<string, number>();
   private readonly lapsed = new Map<string, number>();
   private reordered = false;
+  /*
+   * HOW MANY OF EACH KIND, kept as records come and go, so a count follows
+   * the change rather than walking the graph: the app bar asks which kinds
+   * hold anything on every change (`barPlaces`).
+   */
+  private readonly counts = new Map<string, number>();
   private readonly listeners = new Set<GraphListener<S>>();
   private readonly validate: boolean;
 
@@ -132,19 +138,13 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   /** Replaces the whole graph without emitting a per-node diff storm. */
   load(snapshot: GraphSnapshot<NodeOfSchema<S>>): GraphDiff<NodeOfSchema<S>> {
     const before = this.snapshot();
-    this.nodes.clear();
-    this.edges.clear();
-    this.outIndex.clear();
-    this.inIndex.clear();
-    this.forgetRanks();
     /*
      * HELD AS STORED (FR-28). Loading never parses a node into something
      * else — no default filled, no field stripped or coerced — and never
      * refuses one that no longer fits: what was written stays what it was,
      * and `validateGraph` is how a person hears what does not fit.
      */
-    for (const node of snapshot.nodes) this.insertNode(node, true);
-    for (const edge of snapshot.edges) this.insertEdge(edge, true);
+    this.restore(snapshot);
     const diff = diffSnapshots(before, this.snapshot());
     this.emit(diff);
     return diff;
@@ -162,6 +162,11 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
 
   allNodes(): NodeOfSchema<S>[] {
     return [...this.nodes.values()];
+  }
+
+  /** How many records of `kind` it holds, without walking them. */
+  count(kind: string): number {
+    return this.counts.get(kind) ?? 0;
   }
 
   allEdges(): GraphEdge[] {
@@ -252,21 +257,17 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
 
   // ------------------------------------------------------------ internals
 
-  /** Puts the graph back to a snapshot it held, silently: nothing a listener saw ever changed. */
+  /** Puts the graph back to a snapshot it held, as stored and silently: nothing a listener saw ever changed. */
   private restore(snapshot: GraphSnapshot<NodeOfSchema<S>>): void {
-    this.nodes.clear();
-    this.edges.clear();
-    this.outIndex.clear();
-    this.inIndex.clear();
-    this.forgetRanks();
+    for (const held of [this.nodes, this.edges, this.outIndex, this.inIndex, this.ranks, this.lapsed, this.counts]) held.clear();
+    this.reordered = false;
     for (const node of snapshot.nodes) this.insertNode(node, true);
     for (const edge of snapshot.edges) this.insertEdge(edge, true);
   }
 
-  private forgetRanks(): void {
-    this.ranks.clear();
-    this.lapsed.clear();
-    this.reordered = false;
+  /** One more, or one fewer, record of `kind`. */
+  private tally(kind: string, by: number): void {
+    this.counts.set(kind, this.count(kind) + by);
   }
 
   /** A rank for what just went in: the one it had, when it is being put back in place; the next one otherwise. */
@@ -323,12 +324,14 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         return;
       case "remove-node": {
         const id = primitive.node.id;
-        if (!this.nodes.has(id)) {
+        const node = this.nodes.get(id);
+        if (!node) {
           throw new MissingRecordError(id, `Cannot remove missing node "${id}"`);
         }
         for (const edge of [...this.outEdges(id), ...this.inEdges(id)]) {
           this.deleteEdge(edge);
         }
+        this.tally(node.kind, -1);
         this.nodes.delete(id);
         this.lapse(NODE + id);
         this.outIndex.delete(id);
@@ -347,7 +350,10 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
           if (isUnset(value)) delete next[key];
           else next[key] = value;
         }
-        this.nodes.set(primitive.id, (restoring ? next : this.checkPatch(current, next, Object.keys(primitive.after))) as NodeOfSchema<S>);
+        const patched = (restoring ? next : this.checkPatch(current, next, Object.keys(primitive.after))) as NodeOfSchema<S>;
+        this.nodes.set(primitive.id, patched);
+        // A patch that names the kind moves the record between counts.
+        if (patched.kind !== current.kind) this.tally(current.kind, -1), this.tally(patched.kind, 1);
         return;
       }
       case "add-edge":
@@ -456,6 +462,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       throw new GraphError(`Duplicate node id "${node.id}"`);
     }
     this.nodes.set(node.id, held ? node : this.check(node));
+    this.tally(node.kind, 1);
     this.place(NODE + node.id, inPlace);
   }
 
@@ -494,9 +501,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
   }
 
   private index(map: Map<string, Set<string>>, key: string, id: string): void {
-    const set = map.get(key);
-    if (set) set.add(id);
-    else map.set(key, new Set([id]));
+    (map.get(key) ?? map.set(key, new Set()).get(key)!).add(id);
   }
 
   private edgesFrom(ids: Set<string> | undefined, kind?: string): GraphEdge[] {

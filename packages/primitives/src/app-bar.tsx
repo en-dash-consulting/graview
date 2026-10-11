@@ -97,8 +97,8 @@ export function barPlaces(input: {
    */
   const declared = primaryOf(arrangement, store.schema, all);
   const supporting = supportingKinds(store.schema, arrangement, [...store.modules.administered.values()].flatMap((module) => module.kinds ?? []));
-  const held = new Set(store.graph.allNodes().map((node) => node.kind as string));
-  const stands = (kind: string, as?: string): boolean => (!held.size || held.has(kind)) && (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
+  // Which kinds hold anything, from the counts the graph keeps as records come and go: never a walk of every record.
+  const stands = (kind: string, as?: string): boolean => (!store.graph.size.nodes || store.graph.count(kind) > 0) && (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
   const out: BarPlace[] = [{ key: HOME_KEY, label: "Home", path: HOME_PATH, group: "home", primary: true }];
   for (const kind of orderKinds(live, arrangement?.order)) out.push({ key: `kind:${kind}`, label: pluralLabel(store.schema, kind), path: kindPath(store.schema, kind), group: "lists", kind, primary: stands(kind) });
   for (const place of all) {

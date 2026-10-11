@@ -1,8 +1,7 @@
 import { addressOf, kindPath, OVERVIEW_PATH, pathWithin, type AnySchema, type GraviewApp, type Place, type Store } from "@graview/core";
 import { aggregateId, AGGREGATE_PREFIX, fromUrl, kindOfCard, toUrl, withFocus, type ViewState } from "@graview/layout/view";
 import { faceAtAddress, stopAtAddress } from "./address.js";
-import type { EmbedProps } from "./embed.js";
-import type { EmbedFace } from "./frame.js";
+import type { EmbedFace, FrameOptions } from "./frame.js";
 
 /**
  * WHERE THE READER IS (FR-116): the face, the path of the place they are
@@ -94,7 +93,7 @@ export function settle(where: EmbedWhere, app: GraviewApp<AnySchema>, store: Sto
  * Under address routing the address is the source of truth, and when what
  * it names is gone it is replaced, in place, by where the reader lands.
  */
-export function settleAt(props: Pick<EmbedProps<AnySchema>, "at" | "app" | "routing" | "basePath" | "pages">, store: Store<AnySchema>, places: readonly Place[]): EmbedWhere {
+export function settleAt(props: Pick<FrameOptions<AnySchema>, "routing" | "basePath" | "pages"> & { readonly at?: EmbedWhere; readonly app: GraviewApp<AnySchema> }, store: Store<AnySchema>, places: readonly Place[]): EmbedWhere {
   const given = props.at!;
   const routes = props.pages?.routes() ?? [];
   if (props.routing !== "address" || typeof window === "undefined") return settle(given, props.app, store, places, routes);

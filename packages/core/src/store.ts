@@ -15,7 +15,7 @@ import type {
   InvariantDefinition,
   Violation,
 } from "./invariants/types.js";
-import { compileMutation, READ_BEFORE_REFUSING } from "./mutations/define-mutation.js";
+import { compileMutation } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
@@ -758,36 +758,21 @@ export class Store<S extends AnySchema> {
   }
 
   /**
-   * AN ACT'S SENTENCE IS WORDED FROM ITS AUTHOR'S VIEW (FR-55). `describe`
-   * reads the graph to name what the act touched ("Point at Venue"); read
-   * from the whole store, it named a record the author may not see by its
-   * label, and so told the author whether a guessed id was real. Read from
-   * the store as the author is served it, such a record is named only by
-   * what the author wrote, as one that does not exist is. A reader who sees
-   * more reads the author's sentence as the author would have. With nothing
-   * kept from the author, the store's own graph.
+   * AN ACT RUNS UNDER ITS AUTHOR'S SIGHT (FR-55). Its body, its guard, its
+   * refusal and its sentence read the store as the author is served it,
+   * so a record the author may not see is to the act what one that does
+   * not exist is: a condition that would count it does not, a refusal
+   * that would quote it cannot, and a seat learns nothing from whether,
+   * how or in what words its act ran. What it writes lands on the whole
+   * store. A rule that must hold across what a seat may not see is an
+   * invariant's to judge, not an act's. With nothing kept from the author,
+   * the store's own graph.
    */
-  private wordedFor(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
+  private sighted(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
     if (author === undefined || !hidesFrom(this, author)) return {};
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
     const hidden = seesId(this, author);
-    return { describeWith: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden) };
-  }
-
-  /**
-   * AN ACT'S OWN REFUSAL, AS ITS CALLER MAY READ IT (FR-55). An act's body
-   * may refuse in its own words, worded from what it read — "Freya Davies
-   * is already booked" — and what it read may be a record its caller may
-   * not see. Such a refusal is said without its words: the act, and that it
-   * could not be done. The store's own refusals already name nothing.
-   */
-  private refusalWordedFor(error: unknown, author: Principal, calls: readonly MutationCall[]): unknown {
-    if (!hidesFrom(this, author) || error instanceof PermissionDeniedError || error instanceof MissingRecordError || error === null || typeof error !== "object") return error;
-    const read = (error as { [READ_BEFORE_REFUSING]?: readonly string[] })[READ_BEFORE_REFUSING] ?? [];
-    const visible = seesId(this, author);
-    if (!read.some((id) => this.graph.has(id) && !visible(id))) return error;
-    const title = calls.length === 1 ? (this.mutations.get(calls[0]!.name)?.title ?? calls[0]!.name) : undefined;
-    return new GraphError(title ? `“${title}” could not be done as asked.` : "This change could not be done as asked.");
+    return { seen: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden) };
   }
 
   /**
@@ -814,9 +799,10 @@ export class Store<S extends AnySchema> {
     if (mutation.subject) add(call.args[mutation.subject.arg]);
     for (const ref of nodeRefArgs(mutation.input)) add(call.args[ref.name]);
     if (named.size === 0) return undefined;
-    const visible = seesId(this, principal);
+    // Served, not only in sight: a record withheld whole for a field it cannot do without is not there for this seat either.
+    const seen = seenBy(this, principal).graph;
     for (const id of named) {
-      if (this.graph.has(id) && visible(id)) continue;
+      if (seen.has(id)) continue;
       return new MissingRecordError(id, `“${mutation.title ?? call.name}” names a record that is not there.`);
     }
     return undefined;
@@ -976,9 +962,12 @@ export class Store<S extends AnySchema> {
     return typeof pinned === "string" && /^\d{4}-\d{2}-\d{2}$/.test(pinned) ? pinned : undefined;
   }
 
-  /** Current violations, evaluated fresh — nothing is cached or stale. */
-  violations(context?: InvariantContext): Violation[] {
-    return evaluate(this.graph, this.allInvariants(), {
+  /**
+   * Current violations, evaluated fresh — nothing is cached or stale. `over`
+   * judges them over another reading of this graph: a seat's (FR-55).
+   */
+  violations(context?: InvariantContext, over: Graph<S> = this.graph): Violation[] {
+    return evaluate(over, this.allInvariants(), {
       ...this.invariantOptions,
       ...(context === undefined ? {} : { context }),
     });
@@ -1000,9 +989,9 @@ export class Store<S extends AnySchema> {
    * the act that decided to do nothing. That is not an act, and offering it
    * is a button that appears broken.
    */
-  wouldChange(call: MutationCall): boolean {
+  wouldChange(call: MutationCall, author?: Principal): boolean {
     try {
-      return compileMutation(this.graph, this.mutation(call.name), call.args).primitives.length > 0;
+      return compileMutation(this.graph, this.mutation(call.name), call.args, this.sighted(author)).primitives.length > 0;
     } catch {
       // An act that cannot even compile is not one that changes nothing; let
       // whoever asked find out the honest way.
@@ -1012,7 +1001,7 @@ export class Store<S extends AnySchema> {
 
   preview(call: MutationCall, context?: InvariantContext, options: { readonly author?: Principal } = {}): Preview<S> {
     const definition = this.mutation(call.name);
-    const compiled = compileMutation(this.graph, definition, call.args, this.wordedFor(options.author));
+    const compiled = compileMutation(this.graph, definition, call.args, this.sighted(options.author));
     return this.previewPrimitives(compiled.primitives, {
       reads: compiled.reads,
       writes: compiled.writes,
@@ -1171,7 +1160,7 @@ export class Store<S extends AnySchema> {
         const definition = this.mutation(call.name);
         const missing = this.missingFor(call, author as Principal);
         if (missing) throw missing;
-        const compiled = compileMutation(this.graph, definition, call.args, this.wordedFor(author as Principal));
+        const compiled = compileMutation(this.graph, definition, call.args, this.sighted(author as Principal));
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *
@@ -1224,7 +1213,7 @@ export class Store<S extends AnySchema> {
     } catch (error) {
       // A batch refused part way keeps none of it: the graph, and the ops it had logged before the refusal.
       this.putBack(rollback, kept);
-      throw this.refusalWordedFor(error, author as Principal, calls);
+      throw error;
     }
 
     const diff = diffSnapshots(rollback, this.graph.snapshot());

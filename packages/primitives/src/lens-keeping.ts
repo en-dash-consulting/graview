@@ -3,9 +3,9 @@ import { useGraview, type KeepLensAnswer, type SeatKept } from "@graview/react/p
 import type { SeatMove } from "@graview/tools";
 import type { AddLensEdit, SeatDraft } from "@graview/tools/draft";
 import { useContext } from "react";
-import { registerLensPlaces, type KeptLens } from "./declared-lens-doors.js";
+import { registerLensPlaces } from "./declared-lens-doors.js";
 import { NoticeBoardContext } from "./notices.js";
-import { appKeyOf, readerLenses, readerLensesKey } from "./reader-lenses.js";
+import { appKeyOf, readerLenses, readerLensesKey, type KeptLens } from "./reader-lenses.js";
 import type { ReactViewRegistry } from "@graview/react/provider";
 
 /**

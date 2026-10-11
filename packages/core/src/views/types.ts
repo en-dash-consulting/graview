@@ -1,5 +1,4 @@
 import type { AnySchema, KindOfSchema } from "../schema/schema.js";
-import type { PagesArrangement } from "../places.js";
 
 /** One node, or a group of them standing in for a kind. */
 export type Cardinality = "one" | "many";
@@ -283,4 +282,43 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
   };
 
   return registry;
+}
+
+/**
+ * WHERE THE HOME PUTS THINGS AND WHERE THE APP OPENS (FR-80).
+ *
+ *   pages: { order: ["offer", "package", "signal"], hide: ["party"], first: "The offers" }
+ *
+ * `order` is the kinds in the order the home, the routed face's nav and the
+ * city at altitude walk them; kinds it does not name follow in the order
+ * they were declared. `hide` takes kinds off the home — their cards and
+ * counts — and nowhere else: a hidden kind keeps its list, its records,
+ * its links and its search results. `first` is where the app opens: a
+ * place by its title or address word, a kind by its name or plural, or
+ * `"home"`. `scene` and `pages` are what the bar's switch calls the two
+ * faces (FR-137).
+ */
+export interface PagesArrangement {
+  readonly order?: readonly string[];
+  readonly hide?: readonly string[];
+  readonly first?: string;
+  /**
+   * WHAT THE BAR'S SWITCH CALLS THE SCENE (FR-137): "Scene" when the
+   * declaration says none. Its address stays `/places/overview` whatever
+   * it is called (FR-132).
+   */
+  readonly scene?: string;
+  /** WHAT THE SWITCH CALLS THE ROUTED FACE (FR-137): "Pages" when the declaration says none. */
+  readonly pages?: string;
+  /**
+   * THE PLACES THAT STAND ON THE BAR (FR-145, ranked): kinds by name or
+   * plural and pictures by title or address word, each of which stands on
+   * the bar's row beside Home when there is room; every other place folds
+   * into "More". Unsaid, the bar derives it (`supportingKinds`): the main
+   * kinds and their pictures stand, the machinery folds. At most
+   * `MOST_STANDING` stand however many are named.
+   *
+   *   pages: { primary: ["task", "list", "The week"] }
+   */
+  readonly primary?: readonly string[];
 }

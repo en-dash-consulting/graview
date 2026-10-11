@@ -501,13 +501,20 @@ export const BUDGETS = [
     // "embed without the studio") is 0 / 5 smaller: the scene's way back taking its offer down when the scene goes (its
     // door), the Key and the inspector saying a shared relation in each kind's own words, and the schema provider's reason
     // in the words of the kind a line leaves. 825 / 478 more than main. Measured at 1_708_282 / 539_229.
+    // Raised when a seat's problems came to be judged over what it sees, a fact's count with them, by chunks fetched later
+    // only — every face as a page loads it first is 42 / 42 smaller: the checker's warning for a rule that says a fact some
+    // role may not see all of (`rule-says-hidden-fact`), where the studio and the frame's compile carry it, and a change's
+    // problems said to a seat as it judges them (`answeredTo`), with the words. 2_364 / 923 more than main. Measured at
+    // 1_710_646 / 540_149.
+    // Raised again when that met the chat handing a host's turn its app and a responder reading only what its seat sees
+    // (#213), by chunks fetched later only: 321 / 243 more together than either alone. Measured at 1_710_967 / 540_392.
     // Raised by the eighth walk, mostly by chunks fetched later: a problem's rows opening the acts on its repairs (their
     // door), a record page's name changed in place and its ↗ a fingertip wide, the seat saying each way to fix it, the way in
     // leaving a seat's own kinds alone; and 144 bytes of what a page loads first (a box nobody ticked sent as no, a name
     // called a name, a creating act not guessed to write its subject, the upgrade's refusal, the bar giving on a phone).
-    // 555 / 149 more than main. Measured at 1_708_837 / 539_378.
-    minified: 1_709_000,
-    gzipped: 539_500,
+    // 24 / 258 more than main as it measured itself, over the sight of a seat's problems and #213. Measured at 1_710_991 / 540_650.
+    minified: 1_711_300,
+    gzipped: 540_800,
     load: "all",
   },
   {
@@ -596,8 +603,10 @@ export const BUDGETS = [
     // time and its author: the studio carries the checker, and the checker now judges a fact as a computed field and a
     // role against its field's type (`facts-and-roles.ts`, `computedFindings`), less the one-relation-one-wording refusal
     // and a kind's computed fields judged twice. 2_809 / 1_199 more than main. Measured at 1_568_167 / 481_507.
+    // Gzipped only, when the checker's fact-rule warning (#216) met each blocks lens claiming under its own address and
+    // the bar counting per kind: 17 bytes over together. Measured at 1_566_803 / 481_617.
     minified: 1_568_300,
-    gzipped: 481_600,
+    gzipped: 481_800,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

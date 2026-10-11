@@ -86,10 +86,14 @@ const hygiene = (page) =>
       }),
   }));
 
-try {
-  vite = await startVite("todo", portFor("todo"));
-  browser = await launchEngine(ENGINE, { headless: true });
+/*
+ * THE STEPS, in the order the run takes them. Each writes its claims into
+ * `report.checks`; the order they are written in is the order the verdict
+ * lists them, so the run below calls them in the order they always ran.
+ */
 
+/** The routed face at a phone's width: the home, a list and a record, each read for its hygiene. The page stays open for the steps that follow it. */
+async function thePhoneFirst() {
   /* ---------------------------------------------------- the phone, first */
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await phone.goto(`${at("todo")}/pages?today=2026-09-01`, { waitUntil: "networkidle" });
@@ -116,7 +120,10 @@ try {
     actions: document.querySelector('[data-testid="record-actions"]') !== null,
     spatialLink: document.querySelector('[data-testid="spatial-link"]') !== null,
   }));
+  return phone;
+}
 
+async function theReadersOwnTextSize(phone) {
   /* ------------------- the reader's own text size, on the narrow screen */
   /*
    * 200% TEXT AT PHONE WIDTH, WHICH IS WHAT WCAG 1.4.4 AND 1.4.10 ACTUALLY
@@ -195,17 +202,10 @@ try {
       },
     };
   }
-  const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
+}
 
-  /* ------------------------- the face behaves like something finished */
-  /*
-   * A DESIGN IS NOT A STYLESHEET. What makes Things' face read as shipped
-   * is not the type: it is that a list you arranged is a link you can send,
-   * a record edits where it is shown, and a problem is one press from being
-   * fixed. All three through the framework — the same acts, the same
-   * policy, the same op log.
-   */
-  const desk2 = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+/** A list you arranged is a link you can send: opened cold, the same arrangement. */
+async function aListYouArrangedIsALinkYouCanSend(desk2) {
   await desk2.goto(`${at("todo")}/pages/tasks?today=2026-09-01&fresh=1`, { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="arrange-bar"]', { timeout: 20_000 });
   await chooseOnTheLine(desk2, "arrange", "group", "due");
@@ -235,7 +235,9 @@ try {
       reopened.query === "the" &&
       reopened.rows === arranged.rows,
   };
+}
 
+async function aListArrangesOnOneQuietLine() {
   /*
    * A LIST ARRANGES ON ONE QUIET LINE (todo's own list page, which draws the
    * framework's line). Nick, on Cloud's "Purchase scenarios": "these
@@ -285,7 +287,9 @@ try {
     ok: quiet.addressed !== null && quiet.addressed.sort === "due" && /latest first/.test(quiet.addressed.sortSaid ?? "") && quiet.addressed.group === "due" && /a month each/.test(quiet.addressed.groupSaid ?? "") && quiet.addressed.headings.length >= 2,
   };
   report.checks.aShortListIsReadNotArranged = { seen: quiet.short, ok: quiet.short.length === 2 && quiet.short.every((one) => one.count === "1 reason" && one.controls === 0) };
+}
 
+async function anEmptyStateSaysWhatToDoNext(desk2) {
   /* An empty state that says what to do next, rather than a blank page. */
   await desk2.fill('[data-testid="nav-find"]', "zzzz");
   await desk2.waitForTimeout(400);
@@ -297,7 +301,9 @@ try {
     ...empty,
     ok: empty.said !== null && empty.away > 0,
   };
+}
 
+async function theWordsFindItOnAPage() {
   /*
    * SEARCH, ON A PAGE. `/search?q=` is the Find box's matcher at an address:
    * opened cold it lists what the words find grouped by kind, each heading
@@ -390,7 +396,9 @@ try {
       nothing.prefilled &&
       onAPhone.noSideScroll,
   };
+}
 
+async function aRecordEditsWhereItIsShown(desk2) {
   /* A record edits where it is shown, through the act the framework found. */
   await desk2.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="record-fields"]', { timeout: 20_000 });
@@ -410,7 +418,9 @@ try {
     ...edited,
     ok: edited.heading === "Pay the deposit today" && !edited.stillAForm,
   };
+}
 
+async function theProblemsPageIsAnInbox(desk2) {
   /* And the problems page is an inbox: one press puts a rule right. */
   await desk2.goto(`${at("todo")}/pages/problems?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk2.waitForSelector('[data-testid="problem"]', { timeout: 20_000 });
@@ -423,8 +433,9 @@ try {
     after: after2,
     ok: before2 > 0 && after2 < before2,
   };
-  await desk2.close();
+}
 
+async function everyRouteOfTheOwnFaceIsReachable(axeSource) {
   /* ------------------- every route of the app's own face, read by a machine */
   /*
    * A DESIGN IS NOT FINISHED UNTIL A MACHINE CAN READ IT.
@@ -459,25 +470,9 @@ try {
     ...faceFindings,
     ok: Object.keys(faceFindings).length === 0,
   };
+}
 
-  /* --------------------------- the profile pane, read by a machine */
-  /*
-   * A PANE HOLDING THE ACCESSIBILITY CONTROLS HAS TO BE ACCESSIBLE.
-   *
-   * Text size and motion are settings people who need them come looking for,
-   * so a pane that offers them and fails a contrast or a name rule is worse
-   * than one that offers nothing. Both widths and both schemes, with the
-   * pane OPEN — closed, it is one button and proves nothing.
-   */
-  const axeOnThePane = async (page) => {
-    await page.click('[data-testid="profile-button"]');
-    await page.waitForSelector('[data-testid="profile"]', { timeout: 10_000 });
-    await page.addScriptTag({ content: axeSource });
-    return page.evaluate(async () => {
-      const result = await window.axe.run(document, { resultTypes: ["violations"] });
-      return result.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
-    });
-  };
+async function theCalendarIsReachable(axeSource) {
   /*
    * AND THE CALENDAR, which is a grid of controls a person navigates: six
    * weeks of day cells, an overflow button per busy day, four ranges and
@@ -506,7 +501,27 @@ try {
     ...calendarFindings,
     ok: Object.values(calendarFindings).every((found) => found.length === 0),
   };
+}
 
+async function theProfilePaneIsReachable(axeSource) {
+  /* --------------------------- the profile pane, read by a machine */
+  /*
+   * A PANE HOLDING THE ACCESSIBILITY CONTROLS HAS TO BE ACCESSIBLE.
+   *
+   * Text size and motion are settings people who need them come looking for,
+   * so a pane that offers them and fails a contrast or a name rule is worse
+   * than one that offers nothing. Both widths and both schemes, with the
+   * pane OPEN — closed, it is one button and proves nothing.
+   */
+  const axeOnThePane = async (page) => {
+    await page.click('[data-testid="profile-button"]');
+    await page.waitForSelector('[data-testid="profile"]', { timeout: 10_000 });
+    await page.addScriptTag({ content: axeSource });
+    return page.evaluate(async () => {
+      const result = await window.axe.run(document, { resultTypes: ["violations"] });
+      return result.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
+    });
+  };
   const paneFindings = {};
   for (const width of [390, 1280]) {
     for (const theme of ["light", "dark"]) {
@@ -522,7 +537,9 @@ try {
     ...paneFindings,
     ok: Object.values(paneFindings).every((found) => found.length === 0),
   };
+}
 
+async function backToTheReadersOwnSize(phone) {
   /* Back to the reader's own size, through the same control. */
   await phone.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await phone.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
@@ -531,7 +548,9 @@ try {
   await phone.waitForSelector('[data-testid="setting-text-size-browser"]', { timeout: 10_000 });
   await phone.click('[data-testid="setting-text-size-browser"]');
   await phone.waitForTimeout(300);
+}
 
+async function aDerivedFormApplies(phone) {
   /* ------------------------------------- a derived form actually applies */
   await phone.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
   await phone.waitForTimeout(500);
@@ -550,10 +569,10 @@ try {
   report.checks.derivedFormApplies =
     after === before + 1 &&
     (await phone.evaluate(() => document.body.textContent.includes("Buy compost")));
-  await phone.close();
+}
 
-  /* ------------------------------------------- the two faces cross-link */
-  const desk = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+/** The scene offers the pages, and a record page links its stop on the scene. */
+async function theTwoFacesCrossLink(desk) {
   await desk.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await desk.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   // The scene's bar is the one app bar: its switch offers the pages, and the app's name is the way to their front page.
@@ -569,7 +588,9 @@ try {
     () => document.querySelector('[data-testid="spatial-link"]')?.getAttribute("href") ?? "",
   );
   report.checks.recordLinksItsStop = spatial === "/#focus=t-deposit";
+}
 
+async function thePicturesOnPages(desk) {
   /* ------------------------------------------------ the pictures on pages */
   await desk.goto(`${at("todo")}/pages/places?today=2026-09-01`, { waitUntil: "networkidle" });
   await desk.waitForTimeout(500);
@@ -607,7 +628,9 @@ try {
   await desk.waitForTimeout(500);
   const landed = await desk.evaluate(() => location.pathname);
   report.checks.aPickTravelsToTheRecord = { landed, ok: /^\/pages\/tasks\/.+/.test(landed) };
-  await desk.close();
+}
+
+async function thePicturesAtAPhonesWidth() {
   // The index and a picture at a phone's width: one column, nothing side-scrolls the document.
   const phone3 = await browser.newPage({ viewport: { width: 390, height: 844 } });
   await phone3.goto(`${at("todo")}/pages/places?today=2026-09-01`, { waitUntil: "networkidle" });
@@ -617,7 +640,9 @@ try {
   await phone3.waitForTimeout(400);
   report.checks.phonePlace = await hygiene(phone3);
   await phone3.close();
+}
 
+async function theAssistantOnEveryPage() {
   /* ------------------------------------------ the assistant on every page */
   const asker = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await asker.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&fresh=1`, { waitUntil: "networkidle" });
@@ -668,15 +693,10 @@ try {
   await phone4.waitForTimeout(700);
   report.checks.phoneAsk = await hygiene(phone4);
   await phone4.close();
+}
 
-  /*
-   * ---------------------------------------- relationships as structure
-   * On the DERIVED pages, which the todo app has replaced with its own
-   * design: seedbed's chapter nine keeps the framework's list and record
-   * pages, with plots tended by gardeners and plantings that grow in plots.
-   */
-  garden = await startVite("seedbed", portFor("seedbed"));
-  const bed = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+/** Relationships as structure, on seedbed's derived pages: the map, a list grouped by a relation, a record that links the other way round. */
+async function relationshipsAsStructure(bed) {
   await bed.goto(`${at("seedbed")}/pages/map?chapter=9`, { waitUntil: "networkidle" });
   await bed.waitForTimeout(500);
   const map = await bed.evaluate(() => ({
@@ -719,176 +739,185 @@ try {
     ...narrowed,
     ok: related === "/pages/plots?tended-by=june" && narrowed.rows === 1 && narrowed.note !== null && narrowed.note.includes("June"),
   };
+}
+
+async function theDerivedListArrangesOnOneQuietLine() {
   /* The same line on the framework's own list page, which seedbed keeps: near the top, no select, every way to arrange by keyboard. */
-  {
-    const heads = [];
-    let keys = null;
-    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
-      const page = await browser.newPage({ viewport });
-      await page.goto(`${at("seedbed")}/pages/plantings?chapter=9&sort=label`, { waitUntil: "networkidle" });
-      await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
-      await page.waitForTimeout(300);
-      heads.push({ width: viewport.width, ...(await listHead(page)) });
-      if (viewport.width === 1440) keys = await arrangeByKeyboard(page, "arrange");
-      await page.close();
-    }
-    report.checks.theDerivedListArrangesOnOneQuietLine = {
-      heads,
-      keys,
-      ok: heads.every((one) => one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && one.selects === 0 && !one.countedInAnEyebrow && !one.scrolls) && keys?.ok === true,
-    };
+  const heads = [];
+  let keys = null;
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    const page = await browser.newPage({ viewport });
+    await page.goto(`${at("seedbed")}/pages/plantings?chapter=9&sort=label`, { waitUntil: "networkidle" });
+    await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
+    await page.waitForTimeout(300);
+    heads.push({ width: viewport.width, ...(await listHead(page)) });
+    if (viewport.width === 1440) keys = await arrangeByKeyboard(page, "arrange");
+    await page.close();
   }
+  report.checks.theDerivedListArrangesOnOneQuietLine = {
+    heads,
+    keys,
+    ok: heads.every((one) => one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && one.selects === 0 && !one.countedInAnEyebrow && !one.scrolls) && keys?.ok === true,
+  };
+}
+
+async function aLargeListHasAWayThrough() {
   /*
    * A LARGE LIST HAS A WAY THROUGH IT (Discography's 479 albums, its own
    * design drawing the framework's list): newest first, said on the line;
    * each row saying whose and when; an index of years that jumps; and the
    * bar's "Narrow…" never cut at its box's edge, at a desk and on a phone.
    */
-  catalog = await startVite("discography", portFor("discography"));
-  {
-    const seen = [];
-    for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }]) {
-      const page = await browser.newPage({ viewport });
-      await page.goto(`${at("discography")}/pages/albums`, { waitUntil: "networkidle" });
-      await page.waitForSelector('[data-testid="records"]', { timeout: 30_000 });
-      await page.waitForTimeout(400);
-      const read = await page.evaluate(() => {
-        const box = document.querySelector('[data-testid="nav-find"]');
-        let placeholderFits = null;
-        if (box && box.getBoundingClientRect().width > 0) {
-          const style = getComputedStyle(box);
-          const pen = document.createElement("canvas").getContext("2d");
-          pen.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-          placeholderFits = pen.measureText(box.placeholder).width <= box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) + 0.5;
-        }
-        const rows = [...document.querySelectorAll('[data-testid="records"] [data-testid="record-row"]')];
-        return {
-          sort: document.querySelector('button[data-testid="arrange-sort"]')?.getAttribute("aria-label") ?? null,
-          years: [...document.querySelectorAll('[data-testid="list-index"] a')].map((a) => a.textContent?.trim()).slice(0, 4),
-          rows: rows.length,
-          saysWhoseAndWhen: rows.slice(0, 20).every((row) => /\d{4}/.test(row.textContent ?? "") && (row.textContent ?? "").includes(" · ")),
-          placeholder: box?.placeholder ?? null,
-          placeholderFits,
-          selects: [...document.querySelectorAll('[role="group"][aria-label="Arrange"] select')].length,
-          eyebrow: document.querySelector(".ln-eyebrow") !== null && document.querySelector("main .ln-eyebrow")?.textContent?.includes("discography"),
-          // No entry of the index cut at its edge, nor the index wider than the page.
-          indexCut: (() => {
-            const index = document.querySelector('[data-testid="list-index"]');
-            if (!index) return null;
-            const box = index.getBoundingClientRect();
-            return index.scrollWidth > index.clientWidth + 1 || [...index.querySelectorAll("a")].some((a) => { const at = a.getBoundingClientRect(); return at.right > box.right + 1 || at.right > document.documentElement.clientWidth; });
-          })(),
-        };
-      });
-      // The index jumps: the fifth year's heading comes to the top of the window.
-      const fifth = page.locator('[data-testid="list-index"] a').nth(4);
-      let jumped = null;
-      if (await fifth.isVisible().catch(() => false)) {
-        const year = (await fifth.textContent())?.trim();
-        await fifth.click();
-        await page.waitForTimeout(300);
-        jumped = await page.evaluate((year) => {
-          const heading = [...document.querySelectorAll('[data-testid="list-section"] h2')].find((h) => h.textContent?.trim() === year);
-          return heading ? Math.round(heading.getBoundingClientRect().top) : null;
-        }, year);
+  const seen = [];
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }]) {
+    const page = await browser.newPage({ viewport });
+    await page.goto(`${at("discography")}/pages/albums`, { waitUntil: "networkidle" });
+    await page.waitForSelector('[data-testid="records"]', { timeout: 30_000 });
+    await page.waitForTimeout(400);
+    const read = await page.evaluate(() => {
+      const box = document.querySelector('[data-testid="nav-find"]');
+      let placeholderFits = null;
+      if (box && box.getBoundingClientRect().width > 0) {
+        const style = getComputedStyle(box);
+        const pen = document.createElement("canvas").getContext("2d");
+        pen.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+        placeholderFits = pen.measureText(box.placeholder).width <= box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) + 0.5;
       }
-      seen.push({ width: viewport.width, ...read, jumped });
-      await page.close();
-    }
-    report.checks.aLargeListHasAWayThrough = {
-      seen,
-      ok: seen.every(
-        (one) =>
-          /^Sorted by released, latest first$/.test(one.sort ?? "") &&
-          one.years.length === 4 &&
-          one.rows > 400 &&
-          one.saysWhoseAndWhen &&
-          one.selects === 0 &&
-          one.indexCut === false &&
-          !one.eyebrow &&
-          (one.placeholderFits === null || one.placeholderFits) &&
-          one.jumped !== null && one.jumped >= 0 && one.jumped < 160,
-      ),
-    };
-  }
-  /* A design's short page (the almanac's two gardeners): its paper fills the window, and the ask field stands at the window's foot. */
-  {
-    const seen = [];
-    for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
-      const page = await browser.newPage({ viewport });
-      await page.goto(`${at("seedbed")}/pages/gardeners?chapter=13`, { waitUntil: "networkidle" });
-      await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
-      await page.waitForTimeout(400);
-      const head = await listHead(page);
-      const paper = await page.evaluate(() => Math.round(document.querySelector('[data-testid="seedbed-design"]')?.getBoundingClientRect().bottom ?? 0));
-      seen.push({ width: viewport.width, seatFromTheFoot: head.seatFromTheFoot, paperEndsAt: paper, window: viewport.height, scrolls: head.scrolls });
-      await page.close();
-    }
-    report.checks.aShortPageKeepsTheAskFieldAtTheWindowsFoot = {
-      seen,
-      ok: seen.every((one) => one.seatFromTheFoot !== null && one.seatFromTheFoot >= 0 && one.seatFromTheFoot <= 48 && one.paperEndsAt >= one.window - 2 && !one.scrolls),
-    };
-  }
-  report.checks.phoneMap = await (async () => {
-    const small = await browser.newPage({ viewport: { width: 390, height: 844 } });
-    await small.goto(`${at("seedbed")}/pages/map?chapter=9`, { waitUntil: "networkidle" });
-    await small.waitForTimeout(400);
-    const seen = await hygiene(small);
-    await small.close();
-    return seen;
-  })();
-  /* ------------------------------------------- the landing is a gallery */
-  /*
-   * THE HOME IS THE PICTURES, LARGE AND LIVE — measured, not asserted.
-   *
-   * The derived home read as a readme: a sentence of counts, the relations,
-   * a section per kind, with the app's own pictures as two 288-pixel cards
-   * between them. On the framework's default face — seedbed's finished
-   * garden, which registers no shell of its own — the gallery has to be the
-   * first thing after the header (chapter sixteen, the garden with every
-   * lens it ever grew), two across at a desk and one on a phone,
-   * every card wide enough to see into and every frame with something drawn
-   * in it. Chapter nine has no titled lens at all, so it proves the other
-   * half: a kind with no picture is drawn anyway.
-   */
-  const gallery = async (page, path) => {
-    await page.goto(`${at("seedbed")}${path}`, { waitUntil: "networkidle" });
-    await page.waitForTimeout(600);
-    return page.evaluate(() => {
-      const main = document.querySelector("main");
-      const sections = [...(main?.children ?? [])];
-      const gallery = document.querySelector('[data-testid="gallery"]');
-      const cards = [...document.querySelectorAll('[data-testid="place-card"], [data-testid="kind-card"]')];
-      const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
-      /* The bar's row, control by control (FR-138): the lines their middles stand on, and its height. */
-      const bar = document.querySelector("[data-graview-app-bar]");
-      const middles = [...(bar?.querySelectorAll(".graview-bar-row a, .graview-bar-row button, .graview-bar-row input") ?? [])]
-        .filter((one) => !one.closest("[hidden], .graview-bar-list") && one.getBoundingClientRect().width > 2)
-        .map((one) => { const box = one.getBoundingClientRect(); return (box.top + box.bottom) / 2; })
-        .sort((a, b) => a - b);
-      const barLines = middles.reduce((lines, middle, at) => (at === 0 || middle - middles[at - 1] > 3 ? lines + 1 : lines), 0);
+      const rows = [...document.querySelectorAll('[data-testid="records"] [data-testid="record-row"]')];
       return {
-        headerThenGallery: sections[0]?.tagName === "HEADER" && sections[1] === gallery,
-        cards: cards.length,
-        placeCards: document.querySelectorAll('[data-testid="place-card"]').length,
-        kindCards: document.querySelectorAll('[data-testid="kind-card"]').length,
-        narrowest: Math.min(...cards.map((card) => Math.round(card.getBoundingClientRect().width))),
-        // Two cards sharing a top are two cards in one row.
-        rows: new Set(tops).size,
-        barLines,
-        barHeight: bar ? Math.round(bar.getBoundingClientRect().height) : null,
-        drawn: cards.every((card) => card.querySelector('[data-testid$="-picture"] > span > *') !== null),
-        noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
-        readmeGone: !document.querySelector('main [data-testid="kind-map"]') && !/none yet<\/span><\/div><p/.test(main?.innerHTML ?? ""),
+        sort: document.querySelector('button[data-testid="arrange-sort"]')?.getAttribute("aria-label") ?? null,
+        years: [...document.querySelectorAll('[data-testid="list-index"] a')].map((a) => a.textContent?.trim()).slice(0, 4),
+        rows: rows.length,
+        saysWhoseAndWhen: rows.slice(0, 20).every((row) => /\d{4}/.test(row.textContent ?? "") && (row.textContent ?? "").includes(" · ")),
+        placeholder: box?.placeholder ?? null,
+        placeholderFits,
+        selects: [...document.querySelectorAll('[role="group"][aria-label="Arrange"] select')].length,
+        eyebrow: document.querySelector(".ln-eyebrow") !== null && document.querySelector("main .ln-eyebrow")?.textContent?.includes("discography"),
+        // No entry of the index cut at its edge, nor the index wider than the page.
+        indexCut: (() => {
+          const index = document.querySelector('[data-testid="list-index"]');
+          if (!index) return null;
+          const box = index.getBoundingClientRect();
+          return index.scrollWidth > index.clientWidth + 1 || [...index.querySelectorAll("a")].some((a) => { const at = a.getBoundingClientRect(); return at.right > box.right + 1 || at.right > document.documentElement.clientWidth; });
+        })(),
       };
     });
+    // The index jumps: the fifth year's heading comes to the top of the window.
+    const fifth = page.locator('[data-testid="list-index"] a').nth(4);
+    let jumped = null;
+    if (await fifth.isVisible().catch(() => false)) {
+      const year = (await fifth.textContent())?.trim();
+      await fifth.click();
+      await page.waitForTimeout(300);
+      jumped = await page.evaluate((year) => {
+        const heading = [...document.querySelectorAll('[data-testid="list-section"] h2')].find((h) => h.textContent?.trim() === year);
+        return heading ? Math.round(heading.getBoundingClientRect().top) : null;
+      }, year);
+    }
+    seen.push({ width: viewport.width, ...read, jumped });
+    await page.close();
+  }
+  report.checks.aLargeListHasAWayThrough = {
+    seen,
+    ok: seen.every(
+      (one) =>
+        /^Sorted by released, latest first$/.test(one.sort ?? "") &&
+        one.years.length === 4 &&
+        one.rows > 400 &&
+        one.saysWhoseAndWhen &&
+        one.selects === 0 &&
+        one.indexCut === false &&
+        !one.eyebrow &&
+        (one.placeholderFits === null || one.placeholderFits) &&
+        one.jumped !== null && one.jumped >= 0 && one.jumped < 160,
+    ),
   };
+}
+
+async function aShortPageKeepsTheAskFieldAtTheWindowsFoot() {
+  /* A design's short page (the almanac's two gardeners): its paper fills the window, and the ask field stands at the window's foot. */
+  const seen = [];
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    const page = await browser.newPage({ viewport });
+    await page.goto(`${at("seedbed")}/pages/gardeners?chapter=13`, { waitUntil: "networkidle" });
+    await page.waitForSelector('[data-testid="records"]', { timeout: 20_000 });
+    await page.waitForTimeout(400);
+    const head = await listHead(page);
+    const paper = await page.evaluate(() => Math.round(document.querySelector('[data-testid="seedbed-design"]')?.getBoundingClientRect().bottom ?? 0));
+    seen.push({ width: viewport.width, seatFromTheFoot: head.seatFromTheFoot, paperEndsAt: paper, window: viewport.height, scrolls: head.scrolls });
+    await page.close();
+  }
+  report.checks.aShortPageKeepsTheAskFieldAtTheWindowsFoot = {
+    seen,
+    ok: seen.every((one) => one.seatFromTheFoot !== null && one.seatFromTheFoot >= 0 && one.seatFromTheFoot <= 48 && one.paperEndsAt >= one.window - 2 && !one.scrolls),
+  };
+}
+
+/** Seedbed's map at a phone's width, read for its hygiene. */
+async function theMapOnAPhone() {
+  const small = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await small.goto(`${at("seedbed")}/pages/map?chapter=9`, { waitUntil: "networkidle" });
+  await small.waitForTimeout(400);
+  const seen = await hygiene(small);
+  await small.close();
+  report.checks.phoneMap = seen;
+}
+
+/* ------------------------------------------- the landing is a gallery */
+/*
+ * THE HOME IS THE PICTURES, LARGE AND LIVE — measured, not asserted.
+ *
+ * The derived home read as a readme: a sentence of counts, the relations,
+ * a section per kind, with the app's own pictures as two 288-pixel cards
+ * between them. On the framework's default face — seedbed's finished
+ * garden, which registers no shell of its own — the gallery has to be the
+ * first thing after the header (chapter sixteen, the garden with every
+ * lens it ever grew), two across at a desk and one on a phone,
+ * every card wide enough to see into and every frame with something drawn
+ * in it. Chapter nine has no titled lens at all, so it proves the other
+ * half: a kind with no picture is drawn anyway.
+ */
+async function readGallery(page, path) {
+  await page.goto(`${at("seedbed")}${path}`, { waitUntil: "networkidle" });
+  await page.waitForTimeout(600);
+  return page.evaluate(() => {
+    const main = document.querySelector("main");
+    const sections = [...(main?.children ?? [])];
+    const gallery = document.querySelector('[data-testid="gallery"]');
+    const cards = [...document.querySelectorAll('[data-testid="place-card"], [data-testid="kind-card"]')];
+    const tops = cards.map((card) => Math.round(card.getBoundingClientRect().top));
+    /* The bar's row, control by control (FR-138): the lines their middles stand on, and its height. */
+    const bar = document.querySelector("[data-graview-app-bar]");
+    const middles = [...(bar?.querySelectorAll(".graview-bar-row a, .graview-bar-row button, .graview-bar-row input") ?? [])]
+      .filter((one) => !one.closest("[hidden], .graview-bar-list") && one.getBoundingClientRect().width > 2)
+      .map((one) => { const box = one.getBoundingClientRect(); return (box.top + box.bottom) / 2; })
+      .sort((a, b) => a - b);
+    const barLines = middles.reduce((lines, middle, at) => (at === 0 || middle - middles[at - 1] > 3 ? lines + 1 : lines), 0);
+    return {
+      headerThenGallery: sections[0]?.tagName === "HEADER" && sections[1] === gallery,
+      cards: cards.length,
+      placeCards: document.querySelectorAll('[data-testid="place-card"]').length,
+      kindCards: document.querySelectorAll('[data-testid="kind-card"]').length,
+      narrowest: Math.min(...cards.map((card) => Math.round(card.getBoundingClientRect().width))),
+      // Two cards sharing a top are two cards in one row.
+      rows: new Set(tops).size,
+      barLines,
+      barHeight: bar ? Math.round(bar.getBoundingClientRect().height) : null,
+      drawn: cards.every((card) => card.querySelector('[data-testid$="-picture"] > span > *') !== null),
+      noSideScroll: document.documentElement.scrollWidth <= window.innerWidth + 1,
+      readmeGone: !document.querySelector('main [data-testid="kind-map"]') && !/none yet<\/span><\/div><p/.test(main?.innerHTML ?? ""),
+    };
+  });
+}
+
+/** The landing is a gallery at a desk and on a phone, and chapter nine's kinds are drawn though none has a picture. Returns the two readings the bar's own claim is judged from. */
+async function theLandingIsAGallery() {
   const wideDesk = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  const deskGallery = await gallery(wideDesk, "/pages?chapter=16");
-  const deskNine = await gallery(wideDesk, "/pages?chapter=9");
+  const deskGallery = await readGallery(wideDesk, "/pages?chapter=16");
+  const deskNine = await readGallery(wideDesk, "/pages?chapter=9");
   await wideDesk.close();
   const narrow = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  const phoneGallery = await gallery(narrow, "/pages?chapter=16");
+  const phoneGallery = await readGallery(narrow, "/pages?chapter=16");
   await narrow.close();
   report.checks.theLandingIsAGallery = {
     desk: deskGallery,
@@ -908,6 +937,10 @@ try {
       deskNine.kindCards >= 4 &&
       deskNine.drawn,
   };
+  return { deskGallery, phoneGallery };
+}
+
+async function aNewPageOpensAtItsTop() {
   /* A new page opens at its top, however far down the gallery the press was. */
   const scroller = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await scroller.goto(`${at("seedbed")}/pages?chapter=16`, { waitUntil: "networkidle" });
@@ -929,12 +962,17 @@ try {
     cameBackTo,
     ok: pressedFrom > 400 && landedAt.path === "/pages/rules" && landedAt.scrollY === 0 && cameBackTo > 400,
   };
+}
+
+/** The bar is one row, at a desk and on a phone: read from the gallery's own readings. */
+async function theBarIsOneRow(deskGallery, phoneGallery) {
   report.checks.theBarIsOneRow = {
     desk: { lines: deskGallery.barLines, height: deskGallery.barHeight },
     phone: { lines: phoneGallery.barLines, height: phoneGallery.barHeight },
     ok: deskGallery.barLines === 1 && phoneGallery.barLines === 1 && deskGallery.barHeight <= 48 && phoneGallery.barHeight <= 48 && phoneGallery.noSideScroll,
   };
-  await bed.close();
+}
+
 /* ------------------- a page draws with whatever the picture needs */
 /*
  * HTML AND CANVAS BOTH, AND HTML-IN-CANVAS NEITHER.
@@ -950,6 +988,7 @@ try {
  * a flag, and on this face it is not defaulted off but absent. Checked on
  * every route rather than asserted once.
  */
+async function aPageDrawsWithWhatThePictureNeeds() {
   try {
     const canvasChecks = {};
     for (const width of [390, 1280]) {
@@ -1012,7 +1051,68 @@ try {
   } catch (error) {
     report.checks.aPageDrawsWithWhatThePictureNeeds = { ok: false, error: String(error).slice(0, 200) };
   }
+}
 
+try {
+  vite = await startVite("todo", portFor("todo"));
+  browser = await launchEngine(ENGINE, { headless: true });
+
+  const phone = await thePhoneFirst();
+  await theReadersOwnTextSize(phone);
+  const axeSource = readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8");
+
+  /* ------------------------- the face behaves like something finished */
+  /*
+   * A DESIGN IS NOT A STYLESHEET. What makes Things' face read as shipped
+   * is not the type: it is that a list you arranged is a link you can send,
+   * a record edits where it is shown, and a problem is one press from being
+   * fixed. All three through the framework — the same acts, the same
+   * policy, the same op log.
+   */
+  const desk2 = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await aListYouArrangedIsALinkYouCanSend(desk2);
+  await aListArrangesOnOneQuietLine();
+  await anEmptyStateSaysWhatToDoNext(desk2);
+  await theWordsFindItOnAPage();
+  await aRecordEditsWhereItIsShown(desk2);
+  await theProblemsPageIsAnInbox(desk2);
+  await desk2.close();
+
+  await everyRouteOfTheOwnFaceIsReachable(axeSource);
+  await theCalendarIsReachable(axeSource);
+  await theProfilePaneIsReachable(axeSource);
+  await backToTheReadersOwnSize(phone);
+  await aDerivedFormApplies(phone);
+  await phone.close();
+
+  /* ------------------------------------------- the two faces cross-link */
+  const desk = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  await theTwoFacesCrossLink(desk);
+  await thePicturesOnPages(desk);
+  await desk.close();
+  await thePicturesAtAPhonesWidth();
+  await theAssistantOnEveryPage();
+
+  /*
+   * ---------------------------------------- relationships as structure
+   * On the DERIVED pages, which the todo app has replaced with its own
+   * design: seedbed's chapter nine keeps the framework's list and record
+   * pages, with plots tended by gardeners and plantings that grow in plots.
+   */
+  garden = await startVite("seedbed", portFor("seedbed"));
+  const bed = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await relationshipsAsStructure(bed);
+  await theDerivedListArrangesOnOneQuietLine();
+  // Discography's 479 albums, for a large list's way through.
+  catalog = await startVite("discography", portFor("discography"));
+  await aLargeListHasAWayThrough();
+  await aShortPageKeepsTheAskFieldAtTheWindowsFoot();
+  await theMapOnAPhone();
+  const { deskGallery, phoneGallery } = await theLandingIsAGallery();
+  await aNewPageOpensAtItsTop();
+  await theBarIsOneRow(deskGallery, phoneGallery);
+  await bed.close();
+  await aPageDrawsWithWhatThePictureNeeds();
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {

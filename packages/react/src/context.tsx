@@ -1,6 +1,7 @@
 import type {
   AnySchema,
   Brand,
+  GraviewApp,
   NodeOfSchema,
   Person,
   Presence,
@@ -284,6 +285,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly brand?: Brand;
   /** Where a lens the seat drew is kept: the host's, when it keeps one (`GraviewProviderProps.onKeepLens`). */
   readonly onKeepLens?: KeepLensHost;
+  /** The app this is mounted with (`GraviewProviderProps.app`), or the one it is drawn inside. */
+  readonly app?: GraviewApp<S> | undefined;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
@@ -355,28 +358,28 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly initialSelection?: readonly string[];
   /** Defaults to an unroled human, which a store with no policy permits everything. */
-  readonly principal?: Principal;
+  readonly principal?: Principal | undefined;
   /**
    * The seats a reader may take. The first is where they start unless
    * `principal` says otherwise; the bar draws a control when there are two
    * or more, and nothing at all when there are none.
    */
-  readonly seats?: readonly Seat[];
+  readonly seats?: readonly Seat[] | undefined;
   /** Told when a seat is taken, for a host that keeps the choice (a URL, storage). */
   readonly onSeat?: (principal: Principal) => void;
   /**
    * Who the app may name: a host's directory, kept apart from the seats so
    * naming a member never offers to sit as them. Changes as the host's do.
    */
-  readonly people?: readonly Person[];
+  readonly people?: readonly Person[] | undefined;
   /**
    * Where the reader's own choices are kept. The page's `localStorage` by
    * default, which a sandboxed frame refuses; a host passes its own.
    */
-  readonly memory?: ReaderMemory;
+  readonly memory?: ReaderMemory | undefined;
   /** How long a participant the presence channel told of stands without a fresh word. */
-  readonly presenceTtlMs?: number;
-  /** The app's declared reader settings — `app.settings`, passed straight through. */
+  readonly presenceTtlMs?: number | undefined;
+  /** The app's declared reader settings — `app.settings`, which is what they are when unsaid. */
   readonly settings?: readonly SettingDeclaration[];
   /**
    * The channel that carries who is where — `createBroadcastPresence` beside
@@ -384,8 +387,8 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * broadcasts nothing and draws nobody, which is what an embed wants
    * unless it opts in.
    */
-  readonly presence?: PresenceChannel;
-  readonly brand?: Brand;
+  readonly presence?: PresenceChannel | undefined;
+  readonly brand?: Brand | undefined;
   /**
    * WHERE A LENS THE SEAT DREW IS KEPT (`KeepLensHost`): handed the
    * check-clean `add-lens` edit when a reader presses "Keep as a lens", and
@@ -393,9 +396,18 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * declaration (a document app's server, a dev server) answers
    * `{ kept: true }`; otherwise the lens is kept as the reader's own.
    */
-  readonly onKeepLens?: KeepLensHost;
+  readonly onKeepLens?: KeepLensHost | undefined;
   /** Extra or replacement affordance providers (e.g. an LLM intelligence). */
   readonly providers?: readonly AffordanceProvider<S>[];
+  /**
+   * THE APP THIS IS MOUNTED WITH: its home, lenses, views and arrangement.
+   * The seat hands it to its tools and to a host's turn, so `describe_place`
+   * says what a lens or the home shows, as it does over `graview mcp`.
+   * Unsaid, it is the app of the provider this is drawn inside, if any;
+   * `mount` and `<Embed>` pass theirs. Its `settings` are the reader
+   * settings when `settings` is unsaid.
+   */
+  readonly app?: GraviewApp<S> | undefined;
   /**
    * THE AI THE SEAT MAY USE, decided here by the host and nowhere by a
    * reader: `complete` (the host's model) for open questions and views no
@@ -403,7 +415,7 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * run in the reader's browser. Unsaid, the graph answers alone and the
    * seat says so when an ask needs more.
    */
-  readonly ai?: HostAi;
+  readonly ai?: HostAi | undefined;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -459,7 +471,8 @@ export function GraviewProvider<S extends AnySchema>({
   people = NO_PEOPLE,
   memory,
   presenceTtlMs,
-  settings: appSettings = NO_SETTINGS,
+  app: mountedApp,
+  settings: appSettings = mountedApp?.settings ?? NO_SETTINGS,
   presence,
   brand,
   onKeepLens,
@@ -506,6 +519,7 @@ export function GraviewProvider<S extends AnySchema>({
   const [seatTalk] = useState<SeatTalk>(() => outer?.seatTalk ?? createSeatTalk(brand?.name ?? given.schema.kinds.join(",")));
   /* The host that keeps a drawn lens: this provider's, else the one it is drawn inside. */
   const keepLens = onKeepLens ?? outer?.onKeepLens;
+  const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
   /*
    * The scene's handle, held in a ref: where things are changes every frame
    * of a tween, and a context value that changed with it would re-render
@@ -873,6 +887,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(providers ? { providers } : {}),
       ...(brand ? { brand } : {}),
       ...(keepLens ? { onKeepLens: keepLens } : {}),
+      app,
     }),
     [
       store,
@@ -917,6 +932,7 @@ export function GraviewProvider<S extends AnySchema>({
       providers,
       brand,
       keepLens,
+      app,
     ],
   );
 

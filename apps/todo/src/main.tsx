@@ -115,6 +115,7 @@ if (window.location.pathname.startsWith("/pages")) {
          */
         views: todoViews(),
         settings: todoApp.settings ?? [],
+        app: todoApp,
         ...(presence ? { presence } : {}),
         ...(ai ? { ai } : {}),
       }}

@@ -39,20 +39,11 @@ import {
   checkViewSpecs,
   checkComputed,
   checkHiddenReads,
+  checkFactRules,
 } from "./check/index.js";
-import type { CheckContext } from "./check/context.js";
+import type { CheckContext, Finding } from "./check/context.js";
 
-export type Severity = "error" | "warning" | "note";
-
-export interface Finding {
-  readonly severity: Severity;
-  readonly code: string;
-  /** Where the problem is, in terms an agent can act on. */
-  readonly where: string;
-  readonly message: string;
-  /** The concrete edit that would fix it. */
-  readonly fix: string;
-}
+export type { Finding, Severity } from "./check/context.js";
 
 export interface CheckResult {
   readonly app: string;
@@ -114,6 +105,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkViewSpecs(ctx);
   checkComputed(ctx);
   checkHiddenReads(ctx);
+  checkFactRules(ctx);
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const notes = findings.filter((f) => f.severity === "note").length;
