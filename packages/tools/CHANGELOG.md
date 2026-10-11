@@ -1,5 +1,41 @@
 # @graview/tools
 
+## 0.1.24
+
+### Patch Changes
+
+- 9fe145e: A host's turn knows the app the seat is mounted with, so `describe_place` describes a lens place. Inside `HostAi.turn` the seat built its read tools from the store alone, and the chat's own runtime did the same, so a model asking `describe_place` for a lens or the declared home was told "is not a place this app has": the app never reached the seat. `GraviewProvider` now takes `app` and holds it on its context (`useGraview().app`), inheriting the app of a provider it is drawn inside; `mount` and `<Embed>` pass theirs on both faces, and `PagesApp`'s `context.app` reaches the provider under the pages. The chat hands it to its own tool runtime, to the workbench's agent seat and, as `ChatContext.app`, to a host's turn, whose `describe_place` now answers exactly as the runtime `graview mcp` serves does, for the seat that asked. With `app` given, a provider's reader `settings` default to `app.settings`. `graview create` writes `app` on the provider and on the pages' context. The hosted page carries 132 bytes fewer up front (589 625; 589 757 before), and as many fewer handed a compiled app (547 324; 547 456): the embed now hands the provider each option as given, which the provider's props accept as `undefined`, rather than spreading each one in only when it is set.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged. New: `app` on `GraviewProviderProps`, `GraviewContextValue`, `PageContext` and `ChatContext`. Changed: `GraviewProviderProps`' `principal`, `seats`, `people`, `memory`, `presenceTtlMs`, `presence`, `brand`, `onKeepLens` and `ai` also accept `undefined`, which means the same as leaving them out. What a host does: one that mounts its own `GraviewProvider` passes `app={yourApp}` (and `app` in `PagesApp`'s context) so its seat and its turn can describe the app's lenses and home; `mount` and `<Embed>` need nothing.
+- 9fe145e: A responder handed the whole store says only what its seat sees. The chat hands its responder the provider's store, already narrowed to the seat, but `llmResponder` and `seatResponder` called directly with the store itself wrote the whole graph into the model's system prompt: every kind's names, the links between them, the broken rules, the selection and the graph's first reading, whoever was asking, while the turn's tools stayed sighted. The prompt is now written over `store.seenBy(context.principal)` whatever store it is handed: a record the seat may not see is not said by name or id, in the shape, the connections, the rules, the selection or the reading, and a model's answer is resolved by name and validated over the same graph. `seatResponder`'s graph answer is read as that seat too. With no principal, a responder does not read the whole graph: its prompt, its turn's tools and the reading of its answer are all as `{ kind: "agent" }`, the seat a tool runtime acts as when no author is given, and where the policy keeps anything from that seat the answer says so: "(No seat was named, so this was read as any agent may see it.)". A store that keeps nothing from anybody is read as before, and says nothing extra. Nothing a page loads up front changed: the prompt is the seat's model's, fetched with the first ask a model answers.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged. Changed: `llmResponder` and `seatResponder` read as `context.principal`, and without one as `{ kind: "agent" }`. What a host does: one that calls a responder itself names the seat it answers for in `principal`; one that relied on a responder with no principal reading the whole graph names a seat that may see it.
+- 129f2fa: A type lives where it is said first, so six of the import cycles that were left only in types are gone. The kit's types (`Kit`, `ConnectorKit`, `KitOverrides` and the rest) are the theme's, beside the `Brand` that carries them; `PagesArrangement` is the view registry's, which arranges by it; `Finding` and `Severity` are the check context's, where a finding is added; `validateScaffoldOptions` asks only the options a name can be wrong in; `settleAt` asks only the embed's options it reads; the seat's `SeatMove` and `SeatOffer` are the conversation's, whose replies carry them (`@graview/tools/go` still says both); and `KeptLens` is the reader's lenses'. Every name is exported from the same entry as before. Three are left, each for a reason: a `Store` is declared beside the store it describes; the document's views and its description of a place are being changed by this round's other work.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and check finding codes, and tool names and input schemas are unchanged — only where a type is declared moved, and every entry exports what it did; the hosted page's first load is the same to the byte.
+- 6b60219: The seat says each way to fix a problem in its form's words. Asked what is wrong, it ran every repair's missing arguments together by their keys — "it needs a returned and a due chosen" — where an overdue loan's two repairs are a choice; it now names each way and what it asks, as its form asks it: "Each way to fix these asks something first — “Check it back in” (Came back) or “Extend the loan” (Due back)". (W-182, the eighth walk.)
+  
+  Compatibility: ops, stored formats, the wire, the document format, the compiled format, check finding codes and tool names and schemas are unchanged.
+- Updated dependencies [6dbad14]
+- Updated dependencies [e23f631]
+- Updated dependencies [9fe145e]
+- Updated dependencies [56f203f]
+- Updated dependencies [cfe3b7a]
+- Updated dependencies [e23f631]
+- Updated dependencies [108721d]
+- Updated dependencies [e23f631]
+- Updated dependencies [079ccec]
+- Updated dependencies [129f2fa]
+- Updated dependencies [5b7e4c8]
+- Updated dependencies [b68d1cc]
+- Updated dependencies [32c54f1]
+- Updated dependencies [56f203f]
+- Updated dependencies [e23f631]
+- Updated dependencies [8e1f679]
+- Updated dependencies [fe08229]
+  - @graview/core@0.1.24
+  - @graview/ship@0.1.24
+
 ## 0.1.23
 
 ### Patch Changes

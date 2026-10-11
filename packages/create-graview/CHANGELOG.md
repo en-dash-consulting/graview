@@ -1,5 +1,11 @@
 # create-graview
 
+## 0.1.24
+
+### Patch Changes
+
+- graview@0.1.24
+
 ## 0.1.23
 
 ### Patch Changes

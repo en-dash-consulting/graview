@@ -1,5 +1,41 @@
 # @graview/react
 
+## 0.1.24
+
+### Patch Changes
+
+- 9fe145e: A host's turn knows the app the seat is mounted with, so `describe_place` describes a lens place. Inside `HostAi.turn` the seat built its read tools from the store alone, and the chat's own runtime did the same, so a model asking `describe_place` for a lens or the declared home was told "is not a place this app has": the app never reached the seat. `GraviewProvider` now takes `app` and holds it on its context (`useGraview().app`), inheriting the app of a provider it is drawn inside; `mount` and `<Embed>` pass theirs on both faces, and `PagesApp`'s `context.app` reaches the provider under the pages. The chat hands it to its own tool runtime, to the workbench's agent seat and, as `ChatContext.app`, to a host's turn, whose `describe_place` now answers exactly as the runtime `graview mcp` serves does, for the seat that asked. With `app` given, a provider's reader `settings` default to `app.settings`. `graview create` writes `app` on the provider and on the pages' context. The hosted page carries 132 bytes fewer up front (589 625; 589 757 before), and as many fewer handed a compiled app (547 324; 547 456): the embed now hands the provider each option as given, which the provider's props accept as `undefined`, rather than spreading each one in only when it is set.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged. New: `app` on `GraviewProviderProps`, `GraviewContextValue`, `PageContext` and `ChatContext`. Changed: `GraviewProviderProps`' `principal`, `seats`, `people`, `memory`, `presenceTtlMs`, `presence`, `brand`, `onKeepLens` and `ai` also accept `undefined`, which means the same as leaving them out. What a host does: one that mounts its own `GraviewProvider` passes `app={yourApp}` (and `app` in `PagesApp`'s context) so its seat and its turn can describe the app's lenses and home; `mount` and `<Embed>` need nothing.
+- a6c8da2: A problem opens on its repairs. Pressing a problem under the scene's standing selected what it named and nothing more — the scene's acts are the menu at the pointer, so at altitude, where the record is a cube in a shut district, its repair was on no surface at all, in every example. The press now opens the acts menu under the standing, on the problem's subject, its repairs first. `PointerMenu.on` may be given as `undefined`. (W-179, the eighth walk.)
+  
+  Compatibility: ops, stored formats, the wire, the document format, the compiled format, check finding codes and tool names and schemas are unchanged.
+- 129f2fa: The scene is said in named pieces. `Scene` was one function of 108 callees; what it does is now a hook or a part each named for what it is — the layout's options for the box it has (`useLayoutOptions`, in `scene-options.ts`), the hand's zoom, the billboard's height, the camera, the world laid out at rest and then moved, the steering hand, the first picture as a cut, the scene lending `whereIs`, the pointer reported only while somebody listens, the renderer handed the frame, what just happened resolved onto what is drawn, a card's gestures, the billboard's title bar (`ScreenGrip`) and the zoom in the ground's corner (`ZoomControls`). Nothing a person or a harness sees moves: the same elements, attributes and test ids, in the same order, and the scene face fetched before it draws is 29 bytes smaller (898 008 where it was 898 037).
+  
+  Compatibility: ops, stored formats, the wire, the declaration and check finding codes, and tool names and input schemas are unchanged; the hosted page's first load is the same to the byte (589 757, and 547 456 handed a compiled app).
+- Updated dependencies [6dbad14]
+- Updated dependencies [e23f631]
+- Updated dependencies [9fe145e]
+- Updated dependencies [56f203f]
+- Updated dependencies [cfe3b7a]
+- Updated dependencies [e23f631]
+- Updated dependencies [9fe145e]
+- Updated dependencies [108721d]
+- Updated dependencies [e23f631]
+- Updated dependencies [129f2fa]
+- Updated dependencies [5b7e4c8]
+- Updated dependencies [b68d1cc]
+- Updated dependencies [32c54f1]
+- Updated dependencies [56f203f]
+- Updated dependencies [e23f631]
+- Updated dependencies [8e1f679]
+- Updated dependencies [6b60219]
+- Updated dependencies [fe08229]
+  - @graview/core@0.1.24
+  - @graview/tools@0.1.24
+  - @graview/layout@0.1.24
+  - @graview/render@0.1.24
+
 ## 0.1.23
 
 ### Patch Changes

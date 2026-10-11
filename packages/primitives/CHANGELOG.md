@@ -1,5 +1,56 @@
 # @graview/primitives
 
+## 0.1.24
+
+### Patch Changes
+
+- 9fe145e: A host's turn knows the app the seat is mounted with, so `describe_place` describes a lens place. Inside `HostAi.turn` the seat built its read tools from the store alone, and the chat's own runtime did the same, so a model asking `describe_place` for a lens or the declared home was told "is not a place this app has": the app never reached the seat. `GraviewProvider` now takes `app` and holds it on its context (`useGraview().app`), inheriting the app of a provider it is drawn inside; `mount` and `<Embed>` pass theirs on both faces, and `PagesApp`'s `context.app` reaches the provider under the pages. The chat hands it to its own tool runtime, to the workbench's agent seat and, as `ChatContext.app`, to a host's turn, whose `describe_place` now answers exactly as the runtime `graview mcp` serves does, for the seat that asked. With `app` given, a provider's reader `settings` default to `app.settings`. `graview create` writes `app` on the provider and on the pages' context. The hosted page carries 132 bytes fewer up front (589 625; 589 757 before), and as many fewer handed a compiled app (547 324; 547 456): the embed now hands the provider each option as given, which the provider's props accept as `undefined`, rather than spreading each one in only when it is set.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged. New: `app` on `GraviewProviderProps`, `GraviewContextValue`, `PageContext` and `ChatContext`. Changed: `GraviewProviderProps`' `principal`, `seats`, `people`, `memory`, `presenceTtlMs`, `presence`, `brand`, `onKeepLens` and `ai` also accept `undefined`, which means the same as leaving them out. What a host does: one that mounts its own `GraviewProvider` passes `app={yourApp}` (and `app` in `PagesApp`'s context) so its seat and its turn can describe the app's lenses and home; `mount` and `<Embed>` need nothing.
+- a6c8da2: A problem opens on its repairs. Pressing a problem under the scene's standing selected what it named and nothing more — the scene's acts are the menu at the pointer, so at altitude, where the record is a cube in a shut district, its repair was on no surface at all, in every example. The press now opens the acts menu under the standing, on the problem's subject, its repairs first. `PointerMenu.on` may be given as `undefined`. (W-179, the eighth walk.)
+  
+  Compatibility: ops, stored formats, the wire, the document format, the compiled format, check finding codes and tool names and schemas are unchanged.
+- 129f2fa: A type lives where it is said first, so six of the import cycles that were left only in types are gone. The kit's types (`Kit`, `ConnectorKit`, `KitOverrides` and the rest) are the theme's, beside the `Brand` that carries them; `PagesArrangement` is the view registry's, which arranges by it; `Finding` and `Severity` are the check context's, where a finding is added; `validateScaffoldOptions` asks only the options a name can be wrong in; `settleAt` asks only the embed's options it reads; the seat's `SeatMove` and `SeatOffer` are the conversation's, whose replies carry them (`@graview/tools/go` still says both); and `KeptLens` is the reader's lenses'. Every name is exported from the same entry as before. Three are left, each for a reason: a `Store` is declared beside the store it describes; the document's views and its description of a place are being changed by this round's other work.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and check finding codes, and tool names and input schemas are unchanged — only where a type is declared moved, and every entry exports what it did; the hosted page's first load is the same to the byte.
+- 791fb0c: Each blocks lens's blocks are claimed under its own address. Every lens drawn from blocks answered to one shared view name, `place`, for `BlockSlots` claims, so two lenses whose blocks said one key could not be claimed differently: a face's claim on one was a claim on both. A blocks lens's view is now its address, as `describe_place` names it — the lens titled "The offers" is claimed as `{ "the-offers": { top: Banner } }` — and two lenses that say one key each draw their own. `SpecPlace` takes the `view` its blocks are claimed under; unsaid, it is the slot, so the home is still `home`.
+  
+  Compatibility: ops, stored formats, wire messages, the declaration, the compiled format and tool names and schemas are unchanged. A claim keyed `place` no longer reaches any lens; key it by the lens's address. What Graview Cloud changes: nothing.
+- 8e1f679: The app bar says which kinds hold anything without walking every record. A kind with no records folds into "More" (`barPlaces`), and the bar asked by gathering the kind of every record in the graph each time it drew — on every page's bar, on every change. The graph now keeps how many records of each kind it holds as they come and go — added, removed, loaded, a batch that failed put back, a patch that names the kind — and `Graph.count(kind)` reads it without a walk; a seat's view of the graph (`seenBy`) counts only what that seat is served. Measured on apps/discography's 2,229 records, the bar's places took 0.044 ms a change and take 0.007; at 22,290 records, 0.42 ms and 0.009. Paid for in the same bytes: the hosted page's first load is 22 bytes lighter.
+  
+  Compatibility: ops, stored formats, wire messages, the declaration, the compiled format and tool names and schemas are unchanged. New: `Graph.count(kind)`. What Graview Cloud changes: nothing.
+- 9646578: The bar fits the narrowest phone at the reader's largest text. At 320 pixels wide and 32px text the person's button sat 23 pixels past the edge of every page; on a phone the app's name now gives, to its ellipsis. (W-189, the eighth walk.)
+  
+  Compatibility: ops, stored formats, the wire, the document format, the compiled format, check finding codes and tool names and schemas are unchanged.
+- 3043dcc: The way in is not a seat's own "none yet". Under a policy, `Begin` counted what the seat sees, so a member with no holds of their own, in a library with twenty, opened on "what has to exist before the rest of it can … Holds none yet" in place of the home, and somebody browsing on "Members none yet" over 280 of them. A kind a seat sees only its own of, or none of, is no longer the way in's to count: what exists there is not that seat's, and its own first is on the kind's page. (W-183, the eighth walk.)
+  
+  Compatibility: ops, stored formats, the wire, the document format, the compiled format, check finding codes and tool names and schemas are unchanged.
+- Updated dependencies [6dbad14]
+- Updated dependencies [e23f631]
+- Updated dependencies [9fe145e]
+- Updated dependencies [56f203f]
+- Updated dependencies [cfe3b7a]
+- Updated dependencies [a6c8da2]
+- Updated dependencies [e23f631]
+- Updated dependencies [9fe145e]
+- Updated dependencies [108721d]
+- Updated dependencies [e23f631]
+- Updated dependencies [129f2fa]
+- Updated dependencies [5b7e4c8]
+- Updated dependencies [b68d1cc]
+- Updated dependencies [32c54f1]
+- Updated dependencies [56f203f]
+- Updated dependencies [e23f631]
+- Updated dependencies [8e1f679]
+- Updated dependencies [129f2fa]
+- Updated dependencies [6b60219]
+- Updated dependencies [fe08229]
+  - @graview/core@0.1.24
+  - @graview/react@0.1.24
+  - @graview/tools@0.1.24
+  - @graview/layout@0.1.24
+  - @graview/render@0.1.24
+
 ## 0.1.23
 
 ### Patch Changes
