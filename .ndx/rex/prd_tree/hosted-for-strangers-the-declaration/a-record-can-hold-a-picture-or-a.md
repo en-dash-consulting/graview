@@ -24,5 +24,5 @@ acceptanceCriteria:
   - "The hosted page's first load does not grow"
 description: "A record could hold words, numbers, dates and choices, and nothing a person photographs or is sent. Cloud's apps need a receipt's photo, a quote's PDF and a job's pictures on the record itself, stored by the host and shown wherever the record is."
 lastModified: "2026-10-12T00:14:12.000Z"
-resolution: "Done in #PR_NUMBER: image and file fields in both declarations, FileValue validated as a path on the host, drawn as thumbnails, a gallery and documents behind one lazy door, the image block, files lost said by a removal and a migration; the hosted page's first load is 1,609 bytes smaller. Views in a guest frame or worker are not yet handed the addresses they may put in an img."
+resolution: "Done in #223: image and file fields in both declarations, FileValue validated as a path on the host, drawn as thumbnails, a gallery and documents behind one lazy door, the image block, files lost said by a removal and a migration; the hosted page's first load is 1,609 bytes smaller. Views in a guest frame or worker are not yet handed the addresses they may put in an img."
 ---

@@ -24,5 +24,5 @@ acceptanceCriteria:
   - "A browser harness: upload by input and by paste, a thumbnail drawn, the gallery full size, a PDF inline, a refusal in words, undo removes it"
 description: "A file field needs a way in. Cloud's route stores bytes at /graview/files/<sha256>.<ext> and answers the value; the framework needs the seam a host hands it and an editor on every face that sends to it."
 lastModified: "2026-10-12T00:14:12.000Z"
-resolution: "Done in #PR_NUMBER: HostFiles on mount, <Embed>, GraviewProvider, the Shell and PagesApp; the editor on the scene's record, the record page, the forms and the strip's ask; devFiles and filesAt for development; the todo example's attachments; scripts/verify-files.mjs."
+resolution: "Done in #223: HostFiles on mount, <Embed>, GraviewProvider, the Shell and PagesApp; the editor on the scene's record, the record page, the forms and the strip's ask; devFiles and filesAt for development; the todo example's attachments; scripts/verify-files.mjs."
 ---
