@@ -1,6 +1,6 @@
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -195,8 +195,14 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * its content: the pages face grows with its page, and the scene and the
    * Graview take `AUTO_SCENE_HEIGHT`. A frame that is sized from its content
    * (a chat's widget) wants `"auto"` and `onIntrinsicHeight`.
+   *
+   * `"viewport"` is the screen's height, measured by the embed and measured
+   * again when a phone turns (FR-165): a page that IS the app wants it. A
+   * height in viewport units (`100dvh`, `calc(100svh - 48px)`, a `var()`'s
+   * fallback) is measured the same way, each unit read as a hundredth of
+   * the window's `innerHeight`. The on-screen keyboard does not shrink it.
    */
-  readonly height?: number | string;
+  readonly height?: number | "auto" | "viewport" | (string & {});
   /**
    * THE HEIGHT THE EMBED ASKS FOR, as it changes (FR-13): the bar and the
    * whole page under it on the pages face, the bar and the picture's box
@@ -401,6 +407,9 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
   const { app, seed, scheme: askedScheme = "auto", brand = app.brand, fonts = true, height = "100%", label } = props;
   const rootRef = useRef<HTMLElement>(null);
   useTheKeyboardLandsSomewhere(rootRef as never);
+  // The screen's height, when the host asked for it in any words (FR-165).
+  const asked = height === "viewport" ? "100dvh" : height;
+  const screen = useViewportHeight(typeof asked === "string" && /vh\b/.test(asked));
   const scope = useMemo(() => `graview-embed-${++sequence}`, []);
   /*
    * ONE STORE ACROSS THE SEATS. Who is at the keyboard is the provider's
@@ -463,7 +472,8 @@ export function useFrame<S extends AnySchema>(props: FrameOptions<S>) {
     return () => observer.disconnect();
   }, [label]);
 
-  return { rootRef, scope, css, scheme, store, presence, brand, auto: height === "auto", height };
+  const measured = screen ? `${asked}`.replace(/([\d.]+)[sdl]?vh\b/g, (_, units: string) => `${(+units * screen) / 100}px`) : asked;
+  return { rootRef, scope, css, scheme, store, presence, brand, auto: height === "auto", height: measured };
 }
 
 /**

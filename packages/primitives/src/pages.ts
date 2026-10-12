@@ -28,6 +28,7 @@ export { RelationMark } from "./relation-key.js";
 export { registerDefaultViews } from "./default-views.js";
 export { HeadingsUnder, HomeLine, pageSays, registerViewSpecs, SpecLinks } from "./spec-views.js";
 export { StandingDot, standingWords } from "./workbench/standing.js";
+export { useViewportHeight } from "./primitives/measure.js";
 export { Profile } from "./profile.js";
 export { viewsCss } from "./views-css.js";
 // Where a notice stands over a picture, clear of what stands at its foot (FR-133): the routed face's way back is one.

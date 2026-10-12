@@ -517,8 +517,11 @@ export const BUDGETS = [
     // fetched when it is first opened: the pull that follows a finger, the ✕ on a phone, the talk's scroll kept for the
     // sheet opened again. What a page loads first is unchanged up front, 75 bytes more on either face before it draws (the
     // keyboard put on the seat's region on a phone, the field never under 16px). 986 / 218 more than main. Measured at 1_711_977 / 540_868.
-    minified: 1_712_300,
-    gzipped: 541_000,
+    // Raised when the phone's seat sheet (FR-164, #221) met an app filling the phone after it turns (FR-165): the
+    // seat's sheet chunk and the faces' re-measure, chunks fetched later only; the first load is 732 bytes smaller.
+    // Measured at 1_712_707 / 541_124.
+    minified: 1_712_900,
+    gzipped: 541_300,
     load: "all",
   },
   {

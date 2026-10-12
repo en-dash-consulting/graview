@@ -1,6 +1,6 @@
 import { layer, type AnySchema } from "@graview/core";
 import { aggregateId, kindCardId } from "@graview/layout/view";
-import { SeatField } from "@graview/primitives/pages";
+import { SeatField, useViewportHeight } from "@graview/primitives/pages";
 import { useGraviewIfAny } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { askPlace, pin } from "./ask-place.js";
@@ -84,10 +84,13 @@ const NEED = { width: 160, height: 40 };
  * page, its reading column (`main`), so a field at the foot's left stands
  * under the page and not across the list of places beside it. Placed again
  * as the page scrolls, the box changes size or the route changes, and put
- * away while too little of the box shows.
+ * away while too little of the box shows. Its height is the screen's as
+ * measured (FR-165), placed again when a phone turns and a beat after:
+ * the `100dvh` it is first drawn at is only the first frame's.
  */
 function useInItsBox(anchor: RefObject<HTMLDivElement | null>, drawn: boolean) {
   const { pathname } = useLocation();
+  const screen = useViewportHeight(drawn);
   useLayoutEffect(() => {
     const element = anchor.current;
     if (!element) return;
@@ -95,7 +98,7 @@ function useInItsBox(anchor: RefObject<HTMLDivElement | null>, drawn: boolean) {
     const boxOf = () => embed ?? document.querySelector<HTMLElement>("main") ?? null;
     const place = () => {
       const box = boxOf();
-      const view = { width: document.documentElement.clientWidth || innerWidth, height: innerHeight };
+      const view = { width: document.documentElement.clientWidth || innerWidth, height: screen ?? innerHeight };
       const rect = box?.getBoundingClientRect() ?? { left: 0, top: 0, right: view.width, bottom: view.height };
       /*
        * AT THE WINDOW'S FOOT ON A SHORT PAGE TOO. The page's column ends
@@ -129,7 +132,7 @@ function useInItsBox(anchor: RefObject<HTMLDivElement | null>, drawn: boolean) {
       removeEventListener("resize", place);
       removeEventListener("scroll", place, true);
     };
-  }, [anchor, drawn, pathname]);
+  }, [anchor, drawn, pathname, screen]);
 }
 
 /** The page's own subject, put where every surface reads it: the selection. */

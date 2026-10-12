@@ -49,6 +49,10 @@
       "types": "./dist/lines.d.ts",
       "default": "./dist/lines.js"
     },
+    "./json-schema": {
+      "types": "./dist/json-schema.d.ts",
+      "default": "./dist/json-schema.js"
+    },
     "./sync": {
       "types": "./dist/sync/index.d.ts",
       "default": "./dist/sync/index.js"

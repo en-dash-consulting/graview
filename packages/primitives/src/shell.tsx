@@ -17,6 +17,7 @@ import { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
 import { SceneWayBack } from "./scene-way-back.js";
 import { BackOut, Inspector, OverviewButton, Standing } from "./workbench/index.js";
 import { useFavicon } from "./app-title.js";
+import { useViewportHeight } from "./primitives/measure.js";
 
 /**
  * The shell: everything an application's window holds that is not about
@@ -146,6 +147,8 @@ export function Shell<S extends AnySchema>({
   const [barFind, setBarFind] = useState<BarFind | null>(null);
   // What the scene shows, and every picture it can (FR-144).
   const scenePlaces = useScenePlaces();
+  // The screen's height, measured again when a phone turns (FR-165): `100vh` kept the first one.
+  const screen = useViewportHeight();
   const arrangement = views.arrangement?.();
   /*
    * THE WAY HOME: the app's front page on the pages, as an embed's is; with
@@ -160,7 +163,7 @@ export function Shell<S extends AnySchema>({
 
   return (
     <NoticeBoardContext.Provider value={board}>
-    <div ref={shell} style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+    <div ref={shell} style={{ display: "flex", flexDirection: "column", height: screen ?? "100dvh", overflow: "hidden" }}>
       {syncUrl ? <UrlSync /> : null}
       {/*
         * THE ONE APP BAR, as an embed's scene face wears it: the same parts

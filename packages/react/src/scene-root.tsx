@@ -920,6 +920,8 @@ export function Scene<S extends AnySchema>({
       data-graview-reach={frame.city ? reachOf(cameraLimit(result)) : undefined}
       // Nothing in motion: no tween running and no camera glide pending. A harness can wait on this rather than on a timer.
       data-graview-settled={frame.t >= 1 && !flights.gliding() ? "" : undefined}
+      // The box the scene laid itself out for, so a harness can tell a box followed from one kept (FR-165).
+      data-graview-box={size ? `${size.width}x${size.height}` : undefined}
       onPointerDown={onGroundDown}
       onPointerMove={onDragMove}
       onPointerUp={onDragUp}

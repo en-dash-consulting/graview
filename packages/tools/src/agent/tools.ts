@@ -3,7 +3,6 @@ import {
   answerSeenBy,
   deriveMutations,
   derivedVia,
-  mutationToolSchema,
   nodeRefArgs,
   permits,
   permittedMutations,
@@ -15,7 +14,6 @@ import {
   type AnySchema,
   type GraphDiff,
   type GraviewApp,
-  type JsonSchema,
   type NodeOfSchema,
   type Place,
   type Principal,
@@ -24,6 +22,7 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
+import { mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import { computedValues } from "@graview/core/blocks";
 import { authorship, markComputed, markGraph, markHits, markNode } from "./untrusted.js";
 import {

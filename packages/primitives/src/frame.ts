@@ -28,5 +28,5 @@ export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, Notic
 export { Standing, StandingDot, standingWords } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/descent.js";
 export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from "./view-doors.js";
-export { useWidth, VISUALLY_HIDDEN } from "./primitives/measure.js";
+export { useViewportHeight, useWidth, VISUALLY_HIDDEN } from "./primitives/measure.js";
 export { fetchDeclaredLenses, fetchHomeView, registerDeclaredLenses, registerReaderLenses } from "./declared-lens-doors.js";

@@ -1,9 +1,9 @@
 import { useViewMode } from "@graview/react/provider";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { useWidth, VISUALLY_HIDDEN } from "./measure.js";
+import { useViewportHeight, useWidth, VISUALLY_HIDDEN } from "./measure.js";
 
 /* Their own file, so the frame reaches them without this one (FR-104): `@graview/primitives/frame`. */
-export { useWidth, VISUALLY_HIDDEN };
+export { useViewportHeight, useWidth, VISUALLY_HIDDEN };
 
 /**
  * A rich primitive set, not a visualization library.
