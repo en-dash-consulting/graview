@@ -1,0 +1,26 @@
+---
+id: "b6f1c2a4-7d3e-4e59-9a1c-164f164f1640"
+level: "feature"
+title: "A phone's seat is put away by its ✕, a tap or a pull down, and the keyboard goes down with it (FR-164)"
+status: "completed"
+priority: "high"
+tags:
+  - "graview-cloud"
+  - "FR-164"
+source: "Graview Cloud, 2026-10-11 (the framework brief after 0.1.23; Nick, on his phone)"
+startedAt: "2026-10-11T19:00:00.000Z"
+completedAt: "2026-10-11T20:30:00.000Z"
+endedAt: "2026-10-11T20:30:00.000Z"
+acceptanceCriteria:
+  - "The phone's sheet has a ✕, as the desk's seat does, and a tap on it closes the sheet"
+  - "A tap on the grab line closes the sheet, and a pull down on its top row closes it past a threshold or a flick; a short, slow pull settles back"
+  - "Closed on a phone, no field holds the keyboard and it is not on <body>; a letter typed then opens nothing"
+  - "The ask field's text is at least 16px, so iOS Safari does not zoom the page"
+  - "The words typed and not sent, and where the talk was scrolled to, are kept for the sheet opened again"
+  - "An open sheet restored after a reload can be closed, with no field focused"
+  - "The swipe is in the seat's lazy chunk: the hosted page's first load does not grow"
+  - "Held by the phone-seat harness on an iPhone and a Pixel with touch, in Chromium and WebKit, on the scene and on Pages"
+description: "Nick, on his phone after 0.1.23: the bar at the top of the seat's sheet 'suggests it can be swiped down or tapped to minimize. Neither does anything, and there is no close button.' The grab was a 64x28 button closing on click only, with no pointer or touch handler; the ✕ and ⇄ were drawn on a desk only; the field was 0.9375rem, so iOS zoomed on focus; close() put the keyboard back in the ask field, so on a phone the on-screen keyboard stayed up and the next change opened the sheet again; and open was restored from sessionStorage on reload. Verified in Playwright's iPhone 13 (WebKit) and Pixel 7 (Chromium) emulation on both faces: the tap reached the grab and closed the sheet, focus went back to the field, and the next letter typed reopened it."
+lastModified: "2026-10-11T20:30:00.000Z"
+resolution: "Shipped in the PR seat/the-phone-sheet-closes: a ✕ on the phone's sheet, a pull down on its top row (64px, or 0.5px/ms over 16px), a phone's close focuses the seat's region rather than a field, the field at max(1rem,16px), the talk's scroll kept for reopening; an open sheet is still restored on reload, now closable. Held by scripts/verify-phone-seat.mjs."
+---
