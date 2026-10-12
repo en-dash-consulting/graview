@@ -98,6 +98,11 @@ here requires a service.
 4. **Health is coherence, not liveness.** `health(store)` reports sizes,
    standing and dangling edges — poll it per deployment, curl it self-hosted.
 
+   **Files are yours to store.** An `image`/`file` field keeps a `FileValue`
+   whose `href` is a path you serve to whoever may read the record. Hand
+   `mount` `files: { upload(file, name), maxBytes, kinds }`; in dev,
+   `devFiles()` and `filesAt("/__graview/files", …)`.
+
 5. **The machine under the dev server is a door.** A locally-run product
    very often has a coding agent installed, logged in and paid for; the
    browser cannot spawn it and the dev server can.

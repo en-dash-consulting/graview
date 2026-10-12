@@ -70,7 +70,7 @@ These are pinned by tests, not by convention:
   (`checkApp`, `compileDocument`, `describeApp`) lives on
   `@graview/core/check`, the city and `sceneThumbnail` on `/scene`, the
   shipped drawings on `/figures`, a view's block resolver on `/blocks`,
-  a status board's reach and `resolveFor` on `/describe`, and arranging a list on `/arrange`
+  a status board's reach and `resolveFor` on `/describe`, arranging a list on `/arrange`, and an act's form on `/forms`
   (`packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts`).
   A page its host hands a compiled app imports `@graview/core/compiled`
   and nothing from `/document` up front, which would bring the compiler
@@ -140,9 +140,9 @@ pinned at 1.49.1 on purpose.
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`,
-  `./figures`, `./blocks`, `./describe`, `./arrange`, `./typed`, `./sync`, `./snapshot`, `./conformance`, `./scaffold`,
+  `./figures`, `./blocks`, `./describe`, `./arrange`, `./forms`, `./typed`, `./sync`, `./snapshot`, `./conformance`, `./scaffold`,
   `./testing` and the `./document.schema.json` the build writes; layout's `./view`; react's `./provider` and `./drawing`;
-  tools' `./frame`, `./edit`, `./suggest`, `./go`, `./draft`, `./keep` and `./turn`; embed's `./pages`;
+  tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep` and `./turn`; embed's `./pages`;
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and
   `scripts/inspect-pack.mjs` asserts against the real tarball.
 - **Node 22.** Top-level await in the scaffolded app, and the engines field

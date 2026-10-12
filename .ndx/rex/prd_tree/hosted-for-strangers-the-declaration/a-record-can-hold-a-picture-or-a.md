@@ -1,0 +1,28 @@
+---
+id: "e8c2642c-f325-4163-8605-03d1522966df"
+level: "feature"
+title: "A record can hold a picture or a document (FR-162)"
+status: "completed"
+priority: "high"
+tags:
+  - "graview-cloud"
+  - "FR-162"
+  - "document"
+  - "files"
+source: "Graview Cloud, the brief after 0.1.23"
+startedAt: "2026-10-11T19:00:00.000Z"
+completedAt: "2026-10-12T00:14:12.000Z"
+endedAt: "2026-10-12T00:14:12.000Z"
+acceptanceCriteria:
+  - "Field types image and file, and list with of image or file, in TypeScript (imageField, fileField) and in the document format: the compiler, document.schema.json, graview types and typed, and the check"
+  - "The value is FileValue { href, name, type, bytes, width?, height?, caption? }, validated, its href a path on the host: a scheme of any sort, another host, a backslash or a climb is refused"
+  - "Drawn wherever the record is drawn: a thumbnail on cards and rows, a gallery on the record page that opens each full size, a document by its name, type and size, a PDF inline, anything else a download"
+  - "An image block for the card, row, page and home lenses: { image, as: thumb | gallery }"
+  - "A removed field or record says what files would be lost; the host decides what happens to the bytes"
+  - "Export and remix carry the values as any field; the agent's tools describe the type and a seat may set a file field to a value the host gave"
+  - "Every image has alt text: its caption, else its name"
+  - "The hosted page's first load does not grow"
+description: "A record could hold words, numbers, dates and choices, and nothing a person photographs or is sent. Cloud's apps need a receipt's photo, a quote's PDF and a job's pictures on the record itself, stored by the host and shown wherever the record is."
+lastModified: "2026-10-12T00:14:12.000Z"
+resolution: "Done in #PR_NUMBER: image and file fields in both declarations, FileValue validated as a path on the host, drawn as thumbnails, a gallery and documents behind one lazy door, the image block, files lost said by a removal and a migration; the hosted page's first load is 1,609 bytes smaller. Views in a guest frame or worker are not yet handed the addresses they may put in an img."
+---

@@ -15,9 +15,8 @@ agent tool that walks the graph.
 1. **Find the schema.** It is the file calling `createSchema`. Usually
    `src/domain/schema.ts`.
 
-2. **Declare the kind.** Zod is the single source of runtime validation,
-   TypeScript types and JSON Schema — there is no second place to describe a
-   field.
+2. **Declare the kind.** Zod is the one place a field is described:
+   validation, types and JSON Schema.
 
    ```ts
    export const fixture = defineNode("fixture", {
@@ -27,6 +26,8 @@ agent tool that walks the graph.
        label: z.string().min(1).max(60),
        kickOff: z.string(),
        opponent: z.string(),
+       // A picture the host stores: a document's "image" (or "file").
+       programme: imageField().optional(),
      }),
      plural: "Fixtures",
      description: "A match, and the team you intend to put out for it.",
@@ -59,13 +60,13 @@ agent tool that walks the graph.
    `creates: ["fixture"]` takes an optional `id` argument the framework adds,
    so a seed being synced or an agent that will refer to the node next call
    gets exactly the id it asked for, or a refusal by name. Never hardcode a
-   bootstrap id — `"today"`, `"u-nick"` — inside a mutation body or an
-   invariant; bind a role, a flag or an edge instead, so a store seeded
+   bootstrap id — `"today"`, `"u-nick"` — in a mutation body or an
+   invariant; bind a role, a flag or an edge, so a store seeded
    differently still works. And every kind gets `remove-<kind>` derived,
    permitted through the acts that create it.
 
-5. **Give it verbs.** A kind with no mutation naming it as a subject renders
-   fine and can have nothing done to it, and the actions strip will say so. If that is not what you meant, see `graview-invariant` for the rule
+5. **Give it verbs.** A kind no mutation names as a subject can have nothing
+   done to it, and the strip says so. If that is not what you meant, see `graview-invariant` for the rule
    shape and add at least one mutation whose `subject.kinds` includes it.
 
 6. **Let the fields be changed, or say why not.** A field you could set at

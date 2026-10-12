@@ -1277,6 +1277,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 <ol>
 <li><strong>Health is coherence, not liveness.</strong> <code>health(store)</code> reports sizes, standing and dangling edges — poll it per deployment, curl it self-hosted.</li>
 </ol>
+<p><strong>Files are yours to store.</strong> An <code>image</code>/<code>file</code> field keeps a <code>FileValue</code>    whose <code>href</code> is a path you serve to whoever may read the record. Hand    <code>mount</code> <code>files: { upload(file, name), maxBytes, kinds }</code>; in dev,    <code>devFiles()</code> and <code>filesAt("/__graview/files", …)</code>.</p>
 <ol>
 <li><strong>The machine under the dev server is a door.</strong> A locally-run product very often has a coding agent installed, logged in and paid for; the browser cannot spawn it and the dev server can.</li>
 </ol>

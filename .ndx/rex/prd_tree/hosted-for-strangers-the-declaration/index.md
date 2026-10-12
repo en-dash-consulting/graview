@@ -187,3 +187,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Write a worker view with no build and no copied protocol (FR-96)](./write-a-worker-view-with-no-build-and.md) | completed |
 | [Writes from a worker view that can't leak: manifest acts, and presses the host saw (FR-92)](./writes-from-a-worker-view-that-can-t.md) | completed |
 | [A host wires its turn from the loop alone: @graview/tools/turn (FR-161)](./a-host-wires-its-turn-from-the-loop.md) | completed |
+| [A record can hold a picture or a document (FR-162)](./a-record-can-hold-a-picture-or-a.md) | completed |
+| [Putting a file on a record from the page, through the host's files (FR-163)](./putting-a-file-on-a-record-from-the.md) | completed |

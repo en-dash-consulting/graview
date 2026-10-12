@@ -160,8 +160,13 @@ export const BUDGETS = [
     // Gzipped raised when a document came to work out facts of the whole graph and a kind to say its time and its author:
     // `fact()` in the evaluator the face reads blocks with, a glance led by `who` and `when`, and each reading of a shared
     // relation listed apart, less a list opening newest first in fewer bytes. 245 / 145 more than main. Measured at 535_746 / 191_209.
-    minified: 537_200,
-    gzipped: 191_300,
+    // Lowered when a record came to hold a picture or a document (FR-162, FR-163): the routed face asks what can be done
+    // through `@graview/tools/derive`, not the tools' root, so the chat, the agent's tool surface and zod's JSON Schema left
+    // its first load — with the value's check, the files' door and the image block in it, 26_338 / 10_784 fewer than main
+    // (531_644 / 190_208). The gallery and the editor are a chunk fetched with the first file field drawn. Measured at
+    // 505_306 / 179_424.
+    minified: 507_000,
+    gzipped: 180_200,
     load: "first",
   },
   {
@@ -513,8 +518,12 @@ export const BUDGETS = [
     // leaving a seat's own kinds alone; and 144 bytes of what a page loads first (a box nobody ticked sent as no, a name
     // called a name, a creating act not guessed to write its subject, the upgrade's refusal, the bar giving on a phone).
     // 24 / 258 more than main as it measured itself, over the sight of a seat's problems and #213. Measured at 1_710_991 / 540_650.
-    minified: 1_711_300,
-    gzipped: 540_800,
+    // Raised when a record came to hold a picture or a document (FR-162, FR-163), mostly by the chunk fetched with the first
+    // file field drawn — its gallery, its documents and its editor (`files.tsx`, 12_384, and the resampling a camera's photo
+    // is sent through, 403) — and by what every face loads first (see "embed with the studio handed in"). 18_752 / 7_539
+    // more than main (1_710_529 / 540_260). Measured at 1_729_281 / 547_799.
+    minified: 1_730_000,
+    gzipped: 548_000,
     load: "all",
   },
   {
@@ -605,8 +614,14 @@ export const BUDGETS = [
     // and a kind's computed fields judged twice. 2_809 / 1_199 more than main. Measured at 1_568_167 / 481_507.
     // Gzipped only, when the checker's fact-rule warning (#216) met each blocks lens claiming under its own address and
     // the bar counting per kind: 17 bytes over together. Measured at 1_566_803 / 481_617.
-    minified: 1_568_300,
-    gzipped: 481_800,
+    // Raised when a record came to hold a picture or a document (FR-162, FR-163), by what this page loads first: the
+    // value's check and its mark (`files.ts`, 962), the image block, the file field's door on every face that draws a
+    // record, and the checker reading a field as a document says it from modules of their own (`field-spec.ts`,
+    // `view-specs.ts`, which is what takes 1_609 bytes off the hosted page's first load). The gallery and the editor are a
+    // chunk fetched with the first file field drawn. 4_965 / 2_083 more than main (1_566_369 / 481_360). Measured at
+    // 1_571_334 / 483_443.
+    minified: 1_572_000,
+    gzipped: 483_600,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
