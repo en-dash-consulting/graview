@@ -6,6 +6,7 @@ import { parseTemplate } from "../../document/template-parse.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
 import { humanizeField } from "../../schema/define-node.js";
 import { permits, rolesOf } from "../../permissions/policy.js";
+import { THEMSELVES } from "./people.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
 
@@ -175,7 +176,7 @@ export function checkHiddenReads<S extends AnySchema>(ctx: CheckContext<S>): voi
     if (reads.size === 0) continue;
     const subjects = mutation.subject && mutation.subject.kinds !== "*" ? (mutation.subject.kinds as readonly string[]) : [undefined];
     for (const role of roles) {
-      const runs = subjects.some((kind) => permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, undefined, "themselves").ok);
+      const runs = subjects.some((kind) => permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, undefined, "themselves", undefined, THEMSELVES).ok);
       if (!runs) continue;
       for (const [kind, why] of reads) {
         if (sees(role, kind)) continue;

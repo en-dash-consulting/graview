@@ -124,6 +124,8 @@ export function compileMutation<S extends AnySchema>(
      * links, an id already taken. Absent, the graph itself.
      */
     readonly seen?: GraphReader<NodeOfSchema<S>>;
+    /** The id of the seat the act is run by — the person, for an agent acting for one: the act's `ctx.me`. */
+    readonly me?: string | undefined;
   } = {},
 ): CompiledMutation {
   /*
@@ -173,6 +175,7 @@ export function compileMutation<S extends AnySchema>(
   const context: MutationContext<S> = {
     graph: reader,
     schema: graph.schema,
+    me: options.me,
     emit(primitive) {
       primitives.push(primitive);
     },

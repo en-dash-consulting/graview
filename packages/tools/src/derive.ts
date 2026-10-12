@@ -425,18 +425,25 @@ export function previewAffordance<S extends AnySchema>(
  */
 function narrowed<S extends AnySchema>(store: Store<S>, affordance: Affordance, asking: Principal): Affordance | "done" | undefined {
   const subject = store.allMutations().find((mutation) => mutation.name === affordance.mutation)?.subject;
-  if (!subject || affordance.args[subject.arg] !== undefined) return undefined;
-  const asked = affordance.open.find((parameter) => parameter.name === subject.arg);
+  const open = subject !== undefined && affordance.args[subject.arg] === undefined;
+  /*
+   * From its far end the subject is open; from its subject, the record at
+   * the other end of the link it makes or breaks — which a grant held to
+   * the seat's own end (`ownEnd`) permits only when it is theirs: "take back
+   * a vote" on an idea is offered with the seat's own vote, or not at all.
+   */
+  const asked = open ? affordance.open.find((parameter) => parameter.name === subject.arg) : affordance.open.find((parameter) => parameter.name !== subject?.arg && parameter.candidates);
   if (!asked?.candidates) return undefined;
-  const on = (id: string) => store.permits({ name: affordance.mutation, args: { ...affordance.args, ...(affordance.batch?.[0] ?? {}), [subject.arg]: id } }, asking).ok;
+  const on = (id: string) => store.permits({ name: affordance.mutation, args: { ...affordance.args, ...(affordance.batch?.[0] ?? {}), [asked.name]: id } }, asking).ok;
   const permitted = asked.candidates.filter(on);
   const me = asking.id === undefined ? undefined : store.graph.getNode(asking.id);
   if (permitted.length === 0) {
-    const mine = me !== undefined && (subject.kinds === "*" || (subject.kinds as readonly string[]).includes(me.kind as string)) && on(me.id);
+    const kinds = open ? subject.kinds : "*";
+    const mine = me !== undefined && (kinds === "*" || (kinds as readonly string[]).includes(me.kind as string)) && on(me.id);
     return mine ? "done" : undefined;
   }
   if (permitted.length === 1 && permitted[0] === asking.id) {
-    return { ...affordance, args: { ...affordance.args, [subject.arg]: asking.id }, open: affordance.open.filter((parameter) => parameter !== asked) };
+    return { ...affordance, args: { ...affordance.args, [asked.name]: asking.id }, open: affordance.open.filter((parameter) => parameter !== asked) };
   }
   return { ...affordance, open: affordance.open.map((parameter) => (parameter === asked ? { ...parameter, candidates: permitted } : parameter)) };
 }

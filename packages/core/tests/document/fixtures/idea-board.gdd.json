@@ -1,0 +1,49 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Idea board",
+  "description": "What we might do next, and who wants it.",
+  "kinds": {
+    "member": {
+      "noun": "member",
+      "plural": "members",
+      "description": "Somebody on the board: their record's id is their principal's.",
+      "people": true,
+      "fields": {
+        "name": { "type": "string", "required": true }
+      }
+    },
+    "idea": {
+      "noun": "idea",
+      "plural": "ideas",
+      "fields": {
+        "title": { "type": "string", "required": true },
+        "champion": { "type": "string", "description": "who speaks for it" }
+      },
+      "edges": {
+        "votedBy": { "to": ["member"], "description": "who voted for it", "inverse": "what they voted for" }
+      }
+    }
+  },
+  "acts": {
+    "add-idea": { "title": "Add an idea", "creates": "idea" },
+    "vote-for": {
+      "title": "Vote for it",
+      "on": "idea",
+      "effects": [{ "connect": "votedBy", "from": "$subject", "to": "$me" }]
+    },
+    "champion": {
+      "title": "Champion it",
+      "on": "idea",
+      "effects": [{ "set": { "champion": "$me" } }]
+    },
+    "take-back": { "title": "Take back a vote", "fromTheOtherEnd": "Take back this vote", "on": "idea", "severs": "votedBy" }
+  },
+  "roles": ["member"],
+  "policy": {
+    "grants": [
+      { "roles": "*", "mutations": ["add-idea", "vote-for", "champion"] },
+      { "roles": "*", "mutations": ["take-back"], "ownEnd": true, "describe": "A vote is taken back only by whoever cast it." }
+    ]
+  }
+}

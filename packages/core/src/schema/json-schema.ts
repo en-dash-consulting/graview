@@ -43,12 +43,15 @@ function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: 
 
 /** JSON Schema for one node kind, including its id and kind discriminator. */
 export function nodeJsonSchema(definition: AnyNodeDefinition): JsonSchema {
-  return toJsonSchema(
+  const js = toJsonSchema(
     z.extend(definition.fields as unknown as z.ZodMiniObject, {
       id: z.string().check(z.minLength(1)),
       kind: z.literal(definition.kind),
     }),
   );
+  // The kind that stands for the people says so (Roadmap f-people-kind): a record's id is a member's principal id.
+  if (definition.people) js["x-graview-people"] = true;
+  return js;
 }
 
 export interface MutationToolSchema {

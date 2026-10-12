@@ -1,4 +1,5 @@
 import { permits, rolesOf } from "../../permissions/policy.js";
+import { THEMSELVES } from "./people.js";
 import { derivedVia } from "../../mutations/derive-edits.js";
 import { nodeRefKinds } from "../../mutations/node-ref.js";
 import type { AnySchema } from "../../schema/schema.js";
@@ -41,7 +42,7 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
           // A self grant counts: a role that may edit its own record may do
           // something, so the role is judged as somebody acting on themselves.
           (kind) =>
-            permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, undefined, "themselves").ok,
+            permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, undefined, "themselves", undefined, THEMSELVES).ok,
         ),
       );
       const openToAll = subjectKinds.some(
@@ -75,7 +76,7 @@ export function checkPolicy<S extends AnySchema>(ctx: CheckContext<S>): void {
         const via = derivedVia(app.schema, declaredMutations, mutation);
         return subjectKinds.some(
           (kind) =>
-            permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, via, "themselves").ok,
+            permits(app.policy, { kind: "human", id: "themselves", roles: [role] }, mutation.name, kind, via, "themselves", undefined, THEMSELVES).ok,
         );
       });
       /*

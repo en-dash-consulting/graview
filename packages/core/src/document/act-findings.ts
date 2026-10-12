@@ -71,7 +71,37 @@ function otherEndFindings(name: string, act: ActSpec, document: GraviewDocument)
   return out;
 }
 
-/** Every range and other-end finding of a document, in its order: fields, then acts. */
+/**
+ * What an act's `$me` needs (Roadmap f-act-as-me): a kind that says it is
+ * the people, since `$me` is the acting person's own record of it; and,
+ * where it links `$me`, a relation whose end there takes that kind.
+ */
+function meFindings(name: string, act: ActSpec, document: GraviewDocument): Finding[] {
+  if (!JSON.stringify(act).includes('"$me"')) return [];
+  const at = `acts.${name}`;
+  const people = Object.keys(document.kinds).filter((kind) => document.kinds[kind]!.people);
+  if (people.length === 0) {
+    return [error("people-unsaid", at, `"$me" is the acting person's own record, and no kind says it is the people`, `say "people": true on the kind whose records are the people (a record's id is a member's principal id)`)];
+  }
+  const out: Finding[] = [];
+  for (const effect of act.effects ?? []) {
+    if (!("connect" in effect) && !("sever" in effect)) continue;
+    const relation = "connect" in effect ? effect.connect : effect.sever;
+    for (const end of ["from", "to"] as const) {
+      if (effect[end] !== "$me") continue;
+      const kinds = Object.entries(document.kinds).flatMap(([kind, spec]) => {
+        const edge = spec.edges?.[relation];
+        return !edge ? [] : end === "from" ? [kind] : edge.to === "*" ? people : edge.to;
+      });
+      if (kinds.length > 0 && !people.some((kind) => kinds.includes(kind))) {
+        out.push(error("act-me", `${at}.effects`, `"${name}" links "$me" at the ${end} end of ${relation}, which takes ${kinds.join(" or ")} and never ${withArticle(people[0]!)}`, `link "$me" where ${relation} takes ${withArticle(people[0]!)}`));
+      }
+    }
+  }
+  return out;
+}
+
+/** Every range, other-end and `$me` finding of a document, in its order: fields, then acts. */
 export function actFindings(document: GraviewDocument): Finding[] {
-  return [...rangeFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => otherEndFindings(name, act, document))];
+  return [...rangeFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...meFindings(name, act, document)])];
 }

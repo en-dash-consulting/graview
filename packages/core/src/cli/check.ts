@@ -28,6 +28,7 @@ import {
   checkModules,
   checkPalette,
   checkPlots,
+  checkPeople,
   checkPolicy,
   checkProviders,
   checkReadings,
@@ -97,6 +98,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkUnmakeable(ctx);
   checkEditableFields(ctx);
   checkPolicy(ctx);
+  checkPeople(ctx);
   checkPalette(ctx);
   checkLensBindings(ctx);
   checkDeclaredLenses(ctx);

@@ -1,0 +1,7 @@
+---
+"@graview/core": patch
+---
+
+A document act can say `$me`, so "Vote for it" always votes as you (the Graview Roadmap's f-act-as-me). An act that linked the acting person took them as an argument, so anyone could vote as anyone. `$me` in a `connect`, a `sever` or a `set` is the acting principal's own record of the people kind — the person, for an agent acting for one — and the act's tool no longer asks for it: `{ "connect": "votedBy", "from": "$subject", "to": "$me" }` takes the idea and nothing else. A principal with no record of the people kind is refused with a sentence, reason `refused`: "\"Vote for it\" is done as you, and you have no record here". A TypeScript act reads the same id as `ctx.me`. The checker refuses `$me` in a document that says no people kind (`people-unsaid`, at the act) and `$me` linked where the relation never takes one (`act-me`).
+
+Compatibility: `$me` is no longer an argument's name: a document whose act named an argument `$me` now means the acting person by it, and its tool no longer takes `me`. Every other document compiles and runs as before. The compiled format carries it within `graview-compiled@1`. Check finding codes: `act-me` is new, and `people-unsaid` is said of an act too. Tool names are unchanged; an act's input schema loses an argument only where it said `$me`. Ops, stored formats and the wire are unchanged. New: `MutationContext.me`. What Graview Cloud changes: nothing, once its member records are of the people kind; an act that took the voter as an argument may say `$me` instead.

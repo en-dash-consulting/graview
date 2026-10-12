@@ -39,6 +39,15 @@ export interface Grant {
    * without a role that edits everyone's — the grant reads "you, on yours".
    */
   readonly self?: boolean;
+  /**
+   * Only on the principal's OWN END of the link the act makes or breaks:
+   * every record the call names at the far end of what it connects or
+   * severs must be the principal's own (Roadmap f-own-end-grants). How a
+   * voter takes back their own vote and nobody else's — the act is on the
+   * idea, so `self` cannot say it. `graview check` refuses it on an act
+   * that connects and severs nothing (`grant-own-end-without-link`).
+   */
+  readonly ownEnd?: boolean;
 }
 
 /**
@@ -63,6 +72,14 @@ export interface Sight {
   readonly kinds: readonly string[];
   /** Only the principal's own records: their own record, what an edge joins to it, and what they made. */
   readonly own?: boolean;
+  /**
+   * Only the records this relation joins to the principal's own record (of
+   * the people kind), at either end: `{ kinds: ["match"], via: "givenBy" }`
+   * shows each giver their own match and not the one they receive in, which
+   * `own` would (it reads every edge). `graview check` holds the relation
+   * to one that reaches the people kind (`sight-via-misses-people`).
+   */
+  readonly via?: string;
   readonly describe?: string;
 }
 

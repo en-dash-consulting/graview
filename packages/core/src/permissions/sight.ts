@@ -1,16 +1,13 @@
 import type { Epoch } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
-import { actingAs, isSystem } from "./policy.js";
-import type { Policy, Principal, Sight } from "./types.js";
+import { actingAs, grantsTo, isSystem } from "./policy.js";
+import type { Policy, Principal } from "./types.js";
 
 /** The edges a graph can be asked about, to say what is joined to whom. */
 interface Joined {
-  out(id: string): readonly { readonly id: string }[];
-  in(id: string): readonly { readonly id: string }[];
+  out(id: string, kind?: string): readonly { readonly id: string }[];
+  in(id: string, kind?: string): readonly { readonly id: string }[];
 }
-
-const sightGrantsTo = (sight: Sight, principal: Principal): boolean =>
-  sight.roles === "*" || (principal.roles ?? []).some((role) => (sight.roles as readonly string[]).includes(role));
 
 /** The kinds a policy keeps to those its sights name. */
 export function sightedKinds(policy: Policy | undefined): ReadonlySet<string> {
@@ -173,7 +170,8 @@ export function creatorsBefore(log: RecordedLog, seq: number): Record<string, st
  * kind is added and nobody said who sees it. A kind a sight names is seen
  * by the roles it lists, and with `own` only the principal's own records:
  * their record itself, what an edge joins to it ("a shopper sees their own
- * test drives" without a field naming the owner), and what they made.
+ * test drives" without a field naming the owner), and what they made. With
+ * `via`, only what that one relation joins to their record.
  */
 export function sees(
   policy: Policy | undefined,
@@ -190,15 +188,14 @@ export function sees(
   if (sights.length === 0) return false;
   principal = actingAs(principal);
   return sights.some((sight) => {
-    if (!sightGrantsTo(sight, principal)) return false;
-    if (!sight.own) return true;
+    if (!grantsTo(sight, principal)) return false;
+    if (!sight.own && !sight.via) return true;
     const me = principal.id;
     if (me === undefined) return false;
-    return (
-      node.id === me ||
-      graph.out(node.id).some((other) => other.id === me) ||
-      graph.in(node.id).some((other) => other.id === me) ||
-      records?.creatorOf(node.id) === me
-    );
+    // `via` reads the one relation, at either end, and nothing else (Roadmap: visibility scoped by relation).
+    const mine = (other: { readonly id: string }) => other.id === me;
+    return sight.via
+      ? graph.out(node.id, sight.via).some(mine) || graph.in(node.id, sight.via).some(mine)
+      : node.id === me || graph.out(node.id).some(mine) || graph.in(node.id).some(mine) || records?.creatorOf(node.id) === me;
   });
 }
