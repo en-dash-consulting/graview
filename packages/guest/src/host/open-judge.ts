@@ -70,10 +70,18 @@ const NUMBER = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/;
 const GEOMETRY = /^[0-9A-Za-z\s.,+\-%()]*$/;
 const FRAGMENT = /^#[A-Za-z_][A-Za-z0-9_.:-]*$/;
 const DATA_IMAGE = /^data:image\/(png|gif|jpeg|webp|avif|bmp|svg\+xml)(;[A-Za-z0-9=._+-]+)*,/i;
+/* An image the app itself holds, by content address: what `add_image` answers, and nothing else under the app. */
+const APP_IMAGE = /^\/graview\/assets\/[0-9a-f]{64}\.(png|gif|jpe?g|webp|avif|svg|ico)$/;
 
 export interface JudgeContext {
   /** The host page's origin, for a `blob:` image of its own. "null" in an opaque origin. */
   readonly origin: string;
+  /**
+   * Where an image the app holds is loaded from (`/graview/assets/<sha256>.<ext>`):
+   * the host's address for it, or undefined to refuse it. Without it, a view
+   * draws only `data:` images and the page's own `blob:`.
+   */
+  readonly asset?: (path: string) => string | undefined;
 }
 
 /**
@@ -112,6 +120,11 @@ function judgeValue(name: string, kind: OpenAttribute, value: string, context: J
     if (DATA_IMAGE.test(value)) return { value };
     /* A blob: of the host's own page: it is in the page's memory already, and loading it asks nobody. */
     if (value.startsWith(`blob:${context.origin}/`) && /^blob:[^\s"'<>]+$/.test(value)) return { value };
+    /* An image the app holds, where the host says it lives: its own host, by content address, so loading it asks nobody new. */
+    if (APP_IMAGE.test(value) && context.asset) {
+      const address = context.asset(value);
+      if (address) return { value: address };
+    }
     return refused("url");
   }
   if (value.length > OPEN_MAX_ATTRIBUTE) return refused("value");

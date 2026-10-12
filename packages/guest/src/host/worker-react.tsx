@@ -24,6 +24,8 @@ export interface WorkerViewDefinition {
   readonly onFailure?: (reason: WorkerViewFailure, detail?: string) => void;
   /** Each thing it did that went nowhere, and why (FR-93): a link or `graview.navigate` to no record and no place, naming the places there are. */
   readonly onProblem?: (said: string) => void;
+  /** Where an image the app holds (`/graview/assets/<sha256>.<ext>`) is loaded from, so the view may draw it by that path (WorkerViewOptions.asset). */
+  readonly asset?: (path: string) => string | undefined;
 }
 
 const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
@@ -83,6 +85,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(definition.limits ? { limits: definition.limits } : {}),
         ...(definition.author ? { author: definition.author } : {}),
         ...(definition.onProblem ? { onProblem: definition.onProblem } : {}),
+        ...(definition.asset ? { asset: definition.asset } : {}),
       });
     });
     return () => {

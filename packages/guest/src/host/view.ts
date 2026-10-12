@@ -149,6 +149,12 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
   readonly fallback?: false | ((region: HTMLElement, reason: WorkerViewFailure, detail: string) => void);
   /** The page's origin, for a `blob:` image of its own. `location.origin` by default. */
   readonly origin?: string;
+  /**
+   * Where an image the app holds (`/graview/assets/<sha256>.<ext>`) is
+   * loaded from, so a view may draw it by that path: a host serving the app
+   * under a base answers `base + path`. Without it, such an image is refused.
+   */
+  readonly asset?: (path: string) => string | undefined;
   /** Who made it, said under the region (ADR 0007: "Made by Claude for Nick"). Nothing by default. */
   readonly author?: string;
 }
@@ -393,6 +399,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     refill = () => fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
+      ...(options.asset ? { asset: options.asset } : {}),
       ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
       onOverBudget: () => fail("nodes"),
       send,
