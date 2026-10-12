@@ -150,13 +150,20 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
     panelModule.prefetch();
     seatTalk.setOpen(true);
   };
+  /*
+   * CLOSED ON A PHONE, THE ON-SCREEN KEYBOARD GOES DOWN (FR-164). Put back
+   * in the field, it kept the keyboard up and the next letter opened the
+   * sheet again: a tap on the grab seemed to do nothing. On a phone the
+   * keyboard goes back to where it was only if that is no field, and
+   * otherwise to the seat's region itself — never a field, never <body>.
+   */
   const close = () => {
     seatTalk.setOpen(false);
     const back = cameFrom.current;
     cameFrom.current = null;
-    if (back?.isConnected) back.focus({ preventScroll: true });
-    // Gone, or no longer something the keyboard can stand on (a view drawn over it): the field keeps it.
-    if (document.activeElement !== back) field.current?.focus({ preventScroll: true });
+    if (back?.isConnected && !(phone && back instanceof HTMLInputElement)) back.focus({ preventScroll: true });
+    // Gone, or no longer something the keyboard can stand on (a view drawn over it): the field keeps it, or on a phone the region.
+    if (document.activeElement !== back) (phone ? region : field).current?.focus({ preventScroll: true });
   };
 
   if (hidden) return null;
@@ -174,6 +181,8 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
       ref={region}
       role="region"
       aria-label={`Ask ${name}`}
+      // Where a phone's keyboard goes when the sheet is put away: here, not into the field.
+      tabIndex={-1}
       data-testid="seat"
       data-graview-seat={open ? "open" : "closed"}
       data-graview-seat-side={right ? "right" : "left"}
@@ -198,6 +207,8 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
         flexDirection: "column",
         gap: 8,
         pointerEvents: "auto",
+        // A landing place for the keyboard, never in the tab order: no ring around the whole seat.
+        outline: "none",
         ...style,
       }}
     >
@@ -255,7 +266,8 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
             height: 38,
             padding: "0 12px",
             font: "inherit",
-            fontSize: "0.9375rem",
+            // Never under 16px: smaller, iOS Safari zooms the page when the field is focused (FR-164).
+            fontSize: "max(1rem,16px)",
             color: "var(--graview-ink)",
             background: "var(--graview-panel)",
             border: "1px solid var(--graview-edge)",

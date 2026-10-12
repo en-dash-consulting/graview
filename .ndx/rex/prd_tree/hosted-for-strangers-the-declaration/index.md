@@ -187,3 +187,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Write a worker view with no build and no copied protocol (FR-96)](./write-a-worker-view-with-no-build-and.md) | completed |
 | [Writes from a worker view that can't leak: manifest acts, and presses the host saw (FR-92)](./writes-from-a-worker-view-that-can-t.md) | completed |
 | [A host wires its turn from the loop alone: @graview/tools/turn (FR-161)](./a-host-wires-its-turn-from-the-loop.md) | completed |
+| [A phone's seat is put away by its ✕, a tap or a pull down, and the keyboard goes down with it (FR-164)](./a-phone-s-seat-is-put-away-by-its-a.md) | completed |
