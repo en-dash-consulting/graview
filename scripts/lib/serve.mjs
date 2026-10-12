@@ -24,6 +24,23 @@ const answers = async (port) => {
   }
 };
 
+/*
+ * THE SERVERS THIS PROCESS STARTED go with it. Each vite is detached (its
+ * own process group, so `stop` takes its children too), which also means a
+ * harness stopped from outside — `verify-all` past its limit — would leave
+ * them holding their ports. A SIGTERM stops them first.
+ */
+const owned = new Set();
+let listening = false;
+const stopOnTerm = () => {
+  if (listening) return;
+  listening = true;
+  process.once("SIGTERM", () => {
+    for (const stop of [...owned]) stop();
+    process.exit(143);
+  });
+};
+
 /**
  * @param {string} app  directory under `apps/`, or an absolute path to an app beside the checkout
  * @param {number} port the port to serve it on: `portFor(app)` (lib/ports.mjs), moved onto GRAVIEW_PORT_BASE
@@ -56,12 +73,15 @@ export async function serving(app, port, repoRoot) {
     detached: true,
   });
   const stop = () => {
+    owned.delete(stop);
     try {
       process.kill(-child.pid, "SIGTERM");
     } catch {
       child.kill("SIGTERM");
     }
   };
+  owned.add(stop);
+  stopOnTerm();
   await new Promise((ready, fail) => {
     const timer = setTimeout(() => {
       stop();

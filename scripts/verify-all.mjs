@@ -242,6 +242,8 @@ if (chain.length > 1) {
   }
 }
 
+/** The longest any one harness may run; the slowest (gauntlet) takes about eleven minutes on the nightly. */
+const HARNESS_MINUTES = Number(process.env.GRAVIEW_HARNESS_MINUTES ?? 25);
 const results = [];
 const runOne = async ([name, file]) => {
   const began = Date.now();
@@ -252,9 +254,25 @@ const runOne = async ([name, file]) => {
       env: { ...process.env, ANTHROPIC_API_KEY: "", ...(quick ? { GRAVIEW_QUICK: "1" } : {}) },
     });
     let output = "";
+    /*
+     * A HARNESS THAT NEVER ENDS ENDS HERE. verify-menu waited forever on an
+     * ask it could not answer, and the nightly's shard ran out its sixty
+     * minutes: the harness after it never started, and the run said only
+     * that it was canceled. Past the limit the harness is stopped (its dev
+     * servers with it, lib/serve.mjs) and fails by name, and the chain goes
+     * on. Each harness also fails its own stuck claim sooner (lib/deadline.mjs).
+     */
+    const stopped = setTimeout(() => {
+      output += `\nstopped after ${HARNESS_MINUTES} minutes: ${name} wrote no verdict in time (GRAVIEW_HARNESS_MINUTES)\n`;
+      child.kill("SIGTERM");
+      setTimeout(() => child.kill("SIGKILL"), 15_000).unref();
+    }, HARNESS_MINUTES * 60_000);
     child.stdout.on("data", (chunk) => (output += chunk));
     child.stderr.on("data", (chunk) => (output += chunk));
-    child.on("exit", (code) => done({ code: code ?? 1, output }));
+    child.on("exit", (code) => {
+      clearTimeout(stopped);
+      done({ code: code ?? 1, output });
+    });
   });
   const took = Math.round((Date.now() - began) / 1000);
   /*
