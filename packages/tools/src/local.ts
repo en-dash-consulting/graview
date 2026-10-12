@@ -335,11 +335,25 @@ export function seatResponder<S extends AnySchema>(
       });
       if (answered.proposals.length === 0 && known.proposals.length > 0) return known;
       return { ...answered, via };
-    } catch {
-      return note(known, "(AI didn't answer just now, so this is from the app alone.)");
+    } catch (error) {
+      const why = hostSentence(error);
+      return note(known, why ? `(AI didn't answer just now: ${why}. This is from the app alone.)` : "(AI didn't answer just now, so this is from the app alone.)");
     }
   };
 }
+
+/**
+ * A HOST'S OWN SENTENCE, WHEN ITS TURN FAILED (FR-166): a plain `Error` a
+ * host threw says why in its words ("The model is busy right now; try again
+ * in a moment"), and the aside carries it. A `TypeError` from a fetch that
+ * never left, and every other kind, is the machine's, not the host's, and
+ * is not said. One line, at most 160 characters, no brackets to end the aside early.
+ */
+const hostSentence = (error: unknown): string | undefined => {
+  if (!(error instanceof Error) || error.name !== "Error") return undefined;
+  const said = error.message.replace(/[()]/g, "").replace(/\s+/g, " ").trim().replace(/[.!]+$/, "");
+  return said && said.length <= 160 ? said : undefined;
+};
 
 /**
  * THE DECISION A SURFACE ASKS FOR — a field that wants filling, a matrix

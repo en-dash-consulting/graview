@@ -192,3 +192,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Putting a file on a record from the page, through the host's files (FR-163)](./putting-a-file-on-a-record-from-the.md) | completed |
 | [A phone's seat is put away by its ✕, a tap or a pull down, and the keyboard goes down with it (FR-164)](./a-phone-s-seat-is-put-away-by-its-a.md) | completed |
 | [An app fills the phone after it turns (FR-165)](./an-app-fills-the-phone-after-it-turns.md) | completed |
+| [A failed turn says why in the host's own words (FR-166)](./a-failed-turn-says-why-in-the-host-s.md) | completed |
