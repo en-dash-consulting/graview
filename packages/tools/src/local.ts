@@ -328,17 +328,18 @@ export function seatResponder<S extends AnySchema>(
       if (talking.failed() !== null) return note(known, "(AI isn't available in this browser, so this is from the app alone.)");
       if (!talking.ready()) return note(known, "(AI is still getting ready on this device, so this is from the app alone.)");
     }
+    let why: string | undefined;
     try {
       const answered = await modeled(store, text, {
         ...context,
         ...(known.proposals.length > 0 ? { reading: known.proposals } : {}),
       });
-      if (answered.proposals.length === 0 && known.proposals.length > 0) return known;
-      return { ...answered, via };
+      /* An answer that was nothing, or JSON that would not parse, is no answer: the floor's reading, said as a failed turn's is (FR-168). */
+      if (!answered.unsure) return answered.proposals.length === 0 && known.proposals.length > 0 ? known : { ...answered, via };
     } catch (error) {
-      const why = hostSentence(error);
-      return note(known, why ? `(AI didn't answer just now: ${why}. This is from the app alone.)` : "(AI didn't answer just now, so this is from the app alone.)");
+      why = hostSentence(error);
     }
+    return note(known, why ? `(AI didn't answer just now: ${why}. This is from the app alone.)` : "(AI didn't answer just now, so this is from the app alone.)");
   };
 }
 

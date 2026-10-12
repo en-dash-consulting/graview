@@ -23,26 +23,31 @@ import {
   type Violation,
 } from "@graview/core";
 import { mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
-import { computedValues } from "@graview/core/blocks";
-import { authorship, markComputed, markGraph, markHits, markNode } from "./untrusted.js";
+import { authorship, markHits } from "./untrusted.js";
+import { READ_HITS } from "./bounds.js";
 import {
   deriveAffordances,
   applyAffordance,
   type DeriveOptions,
 } from "../derive.js";
 
+/** A part fetched once when first asked for, and asked for again on the next ask when it did not arrive (FR-139). */
+const lazily =
+  <T>(load: () => Promise<T>): (() => Promise<T>) => {
+    let held: Promise<T> | undefined;
+    return () =>
+      (held ??= load().catch((error: unknown) => {
+        held = undefined;
+        throw error;
+      }));
+  };
+
 /*
- * The describer, fetched when a place is first asked about, and asked for
- * again on the next ask when it did not arrive (FR-139). A literal
+ * The describer, fetched when a place is first asked about. A literal
  * specifier and nothing more: tools runs in workerd, which refuses an
  * `import()` whose specifier is computed at run time.
  */
-let describing: Promise<typeof import("@graview/core/describe")> | undefined;
-const describer = () =>
-  (describing ??= import("@graview/core/describe").catch((error: unknown) => {
-    describing = undefined;
-    throw error;
-  }));
+const describer = lazily(() => import("@graview/core/describe"));
 
 /*
  * The words a broken rule's line is said in (FR-159), fetched and waited
@@ -68,16 +73,17 @@ const judgingWithLines = async (): Promise<void> => {
 };
 
 /*
+ * The bounded reads (FR-167), fetched with the first read: a seat that is
+ * never asked carries none of them. A literal specifier, as above.
+ */
+const reads = lazily(() => import("./reads.js"));
+
+/*
  * The drafting engine, fetched when a view is first asked for (draft_view,
  * keep_lens): a seat that never asks carries none of it. A literal
  * specifier, as above.
  */
-let drafting: Promise<typeof import("../draft.js")> | undefined;
-const drafter = () =>
-  (drafting ??= import("../draft.js").catch((error: unknown) => {
-    drafting = undefined;
-    throw error;
-  }));
+const drafter = lazily(() => import("../draft.js"));
 
 /**
  * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).
@@ -221,6 +227,9 @@ export interface DraftTools {
 
 const read =(title: string): ToolAnnotations => ({ title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
 
+/** Where a page of a read starts (FR-167). */
+const OFFSET = { type: "number", description: "Where the page starts; 0 when unsaid." } as const;
+
 const READ_TOOLS: readonly ToolDefinition[] = [
   {
     name: "search_graph",
@@ -231,7 +240,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
       type: "object",
       properties: {
         query: { type: "string", description: "Words, with optional key:value conditions." },
-        limit: { type: "number", description: "Most hits to return; 20 when unsaid." },
+        limit: { type: "number", description: "Most hits to return; at most 20." },
         subject: { type: "string", description: "A node id whose acts to include." },
       },
       required: ["query"],
@@ -242,25 +251,28 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   },
   {
     name: "get_graph",
-    title: "Read the whole graph",
+    title: "Read the graph",
     description:
-      "Read the whole graph: every node with its fields, and every edge. Start here when you need the shape of the domain rather than one thing in it.",
+      "Read the graph, 25 nodes a page: their fields, the edges out of them, and how many more. Start here when you need the shape of the domain rather than one thing in it.",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: { offset: OFFSET },
       additionalProperties: false,
     },
     mutating: false,
-    annotations: read("Read the whole graph"),
+    annotations: read("Read the graph"),
   },
   {
     name: "get_node",
     title: "Read one node",
     description:
-      "Read one node, its edges, and the violations that implicate it, with its computed values: read-only fields worked out from what you can see, which no act sets. Use this to check a thing before you change it.",
+      "Read one node: its fields, its links (id, kind and label, 20 each way a page), the violations that implicate it, and its computed values: read-only fields worked out from what you can see, which no act sets. Use this to check a thing before you change it.",
     inputSchema: {
       type: "object",
-      properties: { id: { type: "string", description: "A node's id, or its name." } },
+      properties: {
+        id: { type: "string", description: "A node's id, or its name." },
+        offset: OFFSET,
+      },
       required: ["id"],
       additionalProperties: false,
     },
@@ -271,10 +283,11 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     name: "get_violations",
     title: "List the problems",
     description:
-      "List every invariant violation the graph currently has, with the repairs that would resolve each one. Read this before proposing work: a rule that is already broken is more urgent than anything you could add.",
+      "List the invariant violations the graph currently has, 20 a page, with the repairs that would resolve each one. Read this before proposing work: a rule that is already broken is more urgent than anything you could add.",
     inputSchema: {
       type: "object",
       properties: {
+        offset: OFFSET,
         context: {
           type: "object",
           description: "Evaluation context, e.g. { weekStart }.",
@@ -543,8 +556,8 @@ function actTool(mutation: AnyMutationDefinition, name: string): ToolDefinition 
   };
 }
 
-/** JSON with every object's keys sorted — the form two equal surfaces share. */
-function canonical(value: unknown): string {
+/** JSON with every object's keys sorted — the form two equal surfaces share, and two equal calls (FR-167). */
+export function canonical(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   const record = value as Record<string, unknown>;
@@ -749,25 +762,21 @@ export function createToolRuntime<S extends AnySchema>(
           const subject = typeof args["subject"] === "string" ? args["subject"] : undefined;
           const found = search(seen, String(args["query"] ?? ""), {
             principal,
-            limit: typeof args["limit"] === "number" ? args["limit"] : 20,
+            limit: typeof args["limit"] === "number" && args["limit"] > 0 ? Math.min(args["limit"], READ_HITS) : READ_HITS,
             ...(places ? { places } : {}),
             ...(subject ? { subject, from: [subject] } : {}),
           });
           return {
             ok: true,
-            data: markHits(found, authorship(seen, principal)),
+            data: (await reads()).searchRead(found, markHits(found, authorship(seen, principal))),
             // What came back was looked at: the records named, and nothing else.
             reads: found.hits.flatMap((hit) => (hit.about === "node" ? [hit.id] : [])),
           };
         }
 
         case "get_graph": {
-          const snapshot = seen.graph.snapshot();
-          return {
-            ok: true,
-            data: markGraph(snapshot, authorship(seen, principal)),
-            reads: snapshot.nodes.map((node) => node.id),
-          };
+          /* A page of records, the edges out of them, and how many more (FR-167): the whole graph was one answer of 28,000 tokens. */
+          return { ok: true, ...(await reads()).graphRead(seen, authorship(seen, principal), args) };
         }
 
         case "get_node": {
@@ -783,30 +792,9 @@ export function createToolRuntime<S extends AnySchema>(
             } else if (found?.reason === "ambiguous") return { ok: false, error: found.message, argument: "id", candidates: found.candidates };
             else return { ok: false, error: `No node "${asked}".` };
           }
-          const node = seen.graph.getNode(id)!;
-          const out = seen.graph.outEdges(id);
-          const inbound = seen.graph.inEdges(id);
-          const by = authorship(seen, principal);
-          // Worked out over what this seat sees, never the store's whole graph (FR-83, FR-55).
-          const worked = computedValues(seen.schema, seen.graph as never, node as never);
-          return {
-            ok: true,
-            data: {
-              node: markNode(node, by),
-              ...(Object.keys(worked.values).length > 0 ? { computed: markComputed(id, worked.values, by) } : {}),
-              ...(Object.keys(worked.refused).length > 0 ? { uncomputed: worked.refused } : {}),
-              out,
-              in: inbound,
-              violations: seen
-                .violations()
-                .filter((violation) => violation.nodeIds.includes(id))
-                .map(withoutLine),
-              ...(resolved ? { resolved: [resolved] } : {}),
-            },
-            // Asking about a node is asking about its neighborhood: the
-            // answer names them, so looking at it looked at them.
-            reads: [id, ...out.map((edge) => edge.to), ...inbound.map((edge) => edge.from)],
-          };
+          /* Its fields and its links as ids, kinds and labels, a page each way (FR-167): never the neighborhood's own fields. */
+          const answer = (await reads()).nodeRead(seen, authorship(seen, principal), id, args);
+          return { ok: true, data: resolved ? { ...answer.data, resolved: [resolved] } : answer.data, reads: answer.reads };
         }
 
         case "describe_place": {
@@ -842,14 +830,11 @@ export function createToolRuntime<S extends AnySchema>(
         }
 
         case "get_violations": {
-          const violations = seen.violations(
+          const every = seen.violations(
             args["context"] as Record<string, unknown> | undefined,
           );
-          return {
-            ok: true,
-            data: violations.map(withoutLine),
-            reads: [...new Set(violations.flatMap((violation) => violation.nodeIds))],
-          };
+          /* A page of problems, and how many more (FR-167). */
+          return { ok: true, ...(await reads()).violationsRead(every, args) };
         }
 
         case "get_affordances": {
@@ -946,7 +931,9 @@ export function createToolRuntime<S extends AnySchema>(
         );
         return result;
       };
-      return settle(await run(name, args));
+      const result = await run(name, args);
+      // No read hands a model more than a read may (FR-167): what does not fit is cut, and says so.
+      return settle(result.ok && !mutating ? { ...result, data: (await reads()).withinReadChars(name, result.data) } : result);
     },
   };
 }

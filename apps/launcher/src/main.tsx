@@ -403,10 +403,16 @@ function AuditButton({ onCall }: { onCall: (call: ToolCall) => void }) {
         setBusy(true);
         void (async () => {
           try {
-            const graph = (await agent.run("get_graph", {})) as {
-              nodes: ({ id: string; kind: string } & Record<string, unknown>)[];
-              edges: { kind: string; from: string; to: string }[];
-            };
+            // The graph a page at a time, as a read answers it (FR-167).
+            type Page = { nodes: ({ id: string; kind: string } & Record<string, unknown>)[]; edges: { kind: string; from: string; to: string }[]; more?: string };
+            const graph: Page = { nodes: [], edges: [] };
+            for (let offset = 0; ; ) {
+              const page = (await agent.run("get_graph", { offset })) as Page;
+              graph.nodes.push(...page.nodes);
+              graph.edges.push(...page.edges);
+              if (!page.more || page.nodes.length === 0) break;
+              offset += page.nodes.length;
+            }
             const uses = graph.edges.filter((edge) => edge.kind === "uses");
             const ranked = graph.nodes
               .filter((node) => node.kind === "app")

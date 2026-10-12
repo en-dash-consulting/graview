@@ -543,8 +543,14 @@ export const BUDGETS = [
     // Measured at 1_732_931 / 549_243.
     // without the studio") is 167 bytes smaller minified, 83 more gzipped. 4_262 / 1_467 more than main (1_732_661 /
     // 549_148). Measured at 1_736_923 / 550_615.
-    minified: 1_737_200,
-    gzipped: 550_900,
+    // Raised when a seat's read came to be bounded and a repeated read answered from the first (FR-167), with an empty
+    // last step saying the floor's reading (FR-168), by chunks fetched later only: the bounded reads (`agent/reads.ts`,
+    // fetched with the first read, which took the record markers with them) and the turn's repeat check in the seat's
+    // model. Every face as a page loads it first is unchanged (0 / 7 more gzipped), the studio handed in 630 / 184 smaller
+    // and the scene face before it draws 742 smaller. 2_984 / 1_604 more than main (1_737_193 / 550_735). Measured at
+    // 1_740_177 / 552_339.
+    minified: 1_740_500,
+    gzipped: 552_700,
     load: "all",
   },
   {

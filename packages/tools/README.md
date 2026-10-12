@@ -91,6 +91,20 @@ caller — or the person an agent acts for — comes back as
 `{ untrusted: true, authoredBy, text }` in `get_node`, `get_graph` and
 `search_graph`, so a model reads another collaborator's words as data.
 
+Every read is bounded, for a seat's turn and an MCP client alike, since both
+call the same runtime: no answer is longer than `READ_CHARS` (8,000)
+characters of JSON. `get_graph` answers a page of at most `READ_PAGE` (25)
+records with the edges out of them, `total`, and `more` saying how many are
+left and the `offset` of the next page; `get_node` answers a record's fields
+and its links as `{ kind, id, label }`, `READ_LINKS` (20) each way a page;
+`search_graph` at most `READ_HITS` (20) hits, whatever `limit` asked;
+`get_violations` `{ violations, total, more? }`, `READ_PROBLEMS` (20) a page.
+A text longer than `READ_TEXT` (600) characters is cut and says how long it
+was, and any other read that does not fit answers `{ cut, partial }`. Within
+one turn of a host's model, a call with the same name and input as an
+earlier one is answered `{ already: "Already read: see the answer to call N
+of this turn, which is above." }`, and counts toward the turn's twelve.
+
 ## Drawing a view on the fly, and keeping it as a lens
 
 Asked for a way of seeing — "a board of deliverables by status", "a timeline

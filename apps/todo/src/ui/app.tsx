@@ -259,12 +259,14 @@ function TidyButton({ onCall }: { onCall: (call: ToolCall) => void }) {
          * What it names is what the seat looked at, and the picture says so.
          */
         await agent.run("search_graph", { query: `kind:task done:false due:before:${today()}`, limit: 50 });
-        const violations = (await agent.run("get_violations", {
+        const { violations } = (await agent.run("get_violations", {
           context: { today: today() },
         })) as {
-          invariant: string;
-          repairs: { mutation: string; args?: Record<string, unknown> }[];
-        }[];
+          violations: {
+            invariant: string;
+            repairs: { mutation: string; args?: Record<string, unknown> }[];
+          }[];
+        };
         for (const violation of violations) {
           if (violation.invariant !== "nothing-overdue") continue;
           const repair = violation.repairs.find(

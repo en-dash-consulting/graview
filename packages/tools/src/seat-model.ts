@@ -1,7 +1,7 @@
 import { labelOf, pluralOf, type AnySchema, type GraviewApp, type Principal, type Store } from "@graview/core";
 import { formFields, type FormField } from "@graview/core/forms";
 import type { HostAi, HostTurn, TurnMessage } from "./ai.js";
-import { createToolRuntime } from "./agent/tools.js";
+import { canonical, createToolRuntime } from "./agent/tools.js";
 import type { ChatContext, ChatReply } from "./conversation.js";
 import { droppedProposals, firstJsonObject, resolveProposal, validateProposals, type Completion, type ProposedCall } from "./intelligence.js";
 
@@ -14,6 +14,9 @@ import { droppedProposals, firstJsonObject, resolveProposal, validateProposals, 
 
 /** The most tool calls one turn may make; past it, a call says to answer from what was read. */
 export const TURN_CALLS = 12;
+
+/** What a call the turn already made is answered, in place of its answer again (FR-167). */
+export const alreadyRead = (call: number): string => `Already read: see the answer to call ${call} of this turn, which is above.`;
 
 /** What a turn's system says beyond a completion's prompt: read before answering. */
 const READ_FIRST =
@@ -196,11 +199,18 @@ export async function answerWithModel<S extends AnySchema>(
   if (!parsed || typeof parsed !== "object") {
     const prose = answer.trim();
     const looksLikeJson = prose.startsWith("{") || prose.startsWith("[");
+    /*
+     * NOTHING, OR JSON THAT DOES NOT PARSE, IS NOT AN ANSWER (FR-168): it is
+     * marked `unsure`, and a seat with a floor says the floor's reading in
+     * its place, as it does for a turn that failed.
+     */
+    const unread = prose.length === 0 || looksLikeJson;
     return {
-      say: [prose.length > 0 && !looksLikeJson ? prose : "The answer came back in a shape I could not read. Ask again in other words.", unnamed ? READ_AS_ANY_AGENT : ""]
+      say: [!unread ? prose : "The answer came back in a shape I could not read. Ask again in other words.", unnamed ? READ_AS_ANY_AGENT : ""]
         .filter(Boolean)
         .join(" "),
       proposals: [],
+      ...(unread ? { unsure: true } : {}),
     };
   }
   /*
@@ -235,10 +245,13 @@ export async function answerWithModel<S extends AnySchema>(
   const said = typeof parsed.say === "string" && parsed.say.length > 0 ? parsed.say : "";
   const named = [parsed.go, parsed.moves].flatMap((one) => (Array.isArray(one) ? one : typeof one === "string" ? [one] : []));
   const moves = named.length > 0 ? (await import("./go.js")).movesFromNames(store, named, context) : [];
+  const say = [said || moves.map((move) => move.said).join(" "), aside].filter(Boolean).join(" ");
   return {
-    say: [said || moves.map((move) => move.said).join(" "), aside].filter(Boolean).join(" ") || "…",
+    say: say || "…",
     proposals: kept,
     ...(moves.length > 0 ? { moves } : {}),
+    // An answer of JSON that says nothing and proposes nothing is nothing (FR-168).
+    ...(!say && offered.length === 0 ? { unsure: true } : {}),
   };
 }
 
@@ -258,6 +271,8 @@ function turnOf<S extends AnySchema>(store: Store<S>, author: Principal, system:
   const runtime = createToolRuntime(store, { author, readOnly: true, ...(context.app ? { app: context.app as GraviewApp<S> } : {}) });
   const tools = runtime.definitions;
   let calls = 0;
+  /* Each read's name and input, and the call that first made it. */
+  const asked = new Map<string, number>();
   /* Alternating, the person's first and last: a seat's line with nothing before it is dropped, two of one side are one. */
   const messages: TurnMessage[] = [];
   for (const one of [...(context.history ?? []).slice(-8), { role: "person" as const, text }]) {
@@ -272,7 +287,19 @@ function turnOf<S extends AnySchema>(store: Store<S>, author: Principal, system:
     tools,
     call: async (name, args) => {
       if (!tools.some((tool) => tool.name === name)) return { error: `"${name}" is not one of this turn's tools, which only read: ${tools.map((tool) => tool.name).join(", ")}.` };
-      if (++calls > TURN_CALLS) return { error: `This turn has read ${TURN_CALLS} times; answer from what you have read.` };
+      /* A repeat counts as a call: a model that asks the same thing over and over is stopped by the same cap. */
+      const at = ++calls;
+      if (at > TURN_CALLS) return { error: `This turn has read ${TURN_CALLS} times; answer from what you have read.` };
+      /*
+       * ASKED ONCE, ANSWERED ONCE (FR-167). A model asked for the same read
+       * three times in one turn, and each answer was resent with every step
+       * after it. The same name and the same input is answered from the
+       * first: a line that points at it, not the answer again.
+       */
+      const key = `${name}\u0000${canonical(args ?? {})}`;
+      const first = asked.get(key);
+      if (first !== undefined) return { already: alreadyRead(first) };
+      asked.set(key, at);
       try {
         const result = await runtime.call(name, args ?? {});
         return result.ok ? result.data : { error: result.error };

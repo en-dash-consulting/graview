@@ -165,7 +165,8 @@ path to the store:
   "ai:<name>"`. **Give `ai.turn` and the model reads before it answers**
   (FR-160): the seat hands it its framing, the conversation and its read
   tools as the person (`call` refuses any write, an unseen record, and
-  every call past twelve); the host loops and returns the last text.
+  every call past twelve, and answers a repeat "Already read"; every read
+  is a page of at most `READ_CHARS`); the host loops and returns the last text.
   `turnThroughMessages(post)` (`@graview/tools/turn`, the loop alone) is
   that loop over one Messages request at a time; `complete` alone
   answers from the prompt, which holds no record's fields. Hand
