@@ -1,5 +1,33 @@
 # @graview/tools
 
+## 0.1.27
+
+### Patch Changes
+
+- 649dc1f: A grant can hold to your own end of a link (the Graview Roadmap's f-own-end-grants). `self` holds a grant to the act's subject being the principal's own record, and the act that takes back a vote is on the idea, so a voter could take back anyone's. `ownEnd: true` on a grant holds a connect or sever to every record the call names at the far end of the link being the principal's own. The store refuses another with a sentence — "Not permitted: “Take back a vote” on an idea — only on your own end of the link." and the grant's own words — the seat keeps the tool, and the strip offers the act on an idea you voted for with you already chosen, and not at all on one only somebody else voted for. `graview check` refuses the condition on an act that connects and severs nothing, or names no record at its far end (`grant-own-end-without-link`), and asks for a people kind (`people-unsaid`).
+  
+  Compatibility: additive. The document format gains `policy.grants[].ownEnd` within `graview-document@1`; a build that predates it refuses it by path. Check finding codes: `grant-own-end-without-link` is new, an error only about a grant that could not be written before. A refusal's `reason` is `forbidden`, as any grant's. Tool names and schemas are unchanged; the affordances of an act refused for want of a far end now narrow to the seat's own as they did for a subject. Ops, stored formats and the wire are unchanged. New: `Grant.ownEnd`, and `permits`'s eighth argument, the records the call names at the far end of what it links.
+- af180f4: A seat's read is bounded, and a read it already made is not sent again (FR-167). One turn in an app of 30 components, 28 skills and 84 strengths ran seven steps whose input grew from 5.6k to 91k tokens: `get_graph` answered the whole graph, about 28,000 tokens, the model asked for it three more times, and every step resent all of it, $0.60 for one question. Now no read answers more than `READ_CHARS` (8,000) characters of JSON, for a seat's turn and an MCP client alike, since both call the same runtime. `get_graph` answers a page of at most `READ_PAGE` (25) records with the edges out of them, `total`, and `more`: "and 117 more nodes: call get_graph with offset 25 for the next page." `get_node` answers a record's fields and its links as `{ kind, id, label }`, `READ_LINKS` (20) each way a page, never the linked records' own fields, with "and 24 more links in: call get_node with id "component-1" and offset 20 for the next page." `search_graph` answers at most `READ_HITS` (20) hits whatever `limit` asked, without every match's id, and "and 65 more records match: narrow the words, or add kind:<kind>." `get_violations` answers `READ_PROBLEMS` (20) a page. A text longer than `READ_TEXT` (600) characters is cut and says "… (cut at 600 of 5000 characters)", and any other read too long to fit, a place described in full, answers `{ cut, partial }`, the cut saying how long it was and to ask for less. Within one turn of a host's model, a call with the same name and input as an earlier one, in any order of its keys, is answered `{ already: "Already read: see the answer to call 1 of this turn, which is above." }` and counts toward the turn's twelve calls, so a model asking the same thing over and over is stopped as before. The bounds are exported from `@graview/tools` as named constants. The reads are a chunk of their own, fetched with the first read: a page whose seat is never asked carries none of them, the scene face before it draws is 742 bytes smaller and a hosted page's first load is unchanged. `capabilities().shipped` gains FR-167.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format and check finding codes are unchanged; `capabilities().shipped` gains FR-167. Tool names are unchanged; the read tools' answers, titles, descriptions and three input schemas moved, so a surface's hash moves with them. `get_graph` takes `offset`, is titled "Read the graph", and answers `{ nodes, edges, total, more? }` a page at a time where it answered every node and edge. `get_node` takes `offset` and answers `out` and `in` as `{ kind, id, label }` links where it answered whole edges, with `more` when there are more links or problems. `get_violations` takes `offset` and answers `{ violations, total, more? }` where it answered an array. `search_graph` answers at most 20 hits, with `more`, and no longer `matched`. What a host or an agent does: read `get_violations`' `violations`, follow `more` with `offset`, and read a link's `id` where it read an edge's `to` or `from`.
+- af180f4: A model's last step that answers nothing says the app's own reading, as a failed turn does (FR-168). A turn whose last step answered one output token was shown "The answer came back in a shape I could not read. Ask again in other words." though the app had read the ask and had a proposal ready. Now an answer that is empty, only whitespace, JSON that does not parse, or JSON that says nothing and proposes nothing is no answer: the seat says what the app read, its proposals with it, and the failed turn's aside, "(AI didn't answer just now, so this is from the app alone.)", and nothing is marked as answered with AI. A model's prose is still its answer. `llmResponder` on its own, with no floor to fall back on, still says the shape sentence, and now marks it `unsure`. `capabilities().shipped` gains FR-168.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged; `capabilities().shipped` gains FR-168. A reply `llmResponder` could not read carries `unsure: true`. What a host does: nothing.
+- Updated dependencies [e404dd1]
+- Updated dependencies [b228859]
+- Updated dependencies [649dc1f]
+- Updated dependencies [649dc1f]
+- Updated dependencies [649dc1f]
+- Updated dependencies [41c0ebc]
+- Updated dependencies [b228859]
+- Updated dependencies [af180f4]
+- Updated dependencies [649dc1f]
+- Updated dependencies [b228859]
+- Updated dependencies [af180f4]
+- Updated dependencies [b228859]
+  - @graview/core@0.1.27
+  - @graview/ship@0.1.27
+
 ## 0.1.26
 
 ### Patch Changes

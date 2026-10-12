@@ -1,5 +1,33 @@
 # @graview/primitives
 
+## 0.1.27
+
+### Patch Changes
+
+- 41c0ebc: A proposal to add a record names it by its label, then the rest, and the seat tells the model what the person saw (FR-169). On Graview Cloud's staging, "add a new revenue stream for Graview Cloud SaaS" was offered as "Add a revenue stream: nascent": the line took the first string it was handed, the person read the stream's maturity as its title and said so, and the model, which never saw the line, agreed and asked for another. A document act that creates a record, the `add-<kind>` act the studio writes for a new kind among them, now says the record by its kind's label and then what else it was given, in parentheses, as a record says it: "Add a revenue stream: Graview Cloud SaaS (nascent)", money as money, a yes by the field's words, and neither a no, a long text nor what the label already says. The offer under an answer (`describeProposal`) and the line the log keeps are that one sentence, and a creating act with no label to say is said by its title, never by the first string it was sent. The conversation a seat hands the model carries each offer as the person was shown it, and what became of it: "Here is a plot for it. [Offered beneath this answer: Stake out Back bed — applied]". "Answered with AI" is one quiet mark at the end of the answer's own line, not a line of its own under every answer. A hosted page's first load is 39 bytes smaller (587 280 bytes over the vendors document, 587 319 on main), and 10 bytes smaller handed a compiled app: the new sentence is paid for by a kind's defaults kept once, `isoToday` from one place, and one test for a document too large. `capabilities().shipped` gains FR-169.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format and check finding codes are unchanged; `capabilities().shipped` gains FR-169. Only the sentence an op is logged with changes, for a creating document act given more than its label says. `useSeatConversation` takes `said`, how the surface shows one proposal, and the history it hands `answer` says "[Offered beneath this answer: …]" where it said "[applied: …]". What a host does: a surface that calls `useSeatConversation` passes `said: (proposal) => describeProposal(store, proposal)`.
+- 649dc1f: A sight can reach the records that link to you (the Graview Roadmap's open request "Visibility scoped by relation"). `sees` kept whole kinds, and `own` showed a seat every record any relation joins to its own — so a Secret Santa match, joined to its giver and its receiver, was shown to both. `{ "roles": ["participant"], "kinds": ["match"], "via": "givenBy" }` shows a seat a match only where `givenBy` joins it, at either end, to the seat's own record of the people kind: each giver sees their own match and not the one they receive in. It holds wherever sight is honored — a seat's graph and its counts, names, search, what a place says, the served log, the wire's state, polls and export, an answer to a seat, a seat's problems and its tools — and moves as the link does. A declaration says it as `Sight.via`; the studio carries it. `graview check` refuses a relation no kind declares (`sight-via-unknown-edge`), one that never joins the kind to the people (`sight-via-misses-people`) and a policy that says one with no people kind (`people-unsaid`). `packages/core/tests/document/fixtures/secret-santa.gdd.json` is the worked example.
+  
+  Compatibility: additive. The document format gains `policy.sees[].via` within `graview-document@1`; a build that predates it refuses it by path. Check finding codes: `sight-via-unknown-edge` and `sight-via-misses-people` are new, errors only about a sight that could not be written before. A seat is served what it was before under every sight a declaration could already say. Ops, stored formats, the wire's shapes and tool names and schemas are unchanged. New: `Sight.via`.
+- Updated dependencies [e404dd1]
+- Updated dependencies [b228859]
+- Updated dependencies [649dc1f]
+- Updated dependencies [649dc1f]
+- Updated dependencies [649dc1f]
+- Updated dependencies [41c0ebc]
+- Updated dependencies [b228859]
+- Updated dependencies [af180f4]
+- Updated dependencies [649dc1f]
+- Updated dependencies [b228859]
+- Updated dependencies [af180f4]
+- Updated dependencies [b228859]
+  - @graview/core@0.1.27
+  - @graview/tools@0.1.27
+  - @graview/layout@0.1.27
+  - @graview/react@0.1.27
+  - @graview/render@0.1.27
+
 ## 0.1.26
 
 ### Patch Changes

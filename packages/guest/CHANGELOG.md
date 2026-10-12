@@ -1,5 +1,39 @@
 # @graview/guest
 
+## 0.1.27
+
+### Patch Changes
+
+- 649dc1f: A sight can reach the records that link to you (the Graview Roadmap's open request "Visibility scoped by relation"). `sees` kept whole kinds, and `own` showed a seat every record any relation joins to its own — so a Secret Santa match, joined to its giver and its receiver, was shown to both. `{ "roles": ["participant"], "kinds": ["match"], "via": "givenBy" }` shows a seat a match only where `givenBy` joins it, at either end, to the seat's own record of the people kind: each giver sees their own match and not the one they receive in. It holds wherever sight is honored — a seat's graph and its counts, names, search, what a place says, the served log, the wire's state, polls and export, an answer to a seat, a seat's problems and its tools — and moves as the link does. A declaration says it as `Sight.via`; the studio carries it. `graview check` refuses a relation no kind declares (`sight-via-unknown-edge`), one that never joins the kind to the people (`sight-via-misses-people`) and a policy that says one with no people kind (`people-unsaid`). `packages/core/tests/document/fixtures/secret-santa.gdd.json` is the worked example.
+  
+  Compatibility: additive. The document format gains `policy.sees[].via` within `graview-document@1`; a build that predates it refuses it by path. Check finding codes: `sight-via-unknown-edge` and `sight-via-misses-people` are new, errors only about a sight that could not be written before. A seat is served what it was before under every sight a declaration could already say. Ops, stored formats, the wire's shapes and tool names and schemas are unchanged. New: `Sight.via`.
+- 4ade99c: A view may draw an image the app holds. Where its host says where those live (`asset` on a worker view's definition, or on `mountWorkerView`), an `img` whose `src` is the content address `add_image` answers, `/graview/assets/<sha256>.<ext>`, is drawn from the host's address for it. Nothing else under the app, and no other origin, is drawn; without `asset`, such an image is refused as before. A discography's covers and an artist's photo can now be uploaded once by address and drawn by every view, instead of carried inside the graph as `data:` text.
+  
+  Compatibility: additive. A host that passes no `asset` draws exactly what it drew before.
+- 32d0c0d: A worker view's delegated event is taught by the element it matched, and a DOM method the worker lacks says so. `graview.on(type, selector, listener)` always handed `event.element`, the element the selector matched at or above what was pressed, but nothing said it, and `event.target.closest(…)` failed with "closest is not a function" because Remote DOM's polyfill has none. Now `closest`, `matches` and `dataset` on a view's element throw "A view's element has no closest: graview.on hands event.element, the element its selector matched; read event.element.getAttribute("data-…")." The worker-view skill and the guest README show a delegated handler reading `event.element`'s `data-*`.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged. What a view does: read `event.element.getAttribute("data-…")` rather than walking up from `event.target`.
+- 32d0c0d: A worker view's link or `graview.navigate` that goes nowhere says why. A bare string was taken as a record's id and nothing else, so `graview.navigate("projections")` went nowhere without a word, and Graview Cloud's pricing app lost its bottom links that way. Now a bare string is a record the viewer may see first, then a place by that slug, so `graview.navigate("the-packages")` goes to the place. One that is neither, from code, `<a data-record>` or `<a data-place>`, says so in the view's console and to the host's new `onProblem`, on `mountWorkerView` and on a registered view's definition: '"projections" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages".' A record the viewer may not see is said the same way as one that is not there. A headless run's problems name the places too, and take a bare place slug as the host does. The worker-view skill says what a destination may be.
+  
+  Compatibility: ops, stored formats, the document format, the compiled format, check finding codes and tool names and schemas are unchanged. The guest protocol gains one message from host to view, `{ type: "notice", text }`, which a runtime from before it ignores; `GUEST_PROTOCOL` is unchanged. What a host does: pass `onProblem` to hear a worker view's links that go nowhere.
+- 7fd403d: A worker view's navigate takes only a string. The host handed whatever the worker sent as `to` to the links, so an object or a number reached the viewer's sight and the sentence `onProblem` hears, and a view could write a sentence of any length into a host's problems. Now a navigate whose `to` or `place` is no string is refused without a word, and one that goes nowhere quotes at most 80 characters of where it asked to go, ending "…", in the host's sentence and in a headless run's problems alike. Every navigate is still a message the flood allowance counts.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged. What a host hears in `onProblem` for a destination longer than 80 characters is cut to 80.
+- Updated dependencies [e404dd1]
+- Updated dependencies [b228859]
+- Updated dependencies [649dc1f]
+- Updated dependencies [649dc1f]
+- Updated dependencies [649dc1f]
+- Updated dependencies [41c0ebc]
+- Updated dependencies [b228859]
+- Updated dependencies [af180f4]
+- Updated dependencies [649dc1f]
+- Updated dependencies [b228859]
+- Updated dependencies [af180f4]
+- Updated dependencies [b228859]
+  - @graview/core@0.1.27
+  - @graview/react@0.1.27
+
 ## 0.1.26
 
 ### Patch Changes
