@@ -98,6 +98,12 @@ function watchInPage() {
   const ids = new Set();
   const words = [];
   const unsaid = new Set();
+  /*
+   * A word one store declares is never another's key: with the studio open
+   * over an app, the studio's "people" flag speaks as "People" while the
+   * app's people kind is called "People", and the app's word is its own.
+   */
+  const declaredWhole = new Set();
   /* What the seat at the keyboard may not see: names and addresses of records the policy keeps from it. */
   let unseen = null;
   const unseenBy = new Map();
@@ -233,7 +239,7 @@ function watchInPage() {
         for (const el of document.body.querySelectorAll("*")) {
           if (el.closest(UNSHOWN)) continue;
           const own = [...el.childNodes].filter((child) => child.nodeType === 3).map((child) => child.nodeValue).join("").replace(/\s*\*\s*$/, "").trim();
-          if (own && unsaid.has(own) && (el.tagName === "OPTION" || visible(el))) {
+          if (own && unsaid.has(own) && !declaredWhole.has(own) && (el.tagName === "OPTION" || visible(el))) {
             report("machine-words-shown", `"${own}" is shown in the key's words in ${describe(el)}, where the declaration says it otherwise`, `${own}|${describe(el)}`);
           }
         }
@@ -261,6 +267,7 @@ function watchInPage() {
       for (const id of learned) ids.add(id);
       for (const word of plain) unsaid.add(word);
       words.push(...said);
+      for (const word of said) declaredWhole.add(word.trim());
       rebuild();
       schedule();
     },
