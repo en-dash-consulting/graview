@@ -535,12 +535,12 @@ export const BUDGETS = [
     // with the first file field drawn. 19_693 / 7_902 more than main (1_712_707 / 541_115). Measured at 1_732_400 / 549_017.
     // Raised when a failed turn came to say why in the host's own words (FR-166, `hostSentence` in the seat's
     // responder), by about 260 bytes, the seat's chunk. Measured at 1_732_661 / 549_129.
+    // And by a creating act logged by what it made (`madeLabel` in the compiled document), about 270 bytes.
+    // Measured at 1_732_931 / 549_243.
     // Raised when a document came to name its people (the Roadmap's f-people-kind, f-act-as-me, f-own-end-grants and a
     // sight via a relation), by what the studio carries and chunks fetched later only: the checker's people findings
     // (`check/people.ts`, a document's `$me` in `act-findings.ts`), the studio's kind, grant and sight carrying them, and
     // the strip narrowing an act to the seat's own end of a link. Every face as a page loads it first (the budget "embed
-    // And by a creating act logged by what it made (`madeLabel` in the compiled document), about 270 bytes.
-    // Measured at 1_732_931 / 549_243.
     // without the studio") is 167 bytes smaller minified, 83 more gzipped. 4_262 / 1_467 more than main (1_732_661 /
     // 549_148). Measured at 1_736_923 / 550_615.
     minified: 1_737_200,
@@ -647,12 +647,18 @@ export const BUDGETS = [
     // Measured at 1_572_188 / 483_780.
     // And by a failed turn saying why in the host's own words (FR-166): the studio's seat carries the responder.
     // Measured at 1_572_449 / 483_878.
+    // And by a creating act logged by what it made (`madeLabel` in the compiled document). Measured at 1_572_719 / 484_001.
     // Raised with every face's when a document came to name its people: the studio carries the checker, and the checker
     // now judges the people kind, a sight via a relation, a grant held to your own end of a link and a document's `$me`
     // (`check/people.ts`, `act-findings.ts`), and the studio models all three. 4_262 / 1_453 more than main, while a
     // hosted page's first load is 39 bytes smaller than main and a page handed a compiled app 61. Measured at
     // 1_576_711 / 485_331.
-    // And by a creating act logged by what it made (`madeLabel` in the compiled document). Measured at 1_572_719 / 484_001.
+    // None of that can wait for a chunk: the studio judges each change with `checkApp` as it is made, so the checker is
+    // what it draws with. The review before 0.1.27 paid for its own fixes here (an own-end grant held to every link an
+    // act touches, an act done as you undone only by you, a sight following its relation's rename) by saying the
+    // checker's people findings and a document edit's refusals once, and the editor reading a plain object and an
+    // effect's `$name` with the compiled document's own: 698 bytes smaller minified than main (1_576_981 / 485_456), 42 more
+    // gzipped. Measured at 1_576_283 / 485_498.
     minified: 1_577_000,
     gzipped: 485_600,
     load: "first",

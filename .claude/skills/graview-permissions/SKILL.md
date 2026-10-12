@@ -119,9 +119,11 @@ yesterday and now the button is gone.
      (`own` would show both).
    - `{ mutations: ["take-back"], ownEnd: true }` holds a connect or sever
      to the seat's own end of the link: a voter takes back their own vote.
+     Every link the act touches is held, so a connect on a relation of one
+     that would replace somebody else's is refused.
    - A document act's `"to": "$me"` (or `"set": { "champion": "$me" }`) is
-     the acting person's record — the tool stops asking who, and a seat
-     with no record is refused with a sentence.
+     the acting person's record — the tool stops asking who, a seat with no
+     record is refused with a sentence, and only that person can undo it.
 
 ## Worked examples
 
