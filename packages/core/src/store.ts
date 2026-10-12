@@ -249,6 +249,9 @@ export interface AppendOp {
   readonly via?: Via;
 }
 
+/** `{ [key]: value }` where the value is said, and nothing where it is not: an optional key left off rather than undefined. */
+const given = <K extends string, V>(key: K, value: V | undefined) => (value === undefined ? {} : { [key]: value }) as { readonly [P in K]?: V };
+
 const HUMAN: Author = { kind: "human" };
 /** The host itself, which sees what it keeps: the principal a question is asked as when no seat is named. */
 const SYSTEM: Principal = { kind: "system" };
@@ -487,7 +490,7 @@ export class Store<S extends AnySchema> {
     }
     tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
-    const horizon = options.horizon !== undefined ? { horizon: options.horizon } : {};
+    const horizon = given("horizon", options.horizon);
     const validate = { validate: this.validate };
     if (options.log) {
       // Hydrate: the history as recorded, and the graph as stored — or, with none stored, folded from the history.
@@ -608,7 +611,7 @@ export class Store<S extends AnySchema> {
       reads: [],
       writes: [],
       at: this.now(),
-      ...(options.via !== undefined ? { via: options.via } : {}),
+      ...given("via", options.via),
       enabledModules: [...after].sort(),
     };
     this.log.append(op);
@@ -693,16 +696,23 @@ export class Store<S extends AnySchema> {
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     const mutation = this.mutations.get(call.name);
     const id = mutation?.subject && call.args[mutation.subject.arg];
-    return permits(
-      this.policy,
-      principal,
-      call.name,
-      this.subjectKindOf(call, principal),
-      this.viaOf(mutation),
-      typeof id === "string" ? id : undefined,
-      this.words,
-      () => this.namedIn(call, false),
-    );
+    /*
+     * An own-end grant holds the records the call names at the far end of
+     * what it links, and every link the act would make or break: a connect
+     * on a relation of one breaks the link that was there, which no argument
+     * names. A call that cannot be compiled is refused by `apply`, in its
+     * own words.
+     */
+    return permits(this.policy, principal, call.name, this.subjectKindOf(call, principal), this.viaOf(mutation), typeof id === "string" ? id : undefined, this.words, () => {
+      const me = actingAs(principal).id;
+      const far = this.namedIn(call, false);
+      try {
+        for (const one of compileMutation(this.graph, mutation!, call.args, this.sighted(principal)).primitives) if ("edge" in one && one.edge.from !== me && one.edge.to !== me) far.push(one.edge.to);
+      } catch {
+        // Refused by `apply`.
+      }
+      return far;
+    });
   }
 
   /** The ids a call names in its record arguments: its subject's too, unless `subject` is false (the far ends of what it links). */
@@ -711,7 +721,13 @@ export class Store<S extends AnySchema> {
     if (!mutation) return [];
     const at = mutation.subject?.arg;
     const values = [...(subject && at ? [call.args[at]] : []), ...nodeRefArgs(mutation.input).flatMap((ref) => (ref.name === at ? [] : [call.args[ref.name]]))];
-    return values.flatMap((value) => (typeof value === "string" ? [value] : Array.isArray(value) ? value.filter((inner): inner is string => typeof inner === "string") : []));
+    return values.flat().filter((value): value is string => typeof value === "string");
+  }
+
+  /** A refusal told to the watch — unless the store is rehearsing — and thrown. */
+  private refuse(refusal: Refusal, by: string | undefined, told = !this.rehearsing): never {
+    if (told) tellTheWatchOfARefusal(refusal, by);
+    throw new PermissionDeniedError(refusal);
   }
 
   /** How the policy's refusals name an act and a kind: by title and noun, never by id. */
@@ -1120,10 +1136,7 @@ export class Store<S extends AnySchema> {
     if (this.policy) {
       for (const call of calls) {
         const verdict = this.permits(call, author as Principal);
-        if (!verdict.ok) {
-          if (!this.rehearsing) tellTheWatchOfARefusal(verdict.refusal, author.id);
-          throw new PermissionDeniedError(verdict.refusal);
-        }
+        if (!verdict.ok) this.refuse(verdict.refusal, author.id);
       }
     }
     /*
@@ -1138,10 +1151,7 @@ export class Store<S extends AnySchema> {
      */
     for (const call of calls) {
       const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call, author as Principal);
-      if (refusal) {
-        if (!this.rehearsing) tellTheWatchOfARefusal(refusal, author.id);
-        throw new PermissionDeniedError(refusal);
-      }
+      if (refusal) this.refuse(refusal, author.id);
     }
     if (!this.rehearsing) tellTheWatchOfAnAuthor(author.id);
 
@@ -1175,7 +1185,7 @@ export class Store<S extends AnySchema> {
            * words ("Close it", the button's) are the better one.
            */
           intent: definition.describe !== undefined ? compiled.intent : (options.intent ?? compiled.intent),
-          ...(options.intent !== undefined ? { batchIntent: options.intent } : {}),
+          ...given("batchIntent", options.intent),
           mutation: call,
           /*
            * NORMALIZED on the way into the record: a patch that clears a
@@ -1190,7 +1200,7 @@ export class Store<S extends AnySchema> {
           // Which records its sentence read, so a reader who may not see one is not handed the sentence (FR-55).
           ...(definition.describe !== undefined && compiled.described && compiled.described.length > 0 ? { described: compiled.described } : {}),
           at: this.now(),
-          ...(options.via !== undefined ? { via: options.via } : {}),
+          ...given("via", options.via),
         };
         this.graph.applyPrimitives(op.primitives);
         this.log.append(op);
@@ -1322,15 +1332,15 @@ export class Store<S extends AnySchema> {
         batch: made.batch ?? options.batch ?? (batch ??= this.mintBatch("batch")),
         author: made.author,
         intent: made.intent,
-        ...(made.batchIntent !== undefined ? { batchIntent: made.batchIntent } : {}),
+        ...given("batchIntent", made.batchIntent),
         mutation: made.mutation ?? null,
         primitives,
         inverse: made.inverse ?? [...primitives].reverse().map(invert),
         reads: made.reads ?? [],
         writes: made.writes ?? [...new Set(primitives.flatMap(writesOf))],
         at: made.at ?? this.now(),
-        ...(made.undoes !== undefined ? { undoes: made.undoes } : {}),
-        ...(made.via !== undefined ? { via: made.via } : {}),
+        ...given("undoes", made.undoes),
+        ...given("via", made.via),
       };
       if (taken.has(op.id)) throw new GraphError(`Op "${op.id}" (${op.intent}) is already in the log`, "A host-made op needs an id of its own; leave `id` out and the store mints one.");
       taken.add(op.id);
@@ -1382,7 +1392,7 @@ export class Store<S extends AnySchema> {
         reads: [],
         writes: [...new Set(recorded.flatMap(writesOf))],
         at: this.now(),
-        ...(options.via !== undefined ? { via: options.via } : {}),
+        ...given("via", options.via),
       };
       this.graph.applyPrimitives(op.primitives);
       this.log.append(op);
@@ -1503,15 +1513,19 @@ export class Store<S extends AnySchema> {
     if (this.policy) {
       for (const target of check.ops) {
         if (!target.mutation) continue;
-        const verdict = this.permits(target.mutation, author as Principal);
-        if (!verdict.ok) {
-          const refusal = {
-            ...verdict.refusal,
-            message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}`,
-          };
-          tellTheWatchOfARefusal(refusal, author.id);
-          throw new PermissionDeniedError(refusal);
-        }
+        /*
+         * AND AN ACT DONE AS ITS AUTHOR (`$me`, `ctx.me`) IS THEIRS TO TAKE
+         * BACK: it wrote their own record where its call never named it, so
+         * the same call by another would have done something else. "Vote for
+         * it" is everybody's to run, and undoing Ann's was taking back her vote.
+         */
+        const by = actingAs(target.author as Principal).id;
+        const names = (value: unknown) => JSON.stringify(value).includes(JSON.stringify(by));
+        const verdict =
+          by !== undefined && by !== actingAs(author as Principal).id && !isSystem(author as Principal) && !names(target.mutation.args) && names(target.primitives)
+            ? { ok: false as const, refusal: { mutation: target.mutation.name, wouldNeed: [], message: "it was done as somebody else." } }
+            : this.permits(target.mutation, author as Principal);
+        if (!verdict.ok) this.refuse({ ...verdict.refusal, message: `Not permitted to undo "${target.intent}": ${verdict.refusal.message}` }, author.id, true);
       }
     }
 
@@ -1527,7 +1541,7 @@ export class Store<S extends AnySchema> {
         batch,
         author,
         intent: `Undo: ${target.intent}`,
-        ...(options.intent !== undefined ? { batchIntent: options.intent } : {}),
+        ...given("batchIntent", options.intent),
         mutation: null,
         primitives: target.inverse,
         inverse: [...target.inverse].reverse().map(invert),
@@ -1535,7 +1549,7 @@ export class Store<S extends AnySchema> {
         writes: target.writes,
         at: this.now(),
         undoes: target.id,
-        ...(options.via !== undefined ? { via: options.via } : {}),
+        ...given("via", options.via),
       };
       this.graph.applyPrimitives(op.primitives, { restoring: putsBack(target) });
       this.log.append(op);
@@ -1745,7 +1759,7 @@ export class Store<S extends AnySchema> {
     const tails = new Map(pending.map((batch) => [batch, held.filter((op) => op.batch === batch)]));
 
     // A log that is not intact is refused here, before the graph moves.
-    if (state.log.length > 0) this.log.replace(state.log, state.epochs, state.horizon !== undefined ? { horizon: state.horizon } : {});
+    if (state.log.length > 0) this.log.replace(state.log, state.epochs, given("horizon", state.horizon));
     else {
       const at = state.horizon ?? 0;
       this.log.replace([], state.epochs ?? [{ seq: at, base: state.snapshot }], { horizon: at });
@@ -1789,8 +1803,8 @@ export class Store<S extends AnySchema> {
     const options: ApplyOptions = {
       author: head.author,
       batch,
-      ...(head.batchIntent !== undefined ? { intent: head.batchIntent } : {}),
-      ...(head.via !== undefined ? { via: head.via } : {}),
+      ...given("intent", head.batchIntent),
+      ...given("via", head.via),
     };
     if (head.undoes !== undefined) {
       const targets = ops.map((op) => this.log.get(op.undoes ?? ""));

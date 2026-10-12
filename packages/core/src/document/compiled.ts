@@ -33,7 +33,7 @@ import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
 import { renderTemplate, type TemplatePart } from "./template.js";
 import { rememberDocument } from "./remembered.js";
-import { respellDocument } from "./respell.js";
+import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
@@ -268,7 +268,6 @@ export function serializeCompiled(compiled: CompiledDocument): CompiledApp {
   return { ...plan, findings: [...compiled.findings] };
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 const sameNames = (a: Readonly<Record<string, unknown>> | undefined, b: unknown) => isRecord(b) && Object.keys(a ?? {}).length === Object.keys(b).length && Object.keys(a ?? {}).every((name) => Object.hasOwn(b, name));
 
 /**
@@ -390,13 +389,23 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
      * labeled from the arguments its fields are set from.
      */
     const creation = effects.find((e): e is Extract<ActEffect, { create: string }> => "create" in e);
-    const madeLabel = (input: Record<string, unknown>): string | undefined => {
+    /** What an effect's value is, as the act works it out: an expression, a literal (`$$` saying one `$`), the time or an argument. */
+    const valueOf = (value: ValueSpec, bindings: Record<string, unknown>, graph: GraphReader, subject: AnyGraphNode | null = null): unknown => {
+      if (isRecord(value) && "expr" in value) return evaluateExpr(exprs.get(value.expr)!, { graph, subject, kinds: shapes, bindings: bindings as Record<string, Value>, today: today() });
+      const ref = refName(value);
+      return ref === undefined ? (typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value) : ref === "now" ? new Date().toISOString() : ref === "today" ? today() : bindings[ref];
+    };
+    // Labeled as it would be made: its defaults, then what the act sets (the review before 0.1.27).
+    const madeLabel = (input: Record<string, unknown>, graph: GraphReader): string | undefined => {
       if (!creation) return undefined;
       const node: Record<string, unknown> = { id: "", kind: creation.create };
+      for (const [field, f] of Object.entries(document.kinds[creation.create]!.fields)) if (f.default !== undefined) node[field] = f.default;
       for (const [field, value] of Object.entries(creation.set ?? {})) {
-        const ref = refName(value);
-        const v = ref === undefined ? value : input[ref];
-        if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") node[field] = v;
+        try {
+          node[field] = valueOf(value, input, graph) ?? node[field];
+        } catch {
+          // A value that cannot be worked out here is left unsaid: the act refuses it in its own words.
+        }
       }
       return labelFor(node as unknown as AnyGraphNode).trim() || undefined;
     };
@@ -419,7 +428,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         ...(Object.keys(sets).length > 0 ? { sets } : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
           const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;
-          const what = subject ? labelFor(subject) : (madeLabel(input) ?? Object.values(input).find((v) => typeof v === "string"));
+          const what = subject ? labelFor(subject) : (madeLabel(input, graph) ?? Object.values(input).find((v) => typeof v === "string"));
           return what ? `${title}: ${String(what)}` : title;
         },
         apply(context: MutationContext<never>, input: Record<string, unknown>) {
@@ -459,27 +468,21 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             context.removeEdge(edge);
           };
           const resolve = (value: ValueSpec, current: AnyGraphNode | undefined): unknown => {
-            if (value && typeof value === "object" && !Array.isArray(value) && "expr" in value) {
-              try {
-                return evaluateExpr(exprs.get(value.expr)!, { graph, subject: current ?? subject ?? null, kinds: shapes, bindings, today: today() });
-              } catch (e) {
-                if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not work out a value: ${e.sentence}`);
-                throw e;
-              }
-            }
             const ref = refName(value);
-            if (ref === undefined) return typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value;
             if (ref === "subject") return subjectId;
-            if (ref === "now") return new Date().toISOString();
-            if (ref === "today") return today();
             // The acting person's own record of the people kind (Roadmap f-act-as-me), never an argument.
             if (ref === "me") {
               const me = context.me;
               if (me && document.kinds[graph.getNode(me)?.kind as string]?.people) return me;
               throw new ActRefusal(`"${title}" is done as you, and you have no record here`);
             }
-            if (made.has(ref)) return made.get(ref);
-            return input[ref];
+            if (made.has(ref!)) return made.get(ref!);
+            try {
+              return valueOf(value, bindings, graph, current ?? subject ?? null);
+            } catch (e) {
+              if (e instanceof ExprEvalError) throw new ActRefusal(`"${title}" could not work out a value: ${e.sentence}`);
+              throw e;
+            }
           };
           for (const effect of effects) {
             if ("create" in effect) {

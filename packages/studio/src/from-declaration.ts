@@ -230,7 +230,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
     nodes.push({
       id,
       kind: "sight",
-      label: sight.describe ?? `${who} may see ${sight.own ? "their own " : ""}${sight.kinds.join(", ")}`,
+      label: sight.describe ?? `${who} may see ${sight.own || sight.via ? "their own " : ""}${sight.kinds.join(", ")}`,
       own: sight.own ?? false,
       ...(sight.via ? { via: sight.via } : {}),
       everyone: sight.roles === "*",
