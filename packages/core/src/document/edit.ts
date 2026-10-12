@@ -28,7 +28,8 @@ import { validateViews, VIEW_SLOTS } from "./views.js";
 import { brandFindings } from "./brand-check.js";
 import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
-import { respellDocument } from "./respell.js";
+import { isRecord as isObject, respellDocument } from "./respell.js";
+import { refName } from "./compiled.js";
 import { accentProblem } from "../theme/accent.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize } from "../capital.js";
@@ -221,9 +222,7 @@ type Kinds = ReadonlySet<string> | "*";
 const NONE: Kinds = new Set<string>();
 
 const clone = <T>(v: T): T => structuredClone(v);
-const asArray = (v: unknown): string[] => (v === undefined ? [] : Array.isArray(v) ? (v as string[]) : [v as string]);
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
-const refName = (v: unknown): string | undefined => (typeof v === "string" && /^\$[A-Za-z][A-Za-z0-9]*$/.test(v) ? v.slice(1) : undefined);
+const asArray = (v: unknown): string[] => [v ?? []].flat() as string[];
 const kebab = (camel: string) => camel.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 const words = (name: string) => kebab(name).replace(/-/g, " ");
 
@@ -641,6 +640,11 @@ class Editor {
     return true;
   }
 
+  /** A shape's refusals, each at its path: a key it does not take, said by name. */
+  private refuse(i: number, issues: readonly { readonly path: readonly PropertyKey[]; readonly code: string; readonly message: string; readonly keys?: readonly string[] }[], what: string): void {
+    for (const issue of issues) this.fail(i, issue.path.map(String).join("."), issue.keys ? `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of ${what}` : issue.message);
+  }
+
   apply(i: number, edit: Record<string, unknown>) {
     const op = edit["op"];
     if (typeof op !== "string" || !(EDIT_OPS as readonly string[]).includes(op)) {
@@ -649,10 +653,7 @@ class Editor {
     }
     const parsed = SHAPES[op as EditOp].safeParse(edit);
     if (!parsed.success) {
-      for (const issue of parsed.error.issues) {
-        const path = issue.path.map(String).join(".");
-        this.fail(i, path, issue.code === "unrecognized_keys" ? `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of ${op}` : issue.message);
-      }
+      this.refuse(i, parsed.error.issues, op);
       return;
     }
     const e = parsed.data as Doc;
@@ -1102,7 +1103,7 @@ class Editor {
     if (this.doc.kinds[kind]) return this.fail(i, "kind", `there is already a kind "${kind}"`);
     const parsed = KindSpec.safeParse(rest);
     if (!parsed.success) {
-      for (const issue of parsed.error.issues) this.fail(i, issue.path.map(String).join("."), issue.code === "unrecognized_keys" ? `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of a kind` : issue.message);
+      this.refuse(i, parsed.error.issues, "a kind");
       return;
     }
     const spec = { ...parsed.data } as Doc;
@@ -1262,7 +1263,7 @@ class Editor {
     if (KEYWORDS.has(field)) return this.fail(i, "field", `"${field}" is a word the rule language keeps; pick another name`);
     const parsed = FieldSpec.safeParse({ ...(given ?? {}), ...inline });
     if (!parsed.success) {
-      for (const issue of parsed.error.issues) this.fail(i, issue.path.map(String).join("."), issue.code === "unrecognized_keys" ? `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of a field` : issue.message);
+      this.refuse(i, parsed.error.issues, "a field");
       return;
     }
     const f = { ...parsed.data } as Doc;
@@ -1451,7 +1452,7 @@ class Editor {
     if (KEYWORDS.has(relation)) return this.fail(i, "relation", `"${relation}" is a word the rule language keeps; pick another name`);
     const parsed = EdgeSpec.safeParse({ ...rest, to: typeof rest.to === "string" && rest.to !== "*" ? [rest.to] : rest.to });
     if (!parsed.success) {
-      for (const issue of parsed.error.issues) this.fail(i, issue.path.map(String).join("."), issue.code === "unrecognized_keys" ? `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of a relation` : issue.message);
+      this.refuse(i, parsed.error.issues, "a relation");
       return;
     }
     const edge = { ...parsed.data } as Doc;
@@ -1471,6 +1472,8 @@ class Editor {
     for (const k of holders) if (!this.freeName(i, k, to, "relation")) return;
     if (Object.values(this.doc.kinds).some((s: Doc) => s.edges?.[to])) return this.fail(i, "to", `another kind already has a relation called "${to}"`);
     const touched = this.rewriteAll({ t: "edge", from: relation, to });
+    // A sight via it names it too.
+    for (const sight of this.doc.policy?.sees ?? []) if (sight.via === relation) sight.via = to;
     for (const k of holders) {
       const s = this.doc.kinds[k];
       const edges: Doc = {};
@@ -1491,6 +1494,8 @@ class Editor {
     if (!spec.edges?.[relation]) return this.fail(i, "relation", `${kind} has no relation "${relation}"`);
     const others = [...(sources(this.doc, relation) as Set<string>)].filter((k) => k !== kind);
     if (others.length === 0 && this.lensesDrawnBy(i, { t: "edge", from: relation, to: "\u0000" })) return;
+    // A sight via it is the policy's to change first, as a lens drawn by it is: dropped, it could show everybody what it kept to each seat's own.
+    if (others.length === 0 && this.doc.policy?.sees?.some((sight: Doc) => sight.via === relation)) return this.fail(i, "relation", `a sight shows what "${relation}" joins to each seat's own record`, "change the policy's sight first");
     const gone: string[] = [];
     this.dropRelation(kind, relation, gone);
     this.said.push(`The "${relation}" relation from ${kind} is removed, with every link of that kind${gone.length ? `; ${listOf(gone)} ${gone.length === 1 ? "goes" : "go"} with it` : ""}.`);
@@ -1512,7 +1517,7 @@ class Editor {
     if (this.doc.acts?.[act] && !replace) return this.fail(i, "act", `there is already an act "${act}"`, "pass replace: true to change it, or pick another name");
     const parsed = ActSpec.safeParse(rest);
     if (!parsed.success) {
-      for (const issue of parsed.error.issues) this.fail(i, issue.path.map(String).join("."), issue.code === "unrecognized_keys" ? `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of an act` : issue.message);
+      this.refuse(i, parsed.error.issues, "an act");
       return;
     }
     const existed = Boolean(this.doc.acts?.[act]);
@@ -1552,7 +1557,7 @@ class Editor {
     if (this.doc.rules?.[rule] && !replace) return this.fail(i, "rule", `there is already a rule "${rule}"`, "pass replace: true to change it, or pick another name");
     const parsed = RuleSpec.safeParse(rest);
     if (!parsed.success) {
-      for (const issue of parsed.error.issues) this.fail(i, issue.path.map(String).join("."), issue.code === "unrecognized_keys" ? `${issue.keys.map((k) => `"${k}"`).join(", ")} ${issue.keys.length === 1 ? "is" : "are"} not part of a rule` : issue.message);
+      this.refuse(i, parsed.error.issues, "a rule");
       return;
     }
     const existed = Boolean(this.doc.rules?.[rule]);

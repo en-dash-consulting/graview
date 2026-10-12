@@ -44,9 +44,12 @@ export interface Links {
 /** The app's places, as a sentence ends with them. */
 export const placesSaid = (slugs: readonly string[]) => ` Its places: ${slugs.map((slug) => `"${slug}"`).join(", ") || "none"}.`;
 
+/** At most 80 characters of what a view asked for, ending "…" where it was cut: the sentence reaches the host's problems, and a view may ask for anything. */
+export const quoted = (asked: string) => `"${asked.length > 80 ? `${asked.slice(0, 79)}…` : asked}"`;
+
 /** Why a destination goes nowhere, naming where it could go. */
 export const nowhere = (to: Destination, slugs: readonly string[]) =>
-  `${"place" in to ? `The place "${to.place}"` : `"${to.record}" is no record this viewer may see and`} is no place of this app: it goes nowhere.${placesSaid(slugs)}`;
+  `${"place" in to ? `The place ${quoted(to.place)}` : `${quoted(to.record)} is no record this viewer may see and`} is no place of this app: it goes nowhere.${placesSaid(slugs)}`;
 
 export function createLinks(options: LinksOptions): Links {
   const go = (to: Destination) => {

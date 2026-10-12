@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://graview.dev/</loc><lastmod>2026-10-12</lastmod><!-- 0c5d131dc379 --></url>
+  <url><loc>https://graview.dev/</loc><lastmod>2026-10-12</lastmod><!-- 261af9e16689 --></url>
   <url><loc>https://graview.dev/progression.html</loc><lastmod>2026-10-09</lastmod><!-- dde9b6aadf2f --></url>
   <url><loc>https://graview.dev/docs/agents.html</loc><lastmod>2026-10-09</lastmod><!-- cd5c85215afb --></url>
   <url><loc>https://graview.dev/docs/checks.html</loc><lastmod>2026-10-12</lastmod><!-- 63f593c82c26 --></url>
@@ -34,11 +34,11 @@
   <url><loc>https://graview.dev/docs/skills/graview-new-app.html</loc><lastmod>2026-10-11</lastmod><!-- 52daa7a86d3a --></url>
   <url><loc>https://graview.dev/docs/skills/graview-node-kind.html</loc><lastmod>2026-10-12</lastmod><!-- 7e12d8e36e5a --></url>
   <url><loc>https://graview.dev/docs/skills/graview-pages.html</loc><lastmod>2026-10-11</lastmod><!-- a235a17c4d1f --></url>
-  <url><loc>https://graview.dev/docs/skills/graview-permissions.html</loc><lastmod>2026-10-12</lastmod><!-- 987797fe367f --></url>
+  <url><loc>https://graview.dev/docs/skills/graview-permissions.html</loc><lastmod>2026-10-12</lastmod><!-- d10c4038273c --></url>
   <url><loc>https://graview.dev/docs/skills/graview-port-app.html</loc><lastmod>2026-10-11</lastmod><!-- 65d28808057c --></url>
   <url><loc>https://graview.dev/docs/skills/graview-seed.html</loc><lastmod>2026-10-09</lastmod><!-- d680e37fdbe4 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-ship.html</loc><lastmod>2026-10-12</lastmod><!-- bee0569ce3b1 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-studio.html</loc><lastmod>2026-10-09</lastmod><!-- f4972d021f12 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-worker-view.html</loc><lastmod>2026-10-12</lastmod><!-- e7d842a47172 --></url>
-  <url><loc>https://graview.dev/docs/stability.html</loc><lastmod>2026-10-12</lastmod><!-- ba0d3365f50c --></url>
+  <url><loc>https://graview.dev/docs/stability.html</loc><lastmod>2026-10-12</lastmod><!-- f86a23812706 --></url>
 </urlset>

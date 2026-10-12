@@ -1,5 +1,5 @@
 import type { DescribedPart, DescribedProblem } from "@graview/core/describe";
-import { placesSaid } from "../host/links.js";
+import { placesSaid, quoted } from "../host/links.js";
 import type { ViewRefusal } from "../host/open-draw.js";
 import { describeDrawing } from "./describe.js";
 import { drawTranscript } from "./draw.js";
@@ -58,8 +58,8 @@ export function judgeTranscript(transcript: HeadlessTranscript, input: HeadlessI
   const problems: DescribedProblem[] = [...drawn.refused.map(sayRefusal), ...said.problems];
   for (const went of transcript.went) {
     /* A bare string is a record first, then a place by that slug, as the host follows it. */
-    if ("record" in went && !(input.props.node?.id === went.record || (input.props.nodes ?? []).some((node) => node.id === went.record) || input.places.includes(went.record))) problems.push({ at: "navigate", says: `It goes to "${went.record}", which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(input.places)}` });
-    if ("place" in went && !input.places.includes(went.place)) problems.push({ at: "navigate", says: `It goes to the place "${went.place}", which this app does not have.${placesSaid(input.places)}` });
+    if ("record" in went && !(input.props.node?.id === went.record || (input.props.nodes ?? []).some((node) => node.id === went.record) || input.places.includes(went.record))) problems.push({ at: "navigate", says: `It goes to ${quoted(went.record)}, which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(input.places)}` });
+    if ("place" in went && !input.places.includes(went.place)) problems.push({ at: "navigate", says: `It goes to the place ${quoted(went.place)}, which this app does not have.${placesSaid(input.places)}` });
   }
   return { ok: true, parts: said.parts, problems };
 }
