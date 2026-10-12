@@ -16,6 +16,6 @@ acceptanceCriteria:
   - "A destination that goes nowhere is quoted to at most 80 characters, ending with an ellipsis, in the host's sentence and a headless run's problems"
   - "Every navigate, lost or refused, still counts against the flood allowance"
 description: "packages/guest host/view.ts: given.onmessage handed data.to from the untrusted worker to links.go without a type check, so options.sees and the nowhere() sentence took anything the worker sent, and that sentence reaches the host's onProblem and from there Cloud's problems list at any length."
-resolution: "PR_PLACEHOLDER"
+resolution: "Shipped in #235: a navigate whose to or place is no string is refused without a sentence, and one that goes nowhere quotes at most 80 characters of it, ending with an ellipsis, in the host's sentence and a headless run's problems; every navigate still counts against the flood allowance."
 lastModified: "2026-10-12T15:40:00.000Z"
 ---
