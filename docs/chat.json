@@ -1,31 +1,46 @@
 {
-  "at": "2026-10-04T07:13:27.335Z",
+  "at": "2026-10-12T03:55:21.766Z",
   "engine": "chromium",
   "checks": {
-    "itLivesInTheRail": {
-      "inTheRail": true,
-      "anchor": "rail",
-      "tall": 135,
+    "itFloatsAtTheFoot": {
+      "state": "closed",
+      "atTheFoot": 16,
+      "field": "Ask Things",
       "noPill": true,
+      "opened": 148,
       "ok": true
     },
-    "theRailStandsThroughEscape": {
+    "escapePutsTheSeatAwayAndKeepsTheChoice": {
       "before": {
         "selected": true,
-        "subject": "t-deposit"
+        "seat": "open"
       },
       "after": {
-        "panel": true,
-        "subject": "t-deposit"
+        "selected": true,
+        "seat": "closed"
       },
       "ok": true
     },
-    "headerSaysGraphNative": {
-      "source": "graph-native",
+    "noChoiceOfWhatAnswers": {
+      "seat": {
+        "found": true,
+        "controls": [],
+        "words": []
+      },
+      "menu": {
+        "found": true,
+        "controls": [],
+        "words": []
+      },
       "ok": true
     },
     "groundedOverview": {
-      "reply": "This graph holds 3 Lists, 12 Tasks, 3 Rules, 1 Reasons, 2 People, 1 Invitations. Ask about anything by name, ask what's ",
+      "reply": "Home. It holds 3 lists, 12 tasks, 3 rules, 1 reason, 2 people and 1 invitation. 2 problems to see to.",
+      "ok": true
+    },
+    "withoutAiAnOpenQuestionIsToldSo": {
+      "reply": "I can answer about what's in this app. Open questions need AI. Set ANTHROPIC_API_KEY when you start the dev server to turn it on.",
+      "note": null,
       "ok": true
     },
     "noActAndNoFactAnswersWithWhatTheWordsFind": {
@@ -36,12 +51,12 @@
       "ok": true
     },
     "problemsProposeRepairs": {
-      "reply": "2 problems: \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\"; \"Pay the deposit\" was due 2026-08-2",
+      "reply": "Went to the problems. 2 rules broken: \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\"; \"Pay the ",
       "applies": 2,
       "ok": true
     },
     "sayAChangeProposesOne": {
-      "reply": "I can do that. Review it below.Finish \"Book the van\"",
+      "reply": "I can do that. Review it below.Finish \"Book the van\"Do itNot now",
       "applies": 1,
       "ok": true
     },
@@ -52,26 +67,30 @@
       "undone": true,
       "ok": true
     },
-    "brokenModelDegradesToTheFloor": {
-      "header": "m-test",
-      "grounded": "someone who moves pianos\"Finish \"Pay the deposit\"Apply all 2",
-      "floored": "say a change in its own words — like \"Add a task\".(m-test did not answer — Failed to fetch. The graph answered instead.)",
+    "theHostsModelAnswersAnOpenQuestionQuietly": {
+      "fact": "Went to the problems. 2 rules broken: \"Order boxes\" is done, but it waits for \"F",
+      "factNote": null,
+      "askedForTheFact": 0,
+      "answered": "Repaint it in the spring, when the windows can stay open.Answered with AI",
+      "answeredNote": "Answered with AI",
+      "offered": {
+        "seat": {
+          "found": true,
+          "controls": [],
+          "words": []
+        },
+        "menu": {
+          "found": true,
+          "controls": [],
+          "words": []
+        }
+      },
       "ok": true
     },
-    "keySurvivesRungSwitch": {
-      "source": "graph",
-      "key": "k-test",
-      "ok": true
-    },
-    "decisionRungSaysItDecides": {
-      "rungs": [
-        "graph",
-        "local",
-        "decision",
-        "remote"
-      ],
-      "header": "jev — decides; the graph talks",
-      "reply": "ther than talks — the graph is answering here.)Finish \"Find someone who moves pianos\"Finish \"Pay the deposit\"Apply all 2",
+    "aBrokenModelLeavesTheGraphsAnswer": {
+      "grounded": "omeone who moves pianos\"Do itNot nowFinish \"Pay the deposit\"Do itNot nowDo all 2",
+      "floored": " wrong, or say a change in its own words — like \"Add a task\".(AI didn't answer just now, so this is from the app alone.)",
+      "flooredNote": null,
       "ok": true
     }
   },
