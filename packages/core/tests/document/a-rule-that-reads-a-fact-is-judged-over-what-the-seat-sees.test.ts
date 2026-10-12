@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { checkApp, compileDocument } from "../../src/check.js";
-import { answerSeenBy, Store, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
+import { answerSeenBy } from "../../src/answer.js";
+import { Store, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
 import "../../src/lines.js";
 
 /**

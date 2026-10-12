@@ -49,6 +49,10 @@
       "types": "./dist/forms.d.ts",
       "default": "./dist/forms.js"
     },
+    "./answer": {
+      "types": "./dist/answer.d.ts",
+      "default": "./dist/answer.js"
+    },
     "./lines": {
       "types": "./dist/lines.d.ts",
       "default": "./dist/lines.js"

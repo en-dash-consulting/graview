@@ -1,6 +1,5 @@
 import {
   actTitle,
-  answerSeenBy,
   deriveMutations,
   derivedVia,
   nodeRefArgs,
@@ -22,6 +21,7 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
+import { answerSeenBy } from "@graview/core/answer";
 import { mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import { computedValues } from "@graview/core/blocks";
 import { authorship, markComputed, markGraph, markHits, markNode } from "./untrusted.js";

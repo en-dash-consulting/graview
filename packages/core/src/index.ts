@@ -265,7 +265,7 @@ export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/typ
 export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
 export type { RecordedLog, Records } from "./permissions/sight.js";
-export { answerSeenBy, hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
+export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 

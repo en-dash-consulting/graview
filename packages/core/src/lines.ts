@@ -19,7 +19,7 @@ import { shapesOfSchema } from "./document/rules.js";
 import { judgedWith } from "./invariants/engine.js";
 import { Graph } from "./graph/graph.js";
 import { invert, type Primitive } from "./graph/primitives.js";
-import { answersJudgedWith } from "./seen.js";
+import { answersJudgedWith } from "./answer.js";
 import { problemsMoved, type Store } from "./store.js";
 
 export { brokenLineOf, ruleLineOf } from "./document/rule-line.js";
