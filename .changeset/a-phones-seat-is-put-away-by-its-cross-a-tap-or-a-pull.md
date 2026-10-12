@@ -1,0 +1,8 @@
+---
+"@graview/primitives": patch
+"@graview/core": patch
+---
+
+A phone's seat is put away by its ✕, a tap on its grab line or a pull down, and the keyboard goes down with it (FR-164). On a phone the open seat is a bottom sheet whose grab line read as something to pull or tap, and neither seemed to do anything: there was no ✕ (only a desk had one), nothing followed a finger, and a tap did close the sheet but put the keyboard back in the ask field, so on a real phone the on-screen keyboard stayed up and the next letter opened the sheet again. The field's 15px text also made iOS Safari zoom the page when it was focused. Now the phone's sheet has the desk's ✕ beside its grab line; its top row follows a finger down and puts the sheet away past 64px, or on a flick of 0.5px a millisecond over 16px, settling back short of both; closed on a phone, the keyboard goes back to where it was only if that is not a field, and otherwise to the seat's region, never the field and never `<body>`; the field's text is never under 16px; and the words typed and not sent, and where the talk was scrolled to, are still there when it is opened again. An open sheet still comes back open after a reload, since the conversation is the tab's, but with no field focused and its ✕ in sight it no longer traps the reader. The swipe is in the seat's lazy chunk: what the hosted page loads up front does not change. `capabilities().shipped` gains FR-164.
+
+Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and tool names and schemas are unchanged; the hosted page's first load is the same size.

@@ -188,6 +188,27 @@ describe("the seat is quiet until it is asked", () => {
     expect(seat(host)!.getAttribute("data-graview-seat-side")).toBe("left");
   });
 
+  it("on a phone has a ✕ beside its grab line, and put away it leaves no field holding the keyboard and keeps the words typed (FR-164)", async () => {
+    // jsdom measures every box as 0 wide: a phone's.
+    const host = await draw(["t1"]);
+    expect(seat(host)!.getAttribute("data-graview-seat-shape")).toBe("phone");
+    await open(host);
+    await act(async () => field(host).focus());
+    await act(async () => {
+      const input = field(host);
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "half a ques");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(host.querySelector('[data-testid="seat-grab"]')).not.toBeNull();
+    const cross = host.querySelector<HTMLButtonElement>('[data-testid="seat-close"]')!;
+    expect(cross.textContent).toBe("✕");
+    await act(async () => cross.click());
+    expect(seat(host)!.getAttribute("data-graview-seat")).toBe("closed");
+    // Not the field — a phone's keyboard would stay up and the next letter open the sheet again — and not <body>.
+    expect(document.activeElement).toBe(seat(host));
+    expect(field(host).value).toBe("half a ques");
+  });
+
   it("is not drawn at all when the host hides it", async () => {
     const host = await draw(["t1"], "hidden");
     expect(seat(host)).toBeNull();

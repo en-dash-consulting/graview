@@ -462,6 +462,7 @@ export default defineConfig({
       "@graview/core/arrange": framework("core/src/arrange.ts"),
       "@graview/core/forms": framework("core/src/forms.ts"),
       "@graview/core/lines": framework("core/src/lines.ts"),
+      "@graview/core/json-schema": framework("core/src/json-schema.ts"),
       "@graview/core/check": framework("core/src/check.ts"),
       "@graview/core/scene": framework("core/src/scene.ts"),
       "@graview/core/figures": framework("core/src/figures.ts"),

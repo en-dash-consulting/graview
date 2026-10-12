@@ -69,6 +69,8 @@ const CHAIN = [
   ["seat-goes-and-draws", "verify-seat-goes-and-draws.mjs"],
   ["chat", "verify-chat.mjs"],
   ["seat", "verify-seat.mjs"],
+  // A phone's seat put away by its ✕, a tap or a pull down, the keyboard down after, on an iPhone and a Pixel in Chromium and WebKit (FR-164).
+  ["phone-seat", "verify-phone-seat.mjs"],
   ["who", "verify-who.mjs"],
   ["calendar", "verify-calendar.mjs"],
   ["desk", "verify-desk.mjs"],
@@ -94,6 +96,8 @@ const CHAIN = [
   ["files", "verify-files.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
   ["address", "verify-address.mjs"],
+  // An app fills the phone after it turns, at the screen's height on both faces and in the Shell, in Chromium and WebKit (FR-165).
+  ["viewport", "verify-viewport.mjs"],
   // The studio's whole path, on a scratch copy of seedbed: said, rewritten, written, compiled, migrated.
   ["rehearsal", "rehearse-studio.mjs"],
   ["remember", "verify-remember.mjs"],

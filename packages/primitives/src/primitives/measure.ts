@@ -32,6 +32,44 @@ export function useWidth(ref: { current: HTMLElement | null }): number | null {
 }
 
 /**
+ * THE SCREEN'S HEIGHT, MEASURED (FR-165): `innerHeight` in pixels while
+ * `on`, else undefined. CSS's viewport units were trusted once: after a
+ * phone turned, a box of `100vh` or `100dvh` kept the height it had been
+ * given and the app was drawn in the top half of the screen. This reads
+ * the window on `resize`, `orientationchange` and the visual viewport's
+ * `resize`, and again a beat later for the phones that report a turn late.
+ *
+ * THE KEYBOARD DOES NOT SHRINK IT. The figure is the layout viewport's
+ * (`innerHeight`), not the visual viewport's: the on-screen keyboard and a
+ * pinch change the second and not the first, so the app keeps its height
+ * while somebody types and the browser scrolls the field into view, rather
+ * than every lens laying itself out again for half a screen and back.
+ */
+export function useViewportHeight(on = true): number | undefined {
+  const [height, setHeight] = useState<number>();
+  useEffect(() => {
+    if (!on) return setHeight(undefined);
+    let beat = 0;
+    const read = () => setHeight(innerHeight);
+    const turned = () => {
+      read();
+      clearTimeout(beat);
+      beat = window.setTimeout(read, 300);
+    };
+    const each = (verb: "addEventListener" | "removeEventListener") => {
+      for (const [target, event] of [[window, "resize"], [window, "orientationchange"], [window.visualViewport, "resize"]] as const) target?.[verb](event, turned);
+    };
+    each("addEventListener");
+    read();
+    return () => {
+      clearTimeout(beat);
+      each("removeEventListener");
+    };
+  }, [on]);
+  return height;
+}
+
+/**
  * Present to a screen reader, absent to the eye — the one idiom, written
  * once.
  *

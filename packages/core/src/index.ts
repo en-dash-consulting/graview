@@ -59,13 +59,7 @@ export type {
   PageFields,
   ValidateEdgeTargets,
 } from "./schema/types.js";
-export {
-  mutationToolSchema,
-  nodeJsonSchema,
-  schemaJson,
-  toJsonSchema,
-} from "./schema/json-schema.js";
-export type { JsonSchema, MutationToolSchema } from "./schema/json-schema.js";
+// A kind's JSON Schema and an act's tool schema are `@graview/core/json-schema`'s: a page's first load does not carry them (FR-165).
 
 // Graph — the reactive in-memory model the framework owns.
 export { Graph, GraphError, MissingRecordError } from "./graph/graph.js";

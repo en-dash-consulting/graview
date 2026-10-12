@@ -189,3 +189,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A host wires its turn from the loop alone: @graview/tools/turn (FR-161)](./a-host-wires-its-turn-from-the-loop.md) | completed |
 | [A record can hold a picture or a document (FR-162)](./a-record-can-hold-a-picture-or-a.md) | completed |
 | [Putting a file on a record from the page, through the host's files (FR-163)](./putting-a-file-on-a-record-from-the.md) | completed |
+| [A phone's seat is put away by its ✕, a tap or a pull down, and the keyboard goes down with it (FR-164)](./a-phone-s-seat-is-put-away-by-its-a.md) | completed |
+| [An app fills the phone after it turns (FR-165)](./an-app-fills-the-phone-after-it-turns.md) | completed |

@@ -85,11 +85,16 @@ export function useElementSize(
     setSize((current) => current ?? { width: Math.round(box.width), height: Math.round(box.height) });
   }, [ref]);
 
+  /*
+   * A ZERO-SIZE REPORT IS PASSED OVER, NOT KEPT (FR-165). A phone turning
+   * can report the box as nothing for a moment; the scene keeps the last
+   * real size, and the window's own `resize` reads the box again, so a box
+   * that comes back is followed even when the observer said nothing more.
+   */
   useEffect(() => {
     const element = ref.current;
     if (!element || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver((entries) => {
-      const box = entries[0]?.contentRect;
+    const take = (box: { width: number; height: number } | undefined) => {
       if (!box || box.width === 0 || box.height === 0) return;
       // Round to whole pixels: a fractional width would recompute the layout
       // on every sub-pixel wobble and never settle.
@@ -99,9 +104,15 @@ export function useElementSize(
           ? current
           : next;
       });
-    });
+    };
+    const observer = new ResizeObserver((entries) => take(entries[0]?.contentRect));
+    const again = () => take(element.getBoundingClientRect());
     observer.observe(element);
-    return () => observer.disconnect();
+    addEventListener("resize", again);
+    return () => {
+      observer.disconnect();
+      removeEventListener("resize", again);
+    };
   }, [ref]);
 
   return size;

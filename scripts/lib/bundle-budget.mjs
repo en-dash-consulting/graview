@@ -518,10 +518,18 @@ export const BUDGETS = [
     // leaving a seat's own kinds alone; and 144 bytes of what a page loads first (a box nobody ticked sent as no, a name
     // called a name, a creating act not guessed to write its subject, the upgrade's refusal, the bar giving on a phone).
     // 24 / 258 more than main as it measured itself, over the sight of a seat's problems and #213. Measured at 1_710_991 / 540_650.
+    // Raised when a phone's seat came to be put away by its ✕, a tap or a pull down (FR-164), by the seat's own chunk,
+    // fetched when it is first opened: the pull that follows a finger, the ✕ on a phone, the talk's scroll kept for the
+    // sheet opened again. What a page loads first is unchanged up front, 75 bytes more on either face before it draws (the
+    // keyboard put on the seat's region on a phone, the field never under 16px). 986 / 218 more than main. Measured at 1_711_977 / 540_868.
+    // Raised when the phone's seat sheet (FR-164, #221) met an app filling the phone after it turns (FR-165): the
+    // seat's sheet chunk and the faces' re-measure, chunks fetched later only; the first load is 732 bytes smaller.
+    // Measured at 1_712_707 / 541_124.
     // Raised when a record came to hold a picture or a document (FR-162, FR-163), mostly by the chunk fetched with the first
     // file field drawn — its gallery, its documents and its editor (`files.tsx`, 12_384, and the resampling a camera's photo
     // is sent through, 403) — and by what every face loads first (see "embed with the studio handed in"). 18_752 / 7_539
     // more than main (1_710_529 / 540_260). Measured at 1_729_281 / 547_799.
+    // MERGE-REMEASURE
     minified: 1_730_000,
     gzipped: 548_000,
     load: "all",
