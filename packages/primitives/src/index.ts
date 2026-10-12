@@ -113,6 +113,7 @@ export {
   Prose,
   VISUALLY_HIDDEN,
   Roster,
+  useViewportHeight,
   useWidth,
 } from "./primitives/index.js";
 export type {

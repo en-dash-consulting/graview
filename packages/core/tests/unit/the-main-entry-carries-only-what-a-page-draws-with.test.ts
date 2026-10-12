@@ -5,6 +5,7 @@ import * as check from "../../src/check.js";
 import * as describePlaces from "../../src/describe.js";
 import * as document from "../../src/document/index.js";
 import * as figures from "../../src/figures.js";
+import * as jsonSchema from "../../src/json-schema.js";
 import * as main from "../../src/index.js";
 import * as scene from "../../src/scene.js";
 
@@ -25,6 +26,7 @@ const OFF_THE_PAGE = {
   "@graview/core/check": { from: check, names: ["checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt"] },
   "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "toIso", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail"] },
   "@graview/core/figures": { from: figures, names: ["FIGURES", "FIGURE_NAMES", "figureBrief", "figureFaults", "figureSvg"] },
+  "@graview/core/json-schema": { from: jsonSchema, names: ["mutationToolSchema", "nodeJsonSchema", "schemaJson", "toJsonSchema"] },
 } as const;
 
 describe("the entries a hosted page imports up front", () => {

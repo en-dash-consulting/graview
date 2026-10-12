@@ -6,13 +6,13 @@ import {
   defineApp,
   defineNode,
   deriveRemoveMutations,
-  mutationToolSchema,
   nodeRef,
   removeVia,
   Store,
   takesAnId,
   type Policy,
 } from "../../src/index.js";
+import { mutationToolSchema } from "../../src/schema/json-schema.js";
 import { checkApp } from "../../src/check.js";
 
 /**

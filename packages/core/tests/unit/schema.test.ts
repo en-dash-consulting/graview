@@ -6,12 +6,11 @@ import {
   createViewRegistry,
   defineNode,
   labelOf,
-  mutationToolSchema,
-  nodeJsonSchema,
   nodeRef,
   SchemaError,
   withArticle,
 } from "../../src/index.js";
+import { mutationToolSchema, nodeJsonSchema } from "../../src/schema/json-schema.js";
 
 const person = defineNode("person", {
   fields: z.object({ label: z.string(), role: z.enum(["parent", "child"]) }),

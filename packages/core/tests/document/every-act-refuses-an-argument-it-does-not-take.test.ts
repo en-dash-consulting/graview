@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { compileDocument } from "../../src/check.js";
-import { createSchema, defineMutation, defineNode, InvalidArguments, mutationToolSchema, nodeRef, refusalOf, Store, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { createSchema, defineMutation, defineNode, InvalidArguments, nodeRef, refusalOf, Store, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { mutationToolSchema } from "../../src/schema/json-schema.js";
 
 /**
  * FR-121. EVERY ACT REFUSES AN ARGUMENT IT DOES NOT TAKE.

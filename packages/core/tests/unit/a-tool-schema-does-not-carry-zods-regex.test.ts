@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { mutationToolSchema, toJsonSchema } from "../../src/index.js";
+import {  } from "../../src/index.js";
+import { mutationToolSchema, toJsonSchema } from "../../src/schema/json-schema.js";
 
 /**
  * A TOOL'S SCHEMA DOES NOT DEPEND ON ZOD'S MINOR VERSION. An agent tool's
