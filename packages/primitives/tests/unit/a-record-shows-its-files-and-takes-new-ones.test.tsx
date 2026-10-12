@@ -2,13 +2,13 @@
 /* React's act() wants to know it is in a test environment. */
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { createSchema, defineNode, fileField, imageField, Store, type FileValue, type HostFiles } from "@graview/core";
-import { GraviewProvider, createViews } from "@graview/react";
+import { GraviewProvider, HostFilesContext, createViews } from "@graview/react";
 import { act, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { Fields, Files } from "../../src/index.js";
-import { kindsWords, sizeWords, takes, typeWords } from "../../src/files.js";
+import { kindsWords, prepare, sizeWords, takes, typeWords } from "../../src/files.js";
 
 /**
  * FR-162, FR-163. A RECORD SHOWS ITS PICTURES AND DOCUMENTS, AND TAKES NEW
@@ -188,5 +188,93 @@ describe("a record's file field, put there through the host's files", () => {
     // What it holds is still drawn, and may still be taken off a list.
     expect(host.querySelector('object[type="application/pdf"]')).not.toBeNull();
     expect(host.querySelector('button[aria-label="Remove quote.pdf"]')).not.toBeNull();
+  });
+});
+
+describe("a file field's editor, as it is used", () => {
+  /** The editor as a form draws it, its value held by the test, under a host's files. */
+  async function editor(options: { readonly value: readonly FileValue[]; readonly several: boolean; readonly files: HostFiles }) {
+    let value: unknown = options.value;
+    const changes: unknown[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    // Drawn again with what it changed to, inside the act its press is already in.
+    const drawWith = (next: unknown) => {
+      value = next;
+      root.render(
+        <HostFilesContext.Provider value={options.files}>
+          <Files
+            as="control"
+            value={value}
+            several={options.several}
+            image
+            label="Photos"
+            onChange={(changed) => {
+              changes.push(changed);
+              drawWith(changed);
+            }}
+          />
+        </HostFilesContext.Provider>,
+      );
+    };
+    const render = (next: unknown) => act(async () => drawWith(next));
+    await render(value);
+    cleanup = async () => {
+      await act(async () => root.unmount());
+      container.remove();
+    };
+    await arrives(() => container.querySelector("[data-graview-file-editor]"));
+    return { container, changes, render, value: () => value };
+  }
+
+  it("adds to what the field holds when the upload answers, not to what it held when the file was sent", async () => {
+    let answer: (value: FileValue) => void = () => undefined;
+    const files: HostFiles = { maxBytes: 1_000_000, kinds: ["image/*"], upload: () => new Promise<FileValue>((done) => (answer = done)) };
+    const drawn = await editor({ value: [porch], several: true, files });
+    await pick(drawn.container.querySelector<HTMLInputElement>("input[data-graview-file-input]")!, [new File(["n"], "new.png", { type: "image/png" })]);
+    // Somebody else puts a picture there while this one is on its way.
+    await drawn.render([porch, gutter]);
+    await act(async () => answer({ href: "/files/new.png", name: "new.png", type: "image/png", bytes: 1 }));
+    await arrives(() => (drawn.changes.length > 0 ? true : null));
+    expect((drawn.value() as FileValue[]).map((file) => file.name)).toEqual(["porch.jpg", "gutter.jpg", "new.png"]);
+  });
+
+  it("says a file already there is there, and adds it no second time", async () => {
+    const files: HostFiles = { maxBytes: 1_000_000, kinds: ["image/*"], upload: async () => porch };
+    const drawn = await editor({ value: [porch], several: true, files });
+    await pick(drawn.container.querySelector<HTMLInputElement>("input[data-graview-file-input]")!, [new File(["p"], "porch.jpg", { type: "image/jpeg" })]);
+    const said = await arrives(() => drawn.container.querySelector('[role="alert"]'));
+    expect(said.textContent).toBe("“porch.jpg” is already here.");
+    expect(drawn.changes).toEqual([]);
+  });
+
+  it("says which files were left out when several are given to a field that holds one", async () => {
+    const drawn = await editor({ value: [], several: false, files: fakeHost() });
+    await pick(drawn.container.querySelector<HTMLInputElement>("input[data-graview-file-input]")!, [new File(["a"], "a.png", { type: "image/png" }), new File(["b"], "b.png", { type: "image/png" })]);
+    const said = await arrives(() => drawn.container.querySelector('[role="alert"]'));
+    expect(said.textContent).toBe("Photos holds one picture, so “b.png” was left out.");
+    expect((drawn.value() as FileValue).name).toBe("a.png");
+  });
+
+  it("keeps the keyboard in the editor when a file is moved or removed", async () => {
+    const drawn = await editor({ value: [porch, gutter], several: true, files: fakeHost() });
+    const button = (name: string) => drawn.container.querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`);
+    button("Move gutter.jpg earlier")!.focus();
+    await act(async () => button("Move gutter.jpg earlier")!.click());
+    // At the top it can move no earlier: the keyboard is on what it can do there.
+    expect(document.activeElement).toBe(button("Remove gutter.jpg"));
+    await act(async () => button("Remove gutter.jpg")!.click());
+    expect(document.activeElement).toBe(button("Remove porch.jpg"));
+    await act(async () => button("Remove porch.jpg")!.click());
+    expect(document.activeElement).toBe(drawn.container.querySelector("[data-graview-file-choose]"));
+  });
+
+  it("sends a HEIC this browser cannot read as it is where the host takes it, and refuses it in words where it does not", async () => {
+    const heic = new File(["heic"], "IMG_0001.HEIC", { type: "" });
+    const takesHeic = await prepare(heic, fakeHost({ kinds: ["image/*"] }), { image: true });
+    expect(takesHeic).toMatchObject({ name: "IMG_0001.HEIC", type: "image/heic" });
+    const refuses = await prepare(heic, fakeHost({ kinds: ["image/jpeg", "image/png"] }), { image: true });
+    expect(refuses).toEqual({ refused: "“IMG_0001.HEIC” is a HEIC photo, which this browser can’t turn into a JPEG and this host doesn’t take. Save it as a JPEG and try again." });
   });
 });

@@ -42,6 +42,17 @@ describe("the dev server's files", () => {
     expect(await served.text()).toBe("%PDF-1.4");
   });
 
+  it("never runs what it serves as this app's page: an SVG, which can carry a script, is drawn by an <img> but sandboxed when opened", async () => {
+    const svg = "<svg><script>parent.x=document.cookie</script></svg>";
+    const value = await files().upload(new Blob([svg], { type: "image/svg+xml" }), "badge.svg");
+    const served = await fetch(`${base}${value.href}`);
+    expect(served.headers.get("content-type")).toBe("image/svg+xml");
+    expect(served.headers.get("content-security-policy")).toMatch(/(^|;\s*)sandbox(;|$)/);
+    // A raster picture is sandboxed too: what the record says it is never decides what the bytes may do.
+    const png = await files().upload(new Blob(["PNG pixels"], { type: "image/png" }), "porch.png");
+    expect((await fetch(`${base}${png.href}`)).headers.get("content-security-policy")).toMatch(/(^|;\s*)sandbox(;|$)/);
+  });
+
   it("says what it takes, and refuses past its size or outside its kinds in words the editor says", async () => {
     expect(await (await fetch(`${base}/__graview/files`)).json()).toEqual({ maxBytes: 64, kinds: ["image/*", "application/pdf"] });
     await expect(files().upload(new Blob(["x".repeat(65)], { type: "image/png" }), "big.png")).rejects.toThrow("it is more than 64 bytes, the most this server takes");

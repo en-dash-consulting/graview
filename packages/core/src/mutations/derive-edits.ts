@@ -305,7 +305,8 @@ export function deriveRemoveMutations<S extends AnySchema>(
         const id = (args as { id: string }).id;
         const node = graph.getNode(id);
         // What files go with it (FR-162): the host decides what becomes of their bytes.
-        const files = node ? Object.values(node).flatMap(filesOf).length : 0;
+        // Each file once, however many of its fields hold it.
+        const files = node ? new Set(Object.values(node).flatMap((value) => filesOf(value).map((file) => file.href))).size : 0;
         return `Remove ${node ? labelOf(definition, node) : id}${files ? ` and its ${files} file${files > 1 ? "s" : ""}` : ""}`;
       },
       apply(ctx, args) {

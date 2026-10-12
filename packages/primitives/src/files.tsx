@@ -283,12 +283,29 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
   const noun = image ? (several ? "pictures" : "a picture") : several ? "files" : "a file";
   const accept = image ? (kinds.length > 0 ? kinds.join(",") : "image/*") : host?.kinds.join(",") || undefined;
   const coarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+  // What the field holds as the upload answers, which somebody else may have changed while it was sent.
+  const latest = useRef(value);
+  latest.current = value;
+  // Where the keyboard goes once a move or a removal has redrawn the list: never left on the page.
+  const list = useRef<HTMLUListElement | null>(null);
+  const focusNext = useRef<{ readonly at: number; readonly what: "move" | "remove"; readonly from: readonly FileValue[] } | null>(null);
+  useEffect(() => {
+    const next = focusNext.current;
+    // Once the field holds what was changed to, not on a render before it.
+    if (!next || next.from === value) return;
+    focusNext.current = null;
+    const rows = list.current?.children;
+    const row = rows?.[Math.min(next.at, rows.length - 1)];
+    const target = (next.what === "move" ? row?.querySelector<HTMLElement>("[data-graview-file-move]") : null) ?? row?.querySelector<HTMLElement>("[data-graview-file-remove]") ?? picker.current?.parentElement?.querySelector<HTMLElement>("[data-graview-file-choose]");
+    target?.focus();
+  });
 
   const add = async (given: readonly File[], from: "picked" | "camera" | "dropped" | "pasted") => {
     if (!host || given.length === 0) return;
     const chosen = several ? given : given.slice(0, 1);
     const kept: FileValue[] = [];
     const problems: string[] = [];
+    if (chosen.length < given.length) problems.push(`${label} holds one ${image ? "picture" : "file"}, so ${given.slice(1).map((file) => `“${file.name || "the photo"}”`).join(", ")} ${given.length > 2 ? "were" : "was"} left out.`);
     setRefused([]);
     setSaid(null);
     for (const file of chosen) {
@@ -300,23 +317,27 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
       }
       const sent = await send(prepared, host, image);
       if ("refused" in sent) problems.push(sent.refused);
+      // The same bytes answer the same address: a file already here is said, not held twice.
+      else if ([...(several ? latest.current : []), ...kept].some((held) => held.href === sent.href)) problems.push(`“${sent.name}” is already here.`);
       else kept.push(sent);
     }
     setBusy(null);
     setRefused(problems);
     if (kept.length === 0) return;
     try {
-      onChange(several ? [...value, ...kept] : kept.slice(-1));
+      onChange(several ? [...latest.current, ...kept] : kept.slice(-1));
       setSaid(`Added ${kept.map((file) => file.name).join(", ")}.`);
     } catch (error) {
       setRefused([...problems, error instanceof Error ? error.message : String(error)]);
     }
   };
-  const change = (next: readonly FileValue[], words: string) => {
+  const change = (next: readonly FileValue[], words: string, focus?: { readonly at: number; readonly what: "move" | "remove" }) => {
     try {
+      focusNext.current = focus ? { ...focus, from: value } : null;
       onChange(next);
       setSaid(words);
     } catch (error) {
+      focusNext.current = null;
       setRefused([error instanceof Error ? error.message : String(error)]);
     }
   };
@@ -354,19 +375,19 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
         {label}
       </span>
       {value.length > 0 && (several || value.length > 1) ? (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
+        <ul ref={list} style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
           {value.map((file, index) => (
-            <li key={file.href} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
+            <li key={`${index}:${file.href}`} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
               {thumbs && isImage(file) ? <FileThumb file={file} size={40} /> : null}
               <span style={{ flex: "1 1 8rem", minWidth: 0, overflowWrap: "anywhere" }}>{file.name}</span>
               <CaptionInput file={file} onCaption={(caption) => change(value.map((one, at) => (at === index ? withCaption(one, caption) : one)), caption ? `${file.name} now says “${caption}”.` : `${file.name} says its name again.`)} />
               {several && index > 0 ? (
-                <button type="button" aria-label={`Move ${file.name} earlier`} onClick={() => change(value.map((one, at) => (at === index - 1 ? file : at === index ? value[index - 1]! : one)), `Moved ${file.name} earlier.`)}>
+                <button type="button" data-graview-file-move="" aria-label={`Move ${file.name} earlier`} onClick={() => change(value.map((one, at) => (at === index - 1 ? file : at === index ? value[index - 1]! : one)), `Moved ${file.name} earlier.`, { at: index - 1, what: "move" })}>
                   ↑
                 </button>
               ) : null}
               {several ? (
-                <button type="button" aria-label={`Remove ${file.name}`} onClick={() => change(value.filter((_, at) => at !== index), `Removed ${file.name}.`)}>
+                <button type="button" data-graview-file-remove="" aria-label={`Remove ${file.name}`} onClick={() => change(value.filter((_, at) => at !== index), `Removed ${file.name}.`, { at: index, what: "remove" })}>
                   Remove
                 </button>
               ) : null}
@@ -432,8 +453,8 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
       </p>
       {refused.length > 0 ? (
         <div role="alert" data-graview-file-refused="" style={{ color: "var(--graview-warn)", fontSize: "0.875rem", display: "grid", gap: 2 }}>
-          {refused.map((line) => (
-            <p key={line} style={{ margin: 0 }}>
+          {refused.map((line, index) => (
+            <p key={index} style={{ margin: 0 }}>
               {line}
             </p>
           ))}

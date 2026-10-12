@@ -19,8 +19,12 @@ import { fromThisApp, sendJson, type DevServerPlugin } from "./door.js";
  *                          answers the `FileValue`, or `{ error }` in words
  *   GET  <path>            `{ maxBytes, kinds }`: what it takes
  *   GET  <path>/<sha>.<ext> the bytes, as their type and never sniffed: a
- *                          picture or a PDF inline, anything else a download
- *                          that never runs (`content-security-policy: sandbox`)
+ *                          picture or a PDF inline, anything else a download;
+ *                          and nothing but a PDF, whose viewer a sandbox would
+ *                          stop, ever runs as this app's page when it is opened
+ *                          (`content-security-policy: sandbox`). An SVG is a
+ *                          picture that can carry a script: an `<img>` never
+ *                          runs it, and opened on its own it is sandboxed.
  */
 
 export const DEV_FILES_PATH = "/__graview/files";
@@ -82,8 +86,8 @@ export function devFilesHandler(options: DevFilesOptions = {}) {
       res.setHeader("content-type", file.type);
       res.setHeader("content-length", String(file.bytes.length));
       res.setHeader("x-content-type-options", "nosniff");
-      // What is not shown inline is downloaded, and never run as this app's page if it is opened.
-      if (!shown) res.setHeader("content-security-policy", "sandbox");
+      // Never run as this app's page if it is opened, an SVG's script least of all: only a PDF's viewer needs to run.
+      if (file.type !== "application/pdf") res.setHeader("content-security-policy", "sandbox");
       res.setHeader("cache-control", "private, max-age=31536000, immutable");
       res.setHeader("content-disposition", `${shown ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`);
       res.end(file.bytes);

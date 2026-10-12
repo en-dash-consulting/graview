@@ -529,9 +529,12 @@ export const BUDGETS = [
     // file field drawn — its gallery, its documents and its editor (`files.tsx`, 12_384, and the resampling a camera's photo
     // is sent through, 403) — and by what every face loads first (see "embed with the studio handed in"). 18_752 / 7_539
     // more than main (1_710_529 / 540_260). Measured at 1_729_281 / 547_799.
-    // MERGE-REMEASURE
-    minified: 1_730_000,
-    gzipped: 548_000,
+    // Raised when that met the phone's seat sheet and an app filling the phone after it turns (#221, #222), in the review
+    // after the files: the editor keeping what the field holds as an upload answers, saying a file already there and the
+    // ones a field of one left out, and the keyboard kept in it as a file is moved or removed — all in the chunk fetched
+    // with the first file field drawn. 19_693 / 7_902 more than main (1_712_707 / 541_115). Measured at 1_732_400 / 549_017.
+    minified: 1_732_600,
+    gzipped: 549_200,
     load: "all",
   },
   {
@@ -628,8 +631,12 @@ export const BUDGETS = [
     // `view-specs.ts`, which is what takes 1_609 bytes off the hosted page's first load). The gallery and the editor are a
     // chunk fetched with the first file field drawn. 4_965 / 2_083 more than main (1_566_369 / 481_360). Measured at
     // 1_571_334 / 483_443.
-    minified: 1_572_000,
-    gzipped: 483_600,
+    // Re-set when that met the phone's seat sheet and an app filling the phone after it turns (#221, #222), with the review
+    // after the files: 5_009 / 2_089 more than main (1_567_179 / 481_691), 44 / 6 more than #223 measured itself over its
+    // main, while a hosted page's first load is 1_603 bytes smaller than main and a page handed a compiled app 251.
+    // Measured at 1_572_188 / 483_780.
+    minified: 1_572_400,
+    gzipped: 483_900,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

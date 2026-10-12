@@ -44,7 +44,7 @@ A migration answers in the op log's own five words, so running one appends ordin
 
 1. **Health is coherence, not liveness.** `health(store)` reports sizes, standing and dangling edges — poll it per deployment, curl it self-hosted.
 
-**Files are yours to store.** An `image`/`file` field keeps a `FileValue` whose `href` is a path you serve to whoever may read the record. Hand `mount` `files: { upload(file, name), maxBytes, kinds }`; in dev, `devFiles()` and `filesAt("/__graview/files", …)`.
+**Files are yours to store.** An `image`/`file` field keeps a `FileValue`; its `href` is your path. Hand `mount` `files: { upload, maxBytes, kinds }` (dev: `devFiles()`, `filesAt(…)`). Serve each as its bytes' type, `nosniff`, a `sandbox` CSP on all but a PDF (an SVG runs script otherwise), only to a seat that `seesId` a record holding it.
 
 1. **The machine under the dev server is a door.** A locally-run product very often has a coding agent installed, logged in and paid for; the browser cannot spawn it and the dev server can.
 

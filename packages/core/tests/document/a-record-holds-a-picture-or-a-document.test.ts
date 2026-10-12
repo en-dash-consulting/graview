@@ -13,7 +13,6 @@ import {
   filesOf,
   imageField,
   isFileValue,
-  mutationToolSchema,
   readableFields,
   refusalOf,
   safeFileHref,
@@ -24,6 +23,7 @@ import {
   type GraviewApp,
 } from "../../src/index.js";
 import { argShape } from "../../src/mutations/node-ref.js";
+import { mutationToolSchema } from "../../src/json-schema.js";
 
 /**
  * FR-162. A RECORD CAN HOLD A PICTURE OR A DOCUMENT.
@@ -222,6 +222,15 @@ describe("a change that loses files says so", () => {
     store.apply({ name: "edit-job", args: { id: "roof", photos: [porch, gutter], papers: [quote] } });
     store.apply({ name: "remove-job", args: { id: "roof" } });
     expect(store.log.all().at(-1)?.intent).toBe("Remove Fix the roof and its 3 files");
+  });
+});
+
+describe("a removed record's count of files", () => {
+  it("counts each file once, however many of its fields hold it", () => {
+    const store = storeOf(compiled());
+    store.apply({ name: "edit-job", args: { id: "roof", photo: porch, photos: [porch, gutter] } });
+    store.apply({ name: "remove-job", args: { id: "roof" } });
+    expect(store.log.all().at(-1)?.intent).toBe("Remove Fix the roof and its 2 files");
   });
 });
 

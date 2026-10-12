@@ -32,6 +32,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
 | [A figure's label is a template, and check flags braces in any non-template string (FR-99)](./a-figure-s-label-is-a-template-and.md) | completed |
 | [A guest view can be a named place: guestView takes a title (FR-87)](./a-guest-view-can-be-a-named-place.md) | completed |
+| [A guest view is handed the pictures it may show, behind their own door (FR-162)](./a-guest-view-is-handed-the-pictures-it.md) | pending |
 | [A guest view gets the theme, and follows the app's toggle (FR-86)](./a-guest-view-gets-the-theme-and.md) | completed |
 | [A guest view may read across kinds, gets labels, and may attach to the home (FR-85)](./a-guest-view-may-read-across-kinds.md) | completed |
 | [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime-every.md) | completed |
