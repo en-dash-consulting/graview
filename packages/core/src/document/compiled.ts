@@ -10,6 +10,7 @@ import {
   defineMutation,
   defineNode,
   edgeId,
+  humanizeField,
   RuleBudgetError,
   withArticle,
   type AnyGraphNode,
@@ -31,10 +32,11 @@ import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindSha
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
-import { renderTemplate, type TemplatePart } from "./template.js";
+import { formatValue, renderTemplate, type TemplatePart } from "./template.js";
 import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
+import { ISO_DAY, isoToday } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
 /*
@@ -213,7 +215,7 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.boolean();
       break;
     case "date":
-      schema = z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/, "a date like 2026-10-02"));
+      schema = z.string().check(z.regex(ISO_DAY, "a date like 2026-10-02"));
       break;
     case "datetime":
       schema = z.string().check(z.refine((s: string) => !Number.isNaN(Date.parse(s)), "a date and time like 2026-10-02T14:30:00Z"));
@@ -222,7 +224,7 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.enum(spec.options as [string, ...string[]]);
       break;
     case "list":
-      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(/^\d{4}-\d{2}-\d{2}$/)) : spec.of === "image" || spec.of === "file" ? fileSchema(spec.of) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
+      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(ISO_DAY)) : spec.of === "image" || spec.of === "file" ? fileSchema(spec.of) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
       break;
     case "image":
     case "file":
@@ -312,7 +314,7 @@ export function appFrom(compiled: unknown, options: AppFromOptions = {}): Compil
 /** The app, from a compiled document: the second half of compiling one, and all of `appFrom`. */
 export function build(plan: CompiledApp, options: AppFromOptions = {}): CompiledDocument {
   const { document } = plan;
-  const today = options.today ?? (() => new Date().toISOString().slice(0, 10));
+  const today = options.today ?? isoToday;
   const edges = new Map<string, EdgePlan>(plan.edges.map(([name, edge]) => [name, edge]));
   const shapes = new Map<string, KindShape>();
   for (const [kind, spec] of Object.entries(document.kinds)) {
@@ -329,6 +331,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   const money = moneyOf(document);
 
   // ── kinds ────────────────────────────────────────────────────────────────
+  // Each kind's defaults: what a record is made with before an act sets anything.
+  const madeAs = new Map<string, Record<string, unknown>>();
   const definitions = Object.entries(document.kinds).map(([kind, spec]) => {
     const shape: Record<string, z.ZodMiniType> = {};
     for (const [field, f] of Object.entries(spec.fields)) shape[field] = fieldSchema(f, !f.required);
@@ -339,8 +343,10 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...Object.entries(spec.fields).filter(([, f]) => f.label).map(([n, f]) => [n, f.label!]),
       ...computed.filter(([, c]) => c.label).map(([n, c]) => [n, c.label!]),
     ]);
+    const named = Object.keys(labels).length > 0;
     // Defaults stay out of the zod schema (hydration must not invent values) and ride beside it, for a repair to read.
     const defaults = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.default !== undefined).map(([n, f]) => [n, f.default]));
+    madeAs.set(kind, defaults);
     // A relation as the kind declares it, less the name it had in the version before, which is the migration's.
     const edgeDecls = Object.fromEntries(Object.entries(spec.edges ?? {}).map(([n, { renamedFrom: _, ...e }]) => [n, e]));
     // What the definition says as the document says it, where it is said.
@@ -358,8 +364,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...said("fieldRoles"),
       ...said("people"),
       ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
-      ...(Object.keys(labels).length > 0 || spec.glance || spec.page
-        ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
+      ...(named || spec.glance || spec.page
+        ? { display: { ...(named ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
         : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
     } as never);
@@ -372,6 +378,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   }
 
   // ── acts ─────────────────────────────────────────────────────────────────
+  /** A record of a kind as it is made: its defaults, before what an act sets. */
+  const blank = (kind: string): Record<string, unknown> => ({ id: "", kind, ...madeAs.get(kind) });
   const mutations: AnyMutationDefinition[] = [];
   for (const [name, act] of Object.entries(document.acts ?? {})) {
     const planned = plan.acts[name]!;
@@ -395,19 +403,32 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       const ref = refName(value);
       return ref === undefined ? (typeof value === "string" && value.startsWith("$$") ? value.slice(1) : value) : ref === "now" ? new Date().toISOString() : ref === "today" ? today() : bindings[ref];
     };
-    // Labeled as it would be made: its defaults, then what the act sets (the review before 0.1.27).
-    const madeLabel = (input: Record<string, unknown>, graph: GraphReader): string | undefined => {
-      if (!creation) return undefined;
-      const node: Record<string, unknown> = { id: "", kind: creation.create };
-      for (const [field, f] of Object.entries(document.kinds[creation.create]!.fields)) if (f.default !== undefined) node[field] = f.default;
+    /*
+     * Labeled as it would be made: its defaults, then what the act sets (the review before 0.1.27).
+     * THEN THE REST IT WAS GIVEN (FR-169), as the record says them: "Add a revenue stream: nascent"
+     * was read as a stream called nascent, by the person and then by the model.
+     */
+    const madeLabel = (input: Record<string, unknown>, graph: GraphReader): string => {
+      if (!creation) return "";
+      const fields = document.kinds[creation.create]!.fields;
+      const node = blank(creation.create);
+      const given: string[] = [];
       for (const [field, value] of Object.entries(creation.set ?? {})) {
         try {
           node[field] = valueOf(value, input, graph) ?? node[field];
         } catch {
           // A value that cannot be worked out here is left unsaid: the act refuses it in its own words.
         }
+        const arg = refName(value);
+        // Every field it sets is one of the kind's: the reader refused any other (`act-field`).
+        if (arg && input[arg] !== undefined) given.push(field);
       }
-      return labelFor(node as unknown as AnyGraphNode).trim() || undefined;
+      const label = labelFor(node as unknown as AnyGraphNode).trim();
+      // Said once: what the label already says, a no and a long text are not said again.
+      const rest = given
+        .filter((field) => node[field] !== false && fields[field]!.type !== "text" && labelFor({ ...node, [field]: undefined } as unknown as AnyGraphNode).trim() === label)
+        .map((field) => (node[field] === true ? (fields[field]!.label ?? humanizeField(field)) : formatValue(node[field] as Value, fields[field]!.format as never, today(), [], money)));
+      return label && rest.length > 0 ? `${label} (${rest.join(", ")})` : label;
     };
 
     mutations.push(
@@ -428,8 +449,9 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         ...(Object.keys(sets).length > 0 ? { sets } : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
           const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;
-          const what = subject ? labelFor(subject) : (madeLabel(input, graph) ?? Object.values(input).find((v) => typeof v === "string"));
-          return what ? `${title}: ${String(what)}` : title;
+          // Never the first string it was handed (FR-169): that was a stream's maturity read as its name.
+          const what = subject ? labelFor(subject) : madeLabel(input, graph);
+          return what ? `${title}: ${what}` : title;
         },
         apply(context: MutationContext<never>, input: Record<string, unknown>) {
           const graph = context.graph as unknown as GraphReader;
@@ -487,15 +509,14 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           for (const effect of effects) {
             if ("create" in effect) {
               const kind = document.kinds[effect.create]!;
-              const node: Record<string, unknown> = { kind: effect.create };
-              for (const [field, f] of Object.entries(kind.fields)) if (f.default !== undefined) node[field] = f.default;
+              const node = blank(effect.create);
               for (const [field, value] of Object.entries(effect.set ?? {})) {
                 const v = resolve(value, undefined);
                 if (v !== undefined) node[field] = v;
               }
               const labelField = defaultLabelField(kind);
               const id = context.freshId(String((labelField && node[labelField]) ?? effect.create), effect.create);
-              context.addNode({ id, ...node } as never);
+              context.addNode({ ...node, id } as never);
               if (effect.as) made.set(effect.as, id);
             } else if ("connect" in effect || "sever" in effect) {
               const kind = "connect" in effect ? effect.connect : effect.sever;

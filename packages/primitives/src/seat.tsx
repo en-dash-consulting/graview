@@ -38,13 +38,21 @@ export type SeatAnswer = (text: string, context: Pick<ChatContext, "history">) =
  * WHAT WAS DONE is part of what was said. "Erin tends that plot" means the
  * plot the last turn made, and the model only knows which if the history
  * carries what landed, by name — so every surface sends it, not just one.
+ *
+ * AND WHAT WAS SHOWN (FR-169). An offer read "Add a revenue stream:
+ * nascent"; the person said that was the wrong title, and the model, which
+ * had never seen the line, agreed. Each offer goes into the history as the
+ * sentence the person saw, with what became of it.
  */
 export function useSeatConversation({
   answer,
+  said,
   onReply,
   talk,
 }: {
   readonly answer: SeatAnswer;
+  /** An offer as the person is shown it: the same sentence the surface draws. */
+  readonly said: (proposal: ProposedCall) => string;
   /** Said from the body too, or refused at a gate: whatever the surface does with a reply besides showing it. */
   readonly onReply?: (reply: ChatReply) => void;
   /**
@@ -67,11 +75,12 @@ export function useSeatConversation({
     const before = kept.get();
     kept.setTurns((current) => [...current, { role: "person", text: asked }]);
     const history = before.turns.map((turn, index) => {
-      const landed = (turn.proposals ?? []).flatMap((_, at) => {
+      const offered = (turn.proposals ?? []).map((proposal, at) => {
         const outcome = before.outcomes.get(proposalKey(index, at));
-        return outcome?.state === "applied" ? [outcome.said] : [];
+        if (outcome?.state === "refused") return `${said(proposal)} — refused: ${outcome.error}`;
+        return outcome ? `${outcome.said} — ${outcome.state === "applied" ? "applied" : "set aside"}` : said(proposal);
       });
-      return { role: turn.role, text: landed.length > 0 ? `${turn.text} [applied: ${landed.join("; ")}]` : turn.text };
+      return { role: turn.role, text: offered.length > 0 ? `${turn.text} [Offered beneath this answer: ${offered.join("; ")}]` : turn.text };
     });
     let reply: ChatReply;
     try {
@@ -219,15 +228,19 @@ export function SeatThread({
             ) : (
               <p style={{ margin: 0, fontSize: "0.875rem", lineHeight: 1.5, color: "var(--graview-ink)" }}>
                 {renderSaid ? renderSaid(turn, aside.said) : aside.said}
+                {/*
+                  * A MODEL ANSWERED: one quiet mark in the turn, after what it said
+                  * (FR-169), not a line of its own under every answer. The graph
+                  * answering is said by saying nothing.
+                  */}
+                {turn.via ? (
+                  <span data-testid={`${testId}-answered-with-ai`} style={{ marginLeft: 6, fontSize: "0.6875rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}>
+                    {ANSWERED_WITH_AI}
+                  </span>
+                ) : null}
                 {aside.aside ? (
                   <span style={{ display: "block", marginTop: 2, fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
                     {aside.aside}
-                  </span>
-                ) : null}
-                {/* A MODEL ANSWERED: said once, quietly. The graph answering is said by saying nothing. */}
-                {turn.via ? (
-                  <span data-testid={`${testId}-answered-with-ai`} style={{ display: "block", marginTop: 2, fontSize: "0.75rem", color: "var(--graview-ink-faint)" }}>
-                    {ANSWERED_WITH_AI}
                   </span>
                 ) : null}
               </p>

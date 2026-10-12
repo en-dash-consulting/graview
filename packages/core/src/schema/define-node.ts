@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { dayAsRead, ISO_DAY } from "../days.js";
+import { dayAsRead, ISO_DAY, isoToday } from "../days.js";
 import { capitalize } from "../capital.js";
 import { filesOf, type FileValue } from "./files.js";
 import type {
@@ -48,7 +48,7 @@ export function isCurrent(
     // No date means no expiry: an open-ended node is current for ever.
     if (typeof value !== "string" || value.length === 0) return true;
     // The clock is read only where a date decides: a search asks this of every record it looks through.
-    return value >= (today ?? new Date().toISOString().slice(0, 10));
+    return value >= (today ?? isoToday());
   }
   return !lifecycle.retired.includes(value);
 }

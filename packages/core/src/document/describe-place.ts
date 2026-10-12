@@ -6,6 +6,7 @@ import { declaredLenses, orderKinds, placesOf, type AppPlace } from "../places.j
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, humanizeField, isCurrent, labelOf, pageSections, pluralOf, readableFields } from "../schema/define-node.js";
 import { recordPath } from "../views/types.js";
+import { isoToday } from "../days.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { coverageParts } from "./describe-coverage.js";
 import type { ResolvedBlock } from "./blocks.js";
@@ -143,7 +144,7 @@ const columnsAt = (width: number) => Math.max(1, Math.floor((Math.min(width, FAC
 export function describePlace<S extends AnySchema>(store: Store<S>, principal: Principal, place: string | AppPlace, options: DescribePlaceOptions<S>): DescribePlaceResult {
   const { app } = options;
   const width = options.width ?? 1440;
-  const today = options.today ?? new Date().toISOString().slice(0, 10);
+  const today = options.today ?? isoToday();
   const seen = store.seenBy(principal);
   const schema = seen.schema as AnySchema;
   const graph = seen.graph as unknown as GraphReader;

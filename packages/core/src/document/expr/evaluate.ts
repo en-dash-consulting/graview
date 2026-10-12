@@ -1,4 +1,5 @@
 import { withArticle } from "../../schema/define-node.js";
+import { isoToday } from "../../days.js";
 import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
 
@@ -81,7 +82,7 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     steps -= n;
     if (steps < 0) throw new ExprBudgetError("this rule looks at too much of the graph to judge in one go", at);
   };
-  const today = ctx.today ?? new Date().toISOString().slice(0, 10);
+  const today = ctx.today ?? isoToday();
   const now = ctx.now ?? new Date().toISOString();
   /*
    * A COMPUTED FIELD IS WORKED OUT ONCE PER EVALUATION, and never while it

@@ -76,6 +76,7 @@ export function StudioAgentPanel({
 
   const conversation = useSeatConversation({
     answer: (text, context) => answer(studio.store, text, context),
+    said: (proposal) => describeProposal(studio.store, proposal),
   });
   const { outcomes, settle } = conversation;
 

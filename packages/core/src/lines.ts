@@ -10,6 +10,7 @@
  * problems' rows, the problems page and the seat fetch them as they draw.
  */
 import type { AnySchema } from "./schema/schema.js";
+import { isoToday } from "./days.js";
 import type { GraphReader } from "./graph/types.js";
 import type { InvariantDefinition, RuleShapeSource, Violation } from "./invariants/types.js";
 import type { RuleLine } from "./invariants/line.js";
@@ -83,7 +84,7 @@ export function withLines<V extends Violation>(
       if (!kinds) SHAPES.set(source.schema, (kinds = shapesOfSchema(source.schema)));
     }
     try {
-      const today = shape.today?.() ?? source.today?.() ?? new Date().toISOString().slice(0, 10);
+      const today = shape.today?.() ?? source.today?.() ?? isoToday();
       const line = brokenLineOf(shape, wordsOf(shape, source.schema), { graph: source.graph, subject: subject ?? null, kinds, today });
       return { ...violation, line, ...(shape.says ? {} : { message: `${violation.message} — ${line.text}` }) };
     } catch {

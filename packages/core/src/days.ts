@@ -14,6 +14,9 @@ const MONTH_WORDS = "JanFebMarAprMayJunJulAugSepOctNovDec";
 /** A day as the record holds it: `YYYY-MM-DD`, nothing before or after. */
 export const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Today as a record keeps a day, by the clock's UTC date: what a rule, a template and a label read as today(). */
+export const isoToday = (): string => new Date().toISOString().slice(0, 10);
+
 /** A `YYYY-MM-DD` day as a person reads it: "28 Aug 2026". Anything else is said as it is. */
 export function dayAsRead(day: string): string {
   const month = ISO_DAY.test(day) ? MONTH_WORDS.slice(+day.slice(5, 7) * 3 - 3, +day.slice(5, 7) * 3) : "";
