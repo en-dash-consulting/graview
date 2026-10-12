@@ -161,6 +161,8 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
   const documents = files.filter((file) => !isImage(file));
   const [open, setOpen] = useState<number | null>(null);
   const dialog = useRef<HTMLDialogElement | null>(null);
+  // The picture it opened from: the keyboard goes back there, in an engine that focuses no button on a press (WebKit) too.
+  const opener = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     const element = dialog.current;
     if (open !== null && element && !element.open) element.showModal?.();
@@ -175,7 +177,10 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
               <button
                 type="button"
                 aria-label={`Open ${fileWords(file)} full size`}
-                onClick={() => setOpen(index)}
+                onClick={(event) => {
+                  opener.current = event.currentTarget;
+                  setOpen(index);
+                }}
                 style={{ padding: 0, border: 0, background: "none", cursor: "zoom-in", display: "block", width: "100%", borderRadius: ROUND }}
               >
                 <img src={file.href} alt={fileWords(file)} loading="lazy" decoding="async" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: ROUND, display: "block", background: "var(--graview-edge)" }} />
@@ -213,7 +218,10 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
           ref={dialog}
           data-graview-full={shown.href}
           aria-label={fileWords(shown)}
-          onClose={() => setOpen(null)}
+          onClose={() => {
+            setOpen(null);
+            opener.current?.focus();
+          }}
           onClick={(event) => {
             // A press on the dimmed page around the picture closes it.
             if (event.target === event.currentTarget) event.currentTarget.close();
