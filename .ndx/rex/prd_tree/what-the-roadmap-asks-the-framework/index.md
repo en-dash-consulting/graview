@@ -17,9 +17,9 @@ lastModified: "2026-10-12T14:10:00.000Z"
 
 | Title | Status |
 |-------|--------|
-| [A document act can say $me, so Vote for it always votes as you](./a-document-act-can-say-me-so-vote-for.md) | pending |
-| [A document names the kind that stands for its people, and a record's id is a member's principal](./a-document-names-the-kind-that-stands.md) | pending |
-| [A grant can hold to your own end of a link](./a-grant-can-hold-to-your-own-end-of-a.md) | pending |
-| [A sight can reach the records that link to you](./a-sight-can-reach-the-records-that.md) | pending |
+| [A document act can say $me, so Vote for it always votes as you](./a-document-act-can-say-me-so-vote-for.md) | completed |
+| [A document names the kind that stands for its people, and a record's id is a member's principal](./a-document-names-the-kind-that-stands.md) | completed |
+| [A grant can hold to your own end of a link](./a-grant-can-hold-to-your-own-end-of-a.md) | completed |
+| [A sight can reach the records that link to you](./a-sight-can-reach-the-records-that.md) | completed |
 | [A view's event names the element it matched, and a missing DOM method says so](./a-view-s-event-names-the-element-it.md) | pending |
 | [A view's link or navigate says why it didn't go](./a-view-s-link-or-navigate-says-why-it.md) | pending |

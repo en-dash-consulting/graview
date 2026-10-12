@@ -539,8 +539,8 @@ export const BUDGETS = [
     // sight via a relation), by what the studio carries and chunks fetched later only: the checker's people findings
     // (`check/people.ts`, a document's `$me` in `act-findings.ts`), the studio's kind, grant and sight carrying them, and
     // the strip narrowing an act to the seat's own end of a link. Every face as a page loads it first (the budget "embed
-    // without the studio") is 163 / 41 smaller. 4_262 / 1_467 more than main (1_732_661 / 549_148). Measured at
-    // 1_736_923 / 550_615.
+    // without the studio") is 167 bytes smaller minified, 83 more gzipped. 4_262 / 1_467 more than main (1_732_661 /
+    // 549_148). Measured at 1_736_923 / 550_615.
     minified: 1_737_200,
     gzipped: 550_900,
     load: "all",
