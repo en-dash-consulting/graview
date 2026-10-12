@@ -543,8 +543,14 @@ export const BUDGETS = [
     // Measured at 1_732_931 / 549_243.
     // without the studio") is 167 bytes smaller minified, 83 more gzipped. 4_262 / 1_467 more than main (1_732_661 /
     // 549_148). Measured at 1_736_923 / 550_615.
-    minified: 1_737_200,
-    gzipped: 550_900,
+    // Raised when a change's sentence came to follow sight, by the seat's chunk: `answerSeenBy` moved off
+    // `@graview/core`'s index to `@graview/core/answer`, fetched with the seat that answers, and there judges a
+    // preview's new records by their kind and links and says a change from the ops a seat is served. What every face
+    // loads first is smaller (the pages face alone 1_685 bytes, without the studio 1_708, a hosted page 1_694); the
+    // log's batch sentence kept from a seat served part of a batch (`partly` in withheld.ts) is about 230 bytes of it.
+    // 1_319 / 783 more than main (1_737_193 / 550_735). Measured at 1_738_512 / 551_518.
+    minified: 1_738_800,
+    gzipped: 551_800,
     load: "all",
   },
   {
@@ -653,8 +659,10 @@ export const BUDGETS = [
     // hosted page's first load is 39 bytes smaller than main and a page handed a compiled app 61. Measured at
     // 1_576_711 / 485_331.
     // And by a creating act logged by what it made (`madeLabel` in the compiled document). Measured at 1_572_719 / 484_001.
-    minified: 1_577_000,
-    gzipped: 485_600,
+    // Raised with every face's when a change's sentence came to follow sight: the studio's seat carries
+    // `@graview/core/answer`. 1_147 / 736 more than main (1_576_981 / 485_464). Measured at 1_578_128 / 486_200.
+    minified: 1_578_400,
+    gzipped: 486_500,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },
