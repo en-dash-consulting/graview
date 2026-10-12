@@ -133,6 +133,13 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
   /** The view is not going to be shown, and why: the reason, and a sentence saying it. */
   readonly onFailure?: (reason: WorkerViewFailure, detail?: string) => void;
   /**
+   * Something the view did went nowhere, and why, as a sentence for the
+   * host's problems: a link or `graview.navigate` to no record the viewer
+   * may see and no place of the app, naming the places there are. The
+   * view's console is told the same.
+   */
+  readonly onProblem?: (said: string) => void;
+  /**
    * What is drawn in the view's place when it fails. By default the host
    * draws the plain face of what the view was shown — its title, each
    * record's label, and why the view was stopped — in the region; `false`
@@ -370,6 +377,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     sees: (id) => options.store.seenBy(options.principal).graph.has(id),
     places: () => options.places?.() ?? [],
     ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
+    /* Said in the view's console, and to the host. */
+    onLost: (said) => {
+      port?.postMessage({ type: "notice", text: said });
+      options.onProblem?.(said);
+    },
   });
 
   /* The records the view was last shown: a press may be bound to one of these, and to nothing else (FR-92). */
@@ -460,17 +472,17 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
         onStyle: (css) => draw(["style", css]),
-        onNavigate: (record) => void links.go({ record }),
-        onNavigatePlace: (place) => void links.go({ place }),
         places: () => (options.places?.() ?? []).map((place) => place.as),
         ...(options.limits ? { limits: options.limits } : {}),
         limiter,
       });
       session = live;
-      given.onmessage = (message) => {
-        if (started?.answer(message.data)) return;
-        live.receive(message.data);
+      given.onmessage = ({ data }) => {
+        if (started?.answer(data)) return;
+        live.receive(data);
         tally();
+        /* Where the view asked to go is the links' to judge, so one that goes nowhere says why (FR-93). */
+        if (!failed && data?.nonce === nonce && data.type === "navigate") links.go(typeof data.place === "string" ? { place: data.place } : { record: data.to });
       };
       push();
     },

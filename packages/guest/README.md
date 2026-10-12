@@ -247,6 +247,18 @@ graview.onProps((props) => graview.render(graview.html`
 graview.on("click", ".card", (event) => { /* … */ });
 ```
 
+A delegated listener is handed `event.element`, the element its selector
+matched at or above what was pressed (`event.target`), so it reads that
+element's `data-*`:
+
+```js
+graview.on("click", "button[data-go]", (event) => graview.navigate(event.element.getAttribute("data-go")));
+```
+
+The worker's elements are Remote DOM's polyfill, which has no `closest`,
+`matches` or `dataset`; calling one throws a sentence that names
+`event.element` as the way.
+
 What may be drawn is one declaration, read by both sides: most of HTML's
 sectioning, text, lists, tables, `details`, buttons, fields and `img`;
 SVG's shapes, paths, text, gradients, clip paths, masks, markers and `use`
@@ -389,7 +401,12 @@ else. The open kit draws no `href`, so `<a href="https://…">` is text;
 made links by the host — focusable, a link to assistive technology — and
 followed by it on a press or Enter, to a record the viewer may see or a
 place the app has. `graview.navigate("offer:coaching")` and
-`graview.navigate({ place: "the-packages" })` are held to the same. The
+`graview.navigate({ place: "the-packages" })` are held to the same. A bare
+string is a record the viewer may see first, then a place by that slug, so
+`graview.navigate("the-packages")` goes to the place. A destination that
+is neither goes nowhere and says why — in the view's console, and to the
+host's `onProblem` (on `mountWorkerView` and on a registered view's
+definition) — naming the places there are. The
 props list the app's places (`places`, each with its slug and title). On
 the Graview face a record is focused and chosen and a place is drawn; on
 the pages face each goes to its own address — through `useGoTo` in
