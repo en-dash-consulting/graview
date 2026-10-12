@@ -852,8 +852,10 @@ export const BUDGETS = [
     // Raised when a link or `graview.navigate` that goes nowhere says why, naming the places, and a bare string that is a place's slug
     // goes to the place (host/links.ts), and the runtime it carries as text says which DOM methods its elements lack. 740 / 336 more,
     // all fetched only when a view first draws. Measured at 130_741 / 47_126.
-    minified: 131_000,
-    gzipped: 47_250,
+    // Raised when a view draws an image the app holds by its content address, resolved where the host says those live
+    // (open-judge.ts, open-draw.ts). 328 / 146 more, all fetched only when a view first draws. Measured at 131_069 / 47_272.
+    minified: 131_300,
+    gzipped: 47_500,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
