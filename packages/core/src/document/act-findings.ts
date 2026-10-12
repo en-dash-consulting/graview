@@ -12,7 +12,7 @@ import type { ActSpec, GraviewDocument } from "./schema.js";
  * not carry them (FR-57).
  */
 
-const asArray = <T>(v: T | readonly T[] | undefined): readonly T[] => (v === undefined ? [] : Array.isArray(v) ? (v as readonly T[]) : [v as T]);
+const asArray = <T>(v: T | readonly T[] | undefined): readonly T[] => [v ?? []].flat() as readonly T[];
 
 /** A number field's range, and its default against it (FR-114). */
 function rangeFindings(document: GraviewDocument): Finding[] {
