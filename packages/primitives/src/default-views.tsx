@@ -12,7 +12,7 @@ import {
   type NodeOfSchema,
   violationsTouching,
 } from "@graview/core";
-import { withComputed } from "@graview/core/blocks";
+import { firstPicture, withComputed } from "@graview/core/blocks";
 import { aggregateId, kindCardId, rosterRows, withFocus, withJackIn, withOverview, withPast, withPicture, withWithin } from "@graview/layout/view";
 import { useKit, useMarqueeRoom, useReached } from "@graview/react/drawing";
 import {
@@ -41,6 +41,7 @@ const ArrangeBar = lazyModule(retryingImport(() => import("./arrange-bar.js"))).
 );
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
+import { Files } from "./files-door.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
 import { RecordHeadContext } from "./record-head.js";
 
@@ -460,6 +461,8 @@ export function registerDefaultViews<S extends AnySchema>(
         glance: true,
       });
       const hue = useHue(kind as string);
+      // Its first picture, small, above its facts (FR-162).
+      const picture = firstPicture(node, definition);
       return (
         <Panel
           title={labelOf(definition, node)}
@@ -467,6 +470,7 @@ export function registerDefaultViews<S extends AnySchema>(
           tone={props.flagged?.includes(node.id) ? "warning" : "muted"}
           fit
         >
+          {picture ? <Files as="thumb" file={picture} size={64} style={{ marginBottom: 6 }} /> : null}
           <Roster
             items={fields.map((field) => ({
               id: field.key,

@@ -45,6 +45,10 @@
       "types": "./dist/arrange.d.ts",
       "default": "./dist/arrange.js"
     },
+    "./forms": {
+      "types": "./dist/forms.d.ts",
+      "default": "./dist/forms.js"
+    },
     "./lines": {
       "types": "./dist/lines.d.ts",
       "default": "./dist/lines.js"

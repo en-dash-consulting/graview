@@ -9,8 +9,8 @@ import {
   type AnySchema,
   type GraviewApp,
   providerCan,
-  undecidableArguments,
 } from "../../src/index.js";
+import { undecidableArguments } from "../../src/forms.js";
 import { checkApp, describeApp, generateLlmsTxt } from "../../src/check.js";
 
 /**

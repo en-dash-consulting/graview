@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { dayAsRead, ISO_DAY } from "../days.js";
 import { capitalize } from "../capital.js";
+import { filesOf, type FileValue } from "./files.js";
 import type {
   AnyNodeDefinition,
   EdgeMap,
@@ -143,6 +144,12 @@ export function describeNode(
 /** One field, as a person sees it. */
 export interface ReadableField {
   readonly key: string;
+  /**
+   * THE PICTURES OR DOCUMENTS IT HOLDS (FR-162), where it holds files: a
+   * record draws them — a gallery, a document by its name, type and size —
+   * and its words are their names. A glance leaves them out of its words.
+   */
+  readonly files?: readonly FileValue[];
   /** The field name in words, after `display.labels` and humanizing. */
   readonly label: string;
   /** The value in words, after `display.format` and the built-in defaults: a day as a person reads it, a choice as it is declared. */
@@ -380,6 +387,9 @@ export function readableFields(
   for (const [key, value] of entries) {
     if (skip.has(key) || value === undefined || value === null) continue;
     const format = display?.format?.[key];
+    // A picture or a document (FR-162) is drawn, not said on a glance; its words are its names.
+    const files = format ? [] : filesOf(value);
+    if (files[0] && options.glance) continue;
     /*
      * A NESTED OBJECT HAS NO ONE-LINE RENDERING, and inventing one is worse
      * than leaving it to a view that knows what it is.
@@ -397,10 +407,11 @@ export function readableFields(
      * that the numbers are corners.
      */
     const nested =
+      !files[0] &&
       typeof value === "object" &&
       (!Array.isArray(value) || value.some((one) => typeof one === "object" && one !== null));
     if (nested && format === undefined) continue;
-    const stored = Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
+    const stored = files[0] ? files.map((file) => (file.caption ? `${file.name} — ${file.caption}` : file.name)).join(", ") : Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
     const text = format
       ? format(value)
       : Array.isArray(value) || typeof value === "boolean"
@@ -425,7 +436,7 @@ export function readableFields(
     const alone =
       // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text) });
+    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text), ...(files[0] ? { files } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;

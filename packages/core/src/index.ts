@@ -26,6 +26,10 @@ export type { ZodDef } from "./schema/zod.js";
 
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";
+// A picture or a document on a record (FR-162), and the host that stores them (FR-163).
+export { fileKindOf, filesOf, isFileValue, isImage, safeFileHref } from "./schema/files.js";
+export type { FileValue, HostFiles } from "./schema/files.js";
+export { fileField, imageField } from "./schema/file-field.js";
 export { nameOfAuthor } from "./who.js";
 export { viaSaid } from "./via.js";
 export type { Person } from "./who.js";
@@ -359,9 +363,7 @@ export { bindSchema } from "./bind.js";
 export type { SchemaBinding } from "./bind.js";
 
 // App bundle, checks and generated agent docs.
-export { formArgs, formField, formFields, formComplete } from "./mutations/form.js";
 export { argumentWords, failureWords, InvalidArguments } from "./mutations/words.js";
-export type { FormField, ScalarField } from "./mutations/form.js";
 export { resolveModules } from "./modules.js";
 export { declareInstallation, INSTALLATION_MODULE } from "./installation.js";
 export type { Installation, InstallationOf, InstallationOptions } from "./installation.js";
@@ -375,8 +377,6 @@ export type {
   SettingDeclaration,
 } from "./app.js";
 export { capabilitiesOf, describeCapability, providerCan } from "./app.js";
-export { undecidableArguments } from "./mutations/decidable.js";
-export type { UndecidableArgument } from "./mutations/decidable.js";
 export { motion, readerSettings, textSize } from "./settings.js";
 export { AI_BRIDGE_PATH, DECISION_BRIDGE_PATH, LOCAL_BRIDGE_PATH } from "./intelligence-bridge.js";
 export { STUDIO_DOOR_PATH } from "./studio-door.js";

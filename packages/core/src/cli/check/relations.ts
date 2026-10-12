@@ -20,7 +20,7 @@ import type { CheckContext } from "./context.js";
 import { bounded } from "./context.js";
 
 /** What a field's schema says it holds, in the words a role is judged in. */
-const ARG_ROLE_TYPES: Readonly<Record<ArgShape["type"], string>> = { date: "date", text: "string", choice: "enum", number: "number", boolean: "boolean", several: "list", unknown: "structured" };
+const ARG_ROLE_TYPES: Readonly<Record<ArgShape["type"], string>> = { date: "date", text: "string", choice: "enum", number: "number", boolean: "boolean", several: "list", file: "file", unknown: "structured" };
 
 export function checkReadings<S extends AnySchema>(ctx: CheckContext<S>): void {
   const { app, add } = ctx;

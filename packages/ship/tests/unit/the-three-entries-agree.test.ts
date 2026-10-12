@@ -40,6 +40,7 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   StorageLike: "localStorage",
   // Tab-to-tab presence: a BroadcastChannel between a person's tabs.
   createBroadcastPresence: "a page's tabs",
+  filesAt: "a page's upload to its host (FR-163)",
   presenceChannelName: "a page's tabs",
   BroadcastPresenceOptions: "a page's tabs",
   ChannelLike: "a page's tabs",

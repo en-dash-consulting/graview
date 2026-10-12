@@ -1,19 +1,18 @@
 import {
   fieldWriters,
-  formFields,
   humanizeField,
   nounOf,
   labelOf,
   readableFields,
   withArticle,
   type AnySchema,
-  type FormField,
   type InvariantDefinition,
   type Store,
   type Violation,
   defOf,
   descriptionOf,
 } from "@graview/core";
+import { formFields, type FormField } from "@graview/core/forms";
 
 /**
  * THE QUESTIONS ARE DERIVED, NOT AUTHORED.

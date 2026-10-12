@@ -2,6 +2,7 @@ import type {
   AnySchema,
   Brand,
   GraviewApp,
+  HostFiles,
   NodeOfSchema,
   Person,
   Presence,
@@ -33,6 +34,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
+import { HostFilesContext } from "./files.js";
 import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent, ViewMode } from "./view-registry.js";
@@ -416,6 +418,13 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * seat says so when an ask needs more.
    */
   readonly ai?: HostAi | undefined;
+  /**
+   * THE HOST'S FILES (FR-163): where a picture or a document put on a
+   * record is sent — `upload` answers the value the record keeps — with the
+   * most it takes and the kinds. Unsaid, a file field's editor says this
+   * host takes no files.
+   */
+  readonly files?: HostFiles | undefined;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -478,6 +487,7 @@ export function GraviewProvider<S extends AnySchema>({
   onKeepLens,
   providers,
   ai = NO_AI,
+  files,
   view,
   onViewChange,
   children,
@@ -938,7 +948,7 @@ export function GraviewProvider<S extends AnySchema>({
 
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
-      <FoundProvider>{children}</FoundProvider>
+      <FoundProvider>{files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children}</FoundProvider>
     </GraviewContext.Provider>
   );
 }

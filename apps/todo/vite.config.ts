@@ -1,4 +1,4 @@
-import { aiDevProxy } from "@graview/ship/dev";
+import { aiDevProxy, devFiles } from "@graview/ship/dev";
 import { defineConfig } from "vite";
 import { moved } from "../../scripts/lib/ports.mjs";
 import { fileURLToPath } from "node:url";
@@ -14,11 +14,20 @@ export default defineConfig({
    * `/__graview/ai`, the key held here and never in the page. Serve only:
    * a build carries none of it.
    */
-  plugins: [aiDevProxy()],
+  plugins: [
+    aiDevProxy(),
+    /*
+     * A TASK'S ATTACHMENTS IN DEVELOPMENT (FR-163): the dev server keeps what
+     * the editor sends in memory and serves it back at `/__graview/files`.
+     * Serve only, like the model's door.
+     */
+    devFiles(),
+  ],
   resolve: {
     alias: {
       "@graview/core/blocks": fileURLToPath(new URL("../../packages/core/src/blocks.ts", import.meta.url)),
       "@graview/core/arrange": fileURLToPath(new URL("../../packages/core/src/arrange.ts", import.meta.url)),
+      "@graview/core/forms": fileURLToPath(new URL("../../packages/core/src/forms.ts", import.meta.url)),
       "@graview/core/lines": fileURLToPath(new URL("../../packages/core/src/lines.ts", import.meta.url)),
       "@graview/core/json-schema": fileURLToPath(new URL("../../packages/core/src/json-schema.ts", import.meta.url)),
       "@graview/core/check": fileURLToPath(new URL("../../packages/core/src/check.ts", import.meta.url)),
@@ -33,6 +42,7 @@ export default defineConfig({
       "@graview/tools/frame": fileURLToPath(new URL("../../packages/tools/src/frame.ts", import.meta.url)),
       "@graview/tools/edit": fileURLToPath(new URL("../../packages/tools/src/edit.ts", import.meta.url)),
       "@graview/tools/suggest": fileURLToPath(new URL("../../packages/tools/src/suggest.ts", import.meta.url)),
+      "@graview/tools/derive": fileURLToPath(new URL("../../packages/tools/src/derive.ts", import.meta.url)),
       "@graview/tools/go": fileURLToPath(new URL("../../packages/tools/src/go.ts", import.meta.url)),
       "@graview/tools/draft": fileURLToPath(new URL("../../packages/tools/src/draft.ts", import.meta.url)),
       "@graview/tools/keep": fileURLToPath(new URL("../../packages/tools/src/keep.ts", import.meta.url)),

@@ -3,6 +3,7 @@ import type { GraphEdge } from "../graph/types.js";
 import { canonicalize } from "./canonical.js";
 import { hasRange, outsideRange, rangeWords } from "./range.js";
 import type { FieldSpec, FieldType, GraviewDocument } from "./schema.js";
+import { filesOf, isFileValue, isImage, type FileValue } from "../schema/files.js";
 
 /*
  * A CHANGE TO AN APP THAT KEEPS ITS DATA (docs/operations.md §4).
@@ -35,6 +36,12 @@ export interface MigrationPlan {
   readonly counts: { readonly moved: number; readonly coerced: number; readonly defaulted: number; readonly filled: number; readonly cleared: number; readonly removedNodes: number; readonly removedEdges: number };
   /** Values a field that is required (and has no default) would still lack after the migration. */
   readonly missingRequired: number;
+  /**
+   * THE FILES NO RECORD HOLDS AFTERWARDS (FR-162): a removed field's, a
+   * removed kind's records', a value that did not fit. Their bytes are the
+   * host's, and what becomes of them is the host's to decide.
+   */
+  readonly files: readonly FileValue[];
 }
 
 /** Whether a plan loses anything: a value cleared, a record or link removed, a required value left missing. */
@@ -121,6 +128,9 @@ export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown 
       const coerced = items.map((v) => coerce(v, typeof v === "number" ? "number" : "string", { type: of } as FieldSpec));
       return coerced.every((v) => v !== undefined) ? coerced : undefined;
     }
+    case "image":
+    case "file":
+      return isFileValue(value) && (type === "file" || isImage(value)) ? value : undefined;
     case "url":
     case "email": {
       const t = asText(value)?.trim();
@@ -163,6 +173,8 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
 
   const removedIds = new Set<string>();
   const rekinded = new Map<string, Record<string, unknown>>();
+  // Every file a record holds afterwards, by its address; what a record held before and none holds after is lost.
+  const held = new Set<string>();
 
   for (const node of graph.nodes) {
     const id = String(node["id"]);
@@ -202,6 +214,7 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
         note(`${newKind}'s ${field} filled with its default`);
       }
       if (value !== undefined) next[field] = value;
+      for (const file of filesOf(value)) held.add(file.href);
     }
     for (const fill of fills) {
       const spec = now[fill.field];
@@ -276,5 +289,7 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
 
   for (const [sentence, n] of tally) words.push(sentence.includes("record(s)") || sentence.includes("link(s)") || sentence.includes("value(s)") ? `${n} ${sentence.replace(/\(s\)/g, n === 1 ? "" : "s")}.` : `${sentence} (${plural(n, "record")}).`);
   if (missingRequired > 0) words.push(`${plural(missingRequired, "required value")} would be missing; those records need ${missingRequired === 1 ? "it" : "them"} filled in.`);
-  return { primitives, words, counts, missingRequired };
+  const files = [...new Map(graph.nodes.flatMap((node) => Object.values(node).flatMap(filesOf)).filter((file) => !held.has(file.href)).map((file) => [file.href, file])).values()];
+  if (files.length > 0) words.push(`${plural(files.length, "file")} no record would hold any more (${files.map((file) => file.name).join(", ")}); the host decides what becomes of ${files.length === 1 ? "it" : "them"}.`);
+  return { primitives, words, counts, missingRequired, files };
 }

@@ -1,5 +1,6 @@
 import { documentOf } from "../../document/to-document.js";
-import { validateViewSpecs, viewBraces, viewKeys } from "../../document/views.js";
+import { viewBraces, viewKeys } from "../../document/views.js";
+import { validateViewSpecs } from "../../document/view-specs.js";
 import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
 

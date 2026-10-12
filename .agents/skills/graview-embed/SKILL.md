@@ -33,9 +33,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    `#view=the-week` — so a link you copied from the app is an embed's
    starting point. `face` follows the stop unless you name one.
 2. **Pick the face for the page.** One app bar: the name, the switch
-   (Scene, Pages), the place you are on (a page, or the scene's
-   picture) opening the rest — on a wide row they stand, the rest under
-   More — Find, the standing, the person. Name no `face` and an
+   (Scene, Pages), the place you are on opening the rest (on a wide row
+   they stand, the rest under More), Find, the standing, the person. Name no `face` and an
    app with a home view opens on it, else the scene; `"scene"`,
    `"graview"`, `"pages"` (on `path`); `"picture"` is ONE lens alone
    (`stop: "#view=the-week"`), no bar. `bar: false` drops the bar;
@@ -67,8 +66,9 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
    (`@graview/primitives`); on the record page, which is the default, that
    draws nothing. `@graview/embed/pages` takes `views` too.
 9. **Say its name at the right level.** The bar says the app's name once,
-   as a heading: `heading: 1` when the page is the app, the default `2`
-   inside an article, `false` when your heading already says it.
+   as a heading: `heading: 1` when the page is the app (and `height:
+   "viewport"`, re-measured as a phone turns), the default `2` inside an
+   article, `false` when your heading already says it.
 10. **In a chat's widget, let the frame be sized from the embed.** `height:
     "auto"` with `onIntrinsicHeight` tells the host the height to give it;
     `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the

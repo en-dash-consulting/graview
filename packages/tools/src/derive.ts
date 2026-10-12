@@ -1,3 +1,14 @@
+/*
+ * `@graview/tools/derive` — WHAT CAN BE DONE HERE: the affordances a
+ * record, a selection or a kind offers, derived from the declaration.
+ *
+ * Also exported from `@graview/tools`. Its own entry because a bundler
+ * places a whole file in a page's first chunk when the first chunk can
+ * reach it: the routed face lists what can be done on every record page,
+ * and reaching it through `@graview/tools` carried the chat, the agent's
+ * tool surface and zod's JSON Schema into that face's first load — some
+ * 30 KB the pages face alone never drew with before a reader asked.
+ */
 import { nodeRefArgs, type AnySchema, type NodeOfSchema, type Principal, type Store } from "@graview/core";
 import { insightProvider } from "./providers/insight.js";
 import { usageBoost, usageWeights } from "./usage.js";

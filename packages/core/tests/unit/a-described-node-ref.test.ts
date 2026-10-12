@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { formFields, nodeRef, nodeRefKinds } from "../../src/index.js";
+import { nodeRef, nodeRefKinds } from "../../src/index.js";
+import { formFields } from "../../src/forms.js";
 
 /**
  * A DESCRIBED NODE REFERENCE IS STILL A NODE REFERENCE.

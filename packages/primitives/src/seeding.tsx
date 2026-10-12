@@ -27,6 +27,7 @@ import {
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnswerArgs } from "./workbench/index.js";
 import { MUTED_TEXT, Panel } from "./primitives/index.js";
+import { resample } from "./resample.js";
 
 /**
  * THE SURFACES A BLANK GRAPH NEEDS, derived like every other surface.
@@ -786,21 +787,7 @@ export async function downscale(
   maxEdge = PHOTO_MAX_EDGE,
   quality = PHOTO_QUALITY,
 ): Promise<string> {
-  const bitmap = await createImageBitmap(file);
-  try {
-    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
-    const width = Math.max(1, Math.round(bitmap.width * scale));
-    const height = Math.max(1, Math.round(bitmap.height * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-    if (context === null) throw new Error("This browser will not give us a canvas to resize with.");
-    context.drawImage(bitmap, 0, 0, width, height);
-    return canvas.toDataURL("image/jpeg", quality);
-  } finally {
-    bitmap.close();
-  }
+  return (await resample(file, maxEdge)).toDataURL("image/jpeg", quality);
 }
 
 export interface IntakeProps {

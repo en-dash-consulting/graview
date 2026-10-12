@@ -22,6 +22,7 @@
  * nothing. Expressions stay strings: `graview check` reads those.
  */
 import type * as z from "./schema/zod.js";
+import type { FileValue } from "./schema/files.js";
 import type { ActSpec, DocumentSpec, EdgeSpec, FieldSpec, KindSpec, RuleSpec } from "./document/schema.js";
 
 // ------------------------------------------------------------- the types
@@ -127,11 +128,15 @@ export type ValueOf<F> = F extends { readonly type: "enum"; readonly options: re
     ? number
     : F extends { readonly type: "boolean" }
       ? boolean
-      : F extends { readonly type: "list"; readonly of: "number" }
-        ? readonly number[]
-        : F extends { readonly type: "list" }
-          ? readonly string[]
-          : string;
+      : F extends { readonly type: "image" | "file" }
+        ? FileValue
+        : F extends { readonly type: "list"; readonly of: "number" }
+          ? readonly number[]
+          : F extends { readonly type: "list"; readonly of: "image" | "file" }
+            ? readonly FileValue[]
+            : F extends { readonly type: "list" }
+              ? readonly string[]
+              : string;
 
 type RequiredFields<Fs> = { [F in keyof Fs]: Fs[F] extends { readonly required: true } ? F : never }[keyof Fs];
 

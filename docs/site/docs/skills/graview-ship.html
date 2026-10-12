@@ -1277,6 +1277,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 <ol>
 <li><strong>Health is coherence, not liveness.</strong> <code>health(store)</code> reports sizes, standing and dangling edges — poll it per deployment, curl it self-hosted.</li>
 </ol>
+<p><strong>Files are yours to store.</strong> An <code>image</code>/<code>file</code> field keeps a <code>FileValue</code>;    its <code>href</code> is your path. Hand <code>mount</code> <code>files: { upload, maxBytes, kinds }</code>    (dev: <code>devFiles()</code>, <code>filesAt(…)</code>). Serve each as its bytes' type,    <code>nosniff</code>, a <code>sandbox</code> CSP on all but a PDF (an SVG runs script    otherwise), only to a seat that <code>seesId</code> a record holding it.</p>
 <ol>
 <li><strong>The machine under the dev server is a door.</strong> A locally-run product very often has a coding agent installed, logged in and paid for; the browser cannot spawn it and the dev server can.</li>
 </ol>

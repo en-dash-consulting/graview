@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import { diffDocuments, editDocument, planMigration, readDocument, toDocument, type GraviewDocument } from "../../src/document/index.js";
-import { createSchema, defineApp, defineNode, formFields, refusalOf, Store, z, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, refusalOf, Store, z, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { formFields } from "../../src/forms.js";
 import { mutationToolSchema } from "../../src/schema/json-schema.js";
 import { argShape } from "../../src/mutations/node-ref.js";
 

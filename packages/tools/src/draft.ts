@@ -13,7 +13,8 @@ import {
   type Principal,
   type ShippedLensName,
 } from "@graview/core";
-import { fieldSpecOf, parseExpr, type Expr } from "@graview/core/document";
+import { parseExpr, type Expr } from "@graview/core/document";
+import { fieldSpecOf } from "@graview/core/blocks";
 import type { DraftTools } from "./agent/tools.js";
 import { firstJsonObject, type Completion } from "./intelligence.js";
 import { capitalize } from "./capital.js";

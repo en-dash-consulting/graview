@@ -32,6 +32,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A document can say a kind's glance fields, and the compiler stops asking for what it cannot say (FR-39)](./a-document-can-say-a-kind-s-glance.md) | completed |
 | [A figure's label is a template, and check flags braces in any non-template string (FR-99)](./a-figure-s-label-is-a-template-and.md) | completed |
 | [A guest view can be a named place: guestView takes a title (FR-87)](./a-guest-view-can-be-a-named-place.md) | completed |
+| [A guest view is handed the pictures it may show, behind their own door (FR-162)](./a-guest-view-is-handed-the-pictures-it.md) | pending |
 | [A guest view gets the theme, and follows the app's toggle (FR-86)](./a-guest-view-gets-the-theme-and.md) | completed |
 | [A guest view may read across kinds, gets labels, and may attach to the home (FR-85)](./a-guest-view-may-read-across-kinds.md) | completed |
 | [A hardened guest worker runtime: every global outside an allowlist removed before guest code runs (FR-70)](./a-hardened-guest-worker-runtime-every.md) | completed |
@@ -187,6 +188,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [Write a worker view with no build and no copied protocol (FR-96)](./write-a-worker-view-with-no-build-and.md) | completed |
 | [Writes from a worker view that can't leak: manifest acts, and presses the host saw (FR-92)](./writes-from-a-worker-view-that-can-t.md) | completed |
 | [A host wires its turn from the loop alone: @graview/tools/turn (FR-161)](./a-host-wires-its-turn-from-the-loop.md) | completed |
+| [A record can hold a picture or a document (FR-162)](./a-record-can-hold-a-picture-or-a.md) | completed |
+| [Putting a file on a record from the page, through the host's files (FR-163)](./putting-a-file-on-a-record-from-the.md) | completed |
 | [A phone's seat is put away by its ✕, a tap or a pull down, and the keyboard goes down with it (FR-164)](./a-phone-s-seat-is-put-away-by-its-a.md) | completed |
-
 | [An app fills the phone after it turns (FR-165)](./an-app-fills-the-phone-after-it-turns.md) | completed |

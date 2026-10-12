@@ -1,0 +1,21 @@
+---
+id: "4d7c1b2e-9a63-4f0e-b1d8-62c5e0f3a917"
+level: "feature"
+title: "A guest view is handed the pictures it may show, behind their own door (FR-162)"
+status: "pending"
+priority: "medium"
+tags:
+  - "graview-cloud"
+  - "FR-162"
+  - "guest"
+  - "files"
+source: "The review after the files (review/after-the-files, with #223): FR-162 asks that views be handed the addresses they may put in an img, as theme.logo is; #223 does it for the framework's own faces and blocks, not for a guest frame or worker view"
+acceptanceCriteria:
+  - "A guest view (frame or worker) that declares it in its manifest is handed, for each file value on a record it reads, an address it can put in an img: made by the host page from the bytes (a blob: or data: URL, as the logo is, FR-127), never the host's path, which a sandboxed frame cannot load with the reader's credentials and should not learn"
+  - "Only files on records the guest is handed, under the reader's sight: a file on a record the seat may not see is never fetched for a guest"
+  - "Within the guest host's budgets: a byte cap per view and per file, said in the manifest's words when a picture is left out, and a picture larger than a view needs is handed downscaled"
+  - "Only pictures (image/*, not SVG) are handed as addresses; a document is handed as its name, type and size"
+  - "The guest protocol stays additive: a guest that does not ask is handed nothing new, and GUEST_PROTOCOL does not move"
+  - "Tested in @graview/guest and covered by a harness that draws a worker view of a record with a picture"
+description: "A worker view or a guest frame runs at an opaque origin and is handed values, so a record's FileValue reaches it as a path it cannot load (the host serves files to the app's members, with credentials, same-origin). theme.logo is handed as a data: URL for that reason. Give guests the same for the pictures on records they read, behind a door of their own in the manifest and inside the guest host's budgets, so a view somebody else wrote can show a job's photos without the host lending it its origin."
+---

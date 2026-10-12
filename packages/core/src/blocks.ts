@@ -15,4 +15,8 @@ export { computedNames, computedValues, withComputed } from "./document/computed
 export { factNames, factValues } from "./document/fact-values.js";
 export type { ComputedRecord, ComputedValues, PlainComputed } from "./document/computed-values.js";
 export { blockContextFor, CARD_BUDGET, PAGE_BUDGET } from "./document/block-context.js";
+// What a drawn record asks of its files (FR-162): here, not in the main entry a hosted page loads up front.
+export { fileFieldsOf, fileWords, firstPicture } from "./schema/file-fields.js";
+// One declared field in the document's words: `url`, `date`, `enum`, `image` (FR-162).
+export { fieldSpecOf } from "./document/field-spec.js";
 export type { BlockContextOptions, BlockSource } from "./document/block-context.js";

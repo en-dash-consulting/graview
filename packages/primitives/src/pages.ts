@@ -15,6 +15,9 @@ export type { ArrangeBarProps } from "./arrange-bar.js";
 export { DefaultViewElsewhere } from "./default-view.js";
 // A record's values as the scene draws them: changed in place, prose with its paragraphs kept (FR-146, FR-147).
 export { EditableValue, LongValue } from "./editable.js";
+// A record's pictures and documents, drawn and put there, fetched with the first one drawn (FR-162, FR-163).
+export { Files } from "./files-door.js";
+export type { FilesProps } from "./files-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 export { KindFigure } from "./figure.js";
 export { ownSentence, problemLine, problemTitle, RuleLineView, RuleParts, useLined, useRuleLines } from "./rule-line.js";

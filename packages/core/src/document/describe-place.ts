@@ -196,6 +196,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
           out.push({ t: "badge", text: block.text });
           return;
         case "field":
+        case "image":
           out.push({ t: "field", label: block.label, text: block.text });
           return;
         case "progress":

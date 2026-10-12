@@ -1,0 +1,37 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "House repairs",
+  "description": "Jobs around a house, each with the photos that show it and the papers that come with it: a picture or a document on a record (FR-162), put there through the host's files (FR-163).",
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "kinds": {
+    "job": {
+      "noun": "job",
+      "plural": "jobs",
+      "description": "Something about the house that needs doing.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "status": { "type": "enum", "options": ["open", "done"], "default": "open", "required": true },
+        "photos": { "type": "list", "of": "image", "description": "what it looks like" },
+        "papers": { "type": "list", "of": "file", "description": "the quote, the receipt, the warranty" }
+      }
+    }
+  },
+  "acts": {
+    "add-job": { "title": "Add a job", "creates": "job", "description": "Write down something that needs doing." }
+  },
+  "views": {
+    "job": {
+      "card": [{ "title": "{name}" }, { "image": "photos", "as": "thumb" }, { "badge": "{status}" }]
+    }
+  },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "Around the house",
+      "on": "job",
+      "options": { "blocks": [{ "list": "all('job')", "as": "card" }] }
+    }
+  ]
+}

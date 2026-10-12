@@ -56,7 +56,8 @@ const sentence = str(1, 500);
 const expression = str(1, 2000);
 const template = str(1, 300);
 
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email"] as const;
+/** `image` and `file` hold what the host stored (FR-162): a `FileValue`, its `href` a path on the host. */
+export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const FieldSpec = z
@@ -67,7 +68,7 @@ export const FieldSpec = z
     /** What the field is called on screen, where its name does not say it. */
     label: z.optional(str(1, 60)),
     options: z.optional(some(str(1, 80), 1, 100)),
-    of: z.optional(z.enum(["string", "number", "date"])),
+    of: z.optional(z.enum(["string", "number", "date", "image", "file"])),
     default: z.optional(z.unknown()),
     unit: z.optional(str(undefined, 12)),
     format: z.optional(z.enum(["money", "percent", "duration"])),

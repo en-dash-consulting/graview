@@ -1,0 +1,28 @@
+---
+id: "635b55e6-c088-401a-ace2-6cb7088a7cb1"
+level: "feature"
+title: "Putting a file on a record from the page, through the host's files (FR-163)"
+status: "completed"
+priority: "high"
+tags:
+  - "graview-cloud"
+  - "FR-163"
+  - "embed"
+  - "files"
+source: "Graview Cloud, the brief after 0.1.23"
+startedAt: "2026-10-11T19:00:00.000Z"
+completedAt: "2026-10-12T00:14:12.000Z"
+endedAt: "2026-10-12T00:14:12.000Z"
+acceptanceCriteria:
+  - "A host seam on mount, exactly files?: { upload(file: Blob, name: string): Promise<FileValue>; maxBytes: number; kinds: readonly string[] }, threaded through mount, <Embed>, GraviewProvider and the Shell"
+  - "The field's editor on every face: pick, take a photo, drag and drop, paste; several at once for a list"
+  - "A camera photo downscaled in the page before it is sent; a HEIC converted where the browser can decode it, else sent as is where kinds allows HEIC, else said"
+  - "maxBytes, kinds and any refusal thrown by upload said in the editor's own words"
+  - "The upload becomes the ordinary set-field act, recorded in history and undone as any act"
+  - "Without a files seam the editor says this host takes no files and offers nothing it would refuse"
+  - "A dev upload door for harnesses and examples that is never in a build, and an example with a file field"
+  - "A browser harness: upload by input and by paste, a thumbnail drawn, the gallery full size, a PDF inline, a refusal in words, undo removes it"
+description: "A file field needs a way in. Cloud's route stores bytes at /graview/files/<sha256>.<ext> and answers the value; the framework needs the seam a host hands it and an editor on every face that sends to it."
+lastModified: "2026-10-12T00:14:12.000Z"
+resolution: "Done in #223: HostFiles on mount, <Embed>, GraviewProvider, the Shell and PagesApp; the editor on the scene's record, the record page, the forms and the strip's ask; devFiles and filesAt for development; the todo example's attachments; scripts/verify-files.mjs."
+---

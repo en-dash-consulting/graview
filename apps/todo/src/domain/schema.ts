@@ -1,4 +1,4 @@
-import { createSchema, defineNode, effectivity, isoDate, summarize } from "@graview/core";
+import { createSchema, defineNode, effectivity, fileField, isoDate, summarize } from "@graview/core";
 import { todoInstallation } from "./installation.js";
 import { z } from "zod";
 
@@ -70,6 +70,14 @@ export const task = defineNode("task", {
     plannedAt: z.number().int().min(0).max(1439).optional(),
     plannedUntil: z.number().int().min(0).max(1440).optional(),
     notes: z.string().optional(),
+    /*
+     * WHAT IS ATTACHED TO IT: a photo of the receipt, the quote as a PDF
+     * (FR-162). Each is what the host's upload answered — a path on the host,
+     * a name, a type and a size — and is put there from the task's page or
+     * its card in the scene, through the host's files (FR-163). Under
+     * `pnpm dev` that is the dev server's door; a host without one says so.
+     */
+    attachments: z.array(fileField()).max(10).optional(),
   }),
   plural: "Tasks",
   label: (node) => node.label,

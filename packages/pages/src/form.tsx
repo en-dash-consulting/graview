@@ -1,19 +1,18 @@
 import {
-  formFields,
   argumentWords,
   failureWords,
-  formArgs,
   humanizeField,
   nounOf,
   labelOf,
   tellApart,
   type AnySchema,
-  type FormField,
   type Principal,
   type Store,
 } from "@graview/core";
+import { formFields, formArgs, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
+import { Files } from "@graview/primitives/pages";
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 /**
@@ -396,7 +395,11 @@ function Control<S extends AnySchema>({
         </fieldset>
       );
     }
+    case "file":
     case "list": {
+      // A picture or a document, or a list of them put there several at once, through the host's upload (FR-163).
+      const file = spec.control === "file" ? spec : spec.item.control === "file" ? spec.item : undefined;
+      if (file || spec.control === "file") return <Files as="control" title={title} value={value} onChange={onChange} several={file !== spec} image={file?.image === true} label={named} />;
       const items = Array.isArray(value) ? (value as unknown[]) : [];
       return (
         <fieldset data-graview-part="group" data-graview-field="list">

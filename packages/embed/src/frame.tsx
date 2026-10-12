@@ -1,4 +1,4 @@
-import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
+import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
@@ -244,6 +244,14 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * graph answers alone, and an open question is told AI isn't on here.
    */
   readonly ai?: HostAi;
+  /**
+   * THE HOST'S FILES (FR-163): `{ upload(file, name), maxBytes, kinds }`.
+   * A picture or a document put on a record is sent to `upload`, which
+   * stores the bytes and answers the `FileValue` the record keeps (FR-162);
+   * a refusal it throws is said in the field's editor. Unsaid, the editor
+   * says this host takes no files.
+   */
+  readonly files?: HostFiles;
   /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
@@ -502,6 +510,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     presenceTtlMs: props.presenceTtlMs,
     onKeepLens: props.onKeepLens,
     ai: props.ai,
+    files: props.files,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,
