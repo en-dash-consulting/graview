@@ -20,5 +20,5 @@ acceptanceCriteria:
   - "A hosted page's first load is no larger"
 description: "The offer under an answer read 'Add a revenue stream: nascent'. The person read 'nascent' as the title and said so, and the model, which never sees the line the person sees, agreed it was the title and asked for another. And 'Answered with AI' stood on a line of its own under every answer."
 lastModified: "2026-10-12T19:00:00.000Z"
-resolution: "Shipped in #PR: madeLabel in packages/core/src/document/compiled.ts says the label and then the rest, the seat's history in packages/primitives/src/seat.tsx carries what was offered, and the mark rides the answer's line."
+resolution: "Shipped in #240: madeLabel in packages/core/src/document/compiled.ts says the label and then the rest, the seat's history in packages/primitives/src/seat.tsx carries what was offered, and the mark rides the answer's line."
 ---
