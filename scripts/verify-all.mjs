@@ -69,6 +69,8 @@ const CHAIN = [
   ["seat-goes-and-draws", "verify-seat-goes-and-draws.mjs"],
   ["chat", "verify-chat.mjs"],
   ["seat", "verify-seat.mjs"],
+  // A phone's seat put away by its ✕, a tap or a pull down, the keyboard down after, on an iPhone and a Pixel in Chromium and WebKit (FR-164).
+  ["phone-seat", "verify-phone-seat.mjs"],
   ["who", "verify-who.mjs"],
   ["calendar", "verify-calendar.mjs"],
   ["desk", "verify-desk.mjs"],
