@@ -242,6 +242,7 @@ export function kindLines(
   if (lifecycleField && retired) lines.push(`  lifecycle: { field: ${q(lifecycleField)}, retired: ${retired[0] === "date" ? '"date"' : `[${retired.map(q).join(", ")}]`} },`);
   // The drawing is part of the declaration, so it is part of the file.
   if (str(kind, "figure")) lines.push(`  figure: ${q(str(kind, "figure")!)},`);
+  if (bool(kind, "people")) lines.push(`  people: true,`);
   // What the kind works out (FR-83), as an app writes it: the expression, or the expression with its words.
   const computed = computedFor(read, kind);
   if (computed) {
@@ -549,6 +550,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
           ...(bool(g, "allKinds") ? [] : [`kinds: [${over.map(q).join(", ")}]`]),
           ...(str(g, "describe") ? [`describe: ${q(str(g, "describe")!)}`] : []),
           ...(bool(g, "self") ? ["self: true"] : []),
+          ...(bool(g, "ownEnd") ? ["ownEnd: true"] : []),
         ];
         return `    { ${parts.join(", ")} },`;
       }),
@@ -577,6 +579,7 @@ function sightLines(read: Read): string[] {
         `roles: ${bool(sight, "everyone") ? '"*"' : `[${roles.map(q).join(", ")}]`}`,
         `kinds: [${kinds.map(q).join(", ")}]`,
         ...(bool(sight, "own") ? ["own: true"] : []),
+        ...(str(sight, "via") ? [`via: ${q(str(sight, "via")!)}`] : []),
         ...(str(sight, "describe") ? [`describe: ${q(str(sight, "describe")!)}`] : []),
       ];
       return `    { ${parts.join(", ")} },`;

@@ -182,6 +182,15 @@ export interface NodeDefinitionSpec<
    */
   readonly plot?: { readonly col: number; readonly row: number };
   /**
+   * THIS KIND STANDS FOR THE PEOPLE (Roadmap f-people-kind): a record of it
+   * whose id is a principal's id IS that person. A `self` grant, an `own`
+   * sight, a sight `via` a relation, an `ownEnd` grant and a document act's
+   * `$me` all read the principal's id as a record of this kind. At most one
+   * kind says it (`graview check`: `people-ambiguous`); the installation's
+   * `user` does.
+   */
+  readonly people?: boolean;
+  /**
    * VALUES WORKED OUT, NOT WRITTEN (FR-83): a name and an expression of the
    * rule language (`@graview/core/document`), read like a stored field by
    * every template, view spec, rule, sum and sort — `net: "sum(out('includes'),

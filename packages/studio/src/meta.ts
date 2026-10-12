@@ -59,9 +59,11 @@ export const kindNode = defineNode("kind", {
      * propose.
      */
     figure: z.string().optional(),
+    /** This kind stands for the people: a record of it whose id is a principal's is that person (Roadmap f-people-kind). */
+    people: z.boolean().optional(),
   }),
   label: (node) => node.label,
-  display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when" } },
+  display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when", people: "stands for the people" } },
 });
 
 export const fieldNode = defineNode("field", {
@@ -225,6 +227,8 @@ export const grantNode = defineNode("grant", {
     label,
     describe: z.string().optional(),
     self: z.boolean(),
+    /** Only on the seat's own end of the link the act makes or breaks (Roadmap f-own-end-grants). */
+    ownEnd: z.boolean().optional(),
     everyone: z.boolean(),
     allActs: z.boolean(),
     allKinds: z.boolean(),
@@ -236,7 +240,7 @@ export const grantNode = defineNode("grant", {
     "allows-on": { to: ["kind"], description: "the kinds it allows those acts on", inverse: "who may act on it" },
   },
   label: (node) => node.label,
-  display: { labels: { self: "on their own record only", allActs: "every act", allKinds: "every kind" } },
+  display: { labels: { self: "on their own record only", ownEnd: "on their own end of the link only", allActs: "every act", allKinds: "every kind" } },
 });
 
 export const sightNode = defineNode("sight", {
@@ -253,6 +257,8 @@ export const sightNode = defineNode("sight", {
     describe: z.string().optional(),
     /** Only the seat's own records: theirs, joined to theirs, or made by them. */
     own: z.boolean(),
+    /** Only the records this relation joins to the seat's own record. */
+    via: z.string().optional(),
     /** Every seat, whatever its roles. */
     everyone: z.boolean(),
   }),
@@ -261,7 +267,7 @@ export const sightNode = defineNode("sight", {
     shows: { to: ["kind"], description: "the kinds it shows", inverse: "who sees it" },
   },
   label: (node) => node.label,
-  display: { labels: { own: "their own records only", everyone: "everybody" } },
+  display: { labels: { own: "their own records only", via: "only what this relation joins to them", everyone: "everybody" } },
 });
 
 export const lensNode = defineNode("lens", {

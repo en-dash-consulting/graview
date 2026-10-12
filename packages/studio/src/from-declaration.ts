@@ -88,6 +88,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(def.description ? { description: def.description } : {}),
       ...(def.lifecycle ? { lifecycleField: def.lifecycle.field, retired: def.lifecycle.retired === "date" ? ["date"] : def.lifecycle.retired.map(String) } : {}),
       ...(def.figure ? { figure: def.figure } : {}),
+      ...(def.people ? { people: true } : {}),
     });
     for (const [name, type] of Object.entries(shapeOf(def.fields))) {
       const id = `field:${def.kind}.${name}`;
@@ -211,6 +212,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       kind: "grant",
       label: g.describe ?? `${who} may ${what}`,
       self: g.self ?? false,
+      ...(g.ownEnd ? { ownEnd: true } : {}),
       everyone: g.roles === "*",
       allActs: g.mutations === "*",
       allKinds: g.kinds === undefined || g.kinds === "*",
@@ -230,6 +232,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       kind: "sight",
       label: sight.describe ?? `${who} may see ${sight.own ? "their own " : ""}${sight.kinds.join(", ")}`,
       own: sight.own ?? false,
+      ...(sight.via ? { via: sight.via } : {}),
       everyone: sight.roles === "*",
       ...(sight.describe ? { describe: sight.describe } : {}),
     });

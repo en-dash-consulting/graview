@@ -29,11 +29,9 @@ export function actingAs(principal: Principal): Principal {
  */
 export const isSystem = (principal: Principal): boolean => principal.kind === "system" && principal.onBehalfOf === undefined;
 
-/** Whether a grant covers a principal at all, before looking at the call. */
-function grantsTo(grant: Grant, principal: Principal): boolean {
-  if (grant.roles === "*") return true;
-  return (principal.roles ?? []).some((role) => grant.roles.includes(role));
-}
+/** Whether a grant (or a sight) covers a principal at all, before looking at the call. */
+export const grantsTo = (grant: Pick<Grant, "roles">, principal: Principal): boolean =>
+  grant.roles === "*" || (principal.roles ?? []).some((role) => grant.roles.includes(role));
 
 /**
  * WHAT A REFUSAL CALLS THINGS. The policy knows acts and roles by their
@@ -79,6 +77,8 @@ export function permits(
   subjectId?: string,
   /** How the refusal names an act and a kind: the store hands its titles and nouns. */
   words: PolicyWords = {},
+  /** The records the call names at the far end of the links it makes or breaks: an `ownEnd` grant holds them to the principal's own. */
+  ends?: () => readonly unknown[],
 ): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   // No policy means permission is not a concern in this installation.
   if (!policy) return { ok: true };
@@ -121,6 +121,7 @@ export function permits(
     };
   }
 
+  let theirs = false;
   for (const grant of policy.grants) {
     if (!grantsTo(grant, principal)) continue;
     if (!matches(grant.mutations, mutation)) continue;
@@ -129,11 +130,17 @@ export function permits(
     }
     // "You, on yours": a self grant needs the subject to be the principal.
     if (grant.self && (subjectId === undefined || principal.id === undefined || subjectId !== principal.id)) continue;
+    // And an own-end grant every record at the far end of the link (Roadmap f-own-end-grants).
+    const far = grant.ownEnd ? (ends?.() ?? []) : [principal.id];
+    if (!far.length || far.some((id) => id !== principal.id)) {
+      theirs = true;
+      continue;
+    }
     return { ok: true };
   }
 
   const wouldNeed = rolesWhoCould(policy, mutation, kind);
-  const who = wouldNeed.length === 0 ? "no role can" : `${rolesSaid(wouldNeed)} can`;
+  const who = theirs ? "only on your own end of the link" : wouldNeed.length === 0 ? "no role can" : `${rolesSaid(wouldNeed)} can`;
   return {
     ok: false,
     refusal: {
@@ -178,16 +185,12 @@ function said(
  * allow this are the ones worth repeating.
  */
 export function whyNot(policy: Policy, mutation: string, kind?: string): readonly string[] {
-  const said = new Set<string>();
-  for (const grant of policy.grants) {
-    if (!matches(grant.mutations, mutation)) continue;
-    if (grant.kinds !== undefined && grant.kinds !== "*" && kind !== undefined) {
-      if (!grant.kinds.includes(kind)) continue;
-    }
-    if (grant.describe) said.add(grant.describe);
-  }
-  return [...said];
+  return [...new Set(grantsOf(policy, mutation, kind).flatMap((grant) => grant.describe || []))];
 }
+
+/** The grants that name this mutation, and this kind where they name kinds at all. */
+const grantsOf = (policy: Policy, mutation: string, kind?: string): readonly Grant[] =>
+  policy.grants.filter((grant) => matches(grant.mutations, mutation) && (kind === undefined || matches(grant.kinds ?? "*", kind)));
 
 /**
  * Every role that could run this mutation, so a refusal can name what would
@@ -198,19 +201,9 @@ export function rolesWhoCould(
   mutation: string,
   kind?: string,
 ): readonly string[] {
-  const roles = new Set<string>();
-  for (const grant of policy.grants) {
-    if (!matches(grant.mutations, mutation)) continue;
-    if (grant.kinds !== undefined && grant.kinds !== "*" && kind !== undefined) {
-      if (!grant.kinds.includes(kind)) continue;
-    }
-    if (grant.roles === "*") {
-      // Everyone already may; naming roles would be misleading.
-      return [];
-    }
-    for (const role of grant.roles) roles.add(role);
-  }
-  return [...roles].sort();
+  const grants = grantsOf(policy, mutation, kind);
+  // Everyone already may, where any of them is for everyone; naming roles would be misleading.
+  return grants.some((grant) => grant.roles === "*") ? [] : [...new Set(grants.flatMap((grant) => grant.roles))].sort();
 }
 
 /** Every role the policy mentions, declared or implied by its grants. */
@@ -238,13 +231,16 @@ export function permittedMutations<S extends AnySchema>(
 ): readonly AnyMutationDefinition<S>[] {
   if (!policy) return mutations;
   return mutations.filter((mutation) => {
-    const subject = mutation.subject;
-    const kinds =
-      subject && subject.kinds !== "*" ? (subject.kinds as readonly string[]) : [undefined];
     // Permitted for ANY of its subject kinds is enough to offer the tool; the
     // store still refuses the individual call that is not allowed.
     // A `self` grant is offered with the principal as its subject: "ask, on
-    // yours" is an act the principal has, though only ever on themselves.
-    return kinds.some((kind) => permits(policy, principal, mutation.name, kind, undefined, actingAs(principal).id).ok);
+    // yours" is an act the principal has, though only ever on themselves;
+    // an `ownEnd` grant with the principal at the far end, likewise.
+    const me = actingAs(principal).id;
+    return subjectKinds(mutation).some((kind) => permits(policy, principal, mutation.name, kind, undefined, me, undefined, () => [me]).ok);
   });
 }
+
+/** The kinds a mutation's subject may be, or one unknown kind when it takes any or none. */
+export const subjectKinds = (mutation: Pick<AnyMutationDefinition<AnySchema>, "subject">): readonly (string | undefined)[] =>
+  mutation.subject && mutation.subject.kinds !== "*" ? (mutation.subject.kinds as readonly string[]) : [undefined];

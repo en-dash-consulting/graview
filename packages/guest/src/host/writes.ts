@@ -42,7 +42,7 @@ import { manifestActs, type ManifestAct, type WorkerViewManifest } from "./manif
 export function sightIsTotal<S extends AnySchema>(store: Store<S>): boolean {
   const sees = store.policy?.sees ?? [];
   if (sees.length === 0) return true;
-  return (store.schema.kinds as readonly string[]).every((kind) => sees.some((sight) => sight.roles === "*" && !sight.own && sight.kinds.includes(kind)));
+  return (store.schema.kinds as readonly string[]).every((kind) => sees.some((sight) => sight.roles === "*" && !sight.own && !sight.via && sight.kinds.includes(kind)));
 }
 
 /** A field the host read, at the moment of a press. */

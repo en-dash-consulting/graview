@@ -44,10 +44,13 @@ The coach sees "Show the installation" in the person's menu on the app bar and t
 
 1. **Say who sees what, for every kind.** `sees` keeps records from seats the way grants keep acts: once there is one sight, a kind no sight names is seen by nobody but the system (`sight-unnamed-kind` says which). `{ roles: "*", kinds: ["car"] }` is the shop window; `own: true` keeps a kind to a seat's own records — theirs, joined to theirs, or made by them. A served store sends a seat only what it sees, withholds the rest of the log in place, and refuses an act that names a record it may not — a document's act that sets the record at the other end of a link (`setsOther`) too: that record is its `to`, refused as missing. A record whose required reference names a kind its seat may not see is withheld whole (`sight-hides-required-ref` says which role loses which kind): let the role see the target, or make the field optional.
 
+1. **Say which kind is the people.** `people: true` on one kind (a document's `"people": true`; the installation's `user` says it): a record of it whose id is a principal's id IS that person. Then: - `{ roles: ["participant"], kinds: ["match"], via: "givenBy" }` shows a seat a match only where `givenBy` joins it to their own record — each Secret Santa giver sees their match, not the one they receive in (`own` would show both). - `{ mutations: ["take-back"], ownEnd: true }` holds a connect or sever to the seat's own end of the link: a voter takes back their own vote. - A document act's `"to": "$me"` (or `"set": { "champion": "$me" }`) is the acting person's record — the tool stops asking who, and a seat with no record is refused with a sentence.
+
 ### Worked examples
 
 - `packages/core/tests/unit/permissions.test.ts` — grants by role, by mutation and by subject kind, and the refusal that names who could
 - `packages/tools/tests/unit/affordances.test.ts` — a guarded store: what a principal is offered, what is withheld and said, and how the agent seat narrows with it
+- `packages/core/tests/document/fixtures/secret-santa.gdd.json` and `idea-board.gdd.json` — a sight via a relation, `$me` and an own-end grant
 
 ### Then find out whether it worked
 
@@ -55,7 +58,7 @@ The coach sees "Show the installation" in the person's menu on the app bar and t
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-The checker reports `mutation-unreachable-by-any-role` (declared and unreachable), `role-may-do-nothing` (a role that can neither run a mutation nor see a kind; a viewer that only reads is not reported, since reading is the point of it), `grant-unknown-mutation` and `grant-unknown-kind`. All four are silent at runtime and obvious at build time, and the person who finds them otherwise is the person standing in front of a button they cannot press. Report the output.
+The checker reports `mutation-unreachable-by-any-role` (declared and unreachable), `role-may-do-nothing` (a role that can neither run a mutation nor see a kind; a viewer that only reads is not reported, since reading is the point of it), `grant-unknown-mutation` and `grant-unknown-kind`. All four are silent at runtime and obvious at build time, and the person who finds them otherwise is the person standing in front of a button they cannot press. Report the output. The people have theirs: `people-ambiguous` (two kinds say it), `people-unsaid` (a `via`, an `ownEnd` or a `$me` and no people kind), `sight-via-misses-people` (a relation that never reaches them) and `grant-own-end-without-link`.
 
 `act-reads-hidden-kind` (a warning, FR-105) names an act, a role that may run it and a kind that role may not see, which the act reads: its condition, its refusal, a value it sets in a document (on its subject or the other record) or the links it `replaces`; what it declares it `reads` in TypeScript (`reads: ["memo"]` — an `apply` is never read, so say it). The store hides the records; the act's answer can still tell that one exists. Let the role see the kind, keep the act from it, or read only what it sees.
 

@@ -20,7 +20,7 @@ import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
-import { actingAs, isSystem, permits, permittedMutations, type PolicyWords } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
 import { creatorsBefore } from "./permissions/sight.js";
@@ -691,15 +691,27 @@ export class Store<S extends AnySchema> {
      */
     const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
+    const mutation = this.mutations.get(call.name);
+    const id = mutation?.subject && call.args[mutation.subject.arg];
     return permits(
       this.policy,
       principal,
       call.name,
       this.subjectKindOf(call, principal),
-      this.viaOf(this.mutations.get(call.name)),
-      this.subjectIdOf(call),
+      this.viaOf(mutation),
+      typeof id === "string" ? id : undefined,
       this.words,
+      () => this.namedIn(call, false),
     );
+  }
+
+  /** The ids a call names in its record arguments: its subject's too, unless `subject` is false (the far ends of what it links). */
+  private namedIn(call: MutationCall, subject = true): string[] {
+    const mutation = this.mutations.get(call.name);
+    if (!mutation) return [];
+    const at = mutation.subject?.arg;
+    const values = [...(subject && at ? [call.args[at]] : []), ...nodeRefArgs(mutation.input).flatMap((ref) => (ref.name === at ? [] : [call.args[ref.name]]))];
+    return values.flatMap((value) => (typeof value === "string" ? [value] : Array.isArray(value) ? value.filter((inner): inner is string => typeof inner === "string") : []));
   }
 
   /** How the policy's refusals name an act and a kind: by title and noun, never by id. */
@@ -744,12 +756,7 @@ export class Store<S extends AnySchema> {
     // A seat the module's records are kept from is not told they are there: naming one is naming nothing (FR-55).
     if (!isSystem(principal)) return undefined;
     const mutation = this.mutations.get(call.name);
-    if (!mutation) return undefined;
-    const named: unknown[] = [];
-    if (mutation.subject) named.push(call.args[mutation.subject.arg]);
-    for (const ref of nodeRefArgs(mutation.input)) named.push(call.args[ref.name]);
-    const ids = named.flatMap((value) => (typeof value === "string" ? [value] : Array.isArray(value) ? value.filter((inner): inner is string => typeof inner === "string") : []));
-    if (!ids.some((id) => off.has(this.graph.getNode(id)?.kind as string))) return undefined;
+    if (!mutation || !this.namedIn(call).some((id) => off.has(this.graph.getNode(id)?.kind as string))) return undefined;
     return {
       mutation: call.name,
       message: `“${mutation.title ?? call.name}” names a record of a module this workspace has turned off.`,
@@ -769,10 +776,12 @@ export class Store<S extends AnySchema> {
    * the store's own graph.
    */
   private sighted(author: Principal | undefined): NonNullable<Parameters<typeof compileMutation<S>>[3]> {
-    if (author === undefined || !hidesFrom(this, author)) return {};
+    // Who `$me` is: the person, for an agent acting for one (Roadmap f-act-as-me).
+    const me = { me: author && actingAs(author).id };
+    if (author === undefined || !hidesFrom(this, author)) return me;
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
     const hidden = seesId(this, author);
-    return { seen: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden) };
+    return { ...me, seen: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden) };
   }
 
   /**
@@ -790,15 +799,8 @@ export class Store<S extends AnySchema> {
    */
   missingFor(call: MutationCall, principal: Principal = HUMAN): MissingRecordError | undefined {
     const mutation = this.mutations.get(call.name);
-    if (!mutation) return undefined;
-    const named = new Set<string>();
-    const add = (value: unknown) => {
-      if (typeof value === "string") named.add(value);
-      else if (Array.isArray(value)) for (const inner of value) if (typeof inner === "string") named.add(inner);
-    };
-    if (mutation.subject) add(call.args[mutation.subject.arg]);
-    for (const ref of nodeRefArgs(mutation.input)) add(call.args[ref.name]);
-    if (named.size === 0) return undefined;
+    const named = new Set(this.namedIn(call));
+    if (!mutation || named.size === 0) return undefined;
     // Served, not only in sight: a record withheld whole for a field it cannot do without is not there for this seat either.
     const seen = seenBy(this, principal).graph;
     for (const id of named) {
@@ -819,12 +821,7 @@ export class Store<S extends AnySchema> {
     if (!declared) return false;
     return (declared.mutations ?? []).some((name) => {
       const mutation = this.mutations.get(name);
-      if (!mutation) return false;
-      const kinds =
-        mutation.subject && mutation.subject.kinds !== "*"
-          ? (mutation.subject.kinds as readonly string[])
-          : [undefined];
-      return kinds.some((kind) => permits(this.policy, principal, name, kind, this.viaOf(mutation)).ok);
+      return !!mutation && subjectKinds(mutation).some((kind) => permits(this.policy, principal, name, kind, this.viaOf(mutation)).ok);
     });
   }
 
@@ -888,18 +885,11 @@ export class Store<S extends AnySchema> {
       const creatable = new Set(this.permittedMutations(principal).flatMap((mutation) => mutation.creates ?? []));
       // Every kind: once a policy says who sees what, a kind no sight names is seen by nobody.
       for (const kind of this.schema.kinds as readonly string[]) {
-        const seeing = sights.some((sight) => sight.kinds.includes(kind) && (sight.roles === "*" || (principal.roles ?? []).some((role) => (sight.roles as readonly string[]).includes(role))) && (!sight.own || principal.id !== undefined));
+        const seeing = sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, principal) && ((!sight.own && !sight.via) || principal.id !== undefined));
         if (!seeing && !creatable.has(kind)) kept.add(kind);
       }
     }
     return kept;
-  }
-
-  private subjectIdOf(call: MutationCall): string | undefined {
-    const subject = this.mutations.get(call.name)?.subject;
-    if (!subject) return undefined;
-    const id = call.args[subject.arg];
-    return typeof id === "string" ? id : undefined;
   }
 
   /**

@@ -10,6 +10,12 @@ import type { AnySchema, KindOfSchema, NodeOfSchema } from "../schema/schema.js"
 export interface MutationContext<S extends AnySchema> {
   readonly graph: GraphReader<NodeOfSchema<S>>;
   readonly schema: S;
+  /**
+   * The id of the seat this act is run by — the person, for an agent acting
+   * for one; their record of the people kind, where they have one. What a
+   * document act's `$me` reads. Undefined for a seat with no id.
+   */
+  readonly me?: string | undefined;
   addNode(node: NodeOfSchema<S>): void;
   /** Removes a node together with every edge touching it. */
   removeNode(id: string): void;

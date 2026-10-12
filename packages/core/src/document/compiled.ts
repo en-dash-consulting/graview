@@ -345,7 +345,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     // A relation as the kind declares it, less the name it had in the version before, which is the migration's.
     const edgeDecls = Object.fromEntries(Object.entries(spec.edges ?? {}).map(([n, { renamedFrom: _, ...e }]) => [n, e]));
     // What the definition says as the document says it, where it is said.
-    const said = <K extends "plural" | "noun" | "description" | "figure" | "fieldRoles" | "lifecycle">(key: K) => (spec[key] ? { [key]: spec[key] } : {});
+    const said = <K extends "plural" | "noun" | "description" | "figure" | "fieldRoles" | "lifecycle" | "people">(key: K) => (spec[key] ? { [key]: spec[key] } : {});
     return defineNode(kind, {
       fields: z.object(shape) as never,
       edges: edgeDecls,
@@ -357,6 +357,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...said("lifecycle"),
       ...said("figure"),
       ...said("fieldRoles"),
+      ...said("people"),
       ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
       ...(Object.keys(labels).length > 0 || spec.glance || spec.page
         ? { display: { ...(Object.keys(labels).length > 0 ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
@@ -379,7 +380,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const args = new Map(planned.args);
     const shape: Record<string, z.ZodMiniType> = {};
     for (const [arg, a] of args) shape[arg] = argSchema(a);
-    const subjectKinds = act.on === undefined ? [] : Array.isArray(act.on) ? (act.on as readonly string[]) : [act.on as string];
+    const subjectKinds: readonly string[] = [act.on ?? []].flat();
     const exprs = new Map(planned.exprs);
 
     mutations.push(
@@ -453,6 +454,12 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
             if (ref === "subject") return subjectId;
             if (ref === "now") return new Date().toISOString();
             if (ref === "today") return today();
+            // The acting person's own record of the people kind (Roadmap f-act-as-me), never an argument.
+            if (ref === "me") {
+              const me = context.me;
+              if (me && document.kinds[graph.getNode(me)?.kind as string]?.people) return me;
+              throw new ActRefusal(`"${title}" is done as you, and you have no record here`);
+            }
             if (made.has(ref)) return made.get(ref);
             return input[ref];
           };
@@ -577,13 +584,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
    * absent, everybody sees everything; present, a kind no sight names is
    * seen by nobody but the system, and `own` is the principal's own records.
    */
-  const policy: Policy | undefined = document.policy
-    ? {
-        grants: document.policy.grants as Policy["grants"],
-        ...(document.policy.sees ? { sees: document.policy.sees as Policy["sees"] } : {}),
-        ...(document.roles ? { roles: document.roles } : {}),
-      }
-    : undefined;
+  const policy: Policy | undefined = document.policy && { ...(document.policy as Policy), ...(document.roles ? { roles: document.roles } : {}) };
 
   const app: GraviewApp = {
     name: document.name,

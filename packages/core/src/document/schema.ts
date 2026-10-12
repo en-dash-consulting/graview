@@ -143,6 +143,8 @@ export const KindSpec = z.strictObject({
   fieldRoles: z.optional(z.record(z.string(), z.string())),
   /** The name this kind had in the previous version: its records move. */
   renamedFrom: z.optional(z.string().check(z.regex(NAME))),
+  /** This kind stands for the people: a record of it whose id is a member's principal id is that member (`$me`, `self`, `own`, `via`, `ownEnd`). */
+  people: z.optional(z.boolean()),
 });
 export type KindSpec = z.infer<typeof KindSpec>;
 
@@ -216,6 +218,8 @@ export const GrantSpec = z.strictObject({
   kinds: z.optional(z.union([z.array(name("kind")), z.literal("*")])),
   describe: z.optional(sentence),
   self: z.optional(z.boolean()),
+  /** Only on the principal's own end of the link the act connects or severs. */
+  ownEnd: z.optional(z.boolean()),
 });
 
 /**
@@ -229,6 +233,8 @@ export const SightSpec = z.strictObject({
   kinds: some(name("kind"), 1),
   /** Only the principal's own records: the ones they made, their own record, and what an edge joins to it. */
   own: z.optional(z.boolean()),
+  /** Only the records this relation joins to the principal's own record of the people kind. */
+  via: z.optional(edgeName),
 });
 export type SightSpec = z.infer<typeof SightSpec>;
 

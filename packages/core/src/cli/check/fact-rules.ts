@@ -35,7 +35,7 @@ export function checkFactRules<S extends AnySchema>(ctx: CheckContext<S>): void 
     return read;
   };
   /** Whether a role sees a kind: any of it, or all of it — named for the role by a sight that is not only what is its own. */
-  const sees = (role: string, kind: string, all: boolean) => sights.some((sight) => (sight.roles === "*" || sight.roles.includes(role)) && sight.kinds.includes(kind) && !(all && sight.own));
+  const sees = (role: string, kind: string, all: boolean) => sights.some((sight) => (sight.roles === "*" || sight.roles.includes(role)) && sight.kinds.includes(kind) && !(all && (sight.own || sight.via)));
   const roles = [...new Set([...rolesOf(app.policy), ...sights.flatMap((sight) => (sight.roles === "*" ? [] : sight.roles))])].sort();
   for (const rule of app.invariants ?? []) {
     const shape = rule.shape;

@@ -297,6 +297,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(hasLabel ? { label: (node: { id: string } & Record<string, unknown>) => String(node["label"] ?? node.id) } : {}),
       ...(lifecycleField && retired ? { lifecycle: { field: lifecycleField, retired: retired[0] === "date" ? ("date" as const) : retired } } : {}),
       ...(str(kind, "figure") ? { figure: str(kind, "figure")! } : {}),
+      ...(bool(kind, "people") ? { people: true } : {}),
       ...(computed ? { computed } : {}),
       // What the studio has no act for is CARRIED, not dropped — a glance may say a computed field too.
       ...kept(base, name(kind), shape, new Set(Object.keys(computed ?? {}))),
@@ -389,6 +390,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(bool(g, "allKinds") ? {} : { kinds: over }),
       ...(str(g, "describe") ? { describe: str(g, "describe")! } : {}),
       ...(bool(g, "self") ? { self: true } : {}),
+      ...(bool(g, "ownEnd") ? { ownEnd: true } : {}),
     };
   });
   /*
@@ -401,6 +403,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       roles: bool(sight, "everyone") ? ("*" as const) : read.out(sight.id, "seen-by").map(name),
       kinds: read.out(sight.id, "shows").map((kind) => kindName.get(kind.id) ?? name(kind)),
       ...(bool(sight, "own") ? { own: true } : {}),
+      ...(str(sight, "via") ? { via: str(sight, "via")! } : {}),
       ...(str(sight, "describe") ? { describe: str(sight, "describe")! } : {}),
     }))
     .filter((sight) => sight.kinds.length > 0);

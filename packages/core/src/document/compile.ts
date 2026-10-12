@@ -72,7 +72,7 @@ export interface CompileOptions {
   readonly fonts?: readonly string[];
 }
 
-const BUILTIN_REFS = new Set(["subject", "now", "today"]);
+const BUILTIN_REFS = new Set(["subject", "now", "today", "me"]);
 
 /** Parse and validate without compiling — the document's own sentences, before the framework's. */
 export function readDocument(raw: unknown): { readonly document?: GraviewDocument; readonly findings: readonly Finding[] } {
@@ -113,7 +113,7 @@ export function readDocument(raw: unknown): { readonly document?: GraviewDocumen
   return { document, findings: validate(document) };
 }
 
-const asArray = <T>(v: T | readonly T[] | undefined): readonly T[] => (v === undefined ? [] : Array.isArray(v) ? (v as readonly T[]) : [v as T]);
+const asArray = <T>(v: T | readonly T[] | undefined): readonly T[] => [v ?? []].flat() as readonly T[];
 
 interface EdgeInfo {
   readonly name: string;

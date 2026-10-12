@@ -110,6 +110,8 @@ export function declareInstallation<const R extends string>(options: Installatio
       status: z.enum(["active", "removed"]),
     }),
     plural: options.plurals?.user ?? "People",
+    // The installation's people: a user whose id is a principal's is that person (`self`, `own`, `via`, `ownEnd`).
+    people: true,
     label: (node) => node.label,
     // A removed person leaves the picture and never the record: what they did
     // is still theirs in the log.

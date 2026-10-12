@@ -277,6 +277,13 @@ export function describeApp<S extends AnySchema>(
    * which is a whole product's worth of struck-through buttons and no
    * error anywhere.
    */
+  // WHOSE RECORD A PRINCIPAL IS (Roadmap f-people-kind): what `$me`, `self`, `own`, `via` and `ownEnd` read.
+  const people = app.schema.definitions.find((definition) => definition.people);
+  if (people) {
+    const noun = (people as { noun?: string }).noun ?? people.kind;
+    lines.push("", "## The people", `The people are the ${pluralOf(app.schema, people.kind).toLowerCase()}: ${withArticle(noun)} whose id is a member's principal id is that member.`);
+  }
+
   if (app.policy) {
     lines.push("", "## Who may do what");
     const roles = app.policy.roles ?? [];

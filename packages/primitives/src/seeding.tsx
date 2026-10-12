@@ -178,7 +178,7 @@ function BeginInside<S extends AnySchema>({ whenFull, frame, title = "Begin", he
     const kept = store.kindsKeptFrom(principal);
     const sights = store.policy?.sees ?? [];
     const roles: readonly string[] = principal?.roles ?? [];
-    const partly = (kind: string) => sights.length > 0 && !sights.some((sight) => !sight.own && sight.kinds.includes(kind) && (sight.roles === "*" || roles.some((role) => sight.roles.includes(role))));
+    const partly = (kind: string) => sights.length > 0 && !sights.some((sight) => !sight.own && !sight.via && sight.kinds.includes(kind) && (sight.roles === "*" || roles.some((role) => sight.roles.includes(role))));
     return { ...whole, order: whole.order.filter((entry) => !kept.has(entry.kind) && !partly(entry.kind)) };
   }, [store, principal]);
   const counts = useMemo(() => {
