@@ -195,3 +195,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A failed turn says why in the host's own words (FR-166)](./a-failed-turn-says-why-in-the-host-s.md) | completed |
 | [A seat's read is bounded, and a repeated read is not re-sent (FR-167)](./a-seat-s-read-is-bounded-and-a.md) | completed |
 | [An empty last step says the floor's reading (FR-168)](./an-empty-last-step-says-the-floor-s.md) | completed |
+| [A proposal names its record by its label, and the seat knows what the person saw (FR-169)](./a-proposal-names-its-record-by-its.md) | completed |

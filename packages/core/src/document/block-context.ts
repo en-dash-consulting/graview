@@ -7,6 +7,7 @@ import { shapesFor } from "./computed-values.js";
 import type { FieldSpec } from "./schema.js";
 import type { Money } from "./template.js";
 import type { ViewSlot } from "./views.js";
+import { isoToday } from "../days.js";
 
 /*
  * A RECORD'S DECLARED BLOCKS, RESOLVED ONCE, FOR EVERYONE WHO SAYS THEM.
@@ -96,7 +97,7 @@ export function blockContextFor(source: BlockSource, principal: Principal | null
     kinds: shapesFor(schema),
     fields: node ? fieldsFor(schema, node.kind) : {},
     definition: (definition || undefined) as BlockContext["definition"],
-    today: options.today ?? seen.today?.() ?? new Date().toISOString().slice(0, 10),
+    today: options.today ?? seen.today?.() ?? isoToday(),
     money,
     heading: options.heading ?? (once ? 2 : 3),
     firstHeading,

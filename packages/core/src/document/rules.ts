@@ -8,6 +8,7 @@ import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, ty
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape } from "./expr/evaluate.js";
 import { parseExpr } from "./expr/parse.js";
 import { renderTemplate } from "./template.js";
+import { isoToday } from "../days.js";
 import { parseTemplate } from "./template-parse.js";
 import { parsedComputed } from "./computed.js";
 
@@ -82,7 +83,7 @@ export function expressionRule(
   const when = spec.when ? parseExpr(spec.when) : undefined;
   const says = spec.says ? parseTemplate(spec.says) : undefined;
   const title = spec.title ?? name.replace(/-/g, " ");
-  const today = options.today ?? (() => new Date().toISOString().slice(0, 10));
+  const today = options.today ?? isoToday;
   const judge = (graph: GraphReader, subject: AnyGraphNode | null): Violation[] => {
     const shapes = (kinds ?? shapesOf(graph)) as Map<string, KindShape>;
     const ctx = { graph, subject, kinds: shapes, today: today() };

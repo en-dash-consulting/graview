@@ -190,6 +190,7 @@ export function ChatPanel<S extends AnySchema>({
 
   const conversation = useSeatConversation({
     ...(shared ? { talk: seatTalk } : {}),
+    said: (proposal) => describeProposal(store, proposal),
     /* "This" is the seat's subject: the selection, else what the pointer settled on, else where you are. */
     answer: async (text, context) => {
       const drawn = await drawIfAsked(text);

@@ -35,8 +35,8 @@ describe("a creating act's line in the log", () => {
   const store = new Store<AnySchema>({ schema: app.schema, mutations: (app.mutations ?? []) as never, snapshot: { nodes: [], edges: [] } });
   const said = (name: string, input: Record<string, unknown>) => app.mutations!.find((m) => m.name === name)!.describe!(input as never, store.graph as never);
 
-  it("names the record it made, whatever order the arguments came in", () => {
-    expect(said("add-feature", { layer: "framework", name: "A sight can reach what links to you" })).toBe("Add a feature: A sight can reach what links to you");
+  it("names the record it made, whatever order the arguments came in, and then the rest (FR-169)", () => {
+    expect(said("add-feature", { layer: "framework", name: "A sight can reach what links to you" })).toBe("Add a feature: A sight can reach what links to you (framework)");
   });
 
   /*

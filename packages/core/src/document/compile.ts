@@ -76,15 +76,16 @@ const BUILTIN_REFS = new Set(["subject", "now", "today", "me"]);
 
 /** Parse and validate without compiling — the document's own sentences, before the framework's. */
 export function readDocument(raw: unknown): { readonly document?: GraviewDocument; readonly findings: readonly Finding[] } {
+  // Measured as it came, text or a value: one sentence for either too large, and no text that size parsed.
+  if ((typeof raw === "string" ? raw : JSON.stringify(raw ?? null)).length > MAX_DOCUMENT_BYTES) {
+    return { findings: [error("too-large", "", `a document may be at most ${MAX_DOCUMENT_BYTES / 1024} KB`)] };
+  }
   if (typeof raw === "string") {
-    if (raw.length > MAX_DOCUMENT_BYTES) return { findings: [error("too-large", "", `a document may be at most ${MAX_DOCUMENT_BYTES / 1024} KB`)] };
     try {
       raw = JSON.parse(raw);
     } catch (e) {
       return { findings: [error("not-json", "", `this is not JSON: ${(e as Error).message}`)] };
     }
-  } else if (JSON.stringify(raw ?? null).length > MAX_DOCUMENT_BYTES) {
-    return { findings: [error("too-large", "", `a document may be at most ${MAX_DOCUMENT_BYTES / 1024} KB`)] };
   }
   // An older format is upgraded before it is read (upgrade.ts); the host records that as a new version.
   try {

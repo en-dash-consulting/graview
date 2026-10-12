@@ -1,7 +1,7 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
-import { dayAsRead, ISO_DAY } from "../days.js";
+import { dayAsRead, ISO_DAY, isoToday } from "../days.js";
 
 /*
  * TEMPLATES: "{name}", "{status} · {quote|money}", "{fills.name}".
@@ -159,7 +159,7 @@ export interface RenderContext {
 
 /** Render a parsed template. A part that cannot be judged renders as "—" rather than failing the whole sentence. */
 export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContext): string {
-  const today = ctx.today ?? new Date().toISOString().slice(0, 10);
+  const today = ctx.today ?? isoToday();
   return parts
     .map((part) => {
       if (part.text !== undefined) return part.text;
