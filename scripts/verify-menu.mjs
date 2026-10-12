@@ -20,13 +20,24 @@ import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
+import { deadline } from "./lib/deadline.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ENGINE = engineName();
 
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {} };
-const app = await serving("todo", portFor("todo"), repoRoot);
+let app;
 let browser;
+// Each claim gets three minutes; one that takes longer fails by name (lib/deadline.mjs).
+const reach = deadline({
+  verdict: resolve(repoRoot, "docs/menu.json"),
+  report,
+  cleanup: async () => {
+    await browser?.close();
+    app?.stop();
+  },
+});
+app = await serving("todo", portFor("todo"), repoRoot);
 
 const MENU = '[data-testid="context-menu"]';
 
@@ -51,6 +62,7 @@ async function closeActs(page) {
 }
 
 try {
+  reach("pinThenReorder");
   browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
   const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   const errors = [];
@@ -108,6 +120,7 @@ try {
   };
 
   /* -------------------------------------------- the pin is this browser's */
+  reach("pinSurvivesReloadAndUnpins");
   await page.reload({ waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 });
   await page.waitForTimeout(800);
@@ -134,6 +147,7 @@ try {
   };
 
   /* ------------------------------------- the dev's pin is overridable too */
+  reach("devPinOverride");
   // finish is pinned by the app's own declaration. The same star demotes
   // it for this person — and brings it back. Without this, the star on a
   // declared pin was a control that visibly did nothing.
@@ -157,6 +171,7 @@ try {
   };
 
   /* --------------------------- the list leads with the thing you clicked */
+  reach("leadsWithWhatYouClicked");
   /*
    * ONE RULE, FIVE LATE TASKS, TEN REPAIRS — and until the derivation knew
    * which node the gesture landed on, it offered them in the order the rule
@@ -268,6 +283,7 @@ try {
   };
 
   /* ------------------------------------ the keyboard keeps its place */
+  reach("theKeyboardKeepsItsPlace");
   /*
    * EVERY ACT TAKEN FROM THE KEYBOARD used to end at the top of the
    * document: the list is live — an act applies and goes, a pin regroups,
@@ -313,10 +329,33 @@ try {
   await page.keyboard.press("Enter");
   await page.waitForSelector("[data-graview-asking]");
   await page.waitForTimeout(200);
-  // Answer every open argument, so the ask actually closes.
-  while ((await page.$("[data-graview-asking]")) !== null) {
-    await page.keyboard.type("90");
-    await page.keyboard.press("Enter");
+  /*
+   * ANSWER EVERY OPEN ARGUMENT, so the ask actually closes — the way a
+   * person on the keyboard would: type into a field, pass over a file.
+   *
+   * This loop typed "90" and pressed Enter until the ask went away, which
+   * held for as long as every argument was a field you type into. Then the
+   * example's tasks gained attachments: the third step became a file
+   * editor, the keyboard landed on "Choose files", Enter opened a file
+   * chooser nobody answers, and the loop asked again forever — the nightly
+   * ran out its sixty minutes with no verdict from this harness or the one
+   * queued behind it. A file step is passed over by its own Skip, and the
+   * loop is bounded: an ask that does not close names the step it stuck on.
+   */
+  const answered = [];
+  for (let turn = 0; (await page.$("[data-graview-asking]")) !== null; turn += 1) {
+    const asking = page.locator("[data-graview-asking]");
+    const step = ((await asking.locator("span").first().textContent()) ?? "").trim();
+    if (turn >= 8) throw new Error(`the ask did not close after ${turn} answers; it stopped on "${step}"`);
+    if ((await asking.locator("[data-graview-file-editor]").count()) > 0) {
+      await asking.getByRole("button", { name: "Skip", exact: true }).focus();
+      await page.keyboard.press("Enter");
+      answered.push(`${step}: skipped`);
+    } else {
+      await page.keyboard.type("90");
+      await page.keyboard.press("Enter");
+      answered.push(`${step}: typed`);
+    }
     await page.waitForTimeout(400);
   }
   const afterAnAsk = await where();
@@ -324,13 +363,19 @@ try {
     afterAnAct,
     afterAPin,
     afterAnAsk,
+    answered,
     ok: !afterAnAct.body && afterAPin.inside && !afterAnAsk.body,
   };
 
+  reach.done();
   report.pageErrors = errors;
   report.passed =
     Object.values(report.checks).every((check) => check.ok) && errors.length === 0;
 } catch (error) {
+  reach.done();
+  // The claim it was driving fails by name, not only the run.
+  if (!report.checks[reach.at()]) report.checks[reach.at()] = { ok: false, stopped: String(error) };
+  report.stoppedAt = reach.at();
   report.error = String(error);
   report.passed = false;
 } finally {
