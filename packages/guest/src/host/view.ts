@@ -481,8 +481,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         if (started?.answer(data)) return;
         live.receive(data);
         tally();
-        /* Where the view asked to go is the links' to judge, so one that goes nowhere says why (FR-93). */
-        if (!failed && data?.nonce === nonce && data.type === "navigate") links.go(typeof data.place === "string" ? { place: data.place } : { record: data.to });
+        /* Where the view asked to go is the links' to judge, so one that goes nowhere says why (FR-93); one that names no string is refused unsaid. */
+        if (!failed && data?.nonce === nonce && data.type === "navigate") {
+          const to = typeof data.place === "string" ? { place: data.place } : typeof data.to === "string" && { record: data.to };
+          if (to) links.go(to);
+        }
       };
       push();
     },
