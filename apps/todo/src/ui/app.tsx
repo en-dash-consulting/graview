@@ -8,7 +8,7 @@ import {
 } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
-import type { PresenceChannel, Principal } from "@graview/core";
+import type { HostFiles, PresenceChannel, Principal } from "@graview/core";
 import type { HostAi, ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
 import example from "../data/example.json";
@@ -100,6 +100,8 @@ export interface TodoAppProps {
   readonly presence?: PresenceChannel;
   /** The AI the seat may use, as the host decided it (`ai` on the provider). Things has none of its own. */
   readonly ai?: HostAi;
+  /** Where a task's attachments are sent (FR-163): the dev server's door in development, a host's own in a deployment. */
+  readonly files?: HostFiles;
 }
 
 export function TodoApp({
@@ -115,6 +117,7 @@ export function TodoApp({
   onSeat,
   presence,
   ai,
+  files,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
   const views = useMemo(() => todoViews(), []);
@@ -145,6 +148,7 @@ export function TodoApp({
           onSchemeChange?.(next);
         }}
         {...(attachRenderer ? { attachRenderer } : {})}
+        {...(files ? { files } : {})}
       />
     </GraviewProvider>
   );
@@ -172,6 +176,7 @@ function TodoShell({
   scheme,
   onScheme,
   attachRenderer,
+  files,
 }: {
   remembers: boolean;
   syncUrl: boolean;
@@ -179,11 +184,14 @@ function TodoShell({
   scheme: Scheme;
   onScheme: (scheme: Scheme) => void;
   attachRenderer?: SceneProps["attachRenderer"];
+  files?: HostFiles;
 }) {
   const place = usePlace();
   return (
     <Shell<S>
       home={place.id}
+      // The host's files, handed to the Shell: what a task's attachments are sent to (FR-163).
+      {...(files ? { files } : {})}
       standing="Nothing is out of order"
       // Graview's own example, so it signs itself — quietly, in the person's menu.
       signature

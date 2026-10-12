@@ -62,6 +62,8 @@ export const OWN = {
   "offline-host": 5274,
   /** The host's page `verify-drawn-once` mounts Cloud's workshop into, to see a selected record drawn by one thing (FR-141–FR-143). */
   "drawn-once-host": 5273,
+  /** The host's page `verify-files` mounts a house's repairs into, and the dev server's files door beside it (FR-162, FR-163). */
+  "files-host": 5263,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */
   "long-text-host": 5271,
   /** The host's page `verify-seat-guide` mounts the todo app into, to switch faces in place under one conversation. */

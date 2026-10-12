@@ -309,7 +309,8 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
   if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today);
   if (spec?.type === "enum" && typeof value === "string") return valueWords(ctx.definition, key, value);
   if (typeof value === "number") return value.toLocaleString("en-US");
-  if (filesOf(value).length > 0) return filesOf(value).map(fileWords).join(", ");
+  const files = filesOf(value);
+  if (files[0]) return files.map(fileWords).join(", ");
   if (Array.isArray(value)) return value.map((one) => String(one)).join(", ");
   if (typeof value === "object") return NOTHING;
   return String(value);
@@ -358,11 +359,10 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       return withProblem({ t: "field", field: block.field, label, text, ...(href ? { href } : {}) }, problem);
     }
     case "image": {
-      const label = block.label ?? fieldWords(ctx.definition, block.field);
-      const files = ctx.node && Object.hasOwn(ctx.node, block.field) ? filesOf(ctx.node[block.field]) : [];
-      const shown = block.as === "thumb" ? files.filter(isImage).slice(0, 1) : files;
-      const base = { t: "image" as const, field: block.field, label, as: block.as, files: shown, text: shown.length > 0 ? shown.map(fileWords).join(", ") : NOTHING };
-      return ctx.node ? base : { ...base, problem: `"${block.field}" names a field, and these blocks are about no one record` };
+      // About no one record there are no files: the check says so of the home's blocks.
+      const all = filesOf(ctx.node && Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : null);
+      const files = block.as === "gallery" ? all : all.filter(isImage).slice(0, 1);
+      return { t: "image", field: block.field, label: block.label ?? fieldWords(ctx.definition, block.field), as: block.as, files, text: files.map(fileWords).join(", ") || NOTHING };
     }
     case "progress": {
       const value = judge(block.value, ctx);

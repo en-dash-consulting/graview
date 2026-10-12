@@ -26,6 +26,8 @@ export type { StoredMeta } from "./meta.js";
 export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
 export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
+// The host's files at an address, for a page's `files` (FR-163): what the dev door answers.
+export { filesAt } from "./files-at.js";
 export { SEAT_HEADERS } from "./seat-headers.js";
 export { createBroadcastPresence, presenceChannelName } from "./presence.js";
 export type { BroadcastPresenceOptions, ChannelLike } from "./presence.js";

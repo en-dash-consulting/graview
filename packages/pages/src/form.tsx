@@ -12,7 +12,7 @@ import {
 import { formFields, formArgs, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
-import { FilesControl } from "@graview/primitives/pages";
+import { Files } from "@graview/primitives/pages";
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 /**
@@ -396,22 +396,10 @@ function Control<S extends AnySchema>({
       );
     }
     case "file":
-      return (
-        <fieldset data-graview-part="group" data-graview-field="file">
-          <legend data-graview-part="label">{title}</legend>
-          <FilesControl value={value} onChange={onChange} several={false} image={spec.image === true} label={named} />
-        </fieldset>
-      );
     case "list": {
-      // A list of pictures or documents is put there several at once, through the host's upload (FR-163).
-      if (spec.item.control === "file") {
-        return (
-          <fieldset data-graview-part="group" data-graview-field="files">
-            <legend data-graview-part="label">{title}</legend>
-            <FilesControl value={value} onChange={onChange} several image={spec.item.image === true} label={named} />
-          </fieldset>
-        );
-      }
+      // A picture or a document, or a list of them put there several at once, through the host's upload (FR-163).
+      const file = spec.control === "file" ? spec : spec.item.control === "file" ? spec.item : undefined;
+      if (file || spec.control === "file") return <Files as="control" title={title} value={value} onChange={onChange} several={file !== spec} image={file?.image === true} label={named} />;
       const items = Array.isArray(value) ? (value as unknown[]) : [];
       return (
         <fieldset data-graview-part="group" data-graview-field="list">

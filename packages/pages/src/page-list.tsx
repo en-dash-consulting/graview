@@ -1,4 +1,4 @@
-import { ArrangeBar, FileThumb, pageSays } from "@graview/primitives/pages";
+import { ArrangeBar, Files, pageSays } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement } from "@graview/core/arrange";
 import {
   describeSearched,
@@ -249,9 +249,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const said = glance(read as Record<string, unknown>, definition, label);
     // Found by the words in a field rather than the name: say which, as the Find box does.
     const why = typed.words ? matchNode(definition, node, typed.words) : undefined;
-    // Its first picture, small, beside its name (FR-162).
-    const picture = firstPicture(node as Record<string, unknown>, definition);
-    const thumb = picture ? <FileThumb file={picture} size={large ? 32 : 56} style={large ? { alignSelf: "center" } : { gridRow: "span 3" }} /> : null;
+    // Its first picture, small, beside its name (FR-162) — not down a large list's index.
+    const picture = large ? undefined : firstPicture(node as Record<string, unknown>, definition);
     // A large list is read down a column: each record one line, its glance at the line's end.
     return (
       <li
@@ -262,7 +261,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             : {
                 display: "grid",
                 // One track no wider than the page, and a long unbroken value (an email) breaks inside it (W-175); its picture, when it has one, beside it.
-                gridTemplateColumns: thumb ? "auto minmax(0, 1fr)" : "minmax(0, 1fr)",
+                gridTemplateColumns: picture ? "auto minmax(0, 1fr)" : "minmax(0, 1fr)",
                 columnGap: 14,
                 gap: 2,
                 padding: "14px 0",
@@ -271,7 +270,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
               }
         }
       >
-        {thumb}
+        {picture ? <Files as="thumb" file={picture} style={{ gridRow: "span 3" }} /> : null}
         <Link
           to={recordPath(store.schema, kind, node.id)}
           style={large ? { ...plain, flex: "1 1 14rem", minWidth: 0, fontSize: "1rem", fontWeight: 600, lineHeight: 1.35 } : { ...plain, fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, lineHeight: 1.3 }}

@@ -3,6 +3,7 @@ import { applySettings } from "@graview/react";
 import { createRoot } from "react-dom/client";
 import { PagesApp } from "@graview/pages";
 import { aiThroughDevServer, type HostAi } from "@graview/tools";
+import { filesAt } from "@graview/ship/browser";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
@@ -86,6 +87,14 @@ const { opened, principal, remembers, presence } = await open();
 const ai = (window as unknown as { __todoAi?: HostAi }).__todoAi ?? ((import.meta as { env?: { DEV?: boolean } }).env?.DEV ? await aiThroughDevServer() : undefined);
 
 /*
+ * WHERE A TASK'S ATTACHMENTS GO (FR-163). In development, the dev server's
+ * door (`devFiles` in vite.config.ts), which keeps them in memory; a built
+ * page has no door, hands no `files`, and the editor says this host takes
+ * none.
+ */
+const files = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? filesAt("/__graview/files", { maxBytes: 10_000_000, kinds: ["image/*", "application/pdf", "text/plain"] }) : undefined;
+
+/*
  * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
  * its view state); the routed face lives under "/pages" on ordinary paths.
  * Same store machinery, same ids — a record page links to its spatial stop
@@ -118,6 +127,7 @@ if (window.location.pathname.startsWith("/pages")) {
         app: todoApp,
         ...(presence ? { presence } : {}),
         ...(ai ? { ai } : {}),
+        ...(files ? { files } : {}),
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is
@@ -136,6 +146,7 @@ if (window.location.pathname.startsWith("/pages")) {
       remembers={remembers}
       presence={presence}
       {...(ai ? { ai } : {})}
+      {...(files ? { files } : {})}
       syncUrl
       renderer="dom"
       initialScheme={scheme}

@@ -1,7 +1,7 @@
-import { filesOf, isFileValue, isImage, type FileValue, type HostFiles } from "@graview/core";
-import { fileWords } from "@graview/core/blocks";
+import { fieldWords, filesOf, isFileValue, isImage, LOCAL_LAYERS, type FileValue, type HostFiles } from "@graview/core";
+import { fileFieldsOf, fileWords } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
-import { useHostFiles } from "@graview/react/provider";
+import { useGraview, useHostFiles, useNode } from "@graview/react/provider";
 import { useEffect, useId, useRef, useState, type ClipboardEvent, type CSSProperties, type DragEvent, type ReactNode } from "react";
 import { resample } from "./resample.js";
 
@@ -136,7 +136,7 @@ const ROUND = "var(--graview-radius, 8px)";
 const QUIET: CSSProperties = { color: "var(--graview-ink-muted)", fontSize: "0.8125rem" };
 
 /** One picture, small: on a card, a row, an `image` block's `thumb`. */
-export function FileThumb({ file, size = 56, style }: { readonly file: FileValue; readonly size?: number; readonly style?: CSSProperties }) {
+function FileThumb({ file, size = 56, style }: { readonly file: FileValue; readonly size?: number; readonly style?: CSSProperties }) {
   return (
     <img
       src={file.href}
@@ -156,7 +156,7 @@ export function FileThumb({ file, size = 56, style }: { readonly file: FileValue
  * opening full size in a dialog that gives the keyboard back to it; its
  * documents by name, type and size — a PDF inline, the rest a download.
  */
-export function FilesShown({ files, label }: { readonly files: readonly FileValue[]; readonly label: string }) {
+function FilesShown({ files, label }: { readonly files: readonly FileValue[]; readonly label: string }) {
   const pictures = files.filter(isImage);
   const documents = files.filter((file) => !isImage(file));
   const [open, setOpen] = useState<number | null>(null);
@@ -237,12 +237,6 @@ export function FilesShown({ files, label }: { readonly files: readonly FileValu
   );
 }
 
-/** An `image` block (FR-162): the record's first picture, small, or every file, as its page shows them. */
-export function FilesBlock({ files, label, as }: { readonly files: readonly FileValue[]; readonly label: string; readonly as: "thumb" | "gallery" }) {
-  if (files.length === 0) return null;
-  return as === "thumb" ? <FileThumb file={files[0]!} size={72} /> : <FilesShown files={files} label={label} />;
-}
-
 // ── put there ─────────────────────────────────────────────────────────────
 
 export interface FilesEditorProps {
@@ -256,6 +250,8 @@ export interface FilesEditorProps {
   readonly image: boolean;
   /** The field, in the declaration's words. */
   readonly label: string;
+  /** Each file small beside its name: where nothing else draws them (a form). Not under a gallery that already does. */
+  readonly thumbs?: boolean;
 }
 
 /**
@@ -264,7 +260,7 @@ export interface FilesEditorProps {
  * the host takes, what it refused and why; without a host's files it says
  * this host takes none, and offers no way to add one.
  */
-export function FilesEditor({ value, onChange, several, image, label }: FilesEditorProps) {
+export function FilesEditor({ value, onChange, several, image, label, thumbs = true }: FilesEditorProps) {
   const host = useHostFiles();
   const id = useId();
   const picker = useRef<HTMLInputElement | null>(null);
@@ -353,7 +349,7 @@ export function FilesEditor({ value, onChange, several, image, label }: FilesEdi
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
           {value.map((file, index) => (
             <li key={file.href} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-              {isImage(file) ? <FileThumb file={file} size={40} /> : null}
+              {thumbs && isImage(file) ? <FileThumb file={file} size={40} /> : null}
               <span style={{ flex: "1 1 8rem", minWidth: 0, overflowWrap: "anywhere" }}>{file.name}</span>
               <CaptionInput file={file} onCaption={(caption) => change(value.map((one, at) => (at === index ? withCaption(one, caption) : one)), caption ? `${file.name} now says “${caption}”.` : `${file.name} says its name again.`)} />
               {several && index > 0 ? (
@@ -493,23 +489,13 @@ function Row({ field, label, labelStyle, valueStyle, style, children }: Omit<Fil
   );
 }
 
-/** A file field on a record where nothing changes it here: its files as the page shows them, or nothing when it holds none. */
-export function FileRow(props: FileRowProps) {
-  if (props.files.length === 0) return null;
-  return (
-    <Row {...props}>
-      <FilesShown files={props.files} label={props.label} />
-    </Row>
-  );
-}
-
 /**
  * A FILE FIELD ON A RECORD, CHANGED WHERE IT STANDS: its files as the page
  * shows them and, where an act writes the field, its editor — whose new
  * value is that act, recorded, judged and undone like any other edit. A
  * field that holds none and that nothing here may change is not drawn.
  */
-export function FileField(props: FileRowProps): ReactNode {
+function FileField(props: FileRowProps): ReactNode {
   const { nodeId, field, label, files } = props;
   const { fields, commit } = useEditableFields(nodeId);
   const editable = fields.find((candidate) => candidate.field === field && candidate.takesValue);
@@ -523,6 +509,7 @@ export function FileField(props: FileRowProps): ReactNode {
       {editable && one?.type === "file" ? (
         <FilesEditor
           value={files}
+          thumbs={false}
           several={several}
           image={one.image === true}
           label={label}
@@ -537,7 +524,61 @@ export function FileField(props: FileRowProps): ReactNode {
   );
 }
 
-/** A form's file control (`control: "file"`, or a list of them): the editor, its value held by the form until it is sent. */
-export function FilesControl({ value, onChange, several, image, label }: { readonly value: unknown; readonly onChange: (next: unknown) => void; readonly several: boolean; readonly image: boolean; readonly label: string }) {
-  return <FilesEditor value={filesOf(value)} several={several} image={image} label={label} onChange={(next) => onChange(several ? next : next[next.length - 1])} />;
+/**
+ * WHAT A FACE ASKS OF A RECORD'S FILES, BY ONE DOOR (`files-door.tsx`): a
+ * file field on a record (`field`, changed in place unless `read`), the file
+ * fields it holds none in yet (`unfilled`), a thumbnail (`thumb`), an `image`
+ * block (`block`) and a form's control (`control`, in its fieldset unless
+ * `bare`). One door, so a face that draws files carries one small part.
+ */
+export type FilesProps =
+  | ({ readonly as: "field"; readonly read?: boolean } & FileRowProps)
+  | { readonly as: "unfilled"; readonly nodeId: string; readonly skip: readonly string[]; readonly labels?: Readonly<Record<string, string>>; readonly labelStyle?: CSSProperties; readonly style?: CSSProperties }
+  | { readonly as: "thumb"; readonly file: FileValue; readonly size?: number; readonly style?: CSSProperties }
+  | { readonly as: "block"; readonly field: string; readonly files: readonly FileValue[]; readonly label: string; readonly view: "thumb" | "gallery" }
+  | { readonly as: "control"; readonly value: unknown; readonly onChange: (next: unknown) => void; readonly several: boolean; readonly image: boolean; readonly label: string; readonly title?: string };
+
+export function drawFiles(props: FilesProps): ReactNode {
+  switch (props.as) {
+    case "field":
+      return props.read ? (props.files.length > 0 ? <Row {...props}><FilesShown files={props.files} label={props.label} /></Row> : null) : <FileField {...props} />;
+    case "unfilled":
+      return <Unfilled {...props} />;
+    case "thumb":
+      return <FileThumb {...props} />;
+    case "block":
+      // A gallery's pictures are pressed, so they stand above the card's own link.
+      return props.files.length > 0 ? (
+        <span className="graview-spec-image" data-graview-field={props.field} data-graview-image={props.view} style={{ display: "block", minWidth: 0, ...(props.view === "gallery" ? { position: "relative", zIndex: LOCAL_LAYERS.raised } : {}) }}>
+          {props.view === "thumb" ? <FileThumb file={props.files[0]!} size={72} /> : <FilesShown files={props.files} label={props.label} />}
+        </span>
+      ) : null;
+    case "control": {
+      const editor = <FilesEditor value={filesOf(props.value)} several={props.several} image={props.image} label={props.label} onChange={(next) => props.onChange(props.several ? next : next[next.length - 1])} />;
+      return props.title === undefined ? (
+        editor
+      ) : (
+        <fieldset data-graview-part="group" data-graview-field={props.several ? "files" : "file"}>
+          <legend data-graview-part="label">{props.title}</legend>
+          {editor}
+        </fieldset>
+      );
+    }
+  }
+}
+
+/** The file fields a record holds none in yet, where an act may put one: each drawn as its editor, under its label (FR-163). */
+function Unfilled({ nodeId, skip, labels, labelStyle, style }: Extract<FilesProps, { as: "unfilled" }>) {
+  const { store } = useGraview();
+  const node = useNode(nodeId);
+  const definition = node ? store.schema.tryDefinition(node.kind) : undefined;
+  const keys = fileFieldsOf(definition).filter((key) => !skip.includes(key) && !(definition?.display?.hide ?? []).includes(key) && filesOf(node?.[key as never]).length === 0);
+  if (keys.length === 0) return null;
+  return (
+    <dl style={{ margin: 0, display: "grid", gap: 14, minWidth: 0 }}>
+      {keys.map((key) => (
+        <FileField key={key} nodeId={nodeId} field={key} label={labels?.[key] ?? fieldWords(definition, key)} files={[]} {...(labelStyle ? { labelStyle } : {})} {...(style ? { style } : {})} />
+      ))}
+    </dl>
+  );
 }

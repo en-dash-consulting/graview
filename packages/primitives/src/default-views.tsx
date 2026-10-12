@@ -41,7 +41,7 @@ const ArrangeBar = lazyModule(retryingImport(() => import("./arrange-bar.js"))).
 );
 import { Connections } from "./connections.js";
 import { EditableTitle, Fields } from "./editable.js";
-import { FileThumb } from "./files-door.js";
+import { Files } from "./files-door.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
 import { RecordHeadContext } from "./record-head.js";
 
@@ -470,7 +470,7 @@ export function registerDefaultViews<S extends AnySchema>(
           tone={props.flagged?.includes(node.id) ? "warning" : "muted"}
           fit
         >
-          {picture ? <FileThumb file={picture} size={64} style={{ marginBottom: 6 }} /> : null}
+          {picture ? <Files as="thumb" file={picture} size={64} style={{ marginBottom: 6 }} /> : null}
           <Roster
             items={fields.map((field) => ({
               id: field.key,

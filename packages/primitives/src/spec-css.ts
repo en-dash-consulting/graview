@@ -36,8 +36,6 @@ ${/* A STATE BADGE, the one pill a record wears (FR-117), and never cut
 .graview-spec-label { color: var(--graview-ink-muted); }
 .graview-spec-value { min-width: 0; color: var(--graview-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .graview-spec-link { position: relative; z-index: ${LOCAL_LAYERS.raised}; color: var(--graview-accent); text-decoration: underline; }
-.graview-spec-image { display: block; min-width: 0; }
-.graview-spec-image[data-graview-image="gallery"] { position: relative; z-index: ${LOCAL_LAYERS.raised}; }
 .graview-spec-progress { display: grid; gap: 4px; font-size: 0.8125rem; }
 .graview-spec-progress > .graview-spec-label, .graview-spec-progress > .graview-spec-value { white-space: nowrap; }
 .graview-spec-track { display: block; height: 6px; border-radius: 999px; background: var(--graview-edge); overflow: hidden; }
