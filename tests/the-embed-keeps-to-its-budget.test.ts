@@ -1,9 +1,10 @@
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, without types.
-import { BUDGETS, measureBudgets } from "../scripts/lib/bundle-budget.mjs";
+import { BASES, BUDGETS, measureBudgets, readRaises, withRaises } from "../scripts/lib/bundle-budget.mjs";
 
 /**
  * THE EMBED KEEPS TO ITS BUDGET (FR-19). A chat's widget that shows only
@@ -78,5 +79,54 @@ describe("the embed's bundle budget", () => {
   it("is checked where CI checks the tarballs", () => {
     const inspect = readFileSync(resolve(repo, "scripts/inspect-pack.mjs"), "utf8");
     expect(inspect).toContain("measureBudgets");
+  });
+});
+
+/*
+ * A RAISE IS A FILE OF ITS OWN, so two pull requests raising one entry
+ * never conflict — and it is still a decision somebody explained: one that
+ * names no budget, or says nothing, fails every measure.
+ */
+describe("a budget's raises", () => {
+  type Base = { name: string; minified: number; gzipped: number };
+  const raisesOf = (files: Record<string, unknown>) => {
+    const dir = mkdtempSync(join(tmpdir(), "budget-raises-"));
+    try {
+      for (const [file, raise] of Object.entries(files)) writeFileSync(join(dir, file), JSON.stringify(raise));
+      return readRaises(dir);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+  const note = "Raised when a test came to raise it twice, 100 / 10 more. Measured at nothing.";
+
+  it("holds an entry to its base plus the sum of its raises", () => {
+    const base = (BASES as Base[]).find((one) => one.name === "every face")!;
+    const raises = raisesOf({
+      "one.json": { budget: "every face", minified: 100, gzipped: 10, note },
+      "two.json": { budget: "every face", minified: 250, gzipped: -4, note },
+    });
+    const raised = (withRaises(BASES, raises) as (Base & { raises: string[] })[]).find((one) => one.name === "every face")!;
+    expect([raised.minified, raised.gzipped]).toEqual([base.minified + 350, base.gzipped + 6]);
+    expect(raised.raises).toEqual(["one.json", "two.json"]);
+  });
+
+  it("fails a raise that names an entry there is no budget for", () => {
+    const raises = raisesOf({ "typo.json": { budget: "every faces", minified: 100, gzipped: 10, note } });
+    expect(() => withRaises(BASES, raises)).toThrow(/typo\.json raises "every faces", which is not a budget/);
+  });
+
+  it("fails a raise that carries no note", () => {
+    expect(() => withRaises(BASES, raisesOf({ "quiet.json": { budget: "every face", minified: 100, gzipped: 10 } }))).toThrow(/quiet\.json carries no note/);
+    expect(() => withRaises(BASES, raisesOf({ "terse.json": { budget: "every face", minified: 100, gzipped: 10, note: "  " } }))).toThrow(/terse\.json carries no note/);
+  });
+
+  it("fails a raise that does not say its bytes as whole numbers", () => {
+    expect(() => withRaises(BASES, raisesOf({ "vague.json": { budget: "every face", minified: "a little", gzipped: 10, note } }))).toThrow(/vague\.json must say how many bytes minified/);
+  });
+
+  it("reads every raise in the tree, and every one of them holds", () => {
+    expect(() => withRaises(BASES, readRaises())).not.toThrow();
+    expect((BUDGETS as Base[]).map((one) => one.name)).toEqual((BASES as Base[]).map((one) => one.name));
   });
 });

@@ -14,27 +14,65 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
+  # SIDE BY SIDE, NOT ONE AFTER ANOTHER. One runner taking every step in turn
+  # was about twelve minutes a pull request (the tests six and a half of
+  # them), and every pull request waits on it. Each job here is its own
+  # machine and builds for itself: a build is about a minute (`pnpm
+  # typecheck` is the same `tsc -b` over the packages and the apps, and the
+  # tests read the apps' dist), and handing it from one job to the next as
+  # an artifact would put that minute, an upload and a download in front of
+  # every other job instead of beside them. Every step that ran on the one
+  # runner runs on one of these; `verify`, at the end, is the check main's
+  # rules ask for, and it passes only when every one of them did.
+
+  # The tests, a third of the files each (vitest's own sharding).
+  test:
+    name: test (${{ matrix.shard }}/3)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
         with:
-          # Changesets needs the history to tell what has changed since main.
+          # The history, as the one runner had it.
           fetch-depth: 0
-
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
 
+      # The tests read what the packages and the apps build to (the docs
+      # generator reads what `graview create` writes; a template's project
+      # its app's dist), so they run where the typecheck has.
       - name: Typecheck
         run: pnpm typecheck
 
       - name: Test
-        run: pnpm test
+        run: pnpm vitest run --shard=${{ matrix.shard }}/3
+
+  packages:
+    name: typecheck, build and the tarballs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The history, as the one runner had it.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
 
       - name: Build
         run: pnpm build
@@ -66,21 +104,82 @@ jobs:
       - name: Build a scratch app from the tarballs
         run: node scripts/smoke-install.mjs
 
-      # And whether the ONBOARDING works: `graview create` writes a project,
-      # the project installs from the tarballs, its own `verify` passes, the
-      # skills land, and a real browser opens it — because "it typechecks"
-      # is not "it runs". Then the same by path, the way the first-party
-      # products consume the framework.
+  # And whether the ONBOARDING works: `graview create` writes a project,
+  # the project installs from the tarballs, its own `verify` passes, the
+  # skills land, and a real browser opens it — because "it typechecks"
+  # is not "it runs". Then the same by path, the way the first-party
+  # products consume the framework.
+  scaffold:
+    name: scaffold a project, install it, verify it, open it
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The history, as the one runner had it.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Build
+        run: pnpm build
       - name: A browser for the scaffolded app
         run: npx playwright install --with-deps chromium
       - name: Scaffold a project, install it, verify it, open it
         run: node scripts/smoke-create.mjs
 
-      # The example the docs teach from, grown a chapter at a time, each
-      # chapter opened in a browser: a chapter that stops holding its claim
-      # fails the build rather than the page.
+  # The example the docs teach from, grown a chapter at a time, each
+  # chapter opened in a browser: a chapter that stops holding its claim
+  # fails the build rather than the page.
+  progression:
+    name: photograph the progression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The history, as the one runner had it.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Build
+        run: pnpm build
+      - name: A browser for the chapters
+        run: npx playwright install --with-deps chromium
       - name: Photograph the progression
         run: node scripts/progression.mjs
+
+  # THE CHECK MAIN'S RULES ASK FOR, by the name they ask for it. It runs
+  # whatever happened above (`always()`), so a job that failed or was
+  # called off makes this fail rather than leave the check skipped, which
+  # the rules would count as passing.
+  verify:
+    if: always()
+    needs: [test, packages, scaffold, progression]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node -e '
+            const needs = JSON.parse(process.env.RESULTS);
+            const failed = Object.entries(needs).filter(([, job]) => job.result !== "success");
+            for (const [name, job] of Object.entries(needs)) console.log(`${job.result === "success" ? "ok  " : "FAIL"} ${name}: ${job.result}`);
+            if (failed.length > 0) process.exit(1);
+          '
 
   changeset:
     # A version bump is a decision, and one nobody made is one nobody can

@@ -120,7 +120,12 @@ then refused, no page error — and the ledger (`docs/watch/ledger.json`)
 keeps each problem once across harnesses and runs: a run ends by saying
 what is new, still open, fixed, and back after a fix. `tests/site.test.ts`
 checks that `docs/site` matches the tree — after changing package
-descriptions, skills or test counts, run `pnpm site:build:all`.
+descriptions or skills, run `pnpm site:build:all`. The test count on the
+landing page is not a pull request's to write: the Version packages step and
+the Pages deploy fill it in (`site-numbers.mjs --release`), so a PR never
+touches `docs/site/index.html` or the sitemap just because it added tests.
+A bundle budget raise is a file of its own in `scripts/budget-raises/`
+(see `scripts/lib/bundle-budget.mjs`), never an edit to an entry's numbers.
 
 Run `npx playwright install chromium webkit firefox` once. Playwright is
 pinned at 1.49.1 on purpose.
