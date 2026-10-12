@@ -150,10 +150,9 @@ function FillTheGaps({ onCall }: { onCall: (call: ToolCall) => void }) {
       idle="Every shift is covered"
       onCall={onCall}
       run={async (agent) => {
-        const violations = (await agent.run("get_violations", {})) as {
-          invariant: string;
-          repairs: { mutation: string; args?: Record<string, unknown> }[];
-        }[];
+        const { violations } = (await agent.run("get_violations", {})) as {
+          violations: { invariant: string; repairs: { mutation: string; args?: Record<string, unknown> }[] }[];
+        };
         for (const violation of violations) {
           if (violation.invariant !== "every-shift-covered") continue;
           const repair = violation.repairs.find((candidate) => candidate.mutation === "cover");

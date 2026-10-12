@@ -193,3 +193,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A phone's seat is put away by its ✕, a tap or a pull down, and the keyboard goes down with it (FR-164)](./a-phone-s-seat-is-put-away-by-its-a.md) | completed |
 | [An app fills the phone after it turns (FR-165)](./an-app-fills-the-phone-after-it-turns.md) | completed |
 | [A failed turn says why in the host's own words (FR-166)](./a-failed-turn-says-why-in-the-host-s.md) | completed |
+| [A seat's read is bounded, and a repeated read is not re-sent (FR-167)](./a-seat-s-read-is-bounded-and-a.md) | completed |
+| [An empty last step says the floor's reading (FR-168)](./an-empty-last-step-says-the-floor-s.md) | completed |

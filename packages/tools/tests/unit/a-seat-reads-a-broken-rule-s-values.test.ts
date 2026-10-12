@@ -53,7 +53,7 @@ describe("a seat reads a broken rule's values", () => {
     const tools = createToolRuntime(store);
     const result = await tools.call("get_violations", {});
     expect(result.ok).toBe(true);
-    const [violation] = (result as { data: Violation[] }).data;
+    const [violation] = (result as { data: { violations: Violation[] } }).data.violations;
     expect(violation!.message).toBe("A wedding planner on Small: Margin above target — margin 31% < target 40%");
     // A model reads words: the parts a page draws the line with stay off the answer.
     expect(violation).not.toHaveProperty("line");

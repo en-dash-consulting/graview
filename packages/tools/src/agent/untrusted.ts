@@ -109,45 +109,6 @@ export function authorship<S extends AnySchema>(store: Store<S>, caller: Princip
 
 const wrap = (text: string, author: Author, by: Authorship): UntrustedText => ({ untrusted: true, authoredBy: by.say(author), text });
 
-/** A record with each field somebody else wrote as their words. */
-export function markNode<N extends { id: string; kind: string }>(node: N, by: Authorship): N {
-  let out: Record<string, unknown> | undefined;
-  for (const [field, value] of Object.entries(node)) {
-    if (typeof value !== "string" || field === "id" || field === "kind") continue;
-    const author = by.fieldBy(node.id, field);
-    if (!author) continue;
-    out ??= { ...node };
-    out[field] = wrap(value, author, by);
-  }
-  return (out ?? node) as N;
-}
-
-/**
- * A record's computed values (FR-83), with the words in them marked as
- * somebody's: a record named by a value is named in its author's words, and
- * words worked out from the record's own prose are that prose's author's.
- */
-export function markComputed(id: string, values: Readonly<Record<string, unknown>>, by: Authorship): Record<string, unknown> {
-  const mark = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(mark);
-    if (value !== null && typeof value === "object" && "id" in value && "label" in value) {
-      const record = value as { id: string; label: string };
-      const author = by.recordBy(record.id);
-      return author ? { ...record, label: wrap(record.label, author, by) } : record;
-    }
-    if (typeof value === "string") {
-      const author = by.recordBy(id);
-      return author ? wrap(value, author, by) : value;
-    }
-    return value;
-  };
-  return Object.fromEntries(Object.entries(values).map(([name, value]) => [name, mark(value)]));
-}
-
-export function markGraph<G extends { nodes: readonly { id: string; kind: string }[] }>(snapshot: G, by: Authorship): G {
-  return { ...snapshot, nodes: snapshot.nodes.map((node) => markNode(node, by)) };
-}
-
 /** Search hits whose words — a record's name, the fragment that matched — somebody else wrote. */
 export function markHits(result: SearchResult, by: Authorship): SearchResult {
   return {

@@ -30,6 +30,7 @@ export type { LlmProposal, LlmProvider } from "./providers/llm.js";
 
 // One tool surface, two transports.
 export { BY_NAME, createToolRuntime, surfaceHash, toolDefinitions } from "./agent/tools.js";
+export { READ_CHARS, READ_HITS, READ_LINKS, READ_PAGE, READ_PROBLEMS, READ_TEXT } from "./agent/bounds.js";
 export type {
   DraftTools,
   KeptLensEdit,

@@ -56,7 +56,7 @@ function opened(hidden: number) {
     } as never,
   });
 }
-const messages = async (store: Store<AnySchema>, seat: Principal) => ((await createToolRuntime(store, { author: seat }).call("get_violations", {})) as { data: Violation[] }).data.map((v) => v.message);
+const messages = async (store: Store<AnySchema>, seat: Principal) => ((await createToolRuntime(store, { author: seat }).call("get_violations", {})) as { data: { violations: Violation[] } }).data.violations.map((v) => v.message);
 
 describe("a seat's tools and a rule that reads a fact", () => {
   it("answer get_violations as the seat judges: the owner is told of three, the guest of none", async () => {

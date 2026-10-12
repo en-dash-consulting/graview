@@ -182,3 +182,39 @@ describe("seatResponder: a host's turn that fails says why in the host's words (
     expect(nothing.say).toContain("(AI didn't answer just now, so this is from the app alone.)");
   });
 });
+
+describe("seatResponder: a last step that answers nothing says the floor's reading (FR-168)", () => {
+  /* A floor with a reading and a proposal, not grounded: the model is asked, and its answer is what failed. */
+  const reading = { say: "I'd rename Widget to Gadget.", proposals: [{ mutation: "rename", args: { id: "a", label: "Gadget" }, why: "Asked." }] };
+  const floor = async () => reading;
+  const answering = (text: string) => ({ name: "claude", turn: async () => text });
+  const aside = "(AI didn't answer just now, so this is from the app alone.)";
+
+  for (const [what, text] of [
+    ["an empty answer", ""],
+    ["an answer of whitespace", "  \n"],
+    ["JSON that does not parse", '{"say": "Renamed", "proposals": [{"mutation": "rename"'],
+    ["a bare bracket", "["],
+    ["JSON that says nothing and proposes nothing", '{"say": "", "proposals": []}'],
+  ] as const) {
+    it(`says the floor's reading with the aside, for ${what}, rather than "a shape I could not read"`, async () => {
+      const reply = await seatResponder<typeof schema>(answering(text), { floor })(store(), "rename the widget to gadget");
+      expect(reply.say).toBe(`${reading.say} ${aside}`);
+      expect(reply.say).not.toContain("shape I could not read");
+      expect(reply.proposals).toEqual(reading.proposals);
+      expect(reply.via).toBeUndefined();
+    });
+  }
+
+  it("says the floor's own sentence with the aside when the floor had no proposal either", async () => {
+    const reply = await seatResponder<typeof schema>(answering(""))(store(), "hello");
+    expect(reply.say).toContain("1 Things");
+    expect(reply.say.endsWith(aside)).toBe(true);
+  });
+
+  it("still passes a model's prose through as its answer", async () => {
+    const reply = await seatResponder<typeof schema>(answering("Widget is the only thing here."), { floor: async () => ({ say: "I could not read that.", proposals: [], unsure: true }) })(store(), "what is here?");
+    expect(reply.say).toBe("Widget is the only thing here.");
+    expect(reply.via).toBe("ai:claude");
+  });
+});
