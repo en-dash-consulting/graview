@@ -399,7 +399,8 @@ try {
     ok:
       /problem/.test(grounded.text) &&
       !grounded.text.includes("AI didn't answer") &&
-      floored.text.includes("AI didn't answer just now, so this is from the app alone.") &&
+      // The host's own sentence is carried (FR-166): its model threw "the model is down".
+      floored.text.includes("AI didn't answer just now: the model is down. This is from the app alone.") &&
       flooredNote === null &&
       !new RegExp(RUNG_WORDS).test(floored.text),
   };
