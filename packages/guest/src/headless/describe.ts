@@ -1,5 +1,6 @@
 import type { DescribedItem, DescribedPart, DescribedProblem } from "@graview/core/describe";
 import type { GuestNode, GuestProps } from "../protocol.js";
+import { placesSaid } from "../host/links.js";
 import { TreeElement, type TreeNode, TreeText } from "./tree.js";
 
 /*
@@ -79,10 +80,11 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
     const record = element.getAttribute("data-record");
     if (record !== null) {
       records.add(record);
-      if (!shown.has(record)) problems.push({ at: `drawing <${element.localName} data-record="${record}">`, says: `It names "${record}", which this seat was not shown: the host will not follow it.` });
+      /* A record first, then a place by that slug, as the host follows it. */
+      if (!shown.has(record) && !places.has(record)) problems.push({ at: `drawing <${element.localName} data-record="${record}">`, says: `It names "${record}", which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(context.places)}` });
     }
     const place = element.getAttribute("data-place");
-    if (place !== null && !places.has(place)) problems.push({ at: `drawing <${element.localName} data-place="${place}">`, says: `It names the place "${place}", which this app does not have.` });
+    if (place !== null && !places.has(place)) problems.push({ at: `drawing <${element.localName} data-place="${place}">`, says: `It names the place "${place}", which this app does not have.${placesSaid(context.places)}` });
   }
 
   /** The record an element stands for: its own `data-record`, a `data-key` that is a shown record's id, or the one record linked inside it. */

@@ -35,6 +35,7 @@
  *   guest → host     { type: "style", nonce, css }                   (over the port: its one stylesheet)
  *   guest → host     { type: "pushed", nonce, push, ms }             (over the port: the runtime has drawn push `push`, in `ms`)
  *   host  → guest    { type: "dom-event", target, event, … }         (over the port: the viewer clicked, typed or chose on what it drew)
+ *   host  → guest    { type: "notice", text }                        (over the port: something it did went nowhere, and why, for its console)
  *
  * The host draws a stylesheet only as the open kit allows (host/css.ts),
  * and numbers each props push (`push`) so the runtime can say when it has
@@ -260,6 +261,8 @@ export type HostMessage =
   | GuestAnswer
   | GuestEvent
   | GuestDomEvent
+  /** Something a worker view did went nowhere, and why: its runtime says it in the view's console (FR-93). */
+  | { readonly type: "notice"; readonly text: string }
   | HostHeartbeat;
 
 export type GuestRequest =

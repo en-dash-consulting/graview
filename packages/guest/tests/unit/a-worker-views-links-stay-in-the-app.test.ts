@@ -28,7 +28,8 @@ function region() {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
-  const links = createLinks({ sees: (id) => shelf.seenBy(lin).graph.has(id), places: () => places, onNavigate: (to) => went.push(to) });
+  const lost: string[] = [];
+  const links = createLinks({ sees: (id) => shelf.seenBy(lin).graph.has(id), places: () => places, onNavigate: (to) => went.push(to), onLost: (said) => lost.push(said) });
   const drawing = createOpenDrawing(shadow, {
     origin: "null",
     send: () => {},
@@ -58,7 +59,7 @@ function region() {
     ],
   ]);
   const at = (id: string) => shadow.getElementById(id)!;
-  return { shelf, went, at, links };
+  return { shelf, went, lost, at, links };
 }
 
 describe("a worker view's links", () => {
@@ -89,10 +90,15 @@ describe("a worker view's links", () => {
   });
 
   it("goes nowhere for a record the viewer may not see, or a place the app does not have", () => {
-    const { at, went } = region();
+    const { at, went, lost } = region();
     at("hidden").dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
     at("nowhere").dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true }));
     expect(went).toEqual([]);
+    // And says why, naming the places there are: a link that goes nowhere is not silent.
+    expect(lost).toEqual([
+      '"offer:margin" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages".',
+      'The place "the-secrets" is no place of this app: it goes nowhere. Its places: "the-packages".',
+    ]);
   });
 
   it("holds the view's code to the same: a place by its slug, a record by its id, nothing else", () => {
@@ -112,5 +118,35 @@ describe("a worker view's links", () => {
     for (const asked of [{ to: "offer:strategy" }, { place: "the-packages" }, { to: "offer:margin" }, { place: "https://attacker.example" }, { to: "https://attacker.example" }]) host.receive({ type: "navigate", nonce: "n", ...asked });
     expect(went).toEqual([{ record: "offer:strategy" }, { place: "the-packages" }]);
     expect(host.stats.dropped).toBe(3);
+    // The worker view's host hands every navigate to the links, as `mountWorkerView` does, so one that goes nowhere says why.
+    const lost: string[] = [];
+    const judged = createLinks({ sees: (id) => shelf.seenBy(lin).graph.has(id), places: () => places, onLost: (said) => lost.push(said) });
+    for (const to of [{ record: "offer:margin" }, { place: "https://attacker.example" }, { record: "https://attacker.example" }]) expect(judged.go(to)).toBe(false);
+    expect(lost).toHaveLength(3);
+    for (const said of lost) expect(said).toMatch(/: it goes nowhere\. Its places: "the-packages"\.$/);
+  });
+
+  it("takes a bare string that is no record but is a place's slug to that place, and a record before a place of the same name", () => {
+    const shelf = store();
+    const went: Destination[] = [];
+    const lost: string[] = [];
+    const links = createLinks({
+      sees: (id) => shelf.seenBy(lin).graph.has(id),
+      places: () => [...places, { as: "offer:strategy", title: "Strategy", kind: "package" }],
+      onNavigate: (to) => went.push(to),
+      onLost: (said) => lost.push(said),
+    });
+    // graview.navigate("the-packages"): no record has that id, and a place has that slug.
+    expect(links.go({ record: "the-packages" })).toBe(true);
+    // A record the viewer may see comes first, though a place shares its name.
+    expect(links.go({ record: "offer:strategy" })).toBe(true);
+    expect(went).toEqual([{ place: "the-packages" }, { record: "offer:strategy" }]);
+    expect(lost).toEqual([]);
+  });
+
+  it("says so when the app has no places at all", () => {
+    const lost: string[] = [];
+    createLinks({ sees: () => false, places: () => [], onLost: (said) => lost.push(said) }).go({ record: "projections" });
+    expect(lost).toEqual(['"projections" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: none.']);
   });
 });

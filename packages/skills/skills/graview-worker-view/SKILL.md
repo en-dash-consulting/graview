@@ -44,7 +44,7 @@ graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
 graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
-graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-packages" }) a place
+graview.navigate("offer:7")     // a record, else a place by slug; or { place: "…" }
 ```
 
 `props` holds `node`, the record a view of one is drawn for, and `nodes`,
@@ -59,7 +59,13 @@ title }`, those the viewer may run), `places` (`{ as, title }`), and `theme`
 `<img src="${props.theme.logo}">`, never a URL of your own). `render` keeps what it can, by
 element and by `data-key` or `id`, so give repeated rows a `data-key`: a
 field being typed in keeps its text across a push. An event carries
-`value`, `checked`, `key`, and `pressed` for a bound press.
+`value`, `checked`, `key`, `pressed` for a bound press, and `element`,
+what the selector matched: read its `data-*`. Elements lack `closest`,
+`matches` and `dataset`.
+
+```js
+graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
+```
 
 ## What it may draw
 
@@ -99,6 +105,8 @@ not take `var()`; put paints in the stylesheet (`.bar { fill: var(--graview-acce
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links
 the host follows, on both faces. `<a href="https://…">` is drawn as text.
+A destination is a record's id, else a place's slug; any other says
+why in the console.
 
 ## Writes
 
@@ -143,9 +151,8 @@ About 256 kB of source, 5 000 drawn nodes, 120 messages a second,
 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face
 of its records is drawn instead, with why. Draw summaries, not every row
 of a huge set. Work a view schedules with timers between pushes is not
-timed per push. It can keep its own worker busy for just under the
-heartbeat's 5 s at a time; the page stays responsive, but the person's CPU
-does not, so never spin.
+timed per push. It may keep its worker busy just under the heartbeat's
+5 s; the page stays responsive, the person's CPU does not: never spin.
 
 ## Worked examples
 
@@ -166,7 +173,7 @@ pages.surface("home", workerHome({ manifest: front, worker: { source: frontSourc
 
 A view with `attach: "home"` given to `registerWorkerView` is the home's own
 view: the routed home's body, the page the app opens on — full width under
-the bar on a desk too (FR-136) — and the app's declared home is drawn if it
+the bar on a desk too — and the app's declared home is drawn if it
 fails.
 
 ## Then find out whether it worked

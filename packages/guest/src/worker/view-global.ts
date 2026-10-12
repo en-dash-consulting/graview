@@ -110,6 +110,18 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
   let current: GuestProps | undefined;
   let refusedLast: string[] = [];
 
+  /*
+   * WHAT REMOTE DOM'S ELEMENTS LACK, SAID. Its polyfill has no `closest`,
+   * `matches` or `dataset`: a view that reaches for one is told the way
+   * that works, rather than that undefined is not a function.
+   */
+  for (const name of ["closest", "matches", "dataset"]) {
+    const lacks = () => {
+      throw new TypeError(`A view's element has no ${name}: graview.on hands event.element, the element its selector matched; read event.element.getAttribute("data-…").`);
+    };
+    if (!(name in Element.prototype)) Object.defineProperty(Element.prototype, name, name === "dataset" ? { get: lacks } : { value: lacks });
+  }
+
   const root = document.createElement(VIEW_ROOT) as unknown as RemoteRootElement & Element;
 
   const byId = (id: string): Element | undefined => {
@@ -149,6 +161,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
 
   const hear = (message: HostMessage) => {
     if (message.type === "dom-event" && typeof message.target === "string") return heard(message);
+    if (message.type === "notice") return io.warn(message.text);
     if (message.type !== "props") return;
     /*
      * A PUSH, TIMED. The view's listeners run now; what they drew goes in
