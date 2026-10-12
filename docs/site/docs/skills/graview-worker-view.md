@@ -39,10 +39,14 @@ graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
 graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
-graview.navigate("offer:7")     // a record; graview.navigate({ place: "the-packages" }) a place
+graview.navigate("offer:7")     // a record, else a place by slug; or { place: "…" }
 ```
 
-`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made: draw it with `<img src="${props.theme.logo}">`, never a URL of your own). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, and `pressed` for a bound press.
+`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made: draw it with `<img src="${props.theme.logo}">`, never a URL of your own). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
+
+```js
+graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
+```
 
 ### What it may draw
 
@@ -56,7 +60,7 @@ A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and 
 
 ### Links
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text.
+`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text. A destination is a record's id, else a place's slug; any other says why in the console.
 
 ### Writes
 
@@ -82,7 +86,7 @@ The host fills it with the record's whole value, line breaks kept, when an act i
 
 ### Limits
 
-About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set. Work a view schedules with timers between pushes is not timed per push. It can keep its own worker busy for just under the heartbeat's 5 s at a time; the page stays responsive, but the person's CPU does not, so never spin.
+About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set. Work a view schedules with timers between pushes is not timed per push. It may keep its worker busy just under the heartbeat's 5 s; the page stays responsive, the person's CPU does not: never spin.
 
 ### Worked examples
 
@@ -96,7 +100,7 @@ views: (schema, registry) => registerWorkerView(registry, { manifest, worker: { 
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));
 ```
 
-A view with `attach: "home"` given to `registerWorkerView` is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too (FR-136) — and the app's declared home is drawn if it fails.
+A view with `attach: "home"` given to `registerWorkerView` is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too — and the app's declared home is drawn if it fails.
 
 ### Then find out whether it worked
 

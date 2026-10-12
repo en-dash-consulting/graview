@@ -11,6 +11,12 @@ import type { GuestPlace } from "../protocol.js";
  * presses it or presses Enter on it, to a record the viewer may see or a
  * place the app has. A view's code asks the same with `graview.navigate`,
  * and is held to the same.
+ *
+ * A bare string is a record's id first and a place's slug second, so
+ * `graview.navigate("pricing")` goes to the place when no record the
+ * viewer may see has that id. One that is neither goes nowhere, and says
+ * why — in the view's console and to the host — naming the places there
+ * are, rather than doing nothing.
  */
 
 export type Destination = { readonly record: string } | { readonly place: string };
@@ -22,6 +28,8 @@ export interface LinksOptions {
   readonly places: () => readonly GuestPlace[];
   /** Go: the face's own way to a record or a place. */
   readonly onNavigate?: (to: Destination) => void;
+  /** It went nowhere: the sentence saying why. */
+  readonly onLost?: (said: string) => void;
 }
 
 export interface Links {
@@ -29,14 +37,25 @@ export interface Links {
   link(anchor: Element): void;
   /** The viewer followed a link the host made. */
   follow(anchor: Element): void;
-  /** Go somewhere, if it is a record the viewer may see or a place of the app. Whether it went. */
+  /** Go somewhere: a record the viewer may see, else a place by that slug. Whether it went; where it did not, `onLost` hears why. */
   go(to: Destination): boolean;
 }
 
+/** The app's places, as a sentence ends with them. */
+export const placesSaid = (slugs: readonly string[]) => ` Its places: ${slugs.map((slug) => `"${slug}"`).join(", ") || "none"}.`;
+
+/** Why a destination goes nowhere, naming where it could go. */
+export const nowhere = (to: Destination, slugs: readonly string[]) =>
+  `${"place" in to ? `The place "${to.place}"` : `"${to.record}" is no record this viewer may see and`} is no place of this app: it goes nowhere.${placesSaid(slugs)}`;
+
 export function createLinks(options: LinksOptions): Links {
   const go = (to: Destination) => {
-    const ok = "record" in to ? typeof to.record === "string" && options.sees(to.record) : options.places().some((place) => place.as === to.place);
-    if (ok) options.onNavigate?.(to);
+    const slugs = options.places().map((place) => place.as);
+    /* A record the viewer may see first, then a place by that slug. */
+    const place = "place" in to ? to.place : options.sees(to.record) ? undefined : to.record;
+    const ok = place === undefined || slugs.includes(place);
+    if (ok) options.onNavigate?.(place === undefined ? to : { place });
+    else options.onLost?.(nowhere(to, slugs));
     return ok;
   };
   return {

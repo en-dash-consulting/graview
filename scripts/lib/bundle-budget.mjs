@@ -826,8 +826,11 @@ export const BUDGETS = [
     // Raised when the host's half of a worker view, and its drawing, came to be asked for again after they failed to arrive
     // (FR-139): `retryingImport`, and asking again when the browser is back online. 582 / 252 more. Measured at 127_103 / 45_742.
     // Raised when views beside editing (FR-149–FR-151), long text on a record page (FR-146–FR-148) and the places in the bar (FR-144, FR-145), landed together over a record drawn once came in one integration, with main's security review, module moves and a lens double-clicked from Up. Measured at 130_001 / 46_790.
-    minified: 130_300,
-    gzipped: 47_000,
+    // Raised when a link or `graview.navigate` that goes nowhere says why, naming the places, and a bare string that is a place's slug
+    // goes to the place (host/links.ts), and the runtime it carries as text says which DOM methods its elements lack. 740 / 336 more,
+    // all fetched only when a view first draws. Measured at 130_741 / 47_126.
+    minified: 131_000,
+    gzipped: 47_250,
     load: "all",
     lacks: ["@remote-dom/core", "@remote-dom/polyfill"],
   },
@@ -847,10 +850,15 @@ export const BUDGETS = [
      * the runtime hands it (worker/view-global.ts), so a headless run
      * (FR-95) hands a view the same global over a transcript: the budget
      * just above it.
+     *
+     * Raised at 60_379 / 20_765 when an element's `closest`, `matches` or
+     * `dataset`, which the polyfill lacks, throws a sentence naming
+     * `event.element`, and the runtime says in the view's console what the
+     * host says went nowhere: the budget just above it.
      */
     entry: `import { graview } from "@graview/guest/worker/view"; globalThis.graview = graview;`,
     minified: 60_500,
-    gzipped: 20_750,
+    gzipped: 20_850,
     load: "all",
     lacks: ["@graview/core"],
   },

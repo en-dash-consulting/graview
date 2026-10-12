@@ -22,6 +22,8 @@ export interface WorkerViewDefinition {
    * worker hears `start`, the sentence naming the directive.
    */
   readonly onFailure?: (reason: WorkerViewFailure, detail?: string) => void;
+  /** Each thing it did that went nowhere, and why (FR-93): a link or `graview.navigate` to no record and no place, naming the places there are. */
+  readonly onProblem?: (said: string) => void;
 }
 
 const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
@@ -80,6 +82,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(drawsItsOwn ? { fallback: false as const } : {}),
         ...(definition.limits ? { limits: definition.limits } : {}),
         ...(definition.author ? { author: definition.author } : {}),
+        ...(definition.onProblem ? { onProblem: definition.onProblem } : {}),
       });
     });
     return () => {

@@ -38,7 +38,8 @@ import { erin, lin, offersApp, offersSeed } from ${JSON.stringify(resolve(repoRo
 const asked = new URLSearchParams(location.search);
 window.__failures = [];
 const definition = { manifest: ${JSON.stringify(PACKAGES_MANIFEST)}, worker: { source: window.PACKAGES }, author: "Made by Claude for Nick" };
-const notes = { manifest: ${JSON.stringify(NOTES_MANIFEST)}, worker: { source: window.NOTES } };
+window.__problems = [];
+const notes = { manifest: ${JSON.stringify(NOTES_MANIFEST)}, worker: { source: window.NOTES }, onProblem: (said) => window.__problems.push(said) };
 window.__handle = mount(document.getElementById("app"), {
   app: offersApp,
   seed: offersSeed,
@@ -184,6 +185,22 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     await lens().catch(() => null);
     const placePage = await tab.evaluate(() => Boolean(document.querySelector('[data-worker-view="packages"]')?.shadowRoot?.querySelector(".package")));
     claim("on the pages face, a view's link to a place, followed with Enter, goes to that place", placePage);
+    /* graview.navigate with a bare string: a place's slug goes there; neither a record nor a place says why (FR-93). */
+    const consoled = [];
+    const hearConsole = (message) => consoled.push(message.text());
+    tab.on("console", hearConsole);
+    await open("face=pages&path=/places/what-we-heard");
+    await inRegion("notes", "#go-nowhere").click();
+    await tab.waitForFunction(() => window.__problems.length > 0, null, { timeout: 10_000 }).catch(() => {});
+    await tab.waitForTimeout(300);
+    const problems = await tab.evaluate(() => window.__problems);
+    const nowhere = '"projections" is no record this viewer may see and is no place of this app: it goes nowhere. Its places:';
+    claim("graview.navigate to no record and no place stays, and tells the host's problems why, naming the places", problems.length === 1 && problems[0].startsWith(nowhere) && problems[0].includes('"the-packages"') && Boolean(await inRegion("notes", "#go-nowhere").count()), problems);
+    claim("and says the same in the view's console", consoled.some((text) => text.startsWith(nowhere)), consoled.filter((text) => /goes nowhere/.test(text)));
+    tab.off("console", hearConsole);
+    await inRegion("notes", "#go-packages").click();
+    const slugPage = await lens().then((drawn) => drawn.packages.length === 3).catch(() => false);
+    claim('graview.navigate("the-packages"), a bare string that is no record but a place\'s slug, goes to that place', slugPage);
     await open("face=scene");
     await inScene("what-we-heard");
     await inRegion("notes", "#to-packages").waitFor({ timeout: 15_000 });
