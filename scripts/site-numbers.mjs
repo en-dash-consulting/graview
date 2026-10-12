@@ -12,6 +12,17 @@
  *
  * The test suite total is the one number here that cannot be counted from a
  * file listing, so it is read from the last run's report rather than guessed.
+ *
+ * THE COUNT THAT MOVES WITH EVERY PULL REQUEST IS THE RELEASE'S TO WRITE.
+ * Nearly every pull request adds a test, so a page that had to carry the
+ * current test count made every pull request rewrite the same line of
+ * `index.html` (and the landing page's hash in the sitemap) and conflict
+ * with the one merged before it. So the counts in `VOLATILE` are written
+ * only with `--release`: by the Version packages step (`pnpm
+ * version-packages`) and by the Pages deploy, which fills them in before it
+ * uploads the site, so graview.dev always says the number main has. Without
+ * `--release` they are left as the page has them, and `--check` holds every
+ * other count exactly as before.
  */
 import { readdirSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -119,6 +130,16 @@ export function spelled(n) {
 }
 const capital = (word, like) => (/^[A-Z]/.test(like) ? word[0].toUpperCase() + word.slice(1) : word);
 
+/** Counts that move with nearly every pull request: written only with `--release`. */
+export const VOLATILE = ["tests", "testFiles"];
+
+/** The counts a run writes and checks: every one with `--release`, the steady ones without. */
+export function countsFor({ release = false } = {}) {
+  const counts = countOf();
+  if (!release) for (const name of VOLATILE) counts[name] = null;
+  return counts;
+}
+
 /** The pages that carry counts: the landing page, and the long version. */
 export const PAGES = ["docs/site/index.html", "docs/site/progression.html"];
 
@@ -143,7 +164,7 @@ export function fill(html, counts, wrong = []) {
 const main = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (main) {
   const checking = process.argv.includes("--check");
-  const counts = countOf();
+  const counts = countsFor({ release: process.argv.includes("--release") });
   let stale = 0;
   for (const page of PAGES) {
     const html = readFileSync(at(page), "utf8");
@@ -151,7 +172,7 @@ if (main) {
     const next = fill(html, counts, wrong);
     if (checking) {
       if (wrong.length > 0) {
-        process.stderr.write(`${page} has numbers the repository disagrees with — run \`pnpm site:numbers\`.\n`);
+        process.stderr.write(`${page} has numbers the repository disagrees with — run \`node scripts/site-numbers.mjs${process.argv.includes("--release") ? " --release" : ""}\`.\n`);
         for (const line of wrong) process.stderr.write(`  ${line}\n`);
         stale += 1;
       }

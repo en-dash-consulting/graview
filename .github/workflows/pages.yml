@@ -2,11 +2,18 @@
 #
 # The site is committed, not built here: `pnpm site:build:all` writes the
 # stylesheet, the numbers and the docs pages out of the repository, and
-# tests/site.test.ts fails CI when any of them has gone stale. So a push to
-# main that passed CI already holds the site it should publish, and this job
-# only has to upload it. `apps/seedbed` builds docs/site/chapters.js the same
-# way (`pnpm site:build`), and it is committed too — a 900 KB script nobody
-# wants to rebuild on every deploy just to prove it is the same script.
+# tests/site.test.ts fails CI when any of them has gone stale. `apps/seedbed`
+# builds docs/site/chapters.js the same way (`pnpm site:build`), and it is
+# committed too — a 900 KB script nobody wants to rebuild on every deploy
+# just to prove it is the same script.
+#
+# ONE NUMBER IS FILLED IN HERE. The test count moves with nearly every pull
+# request, so pull requests leave it alone (a page every one of them
+# rewrote was a conflict every one of them had); the Version packages step
+# writes it, and so does this job before it uploads: `site-numbers.mjs
+# --release`, then the docs generator again for the sitemap and the llms
+# files that read the landing page. So this runs on every push to main, not
+# only on one that touched docs/site, and graview.dev says the count main has.
 #
 # One-time setup in the repository: Settings → Pages → Source: "GitHub
 # Actions", and the custom domain graview.dev with a CNAME at the registrar
@@ -17,9 +24,6 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths:
-      - "docs/site/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -43,6 +47,16 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The docs generator reads the built packages (what `graview create` writes).
+      - run: pnpm build
+      - name: The test count, and what reads it
+        run: node scripts/site-numbers.mjs --release && node scripts/site-docs.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

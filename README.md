@@ -416,7 +416,9 @@ and barrel, a page per skill from its `SKILL.md`, the CLI page from the help
 the CLI prints, the findings page from the checker's source, getting
 started from what the scaffolder really writes — and `tests/site.test.ts`
 fails when any of it has gone stale. `pnpm site:build:all` regenerates the
-stylesheet, the numbers and the docs; `pnpm site:build` rebuilds the
+stylesheet, the numbers and the docs (all but the test count, which moves
+with every pull request and is filled in by the release's version step and
+by the Pages deploy); `pnpm site:build` rebuilds the
 chapters bundle from `apps/seedbed`; `pnpm site` drives every page at ten
 widths in both schemes with axe-core and a keyboard.
 

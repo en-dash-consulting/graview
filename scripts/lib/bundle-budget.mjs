@@ -18,14 +18,35 @@
  * budget that `lacks` a package fails when any module of it is in what it
  * measures — so "the studio is not in a page that does not turn it on" is
  * a claim CI holds, not a size that happens to be small.
+ *
+ * A RAISE IS A FILE OF ITS OWN. Every pull request that grew a chunk raised
+ * the same entry's two numbers and wrote its note under the same lines, so
+ * each one conflicted with the one landed before it. So the numbers below
+ * are an entry's base, with the notes that set it, and a raise goes in
+ * `scripts/budget-raises/<what-raised-it>.json`, one file per change:
+ *
+ *   { "budget": "every face", "minified": 1_034, "gzipped": 392,
+ *     "note": "Raised when … 1_034 / 392 more. Measured at … / …." }
+ *
+ * (in JSON, without the underscores). `minified` and `gzipped` are what the
+ * change adds, in bytes; a lowering is negative. The budget an entry holds
+ * to is its base plus the sum of its raises. The note is the one the
+ * comments below would have carried, in the same voice: what grew, why, and
+ * what it measured. A raise that names no entry here, or says nothing, fails
+ * every measure (`withRaises`), so a raise is never a number nobody can
+ * explain. Two pull requests that raise one entry write two files, and
+ * neither conflicts with the other. A hosted page's budgets
+ * (`hosted-page.mjs`) are never raised and are not here.
  */
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
-import { join, relative } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import { graviewSources } from "./graview-sources.mjs";
 
-/** Bytes, minified and gzipped. */
-export const BUDGETS = [
+/** Bytes, minified and gzipped: each entry's base, before the raises in `scripts/budget-raises/`. */
+export const BASES = [
   {
     name: "the pages face alone",
     entry: `import { mount } from "@graview/embed/pages"; globalThis.mount = mount;`,
@@ -888,6 +909,53 @@ export const BUDGETS = [
     lacks: ["@graview/core"],
   },
 ];
+
+/** Where the raises live: one JSON file per change. */
+export const RAISES_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..", "budget-raises");
+
+/** Every raise in a directory, each with the file it came from. None when there is no directory. */
+export function readRaises(dir = RAISES_DIR) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".json"))
+    .sort()
+    .map((file) => {
+      let raise;
+      try {
+        raise = JSON.parse(readFileSync(join(dir, file), "utf8"));
+      } catch (error) {
+        throw new Error(`scripts/budget-raises/${file} is not JSON: ${error.message}`);
+      }
+      return { ...raise, file };
+    });
+}
+
+/**
+ * The bases with their raises added. A raise that names no budget, moves
+ * neither number by a whole number of bytes, or carries no note is refused
+ * here, so every measure fails with the file named.
+ */
+export function withRaises(bases, raises) {
+  const byName = new Map(bases.map((base) => [base.name, { ...base, raises: [] }]));
+  for (const raise of raises) {
+    const where = `scripts/budget-raises/${raise.file ?? "(a raise)"}`;
+    const entry = byName.get(raise.budget);
+    if (!entry) throw new Error(`${where} raises "${raise.budget}", which is not a budget: name one of ${[...byName.keys()].map((name) => `"${name}"`).join(", ")}`);
+    for (const size of ["minified", "gzipped"]) {
+      if (!Number.isInteger(raise[size])) throw new Error(`${where} must say how many bytes ${size} it adds, as a whole number (0 when none)`);
+    }
+    if (typeof raise.note !== "string" || raise.note.trim().length < 20) {
+      throw new Error(`${where} carries no note: say what grew, why, and what it measured, in a sentence`);
+    }
+    entry.minified += raise.minified;
+    entry.gzipped += raise.gzipped;
+    entry.raises.push(raise.file);
+  }
+  return [...byName.values()];
+}
+
+/** The budgets every measure holds to: each base, plus its raises. */
+export const BUDGETS = withRaises(BASES, readRaises());
 
 /** The host's own: a page has one React, and the embed is not it. */
 const HOSTS_OWN = ["react", "react-dom", "react/jsx-runtime", "react-dom/client"];

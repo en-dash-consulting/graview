@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
  * reader that cannot see the page relies on.
  *
  * The files are written by scripts/site-docs.mjs (and the counts by
- * site-numbers.mjs); a failure here means run `pnpm site:build:all`, or
+ * site-numbers.mjs, all but the test count, which the release writes); a failure here means run `pnpm site:build:all`, or
  * that a hand-written page broke a promise below.
  */
 

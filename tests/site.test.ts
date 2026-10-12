@@ -51,6 +51,23 @@ describe("the site says what the repository says", () => {
     expect(run("site-numbers.mjs")).toBeNull();
   });
 
+  it("leaves the test count, which every pull request moves, to the release and the deploy", () => {
+    /*
+     * A count every pull request changes was a line every pull request
+     * rewrote, and a conflict with whichever merged first. The Version
+     * packages step and the Pages deploy write it (`--release`), so the
+     * page a person reads still says main's number; a pull request's check
+     * holds every other count exactly.
+     */
+    const manifest = JSON.parse(readFileSync(resolve(repoRoot, "package.json"), "utf8")) as { scripts: Record<string, string> };
+    expect(manifest.scripts["version-packages"]).toMatch(/site-numbers\.mjs --release && node scripts\/site-docs\.mjs/);
+    const pages = readFileSync(resolve(repoRoot, ".github/workflows/pages.yml"), "utf8");
+    expect(pages).toContain("node scripts/site-numbers.mjs --release && node scripts/site-docs.mjs");
+    expect(pages).not.toMatch(/^\s+paths:/m);
+    // The page still carries the count, as a number, for those two to fill in.
+    expect(readFileSync(resolve(repoRoot, "docs/site/index.html"), "utf8")).toMatch(/<strong data-number="tests">\d+<\/strong>/);
+  });
+
   it("has docs pages that match the packages, skills and findings in the tree", () => {
     /* And their Markdown twins, llms.txt, llms-full.txt, robots.txt, the
        sitemap and the landing pages' structured data, all written by the
