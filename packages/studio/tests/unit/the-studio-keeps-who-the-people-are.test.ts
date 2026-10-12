@@ -50,4 +50,9 @@ describe("the people, through the studio", () => {
     expect(policy).toContain('{ roles: ["participant"], kinds: ["match"], via: "givenBy" },');
     expect(files.find((file) => file.path.endsWith("schema.ts"))!.contents).toContain("people: true,");
   });
+
+  it("calls a sight via a relation what it is: a seat's own, not the whole kind", () => {
+    const sights = createStudio(app).store.graph.allNodes().filter((node) => node.kind === "sight").map((node) => (node as { label?: string }).label);
+    expect(sights).toContain("participant may see their own match");
+  });
 });

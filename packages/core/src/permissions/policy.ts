@@ -235,9 +235,9 @@ export function permittedMutations<S extends AnySchema>(
     // store still refuses the individual call that is not allowed.
     // A `self` grant is offered with the principal as its subject: "ask, on
     // yours" is an act the principal has, though only ever on themselves;
-    // an `ownEnd` grant with the principal at the far end, likewise.
+    // an `ownEnd` grant with the principal at the far end, likewise — for a principal who has a record to be there.
     const me = actingAs(principal).id;
-    return subjectKinds(mutation).some((kind) => permits(policy, principal, mutation.name, kind, undefined, me, undefined, () => [me]).ok);
+    return subjectKinds(mutation).some((kind) => permits(policy, principal, mutation.name, kind, undefined, me, undefined, () => [me ?? []].flat()).ok);
   });
 }
 

@@ -48,7 +48,8 @@ export interface Respelled<T = unknown> {
   readonly respelled: readonly string[];
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
+/** A plain object: not null, not a list. */
+export const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 /** A document with every key in RESPELLED read as its current name. Anything that is not a document comes back as it was. */
 export function respellDocument<T>(document: T, respellings: readonly Respelling[] = RESPELLED): Respelled<T> {
