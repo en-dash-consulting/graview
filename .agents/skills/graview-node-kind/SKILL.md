@@ -27,7 +27,7 @@ agent tool that walks the graph.
        kickOff: z.string(),
        opponent: z.string(),
        // A picture the host stores: a document's "image" (or "file").
-       programme: imageField().optional(),
+       crest: imageField().optional(),
      }),
      plural: "Fixtures",
      description: "A match, and the team you intend to put out for it.",
