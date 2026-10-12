@@ -405,7 +405,7 @@ place the app has. `graview.navigate("offer:coaching")` and
 string is a record the viewer may see first, then a place by that slug, so
 `graview.navigate("the-packages")` goes to the place. A destination that
 is neither goes nowhere and says why — in the view's console, and to the
-host's `onProblem` (on `mountWorkerView` and on a registered view's
+host's problems (the onProblem option on `mountWorkerView` and on a registered view's
 definition) — naming the places there are. The
 props list the app's places (`places`, each with its slug and title). On
 the Graview face a record is focused and chosen and a place is drawn; on
