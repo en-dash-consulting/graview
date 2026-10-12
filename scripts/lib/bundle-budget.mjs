@@ -533,8 +533,10 @@ export const BUDGETS = [
     // after the files: the editor keeping what the field holds as an upload answers, saying a file already there and the
     // ones a field of one left out, and the keyboard kept in it as a file is moved or removed — all in the chunk fetched
     // with the first file field drawn. 19_693 / 7_902 more than main (1_712_707 / 541_115). Measured at 1_732_400 / 549_017.
-    minified: 1_732_600,
-    gzipped: 549_200,
+    // Raised when a failed turn came to say why in the host's own words (FR-166, `hostSentence` in the seat's
+    // responder), by about 260 bytes, the seat's chunk. Measured at 1_732_661 / 549_129.
+    minified: 1_732_900,
+    gzipped: 549_400,
     load: "all",
   },
   {
@@ -635,8 +637,10 @@ export const BUDGETS = [
     // after the files: 5_009 / 2_089 more than main (1_567_179 / 481_691), 44 / 6 more than #223 measured itself over its
     // main, while a hosted page's first load is 1_603 bytes smaller than main and a page handed a compiled app 251.
     // Measured at 1_572_188 / 483_780.
-    minified: 1_572_400,
-    gzipped: 483_900,
+    // And by a failed turn saying why in the host's own words (FR-166): the studio's seat carries the responder.
+    // Measured at 1_572_449 / 483_878.
+    minified: 1_572_700,
+    gzipped: 484_100,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

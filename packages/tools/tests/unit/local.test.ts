@@ -163,3 +163,22 @@ describe("seatResponder: the graph always answers first", () => {
     expect(reply.via).toBeUndefined();
   });
 });
+
+describe("seatResponder: a host's turn that fails says why in the host's words (FR-166)", () => {
+  const failing = (error: unknown) => ({ turn: async () => { throw error; } });
+
+  it("carries the sentence a host threw in the aside", async () => {
+    const reply = await seatResponder<typeof schema>(failing(new Error("The model is busy right now; try again in a moment.")))(store(), "hello");
+    expect(reply.say).toContain("1 Things");
+    expect(reply.say).toContain("(AI didn't answer just now: The model is busy right now; try again in a moment. This is from the app alone.)");
+  });
+
+  it("says nothing of the machine's own errors, and keeps the aside whole", async () => {
+    const fetchFailed = await seatResponder<typeof schema>(failing(new TypeError("Failed to fetch")))(store(), "hello");
+    expect(fetchFailed.say).toContain("(AI didn't answer just now, so this is from the app alone.)");
+    const bracketed = await seatResponder<typeof schema>(failing(new Error("Refused (key revoked)")))(store(), "hello");
+    expect(bracketed.say).toContain("(AI didn't answer just now: Refused key revoked. This is from the app alone.)");
+    const nothing = await seatResponder<typeof schema>(failing("a string, not an error"))(store(), "hello");
+    expect(nothing.say).toContain("(AI didn't answer just now, so this is from the app alone.)");
+  });
+});

@@ -1,25 +1,7 @@
 {
-  "at": "2026-10-04T07:12:08.799Z",
+  "at": "2026-10-12T03:55:44.970Z",
   "engine": "chromium",
   "checks": {
-    "filterOnlyPastTheFold": {
-      "quietTaskActions": 10,
-      "filterShown": true,
-      "ok": true
-    },
-    "searchThenApply": {
-      "survivors": 1,
-      "soleLabel": "Mark it done↵",
-      "dueShownBeforehand": true,
-      "applied": true,
-      "ok": true
-    },
-    "destructiveNeedsTheClick": {
-      "dropSurvivors": 1,
-      "hintShown": false,
-      "stillThere": true,
-      "ok": true
-    },
     "pinThenReorder": {
       "before": [
         "reschedule",
@@ -30,7 +12,8 @@
         "explain",
         "move-to-list",
         "wait-for",
-        "drop"
+        "drop",
+        "remove-task"
       ],
       "after": [
         "reschedule",
@@ -41,12 +24,8 @@
         "explain",
         "move-to-list",
         "wait-for",
-        "drop"
-      ],
-      "headings": [
-        "⚠ Was due 2026-08-28",
-        "pinned",
-        "its ties"
+        "drop",
+        "remove-task"
       ],
       "peerIsOffered": true,
       "ok": true
@@ -105,23 +84,8 @@
       },
       "namedItsOwn": true,
       "ok": true
-    },
-    "theKeyboardKeepsItsPlace": {
-      "afterAnAct": {
-        "where": "Inspector",
-        "inside": true
-      },
-      "afterAPin": {
-        "where": "edit-task",
-        "inside": true
-      },
-      "afterAnAsk": {
-        "where": "schema:edit-task",
-        "inside": true
-      },
-      "ok": true
     }
   },
-  "pageErrors": [],
-  "passed": true
+  "error": "Error: page.waitForTimeout: Target page, context or browser has been closed",
+  "passed": false
 }
