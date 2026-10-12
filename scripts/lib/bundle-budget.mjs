@@ -535,7 +535,9 @@ export const BUDGETS = [
     // with the first file field drawn. 19_693 / 7_902 more than main (1_712_707 / 541_115). Measured at 1_732_400 / 549_017.
     // Raised when a failed turn came to say why in the host's own words (FR-166, `hostSentence` in the seat's
     // responder), by about 260 bytes, the seat's chunk. Measured at 1_732_661 / 549_129.
-    minified: 1_732_900,
+    // And by a creating act logged by what it made (`madeLabel` in the compiled document), about 270 bytes.
+    // Measured at 1_732_931 / 549_243.
+    minified: 1_733_200,
     gzipped: 549_400,
     load: "all",
   },
@@ -639,7 +641,8 @@ export const BUDGETS = [
     // Measured at 1_572_188 / 483_780.
     // And by a failed turn saying why in the host's own words (FR-166): the studio's seat carries the responder.
     // Measured at 1_572_449 / 483_878.
-    minified: 1_572_700,
+    // And by a creating act logged by what it made (`madeLabel` in the compiled document). Measured at 1_572_719 / 484_001.
+    minified: 1_573_000,
     gzipped: 484_100,
     load: "first",
     lazyLacks: ["@graview/studio"],

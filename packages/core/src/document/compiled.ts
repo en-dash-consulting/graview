@@ -381,6 +381,24 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     for (const [arg, a] of args) shape[arg] = argSchema(a);
     const subjectKinds = act.on === undefined ? [] : Array.isArray(act.on) ? (act.on as readonly string[]) : [act.on as string];
     const exprs = new Map(planned.exprs);
+    /*
+     * WHAT A CREATING ACT MADE, BY ITS OWN LABEL. With no subject, the line
+     * the log keeps took the first string argument, which is whatever the
+     * caller happened to send first: "Add a feature: framework" for a
+     * feature named in another field. The first record the act creates is
+     * labeled from the arguments its fields are set from.
+     */
+    const creation = effects.find((e): e is Extract<ActEffect, { create: string }> => "create" in e);
+    const madeLabel = (input: Record<string, unknown>): string | undefined => {
+      if (!creation) return undefined;
+      const node: Record<string, unknown> = { id: "", kind: creation.create };
+      for (const [field, value] of Object.entries(creation.set ?? {})) {
+        const ref = refName(value);
+        const v = ref === undefined ? value : input[ref];
+        if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") node[field] = v;
+      }
+      return labelFor(node as unknown as AnyGraphNode).trim() || undefined;
+    };
 
     mutations.push(
       defineMutation(name, {
@@ -400,7 +418,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         ...(Object.keys(sets).length > 0 ? { sets } : {}),
         describe: (input: Record<string, unknown>, graph: GraphReader) => {
           const subject = typeof input[SUBJECT_ARG] === "string" ? graph.getNode(input[SUBJECT_ARG] as string) : undefined;
-          const what = subject ? labelFor(subject) : Object.values(input).find((v) => typeof v === "string");
+          const what = subject ? labelFor(subject) : (madeLabel(input) ?? Object.values(input).find((v) => typeof v === "string"));
           return what ? `${title}: ${String(what)}` : title;
         },
         apply(context: MutationContext<never>, input: Record<string, unknown>) {
