@@ -60,6 +60,13 @@ const plain = takeViolations().filter((v) => v.rule === "machine-words-shown").m
 checks.aKeysOwnWordsAreCaught = plain.some((d) => d.startsWith('"Vin" is shown')) && plain.some((d) => d.startsWith('"suv" is shown'));
 checks.aWordInASentenceIsNotAKey = plain.length === 2;
 
+/* One store's key is another's declared word: the studio's "people" flag says "People", and the app it edits calls its people "People". */
+await show(`<main><h2><span>People</span></h2></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: ["people"], words: ["stands for the people"], unsaid: ["People"] }));
+await page.evaluate(() => window.__graviewWatch.learn({ ids: ["user"], words: ["People"], unsaid: [] }));
+await settle();
+checks.aWordAnotherStoreDeclaresIsNotAKey = takeViolations().filter((v) => v.rule === "machine-words-shown").length === 0;
+
 /* Shown though not spoken: a kind's id on a card's tag that screen readers skip is still read by eye. */
 await show(`<main><div role="group" aria-label="2024 Kia Sportage"><span aria-hidden="true">vehicle</span><span aria-hidden="true">close-deal</span></div></main>`);
 await page.evaluate(() => window.__graviewWatch.learn({ ids: ["vehicle", "close-deal"], words: ["Car"], unsaid: ["vehicle"] }));
