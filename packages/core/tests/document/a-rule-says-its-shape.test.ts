@@ -3,7 +3,8 @@ import { compileDocument } from "../../src/check.js";
 import { expressionRule } from "../../src/document/index.js";
 import { judgeWithLines, problemWords, ruleLine, ruleLineWords, ruleSpoken, ruleText, withLines } from "../../src/lines.js";
 import { judgedWith } from "../../src/invariants/engine.js";
-import { answerSeenBy, brokenWords, createSchema, defineNode, shapedRules, Store, violationKey, z, type AnySchema, type GraviewApp } from "../../src/index.js";
+import { answerSeenBy } from "../../src/answer.js";
+import { brokenWords, createSchema, defineNode, shapedRules, Store, violationKey, z, type AnySchema, type GraviewApp } from "../../src/index.js";
 
 /**
  * A RULE SAYS ITS SHAPE.

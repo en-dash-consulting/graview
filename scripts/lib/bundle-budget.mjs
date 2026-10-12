@@ -543,8 +543,10 @@ export const BUDGETS = [
     // the strip narrowing an act to the seat's own end of a link. Every face as a page loads it first (the budget "embed
     // without the studio") is 167 bytes smaller minified, 83 more gzipped. 4_262 / 1_467 more than main (1_732_661 /
     // 549_148). Measured at 1_736_923 / 550_615.
-    minified: 1_737_200,
-    gzipped: 550_900,
+    // And by a change's sentence following sight: the seat's chunk judging what an answer may say, and `partly` in the
+    // served log, while the hosted page's first load is about 1.7 KB smaller. Measured at 1_737_808 / 551_532.
+    minified: 1_738_100,
+    gzipped: 551_800,
     load: "all",
   },
   {
@@ -659,8 +661,10 @@ export const BUDGETS = [
     // checker's people findings and a document edit's refusals once, and the editor reading a plain object and an
     // effect's `$name` with the compiled document's own: 698 bytes smaller minified than main (1_576_981 / 485_456), 42 more
     // gzipped. Measured at 1_576_283 / 485_498.
-    minified: 1_577_000,
-    gzipped: 485_600,
+    // And by a change's sentence following sight (`partly` in the served log; the rest moved to `@graview/core/answer`).
+    // Measured at 1_577_424 / 486_193.
+    minified: 1_577_700,
+    gzipped: 486_500,
     load: "first",
     lazyLacks: ["@graview/studio"],
   },

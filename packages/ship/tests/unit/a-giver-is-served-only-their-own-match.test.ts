@@ -47,4 +47,23 @@ describe("a sight via a relation, over the wire", () => {
       expect(said, path).not.toContain(theirs);
     }
   });
+
+  it("never sends a giver what a whole draw was for when part of it is kept from them", async () => {
+    const seed = { nodes: [{ id: "p_ann", kind: "participant", name: "Ann" }, { id: "p_bo", kind: "participant", name: "Bo" }], edges: [] };
+    const handler = await createStoreHandler({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
+    handler.store.applyAll(
+      [
+        { name: "draw", args: { note: "Ann for Bo", giver: "p_ann", receiver: "p_bo" } },
+        { name: "draw", args: { note: "Bo for Ann", giver: "p_bo", receiver: "p_ann" } },
+      ],
+      { author: organizer, intent: "Draw: Ann for Bo, Bo for Ann" },
+    );
+    for (const path of ["/graview/state", "/graview/since?seq=-1", "/graview/export"]) {
+      const said = JSON.stringify(await (await handler.handle(at(path, ann))).json());
+      expect(said, path).toContain("Draw a match: Ann for Bo");
+      expect(said, path).not.toContain("Bo for Ann");
+    }
+    // The organizer, who sees the whole draw, is sent what it was for.
+    expect(JSON.stringify(await (await handler.handle(at("/graview/since?seq=-1", organizer))).json())).toContain("Draw: Ann for Bo, Bo for Ann");
+  });
 });

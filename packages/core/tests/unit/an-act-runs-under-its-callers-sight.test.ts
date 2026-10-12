@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { answerSeenBy, refusalOf, Store, type AnySchema, type GraviewApp, type MutationCall, type Principal } from "../../src/index.js";
+import { answerSeenBy } from "../../src/answer.js";
+import { refusalOf, Store, type AnySchema, type GraviewApp, type MutationCall, type Principal } from "../../src/index.js";
 import { guest, keeper, MUTATIONS, policy, said, schema, world } from "../support/hidden-holds.js";
 
 /**

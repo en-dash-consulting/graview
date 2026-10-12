@@ -227,10 +227,27 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
       sees: lens.sees,
       names: (value: unknown) => namesUnseen(value, lens.sees),
     };
-    return serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) => (!op.withheld && faithful ? whole(op, lens, primitives) : undefined) ?? withhold(op, lens, primitives));
+    return told(ops, serveAlong(ops, lens.timeline, judge).map(({ op, primitives, faithful }) => (!op.withheld && faithful ? whole(op, lens, primitives) : undefined) ?? withhold(op, lens, primitives)));
   }
-  return ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) ? whole(op, lens) : undefined) ?? withhold(op, lens));
+  return told(ops, ops.map((op) => (!op.withheld && !touchesUnseen(op, lens.shows) ? whole(op, lens) : undefined) ?? withhold(op, lens)));
 }
+
+/**
+ * A GESTURE'S SENTENCE, ONLY TO A SEAT THAT SEES ALL IT DID. What a caller
+ * said a batch was for ("Draw: Ann for Bo, Bo for Ann") is free text over
+ * every op of it, so no id check can say it names nothing the seat may not
+ * see. Where a seat is served part of a batch — an op of it withheld, or a
+ * link of one left out — its served ops go without it, and the batch reads
+ * as the ops it may see, each in its own sentence.
+ */
+function told(ops: readonly Operation[], served: Operation[]): Operation[] {
+  const part = partly(ops, served);
+  return served.map((op) => (op.batchIntent && part.has(op.batch) ? { ...op, batchIntent: undefined } : op));
+}
+
+/** The batches a seat is served only part of: an op of it withheld, or a link of one left out. */
+export const partly = (ops: readonly Operation[], served: readonly Operation[]): Set<string> =>
+  new Set(served.flatMap((op, at) => (op.withheld || op.primitives.length < ops[at]!.primitives.length ? [op.batch] : [])));
 
 /**
  * AN OP SERVED WHOLE, when what it did is all the seat's to know: as it is

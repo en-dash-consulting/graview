@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { describePlace } from "../../src/describe.js";
-import { answerSeenBy, createSchema, defineApp, defineNode, logSeenBy, search, Store, type AnySchema, type GraviewApp, type Policy, type Principal } from "../../src/index.js";
+import { answerSeenBy } from "../../src/answer.js";
+import { createSchema, defineApp, defineNode, logSeenBy, search, Store, type AnySchema, type GraviewApp, type Policy, type Principal } from "../../src/index.js";
 
 /**
  * A SIGHT CAN REACH THE RECORDS THAT LINK TO YOU (the Roadmap's open
