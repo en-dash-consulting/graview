@@ -1,5 +1,46 @@
 # @graview/studio
 
+## 0.1.27
+
+### Patch Changes
+
+- 649dc1f: A document names the kind that stands for its people (the Graview Roadmap's f-people-kind). `"people": true` on one kind says that a record of it whose id is a principal's id is that person — the record Graview Cloud makes for each member under their principal id. A declaration says the same with `people: true` on `defineNode`, and the installation's `user` says it. `self` grants and `own` sights read a principal's id as before; the people kind is what `$me`, a grant held to your own end of a link and a sight via a relation read it as. `describeApp` says it ("The people are the participants: a participant whose id is a member's principal id is that member."), a kind's JSON Schema says `"x-graview-people": true`, and `toDocument` and the studio carry it. `graview check` refuses two kinds that both say it (`people-ambiguous`) and a policy that reads a principal's own record with no kind saying it (`people-unsaid`).
+  
+  The hosted page pays for what it carries of these four changes up front by reading a grant's and a sight's roles one way, a mutation's subject kinds one way, and a call's named records once in the store: 586,874 bytes up front where main is 586,913, and 545,887 handed a compiled app where main is 545,948.
+  
+  Compatibility: additive. The document format gains `kinds.<kind>.people` within `graview-document@1`; a build that predates it refuses it by path. Check finding codes: `people-ambiguous` and `people-unsaid` are new, errors only about declarations that say something that could not be said before. A kind's JSON Schema gains `x-graview-people` on the people kind. Ops, stored formats, the wire and tool names and schemas are unchanged. New: `NodeDefinitionSpec.people`. What Graview Cloud changes: say `"people": true` on the kind its member records are (f-member-records), with each record's id the member's principal id.
+- 649dc1f: A grant can hold to your own end of a link (the Graview Roadmap's f-own-end-grants). `self` holds a grant to the act's subject being the principal's own record, and the act that takes back a vote is on the idea, so a voter could take back anyone's. `ownEnd: true` on a grant holds a connect or sever to every record the call names at the far end of the link being the principal's own. The store refuses another with a sentence — "Not permitted: “Take back a vote” on an idea — only on your own end of the link." and the grant's own words — the seat keeps the tool, and the strip offers the act on an idea you voted for with you already chosen, and not at all on one only somebody else voted for. `graview check` refuses the condition on an act that connects and severs nothing, or names no record at its far end (`grant-own-end-without-link`), and asks for a people kind (`people-unsaid`).
+  
+  Compatibility: additive. The document format gains `policy.grants[].ownEnd` within `graview-document@1`; a build that predates it refuses it by path. Check finding codes: `grant-own-end-without-link` is new, an error only about a grant that could not be written before. A refusal's `reason` is `forbidden`, as any grant's. Tool names and schemas are unchanged; the affordances of an act refused for want of a far end now narrow to the seat's own as they did for a subject. Ops, stored formats and the wire are unchanged. New: `Grant.ownEnd`, and `permits`'s eighth argument, the records the call names at the far end of what it links.
+- 41c0ebc: A proposal to add a record names it by its label, then the rest, and the seat tells the model what the person saw (FR-169). On Graview Cloud's staging, "add a new revenue stream for Graview Cloud SaaS" was offered as "Add a revenue stream: nascent": the line took the first string it was handed, the person read the stream's maturity as its title and said so, and the model, which never saw the line, agreed and asked for another. A document act that creates a record, the `add-<kind>` act the studio writes for a new kind among them, now says the record by its kind's label and then what else it was given, in parentheses, as a record says it: "Add a revenue stream: Graview Cloud SaaS (nascent)", money as money, a yes by the field's words, and neither a no, a long text nor what the label already says. The offer under an answer (`describeProposal`) and the line the log keeps are that one sentence, and a creating act with no label to say is said by its title, never by the first string it was sent. The conversation a seat hands the model carries each offer as the person was shown it, and what became of it: "Here is a plot for it. [Offered beneath this answer: Stake out Back bed — applied]". "Answered with AI" is one quiet mark at the end of the answer's own line, not a line of its own under every answer. A hosted page's first load is 39 bytes smaller (587 280 bytes over the vendors document, 587 319 on main), and 10 bytes smaller handed a compiled app: the new sentence is paid for by a kind's defaults kept once, `isoToday` from one place, and one test for a document too large. `capabilities().shipped` gains FR-169.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format and check finding codes are unchanged; `capabilities().shipped` gains FR-169. Only the sentence an op is logged with changes, for a creating document act given more than its label says. `useSeatConversation` takes `said`, how the surface shows one proposal, and the history it hands `answer` says "[Offered beneath this answer: …]" where it said "[applied: …]". What a host does: a surface that calls `useSeatConversation` passes `said: (proposal) => describeProposal(store, proposal)`.
+- 649dc1f: A sight can reach the records that link to you (the Graview Roadmap's open request "Visibility scoped by relation"). `sees` kept whole kinds, and `own` showed a seat every record any relation joins to its own — so a Secret Santa match, joined to its giver and its receiver, was shown to both. `{ "roles": ["participant"], "kinds": ["match"], "via": "givenBy" }` shows a seat a match only where `givenBy` joins it, at either end, to the seat's own record of the people kind: each giver sees their own match and not the one they receive in. It holds wherever sight is honored — a seat's graph and its counts, names, search, what a place says, the served log, the wire's state, polls and export, an answer to a seat, a seat's problems and its tools — and moves as the link does. A declaration says it as `Sight.via`; the studio carries it. `graview check` refuses a relation no kind declares (`sight-via-unknown-edge`), one that never joins the kind to the people (`sight-via-misses-people`) and a policy that says one with no people kind (`people-unsaid`). `packages/core/tests/document/fixtures/secret-santa.gdd.json` is the worked example.
+  
+  Compatibility: additive. The document format gains `policy.sees[].via` within `graview-document@1`; a build that predates it refuses it by path. Check finding codes: `sight-via-unknown-edge` and `sight-via-misses-people` are new, errors only about a sight that could not be written before. A seat is served what it was before under every sight a declaration could already say. Ops, stored formats, the wire's shapes and tool names and schemas are unchanged. New: `Sight.via`.
+- b228859: The studio calls a sight via a relation what it is. A sight that shows a seat only the matches `givenBy` joins to them was drawn as "participant may see match", which reads as every match; it is now "participant may see their own match", as an `own` sight is.
+  
+  Compatibility: unchanged. The declaration the studio writes back, and every other surface, are as they were; only a sight's label in the studio's own graph changes.
+- Updated dependencies [e404dd1]
+- Updated dependencies [b228859]
+- Updated dependencies [649dc1f]
+- Updated dependencies [649dc1f]
+- Updated dependencies [649dc1f]
+- Updated dependencies [41c0ebc]
+- Updated dependencies [b228859]
+- Updated dependencies [af180f4]
+- Updated dependencies [649dc1f]
+- Updated dependencies [b228859]
+- Updated dependencies [af180f4]
+- Updated dependencies [b228859]
+  - @graview/core@0.1.27
+  - @graview/tools@0.1.27
+  - @graview/primitives@0.1.27
+  - @graview/layout@0.1.27
+  - @graview/pages@0.1.27
+  - @graview/react@0.1.27
+  - @graview/ship@0.1.27
+
 ## 0.1.26
 
 ### Patch Changes
