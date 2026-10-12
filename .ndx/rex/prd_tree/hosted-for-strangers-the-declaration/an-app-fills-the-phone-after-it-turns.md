@@ -24,5 +24,5 @@ acceptanceCriteria:
   - "The hosted page's first load does not grow"
 description: "The embed trusted the host's height once: both faces sat in a section of the height mount was given, the Shell was 100vh, the pages' ask box a fixed 100dvh, and the scene's ResizeObserver dropped zero-size reports. On a phone, after a turn, the app was drawn in the top half of the screen on both faces and stayed so. Cloud keeps --gc-viewport equal to innerHeight on its own page; the Shell and the ask box are the framework's."
 lastModified: "2026-10-11T23:36:09.000Z"
-resolution: "Shipped in the PR adding height: \"viewport\": the screen's height measured by useViewportHeight, paid for by moving the tool schema to @graview/core/json-schema."
+resolution: "Shipped in #222, adding height: \"viewport\": the screen's height measured by useViewportHeight, paid for by moving the tool schema to @graview/core/json-schema."
 ---
