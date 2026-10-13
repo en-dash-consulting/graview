@@ -1156,6 +1156,7 @@ class Editor {
     this.lastPolicyEdit = i;
     if (e.op === "remove-grant" || e.op === "remove-sight") return this.removePolicyPart(i, part, sight);
     // What it names is the app's: its kinds, and a grant's acts (a kind's derived edit and remove among them).
+    if (!sight && Array.isArray(part.kinds) && part.kinds.length === 0) return this.fail(i, "kinds", "a grant on no kind gives nothing", "leave kinds out for every kind, or name the kinds it is on");
     for (const [n, kind] of (Array.isArray(part.kinds) ? part.kinds : []).entries()) {
       if (!this.doc.kinds[kind]) return this.failAs(sight ? "sight-kind" : "edit", i, `kinds.${n}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
     }
@@ -1303,6 +1304,11 @@ class Editor {
   private removeKind(i: number, kind: string) {
     if (!this.kind(i, kind)) return;
     if (Object.keys(this.doc.kinds).length === 1) return this.fail(i, "kind", "an app keeps at least one kind");
+    // The last sight gone would show everyone everything, every other kind included: the policy's to change first, as a relation a sight reads is.
+    const sees: Doc[] = this.doc.policy?.sees ?? [];
+    if (sees.length > 0 && sees.every((sight) => sight.kinds.every((k: string) => k === kind))) {
+      return this.fail(i, "kind", `every sight shows only ${pluralWords(this.doc, kind)}, so with them gone everyone would see everything`, `remove those sights first, in the same change ({"op": "remove-sight", …}), which says so`);
+    }
     const gone: string[] = [];
     /*
      * The relations it declares go with it — and so does what walks them
@@ -1347,7 +1353,20 @@ class Editor {
       delete this.doc.views[kind];
       if (Object.keys(this.doc.views).length === 0) delete this.doc.views;
     }
-    for (const g of this.doc.policy?.grants ?? []) if (Array.isArray(g.kinds)) g.kinds = g.kinds.filter((k: string) => k !== kind);
+    /*
+     * A grant no longer names the kind, nor its derived edit and remove; one
+     * left naming no kind or no act gives nothing, and goes, as a grant does
+     * whose last act is removed — kept, it read as a grant on every kind.
+     */
+    if (this.doc.policy) {
+      const derived = [`edit-${kind}`, `remove-${kind}`];
+      this.doc.policy.grants = this.doc.policy.grants.flatMap((g: Doc) => {
+        const kinds = Array.isArray(g.kinds) ? g.kinds.filter((k: string) => k !== kind) : g.kinds;
+        const mutations = Array.isArray(g.mutations) ? g.mutations.filter((m: string) => !derived.includes(m) || this.doc.acts?.[m]) : g.mutations;
+        if ((Array.isArray(g.kinds) && g.kinds.length > 0 && kinds.length === 0) || (Array.isArray(mutations) && mutations.length === 0)) return [];
+        return [{ ...g, ...(kinds !== undefined ? { kinds } : {}), mutations }];
+      });
+    }
     if (this.doc.policy?.sees) {
       this.doc.policy.sees = this.doc.policy.sees.map((s: Doc) => ({ ...s, kinds: s.kinds.filter((k: string) => k !== kind) })).filter((s: Doc) => s.kinds.length > 0);
       if (this.doc.policy.sees.length === 0) delete this.doc.policy.sees;

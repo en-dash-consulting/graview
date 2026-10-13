@@ -306,12 +306,13 @@ function policySentences(before: GraviewDocument, after: GraviewDocument): strin
     });
   };
   for (const role of less(after.roles ?? [], before.roles ?? [])) out.push(`${capitalize(whoWords([role]))} is a new role.`);
+  for (const role of less(before.roles ?? [], after.roles ?? [])) out.push(`${capitalize(whoWords([role]))} is no longer a role.`);
   const [was, now] = [before.policy, after.policy];
   if (!now) out.push("The app has no policy now: everyone may do anything and sees everything.");
   else {
     if (!was) out.push(FIRST_GRANT);
     out.push(...less(was?.grants ?? [], now.grants).map((grant) => grantGone(before, grant)), ...less(now.grants, was?.grants ?? []).map((grant) => grantSentence(after, grant)));
-    if (now.grants.length === 0 && (was?.grants.length ?? 0) > 0) out.push(NO_GRANT_LEFT);
+    if (now.grants.length === 0 && (!was || was.grants.length > 0)) out.push(NO_GRANT_LEFT);
     if (!was?.sees?.length && now.sees?.length) out.push(FIRST_SIGHT);
     out.push(...less(was?.sees ?? [], now.sees ?? []).map((sight) => sightGone(before, sight)), ...less(now.sees ?? [], was?.sees ?? []).map((sight) => sightSentence(after, sight)));
     if (was?.sees?.length && !now.sees?.length) out.push(NO_SIGHT_LEFT);

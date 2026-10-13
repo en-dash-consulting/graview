@@ -29,7 +29,7 @@ describe("the studio's grants, sights and people", () => {
       { name: "revoke-grant", args: { id: "grant:1" } },
     ]);
     expect(studio.edits().filter((edit) => /grant/.test(edit.op))).toEqual([
-      { op: "remove-grant", roles: ["organizer"], mutations: "*" },
+      { op: "remove-grant", roles: ["organizer"], mutations: "*", kinds: "*", self: false, ownEnd: false },
       { op: "add-grant", roles: ["participant"], mutations: ["draw"] },
     ]);
     const outcome = studio.document();
@@ -37,9 +37,32 @@ describe("the studio's grants, sights and people", () => {
     expect(outcome.document.policy!.grants).toEqual([santa.policy!.grants[1], { roles: ["participant"], mutations: ["draw"] }]);
   });
 
+  it("a grant revoked beside one held to a person's own record is named apart from it: every kind, and not only their own", () => {
+    // The same roles and act, once to every kind and once only on their own record: a removal naming roles and acts alone would mean either.
+    const held = { roles: ["participant"], mutations: ["draw"], self: true };
+    const twins: GraviewDocument = { ...santa, policy: { ...santa.policy!, grants: [...santa.policy!.grants, held, { roles: ["participant"], mutations: ["draw"] }] } };
+    const twinsApp = compileDocument(twins);
+    if (!twinsApp.ok) throw new Error("the twins must compile");
+    const studio = createStudio(twinsApp.app as never, { document: twins });
+    studio.store.apply({ name: "revoke-grant", args: { id: "grant:4" } } as never);
+    expect(studio.edits()).toEqual([{ op: "remove-grant", roles: ["participant"], mutations: ["draw"], kinds: "*", self: false, ownEnd: false }]);
+    const outcome = studio.document();
+    if (!outcome?.ok) throw new Error(JSON.stringify(outcome));
+    expect(outcome.document.policy!.grants).toEqual([...santa.policy!.grants, held]);
+  });
+
+  it("a grant on a kind's derived edit, revoked, comes back as remove-grant rather than nothing", () => {
+    // "Change the participant" is no act node of the studio's, and a grant naming it read as a grant naming no act at all.
+    const studio = studioOn([{ name: "revoke-grant", args: { id: "grant:2" } }]);
+    expect(studio.edits()).toEqual([{ op: "remove-grant", roles: ["participant"], mutations: ["edit-participant"], kinds: ["participant"], describe: "Anyone may change their own wish.", self: true, ownEnd: false }]);
+    const outcome = studio.document();
+    if (!outcome?.ok) throw new Error(JSON.stringify(outcome));
+    expect(outcome.document.policy!.grants).toEqual([santa.policy!.grants[0]]);
+  });
+
   it("a sight taken away comes back as remove-sight, naming it by what it shows", () => {
     const studio = studioOn([{ name: "remove-sight", args: { id: "sight:2" } }]);
-    expect(studio.edits()).toEqual([{ op: "remove-sight", roles: ["organizer"], kinds: ["match"] }]);
+    expect(studio.edits()).toEqual([{ op: "remove-sight", roles: ["organizer"], kinds: ["match"], own: false }]);
     const outcome = studio.document();
     if (!outcome?.ok) throw new Error(JSON.stringify(outcome));
     expect(outcome.document.policy!.sees).toEqual([santa.policy!.sees![0], santa.policy!.sees![2]]);

@@ -106,4 +106,9 @@ describe("a proposal to add a record", () => {
     expect(said("add-feature", { name: "Search", layerWhy: "It is the core's.", release: "0.1.28" })).toBe("Add a feature: Search (0.1.28)");
     expect(said("add-feature", { name: "Search", layerWhy: "core", release: "v0.1.28." })).toBe("Add a feature: Search (core, v0.1.28.)");
   });
+
+  it("still says a name that ends in an abbreviation's stop, which is not a sentence", () => {
+    expect(said("add-feature", { name: "Search", layerWhy: "Acme Holdings Inc.", release: "Made in the U.S." })).toBe("Add a feature: Search (Acme Holdings Inc., Made in the U.S.)");
+    expect(said("add-feature", { name: "Search", layerWhy: "Smith & Sons Ltd.", release: "It ships with the core." })).toBe("Add a feature: Search (Smith & Sons Ltd.)");
+  });
 });

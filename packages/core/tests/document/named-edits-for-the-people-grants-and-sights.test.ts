@@ -244,3 +244,58 @@ describe("add-sight and remove-sight", () => {
     expect(finding!.message).toBe('no sight shows an organizer participants; the sights show everyone participants; an organizer matches; and a participant matches, only those "givenBy" joins to their own participant');
   });
 });
+
+/*
+ * WHAT THE OLDER EDITS DO TO A GRANT AND A SIGHT. Removing a kind took it
+ * out of every sight and dropped a sight left showing nothing — and when
+ * that was the last sight, every other kind came to be seen by everyone,
+ * which the edit never said. A grant left on no kind read as a grant on
+ * every kind, and a grant on the kind's derived edit named an act that was
+ * gone, so the change failed the check it was previewed by.
+ */
+describe("remove-kind and the policy", () => {
+  it("is refused when it would take the last sight away, which would show everyone everything", () => {
+    const matchesOnly: GraviewDocument = { ...santa, policy: { ...santa.policy!, sees: [santa.policy!.sees![1]!] } };
+    const [finding] = refused(matchesOnly, [{ op: "remove-kind", kind: "match" }]);
+    expect(finding).toMatchObject({ path: "edits.0.kind", message: "every sight shows only matches, so with them gone everyone would see everything" });
+    const said = edited(matchesOnly, [{ op: "remove-sight", roles: ["organizer"], kinds: ["match"] }, { op: "remove-kind", kind: "match" }]).said;
+    expect(said).toContain("With no sight left, everyone sees everything.");
+  });
+
+  it("takes a grant on the kind's derived edit with it, and a grant left on no kind, so what is left checks clean", () => {
+    const outcome = edited(santa, [
+      { op: "set-people", kind: "participant", people: false },
+      { op: "remove-sight", roles: ["participant"], kinds: ["match"] },
+      { op: "remove-kind", kind: "participant" },
+    ]);
+    expect(outcome.document.policy!.grants).toEqual([santa.policy!.grants[0]]);
+    expect(compileDocument(outcome.document).findings.filter((finding) => finding.severity === "error")).toEqual([]);
+    expect(diffDocuments(santa, outcome.document).sentences).toContain('The grant is removed that said a participant may "Change the participant" on participants, only on their own record.');
+  });
+});
+
+describe("a grant on no kind", () => {
+  it("is refused as an edit, since it gives nothing", () => {
+    expect(refused(santa, [{ op: "add-grant", roles: ["participant"], mutations: ["draw"], kinds: [] }])[0]).toMatchObject({ path: "edits.0.kinds", message: "a grant on no kind gives nothing" });
+  });
+
+  it("is said as giving nothing where a document holds one, never as a grant on every kind", () => {
+    const before = { ...santa, policy: { ...santa.policy!, grants: [santa.policy!.grants[0]!] } };
+    const after = { ...santa, policy: { ...santa.policy!, grants: [santa.policy!.grants[0]!, { roles: ["participant"], mutations: ["draw"], kinds: [] }] } };
+    expect(diffDocuments(before, after).sentences).toEqual(['A participant may "Draw a match" on no kind, so on nothing.']);
+  });
+});
+
+describe("the preview of who may do what", () => {
+  it("says a role taken away, beside what else changed", () => {
+    const after = { ...santa, roles: ["organizer"], policy: { ...santa.policy!, grants: [santa.policy!.grants[0]!] } };
+    expect(diffDocuments(santa, after).sentences).toContain("A participant is no longer a role.");
+  });
+
+  it("says a new policy that gives nothing gives nothing", () => {
+    expect(diffDocuments(unsaid(vendors), { ...unsaid(vendors), policy: { grants: [] } }).sentences).toEqual([
+      "The app gets a policy: from now on, only what a grant gives is allowed.",
+      "No grant is left, so nobody but the system may do anything.",
+    ]);
+  });
+});
