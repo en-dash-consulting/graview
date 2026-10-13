@@ -38,6 +38,9 @@ const ProblemRows = barPanes.part((panes, props: RowsProps) => <panes.ProblemRow
  *   in it, none of them "+10 more".
  */
 
+/** How far the panel floats in from the edges of the picture and from the map: the app's gap. */
+const PANEL_GAP = "var(--graview-gap, 8px)";
+
 /** Narrower than this, the panel is a sheet from the foot rather than a column beside the map. */
 const MAP_PANEL_SHEET_BELOW = 720;
 
@@ -130,9 +133,20 @@ function PanelFrame({
         flexDirection: "column",
         background: "var(--graview-panel)",
         color: "var(--graview-ink)",
+        /*
+         * A SURFACE OVER THE SCENE, NOT A COLUMN BESIDE IT: inset from the
+         * right, the top (under the bar) and the foot by the app's gap, with
+         * the app's own radius on every corner, its own edge and the real
+         * elevation, so it reads as lying on the map. What it holds is
+         * clipped to the radius, its scrollbar inside the box.
+         */
+        overflow: "hidden",
+        border: "1px solid var(--graview-edge)",
+        borderRadius: "var(--graview-radius, 12px)",
+        boxShadow: "var(--graview-lift-high)",
         ...(sheet
-          ? { left: 0, right: 0, bottom: 0, height: sheetHeight, borderTop: "1px solid var(--graview-edge)", borderRadius: "14px 14px 0 0", boxShadow: "var(--graview-lift-high)" }
-          : { top: 0, right: 0, bottom: 0, width: wide, borderLeft: "1px solid var(--graview-edge)" }),
+          ? { left: PANEL_GAP, right: PANEL_GAP, bottom: `calc(${PANEL_GAP} + env(safe-area-inset-bottom, 0px))`, height: sheetHeight }
+          : { top: PANEL_GAP, right: PANEL_GAP, bottom: PANEL_GAP, width: wide }),
       }}
     >
       {/*
@@ -144,10 +158,11 @@ function PanelFrame({
         * finger can still press it and open its acts, rather than under the
         * sheet it opened.
         */}
+      {/* The room it takes is its width and the gap on each side of it: the map side's, and the inset from the right edge. */}
       {sheet ? (
-        <style>{`:has(> [data-graview-map-panel="sheet"]) { --graview-sheet: ${sheetHeight}; }`}</style>
+        <style>{`:has(> [data-graview-map-panel="sheet"]) { --graview-sheet: calc(${sheetHeight} + 2 * ${PANEL_GAP} + env(safe-area-inset-bottom, 0px)); }`}</style>
       ) : (
-        <style>{`:has(> [data-graview-map-panel="dock"]) { --graview-dock: ${wide}; }`}</style>
+        <style>{`:has(> [data-graview-map-panel="dock"]) { --graview-dock: calc(${wide} + 2 * ${PANEL_GAP}); }`}</style>
       )}
       <header style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 14px 10px 18px", borderBottom: "1px solid var(--graview-edge)" }}>
         <div style={{ flex: "1 1 auto", minWidth: 0 }}>{head}</div>

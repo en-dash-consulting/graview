@@ -451,6 +451,51 @@ try {
   const bookmarked = await nameAgainstPlot();
   report.districtName = { resting, dragged, bookmarked };
   await unmoved.close();
+  /*
+   * THE PANEL FLOATS OVER THE MAP; it is not a column beside it. Docked on a
+   * desk (or a sheet on a phone) it is inset from the edges of the picture by
+   * the app's gap, below the bar, with the app's radius on its corners and a
+   * real elevation — and the city is laid out in the room left, so no
+   * district, name or control stands under it.
+   */
+  report.mapPanel = {};
+  for (const [width, height] of [[1560, 940], [390, 844]]) {
+    const floating = await browser.newPage({ viewport: { width, height } });
+    floating.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await floating.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Atask&in.view=the-week`, { waitUntil: "load" });
+    await floating.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await floating.waitForSelector('[data-graview-map-panel]', { timeout: 15_000 }).catch(() => {});
+    await floating.waitForTimeout(1500);
+    report.mapPanel[width] = await floating.evaluate(() => {
+      const panel = document.querySelector("[data-graview-map-panel]");
+      const box = panel?.getBoundingClientRect();
+      if (!panel || !box) return null;
+      const bar = document.querySelector('[data-testid="app-bar"]')?.getBoundingClientRect();
+      const style = getComputedStyle(panel);
+      const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+      const under = [];
+      for (const el of document.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face, [data-graview-plot] .graview-plot-tile, [data-testid="overview"], [data-testid="lines-key"], .graview-zoom, [data-testid="seat-field"]')) {
+        // On a phone a sheet stands over the ask field on purpose: the field is behind the sheet while it is open.
+        if (panel.getAttribute("data-graview-map-panel") === "sheet" && el.getAttribute("data-testid") === "seat-field") continue;
+        const r = el.getBoundingClientRect();
+        // What is drawn outside the window is not under anything.
+        if (r.width > 0 && r.height > 0 && meets(r, box)) under.push(el.getAttribute("data-testid") ?? el.getAttribute("class")?.split(" ")[0] ?? el.tagName);
+      }
+      return {
+        kind: panel.getAttribute("data-graview-map-panel"),
+        right: Math.round(innerWidth - box.right),
+        bottom: Math.round(innerHeight - box.bottom),
+        left: Math.round(box.left),
+        belowTheBar: bar ? box.top >= bar.bottom : null,
+        top: Math.round(box.top),
+        radius: parseFloat(style.borderTopLeftRadius) || 0,
+        shadow: style.boxShadow !== "none",
+        edge: parseFloat(style.borderTopWidth) > 0,
+        under,
+      };
+    });
+    await floating.close();
+  }
 
   /*
    * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
@@ -1117,7 +1162,8 @@ report.verdict = {
   // A pressed showing opens beside the map: docked at the side, wide enough to read, its text at its own size, nothing drawn over it, and no billboard on the plot.
   aPictureOpensBesideTheMapAtASizeYouRead:
     report.driveIn?.standing?.panel === "dock" &&
-    report.driveIn?.standing?.right === 0 &&
+    // Floating over the map, a gap in from the right edge, not flush to it (see theMapPanelFloatsOver...).
+    (report.driveIn?.standing?.right ?? 0) >= 4 &&
     (report.driveIn?.standing?.width ?? 0) >= 440 &&
     (report.driveIn?.standing?.font ?? 0) >= 12 &&
     report.driveIn?.standing?.scaled === false &&
@@ -1211,6 +1257,23 @@ report.verdict = {
     report.districtName.bookmarked?.dx === report.districtName.resting.dx &&
     report.districtName.bookmarked?.dy === report.districtName.resting.dy &&
     report.districtName.bookmarked?.pinned === 0,
+  // The panel beside the map floats over it: inset from the right and the foot, below the bar, rounded, edged and lifted — and nothing of the city stands under it.
+  theMapPanelFloatsOverTheMapInsteadOfRunningFlushToItsEdges:
+    ["1560", "390"].every((width) => {
+      const one = report.mapPanel?.[width];
+      return (
+        one !== null &&
+        one !== undefined &&
+        one.right >= 4 &&
+        one.bottom >= 4 &&
+        one.belowTheBar === true &&
+        one.radius > 0 &&
+        one.shadow === true &&
+        one.edge === true &&
+        one.under.length === 0 &&
+        (width === "390" ? one.left >= 4 && one.kind === "sheet" : one.kind === "dock" && one.top >= (report.mapPanel[width].top ?? 0))
+      );
+    }),
   aDistrictWithoutOneIsListedBesideTheMap:
     (report.districts?.withoutOne ?? "").includes("sel=kind%3Areason") &&
     !(report.districts?.withoutOne ?? "").includes("expand=") &&
