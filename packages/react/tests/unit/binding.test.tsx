@@ -1,7 +1,7 @@
 import { bindSchema, createSchema, DARK, defineNode, LIGHT, nodeRef, Store, type KitOverrides } from "@graview/core";
 import { EMPTY_VIEW, aggregateId, fromUrl, kindCardId, layout, toUrl, withZoom } from "@graview/layout";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
   createViews,
@@ -493,38 +493,49 @@ describe("a selection, mapped onto what is drawn", () => {
       Number(match[1]),
     );
 
-  it("does not blank the picture for a selection the scene has to resolve", () => {
-    /*
-     * The regression, through the wiring rather than the function. Arriving in
-     * the Graview with a real node already chosen used to recede every line at
-     * once, and the picture you rose to look at went dark.
-     */
-    const drawn = opacities(graview(["ana"]));
-    expect(drawn.length).toBeGreaterThan(0);
-    expect(drawn.some((value) => value > 0.5)).toBe(true);
+  const ribbons = (html: string) => [...html.matchAll(/<g class="graview-ribbon"[^>]*>/g)].map((match) => match[0]);
+
+  /* The ribbons are fetched the first time the city is drawn: drawn once, and arrived, they draw in the same pass after. */
+  beforeAll(async () => {
+    graview();
+    await import("../../src/ribbons-layer.js");
+    for (let tick = 0; tick < 20 && ribbons(graview()).length === 0; tick += 1) await new Promise((resolve) => setTimeout(resolve, 10));
   });
 
-  it("draws the relations as roads on the ground from up there, and no line in the air", () => {
+  it("draws each relation as a ribbon between the districts from up there, and no line in the air", () => {
     const html = graview();
-    // The relations ARE the content up here — as roads between the plots,
-    // on the ground layer, one per pair of districts a declared edge joins.
-    expect((html.match(/class="graview-road"/g) ?? []).length).toBeGreaterThan(0);
-    // A line in the air says only what a road cannot: nothing is chosen, so nothing is drawn.
+    // The relations ARE the content up here — one ribbon per relation, on the ground, between the plots it joins.
+    expect(ribbons(html)).toHaveLength(1);
+    // Nothing is chosen, so no record has a line of its own.
     expect(opacities(html)).toEqual([]);
   });
 
-  it("says which two plots each road joins, by the ids the plots carry", () => {
+  it("says which relation each ribbon is, which way it runs and how many links it carries", () => {
     /*
-     * A road is drawn between two districts, and a design that lights the
-     * roads touching a district needs to know which: by the same id the
-     * plot wears, so `[data-graview-plot=x]` and `[data-graview-from=x]`
-     * are one selector's worth of work, not a path parsed back to points.
+     * A ribbon is one relation, read the way it is declared: from the kind
+     * that declares it to the kind it reaches, as wide as its links — by the
+     * same ids the plots wear, so `[data-graview-plot=x]` and
+     * `[data-graview-from=x]` are one selector's worth of work.
      */
     const html = graview();
-    const road = /<g class="graview-road"[^>]*>/.exec(html)?.[0] ?? "";
-    expect(road).toContain('data-graview-road="assigned-to"');
-    const ends = [/data-graview-from="([^"]*)"/.exec(road)?.[1], /data-graview-to="([^"]*)"/.exec(road)?.[1]];
-    expect(ends.sort()).toEqual([kindCardId("duty"), kindCardId("person")]);
-    for (const end of ends) expect(html).toContain(`data-graview-plot="${end}"`);
+    const ribbon = ribbons(html)[0] ?? "";
+    expect(ribbon).toContain('data-graview-ribbon="assigned-to"');
+    expect(ribbon).toContain(`data-graview-from="${kindCardId("person")}"`);
+    expect(ribbon).toContain(`data-graview-to="${kindCardId("duty")}"`);
+    expect(ribbon).toContain('data-graview-links="1"');
+    for (const end of [kindCardId("person"), kindCardId("duty")]) expect(html).toContain(`data-graview-plot="${end}"`);
+  });
+
+  it("draws only a chosen district's own relations, and none for a chosen record", () => {
+    // A district chosen: its relations stay, lit.
+    const district = ribbons(graview([kindCardId("person")]));
+    expect(district).toHaveLength(1);
+    expect(district[0]).toContain("data-graview-lit");
+    // A district the relation does not touch: nothing to draw.
+    expect(ribbons(graview([kindCardId("week")]))).toEqual([]);
+    // A record chosen draws its own links (measured on the page), so no ribbon says it again, and no connector does either.
+    const record = graview(["ana"]);
+    expect(ribbons(record)).toEqual([]);
+    expect(opacities(record)).toEqual([]);
   });
 });

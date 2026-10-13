@@ -302,8 +302,17 @@ const APPS = {
       // sized for a wide screen lands on the thing you came to act on.
       const opener = await p.$("[data-testid^='open-']");
       if (opener) { await opener.click(); await p.waitForTimeout(500); }
-      const chip = await p.$("[data-graview-pick]");
-      if (chip) { await chip.dblclick(); await p.waitForTimeout(900); }
+      // A district's records are listed beside the map: choose one there, then go to it.
+      const row = await p.$('[data-testid="district-panel"] [data-graview-record]');
+      if (row) {
+        await row.click();
+        await p.waitForTimeout(400);
+        await p.click('[data-testid="record-panel-go"]').catch(() => {});
+        await p.waitForTimeout(900);
+      } else {
+        const chip = await p.$("[data-graview-pick]");
+        if (chip) { await chip.dblclick(); await p.waitForTimeout(900); }
+      }
     } },
     // The empty app's own first screen: a city of districts saying "none yet".
     empty: async () => {},

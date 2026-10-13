@@ -234,9 +234,12 @@ try {
           // A member DRAWN IN THE SCENE, and one a person can press: a chapter that
           // opened the activity rail has chips there too (a log entry, not a thing),
           // and a lens drawn small as a picture is inert.
+          // Or, where a picture stands beside the map, a record in it; or, where opening a district lists its records there, the first of them.
           const member = (
             await page.evaluateHandle(() =>
-              [...document.querySelectorAll("[data-graview-stage] [data-graview-pick]")].find((el) => !el.closest("[inert]")) ?? null,
+              [...document.querySelectorAll("[data-graview-stage] [data-graview-pick]")].find((el) => !el.closest("[inert]")) ??
+              document.querySelector('[data-testid="lens-panel"] [data-graview-pick]') ??
+              document.querySelector('[data-testid="district-panel"] [data-graview-record]'),
             )
           ).asElement();
           if (member) {

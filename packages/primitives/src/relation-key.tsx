@@ -3,6 +3,8 @@ import { kitConnector, useKit } from "@graview/react/drawing";
 import { useGraph, useGraview, useGraviewIfAny, useNavigation, useSelection } from "@graview/react/provider";
 import {
   CONNECTOR_DASH,
+  PROVISIONAL_DASH,
+  PROVISIONAL_OPACITY,
   connectorStroke,
   connectorWidth,
 } from "@graview/render";
@@ -25,7 +27,14 @@ import { useEffect, useMemo } from "react";
  * clicking a card: from up here, "show me what this touches" is the only thing
  * selecting can mean.
  */
-export function RelationKey<S extends AnySchema>({ inside = false }: { readonly inside?: boolean } = {}) {
+export function RelationKey<S extends AnySchema>({
+  inside = false,
+  widthOf,
+}: {
+  readonly inside?: boolean;
+  /** From altitude, how wide the map draws a relation's ribbon, by its links and the busiest relation's: the swatch is that ribbon. */
+  readonly widthOf?: (links: number, most: number) => number;
+} = {}) {
   const { store, view, emphasis, setEmphasis } = useGraview<S>();
   // The same kit the scene draws with: a swatch that ignored the brand's kit would be a key you cannot trust.
   const kit = useKit();
@@ -58,6 +67,8 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([kind, entry]) => ({ kind, count: entry.count, ends: [...entry.ends] }));
   }, [store, nodes]);
+  // The busiest relation, which the widest ribbon is drawn for.
+  const most = Math.max(0, ...relations.map((relation) => relation.count));
 
   // A key that disappears mid-hover must not leave its question standing.
   useEffect(() => () => setEmphasis(null), [setEmphasis]);
@@ -135,6 +146,7 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
           {relations.length === 1 ? "1 relation" : `${relations.length} relations`}
         </span>
       )}
+      {widthOf ? <LineManners aloft={view.overview === true} /> : null}
       {relations.map(({ kind: edgeKind, count, ends }) => {
         const { connector, style } = kitConnector(kit, edgeKind);
         // Every declaring kind's own words, where kinds word a shared relation apart.
@@ -181,16 +193,21 @@ export function RelationKey<S extends AnySchema>({ inside = false }: { readonly 
             }}
           >
             {/* The same stroke the scene draws, from the same helpers — a key
-                whose swatch is an approximation is a key you cannot trust. */}
-            <svg width="30" height="8" aria-hidden="true" style={{ display: "block", opacity: connector.visible ? 1 : 0.35 }}>
-              <path
-                d="M 1 4 L 29 4"
-                fill="none"
-                stroke={connectorStroke(style)}
-                strokeWidth={connectorWidth(style, true)}
-                strokeDasharray={CONNECTOR_DASH[style.pattern]}
-                strokeLinecap="round"
-              />
+                whose swatch is an approximation is a key you cannot trust.
+                From altitude that is the relation's ribbon, as wide as its links. */}
+            <svg width="30" height="10" aria-hidden="true" style={{ display: "block", opacity: connector.visible ? 1 : 0.35 }}>
+              {view.overview && widthOf ? (
+                <path d="M 1 5 L 29 5" fill="none" className="graview-key-ribbon" stroke="var(--graview-ink)" strokeOpacity={0.35} strokeWidth={widthOf(count, most)} />
+              ) : (
+                <path
+                  d="M 1 5 L 29 5"
+                  fill="none"
+                  stroke={connectorStroke(style)}
+                  strokeWidth={connectorWidth(style, true)}
+                  strokeDasharray={CONNECTOR_DASH[style.pattern]}
+                  strokeLinecap="round"
+                />
+              )}
             </svg>
             {/*
               * THE RELATION IN ITS OWN WORDS. The row said the edge's name —
@@ -270,5 +287,42 @@ export function RelationMark({ edgeKind, kit: given, width = 30 }: { readonly ed
     <svg width={width} height="8" aria-hidden="true" data-testid="relation-mark" data-graview-relation={edgeKind} style={{ display: "inline-block", verticalAlign: "middle", opacity: connector.visible ? 1 : 0.35 }}>
       <path d={`M 1 4 L ${width - 1} 4`} fill="none" stroke={connectorStroke(style)} strokeWidth={connectorWidth(style, true)} strokeDasharray={CONNECTOR_DASH[style.pattern]} strokeLinecap="round" />
     </svg>
+  );
+}
+
+/**
+ * ONE MANNER OF LINE PER MEANING, said once. From altitude a line means one
+ * of three things, and any link may be unsure (FR-172), and the Key says which before it lists the relations: a
+ * ribbon between two districts, as wide as the links along it; a chosen
+ * record's link to a record the map draws, solid, ending on it; and its
+ * links into a district, dashed, for records the map does not draw one by
+ * one. Color and dash no longer tell relations apart — each line says its
+ * relation in words where it is drawn.
+ */
+function LineManners({ aloft }: { readonly aloft: boolean }) {
+  const row = { display: "grid", gridTemplateColumns: "30px 1fr", alignItems: "center", gap: 8, minHeight: 23, padding: "2px 4px" } as const;
+  const said = { fontSize: "0.75rem", color: "var(--graview-ink-muted)" } as const;
+  return (
+    <div role="group" aria-label="The lines" data-testid="line-manners" style={{ display: "grid", gap: 1, paddingBottom: 6, marginBottom: 4, borderBottom: "1px solid var(--graview-edge)" }}>
+      {aloft ? (<>
+      <div style={row} data-graview-manner="ribbon">
+        <svg width="30" height="10" aria-hidden="true"><path d="M 1 5 L 29 5" stroke="var(--graview-ink)" strokeOpacity={0.35} strokeWidth={6} /></svg>
+        <span style={said}>A relation between two districts, as wide as the links along it — point at one for its words</span>
+      </div>
+      <div style={row} data-graview-manner="record">
+        <svg width="30" height="10" aria-hidden="true"><path d="M 1 5 L 25 5" stroke="var(--graview-accent)" strokeWidth={1.8} strokeLinecap="round" /><circle cx={26} cy={5} r={3} fill="var(--graview-accent)" /></svg>
+        <span style={said}>A chosen record's link to another record, labeled with the relation</span>
+      </div>
+      <div style={row} data-graview-manner="district">
+        <svg width="30" height="10" aria-hidden="true"><path d="M 1 5 L 29 5" stroke="var(--graview-accent)" strokeWidth={1.8} strokeDasharray="5 4" /></svg>
+        <span style={said}>A chosen record's links into a district, with how many</span>
+      </div>
+      </>) : null}
+      {/* A link made less than sure (FR-172) is drawn so wherever it is drawn, until a person keeps it. */}
+      <div style={row} data-graview-manner="unsure">
+        <svg width="30" height="10" aria-hidden="true"><path d="M 1 5 L 29 5" stroke="var(--graview-accent)" strokeOpacity={PROVISIONAL_OPACITY} strokeWidth={1.8} strokeDasharray={PROVISIONAL_DASH} strokeLinecap="round" /></svg>
+        <span style={said}>Unsure: a link its maker was less than sure of, until a person keeps it — point at its words for what it was based on</span>
+      </div>
+    </div>
   );
 }

@@ -174,8 +174,8 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
       : { left: GAP, right: GAP, bottom: `calc(${GAP}px + env(safe-area-inset-bottom, 0px))` }
     : open
       ? /* The box around the field, so the field itself stays where it stood: its padding and hairline outside it. */
-        { [right ? "right" : "left"]: GAP / 2 - 1, bottom: GAP / 2 - 1, width: SEAT_WIDTH + GAP + 2, padding: GAP / 2, borderRadius: 12, ...OPEN_BOX }
-      : { [right ? "right" : "left"]: GAP, bottom: GAP, width: SEAT_WIDTH };
+        { [right ? "right" : "left"]: right ? `calc(${GAP / 2 - 1}px + var(--graview-dock, 0px))` : GAP / 2 - 1, bottom: GAP / 2 - 1, width: SEAT_WIDTH + GAP + 2, padding: GAP / 2, borderRadius: 12, ...OPEN_BOX }
+      : { [right ? "right" : "left"]: right ? `calc(${GAP}px + var(--graview-dock, 0px))` : GAP, bottom: GAP, width: SEAT_WIDTH };
   return (
     <section
       ref={region}

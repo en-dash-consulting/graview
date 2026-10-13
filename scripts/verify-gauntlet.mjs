@@ -228,8 +228,13 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
   await open(page, "/", { scheme, seat, hash: "#overview=1" });
 
   for (const kind of ["talk", "speaker", "session"]) {
-    await reach(page, where, `the ${kind} district opened in place`, async () => {
+    await reach(page, where, `the ${kind} district listed beside the map`, async () => {
       await rise(page);
+      // The district chosen before is put down first: on a phone its sheet stands over the city.
+      if ((await page.locator("[data-graview-map-panel]").count()) > 0) {
+        await page.locator('[data-testid="map-panel-close"]').first().click();
+        await page.waitForTimeout(400);
+      }
       const control = page.locator(`[data-testid="open-${kind}"]`).first();
       // On a phone a district can stand past the edge of the ground; its sign brings it in, as a person would press it.
       const sign = page.locator(`[data-graview-past-edge="kind:${kind}"]`).first();
@@ -239,7 +244,7 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
       }
       await control.click();
       await page.waitForTimeout(1200);
-      return { reached: (await control.getAttribute("aria-expanded")) === "true", detail: await count(page, `[data-graview-view="kind:${kind}"] [data-graview-pick]`) };
+      return { reached: (await control.getAttribute("aria-expanded")) === "true", detail: await count(page, '[data-testid="district-panel"] [data-graview-record]') };
     });
   }
 
@@ -575,7 +580,7 @@ report.checks = {
     reached("the city from altitude") &&
     reached("the pages' home"),
   // Every district clicked open at altitude, opened.
-  everyDistrictOpensInPlace: ["talk", "speaker", "session"].every((kind) => reached(`the ${kind} district opened in place`)),
+  everyDistrictIsListedBesideTheMap: ["talk", "speaker", "session"].every((kind) => reached(`the ${kind} district listed beside the map`)),
   // Each record chosen for an awkward name is reached on both faces.
   everyAwkwardRecordIsReached:
     [

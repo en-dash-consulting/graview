@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T15:07:58.483Z",
+  "at": "2026-10-13T05:32:45.968Z",
   "engine": "chromium",
   "states": [
     {
@@ -343,31 +343,31 @@
       "reached": true
     },
     {
-      "state": "the talk district opened in place",
+      "state": "the talk district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "light",
       "seat": "u-4f1c9a",
       "reached": true,
-      "detail": 33
+      "detail": 1960
     },
     {
-      "state": "the speaker district opened in place",
+      "state": "the speaker district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "light",
       "seat": "u-4f1c9a",
       "reached": true,
-      "detail": 4
+      "detail": 1100
     },
     {
-      "state": "the session district opened in place",
+      "state": "the session district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "light",
       "seat": "u-4f1c9a",
       "reached": true,
-      "detail": 4
+      "detail": 240
     },
     {
       "state": "a district gone deeper into",
@@ -450,19 +450,19 @@
       "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
     },
     {
-      "state": "the strip on a submitted talk, withheld acts shown",
+      "state": "the acts on a submitted talk, withheld acts shown",
       "face": "scene",
       "width": 1440,
       "scheme": "light",
       "seat": "u-4f1c9a",
       "reached": true,
       "detail": {
-        "offered": 9,
+        "offered": 14,
         "withheld": 0
       }
     },
     {
-      "state": "an ask opened from the strip and put away with Escape",
+      "state": "an ask opened from the acts and put away with Escape",
       "face": "scene",
       "width": 1440,
       "scheme": "light",
@@ -790,31 +790,31 @@
       }
     },
     {
-      "state": "the talk district opened in place",
+      "state": "the talk district listed beside the map",
       "face": "scene",
       "width": 390,
       "scheme": "light",
       "seat": "u-9b27e0",
       "reached": true,
-      "detail": 33
+      "detail": 1960
     },
     {
-      "state": "the speaker district opened in place",
+      "state": "the speaker district listed beside the map",
       "face": "scene",
       "width": 390,
       "scheme": "light",
       "seat": "u-9b27e0",
       "reached": true,
-      "detail": 4
+      "detail": 1100
     },
     {
-      "state": "the session district opened in place",
+      "state": "the session district listed beside the map",
       "face": "scene",
       "width": 390,
       "scheme": "light",
       "seat": "u-9b27e0",
       "reached": true,
-      "detail": 4
+      "detail": 240
     },
     {
       "state": "a district gone deeper into",
@@ -897,7 +897,7 @@
       "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
     },
     {
-      "state": "the strip on a submitted talk, withheld acts shown",
+      "state": "the acts on a submitted talk, withheld acts shown",
       "face": "scene",
       "width": 390,
       "scheme": "light",
@@ -905,11 +905,11 @@
       "reached": true,
       "detail": {
         "offered": 5,
-        "withheld": 6
+        "withheld": 9
       }
     },
     {
-      "state": "an ask opened from the strip and put away with Escape",
+      "state": "an ask opened from the acts and put away with Escape",
       "face": "scene",
       "width": 390,
       "scheme": "light",
@@ -1229,31 +1229,31 @@
       }
     },
     {
-      "state": "the talk district opened in place",
+      "state": "the talk district listed beside the map",
       "face": "scene",
       "width": 390,
       "scheme": "dark",
       "seat": "u-02d8c4",
       "reached": true,
-      "detail": 33
+      "detail": 1960
     },
     {
-      "state": "the speaker district opened in place",
+      "state": "the speaker district listed beside the map",
       "face": "scene",
       "width": 390,
       "scheme": "dark",
       "seat": "u-02d8c4",
       "reached": true,
-      "detail": 4
+      "detail": 1100
     },
     {
-      "state": "the session district opened in place",
+      "state": "the session district listed beside the map",
       "face": "scene",
       "width": 390,
       "scheme": "dark",
       "seat": "u-02d8c4",
       "reached": true,
-      "detail": 4
+      "detail": 240
     },
     {
       "state": "a district gone deeper into",
@@ -1336,7 +1336,7 @@
       "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
     },
     {
-      "state": "the strip on a submitted talk, withheld acts shown",
+      "state": "the acts on a submitted talk, withheld acts shown",
       "face": "scene",
       "width": 390,
       "scheme": "dark",
@@ -1344,7 +1344,7 @@
       "reached": true,
       "detail": {
         "offered": 0,
-        "withheld": 11
+        "withheld": 14
       }
     },
     {
@@ -1667,31 +1667,31 @@
       }
     },
     {
-      "state": "the talk district opened in place",
+      "state": "the talk district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
       "seat": "agent-sched-7",
       "reached": true,
-      "detail": 33
+      "detail": 1960
     },
     {
-      "state": "the speaker district opened in place",
+      "state": "the speaker district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
       "seat": "agent-sched-7",
       "reached": true,
-      "detail": 4
+      "detail": 1100
     },
     {
-      "state": "the session district opened in place",
+      "state": "the session district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
       "seat": "agent-sched-7",
       "reached": true,
-      "detail": 4
+      "detail": 240
     },
     {
       "state": "a district gone deeper into",
@@ -1774,7 +1774,7 @@
       "detail": "#focus=staff%3Asam-taylor-2&sel=staff%3Asam-taylor-2"
     },
     {
-      "state": "the strip on a submitted talk, withheld acts shown",
+      "state": "the acts on a submitted talk, withheld acts shown",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
@@ -1782,11 +1782,11 @@
       "reached": true,
       "detail": {
         "offered": 2,
-        "withheld": 9
+        "withheld": 12
       }
     },
     {
-      "state": "an ask opened from the strip and put away with Escape",
+      "state": "an ask opened from the acts and put away with Escape",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
@@ -2106,31 +2106,31 @@
       }
     },
     {
-      "state": "the talk district opened in place",
+      "state": "the talk district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": 33
+      "detail": 1960
     },
     {
-      "state": "the speaker district opened in place",
+      "state": "the speaker district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": 4
+      "detail": 1100
     },
     {
-      "state": "the session district opened in place",
+      "state": "the session district listed beside the map",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": 4
+      "detail": 240
     },
     {
       "state": "a district gone deeper into",
@@ -2213,7 +2213,7 @@
       "detail": "#overview=1"
     },
     {
-      "state": "the strip on a submitted talk, withheld acts shown",
+      "state": "the acts on a submitted talk, withheld acts shown",
       "face": "scene",
       "width": 1440,
       "scheme": "dark",
@@ -2221,7 +2221,7 @@
       "reached": true,
       "detail": {
         "offered": 0,
-        "withheld": 11
+        "withheld": 14
       }
     },
     {
@@ -2358,7 +2358,7 @@
       "scheme": "dark",
       "seat": "u-anon-0",
       "reached": true,
-      "detail": "Programme"
+      "detail": "Program — a Graview example"
     },
     {
       "state": "a talk with a long, shared-prefix title",
@@ -2529,7 +2529,7 @@
   "pageErrors": [],
   "checks": {
     "everyFaceOpensAtEveryWidthSchemeAndSeat": true,
-    "everyDistrictOpensInPlace": true,
+    "everyDistrictIsListedBesideTheMap": true,
     "everyAwkwardRecordIsReached": true,
     "theCalendarOverTwoKindsOpens": true,
     "whatASeatMayNotSeeIsKeptFromIt": true,

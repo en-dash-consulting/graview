@@ -17,6 +17,9 @@ export { SeatField } from "./seat-field.js";
 export { DraftDoor } from "./draft-door.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 export { LinesKey } from "./lines-key.js";
+/* What is chosen from altitude, beside the map at a size a person reads: a lens, a record's links, a district. */
+export { MapPanel, mapPanelShows } from "./map-panel-door.js";
+export type { MapPanelShowing } from "./map-panel-door.js";
 export { Inspector } from "./workbench/inspector-door.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";

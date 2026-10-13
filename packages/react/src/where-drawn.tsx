@@ -233,21 +233,13 @@ export function whereIsIn(
 ): DrawnBox | null {
   const find = (wanted: string) => frame.nodes.find((node) => node.id === wanted);
   /*
-   * THE AUDIENCE STRIP in front of a drive-in's screen: the ground between
-   * the screen's foot and the plot's near half, where figures will stand.
-   * Nothing draws there yet; the address is what later tasks stand on.
+   * THE AUDIENCE of a picture chosen from altitude stands at its district.
+   * The picture opens beside the map (the lens panel), not on a screen on
+   * the plot, so those looking at it gather where the district is drawn.
    */
   if (id.startsWith("screen:")) {
-    const kind = id.slice("screen:".length);
-    const screen = frame.nodes.find((node) => node.screenOf === kind);
-    if (!screen) return null;
-    const box = measureVisible(stageEl, screen.id, false) ?? drawnBox(screen, scheme);
-    if (!box) return null;
-    const card = frame.nodes.find((node) => node.id === kindCardId(kind));
-    const plate = card ? drawnBox(card, scheme) : null;
-    const foot = box.y + box.height;
-    const depth = plate ? Math.max(20, plate.y - foot) : Math.max(20, box.height * 0.18);
-    return { x: box.x, y: foot, width: box.width, height: depth };
+    const card = frame.nodes.find((node) => node.id === kindCardId(id.slice("screen:".length)));
+    return card ? (measureVisible(stageEl, card.id, true) ?? drawnBox(card, scheme)) : null;
   }
   let target = find(id);
   const kind = kindOfCard(id);

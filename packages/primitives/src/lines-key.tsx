@@ -2,6 +2,8 @@ import { layer, type AnySchema } from "@graview/core";
 import { useGraph, useGraview } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { KEY_PANE_WIDTH, RelationKey } from "./relation-key.js";
+// The Key is drawn with the scene, whose face has fetched `@graview/react` already.
+import { ribbonWidth } from "@graview/react";
 
 /**
  * THE KEY TO THE LINES, BESIDE UP.
@@ -54,7 +56,7 @@ export function LinesKey<S extends AnySchema>() {
         style={{
           position: "absolute",
           top: 60,
-          right: 14,
+          right: "calc(14px + var(--graview-dock, 0px))",
           zIndex: layer("overview"),
           height: 30,
           padding: "0 11px",
@@ -77,7 +79,7 @@ export function LinesKey<S extends AnySchema>() {
           style={{
             position: "absolute",
             top: 98,
-            right: 14,
+            right: "calc(14px + var(--graview-dock, 0px))",
             zIndex: layer("rail"),
             width: KEY_PANE_WIDTH,
             maxHeight: "calc(100cqh - 120px)",
@@ -90,7 +92,7 @@ export function LinesKey<S extends AnySchema>() {
             boxShadow: "var(--graview-lift-high)",
           }}
         >
-          <RelationKey<S> inside />
+          <RelationKey<S> inside widthOf={ribbonWidth} />
         </div>
       ) : null}
     </div>

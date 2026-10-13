@@ -1,0 +1,314 @@
+{
+  "at": "2026-10-13T05:35:35.321Z",
+  "tags": [
+    "wcag2a",
+    "wcag2aa",
+    "wcag21a",
+    "wcag21aa",
+    "wcag22aa",
+    "best-practice"
+  ],
+  "sweep": [
+    "desk light",
+    "desk dark",
+    "phone light",
+    "phone dark"
+  ],
+  "checks": {
+    "theFrameworksMarkupOnAHostsPagePassesAxe": {
+      "nodes": 0,
+      "rules": [],
+      "ok": true
+    },
+    "everyExampleAppPassesAxeOnBothFaces": {
+      "nodes": 0,
+      "rules": [],
+      "ok": true
+    },
+    "everyScreenWasScanned": {
+      "scanned": 68,
+      "expected": 68,
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "byRule": {},
+  "scanned": [
+    {
+      "screen": "vendors · graview · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · graview · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · graview · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · graview · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · pages · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · pages · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · pages · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · graview · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · graview · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · graview · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · graview · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · pages · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · pages · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · pages · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · / · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · / · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks/t-deposit · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks/t-deposit · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks/t-deposit · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks/t-deposit · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/problems · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/problems · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/problems · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/problems · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/search?q=the · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/search?q=the · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/search?q=the · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/search?q=the · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · / · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · / · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · /pages · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · /pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · /pages · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · /pages · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · / · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · / · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · /pages · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · /pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · /pages · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · /pages · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · / · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · / · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · /pages · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · /pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · /pages · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · /pages · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "launcher · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "launcher · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "launcher · / · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "launcher · / · phone · dark",
+      "nodes": 0
+    }
+  ],
+  "passed": true
+}

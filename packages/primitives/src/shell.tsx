@@ -1,10 +1,11 @@
 import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles } from "@graview/core";
-import { HostFilesContext, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
+import { BesideTheMap, HostFilesContext, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
 import { SeatField, type SeatStart } from "./seat-field.js";
 import { LinesKey } from "./lines-key.js";
+import { MapPanel } from "./map-panel-door.js";
 import { ShowInstallation } from "./installation.js";
 import { Profile, type HostAction } from "./profile.js";
 import { createNoticeBoard, NoticeBoardContext, Notices, type NoticeBoard } from "./notices.js";
@@ -169,6 +170,8 @@ export function Shell<S extends AnySchema>({
 
   const drawn = (
     <NoticeBoardContext.Provider value={board}>
+    {/* A district opened here is listed in the panel beside the map. */}
+    <BesideTheMap.Provider value={true}>
     <div ref={shell} style={{ display: "flex", flexDirection: "column", height: screen ?? "100dvh", overflow: "hidden" }}>
       {syncUrl ? <UrlSync /> : null}
       {/*
@@ -252,6 +255,8 @@ export function Shell<S extends AnySchema>({
           onCall={onCall}
           {...(typeof chat === "object" && chat.respond ? { respond: chat.respond } : {})}
         />
+        {/* What is chosen from altitude — a lens, a record's links, a district — beside the map, at a size a person reads. */}
+        <MapPanel<S> />
         {/* The acts at the pointer: right-click, or the acts key on a card, is the context menu. */}
         <Inspector placement="menu" />
         {/* After an act, the way back on the board, and ⌘Z (FR-153): as on the pages. */}
@@ -259,6 +264,7 @@ export function Shell<S extends AnySchema>({
       </main>
       <Notices board={board} anchor={scene} />
     </div>
+    </BesideTheMap.Provider>
     </NoticeBoardContext.Provider>
   );
   return files ? <HostFilesContext.Provider value={files}>{drawn}</HostFilesContext.Provider> : drawn;

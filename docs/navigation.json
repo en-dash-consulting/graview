@@ -1,32 +1,29 @@
 {
-  "at": "2026-10-04T15:07:58.483Z",
+  "at": "2026-10-13T07:54:15.499Z",
   "engine": "chromium",
   "steps": [
     {
       "step": "landed",
       "url": "#focus=aggregate%3Alist",
-      "back": false,
-      "forward": false,
-      "trail": "",
+      "arrows": false,
+      "trail": null,
       "captions": []
     },
     {
-      "step": "travelled",
+      "step": "traveled",
       "url": "#focus=t-deposit&sel=t-deposit",
-      "back": true,
-      "forward": false,
-      "trail": "Pay the deposit×",
+      "arrows": false,
+      "trail": null,
       "captions": [
         "the list it is on",
         "why this is here"
       ]
     },
     {
-      "step": "travelled again",
+      "step": "traveled again",
       "url": "#focus=reason-deposit&sel=reason-deposit",
-      "back": true,
-      "forward": false,
-      "trail": "The landlord holds the date for 48 hours once the deposit…×",
+      "arrows": false,
+      "trail": null,
       "captions": [
         "what this is about"
       ]
@@ -34,9 +31,8 @@
     {
       "step": "back once",
       "url": "#focus=t-deposit&sel=reason-deposit",
-      "back": true,
-      "forward": true,
-      "trail": "Pay the deposit×",
+      "arrows": false,
+      "trail": null,
       "captions": [
         "the list it is on",
         "why this is here"
@@ -45,43 +41,38 @@
     {
       "step": "back twice",
       "url": "#focus=aggregate%3Alist&sel=t-deposit",
-      "back": false,
-      "forward": true,
-      "trail": "",
+      "arrows": false,
+      "trail": null,
       "captions": []
     },
     {
       "step": "forward once",
       "url": "#focus=t-deposit&sel=reason-deposit",
-      "back": true,
-      "forward": true,
-      "trail": "Pay the deposit×",
+      "arrows": false,
+      "trail": null,
       "captions": [
         "the list it is on",
         "why this is here"
       ]
     },
     {
-      "step": "home by breadcrumb",
-      "url": "#focus=aggregate%3Alist&sel=reason-deposit",
-      "back": true,
-      "forward": false,
-      "trail": "",
+      "step": "home by escape",
+      "url": "#focus=aggregate%3Alist",
+      "arrows": false,
+      "trail": null,
       "captions": []
     },
     {
       "step": "lists with every task raised",
       "url": "#focus=aggregate%3Alist&relation=task",
-      "back": false,
-      "forward": true,
+      "arrows": false,
       "trail": "Tasks×",
       "captions": []
     },
     {
       "step": "the week with the lists raised",
       "url": "#focus=aggregate%3Atask&relation=list",
-      "back": false,
-      "forward": true,
+      "arrows": false,
       "trail": "Lists×",
       "captions": []
     }
@@ -104,9 +95,9 @@
       "registered": true
     },
     "altitude": {
-      "label": "Down to The month",
+      "label": "Down to What is left",
       "pressed": "true",
-      "name": "Down to The month",
+      "name": "Down to What is left",
       "wingOpacity": 0,
       "registered": true
     },
@@ -114,7 +105,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.589002,
+      "wingOpacity": 0.539087,
       "registered": true
     },
     "groundAgain": {
@@ -127,29 +118,29 @@
   },
   "hitArea": {
     "host": [
-      515,
-      425
+      576,
+      397
     ],
     "drawn": [
-      515,
-      147
+      576,
+      208
     ],
     "onContent": "t-deposit",
     "belowContent": null
   },
   "moves": {
     "arranged": {
-      "url": "#focus=t-deposit&sel=t-deposit&pin.t-deposit=562%2C3.44",
+      "url": "#focus=t-deposit&pin.t-deposit=434%2C1.12",
       "pinned": [
         "t-deposit"
       ]
     },
-    "travelled": {
+    "traveled": {
       "url": "#focus=reason-deposit&sel=reason-deposit",
       "pinned": []
     },
     "back": {
-      "url": "#focus=t-deposit&sel=reason-deposit&pin.t-deposit=562%2C3.44",
+      "url": "#focus=t-deposit&sel=reason-deposit&pin.t-deposit=434%2C1.12",
       "pinned": [
         "t-deposit"
       ]
@@ -157,14 +148,20 @@
   },
   "districts": {
     "withAPicture": "#focus=aggregate%3Atask&overview=1&zoom=1",
-    "withoutOne": "#focus=t-deposit&overview=1&expand=kind%3Areason"
+    "withoutOne": "#focus=t-deposit&overview=1&sel=kind%3Areason",
+    "listed": {
+      "panel": "dock",
+      "rows": 1,
+      "font": 14,
+      "floating": 0
+    }
   },
   "removed": {
-    "standingIn": "#focus=t-deposit&sel=t-deposit",
+    "standingIn": "#focus=t-deposit&sel=t-deposit&pin.t-deposit=434%2C1.12",
     "landedOn": "#focus=aggregate%3Alist",
     "views": 5,
-    "pane": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them.",
-    "subject": "aggregate:list",
+    "pane": null,
+    "seat": "Ask Things",
     "victim": "t-deposit",
     "ok": true
   },
@@ -172,58 +169,46 @@
     "shown": {
       "hash": "#focus=aggregate:list&show=installation",
       "studio": false,
-      "installation": true,
-      "back": true
+      "installation": true
     },
     "back": {
       "hash": "#focus=aggregate:list",
       "studio": false,
-      "installation": false,
-      "back": false
+      "installation": false
     },
     "forward": {
       "hash": "#focus=aggregate:list&show=installation",
       "studio": false,
-      "installation": true,
-      "back": true
-    },
-    "ownArrow": {
-      "hash": "#focus=aggregate:list",
-      "studio": false,
-      "installation": false,
-      "back": false
+      "installation": true
     },
     "ok": true
   },
   "theStudioIsAStop": {
     "inStudio": {
-      "hash": "#focus=aggregate:list&in.studio=open",
+      "hash": "#focus=aggregate:list&show=installation&in.studio=open",
       "studio": true,
-      "installation": false,
-      "back": true
+      "installation": true
     },
     "outOfStudio": {
-      "hash": "#focus=aggregate:list",
+      "hash": "#focus=aggregate:list&show=installation",
       "studio": false,
-      "installation": false,
-      "back": false
+      "installation": true
     },
     "backInStudio": {
-      "hash": "#focus=aggregate:list&in.studio=open",
+      "hash": "#focus=aggregate:list&show=installation&in.studio=open",
       "studio": true,
-      "installation": false,
-      "back": true
+      "installation": true
     },
     "ok": true
   },
   "driveIn": {
     "marquee": [
       {
-        "label": "Tasks: The month",
+        "label": "Tasks: What is left",
         "focusable": true
       },
       {
-        "label": "Tasks: What is left",
+        "label": "Tasks: The month",
         "focusable": true
       },
       {
@@ -231,50 +216,41 @@
         "focusable": true
       }
     ],
-    "liveInsideAPicture": 0,
-    "leavingBefore": {
-      "width": 335,
-      "height": 277
-    },
-    "midSwitch": [
+    "tiles": [
       {
-        "view": "aggregate:list",
-        "width": 418,
-        "height": 193,
-        "opacity": 1
+        "name": "What is left",
+        "label": "Tasks: What is left",
+        "controls": 1,
+        "pictures": 0
       },
       {
-        "view": "aggregate:task",
-        "width": 280,
-        "height": 255.99996948242188,
-        "opacity": 0.454194
+        "name": "The month",
+        "label": "Tasks: The month",
+        "controls": 1,
+        "pictures": 0
+      },
+      {
+        "name": "The week",
+        "label": "Tasks: The week",
+        "controls": 1,
+        "pictures": 0
       }
     ],
-    "afterSwitch": [
-      "aggregate:list"
-    ],
+    "leavingBefore": "The month",
+    "afterSwitch": {
+      "title": "The lists",
+      "panels": 1
+    },
     "noteDriveIn": false,
     "standing": {
-      "screen": {
-        "x": 612.3607788085938,
-        "y": 208.44741821289062,
-        "width": 335,
-        "height": 277,
-        "top": 208.44741821289062,
-        "right": 947.3607788085938,
-        "bottom": 485.4474182128906,
-        "left": 612.3607788085938
-      },
-      "card": {
-        "x": 663.2000122070312,
-        "y": 547.9525756835938,
-        "width": 214.78271484375,
-        "height": 218.45428466796875,
-        "top": 547.9525756835938,
-        "right": 877.9827270507812,
-        "bottom": 766.4068603515625,
-        "left": 663.2000122070312
-      },
+      "panel": "dock",
+      "title": "The week",
+      "width": 718,
+      "right": 0,
+      "font": 14,
+      "scaled": false,
+      "onTop": true,
+      "screens": 0,
       "url": "#focus=aggregate%3Atask&overview=1&in.view=the-week"
     },
     "switched": {
@@ -282,9 +258,9 @@
       "up": true
     },
     "midway": {
-      "x": 769.7362060546875,
-      "y": 289.6752624511719,
-      "width": 380
+      "x": 287.75492095947266,
+      "y": 340.81468200683594,
+      "width": 346
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -293,81 +269,81 @@
     "movedFromThePlot": true
   },
   "checks": {
-    "theBillboardPansTheCity": {
+    "theCityPansBesideAnOpenPicture": {
       "moved": 240,
       "ok": true
     },
     "theGroundTravelsWithTheCards": {
-      "steps": 27,
+      "steps": 22,
       "jumps": 0,
-      "first": 236,
-      "last": 355,
+      "first": 105,
+      "last": 59,
       "ok": true
     }
   },
   "camera": {
     "start": {
-      "cell": 135.78,
-      "latticeX": 1149.3,
+      "cell": 58.89,
+      "latticeX": 571.4,
       "pan": null,
       "level": "100%",
       "reach": [
-        702,
-        399
+        379,
+        373
       ]
     },
     "zoomedIn": {
-      "cell": 354.61,
-      "latticeX": 1763.9,
-      "pan": "-96.63,296.29",
+      "cell": 153.81,
+      "latticeX": 430.2,
+      "pan": "-449.66,90.99",
       "level": "261%",
       "reach": [
-        1528,
-        716
+        605,
+        373
       ]
     },
     "wheelAt": {
-      "x": 280,
+      "x": 120,
       "y": 160
     },
     "wheeled": {
-      "cell": 354.61,
-      "latticeX": 1703.9,
-      "pan": "-156.63,216.29",
+      "cell": 153.81,
+      "latticeX": 370.2,
+      "pan": "-509.66,10.99",
       "level": "261%",
       "reach": [
-        1528,
-        716
+        605,
+        373
       ]
     },
     "buttonOut": {
-      "cell": 283.69,
-      "latticeX": 1532.7,
-      "pan": "-97.31,154.56",
+      "cell": 123.05,
+      "latticeX": 372.2,
+      "pan": "-407.73,8.79",
       "level": "209%",
       "reach": [
-        1085,
-        494
+        413,
+        373
       ]
     },
     "buttonIn": {
-      "cell": 354.61,
-      "latticeX": 1703.9,
-      "pan": "-156.63,216.29",
+      "cell": 153.81,
+      "latticeX": 370.2,
+      "pan": "-509.66,10.99",
       "level": "261%",
       "reach": [
-        1528,
-        716
+        605,
+        373
       ]
     },
     "dragged": {
-      "cell": 354.61,
-      "latticeX": 472.2,
-      "pan": "-1388.36,216.29",
+      "cell": 153.81,
+      "latticeX": 274.6,
+      "pan": "-605.31,10.99",
       "level": "261%",
       "reach": [
-        1528,
-        716
+        605,
+        373
       ]
     },
     "onThePicture": {
@@ -393,8 +369,8 @@
       "controls": true,
       "count": "1 task, 1 reason found"
     },
-    "before": 3,
-    "typedHistory": 3,
+    "before": 2,
+    "typedHistory": 2,
     "active": "true",
     "landed": {
       "url": "#focus=aggregate%3Atask&zoom=1&in.q=deposit&q=deposit",
@@ -417,11 +393,11 @@
       "width": 390,
       "strip": {
         "left": 0,
-        "top": 275,
+        "top": 48,
         "width": 390
       },
-      "boxBottom": 275,
-      "boxWidth": 366,
+      "boxBottom": 38,
+      "boxWidth": 247,
       "small": 0
     },
     "ok": true
@@ -432,29 +408,26 @@
     "theWheelZoomsTheCity": true,
     "theWheelPansTheGround": true,
     "theZoomControlsWork": true,
-    "theBillboardPansTheCity": true,
+    "theCityPansBesideAnOpenPicture": true,
     "theGroundTravelsWithTheCards": true,
     "theGroundReachesItsFarEdge": true,
-    "aLeavingPictureSinksIntoItsVillage": true,
-    "theScreenStandsOnItsPlot": true,
+    "switchingKindsSwapsThePicture": true,
+    "aPictureOpensBesideTheMapAtASizeYouRead": true,
     "switchingAShowingStaysUp": true,
-    "fullScreenDescendsInOneGesture": true,
+    "openGoesToThePlaceInOneGesture": true,
     "theDescentTweensFromThePlot": true,
-    "nothingToGoBackToAtFirst": true,
-    "travellingChangesTheAddress": true,
-    "backBecomesAvailable": true,
-    "nothingAheadUntilYouGoBack": true,
+    "theBarDrawsNoArrowsOfItsOwn": true,
+    "travelingChangesTheAddress": true,
     "backActuallyGoesBack": true,
     "backRestoresTheSelection": true,
     "wentDeeperThanOnce": true,
     "eachTravelIsItsOwnStop": true,
     "backAgainReachesTheStart": true,
-    "forwardIsOfferedOnceThereIsSomewhere": true,
     "aViewThatDrawsBothEndsDrawsTheRelation": true,
     "aCardsChipsDoNotSilenceItsLines": true,
     "forwardActuallyGoesForward": true,
-    "theTrailNamesWhereYouAre": true,
-    "theTrailGetsYouHome": true,
+    "theFocusIsNotNamedAgainOverThePicture": true,
+    "escapeGetsYouHome": true,
     "theControlSaysUpOnTheGround": true,
     "theControlSaysDownToFromAltitude": true,
     "theMarkHasTwoStates": true,
@@ -462,7 +435,7 @@
     "theControlComesBackDown": true,
     "aNewStopStartsWhereTheLayoutPutsThings": true,
     "aDistrictWithAPictureGoesIntoIt": true,
-    "aDistrictWithoutOneOpensInPlace": true,
+    "aDistrictWithoutOneIsListedBesideTheMap": true,
     "typingLightsAndALitDistrictLandsNarrowed": true,
     "theFindBoxIsACombobox": true,
     "theDistrictOpensNarrowed": true,
