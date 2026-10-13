@@ -1,4 +1,5 @@
-import { fieldWords, humanizeField as humanize, pageSections, readableFields, valueWords, type AnySchema } from "@graview/core";
+import { fieldWords, humanizeField as humanize, valueWords, type AnySchema } from "@graview/core";
+import { pageSections, readableFields } from "@graview/core/words";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";

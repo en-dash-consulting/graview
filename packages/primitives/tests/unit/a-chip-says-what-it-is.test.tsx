@@ -1,4 +1,5 @@
-import { createSchema, defineNode, readableFields, Store } from "@graview/core";
+import { createSchema, defineNode, Store } from "@graview/core";
+import { readableFields } from "@graview/core/words";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";

@@ -4,12 +4,8 @@ import {
   kindPath,
   labelOf,
   nounOf,
-  placesFrom,
   pluralOf as pluralOfKind,
   recordPath,
-  readableFields,
-  search,
-  squeeze,
   violationsTouching,
   withArticle,
   type AnySchema,
@@ -20,6 +16,9 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
+import { placesFrom } from "@graview/core/seat";
+import { readableFields } from "@graview/core/words";
+import { search, squeeze } from "@graview/core/search";
 import { arrangeable, conditionHolds, type ArrangeGraph, type ArrangeOffer, type Condition } from "@graview/core/arrange";
 import { readyRepairsOf, type ChatContext, type ChatReply, type SeatMove, type SeatOffer } from "./conversation.js";
 import { validateProposals } from "./intelligence.js";

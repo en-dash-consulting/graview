@@ -7,6 +7,13 @@ import { retryingImport } from "@graview/core/retry";
 export const workerChunk = retryingImport(() => import("./worker.js"));
 
 /**
+ * The host's half of a frame view — the frame, its session and the theme it
+ * reads — fetched when one is first drawn (FR-179), so a page that only
+ * registers a `guestView` carries none of it before a face draws one.
+ */
+export const frameChunk = /* @__PURE__ */ retryingImport(() => import("./frame.js"));
+
+/**
  * Load a part, and hand it over once it is here: when it did not arrive —
  * the network away as the view was drawn — it is asked for again when the
  * browser is back online, for as long as the view is drawn. Never a

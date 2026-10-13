@@ -112,6 +112,17 @@ Everything a Graview app declares, and the checker that verifies it.
   district on its block in its hue with one block on it, readable at 16
   pixels and about a kilobyte — a standalone SVG to serve as a favicon. A kind's
   figures are `@graview/core/figures`.
+- **What is said, matched and listed after a page draws** (FR-179) —
+  `@graview/core/search`: the one matcher (`search`, `actsOn`,
+  `touchWeights`, `parseQuery`, `matchNode`), fetched when somebody first
+  searches. `@graview/core/words`: a record read as a person reads it
+  (`readableFields`, `pageSections`, `isLongText`, `describeNode`,
+  `tellApart`), what an argument asks for (`argShape`, `describeArg`), an
+  argument and a refusal in the record's words (`argumentWords`,
+  `failureWords`) and `viaSaid`. `@graview/core/seat`: an act's answer as
+  its seat may see it (`answerSeenBy`), every place an app has (`placesOf`,
+  `placesFrom`) and the order things are made in (`beginning`). Judging the
+  arrangement (`arrangementFindings`) is `@graview/core/check`'s.
 - **What a page loads first** — `@graview/core` and `@graview/core/document`
   hold only what a page draws with. The checker, the city, the figures and
   the block resolver are on the subpaths above because a bundler places a

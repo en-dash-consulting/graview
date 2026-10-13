@@ -12,6 +12,7 @@
  * command line and a test import the checker from here.
  */
 export { checkApp, formatFindings } from "./cli/check.js";
+export { arrangementFindings } from "./app-places.js";
 export type { CheckResult, Finding, Severity } from "./cli/check.js";
 export { compileDocument } from "./document/compile-checked.js";
 export { instantiateTemplate } from "./document/instantiate-template.js";

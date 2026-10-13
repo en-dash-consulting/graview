@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { createSchema, defineNode, isoDate, placesOf, Store, type AnySchema, type Policy, type Principal } from "@graview/core";
+import { createSchema, defineNode, isoDate, Store, type AnySchema, type Policy, type Principal } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { resolveAsk, type AskAnswer, type SeatMove } from "../../src/go.js";

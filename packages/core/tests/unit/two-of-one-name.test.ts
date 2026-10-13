@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { arrange } from "../../src/arrange.js";
-import { createSchema, defineNode, isoDate, search, Store, tellApart } from "../../src/index.js";
+import { createSchema, defineNode, isoDate, Store } from "../../src/index.js";
+import { tellApart } from "../../src/words.js";
+import { search } from "../../src/search.js";
 
 /**
  * TWO THINGS OF ONE NAME ARE TOLD APART WHERE A PERSON CHOOSES. A single

@@ -1,7 +1,8 @@
 import type { z } from "zod";
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
-import { describeArg, nodeRefKinds, unwrap } from "./node-ref.js";
+import { describeArg, unwrap } from "./arg-shape.js";
+import { nodeRefKinds } from "./node-ref.js";
 
 /**
  * A FORM, derived from a mutation's own input declaration.

@@ -2,7 +2,8 @@ import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { placesOf, type AnySchema, type AppPlace, type GraviewApp } from "@graview/core";
+import { type AnySchema, type AppPlace, type GraviewApp } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 
 /**
  * THE PLACES A `graview shots` RUN PHOTOGRAPHS, by what was asked.

@@ -1,7 +1,5 @@
 import {
-  describeSearched,
   nounOf,
-  search,
   withArticle,
   type AnyMutationDefinition,
   type AnySchema,
@@ -9,6 +7,7 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
+import { describeSearched, search } from "@graview/core/search";
 import { formFields } from "@graview/core/forms";
 import type { Affordance } from "@graview/tools";
 import { useGraviewIfAny, useSeatTalkState, type SeatTalk } from "@graview/react/provider";

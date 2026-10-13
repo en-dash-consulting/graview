@@ -1,0 +1,497 @@
+{
+  "at": "2026-10-13T04:11:57.178Z",
+  "transport": "limits",
+  "engine": "firefox",
+  "claims": {
+    "a view that spins in its listener is stopped as slow, its plain face drawn and the reason said": {
+      "ok": true,
+      "detail": {
+        "failure": {
+          "reason": "slow",
+          "detail": "It took longer than 1,000 ms to draw what it was shown.",
+          "at": 1059
+        },
+        "running": false,
+        "face": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ],
+        "note": "This view was stopped. It took longer than 1,000 ms to draw what it was shown."
+      }
+    },
+    "a view that spins where no push waits is stopped as silent within silentMs (1500 ms), its plain face drawn and the reason said": {
+      "ok": true,
+      "detail": {
+        "failure": {
+          "reason": "silent",
+          "detail": "It stopped answering for 1,500 ms.",
+          "at": 1572
+        },
+        "running": false,
+        "face": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ],
+        "note": "This view was stopped. It stopped answering for 1,500 ms."
+      }
+    },
+    "a view that floods the host with messages is stopped, its plain face drawn and the reason said": {
+      "ok": true,
+      "detail": {
+        "failure": {
+          "reason": "flood",
+          "detail": "It sent more than 120 messages in 1,000 ms.",
+          "at": 56
+        },
+        "running": false,
+        "face": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ],
+        "note": "This view was stopped. It sent more than 120 messages in 1,000 ms."
+      }
+    },
+    "a view that draws 100 000 nodes is stopped at 5 000, its plain face drawn and the reason said (its time per push raised, so the node cap is what stops it)": {
+      "ok": true,
+      "detail": {
+        "failure": {
+          "reason": "nodes",
+          "detail": "It drew more than the 5,000 things a view may draw.",
+          "at": 1761
+        },
+        "running": false,
+        "face": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ],
+        "note": "This view was stopped. It drew more than the 5,000 things a view may draw."
+      }
+    },
+    "a view longer than a view may be is never started, its plain face drawn and the reason said": {
+      "ok": true,
+      "detail": {
+        "failure": {
+          "reason": "source",
+          "detail": "Its code is longer than the 256,000 bytes a view may be.",
+          "at": 12
+        },
+        "running": false,
+        "face": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ],
+        "note": "This view was stopped. Its code is longer than the 256,000 bytes a view may be."
+      }
+    },
+    "a view that sends, in few messages, more to draw than the host may draw in its time is stopped as slow, its plain face drawn and the reason said": {
+      "ok": true,
+      "detail": {
+        "failure": {
+          "reason": "slow",
+          "detail": "It took longer than 1,000 ms to draw what it was shown.",
+          "at": 192
+        },
+        "running": false,
+        "face": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ],
+        "note": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
+        "pulse": {
+          "last": 2389,
+          "longest": 142,
+          "ticks": 39
+        }
+      }
+    },
+    "a view within its limits is kept, and draws": {
+      "ok": true,
+      "detail": {
+        "running": true,
+        "drawn": "6 records"
+      }
+    },
+    "the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks": {
+      "ok": true,
+      "detail": {
+        "last": 2389,
+        "longest": 142,
+        "ticks": 39
+      }
+    },
+    "the page throws nothing": {
+      "ok": true,
+      "detail": []
+    },
+    "a page whose policy is the README's (worker-src blob:, style-src 'unsafe-inline') starts both views, and draws them with their stylesheet": {
+      "ok": true,
+      "detail": {
+        "failures": {
+          "first": [],
+          "second": []
+        },
+        "warned": [],
+        "running": {
+          "first": true,
+          "second": true
+        },
+        "drawn": {
+          "first": "6 records",
+          "second": "6 records"
+        },
+        "styled": {
+          "first": "3px",
+          "second": "3px"
+        },
+        "faces": {
+          "first": [],
+          "second": []
+        },
+        "notes": {
+          "first": null,
+          "second": null
+        }
+      }
+    },
+    "a page whose policy has no worker-src, and whose script-src allows no blob:, reports start once for each view, naming worker-src blob:": {
+      "ok": true,
+      "detail": {
+        "first": [
+          {
+            "reason": "start",
+            "detail": "It could not start: this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:."
+          }
+        ],
+        "second": [
+          {
+            "reason": "start",
+            "detail": "It could not start: this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:."
+          }
+        ]
+      }
+    },
+    "on that page each view's plain face is drawn, its note naming worker-src blob:, and no worker is left running": {
+      "ok": true,
+      "detail": {
+        "faces": {
+          "first": [
+            "A way in",
+            "The whole thing",
+            "Later on",
+            "Team coaching",
+            "AI strategy sprint",
+            "Copernicus build"
+          ],
+          "second": [
+            "A way in",
+            "The whole thing",
+            "Later on",
+            "Team coaching",
+            "AI strategy sprint",
+            "Copernicus build"
+          ]
+        },
+        "notes": {
+          "first": "This view was stopped. It could not start: this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:.",
+          "second": "This view was stopped. It could not start: this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:."
+        },
+        "running": {
+          "first": false,
+          "second": false
+        }
+      }
+    },
+    "on that page the console is told what the policy lacks once, for both views": {
+      "ok": true,
+      "detail": [
+        "Graview: worker views cannot start on this page, because this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:. A host that will not allow blob: serves each view's whole script from its own origin and passes worker: { url } (the @graview/guest README, \"What the host page allows\")."
+      ]
+    },
+    "a page that allows no blob: worker draws both views from a script its host serves from its own origin (worker-src 'self', worker: { url })": {
+      "ok": true,
+      "detail": {
+        "failures": {
+          "first": [],
+          "second": []
+        },
+        "warned": [],
+        "running": {
+          "first": true,
+          "second": true
+        },
+        "drawn": {
+          "first": "6 records",
+          "second": "6 records"
+        },
+        "styled": {
+          "first": "3px",
+          "second": "3px"
+        },
+        "faces": {
+          "first": [],
+          "second": []
+        },
+        "notes": {
+          "first": null,
+          "second": null
+        }
+      }
+    },
+    "the policy pages throw nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "limits": {
+    "failures": {
+      "long": {
+        "reason": "source",
+        "detail": "Its code is longer than the 256,000 bytes a view may be.",
+        "at": 12
+      },
+      "flood": {
+        "reason": "flood",
+        "detail": "It sent more than 120 messages in 1,000 ms.",
+        "at": 56
+      },
+      "churn": {
+        "reason": "slow",
+        "detail": "It took longer than 1,000 ms to draw what it was shown.",
+        "at": 192
+      },
+      "spin": {
+        "reason": "slow",
+        "detail": "It took longer than 1,000 ms to draw what it was shown.",
+        "at": 1059
+      },
+      "later": {
+        "reason": "silent",
+        "detail": "It stopped answering for 1,500 ms.",
+        "at": 1572
+      },
+      "nodes": {
+        "reason": "nodes",
+        "detail": "It drew more than the 5,000 things a view may draw.",
+        "at": 1761
+      }
+    },
+    "running": {
+      "spin": false,
+      "later": false,
+      "flood": false,
+      "nodes": false,
+      "churn": false,
+      "long": false,
+      "good": true
+    },
+    "faces": {
+      "spin": [
+        "A way in",
+        "The whole thing",
+        "Later on",
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ],
+      "later": [
+        "A way in",
+        "The whole thing",
+        "Later on",
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ],
+      "flood": [
+        "A way in",
+        "The whole thing",
+        "Later on",
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ],
+      "nodes": [
+        "A way in",
+        "The whole thing",
+        "Later on",
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ],
+      "churn": [
+        "A way in",
+        "The whole thing",
+        "Later on",
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ],
+      "long": [
+        "A way in",
+        "The whole thing",
+        "Later on",
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ],
+      "good": []
+    },
+    "notes": {
+      "spin": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
+      "later": "This view was stopped. It stopped answering for 1,500 ms.",
+      "flood": "This view was stopped. It sent more than 120 messages in 1,000 ms.",
+      "nodes": "This view was stopped. It drew more than the 5,000 things a view may draw.",
+      "churn": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
+      "long": "This view was stopped. Its code is longer than the 256,000 bytes a view may be.",
+      "good": null
+    },
+    "drawn": {
+      "spin": null,
+      "later": null,
+      "flood": null,
+      "nodes": null,
+      "churn": null,
+      "long": null,
+      "good": "6 records"
+    },
+    "pulse": {
+      "last": 2389,
+      "longest": 142,
+      "ticks": 39
+    }
+  },
+  "policy": {
+    "allowed": {
+      "failures": {
+        "first": [],
+        "second": []
+      },
+      "warned": [],
+      "running": {
+        "first": true,
+        "second": true
+      },
+      "drawn": {
+        "first": "6 records",
+        "second": "6 records"
+      },
+      "styled": {
+        "first": "3px",
+        "second": "3px"
+      },
+      "faces": {
+        "first": [],
+        "second": []
+      },
+      "notes": {
+        "first": null,
+        "second": null
+      }
+    },
+    "strict": {
+      "failures": {
+        "first": [
+          {
+            "reason": "start",
+            "detail": "It could not start: this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:."
+          }
+        ],
+        "second": [
+          {
+            "reason": "start",
+            "detail": "It could not start: this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:."
+          }
+        ]
+      },
+      "warned": [
+        "Graview: worker views cannot start on this page, because this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:. A host that will not allow blob: serves each view's whole script from its own origin and passes worker: { url } (the @graview/guest README, \"What the host page allows\")."
+      ],
+      "running": {
+        "first": false,
+        "second": false
+      },
+      "drawn": {
+        "first": null,
+        "second": null
+      },
+      "styled": {
+        "first": null,
+        "second": null
+      },
+      "faces": {
+        "first": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ],
+        "second": [
+          "A way in",
+          "The whole thing",
+          "Later on",
+          "Team coaching",
+          "AI strategy sprint",
+          "Copernicus build"
+        ]
+      },
+      "notes": {
+        "first": "This view was stopped. It could not start: this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:.",
+        "second": "This view was stopped. It could not start: this page's Content-Security-Policy (worker-src) does not allow a worker from blob:: it needs worker-src blob:."
+      }
+    },
+    "served": {
+      "failures": {
+        "first": [],
+        "second": []
+      },
+      "warned": [],
+      "running": {
+        "first": true,
+        "second": true
+      },
+      "drawn": {
+        "first": "6 records",
+        "second": "6 records"
+      },
+      "styled": {
+        "first": "3px",
+        "second": "3px"
+      },
+      "faces": {
+        "first": [],
+        "second": []
+      },
+      "notes": {
+        "first": null,
+        "second": null
+      }
+    }
+  },
+  "passed": true
+}

@@ -1,6 +1,5 @@
 import {
   actTitle,
-  answerSeenBy,
   deriveMutations,
   derivedVia,
   nodeRefArgs,
@@ -8,7 +7,6 @@ import {
   permittedMutations,
   refusalOf,
   resolveModules,
-  search,
   sha256Hex,
   type AnyMutationDefinition,
   type AnySchema,
@@ -22,6 +20,8 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
+import { answerSeenBy } from "@graview/core/seat";
+import { search } from "@graview/core/search";
 import { mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import { authorship, markHits } from "./untrusted.js";
 import { READ_HITS } from "./bounds.js";

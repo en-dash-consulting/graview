@@ -1,4 +1,5 @@
-import { placesOf, type AnySchema, type GraviewApp } from "@graview/core";
+import { type AnySchema, type GraviewApp } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { describe, expect, it } from "vitest";
 import { createTodoUiStore } from "../../../../apps/todo/src/ui/app.js";
 import { todoApp } from "../../../../apps/todo/src/domain/app.js";

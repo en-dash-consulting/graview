@@ -29,6 +29,10 @@
       "types": "./dist/host/index.d.ts",
       "default": "./dist/host/index.js"
     },
+    "./host/frame": {
+      "types": "./dist/host/frame.d.ts",
+      "default": "./dist/host/frame.js"
+    },
     "./host/worker": {
       "types": "./dist/host/worker.d.ts",
       "default": "./dist/host/worker.js"

@@ -1,4 +1,5 @@
-import { labelOf, tellApart } from "@graview/core";
+import { labelOf } from "@graview/core";
+import { tellApart } from "@graview/core/words";
 import {
   createPageRegistry,
   DerivedForm,

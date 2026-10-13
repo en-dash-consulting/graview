@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { defineNode, readableFields } from "../../src/index.js";
+import { defineNode } from "../../src/index.js";
+import { readableFields } from "../../src/words.js";
 
 
 /**

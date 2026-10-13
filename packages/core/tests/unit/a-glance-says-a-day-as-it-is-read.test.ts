@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { defineNode, isoDate, readableFields } from "../../src/index.js";
+import { defineNode, isoDate } from "../../src/index.js";
+import { readableFields } from "../../src/words.js";
 
 /**
  * A GLANCE SAYS A DAY AS IT IS READ. A board drawn by asking ("Show tasks

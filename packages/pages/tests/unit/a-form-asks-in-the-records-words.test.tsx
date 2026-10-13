@@ -1,4 +1,5 @@
-import { bindSchema, createSchema, defineNode, failureWords, Store, z } from "@graview/core";
+import { bindSchema, createSchema, defineNode, Store, z } from "@graview/core";
+import { failureWords } from "@graview/core/words";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { DerivedForm } from "../../src/index.js";

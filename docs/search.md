@@ -52,7 +52,7 @@ graph itself is the result list.
   place carry `address`: their path on the routed face, as its own links
   spell it, under a host's `basePath` when one is given (FR-129).
 
-## The matcher (core, headless)
+## The matcher (`@graview/core/search`, headless)
 
 ```ts
 search(store, query, options?: { principal?, from?: string[] /* the subject */, limit?, today?, basePath? })

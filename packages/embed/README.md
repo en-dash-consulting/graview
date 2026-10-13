@@ -168,7 +168,7 @@ moving the furniture replaces. The switch and the place list push the
 address of where they go, the scene's included, so Back undoes it. A reload stays where it
 was. `faceAtAddress(options)`
 is the face an address opens on, for a host that renders `<Embed>` itself.
-`placesOf(app)` gives each place's `address` within the app, and
+`placesOf(app)` from `@graview/core/seat` gives each place's `address` within the app, and
 `addressOf(place, { basePath })` from `@graview/core` gives it under the
 base, spelled as the face's own links are (`pathWithin` reads one back).
 

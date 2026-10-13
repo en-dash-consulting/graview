@@ -1,4 +1,4 @@
-import { estimateWidth, type Measure } from "@graview/layout/view";
+import { estimateWidth, type Measure } from "@graview/layout/sizes";
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 
 /**

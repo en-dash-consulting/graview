@@ -1,4 +1,5 @@
-import { failureWords, type AnySchema } from "@graview/core";
+import { type AnySchema } from "@graview/core";
+import { failureWords } from "@graview/core/words";
 import { withFocus, withOverview, withSelection } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance, useGraview, useSeatTalkState, useViolations, type SeatTalk } from "@graview/react";
 import { problemLine, useLined } from "./rule-line.js";

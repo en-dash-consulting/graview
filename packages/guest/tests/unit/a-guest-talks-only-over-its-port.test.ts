@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { connectGuest } from "../../src/index.js";
-import { createGuestHost } from "../../src/host/index.js";
+import { createGuestHost } from "../../src/host/frame.js";
 import { GUEST_PROTOCOL, type HostHello } from "../../src/protocol.js";
 import { showroom, staff } from "./showroom.js";
 

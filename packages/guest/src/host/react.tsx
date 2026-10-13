@@ -1,8 +1,8 @@
 import type { AnySchema } from "@graview/core";
 import { useGoTo, useGraview, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
-import { untilItArrives, workerChunk } from "./arrive.js";
-import { mountGuestView, type GuestFrame } from "./frame.js";
+import { frameChunk, untilItArrives, workerChunk } from "./arrive.js";
+import type { GuestFrame } from "./frame.js";
 import type { GuestLimits, GuestReads, GuestViewInput } from "./session.js";
 import type { KitLinks } from "./kit.js";
 import type { GuestPictures } from "./pictures.js";
@@ -102,25 +102,36 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
           frame.current = null;
         };
       }
-      const mounted = mountGuestView(element, {
-        url: options.url!,
-        view: options.name,
-        ...(options.title ? { title: options.title } : {}),
-        store,
-        principal,
-        input: () => inputOf(latest.current),
-        ...(options.reads ? { reads: options.reads } : {}),
-        ...(options.pictures ? { pictures: options.pictures } : {}),
-        places: () => views.places(),
-        brand: () => branded.current,
-        onNavigate: (id) => going.current.record(id),
-        onNavigatePlace: (as) => going.current.place(as),
-        ...(options.limits ? { limits: options.limits } : {}),
+      /*
+       * The frame's host is fetched as the view is first drawn (FR-179); the
+       * holder keeps the frame's first height meanwhile, so nothing moves
+       * when it arrives.
+       */
+      element.style.minHeight = `${options.height ?? 160}px`;
+      let mounted: GuestFrame | undefined;
+      const stop = untilItArrives(frameChunk, ({ mountGuestView }) => {
+        element.style.minHeight = "";
+        mounted = mountGuestView(element, {
+          url: options.url!,
+          view: options.name,
+          ...(options.title ? { title: options.title } : {}),
+          store,
+          principal,
+          input: () => inputOf(latest.current),
+          ...(options.reads ? { reads: options.reads } : {}),
+          ...(options.pictures ? { pictures: options.pictures } : {}),
+          places: () => views.places(),
+          brand: () => branded.current,
+          onNavigate: (id) => going.current.record(id),
+          onNavigatePlace: (as) => going.current.place(as),
+          ...(options.limits ? { limits: options.limits } : {}),
+        });
+        mounted.iframe.style.height = `${options.height ?? 160}px`;
+        frame.current = mounted;
       });
-      mounted.iframe.style.height = `${options.height ?? 160}px`;
-      frame.current = mounted;
       return () => {
-        mounted.dispose();
+        stop();
+        mounted?.dispose();
         frame.current = null;
       };
     }, [store, principal, setSelection, views]);

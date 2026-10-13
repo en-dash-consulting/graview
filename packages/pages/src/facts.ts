@@ -1,8 +1,6 @@
 import {
   pluralLabel,
   labelOf,
-  readableFields,
-  tellApart,
   violationsTouching,
   type AnySchema,
   type Principal,
@@ -11,6 +9,7 @@ import {
   type Store,
   type Violation,
 } from "@graview/core";
+import { readableFields, tellApart } from "@graview/core/words";
 import type { AffordanceSet } from "@graview/tools";
 import { deriveAffordances } from "@graview/tools/derive";
 import { withComputed } from "@graview/core/blocks";

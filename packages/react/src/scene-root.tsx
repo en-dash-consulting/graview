@@ -40,7 +40,11 @@ import type { ActivityMark } from "./activity.js";
 import { useActivity } from "./attention.js";
 import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
-import { useFound, useGraph, useGraview, type GraviewContextValue } from "./context.js";
+import { matchWith, useFound, useGraph, useGraview, type GraviewContextValue } from "./context.js";
+import { search, touchWeights } from "@graview/core/search";
+
+// The scene searches: it hands the provider the matcher as it is fetched (FR-179).
+matchWith({ search, touchWeights });
 import type { PointerStore } from "./pointer.js";
 import { MarqueeRoomContext, useMarqueeNameWidth } from "./drawn.js";
 import { Plots } from "./plots.js";

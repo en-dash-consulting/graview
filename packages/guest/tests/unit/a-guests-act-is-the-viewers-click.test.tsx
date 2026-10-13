@@ -8,7 +8,7 @@ import { createViews, GraviewProvider } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
-import { createGuestHost } from "../../src/host/index.js";
+import { createGuestHost } from "../../src/host/frame.js";
 import type { GuestAnswer } from "../../src/protocol.js";
 import { bethan, inbox, schema, showroom, staff } from "./showroom.js";
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createGuestHost, createGuestLimiter } from "../../src/host/index.js";
+import { createGuestHost, createGuestLimiter } from "../../src/host/frame.js";
 import type { GuestAnswer } from "../../src/protocol.js";
 import { bethan, inbox, showroom, staff } from "./showroom.js";
 

@@ -1,4 +1,5 @@
-import { argShape, labelOf, nodeRefArgs, type AnySchema } from "@graview/core";
+import { labelOf, nodeRefArgs, type AnySchema } from "@graview/core";
+import { argShape } from "@graview/core/words";
 import type { Affordance, AffordanceProvider, Observation } from "../types.js";
 
 const REPAIR_SCORE = 100;

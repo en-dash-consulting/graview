@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { bindSchema, createSchema, declaredLenses, defineNode, nodeRef, placesOf, Store, type AnySchema, type Policy, type Principal } from "@graview/core";
+import { bindSchema, createSchema, declaredLenses, defineNode, nodeRef, Store, type AnySchema, type Policy, type Principal } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { compileDocument } from "@graview/core/check";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";

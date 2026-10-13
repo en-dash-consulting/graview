@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createSchema, dayAsRead, daysAsRead, defineInvariant, defineNode, isoDate, readableFields, Store } from "../../src/index.js";
+import { createSchema, dayAsRead, daysAsRead, defineInvariant, defineNode, isoDate, Store } from "../../src/index.js";
+import { readableFields } from "../../src/words.js";
 import { parseTemplate, renderTemplate } from "../../src/document/index.js";
 
 /**

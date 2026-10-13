@@ -1,4 +1,5 @@
-import { argumentWords, edgeWords, humanizeField, labelOf, nounOf, tellApart, type AnySchema, type Store } from "@graview/core";
+import { edgeWords, humanizeField, labelOf, nounOf, type AnySchema, type Store } from "@graview/core";
+import { argumentWords, tellApart } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraview } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";

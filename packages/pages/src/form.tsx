@@ -1,14 +1,12 @@
 import {
-  argumentWords,
-  failureWords,
   humanizeField,
   nounOf,
   labelOf,
-  tellApart,
   type AnySchema,
   type Principal,
   type Store,
 } from "@graview/core";
+import { argumentWords, failureWords, tellApart } from "@graview/core/words";
 import { formFields, formArgs, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";

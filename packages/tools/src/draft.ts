@@ -3,7 +3,6 @@ import {
   declaredLenses,
   isShippedLens,
   isSystem,
-  placesOf,
   SHIPPED_LENSES,
   SHIPPED_LENS_NAMES,
   type AnySchema,
@@ -13,6 +12,7 @@ import {
   type Principal,
   type ShippedLensName,
 } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { parseExpr, type Expr } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
 import type { DraftTools } from "./agent/tools.js";

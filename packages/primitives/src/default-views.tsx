@@ -1,19 +1,19 @@
 import { arrange } from "@graview/core/arrange";
 import { retryingImport } from "@graview/core/retry";
 import {
-  describeNode,
   humanizeField,
   labelOf,
   nounOf,
-  readableFields,
   type AnyNodeDefinition,
   type AnySchema,
   type KindOfSchema,
   type NodeOfSchema,
   violationsTouching,
 } from "@graview/core";
+import { describeNode, readableFields } from "@graview/core/words";
 import { firstPicture, withComputed } from "@graview/core/blocks";
-import { aggregateId, kindCardId, rosterRows, withFocus, withJackIn, withOverview, withPast, withPicture, withWithin } from "@graview/layout/view";
+import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withPast, withPicture, withWithin } from "@graview/layout/view";
+import { rosterRows } from "@graview/layout/sizes";
 import { useKit, useMarqueeRoom, useReached } from "@graview/react/drawing";
 import {
   createViews,

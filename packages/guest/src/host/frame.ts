@@ -10,6 +10,16 @@ import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand
 /* The pictures' host, fetched only for a frame that asks for them (FR-175): a page of frames that do not carries none of it. */
 const picturesChunk = retryingImport(() => import("./pictures.js"));
 
+/*
+ * A FRAME GUEST'S HOST: `@graview/guest/host/frame`. Mounting a frame into
+ * any element, the host without the DOM, and the theme read off the page —
+ * apart from `@graview/guest/host`, so a page that registers a `guestView`
+ * fetches this as the view is first drawn rather than up front (FR-179).
+ */
+export { createGuestHost, createGuestLimiter, readAcross } from "./session.js";
+export { readTheme } from "./theme.js";
+export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
+
 export interface MountGuestViewOptions<S extends AnySchema> {
   /** Where the guest's code is served. Where that is, and its CSP, are the host's business. */
   readonly url: string;

@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
 import { checkApp } from "../../src/cli/check.js";
 import { describeApp } from "../../src/cli/describe.js";
-import { declaredLenses, pagesTitle, placesOf, sceneTitle, SHIPPED_LENS_NAMES, type GraviewApp } from "../../src/index.js";
+import { declaredLenses, pagesTitle, sceneTitle, SHIPPED_LENS_NAMES, type GraviewApp } from "../../src/index.js";
+import { placesOf } from "../../src/seat.js";
 
 /**
  * A DECLARED LENS IS A PLACE (FR-79), AND THE ARRANGEMENT IS HONORED (FR-80).

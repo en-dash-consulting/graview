@@ -1,0 +1,192 @@
+{
+  "at": "2026-10-13T04:12:13.380Z",
+  "transport": "client",
+  "engine": "firefox",
+  "claims": {
+    "the pages face lists the guest view among the app's places, by its title, \"The price sheet\"": {
+      "ok": true
+    },
+    "the graview-embed skill's worked example, the client inlined, is served with Cloud's view policy, and GraviewGuest.connect() connects under it": {
+      "ok": true,
+      "detail": {
+        "connected": true,
+        "pushes": 2,
+        "violations": [],
+        "policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'"
+      }
+    },
+    "its frame is named by its title, \"The price sheet\", at the place's own address": {
+      "ok": true,
+      "detail": "The price sheet"
+    },
+    "it draws each package's offers, read across kinds from the offers and the includes edges": {
+      "ok": true,
+      "detail": [
+        {
+          "title": "A way in — $36,000",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint"
+          ]
+        },
+        {
+          "title": "The whole thing — $72,000",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint",
+            "Copernicus build"
+          ]
+        },
+        {
+          "title": "Later on — $36,000",
+          "offers": [
+            "Copernicus build"
+          ]
+        }
+      ]
+    },
+    "nothing it was handed or drew names the offer Lin may not see": {
+      "ok": true,
+      "detail": [
+        {
+          "title": "A way in — $36,000",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint"
+          ]
+        },
+        {
+          "title": "The whole thing — $72,000",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint",
+            "Copernicus build"
+          ]
+        },
+        {
+          "title": "Later on — $36,000",
+          "offers": [
+            "Copernicus build"
+          ]
+        }
+      ]
+    },
+    "it is painted from props.theme in the app's light panel": {
+      "ok": true,
+      "detail": {
+        "background": "rgb(255, 255, 255)",
+        "lightPanel": "rgb(255, 255, 255)"
+      }
+    },
+    "toggling the app to dark pushes it the dark theme and it repaints, though the system says light": {
+      "ok": true,
+      "detail": {
+        "dark": "rgba(19, 27, 52, 0.96)",
+        "darkPanel": "rgba(19, 27, 52, 0.96)",
+        "system": false
+      }
+    },
+    "it resizes: the frame takes the height the guest asked for": {
+      "ok": true,
+      "detail": {
+        "asked": 276,
+        "height": "276px"
+      }
+    },
+    "a press in it asks for an act, applied as Lin through the view (via view:prices)": {
+      "ok": true,
+      "detail": {
+        "answer": "Noted.",
+        "last": {
+          "author": "party:lifelogics",
+          "via": "view:prices",
+          "intent": "Note “Compared the packages on price”"
+        }
+      }
+    },
+    "a link in it goes to the record's own page": {
+      "ok": true,
+      "detail": "Team coaching"
+    },
+    "a frame guest attached to the home is the routed home's body, drawn over what it reads": {
+      "ok": true,
+      "detail": {
+        "home": {
+          "inBody": true,
+          "title": "The front page"
+        },
+        "listed": [
+          "A way in",
+          "The whole thing",
+          "Later on"
+        ]
+      }
+    },
+    "a frame guest draws the app's logo from props.theme, the brand's inline SVG byte for byte at its own size, handed as a data: image (Cloud's view policy with img-src data:)": {
+      "ok": true,
+      "detail": {
+        "name": "En Dash",
+        "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz",
+        "natural": [
+          48,
+          24
+        ],
+        "bytes": 192,
+        "font": "Georgia, \"Times New Roman\", serif",
+        "radius": "4px",
+        "pushes": 2,
+        "marked": true,
+        "headingFont": "Georgia, \"Times New Roman\", serif",
+        "wordmark": "Georgia, \"Times New Roman\", serif",
+        "policy": "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:"
+      }
+    },
+    "and the app's name, \"En Dash\", in the display face of the app's wordmark and headings, with the app's radius": {
+      "ok": true,
+      "detail": {
+        "name": "En Dash",
+        "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz",
+        "natural": [
+          48,
+          24
+        ],
+        "bytes": 192,
+        "font": "Georgia, \"Times New Roman\", serif",
+        "radius": "4px",
+        "pushes": 2,
+        "marked": true,
+        "headingFont": "Georgia, \"Times New Roman\", serif",
+        "wordmark": "Georgia, \"Times New Roman\", serif"
+      }
+    },
+    "after the brand changes it draws the new name, face, radius and logo — a PNG the host fetched from its own origin, byte for byte — pushed into the same frame, not redrawn": {
+      "ok": true,
+      "detail": {
+        "name": "En Dash Consulting",
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSU",
+        "natural": [
+          36,
+          18
+        ],
+        "bytes": 89,
+        "font": "\"Courier New\", Courier, monospace",
+        "radius": "16px",
+        "pushes": 4,
+        "marked": true,
+        "headingFont": "\"Courier New\", Courier, monospace",
+        "wordmark": "\"Courier New\", Courier, monospace",
+        "kept": true
+      }
+    },
+    "the guest's policy refused nothing it needed": {
+      "ok": true,
+      "detail": []
+    },
+    "the page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

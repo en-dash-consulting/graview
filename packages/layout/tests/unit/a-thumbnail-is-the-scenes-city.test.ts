@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { beginning, Graph, hueFor, Store, type GraviewApp } from "@graview/core";
+import { Graph, hueFor, Store, type GraviewApp } from "@graview/core";
+import { beginning } from "@graview/core/seat";
 import { sceneDistricts, villageCap, villageOf, sceneThumbnail } from "@graview/core/scene";
 import { compileDocumentWithoutCheck, type GraviewDocument } from "@graview/core/document";
 import { describe, expect, it } from "vitest";

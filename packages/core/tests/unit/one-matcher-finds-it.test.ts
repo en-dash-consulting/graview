@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { arrange } from "../../src/arrange.js";
-import { actsOn, bindSchema, createSchema, defineApp, defineInvariant, defineNode, describeSearched, fold, Graph, isoDate, parseQuery, search, searchableFields, Store, type Hit, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineApp, defineInvariant, defineNode, Graph, isoDate, Store, type Hit, type Principal } from "../../src/index.js";
+import { actsOn, describeSearched, fold, parseQuery, search, searchableFields } from "../../src/search.js";
 import { describeApp, generateLlmsTxt } from "../../src/check.js";
 import { awkwardApp, awkwardGraph } from "../../src/testing.js";
 

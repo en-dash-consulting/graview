@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { checkApp, compileDocument } from "../../src/check.js";
 import { describeApp } from "../../src/check.js";
 import { diffDocuments, editDocument, toDocument, type GraviewDocument } from "../../src/document/index.js";
-import { createSchema, defineApp, defineNode, isoDate, readableFields, Store, z } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, isoDate, Store, z } from "../../src/index.js";
+import { readableFields } from "../../src/words.js";
 import { describePlace, resolveFor } from "../../src/describe.js";
 
 /**

@@ -1,4 +1,6 @@
-import { beginning, orderKinds, touchWeights } from "@graview/core";
+import { orderKinds } from "@graview/core";
+import { beginning } from "@graview/core/seat";
+import { touchWeights } from "@graview/core/search";
 import type { AnySchema } from "@graview/core";
 import type { LayoutOptions } from "@graview/layout";
 import { useMemo } from "react";

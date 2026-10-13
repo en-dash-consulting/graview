@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { placesOf, type GraviewApp } from "@graview/core";
+import { type GraviewApp } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { compileDocument } from "@graview/core/check";
 import type { GraviewDocument } from "@graview/core/document";
 import { todoApp } from "../../../../apps/todo/src/domain/app.js";

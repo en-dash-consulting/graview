@@ -1,8 +1,20 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, it } from "vitest";
-// @ts-expect-error — a plain .mjs module, without types.
-import { COMPILER_MODULES, HOSTED_PAGE_BUDGET, HOSTED_PAGE_COMPILED_BUDGET, HOSTED_PAGE_COMPILED_ENTRY, measureHostedPage, packageOf } from "../scripts/lib/hosted-page.mjs";
+import {
+  COMPILER_MODULES,
+  HOSTED_PAGE_BASE,
+  HOSTED_PAGE_BUDGET,
+  HOSTED_PAGE_COMPILED_BASE,
+  HOSTED_PAGE_COMPILED_BUDGET,
+  HOSTED_PAGE_COMPILED_ENTRY,
+  HOSTED_RAISES,
+  hostedRaises,
+  measureHostedPage,
+  packageOf,
+  withHostedRaises,
+  // @ts-expect-error — a plain .mjs module, without types.
+} from "../scripts/lib/hosted-page.mjs";
 // @ts-expect-error — a plain .mjs module, without types.
 import { hostedPageMarkdown } from "../scripts/lib/hosted-page-notes.mjs";
 
@@ -15,7 +27,7 @@ import { hostedPageMarkdown } from "../scripts/lib/hosted-page-notes.mjs";
  */
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 type Measured = {
-  upFront: { minified: number; zod: number; packages: Record<string, number>; modules: Record<string, number> };
+  upFront: { minified: number; gzipped: number; zod: number; packages: Record<string, number>; modules: Record<string, number> };
   whenAsked: { minified: number; packages: Record<string, number>; doors: { module: string; minified: number }[] };
   beforeDrawn: Record<"scene" | "pages", { minified: number; fetched: number; packages: Record<string, number> }>;
   over: boolean;
@@ -32,9 +44,15 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most 579.7 KB minified up front: 579.5 KB once the scene opens from a page that held nothing (FR-157), a rule says its shape and the bar ranks its places (FR-145), so Cloud's shell keeps 15.3 KB for its own under its 595", () => {
-    expect(measured.upFront.minified, `${Math.round(measured.upFront.minified / 1024)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
+  it("carries at most its budget up front, minified and gzipped: 543.0 KB and 187.2 KB since FR-179, and only a raise that names its changeset adds to either", () => {
+    expect(measured.upFront.minified, `${(measured.upFront.minified / 1024).toFixed(1)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
+    expect(measured.upFront.gzipped, `${(measured.upFront.gzipped / 1024).toFixed(1)} KB gzipped`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.gzipped);
     expect(measured.over).toBe(false);
+  });
+
+  it("carries at least 30 KB less up front than 0.1.28 did, which carried 587 206 bytes (573.4 KB) and 546 203 handed a compiled app (FR-179)", () => {
+    expect(measured.upFront.minified, `${((587_206 - measured.upFront.minified) / 1024).toFixed(1)} KB less`).toBeLessThanOrEqual(587_206 - 30 * 1024);
+    expect(handed.upFront.minified, `${((546_203 - handed.upFront.minified) / 1024).toFixed(1)} KB less`).toBeLessThanOrEqual(546_203 - 30 * 1024);
   });
 
   it("carries at most 150 KB of zod up front", () => {
@@ -95,8 +113,20 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its budget's numbers: 579.7 KB up front, under the 595 Cloud's shell holds itself to, and 150 KB of it zod's", () => {
-    expect(HOSTED_PAGE_BUDGET).toEqual({ minified: 579.7 * 1024, zod: 150 * 1024 });
+  it("holds its bases' numbers, never edited upward: 543.0 KB (187.2 gzipped) up front, 150 KB of it zod's, and 503.0 KB (173.2 gzipped) handed a compiled app (FR-179)", () => {
+    expect(HOSTED_PAGE_BASE).toEqual({ minified: 543.0 * 1024, gzipped: 187.2 * 1024, zod: 150 * 1024 });
+    expect(HOSTED_PAGE_COMPILED_BASE).toEqual({ minified: 503.0 * 1024, gzipped: 173.2 * 1024 });
+    // Both under 0.1.28's measure less 30 KB: the headroom Cloud's shell was given back is kept.
+    expect(HOSTED_PAGE_BASE.minified).toBeLessThanOrEqual(587_206 - 30 * 1024);
+    expect(HOSTED_PAGE_COMPILED_BASE.minified).toBeLessThanOrEqual(546_203 - 30 * 1024);
+  });
+
+  it("is held to its base plus the raises filed for it, each of which names a changeset that says what it adds", () => {
+    const sum = (name: string, size: "minified" | "gzipped") => (HOSTED_RAISES as { budget: string; minified: number; gzipped: number }[]).filter((raise) => raise.budget === name).reduce((total, raise) => total + raise[size], 0);
+    expect(HOSTED_PAGE_BUDGET.minified).toBe(HOSTED_PAGE_BASE.minified + sum("a hosted page", "minified"));
+    expect(HOSTED_PAGE_BUDGET.gzipped).toBe(HOSTED_PAGE_BASE.gzipped + sum("a hosted page", "gzipped"));
+    expect(HOSTED_PAGE_COMPILED_BUDGET.minified).toBe(HOSTED_PAGE_COMPILED_BASE.minified + sum("a hosted page handed a compiled app", "minified"));
+    for (const raise of HOSTED_RAISES as { changeset: string }[]) expect(raise.changeset).toMatch(/^[\w.-]+\.md$/);
   });
 
   /*
@@ -194,8 +224,9 @@ describe("a hosted page", () => {
  * it cannot read (one cached from another build).
  */
 describe("a hosted page handed a compiled app", () => {
-  it(`carries at most ${HOSTED_PAGE_COMPILED_BUDGET.minified / 1024} KB minified up front`, () => {
+  it(`carries at most its budget up front: ${(HOSTED_PAGE_COMPILED_BUDGET.minified / 1024).toFixed(1)} KB minified and ${(HOSTED_PAGE_COMPILED_BUDGET.gzipped / 1024).toFixed(1)} KB gzipped`, () => {
     expect(handed.upFront.minified, `${(handed.upFront.minified / 1024).toFixed(1)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_COMPILED_BUDGET.minified);
+    expect(handed.upFront.gzipped, `${(handed.upFront.gzipped / 1024).toFixed(1)} KB gzipped`).toBeLessThanOrEqual(HOSTED_PAGE_COMPILED_BUDGET.gzipped);
   });
 
   it("carries no compiler up front: no reader, validator, expression or template parser, view checker or document schema", () => {
@@ -211,5 +242,71 @@ describe("a hosted page handed a compiled app", () => {
 
   it("is at least 40 KB lighter up front than the page that compiles the document itself", () => {
     expect(measured.upFront.minified - handed.upFront.minified, `${((measured.upFront.minified - handed.upFront.minified) / 1024).toFixed(1)} KB`).toBeGreaterThanOrEqual(40 * 1024);
+  });
+});
+
+/**
+ * WHAT A FACE DRAWS IS FETCHED WITH THE FACE (FR-179). The studio's door,
+ * the seat's panel, the lenses, a frame guest's host and the matcher are
+ * each a door of their own, fetched when the face that draws them is first
+ * drawn or asked — never before — and what only they use stays off the
+ * barrels a page imports up front.
+ */
+describe("a hosted page's faces", () => {
+  it("fetch the seat's panel, the declared lenses and a frame guest's host when they are first drawn or asked, and the matcher with the scene that searches, never up front", () => {
+    const doors = measured.whenAsked.doors.map((door) => door.module);
+    for (const module of ["primitives/src/seat-panel.tsx", "primitives/src/declared-lenses.tsx", "guest/src/host/frame.ts"]) {
+      expect(Object.keys(measured.upFront.modules), module).not.toContain(module);
+      expect(Object.keys(handed.upFront.modules), module).not.toContain(module);
+      expect(doors, module).toContain(module);
+    }
+    const sceneDoor = (measured.whenAsked.doors as { module: string; packages: Record<string, number> }[]).find((door) => door.module === "embed/src/scene-face.tsx")!;
+    expect(sceneDoor.packages["@graview/core"]).toBeGreaterThan(0);
+    for (const module of ["core/src/search.ts", "guest/src/host/session.ts", "guest/src/host/theme.ts", "core/src/answer-seen.ts", "core/src/app-places.ts", "core/src/schema/reading.ts", "core/src/mutations/arg-shape.ts", "core/src/mutations/words.ts", "core/src/beginning.ts", "core/src/arrangement.ts", "layout/src/sizes.ts"]) {
+      expect(Object.keys(measured.upFront.modules), module).not.toContain(module);
+      expect(Object.keys(handed.upFront.modules), module).not.toContain(module);
+    }
+  });
+
+  it("carry no studio's door up front, even where the studio is not stubbed: the embed fetches @graview/studio as its place is first drawn", () => {
+    const inputs = (measured as unknown as { metafile: { inputs: Record<string, { imports: { path: string; kind: string }[] }> } }).metafile.inputs;
+    const embed = Object.entries(inputs).find(([input]) => input.endsWith("embed/src/embed.tsx"))![1];
+    const studio = embed.imports.filter((one) => one.path.includes("studio"));
+    expect(studio.length).toBeGreaterThan(0);
+    expect(studio.every((one) => one.kind === "dynamic-import")).toBe(true);
+  });
+});
+
+/**
+ * A RAISE OF A HOSTED PAGE'S BUDGET SAYS ITSELF (FR-179): a file in
+ * scripts/budget-raises/ naming the hosted page, the bytes it adds and the
+ * changeset that ships it, which says the kilobytes up front it adds.
+ */
+describe("a raise of a hosted page's budget", () => {
+  const note = "Raised when a feature came to need this much more of the page before it draws, measured at so many bytes.";
+  const base = { minified: 100_000, gzipped: 40_000 };
+  const said = (texts: Record<string, string>) => ({ changesets: (name: string) => texts[name] });
+
+  it("adds what it says to the budget it names, and to no other", () => {
+    const raises = hostedRaises([{ file: "a.json", budget: "a hosted page", minified: 1_229, gzipped: 400, changeset: "a.md", note }], said({ "a.md": "Spends 1.2 KB more up front." }));
+    expect(withHostedRaises(base, "a hosted page", raises)).toEqual({ ...base, minified: 101_229, gzipped: 40_400, raises: ["a.json"] });
+    expect(withHostedRaises(base, "a hosted page handed a compiled app", raises)).toEqual({ ...base, raises: [] });
+  });
+
+  it("is refused when it names no changeset, says nothing, or its changeset does not say the kilobytes it adds up front", () => {
+    expect(() => hostedRaises([{ file: "b.json", budget: "a hosted page", minified: 1_229, gzipped: 400, note }])).toThrow(/b\.json names no changeset/);
+    expect(() => hostedRaises([{ file: "c.json", budget: "a hosted page", minified: 1_229, gzipped: 400, changeset: "c.md" }])).toThrow(/c\.json carries no note/);
+    expect(() => hostedRaises([{ file: "d.json", budget: "a hosted page", minified: 0, gzipped: 400, changeset: "d.md", note }])).toThrow(/d\.json must say how many bytes minified/);
+    expect(() => hostedRaises([{ file: "e.json", budget: "a hosted page", minified: 1_229, gzipped: 400, changeset: "e.md", note }], said({ "e.md": "A small change." }))).toThrow(/e\.json adds 1\.2 KB to a hosted page up front, and \.changeset\/e\.md does not say so/);
+  });
+
+  it("is judged against its changeset while that changeset is pending, and stands once a release has spent it", () => {
+    expect(() => hostedRaises([{ file: "f.json", budget: "a hosted page", minified: 1_229, gzipped: 400, changeset: "spent.md", note }], said({}))).not.toThrow();
+  });
+
+  it("leaves the embed's budgets alone: a hosted page's raise is not one of theirs", async () => {
+    // @ts-expect-error — a plain .mjs module, without types.
+    const { BASES, withRaises } = await import("../scripts/lib/bundle-budget.mjs");
+    expect(() => withRaises(BASES, [{ file: "g.json", budget: "a hosted page", minified: 1_229, gzipped: 400, changeset: "g.md", note }])).not.toThrow();
   });
 });

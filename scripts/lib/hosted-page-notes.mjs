@@ -23,7 +23,7 @@ export function hostedPageMarkdown(measured, { heading = "###", handed } = {}) {
   return [
     `${heading} The hosted page's weight`,
     "",
-    `What Graview Cloud's app shell loads from the framework before the app draws — \`openRemote\` plus the embed over a compiled document, built as Cloud builds it (esbuild, split, minified) — is **${kb(upFront.minified)} KB** up front, against a budget of ${kb(budget.minified)} KB: **${kb(headroom)} KB of headroom**, and ${kb(600 * 1024 - upFront.minified)} KB under the 600 KB Graview Cloud's brief set. ${kb(upFront.zod)} KB of it is zod (at most ${kb(budget.zod)}).`,
+    `What Graview Cloud's app shell loads from the framework before the app draws — \`openRemote\` plus the embed over a compiled document, built as Cloud builds it (esbuild, split, minified) — is **${kb(upFront.minified)} KB** up front (${kb(upFront.gzipped)} KB gzipped), against a budget of ${kb(budget.minified)} KB (${kb(budget.gzipped)} gzipped): **${kb(headroom)} KB of headroom**, and ${kb(600 * 1024 - upFront.minified)} KB under the 600 KB Graview Cloud's brief set. ${kb(upFront.zod)} KB of it is zod (at most ${kb(budget.zod)}).${budget.raises?.length ? ` The budget is its base raised by ${budget.raises.map((file) => `\`${file}\``).join(", ")}.` : ""}`,
     "",
     "| Package | Up front (KB, minified) |",
     "| --- | ---: |",
@@ -32,7 +32,7 @@ export function hostedPageMarkdown(measured, { heading = "###", handed } = {}) {
     "",
     `Before a face draws, with what it fetches as it is first drawn: the scene ${kb(beforeDrawn.scene.minified)} KB (${kb(beforeDrawn.scene.fetched)} KB fetched), the pages ${kb(beforeDrawn.pages.minified)} KB (${kb(beforeDrawn.pages.fetched)} KB fetched).`,
     "",
-    ...(handed ? [`Handed the compiled app its server made (\`appFromOrCompile\` from \`@graview/core/compiled\`, FR-123), the same page loads **${kb(handed.upFront.minified)} KB** up front — ${kb(upFront.minified - handed.upFront.minified)} KB less, with no compiler in it.`, ""] : []),
+    ...(handed ? [`Handed the compiled app its server made (\`appFromOrCompile\` from \`@graview/core/compiled\`, FR-123), the same page loads **${kb(handed.upFront.minified)} KB** up front (${kb(handed.upFront.gzipped)} KB gzipped) against a budget of ${kb(handed.budget.minified)} KB — ${kb(upFront.minified - handed.upFront.minified)} KB less, with no compiler in it.`, ""] : []),
   ].join("\n");
 }
 

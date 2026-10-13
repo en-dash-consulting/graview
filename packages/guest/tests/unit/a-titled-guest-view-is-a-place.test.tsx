@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { defineApp, placesOf, Store, type AnySchema } from "@graview/core";
+import { defineApp, Store, type AnySchema } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { PagesApp } from "@graview/pages";
 import { createViews } from "@graview/react/provider";
 import { act } from "react";

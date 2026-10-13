@@ -1,4 +1,5 @@
-import { humanizeField, labelOf, tellApart } from "./schema/define-node.js";
+import { humanizeField, labelOf } from "./schema/define-node.js";
+import { tellApart } from "./schema/reading.js";
 import { matchNode, parseQuery } from "./search.js";
 import {
   arrangeable,

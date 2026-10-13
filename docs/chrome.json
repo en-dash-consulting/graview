@@ -1,0 +1,2932 @@
+{
+  "at": "2026-10-13T04:10:20.269Z",
+  "engine": "chromium",
+  "checks": {
+    "everyPopoverStandsOverEverythingWithTheSeatOpen": {
+      "faces": {
+        "the embed's Graview 1440×900": {
+          "seat": "open",
+          "popovers": {
+            "profile": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "fieldset[setting-text-size]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[setting-share-over-shared]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1144,
+                83,
+                280,
+                520
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "a[host-action]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "acts",
+                "acts": false,
+                "profile": true,
+                "ok": true
+              }
+            },
+            "problems": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1086,
+                83,
+                300,
+                100
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "profile",
+                "profile": false,
+                "problems": true,
+                "ok": true
+              }
+            },
+            "places": {
+              "drawn": false
+            },
+            "here": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button[here-one]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[here-one]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1017,
+                83,
+                320,
+                62
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[here-one]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[here-open]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[here-open]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "problems",
+                "problems": false,
+                "here": true,
+                "ok": true
+              }
+            },
+            "activity": {
+              "drawn": false
+            },
+            "find": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                879,
+                83,
+                416,
+                448
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": false,
+                "onTrigger": true,
+                "onCard": false,
+                "onBody": false,
+                "at": "input[find-box]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "input[find-box]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": false,
+                  "onBody": true,
+                  "at": "body"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "here",
+                "here": false,
+                "find": true,
+                "ok": true
+              }
+            },
+            "districts": {
+              "drawn": false
+            },
+            "acts": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[pin-toggle]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                941,
+                270,
+                300,
+                84
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": null,
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "div"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "div"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "find",
+                "find": false,
+                "acts": true,
+                "ok": true
+              }
+            },
+            "arrange": {
+              "drawn": false
+            },
+            "studio-ask": {
+              "drawn": false
+            }
+          }
+        },
+        "the embed's pages 1440×900": {
+          "seat": "open",
+          "popovers": {
+            "profile": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "fieldset[setting-text-size]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[setting-share-over-shared]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1144,
+                83,
+                280,
+                520
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "a[host-action]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "here",
+                "here": false,
+                "profile": true,
+                "ok": true
+              }
+            },
+            "problems": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1086,
+                83,
+                300,
+                100
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "profile",
+                "profile": false,
+                "problems": true,
+                "ok": true
+              }
+            },
+            "places": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button[app-place-kind:invitation]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                379,
+                83,
+                320,
+                261
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[app-place-kind:rule]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[app-places-open]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[app-places-open]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "problems",
+                "problems": false,
+                "places": true,
+                "ok": true
+              }
+            },
+            "here": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span[here-one]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span[here-one]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1017,
+                83,
+                320,
+                62
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "ul[here-list]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[here-open]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[here-open]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "places",
+                "places": false,
+                "here": true,
+                "ok": true
+              }
+            },
+            "activity": {
+              "drawn": false
+            },
+            "find": {
+              "drawn": false
+            },
+            "districts": {
+              "drawn": false
+            },
+            "acts": {
+              "drawn": false
+            },
+            "arrange": {
+              "drawn": false
+            },
+            "studio-ask": {
+              "drawn": false
+            }
+          }
+        },
+        "the Shell 1440×900": {
+          "seat": "open",
+          "popovers": {
+            "profile": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "div",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "a",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1144,
+                45,
+                280,
+                520
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "a[profile-record]"
+              },
+              "hangs": {
+                "gap": 7,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "acts",
+                "acts": false,
+                "profile": true,
+                "ok": true
+              }
+            },
+            "problems": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1086,
+                45,
+                300,
+                152
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": {
+                "gap": 7,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "profile",
+                "profile": false,
+                "problems": true,
+                "ok": true
+              }
+            },
+            "places": {
+              "drawn": false
+            },
+            "here": {
+              "drawn": false
+            },
+            "activity": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button[agent-tidy]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "a[start-fresh]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                1037,
+                45,
+                300,
+                129
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[agent-tidy]"
+              },
+              "hangs": {
+                "gap": 7,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "problems",
+                "problems": false,
+                "activity": true,
+                "ok": true
+              }
+            },
+            "find": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "div[find-hit]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                845,
+                45,
+                416,
+                439
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": false,
+                "onTrigger": true,
+                "onCard": false,
+                "onBody": false,
+                "at": "input[find-box]"
+              },
+              "hangs": {
+                "gap": 7,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "input[find-box]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": false,
+                  "onBody": true,
+                  "at": "body"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "activity",
+                "activity": false,
+                "find": true,
+                "ok": true
+              }
+            },
+            "districts": {
+              "drawn": false
+            },
+            "acts": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "p[no-affordances]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": null,
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                487,
+                797,
+                300,
+                88
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "section[context-menu]"
+              },
+              "hangs": null,
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "div"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "div"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "find",
+                "find": false,
+                "acts": true,
+                "ok": true
+              }
+            },
+            "arrange": {
+              "drawn": false
+            },
+            "studio-ask": {
+              "drawn": false
+            }
+          }
+        },
+        "the embed's Graview 390×844": {
+          "seat": "closed",
+          "popovers": {
+            "profile": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "fieldset[setting-text-size]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[setting-share-over-shared]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                98,
+                83,
+                280,
+                520
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "a[host-action]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "acts",
+                "acts": false,
+                "profile": true,
+                "ok": true
+              }
+            },
+            "problems": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                46,
+                83,
+                300,
+                100
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "profile",
+                "profile": false,
+                "problems": true,
+                "ok": true
+              }
+            },
+            "places": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button[app-place-scene:user:who-may-do-what]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                130,
+                320,
+                170
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[app-place-scene:whole]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[app-places-open]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[app-places-open]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true
+            },
+            "here": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button[here-one]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[here-one]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                83,
+                320,
+                62
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[here-one]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[here-open]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[here-open]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true
+            },
+            "activity": {
+              "drawn": false
+            },
+            "find": {
+              "drawn": false
+            },
+            "districts": {
+              "drawn": false
+            },
+            "acts": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[pin-toggle]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                82,
+                377,
+                300,
+                84
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": null,
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "div"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "div"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "here",
+                "here": false,
+                "acts": true,
+                "ok": true
+              }
+            },
+            "arrange": {
+              "drawn": false
+            },
+            "studio-ask": {
+              "drawn": false
+            }
+          }
+        },
+        "the embed's pages 390×844": {
+          "seat": "closed",
+          "popovers": {
+            "profile": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "fieldset[setting-text-size]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[setting-share-over-shared]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                98,
+                83,
+                280,
+                520
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "a[host-action]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "here",
+                "here": false,
+                "profile": true,
+                "ok": true
+              }
+            },
+            "problems": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                46,
+                83,
+                300,
+                100
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "profile",
+                "profile": false,
+                "problems": true,
+                "ok": true
+              }
+            },
+            "places": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button[app-place-kind:user]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                130,
+                320,
+                422
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[app-place-home]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[app-places-open]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[app-places-open]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "problems",
+                "problems": false,
+                "places": true,
+                "ok": true
+              }
+            },
+            "here": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span[here-one]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span[here-one]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                83,
+                320,
+                62
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "ul[here-list]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[here-open]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[here-open]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "places",
+                "places": false,
+                "here": true,
+                "ok": true
+              }
+            },
+            "activity": {
+              "drawn": false
+            },
+            "find": {
+              "drawn": false
+            },
+            "districts": {
+              "drawn": false
+            },
+            "acts": {
+              "drawn": false
+            },
+            "arrange": {
+              "drawn": false
+            },
+            "studio-ask": {
+              "drawn": false
+            }
+          }
+        },
+        "the Shell 390×844": {
+          "seat": "closed",
+          "popovers": {
+            "profile": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "div",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "a",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                98,
+                45,
+                280,
+                520
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "a[profile-record]"
+              },
+              "hangs": {
+                "gap": 7,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[profile-button]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "acts",
+                "acts": false,
+                "profile": true,
+                "ok": true
+              }
+            },
+            "problems": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                46,
+                45,
+                300,
+                152
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": {
+                "gap": 7,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[standing]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "profile",
+                "profile": false,
+                "problems": true,
+                "ok": true
+              }
+            },
+            "places": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button[app-place-scene:task:what-is-left]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                92,
+                320,
+                202
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[app-place-scene:whole]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[app-places-open]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[app-places-open]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true
+            },
+            "here": {
+              "drawn": false
+            },
+            "activity": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button[agent-tidy]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "a[start-fresh]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                45,
+                300,
+                129
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[agent-tidy]"
+              },
+              "hangs": {
+                "gap": 7,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true
+            },
+            "find": {
+              "drawn": false
+            },
+            "districts": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "button",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "span",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                25,
+                586,
+                200,
+                129
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": true,
+                "onBody": false,
+                "at": "button"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": false
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "button[beyond-more]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "button[beyond-more]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "activity",
+                "activity": false,
+                "districts": true,
+                "ok": true
+              }
+            },
+            "acts": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "p[no-affordances]",
+                "inside": true
+              },
+              "lastRow": {
+                "at": null,
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                82,
+                149,
+                300,
+                58
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "section[context-menu]"
+              },
+              "hangs": null,
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "div"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": false,
+                  "onCard": true,
+                  "onBody": false,
+                  "at": "div"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "districts",
+                "districts": false,
+                "acts": true,
+                "ok": true
+              }
+            },
+            "arrange": {
+              "drawn": false
+            },
+            "studio-ask": {
+              "drawn": false
+            }
+          }
+        }
+      },
+      "failures": [],
+      "ok": true
+    },
+    "everyPopoverBehavesAsOneFamily": {
+      "strays": [],
+      "ok": true
+    },
+    "everyPopoverAFaceDrawsWasOpened": {
+      "seen": {
+        "profile": [
+          "the embed's Graview 1440×900",
+          "the embed's pages 1440×900",
+          "the Shell 1440×900",
+          "the embed's Graview 390×844",
+          "the embed's pages 390×844",
+          "the Shell 390×844"
+        ],
+        "problems": [
+          "the embed's Graview 1440×900",
+          "the embed's pages 1440×900",
+          "the Shell 1440×900",
+          "the embed's Graview 390×844",
+          "the embed's pages 390×844",
+          "the Shell 390×844"
+        ],
+        "here": [
+          "the embed's Graview 1440×900",
+          "the embed's pages 1440×900",
+          "the embed's Graview 390×844",
+          "the embed's pages 390×844"
+        ],
+        "find": [
+          "the embed's Graview 1440×900",
+          "the Shell 1440×900"
+        ],
+        "acts": [
+          "the embed's Graview 1440×900",
+          "the Shell 1440×900",
+          "the embed's Graview 390×844",
+          "the Shell 390×844"
+        ],
+        "places": [
+          "the embed's pages 1440×900",
+          "the embed's Graview 390×844",
+          "the embed's pages 390×844",
+          "the Shell 390×844"
+        ],
+        "activity": [
+          "the Shell 1440×900",
+          "the Shell 390×844"
+        ],
+        "districts": [
+          "the Shell 390×844"
+        ]
+      },
+      "unseen": [],
+      "quick": false,
+      "ok": true
+    },
+    "aHostSpeaksInTheAppsOwnNotices": {
+      "1440×900 light": {
+        "banner": {
+          "topLayer": true,
+          "onTop": true,
+          "inTheViewport": true,
+          "floatingPanel": true,
+          "contrast": 15.94,
+          "text": "A newer version is available — reload when convenient.Reload×"
+        },
+        "toast": {
+          "topLayer": true,
+          "onTop": true,
+          "inTheViewport": true,
+          "floatingPanel": true,
+          "contrast": 15.94,
+          "text": "The app was changed — now version 4×"
+        },
+        "aloud": "The app was changed — now version 4",
+        "overTheProfile": true,
+        "toastGone": true,
+        "bannerStays": true,
+        "changedInPlace": true,
+        "alarm": "That change was refused.",
+        "cleared": true,
+        "ok": true
+      },
+      "1440×900 dark": {
+        "banner": {
+          "topLayer": true,
+          "onTop": true,
+          "inTheViewport": true,
+          "floatingPanel": true,
+          "contrast": 15.59,
+          "text": "A newer version is available — reload when convenient.Reload×"
+        },
+        "toast": {
+          "topLayer": true,
+          "onTop": true,
+          "inTheViewport": true,
+          "floatingPanel": true,
+          "contrast": 15.59,
+          "text": "The app was changed — now version 4×"
+        },
+        "aloud": "The app was changed — now version 4",
+        "overTheProfile": true,
+        "toastGone": true,
+        "bannerStays": true,
+        "changedInPlace": true,
+        "alarm": "That change was refused.",
+        "cleared": true,
+        "ok": true
+      },
+      "390×844 light": {
+        "banner": {
+          "topLayer": true,
+          "onTop": true,
+          "inTheViewport": true,
+          "floatingPanel": true,
+          "contrast": 15.94,
+          "text": "A newer version is available — reload when convenient.Reload×"
+        },
+        "toast": {
+          "topLayer": true,
+          "onTop": true,
+          "inTheViewport": true,
+          "floatingPanel": true,
+          "contrast": 15.94,
+          "text": "The app was changed — now version 4×"
+        },
+        "aloud": "The app was changed — now version 4",
+        "overTheProfile": true,
+        "toastGone": true,
+        "bannerStays": true,
+        "changedInPlace": true,
+        "alarm": "That change was refused.",
+        "cleared": true,
+        "ok": true
+      },
+      "390×844 dark": {
+        "banner": {
+          "topLayer": true,
+          "onTop": true,
+          "inTheViewport": true,
+          "floatingPanel": true,
+          "contrast": 15.59,
+          "text": "A newer version is available — reload when convenient.Reload×"
+        },
+        "toast": {
+          "topLayer": true,
+          "onTop": true,
+          "inTheViewport": true,
+          "floatingPanel": true,
+          "contrast": 15.59,
+          "text": "The app was changed — now version 4×"
+        },
+        "aloud": "The app was changed — now version 4",
+        "overTheProfile": true,
+        "toastGone": true,
+        "bannerStays": true,
+        "changedInPlace": true,
+        "alarm": "That change was refused.",
+        "cleared": true,
+        "ok": true
+      },
+      "ok": true
+    },
+    "theShellAndAnEmbedWearOneBarOnTheScene": {
+      "1440×900 light": {
+        "shell": {
+          "ids": [
+            "app-home",
+            "app-mark",
+            "app-name",
+            "app-faces",
+            "app-face-scene",
+            "app-face-pages",
+            "app-find-open",
+            "app-find",
+            "find",
+            "find-box",
+            "find-count",
+            "find-strip",
+            "find-nothing",
+            "app-find-keys",
+            "standing",
+            "profile-button",
+            "profile-mark"
+          ],
+          "places": [
+            "/places/overview",
+            "/places/overview#focus=aggregate%3Alist&in.view=the-lists",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-month",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-week",
+            "/places/overview#focus=aggregate%3Atask&in.view=what-is-left"
+          ],
+          "activity": true,
+          "activityBeforeStanding": true,
+          "height": 48,
+          "oneRow": true,
+          "oldBar": []
+        },
+        "embed": {
+          "ids": [
+            "app-home",
+            "app-mark",
+            "app-name",
+            "app-faces",
+            "app-face-scene",
+            "app-face-pages",
+            "app-find-open",
+            "app-find",
+            "find",
+            "find-box",
+            "find-count",
+            "find-strip",
+            "find-nothing",
+            "app-find-keys",
+            "standing",
+            "profile-button",
+            "profile-mark"
+          ],
+          "places": [
+            "/places/overview",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-month",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-week",
+            "/places/overview#focus=aggregate%3Auser&in.view=who-may-do-what"
+          ],
+          "activity": false,
+          "activityBeforeStanding": true,
+          "height": 48,
+          "oneRow": true,
+          "oldBar": []
+        },
+        "ok": true
+      },
+      "1440×900 dark": {
+        "shell": {
+          "ids": [
+            "app-home",
+            "app-mark",
+            "app-name",
+            "app-faces",
+            "app-face-scene",
+            "app-face-pages",
+            "app-find-open",
+            "app-find",
+            "find",
+            "find-box",
+            "find-count",
+            "find-strip",
+            "find-nothing",
+            "app-find-keys",
+            "standing",
+            "profile-button",
+            "profile-mark"
+          ],
+          "places": [
+            "/places/overview",
+            "/places/overview#focus=aggregate%3Alist&in.view=the-lists",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-month",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-week",
+            "/places/overview#focus=aggregate%3Atask&in.view=what-is-left"
+          ],
+          "activity": true,
+          "activityBeforeStanding": true,
+          "height": 48,
+          "oneRow": true,
+          "oldBar": []
+        },
+        "embed": {
+          "ids": [
+            "app-home",
+            "app-mark",
+            "app-name",
+            "app-faces",
+            "app-face-scene",
+            "app-face-pages",
+            "app-find-open",
+            "app-find",
+            "find",
+            "find-box",
+            "find-count",
+            "find-strip",
+            "find-nothing",
+            "app-find-keys",
+            "standing",
+            "profile-button",
+            "profile-mark"
+          ],
+          "places": [
+            "/places/overview",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-month",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-week",
+            "/places/overview#focus=aggregate%3Auser&in.view=who-may-do-what"
+          ],
+          "activity": false,
+          "activityBeforeStanding": true,
+          "height": 48,
+          "oneRow": true,
+          "oldBar": []
+        },
+        "ok": true
+      },
+      "390×844 light": {
+        "shell": {
+          "ids": [
+            "app-home",
+            "app-mark",
+            "app-name",
+            "app-faces",
+            "app-face-scene",
+            "app-face-pages",
+            "app-find-open",
+            "app-find",
+            "find",
+            "find-box",
+            "find-count",
+            "find-strip",
+            "find-nothing",
+            "app-find-keys",
+            "standing",
+            "profile-button",
+            "profile-mark"
+          ],
+          "places": [
+            "/places/overview",
+            "/places/overview#focus=aggregate%3Alist&in.view=the-lists",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-month",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-week",
+            "/places/overview#focus=aggregate%3Atask&in.view=what-is-left"
+          ],
+          "activity": true,
+          "activityBeforeStanding": true,
+          "height": 48,
+          "oneRow": true,
+          "oldBar": []
+        },
+        "embed": {
+          "ids": [
+            "app-home",
+            "app-mark",
+            "app-name",
+            "app-faces",
+            "app-face-scene",
+            "app-face-pages",
+            "app-find-open",
+            "app-find",
+            "find",
+            "find-box",
+            "find-count",
+            "find-strip",
+            "find-nothing",
+            "app-find-keys",
+            "standing",
+            "profile-button",
+            "profile-mark"
+          ],
+          "places": [
+            "/places/overview",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-month",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-week",
+            "/places/overview#focus=aggregate%3Auser&in.view=who-may-do-what"
+          ],
+          "activity": false,
+          "activityBeforeStanding": true,
+          "height": 48,
+          "oneRow": true,
+          "oldBar": []
+        },
+        "ok": true
+      },
+      "390×844 dark": {
+        "shell": {
+          "ids": [
+            "app-home",
+            "app-mark",
+            "app-name",
+            "app-faces",
+            "app-face-scene",
+            "app-face-pages",
+            "app-find-open",
+            "app-find",
+            "find",
+            "find-box",
+            "find-count",
+            "find-strip",
+            "find-nothing",
+            "app-find-keys",
+            "standing",
+            "profile-button",
+            "profile-mark"
+          ],
+          "places": [
+            "/places/overview",
+            "/places/overview#focus=aggregate%3Alist&in.view=the-lists",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-month",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-week",
+            "/places/overview#focus=aggregate%3Atask&in.view=what-is-left"
+          ],
+          "activity": true,
+          "activityBeforeStanding": true,
+          "height": 48,
+          "oneRow": true,
+          "oldBar": []
+        },
+        "embed": {
+          "ids": [
+            "app-home",
+            "app-mark",
+            "app-name",
+            "app-faces",
+            "app-face-scene",
+            "app-face-pages",
+            "app-find-open",
+            "app-find",
+            "find",
+            "find-box",
+            "find-count",
+            "find-strip",
+            "find-nothing",
+            "app-find-keys",
+            "standing",
+            "profile-button",
+            "profile-mark"
+          ],
+          "places": [
+            "/places/overview",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-month",
+            "/places/overview#focus=aggregate%3Atask&in.view=the-week",
+            "/places/overview#focus=aggregate%3Auser&in.view=who-may-do-what"
+          ],
+          "activity": false,
+          "activityBeforeStanding": true,
+          "height": 48,
+          "oneRow": true,
+          "oldBar": []
+        },
+        "ok": true
+      },
+      "ok": true
+    },
+    "aSentenceSaysADayAndAChoiceAsAPersonReadsThem": {
+      "problems": "\"Order boxes\" is done, but it waits for \"Find someone who moves pianos\"\nNothing done before what it waits for · 2 ways to fix\n\"Pay the deposit\" was due 28 Aug 2026\nNothing overdue · 2 ways to fix",
+      "record": {
+        "said": [
+          "No",
+          "28 Aug 2026",
+          "Tue",
+          "09:00",
+          "09:15"
+        ],
+        "text": "TASKS\n\nPay the deposit\n\nIn the scene ↗\n\n\"Pay the deposit\" was due 28 Aug 2026\nGive it a new date …\nFinish it\nThe facts\nChange one where you can.\nFINISHED\nNo\nDUE\n28 Aug 2026\nDAY\nTue\nBLOCKED\n09:00\nUNTIL\n09:15\nThe list it is on\nToday\nWhy this is here\nThe landlord holds the date for 48 hours once the deposit…\nWhat can be done\nGive it a new date …\nFinish it\nNote why this is here …\nMove it to another list …\nRename …\nThis has to happen first …\nChange the task …\nBlock time for it …\nDrop it\nRemove the task"
+      },
+      "ok": true
+    },
+    "theSeatFloatsSnapsAndCanBeLeftOut": {
+      "the embed's Graview": {
+        "closed": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": "closed",
+          "side": "left",
+          "fromLeft": 16,
+          "fromRight": 1088,
+          "keyboard": null,
+          "firstCard": 322
+        },
+        "opened": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": "open",
+          "side": "left",
+          "fromLeft": 7,
+          "fromRight": 1079,
+          "keyboard": "seat-field",
+          "firstCard": 322
+        },
+        "snapped": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": "open",
+          "side": "right",
+          "fromLeft": 1079,
+          "fromRight": 7,
+          "keyboard": "seat-side",
+          "firstCard": 322
+        },
+        "afterAReload": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": "open",
+          "side": "right",
+          "fromLeft": 1079,
+          "fromRight": 7,
+          "keyboard": null,
+          "firstCard": 322
+        },
+        "ok": true
+      },
+      "the Shell": {
+        "closed": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": "closed",
+          "side": "left",
+          "fromLeft": 16,
+          "fromRight": 1088,
+          "keyboard": null,
+          "firstCard": 36
+        },
+        "opened": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": "open",
+          "side": "left",
+          "fromLeft": 7,
+          "fromRight": 1079,
+          "keyboard": "seat-field",
+          "firstCard": 36
+        },
+        "snapped": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": "open",
+          "side": "right",
+          "fromLeft": 1079,
+          "fromRight": 7,
+          "keyboard": "seat-side",
+          "firstCard": 36
+        },
+        "afterAReload": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": "open",
+          "side": "right",
+          "fromLeft": 1079,
+          "fromRight": 7,
+          "keyboard": null,
+          "firstCard": 36
+        },
+        "ok": true
+      },
+      "thePictureKeepsItsWidthBelowALaptop": {
+        "narrow": {
+          "frameWidth": 820,
+          "sceneWidth": 820,
+          "state": "closed",
+          "side": "left",
+          "fromLeft": 16,
+          "fromRight": 468,
+          "keyboard": null,
+          "firstCard": 159
+        },
+        "ok": true
+      },
+      "startedAs-hidden": {
+        "started": {
+          "frameWidth": 1440,
+          "sceneWidth": 1440,
+          "state": null,
+          "side": null,
+          "fromLeft": null,
+          "fromRight": null,
+          "keyboard": null,
+          "firstCard": 333
+        },
+        "ok": true
+      },
+      "ok": true
+    },
+    "aHostsActionsAreInTheProfileByKeyboardInBothSchemes": {
+      "hosts": {
+        "the embed's Graview 1440×900 light": {
+          "colorScheme": "light",
+          "reached": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "scheme": "light",
+          "contrast": 15.94,
+          "inThePane": [
+            [
+              "Change the app",
+              "/apps/things/change"
+            ],
+            [
+              "Your apps",
+              "/apps"
+            ],
+            [
+              "Report this app",
+              "/report?app=things"
+            ]
+          ],
+          "overTheScene": []
+        },
+        "the embed's Graview 1440×900 dark": {
+          "colorScheme": "dark",
+          "reached": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "scheme": "dark",
+          "contrast": 15.59,
+          "inThePane": [
+            [
+              "Change the app",
+              "/apps/things/change"
+            ],
+            [
+              "Your apps",
+              "/apps"
+            ],
+            [
+              "Report this app",
+              "/report?app=things"
+            ]
+          ],
+          "overTheScene": []
+        },
+        "the embed's pages 1440×900 light": {
+          "colorScheme": "light",
+          "reached": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "scheme": "light",
+          "contrast": 15.94,
+          "inThePane": [
+            [
+              "Change the app",
+              "/apps/things/change"
+            ],
+            [
+              "Your apps",
+              "/apps"
+            ],
+            [
+              "Report this app",
+              "/report?app=things"
+            ]
+          ],
+          "overTheScene": []
+        },
+        "the embed's pages 1440×900 dark": {
+          "colorScheme": "dark",
+          "reached": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "scheme": "dark",
+          "contrast": 15.59,
+          "inThePane": [
+            [
+              "Change the app",
+              "/apps/things/change"
+            ],
+            [
+              "Your apps",
+              "/apps"
+            ],
+            [
+              "Report this app",
+              "/report?app=things"
+            ]
+          ],
+          "overTheScene": []
+        },
+        "the embed's Graview 390×844 light": {
+          "colorScheme": "light",
+          "reached": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "scheme": "light",
+          "contrast": 15.94,
+          "inThePane": [
+            [
+              "Change the app",
+              "/apps/things/change"
+            ],
+            [
+              "Your apps",
+              "/apps"
+            ],
+            [
+              "Report this app",
+              "/report?app=things"
+            ]
+          ],
+          "overTheScene": []
+        },
+        "the embed's Graview 390×844 dark": {
+          "colorScheme": "dark",
+          "reached": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "scheme": "dark",
+          "contrast": 15.59,
+          "inThePane": [
+            [
+              "Change the app",
+              "/apps/things/change"
+            ],
+            [
+              "Your apps",
+              "/apps"
+            ],
+            [
+              "Report this app",
+              "/report?app=things"
+            ]
+          ],
+          "overTheScene": []
+        },
+        "the embed's pages 390×844 light": {
+          "colorScheme": "light",
+          "reached": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "scheme": "light",
+          "contrast": 15.94,
+          "inThePane": [
+            [
+              "Change the app",
+              "/apps/things/change"
+            ],
+            [
+              "Your apps",
+              "/apps"
+            ],
+            [
+              "Report this app",
+              "/report?app=things"
+            ]
+          ],
+          "overTheScene": []
+        },
+        "the embed's pages 390×844 dark": {
+          "colorScheme": "dark",
+          "reached": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "scheme": "dark",
+          "contrast": 15.59,
+          "inThePane": [
+            [
+              "Change the app",
+              "/apps/things/change"
+            ],
+            [
+              "Your apps",
+              "/apps"
+            ],
+            [
+              "Report this app",
+              "/report?app=things"
+            ]
+          ],
+          "overTheScene": []
+        }
+      },
+      "astray": [],
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "passed": true
+}

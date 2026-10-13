@@ -1,4 +1,5 @@
-import { humanizeField, isWithheld, nameOfAuthor, viaSaid, type AnySchema, type Author } from "@graview/core";
+import { humanizeField, isWithheld, nameOfAuthor, type AnySchema, type Author } from "@graview/core";
+import { viaSaid } from "@graview/core/words";
 import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";

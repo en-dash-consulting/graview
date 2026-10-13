@@ -35,8 +35,15 @@
  * what it measured. A raise that names no entry here, or says nothing, fails
  * every measure (`withRaises`), so a raise is never a number nobody can
  * explain. Two pull requests that raise one entry write two files, and
- * neither conflicts with the other. A hosted page's budgets
- * (`hosted-page.mjs`) are never raised and are not here.
+ * neither conflicts with the other.
+ *
+ * A hosted page's budgets (`hosted-page.mjs`, FR-179) are not here, and
+ * their base is never edited upward. A change that spends more of a hosted
+ * page up front files a raise beside these, naming `"a hosted page"` or
+ * `"a hosted page handed a compiled app"`, the bytes it adds, and the
+ * changeset that says so (`"changeset": "<name>.md"`): that changeset says
+ * the kilobytes up front it adds, or the change does not pass
+ * (`hostedRaises`, and `scripts/require-changeset.mjs` on a pull request).
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -754,7 +761,7 @@ export const BASES = [
      * and logo (FR-127): the host makes the logo into a URL the guest can
      * show without loading anything (host/theme.ts, `createGuestLogo`).
      */
-    entry: `import { guestView, mountGuestView } from "@graview/guest/host"; globalThis.host = { guestView, mountGuestView };`,
+    entry: `import { guestView } from "@graview/guest/host"; import { mountGuestView } from "@graview/guest/host/frame"; globalThis.host = { guestView, mountGuestView };`,
     // Raised when a brand's mark came to be read element by element as the browser reads it before it is drawn
     // (the review after 0.1.15: the rules that searched the string could be talked past), about 4 kB minified,
     // the guest host judging an inline logo before it makes an image of the host page from it. Measured at 16_358 / 7_540.
@@ -930,6 +937,9 @@ export function readRaises(dir = RAISES_DIR) {
     });
 }
 
+/** The hosted page's two budgets, raised only by a file that names its changeset (`hosted-page.mjs`, FR-179). */
+export const HOSTED_BUDGET_NAMES = ["a hosted page", "a hosted page handed a compiled app"];
+
 /**
  * The bases with their raises added. A raise that names no budget, moves
  * neither number by a whole number of bytes, or carries no note is refused
@@ -938,6 +948,8 @@ export function readRaises(dir = RAISES_DIR) {
 export function withRaises(bases, raises) {
   const byName = new Map(bases.map((base) => [base.name, { ...base, raises: [] }]));
   for (const raise of raises) {
+    // A hosted page's raise is `hosted-page.mjs`'s to add up and to judge.
+    if (HOSTED_BUDGET_NAMES.includes(raise.budget)) continue;
     const where = `scripts/budget-raises/${raise.file ?? "(a raise)"}`;
     const entry = byName.get(raise.budget);
     if (!entry) throw new Error(`${where} raises "${raise.budget}", which is not a budget: name one of ${[...byName.keys()].map((name) => `"${name}"`).join(", ")}`);

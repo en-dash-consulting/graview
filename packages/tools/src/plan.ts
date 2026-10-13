@@ -1,5 +1,4 @@
 import {
-  beginning,
   PermissionDeniedError,
   type AnySchema,
   type GraviewApp,
@@ -7,6 +6,7 @@ import {
   type Refusal,
   type Store,
 } from "@graview/core";
+import { beginning } from "@graview/core/seat";
 import type { ProposedCall } from "./intelligence.js";
 
 /**

@@ -1,4 +1,5 @@
-import { declaredLenses, placesOf, sceneTitle, type AnySchema, type GraviewApp, type Place } from "@graview/core";
+import { declaredLenses, sceneTitle, type AnySchema, type GraviewApp, type Place } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { describe, expect, it } from "vitest";
 import { placesFromViews } from "../../src/go.js";
 import { discographyApp } from "../../../../apps/discography/src/domain/app.js";

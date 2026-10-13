@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { describePlace } from "../../src/describe.js";
-import { createSchema, defineApp, defineNode, pageSections, readableFields, Store, z, type AnySchema, type Principal } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, Store, z, type AnySchema, type Principal } from "../../src/index.js";
+import { pageSections, readableFields } from "../../src/words.js";
 import { compileDocumentWithoutCheck, diffDocuments, editDocument, EDIT_OPS, toDocument, type GraviewDocument } from "../../src/document/index.js";
 import { compileDocument } from "../../src/check.js";
 

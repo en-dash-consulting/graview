@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createSchema, defineApp, defineNode, labelOf, readableFields } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, labelOf } from "../../src/index.js";
+import { readableFields } from "../../src/words.js";
 import { checkApp } from "../../src/check.js";
 
 /**

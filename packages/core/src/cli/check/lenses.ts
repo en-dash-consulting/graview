@@ -14,7 +14,8 @@ import type { AnySchema } from "../../schema/schema.js";
  * and never a failure.
  */
 import type { CheckContext } from "./context.js";
-import { arrangementFindings, bindsOf, declaredLenses, isShippedLens, requiredRolesOf } from "../../places.js";
+import { bindsOf, declaredLenses, isShippedLens, requiredRolesOf } from "../../places.js";
+import { arrangementFindings } from "../../app-places.js";
 import { arrangeable, throughEdges } from "../../arrangement.js";
 import { fieldOf } from "./context.js";
 import { columnReach } from "../../columns.js";

@@ -1,4 +1,4 @@
-import { describeArg } from "./mutations/node-ref.js";
+import { describeArg } from "./mutations/arg-shape.js";
 import { humanizeField, isCurrent } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
@@ -254,18 +254,7 @@ export function describeArgOptions(schema: unknown): readonly string[] {
   return shape.type === "choice" ? shape.options : [];
 }
 
-/*
- * THE GRAMMAR. One string per part, short enough to read in an address bar
- * and to type by hand:
- *
- *   sort   = <key>[:asc|:desc]                  due:desc      label
- *   filter = <key>:<value>[,<key>:<value>...]   done:false,holds:today,is:past
- *   group  = <key>[:day|:week|:month]           status        due:month     holds
- *
- * A lens carries them as `in.sort`, `in.filter`, `in.group` in the fragment;
- * a page carries them as `?sort=&filter=&group=`. Same words, same parser.
- */
-
+/** The words an address carries an arrangement in; `parseArrangement` (`./arrangement-words.ts`) reads them. */
 export interface ArrangementWords {
   readonly sort?: string;
   readonly filter?: string;
@@ -273,30 +262,7 @@ export interface ArrangementWords {
   readonly q?: string;
 }
 
-const BUCKETS: readonly DateBucket[] = ["day", "week", "month", "year", "decade"];
-
-export function parseArrangement(words: ArrangementWords): Arrangement {
-  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping; query?: string } = {};
-  if (words.q && words.q.trim().length > 0) out.query = words.q;
-  if (words.sort) {
-    const [by, direction] = words.sort.split(":");
-    if (by) out.sort = { by, direction: direction === "desc" ? "desc" : "asc" };
-  }
-  if (words.filter) {
-    const conditions: Condition[] = [];
-    for (const part of words.filter.split(",")) {
-      const colon = part.indexOf(":");
-      if (colon <= 0) continue;
-      conditions.push({ key: part.slice(0, colon), value: part.slice(colon + 1) });
-    }
-    if (conditions.length > 0) out.filter = conditions;
-  }
-  if (words.group) {
-    const [by, bucket] = words.group.split(":");
-    if (by) out.group = { by, ...(BUCKETS.includes(bucket as DateBucket) ? { bucket: bucket as DateBucket } : {}) };
-  }
-  return out;
-}
+export { parseArrangement } from "./arrangement-words.js";
 
 /*
  * ARRANGING. Pure over the nodes it is handed and the graph it may read.

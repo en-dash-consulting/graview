@@ -1,4 +1,4 @@
-import { InvalidArguments } from "./words.js";
+import { InvalidArguments } from "./invalid-arguments.js";
 import type { z } from "zod";
 import type { Graph } from "../graph/graph.js";
 import { GraphError, MissingRecordError } from "../graph/graph.js";

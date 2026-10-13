@@ -4,11 +4,11 @@ import {
   defineNode,
   labelOf,
   nodeRef,
-  readableFields,
   Store,
   violationsTouching,
   type Violation,
 } from "@graview/core";
+import { readableFields } from "@graview/core/words";
 import { deriveAffordances } from "@graview/tools";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";

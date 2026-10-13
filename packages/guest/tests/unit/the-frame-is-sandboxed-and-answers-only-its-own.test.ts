@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { mountGuestView } from "../../src/host/index.js";
+import { mountGuestView } from "../../src/host/frame.js";
 import { GUEST_PROTOCOL, type HostHello, type HostMessage } from "../../src/protocol.js";
 import { bethan, settle, showroom, staff } from "./showroom.js";
 

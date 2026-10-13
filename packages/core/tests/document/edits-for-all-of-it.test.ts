@@ -4,7 +4,7 @@ import { Store, type AnySchema, type Principal } from "../../src/index.js";
 import { computedValues } from "../../src/blocks.js";
 import { diffDocuments, documentHash, editDocument, type Finding, type GraviewDocument } from "../../src/document/index.js";
 import { compileDocument } from "../../src/check.js";
-import { placesOf } from "../../src/places.js";
+import { placesOf } from "../../src/app-places.js";
 
 /**
  * FR-84: EDITS FOR ALL OF IT. A chat that builds an app from a phone

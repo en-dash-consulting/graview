@@ -1,0 +1,68 @@
+{
+  "at": "2026-10-13T04:21:14.521Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "quick": false,
+  "checks": {
+    "noMachineWordsInTheSeat": {
+      "cases": 96,
+      "failing": [],
+      "ok": true
+    },
+    "theFieldStaysClearOfCards": {
+      "cases": 24,
+      "failing": [],
+      "ok": true
+    },
+    "thePageDoesNotMove": {
+      "cases": 48,
+      "failing": [],
+      "ok": true
+    },
+    "noChoiceOfWhatAnswers": {
+      "cases": 60,
+      "failing": [],
+      "ok": true
+    },
+    "atMostThreeActs": {
+      "cases": 48,
+      "failing": [],
+      "ok": true
+    },
+    "everyPartIsReachable": {
+      "cases": 48,
+      "failing": [],
+      "ok": true
+    },
+    "escapeReturnsFocus": {
+      "cases": 60,
+      "failing": [],
+      "ok": true
+    },
+    "withoutAiAnOpenQuestionIsToldSo": {
+      "cases": 24,
+      "failing": [],
+      "ok": true
+    },
+    "findAsks": {
+      "cases": 24,
+      "failing": [],
+      "ok": true
+    },
+    "theConversationSurvivesTheFaceSwitch": {
+      "cases": 18,
+      "failing": [],
+      "ok": true
+    },
+    "theActsKeyOpensTheMenu": {
+      "cases": 12,
+      "failing": [],
+      "ok": true
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

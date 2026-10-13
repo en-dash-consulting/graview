@@ -1,4 +1,5 @@
-import { edgeWords, failureWords, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { edgeWords, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { failureWords } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, usePopover, useSelection } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";

@@ -1,4 +1,5 @@
-import { pluralLabel, pluralOf, beginning, counted, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
+import { pluralLabel, pluralOf, counted, providerCan, type AnySchema, type Beginning, type Principal, type Store } from "@graview/core";
+import { beginning } from "@graview/core/seat";
 import { kindCardId } from "@graview/layout/view";
 import {
   createViews,
