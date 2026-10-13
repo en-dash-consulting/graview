@@ -84,7 +84,8 @@ export function withLines<V extends Violation>(
       if (!kinds) SHAPES.set(source.schema, (kinds = shapesOfSchema(source.schema)));
     }
     try {
-      const today = shape.today?.() ?? source.today?.() ?? isoToday();
+      // The store's day first, when it has one (pinned or ticked, FR-176): the day the rule was judged on.
+      const today = source.today?.() ?? shape.today?.() ?? isoToday();
       const line = brokenLineOf(shape, wordsOf(shape, source.schema), { graph: source.graph, subject: subject ?? null, kinds, today });
       return { ...violation, line, ...(shape.says ? {} : { message: `${violation.message} — ${line.text}` }) };
     } catch {
@@ -103,7 +104,7 @@ export function withLines<V extends Violation>(
  * store handler and a seat's tools do.
  */
 export function judgeWithLines(): void {
-  judgedWith((graph, invariants, violations) => withLines({ graph, schema: graph.schema, allInvariants: () => invariants }, violations));
+  judgedWith((graph, invariants, violations, today) => withLines({ graph, schema: graph.schema, allInvariants: () => invariants, today: () => today }, violations));
   answersJudgedWith(judgedForASeat);
 }
 

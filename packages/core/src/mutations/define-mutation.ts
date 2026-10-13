@@ -96,6 +96,14 @@ export function slug(label: string): string {
   );
 }
 
+/** An id from `base` no guess collides with: a random suffix, drawn again (never seen to be) while anything holds it. */
+function unguessable(base: string, held: (id: string) => boolean): string {
+  let id;
+  do id = `${base}-${Math.floor(Math.random() * 36 ** 6).toString(36).padStart(6, "0")}`;
+  while (held(id));
+  return id;
+}
+
 /**
  * Runs a mutation against the graph WITHOUT applying it, returning the
  * primitives it would emit plus the causal read set. Applying is the op
@@ -126,6 +134,16 @@ export function compileMutation<S extends AnySchema>(
     readonly seen?: GraphReader<NodeOfSchema<S>>;
     /** The id of the seat the act is run by — the person, for an agent acting for one: the act's `ctx.me`. */
     readonly me?: string | undefined;
+    /**
+     * WHETHER THE SEAT SEES EVERY RECORD OF A KIND (FR-55), or, asked of no
+     * kind, of every kind. Ids are unique across the whole store, so an id
+     * minted or asked for where a record the seat may not see could hold it
+     * would say that record is there: for a kind it does not see in full a
+     * minted id carries a suffix no guess collides with, and a seat that
+     * does not see everything may not ask for an id at all — refused alike,
+     * whether or not anybody holds it. Absent, the seat sees everything.
+     */
+    readonly seesInFull?: (kind?: string) => boolean;
   } = {},
 ): CompiledMutation {
   /*
@@ -216,17 +234,27 @@ export function compileMutation<S extends AnySchema>(
       primitives.push({ op: "remove-edge", edge });
     },
     setSingleSource(kind, to, from) {
+      /*
+       * The new link first, then the old ones it replaces (FR-55): a link the
+       * seat may not see is no part of the op it is served, and what remains
+       * reads — primitives, writes and their order — as it would had there
+       * been no such link.
+       */
+      if (!graph.inEdges(to, kind).some((e) => e.from === from)) {
+        primitives.push({ op: "add-edge", edge: { kind, from, to } });
+      }
       for (const edge of graph.inEdges(to, kind)) {
         reader.getNode(edge.from);
         if (edge.from === from) continue;
         primitives.push({ op: "remove-edge", edge });
       }
-      if (!graph.inEdges(to, kind).some((e) => e.from === from)) {
-        primitives.push({ op: "add-edge", edge: { kind, from, to } });
-      }
     },
     freshId(label, prefix) {
       if (requested !== undefined && !minted.has(requested)) {
+        // Asked the same whether a record the seat may not see holds it or nothing does (FR-55).
+        if (options.seesInFull && !options.seesInFull()) {
+          throw new GraphError(`"${definition.name}" makes its own id here`, "Leave id out: the answer says the id it made.");
+        }
         if (held(requested)) {
           throw new GraphError(
             `Id "${requested}" is already taken`,
@@ -237,8 +265,28 @@ export function compileMutation<S extends AnySchema>(
         return requested;
       }
       const base = prefix ? `${prefix}:${slug(label)}` : slug(label);
-      let id = base;
-      for (let n = 2; held(id); n++) id = `${base}-${n}`;
+      /*
+       * AN ID THAT SAYS NOTHING OF WHAT THE SEAT MAY NOT SEE (FR-55). Stepping
+       * past what it sees is the seat's own to know; stepping past a hidden
+       * record would tell it one is there ("Green" made `room:green-2` with
+       * no room:green in sight). Where a kind may hold records the seat does
+       * not see, its ids are the seat's own — `room:green.person-gus`: a
+       * slug never holds a dot, so no other seat's label mints one — and
+       * the seat steps only past those it sees. Where a step would land on
+       * a hidden record anyway (an id somebody asked for), and for a seat
+       * that is nobody, the suffix is one no guess collides with.
+       */
+      const seen = (one: string) => (options.seen ? options.seen.has(one) : graph.has(one)) || minted.has(one);
+      const limited = options.seesInFull !== undefined && !options.seesInFull(prefix);
+      if (limited && options.me === undefined) {
+        const id = unguessable(base, held);
+        minted.add(id);
+        return id;
+      }
+      const own = limited ? `${base}.${slug(options.me!)}` : base;
+      let id = own;
+      for (let n = 2; seen(id); n++) id = `${own}-${n}`;
+      if (held(id)) id = unguessable(own, held);
       minted.add(id);
       return id;
     },

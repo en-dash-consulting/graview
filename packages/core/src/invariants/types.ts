@@ -89,6 +89,12 @@ export interface InvariantEvalArgs<S extends AnySchema, Subject> {
   readonly graph: GraphReader<NodeOfSchema<S>>;
   readonly subject: Subject;
   readonly context: InvariantContext;
+  /**
+   * The day the store judges on (YYYY-MM-DD), when it has one — pinned, or
+   * the day a host last ticked it to (`Store.tick`, FR-176). A rule that
+   * reads the clock reads this first; absent, the clock as it is.
+   */
+  readonly today?: string;
 }
 
 export interface InvariantDefinition<S extends AnySchema = AnySchema> {
@@ -123,6 +129,14 @@ export interface InvariantDefinition<S extends AnySchema = AnySchema> {
    * genuinely audits history says so here, explicitly.
    */
   readonly judgesPast?: boolean;
+  /**
+   * The rule reads the clock — "overdue", "this week" — so the day turning
+   * may break or mend it with nothing changed, and a store judges it again
+   * when a host ticks it (`Store.tick`, FR-176). A rule written in the rule
+   * language is read for it; a rule that is a function says so here, and
+   * reads the day from its `today`.
+   */
+  readonly readsTheClock?: boolean;
   evaluate(args: InvariantEvalArgs<S, never>): Violation[];
 }
 
@@ -131,9 +145,10 @@ export interface EvaluateOptions<S extends AnySchema = AnySchema> {
   /** What to do when a node requires an invariant nobody registered. */
   readonly onUnregistered?: "skip" | "throw";
   /**
-   * Pins "today" for the lifecycle horizon (YYYY-MM-DD). Without it the
-   * date-retired check reads the real clock — pass this wherever determinism
-   * matters (tests, replays).
+   * Pins "today" (YYYY-MM-DD): for the lifecycle horizon, and for every rule
+   * that reads the clock (handed to each as its `today`). Without it each
+   * reads the real clock — pass this wherever determinism matters (tests,
+   * replays); a store passes the day it was last ticked to (FR-176).
    */
   readonly today?: string;
   /** Filters subject nodes before evaluation, e.g. by effectivity window. */

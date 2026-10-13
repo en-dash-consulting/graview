@@ -566,8 +566,9 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   for (const [name, rule] of Object.entries(document.rules ?? {})) {
     const { title, require, when, says } = plan.rules[name]!;
     const repairs = rule.repairs ?? [];
-    const judge = (graph: GraphReader, subject: AnyGraphNode | null): Violation[] => {
-      const ctx = { graph, subject, kinds: shapes, today: today() };
+    // The store's day when it hands one (pinned, or ticked: FR-176), else the clock.
+    const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today()): Violation[] => {
+      const ctx = { graph, subject, kinds: shapes, today: day };
       let holds: boolean;
       /*
        * A RULE THAT CANNOT ANSWER IS THE ENGINE'S TO SAY (FR-29). Out of
@@ -599,7 +600,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
           invariant: name,
           ...(subject ? { subjectId: subject.id } : {}),
           label: title,
-          message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: today(), money }) : subject ? `${labelFor(subject)}: ${title}` : title,
+          message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day, money }) : subject ? `${labelFor(subject)}: ${title}` : title,
           nodeIds: subject ? [subject.id] : [],
           repairs: repairList,
         },
@@ -615,8 +616,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     };
     invariants.push(
       (rule.over === "graph"
-        ? defineInvariant(name, { scope: "graph", ...declared, evaluate: ({ graph }: { graph: unknown }) => judge(graph as GraphReader, null) } as never)
-        : defineInvariant(name, { scope: { kind: rule.over }, ...declared, evaluate: ({ graph, subject }: { graph: unknown; subject: unknown }) => judge(graph as GraphReader, subject as AnyGraphNode) } as never)) as InvariantDefinition,
+        ? defineInvariant(name, { scope: "graph", ...declared, evaluate: ({ graph, today: day }: { graph: unknown; today?: string }) => judge(graph as GraphReader, null, day) } as never)
+        : defineInvariant(name, { scope: { kind: rule.over }, ...declared, evaluate: ({ graph, subject, today: day }: { graph: unknown; subject: unknown; today?: string }) => judge(graph as GraphReader, subject as AnyGraphNode, day) } as never)) as InvariantDefinition,
     );
   }
 

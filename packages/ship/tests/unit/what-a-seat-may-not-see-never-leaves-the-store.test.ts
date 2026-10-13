@@ -65,7 +65,7 @@ const freya: Principal = { kind: "human", id: "shopper:freya", roles: ["shopper"
 const staff: Principal = { kind: "human", id: "staff:rhian", roles: ["staff"] };
 const as = (principal: Principal) => ({ "content-type": "application/json", ...seatHeaders(principal) });
 const at = (path: string, principal: Principal, init: RequestInit = {}) => new Request(`https://store.example${path}`, { ...init, headers: as(principal) });
-const SECRETS = ["shopper:freya", "Freya", "Finance", "enquiry:finance-on-the-golf"];
+const SECRETS = ["shopper:freya", "Freya", "Finance", "enquiry:finance-on-the-golf.shopper-freya"];
 
 async function showroom() {
   const handler = await createStoreHandler({ app, adapter: createMemoryAdapter(), seed: seed as never, trustSeatHeaders: true });
@@ -80,7 +80,7 @@ describe("the wire sends a seat only what it may see", () => {
     const handler = await showroom();
     const response = await handler.handle(at("/graview/state", bethan));
     const state = (await response.clone().json()) as { snapshot: { nodes: { id: string }[] }; log: Operation[] };
-    expect(state.snapshot.nodes.map((node) => node.id).sort()).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
+    expect(state.snapshot.nodes.map((node) => node.id).sort()).toEqual(["car:golf", "enquiry:is-it-still-there.shopper-bethan", "shopper:bethan"]);
     expect(state.log.map((op) => op.seq)).toEqual([0, 1]);
     expect(state.log.map(isWithheld)).toEqual([true, false]);
     const said = await json(response);
@@ -101,7 +101,7 @@ describe("the wire sends a seat only what it may see", () => {
   it("does not tell a seat who is here when it may not see them, and their ops on /here come back withheld", async () => {
     const handler = await showroom();
     const here = (principal: Principal, session: string): Presence => ({ participant: `human:${principal.id}:${session}`, hue: 1, stop: "/", at: new Date().toISOString() });
-    await handler.handle(at("/graview/here", freya, { method: "POST", body: JSON.stringify({ presence: { ...here(freya, "f1"), stop: "/enquiry/enquiry:finance-on-the-golf" } }) }));
+    await handler.handle(at("/graview/here", freya, { method: "POST", body: JSON.stringify({ presence: { ...here(freya, "f1"), stop: "/enquiry/enquiry:finance-on-the-golf.shopper-freya" } }) }));
     const told = (await (await handler.handle(at("/graview/here", bethan, { method: "POST", body: JSON.stringify({ presence: here(bethan, "b1"), seq: -1 }) }))).json()) as { who: Presence[]; ops: Operation[] };
     expect(told.who).toEqual([]);
     expect(told.ops.map(isWithheld)).toEqual([true, false]);
@@ -113,14 +113,14 @@ describe("the wire sends a seat only what it may see", () => {
   it("refuses a write naming a record the seat may not see exactly as one naming nothing (FR-55)", async () => {
     const handler = await showroom();
     const response = await handler.handle(
-      at("/graview/ops", bethan, { method: "POST", body: JSON.stringify({ calls: [{ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }] }) }),
+      at("/graview/ops", bethan, { method: "POST", body: JSON.stringify({ calls: [{ name: "answer", args: { id: "enquiry:finance-on-the-golf.shopper-freya" } }] }) }),
     );
     expect(response.status).toBe(409);
     const body = (await response.json()) as { error: string };
     expect(body.error).toBe("“Answer the enquiry” names a record that is not there.");
-    expect(handler.store.graph.getNode("enquiry:finance-on-the-golf")).not.toHaveProperty("answered");
+    expect(handler.store.graph.getNode("enquiry:finance-on-the-golf.shopper-freya")).not.toHaveProperty("answered");
     // Their own is theirs to answer.
-    const own = await handler.handle(at("/graview/ops", bethan, { method: "POST", body: JSON.stringify({ calls: [{ name: "answer", args: { id: "enquiry:is-it-still-there" } }] }) }));
+    const own = await handler.handle(at("/graview/ops", bethan, { method: "POST", body: JSON.stringify({ calls: [{ name: "answer", args: { id: "enquiry:is-it-still-there.shopper-bethan" } }] }) }));
     expect(own.status).toBe(200);
   });
 
@@ -134,7 +134,7 @@ describe("the wire sends a seat only what it may see", () => {
       fetch: ((url: string, init?: RequestInit) => handler.handle(new Request(url, { ...init, headers: { ...(init?.headers as Record<string, string>), [SEAT_HEADERS.seat]: "shopper:bethan", [SEAT_HEADERS.roles]: "shopper" } }))) as typeof fetch,
     });
     expect(remote.store.log.all().map(isWithheld)).toEqual([true, false]);
-    handler.store.apply({ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }, { author: staff });
+    handler.store.apply({ name: "answer", args: { id: "enquiry:finance-on-the-golf.shopper-freya" } }, { author: staff });
     await remote.pull();
     expect(remote.store.log.all().map(isWithheld)).toEqual([true, false, true]);
     expect(remote.store.graph.getNode("shopper:freya")).toBeUndefined();
@@ -157,16 +157,16 @@ describe("the wire sends a seat only what it may see", () => {
     connection.receive(JSON.stringify({ t: "hello" }));
     const welcome = (await next("welcome")) as Extract<LiveServerMessage, { t: "welcome" }>;
     expect(welcome.state?.log.map(isWithheld)).toEqual([true, false]);
-    expect(welcome.state!.snapshot.nodes.map((node) => node.id).sort()).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
+    expect(welcome.state!.snapshot.nodes.map((node) => node.id).sort()).toEqual(["car:golf", "enquiry:is-it-still-there.shopper-bethan", "shopper:bethan"]);
 
     // Somebody else's change to what she may not see is pushed in its place, withheld.
     let from = heard.length;
-    handler.store.apply({ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }, { author: staff });
+    handler.store.apply({ name: "answer", args: { id: "enquiry:finance-on-the-golf.shopper-freya" } }, { author: staff });
     const pushed = (await next("ops", from)) as Extract<LiveServerMessage, { t: "ops" }>;
     expect(pushed.ops.map((op) => [op.seq, isWithheld(op)])).toEqual([[2, true]]);
 
     // Freya, here on her enquiry, is not somebody Bethan is told about.
-    await handler.handle(at("/graview/here", freya, { method: "POST", body: JSON.stringify({ presence: { participant: "human:shopper:freya:f1", hue: 1, stop: "/enquiry/enquiry:finance-on-the-golf", at: new Date().toISOString() } }) }));
+    await handler.handle(at("/graview/here", freya, { method: "POST", body: JSON.stringify({ presence: { participant: "human:shopper:freya:f1", hue: 1, stop: "/enquiry/enquiry:finance-on-the-golf.shopper-freya", at: new Date().toISOString() } }) }));
     const told = heard.filter((message) => message.t === "presence") as Extract<LiveServerMessage, { t: "presence" }>[];
     expect(told.length).toBeGreaterThan(0);
     for (const message of told) expect(message.who).toEqual([]);
@@ -174,7 +174,7 @@ describe("the wire sends a seat only what it may see", () => {
     // A call naming what she may not see is refused in the policy's words, and a base naming it says nothing of it.
     from = heard.length;
     connection.receive(
-      JSON.stringify({ t: "call", cid: "c1", calls: [{ name: "answer", args: { id: "enquiry:finance-on-the-golf" } }], base: [{ node: "enquiry:finance-on-the-golf", field: "answered", rev: -1 }] }),
+      JSON.stringify({ t: "call", cid: "c1", calls: [{ name: "answer", args: { id: "enquiry:finance-on-the-golf.shopper-freya" } }], base: [{ node: "enquiry:finance-on-the-golf.shopper-freya", field: "answered", rev: -1 }] }),
     );
     const refused = (await next("refused", from)) as Extract<LiveServerMessage, { t: "refused" }>;
     // Missing, as a record that is not there is: a refusal is no oracle for what exists (FR-55).
@@ -182,7 +182,7 @@ describe("the wire sends a seat only what it may see", () => {
 
     // Her own act is answered with its ops.
     from = heard.length;
-    connection.receive(JSON.stringify({ t: "call", cid: "c2", calls: [{ name: "answer", args: { id: "enquiry:is-it-still-there" } }] }));
+    connection.receive(JSON.stringify({ t: "call", cid: "c2", calls: [{ name: "answer", args: { id: "enquiry:is-it-still-there.shopper-bethan" } }] }));
     const ack = (await next("ack", from)) as Extract<LiveServerMessage, { t: "ack" }>;
     expect(ack.ops.map((op) => [op.mutation?.name, isWithheld(op)])).toEqual([["answer", false]]);
 

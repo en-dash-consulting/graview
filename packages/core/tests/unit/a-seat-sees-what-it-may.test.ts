@@ -73,7 +73,7 @@ describe("the store as one seat may see it", () => {
     // A kind's count, as this seat is served it: the shopper it is, not the one it may not see.
     expect([store.graph.count("shopper"), store.seenBy(bethan).graph.count("shopper"), store.seenBy(bethan).graph.size.nodes]).toEqual([2, 1, 2]);
     store.seenBy(bethan).apply({ name: "ask", args: { shopperId: "shopper:bethan", label: "Is it still there?" } }, { author: bethan });
-    expect(ids(store.seenBy(bethan))).toEqual(["car:golf", "enquiry:is-it-still-there", "shopper:bethan"]);
+    expect(ids(store.seenBy(bethan))).toEqual(["car:golf", "enquiry:is-it-still-there.shopper-bethan", "shopper:bethan"]);
     expect(store.seenBy(bethan).batches().map((batch) => batch.intent)).toHaveLength(1);
     // Somebody else's enquiry is a change the stranger cannot see: in its place, and saying nothing of it (FR-16).
     expect(store.seenBy(browsing).batches().map((batch) => batch.intent)).toEqual(["A change you cannot see"]);

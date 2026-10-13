@@ -66,7 +66,7 @@ function showroom() {
   });
   store.apply({ name: "ask", args: { shopperId: "shopper:freya", label: "Finance on the Golf" } }, { author: { kind: "human", id: "shopper:freya", roles: ["shopper"] } });
   const mine = store.apply({ name: "ask", args: { shopperId: "shopper:bethan", label: "Is it still there" } }, { author: seat });
-  store.apply({ name: "compare", args: { id: "enquiry:is-it-still-there", other: "shopper:freya" } }, { author: staff });
+  store.apply({ name: "compare", args: { id: "enquiry:is-it-still-there.shopper-bethan", other: "shopper:freya" } }, { author: staff });
   return { store, mine };
 }
 const SECRETS = ["shopper:freya", "Freya", "Finance", "finance-on-the-golf"];
@@ -88,7 +88,7 @@ describe("an agent seat over graview mcp", () => {
 
   it("derives no affordances on a record it may not see", async () => {
     const { store } = showroom();
-    const result = await createToolRuntime(store, { author: seat }).call("get_affordances", { selection: ["enquiry:finance-on-the-golf"] });
+    const result = await createToolRuntime(store, { author: seat }).call("get_affordances", { selection: ["enquiry:finance-on-the-golf.shopper-freya"] });
     for (const secret of SECRETS) expect(JSON.stringify(result)).not.toContain(secret);
   });
 
@@ -103,10 +103,10 @@ describe("an agent seat over graview mcp", () => {
 
   it("refuses a write naming a record it may not see", async () => {
     const { store } = showroom();
-    const result = await createToolRuntime(store, { author: seat }).call("compare", { id: "enquiry:finance-on-the-golf", other: "shopper:bethan" });
+    const result = await createToolRuntime(store, { author: seat }).call("compare", { id: "enquiry:finance-on-the-golf.shopper-freya", other: "shopper:bethan" });
     expect(result.ok).toBe(false);
-    expect(store.graph.getNode("enquiry:finance-on-the-golf")).not.toHaveProperty("note");
-    expect(() => store.apply({ name: "compare", args: { id: "enquiry:finance-on-the-golf", other: "shopper:bethan" } }, { author: seat })).toThrow(
+    expect(store.graph.getNode("enquiry:finance-on-the-golf.shopper-freya")).not.toHaveProperty("note");
+    expect(() => store.apply({ name: "compare", args: { id: "enquiry:finance-on-the-golf.shopper-freya", other: "shopper:bethan" } }, { author: seat })).toThrow(
       "“Compare” names a record that is not there.",
     );
   });

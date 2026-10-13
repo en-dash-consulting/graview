@@ -115,13 +115,14 @@ export function evaluate<S extends AnySchema>(
   options: EvaluateOptions<S> = {},
 ): Violation[] {
   const context: InvariantContext = options.context ?? {};
+  const day = options.today === undefined ? {} : { today: options.today };
   const onUnregistered = options.onUnregistered ?? "skip";
   const registered = new Set(invariants.map((i) => i.name));
   const violations: Violation[] = [];
 
   for (const invariant of invariants) {
     if (invariant.scope !== "graph") continue;
-    violations.push(...judged(invariant, () => invariant.evaluate({ graph, subject: undefined as never, context }), undefined));
+    violations.push(...judged(invariant, () => invariant.evaluate({ graph, subject: undefined as never, context, ...day }), undefined));
   }
 
   const scoped = invariants.filter((i) => i.scope !== "graph");
@@ -157,7 +158,7 @@ export function evaluate<S extends AnySchema>(
       if (retired && invariant.judgesPast !== true) continue;
       const match = (invariant.scope as { match?: (n: NodeOfSchema<S>) => boolean }).match;
       if (match && !match(node)) continue;
-      violations.push(...judged(invariant, () => invariant.evaluate({ graph, subject: node as never, context }), node.id));
+      violations.push(...judged(invariant, () => invariant.evaluate({ graph, subject: node as never, context, ...day }), node.id));
     }
   }
 
@@ -188,7 +189,7 @@ export function evaluate<S extends AnySchema>(
       const said = daysAsRead(violation.message);
       return said === violation.message ? violation : { ...violation, message: said };
     });
-  return lined ? lined(graph as never, invariants as never, said) : said;
+  return lined ? lined(graph as never, invariants as never, said, options.today) : said;
 }
 
 /*
@@ -201,7 +202,7 @@ export function evaluate<S extends AnySchema>(
  * says its values in its `message` too. The engine carries none of the
  * words itself, so a page that judges before it draws a problem pays nothing.
  */
-type Lined = (graph: Graph<AnySchema>, invariants: readonly InvariantDefinition<AnySchema>[], violations: Violation[]) => Violation[];
+type Lined = (graph: Graph<AnySchema>, invariants: readonly InvariantDefinition<AnySchema>[], violations: Violation[], today?: string) => Violation[];
 let lined: Lined | undefined;
 
 /** Hands the engine what works out a broken rule's line: `@graview/core/lines` does, as it loads. */

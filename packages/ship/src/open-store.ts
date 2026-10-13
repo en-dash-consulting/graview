@@ -1,6 +1,8 @@
 import {
   assertReadable,
   formatStamp,
+  isEmptyDiff,
+  tickEachDay,
   OperationLog,
   snapshotHash,
   Store,
@@ -74,6 +76,14 @@ export interface OpenStoreOptions<S extends AnySchema> {
    * stands, and every module when it never said one.
    */
   readonly enabledModules?: readonly string[];
+  /**
+   * THE DAY TURNING (FR-176). The opened store is ticked at each midnight
+   * by the clock the rule language's `today()` reads (UTC), so a rule that
+   * reads the clock — "overdue" — is judged again with nothing changed and
+   * its subscribers hear it, until `close()`. `false` leaves the ticking to
+   * the host (`store.tick(now)`): one whose process sleeps through timers.
+   */
+  readonly tick?: boolean;
 }
 
 /*
@@ -102,7 +112,7 @@ export interface OpenedStore<S extends AnySchema> {
   readonly rebuilt?: { readonly from: string; readonly to: string; readonly divergedAfter?: string };
   /** Resolves when every write accepted so far has settled on the adapter. */
   flush(): Promise<void>;
-  /** Stops persisting. The store keeps working; nothing further is written. */
+  /** Stops persisting, and ticking at each turn of the day. The store keeps working; nothing further is written. */
   close(): void;
   /**
    * COMPACTS THE LOG BEHIND AN UNDO HORIZON (FR-23). The checkpoint
@@ -315,7 +325,9 @@ export async function openStore<S extends AnySchema>(
    */
   const report = options.onPersistError ?? ((error: unknown) => console.error("graview ship: persistence failed", error));
   let writing: Promise<void> = Promise.resolve();
-  const unsubscribe = store.subscribe((_diff, ops) => {
+  const unsubscribe = store.subscribe((diff, ops) => {
+    // The day turning (`store.tick`) changes no record: nothing to write.
+    if (ops.length === 0 && isEmptyDiff(diff as never)) return;
     const stamped = ops.map((op) => ({ ...op, seq: seq++ }));
     writing = writing
       .then(async () => {
@@ -324,6 +336,9 @@ export async function openStore<S extends AnySchema>(
       })
       .catch(report);
   });
+
+  // The day turning judges the rules that read the clock again (FR-176).
+  const stopTicking = options.tick === false ? () => {} : tickEachDay(store);
 
   /* The host's word on modules, recorded where it changes the log's (FR-12). */
   const enabledModules = options.enabledModules ?? options.storeOptions?.enabledModules;
@@ -339,7 +354,10 @@ export async function openStore<S extends AnySchema>(
     ...(verified ? { verified } : {}),
     ...(rebuilt ? { rebuilt } : {}),
     flush: () => writing,
-    close: unsubscribe,
+    close: () => {
+      unsubscribe();
+      stopTicking();
+    },
     compact: (compactOptions) => {
       /*
        * On the write chain, after every write accepted so far, and ARCHIVE
