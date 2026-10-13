@@ -54,6 +54,8 @@ function doorFor<S extends AnySchema>(lens: DrawnLens): ViewComponent<S> {
       </Suspense>
     );
   };
+  // A place drawn from blocks is a page's own column of words and cards: it flows with the page, never a box that scrolls inside itself.
+  if (lens.lens === "blocks") (Door as { flows?: boolean }).flows = true;
   return Door;
 }
 

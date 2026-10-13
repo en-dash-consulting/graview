@@ -1,4 +1,4 @@
-import { pluralLabel } from "@graview/core";
+import { excerpt, pluralLabel } from "@graview/core";
 import { KindFigure } from "@graview/primitives/pages";
 import {
   humanizeField,
@@ -185,7 +185,8 @@ export function glance(
   // A bare number says nothing on its own — "12 · 8" is not a sentence —
   // so each fact is read the way it stands alone, the same words a card uses.
   return readableFields(node, definition, { limit: 3, said: [said], glance: true })
-    .map((field) => field.alone)
+    // A record's prose is said by its start on a glance — a sentence, or a line's worth — and whole on its page.
+    .map((field) => (field.long ? excerpt(field.alone, 100) : field.alone))
     .join(" · ");
 }
 

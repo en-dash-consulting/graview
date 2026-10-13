@@ -246,6 +246,8 @@ export interface ResolvedList {
   readonly empty?: string;
   /** How many more there were, said "and N more" when no limit was asked for. */
   readonly more: number;
+  /** How many records the list's source named before the limit: a face that can go to them says "See all N". */
+  readonly total?: number;
   readonly problem?: string;
 }
 
@@ -533,6 +535,7 @@ function resolveList(block: Extract<SpecBlock, { t: "list" }>, ctx: BlockContext
     headingLevel,
     ...(nodes.length === 0 && block.empty ? { empty: block.empty } : {}),
     more,
+    total: all,
   };
 }
 

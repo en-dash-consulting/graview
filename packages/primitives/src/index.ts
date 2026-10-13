@@ -41,7 +41,7 @@ export type {
   CoverageRoles,
   CoverageViewProps,
 } from "./lens/coverage.js";
-export { ARRANGE_NARROW, ArrangeBar, arrangementCaption, arrangementOf, directionWords, preloadArrangeLists, sayCondition, withArrangement } from "./arrange-bar.js";
+export { ARRANGE_NARROW, ArrangeBar, arrangementCaption, arrangementOf, CHIP_FIELDS, chipOffers, directionWords, farCount, farCounts, MANY_AT_THE_FAR_END, offeredFilters, preloadArrangeLists, sayCondition, TYPED_FROM, withArrangement } from "./arrange-bar.js";
 export { useArranging } from "./lens/arranging.js";
 export type { Arranging, ArrangingOptions } from "./lens/arranging.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";

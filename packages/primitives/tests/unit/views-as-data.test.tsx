@@ -106,8 +106,8 @@ describe("views as data", () => {
 
   it("tones a badge from the theme's tokens, and nothing else", () => {
     const css = themeCss("light");
-    expect(css).toContain(".graview-spec [data-graview-tone=\"good\"] { --graview-spec-tone: var(--graview-good); }");
-    expect(css).toContain(".graview-spec [data-graview-tone=\"bad\"] { --graview-spec-tone: var(--graview-bad); }");
+    expect(css).toContain(".graview-spec [data-graview-tone=\"good\"]{--graview-spec-tone:var(--graview-good)}");
+    expect(css).toContain(".graview-spec [data-graview-tone=\"bad\"]{--graview-spec-tone:var(--graview-bad)}");
     expect(css).toMatch(/--graview-good: #1b6436;/);
   });
 

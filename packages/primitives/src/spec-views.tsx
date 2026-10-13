@@ -115,6 +115,8 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
   const homeLine = useContext(HomeLine);
   if (said && block.t === "badge" && said.values.some((value) => sameWords(value, block.text))) return null;
   if (said && block.t === "field" && said.field !== undefined && block.field === said.field) return null;
+  // A count of nothing is not a badge: "0 votes" was a pill saying there is nothing to say.
+  if (block.t === "badge" && /^0(?:\s+\p{L}+)?$/u.test(block.text.trim())) return null;
   switch (block.t) {
     case "title":
       return <strong className="graview-spec-title">{block.text}</strong>;
@@ -265,6 +267,11 @@ const ListDepth = createContext(0);
 export interface SpecLinkTo {
   readonly href: (node: AnyGraphNode) => string;
   readonly go: (node: AnyGraphNode) => void;
+  /**
+   * The way to the rest of a list cut short, where the face has somewhere to
+   * go ("See all 96 features"): drawn by the face, under the records shown.
+   */
+  readonly more?: (list: { readonly members: readonly AnyGraphNode[]; readonly total: number }) => ReactNode;
 }
 export const SpecLinks = createContext<SpecLinkTo | null>(null);
 
@@ -338,6 +345,7 @@ export function ListedLink({ node, label }: { readonly node: AnyGraphNode; reado
 function SpecList({ list }: { readonly list: ResolvedList }) {
   const depth = useContext(ListDepth) + 1;
   const { store } = useGraview();
+  const links = useContext(SpecLinks);
   if (list.failed) return <p className="graview-spec-text">—</p>;
   if (list.members.length === 0) return list.empty ? <p className="graview-spec-text graview-spec-empty">{list.empty}</p> : null;
   const listOf = (members: readonly AnyGraphNode[], said: AlreadySaid | null = null) =>
@@ -358,7 +366,14 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
         ))}
       </ul>
     );
-  const tail = list.more > 0 ? <p className="graview-spec-text graview-spec-more">{`and ${list.more} more`}</p> : null;
+  // A list cut short says where the rest is, where the face has somewhere to go (`SpecLinkTo.more`); else how many more.
+  const total = list.total ?? list.members.length + list.more;
+  const tail =
+    links?.more && total > list.members.length ? (
+      links.more({ members: list.members, total })
+    ) : list.more > 0 ? (
+      <p className="graview-spec-text graview-spec-more">{`and ${list.more} more`}</p>
+    ) : null;
   if (!list.groups) {
     return (
       <div className="graview-spec-listing">

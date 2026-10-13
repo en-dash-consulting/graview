@@ -321,4 +321,15 @@ export interface PagesArrangement {
    *   pages: { primary: ["task", "list", "The week"] }
    */
   readonly primary?: readonly string[];
+  /**
+   * WHAT EACH KIND'S LIST OFFERS TO FILTER BY, by kind: its `filters`, in
+   * order — a field, a relation, `is`, or `<relation>.<field>` for a choice
+   * on the record at a relation's far end. The choice fields among them
+   * stand over the list as chips with counts; the rest are under Filter.
+   * Unsaid, the list offers every way but a relation to a kind with many
+   * records, and its first two choice fields as chips.
+   *
+   *   pages: { lists: { request: { filters: ["status", "area", "became.stage"] } } }
+   */
+  readonly lists?: Readonly<Record<string, { readonly filters?: readonly string[] }>>;
 }

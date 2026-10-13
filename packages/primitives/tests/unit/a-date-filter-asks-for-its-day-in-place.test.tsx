@@ -39,6 +39,8 @@ describe("a date filter", () => {
     await act(async () => render());
     try {
       await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="arrange-add"]')!.click());
+      // Its heading first: each starts closed, so the list opens short.
+      await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="arrange-section"][data-key="due"]')!.click());
       await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="arrange-list"] [data-value="due:before"]')!.click());
       expect(prompt).not.toHaveBeenCalled();
       const day = host.querySelector<HTMLInputElement>('[data-testid="arrange-day"]');

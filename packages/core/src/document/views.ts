@@ -136,6 +136,8 @@ export interface KindNames {
   readonly choices?: (name: string) => readonly string[] | undefined;
   /** Where a relation leads: its target kinds, or every kind. */
   readonly targets?: (relation: string) => readonly string[] | "*" | undefined;
+  /** Whether a field holds prose (a document's `text`): what a card or a row says as an excerpt, never whole. */
+  readonly prose?: (name: string) => boolean;
 }
 
 /** What every kind holds, for a list's records: the kinds a walk or a sweep reaches. */
@@ -154,6 +156,8 @@ interface Scope {
   readonly vocabulary: Vocabulary;
   readonly findings: Finding[];
   count: number;
+  /** The slot the blocks are drawn in, for a kind's views. */
+  readonly slot?: ViewSlot;
 }
 
 const NO_RECORD: KindNames = { field: () => false, relation: () => false, figure: false };
@@ -190,7 +194,7 @@ function expression(source: unknown, path: string, scope: Scope): void {
   }
 }
 
-function template(source: unknown, path: string, scope: Scope): void {
+function template(source: unknown, path: string, scope: Scope, text = false): void {
   if (typeof source !== "string" || source.length === 0 || source.length > 300) {
     scope.findings.push(error("view-template", path, 'a template is words with {field} in braces, like "{name}" or "{quote|money}", at most 300 characters'));
     return;
@@ -205,7 +209,19 @@ function template(source: unknown, path: string, scope: Scope): void {
     }
     throw e;
   }
-  for (const part of parts) if (part.expr) names(part.expr, path, scope);
+  for (const part of parts) {
+    if (!part.expr) continue;
+    names(part.expr, path, scope);
+    /*
+     * A CARD OR A ROW SAYS A LONG TEXT'S START. A card that printed a
+     * thirty-line summary made a row of cards a wall of text; it is clamped
+     * where it is drawn, and the check says how to say less on purpose.
+     */
+    if (text && !part.format && part.expr.t === "ident" && (scope.slot === "card" || scope.slot === "row") && scope.spec.prose?.(part.expr.name)) {
+      const field = part.expr.name;
+      scope.findings.push(warning("view-whole-text", path, `${scope.kind} ${scope.slot} shows ${field} whole; it will be clamped. Use {${field}|excerpt} or move it to the page.`, `write {${field}|excerpt}, or {${field}|excerpt: 80} for fewer characters`));
+    }
+  }
 }
 
 function tone(value: unknown, path: string, scope: Scope): void {
@@ -258,7 +274,7 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
     case "headline":
     case "text":
     case "badge":
-      template(value, `${path}.${type}`, scope);
+      template(value, `${path}.${type}`, scope, type === "text");
       if ("tone" in raw) tone(raw["tone"], `${path}.tone`, scope);
       return;
     // A field, or a field's pictures and documents (FR-162).
@@ -616,7 +632,7 @@ export function validateAll(
     for (const slot of VIEW_SLOTS) {
       const list = specs[slot];
       if (list === undefined) continue;
-      const scope: Scope = { kind, spec, kinds, edges, vocabulary, findings, count: 0 };
+      const scope: Scope = { kind, spec, kinds, edges, vocabulary, findings, count: 0, slot };
       blocks(list, `${at}.${kind}.${slot}`, 1, scope);
       if (scope.count > MAX_VIEW_BLOCKS) findings.push(error("view-size", `${at}.${kind}.${slot}`, `this ${slot} has ${scope.count} blocks; a view has at most ${MAX_VIEW_BLOCKS}`, "show less, or move detail to the page"));
     }
@@ -639,6 +655,7 @@ export function validateViews(document: GraviewDocument): Finding[] {
           files: (n) => own(spec.fields, n) && holdsFiles(spec.fields[n]),
           choices: (n) => (own(spec.fields, n) && spec.fields[n]!.type === "enum" ? spec.fields[n]!.options : undefined),
           targets: (n) => (own(spec.edges, n) ? spec.edges![n]!.to : undefined),
+          prose: (n) => own(spec.fields, n) && spec.fields[n]!.type === "text",
         }
       : undefined;
   };

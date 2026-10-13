@@ -1,5 +1,5 @@
 import { ArrangeBar, Files, pageSays } from "@graview/primitives/pages";
-import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement } from "@graview/core/arrange";
+import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement, throughEdges } from "@graview/core/arrange";
 import {
   describeSearched,
   humanizeField,
@@ -126,7 +126,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    * `?past=1` widens the horizon — because a record's "all the tasks on this
    * list" is a link somebody may have sent.
    */
-  const offers = arrangeable(store.schema, kind);
+  // Its kind's own, and through each relation the far end's choices (`became.stage`).
+  const offers = throughEdges(store.schema, arrangeable(store.schema, kind));
   const edgeKinds = relations.map((relation) => relation.edgeKind);
   const asked = arrangementFromSearch(search, offers, edgeKinds);
   // What the address says, or — saying nothing — how the design opens the list, or a large list's meaningful order.
@@ -299,6 +300,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    * already arranged it, when the line says how and offers the way back.
    */
   const pictures = placesOf(context).filter((place) => place.kind === kind);
+  // What the declaration says this list filters by (`pages.lists.<kind>.filters`), when it says.
+  const named = context.views?.arrangement?.()?.lists?.[kind]?.filters;
   // `is:any` is the horizon widened by "+N past", not an arrangement to undo.
   const narrowed = (arrangement.filter ?? []).some((condition) => condition.key !== "is" || condition.value !== "any");
   const arrangedAlready = Boolean(arrangement.sort || arrangement.group || arrangement.query || narrowed);
@@ -332,7 +335,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     : undefined;
   const rowsStyle: React.CSSProperties =
     layout === "grid"
-      ? { margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 15rem), 1fr))", gap: 12 }
+      ? // Cards in one row keep their own height.
+        { margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 15rem), 1fr))", alignItems: "start", gap: 12 }
       : { margin: 0, padding: 0, listStyle: "none", display: "grid", gap: ownRowOf && layout === "list" ? 6 : 0 };
   const anchor = (key: string) => `list-at-${key.replace(/[^\p{L}\p{N}]/gu, "_")}`;
   const roads = relations.map((relation) => {
@@ -414,6 +418,10 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             kept={{ shown: members.length, of: current.length }}
             noun={{ one: nounOf(definition, kind), many: plural.toLowerCase() }}
             {...(controls ? {} : { allow: false })}
+            {...(named ? { filters: named } : {})}
+            // Its choice fields as chips over the list, counted over what is in it, where the line arranges.
+            offers={offers}
+            chips={{ nodes: current, flagged, ...(typeof invariantContext?.["today"] === "string" ? { today: invariantContext["today"] as string } : {}) }}
             // The bar's Find narrows this list; a second box for the same
             // `?q=` would be two answers to one question. An app's own shell
             // has no such box, so there the line keeps its own.

@@ -871,6 +871,9 @@ export const JOBS = {
       const filter = page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').locator("visible=true").first();
       if (!(await appears(filter))) throw new DeadEnd(`there is no "Filter" to narrow the ${job.plural.toLowerCase()} with`);
       await person.press(filter, '"Filter"');
+      // Each heading of the list starts closed: the one the field stands under is opened, as a person opens it.
+      const heading = page.locator(`[data-testid="arrange-list"] [data-section="${job.field}"] > button[aria-expanded="false"]`).first();
+      if (await heading.isVisible().catch(() => false)) await person.press(heading, `"${job.label}"`);
       const entry = page.locator(`[data-testid="arrange-list"] [data-value^="${job.field}:at-most:"]`).first();
       if (!(await appears(entry))) throw new DeadEnd(`"Filter" offers no ${job.label.toLowerCase()} to narrow the ${job.plural.toLowerCase()} by`);
       const option = (await entry.textContent())?.trim() ?? job.label;

@@ -3,6 +3,7 @@ import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from
 import type { Expr } from "./expr/parse.js";
 import { dayAsRead, ISO_DAY, isoToday } from "../days.js";
 import { listed } from "../capital.js";
+import { excerpt } from "../excerpt.js";
 
 /*
  * TEMPLATES: "{name}", "{status} · {quote|money}", "{fills.name}".
@@ -18,9 +19,13 @@ import { listed } from "../capital.js";
  * plural given where English does not make it: `plural: 'person', 'people'`.
  *
  *   "Answers {count(out('answers')) | words} of the {count(all('note')) | words} {count(all('note')) | plural: 'thing'} we heard"
+ *
+ * `excerpt` says the start of a long text on a card or a row: its first
+ * sentence, or about 140 characters cut at a word (`excerpt: 80` for
+ * fewer); the record's page says it whole.
  */
 
-export const FORMATTERS = ["money", "percent", "date", "relative", "upper", "lower", "count", "words", "and", "plural"] as const;
+export const FORMATTERS = ["money", "percent", "date", "relative", "upper", "lower", "count", "words", "and", "plural", "excerpt"] as const;
 export type Formatter = (typeof FORMATTERS)[number];
 
 export interface TemplatePart {
@@ -126,6 +131,8 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
       return String(value).toUpperCase();
     case "lower":
       return String(value).toLowerCase();
+    case "excerpt":
+      return excerpt(String(value), Number(args[0]) || undefined);
     case "date":
       // A day as a person reads it ("28 Aug 2026"), as a card's glance says it.
       return dayAsRead(String(value).slice(0, 10));

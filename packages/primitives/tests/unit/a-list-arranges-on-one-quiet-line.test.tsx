@@ -132,20 +132,27 @@ describe("the arranging line", () => {
     expect(arrangement.group).toEqual({ by: "due", bucket: "month" });
     expect(byId("group")?.textContent).toContain("Grouped by due date, a month each");
     press(byId("add"));
+    // Each heading of the Filter list starts closed: opened, its entries are there.
+    expect($('[data-testid="arrange-list"] [data-value="size:large"]')).toBeNull();
+    press($('[data-testid$="-section"][data-key="size"]'));
     press($('[data-testid="arrange-list"] [data-value="size:large"]'));
     expect(arrangement.filter).toEqual([{ key: "size", value: "large" }]);
-    // A condition already on is pressed in the list, and pressing it again takes it off.
+    // A condition already on is pressed in the list, and pressing it again takes it off; its heading says it is on.
     press(byId("add"));
+    expect($('[data-testid$="-section"][data-key="size"]')?.textContent).toContain("1 on");
+    press($('[data-testid$="-section"][data-key="size"]'));
     expect($('[data-testid="arrange-list"] [data-value="size:large"]')?.getAttribute("aria-pressed")).toBe("true");
     press($('[data-testid="arrange-list"] [data-value="size:large"]'));
     expect(arrangement.filter).toBeUndefined();
   });
 
-  it("has one Arrange for a narrow line, which holds the sort, the grouping and the filter in one list", () => {
+  it("has one Arrange for a narrow line, which holds the sort and the grouping in one list, and Filter beside it", () => {
     draw();
     press(byId("all"));
     const pane = $('[data-testid="arrange-list"]')!;
-    expect([...pane.querySelectorAll("[role=group]")].map((group) => group.getAttribute("aria-label")).filter((name) => ["Sort", "Group", "Filter"].includes(name ?? ""))).toEqual(["Sort", "Group", "Filter"]);
+    expect([...pane.querySelectorAll("[role=group]")].map((group) => group.getAttribute("aria-label")).filter((name) => ["Sort", "Group", "Filter"].includes(name ?? ""))).toEqual(["Sort", "Group"]);
+    // Filter is a word of its own on a narrow line too: what it opens is a sheet, short however much the app holds.
+    expect(byId("add")?.closest(".graview-arrange-one")).toBeNull();
   });
 
   it("is the count alone when the surface declines arranging", () => {

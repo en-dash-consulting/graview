@@ -467,6 +467,14 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
     );
   }
   const plural = pluralOf(store, place.kind);
+  /*
+   * A PLACE OF WORDS AND CARDS FLOWS WITH THE PAGE. A picture — a board, a
+   * calendar — fills a frame most of the window tall and scrolls inside it;
+   * a place drawn from blocks is a column of headings and cards, and in that
+   * frame a list of cards became a box of its own to scroll, under the
+   * page's own scroll. It is drawn in the page's column, as long as it is.
+   */
+  const flows = (context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean } | undefined)?.flows === true;
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
@@ -507,16 +515,21 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         */}
       <div
         data-testid="place-lens"
-        style={{
-          height: "min(72vh, 760px)",
-          display: "grid",
-          gridTemplateRows: "minmax(0, 1fr)",
-          overflow: "auto",
-          maxWidth: "100%",
-          borderRadius: 12,
-          border: "1px solid var(--graview-edge)",
-          background: "var(--graview-panel)",
-        }}
+        data-flows={flows ? "" : undefined}
+        style={
+          flows
+            ? { display: "grid", gridTemplateColumns: "minmax(0, 1fr)", maxWidth: "100%" }
+            : {
+                height: "min(72vh, 760px)",
+                display: "grid",
+                gridTemplateRows: "minmax(0, 1fr)",
+                overflow: "auto",
+                maxWidth: "100%",
+                borderRadius: 12,
+                border: "1px solid var(--graview-edge)",
+                background: "var(--graview-panel)",
+              }
+        }
         onClick={(event) => {
           const picked = (event.target as HTMLElement | null)?.closest("[data-graview-pick]");
           const id = picked?.getAttribute("data-graview-pick");

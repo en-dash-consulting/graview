@@ -2,12 +2,15 @@
 id: "a514bee4-efa3-4bfa-af5a-77b45335d7ac"
 level: "feature"
 title: "Filters that stay usable as an app grows"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "roadmap"
   - "f-filters-that-scale"
 source: "Nick, 2026-10-13: \"do all planned items for graview core that the roadmap has laid out. capture and work them in ndx appropriately\""
+startedAt: "2026-10-13T02:45:00.000Z"
+completedAt: "2026-10-13T04:30:00.000Z"
+endedAt: "2026-10-13T04:30:00.000Z"
 acceptanceCriteria:
   - "Choice fields filter as chips at the top of a list, always visible, with counts"
   - "A relation with more than about 8 records at its far end filters by typing (up to 8 matches, plus anything / nothing); fewer are listed as now"
@@ -17,4 +20,6 @@ acceptanceCriteria:
   - "A row's badges are not cut off at a desk width, and a count of zero is not drawn as a badge"
   - "Done when: on an app with 100+ records of a related kind, Filter opens short, finding a record is a few keystrokes, and a status filter is one tap"
 description: "On the Roadmap's Requests list, Filter opens one long menu listing every record at the far end of every relation (90+ feature names). Roadmap f-filters-that-scale."
+lastModified: "2026-10-13T04:30:00.000Z"
+resolution: "A list's choice fields stand as chips with counts, what is on is a removable chip beside the count, Filter opens with every heading closed under a sticky find box (opaque, 520px at most, a sheet on a phone), a relation past eight far records is found by typing, a relation to a kind of more than forty records is left out by default and offered through its far end's choices (`became.stage`), and `pages.lists.<kind>.filters` names what a list offers (checked as `pages-filter-unknown`); a zero count is no badge. Proved by `pnpm verify growing` on a 120-feature roadmap at desk and phone in three engines."
 ---

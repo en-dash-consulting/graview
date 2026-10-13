@@ -250,6 +250,7 @@ export {
   isoDate,
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
+export { excerpt } from "./excerpt.js";
 export { actTitle, article, counted, pluralLabel, pluralOf, edgeWords, fieldWords, humanizeField, isLongText, nounOf, pageSections, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
 export { dayAsRead, daysAsRead } from "./days.js";
 export type { FieldSection } from "./schema/define-node.js";

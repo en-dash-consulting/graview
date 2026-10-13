@@ -11,8 +11,13 @@
  * rota's shifts, and `verify-chrome-quiet` of Cloud's workshop.
  */
 
-/** How far a list's first record stands from the top of the page's content, at most, by the window's width. */
-export const FIRST_RECORD_WITHIN = { desk: 210, phone: 240 };
+/**
+ * How far a list's first record stands from the top of the page's content,
+ * at most, by the window's width. A phone's line holds Filter as a word of
+ * its own and the list's choices as a rail of chips beside "Arrange" (the
+ * Roadmap's f-filters-that-scale): one row of them more than the 240 it was.
+ */
+export const FIRST_RECORD_WITHIN = { desk: 210, phone: 275 };
 
 /** The page's head, measured: where its content begins (under the bar), where the first record is, and what arranges it. */
 export function listHead(page) {
@@ -146,5 +151,19 @@ export async function chooseOnTheLine(page, prefix, word, value) {
   // A narrow line holds every word in its one "Arrange".
   await page.click(`button[data-testid="${prefix}-${visible ? word : "all"}"]`);
   await page.waitForSelector('[data-testid="arrange-list"]', { timeout: 5_000 });
+  await openFilterSection(page, value);
   await page.click(`[data-testid="arrange-list"] [data-value="${value}"]`);
+}
+
+/**
+ * Opens the Filter list's heading an entry stands under, when it is closed:
+ * each heading starts closed, so the list opens short. `value` is the
+ * entry's (`size:large`, `price:at-most:25000`, `became.stage:building`).
+ */
+export async function openFilterSection(page, value) {
+  const key = value.slice(0, value.indexOf(":"));
+  const entry = page.locator(`[data-testid="arrange-list"] [data-value="${value}"]`);
+  if ((await entry.count()) > 0) return;
+  const heading = page.locator(`[data-testid="arrange-list"] [data-section="${key}"] > button[aria-expanded="false"]`).first();
+  if ((await heading.count()) > 0) await heading.click();
 }

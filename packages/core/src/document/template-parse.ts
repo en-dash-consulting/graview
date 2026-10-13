@@ -40,7 +40,12 @@ function readFormatter(text: string): { readonly format: Formatter; readonly arg
   const name = (colon >= 0 ? text.slice(0, colon) : text).trim();
   if (!(FORMATTERS as readonly string[]).includes(name)) throw new TemplateError(`"${name}" is not a formatter; use one of ${FORMATTERS.join(", ")}`);
   const args: string[] = [];
-  if (colon >= 0) {
+  if (colon >= 0 && name === "excerpt") {
+    // How many characters at most: a whole number, `excerpt: 80`.
+    const most = text.slice(colon + 1).trim();
+    if (!/^\d+$/.test(most) || Number(most) < 20 || Number(most) > 1000) throw new TemplateError("excerpt is told at most how many characters, 20 to 1000: {summary | excerpt: 80}");
+    args.push(most);
+  } else if (colon >= 0) {
     const rest = text.slice(colon + 1);
     let at = 0;
     while (at < rest.length) {
@@ -55,7 +60,7 @@ function readFormatter(text: string): { readonly format: Formatter; readonly arg
   if (name === "plural" && (args.length < 1 || args.length > 2)) {
     throw new TemplateError("plural is told its noun, like {count | plural: 'offer'}, and its plural where English does not make it: plural: 'person', 'people'");
   }
-  if (name !== "plural" && args.length > 0) throw new TemplateError(`"${name}" takes nothing after it`);
+  if (name !== "plural" && name !== "excerpt" && args.length > 0) throw new TemplateError(`"${name}" takes nothing after it`);
   return { format: name as Formatter, args };
 }
 
