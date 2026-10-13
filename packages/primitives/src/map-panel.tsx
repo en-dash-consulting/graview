@@ -1,4 +1,4 @@
-import { counted, edgeWords, isCurrent, labelOf, layer, nounOf, pluralLabel, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { counted, edgeWords, isCurrent, labelOf, layer, nounOf, numberAsRead, pluralLabel, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { aggregateId, kindCardId, withFocus, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 // Drawn only with the scene, whose face has fetched `@graview/react` already.
 import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
@@ -162,6 +162,34 @@ function useActsAt() {
   };
 }
 
+/*
+ * ITS ACTS, A PRESS AWAY (the ninth walk, W-195). On a phone the panel is a
+ * sheet over the foot of the map, standing on the district or the record it
+ * is about, so the right-click that opened their menu had nothing left to
+ * land on, and a finger has no right button: "Add a hive" was on no screen
+ * of a phone. The panel's head says it in a button that opens the same menu,
+ * under the button, about what the panel is about.
+ */
+function ActsButton({ on, about }: { readonly on: string; readonly about: string }) {
+  const { setSelection, setMenuAt } = useGraview();
+  return (
+    <button
+      type="button"
+      data-testid="map-panel-acts"
+      aria-label={`What can be done with ${about}`}
+      aria-haspopup="menu"
+      style={pressStyle}
+      onClick={(event) => {
+        const box = event.currentTarget.getBoundingClientRect();
+        setSelection([on]);
+        setMenuAt({ x: Math.round(box.left), y: Math.round(box.bottom + 4), on });
+      }}
+    >
+      Acts…
+    </button>
+  );
+}
+
 /** Going to a record from the panel: the same stop a double-click on it in the scene makes, on the ground. */
 const travelTo = (view: ViewState, id: string): ViewState => ({ ...withFocus(withOverview(view, false), id), relation: null });
 
@@ -309,6 +337,7 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
             <button type="button" data-testid="record-panel-go" style={pressStyle} onClick={() => go(travelTo(view, id))}>
               Go to it
             </button>
+            <ActsButton on={id} about={name(id)} />
             <button type="button" data-testid="record-panel-district" style={pressStyle} onClick={() => setSelection([kindCardId(kind)])}>
               All {pluralLabel(store.schema, kind).toLowerCase()}
             </button>
@@ -367,10 +396,19 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
         .sort((a, b) => a.name.localeCompare(b.name)),
     [store, kind, graph, view.past, definition],
   );
-  const relations = useMemo(
-    () => ribbonsOf(store.graph.allEdges(), (id) => store.graph.getNode(id)?.kind as string | undefined).filter((ribbon) => ribbon.from === kind || ribbon.to === kind),
-    [store, kind, graph],
-  );
+  /*
+   * Counted over the records the district counts (W-198): its head says
+   * "280 hives", the ones on this side of the horizon, so its relations do
+   * not say "299 hives → 14 apiaries" of the same district.
+   */
+  const relations = useMemo(() => {
+    const current = (id: string): boolean => {
+      const node = store.graph.getNode(id);
+      return node !== undefined && (view.past === true || isCurrent(store.schema.tryDefinition(node.kind as string), node));
+    };
+    const edges = store.graph.allEdges().filter((edge) => current(edge.from) && current(edge.to));
+    return ribbonsOf(edges, (id) => store.graph.getNode(id)?.kind as string | undefined).filter((ribbon) => ribbon.from === kind || ribbon.to === kind);
+  }, [store, kind, graph, view.past]);
   // A district that stops being asked about takes its question with it.
   useEffect(() => () => setEmphasis(null), [setEmphasis]);
   const plural = pluralLabel(store.schema, kind);
@@ -391,10 +429,11 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
             {counted(store.schema, kind, members.length)}
             {definition?.description ? ` · ${definition.description}` : ""}
           </p>
-          <div style={{ marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             <button type="button" data-testid="district-panel-go" style={pressStyle} onClick={() => go({ ...withFocus(withOverview(view, false), aggregateId(kind)), relation: null })}>
               Go in
             </button>
+            <ActsButton on={kindCardId(kind)} about={`the ${plural.toLowerCase()}`} />
           </div>
         </>
       }
@@ -415,8 +454,8 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
                   onBlur={() => setEmphasis(null)}
                 >
                   <span style={{ flex: "1 1 auto", minWidth: 0 }}>{ribbonSentence(store.schema, ribbon)}</span>
-                  <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", fontVariantNumeric: "tabular-nums" }} title={`${ribbon.links} links`}>
-                    {ribbon.links}
+                  <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", fontVariantNumeric: "tabular-nums" }} title={`${numberAsRead(ribbon.links)} links`}>
+                    {numberAsRead(ribbon.links)}
                   </span>
                 </div>
               </li>

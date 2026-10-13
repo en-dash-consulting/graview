@@ -1,4 +1,4 @@
-import { isCurrent, type AnySchema } from "@graview/core";
+import { counted as countOf, isCurrent, numberAsRead, type AnySchema } from "@graview/core";
 import type { ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link } from "react-router-dom";
@@ -76,14 +76,8 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
     present.length === 0
       ? "Nothing here yet."
       : `${present
-          .map(
-            (entry) =>
-              `${entry.members.length} ${
-                entry.members.length === 1
-                  ? entry.kind
-                  : pluralOf(store, entry.kind).toLowerCase()
-              }`,
-          )
+          // Each kind counted as every face counts it, in the page's locale (W-198): "7,540 inspections".
+          .map((entry) => countOf(store.schema, entry.kind, entry.members.length))
           .join(", ")
           .replace(/, ([^,]*)$/, " and $1")}.`;
   /*
@@ -176,7 +170,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
               >
                 <KindMark kind={kind} brand={brand} schema={store.schema} size={7} />
                 <span style={{ fontWeight: 550, overflowWrap: "anywhere" }}>{pluralOf(store, kind)}</span>
-                <span style={{ ...quiet, fontVariantNumeric: "tabular-nums" }}>{members.length === 0 ? "none yet" : members.length}</span>
+                <span style={{ ...quiet, fontVariantNumeric: "tabular-nums" }}>{members.length === 0 ? "none yet" : numberAsRead(members.length)}</span>
               </Link>
             </li>
           ))}

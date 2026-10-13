@@ -9,6 +9,7 @@ import type { Policy } from "@graview/core";
  *   every other act, which on a talk is a dozen of them (W-115: every
  *   harness's narrower seat used to be refused three or fewer).
  * - the SCHEDULER, an agent, moves talks into slots and sessions into rooms.
+ * - anybody may propose a talk, and change or take out only their own.
  * - a visitor holds no role, and reads — the program, not the staff
  *   behind it: who is on staff is the program's own people's to see
  *   (`sees`), so the watch's "shown-what-is-not-theirs" has a seat to hold
@@ -25,6 +26,13 @@ export const policy: Policy = {
   ],
   grants: [
     { roles: ["chair"], mutations: "*", describe: "The program chair runs the program." },
+    /*
+     * A call for papers is open to everybody: a door, not a key. Riding it,
+     * a visitor may change or take out only a talk they submitted (the
+     * ninth walk, W-201: "anybody may join" let a co-op's novice remove
+     * her mentor).
+     */
+    { roles: "*", mutations: ["submit-talk"], describe: "Anybody may propose a talk." },
     {
       roles: ["reviewer"],
       mutations: ["accept-talk", "reject-talk", "tag", "untag"],

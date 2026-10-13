@@ -413,6 +413,8 @@ export function ruleLines(read: Read, rule: Node, kept: boolean): string[] {
   if (!whole) lines.push(`  scope: { kind: ${q(label(over!))} },`);
   if (repairs.length > 0) lines.push(`  repairs: [${repairs.map(q).join(", ")}],`);
   if (bool(rule, "judgesPast")) lines.push(`  judgesPast: true,`);
+  // A rule that is a function says it reads the day; the studio cannot read its body to know (W-199).
+  if (bool(rule, "readsTheClock")) lines.push(`  readsTheClock: true,`);
   lines.push(`  evaluate(): Violation[] {`);
   if (kept) {
     /*
@@ -453,7 +455,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const schemaUses: ZodUses = { nodeRef: false, isoDate: false };
   const kindText = kinds.flatMap((kind) => ["", ...kindLines(read, kind, options.base, keptFormats, schemaUses)]);
   const schemaTs = [
-    `import { createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}z } from "@graview/core";`,
+    `import { ${schemaUses.appLinkField ? "appLinkField, " : ""}createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}z } from "@graview/core";`,
     ``,
     `/*`,
     ` * ${name}'s kinds, written by the studio. The shape is the declaration's;`,
@@ -475,7 +477,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     return ["", ...actLines(read, act, kept, checkout as AnyMutationDefinition | undefined, actUses)];
   });
   const mutationsTs = [
-    `import { bindSchema, ${actUses.isoDate ? "isoDate, " : ""}nodeRef, z, type GraphReader } from "@graview/core";`,
+    `import { ${actUses.appLinkField ? "appLinkField, " : ""}bindSchema, ${actUses.isoDate ? "isoDate, " : ""}nodeRef, z, type GraphReader } from "@graview/core";`,
     `import { ${schemaVar} } from "./schema.js";`,
     ``,
     `const { defineMutation } = bindSchema(${schemaVar});`,

@@ -26,12 +26,12 @@ import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
-import { creatorsBefore } from "./permissions/sight.js";
+import { creatorsBefore, recordsOf } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
-import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
+import { tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
 import { capitalize } from "./capital.js";
 import { dayOf, type Tick } from "./clock.js";
 import { pluralOf } from "./schema/define-node.js";
@@ -299,6 +299,9 @@ export function violationKey(v: Violation, shaped?: ReadonlySet<string>): string
   return `${v.invariant}|${v.subjectId ?? ""}|${v.line || shaped?.has(v.invariant) ? v.label : v.message}`;
 }
 
+/** Every rule, as `violationKey` reads its `shaped`: a problem known by its rule, its record and its name. */
+const EVERY_RULE = { has: () => true } as unknown as ReadonlySet<string>;
+
 /** The rules that have a shape, by name: what `violationKey` keys by the rule and the record. */
 export const shapedRules = (rules: readonly Pick<InvariantDefinition, "name" | "shape">[]): ReadonlySet<string> => new Set(rules.filter((rule) => rule.shape).map((rule) => rule.name));
 
@@ -313,7 +316,28 @@ export function problemsMoved(rules: readonly Pick<InvariantDefinition, "name" |
   const key = (v: Violation) => violationKey(v, shaped);
   const was = new Set(before.map(key));
   const is = new Set(after.map(key));
-  return { introduces: after.filter((v) => !was.has(key(v))), resolves: before.filter((v) => !is.has(key(v))) };
+  const introduces = after.filter((v) => !was.has(key(v)));
+  const resolves = before.filter((v) => !is.has(key(v)));
+  if (introduces.length === 0 || resolves.length === 0) return { introduces, resolves };
+  /*
+   * REWORDED IS NOT MENDED (the ninth walk, W-191). A rule that is a
+   * function says its count in its message — "not opened for 22 days" —
+   * so the day turning, or an act that leaves it broken, rewords it. The
+   * same rule about the same record under the same name, said differently,
+   * is the problem it was: paired off one for one, it is neither made nor
+   * mended.
+   */
+  // Who a problem is when its words are set aside: its rule, its record and its name, as a rule with a line is known.
+  const who = (v: Violation) => v.subjectId && violationKey(v, EVERY_RULE);
+  // Each mended problem's who, until a reworded one is paired off with it (null).
+  const left: (string | undefined | null)[] = resolves.map(who);
+  return {
+    introduces: introduces.filter((v) => {
+      const at = who(v) ? left.indexOf(who(v)) : -1;
+      return at < 0 || ((left[at] = null), false);
+    }),
+    resolves: resolves.filter((_, at) => left[at] !== null),
+  };
 }
 
 /**
@@ -516,7 +540,6 @@ export class Store<S extends AnySchema> {
       this.keeper = keepLinkMutation(options.schema);
       this.mutations.set(KEEP_LINK, this.keeper);
     }
-    tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
     const horizon = given("horizon", options.horizon);
     const validate = { validate: this.validate };
@@ -732,16 +755,27 @@ export class Store<S extends AnySchema> {
      * names. A call that cannot be compiled is refused by `apply`, in its
      * own words.
      */
-    return permits(this.policy, principal, call.name, this.subjectKindOf(call, principal), this.viaOf(mutation), typeof id === "string" ? id : undefined, this.words, () => {
-      const me = actingAs(principal).id;
-      const far = this.namedIn(call, false);
-      try {
-        for (const one of compileMutation(this.graph, mutation!, call.args, this.sighted(principal)).primitives) if ("edge" in one && one.edge.from !== me && one.edge.to !== me) far.push(one.edge.to);
-      } catch {
-        // Refused by `apply`.
-      }
-      return far;
-    });
+    return permits(
+      this.policy,
+      principal,
+      call.name,
+      this.subjectKindOf(call, principal),
+      this.viaOf(mutation),
+      typeof id === "string" ? id : undefined,
+      this.words,
+      () => {
+        const me = actingAs(principal).id;
+        const far = this.namedIn(call, false);
+        try {
+          for (const one of compileMutation(this.graph, mutation!, call.args, this.sighted(principal)).primitives) if ("edge" in one && one.edge.from !== me && one.edge.to !== me) far.push(one.edge.to);
+        } catch {
+          // Refused by `apply`.
+        }
+        return far;
+      },
+      // Who made the record a derived act is about: riding only everybody's grant, it reaches what this principal made (W-201).
+      mutation?.derived && (() => recordsOf(this.log).creatorOf(id as string)),
+    );
   }
 
   /** The ids a call names in its record arguments: its subject's too, unless `subject` is false (the far ends of what it links). */

@@ -24,6 +24,7 @@ import {
   wide,
 } from "./page-typography.js";
 import { PageMain, PageTitle } from "./page-shell.js";
+import { SpecLinks } from "@graview/primitives/pages";
 
 
 /** The app's pictures this seat may see: registered places whose kind is live here. */
@@ -316,7 +317,15 @@ export function GalleryCard<S extends AnySchema>({ context, entry }: { context: 
             transformOrigin: "0 0",
           }}
         >
-          {entry.place ? <LensOnPage context={context} place={entry.place} /> : <KindOnPage context={context} kind={entry.kind} />}
+          {/*
+            * A PICTURE IN A LINK LINKS NOWHERE ITSELF (the ninth walk, W-200): the
+            * card is the link, so the records a lens draws in it are not, or a
+            * board's cards nested an <a> in this one — markup a browser's parser
+            * takes apart, and React says so on every visit to the home.
+            */}
+          <SpecLinks.Provider value={null}>
+            {entry.place ? <LensOnPage context={context} place={entry.place} /> : <KindOnPage context={context} kind={entry.kind} />}
+          </SpecLinks.Provider>
         </span>
         {members.length === 0 ? (
           <span

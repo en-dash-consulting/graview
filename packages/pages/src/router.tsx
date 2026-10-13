@@ -1,4 +1,4 @@
-import { pluralLabel, type AnySchema, type Store } from "@graview/core";
+import { numberAsRead, pluralLabel, type AnySchema, type Store } from "@graview/core";
 import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { pluralSlug } from "./registry.js";
@@ -31,8 +31,9 @@ function SeeAll<S extends AnySchema>({ list, store }: { readonly list: { readonl
   const plural = pluralLabel(store.schema, kind).toLowerCase();
   return (
     <p className="graview-spec-text graview-spec-more">
+      {/* Its count a figure in the page's locale (the ninth walk, W-198). */}
       <Link to={`/${pluralSlug(store.schema, kind)}`} className="graview-spec-link graview-spec-see-all" data-testid="see-all">
-        {list.total === store.graph.nodesOfKind(kind as never).length ? `See all ${list.total} ${plural}` : `${more} more · all ${plural}`}
+        {list.total === store.graph.nodesOfKind(kind as never).length ? `See all ${numberAsRead(list.total)} ${plural}` : `${numberAsRead(more)} more · all ${plural}`}
       </Link>
     </p>
   );

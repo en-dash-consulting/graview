@@ -279,7 +279,7 @@ export { writersOf, type Writers } from "./ops/writers.js";
 export type { RecordedLog, Records } from "./permissions/sight.js";
 export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
-export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
+export { tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
 export { sha256Hex, snapshotHash } from "./integrity.js";

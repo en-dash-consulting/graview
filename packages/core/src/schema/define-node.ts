@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { isoToday } from "../days.js";
+import { isoToday, numberAsRead } from "../days.js";
 import { capitalize } from "../capital.js";
 import type { FileValue } from "./files.js";
 import type {
@@ -172,7 +172,8 @@ export function valueWords(definition: AnyNodeDefinition | undefined, key: strin
  */
 export function counted(schema: { tryDefinition(kind: string): { readonly noun?: string; readonly plural?: string } | undefined }, kind: string, count: number): string {
   const definition = schema.tryDefinition(kind);
-  return `${count} ${count === 1 ? nounOf(definition, kind) : pluralOf(schema, kind).toLowerCase()}`;
+  // A count is a figure, said in the page's locale like every other (W-198): "7,540 inspections", never "7540".
+  return `${numberAsRead(count)} ${count === 1 ? nounOf(definition, kind) : pluralOf(schema, kind).toLowerCase()}`;
 }
 
 /**

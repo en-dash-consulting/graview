@@ -79,6 +79,11 @@ export function permits(
   words: PolicyWords = {},
   /** The records the call names at the far end of the links it makes or breaks: an `ownEnd` grant holds them to the principal's own. */
   ends?: () => readonly unknown[],
+  /**
+   * Who made the record a derived act is about. Riding only a grant to
+   * every role, the act reaches what this principal made (W-201).
+   */
+  madeBy?: () => string | undefined,
 ): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   // No policy means permission is not a concern in this installation.
   if (!policy) return { ok: true };
@@ -92,7 +97,21 @@ export function permits(
    */
   if (via !== undefined) {
     if (permits(policy, principal, mutation, kind, undefined, subjectId).ok) return { ok: true };
-    if (via.some((name) => permits(policy, principal, name, kind, undefined, subjectId).ok)) return { ok: true };
+    let ridden = false;
+    if (via.some((name) => permits(policy, principal, name, kind, undefined, subjectId).ok)) {
+      /*
+       * A DOOR FOR EVERYBODY IS NOT A KEY TO EVERY RECORD (the ninth walk,
+       * W-201). "Anybody may join" let a novice remove her mentor from the
+       * co-op, and anybody at all archive or merge any member they could see:
+       * the grant that lets everybody make a record is not a grant over every
+       * record of its kind. Riding only a grant to every role, a derived
+       * edit, remove, archive, bring-back or merge reaches the records this
+       * principal made; a role's own grant on the acts it rides, or one that
+       * names the act or says `*`, reaches the rest, as it always has.
+       */
+      if (!madeBy || subjectId === undefined || (principal.id !== undefined && madeBy() === principal.id) || policy.grants.some((grant) => grant.roles !== "*" && grantsTo(grant, principal) && via.some((name) => matches(grant.mutations, name)))) return { ok: true };
+      ridden = true;
+    }
     /*
      * A derived edit is reachable two ways, and the refusal has to count
      * both: a grant naming it (or saying `*`), and a grant on any declared
@@ -100,16 +119,17 @@ export function permits(
      * creates it, so no role can" to a rider while the driver's `mutations:
      * "*"` grant plainly reached it.
      */
-    const names = [mutation, ...via];
+    const names = ridden ? [mutation] : [mutation, ...via];
     const wouldNeed = [
       ...new Set(names.flatMap((name) => rolesWhoCould(policy, name, kind))),
     ].sort();
     const who =
-      wouldNeed.length === 0
+      (ridden ? "only on what you made; " : "") +
+      (wouldNeed.length === 0
         ? via.length === 0
           ? "no declared act creates or changes it, so no role can"
           : "no role can"
-        : `${rolesSaid(wouldNeed)} can`;
+        : `${rolesSaid(wouldNeed)} can`);
     return {
       ok: false,
       refusal: {

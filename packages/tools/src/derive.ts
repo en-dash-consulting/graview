@@ -115,6 +115,8 @@ export function deriveAffordances<S extends AnySchema>(
     // sees the same ones, and a selection change costs one evaluation.
     violations: store.violations(options.context),
     context: options.context ?? {},
+    // The seat every act below is judged for, as `asking` is (W-192).
+    principal: options.principal ?? { kind: "human" },
   };
 
   const affordances: Affordance[] = [];

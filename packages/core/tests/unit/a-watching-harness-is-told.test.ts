@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { bindSchema, createSchema, defineNode, nodeRef, Store, z } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, nodeRef, Store, tellTheWatchWhatIsUnseen, z } from "../../src/index.js";
 
 /**
  * A WATCHING HARNESS IS TOLD. The browser harnesses judge every screen
@@ -7,7 +7,8 @@ import { bindSchema, createSchema, defineNode, nodeRef, Store, z } from "../../s
  * of those need the store: which strings are the declaration's own names,
  * so a screen showing `close-deal` to a person is caught exactly; and which
  * presses the policy refused, which is an act offered to a seat that may
- * not take it.
+ * not take it. The store hands itself over, and the watch reads the names
+ * (`tests/the-watch-reads-a-stores-names.test.ts`).
  */
 const deal = defineNode("deal", {
   fields: z.object({ label: z.string(), stage: z.enum(["open", "closed"]), closedAt: z.string().optional() }),
@@ -44,14 +45,13 @@ afterEach(() => {
 });
 
 describe("a store in a watched page", () => {
-  it("tells the watch its kinds, field keys, edges, acts and roles, and the words it has for them", () => {
-    const told = listen();
-    new Store({ schema, mutations: [close], policy, snapshot });
-    for (const id of ["deal", "label", "stage", "closedAt", "sold-by", "close-deal", "sales-manager", "salesperson"]) {
-      expect(told.ids).toContain(id);
-    }
-    expect(told.words).toContain("Close the deal");
-    expect(told.words).toContain("who sold it");
+  it("hands the watch the store, and the seat at a surface, to read its names and what the seat may not see", () => {
+    const told: unknown[][] = [];
+    (globalThis as { __graviewWatch?: unknown }).__graviewWatch = { store: (store: unknown) => told.push(["store", store]), seat: (...args: unknown[]) => told.push(["seat", ...args]) };
+    const store = new Store({ schema, mutations: [close], policy, snapshot });
+    const seat = { kind: "human" as const, id: "user-priya", roles: ["salesperson"] };
+    tellTheWatchWhatIsUnseen(store, seat, "here");
+    expect(told).toEqual([["store", store], ["seat", store, seat, "here"]]);
   });
 
   it("tells the watch when the policy refuses a press, and who pressed", () => {

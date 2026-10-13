@@ -374,6 +374,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       description: description ?? `${ruleName}: declared in the studio; the checkout gives it a judgment.`,
       ...(repairs.length > 0 ? { repairs } : {}),
       ...(bool(rule, "judgesPast") ? { judgesPast: true } : {}),
+      ...(bool(rule, "readsTheClock") ? { readsTheClock: true } : {}),
       // Declared, not yet judged: a rule with no body holds nothing wrong.
       evaluate: () => [],
     } as never) as InvariantDefinition;

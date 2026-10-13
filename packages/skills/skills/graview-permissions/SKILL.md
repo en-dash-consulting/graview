@@ -47,7 +47,11 @@ yesterday and now the button is gone.
    The derived acts ride your grants rather than needing their own line:
    `edit-<kind>` is permitted to whoever may change or make the kind,
    `remove-<kind>`, `archive-<kind>`, `unarchive-<kind>` and `merge-<kind>`
-   to whoever may make it — or to any grant that names the act or says `*`. A refusal names who could, so a seat told no learns what
+   to whoever may make it — or to any grant that names the act or says `*`.
+   A grant to every role (`roles: "*"`) is a door, not a key: riding
+   only it, a derived act reaches the records that seat made, so "anybody
+   may join" lets each person change or remove their own record, never
+   everybody's. A refusal names who could, so a seat told no learns what
    it lacks rather than concluding the capability is missing.
 
 3. **Give the provider a principal.** `<GraviewProvider principal={{ kind:

@@ -65,7 +65,8 @@ export function diffSnapshots<N extends GraphNodeBase>(
   const changedNodes: NodeChange<N>[] = [];
   for (const prev of before.nodes) {
     const next = afterNodes.get(prev.id);
-    if (!next) continue;
+    // The same record, untouched: a graph replaces a record it patches, so one it holds still has not changed.
+    if (!next || next === prev) continue;
     const fields = changedFields(prev, next);
     if (fields.length > 0) changedNodes.push({ before: prev, after: next, fields });
   }

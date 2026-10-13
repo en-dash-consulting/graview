@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 0,
+  "gzipped": 53,
+  "note": "Raised by the ninth walk's fixes (W-190 to W-201), less the watch's reading of a store, which left core: every face is 229 bytes lighter minified and 53 heavier gzipped than main (1_832_944 / 593_764). Measured at 1_832_715 / 593_817."
+}

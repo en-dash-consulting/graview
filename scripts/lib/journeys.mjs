@@ -220,7 +220,10 @@ export function storeHookInPage() {
   const watch = window.__graviewWatch;
   if (!watch) return;
   window.__journeyStores = [];
+  // The watch reads a store's names when it is handed one; the journeys keep it too.
+  const handed = watch.store;
   watch.store = (store) => {
+    handed?.(store);
     window.__journeyStores.push(store);
     // The seat: whoever the interface last asked the policy about.
     for (const method of ["kindsKeptFrom", "permittedMutations", "mayAdminister"]) {
@@ -500,6 +503,19 @@ async function openActs(person) {
     if (!key) return;
     await person.key(key.toLowerCase());
   } else {
+    /*
+     * A phone's panel is a sheet standing over what is chosen, and a finger
+     * has no right button: its head says "Acts…", and a person presses that
+     * (W-195).
+     */
+    const sheet = page.locator('[data-graview-map-panel="sheet"] [data-testid="map-panel-acts"]').locator("visible=true").first();
+    if (await sheet.isVisible().catch(() => false)) {
+      await sheet.click({ timeout: 4_000 }).catch(() => {});
+      person.presses += 1;
+      await person.settle(250);
+      person.note("its acts", before);
+      return;
+    }
     if (!(await chosen.isVisible().catch(() => false))) return;
     /*
      * On its name, as a person aims at the card itself. The host is the

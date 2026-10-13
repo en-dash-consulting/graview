@@ -1,0 +1,8 @@
+---
+"@graview/core": patch
+"@graview/skills": patch
+---
+
+A door for everybody is not a key to every record (the ninth walk, W-201). A kind's derived edit, remove, archive, bring-back and merge ride the declared acts that make or write it — and a beekeeping co-op's "Anybody may join" (`roles: "*"` on the act that makes a member) let a novice remove her mentor from the co-op, and handed somebody browsing the tools to change, archive or merge any member they could see. Riding only a grant to every role, a derived act now reaches the records that seat made, as the store's log says who made each; a role's own grant on the acts it rides, or a grant that names the act or says `*`, reaches the rest as before. Refused, it says so: "Not permitted: “Remove the beekeeper” on a beekeeper — only on what you made; a coordinator can." The graview-permissions skill says it.
+
+Compatibility: derived tools are unchanged. Narrowed: a seat whose only way to a kind's derived `edit-`, `remove-`, `archive-`, `unarchive-` or `merge-<kind>` is a grant with `roles: "*"` naming the declared acts that make (or write) the kind is now refused it, as `forbidden`, on a record it did not make (`store.permits`, `apply`, what a face offers and an agent's call), where it reached every record it could see. Unchanged: a grant of everything to everybody (`{ roles: "*", mutations: "*" }`, which `add-sight` writes on a document with no policy) and any grant naming the derived act or saying `*` reach every record; a role's own grant on the acts it rides reaches every record of the kind. A store with no policy permits everything, as before. `permits` from `@graview/core` takes an optional ninth argument, who made the record. docs/stability.md says it under derived tools.

@@ -37,6 +37,8 @@ export type GraphListener<S extends AnySchema> = (
   diff: GraphDiff<NodeOfSchema<S>>,
 ) => void;
 
+
+
 /**
  * A validator's complaint, said in words.
  *
@@ -260,6 +262,9 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    */
   applyPrimitives(primitives: readonly Primitive[], options: ApplyPrimitivesOptions = {}): GraphDiff<NodeOfSchema<S>> {
     const before = this.snapshot();
+    // The records a batch names, and those at either end of a link it names (W-197).
+    const ids = new Set(primitives.flatMap((primitive) => (primitive.op === "patch-node" ? [primitive.id] : "node" in primitive ? [primitive.node.id] : [primitive.edge.from, primitive.edge.to])));
+    const within = (snapshot: GraphSnapshot<NodeOfSchema<S>>) => ({ nodes: snapshot.nodes.filter((node) => ids.has(node.id)), edges: snapshot.edges.filter((edge) => ids.has(edge.from) || ids.has(edge.to)) });
     /*
      * ALL OR NOTHING. A primitive that fails used to leave the ones before
      * it applied, so a host rehearsed every repair and migration on a copy
@@ -274,7 +279,18 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       this.restore(before);
       throw error;
     }
-    const diff = diffSnapshots(before, this.snapshot());
+    /*
+     * WHAT CHANGED IS WHAT WAS TOUCHED (the ninth walk, W-197). The diff
+     * compared every record and link before and after, each record field by
+     * field through JSON — some 30 milliseconds an act on a co-op of 8,500
+     * records and 16,000 links, so a sheet of 200 rows took ten seconds to
+     * keep and the seed four minutes to make. Only what a primitive names
+     * can differ — the record it adds, removes or patches, the link it adds
+     * or removes, and the links a removed record takes with it — so the diff
+     * is of the records it names and the links at them, in the graph's own
+     * order; one held unchanged is not compared.
+     */
+    const diff = diffSnapshots(within(before), within(this.snapshot()));
     this.emit(diff);
     return diff;
   }
