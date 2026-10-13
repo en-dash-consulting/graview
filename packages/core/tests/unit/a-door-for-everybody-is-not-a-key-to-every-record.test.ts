@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindSchema, createSchema, defineNode, nodeRef, Store, z, type Policy } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, Store, z, type Policy } from "../../src/index.js";
 
 /**
  * A DOOR FOR EVERYBODY IS NOT A KEY TO EVERY RECORD — AND A KEY IS STILL A
