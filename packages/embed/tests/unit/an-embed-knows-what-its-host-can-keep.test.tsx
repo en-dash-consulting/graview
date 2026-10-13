@@ -81,7 +81,11 @@ async function removeTheNotes(host: HTMLElement) {
     pick!.focus();
     pick!.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   });
-  const remove = [...studio.querySelectorAll<HTMLButtonElement>('[data-testid="inspector-strip"] [data-affordance]')].find((button) => button.textContent?.startsWith("Remove the field"));
+  // The inspector's pane is fetched when an act is first wanted: its acts arrive a moment after the pick.
+  const removing = () => [...studio.querySelectorAll<HTMLButtonElement>('[data-testid="inspector-strip"] [data-affordance]')].find((button) => button.textContent?.startsWith("Remove the field"));
+  for (let tries = 0; tries < 100 && !removing(); tries += 1) await act(async () => new Promise((wait) => setTimeout(wait, 20)));
+  const remove = removing();
+  expect(remove, "the pick's strip offers to remove the field").toBeDefined();
   await act(async () => remove!.click());
 }
 
