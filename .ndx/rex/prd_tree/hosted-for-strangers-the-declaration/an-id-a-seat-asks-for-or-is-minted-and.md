@@ -5,6 +5,7 @@ title: "An id a seat asks for or is minted, and a single-source link it sets, te
 status: "pending"
 priority: "medium"
 tags:
+  - "roadmap"
   - "graview-cloud"
   - "FR-55"
   - "sight"
