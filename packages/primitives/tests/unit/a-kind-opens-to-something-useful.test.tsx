@@ -156,6 +156,13 @@ describe("a kind gone into", () => {
     expect(table.querySelectorAll("tbody tr")).toHaveLength(ROOMS);
     // Each row is named by its record, and its acts are a named control.
     expect(table.querySelector('tbody tr th button')?.textContent).toBe("Hall 00");
+    // And each row is its record to the scene, as a record is anywhere: chosen when pressed, its acts on a right-click.
+    expect([...table.querySelectorAll("tbody tr")].every((tr) => tr.getAttribute("data-graview-pick") === tr.getAttribute("data-graview-record"))).toBe(true);
+    expect(table.querySelector("tbody tr")?.getAttribute("tabindex")).toBe("-1");
+    // A value a record has not got is said, quietly, never a hole: Hall 01 is looked after by nobody.
+    const blank = table.querySelectorAll("tbody tr")[1]!.querySelector('td[data-empty]');
+    expect(blank?.textContent).toBe("—none");
+    expect(blank?.querySelector('[aria-hidden="true"]')?.textContent).toBe("—");
     expect(table.querySelector('[data-testid="kind-stop-row-acts"]')?.getAttribute("aria-label")).toBe("What can be done with Hall 00");
     // A relation is read as the far record's name, never its id.
     expect(table.querySelector('tbody tr')?.textContent).toContain("Ada");
