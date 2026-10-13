@@ -26,7 +26,7 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
-- `pictures: true` (or `{ width }`, the widest it draws one) hands each file on a record as `{ name, type, bytes, caption, src }`: draw `<img src="${photo.src}">` once `src` comes (a push follows); `left` says why it never will.
+- `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path: `graview-view-drawing` says how a view shows it.
 
 A manifest that names a kind, an edge or an act the app does not declare is refused before the view starts.
 
@@ -43,7 +43,7 @@ graview.act(name, args)         // ask for an act: resolves { ok, intent } or { 
 graview.navigate("offer:7")     // a record, else a place by slug; or { place: "…" }
 ```
 
-`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made: draw it with `<img src="${props.theme.logo}">`, never a URL of your own). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
+`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
 
 ```js
 graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
@@ -51,13 +51,7 @@ graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute(
 
 ### What it may draw
 
-HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, transitions, `@keyframes`, `@media`, `@supports` and `@container`.
-
-Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video`, `canvas`, SVG `image` and `foreignObject`; any `href`, `srcset` or `on*` attribute; `src` except on `img`, as a `data:` image. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`; `image-set()`, `attr()` and other unlisted functions; `position: fixed` or `sticky`; `:host`. What the host leaves out it lists in `refused`; `graview.refused` is the runtime's own early word on the last render.
-
-A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds; your selectors for them still match. A `section` is never named (no `aria-label` or `title`), so it stays out of the landmarks. `role` takes no landmark or notice's role (`navigation`, `region`, `status`, `alert`, …).
-
-**Draw with the app's tokens**, so light and dark follow the app's own toggle: `var(--graview-panel)`, `--graview-ground`, `--graview-ink`, `--graview-ink-muted`, `--graview-edge`, `--graview-accent`, `--graview-font-body`, `--graview-font-display` (headings, as the app's), `--graview-font-mono`, `--graview-radius`. A brand change pushes `theme` again. Presentation attributes do not take `var()`; put paints in the stylesheet (`.bar { fill: var(--graview-accent) }`).
+HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so light and dark follow the app's toggle; nothing that loads or escapes. What the host keeps, the tokens, and the only images a view may show (the app's logo, the app's own images, the pictures on records) are `graview-view-drawing`. What the host leaves out it lists in `refused`.
 
 ### Links
 
@@ -87,7 +81,7 @@ The host fills it with the record's whole value, line breaks kept, when an act i
 
 ### Limits
 
-About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set. Work a view schedules with timers between pushes is not timed per push. Never spin: the page stays responsive, the person's CPU does not.
+About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set. Work a view schedules with timers between pushes is not timed per push. It may keep its worker busy just under the heartbeat's 5 s; the page stays responsive, the person's CPU does not: never spin.
 
 ### Worked examples
 
@@ -101,7 +95,7 @@ views: (schema, registry) => registerWorkerView(registry, { manifest, worker: { 
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));
 ```
 
-A view with `attach: "home"` is the home's body, the page the app opens on; the app's declared home is drawn if it fails.
+A view with `attach: "home"` given to `registerWorkerView` is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too — and the app's declared home is drawn if it fails.
 
 ### Then find out whether it worked
 

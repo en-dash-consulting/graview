@@ -41,6 +41,8 @@ skills say which parts of their work the checker cannot see.
 | `graview-pages` | The routed face: derived pages, one page in the app's words, a product design over every surface, and the embed |
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |
 | `graview-studio` | Open the declaration as a graph, change it with acts, check before applying, migrate, and write it back as the scaffold's files |
+| `graview-worker-view` | Write a worker view: one plain script with a manifest the host enforces, its writes, its limits, and a headless run |
+| `graview-view-drawing` | Draw in a worker view: what the host keeps, the app's tokens, and the images a view may show — the logo, the app's own images, the pictures on records |
 
 The worked examples live in `apps/` in the framework repository. The skills
 point at them rather than restating them — a skill that copies an example goes
