@@ -5,6 +5,7 @@ title: "A guest view is handed the pictures it may show, behind their own door (
 status: "pending"
 priority: "medium"
 tags:
+  - "roadmap"
   - "graview-cloud"
   - "FR-162"
   - "guest"

@@ -5,6 +5,7 @@ title: "Walkthrough IX · The ninth walk, from a fresh checkout, adds nothing"
 status: "pending"
 priority: "critical"
 tags:
+  - "roadmap"
   - "walkthrough"
 blockedBy:
   - "2cf0da0d-d2d2-4514-9da1-924718c50add"
