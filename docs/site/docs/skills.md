@@ -1,6 +1,6 @@
 # The skills
 
-Graview's 16 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 17 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -28,6 +28,6 @@ graview skills install .
 
 ---
 
-The 16 skills that teach an assistant the authoring moves, each ending in a real check.
+The 17 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

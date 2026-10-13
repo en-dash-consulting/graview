@@ -32,7 +32,7 @@ graview describe <entry> [--as <role>] [--views <module>] [--place <slug|id>]
 graview docs <entry> [--out <dir>] [--views <module>]
 ```
 
-## What a model reads before it writes (16 skills)
+## What a model reads before it writes (17 skills)
 
 Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by `graview skills install .` — which `graview create` runs for you — into `.claude/skills` and `.agents/skills`, so Claude Code and Codex find the same instructions.
 

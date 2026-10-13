@@ -237,7 +237,7 @@ graview describe <entry> [--as <role>] [--views <module>] [--place <slug|id>]
 graview docs <entry> [--out <dir>] [--views <module>]
 ```
 
-## What a model reads before it writes (16 skills)
+## What a model reads before it writes (17 skills)
 
 Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by `graview skills install .` — which `graview create` runs for you — into `.claude/skills` and `.agents/skills`, so Claude Code and Codex find the same instructions.
 
@@ -665,7 +665,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [Working with a model](https://graview.dev/docs/agents.html): The seat, the typed tools, what a model reads, and the studio.
 - [Live demos](https://graview.dev/docs/demos.html): Every surface of the garden, running on the page, and the example apps.
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
-- [Skills (16)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
+- [Skills (17)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, types, docs, describe, lens, figure, serve, skills.
 - [What check says (97)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
@@ -2079,7 +2079,7 @@ Source: https://graview.dev/docs/skills.html
 
 # The skills
 
-Graview's 16 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 17 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -2107,7 +2107,7 @@ graview skills install .
 
 ---
 
-The 16 skills that teach an assistant the authoring moves, each ending in a real check.
+The 17 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -2117,7 +2117,7 @@ Source: https://graview.dev/docs/skills/graview-agent-seat.html
 
 # graview-agent-seat
 
-`graview-agent-seat` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
+`graview-agent-seat` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2216,7 +2216,7 @@ Source: https://graview.dev/docs/skills/graview-brand.html
 
 # graview-brand
 
-`graview-brand` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+`graview-brand` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2328,7 +2328,7 @@ Source: https://graview.dev/docs/skills/graview-desk.html
 
 # graview-desk
 
-`graview-desk` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
+`graview-desk` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2383,7 +2383,7 @@ Source: https://graview.dev/docs/skills/graview-embed.html
 
 # graview-embed
 
-`graview-embed` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+`graview-embed` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2480,7 +2480,7 @@ Source: https://graview.dev/docs/skills/graview-invariant.html
 
 # graview-invariant
 
-`graview-invariant` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
+`graview-invariant` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2571,7 +2571,7 @@ Source: https://graview.dev/docs/skills/graview-lens.html
 
 # graview-lens
 
-`graview-lens` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
+`graview-lens` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2671,7 +2671,7 @@ Source: https://graview.dev/docs/skills/graview-lists.html
 
 # graview-lists
 
-`graview-lists` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2725,7 +2725,7 @@ Source: https://graview.dev/docs/skills/graview-new-app.html
 
 # graview-new-app
 
-`graview-new-app` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
+`graview-new-app` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2844,7 +2844,7 @@ Source: https://graview.dev/docs/skills/graview-node-kind.html
 
 # graview-node-kind
 
-`graview-node-kind` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
+`graview-node-kind` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2950,7 +2950,7 @@ Source: https://graview.dev/docs/skills/graview-pages.html
 
 # graview-pages
 
-`graview-pages` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
+`graview-pages` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3086,7 +3086,7 @@ Source: https://graview.dev/docs/skills/graview-permissions.html
 
 # graview-permissions
 
-`graview-permissions` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
+`graview-permissions` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3184,7 +3184,7 @@ Source: https://graview.dev/docs/skills/graview-port-app.html
 
 # graview-port-app
 
-`graview-port-app` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
+`graview-port-app` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3266,7 +3266,7 @@ Source: https://graview.dev/docs/skills/graview-seed.html
 
 # graview-seed
 
-`graview-seed` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
+`graview-seed` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3338,7 +3338,7 @@ Source: https://graview.dev/docs/skills/graview-ship.html
 
 # graview-ship
 
-`graview-ship` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+`graview-ship` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3428,7 +3428,7 @@ Source: https://graview.dev/docs/skills/graview-studio.html
 
 # graview-studio
 
-`graview-studio` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
+`graview-studio` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3487,7 +3487,7 @@ Source: https://graview.dev/docs/skills/graview-view-drawing.html
 
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3550,7 +3550,7 @@ Source: https://graview.dev/docs/skills/graview-worker-view.html
 
 # graview-worker-view
 
-`graview-worker-view` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+`graview-worker-view` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 

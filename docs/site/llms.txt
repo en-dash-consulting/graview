@@ -40,7 +40,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 
 ## Skills
 
-- [Skills](https://graview.dev/docs/skills.md): The 16 skills that teach an assistant the authoring moves, each ending in a real check.
+- [Skills](https://graview.dev/docs/skills.md): The 17 skills that teach an assistant the authoring moves, each ending in a real check.
 - [graview-agent-seat](https://graview.dev/docs/skills/graview-agent-seat.md): Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 - [graview-brand](https://graview.dev/docs/skills/graview-brand.md): Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 - [graview-desk](https://graview.dev/docs/skills/graview-desk.md): Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
