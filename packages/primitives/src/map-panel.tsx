@@ -130,9 +130,17 @@ function PanelFrame({
       {/*
         * THE CITY TAKES THE ROOM THAT IS LEFT: the picture the panel stands in
         * says how wide it is (`--graview-dock`), the ground is laid out in
-        * the rest, and Up, the Key and the ask field keep clear of it.
+        * the rest, and Up, the Key and the ask field keep clear of it. A
+        * sheet on a phone says how tall it is (`--graview-sheet`) and the
+        * city is laid out above it: what was chosen stays in sight, where a
+        * finger can still press it and open its acts, rather than under the
+        * sheet it opened.
         */}
-      {sheet ? null : <style>{`:has(> [data-graview-map-panel="dock"]) { --graview-dock: ${wide}; }`}</style>}
+      {sheet ? (
+        <style>{`:has(> [data-graview-map-panel="sheet"]) { --graview-sheet: ${sheetHeight}; }`}</style>
+      ) : (
+        <style>{`:has(> [data-graview-map-panel="dock"]) { --graview-dock: ${wide}; }`}</style>
+      )}
       <header style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 14px 10px 18px", borderBottom: "1px solid var(--graview-edge)" }}>
         <div style={{ flex: "1 1 auto", minWidth: 0 }}>{head}</div>
         <button type="button" data-testid="map-panel-close" aria-label="Close" title="Close (Escape)" onClick={onClose} style={{ flex: "0 0 auto", minWidth: 32, height: 32, borderRadius: 8, fontSize: "1.1rem", lineHeight: 1 }}>
@@ -224,7 +232,7 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
       label={named}
       testId="lens-panel"
       wide="min(max(440px, 46%), 760px)"
-      sheetHeight="86%"
+      sheetHeight="60%"
       onClose={close}
       head={
         <>

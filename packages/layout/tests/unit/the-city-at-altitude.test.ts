@@ -78,7 +78,7 @@ describe("the city at altitude", () => {
     expect(highest.depth).toBeCloseTo(1, 5);
   });
 
-  it("reads upstream to downstream, left to right in a wide window and top to bottom in a tall one", () => {
+  it("reads upstream to downstream along the ground's axis, up and to the right in a wide window, and in order in a tall one", () => {
     const at = (cards: ReturnType<typeof districts>, kind: string) => {
       const card = cards.find((one) => one.id === kindCardId(kind))!;
       return { x: card.x + card.width / 2, y: card.y + card.height / 2 };
@@ -87,9 +87,14 @@ describe("the city at altitude", () => {
     const wide = districts(1280, 800);
     expect(at(wide, "week").x).toBeLessThan(at(wide, "duty").x);
     expect(at(wide, "duty").x).toBeLessThan(at(wide, "person").x);
+    expect(at(wide, "week").y).toBeGreaterThan(at(wide, "duty").y);
+    expect(at(wide, "duty").y).toBeGreaterThan(at(wide, "person").y);
+    // In a tall window, whichever way stands the city larger — down, or still up and to the right — in order along it.
     const tall = districts(390, 640);
-    expect(at(tall, "week").y).toBeLessThan(at(tall, "duty").y);
-    expect(at(tall, "duty").y).toBeLessThan(at(tall, "person").y);
+    const step = (a: string, b: string) => ({ x: at(tall, b).x - at(tall, a).x, y: at(tall, b).y - at(tall, a).y });
+    const first = step("week", "duty");
+    const second = step("duty", "person");
+    expect(first.x * second.x + first.y * second.y).toBeGreaterThan(0);
     // The note is tied to nothing: in the margin, under the rest.
     for (const kind of ["week", "duty", "person"]) expect(at(wide, "note").y, kind).toBeGreaterThan(at(wide, kind).y);
   });
@@ -145,6 +150,23 @@ describe("the city at altitude", () => {
     expect(limit.x).toBeGreaterThanOrEqual(extent.x + extent.width - 390);
     expect(limit.x).toBeGreaterThanOrEqual(-extent.x);
     expect(cameraLimit({ width: 500, height: 300 })).toEqual({ x: 225, y: 135 });
+  });
+
+  it("starts closer where its names cannot all be said in the window, says every one under its own district, and keeps the chosen one in sight", () => {
+    const wide = { width: 180, height: 22, short: { width: 180, height: 22 } };
+    const cards = ["week", "duty", "person", "note"].map((kind) => ({ id: kindCardId(kind), kind, count: 3, opened: 0, nameplate: wide }));
+    const phone = { width: 200, height: 400 };
+    const whole = placeCity(cards, schema, phone);
+    const said = whole.placed.filter((card) => card.nameplate !== "none");
+    expect(said).toHaveLength(cards.length);
+    expect(said.every((card) => card.nameplate === "full" || card.nameplate === "short")).toBe(true);
+    // Past the window somewhere: the camera came closer rather than leave a district unnamed.
+    const past = (card: (typeof whole.placed)[number]) => card.x < 0 || card.y < 0 || card.x + card.width > phone.width || card.y + card.height > phone.height;
+    const outside = whole.placed.filter(past);
+    expect(outside.length).toBeGreaterThan(0);
+    const chosen = outside[0]!;
+    const kept = placeCity(cards, schema, phone, {}, { keep: [chosen.id.slice(5)] }).placed.find((card) => card.id === chosen.id)!;
+    expect(past(kept)).toBe(false);
   });
 
   it("is a pure placer: the same cards, the same schema, the same picture", () => {

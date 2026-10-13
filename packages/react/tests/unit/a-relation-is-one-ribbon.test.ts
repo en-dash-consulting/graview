@@ -2,7 +2,8 @@ import { createSchema, defineNode, z } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { districtOf, mapChoice, ribbonSentence, ribbonsOf } from "../../src/map-choice.js";
 import { ribbonWidth, RIBBON_WIDTH } from "../../src/ribbon-width.js";
-import { crossesAny, loopPoints, midpointOf, routeRibbons, tileOf, type Tile } from "../../src/ribbons.js";
+import { toIso } from "@graview/core/scene";
+import { loopPoints, midpointOf, routeOnTheGround, type Box, type PlotLike } from "../../src/ribbons.js";
 
 /*
  * FROM ALTITUDE, ONE RIBBON PER RELATION BETWEEN TWO DISTRICTS, as wide as
@@ -57,59 +58,83 @@ describe("a relation is one ribbon", () => {
   });
 
   /*
-   * Four districts in a row at the city's own spacing, a fifth below the
-   * first: the shape the map lays a left-to-right city out in.
+   * Four districts in a row as the city lays one out — along one of the
+   * ground's axes, upstream to downstream — a fifth in the next row beside
+   * the first, each with its name card under its front corner.
    */
-  const at = (col: number, row: number) => ({ col, row, side: 4 });
-  const tiles = new Map<string, Tile>([
-    ["a", tileOf(at(0, 6), 20)],
-    ["b", tileOf(at(6, 0), 20)],
-    ["c", tileOf(at(12, -6), 20)],
-    ["d", tileOf(at(18, -12), 20)],
-    ["e", tileOf(at(6, 12), 20)],
+  const cell = 20;
+  const plots = new Map<string, PlotLike>([
+    ["a", { col: 0, row: 0, side: 3 }],
+    ["b", { col: 0, row: -8, side: 2 }],
+    ["c", { col: 0, row: -16, side: 3 }],
+    ["d", { col: 0, row: -24, side: 3 }],
+    ["e", { col: 8, row: 0, side: 3 }],
   ]);
-  const others = (...not: string[]) => [...tiles].filter(([key]) => !not.includes(key)).map(([, tile]) => tile);
-  const lengthOf = (points: readonly { x: number; y: number }[]) => points.reduce((sum, p, i) => (i === 0 ? 0 : sum + Math.hypot(p.x - points[i - 1]!.x, p.y - points[i - 1]!.y)), 0);
+  const labels: Box[] = [...plots.values()].map((plot) => {
+    const front = toIso(plot.col + plot.side, plot.row + plot.side, cell);
+    return { x: front.x - 30, y: front.y + 2, width: 60, height: 20 };
+  });
+  const route = (...pairs: [string, string, number?][]) =>
+    routeOnTheGround({ ribbons: pairs.map(([from, to, width]) => ({ key: `${from}${to}`, from, to, width: width ?? 4 })), plots, cell, labels });
+  // Back from the canvas to the lattice, at the default tilt.
+  const lattice = (p: { x: number; y: number }) => ({ col: p.x / cell + (2 * p.y) / cell, row: (2 * p.y) / cell - p.x / cell });
+  const onAPlot = (p: { x: number; y: number }, except: string[]) => {
+    const { col, row } = lattice(p);
+    return [...plots].some(([key, plot]) => !except.includes(key) && col > plot.col + 0.05 && col < plot.col + plot.side - 0.05 && row > plot.row + 0.05 && row < plot.row + plot.side - 0.05);
+  };
+  const under = (p: { x: number; y: number }) => labels.some((box) => p.x > box.x && p.x < box.x + box.width && p.y > box.y && p.y < box.y + box.height);
+  const sampled = (run: readonly { x: number; y: number }[]) =>
+    run.flatMap((p, i) => (i === 0 ? [p] : Array.from({ length: 20 }, (_, k) => ({ x: run[i - 1]!.x + ((p.x - run[i - 1]!.x) * (k + 1)) / 20, y: run[i - 1]!.y + ((p.y - run[i - 1]!.y) * (k + 1)) / 20 }))));
+  const onTheAxes = (run: readonly { x: number; y: number }[]) =>
+    run.every((p, i) => {
+      if (i === 0) return true;
+      const a = lattice(run[i - 1]!);
+      const b = lattice(p);
+      return Math.abs(a.col - b.col) < 1e-6 || Math.abs(a.row - b.row) < 1e-6;
+    });
 
-  it("runs straight between neighbors, from the corner of one to the corner of the other that faces it", () => {
-    const run = routeRibbons([{ key: "ab", from: "a", to: "b", width: 4 }], tiles).get("ab")!;
-    expect(run).toHaveLength(2);
-    const a = tiles.get("a")!;
-    const b = tiles.get("b")!;
-    expect(run[0]).toEqual({ x: a.cx + a.hw, y: a.cy });
-    expect(run[1]).toEqual({ x: b.cx - b.hw, y: b.cy });
+  it("runs on the ground's own axes, straight between neighbors in a row and with one bend between rows", () => {
+    const along = route(["a", "b"]).get("ab")!;
+    expect(onTheAxes(along)).toBe(true);
+    expect(along).toHaveLength(2);
+    const across = route(["e", "b"]).get("eb")!;
+    expect(onTheAxes(across)).toBe(true);
+    expect(across.length).toBeLessThanOrEqual(5);
   });
 
-  it("goes along the row's street between two with others between, crossing none and bowing nowhere", () => {
-    const run = routeRibbons([{ key: "ad", from: "a", to: "d", width: 4 }], tiles).get("ad")!;
-    expect(crossesAny(run, others("a", "d"))).toBe(false);
-    const a = tiles.get("a")!;
-    const d = tiles.get("d")!;
-    // Never higher than the districts it joins, nor further below them than their fronts and a little: no V up the window.
-    for (const p of run) {
-      expect(p.y).toBeGreaterThanOrEqual(Math.min(a.cy, d.cy) - 1);
-      expect(p.y).toBeLessThanOrEqual(a.cy + a.hh + 20);
+  it("runs a row's street straight past the districts between, one bend out of a curb and one in", () => {
+    const run = route(["d", "a"]).get("da")!;
+    expect(onTheAxes(run)).toBe(true);
+    expect(run.length).toBeLessThanOrEqual(4);
+  });
+
+  it("crosses no district and passes behind no name card, however far it goes", () => {
+    for (const [from, to] of [["a", "d"], ["e", "d"], ["a", "c"]] as const) {
+      const run = route([from, to]).get(`${from}${to}`)!;
+      expect(onTheAxes(run)).toBe(true);
+      for (const p of sampled(run)) {
+        expect(onAPlot(p, [from, to]), `${from}${to} on a plot at ${JSON.stringify(lattice(p))}`).toBe(false);
+        expect(under(p), `${from}${to} under a card at ${JSON.stringify(lattice(p))} ${JSON.stringify(run.map(lattice))}`).toBe(false);
+      }
     }
-    // And hardly longer than the way across.
-    expect(lengthOf(run)).toBeLessThan(1.2 * Math.hypot(d.cx - a.cx, d.cy - a.cy) + 2 * a.hh);
   });
 
-  it("bends once to reach a district in another row and column, crossing none", () => {
-    const run = routeRibbons([{ key: "ed", from: "e", to: "d", width: 4 }], tiles).get("ed")!;
-    expect(crossesAny(run, others("e", "d"))).toBe(false);
-    expect(run.length).toBeLessThanOrEqual(5);
+  it("keeps to the streets between the districts rather than the open ground beyond them", () => {
+    const run = route(["a", "d"]).get("ad")!;
+    const near = (p: { x: number; y: number }) => {
+      const { col, row } = lattice(p);
+      return Math.min(...[...plots.values()].map((plot) => Math.max(0, plot.col - col, col - (plot.col + plot.side)) + Math.max(0, plot.row - row, row - (plot.row + plot.side))));
+    };
+    for (const p of run) expect(near(p)).toBeLessThanOrEqual(3);
   });
 
   it("lays ribbons that share a street side by side, each its own width apart", () => {
-    const runs = routeRibbons(
-      [
-        { key: "ad", from: "a", to: "d", width: 6 },
-        { key: "ac", from: "a", to: "c", width: 2 },
-      ],
-      tiles,
-    );
-    const street = (key: string) => runs.get(key)![1]!.y;
-    expect(Math.abs(street("ad") - street("ac"))).toBeGreaterThanOrEqual(4);
+    const runs = route(["a", "d", 6], ["a", "c", 2]);
+    const ad = runs.get("ad")!;
+    const ac = runs.get("ac")!;
+    // Somewhere along their shared way they run parallel and apart, never on top of each other.
+    const apart = ad.some((p) => ac.some((q) => Math.hypot(p.x - q.x, p.y - q.y) > 2 && Math.hypot(p.x - q.x, p.y - q.y) < 12));
+    expect(apart).toBe(true);
   });
 
   it("draws a relation of a kind to itself as a loop off its own curb, each further one further out", () => {

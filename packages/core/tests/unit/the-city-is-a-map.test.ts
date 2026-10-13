@@ -19,9 +19,11 @@ import { checkApp, describeApp } from "../../src/check.js";
 /**
  * THE CITY IS A MAP DRAWN FROM THE DECLARATION.
  *
- * Same declaration, same plots. The kinds stand upstream to downstream,
- * left to right — each one column past the furthest kind it points at —
- * and a kind tied to nothing stands in the margin under the rest.
+ * Same declaration, same plots. The kinds stand upstream to downstream
+ * along one of the ground's own axes — up and to the right on the screen,
+ * each one place past the furthest kind it points at — so a street can run
+ * straight along every row of them, and a kind tied to nothing stands in
+ * a row of its own beside the rest.
  * Population changes a plot's side, never its corner, and never past three
  * cells: the biggest kind does not take the map. A kind that declares
  * where it stands is put exactly there, and two on one block are reported.
@@ -67,16 +69,21 @@ describe("the map", () => {
     for (const [kind, plot] of a) for (const [other, there] of a) if (kind !== other) expect(plotsOverlap(plot, there), `${kind} and ${other}`).toBe(false);
   });
 
-  it("stands each kind left of the kinds that point at it: upstream to downstream, a column each", () => {
+  it("stands upstream to downstream along one of the ground's own axes, up and to the right on the screen, a place each", () => {
     const map = cityMap(schema, { order });
-    // practice → concern → feature → zone, and concern → zone: four columns.
-    const x = (kind: string) => onScreen(map, kind).x;
-    expect(x("zone")).toBeLessThan(x("feature"));
-    expect(x("feature")).toBeLessThan(x("concern"));
-    expect(x("concern")).toBeLessThan(x("practice"));
-    // One column apart is one block across the screen, whatever the kind's size.
-    expect(x("feature") - x("zone")).toBe(BLOCK);
-    expect(x("practice") - x("concern")).toBe(BLOCK);
+    // practice → concern → feature → zone, and concern → zone: four places along the row.
+    const chain = ["zone", "feature", "concern", "practice"];
+    // On one line of the lattice: one coordinate held, so a street runs straight along them.
+    for (const kind of chain) expect(map.get(kind)!.col, kind).toBe(map.get("zone")!.col);
+    // Each a place further along it, the same distance apart whatever the kind's size.
+    const rows = chain.map((kind) => map.get(kind)!.row);
+    for (let i = 1; i < rows.length; i++) expect(rows[i]! - rows[i - 1]!).toBe(rows[1]! - rows[0]!);
+    expect(rows[0]! - rows[1]!).toBeGreaterThan(BLOCK);
+    // Which on the screen is up and to the right.
+    for (let i = 1; i < chain.length; i++) {
+      expect(onScreen(map, chain[i]!).x).toBeGreaterThan(onScreen(map, chain[i - 1]!).x);
+      expect(onScreen(map, chain[i]!).y).toBeLessThan(onScreen(map, chain[i - 1]!).y);
+    }
   });
 
   it("stands a kind tied to nothing in the margin, under the map", () => {
@@ -85,17 +92,19 @@ describe("the map", () => {
     for (const kind of ["zone", "feature", "concern", "practice"]) expect(y("note"), kind).toBeGreaterThan(y(kind));
   });
 
-  it("stands the kinds of one column one above the other, and the same columns top to bottom when it is turned upright", () => {
+  it("stands the kinds of one place side by side in parallel rows, and runs down the screen when it is turned upright", () => {
     const person = defineNode("person", { fields: z.object({ label: z.string() }), plural: "People" });
     const place = defineNode("place", { fields: z.object({ label: z.string() }), plural: "Places" });
     const visit = defineNode("visit", { fields: z.object({ label: z.string() }), plural: "Visits", edges: { by: { to: ["person"], description: "who" }, at: { to: ["place"], description: "where" } } });
     const app = createSchema([person, place, visit]);
     const wide = cityMap(app, { order: ["person", "place", "visit"] });
-    expect(onScreen(wide, "person").x).toBe(onScreen(wide, "place").x);
-    expect(onScreen(wide, "place").y).toBeGreaterThan(onScreen(wide, "person").y);
-    expect(onScreen(wide, "visit").x).toBeGreaterThan(onScreen(wide, "person").x);
+    // Two kinds of one place stand side by side along the ground's other axis: a row each, parallel.
+    expect(wide.get("person")!.row).toBe(wide.get("place")!.row);
+    expect(wide.get("place")!.col).toBeGreaterThan(wide.get("person")!.col);
+    expect(wide.get("visit")!.row).toBeLessThan(wide.get("person")!.row);
+    // Turned upright for a tall window, upstream to downstream runs down the screen.
     const upright = cityMap(app, { order: ["person", "place", "visit"], upright: true });
-    expect(onScreen(upright, "person").y).toBe(onScreen(upright, "place").y);
+    expect(upright.get("person")!.col).toBe(upright.get("place")!.col);
     expect(onScreen(upright, "visit").y).toBeGreaterThan(onScreen(upright, "person").y);
   });
 

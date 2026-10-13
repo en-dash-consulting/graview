@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T08:46:02.199Z",
+  "at": "2026-10-13T12:26:20.171Z",
   "engine": "chromium",
   "steps": [
     {
@@ -105,7 +105,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565435,
+      "wingOpacity": 0.565384,
       "registered": true
     },
     "groundAgain": {
@@ -258,9 +258,13 @@
       "up": true
     },
     "midway": {
-      "x": 471.7143096923828,
-      "y": 425.5780029296875,
+      "x": 533.6623611450195,
+      "y": 564.2208404541016,
       "width": 1200
+    },
+    "plot": {
+      "x": 193.70000457763672,
+      "y": 560.5500030517578
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -274,17 +278,21 @@
       "ok": true
     },
     "theGroundTravelsWithTheCards": {
-      "steps": 19,
+      "steps": 1,
       "jumps": 0,
       "first": 101,
-      "last": 77,
+      "last": 101,
+      "xSteps": 29,
+      "xJumps": 0,
+      "xFirst": 300,
+      "xLast": -59,
       "ok": true
     }
   },
   "camera": {
     "start": {
-      "cell": 77.14,
-      "latticeX": 131.7,
+      "cell": 101.04,
+      "latticeX": -58.9,
       "pan": null,
       "level": "100%",
       "reach": [
@@ -293,13 +301,13 @@
       ]
     },
     "zoomedIn": {
-      "cell": 201.47,
-      "latticeX": -784.2,
+      "cell": 263.88,
+      "latticeX": -1282.1,
       "pan": "-449.66,90.99",
       "level": "261%",
       "reach": [
-        661,
-        397
+        593,
+        649
       ]
     },
     "wheelAt": {
@@ -307,43 +315,43 @@
       "y": 160
     },
     "wheeled": {
-      "cell": 201.47,
-      "latticeX": -844.2,
+      "cell": 263.88,
+      "latticeX": -1342.1,
       "pan": "-509.66,10.99",
       "level": "261%",
       "reach": [
-        661,
-        397
+        593,
+        649
       ]
     },
     "buttonOut": {
-      "cell": 161.18,
-      "latticeX": -591.2,
+      "cell": 211.11,
+      "latticeX": -989.5,
       "pan": "-407.73,8.79",
       "level": "209%",
       "reach": [
-        449,
-        373
+        395,
+        442
       ]
     },
     "buttonIn": {
-      "cell": 201.47,
-      "latticeX": -844.2,
+      "cell": 263.88,
+      "latticeX": -1342.1,
       "pan": "-509.66,10.99",
       "level": "261%",
       "reach": [
-        661,
-        397
+        593,
+        649
       ]
     },
     "dragged": {
-      "cell": 201.47,
-      "latticeX": -995.3,
-      "pan": "-660.74,10.99",
+      "cell": 263.88,
+      "latticeX": -1425,
+      "pan": "-592.56,10.99",
       "level": "261%",
       "reach": [
-        661,
-        397
+        593,
+        649
       ]
     },
     "onThePicture": {

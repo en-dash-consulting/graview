@@ -637,7 +637,7 @@ describe("a card is the size of the words in it", () => {
    * smaller to keep them, and never past the room it has.
    */
   it("makes room for bigger words: the city draws smaller to keep the names the reader's size", () => {
-    const cell = (unit: number) => layout(graph(), schema, view({ overview: true }), { width: 1600, height: 900, unit }).city!.cell;
+    const cell = (unit: number) => layout(graph(), schema, view({ overview: true }), { width: 640, height: 360, unit }).city!.cell;
     expect(cards(32)).toHaveLength(cards(16).length);
     expect(cell(32)).toBeLessThan(cell(16));
   });

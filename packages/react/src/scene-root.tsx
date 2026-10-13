@@ -959,7 +959,8 @@ export function Scene<S extends AnySchema>({
          * is left, rather than half of it standing under the panel.
          */
         width: "calc(100% - var(--graview-dock, 0px))",
-        height: "100%",
+        // And a sheet from the foot of a phone (`--graview-sheet`): the city stands above it.
+        height: "calc(100% - var(--graview-sheet, 0px))",
         cursor: dragging ? "grabbing" : "grab",
         touchAction: "none",
         ["--graview-altitude" as string]: view.overview ? 1 : 0,
@@ -989,6 +990,23 @@ export function Scene<S extends AnySchema>({
         ...style,
       }}
     >
+      {/* THE RELATIONS, one ribbon each between the districts they join (see ribbons-layer.tsx): on the ground, under the districts and their buildings. */}
+      {view.overview && frame.city ? (
+        <Suspense fallback={null}>
+          <Ribbons
+            frame={frame}
+            {...extent}
+            pan={frame.city.pan}
+            store={store}
+            graphVersion={nodes}
+            selection={selection}
+            view={view}
+            emphasis={emphasis}
+            hiddenKinds={context.hiddenKinds}
+            drawn={kitDraws}
+          />
+        </Suspense>
+      ) : null}
       {/*
         * THE GROUND: every district's plot as a tile, under the cards and
         * over the fields, from the same origin and pan the lattice rides.
@@ -1011,23 +1029,6 @@ export function Scene<S extends AnySchema>({
         }}
       />
       </Suspense>
-      ) : null}
-      {/* THE RELATIONS, one ribbon each between the districts they join (see ribbons-layer.tsx). */}
-      {view.overview && frame.city ? (
-        <Suspense fallback={null}>
-          <Ribbons
-            frame={frame}
-            {...extent}
-            pan={frame.city.pan}
-            store={store}
-            graphVersion={nodes}
-            selection={selection}
-            view={view}
-            emphasis={emphasis}
-            hiddenKinds={context.hiddenKinds}
-            drawn={kitDraws}
-          />
-        </Suspense>
       ) : null}
       {useDom ? (
         /*

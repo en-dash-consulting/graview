@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T05:32:45.968Z",
+  "at": "2026-10-13T12:10:38.235Z",
   "engine": "chromium",
   "states": [
     {
@@ -723,6 +723,17 @@
       }
     },
     {
+      "state": "a dozen workshops, and the way to the rest",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "u-4f1c9a",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
       "state": "the problems the seed was written with",
       "face": "pages",
       "width": 1440,
@@ -1162,6 +1173,17 @@
       }
     },
     {
+      "state": "a dozen workshops, and the way to the rest",
+      "face": "pages",
+      "width": 390,
+      "scheme": "light",
+      "seat": "u-9b27e0",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
       "state": "the problems the seed was written with",
       "face": "pages",
       "width": 390,
@@ -1591,6 +1613,17 @@
     },
     {
       "state": "the coverage's place",
+      "face": "pages",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-02d8c4",
+      "reached": true,
+      "detail": {
+        "wide": 390
+      }
+    },
+    {
+      "state": "a dozen workshops, and the way to the rest",
       "face": "pages",
       "width": 390,
       "scheme": "dark",
@@ -2039,6 +2072,17 @@
       }
     },
     {
+      "state": "a dozen workshops, and the way to the rest",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "agent-sched-7",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
       "state": "the problems the seed was written with",
       "face": "pages",
       "width": 1440,
@@ -2460,6 +2504,17 @@
       }
     },
     {
+      "state": "a dozen workshops, and the way to the rest",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "dark",
+      "seat": "u-anon-0",
+      "reached": true,
+      "detail": {
+        "wide": 1440
+      }
+    },
+    {
       "state": "the problems the seed was written with",
       "face": "pages",
       "width": 1440,
@@ -2540,6 +2595,6 @@
     "noPageErrors": true
   },
   "missed": [],
-  "reached": "259 of 259 states",
+  "reached": "264 of 264 states",
   "passed": true
 }

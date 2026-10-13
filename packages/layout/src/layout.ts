@@ -940,6 +940,8 @@ export function layout<S extends AnySchema>(
           ...(opts.cityOrder ? { order: opts.cityOrder } : {}),
           ...(opts.plots ? { plots: opts.plots } : {}),
           ...(options.cityZoom && options.cityZoom !== 1 ? { zoom: options.cityZoom } : {}),
+          // The chosen districts, and the one a lens is open on, stay in sight when the city runs past the window.
+          keep: [...(state.selection ?? []), ...(state.focusId ? [state.focusId] : [])].flatMap((id) => (id.startsWith("kind:") ? [id.slice(5)] : id.startsWith("aggregate:") && !id.includes("|") ? [id.slice(10)] : [])),
           ...(options.tilt !== undefined ? { tilt: options.tilt } : {}),
           // Recorded, not applied: the cards already carry it, and the ground reads it to ride the same tween.
           pan: { x: state.pan?.x ?? 0, y: state.pan?.y ?? 0 },
