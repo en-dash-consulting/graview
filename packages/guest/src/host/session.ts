@@ -1,4 +1,5 @@
 import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
+import type { GuestPictureLimits } from "./pictures.js";
 import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestPlace, GuestProps, GuestRefusal, GuestTheme, HostMessage } from "../protocol.js";
 
 /**
@@ -20,7 +21,7 @@ export interface GuestViewInput {
 }
 
 /** How much a frame may ask, per frame. Past either, the host stops listening until the window moves. */
-export interface GuestLimits {
+export interface GuestLimits extends GuestPictureLimits {
   /** Acts a frame may ask for in `actWindowMs`. 30 by default. */
   readonly acts?: number;
   /** 60 000 (a minute) by default. */
@@ -116,6 +117,8 @@ export interface GuestHostOptions<S extends AnySchema> {
    * by default.
    */
   readonly props?: () => GuestProps;
+  /** What is done to the props before they are pushed: the files on them handed as pictures (FR-175). */
+  readonly hand?: (props: GuestProps) => GuestProps;
   /**
    * The rules an act the guest asks for from its own code is held to before
    * the store is asked: a worker view's manifest and write rules (FR-92).
@@ -258,7 +261,8 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
   const push = () => {
     if (disposed) return;
     pushes += 1;
-    options.send({ type: "props", props: props(), push: pushes });
+    const now = props();
+    options.send({ type: "props", props: options.hand ? options.hand(now) : now, push: pushes });
   };
 
   /* Every change to the store is a push, coalesced: a batch of five ops is one message, not five. */

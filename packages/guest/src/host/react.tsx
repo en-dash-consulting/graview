@@ -5,6 +5,7 @@ import { untilItArrives, workerChunk } from "./arrive.js";
 import { mountGuestView, type GuestFrame } from "./frame.js";
 import type { GuestLimits, GuestReads, GuestViewInput } from "./session.js";
 import type { KitLinks } from "./kit.js";
+import type { GuestPictures } from "./pictures.js";
 import type { GuestWorkerSource } from "./worker.js";
 
 export interface GuestViewOptions {
@@ -30,6 +31,8 @@ export interface GuestViewOptions {
    * (`views.home(guestView(…))`) is drawn over nothing, and sees what it reads.
    */
   readonly reads?: GuestReads;
+  /** The pictures on the records a frame guest is handed, as `data:` images the host made (FR-175, `MountGuestViewOptions.pictures`). */
+  readonly pictures?: GuestPictures;
   /** Where the frame first stands before the guest asks for a height. 160px by default. */
   readonly height?: number;
   readonly limits?: GuestLimits;
@@ -107,6 +110,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
         principal,
         input: () => inputOf(latest.current),
         ...(options.reads ? { reads: options.reads } : {}),
+        ...(options.pictures ? { pictures: options.pictures } : {}),
         places: () => views.places(),
         brand: () => branded.current,
         onNavigate: (id) => going.current.record(id),

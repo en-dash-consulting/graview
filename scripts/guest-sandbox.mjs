@@ -50,6 +50,12 @@
  *           its logo byte for byte, and all of it again after the host
  *           re-dresses the app — on the app's own page and inside Claude's
  *           and ChatGPT's widgets (scripts/lib/guest-brand-suite.mjs).
+ *   pictures  a worker view of a record with pictures (FR-175): the
+ *           pictures handed as blob: URLs the host made from bytes it
+ *           fetched with the reader's session, one made smaller to the
+ *           view's width, a document by name, type and size, and nothing
+ *           fetched for a record the reader may not see
+ *           (scripts/lib/guest-pictures-suite.mjs).
  *   worker  a classic worker the host starts from a blob: URL, inside a
  *           chat's widget framed the way Claude or ChatGPT frames one
  *           (scripts/lib/widget-policies.mjs, from Graview Cloud's spike);
@@ -84,6 +90,7 @@ import { limitsSuite } from "./lib/guest-limits-suite.mjs";
 import { plainSuite } from "./lib/guest-plain-suite.mjs";
 import { clientSuite } from "./lib/guest-client-suite.mjs";
 import { brandSuite } from "./lib/guest-brand-suite.mjs";
+import { picturesSuite } from "./lib/guest-pictures-suite.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(resolve(repoRoot, "package.json"));
@@ -96,7 +103,7 @@ const arg = (name) => process.argv.find((one) => one.startsWith(`--${name}=`))?.
 if (!arg("transport") && !arg("engine") && !arg("policy")) {
   /* `--quick` (GRAVIEW_QUICK): one engine per transport and policy, crossed so both engines still run. */
   const runs = process.env.GRAVIEW_QUICK
-    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=record", "--engine=firefox"], ["--transport=writes", "--engine=webkit"], ["--transport=limits", "--engine=firefox"], ["--transport=plain", "--engine=chromium"], ["--transport=client", "--engine=webkit"], ["--transport=brand", "--policy=chatgpt", "--engine=firefox"]]
+    ? [["--transport=frame", "--engine=chromium"], ["--transport=worker", "--policy=claude", "--engine=chromium"], ["--transport=worker", "--policy=chatgpt", "--engine=webkit"], ["--transport=open", "--policy=page", "--engine=firefox"], ["--transport=place", "--engine=chromium"], ["--transport=record", "--engine=firefox"], ["--transport=writes", "--engine=webkit"], ["--transport=limits", "--engine=firefox"], ["--transport=plain", "--engine=chromium"], ["--transport=client", "--engine=webkit"], ["--transport=brand", "--policy=chatgpt", "--engine=firefox"], ["--transport=pictures", "--engine=webkit"]]
     : [
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=frame", `--engine=${engine}`]),
         ...["claude", "chatgpt"].flatMap((policy) => ["chromium", "webkit"].map((engine) => ["--transport=worker", `--policy=${policy}`, `--engine=${engine}`])),
@@ -109,6 +116,7 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=plain", `--engine=${engine}`]),
         ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=client", `--engine=${engine}`]),
         ...["page", "claude", "chatgpt"].flatMap((policy) => ["chromium", "webkit", "firefox"].map((engine) => ["--transport=brand", `--policy=${policy}`, `--engine=${engine}`])),
+        ...["chromium", "webkit", "firefox"].map((engine) => ["--transport=pictures", `--engine=${engine}`]),
       ];
   let failed = 0;
   for (const run of runs) {
@@ -123,7 +131,7 @@ if (!arg("transport") && !arg("engine") && !arg("policy")) {
 const TRANSPORT = arg("transport") ?? "frame";
 const ENGINE = arg("engine") ?? "chromium";
 const POLICY = arg("policy") ?? (TRANSPORT === "open" || TRANSPORT === "brand" ? "page" : "claude");
-if (!["frame", "worker", "open", "place", "record", "writes", "limits", "plain", "client", "brand"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place, record, writes, limits, plain, client or brand, not ${TRANSPORT}`);
+if (!["frame", "worker", "open", "place", "record", "writes", "limits", "plain", "client", "brand", "pictures"].includes(TRANSPORT)) throw new Error(`--transport is frame, worker, open, place, record, writes, limits, plain, client, brand or pictures, not ${TRANSPORT}`);
 if (TRANSPORT === "worker" && !POLICIES[POLICY]) throw new Error(`--policy is one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 if ((TRANSPORT === "open" || TRANSPORT === "brand") && POLICY !== "page" && !POLICIES[POLICY]) throw new Error(`--policy is page or one of ${Object.keys(POLICIES).join(", ")}, not ${POLICY}`);
 const HOST_PORT = portFor("guest-host");
@@ -132,7 +140,7 @@ const SILENT_MS = 1_500;
 const GUEST_PORT = portFor("guest-sandbox");
 const HOST = `http://127.0.0.1:${HOST_PORT}`;
 const GUEST = `http://localhost:${GUEST_PORT}`;
-const VERDICT = `docs/guest-sandbox${TRANSPORT === "frame" ? "" : ["place", "record", "writes", "limits", "plain", "client"].includes(TRANSPORT) ? `-${TRANSPORT}` : `-${TRANSPORT}-${POLICY}`}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
+const VERDICT = `docs/guest-sandbox${TRANSPORT === "frame" ? "" : ["place", "record", "writes", "limits", "plain", "client", "pictures"].includes(TRANSPORT) ? `-${TRANSPORT}` : `-${TRANSPORT}-${POLICY}`}${ENGINE === "chromium" ? "" : `-${ENGINE}`}.json`;
 
 const bundle = async (contents, format = "esm") =>
   (
@@ -930,6 +938,7 @@ try {
   else if (TRANSPORT === "client") await clientSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, GUEST, GUEST_PORT });
   else if (TRANSPORT === "limits") await limitsSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
   else if (TRANSPORT === "writes") await writesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, viewScript: viewScriptOf(repoRoot, build) });
+  else if (TRANSPORT === "pictures") await picturesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
   else if (TRANSPORT === "brand") await brandSuite({ repoRoot, build, browser, claim, report, POLICY, HOST, GUEST, HOST_PORT, GUEST_PORT });
   else if (TRANSPORT === "place") await placeSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT });
   else if (TRANSPORT === "record") await recordSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT, engine: ENGINE });

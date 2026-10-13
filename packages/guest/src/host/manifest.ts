@@ -1,5 +1,6 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
+import type { GuestPictures } from "./pictures.js";
 import { plainNode, readAcross, type GuestViewInput } from "./session.js";
 
 /*
@@ -16,6 +17,9 @@ import { plainNode, readAcross, type GuestViewInput } from "./session.js";
  *   replaces     "page", for a view of one record drawn alone in place of
  *                the record's own fields (FR-149); left out, it sits above
  *                them and they stay editable
+ *   pictures     true, or { width }: each file on a record it is handed
+ *                comes as a `GuestFile`, a picture with an address the
+ *                host made from the bytes (FR-175, pictures.ts)
  *
  * What it is handed is the viewer's sight — never more — cut down to the
  * kind it is attached to and what it reads. A record the viewer may not see
@@ -53,6 +57,27 @@ export interface WorkerViewManifest {
    * the view. Only for `cardinality: "one"` on a kind.
    */
   readonly replaces?: "page";
+  /**
+   * The pictures on the records it is handed (FR-175): `true`, or
+   * `{ width }`, the widest it draws a picture in CSS pixels (1 200 by
+   * default). Each file a record holds is then handed as a `GuestFile` —
+   * a picture with `src`, an address the host made from the bytes, made
+   * smaller where it is wider than `width`; a document by its name, type
+   * and size — never as the host's path to it. Left out, a file is handed
+   * as the record keeps it.
+   */
+  readonly pictures?: GuestPictures;
+}
+
+/** What `pictures` asks for, said wrongly, in sentences; empty when it is sound. */
+function picturesProblems(pictures: unknown): readonly string[] {
+  if (pictures === undefined || pictures === true) return [];
+  if (typeof pictures !== "object" || pictures === null || Array.isArray(pictures)) return ['The view\'s pictures is true, or { "width": <the widest it draws a picture, in pixels> }.'];
+  const { width, ...rest } = pictures as { width?: unknown };
+  const problems: string[] = [];
+  if (Object.keys(rest).length > 0) problems.push(`The view's pictures says ${Object.keys(rest).map((key) => `"${key}"`).join(", ")}: only "width" is read.`);
+  if (width !== undefined && !(Number.isInteger(width) && (width as number) >= 16 && (width as number) <= 4_096)) problems.push("The view's pictures width is a whole number of pixels from 16 to 4096.");
+  return problems;
 }
 
 /** An act of a manifest, said in full. */
@@ -77,6 +102,7 @@ export function checkManifest<S extends AnySchema>(manifest: WorkerViewManifest,
   if (manifest.attach === "home" && manifest.cardinality !== "many") findings.push("A view of the home draws many records: its cardinality is many.");
   if (manifest.replaces !== undefined && manifest.replaces !== "page") findings.push(`The view's replaces is "${String(manifest.replaces)}": the one thing a view replaces is "page", or leave it out to draw the view above the record's own fields.`);
   else if (manifest.replaces === "page" && (manifest.attach === "home" || manifest.cardinality !== "one")) findings.push('Only a view of one record replaces its page: replaces "page" needs cardinality one on a kind.');
+  findings.push(...picturesProblems(manifest.pictures));
   for (const kind of manifest.reads?.kinds ?? []) if (!kinds.has(kind)) findings.push(`The view reads "${kind}", which is no kind of this app.`);
   for (const edge of manifest.reads?.edges ?? []) if (!edges.has(edge)) findings.push(`The view reads the edge "${edge}", which no kind of this app declares.`);
   const named = new Set<string>();

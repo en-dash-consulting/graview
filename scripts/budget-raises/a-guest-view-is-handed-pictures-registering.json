@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 450,
+  "gzipped": 150,
+  "note": "Raised when a worker view's manifest came to say `pictures` (FR-175): `checkManifest` says in sentences what is wrong with it, and the session hands its props through the pictures' host where it is asked. 547 / 245 more than main (18_861 / 8_208). Measured at 19_408 / 8_453."
+}

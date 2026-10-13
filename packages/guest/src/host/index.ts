@@ -3,6 +3,7 @@ export type { GuestFrame, MountGuestViewOptions } from "./frame.js";
 export { createGuestHost, createGuestLimiter, readAcross } from "./session.js";
 export type { GuestHost, GuestHostOptions, GuestLimiter, GuestLimits, GuestReads, GuestStats, GuestViewInput } from "./session.js";
 export { readTheme } from "./theme.js";
+export type { GuestPictureLimits, GuestPictures } from "./pictures.js";
 export type { GuestBrand } from "./theme.js";
 /*
  * A worker guest's host — mountGuestWorker and the kit's renderer — is
@@ -20,4 +21,4 @@ export type { GuestViewOptions } from "./react.js";
  * page that draws only frames carries none of it.
  */
 export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN } from "../protocol.js";
-export type { GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
+export type { GuestFile, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";

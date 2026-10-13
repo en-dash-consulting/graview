@@ -10,6 +10,7 @@ import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource } from "./view-source.js";
 import { viewScript } from "./view-script.js";
 import { createLinks, type Destination } from "./links.js";
+import type { GuestPictureHand } from "./pictures.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
 /** A worker view's code: its own source, which the host makes a worker of, or a whole worker script. */
@@ -23,6 +24,8 @@ export type WorkerViewCode = GuestWorkerSource | { readonly source: string };
 /* The host's drawing and press reader, asked for again with URLs of their own when they did not arrive (FR-139). */
 const openDrawChunk = retryingImport(() => import("./open-draw.js"));
 const pressChunk = retryingImport(() => import("./press.js"));
+/* The pictures' host (FR-175), fetched only for a view whose manifest asks for pictures. */
+const picturesChunk = retryingImport(() => import("./pictures.js"));
 
 export type WorkerViewFailure =
   /** Its manifest names a kind, an edge or an act the app does not declare (FR-91): it was never started. */
@@ -330,9 +333,34 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (session && JSON.stringify(theme()) !== pushed) push();
   };
   const unwatchTheme = watchTheme(document, looked);
+  /*
+   * THE PICTURES ON WHAT IT IS HANDED (FR-175), where its manifest asks:
+   * fetched here as the reader, made into `blob:` URLs of this page, and
+   * pushed again as each is ready. What is left out is said in its console
+   * and to the host. The worker starts once their host has arrived, so the
+   * view is never handed a record's path to a file.
+   */
+  let pictures: GuestPictureHand | undefined;
+  const picturesReady: Promise<unknown> = manifest.pictures
+    ? picturesChunk().then(({ createGuestPictures }) => {
+        if (failed) return;
+        pictures = createGuestPictures(window, {
+          as: "blob",
+          view: `"${manifest.title ?? manifest.name}"`,
+          pictures: manifest.pictures!,
+          ...(options.limits ? { limits: options.limits } : {}),
+          moved: () => session?.push(),
+          onLeft: (said) => {
+            port?.postMessage({ type: "notice", text: said });
+            options.onProblem?.(said);
+          },
+        });
+      })
+    : Promise.resolve();
   unwatch = () => {
     unwatchTheme();
     logo.dispose();
+    pictures?.dispose();
   };
 
   let port: MessagePort | undefined;
@@ -467,6 +495,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           lastProps = props;
           return props;
         },
+        ...(pictures ? { hand: pictures.hand } : {}),
         judgeAct: (name, args) => judgeCodeAct(options.store, manifest, name, args),
         onRender: (records) => {
           drew = true;
@@ -498,13 +527,20 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     },
   }));
   if ("source" in code) {
-    void viewScript(code.source).then(
+    void (manifest.pictures ? Promise.all([viewScript(code.source), picturesReady]).then(([script]) => script) : viewScript(code.source)).then(
       (script) => {
         if (!failed) begin({ script });
       },
       () => fail("start", "the view's runtime could not be loaded"),
     );
-  } else begin(code);
+  } else if (!manifest.pictures) begin(code);
+  else
+    void picturesReady.then(
+      () => {
+        if (!failed) begin(code);
+      },
+      () => fail("start", "the view's pictures could not be loaded"),
+    );
 
   return handle();
 

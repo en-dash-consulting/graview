@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 5200,
+  "gzipped": 2300,
+  "note": "Raised when a worker view whose manifest says `pictures` came to be handed the pictures on its records (FR-175): the pictures' host, a chunk fetched only for such a view, fetches each picture on a record the reader may see with their credentials, makes it smaller on a canvas where the view draws it narrower, keeps to a byte budget per picture and per view, and hands it as a `blob:` URL of the page. 5_353 / 2_495 more than main (131_069 / 47_272). Measured at 136_422 / 49_767."
+}

@@ -2,7 +2,7 @@
 id: "4d7c1b2e-9a63-4f0e-b1d8-62c5e0f3a917"
 level: "feature"
 title: "A guest view is handed the pictures it may show, behind their own door (FR-162)"
-status: "pending"
+status: "completed"
 priority: "medium"
 tags:
   - "roadmap"
@@ -10,6 +10,7 @@ tags:
   - "FR-162"
   - "guest"
   - "files"
+  - "FR-175"
 source: "The review after the files (review/after-the-files, with #223): FR-162 asks that views be handed the addresses they may put in an img, as theme.logo is; #223 does it for the framework's own faces and blocks, not for a guest frame or worker view"
 acceptanceCriteria:
   - "A guest view (frame or worker) that declares it in its manifest is handed, for each file value on a record it reads, an address it can put in an img: made by the host page from the bytes (a blob: or data: URL, as the logo is, FR-127), never the host's path, which a sandboxed frame cannot load with the reader's credentials and should not learn"
@@ -19,4 +20,9 @@ acceptanceCriteria:
   - "The guest protocol stays additive: a guest that does not ask is handed nothing new, and GUEST_PROTOCOL does not move"
   - "Tested in @graview/guest and covered by a harness that draws a worker view of a record with a picture"
 description: "A worker view or a guest frame runs at an opaque origin and is handed values, so a record's FileValue reaches it as a path it cannot load (the host serves files to the app's members, with credentials, same-origin). theme.logo is handed as a data: URL for that reason. Give guests the same for the pictures on records they read, behind a door of their own in the manifest and inside the guest host's budgets, so a view somebody else wrote can show a job's photos without the host lending it its origin."
+startedAt: "2026-10-13T02:40:00.000Z"
+completedAt: "2026-10-13T03:20:00.000Z"
+endedAt: "2026-10-13T03:20:00.000Z"
+lastModified: "2026-10-13T03:20:00.000Z"
+resolution: "Shipped as FR-175 on feat/fr-175-guest-view-pictures: a worker view whose manifest says `pictures` (and a frame whose host passes `pictures`) is handed each file on a record as a GuestFile, a picture with a blob: or data: `src` the host made from bytes fetched as the reader, downscaled to the view's width within per-picture and per-view byte budgets, `left` saying why one was left out, a document by name, type and size; GUEST_PROTOCOL stays 1. Covered by @graview/guest unit tests and guest-sandbox --transport=pictures in Chromium, WebKit and Firefox."
 ---
