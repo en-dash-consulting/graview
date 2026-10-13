@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 270,
+  "gzipped": 680,
+  "note": "Raised when a frame guest's host became a chunk of its own (@graview/guest/host/frame), fetched as a frame view is first drawn (FR-179), so a hosted page carries none of it up front: registering a worker view beside it pays that chunk's own lines, 223 / 639 more than main (19_408 / 8_453). Measured at 19_631 / 9_092."
+}

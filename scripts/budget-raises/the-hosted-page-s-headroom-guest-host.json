@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 330,
+  "gzipped": 330,
+  "note": "Raised when guestView came to fetch a frame guest's host (@graview/guest/host/frame) as the view is first drawn, asked for again when it did not arrive (FR-179), so a hosted page carries none of it up front: this entry, which imports mountGuestView outright as well, carries that door beside it, 282 / 288 more than main (17_613 / 8_110). Measured at 17_895 / 8_398."
+}

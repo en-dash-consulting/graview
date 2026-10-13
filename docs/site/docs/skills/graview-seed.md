@@ -17,7 +17,7 @@ Two things make it a surface rather than a wall: the app already declares the OR
 `creates: ["feature"]` on an act, and `zoneId: nodeRef(["zone"])` in its input, are together a chain: a feature cannot be made until a zone exists.
 
 ```ts
-import { beginning } from "@graview/core";
+import { beginning } from "@graview/core/seat";
 const chain = beginning(app);
 chain.roots;        // kinds that can begin with nothing in the graph
 chain.doors;        // the acts that are the way in

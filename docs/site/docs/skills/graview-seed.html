@@ -1255,7 +1255,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 <p>Two things make it a surface rather than a wall: the app already declares the ORDER things must be made in, and what a model proposes can be an object rather than a list of calls somebody applies by hand.</p>
 <h3>What the declaration already says</h3>
 <p><code>creates: ["feature"]</code> on an act, and <code>zoneId: nodeRef(["zone"])</code> in its input, are together a chain: a feature cannot be made until a zone exists.</p>
-<div class="code" data-scroller><pre><code class="language-ts">import { beginning } from "@graview/core";
+<div class="code" data-scroller><pre><code class="language-ts">import { beginning } from "@graview/core/seat";
 const chain = beginning(app);
 chain.roots;        // kinds that can begin with nothing in the graph
 chain.doors;        // the acts that are the way in

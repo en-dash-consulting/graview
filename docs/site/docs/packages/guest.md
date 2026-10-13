@@ -6,7 +6,7 @@
 pnpm add @graview/guest
 ```
 
-Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
+Entry points: `@graview/guest`, `@graview/guest/react`, `@graview/guest/host`, `@graview/guest/host/frame`, `@graview/guest/host/worker`, `@graview/guest/host/views`, `@graview/guest/headless`, `@graview/guest/headless/node`, `@graview/guest/worker`, `@graview/guest/worker/view`, `@graview/guest/build`, `@graview/guest/cli`, `@graview/guest/client`, `@graview/guest/client.js`
 
 ## What it is
 
@@ -15,12 +15,13 @@ A view somebody else wrote — a recipe card, a bespoke dashboard, React or plai
 ### In the host
 
 ```ts
-import { guestView, mountGuestView } from "@graview/guest/host";
+import { guestView } from "@graview/guest/host";
 
 views.register("recipe", { fidelity: "full", cardinality: "one" },
   guestView({ url: "https://cards.example/recipe.html", name: "recipe-card" }));
 
-// Or without React, into any element:
+// Or without React, into any element (`guestView` fetches this as it is first drawn):
+import { mountGuestView } from "@graview/guest/host/frame";
 const frame = mountGuestView(element, { url, view: "recipe-card", store, principal, input: () => ({ node: { id } }) });
 frame.update();   // the input moved
 frame.dispose();

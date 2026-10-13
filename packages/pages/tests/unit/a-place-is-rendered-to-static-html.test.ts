@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createContext, runInContext } from "node:vm";
-import { createSchema, defineApp, defineNode, placesOf, SCHEMES, Store, z, type Policy, type Principal } from "@graview/core";
+import { createSchema, defineApp, defineNode, SCHEMES, Store, z, type Policy, type Principal } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { describe, expect, it } from "vitest";
 import { createTodoStore, todoApp } from "../../../../apps/todo/src/domain/app.js";
 
@@ -222,6 +223,6 @@ describe("the entry", () => {
   it("imports nothing of React, the router, the DOM faces or the seat", () => {
     const source = readFileSync(new URL("../../src/static.ts", import.meta.url), "utf8");
     const imported = [...source.matchAll(/from "([^"]+)"/g)].map((match) => match[1]);
-    expect(imported.sort()).toEqual(["@graview/core", "@graview/core/blocks", "@graview/core/describe"]);
+    expect(imported.sort()).toEqual(["@graview/core", "@graview/core/blocks", "@graview/core/describe", "@graview/core/words"]);
   });
 });

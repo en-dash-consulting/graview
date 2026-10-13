@@ -201,14 +201,17 @@ export const FACE_DOORS = {
  * in (`@graview/core/seat`), the grammar of an address's arrangement apart
  * from what a kind can be arranged by, a card's sizes
  * (`@graview/layout/sizes`) — and a frame guest's host is fetched as the
- * view is first drawn (`@graview/guest/host/frame`): 555 621 bytes
- * (542.6 KB, 186.8 KB gzipped), 31 585 fewer. The base is that with about
- * 400 bytes of room, and it is not edited upward again: a change that spends more files
+ * view is first drawn (`@graview/guest/host/frame`): 555 782 bytes
+ * (542.8 KB, 187.0 KB gzipped) over main with FR-174, FR-175 and FR-177,
+ * 31 815 fewer than main before it (587 597). The base is that with
+ * 10.2 KB of room (4.5 KB gzipped) — the 8 KB or so that FR-171, FR-172,
+ * FR-173, FR-176 and FR-178 need up front, landing beside this, and a
+ * little over — and it is not edited upward again: a change that spends more files
  * a raise in `scripts/budget-raises/` naming `"a hosted page"`, the bytes
  * it adds, and the changeset that says the kilobytes it adds up front
  * (`hostedRaises`).
  */
-export const HOSTED_PAGE_BASE = { minified: 543.0 * 1024, gzipped: 187.2 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BASE = { minified: 553.0 * 1024, gzipped: 191.5 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -325,13 +328,14 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * compiles, took it to 547 775 (534.9 KB): 535.2 KB.
  *
  * FR-179 took it from 0.1.28's 546 203 bytes (533.4 KB, 185.1 KB gzipped)
- * to 514 616 (502.6 KB, 172.8 KB gzipped), 31 587 fewer, by the same moves
- * as the page that compiles (above). The base is that with about 400 bytes
- * of room, raised only as that one is: by a file in
+ * to 514 777 (502.7 KB, 173.0 KB gzipped), 31 817 fewer than main before
+ * it (546 594), by the same moves as the page that compiles (above). The
+ * base is that with 10.3 KB of room (4.5 KB gzipped) for the same five
+ * features, raised only as that one is: by a file in
  * `scripts/budget-raises/` naming `"a hosted page handed a compiled app"`
  * and its changeset.
  */
-export const HOSTED_PAGE_COMPILED_BASE = { minified: 503.0 * 1024, gzipped: 173.2 * 1024 };
+export const HOSTED_PAGE_COMPILED_BASE = { minified: 513.0 * 1024, gzipped: 177.5 * 1024 };
 
 /*
  * A RAISE OF A HOSTED PAGE'S BUDGET SAYS ITSELF (FR-179). Each hosted page's

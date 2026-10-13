@@ -1,4 +1,5 @@
-import * as core from "@graview/core";
+import * as main from "@graview/core";
+import * as words from "@graview/core/words";
 import { todoApp } from "@graview/todo";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
@@ -7,6 +8,9 @@ import { describe, expect, it } from "vitest";
 import { appsNamed, frictionOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
 import { portFor } from "../scripts/lib/ports.mjs";
+
+// What an argument asks for is `@graview/core/words`'s (FR-179); the journeys read both.
+const core = { ...main, ...words };
 
 /**
  * THE JOURNEYS HARNESS'S OWN LOGIC, held without a browser: which jobs a
