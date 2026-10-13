@@ -144,7 +144,7 @@ export type {
 } from "./search.js";
 
 // Mutations — the only writes.
-export { argumentsTaken, compileMutation, defineMutation, takesAnId } from "./mutations/define-mutation.js";
+export { argumentsTaken, compileMutation, defineMutation, seatMark, takesAnId } from "./mutations/define-mutation.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
 export {
   deriveArchiveMutations,

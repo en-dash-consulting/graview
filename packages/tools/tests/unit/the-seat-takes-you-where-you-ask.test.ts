@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { bindSchema, createSchema, declaredLenses, defineNode, nodeRef, Store, type AnySchema, type Policy, type Principal } from "@graview/core";
+import { bindSchema, createSchema, declaredLenses, defineNode, nodeRef, Store, type AnySchema, type Policy, type Principal, seatMark } from "@graview/core";
 import { placesOf } from "@graview/core/seat";
 import { compileDocument } from "@graview/core/check";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -296,7 +296,7 @@ describe("a seat that sees only its own", () => {
 
   it("finds its own records and never another's, whichever way it asks", () => {
     const store = showroom();
-    expect(only(resolveAsk(store, "go to Is it still there", { principal: bethan }))).toMatchObject({ to: "record", id: "enquiry:is-it-still-there.shopper-bethan" });
+    expect(only(resolveAsk(store, "go to Is it still there", { principal: bethan }))).toMatchObject({ to: "record", id: `enquiry:is-it-still-there.${seatMark("shopper:bethan")}` });
     for (const text of ["go to Finance on the Golf", "tell me about Finance on the Golf", "what's wrong with Finance on the Golf", "open Finance"]) {
       const hidden = resolveAsk(store, text, { principal: bethan });
       const absent = resolveAsk(store, text.replace(/Finance on the Golf|Finance/, "Something else"), { principal: bethan });
@@ -308,7 +308,7 @@ describe("a seat that sees only its own", () => {
   it("counts only its own in a narrowed kind: 'open enquiries' is one, not two", () => {
     const answer = resolveAsk(showroom(), "open enquiries", { principal: bethan });
     expect(only(answer)).toMatchObject({ filter: "status:open" });
-    expect("picks" in answer && answer.picks?.map((hit) => hit.id)).toEqual(["enquiry:is-it-still-there.shopper-bethan"]);
+    expect("picks" in answer && answer.picks?.map((hit) => hit.id)).toEqual([`enquiry:is-it-still-there.${seatMark("shopper:bethan")}`]);
     expect(JSON.stringify(answer)).not.toContain("Finance");
   });
 

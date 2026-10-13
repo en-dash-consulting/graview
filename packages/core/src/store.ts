@@ -1,4 +1,4 @@
-import { hidesFrom, readingOf, seatLens, seenBy, seesId } from "./seen.js";
+import { hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId } from "./seen.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
@@ -820,26 +820,7 @@ export class Store<S extends AnySchema> {
     if (author === undefined || !hidesFrom(this, author)) return me;
     // And a seat that writes a value naming what it may not see has written its own words, though the store held them already.
     const hidden = seesId(this, author);
-    return { ...me, seen: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden), seesInFull: this.seesInFull(author) };
-  }
-
-  /**
-   * WHICH KINDS A SEAT SEES EVERY RECORD OF (FR-55): by a sight that is not
-   * only its own (`own`, `via`), with the kind's module on. Asked without a
-   * kind, whether it sees every record of every kind — nothing kept from it
-   * at all. What an act may mint for the seat, and whether it may ask for an
-   * id, turn on it: an id is unique across the whole store, so one minted
-   * or asked for where a record the seat may not see could hold it would
-   * tell the seat that record is there.
-   */
-  private seesInFull(author: Principal): (kind?: string) => boolean {
-    if (!hidesFrom(this, author)) return () => true;
-    const off = this.modules.disabledKinds;
-    const sights = this.policy?.sees ?? [];
-    const acting = actingAs(author);
-    const full = (kind: string) => !off.has(kind) && (sights.length === 0 || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via));
-    const everything = (this.schema.kinds as readonly string[]).every(full);
-    return (kind) => everything || (kind !== undefined && full(kind));
+    return { ...me, seen: seenBy(this, author).graph as never, keepUnchanged: (value: unknown) => namesUnseen(value, hidden), seesInFull: seesEveryRecord(this as never, author) };
   }
 
   /**

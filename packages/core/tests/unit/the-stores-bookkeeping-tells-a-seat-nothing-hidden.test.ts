@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { answerSeenBy } from "../../src/seat.js";
-import { bindSchema, createSchema, defineNode, nodeRef, refusalOf, Store, z, type AnySchema, type MutationCall, type Policy, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, KEEP_LINK, nodeRef, refusalOf, seatMark, Store, z, type AnySchema, type MutationCall, type Policy, type Principal } from "../../src/index.js";
 
 /**
  * THE STORE'S OWN BOOKKEEPING TELLS A SEAT NOTHING OF A HIDDEN RECORD (FR-55).
@@ -104,19 +104,22 @@ function told(store: Store<AnySchema>, call: MutationCall, author: Principal): s
     .replace(MINTED, "-minted");
 }
 
+/** The id the guest's "Green" is minted as: its own, marked as no other seat's is. */
+const GUS_GREEN = `room:green.${seatMark("person:gus")}`;
+
 describe("the store's own bookkeeping tells a seat nothing of a record it may not see", () => {
   it("mints the same id from a label whether or not a record the seat may not see holds it: the seat's own", () => {
     const call: MutationCall = { name: "open-room", args: { name: "Green" } };
     expect(told(world(true), call, guest)).toBe(told(world(false), call, guest));
-    expect(world(true).apply(call, { author: guest }).writes).toEqual(["room:green.person-gus"]);
+    expect(world(true).apply(call, { author: guest }).writes).toEqual([GUS_GREEN]);
     // It steps past its own, which it sees; two in one gesture are two ids.
-    expect(world(true).applyAll([call, call], { author: guest }).writes).toEqual(["room:green.person-gus", "room:green.person-gus-2"]);
+    expect(world(true).applyAll([call, call], { author: guest }).writes).toEqual([GUS_GREEN, `${GUS_GREEN}-2`]);
   });
 
   it("mints one no guess collides with where even the seat's own would land on a hidden record, and for a seat that is nobody", () => {
     const store = world(true);
-    store.apply({ name: "open-room", args: { name: "Green", id: "room:green.person-gus" } }, { author: keeper });
-    expect(store.apply({ name: "open-room", args: { name: "Green" } }, { author: guest }).writes[0]).toMatch(/^room:green\.person-gus-[a-z0-9]{6}$/);
+    store.apply({ name: "open-room", args: { name: "Green", id: GUS_GREEN } }, { author: keeper });
+    expect(store.apply({ name: "open-room", args: { name: "Green" } }, { author: guest }).writes[0]).toMatch(new RegExp(`^room:green\\.${seatMark("person:gus")}-[a-z0-9]{6}$`));
     const nobody: Principal = { kind: "human", roles: ["guest"] };
     expect(world(true).apply({ name: "open-room", args: { name: "Green" } }, { author: nobody }).writes[0]).toMatch(/^room:green-[a-z0-9]{6}$/);
   });
@@ -161,5 +164,28 @@ describe("the store's own bookkeeping tells a seat nothing of a record it may no
     expect(store.seenBy(guest).canUndo(done.batch)).toMatchObject({ ok: true });
     store.undo(done.batch, { author: guest });
     expect(store.graph.allEdges()).toEqual([{ kind: "sits", from: "person:freya", to: "desk:window" }]);
+  });
+
+  it("refuses a seat that would keep a link to a record it may not see alike, whether the link is there or not (FR-172)", () => {
+    // "Keep this link" names its ends as plain ids: a seat that guessed one learned from the answer whether a hidden record held the link.
+    const call: MutationCall = { name: KEEP_LINK, args: { kind: "sits", from: "person:freya", to: "desk:window" } };
+    expect(told(world(true), call, guest)).toBe(told(world(false), call, guest));
+    expect(JSON.parse(told(world(true), call, guest)).answer.refused).toMatchObject({ reason: "missing" });
+    // The keeper, who sees both ends, keeps it.
+    expect(world(true).apply(call, { author: keeper }).ops).toHaveLength(1);
+  });
+});
+
+describe("an id a seat mints for itself", () => {
+  it("says nothing of who the seat is: two seats' ids differ, and neither spells the seat's id", () => {
+    const call: MutationCall = { name: "open-room", args: { name: "Green" } };
+    const gus = world(false).apply(call, { author: guest }).writes[0]!;
+    const ola = world(false).apply(call, { author: { kind: "human", id: "person:ola", roles: ["guest"] } }).writes[0]!;
+    expect(gus).toMatch(/^room:green\.[a-z0-9]{7}$/);
+    expect(ola).toMatch(/^room:green\.[a-z0-9]{7}$/);
+    expect(gus).not.toBe(ola);
+    expect(gus).not.toContain("gus");
+    // The same seat mints the same id on any store, so a page's guess and its host's answer agree.
+    expect(world(true).apply(call, { author: guest }).writes[0]).toBe(gus);
   });
 });
