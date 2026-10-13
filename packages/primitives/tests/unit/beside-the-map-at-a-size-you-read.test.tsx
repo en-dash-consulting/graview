@@ -183,7 +183,8 @@ describe("on a phone", () => {
       const panel = host.querySelector('[data-testid="district-panel"]')!;
       expect(panel.getAttribute("data-graview-map-panel")).toBe("sheet");
       const said = [...panel.querySelectorAll("style")].map((style) => style.textContent ?? "").join("");
-      expect(said).toContain("--graview-sheet: 52%");
+      // Its height and the gap above and below it, and the foot of a phone that is not the screen's: the city is laid out in what is left.
+      expect(said).toContain("--graview-sheet: calc(52% + 2 * var(--graview-gap, 8px) + env(safe-area-inset-bottom, 0px))");
       expect(said).not.toContain("--graview-dock");
       await unmount();
     } finally {
