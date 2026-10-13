@@ -64,7 +64,7 @@ export function checkAccents<S extends AnySchema>(ctx: CheckContext<S>): void {
     add({ severity: "error", code: "brand-currency", where: "brand.currency", message: `"${currency}" is not a currency's three-letter code, so money would be said with no symbol.`, fix: 'Use an ISO 4217 code, like "USD", "EUR" or "GBP".' });
   }
   if (locale !== undefined && !formats({}, locale)) {
-    add({ severity: "error", code: "brand-locale", where: "brand.locale", message: `"${locale}" is not a locale, so money could not be written for it.`, fix: 'Use a language tag, like "en-US" or "de-DE".' });
+    add({ severity: "error", code: "brand-locale", where: "brand.locale", message: `"${locale}" is not a locale, so its days, times, numbers and money could not be written for it.`, fix: 'Use a language tag, like "en-US" or "de-DE".' });
   }
 }
 

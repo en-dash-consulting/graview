@@ -1,4 +1,4 @@
-import { humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
+import { dayAsRead, dayOfMonthAsRead, humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
 import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
@@ -1046,10 +1046,9 @@ function subjectArgOf(store: Ctx["store"], mutation: string): string {
   return store.allMutations().find((candidate) => candidate.name === mutation)?.subject?.arg ?? "id";
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const shortDate = (day: string): string => `${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]}`;
-const longDate = (day: string): string =>
-  `${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]} ${day.slice(0, 4)}`;
+// In the page's locale, as the framework says a day (FR-178): "Sep 5", "Sep 5, 2026" in en-US.
+const shortDate = (day: string): string => dayOfMonthAsRead(day);
+const longDate = (day: string): string => dayAsRead(day);
 
 /* ------------------------------------------------------------ the design */
 

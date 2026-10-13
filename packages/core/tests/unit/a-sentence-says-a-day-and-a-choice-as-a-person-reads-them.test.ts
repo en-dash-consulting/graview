@@ -8,7 +8,7 @@ import { parseTemplate, renderTemplate } from "../../src/document/index.js";
  * A SENTENCE SAYS A DAY, AND A CHOICE, AS A PERSON READS THEM.
  *
  * A rule written in code said "was due 2026-08-28" on the bar, in the
- * problems and to the seat, while the task's own card said "28 Aug 2026";
+ * problems and to the seat, while the task's own card said "Aug 28, 2026";
  * a record's facts said its day as it is kept; and a weekday kept as "tue"
  * was shown as the code it is kept as. The framework says every day it
  * puts in a sentence the way the glance does, and every choice as it is
@@ -24,9 +24,9 @@ const node = { id: "s1", kind: "shift", label: "Morning", on: "2026-08-28", day:
 
 describe("a day in a sentence", () => {
   it("is said as the glance says it, and only where it stands alone", () => {
-    expect(dayAsRead("2026-08-28")).toBe("28 Aug 2026");
-    expect(daysAsRead('"Pay the deposit" was due 2026-08-28')).toBe('"Pay the deposit" was due 28 Aug 2026');
-    expect(daysAsRead("from 2026-09-01 to 2026-09-05.")).toBe("from 1 Sep 2026 to 5 Sep 2026.");
+    expect(dayAsRead("2026-08-28")).toBe("Aug 28, 2026");
+    expect(daysAsRead('"Pay the deposit" was due 2026-08-28')).toBe('"Pay the deposit" was due Aug 28, 2026');
+    expect(daysAsRead("from 2026-09-01 to 2026-09-05.")).toBe("from Sep 1, 2026 to Sep 5, 2026.");
     // Part of an id, or a moment, is left as it is.
     expect(daysAsRead("task-2026-08-28 at 2026-08-28T09:00")).toBe("task-2026-08-28 at 2026-08-28T09:00");
   });
@@ -37,13 +37,13 @@ describe("a day in a sentence", () => {
       evaluate: () => [{ invariant: "nothing-late", label: "Nothing late", message: '"Morning" was due 2026-08-28', nodeIds: ["s1"], repairs: [] }],
     });
     const store = new Store({ schema, mutations: [], invariants: [late], snapshot: { nodes: [node] as never, edges: [] } });
-    expect(store.violations().map((violation) => violation.message)).toEqual(['"Morning" was due 28 Aug 2026']);
+    expect(store.violations().map((violation) => violation.message)).toEqual(['"Morning" was due Aug 28, 2026']);
   });
 
   it("is said so by a template, with or without `| date`", () => {
     const kinds = new Map();
-    expect(renderTemplate(parseTemplate("was due {on}"), { node: node as never, kinds, today: "2026-09-01" })).toBe("was due 28 Aug 2026");
-    expect(renderTemplate(parseTemplate("was due {on | date}"), { node: node as never, kinds, today: "2026-09-01" })).toBe("was due 28 Aug 2026");
+    expect(renderTemplate(parseTemplate("was due {on}"), { node: node as never, kinds, today: "2026-09-01" })).toBe("was due Aug 28, 2026");
+    expect(renderTemplate(parseTemplate("was due {on | date}"), { node: node as never, kinds, today: "2026-09-01" })).toBe("was due Aug 28, 2026");
   });
 });
 

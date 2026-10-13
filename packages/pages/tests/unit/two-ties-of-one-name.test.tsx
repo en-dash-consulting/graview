@@ -39,7 +39,7 @@ describe("a record's ties", () => {
     expect(new Set(targets.map((target) => target.apart)).size).toBe(2);
     const context: PageContext<typeof schema> = { store: store() };
     const html = renderToStaticMarkup(<PagesApp context={context} initialPath="/cars/c1" />);
-    expect(html).toContain("2026-10-03T15:30");
-    expect(html).toContain("2026-10-06T16:15");
+    expect(html).toContain("Oct 3, 2026, 3:30 PM");
+    expect(html).toContain("Oct 6, 2026, 4:15 PM");
   });
 });

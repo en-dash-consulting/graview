@@ -1,0 +1,13 @@
+---
+"@graview/core": patch
+"@graview/tools": patch
+"@graview/react": patch
+"@graview/primitives": patch
+"@graview/pages": patch
+"@graview/embed": patch
+"@graview/skills": patch
+---
+
+Days, times and numbers are said in the app's locale, en-US first (FR-178). The eighth walk read "10 Sep 2023" in an app written for the United States: every day was said day first, in an order fixed in code, and no face knew a locale. Now every day, time and figure a person reads is said through `Intl` — a record's facts and its glance, a template's `{due}`, `{due | date}` and a moment's `{at}`, a block's field and figure, a rule's line and a rule's message, a creating act's line, an arrangement's headings ("Week of Aug 24, 2026"), the calendar's titles and labels, a declared timeline's hours, and the seat's lines ("On Thursday, Sep 17: …") — in en-US unless the app says otherwise: "Sep 10, 2023", "3:30 PM", "1,250". A moment (`2023-09-10T15:30`) is said with its time where it was said as it is kept. The app says its locale where it says its currency, `brand.locale` ("en-GB" keeps the day first, "de-DE" writes "1.250"), and a host that knows its reader passes theirs as `locale` on the embed (both faces), `GraviewProvider` and a pages `PageContext`, which wins over the app's. `describeApp` says what the locale makes of a day, a time and a figure; `editDocument`'s `set-brand` and `diffDocuments` say "Days, times, numbers and money are written for de-DE." The framework's own words stay English. `@graview/core` exports `dayAsRead`, `momentAsRead`, `timeAsRead`, `numberAsRead`, `weekdayAsRead`, `dayOfMonthAsRead`, `monthAsRead`, `weekdayName`, `minutesAsRead`, `whenAsRead`, `localeFor`, `sayIn` and `DEFAULT_LOCALE`; each takes an optional locale. `capabilities().shipped` gains FR-178.
+
+Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and derived tool schemas are unchanged; `brand.locale` is the key it was, and now says days, times and numbers as well as money. The words a person reads change: a day is said "Aug 28, 2026" where it was said "28 Aug 2026", a moment with its time where it was said as stored, a number in a block or a rule's line with the locale's separators, a week's heading with its day in words, and the seat's day "Thursday, Sep 17" where it was "Thursday 17 Sep". `editDocument`'s sentence for `set-brand`'s `locale` and `diffDocuments`' for a changed locale say "Days, times, numbers and money are written for …"; a changed currency is its own sentence. What a host does: pass the reader's locale as `locale` on `mount`, and match words a test reads in en-US.

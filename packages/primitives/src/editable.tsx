@@ -31,7 +31,7 @@ export function EditableValue<S extends AnySchema>({
 }: {
   readonly nodeId: string;
   readonly field: string;
-  /** The value as a person reads it: "28 Aug 2026", "Tue". */
+  /** The value as a person reads it: "Aug 28, 2026", "Tue". */
   readonly value: string;
   /** The value as the record keeps it, which the edit control holds and writes back: "2026-08-28", "tue". The value said, when not given. */
   readonly stored?: string;

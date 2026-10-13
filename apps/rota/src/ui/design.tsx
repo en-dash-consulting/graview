@@ -1,4 +1,4 @@
-import { humanizeField, labelOf, type Arrangement, type Violation } from "@graview/core";
+import { humanizeField, labelOf, weekdayAsRead, type Arrangement, type Violation } from "@graview/core";
 import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   ListPage,
@@ -887,10 +887,8 @@ const iso = (stamp: number) => new Date(stamp).toISOString().slice(0, 10);
 const addDays = (day: string, count: number) => iso(utc(day) + count * DAY);
 const daysFrom = (from: string, count: number) => Array.from({ length: count }, (_, at) => addDays(from, at));
 const startOfWeek = (day: string) => addDays(day, -((new Date(utc(day)).getUTCDay() + 6) % 7));
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const longDay = (day: string) =>
-  `${WEEKDAYS[new Date(utc(day)).getUTCDay()]} ${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]}`;
+// In the page's locale, as the framework says a day (FR-178): "Mon, Sep 14" in en-US.
+const longDay = (day: string) => weekdayAsRead(day, { weekday: "short" });
 
 
 /* ------------------------------------------------------------ the design */

@@ -30,6 +30,12 @@ export interface PageContext<S extends AnySchema> {
   /** Who else the history may name: a host's directory, which offers nobody a seat (FR-13). */
   readonly people?: readonly Person[];
   readonly brand?: Brand;
+  /**
+   * The reader's locale (FR-178): what days, times and numbers are said in
+   * on every page — "en-GB" keeps the day first. Wins over the brand's
+   * `locale`; en-US when neither says. The framework's words stay English.
+   */
+  readonly locale?: string;
   /** Where the spatial face lives, for the cross-links. Default "/". */
   readonly sceneHref?: string;
   readonly invariantContext?: Readonly<Record<string, unknown>>;

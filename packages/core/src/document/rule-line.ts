@@ -16,7 +16,7 @@
  */
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf, type AnyGraphNode, type AnySchema, type FieldFormat, type RuleLine, type RulePart } from "../index.js";
 import { finishedLine } from "../invariants/line.js";
-import { dayAsRead, ISO_DAY } from "../days.js";
+import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead, numberAsRead } from "../days.js";
 import { evaluateExpr, NodeSet, type EvalContext, type Value } from "./expr/evaluate.js";
 import type { BinaryOp, Expr } from "./expr/parse.js";
 import { computedOf } from "./computed.js";
@@ -113,6 +113,8 @@ function reader(words: LineWords) {
     return said ? { ...declared, format: said } : declared;
   };
   const recordName = (node: AnyGraphNode): string => labelOf(schema.tryDefinition(node.kind), node);
+  // The app's locale, for its days and figures (FR-178).
+  const locale = words.money?.locale;
 
   /** A value in words: formatted as its field says, a day as a person reads it, a record by its name. */
   const valueWords = (v: Value | undefined, at?: { readonly kind: Kind; readonly key: string; readonly format?: FieldFormat | undefined }): RulePart => {
@@ -129,11 +131,12 @@ function reader(words: LineWords) {
     const format = at?.format ?? (at ? formatOf(at.kind, at.key) : undefined);
     if (typeof v === "number") {
       if (format?.format === "money") return value(formatMoney(v, { ...words.money, ...(format.unit && /^[A-Z]{3}$/.test(format.unit) ? { currency: format.unit } : {}) }));
-      if (format?.format === "percent") return value(`${Math.round(v * 100)}%`);
-      const plain = v.toLocaleString("en-US", { maximumFractionDigits: 2 });
+      if (format?.format === "percent") return value(numberAsRead(v, locale, { style: "percent", maximumFractionDigits: 0 }));
+      const plain = numberAsRead(v, locale);
       return value(format?.unit && !/^[A-Z]{3}$/.test(format.unit) ? `${plain} ${format.unit}` : plain);
     }
-    if (ISO_DAY.test(v) || format?.format === "date") return value(dayAsRead(v.slice(0, 10)));
+    if (ISO_DAY.test(v) || format?.format === "date") return value(dayAsRead(v.slice(0, 10), locale));
+    if (ISO_MOMENT.test(v)) return value(momentAsRead(v, locale));
     // A choice as the declaration says it, else spoken: 'to-order' is "to order".
     const shown = at && at.kind !== null ? definition(at.kind)?.display?.format?.[at.key] : undefined;
     if (shown) return value(shown(v));
@@ -142,7 +145,7 @@ function reader(words: LineWords) {
     return value(/^[a-z][a-z0-9]*([-_][a-z0-9]+)*$/.test(said) ? said.replace(/[-_]+/g, " ") : said);
   };
 
-  return { definition, relation, farOf, nearOf, fieldName, plural, noun, factName, formatOf, valueWords };
+  return { definition, relation, farOf, nearOf, fieldName, plural, noun, factName, formatOf, valueWords, locale };
 }
 
 type Reader = ReturnType<typeof reader>;
@@ -394,7 +397,7 @@ function call(e: Extract<Expr, { t: "call" }>, kind: Kind, r: Reader): Parts {
     case "now":
       return [value("now")];
     case "date":
-      return literalOf(arg(0)) && typeof (arg(0) as { value: unknown }).value === "string" ? [value(dayAsRead(String((arg(0) as { value: string }).value)))] : say(arg(0), kind, r);
+      return literalOf(arg(0)) && typeof (arg(0) as { value: unknown }).value === "string" ? [value(dayAsRead(String((arg(0) as { value: string }).value), r.locale))] : say(arg(0), kind, r);
     case "days":
     case "hours": {
       const unit = e.fn;

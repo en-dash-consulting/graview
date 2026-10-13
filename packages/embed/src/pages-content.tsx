@@ -61,6 +61,7 @@ export function PagesContent<S extends AnySchema>({
             settings: props.app.settings ?? [],
             ...(presence ? { presence } : {}),
             ...(brand ? { brand } : {}),
+            ...(props.locale ? { locale: props.locale } : {}),
             ...(props.principal ? { principal: props.principal } : {}),
             ...(props.seats ? { seats: props.seats } : {}),
             ...(props.people ? { people: props.people } : {}),

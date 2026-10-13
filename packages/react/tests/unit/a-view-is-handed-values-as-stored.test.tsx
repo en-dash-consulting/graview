@@ -13,9 +13,9 @@ import { createViews, GraviewProvider, ResolvedView, Scene, type ViewProps } fro
  * A VIEW IS HANDED THE VALUES AS THE RECORD KEEPS THEM.
  *
  * The framework says a day and a choice as a person reads them wherever IT
- * puts them in a sentence — "28 Aug 2026", "Tue", "No". A view is not one
+ * puts them in a sentence — "Aug 28, 2026", "Tue", "No". A view is not one
  * of those places: it computes over the record, and `!task.done` on "No"
- * is false, `due >= day` on "28 Aug 2026" sorts by the day of the month.
+ * is false, `due >= day` on "Aug 28, 2026" sorts by the day of the month.
  * So a boolean reaches a view as `false`, a day as `2026-08-28` and a
  * choice as `tue`, on a group's members and on one record alike.
  */

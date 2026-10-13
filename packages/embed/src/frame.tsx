@@ -128,6 +128,13 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   readonly hostContext?: EmbedHostContext;
   /** Defaults to the app's own brand. */
   readonly brand?: Brand;
+  /**
+   * The reader's locale (FR-178): what days, times and numbers are said in
+   * — "en-GB" says "10 Sept 2023" and "15:30" where en-US says "Sep 10,
+   * 2023" and "3:30 PM". Wins over the app's `brand.locale`; en-US when
+   * neither says. The framework's own words stay English.
+   */
+  readonly locale?: string;
   /** A store to share; otherwise one is made from the app and the seed. */
   readonly store?: Store<S>;
   /**
@@ -511,6 +518,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
   /* Each as given: the provider takes an unsaid one as its own default. */
   return {
     brand,
+    locale: props.locale,
     principal: props.principal,
     /* The seats, so every surface under the provider names a seat as it was offered (W-114). */
     seats: props.seats,

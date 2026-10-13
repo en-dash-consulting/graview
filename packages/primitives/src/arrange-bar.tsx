@@ -125,7 +125,7 @@ export function chipOffers(offered: readonly ArrangeOffer[], named?: readonly st
 /** Below this width of its own the line is a phone's: the count and one "Arrange". */
 export const ARRANGE_NARROW = 520;
 
-/** A condition in words: "Due before 1 Oct 2026", "The list it is on: Today", "Past". */
+/** A condition in words: "Due before Oct 1, 2026", "The list it is on: Today", "Past". */
 export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arrangeable, condition: Condition): string {
   const offer = offers.filters.find((candidate) => candidate.key === condition.key);
   if (!offer) return `${condition.key}: ${condition.value}`;
@@ -139,7 +139,7 @@ export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arr
   }
   if (offer.type === "date") {
     const [op, date] = condition.value.split(":");
-    // The day as a person reads it ("Due before 1 Sep 2026"), as the chip's card says it.
+    // The day as a person reads it ("Due before Sep 1, 2026" in en-US), as the chip's card says it.
     return `${offer.label} ${op} ${date ? dayAsRead(date) : ""}`.trim();
   }
   if (offer.type === "boolean") return `${offer.label}: ${condition.value === "true" ? "yes" : "no"}`;

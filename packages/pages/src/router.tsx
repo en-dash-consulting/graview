@@ -1,6 +1,6 @@
 import { pluralLabel, type AnySchema, type Store } from "@graview/core";
 import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
-import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG } from "@graview/core";
+import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
@@ -507,6 +507,8 @@ export function PagesApp<S extends AnySchema>({
    * says nothing of its own, or one tab would say two places by turns.
    */
   const outer = useGraviewIfAny();
+  // Days, times and numbers in the reader's locale, else the app's (FR-178), whether or not a provider is drawn under the pages.
+  sayIn({ reader: given.locale ?? outer?.locale, app: given.brand?.locale ?? given.app?.brand?.locale });
   const viewed = given.store.seenBy(given.principal ?? { kind: "human" });
   const context = viewed === given.store ? given : { ...given, store: viewed };
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
@@ -536,6 +538,7 @@ export function PagesApp<S extends AnySchema>({
       views={context.views}
       {...(context.principal ? { principal: context.principal } : {})}
       {...(context.brand ? { brand: context.brand } : {})}
+      {...(context.locale ? { locale: context.locale } : {})}
       {...(context.settings ? { settings: context.settings } : {})}
       {...(context.presence && !outer ? { presence: context.presence } : {})}
       {...(context.people ? { people: context.people } : {})}

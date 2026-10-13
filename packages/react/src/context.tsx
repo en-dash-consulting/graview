@@ -14,7 +14,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { openingOf, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, type Place, type PagesArrangement } from "@graview/core";
+import { openingOf, sayIn, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, type Place, type PagesArrangement } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
@@ -292,6 +292,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly onKeepLens?: KeepLensHost;
   /** The app this is mounted with (`GraviewProviderProps.app`), or the one it is drawn inside. */
   readonly app?: GraviewApp<S> | undefined;
+  /** The reader's locale the host passed (`GraviewProviderProps.locale`, FR-178), or the one it is drawn inside. */
+  readonly locale?: string | undefined;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
@@ -395,6 +397,16 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly presence?: PresenceChannel | undefined;
   readonly brand?: Brand | undefined;
   /**
+   * THE READER'S LOCALE (FR-178): what days, times and numbers are said in
+   * on every face under this provider — the Scene's labels, a glance, the
+   * pages, the calendar, the seat — "en-GB" for a reader in Britain. A host
+   * passes the reader's (`navigator.language`, an account setting); it wins
+   * over the app's own `brand.locale`, and en-US is said when neither is.
+   * The framework's own words stay English. One page says one locale: the
+   * provider drawn last says it for the page.
+   */
+  readonly locale?: string | undefined;
+  /**
    * WHERE A LENS THE SEAT DREW IS KEPT (`KeepLensHost`): handed the
    * check-clean `add-lens` edit when a reader presses "Keep as a lens", and
    * the `remove-lens` edit when they take it back. A host that writes the
@@ -494,6 +506,7 @@ export function GraviewProvider<S extends AnySchema>({
   settings: appSettings = mountedApp?.settings ?? NO_SETTINGS,
   presence,
   brand,
+  locale: readerLocale,
   onKeepLens,
   providers,
   ai = NO_AI,
@@ -541,6 +554,15 @@ export function GraviewProvider<S extends AnySchema>({
   /* The host that keeps a drawn lens: this provider's, else the one it is drawn inside. */
   const keepLens = onKeepLens ?? outer?.onKeepLens;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
+  /*
+   * WHAT DAYS, TIMES AND NUMBERS ARE SAID IN (FR-178): the reader's a host
+   * passed, else the app's own. Said before anything under this draws, so
+   * the first frame's labels are already the page's — a label is a function
+   * of a node alone and cannot be handed a locale where it is said.
+   */
+  const locale = readerLocale ?? outer?.locale;
+  const appLocale = brand?.locale ?? app?.brand?.locale;
+  sayIn({ reader: locale, app: appLocale });
   /*
    * The scene's handle, held in a ref: where things are changes every frame
    * of a tween, and a context value that changed with it would re-render
@@ -910,6 +932,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(brand ? { brand } : {}),
       ...(keepLens ? { onKeepLens: keepLens } : {}),
       app,
+      ...(locale ? { locale } : {}),
     }),
     [
       store,
@@ -956,6 +979,7 @@ export function GraviewProvider<S extends AnySchema>({
       brand,
       keepLens,
       app,
+      locale,
     ],
   );
 

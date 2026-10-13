@@ -1,4 +1,4 @@
-import { dayAsRead, ISO_DAY } from "../days.js";
+import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead } from "../days.js";
 import { fieldWords, labelOf, nounOf, valueWords, type ReadableField } from "./define-node.js";
 import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
@@ -112,6 +112,8 @@ export function readableFields(
      * full facts keep every field — that is where each is changed.
      */
     readonly glance?: boolean;
+    /** The app's locale its days are said in (FR-178): a reader's a host passed wins, and the page's when unsaid. */
+    readonly locale?: string | undefined;
   } = {},
 ): readonly ReadableField[] {
   const display = definition?.display;
@@ -175,13 +177,15 @@ export function readableFields(
           // state are words.
           stored
         : /*
-           * A DAY AS A PERSON READS IT ("28 Aug 2026"), on a glance and in a
+           * A DAY AS A PERSON READS IT ("Aug 28, 2026"), on a glance and in a
            * record's facts alike; the edit control holds it as it is written
            * (`stored`). And a CHOICE as it is declared — its `display.format`,
            * else the value spoken — never the code it is kept as ("tue").
            */
           typeof value === "string" && ISO_DAY.test(value)
-          ? dayAsRead(value)
+          ? dayAsRead(value, options.locale)
+          : typeof value === "string" && ISO_MOMENT.test(value)
+          ? momentAsRead(value, options.locale)
           : typeof value === "string" && isChoice(definition, key)
             ? valueWords(definition, key, value)
             : stored;

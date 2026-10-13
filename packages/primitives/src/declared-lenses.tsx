@@ -1,4 +1,4 @@
-import type { AnySchema, DrawnLens } from "@graview/core";
+import { minutesAsRead, type AnySchema, type DrawnLens } from "@graview/core";
 import type { ViewComponent, ViewProps } from "@graview/react/provider";
 import { createBoardLens, type BoardOptions } from "./lens/board.js";
 import type { CalendarOptions } from "./lens/calendar-options.js";
@@ -29,12 +29,10 @@ import { compileBlocks, SpecPlace, type SpecBlock } from "./spec-views.js";
  */
 const MADE = new WeakMap<DrawnLens, ViewComponent<AnySchema>>();
 
-const pad = (n: number) => String(n).padStart(2, "0");
-
-/** How a position on a timeline's axis is said, from how long its axis is. */
+/** How a position on a timeline's axis is said, from how long its axis is: a time of day in the page's locale (FR-178), "3:30 PM" in en-US. */
 export function formatFor(extent: number): (at: number) => string {
-  if (extent === 1440) return (at) => `${pad(Math.floor(at / 60))}:${pad(Math.round(at % 60))}`;
-  if (extent === 24) return (at) => `${pad(Math.floor(at))}:00`;
+  if (extent === 1440) return (at) => minutesAsRead(Math.floor(at / 60) * 60 + Math.round(at % 60));
+  if (extent === 24) return (at) => minutesAsRead(Math.floor(at) * 60);
   return (at) => String(at);
 }
 

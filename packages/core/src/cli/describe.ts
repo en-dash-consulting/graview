@@ -14,6 +14,8 @@ import { placesOf } from "../app-places.js";
 import { columnReach } from "../columns.js";
 import { computedOf } from "../document/computed.js";
 import { placePath } from "../views/types.js";
+import { dayAsRead, DEFAULT_LOCALE, numberAsRead, timeAsRead } from "../days.js";
+import { formatMoney } from "../document/template.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -270,6 +272,12 @@ export function describeApp<S extends AnySchema>(
   lines.push(
     `Hues: ${hues.map((entry) => `${entry.kind} ${entry.hue}°`).join(", ")}.` +
       (crowded.length > 1 ? ` ${list(crowded.map((entry) => entry.kind))} are within 12° of each other and will read as one color.` : ""),
+  );
+  // THE APP'S LOCALE (FR-178), with what it makes of a day, a time and a figure, and the currency a sum is said in (FR-100).
+  const locale = app.brand?.locale;
+  lines.push(
+    `Days, times and numbers are written for ${locale ?? `${DEFAULT_LOCALE}, the default`}: ${dayAsRead("2023-09-10", locale)}, ${timeAsRead("2023-09-10T15:30", locale)}, ${numberAsRead(1250, locale)}; ` +
+      (app.brand?.currency ? `money is said in ${app.brand.currency} (${formatMoney(1250, { currency: app.brand.currency, ...(locale ? { locale } : {}) })}).` : "money is said with no currency."),
   );
 
   /*

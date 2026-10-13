@@ -153,7 +153,13 @@ export interface Brand {
    * Absent, a sum is a number in figures with no symbol.
    */
   readonly currency?: string;
-  /** The locale money is written for ("en-US", "de-DE"); "en-US" when absent. */
+  /**
+   * THE APP'S LOCALE (FR-178): what its days, times, numbers and money are
+   * written for ("en-US", "en-GB", "de-DE") — "Sep 10, 2023", "3:30 PM",
+   * "1,250" in en-US, the default. A reader's locale a host passes
+   * (`locale` on the provider, the embed, the pages face) wins over it.
+   * The framework's own words stay English.
+   */
   readonly locale?: string;
 }
 

@@ -62,7 +62,7 @@ describe("the seat, in a person's words", () => {
 
   it("says a day as a person says one, and a one-word yes or no as the state it is", async () => {
     const reply = await graphResponder<typeof schema>()(store(), "tell me about Friday repair cafe", { today: TODAY } as never);
-    expect(reply.say).toContain("date 18 Sep 2026");
+    expect(reply.say).toContain("date Sep 18, 2026");
     expect(reply.say).toContain("not finished");
     expect(reply.say).not.toMatch(/\d{4}-\d{2}-\d{2}|finished: no/);
   });

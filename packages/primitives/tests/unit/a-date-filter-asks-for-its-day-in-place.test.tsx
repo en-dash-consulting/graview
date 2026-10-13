@@ -51,7 +51,7 @@ describe("a date filter", () => {
       await act(async () => add.click());
       expect(arrangement.filter).toEqual([{ key: "due", value: "before:2026-09-15" }]);
       expect(host.querySelector('[data-testid="arrange-day"]'), "the ask is put away once answered").toBeNull();
-      expect(host.querySelector('[data-testid="arrange-condition"]')?.textContent).toContain("Due before 15 Sep 2026");
+      expect(host.querySelector('[data-testid="arrange-condition"]')?.textContent).toContain("Due before Sep 15, 2026");
     } finally {
       await act(async () => root.unmount());
       host.remove();

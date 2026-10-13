@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 1927,
+  "gzipped": 704,
+  "note": "Raised when days, times and numbers came to be said in the app's locale (FR-178): `Intl.DateTimeFormat` and `Intl.NumberFormat` are the runtime's, so what a page carries is the few functions that say a day, a moment and a figure through them, the reader's and the app's locale they are said in, and the provider and the pages saying it. 1_927 / 704 more than main (512_401 / 184_831); a hosted page's first load is 1_783 bytes more than main and a page handed a compiled app 1_773, under their budgets unraised. Measured at 514_328 / 185_535."
+}
