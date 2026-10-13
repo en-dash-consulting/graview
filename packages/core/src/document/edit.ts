@@ -1,3 +1,4 @@
+import { DERIVED_ACTS, derivedActOf, derivedActsOf } from "../mutations/derived-names.js";
 import { z } from "zod";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
@@ -347,9 +348,10 @@ function mapNames(doc: Doc, e: Expr, ctx: Kinds, rename: (site: Site) => string)
         const first = x.args[0];
         const literal = first?.t === "lit" && typeof first.value === "string" ? first.value : undefined;
         let args: Expr[];
-        if ((x.fn === "out" || x.fn === "in" || x.fn === "all") && literal !== undefined && x.args.length === 1) {
+        if ((x.fn === "out" || x.fn === "in" || x.fn === "all") && literal !== undefined && (x.args.length === 1 || (x.fn === "all" && x.args.length === 2))) {
           const name = rename({ role: x.fn === "all" ? "kind" : "edge", kinds: NONE, name: literal });
-          args = name === literal ? [...x.args] : [{ ...first!, value: name } as Expr];
+          // all('task', 'all') keeps what it asked of the archived (FR-173).
+          args = name === literal ? [...x.args] : [{ ...first!, value: name } as Expr, ...x.args.slice(1)];
         } else if ((x.fn === "out" || x.fn === "in") && x.args.length === 2 && x.args[1]!.t === "lit" && typeof x.args[1]!.value === "string") {
           // out(S, 'edge'): the set is read where the walk stands, and its relation renamed like any walk's (FR-101).
           const relation = x.args[1]! as Extract<Expr, { t: "lit" }>;
@@ -1201,9 +1203,9 @@ class Editor {
     }
     if (!sight && part.mutations !== "*") {
       for (const [n, act] of part.mutations.entries()) {
-        const derived = /^(?:edit|remove)-(.+)$/.exec(act);
-        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived[1]!])) continue;
-        return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap((kind) => [`edit-${kind}`, `remove-${kind}`])].join(", ")}`);
+        const derived = derivedActOf(act);
+        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind])) continue;
+        return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf)].join(", ")}`);
       }
     }
     const said: string[] = [];
@@ -1299,8 +1301,7 @@ class Editor {
     const to: string = e.to;
     const touched = this.rewriteAll({ t: "kind", from, to });
     // The acts the framework derives for every kind are named for it, so they move with it.
-    this.toolsMoved.add(`edit-${from} is now edit-${to}`);
-    this.toolsMoved.add(`remove-${from} is now remove-${to}`);
+    for (const act of DERIVED_ACTS) this.toolsMoved.add(`${act}-${from} is now ${act}-${to}`);
     // The kind itself, in order, continuing its records.
     const kinds: Doc = {};
     for (const [k, v] of Object.entries(this.doc.kinds)) kinds[k === from ? to : k] = v;
@@ -1398,7 +1399,7 @@ class Editor {
      * whose last act is removed — kept, it read as a grant on every kind.
      */
     if (this.doc.policy) {
-      const derived = [`edit-${kind}`, `remove-${kind}`];
+      const derived = derivedActsOf(kind);
       this.doc.policy.grants = this.doc.policy.grants.flatMap((g: Doc) => {
         const kinds = Array.isArray(g.kinds) ? g.kinds.filter((k: string) => k !== kind) : g.kinds;
         const mutations = Array.isArray(g.mutations) ? g.mutations.filter((m: string) => !derived.includes(m) || this.doc.acts?.[m]) : g.mutations;
@@ -1889,7 +1890,7 @@ class Editor {
       if (rule.says !== undefined) rule.says = tmplAt(rule.says, ctx, mentioned ? prose : undefined);
       if (r.t === "kind" && rule.over === r.from) rule.over = r.to;
       for (const rep of rule.repairs ?? []) {
-        if (r.t === "kind") rep.act = rep.act === `edit-${r.from}` ? `edit-${r.to}` : rep.act === `remove-${r.from}` ? `remove-${r.to}` : rep.act;
+        if (r.t === "kind") rep.act = renamedAct(rep.act, r.from, r.to);
         const args = renamedArgs.get(rep.act);
         if (args && rep.args) for (const [a, b] of args) if (a in rep.args) {
           rep.args[b] = rep.args[a];
@@ -1911,7 +1912,7 @@ class Editor {
       const swap = (k: string) => (k === r.from ? r.to : k);
       for (const g of doc.policy.grants) {
         if (Array.isArray(g.kinds)) g.kinds = g.kinds.map(swap);
-        if (Array.isArray(g.mutations)) g.mutations = g.mutations.map((m: string) => (m === `edit-${r.from}` ? `edit-${r.to}` : m === `remove-${r.from}` ? `remove-${r.to}` : m));
+        if (Array.isArray(g.mutations)) g.mutations = g.mutations.map((m: string) => renamedAct(m, r.from, r.to));
       }
       for (const s of doc.policy.sees ?? []) s.kinds = s.kinds.map(swap);
       if (JSON.stringify(doc.policy) !== before) touched.push("the policy");
@@ -2564,4 +2565,10 @@ export function renameIn(kinds: DeclaredKinds, over: string | "graph", text: { r
   if (text.expression !== undefined) return rewriteExpr(doc, text.expression, ctx, r);
   if (text.template !== undefined) return rewriteTemplate(doc, text.template, ctx, r);
   return undefined;
+}
+
+/** A derived act of a renamed kind, renamed with it: `archive-task` becomes `archive-chore`. Any other act as it was. */
+function renamedAct(act: string, from: string, to: string): string {
+  const derived = derivedActOf(act);
+  return derived && derived.kind === from ? `${derived.act}-${to}` : act;
 }

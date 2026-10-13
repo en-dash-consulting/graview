@@ -67,7 +67,8 @@ export class LabelIndex<S extends AnySchema> {
   private readonly filed = new Map<string, { kind: string; key: string; label: string }>();
 
   constructor(private readonly graph: Graph<S>) {
-    for (const node of graph.allNodes()) this.file(node as never);
+    // Every record, archived or not: a name finds an archived record when no live one has it (FR-173).
+    for (const node of graph.allNodes({ archived: "all" })) this.file(node as never);
     graph.subscribe((diff) => this.follow(diff as GraphDiff));
   }
 

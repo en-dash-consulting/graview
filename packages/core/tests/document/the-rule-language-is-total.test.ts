@@ -76,12 +76,14 @@ describe("null propagates, and every production says what it does with it", () =
     ["first(out('for'))", null], ["first(out('for')).name", null], ["count(sort(out('for'), name, 'desc'))", 0], ["either(hours, due, null)", null],
     // A fact of the whole graph worked out over nothing is nothing.
     ["fact('longest')", null],
+    // FR-173: nothing is not archived.
+    ["archived(first(out('for')))", false],
   ])("%s → %j", (source, expected) => {
     expect(on(source)).toEqual(expected);
   });
 
   it("names every function the language knows, and a test above reaches each with nothing", () => {
-    expect([...FUNCTIONS].sort()).toEqual(["all", "contains", "count", "date", "days", "either", "every", "exists", "fact", "first", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "some", "sort", "startsWith", "sum", "today"]);
+    expect([...FUNCTIONS].sort()).toEqual(["all", "archived", "contains", "count", "date", "days", "either", "every", "exists", "fact", "first", "hours", "if", "in", "len", "lower", "max", "min", "now", "out", "present", "some", "sort", "startsWith", "sum", "today"]);
   });
 });
 

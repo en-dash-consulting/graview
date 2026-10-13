@@ -1,4 +1,5 @@
 import { addressOf } from "./address.js";
+import { isArchived, type Archived } from "./graph/archived.js";
 import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrangement.js";
 import { describeArg } from "./mutations/arg-shape.js";
 import type { Operation } from "./ops/types.js";
@@ -50,6 +51,8 @@ export type Hit =
       readonly why: Why;
       /** False for a record its kind's lifecycle has retired; only seen under `is:any` or `is:past`. */
       readonly current: boolean;
+      /** Set on an archived record (FR-173): found, said so, and ranked after the live ones. */
+      readonly archived?: true;
       readonly flagged: boolean;
       /** What tells it apart from another hit of the same name — "single" beside "album". */
       readonly apart?: string;
@@ -161,6 +164,13 @@ export interface SearchOptions {
   readonly limit?: number;
   /** The host's base path for the routed face (`/apps/<id>/`): every hit's `address` is under it, as `addressOf` spells it. */
   readonly basePath?: string;
+  /**
+   * WHICH RECORDS (FR-173): `"all"` when unsaid — a person's search finds
+   * an archived record, marked and after the live ones — `false` the live
+   * ones only, as an agent's find asks by default, `true` only the
+   * archived. `is:archived` in the words asks for those alone.
+   */
+  readonly archived?: Archived;
 }
 
 /*
@@ -408,7 +418,7 @@ function kindStrength(schema: AnySchema, kind: string, words: readonly string[])
   return best;
 }
 
-type Ranked = { hit: Hit; tier: number; inKind: number; near: number; past: number; touched: number; flagged: number; name: string; id: string };
+type Ranked = { hit: Hit; tier: number; inKind: number; near: number; past: number; touched: number; flagged: number; name: string; id: string; archived?: number };
 
 /*
  * Alphabetical as `localeCompare` with these options says it, from one
@@ -418,8 +428,10 @@ type Ranked = { hit: Hit; tier: number; inKind: number; near: number; past: numb
 let names: Intl.Collator | undefined;
 const byName = (a: string, b: string): number => (names ??= new Intl.Collator(undefined, { sensitivity: "base", numeric: true })).compare(a, b);
 
-/** The ranking, as one comparison: how it matched, the kind the person is in, near, current, touched, flagged, alphabetical, id. */
+/** The ranking, as one comparison: live before archived, how it matched, the kind the person is in, near, current, touched, flagged, alphabetical, id. */
 const byRank = (a: Ranked, b: Ranked): number =>
+  // An archived record after every live one, however well it matched (FR-173).
+  (a.archived ?? 0) - (b.archived ?? 0) ||
   a.tier - b.tier ||
   a.inKind - b.inKind ||
   a.near - b.near ||
@@ -455,6 +467,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
   const isWords = parsed.conditions.filter((condition) => condition.key === "is").map((condition) => condition.value);
   const past = isWords.includes("any") || isWords.includes("past");
   const onlyPast = isWords.includes("past") && !isWords.includes("any") && !isWords.includes("current");
+  const archived: Archived = isWords.includes("archived") ? true : (options.archived ?? "all");
 
   const named = (kind: string, value: string) => {
     const asked = squeeze(value);
@@ -477,7 +490,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
   }));
   const fieldConditions = conditions.filter((condition) => condition.key !== "is");
   // `is:flagged`, `is:clear` and `is:past` narrow on their own; `is:any` and `is:current` only say which horizon.
-  const narrowingIs = isWords.filter((word) => word === "flagged" || word === "clear" || word === "past");
+  const narrowingIs = isWords.filter((word) => word === "flagged" || word === "clear" || word === "past" || word === "archived");
 
   const searched = { kinds, past };
   const empty: SearchResult = { hits: [], words: parsed.words, conditions, searched, byKind: {}, total: 0, matched: [] };
@@ -516,7 +529,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
      * said "add is:any" — to somebody who had just named the past by name.
      */
     const namesThePast = asksForThePast(definition, own);
-    for (const node of store.graph.nodesOfKind(kind as never) as unknown as ({ id: string; kind: string } & Record<string, unknown>)[]) {
+    for (const node of store.graph.nodesOfKind(kind as never, { archived }) as unknown as ({ id: string; kind: string } & Record<string, unknown>)[]) {
       const current = isCurrent(definition, node, today);
       if (!past && !namesThePast && !current) continue;
       if (sighted && !sighted(node.id)) continue;
@@ -534,11 +547,12 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       const label = labelOf(definition, node);
       byKind[kind] = (byKind[kind] ?? 0) + 1;
       ranked.push({
-        hit: { about: "node", id: node.id, kind, label, why, current, flagged: flagged.has(node.id), address: at(`${listPath(definition, kind)}/${encodeURIComponent(node.id)}`) },
+        hit: { about: "node", id: node.id, kind, label, why, current, flagged: flagged.has(node.id), address: at(`${listPath(definition, kind)}/${encodeURIComponent(node.id)}`), ...(isArchived(node) ? { archived: true as const } : {}) },
         tier: TIER[why.strength],
         inKind: kind === options.inKind ? 0 : 1,
         near: near.has(node.id) ? 0 : 1,
         past: current ? 0 : 1,
+        archived: isArchived(node) ? 1 : 0,
         touched: -(touched.get(node.id) ?? 0),
         flagged: flagged.has(node.id) ? 0 : 1,
         name: label,
@@ -654,6 +668,10 @@ export function actsOn<S extends AnySchema>(
     const binding = mutation.subject;
     if (!binding) continue;
     if (binding.kinds !== "*" && !(binding.kinds as readonly string[]).includes(subject.kind as string)) continue;
+    // Archive is offered on a live record, "Bring it back" on an archived one, and merge only from a live one (FR-173).
+    const act = mutation.derived?.act;
+    if ((act === "archive" || act === "merge") && isArchived(subject)) continue;
+    if (act === "unarchive" && !isArchived(subject)) continue;
     if (!store.permits({ name: mutation.name, args: { [binding.arg]: subject.id } }, principal).ok) continue;
     const title = actTitle(mutation);
     const titled = tokensOf(title);

@@ -88,7 +88,8 @@ describe("labels", () => {
 describe("JSON Schema generation", () => {
   it("derives a node schema from the same declaration as the types", () => {
     const json = nodeJsonSchema(person) as { properties: Record<string, unknown>; required: string[] };
-    expect(Object.keys(json.properties).sort()).toEqual(["id", "kind", "label", "role"]);
+    // The archived mark is the framework's, said beside the fields (FR-173).
+    expect(Object.keys(json.properties).sort()).toEqual(["$archived", "id", "kind", "label", "role"]);
     expect(json.required.sort()).toEqual(["id", "kind", "label", "role"]);
   });
 

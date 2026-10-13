@@ -1,4 +1,4 @@
-import { Graph } from "./graph/graph.js";
+import { Graph, misfit } from "./graph/graph.js";
 import { UNSET, type Primitive } from "./graph/primitives.js";
 import { edgeId, type AnyGraphNode, type GraphEdge, type GraphSnapshot } from "./graph/types.js";
 import { evaluate } from "./invariants/engine.js";
@@ -83,16 +83,8 @@ export interface ValidateGraphOptions<S extends AnySchema = AnySchema> {
 
 /** A stored node's fields that do not fit: undefined when it fits, [] when the failure names no field. */
 function failingFields(schema: AnySchema, node: unknown): string[] | undefined {
-  try {
-    schema.parseNode(node);
-    return undefined;
-  } catch (error) {
-    const issues = (error as { issues?: readonly { code?: string; path?: readonly PropertyKey[]; keys?: readonly string[] }[] }).issues ?? [];
-    const fields = issues.flatMap((issue) =>
-      issue.code === "unrecognized_keys" && issue.keys ? [...issue.keys] : typeof issue.path?.[0] === "string" ? [issue.path[0]] : [],
-    );
-    return [...new Set(fields)];
-  }
+  const failing = misfit(schema, node);
+  return failing && [...failing.fields].filter(Boolean);
 }
 
 /** The declared field schema, when the kind's fields are an object of them. */

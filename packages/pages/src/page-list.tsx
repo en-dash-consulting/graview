@@ -1,6 +1,7 @@
 import { AppLink, ArrangeBar, Files, pageSays } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement, throughEdges } from "@graview/core/arrange";
 import {
+  archivedFrom,
   humanizeField,
   nounOf,
   isAppAddress,
@@ -122,7 +123,9 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   useStoreTick(store);
   const [search, setSearch] = useSearchParams();
   const definition = store.schema.tryDefinition(kind);
-  const all = store.graph.nodesOfKind(kind);
+  // The live records, unless the address asks for the archived (`?archived=true` or `all`, FR-173).
+  const askedArchived = archivedFrom(search.get("archived"));
+  const all = store.graph.nodesOfKind(kind, { archived: askedArchived });
   const relations = kindMap(store).relations.filter((relation) => relation.from === kind || relation.to === kind);
   const flagged = new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds));
   /*
@@ -139,7 +142,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   const edgeKinds = relations.map((relation) => relation.edgeKind);
   const asked = arrangementFromSearch(search, offers, edgeKinds);
   // What the address says, or — saying nothing — how the design opens the list, or a large list's meaningful order.
-  const addressed = ["sort", "filter", "group", "q", "by", "with", "past", ...edgeKinds].some((key) => search.has(key));
+  const addressed = ["sort", "filter", "group", "q", "by", "with", "past", "archived", ...edgeKinds].some((key) => search.has(key));
   const large = all.length >= LARGE_LIST;
   // The kind's natural time, which its list opens newest first by and indexes by year.
   const when = definition?.fieldRoles?.["when"];
@@ -167,9 +170,9 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   const grouping = arrangement.group?.by ?? null;
   const rearrange = (next: Arrangement) => {
     const params = new URLSearchParams(search);
-    for (const key of ["sort", "filter", "group", "q", "by", "with", "past", ...relations.map((relation) => relation.edgeKind)]) params.delete(key);
+    for (const key of ["sort", "filter", "group", "q", "by", "with", "past", "archived", ...relations.map((relation) => relation.edgeKind)]) params.delete(key);
     const words = formatArrangement(next);
-    for (const key of ["sort", "filter", "group", "q"] as const) if (words[key]) params.set(key, words[key]!);
+    for (const key of ["sort", "filter", "group", "q", "archived"] as const) if (words[key]) params.set(key, words[key]!);
     // Everything taken off is still a choice, and not the opening one.
     if (![...params.keys()].some((key) => ["sort", "filter", "group", "q"].includes(key)) && (opening || large || when)) params.set("sort", "");
     setSearch(params);
@@ -520,6 +523,12 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             +{retired} past
           </Link>
         ) : null}
+        {/* What was set aside is a link away, never in the list (FR-173). */}
+        {askedArchived === false && store.graph.count(kind, { archived: true }) > 0 ? (
+          <Link to={withWord(search, "archived", "true")} style={{ ...link, ...quiet, justifySelf: "start" }} data-testid="archived-link">
+            +{store.graph.count(kind, { archived: true })} archived
+          </Link>
+        ) : null}
         {creators.length > 0 ? (
           /*
            * ADDING ONE IS ONE QUIET ACT at the list's end, in the act's own
@@ -594,6 +603,7 @@ export function arrangementFromSearch(
     ...(search.get("filter") ? { filter: search.get("filter")! } : {}),
     ...(search.get("group") ? { group: search.get("group")! } : {}),
     ...(search.get("q") ? { q: search.get("q")! } : {}),
+    ...(search.get("archived") ? { archived: search.get("archived")! } : {}),
   });
   const conditions: Condition[] = [...(parsed.filter ?? [])];
   const by = search.get("by");
@@ -611,6 +621,7 @@ export function arrangementFromSearch(
       ...(parsed.query ? { query: parsed.query } : {}),
       ...(conditions.length > 0 ? { filter: conditions } : {}),
       ...(group ? { group } : {}),
+      ...(parsed.archived !== undefined ? { archived: parsed.archived } : {}),
     },
     offers,
   );

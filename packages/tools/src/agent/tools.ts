@@ -7,6 +7,7 @@ import {
   permittedMutations,
   refusalOf,
   resolveModules,
+  archivedFrom,
   sha256Hex,
   type AnyMutationDefinition,
   type AnySchema,
@@ -227,6 +228,12 @@ export interface DraftTools {
 
 const read =(title: string): ToolAnnotations => ({ title, readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
 
+/** Which records a read reaches (FR-173): the live ones unless it asks. */
+const ARCHIVED_ARG = {
+  description: "Which records: false (the default) the live ones, true only the archived ones, \"all\" both. An archived record is set aside, not gone: unarchive-<kind> brings it back.",
+  anyOf: [{ type: "boolean" }, { type: "string", enum: ["all"] }],
+} as const;
+
 /** Where a page of a read starts (FR-167). */
 const OFFSET = { type: "number", description: "Where the page starts; 0 when unsaid." } as const;
 
@@ -242,6 +249,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
         query: { type: "string", description: "Words, with optional key:value conditions." },
         limit: { type: "number", description: "Most hits to return; at most 20." },
         subject: { type: "string", description: "A node id whose acts to include." },
+        archived: ARCHIVED_ARG,
       },
       required: ["query"],
       additionalProperties: false,
@@ -256,7 +264,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
       "Read the graph, 25 nodes a page: their fields, the edges out of them, and how many more. Start here when you need the shape of the domain rather than one thing in it.",
     inputSchema: {
       type: "object",
-      properties: { offset: OFFSET },
+      properties: { offset: OFFSET, archived: ARCHIVED_ARG },
       additionalProperties: false,
     },
     mutating: false,
@@ -762,6 +770,8 @@ export function createToolRuntime<S extends AnySchema>(
           const subject = typeof args["subject"] === "string" ? args["subject"] : undefined;
           const found = search(seen, String(args["query"] ?? ""), {
             principal,
+            // An agent's find reaches the live records unless it asks (FR-173).
+            archived: archivedFrom(args["archived"]),
             limit: typeof args["limit"] === "number" && args["limit"] > 0 ? Math.min(args["limit"], READ_HITS) : READ_HITS,
             ...(places ? { places } : {}),
             ...(subject ? { subject, from: [subject] } : {}),

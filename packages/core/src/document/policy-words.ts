@@ -1,3 +1,4 @@
+import { derivedActOf } from "../mutations/derived-names.js";
 import { capitalize, listed } from "../capital.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import type { GraviewDocument } from "./schema.js";
@@ -36,8 +37,12 @@ export const whoWords = (roles: readonly string[] | "*"): string => (roles === "
 export function actWords(document: GraviewDocument, act: string): string {
   const title = document.acts?.[act]?.title;
   if (title) return quoted(title);
-  const derived = /^(edit|remove)-(.+)$/.exec(act);
-  if (derived && document.kinds[derived[2]!]) return quoted(`${derived[1] === "edit" ? "Change" : "Remove"} the ${nounWords(document.kinds, derived[2]!)}`);
+  const derived = derivedActOf(act);
+  if (derived && document.kinds[derived.kind]) {
+    const noun = nounWords(document.kinds, derived.kind);
+    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another` }[derived.act];
+    return quoted(words);
+  }
   return quoted(act);
 }
 

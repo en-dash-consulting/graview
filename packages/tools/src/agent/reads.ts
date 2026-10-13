@@ -1,4 +1,4 @@
-import { labelOf, type AnySchema, type SearchResult, type Store, type Violation } from "@graview/core";
+import { archivedFrom, isArchived, labelOf, type AnySchema, type SearchResult, type Store, type Violation } from "@graview/core";
 import { computedValues } from "@graview/core/blocks";
 import { READ_CHARS, READ_LINKS, READ_PAGE, READ_PROBLEMS, READ_TEXT } from "./bounds.js";
 import type { Authorship, UntrustedText } from "./untrusted.js";
@@ -136,13 +136,18 @@ export function searchRead(found: SearchResult, marked: SearchResult): unknown {
 
 /** `get_graph`: a page of records, the edges out of them, the total and how to read the next page. */
 export function graphRead<S extends AnySchema>(seen: Store<S>, by: Authorship, args: Record<string, unknown>): { readonly data: unknown; readonly reads: readonly string[] } {
-  const snapshot = seen.graph.snapshot();
+  // The live records, unless asked for the archived ones (FR-173): `archived: true` or `"all"`.
+  const archived = archivedFrom(args["archived"]);
+  const snapshot = { nodes: seen.graph.allNodes({ archived }), edges: seen.graph.allEdges({ archived: "all" }) };
   const offset = offsetOf(args["offset"]);
   const total = snapshot.nodes.length;
   const { page, answer } = fittedPage(snapshot.nodes, offset, READ_PAGE, (nodes) => {
     const on = new Set(nodes.map((node) => node.id));
+    const reached = new Set(nodes.map((node) => node.id));
     const more = moreSaid(total, offset, nodes.length, "get_graph", "nodes");
-    return { ...markGraph({ nodes: nodes.map(clipped), edges: snapshot.edges.filter((edge) => on.has(edge.from)) }, by), total, ...(more ? { more } : {}) };
+    // A link out of a record on the page, to one the read reaches.
+    const reaches = (id: string) => reached.has(id) || (archived === "all" ? seen.graph.has(id) : seen.graph.has(id) && isArchived(seen.graph.getNode(id)) === archived);
+    return { ...markGraph({ nodes: nodes.map(clipped), edges: snapshot.edges.filter((edge) => on.has(edge.from) && reaches(edge.to)) }, by), total, ...(more ? { more } : {}) };
   });
   return { data: answer, reads: page.map((node) => node.id) };
 }
@@ -157,7 +162,7 @@ export function nodeRead<S extends AnySchema>(seen: Store<S>, by: Authorship, id
   const inbound = inAll.slice(offset, offset + READ_LINKS);
   const link = (kind: string, other: string) => {
     const at = seen.graph.getNode(other);
-    return { kind, id: other, label: at ? labelOf(seen.schema.tryDefinition(at.kind), at) : other };
+    return { kind, id: other, label: at ? labelOf(seen.schema.tryDefinition(at.kind), at) : other, ...(isArchived(at) ? { archived: true } : {}) };
   };
   // Worked out over what this seat sees, never the store's whole graph (FR-83, FR-55).
   const worked = computedValues(seen.schema, seen.graph as never, node as never);
@@ -170,6 +175,8 @@ export function nodeRead<S extends AnySchema>(seen: Store<S>, by: Authorship, id
   return {
     data: {
       node: markNode(clipped(node), by),
+      // Set aside, not gone (FR-173): unarchive-<kind> brings it back.
+      ...(isArchived(node) ? { archived: true } : {}),
       ...(Object.keys(worked.values).length > 0 ? { computed: markComputed(id, worked.values, by) } : {}),
       ...(Object.keys(worked.refused).length > 0 ? { uncomputed: worked.refused } : {}),
       out: markLinks(out.map((edge) => link(edge.kind, edge.to)), by),

@@ -1,3 +1,4 @@
+import { ARCHIVED } from "../graph/archived.js";
 import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
@@ -54,6 +55,9 @@ export function nodeJsonSchema(definition: AnyNodeDefinition): JsonSchema {
   );
   // The kind that stands for the people says so (Roadmap f-people-kind): a record's id is a member's principal id.
   if (definition.people) js["x-graview-people"] = true;
+  // A stored record may be archived (FR-173): the framework's mark, never a declared field.
+  const properties = js["properties"] as Record<string, JsonSchema> | undefined;
+  if (properties) properties[ARCHIVED] = { type: "boolean", const: true, description: "Set when the record is archived: kept with its links and history, out of lists, counts and rules." };
   return js;
 }
 

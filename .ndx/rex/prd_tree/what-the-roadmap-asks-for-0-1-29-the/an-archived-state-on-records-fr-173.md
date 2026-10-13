@@ -2,12 +2,15 @@
 id: "dd8e4788-2c4f-435c-91d6-b7c2c32ab5df"
 level: "feature"
 title: "An archived state on records (FR-173)"
-status: "pending"
+status: "completed"
 priority: "critical"
 tags:
   - "roadmap"
   - "f-record-archive"
   - "FR-173"
+startedAt: "2026-10-13T02:40:00.000Z"
+completedAt: "2026-10-13T04:10:00.000Z"
+endedAt: "2026-10-13T04:10:00.000Z"
 source: "Nick, 2026-10-13: \"do all planned items for graview core that the roadmap has laid out. capture and work them in ndx appropriately\""
 acceptanceCriteria:
   - "archive and unarchive are store primitives with derived acts on every kind (archive-<kind>, unarchive-<kind>), like remove: the record keeps its fields, links and history"
@@ -17,4 +20,6 @@ acceptanceCriteria:
   - "A rule or computed field may ask for archived records explicitly"
   - "editDocument, the checker, the JSON schema and docs/stability.md say it; a changeset with a Compatibility line names FR-173"
 description: "A record is present or removed; the only archive in core is the op log's. Pruning that keeps an app tidy must archive and never delete. Roadmap f-record-archive; unblocks Cloud's f-auto-pruning."
+lastModified: "2026-10-13T04:10:00.000Z"
+resolution: "Shipped on feat/fr-173-archived-records: archive-<kind>, unarchive-<kind> and merge-<kind> on every kind (ctx.archiveNode, unarchiveNode and mergeNode; `$archived: true` on the record, `mergedInto` on a merge's op), and every listing graph read, rule, computed field, lens and agent find reaches live records unless given archived: true or \"all\", while search, a read by id and the record's page, with Bring it back, still find it."
 ---

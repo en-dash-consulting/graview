@@ -1,4 +1,4 @@
-import { humanizeField, isWithheld, type AnySchema, type Violation } from "@graview/core";
+import { humanizeField, isArchived, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { AppLink, DefaultViewElsewhere, EditableValue, Files, LongValue, pageSays, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
@@ -146,6 +146,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           </p>
         ) : null}
       </header>
+
+      {node && isArchived(node) ? <ArchivedSaid context={context} id={id} kind={facts.kind} /> : null}
 
       {PageView && node ? (
         <section data-testid="record-view" style={{ display: "grid", minWidth: 0 }}>
@@ -419,5 +421,39 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
     </PageMain>
+  );
+}
+
+/**
+ * AN ARCHIVED RECORD SAYS SO, AT THE HEAD OF ITS PAGE (FR-173): kept, with
+ * its fields, ties and history, and out of lists and counts — and the way
+ * back, where the seat may take it. A merged record names the one it went
+ * into, from its op.
+ */
+function ArchivedSaid<S extends AnySchema>({ context, id, kind }: { context: PageContext<S>; id: string; kind: string }) {
+  const { store, principal } = context;
+  const call = { name: `unarchive-${kind}`, args: { id } };
+  const may = store.allMutations().some((mutation) => mutation.name === call.name) && store.permits(call, principal).ok;
+  const merged = [...store.log.all()].reverse().find((op) => !isWithheld(op) && op.mergedInto !== undefined && op.writes.includes(id));
+  const into = merged?.mergedInto !== undefined ? store.graph.getNode(merged.mergedInto) : undefined;
+  return (
+    <section
+      data-testid="record-archived"
+      style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "12px 16px", border: "1px solid var(--graview-edge)", borderRadius: "var(--graview-radius, 12px)", background: "var(--graview-panel)" }}
+    >
+      <p style={{ margin: 0, flex: "1 1 16rem" }}>
+        <strong>Archived.</strong> Kept with its ties and history, and out of lists, counts and rules.
+        {into ? (
+          <>
+            {" "}Merged into <Link to={recordPath(store.schema, into.kind, into.id)} style={link}>{labelOf(store.schema.tryDefinition(into.kind), into as never)}</Link>.
+          </>
+        ) : null}
+      </p>
+      {may ? (
+        <button type="button" style={button} data-testid="bring-it-back" onClick={() => store.apply(call, principal ? { author: principal } : {})}>
+          Bring it back
+        </button>
+      ) : null}
+    </section>
   );
 }

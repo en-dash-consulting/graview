@@ -1,4 +1,4 @@
-import { actTitle, edgeWords, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { actTitle, edgeWords, isArchived, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import { argShape } from "@graview/core/words";
 import type { Affordance, AffordanceProvider, Observation, OpenParameter } from "../types.js";
 
@@ -249,6 +249,10 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             ? true
             : [...kinds].every((kind) => (subject.kinds as readonly string[]).includes(kind));
         if (!accepted) continue;
+        // Archive and merge are offered on live records, "Bring it back" on archived ones (FR-173).
+        const derivedAct = mutation.derived?.act;
+        if ((derivedAct === "archive" || derivedAct === "merge") && nodes.some((node) => isArchived(node))) continue;
+        if (derivedAct === "unarchive" && !nodes.some((node) => isArchived(node))) continue;
 
         const subjectId = nodes.length === 1 ? nodes[0]!.id : null;
         const severs = mutation.severs ?? [];

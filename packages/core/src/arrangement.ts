@@ -1,3 +1,4 @@
+import type { Archived } from "./graph/archived.js";
 import { describeArg } from "./mutations/arg-shape.js";
 import { humanizeField, isCurrent } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -63,6 +64,13 @@ export interface Arrangement {
    * conditions a person picks — and the same matcher a search would use.
    */
   readonly query?: string;
+  /**
+   * WHICH RECORDS the picture draws (FR-173): the live ones when unsaid,
+   * `true` the archived ones, `"all"` both. Carried as `archived=` beside
+   * `sort`, `filter`, `group` and `q`, so a list of what was set aside is
+   * a link too.
+   */
+  readonly archived?: Archived;
 }
 
 export const NO_ARRANGEMENT: Arrangement = {};
@@ -260,6 +268,8 @@ export interface ArrangementWords {
   readonly filter?: string;
   readonly group?: string;
   readonly q?: string;
+  /** `true` or `all` (FR-173); anything else is the live records. */
+  readonly archived?: string;
 }
 
 export { parseArrangement } from "./arrangement-words.js";

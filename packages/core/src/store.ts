@@ -896,9 +896,14 @@ export class Store<S extends AnySchema> {
     this.labels ??= new LabelIndex(this.graph);
     if (named && visible(given)) return { ok: true, id: given, label: this.labels.labelOf(given) ?? given, by: "id" };
     const found = this.labels.lookup(arg.kinds, given);
-    const exact = found.exact.filter(visible);
+    // A name is a live record's when one has it, and an archived one's only when none does (FR-173).
+    const live = (ids: readonly string[]): readonly string[] => {
+      const kept = ids.filter((id) => !this.graph.isArchived(id));
+      return kept.length ? kept : ids;
+    };
+    const exact = live(found.exact.filter(visible));
     const exactly = exact.length > 0;
-    const candidates: RefCandidate[] = (exactly ? exact : found.prefix.filter(visible))
+    const candidates: RefCandidate[] = (exactly ? exact : live(found.prefix.filter(visible)))
       .map((id) => ({ id, kind: this.graph.getNode(id)!.kind, label: this.labels!.labelOf(id) ?? id }))
       .sort((a, b) => (a.label < b.label ? -1 : a.label > b.label ? 1 : a.id < b.id ? -1 : 1));
     if (candidates.length === 1) return { ok: true, id: candidates[0]!.id, label: candidates[0]!.label, by: exactly ? "label" : "prefix" };
@@ -1257,6 +1262,7 @@ export class Store<S extends AnySchema> {
           writes: compiled.writes,
           // Which records its sentence read, so a reader who may not see one is not handed the sentence (FR-55).
           ...(definition.describe !== undefined && compiled.described && compiled.described.length > 0 ? { described: compiled.described } : {}),
+          ...given("mergedInto", compiled.mergedInto),
           at: this.now(),
           ...given("via", options.via),
         };

@@ -1,6 +1,7 @@
 import { humanizeField, labelOf } from "../schema/define-node.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
+import { ARCHIVED, isArchived, type ArchivedOption } from "./archived.js";
 import { diffSnapshots, type GraphDiff } from "./diff.js";
 import { isUnset, type Primitive } from "./primitives.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
@@ -85,6 +86,28 @@ export class MissingRecordError extends GraphError {
 }
 
 
+/**
+ * What about a node does not fit its kind: undefined when it fits; `""`
+ * stands for a failure that names no field. A kind the schema does not
+ * have is its `SchemaError`, thrown. What a write is judged by, and what
+ * `validateGraph` reads a stored record by.
+ */
+export function misfit(schema: AnySchema, node: unknown): { readonly fields: ReadonlySet<string>; readonly error: unknown } | undefined {
+  try {
+    schema.parseNode(node);
+    return undefined;
+  } catch (error) {
+    if (error instanceof SchemaError) throw error;
+    const issues = (error as { issues?: readonly { code?: string; path?: readonly PropertyKey[]; keys?: readonly string[] }[] }).issues ?? [];
+    const fields = new Set<string>(
+      issues.flatMap((issue) =>
+        issue.code === "unrecognized_keys" && issue.keys ? [...issue.keys] : typeof issue.path?.[0] === "string" ? [issue.path[0]] : [""],
+      ),
+    );
+    return { fields, error };
+  }
+}
+
 /** The rank keys: nodes and edges share one ranking, under their own prefixes. */
 const NODE = "n\u0000";
 const EDGE = "e\u0000";
@@ -115,6 +138,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    * hold anything on every change (`barPlaces`).
    */
   private readonly counts = new Map<string, number>();
+  /* The archived records' ids (FR-173), kept as they come and go, so a read with none archived costs nothing more. */
+  private readonly archived = new Set<string>();
   private readonly listeners = new Set<GraphListener<S>>();
   private readonly validate: boolean;
 
@@ -160,59 +185,69 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     return this.nodes.has(id);
   }
 
-  allNodes(): NodeOfSchema<S>[] {
-    return [...this.nodes.values()];
+  /** The live records, unless `archived` asks for others (FR-173). */
+  allNodes(options?: ArchivedOption): NodeOfSchema<S>[] {
+    return this.reach([...this.nodes.values()], options, this.held);
   }
 
-  /** How many records of `kind` it holds, without walking them. */
-  count(kind: string): number {
-    return this.counts.get(kind) ?? 0;
+  /** How many records of `kind` it holds, without walking them while none is archived: the live ones, unless `archived` asks for others. */
+  count(kind: string, options?: ArchivedOption): number {
+    return options || this.archived.size ? this.nodesOfKind(kind, options).length : (this.counts.get(kind) ?? 0);
   }
 
-  allEdges(): GraphEdge[] {
-    return [...this.edges.values()];
+  /** The links between records the read reaches: both ends live, unless `archived` asks for others. */
+  allEdges(options?: ArchivedOption): GraphEdge[] {
+    return this.reach([...this.edges.values()], options, (edge) => this.archived.has(edge.from) || this.archived.has(edge.to));
   }
 
   nodesOfKind<K extends NodeOfSchema<S>["kind"]>(
     kind: K,
+    options?: ArchivedOption,
   ): Extract<NodeOfSchema<S>, { kind: K }>[] {
-    return this.allNodes().filter(
+    return this.allNodes(options).filter(
       (node): node is Extract<NodeOfSchema<S>, { kind: K }> => node.kind === kind,
     );
   }
 
-  edgesOfKind(kind: string): GraphEdge[] {
-    return this.allEdges().filter((edge) => edge.kind === kind);
+  edgesOfKind(kind: string, options?: ArchivedOption): GraphEdge[] {
+    return this.allEdges(options).filter((edge) => edge.kind === kind);
   }
 
-  out(id: string, kind?: string): NodeOfSchema<S>[] {
-    return this.resolve(this.outIndex.get(id), kind, "to");
+  out(id: string, kind?: string, options?: ArchivedOption): NodeOfSchema<S>[] {
+    return this.reach(this.resolve(this.outIndex.get(id), kind, "to"), options, this.held);
   }
 
-  in(id: string, kind?: string): NodeOfSchema<S>[] {
-    return this.resolve(this.inIndex.get(id), kind, "from");
+  in(id: string, kind?: string, options?: ArchivedOption): NodeOfSchema<S>[] {
+    return this.reach(this.resolve(this.inIndex.get(id), kind, "from"), options, this.held);
   }
 
-  neighbors(id: string): NodeOfSchema<S>[] {
+  neighbors(id: string, options?: ArchivedOption): NodeOfSchema<S>[] {
     const seen = new Map<string, NodeOfSchema<S>>();
-    for (const node of [...this.out(id), ...this.in(id)]) seen.set(node.id, node);
+    for (const node of [...this.out(id, undefined, options), ...this.in(id, undefined, options)]) seen.set(node.id, node);
     return [...seen.values()];
   }
 
-  /** Edges leaving `id`, optionally of one kind. */
+  /** Whether a record is archived (FR-173). */
+  isArchived(id: string): boolean {
+    return this.archived.has(id);
+  }
+
+  /** Edges leaving `id`, optionally of one kind — every one, whatever is at its far end. */
   outEdges(id: string, kind?: string): GraphEdge[] {
     return this.edgesFrom(this.outIndex.get(id), kind);
   }
 
-  /** Edges arriving at `id`, optionally of one kind. */
+  /** Edges arriving at `id`, optionally of one kind — every one, whatever is at its far end. */
   inEdges(id: string, kind?: string): GraphEdge[] {
     return this.edgesFrom(this.inIndex.get(id), kind);
   }
 
+  /** Everything it holds, archived records and their links with the rest: what is stored. */
   snapshot(): GraphSnapshot<NodeOfSchema<S>> {
-    return { nodes: this.allNodes(), edges: this.allEdges() };
+    return { nodes: [...this.nodes.values()], edges: [...this.edges.values()] };
   }
 
+  /** Everything it holds, archived or not. */
   get size(): { nodes: number; edges: number } {
     return { nodes: this.nodes.size, edges: this.edges.size };
   }
@@ -259,7 +294,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
 
   /** Puts the graph back to a snapshot it held, as stored and silently: nothing a listener saw ever changed. */
   private restore(snapshot: GraphSnapshot<NodeOfSchema<S>>): void {
-    for (const held of [this.nodes, this.edges, this.outIndex, this.inIndex, this.ranks, this.lapsed, this.counts]) held.clear();
+    for (const held of [this.nodes, this.edges, this.outIndex, this.inIndex, this.ranks, this.lapsed, this.counts, this.archived]) held.clear();
     this.reordered = false;
     for (const node of snapshot.nodes) this.insertNode(node, true);
     for (const edge of snapshot.edges) this.insertEdge(edge, true);
@@ -267,7 +302,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
 
   /** One more, or one fewer, record of `kind`. */
   private tally(kind: string, by: number): void {
-    this.counts.set(kind, this.count(kind) + by);
+    this.counts.set(kind, (this.counts.get(kind) ?? 0) + by);
   }
 
   /** A rank for what just went in: the one it had, when it is being put back in place; the next one otherwise. */
@@ -332,6 +367,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
           this.deleteEdge(edge);
         }
         this.tally(node.kind, -1);
+        this.archived.delete(id);
         this.nodes.delete(id);
         this.lapse(NODE + id);
         this.outIndex.delete(id);
@@ -352,6 +388,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
         }
         const patched = (restoring ? next : this.checkPatch(current, next, Object.keys(primitive.after))) as NodeOfSchema<S>;
         this.nodes.set(primitive.id, patched);
+        this.archived[isArchived(patched) ? "add" : "delete"](primitive.id);
         // A patch that names the kind moves the record between counts.
         if (patched.kind !== current.kind) this.tally(current.kind, -1), this.tally(patched.kind, 1);
         return;
@@ -392,7 +429,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     const shape = (this.schema.tryDefinition(String(next["kind"]))?.fields as { shape?: Record<string, { safeParse(value: unknown): { success: boolean; data?: unknown } }> } | undefined)?.shape;
     if (!shape) return this.check(next);
     for (const field of written) {
-      if (field === "id" || field === "kind") continue;
+      // The archived mark is the framework's, not a field: written as it is (FR-173).
+      if (field === "id" || field === "kind" || field === ARCHIVED) continue;
       const declared = shape[field];
       // A field the kind does not declare is not written, as a parse would strip it.
       if (!declared) {
@@ -404,31 +442,15 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       if (read.data === undefined) delete next[field];
       else next[field] = read.data;
     }
-    const failing = this.failing(next);
+    const failing = misfit(this.schema, next);
     if (failing === undefined) return next as NodeOfSchema<S>;
-    const before = this.failing(current)?.fields ?? new Set<string>();
+    const before = misfit(this.schema, current)?.fields ?? new Set<string>();
     if ([...failing.fields].some((field) => written.includes(field) || !before.has(field))) {
       throw this.refusal(next, failing.error);
     }
     return next as NodeOfSchema<S>;
   }
 
-  /** What about a node does not fit: undefined when it fits; `""` stands for a failure that names no field. */
-  private failing(node: unknown): { readonly fields: ReadonlySet<string>; readonly error: unknown } | undefined {
-    try {
-      this.schema.parseNode(node);
-      return undefined;
-    } catch (error) {
-      if (error instanceof SchemaError) throw error;
-      const issues = (error as { issues?: readonly { code?: string; path?: readonly PropertyKey[]; keys?: readonly string[] }[] }).issues ?? [];
-      const fields = new Set<string>(
-        issues.flatMap((issue) =>
-          issue.code === "unrecognized_keys" && issue.keys ? [...issue.keys] : typeof issue.path?.[0] === "string" ? [issue.path[0]] : [""],
-        ),
-      );
-      return { fields, error };
-    }
-  }
 
   /** Why a node was refused, in the app's own words. */
   private refusal(node: unknown, error: unknown): Error {
@@ -462,6 +484,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       throw new GraphError(`Duplicate node id "${node.id}"`);
     }
     this.nodes.set(node.id, held ? node : this.check(node));
+    if (isArchived(node)) this.archived.add(node.id);
     this.tally(node.kind, 1);
     this.place(NODE + node.id, inPlace);
   }
@@ -525,5 +548,18 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       if (node) result.push(node);
     }
     return result;
+  }
+
+  /** Whether a record is one of the archived. */
+  private readonly held = (node: { readonly id: string }): boolean => this.archived.has(node.id);
+
+  /**
+   * What a read reaches of `all` (FR-173): every one when it asks for
+   * `"all"`, or for the live while none is archived; else those whose
+   * `archived` is what it asks. A link is archived when either end is.
+   */
+  private reach<T>(all: T[], options: ArchivedOption | undefined, archived: (one: T) => boolean): T[] {
+    const asked = options?.archived ?? false;
+    return asked === "all" || (!asked && !this.archived.size) ? all : all.filter((one) => archived(one) === asked);
   }
 }

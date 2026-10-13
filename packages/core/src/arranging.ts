@@ -1,3 +1,4 @@
+import { reaches, type Archived } from "./graph/archived.js";
 import { humanizeField, labelOf } from "./schema/define-node.js";
 import { tellApart } from "./schema/reading.js";
 import { matchNode, parseQuery } from "./search.js";
@@ -41,8 +42,9 @@ export function arrangeAllows(option: ArrangeOption | undefined, part: "sort" | 
 }
 
 export function formatArrangement(arrangement: Arrangement): ArrangementWords {
-  const out: { sort?: string; filter?: string; group?: string; q?: string } = {};
+  const out: { sort?: string; filter?: string; group?: string; q?: string; archived?: string } = {};
   if (arrangement.query && arrangement.query.trim().length > 0) out.q = arrangement.query;
+  if (arrangement.archived !== undefined && arrangement.archived !== false) out.archived = String(arrangement.archived);
   if (arrangement.sort) {
     out.sort = arrangement.sort.direction === "desc" ? `${arrangement.sort.by}:desc` : arrangement.sort.by;
   }
@@ -66,8 +68,10 @@ export function admitArrangement(
   offers: Arrangeable,
 ): { readonly arrangement: Arrangement; readonly dropped: readonly string[] } {
   const dropped: string[] = [];
-  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping; query?: string } = {};
+  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping; query?: string; archived?: Archived } = {};
   if (arrangement.query) out.query = arrangement.query;
+  // Which records is the graph's to answer, not a kind's: every kind may be asked for its archived (FR-173).
+  if (arrangement.archived !== undefined && arrangement.archived !== false) out.archived = arrangement.archived;
   if (arrangement.sort) {
     if (offers.sorts.some((offer) => offer.key === arrangement.sort!.by)) out.sort = arrangement.sort;
     else dropped.push(`sort ${arrangement.sort.by}`);
@@ -182,7 +186,9 @@ function matcherFor(ctx: ArrangeContext, query: string): (node: ArrangeNode) => 
  */
 export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement: Arrangement, ctx: ArrangeContext): Arranged<N> {
   const query = arrangement.query?.trim();
-  const found = query ? nodes.filter(matcherFor(ctx, query)) : nodes;
+  // Only the records it asks for: the caller hands what the graph gave it, and an arrangement that says `archived` keeps to those (FR-173).
+  const which = arrangement.archived === undefined ? nodes : nodes.filter((node) => reaches(node, arrangement.archived));
+  const found = query ? which.filter(matcherFor(ctx, query)) : which;
   const kept = arrangement.filter?.length
     ? found.filter((node) => arrangement.filter!.every((condition) => conditionHolds(ctx, node, condition)))
     : [...found];
