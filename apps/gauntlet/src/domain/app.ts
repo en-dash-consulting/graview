@@ -43,11 +43,13 @@ export const gauntletApp = defineApp({
       options: { today: "2026-09-28", range: "week", horizon: { years: 10, title: "Ten editions" } },
     },
     /*
-     * A LIST CUT SHORT, drawn from blocks: twelve talks of thousands, and
+     * A LIST CUT SHORT, drawn from blocks: twelve workshops of a hundred, and
      * "See all" under them on the routed face — a state no
-     * harness reached until the ninth walk, whose count was said bare (W-198).
+     * harness reached until the ninth walk, whose count was said bare (W-198). On the workshops, not the talks: a lens
+     * is the stop a kind's district goes in to, and the talks' is where the
+     * journeys narrow by a number.
      */
-    { name: "blocks", title: "A dozen talks", on: "talk", options: { blocks: [{ list: "all('talk')", as: "row", limit: 12 }] } },
+    { name: "blocks", title: "A dozen workshops", on: "workshop", options: { blocks: [{ list: "all('workshop')", as: "row", limit: 12 }] } },
   ],
 });
 
