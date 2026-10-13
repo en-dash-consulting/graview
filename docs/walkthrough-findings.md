@@ -4573,3 +4573,28 @@ box) hold. Open, and carried to the ninth walk:
 - a list of repairs whose names repeat ("Blade guard sticks", three times)
   does not say which tool each is on; days are said day first ("10 Sep
   2023") in an app written for the United States.
+
+## The ninth walk — a beekeeping co-op (2026-10-13)
+
+The ninth walk took a beekeeping cooperative: yards lent by farms and
+orchards, the hives kept in them, the members who keep them, an inspection
+every two weeks or so in the season, the mite counts and the treatments they
+call for, and the honey — with the coordinator, a mentor, a novice member and
+somebody browsing as seats, and a policy that keeps a member's phone and email
+to them and the mentors. Scaffolded with `graview create ../walk9 --link .
+--name "Larkspur Bee Co-op" --kind hive --plural hives --port 6750` from a
+fresh worktree of main that installed, built and passed its tests (687 files,
+5,586 tests), then seeded through its own acts at real size: 14 yards, 299
+hives (nine of them archived dead-outs), 64 beekeepers, 7,540 inspections,
+565 harvests and 155 treatments, 62 problems on the day. The journeys walked
+from the first run (the eighth walk's W-176 and W-178 hold).
+
+### W-190 · A rule that reads the clock cannot say so without a cast
+- stage: C (a rule about the day, written as the graview-invariant skill says) · face: — · width: — · scheme: —
+- impact: costs a job — writing the co-op's first rule: the skill says a rule that is a function "reads its `today` argument and says `readsTheClock: true`", and `bindSchema(schema).defineInvariant` refused the key ("'readsTheClock' does not exist in type …"), so the build failed on the line the skill wrote
+- class: what-a-project-copies-is-wrong (also: harness-or-setup-itself)
+- expected: what the skill says to write compiles, through the binding every scaffolded app uses
+- actual: FR-176 added `readsTheClock` to `InvariantDefinition` and nowhere a rule is declared — neither `defineInvariant` nor the bound one took it — and its own test reached it through `as never`, so the criterion agreed with the bug
+- where it belongs: `packages/core/src/invariants/engine.ts`, `packages/core/src/bind.ts`
+- harness that should have caught it: the class's check is "none yet" — nothing compiles a skill's words against the binding; the FR's test cast its way past it
+- status: fixed in "walkthrough: C · a rule that reads the clock says so without a cast" · criterion: `packages/core/tests/unit/a-rule-that-reads-the-clock-says-so-without-a-cast.test.ts`, compiled by `pnpm typecheck` (three `TS2353` errors without the fix, verified)

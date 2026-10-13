@@ -29,6 +29,8 @@ export interface SchemaBinding<S extends AnySchema> {
       readonly repairs?: readonly string[];
       /** Judge retired subjects too — see `InvariantDefinition.judgesPast`. */
       readonly judgesPast?: boolean;
+      /** The rule reads the day from its `today` — see `InvariantDefinition.readsTheClock`. */
+      readonly readsTheClock?: boolean;
       readonly evaluate: (args: InvariantEvalArgs<S, NodeOfKind<S, K>>) => Violation[];
     },
   ): InvariantDefinition<S>;
@@ -38,6 +40,7 @@ export interface SchemaBinding<S extends AnySchema> {
       readonly label?: string;
       readonly description?: string;
       readonly repairs?: readonly string[];
+      readonly readsTheClock?: boolean;
       readonly evaluate: (args: InvariantEvalArgs<S, undefined>) => Violation[];
     },
   ): InvariantDefinition<S>;

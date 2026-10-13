@@ -33,6 +33,8 @@ export function defineInvariant<
     readonly description?: string;
     readonly repairs?: readonly string[];
     readonly judgesPast?: boolean;
+    /** The rule reads the day — see `InvariantDefinition.readsTheClock`. */
+    readonly readsTheClock?: boolean;
     readonly evaluate: (args: InvariantEvalArgs<S, NodeOfKind<S, K>>) => Violation[];
   },
 ): InvariantDefinition<S>;
@@ -44,6 +46,8 @@ export function defineInvariant<S extends AnySchema>(
     readonly description?: string;
     readonly repairs?: readonly string[];
     readonly judgesPast?: boolean;
+    /** The rule reads the day — see `InvariantDefinition.readsTheClock`. */
+    readonly readsTheClock?: boolean;
     readonly evaluate: (args: InvariantEvalArgs<S, undefined>) => Violation[];
   },
 ): InvariantDefinition<S>;
@@ -55,6 +59,8 @@ export function defineInvariant<S extends AnySchema>(
     readonly description?: string;
     readonly repairs?: readonly string[];
     readonly judgesPast?: boolean;
+    /** The rule reads the day — see `InvariantDefinition.readsTheClock`. */
+    readonly readsTheClock?: boolean;
     readonly evaluate: (args: never) => Violation[];
   },
 ): InvariantDefinition<S> {
