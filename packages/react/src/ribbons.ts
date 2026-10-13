@@ -1,5 +1,4 @@
-import { BLOCK, toIso } from "@graview/core/scene";
-import type { Ribbon } from "./map-choice.js";
+import { toIso } from "@graview/core/scene";
 export { RIBBON_WIDTH, ribbonWidth } from "./ribbon-width.js";
 
 /*
@@ -30,115 +29,182 @@ export interface PlotLike {
 }
 export interface Lattice {
   readonly cell: number;
+  /** The tilt the city is seen at (`toIso`): a half by default, more from above. */
+  readonly tilt?: number | undefined;
 }
 
 /**
- * Where each ribbon runs in its gutter, in lattice cells off the gutter's
- * middle. Ribbons between the same two districts lie side by side — the
- * gutter is one cell wide, and they share it between them — so two
- * relations joining the same pair are two ribbons, never one drawn twice.
+ * A DISTRICT'S GROUND ON THE CANVAS: its plot's diamond, from origin zero,
+ * at the tilt the city is seen at — its center, and how far its side and its
+ * back and front corners reach from it.
  */
-export function ribbonLanes(ribbons: readonly Pick<Ribbon, "key" | "from" | "to">[]): Map<string, number> {
-  const pairs = new Map<string, string[]>();
+export interface Tile {
+  readonly cx: number;
+  readonly cy: number;
+  /** Half its width: the left and right corners are this far either side. */
+  readonly hw: number;
+  /** Half its height: the back and front corners are this far above and below. */
+  readonly hh: number;
+}
+
+export function tileOf(plot: PlotLike, cell: number, tilt = 0.5): Tile {
+  const back = toIso(plot.col, plot.row, cell, tilt);
+  const right = toIso(plot.col + plot.side, plot.row, cell, tilt);
+  const front = toIso(plot.col + plot.side, plot.row + plot.side, cell, tilt);
+  return { cx: back.x, cy: (back.y + front.y) / 2, hw: right.x - back.x, hh: (front.y - back.y) / 2 };
+}
+
+const corner = (tile: Tile, which: "left" | "right" | "back" | "front"): Point =>
+  which === "left" ? { x: tile.cx - tile.hw, y: tile.cy } : which === "right" ? { x: tile.cx + tile.hw, y: tile.cy } : which === "back" ? { x: tile.cx, y: tile.cy - tile.hh } : { x: tile.cx, y: tile.cy + tile.hh };
+
+/** Whether a point stands on a tile's ground, a hair inside its curb. */
+const onTile = (p: Point, tile: Tile): boolean => Math.abs(p.x - tile.cx) / tile.hw + Math.abs(p.y - tile.cy) / tile.hh < 0.97;
+
+/** Whether a run crosses the ground of any tile but the two it joins. */
+export function crossesAny(points: readonly Point[], tiles: readonly Tile[]): boolean {
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1]!;
+    const b = points[i]!;
+    const steps = Math.max(8, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 6));
+    for (let k = 0; k <= steps; k++) {
+      const p = { x: a.x + ((b.x - a.x) * k) / steps, y: a.y + ((b.y - a.y) * k) / steps };
+      if (tiles.some((tile) => onTile(p, tile))) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * WHERE A RIBBON RUNS, decided for all of them at once: the shortest honest
+ * way along the ground between its two districts.
+ *
+ * - Between neighbors — nothing standing between them — a straight run from
+ *   the corner of one that faces the other to the corner of the other that
+ *   faces it.
+ * - Between two in one row with others between, along the row's street: the
+ *   strip of ground just in front of its districts, which every district in
+ *   the row touches at its front corner and none stands on.
+ * - Between two in one column, along the column's street: the strip just
+ *   beside its districts' right-hand corners.
+ * - Otherwise one bend: along the street beside the first district's column
+ *   to the second's row street, and along that to it — or the other way
+ *   about, whichever crosses no district.
+ *
+ * Ribbons that share a street lie side by side in it, each its own width
+ * apart, so a corridor several relations use is a bundle rather than one
+ * line drawn over another. Nothing is bowed to look like a road: every run
+ * is straight, and a bend is where a street meets another.
+ */
+export function routeRibbons(
+  ribbons: readonly { readonly key: string; readonly from: string; readonly to: string; readonly width: number }[],
+  tiles: ReadonlyMap<string, Tile>,
+): Map<string, Point[]> {
+  const all = [...tiles.values()];
+  const others = (a: Tile, b: Tile) => all.filter((tile) => tile !== a && tile !== b);
+  const sameRow = (a: Tile, b: Tile) => Math.abs(a.cy - b.cy) < 0.25 * Math.min(a.hh, b.hh);
+  const sameCol = (a: Tile, b: Tile) => Math.abs(a.cx - b.cx) < 0.25 * Math.min(a.hw, b.hw);
+  // How far apart neighbors stand: a straight run longer than a neighbor's reach crosses empty ground nobody lives on.
+  const nearest = all.map((a) => Math.min(...all.filter((b) => b !== a).map((b) => Math.hypot(a.cx - b.cx, a.cy - b.cy))));
+  const reach = 1.6 * (nearest.filter(Number.isFinite).sort((x, y) => x - y)[Math.floor(nearest.length / 2)] ?? Infinity);
+  const gap = 10;
+
+  type Street = { readonly axis: "h" | "v"; readonly at: number; readonly sign: 1 | -1 };
+  type Plan = { readonly key: string; readonly width: number; readonly build: (offset: (street: Street) => number) => Point[]; readonly streets: readonly Street[] };
+  const plans: Plan[] = [];
   for (const ribbon of ribbons) {
-    const pair = ribbon.from < ribbon.to ? `${ribbon.from}|${ribbon.to}` : `${ribbon.to}|${ribbon.from}`;
-    pairs.set(pair, [...(pairs.get(pair) ?? []), ribbon.key]);
+    const a = tiles.get(ribbon.from);
+    const b = tiles.get(ribbon.to);
+    if (!a || !b || a === b) continue;
+    const between = others(a, b);
+    // 1. Neighbors: straight, corner to facing corner.
+    const facing: [Point, Point] = sameRow(a, b)
+      ? [corner(a, b.cx > a.cx ? "right" : "left"), corner(b, b.cx > a.cx ? "left" : "right")]
+      : sameCol(a, b)
+        ? [corner(a, b.cy > a.cy ? "front" : "back"), corner(b, b.cy > a.cy ? "back" : "front")]
+        : nearestCorners(a, b);
+    const straight = [...facing];
+    const long = Math.hypot(facing[1].x - facing[0].x, facing[1].y - facing[0].y) > reach && !sameRow(a, b) && !sameCol(a, b);
+    if (!crossesAny(straight, between) && !long) {
+      plans.push({ key: ribbon.key, width: ribbon.width, streets: [], build: () => straight });
+      continue;
+    }
+    const frontStreet = (tile: Tile): Street => ({ axis: "h", at: tile.cy + tile.hh + gap, sign: 1 });
+    const sideStreet = (tile: Tile, right: boolean): Street => ({ axis: "v", at: right ? tile.cx + tile.hw + gap : tile.cx - tile.hw - gap, sign: right ? 1 : -1 });
+    // 2. One row: along the street in front of it.
+    if (sameRow(a, b)) {
+      const street = frontStreet(a.cy + a.hh > b.cy + b.hh ? a : b);
+      plans.push({ key: ribbon.key, width: ribbon.width, streets: [street], build: (offset) => {
+        const y = street.at + offset(street);
+        return [corner(a, "front"), { x: a.cx, y }, { x: b.cx, y }, corner(b, "front")];
+      } });
+      continue;
+    }
+    // 3. One column: along the street beside it.
+    if (sameCol(a, b)) {
+      const street = sideStreet(a.hw > b.hw ? a : b, true);
+      plans.push({ key: ribbon.key, width: ribbon.width, streets: [street], build: (offset) => {
+        const x = street.at + offset(street);
+        return [corner(a, "right"), { x, y: a.cy }, { x, y: b.cy }, corner(b, "right")];
+      } });
+      continue;
+    }
+    // 4. One bend: beside one district's column, then along the other's row street.
+    const toward = b.cx > a.cx;
+    const viaA = { col: sideStreet(a, toward), row: frontStreet(b) };
+    const viaB = { col: sideStreet(b, !toward), row: frontStreet(a) };
+    const firstWay = (offset: (street: Street) => number): Point[] => {
+      const x = viaA.col.at + offset(viaA.col);
+      const y = viaA.row.at + offset(viaA.row);
+      return [corner(a, toward ? "right" : "left"), { x, y: a.cy }, { x, y }, { x: b.cx, y }, corner(b, "front")];
+    };
+    const otherWay = (offset: (street: Street) => number): Point[] => {
+      const x = viaB.col.at + offset(viaB.col);
+      const y = viaB.row.at + offset(viaB.row);
+      return [corner(a, "front"), { x: a.cx, y }, { x, y }, { x, y: b.cy }, corner(b, toward ? "left" : "right")];
+    };
+    const none = () => 0;
+    const firstClear = !crossesAny(firstWay(none), between);
+    const otherClear = !crossesAny(otherWay(none), between);
+    const length = (points: readonly Point[]) => points.reduce((sum, p, i) => (i === 0 ? 0 : sum + Math.hypot(p.x - points[i - 1]!.x, p.y - points[i - 1]!.y)), 0);
+    const useFirst = firstClear && (!otherClear || length(firstWay(none)) <= length(otherWay(none)));
+    plans.push(useFirst || !otherClear ? { key: ribbon.key, width: ribbon.width, streets: [viaA.col, viaA.row], build: firstWay } : { key: ribbon.key, width: ribbon.width, streets: [viaB.col, viaB.row], build: otherWay });
   }
-  const lanes = new Map<string, number>();
-  for (const keys of pairs.values()) {
-    const share = Math.min(0.26, 0.8 / keys.length);
-    keys.forEach((key, i) => lanes.set(key, (i - (keys.length - 1) / 2) * share));
-  }
-  return lanes;
-}
 
-/**
- * THE STREET A RIBBON TAKES, in lattice cells: out of its district to the
- * gutter beside its block, along the gutter, up the gutter beside the other
- * block, and in. Every leg is a lattice line, so no leg crosses a third
- * district. `lane` moves the whole street sideways inside its gutters: each
- * leg holds one coordinate, and both coordinates move by the lane.
- */
-export function streetPoints(from: PlotLike, to: PlotLike, lane = 0): { readonly col: number; readonly row: number }[] {
-  const ca = from.col + from.side / 2 + lane;
-  const ra = from.row + from.side / 2 + lane;
-  const cb = to.col + to.side / 2 + lane;
-  const rb = to.row + to.side / 2 + lane;
-  const blockRow = (plot: PlotLike) => Math.floor(plot.row / BLOCK);
-  const blockCol = (plot: PlotLike) => Math.floor(plot.col / BLOCK);
-  const ja = blockRow(from);
-  const jb = blockRow(to);
-  const ia = blockCol(from);
-  const ib = blockCol(to);
-  // The gutter row beside `from`, on the side `to` lies; the gutter column beside `to`, on the side `from` lies.
-  const gr = (jb > ja ? ja * BLOCK + BLOCK - 0.5 : jb < ja ? ja * BLOCK - 0.5 : ja * BLOCK + BLOCK - 0.5) + lane;
-  const gc = (ib > ia ? ib * BLOCK - 0.5 : ib < ia ? ib * BLOCK + BLOCK - 0.5 : ib * BLOCK - 0.5) + lane;
-  const raw = [
-    { col: ca, row: ra },
-    { col: ca, row: gr },
-    { col: gc, row: gr },
-    { col: gc, row: rb },
-    { col: cb, row: rb },
-  ];
-  // Drop a leg of no length, and a middle point that lies on the line of its neighbors.
-  const out: { col: number; row: number }[] = [];
-  for (const p of raw) {
-    const last = out[out.length - 1];
-    if (last && Math.abs(last.col - p.col) < 1e-9 && Math.abs(last.row - p.row) < 1e-9) continue;
-    out.push(p);
+  // The bundles: each street's ribbons side by side, away from the districts it runs beside.
+  const id = (street: Street) => `${street.axis}:${Math.round(street.at)}:${street.sign}`;
+  const used = new Map<string, number>();
+  const offsets = new Map<string, Map<string, number>>();
+  for (const plan of plans) {
+    for (const street of plan.streets) {
+      const taken = used.get(id(street)) ?? 0;
+      const mine = offsets.get(plan.key) ?? new Map<string, number>();
+      mine.set(id(street), street.sign * (taken + plan.width / 2));
+      offsets.set(plan.key, mine);
+      used.set(id(street), taken + plan.width + 2);
+    }
   }
-  for (let i = out.length - 2; i > 0; i--) {
-    const a = out[i - 1]!;
-    const b = out[i]!;
-    const c = out[i + 1]!;
-    const sameCol = Math.abs(a.col - b.col) < 1e-9 && Math.abs(b.col - c.col) < 1e-9;
-    const sameRow = Math.abs(a.row - b.row) < 1e-9 && Math.abs(b.row - c.row) < 1e-9;
-    if (sameCol || sameRow) out.splice(i, 1);
-  }
+  const out = new Map<string, Point[]>();
+  for (const plan of plans) out.set(plan.key, plan.build((street) => offsets.get(plan.key)?.get(id(street)) ?? 0));
   return out;
 }
 
-const inside = (p: { col: number; row: number }, plot: PlotLike): boolean =>
-  p.col >= plot.col && p.col <= plot.col + plot.side && p.row >= plot.row && p.row <= plot.row + plot.side;
-const mix = (a: { col: number; row: number }, b: { col: number; row: number }, t: number) => ({ col: a.col + (b.col - a.col) * t, row: a.row + (b.row - a.row) * t });
-
-/**
- * FROM CURB TO CURB, in lattice cells: the street with the run inside either
- * district cut away, so a ribbon starts at one curb and ends at the other
- * rather than diving under the buildings. Bisected on each crossing leg.
- */
-export function curbToCurb(street: readonly { col: number; row: number }[], from: PlotLike, to: PlotLike): { col: number; row: number }[] {
-  const out: { col: number; row: number }[] = [];
-  let started = false;
-  for (let i = 0; i < street.length - 1; i++) {
-    const a = street[i]!;
-    const b = street[i + 1]!;
-    if (!started) {
-      if (inside(b, from)) continue;
-      let lo = 0;
-      let hi = 1;
-      for (let k = 0; k < 14; k++) {
-        const mid = (lo + hi) / 2;
-        if (inside(mix(a, b, mid), from)) lo = mid;
-        else hi = mid;
+/** The pair of corners, one on each tile, nearest each other. */
+function nearestCorners(a: Tile, b: Tile): [Point, Point] {
+  const sides = ["left", "right", "back", "front"] as const;
+  let best: [Point, Point] = [corner(a, "right"), corner(b, "left")];
+  let gap = Infinity;
+  for (const one of sides) {
+    for (const other of sides) {
+      const p = corner(a, one);
+      const q = corner(b, other);
+      const d = Math.hypot(p.x - q.x, p.y - q.y);
+      if (d < gap) {
+        gap = d;
+        best = [p, q];
       }
-      out.push(mix(a, b, hi));
-      started = true;
     }
-    if (inside(b, to)) {
-      let lo = 0;
-      let hi = 1;
-      for (let k = 0; k < 14; k++) {
-        const mid = (lo + hi) / 2;
-        if (inside(mix(a, b, mid), to)) hi = mid;
-        else lo = mid;
-      }
-      out.push(mix(a, b, lo));
-      return out;
-    }
-    out.push(b);
   }
-  return out;
+  return best;
 }
 
 /**
@@ -162,7 +228,7 @@ export function loopPoints(plot: PlotLike, index: number): { col: number; row: n
 
 /** Lattice points on the canvas, from origin zero. */
 export function onCanvas(points: readonly { col: number; row: number }[], city: Lattice): Point[] {
-  return points.map((p) => toIso(p.col, p.row, city.cell));
+  return points.map((p) => toIso(p.col, p.row, city.cell, city.tilt));
 }
 
 /** A polyline as an SVG path. */

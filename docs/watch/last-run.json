@@ -1,6 +1,11 @@
 {
-  "at": "2026-10-13T07:55:11.962Z",
+  "at": "2026-10-13T08:47:30.990Z",
   "results": [
+    {
+      "name": "hosted",
+      "code": 0,
+      "took": 1
+    },
     {
       "name": "shrunk",
       "code": 0,
@@ -10,6 +15,11 @@
       "name": "navigation",
       "code": 0,
       "took": 57
+    },
+    {
+      "name": "lines",
+      "code": 0,
+      "took": 32
     }
   ]
 }

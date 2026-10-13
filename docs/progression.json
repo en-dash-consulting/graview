@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T07:49:58.814Z",
+  "at": "2026-10-13T08:47:37.854Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -31,8 +31,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 685,
-        "height": 397
+        "width": 828,
+        "height": 416
       },
       "saw": {
         "standing": "Every rule holds",
@@ -143,7 +143,7 @@
         "standing": "1 rule broken — open what is broken, and what would fix it",
         "districts": [
           "Gardeners2open ▾",
-          "Plots⚠ 2open ▾",
+          "Plots2⚠ 1open ▾",
           "Rules1open ▾Every plot has a caretaker"
         ],
         "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
@@ -195,14 +195,14 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 1006,
-        "height": 562
+        "width": 1120,
+        "height": 577
       },
       "saw": {
         "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
-          "Plantings1+1 past◆open ▾The yearThe season",
+          "Plantings1+1 pastopen ▾1 growingThe yearThe season",
           "Plots2open ▾",
           "Rules1open ▾"
         ],
@@ -267,7 +267,7 @@
         "districts": [
           "Gardeners1open ▾",
           "Plantingsnone yet",
-          "Plots⚠ 1open ▾",
+          "Plots1⚠ 1open ▾",
           "Rules1open ▾"
         ],
         "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
@@ -334,7 +334,7 @@
         "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
-          "Plantings1+1 pastopen ▾",
+          "Plantings1+1 pastopen ▾1 growing",
           "Plots2open ▾",
           "Rules1open ▾"
         ],
@@ -391,14 +391,14 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 801,
-        "height": 518
+        "width": 888,
+        "height": 554
       },
       "saw": {
         "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
-          "Plantings1+1 pastopen ▾",
+          "Plantings1+1 pastopen ▾1 growing",
           "Plots2close ▴",
           "Rules1open ▾"
         ],
@@ -460,14 +460,14 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 1006,
-        "height": 562
+        "width": 1120,
+        "height": 577
       },
       "saw": {
         "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
-          "Plantings1+1 pastopen ▾",
+          "Plantings1+1 pastopen ▾1 growing",
           "Plots2open ▾",
           "Rules1open ▾"
         ],
@@ -748,9 +748,9 @@
       "saw": {
         "standing": "Every rule holds",
         "districts": [
-          "Gardeners2◆open ▾Who tends what",
-          "Plantings1+1 pastopen ▾",
-          "Plots2◆open ▾What grows where",
+          "Gardeners2open ▾Who tends what",
+          "Plantings1+1 pastopen ▾1 growing",
+          "Plots2open ▾What grows where",
           "Rules1open ▾"
         ],
         "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
@@ -883,18 +883,18 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 1134,
-        "height": 604
+        "width": 998,
+        "height": 588
       },
       "saw": {
         "standing": "Every rule holds",
         "districts": [
-          "Gardeners2◆open ▾Who tends what",
-          "Invitations1open ▾",
-          "Plantings1+1 pastopen ▾",
-          "Plots3◆open ▾What grows where",
+          "Gardeners2open ▾Who tends what",
+          "Invitations1open ▾1 pending",
+          "Plantings1+1 pastopen ▾1 growing",
+          "Plots3open ▾What grows where",
           "Rules1open ▾",
-          "People2◆open ▾Who may do what"
+          "People2open ▾2 activeWho may do what"
         ],
         "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
@@ -994,8 +994,8 @@
       "errors": [],
       "offTheMachine": [],
       "picture": {
-        "width": 1172,
-        "height": 624
+        "width": 980,
+        "height": 599
       },
       "saw": {
         "standing": "Every rule holds",
@@ -1006,7 +1006,7 @@
           "edges3open ▾",
           "fields19open ▾",
           "grants4open ▾",
-          "kinds6◆open ▾What the checker says",
+          "kinds6open ▾What the checker says",
           "lenses2open ▾",
           "roles2open ▾",
           "rules1open ▾",

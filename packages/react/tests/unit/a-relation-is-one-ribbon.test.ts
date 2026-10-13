@@ -2,7 +2,7 @@ import { createSchema, defineNode, z } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { districtOf, mapChoice, ribbonSentence, ribbonsOf } from "../../src/map-choice.js";
 import { ribbonWidth, RIBBON_WIDTH } from "../../src/ribbon-width.js";
-import { curbToCurb, loopPoints, midpointOf, ribbonLanes, streetPoints } from "../../src/ribbons.js";
+import { crossesAny, loopPoints, midpointOf, routeRibbons, tileOf, type Tile } from "../../src/ribbons.js";
 
 /*
  * FROM ALTITUDE, ONE RIBBON PER RELATION BETWEEN TWO DISTRICTS, as wide as
@@ -56,36 +56,60 @@ describe("a relation is one ribbon", () => {
     expect(ribbonWidth(4, 146)).toBeLessThan(ribbonWidth(90, 146));
   });
 
-  it("lays two relations between the same two districts side by side in their gutter", () => {
-    const lanes = ribbonLanes([
-      { key: "about|request|area", from: "request", to: "area" },
-      { key: "partOf|feature|area", from: "feature", to: "area" },
-      { key: "made|area|request", from: "area", to: "request" },
-    ]);
-    // Request and area share a gutter both ways round: two lanes, apart, inside the one cell.
-    const a = lanes.get("about|request|area")!;
-    const b = lanes.get("made|area|request")!;
-    expect(a).not.toBe(b);
-    expect(Math.abs(a)).toBeLessThan(0.5);
-    expect(Math.abs(b)).toBeLessThan(0.5);
-    // Alone between its two districts, a ribbon keeps to the gutter's middle.
-    expect(lanes.get("partOf|feature|area")).toBe(0);
+  /*
+   * Four districts in a row at the city's own spacing, a fifth below the
+   * first: the shape the map lays a left-to-right city out in.
+   */
+  const at = (col: number, row: number) => ({ col, row, side: 4 });
+  const tiles = new Map<string, Tile>([
+    ["a", tileOf(at(0, 6), 20)],
+    ["b", tileOf(at(6, 0), 20)],
+    ["c", tileOf(at(12, -6), 20)],
+    ["d", tileOf(at(18, -12), 20)],
+    ["e", tileOf(at(6, 12), 20)],
+  ]);
+  const others = (...not: string[]) => [...tiles].filter(([key]) => !not.includes(key)).map(([, tile]) => tile);
+  const lengthOf = (points: readonly { x: number; y: number }[]) => points.reduce((sum, p, i) => (i === 0 ? 0 : sum + Math.hypot(p.x - points[i - 1]!.x, p.y - points[i - 1]!.y)), 0);
+
+  it("runs straight between neighbors, from the corner of one to the corner of the other that faces it", () => {
+    const run = routeRibbons([{ key: "ab", from: "a", to: "b", width: 4 }], tiles).get("ab")!;
+    expect(run).toHaveLength(2);
+    const a = tiles.get("a")!;
+    const b = tiles.get("b")!;
+    expect(run[0]).toEqual({ x: a.cx + a.hw, y: a.cy });
+    expect(run[1]).toEqual({ x: b.cx - b.hw, y: b.cy });
   });
 
-  it("runs from curb to curb along lattice lines, moved sideways whole by its lane", () => {
-    const from = { col: 0, row: 0, side: 2 };
-    const to = { col: 10, row: 0, side: 2 };
-    const middle = curbToCurb(streetPoints(from, to, 0), from, to);
-    const moved = curbToCurb(streetPoints(from, to, 0.2), from, to);
-    for (const street of [middle, moved]) {
-      for (let i = 1; i < street.length; i++) {
-        const p = street[i - 1]!;
-        const q = street[i]!;
-        expect(Math.abs(p.col - q.col) < 1e-9 || Math.abs(p.row - q.row) < 1e-9).toBe(true);
-      }
+  it("goes along the row's street between two with others between, crossing none and bowing nowhere", () => {
+    const run = routeRibbons([{ key: "ad", from: "a", to: "d", width: 4 }], tiles).get("ad")!;
+    expect(crossesAny(run, others("a", "d"))).toBe(false);
+    const a = tiles.get("a")!;
+    const d = tiles.get("d")!;
+    // Never higher than the districts it joins, nor further below them than their fronts and a little: no V up the window.
+    for (const p of run) {
+      expect(p.y).toBeGreaterThanOrEqual(Math.min(a.cy, d.cy) - 1);
+      expect(p.y).toBeLessThanOrEqual(a.cy + a.hh + 20);
     }
-    // The lane moves the run along the gutter by its own amount.
-    expect(moved[1]!.row - middle[1]!.row).toBeCloseTo(0.2, 6);
+    // And hardly longer than the way across.
+    expect(lengthOf(run)).toBeLessThan(1.2 * Math.hypot(d.cx - a.cx, d.cy - a.cy) + 2 * a.hh);
+  });
+
+  it("bends once to reach a district in another row and column, crossing none", () => {
+    const run = routeRibbons([{ key: "ed", from: "e", to: "d", width: 4 }], tiles).get("ed")!;
+    expect(crossesAny(run, others("e", "d"))).toBe(false);
+    expect(run.length).toBeLessThanOrEqual(5);
+  });
+
+  it("lays ribbons that share a street side by side, each its own width apart", () => {
+    const runs = routeRibbons(
+      [
+        { key: "ad", from: "a", to: "d", width: 6 },
+        { key: "ac", from: "a", to: "c", width: 2 },
+      ],
+      tiles,
+    );
+    const street = (key: string) => runs.get(key)![1]!.y;
+    expect(Math.abs(street("ad") - street("ac"))).toBeGreaterThanOrEqual(4);
   });
 
   it("draws a relation of a kind to itself as a loop off its own curb, each further one further out", () => {
