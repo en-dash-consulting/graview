@@ -299,6 +299,9 @@ export function violationKey(v: Violation, shaped?: ReadonlySet<string>): string
   return `${v.invariant}|${v.subjectId ?? ""}|${v.line || shaped?.has(v.invariant) ? v.label : v.message}`;
 }
 
+/** Every rule, as `violationKey` reads its `shaped`: a problem known by its rule, its record and its name. */
+const EVERY_RULE = { has: () => true } as unknown as ReadonlySet<string>;
+
 /** The rules that have a shape, by name: what `violationKey` keys by the rule and the record. */
 export const shapedRules = (rules: readonly Pick<InvariantDefinition, "name" | "shape">[]): ReadonlySet<string> => new Set(rules.filter((rule) => rule.shape).map((rule) => rule.name));
 
@@ -324,29 +327,17 @@ export function problemsMoved(rules: readonly Pick<InvariantDefinition, "name" |
    * is the problem it was: paired off one for one, it is neither made nor
    * mended.
    */
-  const who = (v: Violation) => (v.subjectId === undefined ? undefined : `${v.invariant}|${v.subjectId}|${v.label ?? ""}`);
-  const left = new Map<string, number>();
-  for (const v of resolves) {
-    const one = who(v);
-    if (one !== undefined) left.set(one, (left.get(one) ?? 0) + 1);
-  }
-  const paired = new Map<string, number>();
-  const made = introduces.filter((v) => {
-    const one = who(v);
-    const open = one === undefined ? 0 : (left.get(one) ?? 0);
-    if (open === 0 || one === undefined) return true;
-    left.set(one, open - 1);
-    paired.set(one, (paired.get(one) ?? 0) + 1);
-    return false;
-  });
-  const mended = resolves.filter((v) => {
-    const one = who(v);
-    const open = one === undefined ? 0 : (paired.get(one) ?? 0);
-    if (open === 0 || one === undefined) return true;
-    paired.set(one, open - 1);
-    return false;
-  });
-  return { introduces: made, resolves: mended };
+  // Who a problem is when its words are set aside: its rule, its record and its name, as a rule with a line is known.
+  const who = (v: Violation) => v.subjectId && violationKey(v, EVERY_RULE);
+  // Each mended problem's who, until a reworded one is paired off with it (null).
+  const left: (string | undefined | null)[] = resolves.map(who);
+  return {
+    introduces: introduces.filter((v) => {
+      const at = who(v) ? left.indexOf(who(v)) : -1;
+      return at < 0 || ((left[at] = null), false);
+    }),
+    resolves: resolves.filter((_, at) => left[at] !== null),
+  };
 }
 
 /**
@@ -765,16 +756,25 @@ export class Store<S extends AnySchema> {
      * names. A call that cannot be compiled is refused by `apply`, in its
      * own words.
      */
-    return permits(this.policy, principal, call.name, this.subjectKindOf(call, principal), this.viaOf(mutation), typeof id === "string" ? id : undefined, this.words, () => {
-      const me = actingAs(principal).id;
-      const far = this.namedIn(call, false);
-      try {
-        for (const one of compileMutation(this.graph, mutation!, call.args, this.sighted(principal)).primitives) if ("edge" in one && one.edge.from !== me && one.edge.to !== me) far.push(one.edge.to);
-      } catch {
-        // Refused by `apply`.
-      }
-      return far;
-    });
+    return permits(
+      this.policy,
+      principal,
+      call.name,
+      this.subjectKindOf(call, principal),
+      this.viaOf(mutation),
+      typeof id === "string" ? id : undefined,
+      this.words,
+      () => {
+        const me = actingAs(principal).id;
+        const far = this.namedIn(call, false);
+        try {
+          for (const one of compileMutation(this.graph, mutation!, call.args, this.sighted(principal)).primitives) if ("edge" in one && one.edge.from !== me && one.edge.to !== me) far.push(one.edge.to);
+        } catch {
+          // Refused by `apply`.
+        }
+        return far;
+      },
+    );
   }
 
   /** The ids a call names in its record arguments: its subject's too, unless `subject` is false (the far ends of what it links). */

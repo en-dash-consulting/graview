@@ -26,16 +26,6 @@ interface Watch {
 
 const theWatch = (): Watch | undefined => (globalThis as { __graviewWatch?: Watch }).__graviewWatch;
 
-/** A field that holds a yes or a no, optional or not. */
-function isBoolean(field: unknown): boolean {
-  let def = (field as { def?: { type?: string; innerType?: unknown } } | undefined)?.def;
-  for (let depth = 0; def && depth < 4; depth += 1) {
-    if (def.type === "boolean") return true;
-    if (def.type !== "optional" && def.type !== "nullable" && def.type !== "default") return false;
-    def = (def.innerType as { def?: { type?: string; innerType?: unknown } } | undefined)?.def;
-  }
-  return false;
-}
 
 /** The declaration's names, and the words it has for them. */
 export function tellTheWatchItsNames(
@@ -114,7 +104,11 @@ export function tellTheWatchItsNames(
        * hive's `queenSeen` labeled "Queen" and said "Queen seen" when true
        * says, in the declaration's words, what its key spoken also says.
        */
-      if (format && isBoolean(field)) for (const value of [true, false]) declared.add(String(format(value)).trim());
+      if (format && !entries)
+        try {
+          // Said of a yes and a no; what a field that is not one says of them is no word anybody shows.
+          declared.add(String(format(true)).trim()).add(String(format(false)).trim());
+        } catch {}
     }
   }
   watch.learn({ ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)) });
