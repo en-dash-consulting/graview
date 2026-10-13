@@ -43,6 +43,11 @@ export const ACTS_KEY = "A";
  * come and go, and gives it back to the picture when it closes.
  */
 const pane = /* @__PURE__ */ lazyModule(/* @__PURE__ */ retryingImport(() => import("./inspector.js")));
+/** Fetch the pane now; resolved, `Inspector` draws it in the commit it is first wanted in. Rejected when it did not arrive, and asked for again on the next call. */
+export function fetchInspector(): Promise<void> {
+  return pane.load().then(() => undefined);
+}
+
 const Pane = pane.part((module, props: { readonly placement: InspectorPlacement }) => <module.InspectorPane {...props} />, { what: "This card's acts" });
 
 /** When the page is idle and online — or, where the browser cannot say when it is idle, a little after it has drawn. */

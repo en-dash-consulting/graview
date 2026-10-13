@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 2320,
+  "gzipped": 2340,
+  "note": "Raised when the inspector's pane became a chunk of its own, fetched when an act is first wanted or the page is idle, and an act's affordances came to be derived from @graview/tools/derive rather than the tools' index, so the scene draws 45 KB lighter: every face's chunks, fetched together, pay the lines between the chunks they now split into, 2_277 / 2_296 more than main (1_778_595 / 569_114). Measured at 1_780_872 / 571_410."
+}

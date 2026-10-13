@@ -5,9 +5,12 @@ import { EMPTY_VIEW } from "@graview/layout";
 import { GraviewProvider, createViews } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { Inspector, Standing, registerDefaultViews } from "../../src/index.js";
+import { fetchInspector, Inspector, Standing, registerDefaultViews } from "../../src/index.js";
+
+// The pane is fetched when it is first wanted; here, before anything is drawn.
+beforeAll(() => fetchInspector());
 
 /**
  * A PROBLEM OPENS ON ITS REPAIRS (W-179). The scene's acts are the menu at
