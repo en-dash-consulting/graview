@@ -4638,3 +4638,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `scripts/lib/journeys.mjs` (the narrow job)
 - harness that should have caught it: the journeys' own `appears`, written for exactly this (a dead end decided with one look) and not used here
 - status: fixed — on main the same morning, by "A harness waits for the Filter list's headings to be drawn before opening one, since the list is fetched at the first press" (9f239f17), which the walk's own fix met in the rebase and gave way to · criterion: the journeys' "narrow" on the scene with the pointer, a dead end at both widths on walk9 before, done in both after (104 of 104 runs)
+
+### W-195 · On a phone, "Add a hive" is on no screen of the scene
+- stage: A (adding a record from the map) · face: scene · width: 390 · scheme: light
+- impact: blocks a job — "Making a hive" on the scene on a phone with the pointer: "“Add a hive” is not on the screen"; the district chosen, its panel rose as a sheet from the foot of the map, over the district, and offered "Go in", its relations and its hives — not the act that begins one
+- class: no-way-to-do-a-job (also: breaks-at-width-zoom-or-engine)
+- expected: what can be done with what the panel is about is a press away in the panel, on a phone as at a desk
+- actual: since the map panel (scene-links-and-lens-panel), a district's and a record's acts open only by a right-click on the district or the record — at a desk the district stands beside the panel; on a phone the sheet stands on it, and a finger has no right button. The keyboard's acts key still reached it. The carried-open "discography's “Add a release” on a phone" is this
+- where it belongs: `packages/primitives/src/map-panel.tsx`
+- harness that should have caught it: the journeys' "make" on the scene at 390 with the pointer, which did; the journeys now press "Acts…" where the panel is a sheet, as a person on a phone would
+- status: fixed in "walkthrough: A · the map panel says its acts" · the district's and the record's panel say "Acts…", which opens the same menu under the button, about what the panel is about. Criterion: `packages/primitives/tests/unit/the-map-panel-says-its-acts.test.tsx` (both verified failing without the fix), and the journeys' "Making a hive" on the scene on a phone with the pointer, done

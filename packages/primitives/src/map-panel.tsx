@@ -162,6 +162,34 @@ function useActsAt() {
   };
 }
 
+/*
+ * ITS ACTS, A PRESS AWAY (the ninth walk, W-195). On a phone the panel is a
+ * sheet over the foot of the map, standing on the district or the record it
+ * is about, so the right-click that opened their menu had nothing left to
+ * land on, and a finger has no right button: "Add a hive" was on no screen
+ * of a phone. The panel's head says it in a button that opens the same menu,
+ * under the button, about what the panel is about.
+ */
+function ActsButton({ on, about }: { readonly on: string; readonly about: string }) {
+  const { setSelection, setMenuAt } = useGraview();
+  return (
+    <button
+      type="button"
+      data-testid="map-panel-acts"
+      aria-label={`What can be done with ${about}`}
+      aria-haspopup="menu"
+      style={pressStyle}
+      onClick={(event) => {
+        const box = event.currentTarget.getBoundingClientRect();
+        setSelection([on]);
+        setMenuAt({ x: Math.round(box.left), y: Math.round(box.bottom + 4), on });
+      }}
+    >
+      Acts…
+    </button>
+  );
+}
+
 /** Going to a record from the panel: the same stop a double-click on it in the scene makes, on the ground. */
 const travelTo = (view: ViewState, id: string): ViewState => ({ ...withFocus(withOverview(view, false), id), relation: null });
 
@@ -309,6 +337,7 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
             <button type="button" data-testid="record-panel-go" style={pressStyle} onClick={() => go(travelTo(view, id))}>
               Go to it
             </button>
+            <ActsButton on={id} about={name(id)} />
             <button type="button" data-testid="record-panel-district" style={pressStyle} onClick={() => setSelection([kindCardId(kind)])}>
               All {pluralLabel(store.schema, kind).toLowerCase()}
             </button>
@@ -391,10 +420,11 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
             {counted(store.schema, kind, members.length)}
             {definition?.description ? ` · ${definition.description}` : ""}
           </p>
-          <div style={{ marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
             <button type="button" data-testid="district-panel-go" style={pressStyle} onClick={() => go({ ...withFocus(withOverview(view, false), aggregateId(kind)), relation: null })}>
               Go in
             </button>
+            <ActsButton on={kindCardId(kind)} about={`the ${plural.toLowerCase()}`} />
           </div>
         </>
       }
