@@ -398,6 +398,59 @@ try {
   }));
   report.districtProblems.onTheGround = onTheGround;
   await ground.close();
+  /*
+   * A DISTRICT'S NAME IS NOT MOVED BY HAND, from altitude. The city is laid
+   * out by the data, and a name stands under its own plot; a name dragged
+   * off its plot and pinned in the address is geometry that compensates for
+   * the layout. A drag that starts on it is the ground's own gesture — it
+   * pans the city, plot and name together — and writes no pin; an old pin in
+   * a bookmark is ignored.
+   */
+  const unmoved = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  unmoved.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  const nameAgainstPlot = () =>
+    unmoved.evaluate(() => {
+      const face = document.querySelector('[data-graview-view="kind:task"] .graview-kind-face')?.getBoundingClientRect();
+      const tile = document.querySelector('[data-graview-plot="kind:task"] .graview-plot-tile')?.getBoundingClientRect();
+      return face && tile ? { dx: Math.round(face.x + face.width / 2 - (tile.x + tile.width / 2)), dy: Math.round(face.y - (tile.y + tile.height)), tileX: Math.round(tile.x), tileY: Math.round(tile.y), hash: location.hash, pinned: document.querySelectorAll("[data-graview-pinned]").length } : null;
+    });
+  await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+  await unmoved.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await unmoved.waitForTimeout(1500);
+  const resting = await nameAgainstPlot();
+  const grab = await unmoved.evaluate(() => {
+    const face = document.querySelector('[data-graview-view="kind:task"] .graview-kind-face');
+    const box = face?.getBoundingClientRect();
+    if (!face || !box) return null;
+    // On the name itself, not on a control drawn in it.
+    for (const fx of [0.5, 0.35, 0.65, 0.2]) {
+      for (const fy of [0.3, 0.5, 0.7]) {
+        const x = Math.round(box.x + box.width * fx);
+        const y = Math.round(box.y + box.height * fy);
+        const el = document.elementFromPoint(x, y);
+        if (el && face.contains(el) && !el.closest("button, a, [role='button']")) return { x, y };
+      }
+    }
+    return null;
+  });
+  let dragged = null;
+  if (grab) {
+    await unmoved.mouse.move(grab.x, grab.y);
+    await unmoved.mouse.down();
+    for (let i = 1; i <= 16; i++) {
+      await unmoved.mouse.move(grab.x + i * 8, grab.y + i * 4);
+      await unmoved.waitForTimeout(16);
+    }
+    await unmoved.mouse.up();
+    await unmoved.waitForTimeout(600);
+    dragged = await nameAgainstPlot();
+  }
+  // And a pin an old bookmark carries for a district is ignored.
+  await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1&pin.kind%3Atask=40,40`, { waitUntil: "load" });
+  await unmoved.waitForTimeout(1800);
+  const bookmarked = await nameAgainstPlot();
+  report.districtName = { resting, dragged, bookmarked };
+  await unmoved.close();
 
   /*
    * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
@@ -1145,6 +1198,19 @@ report.verdict = {
     /^\d/.test(report.districtProblems.onTheGround.membersTitle ?? "") &&
     report.districtProblems.onTheGround.risen.up === true &&
     String(report.districtProblems.onTheGround.risen.rows) === report.districtProblems.onTheGround.said,
+  // A district's name is not moved by hand from altitude: a drag that starts on it pans the city (plot and name together), writes no pin, and an old pin in a bookmark is ignored.
+  aDistrictsNameDoesNotMoveWhenDragged:
+    report.districtName?.resting !== null &&
+    report.districtName?.dragged !== null &&
+    // The name stands where it stood under its plot, and the city went with the hand.
+    report.districtName.dragged.dx === report.districtName.resting.dx &&
+    report.districtName.dragged.dy === report.districtName.resting.dy &&
+    Math.hypot(report.districtName.dragged.tileX - report.districtName.resting.tileX, report.districtName.dragged.tileY - report.districtName.resting.tileY) > 20 &&
+    !report.districtName.dragged.hash.includes("pin.") &&
+    report.districtName.dragged.pinned === 0 &&
+    report.districtName.bookmarked?.dx === report.districtName.resting.dx &&
+    report.districtName.bookmarked?.dy === report.districtName.resting.dy &&
+    report.districtName.bookmarked?.pinned === 0,
   aDistrictWithoutOneIsListedBesideTheMap:
     (report.districts?.withoutOne ?? "").includes("sel=kind%3Areason") &&
     !(report.districts?.withoutOne ?? "").includes("expand=") &&

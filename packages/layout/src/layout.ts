@@ -16,7 +16,7 @@ import { nameplateSize, placeCity } from "./city.js";
 import { rankKinds } from "./rank.js";
 import type { ViewState } from "./view-state.js";
 
-import { byStableKey, kindCardId, kindsOfAggregate, BEYOND_CARD } from "./ids.js";
+import { byStableKey, kindCardId, kindOfCard, kindsOfAggregate, BEYOND_CARD } from "./ids.js";
 import { connectorsFor, pluralOf, relatedNodes } from "./related.js";
 
 /**
@@ -1234,7 +1234,8 @@ export function layout<S extends AnySchema>(
   function push(node: Omit<LayoutNode, "pinned">): void {
     // A user pin overrides the computed position and survives graph changes
     // underneath: the layout keeps recomputing, the pin keeps winning.
-    const pin = state.pins[node.id];
+    // A district from altitude stands under its own plot, wherever an old pin in a bookmark says: its name is not moved by hand.
+    const pin = state.overview && kindOfCard(node.id) !== null ? undefined : state.pins[node.id];
     const placedNode: LayoutNode = pin
       ? { ...node, x: pin.x, y: pin.y, pinned: true }
       : { ...node, pinned: false };

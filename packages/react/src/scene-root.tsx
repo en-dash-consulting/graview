@@ -765,7 +765,8 @@ export function Scene<S extends AnySchema>({
   const seenFrom = useMemo(() => (above ? { ...options, tilt: TOP_DOWN } : options), [options, above]);
   const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, nodes);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
-  const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
+  // A district cannot be placed by hand from altitude, so no plot wears the pinned curb for one (a pin in an old bookmark is ignored).
+  const pinnedIds = useMemo(() => new Set(Object.keys(view.pins).filter((id) => kindOfCard(id) === null)), [view.pins]);
   // A district under the hand is placed here while it is dragged, and written into the view on release.
   const district = useHeldDistrict();
   const [result, inPlace] = useLaidOut(store, view, district.held, sized, nodes, seen.pan);

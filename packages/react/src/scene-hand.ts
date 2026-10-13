@@ -1,4 +1,4 @@
-import { withOverview, withPan, withPin, type ViewState } from "@graview/layout/view";
+import { kindOfCard, withOverview, withPan, withPin, type ViewState } from "@graview/layout/view";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import type { SceneNode } from "./scene-node.js";
 
@@ -216,6 +216,20 @@ export function useSceneDrag({
      * district by hand is a real gesture with a dashed curb to show for it.
      */
     if (node.screenOf !== undefined && !(event.target as HTMLElement).closest("[data-graview-grip]")) {
+      panFrom(event);
+      return;
+    }
+    /*
+     * A DISTRICT IS WHERE THE DATA PUTS IT, from altitude. The city is laid
+     * out by what the kinds point at, upstream to downstream, and a name
+     * stands under its own plot; a name dragged off its plot — and pinned
+     * there, in the address — is the geometry that compensates for the
+     * layout instead of reading from it. So a drag that starts on a district
+     * is the ground's own gesture, the one empty ground makes: it pans the
+     * city. The card is still pressed to be chosen and double-pressed to go
+     * in, and a record's card is still moved by hand.
+     */
+    if (view.overview && kindOfCard(node.id) !== null) {
       panFrom(event);
       return;
     }
