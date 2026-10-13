@@ -1,4 +1,4 @@
-import { humanizeField, SCENE_LAYERS, type AnySchema, type HasLog, type GraphReader, type NodeOfSchema } from "@graview/core";
+import { counted, edgeWords, humanizeField, labelOf, SCENE_LAYERS, type AnySchema, type HasLog, type GraphReader, type NodeOfSchema } from "@graview/core";
 import { provenanceWords, provisionalLinks } from "@graview/core/provenance";
 import { type InterpolatedLayout, edgeSelectionId, edgeOfSelection } from "@graview/layout";
 import { CONNECTOR_DASH, PROVISIONAL_DASH, PROVISIONAL_OPACITY, connectorStroke, styleFor } from "@graview/render";
@@ -260,6 +260,11 @@ type TieLine = {
   /** The far end is a stand-in (the kind's district), not the thing. */
   proxy: boolean;
   edgeId: string | null;
+  /** The chosen record, and the far one (or, to a district, how many are there): what the line says, in the chosen record's kind's words. */
+  self: string;
+  other: string;
+  others: number;
+  said?: string;
 };
 
 function SelectionTies<S extends AnySchema>({
@@ -287,7 +292,7 @@ function SelectionTies<S extends AnySchema>({
   readonly nodes: readonly SceneNode[];
   readonly scheme: "light" | "dark";
   readonly selection: readonly string[];
-  readonly store: { graph: GraphReader<NodeOfSchema<S>> };
+  readonly store: { graph: GraphReader<NodeOfSchema<S>>; schema: S };
   readonly graphNodes: unknown;
   /** From altitude a district's visible body is its iso block. */
   readonly overview: boolean;
@@ -381,7 +386,7 @@ function SelectionTies<S extends AnySchema>({
       const route = box ? tieRoute(cellBox, box) : null;
       if (!box || !route) continue;
       const edge = [...store.graph.allEdges()].find((one) => (one.from === id && selection.includes(one.to)) || (one.to === id && selection.includes(one.from)));
-      joined.push({ key: `join:${id}`, kind: edge?.kind ?? "", endX: route.to.x, endY: route.to.y, ...route, fromBox: cellBox, toBox: box, proxy: false, edgeId: edge ? edgeSelectionId(edge.kind, edge.from, edge.to) : null });
+      joined.push({ key: `join:${id}`, self: id, other: "", others: 1, kind: edge?.kind ?? "", endX: route.to.x, endY: route.to.y, ...route, fromBox: cellBox, toBox: box, proxy: false, edgeId: edge ? edgeSelectionId(edge.kind, edge.from, edge.to) : null });
     }
     return joined;
   }
@@ -475,7 +480,7 @@ function SelectionTies<S extends AnySchema>({
     return false;
   };
 
-  const seen = new Set<string>();
+  const seen = new Map<string, TieLine>();
   const found: TieLine[] = [];
   for (const tie of ties) {
     if (someViewDrawsBoth(tie.self, tie.other)) continue;
@@ -590,8 +595,12 @@ function SelectionTies<S extends AnySchema>({
     const key =
       `${tie.kind}:${Math.round(fromBox.x)},${Math.round(fromBox.y)}` +
       `:${Math.round(toBox.x)},${Math.round(toBox.y)}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const twin = seen.get(key);
+    if (twin) {
+      // Several records of one district on one line: the line counts them.
+      twin.others += 1;
+      continue;
+    }
     const route = tieRoute(fromBox, toBox);
     if (!route) continue;
     const { from, to, control } = route;
@@ -602,8 +611,11 @@ function SelectionTies<S extends AnySchema>({
         ((edge.from === tie.self && edge.to === tie.other) ||
           (edge.from === tie.other && edge.to === tie.self)),
     );
-    found.push({
+    const line: TieLine = {
       key: `${tie.kind}:${tie.self}:${tie.other}`,
+      self: tie.self,
+      other: tie.other,
+      others: 1,
       kind: tie.kind,
       endX: to.x,
       endY: to.y,
@@ -614,7 +626,19 @@ function SelectionTies<S extends AnySchema>({
       toBox,
       proxy: toProxy,
       edgeId: oriented ? edgeSelectionId(oriented.kind, oriented.from, oriented.to) : null,
-    });
+    };
+    seen.set(key, line);
+    found.push(line);
+  }
+  // EVERY LINE SAYS ITS RELATION at its far end, in the chosen record's kind's words, as the same record's links do from altitude.
+  for (const line of found) {
+    const edge = [...store.graph.allEdges()].find((one) => one.kind === line.kind && ((one.from === line.self && one.to === line.other) || (one.from === line.other && one.to === line.self)));
+    const selfNode = store.graph.getNode(line.self);
+    const otherNode = store.graph.getNode(line.other);
+    if (!edge || !selfNode || !otherNode) continue;
+    const direction = edge.from === line.self ? "out" : "in";
+    const words = edgeWords(store.schema, direction === "out" ? selfNode.kind : otherNode.kind, line.kind, direction);
+    line.said = line.proxy ? `${words}: ${counted(store.schema, otherNode.kind, line.others)}` : `${words}: ${labelOf(store.schema.tryDefinition(otherNode.kind), otherNode as never)}`;
   }
   return found;
   };
@@ -628,6 +652,7 @@ function SelectionTies<S extends AnySchema>({
   if (lines.length === 0) return null;
 
   return (
+    <>
     <svg
       // Decorative only while nothing inside takes the pointer; a pickable
       // relation must exist for assistive tech too.
@@ -741,6 +766,16 @@ function SelectionTies<S extends AnySchema>({
         );
       })}
     </svg>
+    <div aria-hidden="true" data-graview-world="" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: SCENE_LAYERS.tieLabels }}>
+      {lines.map((line) =>
+        line.said ? (
+          <span key={line.key} className="graview-record-link-said" data-graview-link-said={line.kind} data-graview-lands={line.proxy ? "district" : "record"} style={{ position: "absolute", left: line.endX, top: line.endY - 26 }}>
+            {line.said}
+          </span>
+        ) : null,
+      )}
+    </div>
+    </>
   );
 }
 

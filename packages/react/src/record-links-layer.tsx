@@ -85,7 +85,7 @@ export function RecordLinks({ frame, width, height, stageRef, tick, store, graph
       let box: Box | null = null;
       for (const el of stage.querySelectorAll(`[data-graview-pick="${CSS.escape(id)}"], [data-graview-view="${CSS.escape(id)}"]`)) {
         if (el.closest("[data-graview-offstage], [data-graview-screen]")) continue;
-        // A chip inside a chosen record's own card is that card saying it, not the far record drawn: a line from the card to it would run from the card to itself.
+        // A chip in a chosen record's own card is the card saying it, not the far record drawn.
         if (!records.includes(id) && el.closest(chosenCards)) continue;
         box = visibleRect(el, stage);
         if (box) break;
