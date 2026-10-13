@@ -30,6 +30,7 @@ import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
 import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
 import { capitalize } from "./capital.js";
+import { dayOf, type Tick } from "./clock.js";
 import { pluralOf } from "./schema/define-node.js";
 
 export interface StoreOptions<S extends AnySchema> {
@@ -450,6 +451,8 @@ export class Store<S extends AnySchema> {
   private quiet = 0;
   /** True of a rehearsal (`previewAll`): what it does is told to nobody. */
   private rehearsing = false;
+  /** The day a host last ticked this store to (FR-176): what its rules are judged on, where nothing pins one. */
+  private ticked: string | undefined;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
@@ -819,7 +822,6 @@ export class Store<S extends AnySchema> {
     return (kind) => everything || (kind !== undefined && full(kind));
   }
 
-
   /**
    * A CALL THAT NAMES A RECORD THAT IS NOT THERE FOR ITS CALLER IS REFUSED
    * AS MISSING (FR-02, FR-55) — one that does not exist, and one the caller
@@ -983,9 +985,51 @@ export class Store<S extends AnySchema> {
    * a day (a test, a demo, a replay) is asked about that day.
    */
   today(): string | undefined {
+    return this.pinned() ?? this.ticked;
+  }
+
+  /** The day `invariantOptions` pins, if it pins one: a tick does not move it. */
+  private pinned(): string | undefined {
     const context = this.invariantOptions.context as { readonly today?: unknown } | undefined;
     const pinned = this.invariantOptions.today ?? context?.today;
     return typeof pinned === "string" && /^\d{4}-\d{2}-\d{2}$/.test(pinned) ? pinned : undefined;
+  }
+
+  /** What every judgment is handed: the store's options, a call's context, and the day it judges on. */
+  private judging(context?: InvariantContext): EvaluateOptions<S> {
+    const today = this.today();
+    return { ...this.invariantOptions, ...(context === undefined ? {} : { context }), ...(today === undefined ? {} : { today }) };
+  }
+
+  /**
+   * THE DAY TURNED (FR-176). Rules are judged on every change and once on
+   * load; one that reads the clock — "overdue", "due this week" — is broken
+   * or mended by the day turning with nothing changed, and a room that stays
+   * open for weeks would go on saying the day it last heard a change. A host
+   * calls this when the day turns (`tickEachDay` does, just after each
+   * midnight by the clock `today()` reads; `@graview/ship`'s `openStore`
+   * and `openRemote` start it): from now on the store's rules are judged on
+   * `now`'s day (UTC, as `today()` reads the clock; or a day given as
+   * `YYYY-MM-DD`), and the answer is the problems that appeared and cleared
+   * with it. Which rules those can be is the declaration's to say
+   * (`clockReaders` on `@graview/core/check`, which `graview check` reads);
+   * the store judges every rule on the day before and the day after, once
+   * a day, and so needs no list. Every subscriber hears the day turn, with
+   * an empty diff and no ops, so the bar, the problems page and a count
+   * read again. Nothing is written or logged. A store whose day is pinned
+   * (`invariantOptions.today`) is judged on that day still, and answers
+   * that nothing moved.
+   */
+  tick(now: Date | string | number = new Date()): Tick {
+    const pinned = this.pinned();
+    if (pinned !== undefined) return { day: pinned, was: pinned, appeared: [], cleared: [] };
+    const day = dayOf(now);
+    const was = this.ticked;
+    const before = this.violations();
+    this.ticked = day;
+    const moved = this.moved(before, this.violations());
+    if (day !== was && !this.rehearsing && this.quiet === 0) for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
+    return { day, ...(was === undefined ? {} : { was }), appeared: moved.introduces, cleared: moved.resolves };
   }
 
   /**
@@ -993,10 +1037,7 @@ export class Store<S extends AnySchema> {
    * judges them over another reading of this graph: a seat's (FR-55).
    */
   violations(context?: InvariantContext, over: Graph<S> = this.graph): Violation[] {
-    return evaluate(over, this.allInvariants(), {
-      ...this.invariantOptions,
-      ...(context === undefined ? {} : { context }),
-    });
+    return evaluate(over, this.allInvariants(), this.judging(context));
   }
 
   /**
@@ -1100,10 +1141,7 @@ export class Store<S extends AnySchema> {
     const before = this.violations(meta.context);
     const trial = Graph.from(this.schema, this.graph.snapshot());
     const diff = trial.applyPrimitives(primitives, { restoring: meta.restoring === true });
-    const after = evaluate(trial, this.allInvariants(), {
-      ...this.invariantOptions,
-      ...(meta.context === undefined ? {} : { context: meta.context }),
-    });
+    const after = evaluate(trial, this.allInvariants(), this.judging(meta.context));
 
     return {
       diff,

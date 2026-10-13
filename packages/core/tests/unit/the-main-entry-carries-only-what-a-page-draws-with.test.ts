@@ -30,7 +30,7 @@ const OFF_THE_PAGE = {
   "@graview/core/forms": { from: forms, names: ["formArgs", "formComplete", "formField", "formFields", "undecidableArguments"] },
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "statusColumns"] },
-  "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt"] },
+  "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders"] },
   "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "toIso", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail"] },
   "@graview/core/figures": { from: figures, names: ["FIGURES", "FIGURE_NAMES", "figureBrief", "figureFaults", "figureSvg"] },
   "@graview/core/json-schema": { from: jsonSchema, names: ["mutationToolSchema", "nodeJsonSchema", "schemaJson", "toJsonSchema"] },

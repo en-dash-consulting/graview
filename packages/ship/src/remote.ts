@@ -6,6 +6,7 @@ import {
   REMOTE_PRESENCE_TTL_MS,
   samePresence,
   Store,
+  tickEachDay,
   WIRE_PROTOCOL,
   writtenBy,
   type AnySchema,
@@ -648,6 +649,8 @@ async function opening<S extends AnySchema>(
     ids: localIds(),
     ...(options.storeOptions ?? {}),
   });
+  // The day turning judges the rules that read the clock again, as the browser reads it (FR-176).
+  const stopTicking = tickEachDay(store);
 
   let seen = state.log.at(-1)?.seq ?? (state.horizon ?? 0) - 1;
   /** Every field's revision as the server's ops this client has say it (FR-05). */
@@ -1688,6 +1691,7 @@ async function opening<S extends AnySchema>(
     presence,
     close() {
       if (timer) clearInterval(timer);
+      stopTicking();
       presence.leave();
       closed = true;
       if (retry) clearTimeout(retry);

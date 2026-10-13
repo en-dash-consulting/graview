@@ -285,6 +285,9 @@ export type {
   StoreOptions,
   UndoPreview,
 } from "./store.js";
+// The day turning (FR-176): a store ticked at each midnight. What reads the clock is `@graview/core/check`'s (`clockReaders`).
+export { dayOf, tickEachDay, untilTheDayTurns } from "./clock.js";
+export type { Tick } from "./clock.js";
 
 // Views — the cardinality x fidelity matrix.
 export { createViewRegistry, FIDELITIES, kindPath, placePath, placeSlug, recordPath, sharesItsName } from "./views/types.js";

@@ -84,9 +84,10 @@ export function expressionRule(
   const says = spec.says ? parseTemplate(spec.says) : undefined;
   const title = spec.title ?? name.replace(/-/g, " ");
   const today = options.today ?? isoToday;
-  const judge = (graph: GraphReader, subject: AnyGraphNode | null): Violation[] => {
+  // The store's day when it hands one (pinned, or ticked: FR-176), else the clock.
+  const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today()): Violation[] => {
     const shapes = (kinds ?? shapesOf(graph)) as Map<string, KindShape>;
-    const ctx = { graph, subject, kinds: shapes, today: today() };
+    const ctx = { graph, subject, kinds: shapes, today: day };
     try {
       if (when && evaluateExpr(when, ctx) !== true) return [];
       if (evaluateExpr(require, ctx) === true) return [];
@@ -100,7 +101,7 @@ export function expressionRule(
         invariant: name,
         ...(subject ? { subjectId: subject.id } : {}),
         label: title,
-        message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: today() }) : title,
+        message: says ? renderTemplate(says, { node: subject, kinds: shapes, graph, today: day }) : title,
         nodeIds: subject ? [subject.id] : [],
         repairs: (spec.repairs ?? []).map((mutation) => ({ mutation, label: mutation.replace(/-/g, " "), args: subject ? { id: subject.id } : {} })),
       },
@@ -117,7 +118,7 @@ export function expressionRule(
   };
   return (
     spec.over === "graph"
-      ? defineInvariant(name, { scope: "graph", ...common, evaluate: ({ graph }: { graph: unknown }) => judge(graph as GraphReader, null) } as never)
-      : defineInvariant(name, { scope: { kind: spec.over }, ...common, evaluate: ({ graph, subject }: { graph: unknown; subject: unknown }) => judge(graph as GraphReader, subject as AnyGraphNode) } as never)
+      ? defineInvariant(name, { scope: "graph", ...common, evaluate: ({ graph, today: day }: { graph: unknown; today?: string }) => judge(graph as GraphReader, null, day) } as never)
+      : defineInvariant(name, { scope: { kind: spec.over }, ...common, evaluate: ({ graph, subject, today: day }: { graph: unknown; subject: unknown; today?: string }) => judge(graph as GraphReader, subject as AnyGraphNode, day) } as never)
   ) as InvariantDefinition;
 }

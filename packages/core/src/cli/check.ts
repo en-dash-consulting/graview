@@ -41,6 +41,7 @@ import {
   checkComputed,
   checkHiddenReads,
   checkFactRules,
+  checkClockRules,
 } from "./check/index.js";
 import type { CheckContext, Finding } from "./check/context.js";
 
@@ -108,6 +109,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkComputed(ctx);
   checkHiddenReads(ctx);
   checkFactRules(ctx);
+  checkClockRules(ctx);
 
   const errors = findings.filter((f) => f.severity === "error").length;
   const notes = findings.filter((f) => f.severity === "note").length;

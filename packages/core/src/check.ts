@@ -19,3 +19,6 @@ export { instantiateTemplate } from "./document/instantiate-template.js";
 export { describeApp } from "./cli/describe.js";
 export type { DescribeOptions } from "./cli/describe.js";
 export { generateAgentsMd, generateLlmsTxt } from "./cli/docs.js";
+// What reads the clock (FR-176): the rules and computed fields a host's tick judges again when the day turns.
+export { clockReaders } from "./clock-readers.js";
+export type { ClockReaders } from "./clock-readers.js";

@@ -16,3 +16,4 @@ export * from "./computed.js";
 export * from "./hidden-reads.js";
 export * from "./fact-rules.js";
 export * from "./people.js";
+export * from "./clock-rules.js";

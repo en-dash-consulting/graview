@@ -56,7 +56,13 @@ naming a mutation is why selecting an out-of-balance set of duties surfaces
 4. **Keep `evaluate` pure.** Same graph and context in, same violations out. No
    clock, no random source, no DOM. That purity is what lets the whole tier run
    headlessly, and what lets `preview` say what a change *would* break before
-   it happens.
+   it happens. A rule about the day ("overdue") reads its `today` argument
+   (absent, the clock's UTC day) and says `readsTheClock: true`. It is judged
+   again when the day turns only if the store is ticked: `@graview/ship`'s
+   `openStore` and `openRemote` tick at each midnight (UTC); a host that
+   keeps a store another way calls `store.tick(now)` once a day, which
+   answers what `appeared` and `cleared`. `graview check` notes each such
+   rule (`rules-read-the-clock`).
 
 5. **Fill in `missing` for a repair that cannot be complete.** A repair still
    needing an argument lists it, and the framework offers real candidates for
