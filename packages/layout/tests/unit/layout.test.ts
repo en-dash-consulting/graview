@@ -598,6 +598,15 @@ describe("a focused group, from altitude", () => {
     expect(district.opened).toBe(true);
   });
 
+  it("stays shut, and draws nothing in the middle, when its stop stands beside the map", () => {
+    const result = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true }), { plainGroups: ["duty"], besideTheMap: true });
+    expect(result.nodes.some((node) => node.plane === 0)).toBe(false);
+    expect(result.nodes.find((node) => node.id === kindCardId("duty"))!.opened).toBeFalsy();
+    // A group with a view of its own, beside the map, draws nothing in the middle either: its picture is in the panel.
+    const pictured = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true }), { besideTheMap: true });
+    expect(pictured.nodes.some((node) => node.plane === 0)).toBe(false);
+  });
+
   it("keeps its scaled card when it has a view of its own, and its district stays shut", () => {
     const result = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true, expanded: [kindCardId("duty")] }));
     const card = result.nodes.find((node) => node.plane === 0)!;

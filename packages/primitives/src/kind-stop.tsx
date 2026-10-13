@@ -207,6 +207,16 @@ function Head<S extends AnySchema>({ kind, plural, count, headingId, description
   const [asking, setAsking] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const button = useRef<HTMLButtonElement | null>(null);
+  /*
+   * OPENED, THE KEYBOARD IS HERE: on the stop's heading, where a screen reader
+   * starts reading it — unless it is already somewhere inside the stop.
+   */
+  const heading = useRef<HTMLHeadingElement | null>(null);
+  useEffect(() => {
+    const at = heading.current;
+    if (!at || at.closest('[data-testid="kind-stop"]')?.contains(document.activeElement)) return;
+    at.focus({ preventScroll: true });
+  }, [kind]);
   const run = (affordance: Affordance, args?: Record<string, unknown>): readonly string[] | void => {
     try {
       preview(affordance, args);
@@ -223,7 +233,7 @@ function Head<S extends AnySchema>({ kind, plural, count, headingId, description
   return (
     <header className="graview-kind-stop-head">
       <div className="graview-kind-stop-title">
-        <h2 id={headingId} data-testid="kind-stop-title">
+        <h2 id={headingId} ref={heading} tabIndex={-1} data-testid="kind-stop-title">
           {plural}
         </h2>
         <p data-testid="kind-stop-count">
@@ -606,12 +616,13 @@ function KindTable<S extends AnySchema>({
  */
 const KIND_STOP_CSS = `
 .graview-kind-stop{container-type:inline-size;box-sizing:border-box;height:100%;min-height:0;display:flex;flex-direction:column;gap:10px;padding:16px 18px 12px;border:1px solid var(--graview-edge);border-radius:var(--graview-radius,12px);background:var(--graview-panel);color:var(--graview-ink);box-shadow:var(--graview-lift-low);overflow:auto;overscroll-behavior:contain}
+[data-graview-map-panel] .graview-kind-stop{height:auto;padding:4px 6px 12px;border:0;box-shadow:none;background:none;overflow:visible}
 .graview-kind-stop :focus-visible{outline:2px solid var(--graview-accent);outline-offset:2px}
 .graview-kind-stop button{font:inherit;cursor:pointer}
 .graview-kind-stop :is(.graview-kind-stop-link,.graview-kind-stop-rule,.graview-kind-stop-name button,.graview-kind-stop-row-acts button,.graview-kind-stop-fact,.graview-kind-stop-switch button){box-shadow:none}
 .graview-kind-stop-head{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 16px}
 .graview-kind-stop-title{flex:1 1 16rem;min-width:0}
-.graview-kind-stop-title h2{margin:0;font-size:1.25rem;line-height:1.25;overflow-wrap:anywhere}
+.graview-kind-stop-title h2{margin:0;outline-offset:2px;font-size:1.25rem;line-height:1.25;overflow-wrap:anywhere}
 .graview-kind-stop-title p{margin:2px 0 0;font-size:.875rem;color:var(--graview-ink-muted);overflow-wrap:anywhere}
 .graview-kind-stop-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .graview-kind-stop-primary,.graview-kind-stop-quiet{min-height:32px;padding:0 14px;border-radius:8px;font-size:.875rem}

@@ -3,7 +3,8 @@ import { beginning } from "@graview/core/seat";
 import { touchWeights } from "@graview/core/search";
 import type { AnySchema } from "@graview/core";
 import type { LayoutOptions } from "@graview/layout";
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
+import { BesideTheMap } from "./beside-the-map.js";
 import { foundIds, useFound, useGraview } from "./context.js";
 import { useViolations } from "./hooks.js";
 import { railInset, SEAT_FOOT } from "./rails.js";
@@ -33,6 +34,8 @@ export function useLayoutOptions<S extends AnySchema>(
 ): LayoutOptions {
   const { store, views, hiddenKinds } = useGraview<S>();
   const found = useFound();
+  // A picture opened from altitude stands beside the map, where a panel is drawn.
+  const besideTheMap = useContext(BesideTheMap);
   // What each subject's violations name, so a rule's neighborhood is what it judges.
   const violations = useViolations<S>();
   const judged = useMemo(() => {
@@ -64,6 +67,7 @@ export function useLayoutOptions<S extends AnySchema>(
     () => ({
       ...options,
       cityZoom,
+      ...(besideTheMap ? { besideTheMap: true } : {}),
       // What is not drawn for this seat at this stop: a workspace's disabled
       // modules, and the administered ones this seat may not see or has not
       // asked to — one set, from the provider, so every surface agrees.
@@ -131,6 +135,6 @@ export function useLayoutOptions<S extends AnySchema>(
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated, besideTheMap],
   );
 }

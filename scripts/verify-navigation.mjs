@@ -295,7 +295,8 @@ try {
     // The district's own ground, in the middle of its plot: never its name, never the open control.
     await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
     await page.waitForTimeout(900);
-    const at = await page.evaluate(() => location.hash);
+    // Where it went, and what stands beside the map for it: a lens, or the kind's own stop.
+    const at = await page.evaluate(() => `${location.hash}|stop=${document.querySelector('[data-graview-map-panel] [data-testid="kind-stop"]')?.getAttribute("data-graview-kind-stop") ?? ""}`);
     await page.goBack();
     await page.waitForTimeout(700);
     return at;
@@ -1051,11 +1052,13 @@ report.verdict = {
     (report.districts?.withAPicture ?? "").includes("focus=aggregate%3Atask") &&
     (report.districts?.withAPicture ?? "").includes("zoom=1") &&
     !(report.districts?.withAPicture ?? "").includes("expand="),
-  // A kind without one is listed beside the map, every record in it, rather than opened in place over its neighbors.
+  // A kind without one opens to its stop beside the map, in the panel a lens opens in, rather than in place over its neighbors;
+  // chosen, it is listed there, every record in it.
   aDistrictWithoutOneIsListedBesideTheMap:
-    (report.districts?.withoutOne ?? "").includes("sel=kind%3Areason") &&
+    (report.districts?.withoutOne ?? "").includes("focus=aggregate%3Areason") &&
+    (report.districts?.withoutOne ?? "").includes("overview=1") &&
+    (report.districts?.withoutOne ?? "").endsWith("|stop=reason") &&
     !(report.districts?.withoutOne ?? "").includes("expand=") &&
-    !(report.districts?.withoutOne ?? "").includes("focus=aggregate") &&
     report.districts?.listed?.panel === "dock" &&
     (report.districts?.listed?.rows ?? 0) > 0 &&
     (report.districts?.listed?.font ?? 0) >= 12 &&

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T18:45:24.605Z",
+  "at": "2026-10-13T19:47:32.288Z",
   "quick": true,
   "stops": [
     {
@@ -732,6 +732,121 @@
     }
   ],
   "walks": {
+    "swap1440": {
+      "lens": {
+        "hash": "#focus=aggregate:talk&overview=1&in.view=the-timetable",
+        "panels": [
+          "lens-panel"
+        ],
+        "stop": null,
+        "lens": "The timetable",
+        "focus": "BODY",
+        "opened": 0,
+        "anyStop": false
+      },
+      "lensToKind": {
+        "hash": "#focus=aggregate:talk&overview=1&sel=kind:room&in.view=the-timetable",
+        "panels": [
+          "lens-panel"
+        ],
+        "stop": null,
+        "lens": "The timetable",
+        "focus": "DIV",
+        "opened": 0,
+        "anyStop": false
+      },
+      "kindToKind": {
+        "hash": "#focus=aggregate:talk&overview=1&sel=kind:staff&in.view=the-timetable",
+        "panels": [
+          "lens-panel"
+        ],
+        "stop": null,
+        "lens": "The timetable",
+        "focus": "DIV",
+        "opened": 0,
+        "anyStop": false
+      },
+      "backToKind": {
+        "hash": "",
+        "panels": [],
+        "stop": null,
+        "lens": null,
+        "focus": "BODY",
+        "opened": 0,
+        "anyStop": false
+      },
+      "backToLens": {
+        "hash": "",
+        "panels": [],
+        "stop": null,
+        "lens": null,
+        "focus": "BODY",
+        "opened": 0,
+        "anyStop": false
+      },
+      "kindToLens": {
+        "hash": "#focus=aggregate:talk&in.view=what-the-talks-are-about",
+        "panels": [],
+        "stop": null,
+        "lens": null,
+        "focus": "app-place-scene:talk:what-the-talks-are-about",
+        "opened": 0,
+        "anyStop": false
+      }
+    },
+    "swap390": {
+      "lens": {
+        "hash": "#focus=aggregate:talk&overview=1&in.view=the-timetable",
+        "panels": [
+          "lens-panel"
+        ],
+        "stop": null,
+        "lens": "The timetable",
+        "focus": "BODY",
+        "opened": 0,
+        "anyStop": false
+      },
+      "lensToKind": {
+        "hash": "#focus=aggregate:talk&overview=1&sel=kind:room&pan=0,-86.14&in.view=the-timetable",
+        "panels": [
+          "lens-panel"
+        ],
+        "stop": null,
+        "lens": "The timetable",
+        "focus": "DIV",
+        "opened": 0,
+        "anyStop": false
+      },
+      "kindToKind": {
+        "hash": "#focus=aggregate:talk&overview=1&sel=kind:staff&pan=0,-86.14&in.view=the-timetable",
+        "panels": [
+          "lens-panel"
+        ],
+        "stop": null,
+        "lens": "The timetable",
+        "focus": "DIV",
+        "opened": 0,
+        "anyStop": false
+      },
+      "backToKind": {
+        "hash": "",
+        "panels": [],
+        "stop": null,
+        "lens": null,
+        "focus": "BODY",
+        "opened": 0,
+        "anyStop": false
+      },
+      "backToLens": {
+        "hash": "",
+        "panels": [],
+        "stop": null,
+        "lens": null,
+        "focus": "BODY",
+        "opened": 0,
+        "anyStop": false
+      }
+    },
     "problemRows": "Hands-on: Fifty People, Twenty-Four Chairs and One Projector takes 50 and Raum 0.001 seats 24Hands-on: Fifty People, Twenty-Four Chairs and One Projector · 2 wa",
     "rowMenu": {
       "open": true,
@@ -770,6 +885,10 @@
     "aLongListIsPaged": true,
     "aChipNarrowsInOnePress": true,
     "noIdIsShown": true,
+    "withALensOpenOpeningAKindShowsItsStopAndNoLens": false,
+    "theKeyboardLandsOnTheStopsHeading": false,
+    "backReturnsToWhatWasOpen": false,
+    "aLensTakesAStopsPlace": true,
     "aRowOpensItsActsOnARightClick": true,
     "everyRowIsItsRecord": true,
     "aRowsActsAreVisible": true,
@@ -783,5 +902,5 @@
     "noPageErrors": true,
     "nothingThrew": true
   },
-  "passed": true
+  "passed": false
 }
