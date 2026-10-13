@@ -52,6 +52,12 @@ export interface Affordance {
   /** Loses something a person made. Listed last, and marked, everywhere. */
   readonly destructive?: boolean;
   /**
+   * Sets the record aside: its kind's derived archive or merge (FR-173).
+   * Listed after everything but the destructive, and, with them, what a
+   * surface may keep one press behind the rest ("Show N more").
+   */
+  readonly setsAside?: true;
+  /**
    * Held to the top of its band: by the person at this browser ("user") or
    * by the app's declaration ("declared"). User pins outrank declared ones;
    * neither outranks a repair or escapes the destructive tail.

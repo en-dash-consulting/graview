@@ -291,8 +291,12 @@ function Acts({ title, actions, context }: { title: string; actions: AffordanceS
   const { store, principal } = context;
   const [open, setOpen] = useState<string | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
+  const [more, setMore] = useState(false);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   if (actions.affordances.length === 0 && actions.withheld.length === 0) return null;
+  // What takes the record away — archive, merge, remove — waits one press behind the rest.
+  const aside = actions.affordances.filter((affordance) => affordance.destructive || affordance.setsAside);
+  const shown = more || aside.length < 2 ? actions.affordances : actions.affordances.filter((affordance) => !aside.includes(affordance));
   const done = (affordance: Affordance) => {
     setOpen(null);
     requestAnimationFrame(() => buttons.current.get(affordance.id)?.focus());
@@ -301,7 +305,7 @@ function Acts({ title, actions, context }: { title: string; actions: AffordanceS
     <section style={{ display: "grid", gap: "0.6rem" }} data-testid="record-actions">
       <h2 className="ln-h2">{title}</h2>
       <div className="ln-row">
-        {actions.affordances.map((affordance) => (
+        {shown.map((affordance) => (
           <button
             key={affordance.id}
             ref={(element) => {
@@ -326,6 +330,19 @@ function Acts({ title, actions, context }: { title: string; actions: AffordanceS
             {affordance.open.length > 0 ? `${affordance.label} …` : affordance.label}
           </button>
         ))}
+        {shown.length < actions.affordances.length ? (
+          <button
+            type="button"
+            className="ln-btn ln-quiet"
+            aria-expanded={false}
+            onClick={() => {
+              setMore(true);
+              requestAnimationFrame(() => buttons.current.get(aside[0]!.id)?.focus());
+            }}
+          >
+            Show {actions.affordances.length - shown.length} more
+          </button>
+        ) : null}
       </div>
       {actions.affordances.map((affordance) => {
         if (open !== affordance.id) return null;

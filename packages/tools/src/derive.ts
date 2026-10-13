@@ -248,10 +248,7 @@ export function deriveAffordances<S extends AnySchema>(
   const bandFor = (affordance: Affordance, repairBand: 0 | 1): number =>
     affordance.provider === "invariant" ? repairBand : 2 + asks(affordance);
 
-  const setAside = (affordance: Affordance): number => {
-    const act = declaredMutations.get(affordance.mutation)?.derived?.act;
-    return act === "archive" || act === "merge" ? 1 : 0;
-  };
+  const setAside = (affordance: Affordance): number => (affordance.setsAside ? 1 : 0);
   const candidates = dedupe(affordances).map(pinnedAs);
   // The order the rules listed them in, kept for the two repair bands: a
   // rule that names "finish it" before "put it back" meant that.

@@ -402,6 +402,8 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           args: batch[0] ?? {},
           open,
           ...(mutation.destructive ? { destructive: true } : {}),
+          // Archive and merge set the record aside (FR-173): ranked and kept with the destructive tail.
+          ...(mutation.derived?.act === "archive" || mutation.derived?.act === "merge" ? { setsAside: true as const } : {}),
           ...(severs.length > 0 || connects.length > 0 ? { ties: true } : {}),
           ...(nodes.length > 1 ? { batch } : {}),
           // A mutation needing nothing more is readier than one needing three
