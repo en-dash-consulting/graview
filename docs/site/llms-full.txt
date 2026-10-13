@@ -1,6 +1,6 @@
 # Graview
 
-> Graview is an agent-native TypeScript framework and visual language for apps built as isometric scenes, made by En Dash for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives an isometric scene, a routed web app, the permissions, a checker and a typed tool for every act from that one declaration. Graview Cloud (https://graview.cloud) is the hosted product built on it.
+> Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong. Graview Cloud (https://graview.cloud) is the hosted product built on it.
 
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
@@ -12,7 +12,7 @@
 
 ### What is Graview?
 
-Graview is an agent-native TypeScript framework and visual language for apps built as isometric scenes, made by En Dash for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives an isometric scene, a routed web app, the permissions, a checker and a typed tool for every act from that one declaration.
+Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong.
 
 ### How is Graview different from other app frameworks?
 
@@ -32,7 +32,7 @@ Through the same acts a person has. Every act in the declaration is a typed tool
 
 ### What is Graview Cloud?
 
-Graview Cloud is the hosted product built on Graview, from En Dash, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You say what you are organizing in ChatGPT or Claude, or start from a template, and it becomes an app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
+Graview Cloud is the hosted product built on Graview, from En Dash, for people who don’t write TypeScript, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You keep working in the AI you already use: say what you are organizing in Claude or ChatGPT, or start from a template, and it becomes a shared, live app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
 
 ---
 
@@ -634,7 +634,7 @@ Source: https://graview.dev/docs/index.html
 
 # Documentation
 
-This is the documentation for Graview, a TypeScript framework for agent-native apps built as isometric scenes. Everything here except the concepts is written out of the repository, so none of it can disagree with the code it describes.
+This is the documentation for Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Everything here except the concepts is written out of the repository, so none of it can disagree with the code it describes.
 
 ```sh
 npm create graview@latest my-app
@@ -667,7 +667,7 @@ Source: https://graview.dev/docs/packages.html
 
 # The packages
 
-Graview, a TypeScript framework for agent-native apps built as isometric scenes, ships as 14 npm packages at one version. `graview` is the tool a person installs; `@graview/*` is the framework a product imports, each package depending only on the ones beneath it.
+Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration, ships as 14 npm packages at one version. `graview` is the tool a person installs; `@graview/*` is the framework a product imports, each package depending only on the ones beneath it.
 
 ## All of them
 
@@ -698,7 +698,7 @@ Source: https://graview.dev/docs/packages/core.html
 
 # @graview/core
 
-`@graview/core` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.
+`@graview/core` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.
 
 ```sh
 pnpm add @graview/core
@@ -755,7 +755,7 @@ Source: https://graview.dev/docs/packages/create-graview.html
 
 # create-graview
 
-`create-graview` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.
+`create-graview` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.
 
 ```sh
 pnpm add create-graview
@@ -800,7 +800,7 @@ Source: https://graview.dev/docs/packages/embed.html
 
 # @graview/embed
 
-`@graview/embed` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.
+`@graview/embed` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.
 
 ```sh
 pnpm add @graview/embed
@@ -1046,7 +1046,7 @@ Source: https://graview.dev/docs/packages/graview.html
 
 # graview
 
-`graview` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.
+`graview` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.
 
 ```sh
 pnpm add graview
@@ -1103,7 +1103,7 @@ Source: https://graview.dev/docs/packages/guest.html
 
 # @graview/guest
 
-`@graview/guest` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.
+`@graview/guest` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.
 
 ```sh
 pnpm add @graview/guest
@@ -1391,7 +1391,7 @@ Source: https://graview.dev/docs/packages/layout.html
 
 # @graview/layout
 
-`@graview/layout` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Where every node goes: three planes, one pure function of the graph and the view state.
+`@graview/layout` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Where every node goes: three planes, one pure function of the graph and the view state.
 
 ```sh
 pnpm add @graview/layout
@@ -1431,7 +1431,7 @@ Source: https://graview.dev/docs/packages/pages.html
 
 # @graview/pages
 
-`@graview/pages` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The traditional face: a routed webapp derived from the same declaration that drives the scene.
+`@graview/pages` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The traditional face: a routed webapp derived from the same declaration that drives the scene.
 
 ```sh
 pnpm add @graview/pages
@@ -1471,7 +1471,7 @@ Source: https://graview.dev/docs/packages/primitives.html
 
 # @graview/primitives
 
-`@graview/primitives` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The primitive set, the lenses, the workbench and the visual system.
+`@graview/primitives` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The primitive set, the lenses, the workbench and the visual system.
 
 ```sh
 pnpm add @graview/primitives
@@ -1531,7 +1531,7 @@ Source: https://graview.dev/docs/packages/react.html
 
 # @graview/react
 
-`@graview/react` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The React binding: a provider, a scene, and the hooks an app builds on.
+`@graview/react` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The React binding: a provider, a scene, and the hooks an app builds on.
 
 ```sh
 pnpm add @graview/react
@@ -1574,7 +1574,7 @@ Source: https://graview.dev/docs/packages/render.html
 
 # @graview/render
 
-`@graview/render` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
+`@graview/render` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
 
 ```sh
 pnpm add @graview/render
@@ -1624,7 +1624,7 @@ Source: https://graview.dev/docs/packages/ship.html
 
 # @graview/ship
 
-`@graview/ship` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.
+`@graview/ship` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.
 
 ```sh
 pnpm add @graview/ship
@@ -1836,7 +1836,7 @@ Source: https://graview.dev/docs/packages/skills.html
 
 # @graview/skills
 
-`@graview/skills` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.
+`@graview/skills` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.
 
 ```sh
 pnpm add @graview/skills
@@ -1898,7 +1898,7 @@ Source: https://graview.dev/docs/packages/studio.html
 
 # @graview/studio
 
-`@graview/studio` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.
+`@graview/studio` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.
 
 ```sh
 pnpm add @graview/studio
@@ -1945,7 +1945,7 @@ Source: https://graview.dev/docs/packages/tools.html
 
 # @graview/tools
 
-`@graview/tools` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.
+`@graview/tools` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.
 
 ```sh
 pnpm add @graview/tools

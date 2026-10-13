@@ -1,6 +1,6 @@
 # @graview/guest
 
-`@graview/guest` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.
+`@graview/guest` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.
 
 ```sh
 pnpm add @graview/guest

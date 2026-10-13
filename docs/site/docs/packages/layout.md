@@ -1,6 +1,6 @@
 # @graview/layout
 
-`@graview/layout` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Where every node goes: three planes, one pure function of the graph and the view state.
+`@graview/layout` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Where every node goes: three planes, one pure function of the graph and the view state.
 
 ```sh
 pnpm add @graview/layout

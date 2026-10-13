@@ -1,6 +1,6 @@
 # @graview/primitives
 
-`@graview/primitives` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The primitive set, the lenses, the workbench and the visual system.
+`@graview/primitives` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The primitive set, the lenses, the workbench and the visual system.
 
 ```sh
 pnpm add @graview/primitives

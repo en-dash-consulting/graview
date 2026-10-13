@@ -1,6 +1,6 @@
 # create-graview
 
-`create-graview` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.
+`create-graview` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Start a product on Graview: `npm create graview my-app`. The conventional door to `graview create`.
 
 ```sh
 pnpm add create-graview

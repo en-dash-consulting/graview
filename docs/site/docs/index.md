@@ -1,6 +1,6 @@
 # Documentation
 
-This is the documentation for Graview, a TypeScript framework for agent-native apps built as isometric scenes. Everything here except the concepts is written out of the repository, so none of it can disagree with the code it describes.
+This is the documentation for Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Everything here except the concepts is written out of the repository, so none of it can disagree with the code it describes.
 
 ```sh
 npm create graview@latest my-app

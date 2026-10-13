@@ -1,6 +1,6 @@
 # @graview/render
 
-`@graview/render` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
+`@graview/render` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
 
 ```sh
 pnpm add @graview/render

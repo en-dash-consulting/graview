@@ -1,6 +1,6 @@
 # graview
 
-`graview` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.
+`graview` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The Graview command line: start a product, check its declaration, write its agent docs, serve its store, preview a document with no product and photograph its places, say whether a product is on one release, host it for an agent over MCP, apply an act to it, sync its seed, install the authoring skills. The tool; @graview/* is the framework.
 
 ```sh
 pnpm add graview

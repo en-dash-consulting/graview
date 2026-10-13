@@ -1,6 +1,6 @@
 # The packages
 
-Graview, a TypeScript framework for agent-native apps built as isometric scenes, ships as 14 npm packages at one version. `graview` is the tool a person installs; `@graview/*` is the framework a product imports, each package depending only on the ones beneath it.
+Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration, ships as 14 npm packages at one version. `graview` is the tool a person installs; `@graview/*` is the framework a product imports, each package depending only on the ones beneath it.
 
 ## All of them
 

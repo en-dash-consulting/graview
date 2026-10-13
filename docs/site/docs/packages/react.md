@@ -1,6 +1,6 @@
 # @graview/react
 
-`@graview/react` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The React binding: a provider, a scene, and the hooks an app builds on.
+`@graview/react` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The React binding: a provider, a scene, and the hooks an app builds on.
 
 ```sh
 pnpm add @graview/react
