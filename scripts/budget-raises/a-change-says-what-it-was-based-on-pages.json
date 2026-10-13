@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 4433,
+  "gzipped": 1716,
+  "note": "Raised when a change came to say what it was based on (FR-172): the store checks its lineage and keeps it on the op, the wire carries it, `keep-link` is answered by every store, and what draws a link or a history line reads `@graview/core/provenance` — the dashed line and its basis in the scene, the mark and \"Keep this link\" on a record page, the basis on the history line. 4_433 / 1_716 more than main (512_306 / 184_562). Measured at 516_739 / 186_278."
+}

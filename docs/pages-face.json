@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-11T18:04:25.511Z",
+  "at": "2026-10-13T05:23:31.287Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -85,7 +85,7 @@
     "aListsFirstRecordStandsNearTheTopOfThePage": {
       "within": {
         "desk": 210,
-        "phone": 240
+        "phone": 275
       },
       "seen": [
         {
@@ -141,8 +141,8 @@
           "under": 93,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 332,
-          "fromTop": 239,
+          "first": 362,
+          "fromTop": 269,
           "lines": 1,
           "selects": 0,
           "count": "10 of 12 tasks",
@@ -241,8 +241,8 @@
             {
               "word": "add",
               "reached": true,
-              "entries": 44,
-              "visited": 44,
+              "entries": 8,
+              "visited": 8,
               "closed": true,
               "onTrigger": true
             }
@@ -252,14 +252,23 @@
         {
           "width": 390,
           "words": [
+            "add",
             "all"
           ],
           "seen": [
             {
+              "word": "add",
+              "reached": true,
+              "entries": 8,
+              "visited": 8,
+              "closed": true,
+              "onTrigger": true
+            },
+            {
               "word": "all",
               "reached": true,
-              "entries": 64,
-              "visited": 64,
+              "entries": 20,
+              "visited": 20,
               "closed": true,
               "onTrigger": true
             }
@@ -505,8 +514,8 @@
           "under": 93,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 298,
-          "fromTop": 205,
+          "first": 328,
+          "fromTop": 235,
           "lines": 1,
           "selects": 0,
           "count": "1 planting",
@@ -540,8 +549,8 @@
           {
             "word": "add",
             "reached": true,
-            "entries": 18,
-            "visited": 18,
+            "entries": 4,
+            "visited": 4,
             "closed": true,
             "onTrigger": true
           }

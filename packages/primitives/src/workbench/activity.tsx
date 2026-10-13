@@ -1,5 +1,6 @@
 import { humanizeField, isWithheld, nameOfAuthor, type AnySchema, type Author } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
+import { lineageWords } from "@graview/core/provenance";
 import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
@@ -16,6 +17,8 @@ export interface Change {
   readonly by?: Author;
   /** What the change came through, when it said ("via Claude"). */
   readonly via?: string;
+  /** What it was based on and how sure, in words, when its maker said (FR-172). */
+  readonly basis?: string;
   readonly touched: readonly string[];
   readonly batch: string;
   /**
@@ -53,6 +56,7 @@ export function useRecentChanges(limit = 4): readonly Change[] {
           ...(batch.author.id ? { authorId: batch.author.id } : {}),
           by: batch.author,
           ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
+          ...(batch.lineage ? { basis: lineageWords(batch.lineage) } : {}),
           // What a withheld op touched is not said, even the part this seat may see.
           touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
           batch: batch.id,
@@ -458,6 +462,7 @@ export function ActivityRail({
                         {viaSaid(change.via) ? <span style={{ fontWeight: 400, color: "var(--graview-ink-muted)" }}>, {viaSaid(change.via)}</span> : null}
                       </strong>{" "}
                       <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
+                      {change.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {change.basis}</span> : null}
                     </span>
                     {change.batch ? <UndoTurn batch={change.batch} /> : null}
                   </div>

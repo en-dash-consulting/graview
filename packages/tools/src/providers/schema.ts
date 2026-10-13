@@ -1,5 +1,6 @@
-import { actTitle, edgeWords, isArchived, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { actTitle, edgeWords, isArchived, KEEP_LINK, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import { argShape } from "@graview/core/words";
+import { linkProvenance, provenanceWords } from "@graview/core/provenance";
 import type { Affordance, AffordanceProvider, Observation, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;
@@ -30,6 +31,25 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           const fromNode = store.graph.getNode(edge.from);
           const toNode = store.graph.getNode(edge.to);
           if (!fromNode || !toNode) continue;
+          /*
+           * A LINE MADE LESS THAN SURE OFFERS TO BE KEPT (FR-172), first and
+           * in one press, with what it was based on as the reason: a person
+           * keeping it is what draws it as an ordinary link.
+           */
+          const provenance = linkProvenance(store, edge);
+          if (provenance?.provisional) {
+            affordances.push({
+              id: `schema:edge:${KEEP_LINK}:${edge.kind}:${edge.from}:${edge.to}`,
+              label: "Keep this link",
+              provider: "schema",
+              mutation: KEEP_LINK,
+              args: { kind: edge.kind, from: edge.from, to: edge.to },
+              open: [],
+              score: 64,
+              why: provenanceWords(provenance),
+              nodeIds: [edge.from, edge.to],
+            });
+          }
           for (const mutation of store.allMutations()) {
             const makes = (mutation.connects ?? []).includes(edge.kind);
             const breaks = (mutation.severs ?? []).includes(edge.kind);

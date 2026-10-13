@@ -105,6 +105,15 @@ export const CONNECTOR_DASH: Readonly<Record<StrokePattern, string | undefined>>
   tapered: "10 3 3 3",
 };
 
+/**
+ * A LINK MADE LESS THAN SURE, drawn (FR-172): short even dashes, the same on
+ * every kind, so "not yet kept by a person" reads as one thing whatever the
+ * relation's own stroke. Drawn quieter too; the relation's hue stays.
+ */
+export const PROVISIONAL_DASH = "2 6";
+/** How much of its own strength a provisional line keeps. */
+export const PROVISIONAL_OPACITY = 0.6;
+
 /** The color a connector of this kind is stroked in, on either surface. */
 export function connectorStroke(style: ConnectorStyle): string {
   return style.color ?? `hsl(${Math.round(style.hue)} 55% 62%)`;

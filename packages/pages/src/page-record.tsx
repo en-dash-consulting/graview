@@ -1,5 +1,6 @@
 import { humanizeField, isArchived, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
+import { lineageWords, linkProvenance } from "@graview/core/provenance";
 import { AppLink, DefaultViewElsewhere, EditableValue, Files, LongValue, pageSays, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
@@ -12,6 +13,7 @@ import { pluralSlug, recordPath } from "./registry.js";
 import { SceneLink, type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { ProblemSaid, Repairs } from "./page-problems.js";
+import { ProvisionalMark } from "./page-provisional.js";
 import {
   KindMark,
   button,
@@ -72,6 +74,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
     .filter((op) => !isWithheld(op) && (op.writes.includes(id) || op.reads.includes(id)))
     .slice(-8)
     .reverse();
+  // The op that made this record, as this seat is told it: its lineage is the record's own (FR-172).
+  const madeOn = store.log.all().find((op) => !isWithheld(op) && op.undoes === undefined && op.primitives.some((primitive) => primitive.op === "add-node" && primitive.node.id === id));
   /*
    * A repair is offered ONCE, beside the rule that named it. The derived
    * set still carries it — parity with the scene is a claim about the
@@ -125,6 +129,12 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         {/* The name is changed where it stands, as the scene's record changes it: a shelf renamed on its page took "Change the category" (W-181). */}
         <PageTitle context={context}>{inPlace && node?.["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} /> : facts.label}</PageTitle>
         {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
+        {/* WHAT IT WAS MADE ON (FR-172): the record's own beginning, when its maker said what it was based on. */}
+        {madeOn?.lineage ? (
+          <p style={{ ...quiet, margin: 0 }} data-testid="record-lineage">
+            Made by {whoDid(madeOn, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}, {lineageWords(madeOn.lineage)}
+          </p>
+        ) : null}
         <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...link, ...quiet }} data-testid="spatial-link" />
         {placesOf(context).some((place) => place.kind === facts.kind || place.across === facts.kind) ? (
           /* WHERE IT IS SEEN: the pictures this kind of thing appears in, each as a page and as a stop in the scene. */
@@ -282,15 +292,20 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             </h2>
           )}
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexWrap: "wrap", gap: "6px 18px" }}>
-            {group.targets.map((target) => (
-              <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <KindMark kind={target.kind} brand={brand} schema={store.schema} size={7} />
-                <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: "1.125rem" }}>
-                  {target.label}
-                  {target.apart ? <span style={quiet}> · {target.apart}</span> : null}
-                </Link>
-              </li>
-            ))}
+            {group.targets.map((target) => {
+              // A link made less than sure and not yet kept by a person is marked as such (FR-172).
+              const provenance = linkProvenance(store, group.direction === "in" ? { kind: group.edgeKind, from: target.id, to: id } : { kind: group.edgeKind, from: id, to: target.id });
+              return (
+                <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <KindMark kind={target.kind} brand={brand} schema={store.schema} size={7} />
+                  <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: "1.125rem" }}>
+                    {target.label}
+                    {target.apart ? <span style={quiet}> · {target.apart}</span> : null}
+                  </Link>
+                  {provenance?.provisional ? <ProvisionalMark store={store} link={provenance} {...(principal ? { principal } : {})} /> : null}
+                </li>
+              );
+            })}
           </ul>
           {/* THE OTHER WAY ROUND: the far kind's list, narrowed to this record — the same relation read as a pile.
               Not for a relation that holds ONE by declaration — a deal's buyer, a vehicle's lot: sorting and
@@ -414,7 +429,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
             {history.map((op) => (
               <li key={op.id} style={quiet}>
-                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span> — {whoDid(op, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}
+                <span style={{ color: "var(--graview-ink)" }}>{op.intent}</span>
+                {/* What it was based on, when its maker said (FR-172). */}
+                {op.lineage ? <span data-graview-lineage=""> · {lineageWords(op.lineage)}</span> : null} — {whoDid(op, principal, { graph: store.graph as never, schema: store.schema, ...(context.seats ? { seats: context.seats } : {}), ...(context.people ? { people: context.people } : {}) })}
               </li>
             ))}
           </ul>

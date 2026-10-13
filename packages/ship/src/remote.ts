@@ -19,6 +19,7 @@ import {
   type PresenceChannel,
   type Principal,
   type Via,
+  type Lineage,
   type WireRefusal,
 } from "@graview/core";
 import type { StorageLike } from "./browser-adapter.js";
@@ -355,6 +356,8 @@ interface Carried {
   readonly batch?: string;
   /** What it claimed to come through — `view:<name>` — sent as a claim the server may believe or not. */
   readonly via?: Via;
+  /** What it was based on (FR-172). */
+  readonly lineage?: Lineage;
 }
 
 /** A call this client let go of for a new declaration or a reload: not refused, so nothing is taken back or said. */
@@ -366,6 +369,9 @@ class Superseded extends Error {
 }
 
 /** "rename (Version 2 has no …)": a call that no longer fits, named in a sentence. */
+/** What a change was based on, carried along when it said (FR-172). */
+const lined = (from: { readonly lineage?: Lineage } | undefined) => (from?.lineage ? { lineage: from.lineage } : {});
+
 const named = (carried: Carried, error: unknown): string =>
   `${carried.calls.map((call) => call.name.replace(/-/g, " ")).join(", ")} (${error instanceof Error ? (error.message.split("\n")[0] ?? "") : String(error)})`;
 
@@ -866,7 +872,7 @@ async function opening<S extends AnySchema>(
   /** Each provisional batch's post, so an undo of it waits until the server has named it. */
   const answers = new Map<string, Promise<unknown>>();
   /** What each provisional batch asked for, so a conflict's `useMine` can ask again. */
-  const asked = new Map<string, { calls: readonly MutationCall[]; intent?: string; via?: Via }>();
+  const asked = new Map<string, { calls: readonly MutationCall[]; intent?: string; via?: Via; lineage?: Lineage }>();
   /** Every post not yet answered, so `settled` can wait for the verdicts. */
   const inFlight = new Set<Promise<unknown>>();
   const track = <T>(promise: Promise<T>): Promise<T> => {
@@ -876,7 +882,7 @@ async function opening<S extends AnySchema>(
   };
 
   /** `via` is what the call was applied with — a guest view's `view:<name>` — sent as a claim the host may judge (FR-52). */
-  type Body = { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string; base?: readonly FieldRevision[]; via?: string };
+  type Body = { calls?: readonly MutationCall[]; undo?: readonly string[]; intent?: string; batch?: string; base?: readonly FieldRevision[]; via?: string; lineage?: Lineage };
 
   /*
    * `mine` names the provisional batch this post answers, when the call was
@@ -1065,7 +1071,7 @@ async function opening<S extends AnySchema>(
     new Promise((resolve, reject) => {
       const cid = mine ?? `send-${++counter}`;
       const message: LiveClientMessage = body.undo
-        ? { t: "undo", cid, batches: body.undo, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.via ? { via: body.via } : {}) }
+        ? { t: "undo", cid, batches: body.undo, ...(body.intent ? { intent: body.intent } : {}), ...(body.batch ? { batch: body.batch } : {}), ...(body.via ? { via: body.via } : {}), ...lined(body) }
         : {
             t: "call",
             cid,
@@ -1074,6 +1080,7 @@ async function opening<S extends AnySchema>(
             ...(body.batch ? { batch: body.batch } : {}),
             ...(body.base?.length ? { base: body.base } : {}),
             ...(body.via ? { via: body.via } : {}),
+            ...lined(body),
           };
       waiting.set(cid, { message, ...(mine !== undefined ? { mine } : {}), resolve, reject });
       // Behind calls the host asked to wait, or while the app is held (FR-66): it goes with them.
@@ -1210,7 +1217,7 @@ async function opening<S extends AnySchema>(
     let undos = 0;
     for (const batch of pending) {
       const made = asked.get(batch);
-      if (made) carried.push({ calls: made.calls, ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}), batch });
+      if (made) carried.push({ calls: made.calls, ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}), ...lined(made), batch });
       else undos++;
     }
     return { carried, undos };
@@ -1453,7 +1460,7 @@ async function opening<S extends AnySchema>(
           chosen = true;
           overriding = true;
           try {
-            store.applyAll(made.calls, { ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}) });
+            store.applyAll(made.calls, { ...(made.intent ? { intent: made.intent } : {}), ...(made.via ? { via: made.via } : {}), ...lined(made) });
           } finally {
             overriding = false;
           }
@@ -1494,7 +1501,7 @@ async function opening<S extends AnySchema>(
     });
     pending.push(result.batch);
     provisional.add(result.batch);
-    asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}), ...(applyOptions?.via ? { via: applyOptions.via } : {}) });
+    asked.set(result.batch, { calls, ...(applyOptions?.intent ? { intent: applyOptions.intent } : {}), ...(applyOptions?.via ? { via: applyOptions.via } : {}), ...lined(applyOptions) });
     // The revision of each field this changes, as this browser saw it — unless the person chose theirs over it.
     const base = overriding ? [] : revisions.baseFor(result.ops, earlier);
     answers.set(
@@ -1507,6 +1514,7 @@ async function opening<S extends AnySchema>(
             batch: result.batch,
             ...(base.length > 0 ? { base } : {}),
             ...(applyOptions?.via ? { via: applyOptions.via } : {}),
+            ...lined(applyOptions),
           },
           result.batch,
         ).catch((error: unknown) => takeBack(result.batch, error)),
@@ -1548,6 +1556,7 @@ async function opening<S extends AnySchema>(
                 ...(undoOptions?.intent ? { intent: undoOptions.intent } : {}),
                 batch: result.batch,
                 ...(undoOptions?.via ? { via: undoOptions.via } : {}),
+                ...lined(undoOptions),
               },
               result.batch,
             ),
@@ -1630,7 +1639,7 @@ async function opening<S extends AnySchema>(
     for (const one of offered) {
       if (one.batch !== undefined && landed.has(one.batch)) continue;
       try {
-        store.applyAll(one.calls, { ...(one.intent ? { intent: one.intent } : {}), ...(one.batch ? { batch: one.batch } : {}), ...(one.via ? { via: one.via } : {}) });
+        store.applyAll(one.calls, { ...(one.intent ? { intent: one.intent } : {}), ...(one.batch ? { batch: one.batch } : {}), ...(one.via ? { via: one.via } : {}), ...lined(one) });
       } catch (error) {
         lost.push(named(one, error));
       }

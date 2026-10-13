@@ -1,6 +1,6 @@
 import { humanizeField, SCENE_LAYERS } from "@graview/core";
 import { type Connector, edgeSelectionId, edgeOfSelection } from "@graview/layout";
-import { CONNECTOR_DASH, connectorStroke, connectorWidth } from "@graview/render";
+import { CONNECTOR_DASH, PROVISIONAL_DASH, PROVISIONAL_OPACITY, connectorStroke, connectorWidth } from "@graview/render";
 import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";
 import {
@@ -607,7 +607,14 @@ export function Connectors({
   stageRef,
   liveOf,
   onPickEdge,
+  provisional,
 }: {
+  /**
+   * The links still provisional (FR-172), by their selection id, each with
+   * what to say of it: drawn in short dashes and quieter, and the sentence
+   * is the line's own on hover.
+   */
+  readonly provisional?: ReadonlyMap<string, string>;
   /** The lines to draw, resolved once per render by `connectorStrands`. */
   readonly strands: readonly Strand[];
   readonly overview: boolean;
@@ -857,6 +864,7 @@ export function Connectors({
         const only = strand.edges.length === 1 ? strand.edges[0]! : null;
         const edgeId = only ? edgeSelectionId(connector.kind, only.from, only.to) : null;
         const edgeChosen = edgeId !== null && selection.includes(edgeId);
+        const unsure = edgeId !== null ? provisional?.get(edgeId) : undefined;
         const mine = strand.edges.some((edge) => chosenReal.has(edge.from) || chosenReal.has(edge.to));
         const lit = !overview && chosenReal.size > 0 && mine;
         const stressed = (emphasis !== null && connector.kind === emphasis) || edgeChosen;
@@ -909,7 +917,8 @@ export function Connectors({
               data-graview-to={strand.toAnchor}
               data-graview-lit={lit || undefined}
               data-graview-activity={liveOf?.(connector)?.manner}
-              opacity={opacity * (connector.opacity ?? 1)}
+              data-graview-provisional={unsure !== undefined || undefined}
+              opacity={opacity * (connector.opacity ?? 1) * (unsure !== undefined ? PROVISIONAL_OPACITY : 1)}
               d={d}
               fill="none"
               stroke={connectorStroke(style)}
@@ -925,7 +934,7 @@ export function Connectors({
                 (lit ? Math.max(1.6, connectorWidth(style, overview)) : connectorWidth(style, overview)) +
                 (stressed ? 0.6 : 0)
               }
-              strokeDasharray={CONNECTOR_DASH[style.pattern]}
+              strokeDasharray={unsure !== undefined ? PROVISIONAL_DASH : CONNECTOR_DASH[style.pattern]}
               strokeLinecap="round"
             />
             {far ? (
@@ -999,7 +1008,10 @@ export function Connectors({
                 event.stopPropagation();
                 onPickEdge(edgeId, { x: event.clientX, y: event.clientY });
               }}
-            />
+            >
+              {/* What it was based on, on hover; a long press opens its acts, which say it too. */}
+              {unsure !== undefined ? <title>{unsure}</title> : null}
+            </path>
           );
         }
         return { key: strand.key, line, hit };

@@ -56,6 +56,8 @@ export { fromLayout } from "./scene/from-layout.js";
 // Connector treatment, derived per edge kind.
 export {
   CONNECTOR_DASH,
+  PROVISIONAL_DASH,
+  PROVISIONAL_OPACITY,
   connectorStroke,
   connectorStyle,
   hueFor,

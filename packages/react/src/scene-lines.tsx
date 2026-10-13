@@ -1,6 +1,7 @@
-import { humanizeField, SCENE_LAYERS, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
+import { humanizeField, SCENE_LAYERS, type AnySchema, type HasLog, type GraphReader, type NodeOfSchema } from "@graview/core";
+import { provenanceWords, provisionalLinks } from "@graview/core/provenance";
 import { type InterpolatedLayout, edgeSelectionId, edgeOfSelection } from "@graview/layout";
-import { CONNECTOR_DASH, connectorStroke, styleFor } from "@graview/render";
+import { CONNECTOR_DASH, PROVISIONAL_DASH, PROVISIONAL_OPACITY, connectorStroke, styleFor } from "@graview/render";
 import { useMemo, useLayoutEffect, useState } from "react";
 import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";
@@ -34,6 +35,16 @@ import { railInset } from "./rails.js";
  * center, so selecting the session lit three of its four drills and left
  * the fourth to a faint line from nowhere.
  */
+/**
+ * THE LINKS STILL PROVISIONAL, as the lines read them (FR-172): each by its
+ * selection id, with the sentence its hover says — who made it and what it
+ * was based on. Undefined when there are none, which is nearly always.
+ */
+export function provisionalLines(store: HasLog): ReadonlyMap<string, string> | undefined {
+  const links = provisionalLinks(store);
+  return links.length > 0 ? new Map(links.map((link) => [edgeSelectionId(link.edge.kind, link.edge.from, link.edge.to), provenanceWords(link)])) : undefined;
+}
+
 export function Lines<S extends AnySchema>({
   frame,
   width,
@@ -48,7 +59,10 @@ export function Lines<S extends AnySchema>({
   onPickEdge,
   liveOf,
   holding = false,
+  provisional,
 }: {
+  /** The links still provisional, by selection id, with what to say of each (FR-172; `provisionalLines`). */
+  readonly provisional?: ReadonlyMap<string, string>;
   readonly frame: InterpolatedLayout;
   readonly width: number;
   readonly height: number;
@@ -166,8 +180,10 @@ export function Lines<S extends AnySchema>({
         stageRef={stageRef}
         onPickEdge={onPickEdge}
         liveOf={liveOf}
+        {...(provisional ? { provisional } : {})}
       />
       <SelectionTies
+        {...(provisional ? { provisional } : {})}
         stageRef={stageRef}
         nodes={frame.nodes}
         scheme={scheme}
@@ -230,7 +246,10 @@ function SelectionTies<S extends AnySchema>({
   onPickEdge,
   alreadyDrawn,
   tick,
+  provisional,
 }: {
+  /** The links still provisional, by selection id (FR-172). */
+  readonly provisional?: ReadonlyMap<string, string>;
   /** Select the ONE edge a tie stands for; `at` means "and menu here". */
   readonly onPickEdge?: (edgeId: string, at?: { x: number; y: number }) => void;
   /** Real edge pairs the connector layer already drew — one line, not two. */
@@ -604,6 +623,8 @@ function SelectionTies<S extends AnySchema>({
         const { connector, style } = kitConnector(kit, line.kind);
         // A kind the kit keeps quiet is not drawn — still selectable from the inspector.
         if (!connector.visible) return null;
+        // A link made less than sure, not yet kept by a person (FR-172): short dashes, quieter, its basis on hover.
+        const unsure = line.edgeId ? provisional?.get(line.edgeId) : undefined;
         const quadratic = { p0: line.from, c: line.control, p1: line.to };
         // The route is the kit's call: the arc the layout chose, its chord, or two elbows.
         const d =
@@ -659,7 +680,9 @@ function SelectionTies<S extends AnySchema>({
                   event.stopPropagation();
                   onPickEdge(line.edgeId!, { x: event.clientX, y: event.clientY });
                 }}
-              />
+              >
+                {unsure !== undefined ? <title>{unsure}</title> : null}
+              </path>
             );
           }
         }
@@ -670,15 +693,16 @@ function SelectionTies<S extends AnySchema>({
            * strength crossing the scene is a hairball. Present enough to
            * say "the rest live over there", never louder than a real tie.
            */
-          <g key={line.key} opacity={line.proxy ? 0.32 : 0.72}>
+          <g key={line.key} opacity={(line.proxy ? 0.32 : 0.72) * (unsure !== undefined ? PROVISIONAL_OPACITY : 1)}>
             <path
               data-graview-tie={line.kind}
               data-graview-tie-proxy={line.proxy || undefined}
+              data-graview-provisional={unsure !== undefined || undefined}
               d={d}
               fill="none"
               stroke={connectorStroke(style)}
               strokeWidth={line.proxy ? 1.1 : 1.6}
-              strokeDasharray={CONNECTOR_DASH[style.pattern]}
+              strokeDasharray={unsure !== undefined ? PROVISIONAL_DASH : CONNECTOR_DASH[style.pattern]}
               strokeLinecap="round"
             />
             {/* A destination, marked: the far end lands somewhere specific. */}

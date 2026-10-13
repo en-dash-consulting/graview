@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 5649,
+  "gzipped": 2176,
+  "note": "Raised when a change came to say what it was based on (FR-172): the store checks its lineage and keeps it on the op, the wire carries it, `keep-link` is answered by every store, and what draws a link or a history line reads `@graview/core/provenance` — the dashed line and its basis in the scene, the mark and \"Keep this link\" on a record page, the basis on the history line. 5_649 / 2_176 more than main (1_604_338 / 498_810). Measured at 1_609_987 / 500_986."
+}
