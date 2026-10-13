@@ -550,6 +550,8 @@ export interface AggregateProps {
   readonly onExpand?: () => void;
   /** Something inside is implicated in a current problem. */
   readonly flagged?: boolean;
+  /** The problems' own count, a control the host draws beside the member count (never the member count painted as one). */
+  readonly problems?: ReactNode;
 }
 
 /**
@@ -558,11 +560,21 @@ export interface AggregateProps {
  * First-class, not a scale fallback: "People" is a legitimate view of a kind,
  * which is why expanding it is the same mechanism as collapsing back.
  */
-export function Aggregate({ label, count, items, onExpand, flagged }: AggregateProps) {
+export function Aggregate({ label, count, items, onExpand, flagged, problems }: AggregateProps) {
   return (
     <Panel
       title={label}
-      meta={flagged ? `⚠ ${count}` : count}
+      // The member count, plain: a group that cannot say how many problems are in it never paints its count as one.
+      meta={
+        problems ? (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            {problems}
+            <span>{count}</span>
+          </span>
+        ) : (
+          count
+        )
+      }
       tone={flagged ? "warning" : "muted"}
       style={onExpand ? { cursor: "zoom-in" } : undefined}
     >

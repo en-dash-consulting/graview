@@ -47,7 +47,7 @@ const KindStopPart = lazyModule(retryingImport(() => import("./kind-stop.js"))).
   { what: "This list" },
 );
 import { Connections } from "./connections.js";
-import { askForProblems } from "./map-asks.js";
+import { ProblemCount, problemsIn } from "./problem-count.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Files } from "./files-door.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -579,13 +579,37 @@ export function registerDefaultViews<S extends AnySchema>(
       // A receded group still has to report trouble inside it, or the only
       // way to find a problem is to open every group in turn.
       const flagged = (nodes: readonly { id: string }[]) => nodes.some((member) => props.flagged?.includes(member.id));
+      /*
+       * The header says the members as a plain count and, apart from it,
+       * how many problems there are — the bar's own count, pressable — never
+       * the member count painted as a warning.
+       */
+      const everyProblem = useViolations<S>();
+      const flag = useKit().marks.flag;
       const pile = (label: string, nodes: typeof members, key?: string) =>
         rows ? (
-          <Panel key={key} title={label} meta={flagged(nodes) ? `⚠ ${nodes.length}` : nodes.length} tone={flagged(nodes) ? "warning" : "muted"}>
+          <Panel
+            key={key}
+            title={label}
+            meta={
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <ProblemCount kind={String(kind)} plural={plural} problems={problemsIn(everyProblem, nodes)} flag={flag} />
+                <span title={`${numberAsRead(nodes.length)} ${nodes.length === 1 ? nounOf(definition, String(kind)) : plural.toLowerCase()}`}>{numberAsRead(nodes.length)}</span>
+              </span>
+            }
+            tone={flagged(nodes) ? "warning" : "muted"}
+          >
             <MemberRows<S> View={rows} members={nodes} mode={props.mode} {...(props.flagged ? { flagged: props.flagged } : {})} />
           </Panel>
         ) : (
-          <Aggregate key={key} label={label} count={nodes.length} flagged={flagged(nodes)} items={nodes.map(item)} />
+          <Aggregate
+            key={key}
+            label={label}
+            count={nodes.length}
+            flagged={flagged(nodes)}
+            items={nodes.map(item)}
+            problems={<ProblemCount kind={String(kind)} plural={plural} problems={problemsIn(everyProblem, nodes)} flag={flag} />}
+          />
         );
       if (!arranged.grouped) {
         return (
@@ -666,7 +690,7 @@ export function registerDefaultViews<S extends AnySchema>(
        * panel and the bar's count never say two things.
        */
       const everyProblem = useViolations<S>();
-      const problems = everyProblem.filter((violation) => violation.nodeIds.some((id) => members.some((member) => member.id === id)));
+      const problems = problemsIn(everyProblem, members);
       /* FROM ALTITUDE THE NAME SAYS THREE THINGS: what the district is, how many, and how many have a problem — and, for a kind with a status, the bar of where they stand. */
       const altitude = (view.overview ?? false) && props.nestedUnder === undefined;
       const accent = props.focused || props.raised;
@@ -962,10 +986,10 @@ export function registerDefaultViews<S extends AnySchema>(
 
           <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.875rem" }}>
             <span
-              title={altitude && members.length > 0 ? `${numberAsRead(members.length)} ${members.length === 1 ? nounOf(definition, String(kind)) : plural.toLowerCase()}` : undefined}
+              title={members.length > 0 ? `${numberAsRead(members.length)} ${members.length === 1 ? nounOf(definition, String(kind)) : plural.toLowerCase()}` : undefined}
               style={{
                 fontVariantNumeric: "tabular-nums",
-                color: trouble && !altitude ? "var(--graview-warn)" : saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
+                color: saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
               }}
             >
               {/*
@@ -974,29 +998,9 @@ export function registerDefaultViews<S extends AnySchema>(
                 * it is — the same honesty the actions strip gives when a kind
                 * has no verbs.
                 */}
-              {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : `${trouble && !altitude ? `${flag} ` : ""}${numberAsRead(members.length)}`}
+              {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : numberAsRead(members.length)}
             </span>
-            {altitude && problems.length > 0 ? (
-              <button
-                type="button"
-                className="graview-district-problems"
-                data-testid={`district-problems-${String(kind)}`}
-                data-graview-problems={problems.length}
-                aria-expanded={listed}
-                aria-label={`${numberAsRead(problems.length)} ${problems.length === 1 ? "problem" : "problems"} in ${plural}`}
-                // The first one's own sentence, for a quick look; the rest are a press away.
-                title={`${numberAsRead(problems.length)} ${problems.length === 1 ? "problem" : "problems"} in ${plural} — ${problems[0]!.message}${problems.length > 1 ? ` (and ${numberAsRead(problems.length - 1)} more)` : ""}. Press to see ${problems.length === 1 ? "it" : "them"} and how to fix ${problems.length === 1 ? "it" : "them"}.`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  choose([kindCardId(String(kind))]);
-                  askForProblems(String(kind));
-                }}
-                onDoubleClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
-              >
-                <span aria-hidden="true">{`${flag} ${numberAsRead(problems.length)}`}</span>
-              </button>
-            ) : null}
+            <ProblemCount kind={String(kind)} plural={plural} problems={problems} flag={flag} listed={listed} />
             {/*
               * What sits BEHIND THE HORIZON, advertised where it dropped
               * from. Pressing it widens the view to the past — an ordinary

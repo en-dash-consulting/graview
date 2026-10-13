@@ -1022,9 +1022,10 @@ ${/* THE PROBLEM COUNT IS A CONTROL: a fingertip's height, quiet until it is rea
 .graview-district-problems {
   display: inline-flex;
   align-items: center;
-  min-height: max(1.5rem, 24px);
-  min-width: max(1.5rem, 24px);
-  margin: -4px -4px;
+  ${/* On the ground the card is drawn at its plane's 0.9: a fingertip there is 27, so it draws 24. */ ""}
+  min-height: max(1.67rem, 27px);
+  min-width: max(1.67rem, 27px);
+  margin: -5px -4px;
   padding: 0 4px;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -1035,6 +1036,12 @@ ${/* THE PROBLEM COUNT IS A CONTROL: a fingertip's height, quiet until it is rea
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+}
+[data-graview-altitude] .graview-district-problems {
+  min-height: max(1.5rem, 24px);
+  min-width: max(1.5rem, 24px);
+  margin: -4px -4px;
 }
 .graview-district-problems:hover {
   background: color-mix(in oklab, var(--graview-warn) 14%, transparent);
