@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 330,
+  "gzipped": 200,
+  "note": "Raised by the review before 0.1.29: an id a seat mints is marked by a digest of the seat (seatMark, mintId) rather than its slug, keep-link refuses an end the seat may not see, a tick holds only for the day it was made on, and an excerpt passes over an abbreviation's stop. Measured at 1_794_043 / 576_249, 309 / 187 over the budget before it."
+}
