@@ -61,33 +61,33 @@ describe.each(adapters)("a log compacted behind its horizon, reopened on the %s 
     first.store.apply({ name: "jot", args: { label: "Flowers" } }, { author: ada });
     await first.flush();
     const before = { ada: seesId(first.store, ada), bo: seesId(first.store, bo) };
-    expect([before.ada("note:cake"), before.ada("note:band"), before.bo("note:band")]).toEqual([true, false, true]);
+    expect([before.ada("note:cake.person-ada"), before.ada("note:band.person-bo"), before.bo("note:band.person-bo")]).toEqual([true, false, true]);
     const compaction = await first.compact({ keepOps: 1, keepDays: 0 });
     expect(compaction.horizon).toBe(2);
-    expect(compaction.checkpoint?.creators).toEqual({ "note:cake": "person:ada", "note:band": "person:bo" });
+    expect(compaction.checkpoint?.creators).toEqual({ "note:cake.person-ada": "person:ada", "note:band.person-bo": "person:bo" });
     first.close();
 
     const reopened = await openStore({ app, adapter });
     expect(reopened.store.log.horizon).toBe(2);
-    expect(recordsOf(reopened.store.log).creatorOf("note:cake")).toBe("person:ada");
+    expect(recordsOf(reopened.store.log).creatorOf("note:cake.person-ada")).toBe("person:ada");
     const after = { ada: seesId(reopened.store, ada), bo: seesId(reopened.store, bo) };
-    for (const id of ["note:cake", "note:band", "note:flowers"]) {
+    for (const id of ["note:cake.person-ada", "note:band.person-bo", "note:flowers.person-ada"]) {
       expect(after.ada(id)).toBe(before.ada(id));
       expect(after.bo(id)).toBe(before.bo(id));
     }
-    expect(reopened.store.seenBy(ada).graph.allNodes().map((node) => node.id).sort()).toEqual(["note:cake", "note:flowers"]);
+    expect(reopened.store.seenBy(ada).graph.allNodes().map((node) => node.id).sort()).toEqual(["note:cake.person-ada", "note:flowers.person-ada"]);
 
     // Compacted again past the first horizon: the makers behind the first are carried into the second.
     reopened.store.apply({ name: "jot", args: { label: "Dress" } }, { author: bo });
     await reopened.flush();
     const again = await reopened.compact({ keepOps: 0, keepDays: 0 });
-    expect(again.checkpoint?.creators).toEqual({ "note:cake": "person:ada", "note:band": "person:bo", "note:flowers": "person:ada", "note:dress": "person:bo" });
+    expect(again.checkpoint?.creators).toEqual({ "note:cake.person-ada": "person:ada", "note:band.person-bo": "person:bo", "note:flowers.person-ada": "person:ada", "note:dress.person-bo": "person:bo" });
     reopened.close();
     const third = await openStore({ app, adapter });
     expect(third.store.log.all()).toHaveLength(0);
-    expect(seesId(third.store, ada)("note:cake")).toBe(true);
-    expect(seesId(third.store, bo)("note:dress")).toBe(true);
-    expect(seesId(third.store, ada)("note:dress")).toBe(false);
+    expect(seesId(third.store, ada)("note:cake.person-ada")).toBe(true);
+    expect(seesId(third.store, bo)("note:dress.person-bo")).toBe(true);
+    expect(seesId(third.store, ada)("note:dress.person-bo")).toBe(false);
   });
 });
 
@@ -109,7 +109,7 @@ describe("a checkpoint written before it kept its makers", () => {
 
     const reopened = await openStore({ app, adapter });
     expect(reopened.verified?.ok ?? true).toBe(true);
-    expect(recordsOf(reopened.store.log).creatorOf("note:cake")).toBeUndefined();
-    expect(recordsOf(reopened.store.log).creatorOf("note:flowers")).toBe("person:ada");
+    expect(recordsOf(reopened.store.log).creatorOf("note:cake.person-ada")).toBeUndefined();
+    expect(recordsOf(reopened.store.log).creatorOf("note:flowers.person-ada")).toBe("person:ada");
   });
 });
