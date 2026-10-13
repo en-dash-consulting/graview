@@ -56,6 +56,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   // Its problems, each with its rule's line once the words are here.
   const lined = useLined(store, facts?.violations ?? NO_PROBLEMS);
   const [open, setOpen] = useState<string | null>(null);
+  const [more, setMore] = useState(false);
   const actsHeading = useRef<HTMLHeadingElement | null>(null);
   if (!facts) {
     return (
@@ -83,6 +84,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
    * done" is the same button twice on one page.
    */
   const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant");
+  /*
+   * WHAT TAKES A RECORD AWAY WAITS ONE PRESS BEHIND THE REST (FR-173):
+   * archive, merge and remove, the tail of the ranked list, behind "Show N
+   * more". Drawn beside the record's own acts they stood between "Change
+   * the song" and its form, and every keyboard walk to either crossed them.
+   */
+  const aside = offered.filter((affordance) => affordance.destructive || affordance.setsAside);
+  const shown = more || aside.length < 2 ? offered : offered.filter((affordance) => !aside.includes(affordance));
   /*
    * THE KIND'S OWN PAGE VIEW, AT THE HEAD (FR-35). A view the app gave the
    * kind at one × full — a component, or a spec's `page` — is drawn under
@@ -337,7 +346,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         <section style={{ ...rule, display: "grid", gap: 14 }} data-testid="record-actions">
           <h2 style={h2} ref={actsHeading} tabIndex={-1}>What can be done</h2>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {offered.map((affordance) => {
+            {shown.map((affordance) => {
               const opened = open === affordance.id;
               return (
                 <button
@@ -352,6 +361,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                    */
                   data-affordance={affordance.id}
                   data-rank={affordance.rank}
+                  // Shown by "Show N more", the first of them takes the keyboard, never <body>.
+                  autoFocus={more && affordance === aside[0]}
                   aria-expanded={opened}
                   onClick={() => setOpen(opened ? null : affordance.id)}
                   style={{
@@ -365,6 +376,11 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                 </button>
               );
             })}
+            {shown.length < offered.length ? (
+              <button type="button" aria-expanded={false} onClick={() => setMore(true)} style={{ ...button, ...quiet }} data-testid="record-actions-more">
+                Show {offered.length - shown.length} more
+              </button>
+            ) : null}
           </div>
           {offered.map((affordance) => {
             if (open !== affordance.id) return null;
