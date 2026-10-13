@@ -1,0 +1,49 @@
+# graview-lists
+
+`graview-lists` is one of Graview's 16 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
+
+Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
+
+## The skill
+
+## Lists that stay usable as an app grows
+
+A list that worked at twelve records stops working at three hundred: Filter lists every record at the far end of every relation, each card prints a thirty-line summary, and the only way to tidy is to delete. None of this needs a custom page. The declaration says what the list offers, the templates say how much of a long text a card shows, and every kind can already set a record aside.
+
+### Do this
+
+1. **Say what a kind's list filters by.** In a document:
+
+```json "pages": { "lists": { "request": { "filters": ["status", "area", "became", "became.stage"] } } } ```
+
+In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key is a field, a relation, `is`, or `<relation>.<field>` — a choice on the record at the far end ("The feature it became · Stage: Building"). The choice fields among them stand over the list as chips with counts; the rest are under Filter, each heading closed until pressed, with a box that finds a filter or a far record by a few letters. Unsaid, a list offers every way but a relation to a kind with more than forty records (offered by that kind's choices instead), and its first two choice fields as chips. An address says the same: `/requests?filter=status:open`.
+
+1. **Let a card say a long text's start.** A card shows a `text` field in three lines at most and a row in one, cut with an ellipsis. Say it on purpose with the `excerpt` formatter — `{summary|excerpt}` is its first sentence or about 140 characters cut at a word, `{summary|excerpt: 80}` at most 80 (20 to 1000) — and leave the whole text to the record's page. A list cut by its `limit` says "See all 120 features" and goes to the kind's list.
+
+1. **Set records aside instead of deleting them.** Every kind has `archive-<kind>` and `unarchive-<kind>` (`{ id }`, "Bring it back") and `merge-<kind>` (`{ id, into }`: `into` takes the duplicate's links and the duplicate is archived), permitted through the acts that create the kind. An archived record is out of lists, the scene, counts, computed fields and rules; its own page and search still find it, marked. A list says "+3 archived" and opens them at `?archived=true`; a rule reads them with `all('feature', true)` (`'all'` for both) and `archived()`. A kind that should never be archived says `archives: false` in `defineNode`.
+
+1. **Print a place when a fixed link wants one.** `renderPlace(store, app, "/requests", { viewer, locale })` from `@graview/pages/static` answers `{ html, css, title, found }`: one self-contained page, no script, in the app's look, under the viewer's sight, the same words the routed face says. It imports no React, so a Worker renders it on each change.
+
+### Then find out whether it worked
+
+```sh
+graview check src/domain/app.ts
+```
+
+It warns of a filter the kind cannot be filtered by (`pages-filter-unknown`) and names the keys it can, a kind `pages.lists` names that is not there (`pages-kind-unknown`), and a card or row that puts a `text` field whole in a text block (`view-whole-text`: "feature card shows summary whole; it will be clamped"). Then look at the list at a phone's width as well as a desk's:
+
+```sh
+graview describe src/domain/app.ts --place requests --seed seed.json --width 390
+```
+
+It says the list's headings, each record's card and what is filtered, as the page draws them. Archive one record by its act and ask again: it is gone from the list and the count, and `?archived=true` finds it. Undo the merge you tried; both records come back with their links.
+
+### What the check cannot see
+
+Whether the filters you named are the ones a person reaches for — that is a question for someone who uses the list. Whether a card's first sentence is a useful one: `excerpt` cuts where the text does. Whether a rule should still count an archived record: it does not unless it asks with `all(kind, true)`. And `renderPlace` writes no history and no acts by design; a host that wants them on paper writes them itself.
+
+---
+
+Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
+
+The page: https://graview.dev/docs/skills/graview-lists.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
