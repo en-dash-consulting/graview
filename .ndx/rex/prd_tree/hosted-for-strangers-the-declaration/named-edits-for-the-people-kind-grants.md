@@ -24,5 +24,5 @@ acceptanceCriteria:
   - "A hosted page's first load is no larger"
 description: "add-kind and add-act passed people: true and $me through, but nothing set people on a kind already there and no op touched the policy, so a builder's forms and a chat's propose_change could not offer an own-end grant or a sight via a relation as a named change with a preview in words. And on the live Graview Roadmap a feature's layerWhy, a string field holding a sentence, stood in the parentheses of the line that offered it."
 lastModified: "2026-10-13T00:30:00.000Z"
-resolution: "Shipped in #PR: the five ops in packages/core/src/document/edit.ts, their sentences in packages/core/src/document/policy-words.ts and the preview in diff.ts, the studio's grants, sights and people as ops in packages/studio/src/edits.ts, and madeLabel in compiled.ts leaving out a value over 40 characters or words ending in a stop."
+resolution: "Shipped in #243: the five ops in packages/core/src/document/edit.ts, their sentences in packages/core/src/document/policy-words.ts and the preview in diff.ts, the studio's grants, sights and people as ops in packages/studio/src/edits.ts, and madeLabel in compiled.ts leaving out a value over 40 characters or words ending in a stop."
 ---
