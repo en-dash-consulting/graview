@@ -79,4 +79,8 @@ ${/* A LONG TEXT IS READ AT A GLANCE ON A CARD AND A ROW: three lines on a
 .graview-spec-row .graview-spec-text,.graview-spec-row .graview-spec-value{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;line-clamp:1;overflow:hidden;max-height:1.45em}
 .graview-spec-card .graview-spec-text>*,.graview-spec-row .graview-spec-text>*{margin-block:0}
 .graview-spec-row .graview-spec-value,.graview-spec-row .graview-spec-text{white-space:normal !important}
+${/* A PROGRESS'S FIGURE IS NO PROSE: "3 of 5" under its bar is said whole.
+   The clamp's height is in the value's own ems, and a progress's line is
+   taller than 1.45 of them, so a row cut the figure's foot (19 of 21 px). */ ""}
+.graview-spec-progress>.graview-spec-value{display:inline;-webkit-line-clamp:none;line-clamp:none;max-height:none;overflow:visible;white-space:nowrap !important}
 `;
