@@ -80,6 +80,11 @@ for the agent, stop: that path is the one that will drift.
    `graview mcp <entry> --list --roles …` prints the seat's tools as
    `tools/list` JSON — the catalog a host registers without writing one.
 
+8. **Say what a guess was based on.** A host applying an agent's inference
+   passes `lineage: { basis, confidence, model }` with the author; a link
+   made under 1 by anyone but a person is provisional until a person keeps
+   it (`keep-link`; `@graview/core/provenance`).
+
 ## Worked examples
 
 - `apps/todo/src/ui/app.tsx` — the seat, the runtime, and an agent that finds

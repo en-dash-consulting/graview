@@ -14,6 +14,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/places.ts"), "utf8"),
   // What a kind's field roles are found wanting by: decided in one place, for the check and a document's checked compile alike.
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/facts-and-roles.ts"), "utf8"),
+  // What a view's blocks are found wanting by: one validator, for the check and a document's compile alike (`warning("view-whole-text", …)`).
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/views.ts"), "utf8"),
 ].join("\n");
 
 /**
@@ -40,6 +42,7 @@ describe("the skills package", () => {
       "graview-embed",
       "graview-invariant",
       "graview-lens",
+      "graview-lists",
       "graview-new-app",
       "graview-node-kind",
       "graview-pages",
@@ -118,7 +121,7 @@ describe("the skills package", () => {
      * these documents that CAN be checked against the code, so they are.
      */
     const real = new Set(
-      [...checkSource.matchAll(/code: "([a-z-]+)"/g)].map((match) => match[1]!),
+      [...checkSource.matchAll(/(?:code: |\b(?:error|warning|note)\()"([a-z-]+)"/g)].map((match) => match[1]!),
     );
     expect(real.size).toBeGreaterThan(15);
     for (const skill of skills) {
