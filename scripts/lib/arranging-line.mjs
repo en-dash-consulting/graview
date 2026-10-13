@@ -146,5 +146,19 @@ export async function chooseOnTheLine(page, prefix, word, value) {
   // A narrow line holds every word in its one "Arrange".
   await page.click(`button[data-testid="${prefix}-${visible ? word : "all"}"]`);
   await page.waitForSelector('[data-testid="arrange-list"]', { timeout: 5_000 });
+  await openFilterSection(page, value);
   await page.click(`[data-testid="arrange-list"] [data-value="${value}"]`);
+}
+
+/**
+ * Opens the Filter list's heading an entry stands under, when it is closed:
+ * each heading starts closed, so the list opens short. `value` is the
+ * entry's (`size:large`, `price:at-most:25000`, `became.stage:building`).
+ */
+export async function openFilterSection(page, value) {
+  const key = value.slice(0, value.indexOf(":"));
+  const entry = page.locator(`[data-testid="arrange-list"] [data-value="${value}"]`);
+  if ((await entry.count()) > 0) return;
+  const heading = page.locator(`[data-testid="arrange-list"] [data-section="${key}"] > button[aria-expanded="false"]`).first();
+  if ((await heading.count()) > 0) await heading.click();
 }

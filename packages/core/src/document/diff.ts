@@ -265,7 +265,7 @@ function lensSentences(before: readonly LooseLens[], after: readonly LooseLens[]
   return out;
 }
 
-type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string; primary?: readonly string[]; scene?: string; pages?: string } | undefined;
+type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string; primary?: readonly string[]; scene?: string; pages?: string; lists?: Readonly<Record<string, { filters?: readonly string[] }>> } | undefined;
 
 /** The arrangement (FR-80), compared part by part. */
 function pagesSentences(before: Arrangement, after: Arrangement): string[] {
@@ -283,6 +283,10 @@ function pagesSentences(before: Arrangement, after: Arrangement): string[] {
   if (!same(before?.primary, after?.primary)) out.push(after?.primary && after.primary.length > 0 ? `The bar stands up ${after.primary.join(", ")} beside Home.` : "The bar stands up the main kinds and their pictures again.");
   if (!same(before?.scene, after?.scene)) out.push(after?.scene === undefined ? "The switch calls the scene Scene again." : `The switch calls the scene "${after.scene}".`);
   if (!same(before?.pages, after?.pages)) out.push(after?.pages === undefined ? "The switch calls the pages Pages again." : `The switch calls the pages "${after.pages}".`);
+  for (const kind of new Set([...Object.keys(before?.lists ?? {}), ...Object.keys(after?.lists ?? {})])) {
+    const filters = after?.lists?.[kind]?.filters;
+    if (!same(before?.lists?.[kind]?.filters, filters)) out.push(filters && filters.length > 0 ? `The ${kind} list filters by ${filters.join(", ")}.` : `The ${kind} list offers the filters it works out again.`);
+  }
   if (out.length === 0) out.push("The app's pages change.");
   return out;
 }

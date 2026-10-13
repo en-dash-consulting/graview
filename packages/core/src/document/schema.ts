@@ -303,6 +303,11 @@ export const PagesSpec = z.looseObject({
    */
   scene: z.optional(str(1, 40)),
   pages: z.optional(str(1, 40)),
+  /*
+   * What each kind's list offers to filter by, by kind (`pages.lists.request.filters`): fields, relations,
+   * `is`, and `<relation>.<field>` for a choice at a relation's far end. Its choice fields stand as chips.
+   */
+  lists: z.optional(z.record(z.string(), z.strictObject({ filters: z.optional(some(str(1, 120), undefined, 40)) }))),
 });
 
 export const DocumentSpec = z.strictObject({

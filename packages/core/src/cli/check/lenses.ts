@@ -15,6 +15,7 @@ import type { AnySchema } from "../../schema/schema.js";
  */
 import type { CheckContext } from "./context.js";
 import { arrangementFindings, bindsOf, declaredLenses, isShippedLens, requiredRolesOf } from "../../places.js";
+import { arrangeable, throughEdges } from "../../arrangement.js";
 import { fieldOf } from "./context.js";
 import { columnReach } from "../../columns.js";
 import { deriveMutations } from "../../mutations/derive-edits.js";
@@ -325,9 +326,27 @@ export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): 
   }
 }
 
-/** What `pages` names that is not there: a kind in `order` or `hide`, a place for `first` (FR-80). */
+/** What `pages` names that is not there: a kind in `order` or `hide`, a place for `first` (FR-80), a list's filter. */
 export function checkPagesArrangement<S extends AnySchema>(ctx: CheckContext<S>): void {
   for (const finding of arrangementFindings(ctx.app)) {
     ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
+  }
+  const kinds = ctx.app.schema.kinds as readonly string[];
+  for (const [kind, list] of Object.entries(ctx.app.pages?.lists ?? {})) {
+    if (!kinds.includes(kind)) {
+      ctx.add({ severity: "warning", code: "pages-kind-unknown", where: `pages.lists.${kind}`, message: `pages.lists names "${kind}", which is not a kind, so it is passed over.`, fix: `Use one of: ${kinds.join(", ")}.` });
+      continue;
+    }
+    const offers = throughEdges(ctx.app.schema, arrangeable(ctx.app.schema, kind)).filters;
+    (list.filters ?? []).forEach((key, index) => {
+      if (offers.some((offer) => offer.key === key)) return;
+      ctx.add({
+        severity: "warning",
+        code: "pages-filter-unknown",
+        where: `pages.lists.${kind}.filters.${index}`,
+        message: `The list of ${kind} cannot be filtered by "${key}", so it is passed over.`,
+        fix: `Name a field, a relation, "is", or a choice at a relation's far end: ${offers.map((offer) => offer.key).join(", ")}.`,
+      });
+    });
   }
 }

@@ -1,5 +1,5 @@
-import type { AnySchema } from "@graview/core";
-import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
+import { pluralLabel, type AnySchema, type Store } from "@graview/core";
+import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG } from "@graview/core";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
@@ -18,6 +18,27 @@ import { OwnBarFind } from "./page-shell.js";
 import { recordPath } from "./registry.js";
 
 /**
+ * A LIST CUT SHORT SAYS WHERE THE REST IS. A list of cards is never a box
+ * to scroll inside: it shows its `limit`, and "See all 96 features" goes to
+ * the kind's list — said so when it listed every record of the kind, else
+ * how many more there are and the way to the kind's list.
+ */
+function SeeAll<S extends AnySchema>({ list, store }: { readonly list: { readonly members: readonly { readonly kind: string }[]; readonly total: number }; readonly store: Store<S> }) {
+  const kinds = new Set(list.members.map((node) => node.kind));
+  const more = list.total - list.members.length;
+  const kind = kinds.size === 1 ? [...kinds][0]! : undefined;
+  if (!kind) return <p className="graview-spec-text graview-spec-more">{`and ${more} more`}</p>;
+  const plural = pluralLabel(store.schema, kind).toLowerCase();
+  return (
+    <p className="graview-spec-text graview-spec-more">
+      <Link to={`/${pluralSlug(store.schema, kind)}`} className="graview-spec-link graview-spec-see-all" data-testid="see-all">
+        {list.total === store.graph.nodesOfKind(kind as never).length ? `See all ${list.total} ${plural}` : `${more} more · all ${plural}`}
+      </Link>
+    </p>
+  );
+}
+
+/**
  * WHERE A LISTED RECORD LEADS ON THIS FACE (FR-81, FR-82): a list block in a
  * home, a lens, a card or a row draws each record as a link, and here a
  * link is the record's own address, followed by the router.
@@ -29,8 +50,9 @@ function RecordLinks<S extends AnySchema>({ context, children }: { readonly cont
     () => ({
       href: (node: { readonly id: string; readonly kind: string }) => recordPath(schema, node.kind, node.id),
       go: (node: { readonly id: string; readonly kind: string }) => navigate(recordPath(schema, node.kind, node.id)),
+      more: (list: { readonly members: readonly { readonly id: string; readonly kind: string }[]; readonly total: number }) => <SeeAll list={list} store={context.store} />,
     }),
-    [schema, navigate],
+    [schema, navigate, context.store],
   );
   // A view's own headlines are said under the page's title, which is said under the app's name (FR-131).
   return (

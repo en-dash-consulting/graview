@@ -10,8 +10,15 @@
  * arranging. The types stay on `@graview/core`, where a declaration names
  * them.
  */
-export { arrangeable, asksForThePast, conditionHolds, edgesOf, NO_ARRANGEMENT, parseArrangement } from "./arrangement.js";
-export { admitArrangement, arrange, arrangeAllows, bucketStart, formatArrangement, matches } from "./arranging.js";
+export { arrangeable, asksForThePast, conditionHolds, edgesOf, NO_ARRANGEMENT, parseArrangement, throughEdges } from "./arrangement.js";
+export {
+  admitArrangement,
+  arrange,
+  arrangeAllows,
+  bucketStart,
+  formatArrangement,
+  matches,
+} from "./arranging.js";
 export type {
   Arrangeable,
   ArrangeContext,

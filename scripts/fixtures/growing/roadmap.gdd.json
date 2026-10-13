@@ -1,0 +1,78 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Product Roadmap",
+  "description": "A product's roadmap grown large: a hundred and twenty features with long summaries, the requests people made, and who voted for them.",
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "kinds": {
+    "feature": {
+      "noun": "feature",
+      "plural": "features",
+      "description": "Something the product will do.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "stage": { "type": "enum", "options": ["idea", "planned", "building", "shipped"], "default": "idea", "required": true },
+        "area": { "type": "enum", "options": ["pages", "scene", "core", "cloud"], "default": "core", "required": true },
+        "summary": { "type": "text" }
+      }
+    },
+    "request": {
+      "noun": "request",
+      "plural": "requests",
+      "description": "Something somebody asked for.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "status": { "type": "enum", "options": ["new", "considering", "planned", "declined", "done"], "default": "new", "required": true },
+        "summary": { "type": "text" }
+      },
+      "edges": {
+        "became": { "to": ["feature"], "description": "the feature it became", "inverse": "the requests it answers" }
+      }
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "description": "Somebody who asks and votes.",
+      "fields": {
+        "name": { "type": "string", "required": true }
+      },
+      "edges": {
+        "votes": { "to": ["request"], "description": "what they voted for", "inverse": "who voted for it" }
+      }
+    }
+  },
+  "acts": {
+    "add-feature": { "title": "Add a feature", "creates": "feature" },
+    "add-request": { "title": "Add a request", "creates": "request" }
+  },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "Up next",
+      "on": "feature",
+      "options": {
+        "blocks": [
+          { "headline": "Being built" },
+          { "list": "all('feature') where stage == 'building'", "as": "card", "limit": 6 },
+          { "headline": "Every feature" },
+          { "list": "all('feature')", "as": "card", "limit": 9 }
+        ]
+      }
+    }
+  ],
+  "views": {
+    "feature": {
+      "card": [{ "title": "{name}" }, { "badge": "{stage}" }, { "text": "{summary}" }],
+      "row": [{ "title": "{name}" }, { "badge": "{stage}" }, { "text": "{summary|excerpt}" }]
+    },
+    "request": {
+      "row": [
+        { "title": "{name}" },
+        { "badge": "{status}" },
+        { "badge": "{count(in('votes'))} {count(in('votes')) | plural: 'vote'}" },
+        { "text": "{summary}" }
+      ]
+    }
+  }
+}

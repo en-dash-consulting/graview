@@ -34,7 +34,9 @@ export interface Sort {
  * field takes `before:<date>`, `after:<date>` or `on:<date>`; a number field
  * takes `at-most:<n>`, `at-least:<n>` or a value; an edge takes a
  * node id, `*` (tied to anything) or `none`; `is` takes `current`, `past`,
- * `any`, `flagged` or `clear`. Anything else is dropped, not thrown.
+ * `any`, `flagged` or `clear`; `<edge>.<field>` takes one of a choice
+ * field's values on the record at the far end ("became a feature that is
+ * building": `became.stage:building`). Anything else is dropped, not thrown.
  */
 export interface Condition {
   readonly key: string;
@@ -75,7 +77,8 @@ export interface ArrangeOffer {
   readonly key: string;
   /** The words for it: the field's reading, the edge kind humanized, or the reserved word's sentence. */
   readonly label: string;
-  readonly about: "label" | "field" | "edge" | "is";
+  /** `via`: a choice field on the record at an edge's far end, keyed `<edge>.<field>`. */
+  readonly about: "label" | "field" | "edge" | "is" | "via";
   readonly type?: OfferType;
   /** For a choice field, its options; for `is`, its words; for an edge, nothing — the far ends are the graph's. */
   readonly options?: readonly string[];
@@ -223,6 +226,29 @@ export function arrangeable(schema: AnySchema, kind: string): Arrangeable {
   return { kind, sorts, filters, groups, ...(natural ? { natural } : {}) };
 }
 
+/**
+ * THROUGH AN EDGE, BY WHAT THE FAR END IS: a kind's offers with a choice
+ * field on the record at each relation's far end added to its filters
+ * (`about: "via"`, keyed `<edge>.<field>`) — a request filtered by the stage
+ * of the feature it became, where there are too many features to pick one.
+ * A list's offers; a lens arranges by its kind's own (`arrangeable`).
+ */
+export function throughEdges(schema: AnySchema, offers: Arrangeable): Arrangeable {
+  const via: ArrangeOffer[] = [];
+  for (const edge of offers.filters) {
+    const far = edge.about === "edge" && edge.far?.length === 1 ? schema.tryDefinition(edge.far[0]!) : undefined;
+    if (!far || far.kind === offers.kind) continue;
+    for (const [field, fieldSchema] of Object.entries((far.fields.shape ?? {}) as Record<string, unknown>)) {
+      if (fieldType(fieldSchema) !== "choice" || far.display?.hide?.includes(field)) continue;
+      via.push({ key: `${edge.key}.${field}`, label: `${edge.label} · ${readingOf(far, field)}`, about: "via", type: "choice", options: describeArgOptions(fieldSchema), far: [far.kind] });
+    }
+  }
+  if (via.length === 0) return offers;
+  // Before `is`, which ends the list.
+  const filters = offers.filters.filter((offer) => offer.about !== "is");
+  return { ...offers, filters: [...filters, ...via, ...offers.filters.filter((offer) => offer.about === "is")] };
+}
+
 export function describeArgOptions(schema: unknown): readonly string[] {
   const shape = describeArg(schema);
   return shape.type === "choice" ? shape.options : [];
@@ -367,8 +393,10 @@ export function conditionHolds(ctx: ArrangeContext, node: ArrangeNode, condition
     }
     return String(value) === condition.value;
   }
-  // An edge: tied to this node, to anything, or to nothing.
-  const ends = farEnds(ctx.graph, node.id, condition.key);
+  // An edge: tied to this node, to anything, or to nothing — or to a record whose choice is the value (`became.stage`).
+  const [edge, field] = condition.key.split(".");
+  const ends = farEnds(ctx.graph, node.id, edge!);
+  if (field) return ends.some((end) => String(fields(end)[field]) === condition.value);
   if (condition.value === "*") return ends.length > 0;
   if (condition.value === "none") return ends.length === 0;
   return ends.some((end) => end.id === condition.value);

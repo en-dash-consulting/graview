@@ -207,6 +207,8 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       primary: z.union([z.array(z.string().min(1).max(80)).max(40), z.null()]).optional(),
       scene: z.union([z.string().min(1).max(40), z.null()]).optional(),
       pages: z.union([z.string().min(1).max(40), z.null()]).optional(),
+      // What a kind's list offers to filter by: `{ "request": ["status", "became.stage"] }`; null or [] gives a kind back its derived filters.
+      filters: z.record(kindName, z.union([z.array(z.string().min(1).max(120)).max(40), z.null()])).optional(),
       // The scene's word as a chat or a tool written before 0.1.17 sends it (FR-132's key, RESPELLED as `scene`).
       overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
     })
@@ -992,7 +994,14 @@ class Editor {
     // `overview` is the scene's word as 0.1.15 and 0.1.16 took it (FR-134): read as `scene`, which wins when both are said.
     const { overview, ...rest } = given;
     const e: Doc = rest.scene === undefined && overview !== undefined ? { ...rest, scene: overview } : rest;
-    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene" or "pages"');
+    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined && e.filters === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene", "pages" or "filters"');
+    for (const [kind, keys] of Object.entries((e.filters ?? {}) as Record<string, readonly string[] | null>)) {
+      if (!this.doc.kinds[kind]) return this.fail(i, `filters.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
+      for (const [n, key] of (keys ?? []).entries()) {
+        const offered = this.filterKeys(kind);
+        if (!offered.includes(key)) return this.fail(i, `filters.${kind}.${n}`, `${kind} cannot be filtered by "${key}"`, `name one of ${offered.join(", ")}`);
+      }
+    }
     for (const [n, word] of (e.primary ?? []).entries()) {
       if (typeof word !== "string" || !this.opens(word) || word.trim().toLowerCase() === "home") {
         const titles = (this.doc.lenses ?? []).flatMap((lens: Doc) => (isObject(lens) && typeof lens["title"] === "string" ? [`"${lens["title"]}"`] : []));
@@ -1061,8 +1070,38 @@ class Editor {
         said.push(`the switch calls the ${face} "${pages[face]}"`);
       }
     }
+    for (const [kind, keys] of Object.entries((e.filters ?? {}) as Record<string, readonly string[] | null>)) {
+      const lists = (pages.lists ??= {});
+      if (keys === null || keys.length === 0) {
+        delete lists[kind];
+        said.push(`the list of ${pluralWords(this.doc, kind)} offers its own filters again`);
+      } else {
+        lists[kind] = { filters: [...keys] };
+        said.push(`the list of ${pluralWords(this.doc, kind)} filters by ${listOf(keys.map((key) => `"${key}"`))}`);
+      }
+      if (Object.keys(lists).length === 0) delete pages.lists;
+    }
     if (Object.keys(pages).length === 0) delete this.doc.pages;
     this.said.push(`${capitalize(listOf(said))}.`);
+  }
+
+  /** What a kind's list may be filtered by: its fields, its relations either way, `is`, and a choice at a relation's single far kind. */
+  private filterKeys(kind: string): readonly string[] {
+    const kinds = this.doc.kinds as Record<string, Doc>;
+    const keys = new Set<string>(["is", ...Object.keys(kinds[kind]?.fields ?? {})]);
+    const edges = new Map<string, readonly string[]>();
+    for (const [edge, spec] of Object.entries((kinds[kind]?.edges ?? {}) as Record<string, Doc>)) edges.set(edge, spec.to === "*" ? [] : [spec.to].flat());
+    for (const [other, spec] of Object.entries(kinds)) {
+      for (const [edge, declared] of Object.entries((spec.edges ?? {}) as Record<string, Doc>)) {
+        if (other !== kind && !edges.has(edge) && (declared.to === "*" || [declared.to].flat().includes(kind))) edges.set(edge, [other]);
+      }
+    }
+    for (const [edge, far] of edges) {
+      keys.add(edge);
+      if (far.length !== 1 || far[0] === kind) continue;
+      for (const [field, spec] of Object.entries((kinds[far[0]!]?.fields ?? {}) as Record<string, Doc>)) if (spec.type === "enum") keys.add(`${edge}.${field}`);
+    }
+    return [...keys];
   }
 
   /** Whether `first` names something the app can open on: home, a kind or its plural, a titled lens. */

@@ -92,6 +92,8 @@ const CHAIN = [
   ["drawn-once", "verify-drawn-once.mjs"],
   // A record's long text keeps its paragraphs and lists, spans the record under its label, is edited in a text area, and its facts follow the declared or the page's order, in three engines (FR-146–FR-148).
   ["long-text", "verify-long-text.mjs"],
+  // A roadmap grown large: status chips with counts, a Filter that opens short and finds a record by typing, whole badges, cards read at a glance, at a desk and a phone, in three engines.
+  ["growing", "verify-growing.mjs"],
   // A picture or a document put on a record from the page — picked, pasted, a PDF inline, full size, refused in words, taken back — on both faces, in three engines (FR-162, FR-163).
   ["files", "verify-files.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).

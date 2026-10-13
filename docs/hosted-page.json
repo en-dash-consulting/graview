@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-11T18:04:25.295Z",
+  "at": "2026-10-13T03:40:29.286Z",
   "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
   "checks": {
     "atMostTheBudgetMinifiedUpFront": {
-      "kb": 576,
+      "kb": 575,
       "budgetKb": 580,
       "ok": true
     },
@@ -16,7 +16,7 @@
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetUpFront": {
-      "kb": 535,
+      "kb": 534,
       "budgetKb": 535,
       "ok": true
     },
@@ -26,10 +26,10 @@
     }
   },
   "upFront": {
-    "kb": 576,
-    "chunks": 19,
+    "kb": 575,
+    "chunks": 20,
     "packagesKb": {
-      "@graview/core": 197,
+      "@graview/core": 195,
       "react-dom": 176,
       "zod": 55,
       "@graview/primitives": 46,
@@ -43,18 +43,18 @@
       "(the page)": 1,
       "@graview/tools": 0
     },
-    "ownNeedKb": 534
+    "ownNeedKb": 538
   },
   "whenAsked": {
-    "kb": 798,
-    "chunks": 54,
+    "kb": 838,
+    "chunks": 58,
     "packagesKb": {
-      "@graview/primitives": 261,
-      "@graview/guest": 125,
-      "@graview/tools": 103,
-      "@graview/pages": 83,
+      "@graview/primitives": 287,
+      "@graview/guest": 126,
+      "@graview/tools": 107,
+      "@graview/pages": 85,
       "@graview/react": 79,
-      "@graview/core": 45,
+      "@graview/core": 51,
       "react-router": 44,
       "@graview/layout": 28,
       "@graview/embed": 4,
@@ -64,64 +64,64 @@
     "doors": [
       {
         "module": "primitives/src/draft-frame.tsx",
-        "kb": 354,
+        "kb": 362,
         "packagesKb": {
-          "@graview/primitives": 161,
+          "@graview/primitives": 163,
           "@graview/react": 79,
           "@graview/tools": 45,
-          "@graview/core": 32,
+          "@graview/core": 38,
           "@graview/layout": 28,
           "@graview/render": 1
         }
       },
       {
         "module": "primitives/src/declared-lenses.tsx",
-        "kb": 326,
+        "kb": 334,
         "packagesKb": {
-          "@graview/primitives": 134,
+          "@graview/primitives": 136,
           "@graview/react": 79,
           "@graview/tools": 45,
-          "@graview/core": 32,
+          "@graview/core": 38,
           "@graview/layout": 28,
           "@graview/render": 1
         }
       },
       {
-        "module": "embed/src/pages-content.tsx",
-        "kb": 263,
+        "module": "embed/src/scene-face.tsx",
+        "kb": 257,
         "packagesKb": {
-          "@graview/pages": 77,
-          "@graview/primitives": 64,
+          "@graview/primitives": 88,
+          "@graview/react": 79,
           "@graview/tools": 45,
+          "@graview/layout": 28,
+          "@graview/core": 10,
+          "@graview/render": 1,
+          "@graview/embed": 1
+        }
+      },
+      {
+        "module": "embed/src/pages-content.tsx",
+        "kb": 243,
+        "packagesKb": {
+          "@graview/pages": 79,
+          "@graview/primitives": 67,
           "react-router": 44,
-          "@graview/core": 17,
+          "@graview/core": 21,
+          "@graview/tools": 16,
           "@graview/react": 6,
           "@graview/render": 1,
           "@graview/embed": 1
         }
       },
       {
-        "module": "embed/src/scene-face.tsx",
-        "kb": 263,
-        "packagesKb": {
-          "@graview/primitives": 88,
-          "@graview/react": 79,
-          "@graview/tools": 45,
-          "@graview/layout": 28,
-          "@graview/core": 16,
-          "@graview/render": 1,
-          "@graview/embed": 1
-        }
-      },
-      {
         "module": "embed/src/picture-face.tsx",
-        "kb": 263,
+        "kb": 243,
         "packagesKb": {
-          "@graview/pages": 77,
-          "@graview/primitives": 64,
-          "@graview/tools": 45,
+          "@graview/pages": 79,
+          "@graview/primitives": 67,
           "react-router": 44,
-          "@graview/core": 17,
+          "@graview/core": 21,
+          "@graview/tools": 16,
           "@graview/react": 6,
           "@graview/render": 1,
           "@graview/embed": 1
@@ -129,23 +129,23 @@
       },
       {
         "module": "primitives/src/seat-panel.tsx",
-        "kb": 219,
+        "kb": 214,
         "packagesKb": {
           "@graview/react": 79,
           "@graview/tools": 49,
-          "@graview/primitives": 37,
+          "@graview/primitives": 39,
           "@graview/layout": 28,
-          "@graview/core": 19,
+          "@graview/core": 12,
           "@graview/render": 1
         }
       },
       {
         "module": "pages/src/page-draft.tsx",
-        "kb": 148,
+        "kb": 153,
         "packagesKb": {
-          "@graview/primitives": 64,
+          "@graview/primitives": 67,
           "react-router": 44,
-          "@graview/core": 17,
+          "@graview/core": 19,
           "@graview/pages": 10,
           "@graview/react": 6,
           "@graview/render": 1,
@@ -154,10 +154,10 @@
       },
       {
         "module": "pages/src/take-back.tsx",
-        "kb": 99,
+        "kb": 104,
         "packagesKb": {
-          "@graview/primitives": 64,
-          "@graview/core": 17,
+          "@graview/primitives": 67,
+          "@graview/core": 19,
           "@graview/pages": 6,
           "@graview/react": 6,
           "@graview/render": 1,
@@ -166,10 +166,10 @@
       },
       {
         "module": "primitives/src/home-view.tsx",
-        "kb": 72,
+        "kb": 75,
         "packagesKb": {
-          "@graview/primitives": 44,
-          "@graview/core": 17,
+          "@graview/primitives": 45,
+          "@graview/core": 19,
           "@graview/react": 6,
           "@graview/render": 1,
           "@graview/tools": 1
@@ -177,10 +177,10 @@
       },
       {
         "module": "primitives/src/framework-views.ts",
-        "kb": 72,
+        "kb": 75,
         "packagesKb": {
-          "@graview/primitives": 44,
-          "@graview/core": 17,
+          "@graview/primitives": 45,
+          "@graview/core": 19,
           "@graview/react": 6,
           "@graview/render": 1,
           "@graview/tools": 1
@@ -194,77 +194,97 @@
         }
       },
       {
+        "module": "tools/src/draft.ts",
+        "kb": 47,
+        "packagesKb": {
+          "@graview/tools": 31,
+          "@graview/core": 14
+        }
+      },
+      {
         "module": "tools/src/seat-model.ts",
-        "kb": 48,
+        "kb": 41,
         "packagesKb": {
           "@graview/tools": 37,
-          "@graview/core": 10
+          "@graview/core": 3
         }
       },
       {
         "module": "primitives/src/bar-panes.tsx",
-        "kb": 37,
+        "kb": 38,
         "packagesKb": {
-          "@graview/primitives": 31,
+          "@graview/primitives": 32,
           "@graview/core": 3,
           "@graview/render": 1
         }
       },
       {
         "module": "tools/src/go.ts",
-        "kb": 36,
+        "kb": 38,
         "packagesKb": {
           "@graview/tools": 31,
-          "@graview/core": 4
+          "@graview/core": 6
+        }
+      },
+      {
+        "module": "primitives/src/files.tsx",
+        "kb": 36,
+        "packagesKb": {
+          "@graview/primitives": 14,
+          "@graview/core": 12,
+          "@graview/react": 6,
+          "@graview/render": 1,
+          "@graview/tools": 1
         }
       },
       {
         "module": "guest/src/host/open-draw.ts",
-        "kb": 35,
+        "kb": 36,
         "packagesKb": {
           "@graview/guest": 35
         }
       },
       {
-        "module": "tools/src/draft.ts",
-        "kb": 32,
+        "module": "primitives/src/arrange-lists.tsx",
+        "kb": 31,
         "packagesKb": {
-          "@graview/tools": 31
+          "@graview/primitives": 26,
+          "@graview/core": 4
+        }
+      },
+      {
+        "module": "core/src/describe.ts",
+        "kb": 26,
+        "packagesKb": {
+          "@graview/core": 25
         }
       },
       {
         "module": "guest/src/host/worker.ts",
-        "kb": 25,
+        "kb": 26,
         "packagesKb": {
           "@graview/guest": 25
         }
       },
       {
-        "module": "core/src/describe.ts",
-        "kb": 24,
+        "module": "tools/src/agent/reads.ts",
+        "kb": 16,
         "packagesKb": {
-          "@graview/core": 23
-        }
-      },
-      {
-        "module": "primitives/src/arrange-lists.tsx",
-        "kb": 23,
-        "packagesKb": {
-          "@graview/primitives": 18,
-          "@graview/core": 4
+          "@graview/core": 12,
+          "@graview/tools": 3
         }
       },
       {
         "module": "primitives/src/arrange-bar.tsx",
-        "kb": 14,
+        "kb": 16,
         "packagesKb": {
-          "@graview/primitives": 9,
+          "@graview/primitives": 11,
           "@graview/core": 4
         }
       },
       {
         "module": "core/src/lines.ts",
-        "kb": 13,
+        "kb": 14,
         "packagesKb": {
           "@graview/core": 13
         }
@@ -300,11 +320,11 @@
     ]
   },
   "handedACompiledApp": {
-    "kb": 535,
+    "kb": 534,
     "savedKb": 41,
     "packagesKb": {
       "react-dom": 176,
-      "@graview/core": 156,
+      "@graview/core": 154,
       "zod": 55,
       "@graview/primitives": 46,
       "@graview/react": 29,
@@ -320,12 +340,12 @@
   },
   "beforeEachFaceDraws": {
     "scene": {
-      "kb": 877,
-      "fetchedKb": 301
+      "kb": 883,
+      "fetchedKb": 308
     },
     "pages": {
-      "kb": 840,
-      "fetchedKb": 264
+      "kb": 819,
+      "fetchedKb": 244
     }
   },
   "passed": true

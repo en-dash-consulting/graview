@@ -1,4 +1,5 @@
 import type { AnySchema } from "../schema/schema.js";
+import { isLongText } from "../schema/define-node.js";
 import { fieldSpecOf } from "./field-spec.js";
 import type { Finding } from "./findings.js";
 import { blockLenses, holdsFiles, own, subjectless, validateAll, type KindNames, type Vocabulary } from "./views.js";
@@ -52,6 +53,8 @@ export function validateViewSpecs(
         return spec?.type === "enum" ? spec.options : undefined;
       },
       targets: (n) => (own(relations, n) ? relations[n]!.to : undefined),
+      // Prose: a string declared to hold more than 500 characters, as a record's page reads it (`isLongText`).
+      prose: (n) => own(fields, n) && isLongText(definition as never, n, undefined),
     };
   };
   const vocabulary: Vocabulary = { namesOf, sources: (edge) => declared.filter((kind) => own(definitionOf(kind)?.edges, edge)) };

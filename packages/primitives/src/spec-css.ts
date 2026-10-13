@@ -2,70 +2,81 @@ import { LOCAL_LAYERS } from "@graview/core";
 
 /** The stylesheet the blocks are drawn with: classes over the theme's tokens, and nothing a spec can reach. */
 export const SPEC_VIEW_CSS = `
-.graview-spec { display: flex; flex-direction: column; gap: 6px; min-width: 0; color: var(--graview-ink); }
+.graview-spec{display:flex;flex-direction:column;gap:6px;min-width:0;color:var(--graview-ink)}
 ${/* A ROW IS A LINE OF A LIST, NOT A CAPSULE (FR-113, FR-117). It was a
    pill holding a title, a badge and a progress block on one line, every one
    of them cut with an ellipsis: at a phone's width "Lv 3" drew as "L…" and
    "3 of 5" as "3 of". Now the small blocks keep their own width, the title
    takes what is left and wraps, and a row too narrow for all of it wraps
    onto a second line before anything is cut. */ ""}
-.graview-spec-row { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 10px; box-sizing: border-box; max-width: 100%; padding: 5px 10px; border: 1px solid var(--graview-edge); border-radius: var(--graview-radius-sm, 8px); background: var(--graview-panel); font-size: 0.875rem; }
-.graview-spec-row[data-selected] { border-color: var(--graview-accent); }
-.graview-spec-row > * { flex: 0 0 auto; min-width: 0; max-width: 100%; }
-.graview-spec-row > .graview-spec-title, .graview-spec-row > .graview-spec-text { flex: 1 1 9rem; overflow-wrap: anywhere; }
-.graview-spec-row > .graview-spec-title { font-size: 0.9375rem; }
-.graview-spec-row > .graview-spec-progress { grid-template-columns: auto minmax(3rem, 5rem) auto; align-items: center; column-gap: 6px; }
-.graview-spec-list[data-as="row"] .graview-spec-row { border-width: 0 0 1px; border-radius: 0; background: transparent; padding: 6px 2px; }
-[data-graview-rows] .graview-spec-row { border-width: 0; border-radius: 0; background: transparent; padding: 2px 0; }
-[data-graview-rows] .graview-spec-row > .graview-spec-title { font-size: 1.0625rem; font-weight: 600; }
-.graview-spec-page { padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--graview-edge); }
-.graview-spec-title { font-family: var(--graview-font-display, inherit); font-weight: 600; font-size: 1rem; line-height: 1.3; overflow-wrap: anywhere; }
-.graview-spec-text { margin: 0; font-size: 0.875rem; line-height: 1.45; overflow-wrap: anywhere; }
-.graview-spec-text[data-graview-tone] { color: var(--graview-spec-tone); }
+.graview-spec-row{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 10px;box-sizing:border-box;max-width:100%;padding:5px 10px;border:1px solid var(--graview-edge);border-radius:var(--graview-radius-sm,8px);background:var(--graview-panel);font-size:.875rem}
+.graview-spec-row[data-selected]{border-color:var(--graview-accent)}
+.graview-spec-row>*{flex:0 0 auto;min-width:0;max-width:100%}
+.graview-spec-row>.graview-spec-title,.graview-spec-row>.graview-spec-text{flex:1 1 9rem;overflow-wrap:anywhere}
+.graview-spec-row>.graview-spec-title{font-size:.9375rem}
+.graview-spec-row>.graview-spec-progress{grid-template-columns:auto minmax(3rem,5rem) auto;align-items:center;column-gap:6px}
+.graview-spec-list[data-as="row"] .graview-spec-row{border-width:0 0 1px;border-radius:0;background:transparent;padding:6px 2px}
+[data-graview-rows] .graview-spec-row{border-width:0;border-radius:0;background:transparent;padding:2px 0}
+[data-graview-rows] .graview-spec-row>.graview-spec-title{font-size:1.0625rem;font-weight:600}
+.graview-spec-page{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--graview-edge)}
+.graview-spec-title{font-family:var(--graview-font-display,inherit);font-weight:600;font-size:1rem;line-height:1.3;overflow-wrap:anywhere}
+.graview-spec-text{margin:0;font-size:.875rem;line-height:1.45;overflow-wrap:anywhere}
+.graview-spec-text[data-graview-tone]{color:var(--graview-spec-tone)}
 ${/* A STATE BADGE, the one pill a record wears (FR-117), and never cut
    (FR-118): it is as wide as its words, and only words longer than the
    whole line they stand in wrap. */ ""}
-.graview-spec-badge { align-self: flex-start; display: inline-block; max-width: 100%; box-sizing: border-box; padding: 1px 8px; border: 1px solid currentColor; border-radius: 999px; background: var(--graview-panel); color: var(--graview-spec-tone, var(--graview-ink-muted)); font-size: 0.8125rem; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
-.graview-spec-row .graview-spec-badge, .graview-spec-group[data-direction="row"] .graview-spec-badge { align-self: center; }
-.graview-spec [data-graview-tone="good"] { --graview-spec-tone: var(--graview-good); }
-.graview-spec [data-graview-tone="bad"] { --graview-spec-tone: var(--graview-bad); }
-.graview-spec [data-graview-tone="warn"] { --graview-spec-tone: var(--graview-warn); }
-.graview-spec [data-graview-tone="accent"] { --graview-spec-tone: var(--graview-accent); }
-.graview-spec [data-graview-tone="neutral"] { --graview-spec-tone: var(--graview-ink-muted); }
-.graview-spec-field { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; min-width: 0; font-size: 0.875rem; line-height: 1.4; }
-.graview-spec-label { color: var(--graview-ink-muted); }
-.graview-spec-value { min-width: 0; color: var(--graview-ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.graview-spec-badge{align-self:flex-start;display:inline-block;max-width:100%;box-sizing:border-box;padding:1px 8px;border:1px solid currentColor;border-radius:999px;background:var(--graview-panel);color:var(--graview-spec-tone,var(--graview-ink-muted));font-size:.8125rem;font-weight:600;line-height:1.5;overflow-wrap:anywhere}
+.graview-spec-row .graview-spec-badge,.graview-spec-group[data-direction="row"] .graview-spec-badge{align-self:center}
+.graview-spec [data-graview-tone="good"]{--graview-spec-tone:var(--graview-good)}
+.graview-spec [data-graview-tone="bad"]{--graview-spec-tone:var(--graview-bad)}
+.graview-spec [data-graview-tone="warn"]{--graview-spec-tone:var(--graview-warn)}
+.graview-spec [data-graview-tone="accent"]{--graview-spec-tone:var(--graview-accent)}
+.graview-spec [data-graview-tone="neutral"]{--graview-spec-tone:var(--graview-ink-muted)}
+.graview-spec-field{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;min-width:0;font-size:.875rem;line-height:1.4}
+.graview-spec-label{color:var(--graview-ink-muted)}
+.graview-spec-value{min-width:0;color:var(--graview-ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .graview-spec-link { position: relative; z-index: ${LOCAL_LAYERS.raised}; color: var(--graview-accent); text-decoration: underline; }
-.graview-spec-progress { display: grid; gap: 4px; font-size: 0.8125rem; }
-.graview-spec-progress > .graview-spec-label, .graview-spec-progress > .graview-spec-value { white-space: nowrap; }
-.graview-spec-track { display: block; height: 6px; border-radius: 999px; background: var(--graview-edge); overflow: hidden; }
-.graview-spec-fill { display: block; height: 100%; background: var(--graview-accent); }
-.graview-spec-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.graview-spec-group[data-direction="row"] { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-.graview-spec-row .graview-spec-group { flex: 1 1 9rem; }
-.graview-spec-divider { width: 100%; margin: 2px 0; border: 0; border-top: 1px solid var(--graview-edge); }
-.graview-spec-figure { display: inline-flex; width: 22px; height: 22px; }
-.graview-spec-row[data-graview-tall] { flex-direction: column; flex-wrap: nowrap; align-items: stretch; border-radius: 10px; padding: 8px 12px; }
-.graview-spec-row[data-graview-tall] .graview-spec-badge { align-self: flex-start; }
-.graview-spec-home, .graview-spec-place { gap: 14px; }
-.graview-spec-headline { margin: 0; font-family: var(--graview-font-display, inherit); font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; overflow-wrap: anywhere; font-size: 1.125rem; }
-.graview-spec-headline[data-level="1"] { font-size: clamp(1.75rem, 5vw, 2.75rem); line-height: 1.05; text-wrap: balance; }
-.graview-spec-headline[data-level="2"] { font-size: clamp(1.25rem, 3vw, 1.625rem); margin-top: 8px; }
-.graview-spec-number { display: grid; gap: 2px; justify-items: start; }
-.graview-spec-number-value { font-family: var(--graview-font-display, inherit); font-weight: 600; font-size: 1.75rem; line-height: 1.05; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
-.graview-spec-card .graview-spec-number-value, .graview-spec-row .graview-spec-number-value { font-size: 1.25rem; }
-.graview-spec-number .graview-spec-label { font-size: 0.8125rem; }
+.graview-spec-progress{display:grid;gap:4px;font-size:.8125rem}
+.graview-spec-progress>.graview-spec-label,.graview-spec-progress>.graview-spec-value{white-space:nowrap}
+.graview-spec-track{display:block;height:6px;border-radius:999px;background:var(--graview-edge);overflow:hidden}
+.graview-spec-fill{display:block;height:100%;background:var(--graview-accent)}
+.graview-spec-group{display:flex;flex-direction:column;gap:6px;min-width:0}
+.graview-spec-group[data-direction="row"]{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.graview-spec-row .graview-spec-group{flex:1 1 9rem}
+.graview-spec-divider{width:100%;margin:2px 0;border:0;border-top:1px solid var(--graview-edge)}
+.graview-spec-figure{display:inline-flex;width:22px;height:22px}
+.graview-spec-row[data-graview-tall]{flex-direction:column;flex-wrap:nowrap;align-items:stretch;border-radius:10px;padding:8px 12px}
+.graview-spec-row[data-graview-tall] .graview-spec-badge{align-self:flex-start}
+.graview-spec-home,.graview-spec-place{gap:14px}
+.graview-spec-headline{margin:0;font-family:var(--graview-font-display,inherit);font-weight:600;letter-spacing:-0.01em;line-height:1.15;overflow-wrap:anywhere;font-size:1.125rem}
+.graview-spec-headline[data-level="1"]{font-size:clamp(1.75rem,5vw,2.75rem);line-height:1.05;text-wrap:balance}
+.graview-spec-headline[data-level="2"]{font-size:clamp(1.25rem,3vw,1.625rem);margin-top:8px}
+.graview-spec-number{display:grid;gap:2px;justify-items:start}
+.graview-spec-number-value{font-family:var(--graview-font-display,inherit);font-weight:600;font-size:1.75rem;line-height:1.05;letter-spacing:-0.015em;font-variant-numeric:tabular-nums}
+.graview-spec-card .graview-spec-number-value,.graview-spec-row .graview-spec-number-value{font-size:1.25rem}
+.graview-spec-number .graview-spec-label{font-size:.8125rem}
 .graview-spec-listing { display: grid; gap: 10px; min-width: 0; position: relative; z-index: ${LOCAL_LAYERS.raised}; }
-.graview-spec-list-group { display: grid; gap: 8px; min-width: 0; }
-.graview-spec-list-heading { margin: 6px 0 0; font-family: var(--graview-font-display, inherit); font-size: 1rem; font-weight: 600; padding-bottom: 4px; border-bottom: 1px solid var(--graview-edge-bright, var(--graview-edge)); }
-.graview-spec-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
-.graview-spec-list[data-as="card"] { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); gap: 10px; }
-.graview-spec-list[data-as="names"] { display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.graview-spec-item { position: relative; min-width: 0; }
-.graview-spec-item-name { font-size: 0.875rem; font-weight: 600; }
-.graview-spec-item-link { all: unset; position: absolute; inset: 0; min-height: 24px; border-radius: 10px; cursor: pointer; }
-.graview-spec-item-link:hover { background: color-mix(in srgb, var(--graview-accent) 6%, transparent); }
-.graview-spec-item-link:focus-visible { outline: 2px solid var(--graview-accent); outline-offset: 2px; }
+.graview-spec-list-group{display:grid;gap:8px;min-width:0}
+.graview-spec-list-heading{margin:6px 0 0;font-family:var(--graview-font-display,inherit);font-size:1rem;font-weight:600;padding-bottom:4px;border-bottom:1px solid var(--graview-edge-bright,var(--graview-edge))}
+.graview-spec-list{list-style:none;margin:0;padding:0;display:grid;gap:6px;min-width:0}
+${/* CARDS IN ONE ROW KEEP THEIR OWN HEIGHT: a card with a long summary
+   stretched every card beside it to its height. */ ""}
+.graview-spec-list[data-as="card"]{grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));gap:10px;align-items:start}
+.graview-spec-list[data-as="names"]{display:flex;flex-wrap:wrap;gap:4px 12px}
+.graview-spec-item{position:relative;min-width:0}
+.graview-spec-item-name{font-size:.875rem;font-weight:600}
+.graview-spec-item-link{all:unset;position:absolute;inset:0;min-height:24px;border-radius:10px;cursor:pointer}
+.graview-spec-item-link:hover{background:color-mix(in srgb,var(--graview-accent) 6%,transparent)}
+.graview-spec-item-link:focus-visible{outline:2px solid var(--graview-accent);outline-offset:2px}
 .graview-spec-item .graview-spec-listing { z-index: ${LOCAL_LAYERS.raised}; }
-.graview-spec-empty, .graview-spec-more { color: var(--graview-ink-muted); }
+.graview-spec-empty,.graview-spec-more{color:var(--graview-ink-muted)}
+.graview-spec-see-all{position:static;font-weight:600}
+${/* A LONG TEXT IS READ AT A GLANCE ON A CARD AND A ROW: three lines on a
+   card, one on a row, cut with an ellipsis; the record's page says it whole.
+   A card that printed a thirty-line summary made a row of cards a wall of
+   text (\`{summary|excerpt}\` says a sentence on purpose). */ ""}
+.graview-spec-card .graview-spec-text,.graview-spec-card .graview-spec-value{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;max-height:4.35em}
+.graview-spec-row .graview-spec-text,.graview-spec-row .graview-spec-value{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;line-clamp:1;overflow:hidden;max-height:1.45em}
+.graview-spec-card .graview-spec-text>*,.graview-spec-row .graview-spec-text>*{margin-block:0}
+.graview-spec-row .graview-spec-value,.graview-spec-row .graview-spec-text{white-space:normal !important}
 `;

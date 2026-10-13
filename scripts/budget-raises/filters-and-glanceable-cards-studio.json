@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 6306,
+  "gzipped": 2130,
+  "note": "Raised when a list came to stay usable as an app grows and its cards to be read at a glance (the Roadmap's f-filters-that-scale and f-glanceable-cards): a list's choice fields as chips with counts, the Filter list's closed headings, its box to find with and a relation found by typing, filters through a relation to its far end and pages.lists, what a list offers by default, the See all of a list cut short, a card's text clamped and the excerpt formatter, and the check's view-whole-text and pages-filter-unknown; the chips and the lists stay behind the lists' door, and a hosted page's first load holds to its budget unraised. 6_306 / 2_130 more than main (1_585_964 / 489_019). Measured at 1_592_270 / 491_149."
+}

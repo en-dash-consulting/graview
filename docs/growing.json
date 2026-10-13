@@ -1,0 +1,537 @@
+{
+  "at": "2026-10-13T04:06:01.701Z",
+  "engines": [
+    "chromium"
+  ],
+  "screens": [
+    {
+      "name": "desk",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "phone",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "expected": {
+    "features": 120,
+    "requests": 60,
+    "people": 20,
+    "becameBuilding": 15,
+    "considering": 12,
+    "wanted": "Quiet calendars",
+    "answeringWanted": 1
+  },
+  "checks": {
+    "aStatusIsAChipWithItsCountAndOnePressNarrows": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "before": {
+            "count": "60 requests",
+            "chips": [
+              "New12",
+              "Considering12",
+              "Planned12",
+              "Declined12",
+              "Done12"
+            ]
+          },
+          "chipWords": "Considering12",
+          "after": {
+            "count": "12 of 60 requests",
+            "on": [
+              "Status: Considering"
+            ],
+            "pressed": [
+              "status:considering"
+            ]
+          },
+          "beside": true,
+          "removed": {
+            "count": "60 requests",
+            "on": []
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "before": {
+            "count": "60 requests",
+            "chips": [
+              "New12",
+              "Considering12",
+              "Planned12",
+              "Declined12",
+              "Done12"
+            ]
+          },
+          "chipWords": "Considering12",
+          "after": {
+            "count": "12 of 60 requests",
+            "on": [
+              "Status: Considering"
+            ],
+            "pressed": [
+              "status:considering"
+            ]
+          },
+          "beside": true,
+          "removed": {
+            "count": "60 requests",
+            "on": []
+          }
+        }
+      ],
+      "ok": true
+    },
+    "whatIsOnIsARemovableChipBesideTheCount": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "on": [
+            "Status: Considering"
+          ],
+          "beside": true,
+          "removed": {
+            "count": "60 requests",
+            "on": []
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "on": [
+            "Status: Considering"
+          ],
+          "beside": true,
+          "removed": {
+            "count": "60 requests",
+            "on": []
+          }
+        }
+      ],
+      "ok": true
+    },
+    "filterOpensShortEveryHeadingClosedAndNoFeatureNamed": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "height": 215,
+          "headings": [
+            {
+              "key": "name",
+              "open": false
+            },
+            {
+              "key": "votes",
+              "open": false
+            },
+            {
+              "key": "became.stage",
+              "open": false
+            },
+            {
+              "key": "became.area",
+              "open": false
+            },
+            {
+              "key": "is",
+              "open": false
+            }
+          ],
+          "entries": 0,
+          "farNamed": 0
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "height": 219,
+          "headings": [
+            {
+              "key": "name",
+              "open": false
+            },
+            {
+              "key": "votes",
+              "open": false
+            },
+            {
+              "key": "became.stage",
+              "open": false
+            },
+            {
+              "key": "became.area",
+              "open": false
+            },
+            {
+              "key": "is",
+              "open": false
+            }
+          ],
+          "entries": 0,
+          "farNamed": 0
+        }
+      ],
+      "ok": true
+    },
+    "theFilterListIsOpaqueHeldToTheWindowAndScrollsInItselfUnderItsFindBox": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "opaque": true,
+          "box": {
+            "left": 618,
+            "top": 235,
+            "right": 918,
+            "bottom": 755,
+            "height": 520
+          },
+          "view": {
+            "width": 1280,
+            "height": 800
+          },
+          "scrolls": true,
+          "findTop": 1
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "opaque": true,
+          "box": {
+            "left": 0,
+            "top": 284,
+            "right": 390,
+            "bottom": 844,
+            "height": 560
+          },
+          "view": {
+            "width": 390,
+            "height": 844
+          },
+          "scrolls": true,
+          "findTop": 1
+        }
+      ],
+      "ok": true
+    },
+    "onAPhoneTheFilterListIsASheetAlongTheFoot": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "box": {
+            "left": 0,
+            "top": 625,
+            "right": 390,
+            "bottom": 844,
+            "height": 219
+          },
+          "view": {
+            "width": 390,
+            "height": 844
+          }
+        }
+      ],
+      "ok": true
+    },
+    "aRelationWithManyAtItsFarEndIsFoundByTypingAtMostEight": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "section": true,
+          "box": true,
+          "listedBefore": 0,
+          "listed": 8
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "section": true,
+          "box": true,
+          "listedBefore": 0,
+          "listed": 8
+        }
+      ],
+      "ok": true
+    },
+    "theRelationToManyFeaturesIsOfferedByTheirStageAndNarrowsRight": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "section": true,
+          "offeredBecame": false,
+          "count": "15 of 60 requests",
+          "on": [
+            "The feature it became · Stage: Building"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "section": true,
+          "offeredBecame": false,
+          "count": "15 of 60 requests",
+          "on": [
+            "The feature it became · Stage: Building"
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "aNamedRelationFindsAFeatureInAFewKeystrokes": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "headings": [
+            "became",
+            "became.stage"
+          ],
+          "keystrokes": 6,
+          "matches": 8,
+          "found": true,
+          "count": "1 of 60 requests",
+          "on": [
+            "The feature it became: Quiet calendars"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "headings": [
+            "became",
+            "became.stage"
+          ],
+          "keystrokes": 6,
+          "matches": 8,
+          "found": true,
+          "count": "1 of 60 requests",
+          "on": [
+            "The feature it became: Quiet calendars"
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "aRowsBadgesAreWholeAndACountOfNothingIsNoBadge": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "rows": 60,
+          "badges": 105,
+          "cut": [],
+          "zero": 0,
+          "votes": 45
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "rows": 60,
+          "badges": 105,
+          "cut": [],
+          "zero": 0,
+          "votes": 45
+        }
+      ],
+      "ok": true
+    },
+    "aCardsSummaryIsThreeLinesAtMostAndCardsKeepTheirHeights": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "cards": 15,
+          "texts": 15,
+          "mostLines": 3,
+          "sideBySide": 4,
+          "mixed": 4,
+          "alignment": "start"
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "cards": 15,
+          "texts": 15,
+          "mostLines": 3,
+          "sideBySide": 0,
+          "mixed": 0,
+          "alignment": "start"
+        }
+      ],
+      "ok": true
+    },
+    "aListOfCardsIsNoBoxToScrollOfItsOwn": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "scrollers": [
+            "div"
+          ],
+          "lensScrolls": false
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "scrollers": [
+            "div"
+          ],
+          "lensScrolls": false
+        }
+      ],
+      "ok": true
+    },
+    "aListCutByItsLimitSaysSeeAllAndGoesThere": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "links": [
+            {
+              "words": "24 more · all features",
+              "href": "/features"
+            },
+            {
+              "words": "See all 120 features",
+              "href": "/features"
+            }
+          ],
+          "went": {
+            "path": "/features",
+            "count": "120 features"
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "links": [
+            {
+              "words": "24 more · all features",
+              "href": "/features"
+            },
+            {
+              "words": "See all 120 features",
+              "href": "/features"
+            }
+          ],
+          "went": {
+            "path": "/features",
+            "count": "120 features"
+          }
+        }
+      ],
+      "ok": true
+    },
+    "aRowSaysTheSummaryInOneLineAndThePageSaysItWhole": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "texts": 120,
+          "mostLines": 1,
+          "chips": [
+            "stage",
+            "area"
+          ],
+          "whole": {
+            "found": true,
+            "paragraphs": 6,
+            "clipped": false
+          }
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "texts": 120,
+          "mostLines": 1,
+          "chips": [
+            "stage",
+            "area"
+          ],
+          "whole": {
+            "found": true,
+            "paragraphs": 6,
+            "clipped": false
+          }
+        }
+      ],
+      "ok": true
+    },
+    "theFeaturesStageAndAreaStandAsChips": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "chips": [
+            "stage",
+            "area"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "chips": [
+            "stage",
+            "area"
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "noPageScrollsSideways": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "where": "requests",
+          "sideways": false
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "where": "up-next",
+          "sideways": false
+        },
+        {
+          "engine": "chromium",
+          "screen": "desk",
+          "where": "features",
+          "sideways": false
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "where": "requests",
+          "sideways": false
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "where": "up-next",
+          "sideways": false
+        },
+        {
+          "engine": "chromium",
+          "screen": "phone",
+          "where": "features",
+          "sideways": false
+        }
+      ],
+      "ok": true
+    },
+    "noPageErrors": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "ok": true
+}

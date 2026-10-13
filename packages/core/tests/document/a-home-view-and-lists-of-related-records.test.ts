@@ -48,7 +48,16 @@ describe("the LifeLogics front page and its four lenses, as data", () => {
 
   it("checks without a finding about its views, lenses or arrangement", () => {
     const result = checkApp(compiled());
-    expect(result.findings.filter((f) => f.severity !== "note" && /^(view|lens|pages|home|list)/.test(f.code))).toEqual([]);
+    // Its cards say a long text whole, as LifeLogics wrote them: drawn clamped, and the check says how to say less on purpose.
+    expect(result.findings.filter((f) => f.severity !== "note" && f.code !== "view-whole-text" && /^(view|lens|pages|home|list)/.test(f.code))).toEqual([]);
+    expect(result.findings.filter((f) => f.code === "view-whole-text").map((f) => f.where)).toEqual([
+      "viewSpecs.offer.card.3.text",
+      "viewSpecs.offer.card.4.text",
+      "viewSpecs.package.card.1.text",
+      "viewSpecs.package.row.2.text",
+      "viewSpecs.signal.row.1.text",
+      "viewSpecs.question.card.1.text",
+    ]);
   });
 
   it("describes its home as data", () => {

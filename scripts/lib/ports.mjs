@@ -64,6 +64,8 @@ export const OWN = {
   "drawn-once-host": 5273,
   /** The host's page `verify-files` mounts a house's repairs into, and the dev server's files door beside it (FR-162, FR-163). */
   "files-host": 5263,
+  /** The host's page `verify-growing` mounts a roadmap grown large into: filters that stay usable, cards read at a glance. */
+  "growing-host": 5258,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */
   "long-text-host": 5271,
   /** The host's page `verify-seat-guide` mounts the todo app into, to switch faces in place under one conversation. */

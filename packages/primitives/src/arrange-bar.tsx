@@ -9,11 +9,12 @@ import {
   type ArrangeOption,
   type Arrangement,
   type ArrangeGraph,
+  type ArrangeNode,
   type Condition,
 } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import { lazyModule, POPOVER_STYLE, usePopover } from "@graview/react/provider";
-import { useEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { Suspense, useEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 export { arrangementOf, withArrangement } from "./arrangement.js";
 
@@ -32,8 +33,8 @@ export { arrangementOf, withArrangement } from "./arrangement.js";
  * "Group by [nothing]", a full-width "Only…" — that put three boxes and two
  * non-choices between a list's title and its first record. Nothing here is
  * a box until it is hovered or has the keyboard; where the line is narrow
- * (a phone) it is the count and one "Arrange", which opens the three as
- * one list.
+ * (a phone) it is the count, one "Arrange" holding the sort and the
+ * grouping, and "Filter", which opens as a sheet along the window's foot.
  *
  * Whatever carries the arrangement — a page's search, a lens's `within` —
  * hands the current one in and takes the next one back; nothing here holds
@@ -56,7 +57,69 @@ export interface ArrangeBarProps {
   readonly noun?: { readonly one: string; readonly many: string };
   /** Prefix for the line's test ids: `arrange` by default. */
   readonly testId?: string;
+  /**
+   * What the line offers to filter by, by key, in order: a declaration's
+   * `pages.lists.<kind>.filters`. Unsaid, every way but a relation to a kind
+   * with many records (`offeredFilters`).
+   */
+  readonly filters?: readonly string[];
+  /**
+   * The records the list holds before it is narrowed. Given, its choice
+   * fields stand under the line as chips, each with how many records it
+   * would keep, and one press keeps them.
+   */
+  readonly chips?: { readonly nodes: readonly ArrangeNode[]; readonly flagged?: ReadonlySet<string>; readonly today?: string };
+  /** What the kind can be arranged by, where the surface says more than its declaration alone: a list's `throughEdges`. */
+  readonly offers?: Arrangeable;
   readonly style?: CSSProperties;
+}
+
+/*
+ * WHAT A LIST OFFERS TO FILTER BY AS AN APP GROWS. Here, beside the line
+ * that asks it, rather than with the arranging a lens in the scene carries.
+ */
+
+/** From how many records at a relation's far end it is found by typing a few letters rather than listed whole. */
+export const TYPED_FROM = 9;
+
+/** From how many records at a relation's far end a list leaves it out of its filters unless the declaration names it. */
+export const MANY_AT_THE_FAR_END = 40;
+
+/** The choice fields a list shows as chips when the declaration names none: the first two it offers. */
+export const CHIP_FIELDS = 2;
+
+/** How many records each kind holds, for the far ends of a kind's relations. */
+export function farCounts(graph: ArrangeGraph): ReadonlyMap<string, number> {
+  const counts = new Map<string, number>();
+  for (const node of graph.allNodes()) counts.set(node.kind, (counts.get(node.kind) ?? 0) + 1);
+  return counts;
+}
+
+/** How many records stand at an offer's far end: every record of its far kinds. */
+export const farCount = (offer: ArrangeOffer, counts: ReadonlyMap<string, number>): number => (offer.far ?? []).reduce((sum, kind) => sum + (counts.get(kind) ?? 0), 0);
+
+/**
+ * WHAT A LIST OFFERS TO FILTER BY, AS AN APP GROWS.
+ *
+ * Every way the declaration allows is too many once a relation's far end
+ * holds ninety features: the menu listed every one of them. `named` — a
+ * declaration's `pages.lists.<kind>.filters` — is what the list offers, in
+ * that order. Unsaid, every way but a relation to a kind with many records
+ * (`MANY_AT_THE_FAR_END`), which is offered instead by what its far end is
+ * (a choice field over the edge, `about: "via"`); a via offer is not
+ * offered otherwise — the relation itself says it.
+ */
+export function offeredFilters(offers: Arrangeable, graph: ArrangeGraph, named?: readonly string[]): readonly ArrangeOffer[] {
+  if (named) return named.flatMap((key) => offers.filters.filter((offer) => offer.key === key));
+  const counts = farCounts(graph);
+  const many = new Set(offers.filters.filter((offer) => offer.about === "edge" && farCount(offer, counts) > MANY_AT_THE_FAR_END).map((offer) => offer.key));
+  return offers.filters.filter((offer) => (offer.about === "edge" ? !many.has(offer.key) : offer.about === "via" ? many.has(offer.key.split(".")[0]!) : true));
+}
+
+/** The choice fields of what a list offers that it shows as chips: the ones named, else the first `CHIP_FIELDS`. */
+export function chipOffers(offered: readonly ArrangeOffer[], named?: readonly string[]): readonly ArrangeOffer[] {
+  const choices = offered.filter((offer) => offer.about === "field" && offer.type === "choice" && (offer.options?.length ?? 0) > 0);
+  return named ? choices : choices.slice(0, CHIP_FIELDS);
 }
 
 /** Below this width of its own the line is a phone's: the count and one "Arrange". */
@@ -67,6 +130,7 @@ export function sayCondition(schema: AnySchema, graph: ArrangeGraph, offers: Arr
   const offer = offers.filters.find((candidate) => candidate.key === condition.key);
   if (!offer) return `${condition.key}: ${condition.value}`;
   if (offer.about === "is") return condition.value.charAt(0).toUpperCase() + condition.value.slice(1);
+  if (offer.about === "via") return `${offer.label}: ${valueWords(schema.tryDefinition(offer.far?.[0] ?? ""), offer.key.split(".")[1]!, condition.value)}`;
   if (offer.about === "edge") {
     if (condition.value === "*") return `${offer.label}: anything`;
     if (condition.value === "none") return `${offer.label}: nothing`;
@@ -105,6 +169,7 @@ export function directionWords(offer: ArrangeOffer | undefined): { readonly asc:
 /** The lists the line opens, fetched when first wanted (`arrange-lists.tsx`). */
 const LISTS = lazyModule(retryingImport(() => import("./arrange-lists.js")));
 const Lists = LISTS.part((module: typeof import("./arrange-lists.js"), props: import("./arrange-lists.js").ListsProps) => <module.ArrangeLists {...props} />, { what: "This list", quiet: true });
+const Chips = LISTS.part((module: typeof import("./arrange-lists.js"), props: import("./arrange-lists.js").ChipsProps) => <module.ArrangeChips {...props} />, { what: "This list", quiet: true });
 /** The lists, fetched now: for a test, or a page that knows a list is about to open. */
 export const preloadArrangeLists = (): Promise<unknown> => LISTS.load();
 
@@ -113,11 +178,20 @@ const SENT = new Map<string, { words: Set<string>; latest: Arrangement | null; a
 
 export function ArrangeBar(props: ArrangeBarProps) {
   const { schema, graph, kind, arrangement: given, onChange } = props;
-  const offers = arrangeable(schema, kind);
+  // A list hands its own (through its relations to their far ends, `throughEdges`); a lens's are its kind's.
+  const offers = props.offers ?? arrangeable(schema, kind);
   const id = props.testId ?? "arrange";
   const canSort = arrangeAllows(props.allow, "sort") && offers.sorts.length > 1;
   const canGroup = arrangeAllows(props.allow, "group") && offers.groups.length > 0;
-  const canFilter = arrangeAllows(props.allow, "filter") && offers.filters.length > 0;
+  /*
+   * WHAT IS OFFERED, AS THE APP GROWS: the ways the declaration names, or
+   * all but a relation to many records; its choice fields stand as chips
+   * when the list hands its records, and Filter holds the rest.
+   */
+  const offered = arrangeAllows(props.allow, "filter") ? offeredFilters(offers, graph, props.filters) : [];
+  const chipped = props.chips ? chipOffers(offered, props.filters) : [];
+  const menu = offered.filter((offer) => !chipped.includes(offer));
+  const canFilter = menu.length > 0;
   const words = props.query !== false && props.allow !== false;
   const count = countWords(props.noun, props.kept);
   if (!canSort && !canGroup && !canFilter && !words && !count) return null;
@@ -172,7 +246,12 @@ export function ArrangeBar(props: ArrangeBarProps) {
   const groupOffer = arrangement.group ? offers.groups.find((offer) => offer.key === arrangement.group!.by) : undefined;
   const ways = directionWords(sortOffer);
   // The lists themselves come when one is first opened (`ArrangeLists`): the line is all a page carries up front.
-  const listProps = { schema, graph, offers, arrangement, set, toggle, has, testId: id };
+  const listProps = { schema, graph, offers: { ...offers, filters: menu }, arrangement, set, toggle, has, testId: id };
+  // A chip keeps one value of its field: pressed again it lets go; another of the same field takes its place.
+  const choose = (key: string, value: string) =>
+    has({ key, value })
+      ? without(conditions.findIndex((c) => c.key === key && c.value === value))
+      : set({ filter: [...conditions.filter((c) => c.key !== key), { key, value }] });
   const sortTrigger = arrangement.sort ? (
     <>
       Sorted by {inSentence(sortOffer?.label ?? arrangement.sort.by)}
@@ -194,6 +273,18 @@ export function ArrangeBar(props: ArrangeBarProps) {
             {count.words}
           </span>
         ) : null}
+        {/* What is on, beside the count, each a chip that takes itself off. */}
+        {conditions.map((condition, at) => {
+          const words = sayCondition(schema, graph, offers, condition);
+          return (
+            <span key={`${condition.key}:${condition.value}`} className="graview-arrange-token" data-testid={`${id}-condition`}>
+              {words}
+              <button type="button" aria-label={`Remove: ${words}`} title="Remove" onClick={() => without(at)}>
+                ×
+              </button>
+            </span>
+          );
+        })}
         {canSort ? (
           <span className="graview-arrange-part graview-arrange-one">
             <Choice
@@ -216,37 +307,26 @@ export function ArrangeBar(props: ArrangeBarProps) {
           </span>
         ) : null}
         {canFilter ? (
-          <span className="graview-arrange-part graview-arrange-one">
+          <span className="graview-arrange-part">
             <Choice testId={`${id}-add`} value="" set={false} label="Filter" name={conditions.length > 0 ? `Filter — ${conditions.length} on` : "Filter"} list={(done) => <Lists which="filter" done={done} {...listProps} />}>
               Filter
             </Choice>
           </span>
         ) : null}
-        {canSort || canGroup || canFilter ? (
+        {canSort || canGroup ? (
           <span className="graview-arrange-part graview-arrange-all">
             <Choice
               testId={`${id}-all`}
               value=""
               set={false}
               label="Arrange"
-              name="Arrange: sort, group and filter"
-              list={(done) => <Lists which="all" done={done} parts={{ sort: canSort, group: canGroup, filter: canFilter }} {...listProps} />}
+              name="Arrange: sort and group"
+              list={(done) => <Lists which="all" done={done} parts={{ sort: canSort, group: canGroup, filter: false }} {...listProps} />}
             >
               Arrange
             </Choice>
           </span>
         ) : null}
-        {conditions.map((condition, at) => {
-          const words = sayCondition(schema, graph, offers, condition);
-          return (
-            <span key={`${condition.key}:${condition.value}`} className="graview-arrange-token" data-testid={`${id}-condition`}>
-              {words}
-              <button type="button" aria-label={`Remove: ${words}`} title="Remove" onClick={() => without(at)}>
-                ×
-              </button>
-            </span>
-          );
-        })}
         {words ? (
           <label className="graview-arrange-words-at">
             <span style={VISUALLY_HIDDEN}>Find</span>
@@ -261,6 +341,12 @@ export function ArrangeBar(props: ArrangeBarProps) {
           </label>
         ) : null}
       </div>
+      {chipped.length > 0 && props.chips ? (
+        // The chips come with the lists' module, fetched as the list is first drawn: a lens's line never carries them.
+        <Suspense fallback={null}>
+          <Chips offers={chipped} chips={props.chips} schema={schema} graph={graph} kind={kind} arrangement={arrangement} has={has} choose={choose} testId={id} />
+        </Suspense>
+      ) : null}
     </div>
   );
 }
@@ -357,7 +443,7 @@ function walk(event: KeyboardEvent<HTMLDivElement>) {
   if (stops.length === 0) return;
   const at = stops.indexOf(document.activeElement as HTMLElement);
   // A date box keeps its own arrows: they change the day.
-  if (document.activeElement instanceof HTMLInputElement && (event.key === "ArrowUp" || event.key === "ArrowDown")) return;
+  if (document.activeElement instanceof HTMLInputElement && document.activeElement.type === "date" && (event.key === "ArrowUp" || event.key === "ArrowDown")) return;
   event.preventDefault();
   const next =
     event.key === "Home" ? 0 : event.key === "End" ? stops.length - 1 : event.key === "ArrowDown" ? (at + 1) % stops.length : (at - 1 + stops.length) % stops.length;
@@ -393,7 +479,7 @@ const ARRANGE_CSS = `
 .graview-arrange :focus-visible,.graview-arrange-list :focus-visible{outline:2px solid var(--graview-accent);outline-offset:1px}
 .graview-arrange-all{display:none}
 @container (max-width: ${ARRANGE_NARROW - 1}px){.graview-arrange-one{display:none}.graview-arrange-all{display:inline-flex}}
-.graview-arrange-token{display:inline-flex;align-items:center;gap:0;min-width:0;padding-left:6px;color:var(--graview-ink);overflow-wrap:anywhere}
+.graview-arrange-token{display:inline-flex;align-items:center;gap:0;min-width:0;min-height:26px;box-sizing:border-box;padding:0 2px 0 10px;border:1px solid var(--graview-edge);border-radius:999px;background:var(--graview-panel);color:var(--graview-ink);overflow-wrap:anywhere}
 .graview-arrange-token button{display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;margin:0;padding:0;border:0;border-radius:6px;background:none;font:inherit;line-height:1;color:var(--graview-ink-muted);cursor:pointer}
 .graview-arrange-token button:hover{color:var(--graview-ink);background:color-mix(in srgb,var(--graview-ink) 7%,transparent)}
 .graview-arrange-words-at{display:inline-flex;min-width:0;max-width:100%}
