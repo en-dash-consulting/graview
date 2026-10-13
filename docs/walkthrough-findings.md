@@ -4648,3 +4648,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/primitives/src/map-panel.tsx`
 - harness that should have caught it: the journeys' "make" on the scene at 390 with the pointer, which did; the journeys now press "Acts…" where the panel is a sheet, as a person on a phone would
 - status: fixed in "walkthrough: A · the map panel says its acts" · the district's and the record's panel say "Acts…", which opens the same menu under the button, about what the panel is about. Criterion: `packages/primitives/tests/unit/the-map-panel-says-its-acts.test.tsx` (both verified failing without the fix), and the journeys' "Making a hive" on the scene on a phone with the pointer, done
+
+### W-196 · A sheet of inspections throws "Cannot read properties of undefined (reading 'trim')"
+- stage: G (bringing a season's inspections in from a spreadsheet: `importRows`, FR-177) · face: — (a host's import) · width: — · scheme: —
+- impact: blocks a job — importing the co-op's inspections: `previewImport` threw a `TypeError` before a row was read, for a sheet with a hive, a day, a temper, a count and a yes, and no name — an inspection is named by the act that logs it ("Hollister 07 · Oct 3, 2026"), not by a column
+- class: data-shape-not-in-fixtures (also: machine-words-shown)
+- expected: a row with no name is refused in words, "it has no Name, which every inspection needs", as any other missing field is
+- actual: the import named each planned record by its kind's label, and every scaffolded kind's label is `(node) => node.label`, which says `undefined` where the sheet holds no label; `.trim()` on it threw. FR-177's fixture is a document whose labels are templates, which say "" rather than nothing
+- where it belongs: `packages/core/src/import/rows.ts` (`labelFor`)
+- harness that should have caught it: none — the import's tests drive a document, never a declaration written in TypeScript
+- status: fixed in "walkthrough: G · a sheet without a name column is refused in words" · a label that says nothing, or throws, names the row as one with no name does. Criterion: `packages/core/tests/unit/a-sheet-without-a-name-column-is-refused-in-words.test.ts` (both verified failing without the fix)

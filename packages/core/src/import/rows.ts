@@ -358,8 +358,19 @@ function resolve<S extends AnySchema>(store: Store<S>, column: Extract<ImportCol
 
 /** What the record will be called: its kind's label, else its first words, else the row. */
 function labelFor(definition: AnyNodeDefinition, kind: string, fields: Record<string, unknown>, row: number): string {
-  const said = labelOf(definition, { id: "", kind, ...fields });
-  if (said.trim().length > 0) return said.trim();
+  /*
+   * A kind's label reads its own fields — `(node) => node.label`, as every
+   * scaffolded kind's does — and a sheet need not hold them: an inspection
+   * is named by the act that makes it, not by a column. Said nothing, or
+   * thrown, it is named the way a row with no name is (W-196).
+   */
+  let said: unknown;
+  try {
+    said = labelOf(definition, { id: "", kind, ...fields });
+  } catch {
+    said = undefined;
+  }
+  if (typeof said === "string" && said.trim().length > 0) return said.trim();
   const words = Object.values(fields).find((value): value is string => typeof value === "string" && value.trim().length > 0);
   return words?.trim() ?? `${nounOf(definition, kind)} from row ${row}`;
 }
