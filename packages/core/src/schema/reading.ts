@@ -1,6 +1,7 @@
 import { dayAsRead, ISO_DAY } from "../days.js";
 import { fieldWords, labelOf, nounOf, valueWords, type ReadableField } from "./define-node.js";
 import { filesOf } from "./files.js";
+import { isAppLinkField } from "./app-link.js";
 import type { AnyNodeDefinition, PageFields } from "./types.js";
 
 /*
@@ -142,6 +143,9 @@ export function readableFields(
     // A picture or a document (FR-162) is drawn, not said on a glance; its words are its names.
     const files = format ? [] : filesOf(value);
     if (files[0] && options.glance) continue;
+    // Another app's address (FR-171) is drawn as the app, not said on a glance.
+    const app = !format && typeof value === "string" && isAppLinkField((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]) ? value : undefined;
+    if (app && options.glance) continue;
     /*
      * A NESTED OBJECT HAS NO ONE-LINE RENDERING, and inventing one is worse
      * than leaving it to a view that knows what it is.
@@ -188,7 +192,7 @@ export function readableFields(
     const alone =
       // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text), ...(files[0] ? { files } : {}) });
+    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text), ...(files[0] ? { files } : {}), ...(app ? { app } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;

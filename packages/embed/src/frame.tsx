@@ -1,4 +1,4 @@
-import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type Person, type PresenceChannel, type Principal } from "@graview/core";
+import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
@@ -252,6 +252,16 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * says this host takes no files.
    */
   readonly files?: HostFiles;
+  /**
+   * THE HOST'S WAY TO NAME ANOTHER APP (FR-171): `resolveApp(address,
+   * viewer)` answers `{ name, icon?, headline?, href }`, `{ denied: true }`
+   * when this viewer may not open it, or null. An app-link field draws as
+   * that app — its name, icon and home headline, linked to `href` — or
+   * "linked app (no access)", never its contents. Asked once per address
+   * and viewer. Unsaid, the field draws its address plainly, a link only
+   * when it is an absolute http(s) address.
+   */
+  readonly resolveApp?: ResolveApp;
   /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
@@ -511,6 +521,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     onKeepLens: props.onKeepLens,
     ai: props.ai,
     files: props.files,
+    resolveApp: props.resolveApp,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,

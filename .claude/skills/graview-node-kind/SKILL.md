@@ -26,7 +26,8 @@ agent tool that walks the graph.
        label: z.string().min(1).max(60),
        kickOff: z.string(),
        opponent: z.string(),
-       // A picture the host stores: a document's "image" (or "file").
+       // Host-kept picture ("image"/"file"); `appLinkField()` ("app-link")
+       // is another app's address, drawn as the app `resolveApp` names.
        crest: imageField().optional(),
      }),
      plural: "Fixtures",
@@ -66,8 +67,8 @@ agent tool that walks the graph.
    permitted through the acts that create it.
 
 5. **Give it verbs.** A kind no mutation names as a subject can have nothing
-   done to it, and the strip says so. If that is not what you meant, see `graview-invariant` for the rule
-   shape and add at least one mutation whose `subject.kinds` includes it.
+   done to it, and the strip says so. Unless you meant that, add a mutation
+   whose `subject.kinds` includes it (the rule shape: `graview-invariant`).
 
 6. **Let the fields be changed, or say why not.** A field you could set at
    creation, you can change: every settable field no mutation writes is
@@ -124,9 +125,8 @@ agent tool that walks the graph.
   along a roof edge"` prints the brief, and `--judge <file>` holds the answer
   to the rules `graview check` holds a figure to and prints the line to
   paste. Then look at it at twenty pixels, a chip's size.
-- **A declared hue** in the brand (`accents: { fixture: 210 }`) if this kind
-  should wear a chosen color rather than a stable hash — every chip dot,
-  district roof and the focus tag follow.
+- **A declared hue** in the brand (`accents: { fixture: 210 }`) for a chosen
+  color, not a stable hash: every chip dot, roof and focus tag follows.
 
 ## How it looks, as data
 

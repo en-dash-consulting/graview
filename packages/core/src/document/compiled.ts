@@ -28,6 +28,7 @@ import { refTo } from "../mutations/node-ref.js";
 import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
 import { fileSchema } from "../schema/files.js";
+import { appLinkSchema } from "../schema/app-link.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
@@ -229,6 +230,10 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
     case "image":
     case "file":
       schema = fileSchema(spec.type);
+      break;
+    case "app-link":
+      // Another app's address (FR-171): the host's `resolveApp` says what it is called.
+      schema = appLinkSchema();
       break;
     case "url":
       schema = z.url();

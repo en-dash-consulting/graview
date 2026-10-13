@@ -51,6 +51,8 @@ export { EditableTitle, EditableValue, Fields, humanize, LongValue } from "./edi
 // A record's pictures and documents (FR-162, FR-163): drawn, and put there through the host's files.
 export { Files } from "./files-door.js";
 export type { FilesProps } from "./files-door.js";
+export { AppLink } from "./app-link-door.js";
+export type { AppLinkProps } from "./app-link-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 // The seat: an ask field at the picture's foot that grows into the conversation when asked.
 export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";

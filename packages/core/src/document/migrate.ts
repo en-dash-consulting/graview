@@ -4,6 +4,7 @@ import { canonicalize } from "./canonical.js";
 import { hasRange, outsideRange, rangeWords } from "./range.js";
 import type { FieldSpec, FieldType, GraviewDocument } from "./schema.js";
 import { filesOf, isFileValue, isImage, type FileValue } from "../schema/files.js";
+import { isAppAddress } from "../schema/app-link.js";
 
 /*
  * A CHANGE TO AN APP THAT KEEPS ITS DATA (docs/operations.md §4).
@@ -131,6 +132,11 @@ export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown 
     case "image":
     case "file":
       return isFileValue(value) && (type === "file" || isImage(value)) ? value : undefined;
+    case "app-link": {
+      // Another app's address (FR-171): a word that is one is kept as it is.
+      const t = asText(value)?.trim();
+      return isAppAddress(t) ? t : undefined;
+    }
     case "url":
     case "email": {
       const t = asText(value)?.trim();

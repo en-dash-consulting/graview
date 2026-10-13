@@ -1,0 +1,36 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Purchase scenarios",
+  "description": "Ways to buy a house, each linking the house it buys, which lives in an app of its own: a link to another app (FR-171), named by the host.",
+  "roles": ["owner", "guest"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "kinds": {
+    "scenario": {
+      "noun": "scenario",
+      "plural": "scenarios",
+      "description": "One way to buy it.",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "house": { "type": "app-link", "description": "the house this scenario buys" },
+        "deposit": { "type": "number", "format": "money" }
+      }
+    }
+  },
+  "acts": {
+    "add-scenario": { "title": "Add a scenario", "creates": "scenario", "description": "Write down another way to buy it." }
+  },
+  "views": {
+    "scenario": {
+      "card": [{ "title": "{name}" }, { "field": "house" }]
+    }
+  },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "The plans",
+      "on": "scenario",
+      "options": { "blocks": [{ "list": "all('scenario')", "as": "card" }] }
+    }
+  ]
+}

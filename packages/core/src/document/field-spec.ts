@@ -1,4 +1,5 @@
 import { fileKindOf } from "../schema/files.js";
+import { isAppLinkField } from "../schema/app-link.js";
 import { descriptionOf } from "../schema/zod.js";
 import type { FieldSpec } from "./schema.js";
 
@@ -36,6 +37,8 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
   // A picture or a document (FR-162): `imageField()`, `fileField()`.
   const file = fileKindOf(schema);
   if (file) return { spec: { type: file, ...base } };
+  // Another app's address (FR-171): `appLinkField()`.
+  if (isAppLinkField(schema)) return { spec: { type: "app-link", ...base } };
   switch (def["type"]) {
     case "string": {
       const format = def["format"];
