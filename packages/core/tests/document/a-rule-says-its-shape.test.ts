@@ -185,7 +185,7 @@ describe("a rule says its shape", () => {
 
     it("a day as a person reads it", () => {
       expect(ruleText(broken("chore-recent").line!.parts)).toBe("days since last done 19 > 7");
-      expect(ruleText(broken("chore-coming").line!.parts)).toBe("due 1 Oct 2026 < today");
+      expect(ruleText(broken("chore-coming").line!.parts)).toBe("due Oct 1, 2026 < today");
     });
 
     it("each side of an and that broke, and only those", () => {

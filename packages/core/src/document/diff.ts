@@ -36,6 +36,10 @@ const keys = <T extends object>(o: T | undefined) => Object.keys(o ?? {});
 /** The same meaning, whatever order the keys were written in: compared as documentHash compares. */
 const same = (a: unknown, b: unknown) => canonicalize(a) === canonicalize(b);
 
+/** What a change of the app's locale says (FR-178). */
+export const localeSentence = (locale: string | undefined): string =>
+  locale ? `Days, times, numbers and money are written for ${locale}.` : "Days, times, numbers and money are written for en-US, the default.";
+
 export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument): DocumentDiff {
   // A key renamed within the format is not a change (FR-134): both are read as this build spells them.
   const before = respellDocument(stored).document;
@@ -153,11 +157,12 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
   sentences.push(...policySentences(before, after));
   if (!same(before.brand?.accent, after.brand?.accent)) sentences.push("The app's colors change.");
   sentences.push(...brandSentences(before.brand ?? {}, after.brand ?? {}, after.name));
-  // The app's money (FR-100), said apart from its colors.
-  if (!same(before.brand?.currency, after.brand?.currency) || !same(before.brand?.locale, after.brand?.locale)) {
+  // The app's money (FR-100) and its locale (FR-178), said apart from its colors.
+  if (!same(before.brand?.currency, after.brand?.currency)) {
     const currency = after.brand?.currency;
-    sentences.push(currency ? `Money is said in ${currency}${after.brand?.locale ? `, written for ${after.brand.locale}` : ""}.` : "Money is said with no currency.");
+    sentences.push(currency ? `Money is said in ${currency}.` : "Money is said with no currency.");
   }
+  if (!same(before.brand?.locale, after.brand?.locale)) sentences.push(localeSentence(after.brand?.locale));
   sentences.push(...viewSentences(before, after));
   sentences.push(...lensSentences(before.lenses ?? [], after.lenses ?? []));
   sentences.push(...pagesSentences(before.pages, after.pages));

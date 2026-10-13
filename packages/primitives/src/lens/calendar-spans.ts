@@ -1,4 +1,5 @@
-import { MONTHS, addDays, addMonths, daysBetween, daysFrom, iso, longDay, startOfMonth, startOfWeek } from "./calendar-dates.js";
+import { dayOfMonthAsRead, monthAsRead } from "@graview/core";
+import { addDays, addMonths, daysBetween, daysFrom, iso, longDay, startOfMonth, startOfWeek } from "./calendar-dates.js";
 import type { CalendarGrain, CalendarHorizon, CalendarRange, PlacedEntry } from "./calendar-options.js";
 
 /**
@@ -31,7 +32,7 @@ export interface CalendarSpan {
 const monthCell = (day: string, withYear: boolean): CalendarCell => ({
   from: startOfMonth(day),
   to: endOfMonth(day),
-  label: `${MONTHS[Number(day.slice(5, 7)) - 1]!.slice(0, 3)}${withYear ? ` ${day.slice(2, 4)}` : ""}`,
+  label: monthAsRead(day, { short: true, year: withYear }),
 });
 
 /** The last day of the month a day falls in. */
@@ -97,7 +98,7 @@ export function spanOf(
       cells.push({
         from,
         to: addDays(from, 6),
-        label: `${Number(from.slice(8, 10))} ${MONTHS[Number(from.slice(5, 7)) - 1]!.slice(0, 3)}`,
+        label: dayOfMonthAsRead(from),
         ...(daysBetween(from, first) > 0 && daysBetween(addDays(from, 6), first) > 0 ? { outside: true } : {}),
       });
     }
@@ -160,7 +161,7 @@ export function spanOf(
   const from = startOfWeek(first, weekStartsOn);
   const month = at.slice(0, 7);
   return {
-    title: `${MONTHS[Number(at.slice(5, 7)) - 1]} ${at.slice(0, 4)}`,
+    title: monthAsRead(at),
     grain: "day",
     columns: 7,
     cells: daysFrom(from, 42).map((one) => day(one, one.slice(0, 7) !== month)),

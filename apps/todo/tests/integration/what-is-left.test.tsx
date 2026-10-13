@@ -13,7 +13,7 @@ const tasks = (example.nodes as Task[]).filter((node) => node.kind === "task");
  * Seven tasks with a date are still open in the example, so the picture's
  * first day reads seven and its last reads one. A picture that read "0 left"
  * on every day over that data — a flat line along the bottom — looked broken
- * because it was, and the days are said as a person reads them ("26 Aug"),
+ * because it was, and the days are said as a person reads them ("Aug 26"),
  * not as the record keeps them.
  */
 describe("what is left", () => {
@@ -24,8 +24,8 @@ describe("what is left", () => {
     expect(left.open).toBe(7);
     expect(left.done).toBe(2);
     expect(left.undated).toBe(3);
-    expect(left.days[0]).toMatchObject({ day: "2026-08-26", said: "26 Aug" });
-    expect(left.days.at(-1)).toMatchObject({ day: "2026-09-05", said: "5 Sep" });
+    expect(left.days[0]).toMatchObject({ day: "2026-08-26", said: "Aug 26" });
+    expect(left.days.at(-1)).toMatchObject({ day: "2026-09-05", said: "Sep 5" });
   });
 
   it("says the year only when the days cross one", () => {
@@ -33,7 +33,7 @@ describe("what is left", () => {
       { done: false, due: "2026-12-30" },
       { done: false, due: "2027-01-02" },
     ]);
-    expect(left.days.map((one) => one.said)).toEqual(["30 Dec 2026", "2 Jan 2027"]);
+    expect(left.days.map((one) => one.said)).toEqual(["Dec 30, 2026", "Jan 2, 2027"]);
   });
 
   it("counts a task as done only when it is, not when its value merely is not false", () => {
@@ -58,8 +58,8 @@ describe("what is left", () => {
     const html = renderToStaticMarkup(
       <View nodes={tasks as never} label="What is left" fidelity="full" cardinality="many" mode="fullscreen" selected={false} />,
     );
-    expect(html).toContain("26 Aug: 7 left");
-    expect(html).toContain("5 Sep: 1 left");
+    expect(html).toContain("Aug 26: 7 left");
+    expect(html).toContain("Sep 5: 1 left");
     expect(html).not.toContain("2026-08-26");
     expect(html).not.toMatch(/: 0 left/);
   });
@@ -81,6 +81,6 @@ describe("what is left", () => {
     const draw = (nodes: unknown[]) =>
       renderToStaticMarkup(<View nodes={nodes as never} label="What is left" fidelity="full" cardinality="many" mode="fullscreen" selected={false} />);
     expect(draw([{ id: "a", kind: "task", label: "A", done: false }])).toContain("Nothing has a date yet");
-    expect(draw([{ id: "a", kind: "task", label: "A", done: false, due: "2026-08-28" }])).toContain("Only 28 Aug has anything due: 1 still open.");
+    expect(draw([{ id: "a", kind: "task", label: "A", done: false, due: "2026-08-28" }])).toContain("Only Aug 28 has anything due: 1 still open.");
   });
 });

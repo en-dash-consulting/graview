@@ -1,4 +1,4 @@
-import { dayAsRead } from "@graview/core";
+import { dayAsRead, dayOfMonthAsRead } from "@graview/core";
 
 /** A task as the picture reads it: the record's own values, as stored. */
 export interface DatedTask {
@@ -41,7 +41,7 @@ export function whatIsLeft(tasks: readonly DatedTask[]): WhatIsLeft {
   const open = dated.filter((task) => task.done !== true);
   const days = [...new Set(dated.map((task) => task.due!))].sort();
   const years = new Set(days.map((day) => day.slice(0, 4)));
-  const said = (day: string) => (years.size > 1 ? dayAsRead(day) : dayAsRead(day).replace(/ \d{4}$/, ""));
+  const said = (day: string) => (years.size > 1 ? dayAsRead(day) : dayOfMonthAsRead(day));
   const points = days.map((day) => ({ day, said: said(day), left: open.filter((task) => task.due! >= day).length }));
   return {
     days: points,

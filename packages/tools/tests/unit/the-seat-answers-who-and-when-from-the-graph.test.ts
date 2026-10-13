@@ -36,7 +36,7 @@ const askRota = (text: string) => resolveAsk(rota(), text, { places: placesOf(ro
 describe("who, on a named day, on the rota", () => {
   it("'who's working thursday' names the volunteers covering Thursday's shifts, as records to press", () => {
     const answer = askRota("who's working thursday");
-    expect(said(answer)).toMatch(/^On Thursday 17 Sep: Ada Nowak is working\./);
+    expect(said(answer)).toMatch(/^On Thursday, Sep 17: Ada Nowak is working\./);
     expect(picked(answer)).toEqual(["v-ada"]);
     expect(answer.unresolved).toBeUndefined();
   });
@@ -49,7 +49,7 @@ describe("who, on a named day, on the rota", () => {
 
   it("reads the relation by its declared words: 'covering' is 'who is covering it', and 'on' needs no verb", () => {
     const wednesday = askRota("who's covering wednesday");
-    expect(said(wednesday)).toMatch(/^On Wednesday 16 Sep: Bo Ferreira is covering\./);
+    expect(said(wednesday)).toMatch(/^On Wednesday, Sep 16: Bo Ferreira is covering\./);
     // Two shifts, one person: named once.
     expect(picked(wednesday)).toEqual(["v-bo"]);
     expect(picked(askRota("who's on tuesday"))).toEqual(["v-cass"]);
@@ -57,14 +57,14 @@ describe("who, on a named day, on the rota", () => {
 
   it("says which are uncovered, and says nobody when nobody is", () => {
     const friday = askRota("who's working friday");
-    expect(said(friday)).toMatch(/^On Friday 18 Sep: nobody is working\. Friday repair cafe has nobody\./);
+    expect(said(friday)).toMatch(/^On Friday, Sep 18: nobody is working\. Friday repair cafe has nobody\./);
     expect(picked(friday)).toEqual([]);
     const weekend = askRota("who's working this weekend");
     expect(said(weekend)).toMatch(/^This weekend: Cass Whitley is working\. Sunday deep clean has nobody\./);
   });
 
   it("reads tomorrow, next Monday, and a date written either way round", () => {
-    expect(said(askRota("who's working tomorrow"))).toMatch(/^On Tuesday 15 Sep: Cass Whitley/);
+    expect(said(askRota("who's working tomorrow"))).toMatch(/^On Tuesday, Sep 15: Cass Whitley/);
     expect(moved(askRota("who's working next monday"))[0]).toMatchObject({ filter: "on:after:2026-09-20,on:before:2026-09-22" });
     for (const text of ["who's working on 17 Sep", "who's working Sept 17th", "who's working on 17th of September"]) {
       expect(picked(askRota(text)), text).toEqual(["v-ada"]);
@@ -72,7 +72,7 @@ describe("who, on a named day, on the rota", () => {
   });
 
   it("a day with no shifts says so", () => {
-    expect(said(askRota("who's working on 3 Oct"))).toMatch(/^No shifts on Saturday 3 Oct\./);
+    expect(said(askRota("who's working on 3 Oct"))).toMatch(/^No shifts on Saturday, Oct 3\./);
   });
 
   it("'which volunteers' names the kind outright, and 'what's on thursday' is the shifts that day", () => {
@@ -88,7 +88,7 @@ describe("who, on a named day, on the rota", () => {
     for (const respond of [graphResponder<AnySchema>(), seatResponder<AnySchema>({ complete })]) {
       const reply = await respond(store, "who's working thursday", { places: placesOf(rotaApp) });
       expect(reply.grounded).toBe(true);
-      expect(reply.say).toMatch(/^On Thursday 17 Sep: Ada Nowak is working\./);
+      expect(reply.say).toMatch(/^On Thursday, Sep 17: Ada Nowak is working\./);
       expect(reply.picks?.map((hit) => hit.id)).toEqual(["v-ada"]);
       expect(reply.moves?.[0]).toMatchObject({ kind: "shift" });
     }
@@ -103,10 +103,10 @@ describe("a named day on things", () => {
   // 2026-09-01 is a Tuesday.
   const ask = (text: string) => resolveAsk(createTodoStore({ snapshot: todoExample }), text, { places: placesOf(todoApp), today: "2026-09-01" });
 
-  it("'what's due friday' is the tasks due on Friday 4 Sep", () => {
+  it("'what's due friday' is the tasks due on Friday, Sep 4", () => {
     const answer = ask("what's due friday");
     expect(moved(answer)[0]).toMatchObject({ to: "kind", kind: "task", filter: "due:after:2026-09-03,due:before:2026-09-05" });
-    expect(said(answer)).toBe("Went to the tasks due Friday 4 Sep. One task is due Friday 4 Sep: Move the broadband.");
+    expect(said(answer)).toBe("Went to the tasks due Friday, Sep 4. One task is due Friday, Sep 4: Move the broadband.");
   });
 
   it("reads 'on thursday', 'next tuesday', 'yesterday' and a date", () => {

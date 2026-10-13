@@ -1007,12 +1007,12 @@ async function aPageDrawsWithWhatThePictureNeeds() {
           factsInTheDocument: (document.querySelector('[data-testid="burndown-days"]')?.textContent ?? "").includes("left"),
           /*
            * And the facts say something IS left: the example has seven
-           * dated tasks open, so its first day reads "26 Aug: 7 left". A
+           * dated tasks open, so its first day reads "Aug 26: 7 left". A
            * picture that read "0 left" on every day drew a flat line along
            * the bottom, and every claim above still held.
            */
           somethingIsLeft: [...document.querySelectorAll('[data-testid="burndown-days"] li')].some((li) => /: [1-9]\d* left$/.test(li.textContent ?? "")),
-          daysSaidAsRead: (document.querySelector('[data-testid="burndown-days"] li')?.textContent ?? "") === "26 Aug: 7 left",
+          daysSaidAsRead: (document.querySelector('[data-testid="burndown-days"] li')?.textContent ?? "") === "Aug 26: 7 left",
           // And the picture must not push the page sideways on a phone.
           noSidewaysPage: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
         };

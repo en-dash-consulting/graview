@@ -178,7 +178,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     if (as === "row") return { id: node.id, kind: node.kind, title, parts: [] };
     // The default card: its title, and what a glance at it says (FR-39, FR-83).
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, node) : node;
-    const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [title], glance: true });
+    const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [title], glance: true, locale: app.brand?.locale });
     return { id: node.id, kind: node.kind, title, parts: fields.map((field) => ({ t: "text", text: field.alone })) };
   };
 
@@ -257,7 +257,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     if (page) parts.push(...say(resolved(record, { slot: "page" }), 1, `views.${record.kind}.page`));
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record) : record;
     // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
-    for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title] }))) {
+    for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale }))) {
       if (section.title) parts.push({ t: "heading", level: 2, text: section.title });
       for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value });
     }

@@ -11,6 +11,7 @@ import { FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES
 import { capitalize } from "../capital.js";
 import { filesOf, isImage, type FileValue } from "../schema/files.js";
 import { fileWords } from "../schema/file-fields.js";
+import { momentAsRead, numberAsRead } from "../days.js";
 
 /*
  * BLOCKS, RESOLVED — what a list of blocks says, worked out once, for every
@@ -309,9 +310,10 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
   if (as) return formatValue(value as Value, as, ctx.today, [], currency ? { ...ctx.money, currency } : ctx.money);
   const spec = ctx.fields[key];
   if (ctx.definition?.display?.format?.[key]) return valueWords(ctx.definition, key, value);
-  if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today);
+  if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today, [], ctx.money);
+  if (spec?.type === "datetime" && typeof value === "string") return momentAsRead(value, ctx.money?.locale);
   if (spec?.type === "enum" && typeof value === "string") return valueWords(ctx.definition, key, value);
-  if (typeof value === "number") return value.toLocaleString("en-US");
+  if (typeof value === "number") return numberAsRead(value, ctx.money?.locale, {});
   const files = filesOf(value);
   if (files[0]) return files.map(fileWords).join(", ");
   if (Array.isArray(value)) return value.map((one) => String(one)).join(", ");
@@ -323,8 +325,8 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
 export function sayNumber(value: string | number | boolean, as: FigureFormat | undefined, currency: string | undefined, today: string, money?: Money): string {
   if (typeof value !== "number") return String(value);
   if (as === "money") return formatMoney(value, currency ? { ...money, currency } : money);
-  if (as === "percent") return formatValue(value, as, today);
-  return value.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  if (as === "percent") return formatValue(value, as, today, [], money);
+  return numberAsRead(value, money?.locale);
 }
 
 const withProblem = <T extends object>(block: T, problem: string | undefined): T => (problem ? { ...block, problem } : block);

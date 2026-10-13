@@ -57,7 +57,7 @@
  *   whoIsWorkingIsTheGraphsToAnswer
  *                           on rota, pinned to Monday 14 September 2026,
  *                           "who's working thursday" is answered with no
- *                           model: "On Thursday 17 Sep: Ada Nowak is
+ *                           model: "On Thursday, Sep 17: Ada Nowak is
  *                           working.", her name a press, no "Answered with
  *                           AI" under it, nothing asked of any server but
  *                           the page's own; and the app goes to Thursday's
@@ -374,7 +374,7 @@ try {
             ...turn,
             landed: `${now.path}${now.search}${now.hash}`.slice(0, 160),
             left: [...new Set(left)],
-            ok: typeof said === "string" && said.startsWith("On Thursday 17 Sep: Ada Nowak is working.") && turn.picks.includes("Ada Nowak") && !turn.withAi && left.length === 0 && thursday,
+            ok: typeof said === "string" && said.startsWith("On Thursday, Sep 17: Ada Nowak is working.") && turn.picks.includes("Ada Nowak") && !turn.withAi && left.length === 0 && thursday,
           });
           await page.close();
         } catch (error) {

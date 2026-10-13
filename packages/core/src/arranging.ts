@@ -2,6 +2,7 @@ import { reaches, type Archived } from "./graph/archived.js";
 import { humanizeField, labelOf } from "./schema/define-node.js";
 import { tellApart } from "./schema/reading.js";
 import { matchNode, parseQuery } from "./search.js";
+import { dayAsRead, monthAsRead } from "./days.js";
 import {
   arrangeable,
   asRecord,
@@ -132,14 +133,13 @@ export function bucketStart(date: string, bucket: DateBucket): string | undefine
   return at.toISOString().slice(0, 10);
 }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
+/** A bucket's heading, its days said in the page's locale (FR-178): "September 2026", "Week of Aug 24, 2026". */
 function bucketLabel(start: string, bucket: DateBucket): string {
-  if (bucket === "month") return `${MONTHS[Number(start.slice(5, 7)) - 1]} ${start.slice(0, 4)}`;
-  if (bucket === "week") return `Week of ${start}`;
+  if (bucket === "month") return monthAsRead(start);
+  if (bucket === "week") return `Week of ${dayAsRead(start)}`;
   if (bucket === "year") return start.slice(0, 4);
   if (bucket === "decade") return `The ${start.slice(0, 4)}s`;
-  return start;
+  return dayAsRead(start);
 }
 
 /**

@@ -166,7 +166,7 @@ describe("arranging", () => {
       ["September 2026", ["t-van", "t-tape"]],
       ["No due date", ["t-call"]],
     ]);
-    expect(by("due:week").map(([label]) => label)).toEqual(["Week of 2026-08-24", "Week of 2026-08-31", "No due date"]);
+    expect(by("due:week").map(([label]) => label)).toEqual(["Week of Aug 24, 2026", "Week of Aug 31, 2026", "No due date"]);
     expect(bucketStart("2026-09-28", "week")).toBe("2026-09-28");
     expect(bucketStart("2026-09-27", "week")).toBe("2026-09-21");
     expect(bucketStart("nonsense", "day")).toBeUndefined();

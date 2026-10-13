@@ -41,7 +41,7 @@ describe("the arrange bar", () => {
     expect(html).toContain("The list it is on: Today");
     expect(html).toContain("Done: no");
     expect(html).toContain(">Past<");
-    expect(html).toContain("Due date before 1 Oct 2026");
+    expect(html).toContain("Due date before Oct 1, 2026");
     expect(html).toContain("1 of 4");
     // The far ends an edge condition may name come from the graph.
     expect(filterEntries(schema, graph, arrangeable(schema, "task")).map((entry) => entry.value)).toContain("holds:today");

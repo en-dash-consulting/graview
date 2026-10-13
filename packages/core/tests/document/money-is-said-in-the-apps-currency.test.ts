@@ -113,9 +113,9 @@ describe("the currency is declared, checked and edited in one place", () => {
     expect(colored.document.brand).toEqual({ currency: "USD", accent: "#2f6f4e" });
     const euros = editDocument(colored.document, [{ op: "set-brand", currency: "EUR", locale: "de-DE" }]);
     if (!euros.ok) throw new Error(JSON.stringify(euros.findings));
-    expect(euros.said).toEqual(["Money is said in EUR.", "Money is written for de-DE."]);
+    expect(euros.said).toEqual(["Money is said in EUR.", "Days, times, numbers and money are written for de-DE."]);
     expect(euros.document.brand).toEqual({ currency: "EUR", locale: "de-DE", accent: "#2f6f4e" });
-    expect(diffDocuments(colored.document, euros.document).sentences).toEqual(["Money is said in EUR, written for de-DE."]);
+    expect(diffDocuments(colored.document, euros.document).sentences).toEqual(["Money is said in EUR.", "Days, times, numbers and money are written for de-DE."]);
     const plain = editDocument(euros.document, [{ op: "set-brand", accent: null, currency: null, locale: null }]);
     if (!plain.ok) throw new Error(JSON.stringify(plain.findings));
     expect(plain.document.brand).toBeUndefined();

@@ -1,7 +1,7 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
-import { dayAsRead, ISO_DAY, isoToday } from "../days.js";
+import { dayAsRead, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, numberAsRead } from "../days.js";
 import { listed } from "../capital.js";
 import { excerpt } from "../excerpt.js";
 
@@ -67,7 +67,8 @@ export function formatValue(value: Value, format: Formatter | undefined, today: 
  * HOW AN APP SAYS MONEY (FR-100): the currency a sum is in when a block
  * names none, and the locale its figures are written for — the app's
  * `brand.currency` and `brand.locale`. Without a currency a sum is a
- * number in figures, as it always was.
+ * number in figures, as it always was. The locale is the app's for its
+ * days, times and numbers too (FR-178); a reader's a host passed wins.
  */
 export interface Money {
   readonly currency?: string;
@@ -79,10 +80,10 @@ export function formatMoney(value: number, money: Money = {}): string {
   const whole = Number.isInteger(value);
   const digits = { maximumFractionDigits: whole ? 0 : 2, minimumFractionDigits: whole ? 0 : 2 };
   try {
-    return new Intl.NumberFormat(money.locale ?? "en-US", money.currency ? { style: "currency", currency: money.currency, ...digits } : digits).format(value);
+    return numberAsRead(value, money.locale, money.currency ? { style: "currency", currency: money.currency, ...digits } : digits);
   } catch {
-    // A currency or locale the runtime does not know is said as a plain number, never a thrown page.
-    return value.toLocaleString("en-US", digits);
+    // A currency the runtime does not know is said as a plain number, never a thrown page.
+    return numberAsRead(value, money.locale, digits);
   }
 }
 
@@ -90,8 +91,8 @@ const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "ei
 const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
 
 /** A whole number from zero to ninety-nine in words; anything else in figures. */
-function inWords(n: number): string {
-  if (!Number.isInteger(n) || n < 0 || n > 99) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+function inWords(n: number, locale?: string): string {
+  if (!Number.isInteger(n) || n < 0 || n > 99) return numberAsRead(n, locale);
   if (n < 20) return ONES[n]!;
   return n % 10 === 0 ? TENS[n / 10]! : `${TENS[Math.floor(n / 10)]}-${ONES[n % 10]}`;
 }
@@ -122,11 +123,11 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
   if (typeof value === "object") return called(value as AnyGraphNode);
   switch (format) {
     case "words":
-      return typeof value === "number" ? inWords(value) : String(value);
+      return typeof value === "number" ? inWords(value, money?.locale) : String(value);
     case "money":
       return typeof value === "number" ? formatMoney(value, money) : String(value);
     case "percent":
-      return typeof value === "number" ? `${Math.round(value * 100)}%` : String(value);
+      return typeof value === "number" ? numberAsRead(value, money?.locale, { style: "percent", maximumFractionDigits: 0 }) : String(value);
     case "upper":
       return String(value).toUpperCase();
     case "lower":
@@ -134,8 +135,8 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
     case "excerpt":
       return excerpt(String(value), Number(args[0]) || undefined);
     case "date":
-      // A day as a person reads it ("28 Aug 2026"), as a card's glance says it.
-      return dayAsRead(String(value).slice(0, 10));
+      // A day as a person reads it ("Aug 28, 2026" in en-US), as a card's glance says it.
+      return dayAsRead(String(value).slice(0, 10), money?.locale);
     case "relative": {
       const t = Date.parse(String(value).length === 10 ? `${value}T00:00:00Z` : String(value));
       if (Number.isNaN(t)) return String(value);
@@ -143,8 +144,8 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
       return days === 0 ? "today" : days === 1 ? "tomorrow" : days === -1 ? "yesterday" : days > 0 ? `in ${days} days` : `${-days} days ago`;
     }
     default:
-      // A day said into a sentence — "was due {due}" — is said as a person reads it, never as it is kept.
-      return typeof value === "string" && ISO_DAY.test(value) ? dayAsRead(value) : String(value);
+      // A day or a moment said into a sentence — "was due {due}" — is said as a person reads it, never as it is kept.
+      return typeof value === "string" && ISO_DAY.test(value) ? dayAsRead(value, money?.locale) : typeof value === "string" && ISO_MOMENT.test(value) ? momentAsRead(value, money?.locale) : String(value);
   }
 }
 

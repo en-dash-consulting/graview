@@ -1,5 +1,6 @@
 import {
   brokenWords,
+  dayAsRead,
   pluralOf,
   humanizeField,
   nounOf,
@@ -582,7 +583,7 @@ export function graphResponder<S extends AnySchema>(
        */
       const quietly = (label: string) => (label === label.toUpperCase() ? label : label.charAt(0).toLowerCase() + label.slice(1));
       /*
-       * SAID, NOT PRINTED: a day as a person says one ("due 1 Sep 2026", not
+       * SAID, NOT PRINTED: a day as a person says one ("due Sep 1, 2026", not
        * "due 2026-09-01"), and a one-word yes/no as the state it is
        * ("not finished", not "finished: no").
        */
@@ -590,7 +591,7 @@ export function graphResponder<S extends AnySchema>(
         .map((field) => {
           const raw = (node as Record<string, unknown>)[field.key];
           if (typeof raw === "boolean" && !/\s/.test(field.label)) return raw ? quietly(field.label) : `not ${quietly(field.label)}`;
-          if (typeof raw === "string" && ISO_DAY.test(raw)) return `${quietly(field.label)} ${dayWords(raw)}`;
+          if (typeof raw === "string" && ISO_DAY.test(raw)) return `${quietly(field.label)} ${dayAsRead(raw)}`;
           return field.alone.startsWith(field.label) ? quietly(field.label) + field.alone.slice(field.label.length) : `${quietly(field.label)} ${field.alone}`;
         })
         .join(", ");
@@ -801,10 +802,3 @@ export function llmResponder<S extends AnySchema>(options: {
 
 /** A day alone, as the record holds it: `YYYY-MM-DD`. */
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** A day as a person says it in a sentence: "1 Sep 2026". */
-function dayWords(day: string): string {
-  const [year, month, date] = day.split("-").map(Number) as [number, number, number];
-  return `${date} ${MONTHS[month - 1] ?? ""} ${year}`;
-}

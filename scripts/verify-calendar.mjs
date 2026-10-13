@@ -303,7 +303,7 @@ try {
        in its own words — never a silent rounding. */
     ok:
       rounded.moved &&
-      ((saidSo.rounded !== null && /1 Jun/.test(saidSo.rounded) && /Undo/.test(saidSo.rounded)) ||
+      ((saidSo.rounded !== null && /Jun 1\b/.test(saidSo.rounded) && /Undo/.test(saidSo.rounded)) ||
         saidSo.refused !== null),
   };
 

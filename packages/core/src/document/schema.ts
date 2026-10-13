@@ -247,7 +247,8 @@ export type PolicySpec = z.infer<typeof PolicySpec>;
 /**
  * The installation's look and its money: an accent color the palette is
  * derived from, and the currency and locale a sum is said in wherever a
- * block names none (FR-100). Any of them may stand alone.
+ * block names none (FR-100) — the locale its days, times and numbers are
+ * said in too (FR-178), "en-US" when absent. Any of them may stand alone.
  */
 export const BrandSpec = z.strictObject({
   accent: z.optional(z.string().check(z.regex(/^#[0-9a-fA-F]{6}$/, 'an accent is a color like "#c2577a"'))),

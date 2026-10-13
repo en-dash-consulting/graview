@@ -1,12 +1,13 @@
 {
-  "at": "2026-10-04T07:13:52.295Z",
+  "at": "2026-10-13T05:36:08.009Z",
   "engine": "chromium",
   "checks": {
     "aSecondPictureOfOneGroupIsASecondPlace": {
       "places": [
+        "The whole thing",
         "The lists",
-        "The month",
         "What is left",
+        "The month",
         "The week"
       ],
       "opened": {
@@ -30,10 +31,12 @@
       "month": 42,
       "ok": true
     },
-    "anEntryIsANodeAndTheStripKnowsIt": {
+    "anEntryIsANodeAndItsActsKnowIt": {
       "entry": "t-book",
       "strip": [
         "Mark it done",
+        "Archive the task",
+        "Merge into another task …",
         "Rename …",
         "Move the date …",
         "Change the task …",
@@ -41,7 +44,9 @@
         "Note why this is here …",
         "Move it to another list …",
         "It no longer has to wait …",
-        "This has to happen first …"
+        "This has to happen first …",
+        "Drop it",
+        "Remove the task"
       ],
       "lit": "lit",
       "ok": true
@@ -106,7 +111,7 @@
     "aCoarseCellSaysWhatTheDropMeant": {
       "id": "rot-plot-1-2026",
       "moved": true,
-      "rounded": "Moved to Thu 1 Jun — a month is coarser than the from holds, so it takes the first day of the cell. Undo puts it back.",
+      "rounded": "Moved to Thu, Jun 1 — a month is coarser than the from holds, so it takes the first day of the cell. Undo puts it back.",
       "refused": null,
       "ok": true
     },
@@ -116,6 +121,7 @@
       "cells": 14,
       "withEntries": 2,
       "places": [
+        "The whole thing",
         "The quarter",
         "The fortnight",
         "The week",
@@ -126,7 +132,7 @@
     "theHorizonsReadCleanAtBothWidths": {
       "ok": true
     },
-    "theReaderSSettingsAreHonoured": {
+    "theReaderSSettingsAreHonored": {
       "scrollWidth": 390,
       "width": 390,
       "spilling": [],

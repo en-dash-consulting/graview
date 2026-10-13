@@ -1,9 +1,10 @@
 {
-  "at": "2026-10-04T15:08:55.531Z",
+  "at": "2026-10-13T05:36:08.702Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
       "places": [
+        "The whole thing",
         "The quarter",
         "The fortnight",
         "The week",
@@ -40,7 +41,7 @@
     },
     "aGradientRatherThanADifference": {
       "coordinator": {
-        "offered": 7,
+        "offered": 9,
         "withheld": [],
         "installation": true,
         "studio": true
@@ -48,6 +49,11 @@
       "volunteer": {
         "offered": 1,
         "withheld": [
+          "coordinator",
+          "coordinator",
+          "coordinator",
+          "coordinator",
+          "coordinator",
           "coordinator",
           "coordinator",
           "coordinator"
@@ -59,6 +65,12 @@
         "offered": 0,
         "withheld": [
           "coordinator,volunteer",
+          "coordinator",
+          "coordinator",
+          "coordinator",
+          "coordinator",
+          "coordinator",
+          "coordinator",
           "coordinator",
           "coordinator"
         ],
@@ -92,6 +104,7 @@
       "kinds": [
         "kind:act",
         "kind:brand",
+        "kind:computed",
         "kind:edge",
         "kind:field",
         "kind:grant",
@@ -111,9 +124,101 @@
       "hostFont": "Georgia, \"Times New Roman\", serif",
       "scoped": true,
       "views": [
-        3,
-        3
+        4,
+        4
       ],
+      "ok": true
+    },
+    "theShiftsArrangeOnOneQuietLine": {
+      "heads": [
+        {
+          "width": 1440,
+          "under": 48,
+          "seatFromTheFoot": 16,
+          "relatedRepeats": [],
+          "first": 249,
+          "fromTop": 201,
+          "lines": 1,
+          "selects": 0,
+          "count": "10 shifts",
+          "countedInAnEyebrow": false,
+          "scrolls": false,
+          "end": {
+            "end": 761,
+            "feet": [
+              846
+            ],
+            "last": "button act-open-add-shift",
+            "ok": true
+          }
+        },
+        {
+          "width": 390,
+          "under": 93,
+          "seatFromTheFoot": 16,
+          "relatedRepeats": [],
+          "first": 362,
+          "fromTop": 269,
+          "lines": 1,
+          "selects": 0,
+          "count": "10 shifts",
+          "countedInAnEyebrow": false,
+          "scrolls": false,
+          "end": {
+            "end": 715,
+            "feet": [
+              790
+            ],
+            "last": "button act-open-add-shift",
+            "ok": true
+          }
+        }
+      ],
+      "keys": {
+        "words": [
+          "sort",
+          "group",
+          "add"
+        ],
+        "seen": [
+          {
+            "word": "sort",
+            "reached": true,
+            "entries": 11,
+            "visited": 11,
+            "closed": true,
+            "onTrigger": true
+          },
+          {
+            "word": "group",
+            "reached": true,
+            "entries": 5,
+            "visited": 5,
+            "closed": true,
+            "onTrigger": true
+          },
+          {
+            "word": "add",
+            "reached": true,
+            "entries": 6,
+            "visited": 6,
+            "closed": true,
+            "onTrigger": true
+          }
+        ],
+        "ok": true
+      },
+      "addressed": {
+        "group": "on",
+        "kept": [
+          "Who is covering it: nothing×"
+        ],
+        "rows": [
+          "Friday repair cafeFri, Sep 18, 14:00 · nobody yet",
+          "Sunday deep cleanSun, Sep 20, 15:00 · nobody yet",
+          "Monday open upMon, Sep 21, 08:00 · nobody yet"
+        ]
+      },
       "ok": true
     },
     "everyRouteIsReachable": {

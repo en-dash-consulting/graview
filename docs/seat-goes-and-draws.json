@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-09T07:43:03.497Z",
+  "at": "2026-10-13T05:36:08.032Z",
   "engines": [
     "chromium"
   ],
@@ -22,6 +22,11 @@
     },
     "noModelCall": {
       "cases": 8,
+      "failing": [],
+      "ok": true
+    },
+    "whoIsWorkingIsTheGraphsToAnswer": {
+      "cases": 4,
       "failing": [],
       "ok": true
     },
@@ -72,43 +77,10 @@
     },
     "aPhonesSheetYieldsToTheDrawnView": {
       "cases": 4,
-      "failing": [
-        {
-          "engine": "chromium",
-          "at": "todo phone dark scene",
-          "share": 0.21,
-          "yields": true,
-          "latestWhole": false,
-          "ok": false
-        },
-        {
-          "engine": "chromium",
-          "at": "todo phone dark pages",
-          "share": 0.19,
-          "yields": true,
-          "latestWhole": false,
-          "ok": false
-        },
-        {
-          "engine": "chromium",
-          "at": "workshop phone dark graview",
-          "share": 0.19,
-          "yields": true,
-          "latestWhole": false,
-          "ok": false
-        },
-        {
-          "engine": "chromium",
-          "at": "workshop phone dark pages",
-          "share": 0.19,
-          "yields": true,
-          "latestWhole": false,
-          "ok": false
-        }
-      ],
-      "ok": false
+      "failing": [],
+      "ok": true
     }
   },
   "pageErrors": [],
-  "passed": false
+  "passed": true
 }

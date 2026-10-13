@@ -1,5 +1,7 @@
 
 
+import { minutesAsRead, weekdayAsRead, weekdayName } from "@graview/core";
+
 /*
  * DATE ARITHMETIC ON STRINGS, in UTC, and nowhere near a local `Date`.
  *
@@ -61,12 +63,17 @@ export function daysFrom(from: string, count: number): string[] {
   return Array.from({ length: count }, (_, at) => addDays(from, at));
 }
 
-export const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+/*
+ * IN WORDS, in the page's locale (FR-178): the reader's a host passed, else
+ * the app's, else en-US — "Mon, Mar 3" and "3:30 PM" in the United States,
+ * "Mon 3 Mar" and "15:30" in Britain.
+ */
 
-/** "Mon 3 Mar": a day in words, the way the calendar titles and labels it. */
-export const longDay = (day: string): string =>
-  `${WEEKDAYS[weekdayOf(day)]} ${Number(day.slice(8, 10))} ${MONTHS[Number(day.slice(5, 7)) - 1]!.slice(0, 3)}`;
+/** A weekday's short name, from 0 for Sunday: "Mon". */
+export const weekdayShort = (weekday: number): string => weekdayName(weekday, "short");
 
-export const clock = (minutes: number): string =>
-  `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+/** "Mon, Mar 3": a day in words, the way the calendar titles and labels it. */
+export const longDay = (day: string): string => weekdayAsRead(day, { weekday: "short" });
+
+/** A time of day from minutes after midnight: "9:30 AM". */
+export const clock = (minutes: number): string => minutesAsRead(minutes);

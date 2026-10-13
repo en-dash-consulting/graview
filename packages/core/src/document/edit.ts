@@ -33,6 +33,7 @@ import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
 import { isRecord as isObject, respellDocument } from "./respell.js";
 import { refName } from "./compiled.js";
+import { localeSentence } from "./diff.js";
 import { accentProblem } from "../theme/accent.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize, listed as listOf } from "../capital.js";
@@ -569,11 +570,14 @@ class Editor {
       brand["currency"] = e.currency;
       this.said.push(`Money is said in ${e.currency}.`);
     }
-    if (e.locale === null) delete brand["locale"];
-    else if (e.locale !== undefined) {
+    if (e.locale === null) {
+      if (brand["locale"] !== undefined) this.said.push(localeSentence(undefined));
+      delete brand["locale"];
+    } else if (e.locale !== undefined) {
       if (!/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(e.locale)) return this.fail(i, "locale", 'a locale is a language tag, like "en-US" or "de-DE"');
       brand["locale"] = e.locale;
-      this.said.push(`Money is written for ${e.locale}.`);
+      // Its days, times and numbers as well as its money (FR-178).
+      this.said.push(localeSentence(e.locale));
     }
     if (e.name === null) {
       delete brand["name"];

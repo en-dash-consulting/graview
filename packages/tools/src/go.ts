@@ -1,6 +1,7 @@
 import {
   brokenWords,
   edgeWords,
+  weekdayAsRead,
   kindPath,
   labelOf,
   nounOf,
@@ -158,12 +159,11 @@ interface DateAsk {
   readonly to?: string;
   /** "Overdue": before today, and not finished. */
   readonly overdue?: boolean;
-  /** One day, said back the way a person says it: "Thursday 17 Sep". */
+  /** One day, said back the way a person says it, in the page's locale (FR-178): "Thursday, Sep 17". */
   readonly day?: string;
 }
 
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
-const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 /** A weekday as it is said, with the two shortenings nobody confuses with another word. */
 const WEEKDAY = "(monday|tuesday|tues|wednesday|thursday|thurs|friday|saturday|sunday)";
@@ -173,11 +173,9 @@ const ORDINAL = "(\\d{1,2})(?:st|nd|rd|th)?";
 const weekdayOf = (word: string): number => WEEKDAYS.findIndex((name) => name.startsWith(word.slice(0, 3)));
 const monthOf = (word: string): number => MONTH_NAMES.findIndex((name) => word.startsWith(name.toLowerCase()));
 
-/** "Thursday 17 Sep", and the year when it is not this one. */
+/** "Thursday, Sep 17" in en-US, and the year when it is not this one (FR-178). */
 function dayWords(day: string, today: string): string {
-  const at = new Date(parseDay(day));
-  const year = day.slice(0, 4) === today.slice(0, 4) ? "" : ` ${day.slice(0, 4)}`;
-  return `${WEEKDAY_NAMES[at.getUTCDay()]} ${at.getUTCDate()} ${MONTH_NAMES[at.getUTCMonth()]}${year}`;
+  return weekdayAsRead(day, { year: day.slice(0, 4) !== today.slice(0, 4) });
 }
 
 /** A day of a month with no year: this year's, unless that was half a year ago — then next year's. */
@@ -476,7 +474,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
 
   /**
    * A date ask in a reader's words, against the field it reads: "due Friday
-   * 4 Sep", "on Thursday 17 Sep", "sown this week". A field that only means
+   * 4 Sep", "on Thursday, Sep 17", "sown this week". A field that only means
    * "when" ("Date", "Day") says nothing a reader needs: "shifts this week",
    * not "shifts date this week".
    */

@@ -1,4 +1,4 @@
-import { WEEKDAYS, clock, daysBetween, daysFrom, longDay, startOfWeek, weekdayOf } from "./calendar-dates.js";
+import { clock, daysBetween, daysFrom, longDay, startOfWeek, weekdayOf, weekdayShort } from "./calendar-dates.js";
 import type { CalendarGrain, PlacedEntry } from "./calendar-options.js";
 import { entriesOn } from "./calendar-placing.js";
 import { type CalendarCell, type CalendarSpan, entriesIn } from "./calendar-spans.js";
@@ -121,7 +121,7 @@ export function Grid({
                 textAlign: "center",
               }}
             >
-              {span.columns === 7 ? WEEKDAYS[weekdayOf(day)] : longDay(day)}
+              {span.columns === 7 ? weekdayShort(weekdayOf(day)) : longDay(day)}
             </span>
           ))}
         </div>
