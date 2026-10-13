@@ -6,60 +6,17 @@ import { loadPins, togglePin, type Affordance, type PinOverrides } from "@gravie
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
 import { VISUALLY_HIDDEN } from "../primitives/index.js";
-
-
-/**
- * What is selected, what is true about it, and what can legally be done —
- * as a LEFT PANE beside the focus.
- *
- * It has lived bottom-right (a 340px column over the scene), bottom-center
- * (a strip that sat on the kinds shelf), and now where the room actually
- * is: the left gutter beside a centered focus, which every state leaves
- * open, which a widened or zoomed view only makes wider, and which covers
- * neither the shelf below nor the picture you are acting on. In the
- * Graview the relation key holds the top of the same rail and this pane
- * takes the run of it below.
- */
-/**
- * Where this pane is drawn.
- *
- * `float` is what it always was: a pane beside the picture, or a bar along
- * the bottom when the scene is narrow, and the same pane at the pointer
- * when a right-click opened it. `menu` is only the pointer popover — the
- * context menu, opened by a right-click or by the acts key on a card —
- * for a scene whose selection draws no strip of its own.
- */
-export type InspectorPlacement = "float" | "menu";
+import type { InspectorPlacement } from "./inspector-door.js";
 
 /**
- * The key a card answers with its acts. A letter, and only on the card that
- * has the keyboard — a character key bound to focus is not one a voice
- * user's dictation sets off by accident (WCAG 2.1.4).
+ * The pane itself (`Inspector` in `./inspector-door.tsx` draws it): what is
+ * selected, what is true about it, and what can legally be done. Fetched
+ * when it is first wanted, or when the page is idle: the acts it offers are
+ * derived by `@graview/tools`, which a scene drawn before anybody selects
+ * or right-clicks does not need.
  */
-export const ACTS_KEY = "A";
-
-export function Inspector({ placement = "float" }: { readonly placement?: InspectorPlacement } = {}) {
-  const { store, menuAt, setMenuAt, view, registerActsDoor } = useGraview<AnySchema>();
-  /*
-   * THE KEYBOARD'S RIGHT-CLICK. The acts key on a card opens this menu at
-   * the card, with the keyboard in it, as a right-click opens it at the
-   * pointer; Escape puts the keyboard back on the card.
-   */
-  useEffect(() => {
-    if (placement !== "menu") return;
-    registerActsDoor({
-      key: ACTS_KEY,
-      open: (from) => {
-        const box = from.getBoundingClientRect();
-        const on =
-          from.closest("[data-graview-pick]")?.getAttribute("data-graview-pick") ??
-          from.closest("[data-graview-view]")?.getAttribute("data-graview-view") ??
-          undefined;
-        setMenuAt({ x: Math.round(box.left + Math.min(16, box.width / 2)), y: Math.round(Math.min(box.bottom, box.top + 36)), ...(on ? { on } : {}) });
-      },
-    });
-    return () => registerActsDoor(null);
-  }, [placement, registerActsDoor, setMenuAt]);
+export function InspectorPane({ placement = "float" }: { readonly placement?: InspectorPlacement } = {}) {
+  const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
   /*
    * The pane is positioned within the SCENE'S BOX, not the window. It was
    * fixed to the viewport, which put it at the page's edge when the scene
