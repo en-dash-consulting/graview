@@ -74,7 +74,14 @@ pnpm build:domain && npx graview describe ./dist/domain/app.js
    is a seeding nobody can trust, and a review nobody can disagree with is
    not a review.
 
-5. **Write the prompt from the graph, not from your head.** The model needs
+5. **If the data is already a spreadsheet, import it, don't retype it.**
+   `importRows(store, kind, rows, mapping, { by })` (`@graview/core/import`)
+   reads each cell by its field's type, links a cell to a record by its name,
+   lands one undoable batch and says each refused row in words; offer
+   `proposeMapping` and `previewImport` first. Import the far ends (events)
+   before the kind that names them (vendors). See `docs/import.md`.
+
+6. **Write the prompt from the graph, not from your head.** The model needs
    the kinds, the acts and their arguments — which `generateLlmsTxt(app)` (`@graview/core/check`)
    already writes — plus what is already there, so it does not propose a
    second Back Lawn.

@@ -146,7 +146,7 @@ pinned at 1.49.1 on purpose.
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`,
-  `./figures`, `./blocks`, `./describe`, `./arrange`, `./forms`, `./json-schema`, `./typed`, `./sync`, `./snapshot`, `./conformance`, `./scaffold`,
+  `./figures`, `./blocks`, `./describe`, `./arrange`, `./forms`, `./json-schema`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
   `./testing` and the `./document.schema.json` the build writes; layout's `./view`; react's `./provider` and `./drawing`;
   tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep` and `./turn`; embed's `./pages`; pages' `./static` (a place as static HTML, no React);
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and

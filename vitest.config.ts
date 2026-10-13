@@ -34,6 +34,7 @@ export default defineConfig({
       "@graview/core/document": fileURLToPath(new URL("./packages/core/src/document/index.ts", import.meta.url)),
       "@graview/core/conformance": fileURLToPath(new URL("./packages/core/src/conformance/index.ts", import.meta.url)),
       "@graview/core/sync": fileURLToPath(new URL("./packages/core/src/sync/index.ts", import.meta.url)),
+      "@graview/core/import": fileURLToPath(new URL("./packages/core/src/import/index.ts", import.meta.url)),
       "@graview/core/snapshot": fileURLToPath(new URL("./packages/core/src/snapshot.ts", import.meta.url)),
       "@graview/core": src("core"),
       // The narrow entries (FR-57): the subpath first, or the bare-name alias swallows it.

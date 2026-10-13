@@ -472,6 +472,7 @@ export default defineConfig({
       "@graview/core/document": framework("core/src/document/index.ts"),
       "@graview/core/conformance": framework("core/src/conformance/index.ts"),
       "@graview/core/sync": framework("core/src/sync/index.ts"),
+      "@graview/core/import": framework("core/src/import/index.ts"),
       "@graview/core/snapshot": framework("core/src/snapshot.ts"),
       "@graview/core/cli": framework("core/src/cli/index.ts"),
       "@graview/core/scaffold": framework("core/src/scaffold/index.ts"),

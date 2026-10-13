@@ -26,6 +26,7 @@
       "@graview/core/retry": ["./packages/core/src/retry.ts"],
       "@graview/core/document": ["./packages/core/src/document/index.ts"],
       "@graview/core/conformance": ["./packages/core/src/conformance/index.ts"],
+      "@graview/core/import": ["./packages/core/src/import/index.ts"],
       "@graview/core": ["./packages/core/src/index.ts"],
       "@graview/layout": ["./packages/layout/src/index.ts"],
       "@graview/tools/cli": ["./packages/tools/src/cli.ts"],
