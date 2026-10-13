@@ -4671,13 +4671,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 
 ### W-198 · "7540 inspections", and "299 hives → 14 apiaries" under a head that says 280
 - stage: A and D (the home, the map's district panel, a static page) · face: scene, pages and static · width: 1440 and 390 · scheme: light
-- impact: cosmetic — a hole in a known class's check: every count past a thousand was said bare ("7540 inspections" on the home and in `renderPlace`, "7347 inspections → 299 hives" in the panel, "7347" beside it), and the Hives panel's relations counted the nineteen dead-outs its own head ("280 hives") leaves past the horizon
+- impact: cosmetic — a hole in a known class's check: every count past a thousand was said bare ("7540 inspections" in the home's headline, which counted by hand beside `counted`, and in `renderPlace`, "7347 inspections → 299 hives" in the panel, "7347" beside it), and the Hives panel's relations counted the nineteen dead-outs its own head ("280 hives") leaves past the horizon
 - class: prose-wrong-for-the-domain (also: says-something-untrue, data-shape-not-in-fixtures)
 - expected: a count is a figure said in the page's locale, as FR-178 says every figure is; a panel's relations count what its head counts
 - actual: `counted` — the one sentence every face counts a kind with — wrote `${count}`; the panel's link counts were drawn as numbers; and its relations were read over every live link, current or past. No example has a kind past a thousand records, so FR-178's tests never met a count that needed a separator
 - where it belongs: `packages/core/src/schema/define-node.ts` (`counted`), `packages/primitives/src/map-panel.tsx`
 - harness that should have caught it: the class's check for a bare number is "none yet" — the watch reads no figure as prose; the gauntlet's counts are small
-- status: fixed in "walkthrough: A · a count is said in the page's locale, and the panel counts what its head counts" · criteria: `packages/core/tests/unit/a-count-is-said-in-the-pages-locale.test.ts` and `packages/primitives/tests/unit/the-district-panel-counts-what-its-head-counts.test.tsx` (both verified failing without the fix)
+- status: fixed in "walkthrough: A · a count is said in the page's locale, and the panel counts what its head counts" · criteria: `packages/core/tests/unit/a-count-is-said-in-the-pages-locale.test.ts` and `packages/primitives/tests/unit/the-district-panel-counts-what-its-head-counts.test.tsx` (both verified failing without the fix); the home's headline in "walkthrough: A · the home counts in the locale, and its pictures link nowhere themselves", criterion `packages/pages/tests/unit/the-home-counts-and-pictures-without-nested-links.test.tsx` "counts in the page's locale" (verified failing without it)
 
 ### W-199 · Through the studio, the yard's lease is a string again and the rules stop reading the clock
 - stage: B (the declaration through the studio and back: `createStudio(app).files()`) · face: studio · width: — · scheme: —
@@ -4688,3 +4688,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/studio/src/zod-source.ts`, `source.ts`, `meta.ts`, `from-declaration.ts`, `to-declaration.ts`
 - harness that should have caught it: the class's check — the gauntlet through the studio's round trip — has no app-link field and no rule that is a function reading the clock
 - status: fixed in "walkthrough: B · the studio keeps an app-link and a rule that reads the clock" · criterion: `packages/studio/tests/unit/the-studio-keeps-an-app-link-and-a-clock.test.ts` (the written files: both verified failing without the fix); walk9's own `tests/studio.test.ts` round trip
+
+### W-200 · The home's picture of a board nests a link in a link
+- stage: D (a status board declared with a title) · face: pages · width: 1440 and 390 · scheme: light
+- impact: cosmetic — a new hole in a known class's check: every visit to the co-op's home logged React's "In HTML, <a> cannot be a descendant of <a>. This will cause a hydration error": the gallery's card for "How the hives are" is a link, and the board drawn small in it drew each hive's card as a link of its own (glanceable cards, `ListedLink`). The picture is inert and hidden from assistive technology, so nobody pressed the inner links — but a browser's parser takes nested anchors apart, so the same markup served as HTML would break the card
+- class: accessibility-tree-wrong
+- expected: a picture inside a link draws its records as what they are, not as links
+- actual: the routed face hands every block view its links (`SpecLinks`), the gallery's picture included
+- where it belongs: `packages/pages/src/page-places.tsx` (`GalleryCard`)
+- harness that should have caught it: the class's check is the watch's axe pass, which does not judge what is inert and hidden; and the watch hears an uncaught error, not a console error — React's nesting warnings are nobody's (open: a watch rule for them would be a new rule on every harness)
+- status: fixed in "walkthrough: A · the home counts in the locale, and its pictures link nowhere themselves" · the gallery's pictures are drawn with no links. Criterion: `packages/pages/tests/unit/the-home-counts-and-pictures-without-nested-links.test.tsx` "draws a picture in a card that is a link without a link inside it" (verified failing without the fix)
