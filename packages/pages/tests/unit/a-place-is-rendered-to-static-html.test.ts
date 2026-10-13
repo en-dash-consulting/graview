@@ -48,6 +48,21 @@ describe("each page kind of the todo example, in Node", () => {
     expect(page.html).toContain(page.css);
   });
 
+  it("says days in the reader's locale when the host passes one, and the brand's (en-US) when not, as the document's lang (FR-178)", () => {
+    const store = todo();
+    const task = store.graph.nodesOfKind("task").find((one) => (one as { due?: string }).due === "2026-08-28")!;
+    const at = `/tasks/${encodeURIComponent(task.id)}`;
+    const plain = renderPlace(store, todoApp, at, { viewer: keeper, today: TODAY });
+    expect(plain.html).toContain('<html lang="en-US"');
+    expect(plain.html).toContain("Aug 28, 2026");
+    const british = renderPlace(store, todoApp, at, { viewer: keeper, today: TODAY, locale: "en-GB" });
+    expect(british.html).toContain('<html lang="en-GB"');
+    expect(british.html).toContain("28 Aug 2026");
+    expect(british.html).not.toContain("Aug 28, 2026");
+    // A tag nothing can be said in is en-US.
+    expect(renderPlace(store, todoApp, at, { viewer: keeper, today: TODAY, locale: "xx-nowhere-at-all" }).html).toContain('<html lang="en-US"');
+  });
+
   it("renders a list: its plural, its declared description, its count and each record with its glance", () => {
     const store = todo();
     const page = renderPlace(store, todoApp, "/tasks", { viewer: keeper, today: TODAY });
