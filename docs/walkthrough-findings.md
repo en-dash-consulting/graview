@@ -4678,3 +4678,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/core/src/schema/define-node.ts` (`counted`), `packages/primitives/src/map-panel.tsx`
 - harness that should have caught it: the class's check for a bare number is "none yet" — the watch reads no figure as prose; the gauntlet's counts are small
 - status: fixed in "walkthrough: A · a count is said in the page's locale, and the panel counts what its head counts" · criteria: `packages/core/tests/unit/a-count-is-said-in-the-pages-locale.test.ts` and `packages/primitives/tests/unit/the-district-panel-counts-what-its-head-counts.test.tsx` (both verified failing without the fix)
+
+### W-199 · Through the studio, the yard's lease is a string again and the rules stop reading the clock
+- stage: B (the declaration through the studio and back: `createStudio(app).files()`) · face: studio · width: — · scheme: —
+- impact: costs a job — writing the co-op's declaration back from the studio: `lease: appLinkField().optional()` came back as `z.string().max(500).regex(/…/, "another app's address").optional()`, which every face then draws as text rather than as the landowner's app; and both rules, functions that say `readsTheClock: true`, came back without it, so `graview check` no longer told the host it owes them a tick
+- class: round-trip-loses-something (also: data-shape-not-in-fixtures)
+- expected: what the checkout said survives the round trip: an app-link is written as `appLinkField()`, imported, and a rule that says it reads the clock still says so
+- actual: the studio prints a field from its zod, and an app-link's zod is a string with a pattern — the mark FR-171 put on it was never read; the studio's rule kind had `judgesPast` and nothing for FR-176's `readsTheClock`. The declaration it hands back kept both, because it keeps the checkout's own rule and field objects; the files it writes did not
+- where it belongs: `packages/studio/src/zod-source.ts`, `source.ts`, `meta.ts`, `from-declaration.ts`, `to-declaration.ts`
+- harness that should have caught it: the class's check — the gauntlet through the studio's round trip — has no app-link field and no rule that is a function reading the clock
+- status: fixed in "walkthrough: B · the studio keeps an app-link and a rule that reads the clock" · criterion: `packages/studio/tests/unit/the-studio-keeps-an-app-link-and-a-clock.test.ts` (the written files: both verified failing without the fix); walk9's own `tests/studio.test.ts` round trip

@@ -1,4 +1,4 @@
-import { isoDate, nodeRefKinds } from "@graview/core";
+import { isAppLinkField, isoDate, nodeRefKinds } from "@graview/core";
 
 /*
  * A CHECKOUT'S OWN ZOD, WRITTEN BACK AS IT WAS WRITTEN.
@@ -67,6 +67,8 @@ const q = (text: string): string => JSON.stringify(text);
 export interface ZodUses {
   nodeRef: boolean;
   isoDate: boolean;
+  /** A field that holds another app's address (FR-171), written as the checkout wrote it. */
+  appLinkField?: boolean;
 }
 
 export function printZod(type: unknown, uses: ZodUses = { nodeRef: false, isoDate: false }): string | null {
@@ -88,6 +90,15 @@ export function printZod(type: unknown, uses: ZodUses = { nodeRef: false, isoDat
   if (kinds) {
     uses.nodeRef = true;
     return kinds.length === 1 && kinds[0] === "*" ? "nodeRef()" : `nodeRef([${kinds.map(q).join(", ")}])`;
+  }
+  /*
+   * ANOTHER APP'S ADDRESS IS WRITTEN AS ONE (the ninth walk, W-199). Its
+   * zod is a string with a length and a pattern, and was written back as
+   * that string — which every face then drew as text, not as the app.
+   */
+  if (isAppLinkField(type)) {
+    uses.appLinkField = true;
+    return "appLinkField()";
   }
   if (type === isoDate || (def.type === "string" && String(checkOf(def.checks?.[0]).pattern) === String(checkOf(defOf(isoDate).checks?.[0]).pattern) && def.checks?.length === 1)) {
     uses.isoDate = true;

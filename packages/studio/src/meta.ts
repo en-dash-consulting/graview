@@ -184,6 +184,8 @@ export const ruleNode = defineNode("rule", {
     title: z.string().optional(),
     description: z.string().optional(),
     judgesPast: z.boolean(),
+    /** A rule that is a function and reads the day, as it says (`readsTheClock`, FR-176). */
+    readsTheClock: z.boolean().optional(),
     /** Judged over the whole graph rather than one kind's records. */
     wholeGraph: z.boolean(),
     /**
@@ -210,7 +212,7 @@ export const ruleNode = defineNode("rule", {
     repairs: { to: ["act"], description: "the acts that put it right", inverse: "the rules it repairs" },
   },
   label: (node) => node.label,
-  display: { labels: { label: "name", judgesPast: "judges the past", wholeGraph: "over the whole graph" } },
+  display: { labels: { label: "name", judgesPast: "judges the past", readsTheClock: "reads the clock", wholeGraph: "over the whole graph" } },
 });
 
 export const roleNode = defineNode("role", {
