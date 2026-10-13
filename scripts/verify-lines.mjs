@@ -51,6 +51,11 @@ const APPS = [
       ["focused, with a relation shown", "/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1"],
       ["in the dark", "/?theme=dark&today=2026-09-01#overview=1"],
     ],
+    /* A chosen record's links from altitude: wide with its panel docked, and narrow with its sheet. */
+    chosen: [
+      ["a task chosen from altitude", 1440, 900, "/?theme=light&today=2026-09-01#focus=t-post&overview=1&zoom=1&sel=t-post&pin.t-post=690.29%2C261.93"],
+      ["a task chosen from altitude on a phone", 390, 844, "/?theme=light&today=2026-09-01#overview=1&sel=t-post"],
+    ],
   },
   {
     app: "seedbed",
@@ -59,6 +64,17 @@ const APPS = [
       ["at rest", "/?chapter=15&theme=light"],
       ["from altitude", "/?chapter=15&theme=light#overview=1"],
       ["a chapter with one kind", "/?chapter=1&theme=light#overview=1"],
+    ],
+  },
+  {
+    app: "gauntlet",
+    port: portFor("gauntlet"),
+    states: [["at rest", "/?theme=light"]],
+    /* The ground, in a lens, at 1440 and on a phone, light and dark: nothing chosen draws no record's links; one chosen draws its own. */
+    ground: [
+      ["the timetable", "The timetable", 1440, 900, "light"],
+      ["the timetable in the dark", "The timetable", 1440, 900, "dark"],
+      ["the timetable on a phone", "The timetable", 390, 844, "light"],
     ],
   },
   {
@@ -191,9 +207,65 @@ async function settled(page) {
   return reading;
 }
 
-const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [] };
+/*
+ * A CHOSEN RECORD'S LINK ENDS WHERE IT POINTS. Its end dot lies on the far
+ * record's building or chip, and a dashed one on its district's ground —
+ * never on empty ground, and never on the chosen record's own card (a chip
+ * of the card saying the same thing is not the far record drawn). Read from
+ * the painted path, as above.
+ */
+const RECORD_LINKS = () => {
+  const stage = document.querySelector(".graview-record-links")?.parentElement;
+  const s = stage?.getBoundingClientRect() ?? { left: 0, top: 0 };
+  const rel = (el) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height };
+  };
+  const cards = [...document.querySelectorAll("[data-graview-view][data-graview-selected]:not([data-graview-view^='kind:'])")];
+  // What is drawn as a far end: a building or a district's ground, and none of what stands inside the chosen record's own card.
+  const targets = [...document.querySelectorAll("[data-graview-building], [data-graview-plot] .graview-plot-tile")].filter((el) => !cards.some((card) => card.contains(el))).map(rel);
+  const chips = [...document.querySelectorAll("[data-graview-pick]")].filter((el) => cards.some((card) => card !== el && card.contains(el))).map(rel);
+  const inside = (box, p, slack) => p.x >= box.x - slack && p.x <= box.x + box.w + slack && p.y >= box.y - slack && p.y <= box.y + box.h + slack;
+  return [...document.querySelectorAll(".graview-record-link")].map((g) => {
+    const dot = g.querySelector("circle");
+    const tail = g.querySelector("path")?.getAttribute("d")?.match(/(-?[\d.]+) (-?[\d.]+)\s*$/);
+    const end = dot ? { x: Number(dot.getAttribute("cx")), y: Number(dot.getAttribute("cy")) } : tail ? { x: Number(tail[1]), y: Number(tail[2]) } : null;
+    return {
+      lands: g.getAttribute("data-graview-lands"),
+      edge: g.getAttribute("data-graview-link"),
+      end,
+      onTarget: end !== null && targets.some((box) => inside(box, end, 4)),
+      onItsOwnCard: end !== null && !targets.some((box) => inside(box, end, 4)) && chips.some((box) => inside(box, end, 2)),
+    };
+  });
+};
 
-for (const { app, port, states } of APPS) {
+/*
+ * THE GROUND'S LINES ARE A FUNCTION OF THE CHOICE. Every record-level line
+ * (a tie to a chosen record's far end, or a connector between two records)
+ * is counted with the words it says; nothing chosen, none; one chosen, one
+ * line per link and each says which.
+ */
+const GROUND_LINES = () => {
+  const stage = document.querySelector("[data-graview-stage]");
+  const s = stage?.getBoundingClientRect() ?? { left: 0, top: 0 };
+  const lines = [...document.querySelectorAll("[data-graview-tie], [data-graview-connector]")];
+  const said = [...document.querySelectorAll("[data-graview-link-said]")].map((el) => el.textContent.trim());
+  const boxes = [...document.querySelectorAll("[data-graview-pick], [data-graview-view]")].map((el) => el.getBoundingClientRect());
+  const loose = [...document.querySelectorAll("[data-graview-tie]")].filter((path) => {
+    const circle = path.parentElement?.querySelector("circle");
+    if (!circle) return false;
+    const c = circle.getBoundingClientRect();
+    const x = c.left + c.width / 2;
+    const y = c.top + c.height / 2;
+    return !boxes.some((b) => x >= b.left - 4 && x <= b.right + 4 && y >= b.top - 4 && y <= b.bottom + 4);
+  }).length;
+  return { lines: lines.length, said: said.length, repeated: said.length - new Set(said).size, loose, left: s.left };
+};
+
+const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [], recordLinks: 0 };
+
+for (const { app, port, states, chosen = [], ground = [] } of APPS) {
   const served = await serving(app, port, repoRoot);
   const browser = await launchEngine(ENGINE, { headless: true });
   try {
@@ -239,6 +311,56 @@ for (const { app, port, states } of APPS) {
 
       await page.close();
     }
+    for (const [what, place, width, height, theme] of ground) {
+      const where = `${app} ${what}`;
+      const page = await browser.newPage({ viewport: { width, height } });
+      await page.goto(`${served.url}/?theme=${theme}`, { waitUntil: "load" });
+      await page.waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 }).catch(() => {});
+      await page.waitForTimeout(1600);
+      const tab = page.getByRole("link", { name: place, exact: true }).first();
+      if (!(await tab.isVisible().catch(() => false))) {
+        // A narrow bar folds its places into a menu.
+        await page.locator('[data-testid="app-places-open"], [data-testid="app-menu"]').first().click({ timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(400);
+      }
+      const press = (locator) => locator.first().click({ timeout: 4000 }).then(() => true, () => false);
+      const opened =
+        (await press(page.getByRole("link", { name: place, exact: true }))) ||
+        (await press(page.getByRole("menuitem", { name: place, exact: true }))) ||
+        (await press(page.getByText(place, { exact: true })));
+      await page.waitForTimeout(2200);
+      const count = () => page.evaluate(GROUND_LINES);
+      const rest = await count();
+      if (!opened) report.faults.push(`${where}: the place could not be opened`);
+      report.groundAtRest = (report.groundAtRest ?? 0) + rest.lines;
+      if (rest.lines > 0) report.faults.push(`${where}: ${rest.lines} record-level connectors are drawn with nothing chosen`);
+      const record = page.locator("[data-graview-pick]:visible").first();
+      await record.click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(1600);
+      const chosenNow = await count();
+      report.groundChosen = (report.groundChosen ?? 0) + chosenNow.lines;
+      if (chosenNow.lines !== chosenNow.said) report.faults.push(`${where}: ${chosenNow.lines} lines are drawn for the chosen record but ${chosenNow.said} links are said`);
+      if (chosenNow.repeated > 0) report.faults.push(`${where}: ${chosenNow.repeated} of the chosen record's links are drawn twice`);
+      if (chosenNow.loose > 0) report.faults.push(`${where}: ${chosenNow.loose} lines end where nothing is drawn`);
+      // Back out and in again: the lines are a function of the choice, so none is left standing.
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(1200);
+      const after = await count();
+      if (after.lines > 0) report.faults.push(`${where}: ${after.lines} lines stay drawn after the record is put down`);
+      await page.close();
+    }
+    for (const [what, width, height, path] of chosen) {
+      const page = await browser.newPage({ viewport: { width, height } });
+      await page.goto(`${served.url}${path}`, { waitUntil: "load" });
+      await page.waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 }).catch(() => {});
+      await page.waitForTimeout(2400);
+      for (const link of await page.evaluate(RECORD_LINKS)) {
+        report.recordLinks += 1;
+        if (!link.onTarget) report.faults.push(`${app} ${what}: a ${link.edge} link ends where nothing is drawn (${link.end ? `${Math.round(link.end.x)},${Math.round(link.end.y)}` : "no end"})`);
+        if (link.onItsOwnCard) report.faults.push(`${app} ${what}: a ${link.edge} link ends on the chosen record's own card`);
+      }
+      await page.close();
+    }
   } catch (error) {
     report.faults.push(`${app}: ${String(error).slice(0, 160)}`);
   } finally {
@@ -251,12 +373,15 @@ report.lines = report.seen.reduce((sum, one) => sum + one.lines, 0);
 report.checks.everyLineIsDrawable = !report.faults.some((f) => /not a number|empty path/.test(f));
 report.checks.everyLineStaysInThePicture = !report.faults.some((f) => /leaves the stage/.test(f));
 report.checks.everyLineLandsOnSomething = !report.faults.some((f) => /neither end on anything/.test(f));
+report.checks.everyRecordLinkEndsWhereItPoints = !report.faults.some((f) => /ends where nothing is drawn|ends on the chosen record/.test(f));
+report.checks.withNothingChosenNoRecordLevelConnectorIsDrawn = !report.faults.some((f) => /connectors are drawn with nothing chosen|could not be opened/.test(f)) && (report.groundAtRest ?? 0) === 0;
+report.checks.aChosenRecordDrawsExactlyItsOwnLinks = !report.faults.some((f) => /links are said|drawn twice|stay drawn|end where nothing/.test(f)) && (report.groundChosen ?? 0) > 0;
 report.checks.nothingThrew = !report.faults.some((f) => /Error|Timeout/.test(f));
 /*
  * A HARNESS THAT PASSES ON NOTHING IS THEATER: with no lines on any page
  * every claim above is vacuously true and the run has checked nothing.
  */
-report.checks.thereWereLinesToCheck = report.lines > 0;
+report.checks.thereWereLinesToCheck = report.lines > 0 && report.recordLinks > 0;
 if (report.lines === 0) report.faults.push("no connectors anywhere: the harness checked nothing");
 
 /*

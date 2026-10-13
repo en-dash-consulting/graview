@@ -875,6 +875,14 @@ export function Connectors({
          * drawn only for a change that just happened, while it pulses.
          */
         if (overview && !live) return null;
+        /*
+         * A RECORD CHOSEN ON THE GROUND DRAWS ITS OWN CONNECTORS and the
+         * rest are not drawn at all: dimmed is still drawn, and a scene of
+         * faint lines fanning across unrelated records is clutter, not
+         * context. (A relation the scene was asked to show, with nothing
+         * chosen, draws as asked.) Lines are a function of the choice.
+         */
+        if (!overview && !live && chosenReal.size > 0 && !mine && !stressed) return null;
         const opacity = overview
           ? altitudeOpacity({
               emphasized: emphasis !== null,
