@@ -411,9 +411,20 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
    */
   const sorted = (names: readonly string[]) => [...names].sort();
   const named = (read: Read, from: string, edge: string) => sorted(read.out(from, edge).flatMap((node) => (now.node(node.id) ? [label(now.node(node.id)!)] : [])));
+  /*
+   * A kind's derived edit and remove are no act of the studio's, so a grant
+   * naming one has no line to it: what the document's grant at that place
+   * names and the studio holds no act for is read from the document, or the
+   * grant read as naming no act and its change went unsaid.
+   */
+  const unheld = (g: Node): string[] => {
+    const at = /^grant:(\d+)$/.exec(g.id);
+    const held = at ? document.policy?.grants[Number(at[1]) - 1] : undefined;
+    return held && Array.isArray(held.mutations) ? held.mutations.filter((act) => !was.node(`act:${act}`)) : [];
+  };
   const grantOf = (read: Read, g: Node) => ({
     roles: g["everyone"] === true ? "*" : named(read, g.id, "lets"),
-    mutations: g["allActs"] === true ? "*" : named(read, g.id, "may"),
+    mutations: g["allActs"] === true ? "*" : sorted([...named(read, g.id, "may"), ...unheld(g)]),
     ...(g["allKinds"] === true ? {} : { kinds: named(read, g.id, "allows-on") }),
     ...(str(g, "describe") ? { describe: str(g, "describe") } : {}),
     ...(g["self"] === true ? { self: true } : {}),
@@ -436,7 +447,10 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     });
   };
   for (const [sort, op] of [["grants", "grant"], ["sees", "sight"]] as const) {
-    for (const part of less(had[sort], has[sort])) edits.push({ op: `remove-${op}`, ...part });
+    // A removal names what the one removed leaves unsaid too — every kind, not only their own — so it never means a narrower twin as well.
+    for (const part of less(had[sort], has[sort]) as Record<string, unknown>[]) {
+      edits.push({ op: `remove-${op}`, ...part, ...(op === "grant" ? { kinds: part["kinds"] ?? "*", self: part["self"] ?? false, ownEnd: part["ownEnd"] ?? false } : { own: part["own"] ?? false }) });
+    }
     for (const part of less(has[sort], had[sort])) edits.push({ op: `add-${op}`, ...part });
   }
 

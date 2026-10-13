@@ -177,7 +177,7 @@ describe("removals take with them what cannot stand", () => {
     expect(doc.views.vendor.card.some((b: any) => b.field === "quote")).toBe(false);
     expect(out.plan.counts.cleared).toBe(2);
     expect(losesData(out.plan)).toBe(true);
-    expect(out.said[0]).toMatch(/vendor loses its quote field, and every value in it; .*act set-quote/);
+    expect(out.said[0]).toMatch(/vendor loses its quote field, and every value in it; .*the act "Set the quote"/);
   });
 
   it("an act that also does something else keeps that, and loses only the field", () => {

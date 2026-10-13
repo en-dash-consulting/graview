@@ -39,8 +39,8 @@ describe("a removal leaves nothing dangling", () => {
     if (!outcome.ok) throw new Error(JSON.stringify(outcome.findings));
     expect(Object.keys(outcome.document.rules ?? {})).not.toContain("one-booked-per-category");
     expect(Object.keys(outcome.document.rules ?? {})).not.toContain("within-budget");
-    expect(outcome.said.join(" ")).toMatch(/rule one-booked-per-category/);
-    expect(outcome.said.join(" ")).toMatch(/rule within-budget/);
+    expect(outcome.said.join(" ")).toMatch(/the rule "One vendor booked per category"/);
+    expect(outcome.said.join(" ")).toMatch(/the rule "Booked vendors fit the category.s budget"/);
     const compiled = compileDocument(outcome.document);
     expect(compiled.ok ? [] : compiled.findings.filter((finding) => finding.severity === "error")).toEqual([]);
   });
