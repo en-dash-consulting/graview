@@ -53,14 +53,15 @@ any other.
    `compileDocument` from `@graview/core/check`), the studio hands back a
    document, not TypeScript. `studio.edits()` is the
    change as `editDocument`'s own ops (`add-field`, `rename-field`,
-   `set-required`, `set-options`, `add-relation`, `remove-act`, `add-rule`
-   …); `studio.document()` is the opened document with them applied, every
+   `set-required`, `set-options`, `add-relation`, `remove-act`, `add-rule`,
+   and a grant, a sight or the people kind as `add-grant`, `remove-grant`,
+   `add-sight`, `remove-sight` and `set-people` …); `studio.document()` is the opened document with them applied, every
    act, label, brand and money field untouched. `check()`, `would()` and
    `apply()` judge by compiling that document, and `apply()` hands back
    `document` with `app` compiled from it. A copied app, or one with its
    policy swapped, says it: `createStudio(app, { document })`; without one,
    `whyNoDocument()` says why. A change no op says yet — a relation's
-   cardinality, a lifecycle, a grant, retyping a money field — comes back
+   cardinality, a lifecycle, a role, retyping a money field — comes back
    as `documentFindings`, one sentence each, and no document. Ask ahead
    what it keeps but will not change: `uneditable(document)` is one note
    per format, unit or list item type (`kinds.vendor.fields.quote`).

@@ -13,9 +13,11 @@ import {
   FIELD_NAME,
   FIELD_TYPES,
   FieldSpec,
+  GrantSpec,
   KindSpec,
   NAME,
   RuleSpec,
+  SightSpec,
   type FieldType,
   type GraviewDocument,
 } from "./schema.js";
@@ -32,7 +34,9 @@ import { isRecord as isObject, respellDocument } from "./respell.js";
 import { refName } from "./compiled.js";
 import { accentProblem } from "../theme/accent.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
-import { capitalize } from "../capital.js";
+import { capitalize, listed as listOf } from "../capital.js";
+import { quoted } from "./quote.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -106,6 +110,11 @@ export const EDIT_OPS = [
   "set-home",
   "arrange-pages",
   "set-computed",
+  "set-people",
+  "add-grant",
+  "remove-grant",
+  "add-sight",
+  "remove-sight",
 ] as const;
 export type EditOp = (typeof EDIT_OPS)[number];
 
@@ -212,6 +221,12 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       description: z.union([z.string().min(1).max(500), z.null()]).optional(),
     })
     .strict(),
+  // Who the people are, and who may do and see what (FR-170): a grant and a sight as the document holds one.
+  "set-people": z.object({ op: z.literal("set-people"), kind: kindName, people: z.boolean() }).strict(),
+  "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
+  "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
+  "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
+  "remove-sight": z.object({ op: z.literal("remove-sight") }).passthrough(),
 };
 
 // ── the document as something to change ──────────────────────────────────────
@@ -798,6 +813,13 @@ class Editor {
         return this.arrangePages(i, e);
       case "set-computed":
         return this.setComputed(i, e);
+      case "set-people":
+        return this.setPeople(i, e);
+      case "add-grant":
+      case "remove-grant":
+      case "add-sight":
+      case "remove-sight":
+        return this.policyEdit(i, e);
     }
   }
 
@@ -1094,6 +1116,113 @@ class Editor {
     if (existing === undefined) this.said.push(`${plural} work out "${name}": ${next.expr}${next.label ? `, shown as "${next.label}"` : ""}.`);
     else if (was.expr !== next.expr) this.said.push(`How ${pluralWords(this.doc, e.kind)} work out "${name}" changes: ${next.expr}.`);
     else this.said.push(`${plural}' "${name}" is ${next.label ? `shown as "${next.label}"` : "shown by its name"}${next.description ? `, described as "${next.description}"` : ""}.`);
+  }
+
+  // ── who the people are, and who may do and see what (FR-170) ──
+
+  /** The last edit that changed the people or the policy: where what they make together is judged. */
+  lastPolicyEdit = -1;
+
+  private failAs(code: string, i: number, path: string, message: string, fix?: string) {
+    this.findings.push(error(code, `edits.${i}${path ? `.${path}` : ""}`, message, fix));
+  }
+
+  private setPeople(i: number, e: Doc) {
+    const spec = this.kind(i, e.kind);
+    if (!spec) return;
+    this.lastPolicyEdit = i;
+    const already = (spec.people === true) === e.people;
+    if (e.people && !already) {
+      // Exactly one kind is the people: a principal's id is a record of it, never of one of two.
+      const other = peopleKinds(this.doc.kinds)[0];
+      if (other) return this.failAs("people-ambiguous", i, "kind", `${pluralOf(this.doc.kinds, other)} are already the people who sign in, and an app has one kind for them`, `{"op": "set-people", "kind": "${other}", "people": false} first, in the same change`);
+      spec.people = true;
+    } else if (!e.people) delete spec.people;
+    this.said.push(peopleSentence(this.doc.kinds, e.kind, e.people, already));
+  }
+
+  /** A grant or a sight as the document holds one, or undefined having said why not. */
+  private policyPart(i: number, e: Doc, sight: boolean): Doc | undefined {
+    const { op: _op, ...rest } = e;
+    const parsed = (sight ? SightSpec : GrantSpec).safeParse(rest);
+    if (!parsed.success) return void this.refuse(i, parsed.error.issues, sight ? "a sight" : "a grant");
+    return parsed.data as Doc;
+  }
+
+  private policyEdit(i: number, e: Doc) {
+    const sight = e.op === "add-sight" || e.op === "remove-sight";
+    const part = this.policyPart(i, e, sight);
+    if (!part) return;
+    this.lastPolicyEdit = i;
+    if (e.op === "remove-grant" || e.op === "remove-sight") return this.removePolicyPart(i, part, sight);
+    // What it names is the app's: its kinds, and a grant's acts (a kind's derived edit and remove among them).
+    for (const [n, kind] of (Array.isArray(part.kinds) ? part.kinds : []).entries()) {
+      if (!this.doc.kinds[kind]) return this.failAs(sight ? "sight-kind" : "edit", i, `kinds.${n}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
+    }
+    if (!sight && part.mutations !== "*") {
+      for (const [n, act] of part.mutations.entries()) {
+        const derived = /^(?:edit|remove)-(.+)$/.exec(act);
+        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived[1]!])) continue;
+        return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap((kind) => [`edit-${kind}`, `remove-${kind}`])].join(", ")}`);
+      }
+    }
+    const said: string[] = [];
+    // A role the app has not declared becomes one of its roles, where it declares them.
+    if (Array.isArray(this.doc.roles) && part.roles !== "*") {
+      for (const role of part.roles as string[]) {
+        if (this.doc.roles.includes(role)) continue;
+        this.doc.roles.push(role);
+        said.push(`${capitalize(whoWords([role]))} is a new role.`);
+      }
+    }
+    if (!this.doc.policy) {
+      // No policy permits everything; a sight alone would take every act away, so its policy says everyone may still do them.
+      const everything = { roles: "*", mutations: "*" } as const;
+      this.doc.policy = { grants: sight ? [everything] : [] };
+      said.push(FIRST_GRANT, ...(sight ? [grantSentence(this.doc, everything)] : []));
+    }
+    if (sight) {
+      if (!this.doc.policy.sees?.length) said.push(FIRST_SIGHT);
+      (this.doc.policy.sees ??= []).push(part);
+      said.push(sightSentence(this.doc, part as SightWords));
+    } else {
+      this.doc.policy.grants.push(part);
+      said.push(grantSentence(this.doc, part as GrantWords));
+    }
+    this.said.push(...said);
+  }
+
+  /**
+   * A GRANT OR A SIGHT, NAMED BY WHAT IT SAYS. A chat names one the way it
+   * would say it — "the grant that lets everyone take back a vote" — so a
+   * removal names it by its keys: roles and acts (or kinds) in any order,
+   * and any other key it gives must match too. Never by its place in the
+   * list, which another change can move.
+   */
+  private removePolicyPart(i: number, part: Doc, sight: boolean) {
+    const list: Doc[] = (sight ? this.doc.policy?.sees : this.doc.policy?.grants) ?? [];
+    const sameSet = (a: unknown, b: unknown) => a === b || (Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x) => b.includes(x)));
+    const keys = sight ? ["own", "via"] : ["kinds", "self", "ownEnd", "describe"];
+    const matches = list.filter(
+      (one) =>
+        sameSet(one.roles, part.roles) &&
+        (sight ? sameSet(one.kinds, part.kinds) : sameSet(one.mutations, part.mutations)) &&
+        keys.every((key) => part[key] === undefined || (typeof part[key] === "boolean" ? (one[key] ?? false) === part[key] : key === "kinds" ? sameSet(one[key] ?? "*", part[key]) : one[key] === part[key])),
+    );
+    const what = sight ? "sight" : "grant";
+    const say = (one: Doc) => (sight ? `${whoWords(one.roles)} ${sightWords(this.doc, one as SightWords)}` : grantBody(this.doc, one as GrantWords));
+    if (matches.length === 0) {
+      const there = list.map(say);
+      return this.fail(i, "", `no ${what} ${sight ? "shows" : "says"} ${say(part)}${there.length ? `; the ${what}s ${sight ? "show" : "say"} ${there.length > 1 ? `${there.slice(0, -1).join("; ")}; and ${there.at(-1)}` : there[0]}` : `; the app has no ${what}s`}`);
+    }
+    if (matches.length > 1) return this.fail(i, "", `${matches.length} ${what}s ${sight ? "show" : "say"} ${say(part)}`, `say ${sight ? "own or via" : "ownEnd, self, kinds or describe"} as the one to remove says them`);
+    const gone = matches[0]!;
+    list.splice(list.indexOf(gone), 1);
+    this.said.push(sight ? sightGone(this.doc, gone as SightWords) : grantGone(this.doc, gone as GrantWords));
+    if (sight && list.length === 0) {
+      delete this.doc.policy.sees;
+      this.said.push(NO_SIGHT_LEFT);
+    } else if (!sight && list.length === 0) this.said.push(NO_GRANT_LEFT);
   }
 
   // ── kinds ──
@@ -2010,6 +2139,65 @@ class Editor {
   }
 }
 
+/** What the people and the policy make together, as `graview check` judges it (`checkPeople`), said over the document. */
+function peopleProblems(doc: Doc, at: string): Finding[] {
+  const out: Finding[] = [];
+  const kinds = doc.kinds as GraviewDocument["kinds"];
+  const people = peopleKinds(kinds);
+  const policy = doc.policy as GraviewDocument["policy"];
+  const reads = policy?.sees?.some((sight) => sight.via !== undefined) ? "a sight via a relation" : policy?.grants.some((grant) => grant.ownEnd) ? "a grant held to a person's own end of a link" : undefined;
+  if (people.length === 0 && reads) out.push(error("people-unsaid", at, `${reads} reads each person's own record, and no kind is the people who sign in`, '{"op": "set-people", "kind": "<the kind whose records are the people>", "people": true}'));
+  for (const sight of policy?.sees ?? []) {
+    const via = sight.via;
+    if (via === undefined) continue;
+    const from = Object.keys(kinds).filter((kind) => kinds[kind]!.edges?.[via]);
+    if (from.length === 0) {
+      out.push(error("sight-via-unknown-edge", at, `no kind has a relation ${quoted(via)}, so a sight via it shows nothing`, `name a relation that joins ${listOf(sight.kinds.map((kind) => pluralOf(kinds, kind)))} to the people`));
+      continue;
+    }
+    if (people.length === 0) continue;
+    const reaches = (target: string) => from.some((kind) => {
+      const to = kinds[kind]!.edges![via]!.to;
+      return to === "*" || to.includes(target);
+    });
+    for (const kind of sight.kinds) {
+      if ((from.includes(kind) && people.some(reaches)) || (people.some((one) => from.includes(one)) && reaches(kind))) continue;
+      out.push(error("sight-via-misses-people", at, `${quoted(via)} never joins ${pluralOf(kinds, kind)} to ${pluralOf(kinds, people[0]!)}, so the sight shows no ${nounOf(doc, kind)} to anyone`, `name a relation between ${nounOf(doc, kind)} and ${nounOf(doc, people[0]!)}, or say own: true`));
+    }
+  }
+  for (const grant of policy?.grants ?? []) {
+    if (!grant.ownEnd) continue;
+    if (grant.mutations === "*") {
+      out.push(error("grant-own-end-without-link", at, "a grant held to a person's own end of a link names every act, and most link nothing", "name the acts it holds: the ones that connect or sever"));
+      continue;
+    }
+    for (const name of grant.mutations) {
+      const ends = linkEnds(doc.acts?.[name]);
+      if (ends === "far") continue;
+      const title = quoted(doc.acts?.[name]?.title ?? name);
+      out.push(
+        ends === "near"
+          ? error("grant-own-end-without-link", at, `${title} takes no record at the other end of what it links, so a grant held to a person's own end of it is never met`, 'take the record at its far end as an argument, or say "$me" there and drop ownEnd')
+          : error("grant-own-end-without-link", at, `${title} connects and severs nothing, so a grant held to a person's own end of a link has no end to hold`, "hold it with self: true for the subject, or name an act that connects or severs"),
+      );
+    }
+  }
+  return out;
+}
+
+/** Whether an act links, and whether it takes the record at the far end of a link as an argument: "far", "near" (only its subject, "$me" or what it made) or "none". */
+function linkEnds(act: Doc | undefined): "none" | "near" | "far" {
+  if (!act) return "none";
+  if (act.connects || act.severs) return "far";
+  const own = new Set(["subject", "me", "new", ...(act.effects ?? []).flatMap((e: Doc) => (e.create && e.as ? [e.as] : []))]);
+  const links = (act.effects ?? []).filter((e: Doc) => e.connect || e.sever);
+  if (links.length === 0) return "none";
+  return links.some((e: Doc) => [e.from, e.to].some((end) => {
+    const ref = refName(end);
+    return ref !== undefined && !own.has(ref);
+  })) ? "far" : "near";
+}
+
 /** A `$name` reference or bare argument name in a guard, renamed (for an argument that followed its field). */
 function rewriteBinding(source: string, from: string, to: string): string {
   try {
@@ -2031,7 +2219,6 @@ function swapToken(name: string, from: string, to: string): string {
   return name;
 }
 
-const listOf = (xs: readonly string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 
 /** Map every block of a view, nested ones included; a block mapped to null is dropped. */
 function mapBlocks(blocks: unknown[], f: (b: Record<string, unknown>) => Record<string, unknown> | null): unknown[] {
@@ -2053,12 +2240,9 @@ function mapBlocks(blocks: unknown[], f: (b: Record<string, unknown>) => Record<
 // ── words for what changed ───────────────────────────────────────────────────
 
 const withA = (noun: string) => `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
-const nounOf = (doc: Doc, kind: string): string => doc.kinds[kind]?.noun ?? words(kind);
+const nounOf = (doc: Doc, kind: string): string => nounWords(doc.kinds, kind);
 /** A kind's plural as a person reads it: "packages", "people and teams". */
-function pluralWords(doc: Doc, kind: string): string {
-  const plural: string | undefined = doc.kinds[kind]?.plural;
-  return plural ? plural.charAt(0).toLowerCase() + plural.slice(1) : `${words(kind)}s`;
-}
+const pluralWords = (doc: Doc, kind: string): string => pluralOf(doc.kinds, kind);
 /** The kinds a lens binds, for saying where it stands. */
 function kindsBound(lens: Doc): string[] {
   const bindings = lens["bindings"];
@@ -2260,6 +2444,19 @@ export function editDocument(document: GraviewDocument, edits: readonly unknown[
     editor.apply(i, raw);
   });
   if (editor.findings.length > 0) return { ok: false, findings: editor.findings };
+  /*
+   * WHAT THE PEOPLE AND THE POLICY MAKE TOGETHER, judged once the change is
+   * whole (FR-170): moving the people from one kind to another is two edits,
+   * and the first alone leaves a sight reading nobody. What the change made
+   * wrong is refused at its last such edit; what was wrong before is not
+   * this change's to answer for.
+   */
+  if (editor.lastPolicyEdit >= 0) {
+    const at = `edits.${editor.lastPolicyEdit}`;
+    const before = new Set(peopleProblems(current, at).map((finding) => finding.message));
+    const made = peopleProblems(editor.doc, at).filter((finding) => !before.has(finding.message));
+    if (made.length > 0) return { ok: false, findings: made };
+  }
   /*
    * THE TOOL INTERFACE MOVED, AND SAYS SO (FR-34). A derived act is named for
    * its kind and asks for its fields by name, so a rename changes what an

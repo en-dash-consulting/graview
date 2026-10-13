@@ -9,7 +9,7 @@ import type { AnyNodeDefinition } from "./schema/types.js";
 import { hidesFrom, seesId } from "./seen.js";
 import type { Store } from "./store.js";
 import { kindPath, placePath, sharesItsName, type Place } from "./views/types.js";
-import { capitalize } from "./capital.js";
+import { capitalize, listed } from "./capital.js";
 
 /**
  * SEARCH IS ONE SEAM, and the graph is the result list.
@@ -687,12 +687,7 @@ export function describeSearched(schema: AnySchema, searched: SearchResult["sear
     const plural = pluralOf(schema.tryDefinition(kind), kind);
     return index === 0 ? plural : plural.toLowerCase();
   });
-  const names =
-    plurals.length === 0
-      ? "Nothing"
-      : plurals.length === 1
-        ? plurals[0]!
-        : `${plurals.slice(0, -1).join(", ")} and ${plurals[plurals.length - 1]!}`;
+  const names = listed(plurals) || "Nothing";
   const lifecycled = searched.kinds.some((kind) => schema.tryDefinition(kind)?.lifecycle);
   if (!lifecycled) return `${capitalize(names)}.`;
   return searched.past ? `${capitalize(names)}, past ones included.` : `${capitalize(names)}, current ones; add is:any for past ones.`;

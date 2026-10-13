@@ -20,7 +20,7 @@ import type { Reading } from "./to-declaration.js";
  * added. A rename is said before anything that names the new name.
  *
  * What the studio changed that no op can say — a relation's cardinality, a
- * kind's lifecycle, a role, a grant — is a finding, one sentence each, and
+ * kind's lifecycle, a role — is a finding, one sentence each, and
  * no document is made while there is one: a document that silently kept the
  * old value would say the studio's change happened when it had not.
  */
@@ -50,7 +50,7 @@ const KIND_PROPERTIES = ["plural", "noun", "description", "lifecycleField", "ret
 const KIND_WORDS: Record<(typeof KIND_PROPERTIES)[number], string> = { plural: "plural", noun: "noun", description: "description", lifecycleField: "lifecycle", retired: "lifecycle", figure: "figure" };
 const EDGE_PROPERTIES = ["description", "inverse", "cardinality", "appendOnly", "toAny"] as const;
 const ACT_PROPERTIES = ["title", "description", "fromTheOtherEnd", "destructive", "writes", "onAny"] as const;
-const OTHER_SORTS = ["role", "grant", "sight", "lens", "brand"] as const;
+const OTHER_SORTS = ["role", "lens", "brand"] as const;
 
 /** The studio's changes from `before` to `after`, as edits to `document` — the document `before` was read from. */
 export function documentEdits(document: GraviewDocument, before: Reading, after: Reading): StudioEdits {
@@ -201,6 +201,9 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     const changed = new Set(KIND_PROPERTIES.filter((key) => !same(old[key], kind[key])).map((key) => KIND_WORDS[key]));
     for (const what of changed) findings.push(unsaid(`kinds.${label(kind)}`, `${label(kind)}'s ${what} changed; no edit says a kind's ${what} yet`));
   }
+  // The people (FR-170): the kind that stops being them first, so a move is two edits that never say two kinds.
+  const people = [...kindsAfter].flatMap(([id, kind]) => (kindsBefore.has(id) && (kindsBefore.get(id)!["people"] === true) !== (kind["people"] === true) ? [{ op: "set-people" as const, kind: label(kind), people: kind["people"] === true }] : []));
+  edits.push(...people.sort((a, b) => Number(a.people) - Number(b.people)));
   const stillThere = (read: Read, from: string, edge: string) =>
     read
       .out(from, edge)
@@ -396,6 +399,45 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       const verb = !old ? "is new" : !node ? "is gone" : "changed";
       findings.push(unsaid(sort === "brand" ? "brand" : sort === "lens" ? "lenses" : sort === "role" ? "roles" : "policy", `the ${sort} "${what}" ${verb}; no edit says ${sort === "brand" ? "a brand's name or typefaces" : `a ${sort}`} yet`));
     }
+  }
+
+  /*
+   * WHO MAY DO AND SEE WHAT (FR-170): each grant and sight the studio
+   * changed, said as `remove-grant` / `add-grant` (`remove-sight` /
+   * `add-sight`). What one named before is read by what it names now — a
+   * renamed act by its new name, a removed one gone, as the edits above
+   * already left the document's — so only what the studio itself changed
+   * is said.
+   */
+  const sorted = (names: readonly string[]) => [...names].sort();
+  const named = (read: Read, from: string, edge: string) => sorted(read.out(from, edge).flatMap((node) => (now.node(node.id) ? [label(now.node(node.id)!)] : [])));
+  const grantOf = (read: Read, g: Node) => ({
+    roles: g["everyone"] === true ? "*" : named(read, g.id, "lets"),
+    mutations: g["allActs"] === true ? "*" : named(read, g.id, "may"),
+    ...(g["allKinds"] === true ? {} : { kinds: named(read, g.id, "allows-on") }),
+    ...(str(g, "describe") ? { describe: str(g, "describe") } : {}),
+    ...(g["self"] === true ? { self: true } : {}),
+    ...(g["ownEnd"] === true ? { ownEnd: true } : {}),
+  });
+  // A sight's own words are the framework's alone: a document's sight has none to keep.
+  const sightOf = (read: Read, sight: Node) => ({ roles: sight["everyone"] === true ? "*" : named(read, sight.id, "seen-by"), kinds: named(read, sight.id, "shows"), ...(sight["own"] === true ? { own: true } : {}), ...(str(sight, "via") ? { via: str(sight, "via") } : {}) });
+  const policyOf = (read: Read) => ({
+    grants: read.ofKind("grant").map((g) => grantOf(read, g)).filter((grant) => grant.mutations === "*" || grant.mutations.length > 0),
+    sees: read.ofKind("sight").map((sight) => sightOf(read, sight)).filter((sight) => sight.kinds.length > 0),
+  });
+  const [had, has] = [policyOf(was), policyOf(now)];
+  /** What is in `a` and not in `b`, each as often as it is there more. */
+  const less = (a: readonly object[], b: readonly object[]) => {
+    const left = b.map((one) => canonicalize(one));
+    return a.filter((one) => {
+      const at = left.indexOf(canonicalize(one));
+      if (at >= 0) left.splice(at, 1);
+      return at < 0;
+    });
+  };
+  for (const [sort, op] of [["grants", "grant"], ["sees", "sight"]] as const) {
+    for (const part of less(had[sort], has[sort])) edits.push({ op: `remove-${op}`, ...part });
+    for (const part of less(has[sort], had[sort])) edits.push({ op: `add-${op}`, ...part });
   }
 
   return { edits, unsaid: findings };

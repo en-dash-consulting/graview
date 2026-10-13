@@ -196,3 +196,4 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [A seat's read is bounded, and a repeated read is not re-sent (FR-167)](./a-seat-s-read-is-bounded-and-a.md) | completed |
 | [An empty last step says the floor's reading (FR-168)](./an-empty-last-step-says-the-floor-s.md) | completed |
 | [A proposal names its record by its label, and the seat knows what the person saw (FR-169)](./a-proposal-names-its-record-by-its.md) | completed |
+| [Named edits for the people kind, grants and sights (FR-170)](./named-edits-for-the-people-kind-grants.md) | completed |

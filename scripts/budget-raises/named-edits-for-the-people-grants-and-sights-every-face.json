@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 9015,
+  "gzipped": 3069,
+  "note": "Raised when a document's edits came to name the people kind, a grant and a sight (FR-170): `set-people`, `add-grant`, `remove-grant`, `add-sight` and `remove-sight` in `editDocument`, each said in the declaration's words (`policy-words.ts`), the people and the policy judged once the change is whole as the checker judges them, and the studio saying its grants, sights and people as those ops. 9_015 / 3_069 more than main (1_739_486 / 552_625), while a hosted page's first load is 103 bytes smaller than main and a page handed a compiled app 104. Measured at 1_748_501 / 555_694."
+}
