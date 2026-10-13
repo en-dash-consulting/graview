@@ -248,6 +248,14 @@ if (chain.length > 1) {
 
 /** The longest any one harness may run; the slowest (gauntlet) takes about eleven minutes on the nightly. */
 const HARNESS_MINUTES = Number(process.env.GRAVIEW_HARNESS_MINUTES ?? 25);
+/*
+ * A HARNESS LONGER THAN THE LIMIT BY WHAT IT IS, not stuck: quiet sweeps
+ * Cloud's two apps in three engines, two schemes and every width and box,
+ * and took 35 minutes on a machine running other agents' harnesses — so it
+ * was stopped at 25 every time and never wrote a verdict after #257.
+ */
+const LONGER = { quiet: 60 };
+const minutesFor = (name) => Math.max(HARNESS_MINUTES, process.env.GRAVIEW_HARNESS_MINUTES ? 0 : (LONGER[name] ?? 0));
 const results = [];
 const runOne = async ([name, file]) => {
   const began = Date.now();
@@ -267,10 +275,10 @@ const runOne = async ([name, file]) => {
      * on. Each harness also fails its own stuck claim sooner (lib/deadline.mjs).
      */
     const stopped = setTimeout(() => {
-      output += `\nstopped after ${HARNESS_MINUTES} minutes: ${name} wrote no verdict in time (GRAVIEW_HARNESS_MINUTES)\n`;
+      output += `\nstopped after ${minutesFor(name)} minutes: ${name} wrote no verdict in time (GRAVIEW_HARNESS_MINUTES)\n`;
       child.kill("SIGTERM");
       setTimeout(() => child.kill("SIGKILL"), 15_000).unref();
-    }, HARNESS_MINUTES * 60_000);
+    }, minutesFor(name) * 60_000);
     child.stdout.on("data", (chunk) => (output += chunk));
     child.stderr.on("data", (chunk) => (output += chunk));
     child.on("exit", (code) => {
