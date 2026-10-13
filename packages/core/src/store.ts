@@ -1,4 +1,5 @@
 import { hidesFrom, readingOf, seatLens, seenBy, seesEveryRecord, seesId } from "./seen.js";
+import { isoToday } from "./days.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
@@ -465,8 +466,13 @@ export class Store<S extends AnySchema> {
   private quiet = 0;
   /** True of a rehearsal (`previewAll`): what it does is told to nobody. */
   private rehearsing = false;
-  /** The day a host last ticked this store to (FR-176): what its rules are judged on, where nothing pins one. */
-  private ticked: string | undefined;
+  /**
+   * The day a host last ticked this store to (FR-176), and the day the clock
+   * read when it did: what its rules are judged on, where nothing pins one,
+   * until the clock's day moves past the one it was ticked on — a timer
+   * that slept through midnight never leaves the store on yesterday.
+   */
+  private ticked: { readonly day: string; readonly on: string } | undefined;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
@@ -991,7 +997,7 @@ export class Store<S extends AnySchema> {
    * a day (a test, a demo, a replay) is asked about that day.
    */
   today(): string | undefined {
-    return this.pinned() ?? this.ticked;
+    return this.pinned() ?? (this.ticked && this.ticked.on === isoToday() ? this.ticked.day : undefined);
   }
 
   /** The day `invariantOptions` pins, if it pins one: a tick does not move it. */
@@ -1030,9 +1036,9 @@ export class Store<S extends AnySchema> {
     const pinned = this.pinned();
     if (pinned !== undefined) return { day: pinned, was: pinned, appeared: [], cleared: [] };
     const day = dayOf(now);
-    const was = this.ticked;
+    const was = this.today();
     const before = this.violations();
-    this.ticked = day;
+    this.ticked = { day, on: isoToday() };
     const moved = this.moved(before, this.violations());
     if (day !== was && !this.rehearsing && this.quiet === 0) for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
     return { day, ...(was === undefined ? {} : { was }), appeared: moved.introduces, cleared: moved.resolves };

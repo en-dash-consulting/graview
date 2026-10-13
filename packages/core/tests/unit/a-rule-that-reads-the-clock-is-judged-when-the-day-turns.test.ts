@@ -120,6 +120,23 @@ describe("a rule that reads the clock is judged again when the day turns", () =>
     expect(store.violations()).toEqual([]);
   });
 
+  it("never judges on a day the clock has left behind: a tick that did not come leaves the store on the clock", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-12T10:00:00Z"));
+    const store = storeOf();
+    store.tick();
+    expect(store.today()).toBe("2026-10-12");
+    expect(store.violations()).toEqual([]);
+    // The machine slept through midnight, and its timer with it: the next day's rules are judged on the next day.
+    vi.setSystemTime(new Date("2026-10-14T09:00:00Z"));
+    expect(store.today()).toBeUndefined();
+    expect(store.violations().map((one) => one.invariant)).toContain("not-overdue");
+    // A day a host ticks to on purpose holds for the rest of the day it was ticked on.
+    store.tick("2026-10-01");
+    expect(store.today()).toBe("2026-10-01");
+    expect(store.violations()).toEqual([]);
+  });
+
   it("ticks a store at each midnight by the clock today() reads, until it is stopped", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-10-12T22:00:00Z"));
