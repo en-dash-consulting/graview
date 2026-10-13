@@ -4608,3 +4608,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/core/src/store.ts` (`problemsMoved`)
 - harness that should have caught it: the class's check is "none yet"; no fixture had a function rule that counts in its message
 - status: fixed in "walkthrough: C · a problem reworded is not mended" · reworded problems are paired off one for one by rule, record and name before anything is called made or mended. Criterion: `packages/core/tests/unit/a-problem-reworded-is-not-mended.test.ts` (both cases verified failing without the fix)
+
+### W-192 · Somebody browsing is not told "Add a yard" is not theirs: it is not there at all
+- stage: F (sitting down as somebody browsing) · face: pages and scene · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Being told an act is not yours before pressing it" on the pages with the pointer at both widths and on a phone from the keyboard: the yards' list drew no "Add a yard" and no reason, where a member's said "Add a yard — Not permitted: a coordinator can"; and the district's derivation said the act "cannot begin until there is a beekeeper", of a co-op with sixty-four
+- class: offered-then-refused (also: says-something-untrue, shown-what-is-not-theirs)
+- expected: an act the policy keeps from a seat is drawn struck through with the policy's sentence, whatever that seat can see
+- actual: the faces derive over the seat's own graph (`store.seenBy`), and the schema provider drops a creating act — and an act on a record — whose picker has no candidate before the policy is asked; a seat that sees no beekeepers had none, so every act naming one vanished, unexplained, and its absence was put down to the co-op having nobody
+- where it belongs: `packages/tools/src/providers/schema.ts`, `packages/tools/src/derive.ts` (the seat is handed to the providers)
+- harness that should have caught it: the journeys' "refused" job, which did (four of eight ways); the watch judges what is drawn, and an act never drawn has no reason to be missing from
+- status: fixed in "walkthrough: F · an act kept from a seat says so even when it could not be asked" · an act the policy refuses the seat is let through to be withheld with its sentence; only an act the seat may take waits for a candidate. Criterion: `packages/tools/tests/unit/an-act-kept-from-a-seat-says-so-even-when-it-could-not-be-asked.test.ts` (a beginning and an act on a record; both verified failing without the fix), and the journeys' "refused" on walk9

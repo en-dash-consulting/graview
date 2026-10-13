@@ -1,4 +1,4 @@
-import type { AnySchema, NodeOfSchema, Refusal, Store, Violation } from "@graview/core";
+import type { AnySchema, NodeOfSchema, Principal, Refusal, Store, Violation } from "@graview/core";
 
 /** Which provider contributed an action. Ranking reads this. */
 export type ProviderName = "invariant" | "structure" | "schema" | "lens" | "llm" | "insight";
@@ -103,6 +103,13 @@ export interface DeriveContext<S extends AnySchema> {
   /** Current violations, evaluated once and shared by every provider. */
   readonly violations: readonly Violation[];
   readonly context: Readonly<Record<string, unknown>>;
+  /**
+   * Who is asking — the seat the derivation judges every act for. A
+   * provider reads it to let an act the policy keeps from this seat through
+   * to be withheld with its sentence, rather than dropped for want of a
+   * candidate the seat could never see (W-192).
+   */
+  readonly principal?: Principal;
 }
 
 export interface AffordanceProvider<S extends AnySchema> {

@@ -16,7 +16,18 @@ const BASE_SCORE = 40;
 export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
   return {
     name: "schema",
-    derive({ store, selection, nodes, kindSelection, edgeSelection }) {
+    derive({ store, selection, nodes, kindSelection, edgeSelection, principal }) {
+      /*
+       * KEPT FROM THIS SEAT, WHATEVER ITS PICKERS WOULD HOLD (W-192). An act
+       * is dropped below when a picker it needs is empty — but the seat's
+       * graph is what it SEES, so for a seat that sees no beekeepers "Add a
+       * yard" had no candidate and vanished, where a seat that sees them was
+       * told "a coordinator can". An act the policy refuses this seat is let
+       * through, to be withheld with the policy's sentence; only an act the
+       * seat may take waits for a candidate.
+       */
+      const keptFrom = (name: string, args: Readonly<Record<string, unknown>>): boolean =>
+        principal !== undefined && !store.permits({ name, args }, principal).ok;
       const affordances: Affordance[] = [];
 
       /*
@@ -190,7 +201,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
            * words — and it is an observation rather than an action, because
            * there is nothing to press yet.
            */
-          if (!askable) {
+          if (!askable && !keptFrom(mutation.name, {})) {
             const waiting = open.filter(
               (parameter) =>
                 parameter.optional !== true &&
@@ -373,7 +384,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             : (parameter.candidates?.length ?? 0) > 0 ||
               (parameter.shape !== undefined && parameter.shape.type !== "unknown"),
         );
-        if (!askable) continue;
+        if (!askable && !keptFrom(mutation.name, subjectId ? { [subject.arg]: subjectId } : {})) continue;
 
         const batch = nodes.map((node) => ({ [subject.arg]: node.id }));
 
