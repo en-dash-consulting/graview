@@ -872,8 +872,16 @@ export const JOBS = {
       const filter = page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').locator("visible=true").first();
       if (!(await appears(filter))) throw new DeadEnd(`there is no "Filter" to narrow the ${job.plural.toLowerCase()} with`);
       await person.press(filter, '"Filter"');
-      // Each heading of the list starts closed: the one the field stands under is opened, as a person opens it.
-      const heading = page.locator(`[data-testid="arrange-list"] [data-section="${job.field}"] > button[aria-expanded="false"]`).first();
+      /*
+       * Each heading of the list starts closed: the one the field stands
+       * under is opened, as a person opens it — once the list is there. The
+       * list's part is fetched at the first press on the line, so a heading
+       * looked for at once was not there yet on a cold page, was passed
+       * over, and the entry under it never appeared ("Filter offers no …").
+       */
+      const section = page.locator(`[data-testid="arrange-list"] [data-section="${job.field}"]`).first();
+      await appears(section);
+      const heading = section.locator(':scope > button[aria-expanded="false"]');
       if (await heading.isVisible().catch(() => false)) await person.press(heading, `"${job.label}"`);
       const entry = page.locator(`[data-testid="arrange-list"] [data-value^="${job.field}:at-most:"]`).first();
       if (!(await appears(entry))) throw new DeadEnd(`"Filter" offers no ${job.label.toLowerCase()} to narrow the ${job.plural.toLowerCase()} by`);

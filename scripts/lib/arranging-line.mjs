@@ -163,6 +163,8 @@ export async function chooseOnTheLine(page, prefix, word, value) {
 export async function openFilterSection(page, value) {
   const key = value.slice(0, value.indexOf(":"));
   const entry = page.locator(`[data-testid="arrange-list"] [data-value="${value}"]`);
+  // The list's part is fetched at the first press on the line: its heading, or the entry, is waited for before either is read.
+  await page.locator(`[data-testid="arrange-list"] [data-section="${key}"], [data-testid="arrange-list"] [data-value="${value}"]`).first().waitFor({ state: "attached", timeout: 5_000 }).catch(() => {});
   if ((await entry.count()) > 0) return;
   const heading = page.locator(`[data-testid="arrange-list"] [data-section="${key}"] > button[aria-expanded="false"]`).first();
   if ((await heading.count()) > 0) await heading.click();
