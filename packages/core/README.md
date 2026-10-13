@@ -93,6 +93,12 @@ Everything a Graview app declares, and the checker that verifies it.
   (`readonly`, refused here with their `because`), links seeded from a
   version field, and transports for Google Calendar and for a tool server
   over MCP (`mcpClient`, `mcpDoor`, `doorClient`, `mcpRemote`).
+- **A spreadsheet brought in** — `@graview/core/import`: `importRows(store,
+  kind, rows, mapping, { by })` reads each cell by its field's type, links a
+  cell to a record by its name, keeps every row that fits as one undoable
+  batch `via: "import"`, and says each refused row in words;
+  `previewImport` keeps nothing, `proposeMapping` offers a mapping from the
+  header row, and `parseCsv` reads a CSV or a paste (`docs/import.md`).
 - **The city** — `@graview/core/scene`: `sceneThumbnail` draws a document
   (or an app) as the Scene draws it from altitude — the same districts on
   the same map, in their hues — as one SVG string, with no DOM, for a host

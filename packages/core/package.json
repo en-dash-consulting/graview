@@ -61,6 +61,10 @@
       "types": "./dist/sync/index.d.ts",
       "default": "./dist/sync/index.js"
     },
+    "./import": {
+      "types": "./dist/import/index.d.ts",
+      "default": "./dist/import/index.js"
+    },
     "./snapshot": {
       "types": "./dist/snapshot.d.ts",
       "default": "./dist/snapshot.js"
