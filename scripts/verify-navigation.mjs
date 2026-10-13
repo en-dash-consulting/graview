@@ -322,6 +322,43 @@ try {
     };
   });
   await listing.close();
+  /*
+   * THE PROBLEM COUNT ON A DISTRICT'S NAME IS A CONTROL. "⚠ 3" on Tasks was
+   * dead text: nothing on the map said what the warning was. It is a button
+   * now, a fingertip tall, named "3 problems in Tasks"; pressed (or Enter on
+   * the keyboard) it chooses the district and brings its problems up beside
+   * the map, the bar's own rows, as many as it said — and Escape gives the
+   * keyboard back to something, never to the page.
+   */
+  const problems = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  problems.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await problems.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+  await problems.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await problems.waitForSelector(".graview-district-problems", { timeout: 15_000 }).catch(() => {});
+  const asButton = await problems.evaluate(() =>
+    [...document.querySelectorAll(".graview-district-problems")].map((el) => {
+      const box = el.getBoundingClientRect();
+      return { tag: el.tagName, name: el.getAttribute("aria-label"), said: el.getAttribute("data-graview-problems"), title: el.getAttribute("title"), width: box.width, height: box.height };
+    }),
+  );
+  const first = asButton[0];
+  const kind = first ? await problems.evaluate(() => document.querySelector(".graview-district-problems")?.getAttribute("data-testid")?.replace("district-problems-", "") ?? "") : "";
+  if (first) {
+    await problems.focus(`[data-testid="district-problems-${kind}"]`);
+    await problems.keyboard.press("Enter");
+    await problems.waitForSelector('[data-testid="district-problem-rows"] li', { timeout: 10_000 }).catch(() => {});
+  }
+  const opened = await problems.evaluate(() => ({
+    panel: document.querySelector('[data-testid="district-panel"]') !== null,
+    rows: document.querySelectorAll('[data-testid="district-problem-rows"] li').length,
+    said: document.querySelector('[data-testid="district-problems"]')?.getAttribute("data-graview-problems") ?? null,
+    keyboard: document.activeElement?.getAttribute("data-testid") ?? null,
+  }));
+  await problems.keyboard.press("Escape");
+  await problems.waitForTimeout(500);
+  const closed = await problems.evaluate(() => ({ panel: document.querySelector('[data-testid="district-panel"]') !== null, onBody: document.activeElement === document.body || document.activeElement === null }));
+  report.districtProblems = { asButton, opened, closed };
+  await problems.close();
 
   /*
    * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
@@ -1052,6 +1089,16 @@ report.verdict = {
     (report.districts?.withAPicture ?? "").includes("zoom=1") &&
     !(report.districts?.withAPicture ?? "").includes("expand="),
   // A kind without one is listed beside the map, every record in it, rather than opened in place over its neighbors.
+  // A district's "⚠ N" is a control: a button, a fingertip tall, named for what it opens; pressed, it brings up as many problems as it said.
+  aDistrictsProblemCountIsAControlThatRevealsItsProblems:
+    (report.districtProblems?.asButton?.length ?? 0) > 0 &&
+    report.districtProblems.asButton.every((one) => one.tag === "BUTTON" && one.height >= 24 && one.width >= 24 && /^\d+ problems? in /.test(one.name ?? "") && (one.title ?? "").includes(one.name ?? "~")) &&
+    report.districtProblems.opened.panel === true &&
+    report.districtProblems.opened.rows > 0 &&
+    String(report.districtProblems.opened.rows) === report.districtProblems.asButton[0].said &&
+    report.districtProblems.opened.said === report.districtProblems.asButton[0].said &&
+    report.districtProblems.closed.panel === false &&
+    report.districtProblems.closed.onBody === false,
   aDistrictWithoutOneIsListedBesideTheMap:
     (report.districts?.withoutOne ?? "").includes("sel=kind%3Areason") &&
     !(report.districts?.withoutOne ?? "").includes("expand=") &&

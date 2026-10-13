@@ -5,8 +5,14 @@ import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
 import { ViewBoundary } from "@graview/react/drawing";
 import type { MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
-import { useGraph, useGraview, useNavigation, type ViewComponent } from "@graview/react/provider";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useGraph, useGraview, useNavigation, useViolations, type ViewComponent } from "@graview/react/provider";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { barPanes } from "./bar-panes-door.js";
+import { problemsAsked, putDownProblemsAsked, subscribeToProblemsAsked } from "./map-asks.js";
+
+// The problems' rows are the bar's own (`ProblemRows`), fetched with its panes: one set of words, one set of repairs.
+type RowsProps = Parameters<typeof import("./bar-panes.js").ProblemRows>[0];
+const ProblemRows = barPanes.part((panes, props: RowsProps) => <panes.ProblemRows {...props} />, { what: "The problems", as: "li" });
 
 /*
  * BESIDE THE MAP, AT A SIZE A PERSON READS.
@@ -423,6 +429,39 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
   }, [store, kind, graph, view.past]);
   // A district that stops being asked about takes its question with it.
   useEffect(() => () => setEmphasis(null), [setEmphasis]);
+  /*
+   * ITS PROBLEMS, the same rows the bar's problems list draws: the broken
+   * rules that name one of this district's records. The "⚠ N" on its name
+   * counts these, and presses to here.
+   */
+  const everyProblem = useViolations<S>();
+  const problems = useMemo(() => {
+    const ids = new Set(members.map((member) => member.id));
+    return everyProblem.filter((violation) => violation.nodeIds.some((id) => ids.has(id)));
+  }, [everyProblem, members]);
+  const lit = useMemo(() => [...new Set(problems.flatMap((violation) => violation.nodeIds))].filter((id) => store.graph.getNode(id)?.kind === kind).slice(0, 300), [problems, store, kind]);
+  const problemsHead = useRef<HTMLHeadingElement | null>(null);
+  const asked = useSyncExternalStore(subscribeToProblemsAsked, problemsAsked, problemsAsked);
+  // Asked for from the district's name: brought into view, and the keyboard moved to it.
+  useEffect(() => {
+    if (asked?.kind !== kind || problems.length === 0) return;
+    problemsHead.current?.scrollIntoView?.({ block: "start" });
+    problemsHead.current?.focus({ preventScroll: true });
+  }, [asked?.n, asked?.kind, kind, problems.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* Closed, the keyboard goes back to what opened it — the problem count if there is one, else the district — never to the page. */
+  useEffect(
+    () => () => {
+      putDownProblemsAsked();
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (active && active !== document.body) return;
+        const escaped = CSS.escape(kind);
+        document.querySelector<HTMLElement>(`[data-testid="district-problems-${escaped}"]`)?.focus({ preventScroll: true }) ??
+          document.querySelector<HTMLElement>(`[data-graview-view="${kindCardId(kind).replace(/["\\]/g, "\\$&")}"]`)?.focus({ preventScroll: true });
+      }, 0);
+    },
+    [kind],
+  );
   const plural = pluralLabel(store.schema, kind);
   const words = narrow.trim().toLowerCase();
   const shown = words ? members.filter((member) => member.name.toLowerCase().includes(words)) : members;
@@ -450,6 +489,27 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
         </>
       }
     >
+      {problems.length > 0 ? (
+        <section aria-label="Problems" data-testid="district-problems" data-graview-problems={problems.length}>
+          {/* The records that are broken stand out on the map while this is open. */}
+          <style>{`${lit.map((id) => `.graview-ground[data-graview-altitude] .graview-building[data-graview-building="${CSS.escape(id)}"] polygon`).join(",\n")} { stroke: var(--graview-accent); stroke-width: 2.2; stroke-opacity: 1; }`}</style>
+          <h3 ref={problemsHead} tabIndex={-1} style={{ ...heading, outline: "revert-layer" }} data-testid="district-problems-heading">
+            {problems.length === 1 ? "1 problem" : `${numberAsRead(problems.length)} problems`}{" "}
+            <span style={{ fontWeight: 400, color: "var(--graview-ink-faint)" }}>· in {plural.toLowerCase()}</span>
+          </h3>
+          <ol style={listStyle} data-testid="district-problem-rows">
+            <Suspense fallback={null}>
+              <ProblemRows
+                violations={problems}
+                pick={(violation) => {
+                  const id = violation.subjectId ?? violation.nodeIds[0];
+                  if (id !== undefined) setSelection([id]);
+                }}
+              />
+            </Suspense>
+          </ol>
+        </section>
+      ) : null}
       {relations.length > 0 ? (
         <section aria-label="Relations">
           <h3 style={heading}>Relations</h3>

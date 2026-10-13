@@ -42,6 +42,7 @@ const ArrangeBar = lazyModule(retryingImport(() => import("./arrange-bar.js"))).
   { what: "Arranging this list" },
 );
 import { Connections } from "./connections.js";
+import { askForProblems } from "./map-asks.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Files } from "./files-door.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -637,6 +638,15 @@ export function registerDefaultViews<S extends AnySchema>(
       const showingNow = props.focused ? (view.within?.["view"] ?? showings[0]?.as) : undefined;
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
+      /*
+       * THE PROBLEMS OF THIS DISTRICT, as the bar and the problems page have
+       * them: the broken rules (`useViolations`) that name one of its
+       * records. The "⚠ N" on its name is that many, and pressing it
+       * brings the same rows up beside the map — one source, so the card, the
+       * panel and the bar's count never say two things.
+       */
+      const everyProblem = useViolations<S>();
+      const problems = everyProblem.filter((violation) => violation.nodeIds.some((id) => members.some((member) => member.id === id)));
       /* FROM ALTITUDE THE NAME SAYS THREE THINGS: what the district is, how many, and how many have a problem — and, for a kind with a status, the bar of where they stand. */
       const altitude = (view.overview ?? false) && props.nestedUnder === undefined;
       const accent = props.focused || props.raised;
@@ -932,6 +942,7 @@ export function registerDefaultViews<S extends AnySchema>(
 
           <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.875rem" }}>
             <span
+              title={altitude && members.length > 0 ? `${numberAsRead(members.length)} ${members.length === 1 ? nounOf(definition, String(kind)) : plural.toLowerCase()}` : undefined}
               style={{
                 fontVariantNumeric: "tabular-nums",
                 color: trouble && !altitude ? "var(--graview-warn)" : saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
@@ -945,10 +956,26 @@ export function registerDefaultViews<S extends AnySchema>(
                 */}
               {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : `${trouble && !altitude ? `${flag} ` : ""}${numberAsRead(members.length)}`}
             </span>
-            {altitude && trouble ? (
-              <span className="graview-district-problems" data-graview-problems={broken} title={`${broken} of ${members.length} ${broken === 1 ? "has a problem" : "have problems"}`}>
-                {`${flag} ${numberAsRead(broken)}`}
-              </span>
+            {altitude && problems.length > 0 ? (
+              <button
+                type="button"
+                className="graview-district-problems"
+                data-testid={`district-problems-${String(kind)}`}
+                data-graview-problems={problems.length}
+                aria-expanded={listed}
+                aria-label={`${numberAsRead(problems.length)} ${problems.length === 1 ? "problem" : "problems"} in ${plural}`}
+                // The first one's own sentence, for a quick look; the rest are a press away.
+                title={`${numberAsRead(problems.length)} ${problems.length === 1 ? "problem" : "problems"} in ${plural} — ${problems[0]!.message}${problems.length > 1 ? ` (and ${numberAsRead(problems.length - 1)} more)` : ""}. Press to see ${problems.length === 1 ? "it" : "them"} and how to fix ${problems.length === 1 ? "it" : "them"}.`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  choose([kindCardId(String(kind))]);
+                  askForProblems(String(kind));
+                }}
+                onDoubleClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <span aria-hidden="true">{`${flag} ${numberAsRead(problems.length)}`}</span>
+              </button>
             ) : null}
             {/*
               * What sits BEHIND THE HORIZON, advertised where it dropped

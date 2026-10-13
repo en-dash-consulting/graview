@@ -1018,10 +1018,30 @@ ${/* THE NAME UNDER A DISTRICT, from altitude: under the plot's front
 [data-graview-altitude] .graview-kind-face > div {
   gap: 6px !important;
 }
+${/* THE PROBLEM COUNT IS A CONTROL: a fingertip's height, quiet until it is reached for, and it says what it opens. */ ""}
 .graview-district-problems {
+  display: inline-flex;
+  align-items: center;
+  min-height: max(1.5rem, 24px);
+  min-width: max(1.5rem, 24px);
+  margin: -4px -4px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
   color: var(--graview-warn);
+  font: inherit;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  cursor: pointer;
+}
+.graview-district-problems:hover {
+  background: color-mix(in oklab, var(--graview-warn) 14%, transparent);
+  text-decoration: underline;
+}
+.graview-district-problems[aria-expanded="true"] {
+  border-color: color-mix(in oklab, var(--graview-warn) 55%, transparent);
 }
 [data-graview-altitude] .graview-kind-face > .graview-kind-members {
   grid-column: 1 / -1;

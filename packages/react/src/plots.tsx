@@ -283,7 +283,7 @@ const PlotTile = memo(function PlotTile({
           ))}
           {drawing.rests.map((rest, i) => (
             <text key={i} className="graview-village-rest" x={rest.at.x - 3} y={rest.at.y + 4} textAnchor="end">
-              +{numberAsRead(rest.count)}
+              <title>{`${numberAsRead(rest.count)} more in this row than the plot has room to show`}</title>+{numberAsRead(rest.count)}
             </text>
           ))}
         </g>

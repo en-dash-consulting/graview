@@ -1,0 +1,6 @@
+{
+  "budget": "embed without the studio",
+  "minified": 110,
+  "gzipped": 110,
+  "note": "Raised when a district's problem count on the map became a control (the card's button, the panel's problems section, the signal between them): 101 / 103 more than main (684_683 / 179_814). Measured at 684_784 / 179_917."
+}
