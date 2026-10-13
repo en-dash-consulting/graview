@@ -2,7 +2,13 @@ import type { AnySchema, Principal, Store } from "@graview/core";
 import { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, type GuestPlace, type GuestTheme, type HostHello } from "../protocol.js";
 import { mintNonce } from "./nonce.js";
 import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, type GuestReads, type GuestStats, type GuestViewInput } from "./session.js";
+import { retryingImport } from "@graview/core/retry";
+import { untilItArrives } from "./arrive.js";
+import type { GuestPictureHand, GuestPictures } from "./pictures.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
+
+/* The pictures' host, fetched only for a frame that asks for them (FR-175): a page of frames that do not carries none of it. */
+const picturesChunk = retryingImport(() => import("./pictures.js"));
 
 export interface MountGuestViewOptions<S extends AnySchema> {
   /** Where the guest's code is served. Where that is, and its CSP, are the host's business. */
@@ -34,6 +40,17 @@ export interface MountGuestViewOptions<S extends AnySchema> {
    * again when it changes (`update`).
    */
   readonly brand?: () => GuestBrand | undefined;
+  /**
+   * The pictures on the records the guest is handed (FR-175): `true`, or
+   * `{ width }`, the widest it draws one in CSS pixels. Each file a record
+   * holds is then handed as a `GuestFile` — a picture with `src`, a
+   * `data:` image the host made from the bytes it fetched as the viewer
+   * (a frame is another origin, where neither the host's path nor its
+   * `blob:` loads); a document by its name, type and size. Within
+   * `limits.pictureBytes` and `limits.picturesBytes`. Left out, a file is
+   * handed as the record keeps it.
+   */
+  readonly pictures?: GuestPictures;
   /** The app's named places: what the guest is told of (`props.places`), and may ask to go to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
   readonly onNavigate?: (id: string) => void;
@@ -110,6 +127,21 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
     if (session && JSON.stringify(theme()) !== pushed) push();
   });
 
+  /*
+   * The pictures on what it is handed (FR-175), where its host asks:
+   * `data:` images, pushed again as each is ready. A guest that says it is
+   * ready before their host has arrived is answered once it has, so it is
+   * never handed a record's path to a file.
+   */
+  let pictures: GuestPictureHand | undefined;
+  let waiting = false;
+  const stopPictures = options.pictures
+    ? untilItArrives(picturesChunk, ({ createGuestPictures }) => {
+        pictures = createGuestPictures(window as Window & typeof globalThis, { as: "data", view: `"${options.title ?? options.view}"`, pictures: options.pictures!, ...(options.limits ? { limits: options.limits } : {}), moved: () => session?.push() });
+        if (waiting) greet();
+      })
+    : () => {};
+
   const end = () => {
     tally();
     session?.dispose();
@@ -130,6 +162,16 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       stats.dropped += 1;
       return;
     }
+    if (options.pictures && !pictures) {
+      waiting = true;
+      return;
+    }
+    greet();
+  };
+
+  /* Answer the guest's ready: a fresh nonce and port, the one before closed. */
+  const greet = () => {
+    waiting = false;
     end();
     const nonce = mintNonce();
     const channel = new MessageChannel();
@@ -142,6 +184,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       send: (message) => channel.port1.postMessage(message),
       ...(options.input ? { input: options.input } : {}),
       ...(options.reads ? { reads: options.reads } : {}),
+      ...(pictures ? { hand: pictures.hand } : {}),
       theme,
       ...(options.places ? { places: () => options.places!().map((place) => place.as), placesShown: options.places } : {}),
       ...(options.onNavigatePlace ? { onNavigatePlace: options.onNavigatePlace } : {}),
@@ -178,6 +221,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       end();
       unwatch();
       logo.dispose();
+      stopPictures();
+      pictures?.dispose();
       window.removeEventListener("message", onMessage);
       iframe.remove();
     },

@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 400,
+  "gzipped": 150,
+  "note": "Raised when a frame guest whose host asks for pictures came to be handed the pictures on its records (FR-175): the frame fetches the pictures' host only then, and answers the guest's ready once it has arrived, so it is never handed a path to a file; the session hands its props through it. 400 / 164 more than main (17_213 / 7_946). Measured at 17_613 / 8_110."
+}

@@ -37,6 +37,12 @@
  *   host  → guest    { type: "dom-event", target, event, … }         (over the port: the viewer clicked, typed or chose on what it drew)
  *   host  → guest    { type: "notice", text }                        (over the port: something it did went nowhere, and why, for its console)
  *
+ * A GUEST THAT ASKS FOR PICTURES (FR-175) — a worker view's manifest or a
+ * frame's host saying `pictures` — is handed each file on a record it is
+ * handed as a `GuestFile`, in the record's field, where the record keeps a
+ * path on the host: nothing new is said on the wire, and a guest that does
+ * not ask is handed what it always was.
+ *
  * The host draws a stylesheet only as the open kit allows (host/css.ts),
  * and numbers each props push (`push`) so the runtime can say when it has
  * drawn it.
@@ -126,6 +132,40 @@ export interface GuestTheme {
    * on another origin.
    */
   readonly logo?: string;
+}
+
+/**
+ * A FILE ON A RECORD, AS A GUEST THAT ASKED FOR PICTURES IS HANDED IT
+ * (FR-175). Where the record keeps a file (`FileValue`, FR-162), a guest
+ * that declared `pictures` is handed this in its place, never the host's
+ * path to it: a sandboxed frame or a worker cannot load that path with the
+ * reader's credentials, and should not learn it.
+ *
+ * A picture (`image/*`, not SVG) carries `src`, an address for
+ * `<img src>` the host made from the bytes it fetched as the reader: a
+ * `blob:` URL of the host's page for a worker view, a `data:` image for a
+ * frame, as the brand's logo is (FR-127). It is absent while the host is
+ * making it (the guest is pushed again when it has), and where the picture
+ * was left out — past the view's budget, past one picture's, or not
+ * loaded — `left` says why. A document, and an SVG, is its name, type and
+ * size alone.
+ */
+export interface GuestFile {
+  /** What it was called when it was put on the record: `porch.jpg`. */
+  readonly name: string;
+  /** Its media type, as the record keeps it. */
+  readonly type: string;
+  /** Its size in bytes, as the record keeps it. */
+  readonly bytes: number;
+  /** A picture's size in pixels, where the record says it. */
+  readonly width?: number;
+  readonly height?: number;
+  /** What a picture shows, in words: its alt text. */
+  readonly caption?: string;
+  /** A picture's address for `<img src>`, made by the host from the bytes. Smaller than the file where the view needs no more. */
+  readonly src?: string;
+  /** Why a picture was left out, in a sentence that names the view. */
+  readonly left?: string;
 }
 
 /**

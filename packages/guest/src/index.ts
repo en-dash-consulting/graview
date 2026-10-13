@@ -7,6 +7,7 @@ export type {
   GuestEdge,
   GuestDomEvent,
   GuestEvent,
+  GuestFile,
   GuestNode,
   GuestPlace,
   GuestPressed,

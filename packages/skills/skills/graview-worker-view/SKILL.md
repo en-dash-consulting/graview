@@ -30,6 +30,7 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
+- `pictures: true` (or `{ width }`, the widest it draws one) hands each file on a record as `{ name, type, bytes, caption, src }`: draw `<img src="${photo.src}">` once `src` comes (a push follows); `left` says why it never will.
 
 A manifest that names a kind, an edge or an act the app does not declare is
 refused before the view starts.
@@ -88,8 +89,7 @@ early word on the last render.
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
 and `search` are drawn as `div`, and `output` as `span`, each with what it
-holds. They lose their landmark or status role, and a selector for them in
-your stylesheet still matches. A `section` is never named (no `aria-label`
+holds; your selectors for them still match. A `section` is never named (no `aria-label`
 or `title`), so it stays out of the landmarks. `role` takes no landmark or
 notice's role (`navigation`, `region`, `status`, `alert`, …).
 
@@ -151,8 +151,7 @@ About 256 kB of source, 5 000 drawn nodes, 120 messages a second,
 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face
 of its records is drawn instead, with why. Draw summaries, not every row
 of a huge set. Work a view schedules with timers between pushes is not
-timed per push. It may keep its worker busy just under the heartbeat's
-5 s; the page stays responsive, the person's CPU does not: never spin.
+timed per push. Never spin: the page stays responsive, the person's CPU does not.
 
 ## Worked examples
 
@@ -171,10 +170,8 @@ views: (schema, registry) => registerWorkerView(registry, { manifest, worker: { 
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));
 ```
 
-A view with `attach: "home"` given to `registerWorkerView` is the home's own
-view: the routed home's body, the page the app opens on — full width under
-the bar on a desk too — and the app's declared home is drawn if it
-fails.
+A view with `attach: "home"` is the home's body, the page the app opens
+on; the app's declared home is drawn if it fails.
 
 ## Then find out whether it worked
 

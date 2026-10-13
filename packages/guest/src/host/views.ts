@@ -17,5 +17,6 @@ export type { Judged, Prefilled, Press, PressedField } from "./writes.js";
 export { checkViewSource } from "./view-source.js";
 export { viewScript } from "./view-script.js";
 export type { MountWorkerViewOptions, WorkerView, WorkerViewCode, WorkerViewFailure, WorkerViewLimits } from "./view.js";
-export type { GuestPlace, GuestTheme } from "../protocol.js";
+export type { GuestFile, GuestPlace, GuestTheme } from "../protocol.js";
+export type { GuestPictureLimits, GuestPictures } from "./pictures.js";
 export type { GuestBrand } from "./theme.js";

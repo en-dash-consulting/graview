@@ -27,6 +27,7 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
+import { guestFileOf, handFiles } from "../host/pictures.js";
 import type { GuestViewInput } from "../host/session.js";
 import { checkViewSource } from "../host/view-source.js";
 import type { WorkerViewLimits } from "../host/view.js";
@@ -194,7 +195,9 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   if (unloadable.length > 0) return failed("source", unloadable.join(" "));
 
   const places = options.places ?? [];
-  const props = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places });
+  const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places });
+  /* A view that asks for pictures (FR-175) is handed each file without the host's path; headless, no bytes are fetched, so a picture comes without its address, as it does before the host has made it. */
+  const props = manifest.pictures ? handFiles(shown, (file) => guestFileOf(file)) : shown;
   const input: HeadlessInput = {
     props,
     acts: manifestActs(manifest).map((one) => one.as ?? one.act),
