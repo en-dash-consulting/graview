@@ -1,7 +1,7 @@
 import { hueFor, type Brand } from "@graview/core";
-import { BLOCK, roadsOf, toIso, villageOf, type Building, type Plot } from "@graview/core/scene";
-import { kindCardId, kindOfCard, type InterpolatedLayout } from "@graview/layout";
-import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactElement } from "react";
+import { toIso, villageOf, type Building } from "@graview/core/scene";
+import type { InterpolatedLayout } from "@graview/layout";
+import { memo, useCallback, useRef, type CSSProperties, type ReactElement } from "react";
 import { useGraview } from "./context.js";
 import { useFlagged } from "./emphasis.js";
 
@@ -72,10 +72,10 @@ export interface PlotsProps {
  * group, so a pan or a tween changes one attribute. Each plot is its own
  * memoized tile whose village is kept for as long as that plot and its
  * members are the same, so dragging one district redraws that district and
- * the roads, not every building in the city on every frame.
+ * its tile, not every building in the city on every frame.
  */
 export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onFocus }: PlotsProps): ReactElement | null {
-  const { selection, store, emphasis } = useGraview();
+  const { selection } = useGraview();
   const flagged = useFlagged();
   const city = frame.city;
   const tiles = frame.nodes.filter((node) => node.plot !== undefined && Math.round(node.plane) === 2);
@@ -88,29 +88,6 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
     focus.current(id);
     return true;
   }, [swallowed]);
-
-  /*
-   * THE ROADS, one per pair of plots joined by any declared edge
-   * (`roadsOf`), curb to curb along the gutters. They depend on every
-   * plot, so they are routed again when any plot moves — and only then.
-   */
-  const plotsSignature = `${cell}|${tiles.map((node) => `${node.id}:${node.plot!.col},${node.plot!.row},${node.plot!.side}`).join(";")}`;
-  const roads = useMemo(() => {
-    if (!city) return [];
-    const at0 = { cell, originX: 0, originY: 0 };
-    const plotsByKind = new Map<string, Plot>();
-    for (const node of tiles) {
-      const kind = kindOfCard(node.id);
-      if (kind !== null && node.plot) plotsByKind.set(kind, node.plot);
-    }
-    return roadsOf(store.schema, plotsByKind).map((road) => ({
-      ...road,
-      d: roadBetween(plotsByKind.get(road.from)!, plotsByKind.get(road.to)!, at0, { x: 0, y: 0 })
-        .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
-        .join(" "),
-    }));
-    // `plotsSignature` stands for the tiles and the cell.
-  }, [plotsSignature, store.schema]);
 
   /* EACH PLOT'S GROUND, kept while that plot and its members are unchanged. */
   const drawn = useRef(new Map<string, PlotDrawing>());
@@ -144,24 +121,6 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
   return (
     <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length}>
       <g transform={`translate(${(city.originX + pan.x).toFixed(1)} ${(city.originY + pan.y).toFixed(1)})`}>
-        <g className="graview-roads" data-graview-roads={roads.length}>
-          {roads.map((road) =>
-            road.d.includes("L") ? (
-              <g
-                key={`${road.from}|${road.to}`}
-                className="graview-road"
-                data-graview-road={road.edges.join(",")}
-                /* The plots it joins, by the id each plot wears in data-graview-plot. */
-                data-graview-from={kindCardId(road.from)}
-                data-graview-to={kindCardId(road.to)}
-                data-graview-lit={emphasis !== null && road.edges.includes(emphasis) ? "" : undefined}
-              >
-                <path className="graview-road-edge" d={road.d} />
-                <path className="graview-road-bed" d={road.d} />
-              </g>
-            ) : null,
-          )}
-        </g>
         {tiles.map((node) => (
           <PlotTile
             key={node.id}
@@ -277,112 +236,11 @@ export function buildingFaces(building: Building, city: City, pan: Point): { rea
   };
 }
 
-/* --------------------------------------------------------------- the roads */
+/* ------------------------------------------------------------- the lattice */
 
 /** Lattice coordinates of a canvas point: the isometric map run backwards. */
 export function toLattice(point: Point, city: City, pan: Point): { readonly col: number; readonly row: number } {
   const x = point.x - city.originX - pan.x;
   const y = point.y - city.originY - pan.y;
   return { col: x / city.cell + (2 * y) / city.cell, row: (2 * y) / city.cell - x / city.cell };
-}
-
-const insidePlot = (point: Point, plot: PlotLike, city: City, pan: Point): boolean => {
-  const { col, row } = toLattice(point, city, pan);
-  return col >= plot.col && col <= plot.col + plot.side && row >= plot.row && row <= plot.row + plot.side;
-};
-
-const lerp = (a: Point, b: Point, t: number): Point => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
-
-/**
- * THE STREETS. Plots stand at multiples of BLOCK and never fill their
- * block, so between every block there is a gutter — a row and a column
- * of cells nothing stands on. A road runs along them: out of its plot to
- * the gutter beside its block, along that gutter, up the gutter beside
- * the other block, and in. Every leg is a lattice line (one coordinate
- * held), no leg crosses a third plot, and the whole city reads as
- * villages on a street grid rather than lines drawn over it.
- */
-export function streetPoints(from: PlotLike, to: PlotLike): { readonly col: number; readonly row: number }[] {
-  const ca = from.col + from.side / 2;
-  const ra = from.row + from.side / 2;
-  const cb = to.col + to.side / 2;
-  const rb = to.row + to.side / 2;
-  const blockRow = (plot: PlotLike) => Math.floor(plot.row / BLOCK);
-  const blockCol = (plot: PlotLike) => Math.floor(plot.col / BLOCK);
-  const ja = blockRow(from);
-  const jb = blockRow(to);
-  const ia = blockCol(from);
-  const ib = blockCol(to);
-  // The gutter row beside `from`, on the side `to` lies; the gutter column beside `to`, on the side `from` lies.
-  const gr = jb > ja ? ja * BLOCK + BLOCK - 0.5 : jb < ja ? ja * BLOCK - 0.5 : ja * BLOCK + BLOCK - 0.5;
-  const gc = ib > ia ? ib * BLOCK - 0.5 : ib < ia ? ib * BLOCK + BLOCK - 0.5 : ib * BLOCK - 0.5;
-  const raw = [
-    { col: ca, row: ra },
-    { col: ca, row: gr },
-    { col: gc, row: gr },
-    { col: gc, row: rb },
-    { col: cb, row: rb },
-  ];
-  // Drop a leg of no length, and a middle point that lies on the line of its neighbors.
-  const out: { col: number; row: number }[] = [];
-  for (const p of raw) {
-    const last = out[out.length - 1];
-    if (last && Math.abs(last.col - p.col) < 1e-9 && Math.abs(last.row - p.row) < 1e-9) continue;
-    out.push(p);
-  }
-  for (let i = out.length - 2; i > 0; i--) {
-    const a = out[i - 1]!;
-    const b = out[i]!;
-    const c = out[i + 1]!;
-    const sameCol = Math.abs(a.col - b.col) < 1e-9 && Math.abs(b.col - c.col) < 1e-9;
-    const sameRow = Math.abs(a.row - b.row) < 1e-9 && Math.abs(b.row - c.row) < 1e-9;
-    if (sameCol || sameRow) out.splice(i, 1);
-  }
-  return out;
-}
-
-/**
- * A ROAD FROM CURB TO CURB: the street between two plots, with the run
- * inside either plot cut away, so the road starts at one curb and ends at
- * the other rather than diving under the buildings. Sampled and bisected,
- * the same way a connector is clipped against a box.
- */
-export function roadBetween(from: PlotLike, to: PlotLike, city: City, pan: Point): Point[] {
-  const points = streetPoints(from, to).map((p) => {
-    const iso = toIso(p.col, p.row, city.cell);
-    return { x: city.originX + pan.x + iso.x, y: city.originY + pan.y + iso.y };
-  });
-  // Walk out of `from`: the first point on the polyline outside its plot.
-  const out: Point[] = [];
-  let started = false;
-  for (let i = 0; i < points.length - 1; i++) {
-    const a = points[i]!;
-    const b = points[i + 1]!;
-    if (!started) {
-      if (insidePlot(b, from, city, pan)) continue;
-      let lo = 0;
-      let hi = 1;
-      for (let k = 0; k < 12; k++) {
-        const mid = (lo + hi) / 2;
-        if (insidePlot(lerp(a, b, mid), from, city, pan)) lo = mid;
-        else hi = mid;
-      }
-      out.push(lerp(a, b, hi));
-      started = true;
-    }
-    // Walk into `to`: the first point on the polyline inside its plot.
-    if (insidePlot(b, to, city, pan)) {
-      let lo = 0;
-      let hi = 1;
-      for (let k = 0; k < 12; k++) {
-        const mid = (lo + hi) / 2;
-        if (insidePlot(lerp(a, b, mid), to, city, pan)) hi = mid;
-        else lo = mid;
-      }
-      out.push(lerp(a, b, lo));
-      return out;
-    }
-    out.push(b);
-  }
-  return out;
 }

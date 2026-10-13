@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T07:20:50.676Z",
+  "at": "2026-10-13T05:43:00.342Z",
   "engine": "chromium",
   "checks": {
     "bSeesAAtTheTasksPlot": {
@@ -53,13 +53,92 @@
     "bClicksAAndFollowsHerUntilEscape": {
       "followingLine": "following Nora",
       "bHash": "#focus=aggregate%3Alist&overview=1",
-      "bHashAfter": "#focus=aggregate%3Alist",
+      "bHashAfter": "#focus=aggregate%3Alist&overview=1",
+      "ok": true
+    },
+    "whoIsHereIsOnTheBarOnTheScenePagesAndAPhone": {
+      "onTheScene": {
+        "marks": [
+          "N"
+        ],
+        "said": "Nora is here",
+        "name": "Nora is here — who and where",
+        "onTheRow": true,
+        "barHeight": 48
+      },
+      "onPages": {
+        "marks": [
+          "N"
+        ],
+        "said": "Nora is here",
+        "name": "Nora is here — who and where",
+        "onTheRow": true,
+        "barHeight": 48
+      },
+      "onAPhone": {
+        "marks": [
+          "N"
+        ],
+        "said": "Nora is here",
+        "name": "Nora is here — who and where",
+        "onTheRow": true,
+        "barHeight": 48
+      },
+      "ok": true
+    },
+    "pressedTheBarListsEachByNameAndWhereTheyAre": {
+      "sceneList": {
+        "rows": [
+          "N Nora On Tasks"
+        ],
+        "goes": true,
+        "keyboardIn": true
+      },
+      "pagesList": {
+        "rows": [
+          "N Nora On Tasks"
+        ],
+        "goes": false,
+        "keyboardIn": true
+      },
       "ok": true
     },
     "aClosesAndIsGoneWithinTheTtl": {
       "gone": null,
-      "tookMs": 2278,
+      "tookMs": 2897,
       "promisedMs": 4500,
+      "ok": true
+    },
+    "aloneTheBarDrawsNobodyNotEvenYourOtherTab": {
+      "scene": null,
+      "pages": null,
+      "tookMs": 2900,
+      "ok": true
+    },
+    "aReaderOnPagesIsSaidWhereTheyAreOnTheOthersBars": {
+      "recordLabel": "Pay the deposit",
+      "said": {
+        "marks": [
+          "S"
+        ],
+        "said": "Sam is here",
+        "name": "Sam is here — who and where",
+        "onTheRow": true,
+        "barHeight": 48
+      },
+      "list": {
+        "rows": [
+          "S Sam On Pay the deposit"
+        ],
+        "goes": true,
+        "keyboardIn": true
+      },
+      "figure": {
+        "at": "t-deposit",
+        "audience": false,
+        "followed": false,
+        "name": "Sam"
+      },
       "ok": true
     }
   },

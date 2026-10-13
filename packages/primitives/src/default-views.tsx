@@ -16,6 +16,7 @@ import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withPast,
 import { rosterRows } from "@graview/layout/sizes";
 import { useKit, useMarqueeRoom, useReached } from "@graview/react/drawing";
 import {
+  BesideTheMap,
   createViews,
   useFound,
   useGraview,
@@ -606,9 +607,11 @@ export function registerDefaultViews<S extends AnySchema>(
       const { brand } = useGraview();
       const figure = hasFigure(String(kind), schema, brand);
       const flag = useKit().marks.flag;
-      const { selection } = useSelection();
+      const { selection, set: choose, clear: putDown } = useSelection();
       const { toggle, view, go } = useNavigation();
       const { views, hiddenKinds } = useGraview<S>();
+      // Whether a panel beside the map lists this district's records when it is opened.
+      const besideTheMap = useContext(BesideTheMap);
       /*
        * THE DRIVE-IN'S MARQUEE. A kind with a named picture has a drive-in
        * from altitude: a dark screen on its plot and, under it, the showings
@@ -645,6 +648,8 @@ export function registerDefaultViews<S extends AnySchema>(
        * announce a tie to the thing that IS the selection.
        */
       const chosen = new Set(selection);
+      // The district chosen alone: its records are listed beside the map.
+      const listed = besideTheMap ? selection.length === 1 && selection[0] === kindCardId(String(kind)) : (props.opened ?? false);
       // What the selection reaches — never what a search lit, which is counted apart below.
       const reached = useReached();
       const tied = accent
@@ -1011,16 +1016,28 @@ export function registerDefaultViews<S extends AnySchema>(
                 type="button"
                 className="graview-kind-open"
                 data-testid={`open-${String(kind)}`}
-                aria-expanded={props.opened ?? false}
-                title={props.opened ? "Close it up" : `See the ${plural} in here`}
+                aria-expanded={listed}
+                title={listed ? "Close it up" : `See the ${plural} in here`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  toggle(kindCardId(String(kind)));
+                  /*
+                   * THE DISTRICT'S RECORDS, BESIDE THE MAP. Opening one in
+                   * place drew its chips as a card floating over its
+                   * neighbors — "+10 more — double-click to go in" — at the
+                   * city's scale. Choosing the district lists every record
+                   * in it in the panel beside the map (`MapPanel`), at a
+                   * size a person reads; a record pressed there draws its
+                   * own links on the map. A scene drawn without the panel
+                   * still opens the district in place.
+                   */
+                  if (!besideTheMap) toggle(kindCardId(String(kind)));
+                  else if (listed) putDown();
+                  else choose([kindCardId(String(kind))]);
                 }}
                 onDoubleClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
               >
-                <span className="graview-kind-open-word">{props.opened ? "close" : "open"}</span> {props.opened ? "▴" : "▾"}
+                <span className="graview-kind-open-word">{listed ? "close" : "open"}</span> {listed ? "▴" : "▾"}
               </button>
             ) : null}
           </div>

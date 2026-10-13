@@ -1,10 +1,15 @@
 {
-  "at": "2026-10-13T05:45:27.701Z",
+  "at": "2026-10-13T07:55:11.962Z",
   "results": [
     {
-      "name": "journeys",
+      "name": "shrunk",
       "code": 0,
-      "took": 411
+      "took": 11
+    },
+    {
+      "name": "navigation",
+      "code": 0,
+      "took": 57
     }
   ]
 }

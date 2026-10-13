@@ -1,0 +1,325 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "A Roadmap",
+  "description": "A many-kind fixture of a product roadmap's shape: a hundred and forty-six features filed under fourteen areas, the requests behind them, the people who asked, the releases that shipped them and the briefs about them.",
+  "kinds": {
+    "area": {
+      "noun": "area",
+      "plural": "areas",
+      "label": "{name}",
+      "description": "A part of the product, usually one package, that features belong to.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "package": {
+          "type": "string"
+        },
+        "product": {
+          "type": "enum",
+          "options": [
+            "framework",
+            "cloud"
+          ],
+          "default": "framework",
+          "required": true
+        }
+      },
+      "describe": "{package}"
+    },
+    "feature": {
+      "noun": "feature",
+      "plural": "features",
+      "label": "{name}",
+      "description": "A capability: considered, planned, being built, or shipped.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "stage": {
+          "type": "enum",
+          "options": [
+            "considering",
+            "planned",
+            "building",
+            "shipped"
+          ],
+          "default": "considering",
+          "required": true
+        },
+        "layer": {
+          "type": "enum",
+          "options": [
+            "framework",
+            "cloud",
+            "both"
+          ]
+        },
+        "summary": {
+          "type": "text"
+        }
+      },
+      "describe": "{stage}",
+      "glance": [
+        "stage",
+        "layer"
+      ],
+      "edges": {
+        "partOf": {
+          "to": [
+            "area"
+          ],
+          "cardinality": "one",
+          "description": "the part it lives in",
+          "inverse": "what this part does"
+        },
+        "dependsOn": {
+          "to": [
+            "feature"
+          ],
+          "description": "what has to ship first",
+          "inverse": "what is waiting on this"
+        },
+        "pairsWith": {
+          "to": [
+            "feature"
+          ],
+          "description": "its other half in the other layer",
+          "inverse": "its other half in the other layer"
+        }
+      }
+    },
+    "request": {
+      "noun": "request",
+      "plural": "requests",
+      "label": "{name}",
+      "description": "What someone asked for, who wants it, and what became of it.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "open",
+            "accepted",
+            "declined",
+            "done"
+          ],
+          "default": "open",
+          "required": true
+        }
+      },
+      "describe": "{status}",
+      "edges": {
+        "about": {
+          "to": [
+            "area"
+          ],
+          "cardinality": "one",
+          "description": "the part it is about",
+          "inverse": "what people have asked of it"
+        },
+        "became": {
+          "to": [
+            "feature"
+          ],
+          "cardinality": "one",
+          "description": "the feature it became",
+          "inverse": "the requests behind it"
+        },
+        "raisedBy": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "one",
+          "description": "who asked",
+          "inverse": "what they asked for"
+        },
+        "votedBy": {
+          "to": [
+            "person"
+          ],
+          "description": "who voted for it",
+          "inverse": "what they voted for"
+        }
+      }
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "label": "{name}",
+      "description": "Someone who asks for things and votes on them.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "release": {
+      "noun": "release",
+      "plural": "releases",
+      "label": "{name}",
+      "description": "A version: when it went out and what it shipped.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "date": {
+          "type": "date",
+          "required": true
+        },
+        "state": {
+          "type": "enum",
+          "options": [
+            "draft",
+            "published"
+          ],
+          "default": "draft",
+          "required": true
+        }
+      },
+      "describe": "{date|date} \u00b7 {state}",
+      "edges": {
+        "ships": {
+          "to": [
+            "feature"
+          ],
+          "description": "what it shipped",
+          "inverse": "the release it shipped in"
+        },
+        "follows": {
+          "to": [
+            "release"
+          ],
+          "cardinality": "one",
+          "description": "the release before it",
+          "inverse": "the release after it"
+        }
+      }
+    },
+    "brief": {
+      "noun": "brief",
+      "plural": "briefs",
+      "label": "{name}",
+      "description": "A message about features between two teams.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "date": {
+          "type": "date",
+          "required": true
+        }
+      },
+      "edges": {
+        "about": {
+          "to": [
+            "feature"
+          ],
+          "description": "the features it reports on or asks for",
+          "inverse": "the briefs about it"
+        },
+        "after": {
+          "to": [
+            "release"
+          ],
+          "cardinality": "one",
+          "description": "the release it was written after",
+          "inverse": "the briefs written after it"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-feature": {
+      "creates": "feature",
+      "title": "Add a feature",
+      "description": "Put a feature on the roadmap."
+    },
+    "file-under": {
+      "on": "feature",
+      "connects": "partOf",
+      "replaces": true,
+      "title": "File under an area",
+      "description": "Say which part a feature lives in.",
+      "fromTheOtherEnd": "Add a feature to this area"
+    },
+    "raise-request": {
+      "creates": "request",
+      "title": "Ask for something",
+      "description": "Raise a request."
+    },
+    "vote": {
+      "on": "request",
+      "connects": "votedBy",
+      "title": "Vote for it",
+      "description": "Add one person's vote.",
+      "fromTheOtherEnd": "Vote for a request"
+    },
+    "withdraw-vote": {
+      "on": "request",
+      "severs": "votedBy",
+      "title": "Take back a vote",
+      "fromTheOtherEnd": "Take back a vote",
+      "description": "Remove one person's vote."
+    }
+  },
+  "lenses": [
+    {
+      "name": "columns",
+      "title": "Roadmap",
+      "bindings": {
+        "feature": {
+          "column": "stage"
+        }
+      }
+    },
+    {
+      "name": "columns",
+      "title": "Triage",
+      "bindings": {
+        "request": {
+          "column": "status"
+        }
+      }
+    },
+    {
+      "name": "coverage",
+      "title": "What each release touched",
+      "bindings": {
+        "rows": {
+          "kind": "release"
+        },
+        "columns": {
+          "kind": "area"
+        },
+        "link": {
+          "path": [
+            "partOf",
+            "ships"
+          ]
+        }
+      }
+    },
+    {
+      "name": "calendar",
+      "title": "Release calendar",
+      "bindings": {
+        "release": {
+          "start": "date"
+        }
+      },
+      "options": {
+        "range": "month"
+      }
+    }
+  ]
+}

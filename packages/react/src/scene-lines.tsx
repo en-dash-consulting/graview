@@ -2,15 +2,18 @@ import { humanizeField, SCENE_LAYERS, type AnySchema, type HasLog, type GraphRea
 import { provenanceWords, provisionalLinks } from "@graview/core/provenance";
 import { type InterpolatedLayout, edgeSelectionId, edgeOfSelection } from "@graview/layout";
 import { CONNECTOR_DASH, PROVISIONAL_DASH, PROVISIONAL_OPACITY, connectorStroke, styleFor } from "@graview/render";
-import { useMemo, useLayoutEffect, useState } from "react";
+import { Suspense, useMemo, useLayoutEffect, useState } from "react";
 import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";
 import { orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
-import { Connectors, connectorStrands, tieRoute } from "./connectors.js";
+import { clipQuadratic, Connectors, connectorStrands, tieRoute } from "./connectors.js";
 import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-node.js";
 import { captionRuns, type CaptionEntry, type CaptionRun } from "./captions.js";
 import { railInset } from "./rails.js";
+import { retryingImport } from "@graview/core/retry";
+import { lazyModule } from "./lazy-part.js";
+import { mapChoice } from "./map-choice.js";
 
 /**
  * EVERY LINE IN THE SCENE, measured against the DOM it is drawn over.
@@ -60,6 +63,7 @@ export function Lines<S extends AnySchema>({
   liveOf,
   holding = false,
   provisional,
+  focusId = null,
 }: {
   /** The links still provisional, by selection id, with what to say of each (FR-172; `provisionalLines`). */
   readonly provisional?: ReadonlyMap<string, string>;
@@ -71,12 +75,14 @@ export function Lines<S extends AnySchema>({
   readonly selection: readonly string[];
   readonly emphasis: string | null;
   readonly stageRef: { current: HTMLElement | null };
-  readonly store: { graph: GraphReader<NodeOfSchema<S>> };
+  readonly store: { graph: GraphReader<NodeOfSchema<S>>; schema: S };
   readonly graphNodes: unknown;
   readonly onPickEdge: (edgeId: string, at?: { x: number; y: number }) => void;
   readonly liveOf: (connector: { from: string; to: string }) => ActivityMark | undefined;
   /** A card is held by the hand: draw from the layout, measure when it lets go. */
   readonly holding?: boolean;
+  /** The stop's focus: from altitude, a group in focus is a lens open beside the map, and no record's links are drawn over it. */
+  readonly focusId?: string | null;
 }) {
   const [asked, remeasure] = useState(0);
   /*
@@ -182,7 +188,17 @@ export function Lines<S extends AnySchema>({
         liveOf={liveOf}
         {...(provisional ? { provisional } : {})}
       />
-      <SelectionTies
+      {/*
+        * FROM ALTITUDE A CHOSEN RECORD DRAWS ITS OWN LINKS, labeled, and
+        * nothing else does: the ties and the lit connectors were three
+        * manners of line at once, none saying which relation it was.
+        */}
+      {overview && mapChoice(selection, { overview, focusId }, (id) => store.graph.getNode(id)?.kind as string | undefined).records.length > 0 ? (
+        <Suspense fallback={null}>
+          <RecordLinks frame={frame} width={width} height={height} stageRef={stageRef} tick={asked} store={store} graphVersion={graphNodes} selection={selection} view={{ overview, focusId }} rulers={provisional ? { ...RULERS, unsureOf: (edge, from, to) => provisional.get(edgeSelectionId(edge, from, to)) } : RULERS} />
+        </Suspense>
+      ) : null}
+      {overview ? null : <SelectionTies
         {...(provisional ? { provisional } : {})}
         stageRef={stageRef}
         nodes={frame.nodes}
@@ -196,10 +212,23 @@ export function Lines<S extends AnySchema>({
         onPickEdge={onPickEdge}
         alreadyDrawn={drawnSingles}
         tick={asked}
-      />
+      />}
     </>
   );
 }
+
+/*
+ * A CHOSEN RECORD'S LINKS FROM ALTITUDE (`record-links-layer.tsx`), fetched
+ * the first time a record is chosen up there: a page nobody chooses
+ * anything on carries none of it.
+ */
+/* The scene's rulers, handed to the links rather than imported by them: a part fetched apart reaching into the scene's own modules splits them around it. */
+const RULERS = { visibleRect, clipQuadratic, unsureDash: PROVISIONAL_DASH, unsureOpacity: PROVISIONAL_OPACITY };
+const recordLinks = /* @__PURE__ */ lazyModule(retryingImport(() => import("./record-links-layer.js")));
+const RecordLinks = /* @__PURE__ */ recordLinks.part(
+  (module, props: Parameters<typeof import("./record-links-layer.js").RecordLinks>[0]) => <module.RecordLinks {...props} />,
+  { what: "The links", quiet: true },
+);
 
 /**
  * The SELECTION'S OWN EDGES, drawn from where the thing actually is.

@@ -27,7 +27,9 @@ import {
   withWithin,
 } from "@graview/layout";
 import {
+  Suspense,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -36,12 +38,16 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { retryingImport } from "@graview/core/retry";
 import type { ActivityMark } from "./activity.js";
+import { lazyModule } from "./lazy-part.js";
+import { BesideTheMap } from "./beside-the-map.js";
 import { useActivity } from "./attention.js";
 import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
 import { matchWith, useFound, useGraph, useGraview, type GraviewContextValue } from "./context.js";
 import { search, touchWeights } from "@graview/core/search";
+import { kitConnector, useKit } from "./kit.js";
 
 // The scene searches: it hands the provider the matcher as it is fetched (FR-179).
 matchWith({ search, touchWeights });
@@ -162,25 +168,6 @@ function useHandZoom(overview: boolean | undefined) {
   return [zoom, zoomLive, setZoom] as const;
 }
 
-/**
- * THE BILLBOARD IS CUT TO ITS PICTURE. The lens draws in a box as tall as
- * the window; the screen's host reports how much of it the lens actually
- * used, and the layout sizes the billboard to that — so the picture's foot
- * is on the curb instead of a village's height above it. Whole pixels,
- * and only a change re-lays the city.
- *
- * Reported by the layout's CURRENT screen only. A billboard on its way
- * into its village is still drawn as one, but for the length of the tween
- * two hosts would report, the layout would flip between their two heights,
- * and every flip restarted the tween from where it was — a crawl of a
- * pixel a frame until the old picture had faded.
- */
-function useScreenHeight() {
-  const [screenHeight, setScreenHeight] = useState<number | undefined>(undefined);
-  // Whole pixels: React keeps the height it has when the new one is the same, so only a change re-lays the city.
-  const noteScreenHeight = useCallback((height: number | undefined) => setScreenHeight(height && Math.round(height)), []);
-  return [screenHeight, noteScreenHeight] as const;
-}
 
 /**
  * THE CAMERA IS NOT A MOVE. A drive-in on the far side of a large city
@@ -504,6 +491,8 @@ const toggled = (current: readonly string[], id: string) =>
 function useCardActs<S extends AnySchema>() {
   const { views, view, setView, setSelection } = useGraview<S>();
   const found = useFound();
+  // Whether a panel beside the map lists a district opened from altitude.
+  const besideTheMap = useContext(BesideTheMap);
   /*
    * Whether this card stands for a kind the app gave a picture of its own —
    * the same question `ResolvedView` asks to draw the ◆, asked here so the
@@ -619,6 +608,15 @@ function useCardActs<S extends AnySchema>() {
       // A district the search lit opens narrowed by the same words.
       const card = kindOfCard(node.id);
       const lit = card !== null && (found?.byKind[card] ?? 0) > 0;
+      /*
+       * A DISTRICT WITH NO PICTURE OF ITS OWN, OPENED FROM ALTITUDE, IS
+       * LISTED BESIDE THE MAP where a panel is drawn — not opened in place
+       * as a card of chips floating over its neighbors.
+       */
+      if (besideTheMap && card !== null && view.overview && !ownPictureOf(node) && !(lit && view.q)) {
+        setSelection([node.id]);
+        return;
+      }
       setView((current) =>
         withJackIn(current, node.id, { ownPicture: ownPictureOf(node), ...(lit && current.q ? { carry: current.q } : {}) }),
       );
@@ -633,55 +631,16 @@ function useCardActs<S extends AnySchema>() {
   });
 }
 
-/**
- * THE RAIL YOU MOVE THE BOARD BY.
- *
- * Dragging the picture itself looks around the city, and must go on
- * doing so: the billboard is the biggest thing on screen and the one
- * most likely to be under the hand, and taking panning away from it
- * was how the far side of a city became unreachable once. So the
- * board gets a rail along its top edge, the way a window has a title
- * bar — the picture pans, the rail moves the board, and neither
- * gesture has to be discovered from the other.
- *
- * How far it may go is not this rail's business: `layout` leashes
- * the pin to its own plot, so a hand and a pasted link are held to
- * the same distance.
- *
- * A TITLE BAR, not a gray strip with a pill floating over it: the
- * picture's name on the left, the one way down on the right, and
- * the whole bar the handle that moves the board.
+/*
+ * THE RELATIONS FROM ALTITUDE, one ribbon each (`ribbons-layer.tsx`),
+ * fetched the first time the city is drawn: a page that stays on the
+ * ground carries none of them.
  */
-function ScreenGrip<S extends AnySchema>({ node }: { readonly node: SceneNode }) {
-  const { views, view, setView } = useGraview<S>();
-  return (
-    <div
-      className="graview-screen-grip"
-      data-graview-grip={node.id}
-      data-testid="screen-grip"
-      title="Move this picture — it stays by its own village"
-    >
-      <span className="graview-screen-title" aria-hidden="true">
-        {views.places().find((place) => place.as === view.within?.["view"] && place.kind === node.screenOf)?.title ?? ""}
-      </span>
-      {/* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */}
-      <button
-        type="button"
-        className="graview-screen-fullscreen"
-        data-testid="screen-fullscreen"
-        title="Open this picture on its own — leave the graview with it"
-        onClick={(event) => {
-          event.stopPropagation();
-          setView((current) => withOverview(current, false));
-        }}
-        onPointerDown={stop}
-        onDoubleClick={stop}
-      >
-        Open ↗
-      </button>
-    </div>
-  );
-}
+const ribbonsModule = /* @__PURE__ */ lazyModule(retryingImport(() => import("./ribbons-layer.js")));
+const Ribbons = /* @__PURE__ */ ribbonsModule.part(
+  (module, props: Parameters<typeof import("./ribbons-layer.js").Ribbons>[0]) => <module.Ribbons {...props} />,
+  { what: "The relations", quiet: true },
+);
 
 /** SCENE FURNITURE in the ground's other corner: the way a map carries its own zoom. */
 function ZoomControls({ zoom, zoomBy }: { readonly zoom: number; readonly zoomBy: (factor: number) => void }) {
@@ -760,10 +719,15 @@ export function Scene<S extends AnySchema>({
    * bigger on its plot, and the camera keeps the picture in view. Derived
    * from the stop, never stored: leaving the picture flies back out.
    */
-  const closer = view.overview && view.within?.["view"] !== undefined ? 1.5 : 1;
+  /*
+   * A PICTURE CHOSEN FROM ALTITUDE OPENS BESIDE THE MAP, at a size a person
+   * reads (the lens panel), so the camera no longer flies closer to a
+   * billboard on the plot: the city stays where it was, with the district
+   * the picture is of lit and the rest receded.
+   */
+  const closer = 1;
   const [zoom, zoomLive, setZoom] = useHandZoom(view.overview);
-  const [screenHeight, noteScreenHeight] = useScreenHeight();
-  const sized = useLayoutOptions<S>(options, size, unit, nameWidth, seated, closer * zoom, screenHeight, nodes);
+  const sized = useLayoutOptions<S>(options, size, unit, nameWidth, seated, closer * zoom, undefined, nodes);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
   // A district under the hand is placed here while it is dragged, and written into the view on release.
@@ -781,8 +745,7 @@ export function Scene<S extends AnySchema>({
   const seatWork = useSeatWork<S>();
 
   // Where the camera goes on its own: to a drive-in off the edge, and down into a village. See scene-camera.ts.
-  const screenId = result.nodes.find((node) => node.screenOf !== undefined)?.id ?? null;
-  const flights = useCameraFlights({ view, result, frame, panned, closer, screenId, setCamera });
+  const flights = useCameraFlights({ view, result, frame, panned, closer, screenId: null, setCamera });
 
   useLentWhereIs(context, frame, wrapperRef);
   usePointerReport(context.pointer, wrapperRef);
@@ -857,6 +820,9 @@ export function Scene<S extends AnySchema>({
   };
 
   const actsOn = useCardActs<S>();
+  // Whether the kit draws a relation at all, for the ribbons (handed in: see ribbons-layer.tsx).
+  const kit = useKit();
+  const kitDraws = useCallback((edge: string) => kitConnector(kit, edge).connector.visible, [kit]);
   const drawnActivity = (id: string) => activityOf(frame.nodes.find((node) => node.id === id));
   /** How far down its card a plot's foot (`share` 1) or middle (2) stands, from the city's own origin and the pan. */
   const plotY = (city: NonNullable<Layout["city"]>, node: SceneNode, plot: NonNullable<SceneNode["plot"]>, share: number) =>
@@ -866,7 +832,14 @@ export function Scene<S extends AnySchema>({
   const stage = { position: "relative", zIndex: SCENE_LAYERS.stage, ...extent } as const;
   const whereIs = (id: string) => whereIsIn(frame, wrapperRef.current, scheme, views, id);
 
-  const hosts = frame.nodes.map((node) => (
+  /*
+   * THE BILLBOARD IS NOT DRAWN. A picture chosen from altitude was its lens
+   * drawn at the city's scale on its plot — eight-pixel text over the
+   * districts, unreadable until it was opened. It opens beside the map now,
+   * at full size (the lens panel); the stop is the same, so an address, the
+   * bar and Back still name it.
+   */
+  const hosts = frame.nodes.filter((node) => node.screenOf === undefined).map((node) => (
     <SceneViewHost
       key={node.id}
       node={node}
@@ -875,7 +848,6 @@ export function Scene<S extends AnySchema>({
       {...(node.plot && frame.city && Math.round(node.plane) === 2
         ? { frontY: plotY(frame.city, node, node.plot, 1), centerY: plotY(frame.city, node, node.plot, 2) }
         : {})}
-      {...(node.screenOf !== undefined ? { screen: true, ...(node.id === screenId ? { onDrawnHeight: noteScreenHeight } : {}) } : {})}
       touched={touched.has(node.id)}
       {...withActivity(activityOf(node))}
       scheme={scheme}
@@ -890,7 +862,6 @@ export function Scene<S extends AnySchema>({
       onDragEnd={onDragUp}
       swallowClick={swallow}
     >
-      {node.screenOf !== undefined ? <ScreenGrip node={node} /> : null}
       {node.beyond ? (
         <BeyondCard kinds={node.beyond} />
       ) : node.aggregate?.opens ? (
@@ -947,7 +918,12 @@ export function Scene<S extends AnySchema>({
       }}
       style={{
         position: "relative",
-        width: "100%",
+        /*
+         * A PANEL DOCKED BESIDE THE MAP TAKES ITS ROOM (`--graview-dock`,
+         * set by the panel while it stands): the city is laid out in what
+         * is left, rather than half of it standing under the panel.
+         */
+        width: "calc(100% - var(--graview-dock, 0px))",
         height: "100%",
         cursor: dragging ? "grabbing" : "grab",
         touchAction: "none",
@@ -995,6 +971,23 @@ export function Scene<S extends AnySchema>({
           if (kind !== null) setView((current) => withFocus(current, aggregateId(kind)));
         }}
       />
+      {/* THE RELATIONS, one ribbon each between the districts they join (see ribbons-layer.tsx). */}
+      {view.overview && frame.city ? (
+        <Suspense fallback={null}>
+          <Ribbons
+            frame={frame}
+            {...extent}
+            pan={frame.city.pan}
+            store={store}
+            graphVersion={nodes}
+            selection={selection}
+            view={view}
+            emphasis={emphasis}
+            hiddenKinds={context.hiddenKinds}
+            drawn={kitDraws}
+          />
+        </Suspense>
+      ) : null}
       {useDom ? (
         /*
          * The DOM path uses an ORDINARY container, not a capture canvas.
@@ -1040,6 +1033,7 @@ export function Scene<S extends AnySchema>({
       {view.overview ? <ZoomControls zoom={zoom} zoomBy={(factor) => zoomAbout.current(factor)} /> : null}
       <Lines
         frame={frame}
+        focusId={view.focusId}
         holding={inPlace}
         {...extent}
         scheme={scheme}

@@ -43,21 +43,13 @@ describe("where is", () => {
   });
 });
 
-describe("the audience strip", () => {
-  it("answers screen:<kind> with the ground in front of the drive-in's screen, down to its nameplate", () => {
-    const withScreen = {
-      nodes: [
-        ...frame.nodes,
-        { id: "aggregate:zone", kind: "zone", plane: 0, x: 120, y: 40, width: 300, height: 120, pinned: false, opacity: 1, screenOf: "zone", aggregate: { kind: "zone", memberIds: [], label: "Zones" } },
-      ].filter((node: { id: string }) => node.id !== "aggregate:zone" || (node as { screenOf?: string }).screenOf === "zone"),
-    } as never;
-    const strip = whereIsIn(withScreen, null, "light", views, "screen:zone")!;
-    expect(strip.x).toBe(120);
-    expect(strip.width).toBeCloseTo(300, 0);
-    expect(strip.y).toBeCloseTo(160, 0);
-    /* Down to the nameplate at y 200. */
-    expect(strip.height).toBeCloseTo(40, 0);
-    expect(whereIsIn(frame, null, "light", views, "screen:zone")).toBeNull();
+describe("the audience of a picture", () => {
+  it("answers screen:<kind> with the district the picture is of: it opens beside the map, not on a screen on the plot", () => {
+    const box = whereIsIn(frame, null, "light", views, "screen:zone")!;
+    expect(box.x).toBe(100);
+    expect(box.width).toBeGreaterThan(0);
+    // A kind with no district drawn has nowhere to gather.
+    expect(whereIsIn({ nodes: frame.nodes.filter((node) => node.id !== "kind:zone") }, null, "light", views, "screen:zone")).toBeNull();
   });
 });
 

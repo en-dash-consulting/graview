@@ -1,0 +1,3837 @@
+{
+  "at": "2026-10-13T04:46:39.765Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "base": "/apps/a1/",
+  "checks": {
+    "aPlaceOnPagesIsStillOpenAfterANewDeclaration": {
+      "seen": {
+        "chromium": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 2,
+              "writes": 0,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 2,
+              "writes": 0,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/places/the-packages",
+              "path": "/apps/a2/places/the-packages",
+              "hash": "",
+              "length": 3,
+              "writes": 1,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2/places/the-packages",
+              "path": "/apps/a2/places/the-packages",
+              "hash": "",
+              "length": 3,
+              "writes": 1,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            }
+          }
+        },
+        "webkit": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 2,
+              "writes": 0,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 2,
+              "writes": 0,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/places/the-packages",
+              "path": "/apps/a2/places/the-packages",
+              "hash": "",
+              "length": 3,
+              "writes": 1,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2/places/the-packages",
+              "path": "/apps/a2/places/the-packages",
+              "hash": "",
+              "length": 3,
+              "writes": 1,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            }
+          }
+        },
+        "firefox": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 1,
+              "writes": 0,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 1,
+              "writes": 0,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/places/the-packages",
+              "path": "/apps/a2/places/the-packages",
+              "hash": "",
+              "length": 2,
+              "writes": 1,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2/places/the-packages",
+              "path": "/apps/a2/places/the-packages",
+              "hash": "",
+              "length": 2,
+              "writes": 1,
+              "face": "pages",
+              "heading": "The packages",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/places/the-packages",
+                "stop": "#"
+              }
+            }
+          }
+        }
+      },
+      "ok": true
+    },
+    "theSceneFocusedOnARecordKeepsItsFocus": {
+      "seen": {
+        "chromium": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 4,
+              "writes": 0,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 4,
+              "writes": 0,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/places/overview#focus=pkg-start",
+              "path": "/apps/a2/places/overview",
+              "hash": "#focus=pkg-start",
+              "length": 5,
+              "writes": 1,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2/places/overview#focus=pkg-start",
+              "path": "/apps/a2/places/overview",
+              "hash": "#focus=pkg-start",
+              "length": 5,
+              "writes": 1,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            }
+          }
+        },
+        "webkit": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 4,
+              "writes": 0,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 4,
+              "writes": 0,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/places/overview#focus=pkg-start",
+              "path": "/apps/a2/places/overview",
+              "hash": "#focus=pkg-start",
+              "length": 5,
+              "writes": 1,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2/places/overview#focus=pkg-start",
+              "path": "/apps/a2/places/overview",
+              "hash": "#focus=pkg-start",
+              "length": 5,
+              "writes": 1,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            }
+          }
+        },
+        "firefox": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 3,
+              "writes": 0,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 3,
+              "writes": 0,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/places/overview#focus=pkg-start",
+              "path": "/apps/a2/places/overview",
+              "hash": "#focus=pkg-start",
+              "length": 4,
+              "writes": 1,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2/places/overview#focus=pkg-start",
+              "path": "/apps/a2/places/overview",
+              "hash": "#focus=pkg-start",
+              "length": 4,
+              "writes": 1,
+              "face": "scene",
+              "heading": null,
+              "focused": "pkg-start",
+              "where": {
+                "face": "scene",
+                "path": "/places/overview",
+                "stop": "#focus=pkg-start",
+                "kind": "package"
+              }
+            }
+          }
+        }
+      },
+      "ok": true
+    },
+    "aReaderOnAKindTheChangeRemovedLandsOnTheHome": {
+      "seen": {
+        "chromium": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 6,
+              "writes": 0,
+              "face": "pages",
+              "heading": "Open questions",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/open-questions",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 6,
+              "writes": 0,
+              "face": "pages",
+              "heading": "A small start, on three fronts.",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/",
+                "stop": "#"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/open-questions",
+              "path": "/apps/a2/open-questions",
+              "hash": "",
+              "length": 7,
+              "writes": 1,
+              "face": "pages",
+              "heading": "Open questions",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/open-questions",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2",
+              "path": "/apps/a2",
+              "hash": "",
+              "length": 7,
+              "writes": 2,
+              "face": "pages",
+              "heading": "A small start, on three fronts.",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/",
+                "stop": "#"
+              }
+            }
+          }
+        },
+        "webkit": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 6,
+              "writes": 0,
+              "face": "pages",
+              "heading": "Open questions",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/open-questions",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 6,
+              "writes": 0,
+              "face": "pages",
+              "heading": "A small start, on three fronts.",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/",
+                "stop": "#"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/open-questions",
+              "path": "/apps/a2/open-questions",
+              "hash": "",
+              "length": 7,
+              "writes": 1,
+              "face": "pages",
+              "heading": "Open questions",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/open-questions",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2",
+              "path": "/apps/a2",
+              "hash": "",
+              "length": 7,
+              "writes": 2,
+              "face": "pages",
+              "heading": "A small start, on three fronts.",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/",
+                "stop": "#"
+              }
+            }
+          }
+        },
+        "firefox": {
+          "article": {
+            "before": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 5,
+              "writes": 0,
+              "face": "pages",
+              "heading": "Open questions",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/open-questions",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+              "path": "/swap.html",
+              "hash": "",
+              "length": 5,
+              "writes": 0,
+              "face": "pages",
+              "heading": "A small start, on three fronts.",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/",
+                "stop": "#"
+              }
+            }
+          },
+          "address": {
+            "before": {
+              "href": "http://localhost:6488/apps/a2/open-questions",
+              "path": "/apps/a2/open-questions",
+              "hash": "",
+              "length": 6,
+              "writes": 1,
+              "face": "pages",
+              "heading": "Open questions",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/open-questions",
+                "stop": "#"
+              }
+            },
+            "after": {
+              "href": "http://localhost:6488/apps/a2",
+              "path": "/apps/a2",
+              "hash": "",
+              "length": 6,
+              "writes": 2,
+              "face": "pages",
+              "heading": "A small start, on three fronts.",
+              "focused": null,
+              "where": {
+                "face": "pages",
+                "path": "/",
+                "stop": "#"
+              }
+            }
+          }
+        }
+      },
+      "ok": true
+    },
+    "aRenamedAppSaysItsNewNameOnBothFacesWithoutAReload": {
+      "seen": {
+        "chromium": {
+          "pages": {
+            "before": {
+              "face": "pages",
+              "region": "A proposal",
+              "heading": "A proposal",
+              "landmarks": [
+                "A proposal · The app’s places",
+                "A proposal · Ask A proposal"
+              ],
+              "old": 2,
+              "renamed": 0,
+              "sameDocument": false
+            },
+            "after": {
+              "face": "pages",
+              "region": "A proposal, renamed",
+              "heading": "A proposal, renamed",
+              "landmarks": [
+                "A proposal, renamed · The app’s places",
+                "A proposal, renamed · Ask A proposal, renamed"
+              ],
+              "old": 0,
+              "renamed": 2,
+              "sameDocument": true
+            }
+          },
+          "scene": {
+            "before": {
+              "face": "scene",
+              "region": "A proposal",
+              "heading": "A proposal",
+              "landmarks": [
+                "A proposal · What the scene shows",
+                "A proposal · Ask A proposal"
+              ],
+              "old": 2,
+              "renamed": 0,
+              "sameDocument": false
+            },
+            "after": {
+              "face": "scene",
+              "region": "A proposal, renamed",
+              "heading": "A proposal, renamed",
+              "landmarks": [
+                "A proposal, renamed · What the scene shows",
+                "A proposal, renamed · Ask A proposal, renamed"
+              ],
+              "old": 0,
+              "renamed": 2,
+              "sameDocument": true
+            }
+          }
+        },
+        "webkit": {
+          "pages": {
+            "before": {
+              "face": "pages",
+              "region": "A proposal",
+              "heading": "A proposal",
+              "landmarks": [
+                "A proposal · The app’s places",
+                "A proposal · Ask A proposal"
+              ],
+              "old": 2,
+              "renamed": 0,
+              "sameDocument": false
+            },
+            "after": {
+              "face": "pages",
+              "region": "A proposal, renamed",
+              "heading": "A proposal, renamed",
+              "landmarks": [
+                "A proposal, renamed · The app’s places",
+                "A proposal, renamed · Ask A proposal, renamed"
+              ],
+              "old": 0,
+              "renamed": 2,
+              "sameDocument": true
+            }
+          },
+          "scene": {
+            "before": {
+              "face": "scene",
+              "region": "A proposal",
+              "heading": "A proposal",
+              "landmarks": [
+                "A proposal · What the scene shows",
+                "A proposal · Ask A proposal"
+              ],
+              "old": 2,
+              "renamed": 0,
+              "sameDocument": false
+            },
+            "after": {
+              "face": "scene",
+              "region": "A proposal, renamed",
+              "heading": "A proposal, renamed",
+              "landmarks": [
+                "A proposal, renamed · What the scene shows",
+                "A proposal, renamed · Ask A proposal, renamed"
+              ],
+              "old": 0,
+              "renamed": 2,
+              "sameDocument": true
+            }
+          }
+        },
+        "firefox": {
+          "pages": {
+            "before": {
+              "face": "pages",
+              "region": "A proposal",
+              "heading": "A proposal",
+              "landmarks": [
+                "A proposal · The app’s places",
+                "A proposal · Ask A proposal"
+              ],
+              "old": 2,
+              "renamed": 0,
+              "sameDocument": false
+            },
+            "after": {
+              "face": "pages",
+              "region": "A proposal, renamed",
+              "heading": "A proposal, renamed",
+              "landmarks": [
+                "A proposal, renamed · The app’s places",
+                "A proposal, renamed · Ask A proposal, renamed"
+              ],
+              "old": 0,
+              "renamed": 2,
+              "sameDocument": true
+            }
+          },
+          "scene": {
+            "before": {
+              "face": "scene",
+              "region": "A proposal",
+              "heading": "A proposal",
+              "landmarks": [
+                "A proposal · What the scene shows",
+                "A proposal · Ask A proposal"
+              ],
+              "old": 2,
+              "renamed": 0,
+              "sameDocument": false
+            },
+            "after": {
+              "face": "scene",
+              "region": "A proposal, renamed",
+              "heading": "A proposal, renamed",
+              "landmarks": [
+                "A proposal, renamed · What the scene shows",
+                "A proposal, renamed · Ask A proposal, renamed"
+              ],
+              "old": 0,
+              "renamed": 2,
+              "sameDocument": true
+            }
+          }
+        }
+      },
+      "ok": true
+    },
+    "inMemoryRoutingANewDeclarationTouchesNoHistory": {
+      "seen": {
+        "chromium": {
+          "place": {
+            "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 2,
+            "writes": 0,
+            "face": "pages",
+            "heading": "The packages",
+            "focused": null,
+            "where": {
+              "face": "pages",
+              "path": "/places/the-packages",
+              "stop": "#"
+            }
+          },
+          "focus": {
+            "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 4,
+            "writes": 0,
+            "face": "scene",
+            "heading": null,
+            "focused": "pkg-start",
+            "where": {
+              "face": "scene",
+              "path": "/places/overview",
+              "stop": "#focus=pkg-start",
+              "kind": "package"
+            }
+          },
+          "gone": {
+            "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 6,
+            "writes": 0,
+            "face": "pages",
+            "heading": "A small start, on three fronts.",
+            "focused": null,
+            "where": {
+              "face": "pages",
+              "path": "/",
+              "stop": "#"
+            }
+          }
+        },
+        "webkit": {
+          "place": {
+            "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 2,
+            "writes": 0,
+            "face": "pages",
+            "heading": "The packages",
+            "focused": null,
+            "where": {
+              "face": "pages",
+              "path": "/places/the-packages",
+              "stop": "#"
+            }
+          },
+          "focus": {
+            "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 4,
+            "writes": 0,
+            "face": "scene",
+            "heading": null,
+            "focused": "pkg-start",
+            "where": {
+              "face": "scene",
+              "path": "/places/overview",
+              "stop": "#focus=pkg-start",
+              "kind": "package"
+            }
+          },
+          "gone": {
+            "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 6,
+            "writes": 0,
+            "face": "pages",
+            "heading": "A small start, on three fronts.",
+            "focused": null,
+            "where": {
+              "face": "pages",
+              "path": "/",
+              "stop": "#"
+            }
+          }
+        },
+        "firefox": {
+          "place": {
+            "href": "http://localhost:6488/swap.html?face=pages&path=%2Fplaces%2Fthe-packages",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 1,
+            "writes": 0,
+            "face": "pages",
+            "heading": "The packages",
+            "focused": null,
+            "where": {
+              "face": "pages",
+              "path": "/places/the-packages",
+              "stop": "#"
+            }
+          },
+          "focus": {
+            "href": "http://localhost:6488/swap.html?face=scene&stop=%23focus%3Dpkg-start",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 3,
+            "writes": 0,
+            "face": "scene",
+            "heading": null,
+            "focused": "pkg-start",
+            "where": {
+              "face": "scene",
+              "path": "/places/overview",
+              "stop": "#focus=pkg-start",
+              "kind": "package"
+            }
+          },
+          "gone": {
+            "href": "http://localhost:6488/swap.html?face=pages&path=%2Fopen-questions",
+            "path": "/swap.html",
+            "hash": "",
+            "length": 5,
+            "writes": 0,
+            "face": "pages",
+            "heading": "A small start, on three fronts.",
+            "focused": null,
+            "where": {
+              "face": "pages",
+              "path": "/",
+              "stop": "#"
+            }
+          }
+        }
+      },
+      "ok": true
+    },
+    "loadingAPlaceAddressOpensThatPlace": {
+      "seen": {
+        "chromium 1440×900": {
+          "path": "/apps/a1/places/the-board",
+          "hash": "",
+          "fragment": false,
+          "length": 2,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "The board",
+          "place": true,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "chromium 390×844": {
+          "path": "/apps/a1/places/the-board",
+          "hash": "",
+          "fragment": false,
+          "length": 2,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "The board",
+          "place": true,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "webkit 1440×900": {
+          "path": "/apps/a1/places/the-board",
+          "hash": "",
+          "fragment": false,
+          "length": 2,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "The board",
+          "place": true,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "webkit 390×844": {
+          "path": "/apps/a1/places/the-board",
+          "hash": "",
+          "fragment": false,
+          "length": 2,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "The board",
+          "place": true,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "firefox 1440×900": {
+          "path": "/apps/a1/places/the-board",
+          "hash": "",
+          "fragment": false,
+          "length": 1,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "The board",
+          "place": true,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "firefox 390×844": {
+          "path": "/apps/a1/places/the-board",
+          "hash": "",
+          "fragment": false,
+          "length": 1,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "The board",
+          "place": true,
+          "scenePressed": false,
+          "homeView": false
+        }
+      },
+      "ok": true
+    },
+    "openingARecordChangesTheAddress": {
+      "seen": {
+        "chromium 1440×900": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 2,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "chromium 390×844": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 2,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "webkit 1440×900": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 2,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "webkit 390×844": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 2,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "firefox 1440×900": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 3,
+          "pushes": 2,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "firefox 390×844": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 3,
+          "pushes": 2,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        }
+      },
+      "ok": true
+    },
+    "backReturnsToWhereYouWere": {
+      "seen": {
+        "chromium 1440×900": {
+          "list": {
+            "path": "/apps/a1/tasks",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Tasks",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "place": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "forward": {
+            "path": "/apps/a1/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "chromium 390×844": {
+          "list": {
+            "path": "/apps/a1/tasks",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Tasks",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "place": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "forward": {
+            "path": "/apps/a1/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "webkit 1440×900": {
+          "list": {
+            "path": "/apps/a1/tasks",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Tasks",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "place": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "forward": {
+            "path": "/apps/a1/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "webkit 390×844": {
+          "list": {
+            "path": "/apps/a1/tasks",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Tasks",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "place": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "forward": {
+            "path": "/apps/a1/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 4,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "firefox 1440×900": {
+          "list": {
+            "path": "/apps/a1/tasks",
+            "hash": "",
+            "fragment": false,
+            "length": 3,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Tasks",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "place": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 3,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "forward": {
+            "path": "/apps/a1/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 3,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "firefox 390×844": {
+          "list": {
+            "path": "/apps/a1/tasks",
+            "hash": "",
+            "fragment": false,
+            "length": 3,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Tasks",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "place": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 3,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "forward": {
+            "path": "/apps/a1/tasks/t1",
+            "hash": "",
+            "fragment": false,
+            "length": 3,
+            "pushes": 2,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Write the brief",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          }
+        }
+      },
+      "ok": true
+    },
+    "aReloadStaysPut": {
+      "seen": {
+        "chromium 1440×900": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 0,
+          "replaces": 0,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "chromium 390×844": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 0,
+          "replaces": 0,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "webkit 1440×900": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 0,
+          "replaces": 0,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "webkit 390×844": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 0,
+          "replaces": 0,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "firefox 1440×900": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 3,
+          "pushes": 0,
+          "replaces": 0,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "firefox 390×844": {
+          "path": "/apps/a1/tasks/t1",
+          "hash": "",
+          "fragment": false,
+          "length": 3,
+          "pushes": 0,
+          "replaces": 0,
+          "face": "pages",
+          "heading": "Write the brief",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        }
+      },
+      "ok": true
+    },
+    "aDeepLinkToARecordOpensIt": {
+      "seen": {
+        "chromium 1440×900": {
+          "path": "/apps/a1/tasks/t2",
+          "hash": "",
+          "fragment": false,
+          "length": 5,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Book the hall",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "chromium 390×844": {
+          "path": "/apps/a1/tasks/t2",
+          "hash": "",
+          "fragment": false,
+          "length": 5,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Book the hall",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "webkit 1440×900": {
+          "path": "/apps/a1/tasks/t2",
+          "hash": "",
+          "fragment": false,
+          "length": 5,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Book the hall",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "webkit 390×844": {
+          "path": "/apps/a1/tasks/t2",
+          "hash": "",
+          "fragment": false,
+          "length": 5,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Book the hall",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "firefox 1440×900": {
+          "path": "/apps/a1/tasks/t2",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Book the hall",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        },
+        "firefox 390×844": {
+          "path": "/apps/a1/tasks/t2",
+          "hash": "",
+          "fragment": false,
+          "length": 4,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "Book the hall",
+          "place": false,
+          "scenePressed": false,
+          "homeView": false
+        }
+      },
+      "ok": true
+    },
+    "theOverviewsTabIsAStepBackUndoes": {
+      "seen": {
+        "chromium 1440×900": {
+          "before": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "undone": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "redone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "pages": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 10,
+            "pushes": 3,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "chromium 390×844": {
+          "before": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "undone": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "redone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "pages": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 10,
+            "pushes": 3,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "webkit 1440×900": {
+          "before": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "undone": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "redone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "pages": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 10,
+            "pushes": 3,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "webkit 390×844": {
+          "before": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "undone": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "redone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "pages": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 10,
+            "pushes": 3,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "firefox 1440×900": {
+          "before": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 5,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "undone": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "redone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "pages": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 9,
+            "pushes": 3,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "firefox 390×844": {
+          "before": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 5,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "undone": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "redone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "pages": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 9,
+            "pushes": 3,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        }
+      },
+      "ok": true
+    },
+    "aScenePictureChosenFromTheBarMovesInViewAndTheAddress": {
+      "seen": {
+        "chromium 1440×900": {
+          "whole": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 8,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          },
+          "chosen": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 9,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The board"
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 9,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          }
+        },
+        "chromium 390×844": {
+          "whole": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 8,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          },
+          "chosen": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 9,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The board"
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 9,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          }
+        },
+        "webkit 1440×900": {
+          "whole": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 8,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          },
+          "chosen": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 9,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The board"
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 9,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          }
+        },
+        "webkit 390×844": {
+          "whole": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 8,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          },
+          "chosen": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 9,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The board"
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 9,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          }
+        },
+        "firefox 1440×900": {
+          "whole": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          },
+          "chosen": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 8,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The board"
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 8,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          }
+        },
+        "firefox 390×844": {
+          "whole": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          },
+          "chosen": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 8,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The board"
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1",
+            "fragment": true,
+            "length": 8,
+            "pushes": 2,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "said": "The whole thing"
+          }
+        }
+      },
+      "ok": true
+    },
+    "theOverviewsAddressIsItsPlaceWithItsStopOnIt": {
+      "seen": {
+        "chromium 1440×900": {
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "chromium 390×844": {
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "webkit 1440×900": {
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "webkit 390×844": {
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 7,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "firefox 1440×900": {
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "firefox 390×844": {
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 6,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        }
+      },
+      "ok": true
+    },
+    "theSceneFromAnAddressNothingLivesAtLandsWhereTheSceneOpens": {
+      "seen": {
+        "chromium 1440×900": {
+          "page": {
+            "path": "/apps/a1/tasks/nobody",
+            "hash": "",
+            "fragment": false,
+            "length": 11,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Nothing lives at this address.",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 12,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          }
+        },
+        "chromium 390×844": {
+          "page": {
+            "path": "/apps/a1/tasks/nobody",
+            "hash": "",
+            "fragment": false,
+            "length": 11,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Nothing lives at this address.",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 12,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          }
+        },
+        "webkit 1440×900": {
+          "page": {
+            "path": "/apps/a1/tasks/nobody",
+            "hash": "",
+            "fragment": false,
+            "length": 11,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Nothing lives at this address.",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 12,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          }
+        },
+        "webkit 390×844": {
+          "page": {
+            "path": "/apps/a1/tasks/nobody",
+            "hash": "",
+            "fragment": false,
+            "length": 11,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Nothing lives at this address.",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 12,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          }
+        },
+        "firefox 1440×900": {
+          "page": {
+            "path": "/apps/a1/tasks/nobody",
+            "hash": "",
+            "fragment": false,
+            "length": 10,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Nothing lives at this address.",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 11,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          }
+        },
+        "firefox 390×844": {
+          "page": {
+            "path": "/apps/a1/tasks/nobody",
+            "hash": "",
+            "fragment": false,
+            "length": 10,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "pages",
+            "heading": "Nothing lives at this address.",
+            "place": false,
+            "scenePressed": false,
+            "homeView": false
+          },
+          "scene": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 11,
+            "pushes": 1,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          }
+        }
+      },
+      "ok": true
+    },
+    "aLinkToAStopWrittenBeforeTheSceneWasAPlaceStillOpensIt": {
+      "seen": {
+        "chromium 1440×900": {
+          "path": "/apps/a1/places/overview",
+          "hash": "#focus=t2",
+          "fragment": true,
+          "length": 13,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "scene",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        },
+        "chromium 390×844": {
+          "path": "/apps/a1/places/overview",
+          "hash": "#focus=t2",
+          "fragment": true,
+          "length": 13,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "scene",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        },
+        "webkit 1440×900": {
+          "path": "/apps/a1/places/overview",
+          "hash": "#focus=t2",
+          "fragment": true,
+          "length": 13,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "scene",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        },
+        "webkit 390×844": {
+          "path": "/apps/a1/places/overview",
+          "hash": "#focus=t2",
+          "fragment": true,
+          "length": 13,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "scene",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        },
+        "firefox 1440×900": {
+          "path": "/apps/a1/places/overview",
+          "hash": "#focus=t2",
+          "fragment": true,
+          "length": 12,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "scene",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        },
+        "firefox 390×844": {
+          "path": "/apps/a1/places/overview",
+          "hash": "#focus=t2",
+          "fragment": true,
+          "length": 12,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "scene",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        }
+      },
+      "ok": true
+    },
+    "aHostThatMountsOnTheGraviewLandsOnTheScenesAddress": {
+      "seen": {
+        "chromium 1440×900": {
+          "path": "/apps/a1/places/overview",
+          "hash": "",
+          "fragment": false,
+          "length": 14,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "graview",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        },
+        "webkit 1440×900": {
+          "path": "/apps/a1/places/overview",
+          "hash": "",
+          "fragment": false,
+          "length": 14,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "graview",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        },
+        "firefox 1440×900": {
+          "path": "/apps/a1/places/overview",
+          "hash": "",
+          "fragment": false,
+          "length": 13,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "graview",
+          "heading": null,
+          "place": false,
+          "scenePressed": true,
+          "homeView": false
+        }
+      },
+      "ok": true
+    },
+    "theOverviewsAddressAloneOpensItAtAltitude": {
+      "seen": {
+        "chromium 1440×900": {
+          "alone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "withAStop": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t2",
+            "fragment": true,
+            "length": 16,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "bare": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "chromium 390×844": {
+          "alone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 15,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 15,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "withAStop": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t2",
+            "fragment": true,
+            "length": 17,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "bare": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "webkit 1440×900": {
+          "alone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "withAStop": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t2",
+            "fragment": true,
+            "length": 16,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "bare": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "webkit 390×844": {
+          "alone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 15,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 15,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "withAStop": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t2",
+            "fragment": true,
+            "length": 17,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "bare": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        },
+        "firefox 1440×900": {
+          "alone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 13,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 13,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "withAStop": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t2",
+            "fragment": true,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "bare": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 13,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "firefox 390×844": {
+          "alone": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "reloaded": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 14,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "graview",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "withAStop": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t2",
+            "fragment": true,
+            "length": 15,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "bare": {
+            "path": "/apps/a1/places/the-board",
+            "hash": "",
+            "fragment": false,
+            "length": 13,
+            "pushes": 0,
+            "replaces": 2,
+            "face": "pages",
+            "heading": "The board",
+            "place": true,
+            "scenePressed": false,
+            "homeView": false
+          }
+        }
+      },
+      "ok": true
+    },
+    "anAppWithAHomeViewOpensOnItAtTheBareAddress": {
+      "seen": {
+        "chromium 1440×900": {
+          "path": "/apps/a2",
+          "hash": "",
+          "fragment": false,
+          "length": 21,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "A small start, on three fronts.",
+          "place": false,
+          "scenePressed": false,
+          "homeView": true
+        },
+        "chromium 390×844": {
+          "path": "/apps/a2",
+          "hash": "",
+          "fragment": false,
+          "length": 19,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "A small start, on three fronts.",
+          "place": false,
+          "scenePressed": false,
+          "homeView": true
+        },
+        "webkit 1440×900": {
+          "path": "/apps/a2",
+          "hash": "",
+          "fragment": false,
+          "length": 21,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "A small start, on three fronts.",
+          "place": false,
+          "scenePressed": false,
+          "homeView": true
+        },
+        "webkit 390×844": {
+          "path": "/apps/a2",
+          "hash": "",
+          "fragment": false,
+          "length": 19,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "A small start, on three fronts.",
+          "place": false,
+          "scenePressed": false,
+          "homeView": true
+        },
+        "firefox 1440×900": {
+          "path": "/apps/a2",
+          "hash": "",
+          "fragment": false,
+          "length": 19,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "A small start, on three fronts.",
+          "place": false,
+          "scenePressed": false,
+          "homeView": true
+        },
+        "firefox 390×844": {
+          "path": "/apps/a2",
+          "hash": "",
+          "fragment": false,
+          "length": 17,
+          "pushes": 0,
+          "replaces": 1,
+          "face": "pages",
+          "heading": "A small start, on three fronts.",
+          "place": false,
+          "scenePressed": false,
+          "homeView": true
+        }
+      },
+      "ok": true
+    },
+    "aLensDoubleClickedFromUpOpensItAndBackReturnsUp": {
+      "seen": {
+        "chromium 1440×900": {
+          "up": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 18,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "down": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 20,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1&in.view=the-board",
+            "fragment": true,
+            "length": 20,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          }
+        },
+        "webkit 1440×900": {
+          "up": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 18,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "down": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 20,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1&in.view=the-board",
+            "fragment": true,
+            "length": 20,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          }
+        },
+        "firefox 1440×900": {
+          "up": {
+            "path": "/apps/a1/places/overview",
+            "hash": "",
+            "fragment": false,
+            "length": 16,
+            "pushes": 1,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          },
+          "down": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&in.view=the-board",
+            "fragment": true,
+            "length": 18,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": false
+          },
+          "back": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask&overview=1&in.view=the-board",
+            "fragment": true,
+            "length": 18,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false,
+            "up": true
+          }
+        }
+      },
+      "ok": true
+    },
+    "aHostThatKeepsItsOwnHistoryIsToldEachPage": {
+      "seen": {
+        "chromium 1440×900": [
+          [
+            "/tasks",
+            "push"
+          ],
+          [
+            "/tasks/t1",
+            "push"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/places/the-board",
+            "pop"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/tasks/t1",
+            "pop"
+          ]
+        ],
+        "chromium 390×844": [
+          [
+            "/tasks",
+            "push"
+          ],
+          [
+            "/tasks/t1",
+            "push"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/places/the-board",
+            "pop"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/tasks/t1",
+            "pop"
+          ]
+        ],
+        "webkit 1440×900": [
+          [
+            "/tasks",
+            "push"
+          ],
+          [
+            "/tasks/t1",
+            "push"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/places/the-board",
+            "pop"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/tasks/t1",
+            "pop"
+          ]
+        ],
+        "webkit 390×844": [
+          [
+            "/tasks",
+            "push"
+          ],
+          [
+            "/tasks/t1",
+            "push"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/places/the-board",
+            "pop"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/tasks/t1",
+            "pop"
+          ]
+        ],
+        "firefox 1440×900": [
+          [
+            "/tasks",
+            "push"
+          ],
+          [
+            "/tasks/t1",
+            "push"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/places/the-board",
+            "pop"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/tasks/t1",
+            "pop"
+          ]
+        ],
+        "firefox 390×844": [
+          [
+            "/tasks",
+            "push"
+          ],
+          [
+            "/tasks/t1",
+            "push"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/places/the-board",
+            "pop"
+          ],
+          [
+            "/tasks",
+            "pop"
+          ],
+          [
+            "/tasks/t1",
+            "pop"
+          ]
+        ]
+      },
+      "ok": true
+    },
+    "aSeatThatCannotSeeTheFocusResolvesTheStopWithoutAStep": {
+      "seen": {
+        "chromium 1440×900": {
+          "before": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t1",
+            "fragment": true,
+            "length": 20,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "after": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask",
+            "fragment": true,
+            "length": 20,
+            "pushes": 3,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "chromium 390×844": {
+          "before": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t1",
+            "fragment": true,
+            "length": 18,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "after": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask",
+            "fragment": true,
+            "length": 18,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "webkit 1440×900": {
+          "before": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t1",
+            "fragment": true,
+            "length": 20,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "after": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask",
+            "fragment": true,
+            "length": 20,
+            "pushes": 3,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "webkit 390×844": {
+          "before": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t1",
+            "fragment": true,
+            "length": 18,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "after": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask",
+            "fragment": true,
+            "length": 18,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "firefox 1440×900": {
+          "before": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t1",
+            "fragment": true,
+            "length": 18,
+            "pushes": 3,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "after": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask",
+            "fragment": true,
+            "length": 18,
+            "pushes": 3,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        },
+        "firefox 390×844": {
+          "before": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=t1",
+            "fragment": true,
+            "length": 16,
+            "pushes": 0,
+            "replaces": 0,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          },
+          "after": {
+            "path": "/apps/a1/places/overview",
+            "hash": "#focus=aggregate%3Atask",
+            "fragment": true,
+            "length": 16,
+            "pushes": 0,
+            "replaces": 1,
+            "face": "scene",
+            "heading": null,
+            "place": false,
+            "scenePressed": true,
+            "homeView": false
+          }
+        }
+      },
+      "ok": true
+    },
+    "anEmbedInAnArticleNeverTouchesTheAddressOrTheHistory": {
+      "seen": {
+        "chromium 1440×900 article": {
+          "before": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "onRecord": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "Write the brief"
+          },
+          "after": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "reseated": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": null
+          },
+          "writes": []
+        },
+        "chromium 390×844 article": {
+          "before": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "onRecord": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "Write the brief"
+          },
+          "after": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "reseated": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": null
+          },
+          "writes": []
+        },
+        "webkit 1440×900 article": {
+          "before": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "onRecord": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "Write the brief"
+          },
+          "after": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "reseated": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": null
+          },
+          "writes": []
+        },
+        "webkit 390×844 article": {
+          "before": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "onRecord": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "Write the brief"
+          },
+          "after": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "reseated": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 2,
+            "writes": 0,
+            "heading": null
+          },
+          "writes": []
+        },
+        "firefox 1440×900 article": {
+          "before": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 1,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "onRecord": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 1,
+            "writes": 0,
+            "heading": "Write the brief"
+          },
+          "after": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 1,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "reseated": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 1,
+            "writes": 0,
+            "heading": null
+          },
+          "writes": []
+        },
+        "firefox 390×844 article": {
+          "before": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 1,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "onRecord": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 1,
+            "writes": 0,
+            "heading": "Write the brief"
+          },
+          "after": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 1,
+            "writes": 0,
+            "heading": "The board"
+          },
+          "reseated": {
+            "href": "http://localhost:6488/article.html?from=somewhere#the-picture",
+            "length": 1,
+            "writes": 0,
+            "heading": null
+          },
+          "writes": []
+        }
+      },
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "passed": true
+}

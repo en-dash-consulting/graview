@@ -1,9 +1,9 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { DraftDoor, Inspector, LinesKey, OverviewButton, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, SeatField, ShowInstallation, useCallLog, viewsCss, type SeatStart } from "@graview/primitives/scene";
+import { DraftDoor, Inspector, LinesKey, MapPanel, OverviewButton, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, SeatField, ShowInstallation, useCallLog, viewsCss, type SeatStart } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
-import { Scene, UrlSync } from "@graview/react";
+import { BesideTheMap, Scene, UrlSync } from "@graview/react";
 import { AUTO_SCENE_HEIGHT } from "./frame.js";
 
 /*
@@ -32,6 +32,8 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, seat, sc
   const find = useBarFind();
   const [calls, onCall] = useCallLog();
   return (
+    /* A district opened here is listed in the panel beside the map. */
+    <BesideTheMap.Provider value={true}>
     <div data-embed-content="" style={{ position: "relative", flex: auto ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "1 1 auto", minHeight: 0, containerType: "size" }}>
       <style>{css}</style>
       {address ? <UrlSync /> : null}
@@ -44,12 +46,15 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, seat, sc
       <DraftDoor />
       {/* The ask field at the picture's foot, that grows into the conversation when asked. */}
       <SeatField<S> {...(seat ? { start: seat } : {})} onCall={onCall} />
+      {/* What is chosen from altitude — a lens, a record's links, a district — beside the map, at a size a person reads. */}
+      <MapPanel<S> />
       <Inspector placement="menu" />
       {/* The scene's Find and its Activity, in the bar's places for them (FR-131), as the whole-page Shell puts them. */}
       <SceneBarTools<S> find={find} calls={calls} />
       {/* After an act, the way back on the board, and ⌘Z (FR-153): as on the pages, and the whole-page Shell. */}
       <SceneWayBack />
     </div>
+    </BesideTheMap.Provider>
   );
 }
 

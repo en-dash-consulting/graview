@@ -78,6 +78,11 @@ somebody with a bright office files a bug — so the framework measures it.
    the next one is one more case. `graview check` holds an explicit line
    color to 3:1 against both grounds in both schemes
    (`kit-contrast-below-aa`); a kind kept quiet is still on the inspector.
+   The kit dresses the lines on the ground. From altitude one manner means
+   one thing and the Key says which: a relation is a ribbon between two
+   districts, as wide as its links; a chosen record's links are drawn in
+   the accent and labeled in the kind's words. `visible: false` keeps a
+   relation's ribbon off the map too.
    An embed's `handle.setBrand({ ...brand, kit })` re-dresses it live.
 
 7. **Say its money and its days.** `currency: "EUR"` and `locale: "de-DE"`

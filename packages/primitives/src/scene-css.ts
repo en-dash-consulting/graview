@@ -7,7 +7,7 @@ import { SPEC_VIEW_CSS } from "./spec-css.js";
 /*
  * THE SCENE'S OWN RULES (FR-104).
  *
- * The districts from altitude, their plots, the village and the roads, the
+ * The districts from altitude, their plots, the village and the ribbons, the
  * billboards and their rails, the bands and what they could not hold, the
  * kind's tag, the zoom: everything here names an element only the scene
  * draws. They were a third of the one theme sheet, and the sheet is drawn
@@ -608,28 +608,77 @@ ${/* THE VILLAGE on the tile: one small iso building per member in the kind's
   letter-spacing: 0.06em;
   fill: var(--graview-ink-muted);
 }
-${/* THE ROADS between plots: the lattice's own two legs from curb to curb, a
-   bed between two edges in the ground's ink. Under the tiles and the
-   buildings, over the fields. A road the legend is asking about comes up
-   in the accent. */ ""}
-.graview-road-edge {
+${/* THE RIBBONS between districts: one per relation, as wide as the links
+   along it (the width is set on each), in the ground's ink and quiet at
+   rest; the relation a person points at, or the Key asks about, or a chosen
+   district's own come up in the accent. One manner, one meaning: what is
+   joined to what, and how much. */ ""}
+.graview-ribbons {
+  opacity: var(--graview-altitude);
+}
+.graview-ribbon-band {
   fill: none;
   stroke: var(--graview-ink);
-  stroke-opacity: ${scheme === "light" ? "0.28" : "0.4"};
-  stroke-width: 7;
+  stroke-opacity: ${scheme === "light" ? "0.2" : "0.3"};
   stroke-linejoin: round;
-  stroke-linecap: round;
+  stroke-linecap: butt;
+  transition: stroke 170ms ease, stroke-opacity 170ms ease;
 }
-.graview-road-bed {
-  fill: none;
-  stroke: var(--graview-ground);
-  stroke-width: 5;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-.graview-road[data-graview-lit] .graview-road-edge {
+.graview-ribbon[data-graview-lit] .graview-ribbon-band {
   stroke: var(--graview-accent);
-  stroke-opacity: 0.9;
+  stroke-opacity: 0.62;
+}
+.graview-ribbon[data-graview-receded] .graview-ribbon-band {
+  stroke-opacity: 0.07;
+}
+${/* A row in the panel beside the map is a press: it says so under the pointer and the keyboard. */ ""}
+.graview-map-panel-row:hover,
+.graview-map-panel-row:focus-visible {
+  background: var(--graview-panel-muted);
+  color: var(--graview-accent);
+}
+.graview-ribbon-said,
+.graview-record-link-said {
+  z-index: ${SCENE_LAYERS.tieLabels};
+  box-sizing: border-box;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: var(--graview-ink);
+  background: var(--graview-float);
+  border: 1px solid var(--graview-edge);
+  border-radius: 6px;
+  box-shadow: var(--graview-lift-low);
+}
+.graview-ribbon-said {
+  transform: translate(-50%, calc(-100% - 8px));
+  padding: 4px 9px;
+  width: max-content;
+  max-width: min(320px, 80cqw);
+  white-space: normal;
+}
+${/* A CHOSEN RECORD'S LINKS: solid to a record the map draws on its own,
+   ending in a dot on it; dashed into a district, for the records in it the
+   map does not draw one by one. Each says its relation at its far end. */ ""}
+.graview-record-link-line {
+  fill: none;
+  stroke: var(--graview-accent);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.graview-record-link[data-graview-lands="district"] .graview-record-link-line {
+  stroke-dasharray: 5 4;
+  stroke-opacity: 0.85;
+}
+.graview-record-link-end {
+  fill: var(--graview-accent);
+}
+.graview-record-link-said {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 2px 7px;
+  font-size: 0.75rem;
 }
 ${/* FIELDS. From altitude the ground darkens a shade toward the near edge and
    fades to the page at the horizon, so the lattice is land with a distance
@@ -703,68 +752,6 @@ ${/* Quiet: the chevron alone until reached for. Never opacity zero — a
 [data-graview-altitude] .graview-kind-open:hover {
   color: var(--graview-accent);
   text-decoration: underline;
-}
-${/* THE BILLBOARD'S FULL-SCREEN CONTROL: the one way down from a picture. */ ""}
-${/* THE RAIL A BILLBOARD IS MOVED BY: a title bar, in the board's own frame
-   ink, along its top edge. Positioned like the full-screen control beside
-   it — the host wraps its children, so the rail is a grandchild of the
-   screen box and a child selector never reaches it. Wide enough to be an
-   easy target, short enough that the picture underneath is still what you
-   see, and present only at altitude, because only up there is the board
-   standing on a plot it could be moved around. */ ""}
-.graview-screen-grip {
-  display: none;
-}
-[data-graview-altitude] [data-graview-screen] .graview-screen-grip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  ${/* Drawn height, not CSS height: a district's plane is scaled down at
-     altitude, and 14 here reached the screen as an eight-pixel strip that
-     took three attempts to catch. */ ""}
-  height: 32px;
-  padding: 0 6px 0 12px;
-  box-sizing: border-box;
-  cursor: grab;
-  ${/* A title bar in the panel's own colors, not a gray strip: the board is
-     a window onto the picture, and its bar reads as the window's. */ ""}
-  background: var(--graview-panel-muted);
-  border-bottom: 1px solid var(--graview-edge);
-  z-index: ${SCENE_LAYERS.lines};
-}
-[data-graview-altitude] [data-graview-screen] .graview-screen-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--graview-ink);
-}
-[data-graview-altitude] [data-graview-screen] .graview-screen-grip:active {
-  cursor: grabbing;
-}
-.graview-screen-fullscreen {
-  flex: 0 0 auto;
-  min-height: max(1.5rem, 24px);
-  padding: 1px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--graview-edge);
-  background: var(--graview-panel);
-  color: var(--graview-accent);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  white-space: nowrap;
-  cursor: pointer;
-  box-shadow: none;
-}
-.graview-screen-fullscreen:hover:not(:disabled) {
-  border-color: var(--graview-accent);
 }
 [data-graview-altitude] .graview-kind-members > [data-graview-pick] {
   width: 100%;
@@ -1153,41 +1140,6 @@ ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
   color: var(--graview-ink-faint);
   font-variant-numeric: tabular-nums;
 }
-
-${/* THE SCREEN IS A BILLBOARD at the back of the village: a frame, and two
-   posts into the ground at its foot. */ ""}
-${/* On the NATURAL BOX, which is the picture now: the layout cuts the
-   billboard to what the lens drew (measured by the scene), never shorter
-   than a screen's worth — so the box is the picture, and an empty lens is a
-   header over an empty screen rather than a strip floating over the
-   village. The frame used to sit on the drawing itself, from the days the
-   box was as tall as the window with the picture in its top third. It
-   carries the panel's own ground so the empty part of a screen is a screen
-   and not the field showing through a frame. */ ""}
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural],
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag) {
-  outline: 2px solid color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
-  outline-offset: 0;
-  background: var(--graview-panel);
-}
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag) {
-  position: relative;
-}
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::before,
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::after,
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::before,
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  width: 3px;
-  height: 16px;
-  background: color-mix(in oklab, var(--graview-ink) 60%, var(--graview-panel));
-}
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::before,
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::before { left: 22%; }
-[data-graview-altitude] [data-graview-screen] > [data-graview-natural]::after,
-[data-graview-altitude] [data-graview-screen] > :not([data-graview-natural]):not(.graview-kind-tag)::after { right: 22%; }
 
 ${/* A thing inside a view that is itself a thing: an event in a calendar, a
    person in a list. It has to look reachable, and it has to SHOW focus —

@@ -1,0 +1,64 @@
+{
+  "at": "2026-10-13T05:35:35.700Z",
+  "engine": "chromium",
+  "document": "packages/core/tests/document/fixtures/org.gdd.json",
+  "seed": "packages/core/tests/document/fixtures/org.seed.json",
+  "checks": {
+    "thePagesFaceDrawsTheHome": {
+      "failed": null,
+      "title": "En Dash Org",
+      "bar": true,
+      "ok": true
+    },
+    "aKindsRecordsAreListedAtItsAddress": {
+      "heading": "People",
+      "ok": true
+    },
+    "theSceneDrawsTheGraphAtTheOverviewsAddress": {
+      "first": {
+        "sceneOn": true,
+        "districts": 309,
+        "path": "/places/overview"
+      },
+      "again": {
+        "sceneOn": true,
+        "districts": 309,
+        "path": "/places/overview"
+      },
+      "ok": true
+    },
+    "aChangeOnTheServedStoreReachesThePage": {
+      "status": 200,
+      "arrived": true,
+      "nodes": 54,
+      "ok": true
+    },
+    "shotsWritesAPngForEachNamedPlace": {
+      "status": 0,
+      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-45YinL",
+      "pngs": [
+        true,
+        true,
+        true
+      ],
+      "ok": true
+    },
+    "shotsRefusesAPlaceTheAppHasNot": {
+      "status": 2,
+      "said": "graview shots: En Dash Org has no place called \"nowhere\". Its places: home, overview, people, components, constraints, revenue-streams, open-questions, strengths, or a path such as /places/overview.",
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "said": [
+    "graview preview: En Dash Org on http://127.0.0.1:6410",
+    "  Pages: http://127.0.0.1:6410/   the scene: http://127.0.0.1:6410/places/overview",
+    "  data: in memory, gone when the preview stops",
+    "  sits as You",
+    "  53 nodes. Ctrl-C stops it."
+  ],
+  "passed": true
+}

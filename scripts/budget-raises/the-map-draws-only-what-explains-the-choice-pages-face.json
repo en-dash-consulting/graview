@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 372,
+  "gzipped": 166,
+  "note": "Raised when the map came to draw only what explains the choice (the-map-draws-only-what-explains-the-choice.md): a district's card asks whether a panel beside the map lists it (`BesideTheMap`, a context of a few bytes in `@graview/react/provider`), and its open control chooses the district there rather than opening it in place. Everything the panel, the ribbons and a record's links draw is fetched with the scene. 372 / 166 more than main (518_905 / 187_302). Measured at 519_277 / 187_468."
+}

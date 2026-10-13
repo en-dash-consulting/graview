@@ -346,9 +346,19 @@ try {
     await narrow.fill('[data-testid="context-menu"] input[aria-label="Name"]', "Sweep the path");
     await narrow.click('[data-testid="context-menu"] button[type="submit"]');
     await narrow.waitForTimeout(700);
-    await narrow.click('#here [data-testid^="open-"]');
-    await narrow.waitForTimeout(500);
-    await narrow.dblclick("#here [data-graview-pick]");
+    /*
+     * Opening the district lists its records beside the map (on a phone, a
+     * sheet): press the one just made there, then go to it — what a person
+     * does now that the district is no longer opened in place as chips.
+     */
+    // The right-click that made it chose its district, whose panel may already be listing it.
+    if ((await narrow.locator('#here [data-testid="district-panel"]').count()) === 0) {
+      await narrow.click('#here [data-testid^="open-"]');
+      await narrow.waitForTimeout(500);
+    }
+    await narrow.click('#here [data-testid="district-panel"] [data-graview-record]');
+    await narrow.waitForTimeout(400);
+    await narrow.click('#here [data-testid="record-panel-go"]');
     await narrow.waitForTimeout(900);
     b.narrow = await narrow.evaluate(() => {
       const found = document.querySelector('#here [data-testid="seat"]');

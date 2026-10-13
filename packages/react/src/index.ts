@@ -1,5 +1,6 @@
 export { GraviewProvider, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
+export { BesideTheMap } from "./beside-the-map.js";
 export { HostFilesContext, useHostFiles } from "./files.js";
 export type { GoTo } from "./go.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
@@ -60,6 +61,10 @@ export { NOTHING_FOUND, useFlagged, useImplicated, useReached } from "./emphasis
 export { useLocalIntelligence } from "./local-intelligence.js";
 export type { Ask, LocalIntelligence } from "./local-intelligence.js";
 export { kitConnector, useKit } from "./kit.js";
+export { districtOf, mapChoice, ribbonsOf, ribbonSentence } from "./map-choice.js";
+export { RIBBON_WIDTH, ribbonWidth } from "./ribbon-width.js";
+export type { MapChoice, Ribbon } from "./map-choice.js";
+export { pickedFrom } from "./picked.js";
 export { clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 export { bandRows, channelRoute } from "./channels.js";
 export { adjustment, UrlSync, useUrlSync } from "./url-sync.js";

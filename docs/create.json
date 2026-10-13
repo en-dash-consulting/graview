@@ -1,12 +1,14 @@
 {
-  "at": "2026-10-04T07:22:26.757Z",
-  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-IYjvPv",
+  "at": "2026-10-13T07:42:02.429Z",
+  "scratch": "/var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-WM8fK8",
   "engine": "chromium",
   "npm": {
-    "created": "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-IYjvPv/field-notes",
+    "created": "graview create: 22 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-WM8fK8/field-notes",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
+      "AGENTS.md",
+      "CLAUDE.md",
       "README.md",
       "embed.html",
       "index.html",
@@ -32,6 +34,9 @@
     "checkSaid": "graview check: Field Notes — no problems found.",
     "brokenSchemaTypechecked": false,
     "tscSaid": "src/domain/schema.ts(35,46): error TS2345: Argument of type '[NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; readonly inverse: \"what is waiting on this\"; }; }>]' is not assignable to parameter of type 'readonly [NodeDefinition<\"note\", ZodObject<{ label: ZodString; status: ZodEnum<{ open: \"open\"; closed: \"closed\"; }>; }, $strip>, { readonly \"depends-on\": { readonly to: readonly [\"nobody\"]; readonly description: \"what has to be closed first\"; readonly inverse: \"what is waiting on this\"; }; }>] & { ...; }'.",
+    "untitled": [
+      "mutation-untitled"
+    ],
     "docsWritten": true,
     "docsNameTheActs": true,
     "skills": true,
@@ -44,10 +49,12 @@
     "checkSaid": "graview check: Field Notes — no problems found."
   },
   "door": {
-    "said": "graview create: 20 files → door-app",
+    "said": "graview create: 22 files → door-app",
     "tree": [
       ".github/workflows/ci.yml",
       ".gitignore",
+      "AGENTS.md",
+      "CLAUDE.md",
       "README.md",
       "embed.html",
       "index.html",
@@ -71,18 +78,32 @@
   },
   "linked": {
     "said": [
-      "graview create: 20 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-IYjvPv/linked-orders",
+      "graview create: 22 files → /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-create-WM8fK8/linked-orders",
       "graview create: pnpm install"
     ],
     "consumesByPath": true,
     "skills": true,
+    "agents": {
+      "loop": true,
+      "rules": true,
+      "skillsListed": true,
+      "claude": true
+    },
+    "git": {
+      "identity": true,
+      "commit": "Linked Orders, on Graview",
+      "statusAfterCreate": "",
+      "staged": "",
+      "tracksTheAgentDocs": true,
+      "statusAfterVerify": ""
+    },
     "verified": true,
     "checkSaid": "graview check: Linked Orders — no problems found.",
     "hyphenatedKind": true,
-    "gitInitialised": true,
+    "gitInitialized": true,
     "ciChecksOutTheFramework": true,
     "browser": {
-      "districtAfterAdd": "Work Orders1open ▾",
+      "districtAfterAdd": "Work Orders1close ▴",
       "errors": []
     }
   },
@@ -90,7 +111,7 @@
     "districts": 1,
     "saysNoneYet": true,
     "wordmarkSaysTheName": true,
-    "standingIsClean": "Everything is in order",
+    "standingIsClean": "",
     "axeEmptyLight": [],
     "seatOffered": "Add some starter data",
     "seatLog": [
@@ -106,7 +127,7 @@
       "name": "Name",
       "placeholder": "Name"
     },
-    "afterForm": "Notes1open ▾",
+    "afterForm": "Notes1close ▴",
     "theFormAddedIt": true,
     "escape": {
       "selected": {
@@ -132,7 +153,8 @@
     },
     "profileInEmbed": {
       "pane": true,
-      "inside": true
+      "inside": true,
+      "onTop": true
     },
     "embed": {
       "mounted": true,
@@ -146,7 +168,7 @@
     "keyboardReachedTheDistrict": true,
     "keyboardSelectedIt": true,
     "keyboardReachedTheOffer": true,
-    "afterKeyboard": "Notes1open ▾",
+    "afterKeyboard": "Notes1close ▴",
     "theKeyboardAloneAddedIt": true,
     "axePagesEmpty": [],
     "pagesHome": true,
@@ -183,8 +205,9 @@
     "articlesBeforeVowels": []
   },
   "verdict": {
-    "theProfileStaysInTheEmbed": true,
+    "theProfileIsWholeAndOnTop": true,
     "theScaffoldWroteAProject": true,
+    "anUntitledMutationIsOneFinding": true,
     "itInstalledFromTheTarballsWithNpm": true,
     "itsOwnVerifyPassed": true,
     "theCheckerActuallySpoke": true,
@@ -213,6 +236,8 @@
     "aVowelKindIsSpokenWithAn": true,
     "aLinkedProjectInstallsSkillsAndVerifies": true,
     "aHyphenatedKindWorksEndToEnd": true,
+    "anAgentOpeningItColdFindsAgentsMdWithTheLoopAndTheSkills": true,
+    "createMakesTheFirstCommit": true,
     "aLinkedProjectIsARepositoryWhoseCiCanBuildTheFramework": true,
     "theLinkedDevServerRunsInABrowser": true
   },

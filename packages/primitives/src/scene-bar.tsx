@@ -83,8 +83,8 @@ export function SceneTrail({ home = null }: { readonly home?: string | null }) {
         position: "absolute",
         top: 14,
         left: 14,
-        // Up, at the other corner, keeps its room.
-        maxWidth: "calc(100% - 150px)",
+        // Up, at the other corner, keeps its room, and a panel docked beside the map its own.
+        maxWidth: "calc(100% - 150px - var(--graview-dock, 0px))",
         zIndex: layer("overview"),
         display: "flex",
         alignItems: "center",

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-02T08:58:28.391Z",
+  "at": "2026-10-13T07:49:58.814Z",
   "engine": "chromium",
   "chapters": [
     {
@@ -29,16 +29,17 @@
         "dark": "docs/progression/01-a-plot-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 640,
-        "height": 240
+        "width": 685,
+        "height": 397
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
-          "Plots2close ▴Plot 1Plot 2"
+          "Plots2open ▾Plot 1Plot 2"
         ],
-        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.The garden keeps its agreementsNNobody in particular⚙Signed in asNobody in particularThis app has no sign-in",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -78,17 +79,18 @@
         "dark": "docs/progression/02-who-tends-what-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 1086,
-        "height": 629
+        "width": 958,
+        "height": 637
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
           "Plots2"
         ],
-        "trail": "GraviewGraview←→ScenePagesPlot 1×Nothing here is called “”.The garden keeps its agreementsNNobody in particular⚙Signed in asNobody in particularThis app has no ",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -132,18 +134,19 @@
         "dark": "docs/progression/03-the-agreement-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 750,
-        "height": 502
+        "width": 1254,
+        "height": 663
       },
       "saw": {
-        "standing": "1 problem",
+        "standing": "1 rule broken — open what is broken, and what would fix it",
         "districts": [
           "Gardeners2open ▾",
           "Plots⚠ 2open ▾",
-          "Rules1close ▴Every plot has a caretaker"
+          "Rules1open ▾Every plot has a caretaker"
         ],
-        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.1 problemNobody tends Plot 2Every plot has a caretaker · 2 ways to fixNNobody in particular⚙Signed in asNobo",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -190,19 +193,20 @@
         "dark": "docs/progression/04-the-horizon-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 735,
-        "height": 349
+        "width": 1006,
+        "height": 562
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
-          "Plantings1+1 past◆open ▾The year2026‹Today›DayWeekMonthQuarterYearAgendaJanFebMarApr1BeansMayJunJulAugSepOctNovDecThe yearThe seasonApril 2026‹Today›DayWeekMonthQuarterYearAgendaSat 4 AprBeansThe season",
+          "Plantings1+1 past◆open ▾The yearThe season",
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→ScenePagesThe yearThe seasonNothing here is called “”.The garden keeps its agreementsNNobody in particular⚙Signed in asNobody in particularThis ",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -253,19 +257,20 @@
         "dark": "docs/progression/05-a-seat-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 751,
-        "height": 481
+        "width": 1216,
+        "height": 663
       },
       "saw": {
-        "standing": "1 problem",
+        "standing": "1 rule broken — open what is broken, and what would fix it",
         "districts": [
           "Gardeners1open ▾",
           "Plantingsnone yet",
           "Plots⚠ 1open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.1 problem3 ActivityThe agent's seatThe garden is plantedchanged · Agree every plot has a caretakerchanged · ",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [
           "starter Adopt: every plot has a caretakerundoEvery plot has a caretaker",
@@ -320,19 +325,20 @@
         "dark": "docs/progression/06-it-remembers-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 750,
-        "height": 481
+        "width": 1216,
+        "height": 663
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
           "Plantings1+1 pastopen ▾",
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityThe agent's seatThe garden is plantedRemembered in this browserStart",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": "Remembered in this browserStart fresh",
@@ -383,19 +389,20 @@
         "dark": "docs/progression/07-who-may-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 1077,
-        "height": 303
+        "width": 801,
+        "height": 518
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
           "Plantings1+1 pastopen ▾",
-          "Plots2open ▾",
+          "Plots2close ▴",
           "Rules1open ▾"
         ],
-        "trail": "GraviewGraview←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityPlant a starter gardenNot yours to do from this seat. Not permitted:",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": "Stake out a plotNot permitted: “Stake out a plot” — a coordinator can. The coordinator keeps the map.",
         "activity": [],
         "remembered": null,
@@ -407,7 +414,7 @@
         "offered": [
           "Take on a plot …"
         ],
-        "withheld": "Change the gardenerNot permitted: “Change the gardener” on a gardener — a coordinator can. The coordinator keeps the map.Remove the gardenerNot permitted: “Remove the gardener” on a gardener — a coordinator can. The coordinator keeps the map."
+        "withheld": "Change the gardenerNot permitted: “Change the gardener” on a gardener — a coordinator can. The coordinator keeps the map.Archive the gardenerNot permitted: “Archive the gardener” on a gardener — a coordinator can. The coordinator keeps the map.Merge into another gardenerNot permitted: “Merge into another gardener” on a gardener — a coordinator can. The coordinator keeps the map.Remove the gardenerNot permitted: “Remove the gardener” on a gardener — a coordinator can. The coordinator keeps the map."
       }
     },
     {
@@ -451,19 +458,20 @@
         "dark": "docs/progression/08-its-own-name-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 735,
-        "height": 292
+        "width": 1006,
+        "height": 562
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
           "Gardeners2open ▾",
           "Plantings1+1 pastopen ▾",
           "Plots2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→ScenePagesNothing here is called “”.The garden keeps its agreements ActivityThe garden is plantedJJune⚙Signed in asJuneCoordinatorKeeping this a",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -474,6 +482,8 @@
       "seatSees": {
         "offered": [
           "Change the gardener …",
+          "Archive the gardener",
+          "Merge into another gardener …",
           "Take on a plot …",
           "Remove the gardener"
         ],
@@ -523,15 +533,16 @@
         "dark": "docs/progression/09-the-other-face-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
         "width": 390,
-        "height": 1000,
+        "height": 844,
         "phone": true
       },
       "saw": {
         "standing": null,
         "districts": [],
-        "page": "A plot in the gardenPlot 23 beds, looked after by Ravi. Nothing is growing.See it in the scene ↗Sow something hereName *Sown *Sow something",
+        "page": "A plot in the gardenPlot 23 beds, looked after by Ravi. Nothing is growing.See it in the scene ↗Sow something here form:where([data-graview-part=\"form\"]) { /* A grid item of the section above it and a grid container for the fields below: bo",
         "custom": true,
         "design": false,
         "fitsAPhone": true
@@ -579,19 +590,20 @@
         "dark": "docs/progression/10-a-lens-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 1136,
-        "height": 626
+        "width": 1132,
+        "height": 634
       },
       "saw": {
-        "standing": "1 problem",
+        "standing": "1 rule broken — open what is broken, and what would fix it",
         "districts": [
           "Gardeners2◆",
           "Plantings1+1 pastopen ▾",
           "Plots⚠ 2open ▾",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→ScenePagesWho tends whatNothing here is called “”.1 problem ActivityThe garden is plantedJJune⚙Signed in asJuneCoordinatorKeeping this appStudio",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -602,6 +614,8 @@
       "seatSees": {
         "offered": [
           "Change the plot …",
+          "Archive the plot",
+          "Merge into another plot …",
           "Name a caretaker …",
           "Sow something …",
           "Remove the plot"
@@ -652,19 +666,20 @@
         "dark": "docs/progression/11-what-grows-where-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 1136,
-        "height": 626
+        "width": 1132,
+        "height": 634
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
           "Gardeners2◆open ▾",
           "Plantings1+1 pastopen ▾",
           "Plots3◆",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereWho tends whatNothing here is called “”.The garden keeps its agreements ActivityThe garden is plantedJJune⚙Signed in a",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -676,6 +691,8 @@
         "offered": [
           "Harvest it …",
           "Change the planting …",
+          "Archive the planting",
+          "Merge into another planting …",
           "Remove the planting"
         ],
         "withheld": ""
@@ -723,22 +740,23 @@
         "dark": "docs/progression/12-ship-it-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 850,
-        "height": 491
+        "width": 1216,
+        "height": 663
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
-          "Gardeners2◆open ▾Who tends whatcompleteJunePlot 1Plot 2RaviPlot 1Plot 2Who tends what",
+          "Gardeners2◆open ▾Who tends what",
           "Plantings1+1 pastopen ▾",
-          "Plots2◆open ▾What grows where1 unfilledPlot 1BeansPlot 2nothing sownWhat grows where",
+          "Plots2◆open ▾What grows where",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereWho tends whatNothing here is called “”.The garden keeps its agreements1 ActivityThe agent's seatThe garden is planted",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [
-          "the upgrade migration 1→2: Every garden adopts the agreementundoEvery plot has a caretaker"
+          "the upgrade migration 1→2: Every garden adopts the agreementundo +0Every plot has a caretaker"
         ],
         "remembered": "Remembered in this browserStart fresh",
         "problems": null,
@@ -748,6 +766,8 @@
       "seatSees": {
         "offered": [
           "Change the gardener …",
+          "Archive the gardener",
+          "Merge into another gardener …",
           "Take on a plot …",
           "Remove the gardener"
         ],
@@ -796,9 +816,10 @@
         "dark": "docs/progression/13-the-gardens-own-face-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
         "width": 1280,
-        "height": 1392
+        "height": 1336
       },
       "saw": {
         "standing": null,
@@ -860,21 +881,22 @@
         "dark": "docs/progression/14-who-is-here-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 886,
-        "height": 583
+        "width": 1134,
+        "height": 604
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
-          "Gardeners2◆open ▾Who tends whatcompleteJunePlot 1Plot 2Plot 3RaviPlot 1Plot 2Plot 3Who tends what",
+          "Gardeners2◆open ▾Who tends what",
           "Invitations1open ▾",
           "Plantings1+1 pastopen ▾",
-          "Plots3◆open ▾What grows where2 unfilledPlot 1BeansPlot 2nothing sownPlot 3nothing sownWhat grows where",
+          "Plots3◆open ▾What grows where",
           "Rules1open ▾",
-          "People2◆open ▾Who may do what● may · ◐ on their own record · read from the policyRoleWelcome a gardenerStake out a plotSow something · plotName a caretaker · plotHarvest it · plantingAgree every plot has a caretakerInvite somebodyWelcome them in · invitationWithdraw the invitation · invitationRemove them · userGive a role · userTake a role away · usercoordinator●●●●●●●●●●●●gardener··●●●·······Who may do what"
+          "People2◆open ▾Who may do what"
         ],
-        "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereWho may do whatWho tends what+1 moreWho tends whatNothing here is called “”.The garden keeps its agreements ActivityTh",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -885,6 +907,8 @@
       "seatSees": {
         "offered": [
           "Change the gardener …",
+          "Archive the gardener",
+          "Merge into another gardener …",
           "Take on a plot …",
           "Remove the gardener"
         ],
@@ -904,11 +928,13 @@
       "kinds": [
         "kind",
         "field",
+        "computed",
         "edge",
         "act",
         "rule",
         "role",
         "grant",
+        "sight",
         "lens",
         "brand"
       ],
@@ -917,7 +943,12 @@
         "rename-kind",
         "remove-kind",
         "add-field",
+        "rename-field",
         "remove-field",
+        "retype-field",
+        "set-required",
+        "set-options",
+        "describe-field",
         "add-edge",
         "remove-edge",
         "add-act",
@@ -929,7 +960,11 @@
         "set-figure",
         "add-role",
         "grant",
-        "revoke-grant"
+        "revoke-grant",
+        "add-sight",
+        "change-sight",
+        "remove-sight",
+        "remove-lens"
       ],
       "invariants": [],
       "check": {
@@ -945,7 +980,10 @@
           "label-unbounded",
           "glance-unchosen",
           "label-unbounded",
+          "glance-unchosen",
           "label-unbounded",
+          "label-unbounded",
+          "glance-unchosen",
           "label-unbounded"
         ]
       },
@@ -954,24 +992,27 @@
         "dark": "docs/progression/15-the-studio-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 1095,
-        "height": 483
+        "width": 1172,
+        "height": 624
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
           "acts12open ▾",
           "brands1open ▾",
+          "computed fieldsnone yet",
           "edges3open ▾",
           "fields19open ▾",
           "grants4open ▾",
-          "kinds6◆open ▾What the checker says6 kinds · 12 acts · 1 rulegraview check: Seedbed — no problems found.label-unbounded defineNode(\"gardener\").fields.labelA declared provider may create a gardener, and \"label\" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about a gardener belongs in a field of its own, where a person will actually read it.label-unbounded defineNode(\"plot\").fields.labelA declared provider may create a plot, and \"label\" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about a plot belongs in a field of its own, where a person will actually read it.label-unbounded defineNode(\"planting\").fields.labelA declared provider may create a planting, and \"label\" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about a planting belongs in a field of its own, where a person will actually read it.label-unbounded defineNode(\"rule\").fields.labelA declared provider may create a rule, and \"label\" has no maximum length — so a model may write a paragraph where a name goes, and every surface that draws it will try.Bound it to something an interface can draw: z.string().min(1).max(60). Whatever else there is to say about a rule belongs in a field of its own, where a person will actually read it.What the checker says",
+          "kinds6◆open ▾What the checker says",
           "lenses2open ▾",
           "roles2open ▾",
-          "rules1open ▾"
+          "rules1open ▾",
+          "sightsnone yet"
         ],
-        "trail": "GraviewGraview←→ScenePagesWhat the checker saysNothing here is called “”.The garden keeps its agreements ActivityPlant a starter gardenNot yours to do from this",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
@@ -1034,30 +1075,33 @@
         "dark": "docs/progression/16-the-rotation-dark.png"
       },
       "errors": [],
+      "offTheMachine": [],
       "picture": {
-        "width": 884,
-        "height": 626
+        "width": 1132,
+        "height": 634
       },
       "saw": {
-        "standing": "The garden keeps its agreements",
+        "standing": "Every rule holds",
         "districts": [
-          "Gardeners2◆",
+          "Gardeners2◆open ▾",
           "Plantings1+1 past◆open ▾",
           "Plots3◆open ▾",
           "Rotations8◆",
           "Rules1open ▾"
         ],
-        "trail": "SeedbedSeedbed←→ScenePagesWhat grows whereThe yearThe seasonThe rotationWho tends whatThe rotationThe seasonThe rotationWho tends whatNothing here is called “”.",
+        "trail": ".graview-bar{display:block;margin:0;padding:0;container:graview-bar/inline-size;flex:0 0 auto;position:relative;background:var(--graview-bar);border-bottom:1px ",
         "withheld": null,
         "activity": [],
         "remembered": null,
         "problems": null,
         "wordmark": "Seedbed",
-        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029FindOnlyonly…BrassicasLegumesRootsAlliumsRestingbefore…after…on…before…after…on…anythingnothingPlot 1Plot 2Plot 3anythingnothingBeansTomatoesflaggedclearJan 26Feb 26Mar 262Brassicas · Plot 1Legumes · Plot 2Apr 262 May 262Brassicas · Plot 1Legumes · Plot 2Jun 262 Jul 262 Aug 262 Sep 262Brassicas · Pl"
+        "focused": "The rotationThe rotation · 2026–2029‹Today›dayweekmonthquarteryearThe rotationagenda2026202720282029 .graview-arrange{container-type:inline-size;box-sizing:border-box;width:100%;min-width:0;max-width:100%} .graview-arrange-line{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;min-width:0;font-size:.875rem;line-height:1.35;color:var(--graview-ink-muted)} .graview-arrange-count{margin-righ"
       },
       "seatSees": {
         "offered": [
           "Change the rotation …",
+          "Archive the rotation",
+          "Merge into another rotation …",
           "Remove the rotation"
         ],
         "withheld": ""
@@ -1067,6 +1111,7 @@
   "verdict": {
     "everyChapterChecksClean": true,
     "everyChapterRenderedWithoutErrors": true,
+    "noChapterAsksTheNetwork": true,
     "theRuleFiresInChapterThree": true,
     "theHorizonShowsInChapterFour": true,
     "theSeatPlantedInChapterFive": true,

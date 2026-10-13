@@ -196,7 +196,8 @@ export function OverviewButton() {
       style={{
         position: "absolute",
         top: 14,
-        right: 14,
+        // Clear of a panel docked beside the map (`--graview-dock`, set while one stands).
+        right: "calc(14px + var(--graview-dock, 0px))",
         zIndex: layer("overview"),
         display: "inline-flex",
         alignItems: "center",

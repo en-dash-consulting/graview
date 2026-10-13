@@ -194,24 +194,14 @@ try {
    * but below the drawn content must resolve to something else; a point on
    * the content must resolve to the record.
    */
-  await page.click('[data-testid="overview"]');
-  await page.waitForTimeout(900);
-  const kindOfDeposit = await page.evaluate(() => {
-    const chip = document.querySelector('[data-graview-pick="t-deposit"]');
-    return chip?.closest("[data-graview-view]")?.dataset.graviewView ?? null;
+  /*
+   * Reached by its address: a district's records are listed beside the map
+   * now (the panel), not opened in place as chips to double-click.
+   */
+  await page.evaluate(() => {
+    window.location.hash = "#overview=1&focus=t-deposit";
   });
-  if (!kindOfDeposit) {
-    // The district is shut: open the one the deposit lives in.
-    const opened = await page.evaluate(() => {
-      const buttons = [...document.querySelectorAll("[data-testid^='open-']")];
-      for (const button of buttons) button.click();
-      return buttons.length;
-    });
-    report.hitArea = { openedDistricts: opened };
-    await page.waitForTimeout(700);
-  }
-  await page.dblclick('[data-graview-pick="t-deposit"]');
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(1200);
   report.hitArea = {
     ...(report.hitArea ?? {}),
     ...(await page.evaluate(() => {
@@ -314,6 +304,24 @@ try {
     withAPicture: await deeper("task"),
     withoutOne: await deeper("reason"),
   };
+  // And it is listed in the panel beside the map, every record in it, at a size a person reads.
+  const listing = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  listing.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await listing.goto(`${at("todo")}/?today=2026-09-01#overview=1&sel=kind%3Areason`, { waitUntil: "load" });
+  await listing.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await listing.waitForSelector('[data-testid="district-panel"]', { timeout: 10_000 }).catch(() => {});
+  report.districts.listed = await listing.evaluate(() => {
+    const panel = document.querySelector('[data-testid="district-panel"]');
+    const rows = [...(panel?.querySelectorAll("[data-graview-record]") ?? [])];
+    return {
+      panel: panel?.getAttribute("data-graview-map-panel") ?? null,
+      rows: rows.length,
+      font: rows[0] ? parseFloat(getComputedStyle(rows[0]).fontSize) : null,
+      // Nothing of the district floats over the map as a card of chips.
+      floating: document.querySelectorAll(".graview-kind-members").length,
+    };
+  });
+  await listing.close();
 
   /*
    * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
@@ -454,11 +462,12 @@ try {
 
 /*
  * A LENS IS A DRIVE-IN. From altitude a kind's named pictures are a
- * marquee on its district — real buttons — and the focused picture stands
- * on the kind's plot, not in the middle. Pressing a showing focuses the
- * kind and descends in ONE gesture, and the picture tweens from the plot,
- * which the mid-tween capture asserts: at a hundred milliseconds in, the
- * lens's host is nearer the plot than the canvas center.
+ * marquee on its district — real buttons. Pressing a showing opens the
+ * picture BESIDE THE MAP at a size a person reads — a panel docked at the
+ * side, never the lens drawn small on its plot — and the panel's Open goes
+ * down to the picture's place in ONE gesture, tweening from the plot, which
+ * the mid-tween capture asserts: at a hundred milliseconds in, the lens's
+ * host is nearer the plot than the canvas center.
  */
 try {
   const drive = await browser.newPage({ viewport: { width: 1560, height: 940 } });
@@ -492,11 +501,30 @@ try {
     window.location.hash = "#overview=1&focus=aggregate%3Atask&in.view=the-week";
   });
   await drive.waitForTimeout(1200);
+  /*
+   * THE PICTURE OPENS BESIDE THE MAP, at a size a person reads: a panel
+   * docked at the side, the lens in it at its own size — no billboard of
+   * the lens drawn small on its plot, and no line drawn over it.
+   */
+  await drive.waitForSelector('[data-testid="lens-panel"]', { timeout: 10_000 }).catch(() => {});
   const standing = await drive.evaluate(() => {
-    const screen = document.querySelector('[data-graview-view="aggregate:task"][data-graview-plane="0"]');
-    const card = document.querySelector('[data-graview-view="kind:task"]');
-    const box = (el) => el?.getBoundingClientRect() ?? null;
-    return { screen: box(screen), card: box(card), url: location.hash };
+    const panel = document.querySelector('[data-testid="lens-panel"]');
+    const box = panel?.getBoundingClientRect() ?? null;
+    const picks = [...(panel?.querySelectorAll("[data-graview-pick]") ?? [])];
+    const first = picks[0] ?? null;
+    const at = first ? first.getBoundingClientRect() : null;
+    const over = at ? document.elementFromPoint(at.x + at.width / 2, at.y + at.height / 2) : null;
+    return {
+      panel: panel?.getAttribute("data-graview-map-panel") ?? null,
+      title: panel?.querySelector('[data-testid="lens-panel-title"]')?.textContent ?? null,
+      width: box ? Math.round(box.width) : 0,
+      right: box ? Math.round(innerWidth - box.right) : null,
+      font: first ? parseFloat(getComputedStyle(first).fontSize) : null,
+      scaled: first ? Math.abs(first.getBoundingClientRect().width - first.offsetWidth) > 1 : null,
+      onTop: over !== null && panel !== null && panel.contains(over),
+      screens: document.querySelectorAll("[data-graview-screen]").length,
+      url: location.hash,
+    };
   });
   await drive.click('[data-testid="showing-the-month"]');
   await drive.waitForTimeout(600);
@@ -506,27 +534,22 @@ try {
   }));
   /* Switch KINDS at altitude: the tasks' picture sinks into its village while the lists' rises out of its own.
      Captured mid-tween, because the fault was two pictures over each other for the length of it. */
-  const before = await drive.evaluate(() => {
-    const el = document.querySelector('[data-graview-screen][data-graview-view="aggregate:task"]');
-    const b = el?.getBoundingClientRect();
-    return b ? { width: b.width, height: b.height } : null;
-  });
+  const panelTitle = () => drive.evaluate(() => document.querySelector('[data-testid="lens-panel-title"]')?.textContent ?? null);
+  const before = await panelTitle();
   await drive.click('[data-testid="showing-the-lists"]');
-  await drive.waitForTimeout(260);
-  const midSwitch = await drive.evaluate(() =>
-    [...document.querySelectorAll("[data-graview-screen]")].map((el) => {
-      const b = el.getBoundingClientRect();
-      return { view: el.getAttribute("data-graview-view"), width: b.width, height: b.height, opacity: Number(getComputedStyle(el).opacity) };
-    }),
-  );
   await drive.waitForTimeout(1200);
-  const afterSwitch = await drive.evaluate(() => [...document.querySelectorAll("[data-graview-screen]")].map((el) => el.getAttribute("data-graview-view")));
+  // One panel, now the lists': the tasks' picture gave way rather than standing beside it.
+  const afterSwitch = { title: await panelTitle(), panels: await drive.evaluate(() => document.querySelectorAll('[data-testid="lens-panel"]').length) };
   // Back to the tasks' month for the descent below.
   await drive.click('[data-testid="showing-the-month"]');
   await drive.waitForTimeout(1200);
-  /* Full screen: the billboard's own control is the way down; capture mid-tween. */
+  /* Open: the panel's own control is the way to the place; capture mid-tween. */
   const centerX = 1560 / 2;
-  await drive.click('[data-testid="screen-fullscreen"]');
+  const plot = await drive.evaluate(() => {
+    const b = document.querySelector('[data-graview-plot="kind:task"]')?.getBoundingClientRect();
+    return b ? { x: b.x + b.width / 2, y: b.y + b.height / 2 } : null;
+  });
+  await drive.click('[data-testid="lens-panel-open"]');
   await drive.waitForTimeout(110);
   const midway = await drive.evaluate(() => {
     const el = document.querySelector('[data-graview-view="aggregate:task"]');
@@ -538,12 +561,11 @@ try {
     url: location.hash,
     up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
   }));
-  const plotX = standing.screen ? standing.screen.x + standing.screen.width / 2 : null;
+  const plotX = plot ? plot.x : null;
   report.driveIn = {
     marquee,
     tiles,
     leavingBefore: before,
-    midSwitch,
     afterSwitch,
     noteDriveIn,
     standing,
@@ -631,10 +653,9 @@ try {
   await cam.waitForTimeout(400);
   const dragged = await ground();
   /*
-   * AND THE PICTURE ITSELF PANS. Choosing a lens puts a billboard in the
-   * middle of the window; a drag that started on it used to move the card
-   * rather than the view, so the biggest thing on screen — the one most
-   * likely to be under the hand — was the one place panning did not work.
+   * AND THE CITY BESIDE AN OPEN PICTURE PANS. A picture chosen from
+   * altitude opens beside the map, which lays itself out in the room left;
+   * the ground there still moves under the hand.
    */
   await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
   /*
@@ -648,11 +669,20 @@ try {
   await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await cam.waitForTimeout(1500);
   const before = await ground();
-  const screen = await cam.$("[data-graview-screen]");
-  let onThePicture = { ok: false, why: "no picture standing" };
-  if (screen) {
-    const at = await screen.boundingBox();
-    const from = { x: at.x + at.width / 2, y: at.y + at.height / 2 };
+  /* The picture stands beside the map; the city beside it still pans under the hand. */
+  const city = await cam.$(".graview-ground");
+  let onThePicture = { ok: false, why: "no city drawn" };
+  if (city) {
+    const at = await city.boundingBox();
+    const from = await cam.evaluate(() => {
+      for (let y = 200; y < innerHeight - 80; y += 30) {
+        for (let x = 80; x < innerWidth - 80; x += 30) {
+          const el = document.elementFromPoint(x, y);
+          if (el?.closest(".graview-ground") && !el.closest("[data-graview-view], button, a, input, [data-graview-overlay]")) return { x, y };
+        }
+      }
+      return null;
+    }) ?? { x: at.x + at.width / 2, y: at.y + at.height / 2 };
     await cam.mouse.move(from.x, from.y);
     await cam.mouse.down();
     for (let i = 1; i <= 10; i++) await cam.mouse.move(from.x - i * 24, from.y, { steps: 2 });
@@ -711,7 +741,7 @@ try {
   });
   report.checks = {
     ...(report.checks ?? {}),
-    theBillboardPansTheCity: onThePicture,
+    theCityPansBesideAnOpenPicture: onThePicture,
     // Many small steps and no leap: the ground eased from one cell to the other.
     theGroundTravelsWithTheCards: { ...travel, ok: travel.steps >= 5 && travel.jumps === 0 && travel.last !== travel.first },
   };
@@ -887,36 +917,37 @@ report.verdict = {
   theZoomControlsWork:
     (report.camera?.buttonOut?.cell ?? 0) < (report.camera?.wheeled?.cell ?? 0) &&
     (report.camera?.buttonIn?.cell ?? 0) > (report.camera?.buttonOut?.cell ?? 0),
-  // A drag that starts on the picture moves the view, not the card.
-  theBillboardPansTheCity: report.camera?.onThePicture?.ok === true,
+  // With a picture open beside it, the city still pans under the hand.
+  theCityPansBesideAnOpenPicture: report.camera?.onThePicture?.ok === true,
   // And flying closer is travel, not a cut: the ground eases with the cards on it.
   theGroundTravelsWithTheCards: report.checks?.theGroundTravelsWithTheCards?.ok === true,
-  // Dragged as far as it goes, the ground moves by far more than a little way: the far side is reachable.
+  /*
+   * Dragged as far as it goes, the ground reaches the camera's limit: the far side is reachable. (It was "more than
+   * 400 px" while choosing a picture flew the camera half as close again; the picture opens beside the map now, the
+   * city keeps its size in the room left, and how far is far is the limit the scene itself says.)
+   */
   theGroundReachesItsFarEdge:
-    (report.camera?.buttonIn?.latticeX ?? 0) - (report.camera?.dragged?.latticeX ?? 0) > 400,
-  // Switching kinds: mid-tween the old picture is smaller than it was and fading, and afterwards only the new one stands.
-  aLeavingPictureSinksIntoItsVillage:
+    (report.camera?.buttonIn?.latticeX ?? 0) - (report.camera?.dragged?.latticeX ?? 0) > 40 &&
+    Math.abs(Number((report.camera?.dragged?.pan ?? "0").split(",")[0])) >= (report.camera?.dragged?.reach?.[0] ?? Infinity) - 2,
+  // Switching kinds: the panel gives the tasks' picture up for the lists', one panel and never two.
+  switchingKindsSwapsThePicture:
     report.driveIn?.leavingBefore !== null &&
-    (report.driveIn?.midSwitch ?? []).some((screen) => screen.view === "aggregate:list") &&
-    (report.driveIn?.midSwitch ?? [])
-      .filter((screen) => screen.view === "aggregate:task")
-      // A quarter of the way in, ease-in-out has moved it a little and faded it more: smaller than it was, and going.
-      .every((screen) => screen.width < (report.driveIn?.leavingBefore?.width ?? 0) - 4 && screen.opacity < 0.9) &&
-    (report.driveIn?.afterSwitch ?? []).length === 1 &&
-    report.driveIn?.afterSwitch?.[0] === "aggregate:list",
-  // The focused picture stands on its plot: the screen's foot sits above the district's nameplate, centered on it.
-  theScreenStandsOnItsPlot:
-    report.driveIn?.standing?.screen !== null &&
-    report.driveIn?.standing?.card !== null &&
-    Math.abs(
-      (report.driveIn?.standing?.screen?.x ?? 0) + (report.driveIn?.standing?.screen?.width ?? 0) / 2 -
-        ((report.driveIn?.standing?.card?.x ?? 0) + (report.driveIn?.standing?.card?.width ?? 0) / 2),
-    ) < 120 &&
-    (report.driveIn?.standing?.screen?.y ?? 0) < (report.driveIn?.standing?.card?.y ?? 0),
-  // Pressing a showing at altitude changes in.view and stays up; the billboard's full-screen control is the way down.
+    report.driveIn?.leavingBefore !== report.driveIn?.afterSwitch?.title &&
+    report.driveIn?.afterSwitch?.title === "The lists" &&
+    report.driveIn?.afterSwitch?.panels === 1,
+  // A pressed showing opens beside the map: docked at the side, wide enough to read, its text at its own size, nothing drawn over it, and no billboard on the plot.
+  aPictureOpensBesideTheMapAtASizeYouRead:
+    report.driveIn?.standing?.panel === "dock" &&
+    report.driveIn?.standing?.right === 0 &&
+    (report.driveIn?.standing?.width ?? 0) >= 440 &&
+    (report.driveIn?.standing?.font ?? 0) >= 12 &&
+    report.driveIn?.standing?.scaled === false &&
+    report.driveIn?.standing?.onTop === true &&
+    report.driveIn?.standing?.screens === 0,
+  // Pressing a showing at altitude changes in.view and stays up; the panel's Open is the way to its place.
   switchingAShowingStaysUp:
     (report.driveIn?.switched?.url ?? "").includes("in.view=the-month") && report.driveIn?.switched?.up === true,
-  fullScreenDescendsInOneGesture:
+  openGoesToThePlaceInOneGesture:
     report.driveIn?.landed?.up === false && (report.driveIn?.landed?.url ?? "").includes("in.view=the-month"),
   theDescentTweensFromThePlot: report.driveIn?.movedFromThePlot === true,
   // The browser's back and forward are the way: the bar draws no arrows of its own beside them.
@@ -970,9 +1001,15 @@ report.verdict = {
     (report.districts?.withAPicture ?? "").includes("focus=aggregate%3Atask") &&
     (report.districts?.withAPicture ?? "").includes("zoom=1") &&
     !(report.districts?.withAPicture ?? "").includes("expand="),
-  aDistrictWithoutOneOpensInPlace:
-    (report.districts?.withoutOne ?? "").includes("expand=kind%3Areason") &&
-    !(report.districts?.withoutOne ?? "").includes("focus=aggregate"),
+  // A kind without one is listed beside the map, every record in it, rather than opened in place over its neighbors.
+  aDistrictWithoutOneIsListedBesideTheMap:
+    (report.districts?.withoutOne ?? "").includes("sel=kind%3Areason") &&
+    !(report.districts?.withoutOne ?? "").includes("expand=") &&
+    !(report.districts?.withoutOne ?? "").includes("focus=aggregate") &&
+    report.districts?.listed?.panel === "dock" &&
+    (report.districts?.listed?.rows ?? 0) > 0 &&
+    (report.districts?.listed?.font ?? 0) >= 12 &&
+    report.districts?.listed?.floating === 0,
   // Typing lights the districts the words found and dims the rest, as an adjustment rather than a stop per letter;
   // pressing a lit district lands inside it narrowed by the same words; Back returns to the lit city; Escape clears.
   typingLightsAndALitDistrictLandsNarrowed: report.search?.ok === true,

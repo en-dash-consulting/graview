@@ -1,6 +1,7 @@
 import { toIso } from "@graview/core/scene";
 import { describe, expect, it } from "vitest";
-import { buildingFaces, heightOf, roadBetween, streetPoints, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
+import { buildingFaces, heightOf, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
+import { curbToCurb, streetPoints } from "../../src/ribbons.js";
 
 /**
  * A TILE IS THE PLOT THE LAYOUT COMPUTED. Its corners are the plot's four
@@ -81,7 +82,7 @@ describe("a district is a village", () => {
   });
 });
 
-describe("a road runs curb to curb", () => {
+describe("a ribbon runs curb to curb", () => {
   const city = { cell: 40, originX: 500, originY: 300 };
   const pan = { x: 0, y: 0 };
 
@@ -95,11 +96,11 @@ describe("a road runs curb to curb", () => {
   it("starts at one plot's curb and ends at the other's, not at their centers", () => {
     const a = { col: 0, row: 0, side: 2 };
     const b = { col: 10, row: 0, side: 2 };
-    const road = roadBetween(a, b, city, pan);
+    const road = curbToCurb(streetPoints(a, b), a, b);
     expect(road.length).toBeGreaterThanOrEqual(2);
-    const first = toLattice(road[0]!, city, pan);
-    const last = toLattice(road[road.length - 1]!, city, pan);
-    // The road leaves a across its front curb (row 2) and enters b across its near curb (col 10).
+    const first = road[0]!;
+    const last = road[road.length - 1]!;
+    // The ribbon leaves a across its front curb (row 2) and enters b across its near curb (col 10).
     expect(first.row).toBeCloseTo(2, 1);
     expect(last.col).toBeCloseTo(10, 1);
   });

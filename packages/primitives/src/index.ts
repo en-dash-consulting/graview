@@ -64,6 +64,8 @@ export { registerLensPlaces, registerReaderLenses } from "./declared-lens-doors.
 export { NoticeBoardContext } from "./notices.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 export { LinesKey } from "./lines-key.js";
+export { MapPanel, mapPanelShows } from "./map-panel-door.js";
+export type { MapPanelShowing } from "./map-panel-door.js";
 export { useSubject } from "./subject.js";
 export type { Subject } from "./subject.js";
 export { RelationKey, RelationMark, relationWords } from "./relation-key.js";
