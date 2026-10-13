@@ -1,6 +1,6 @@
 # What `graview check` says
 
-`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 96 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
+`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 97 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
 
 ## 63 errors
 
@@ -10,12 +10,12 @@
 
 `act-reads-hidden-kind`, `act-without-far-end-reading`, `brand-unnamed`, `edge-without-inverse`, `edge-without-severer`, `field-without-writer`, `fixed-but-written`, `intelligence-decision-prose-door`, `intelligence-key-without-storage`, `intelligence-local-without-bridge`, `intelligence-reach-on-graph`, `kind-without-view`, `kit-color-unreadable`, `module-edge-leak`, `mutation-title-ambiguous`, `mutation-title-is-an-identifier`, `mutation-undescribed`, `order-role-unknown`, `pages-filter-unknown`, `required-invariant-unregistered`, `role-may-do-nothing`, `rule-says-hidden-fact`, `sight-hides-required-ref`, `sight-unnamed-kind`, `theme-token-unreadable`
 
-## 8 notes
+## 9 notes
 
-`blank-graph-has-no-door`, `blank-graph-unreachable`, `glance-unchosen`, `label-unbounded`, `lens-arrangement-unknown`, `lens-authored-here`, `lens-binding-disagrees-with-field-role`, `lens-column-unreached`
+`blank-graph-has-no-door`, `blank-graph-unreachable`, `glance-unchosen`, `label-unbounded`, `lens-arrangement-unknown`, `lens-authored-here`, `lens-binding-disagrees-with-field-role`, `lens-column-unreached`, `rules-read-the-clock`
 
 ---
 
-Every one of the 96 things graview check can tell you, and how loudly.
+Every one of the 97 things graview check can tell you, and how loudly.
 
 The page: https://graview.dev/docs/checks.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

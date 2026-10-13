@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 3774,
-  "gzipped": 1461,
-  "note": "Raised when rules that read the clock came to be judged again as the day turns (FR-176) and the store's own bookkeeping stopped telling a seat of a hidden record (FR-55): `store.tick(now)` and the day a store judges on, handed to every rule; `openRemote` ticking its store at each midnight; the checker's `rules-read-the-clock` note and `clockReaders`, which the studio's check carries; an id minted for a seat that may not see every record of a kind being its own, and an id it asks for refused alike. 3_774 / 1_461 more than main (1_749_785 / 556_112), while a hosted page's first load holds to its budget unraised. Measured at 1_753_559 / 557_573."
+  "minified": 3772,
+  "gzipped": 1443,
+  "note": "Raised when rules that read the clock came to be judged again as the day turns (FR-176) and the store's own bookkeeping stopped telling a seat of a hidden record (FR-55): `store.tick(now)` and the day a store judges on, handed to every rule; `openRemote` ticking its store at each midnight; the checker's `rules-read-the-clock` note and `clockReaders`, which the studio's check carries; an id minted for a seat that may not see every record of a kind being its own, and an id it asks for refused alike. 3_772 / 1_443 more than main (1_767_822 / 563_991), while a hosted page's first load holds to its budget unraised. Measured at 1_771_594 / 565_434."
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { answerSeenBy, bindSchema, createSchema, defineNode, nodeRef, refusalOf, Store, z, type AnySchema, type MutationCall, type Policy, type Principal } from "../../src/index.js";
+import { answerSeenBy } from "../../src/seat.js";
+import { bindSchema, createSchema, defineNode, nodeRef, refusalOf, Store, z, type AnySchema, type MutationCall, type Policy, type Principal } from "../../src/index.js";
 
 /**
  * THE STORE'S OWN BOOKKEEPING TELLS A SEAT NOTHING OF A HIDDEN RECORD (FR-55).
