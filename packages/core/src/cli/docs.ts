@@ -107,7 +107,10 @@ export function generateLlmsTxt<S extends AnySchema>(app: GraviewApp<S>): string
     "takes an optional `id`: the id of the node it makes, refused if the graph",
     "already has it. And every kind has `remove-<kind>`, derived: it takes the",
     "node and its ties out, and is permitted through the acts that create the",
-    "kind or a grant naming it.",
+    "kind or a grant naming it. Beside it, `archive-<kind>` sets a node aside —",
+    "kept with its ties and history, out of lists, counts and rules —",
+    "`unarchive-<kind>` brings it back, and `merge-<kind>` (`id`, `into`) moves",
+    "a duplicate's ties to the one kept and archives the duplicate.",
     "",
   );
 
@@ -214,8 +217,9 @@ export function generateAgentsMd<S extends AnySchema>(app: GraviewApp<S>): strin
     "  Do not hardcode a bootstrap id inside a mutation body or an invariant —",
     "  bind a role or a flag, so a store seeded differently still works.",
     "- **Prefer the derived acts over reaching around them.** `edit-<kind>` changes",
-    "  what was set at creation; `remove-<kind>` takes a node out. Both flow",
-    "  through the policy.",
+    "  what was set at creation; `archive-<kind>` sets a node aside and",
+    "  `unarchive-<kind>` brings it back; `remove-<kind>` takes a node out for",
+    "  good. All flow through the policy. Archive rather than remove when tidying.",
     "- **Wire `serve` and `mcp` into the app's scripts** so an agent loop has a",
     "  door, and keep a declared provider's `may` list wide enough for redesign,",
     "  not only for filling an empty graph.",

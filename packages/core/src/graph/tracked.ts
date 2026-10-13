@@ -1,3 +1,4 @@
+import type { ArchivedOption } from "./archived.js";
 import type { GraphEdge, GraphNodeBase, GraphReader } from "./types.js";
 
 /**
@@ -18,11 +19,6 @@ export class TrackedReader<N extends GraphNodeBase> implements GraphReader<N> {
     return [...this.seen];
   }
 
-  private mark<T extends N | undefined>(node: T): T {
-    if (node) this.seen.add(node.id);
-    return node;
-  }
-
   private markAll<T extends N>(nodes: T[]): T[] {
     for (const node of nodes) this.seen.add(node.id);
     return nodes;
@@ -38,7 +34,7 @@ export class TrackedReader<N extends GraphNodeBase> implements GraphReader<N> {
 
   getNode(id: string): N | undefined {
     this.seen.add(id);
-    return this.mark(this.inner.getNode(id));
+    return this.inner.getNode(id);
   }
 
   has(id: string): boolean {
@@ -46,34 +42,34 @@ export class TrackedReader<N extends GraphNodeBase> implements GraphReader<N> {
     return this.inner.has(id);
   }
 
-  allNodes(): N[] {
-    return this.markAll(this.inner.allNodes());
+  allNodes(options?: ArchivedOption): N[] {
+    return this.markAll(this.inner.allNodes(options));
   }
 
-  allEdges(): GraphEdge[] {
-    return this.markEdges(this.inner.allEdges());
+  allEdges(options?: ArchivedOption): GraphEdge[] {
+    return this.markEdges(this.inner.allEdges(options));
   }
 
-  nodesOfKind<K extends N["kind"]>(kind: K): Extract<N, { kind: K }>[] {
-    return this.markAll(this.inner.nodesOfKind(kind));
+  nodesOfKind<K extends N["kind"]>(kind: K, options?: ArchivedOption): Extract<N, { kind: K }>[] {
+    return this.markAll(this.inner.nodesOfKind(kind, options));
   }
 
-  edgesOfKind(kind: string): GraphEdge[] {
-    return this.markEdges(this.inner.edgesOfKind(kind));
+  edgesOfKind(kind: string, options?: ArchivedOption): GraphEdge[] {
+    return this.markEdges(this.inner.edgesOfKind(kind, options));
   }
 
-  out(id: string, kind?: string): N[] {
+  out(id: string, kind?: string, options?: ArchivedOption): N[] {
     this.seen.add(id);
-    return this.markAll(this.inner.out(id, kind));
+    return this.markAll(this.inner.out(id, kind, options));
   }
 
-  in(id: string, kind?: string): N[] {
+  in(id: string, kind?: string, options?: ArchivedOption): N[] {
     this.seen.add(id);
-    return this.markAll(this.inner.in(id, kind));
+    return this.markAll(this.inner.in(id, kind, options));
   }
 
-  neighbors(id: string): N[] {
+  neighbors(id: string, options?: ArchivedOption): N[] {
     this.seen.add(id);
-    return this.markAll(this.inner.neighbors(id));
+    return this.markAll(this.inner.neighbors(id, options));
   }
 }

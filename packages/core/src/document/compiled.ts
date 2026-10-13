@@ -594,7 +594,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       const repairList: Repair[] = repairs.flatMap((r) => {
         const act = document.acts?.[r.act];
         const args: Record<string, unknown> = {};
-        if (subject && (act?.on || /^(edit|remove)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
+        if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
         for (const [k, v] of Object.entries(r.args ?? {})) args[k] = refName(v) === "subject" ? subject?.id : v;
         const declared = act ? plan.acts[r.act]!.args : [];
         const missing = declared.filter(([k, a]) => a.required && args[k] === undefined).map(([k]) => k);

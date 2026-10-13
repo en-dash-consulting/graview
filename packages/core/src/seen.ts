@@ -1,4 +1,4 @@
-import type { AnyGraphNode, GraphEdge, GraphSnapshot } from "./graph/types.js";
+import type { AnyGraphNode, GraphEdge, GraphNodeBase, GraphSnapshot } from "./graph/types.js";
 import type { Violation } from "./invariants/types.js";
 import { batchesOf, undoneIn, type LogReading } from "./ops/log.js";
 import { checkUndo } from "./ops/undo.js";
@@ -485,35 +485,29 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return (id: string) => served(target.getNode(id));
         case "has":
           return seenId;
+        /*
+         * Each read as the graph's own, its arguments handed on — a read that
+         * lists records says which (FR-173) — and what comes back served:
+         * records as this seat may see them, links between records it sees,
+         * and nothing reached from a record it may not.
+         */
         case "allNodes":
-          return () => pinned().servedAll(target.allNodes());
         case "nodesOfKind":
-          return (kind: never) => pinned().servedAll(target.nodesOfKind(kind));
+          return (...args: never[]) => pinned().servedAll((target[prop] as (...args: never[]) => GraphNodeBase[])(...args));
         case "count":
-          return (kind: never) => pinned().servedAll(target.nodesOfKind(kind)).length;
+          return (...args: Parameters<typeof target.nodesOfKind>) => pinned().servedAll(target.nodesOfKind(...args)).length;
         case "allEdges":
-          return () => target.allEdges().filter(pinned().seenEdge);
         case "edgesOfKind":
-          return (kind: string) => target.edgesOfKind(kind).filter(pinned().seenEdge);
-        case "out":
-          return (id: string, kind?: string) => {
-            const now = pinned();
-            return now.seenId(id) ? now.servedAll(target.out(id, kind)) : [];
-          };
-        case "in":
-          return (id: string, kind?: string) => {
-            const now = pinned();
-            return now.seenId(id) ? now.servedAll(target.in(id, kind)) : [];
-          };
-        case "neighbors":
-          return (id: string) => {
-            const now = pinned();
-            return now.seenId(id) ? now.servedAll(target.neighbors(id)) : [];
-          };
         case "outEdges":
-          return (id: string, kind?: string) => target.outEdges(id, kind).filter(pinned().seenEdge);
         case "inEdges":
-          return (id: string, kind?: string) => target.inEdges(id, kind).filter(pinned().seenEdge);
+          return (...args: never[]) => (target[prop] as (...args: never[]) => GraphEdge[])(...args).filter(pinned().seenEdge);
+        case "out":
+        case "in":
+        case "neighbors":
+          return (id: string, ...rest: never[]) => {
+            const now = pinned();
+            return now.seenId(id) ? now.servedAll((target[prop] as (id: string, ...rest: never[]) => GraphNodeBase[])(id, ...rest)) : [];
+          };
         case "snapshot":
           return () => {
             const snapshot = target.snapshot();
@@ -522,7 +516,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           };
         case "size": {
           const now = pinned();
-          return { nodes: now.servedAll(target.allNodes()).length, edges: target.allEdges().filter(now.seenEdge).length };
+          return { nodes: now.servedAll(target.allNodes({ archived: "all" })).length, edges: target.allEdges({ archived: "all" }).filter(now.seenEdge).length };
         }
         default:
           return bound(target, prop);

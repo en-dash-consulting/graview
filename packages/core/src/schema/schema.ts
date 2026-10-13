@@ -1,3 +1,4 @@
+import { ARCHIVED } from "../graph/archived.js";
 import * as z from "./zod.js";
 import type {
   AnyNodeDefinition,
@@ -178,7 +179,10 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
           `Declared kinds: ${[...byKind.keys()].join(", ")}`,
         );
       }
-      return parser.parse(node) as NodeOf<Defs[number]>;
+      // The archived mark is the framework's, not a field the kind declares: it is kept, never judged (FR-173).
+      const { [ARCHIVED]: archived, ...fields } = node as Record<string, unknown>;
+      const parsed = parser.parse(fields) as NodeOf<Defs[number]>;
+      return archived === true ? ({ ...parsed, [ARCHIVED]: true } as typeof parsed) : parsed;
     },
     __node: undefined as never,
   };

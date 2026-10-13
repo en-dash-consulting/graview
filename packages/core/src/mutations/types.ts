@@ -20,6 +20,20 @@ export interface MutationContext<S extends AnySchema> {
   /** Removes a node together with every edge touching it. */
   removeNode(id: string): void;
   patchNode(id: string, fields: Record<string, unknown>): void;
+  /**
+   * Sets a record aside (FR-173): its fields, links and history kept, and
+   * it out of lists, the Scene, counts, computed fields and rules. Nothing
+   * when it is archived already.
+   */
+  archiveNode(id: string): void;
+  /** Brings an archived record back. Nothing when it is not archived. */
+  unarchiveNode(id: string): void;
+  /**
+   * Merges two records that are one thing (FR-173): the kept one (`into`)
+   * takes the duplicate's links, and the duplicate is archived, its op
+   * saying `mergedInto`. Undone as one, like any act.
+   */
+  mergeNode(duplicate: string, into: string): void;
   addEdge(edge: GraphEdge): void;
   removeEdge(edge: GraphEdge): void;
   /** Replaces every `kind` edge arriving at `to` with one from `from`. */
@@ -171,8 +185,11 @@ export interface MutationDefinition<
    * bring a thing into being may take it out — so a policy needs no second
    * list for either.
    */
-  readonly derived?: { readonly kind: string; readonly act: "edit" | "remove" };
+  readonly derived?: { readonly kind: string; readonly act: DerivedAct };
 }
+
+/** The acts the framework gives every kind: edit and remove, and archive, unarchive and merge (FR-173). */
+export type DerivedAct = "edit" | "remove" | "archive" | "unarchive" | "merge";
 
 export type AnyMutationDefinition<S extends AnySchema = AnySchema> =
   MutationDefinition<S, string, z.ZodType>;

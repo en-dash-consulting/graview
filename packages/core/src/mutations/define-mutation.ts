@@ -1,8 +1,9 @@
 import { InvalidArguments } from "./invalid-arguments.js";
 import type { z } from "zod";
+import { ARCHIVED, isArchived } from "../graph/archived.js";
 import type { Graph } from "../graph/graph.js";
 import { GraphError, MissingRecordError } from "../graph/graph.js";
-import type { Primitive } from "../graph/primitives.js";
+import { writesOf, type Primitive } from "../graph/primitives.js";
 import { TrackedReader } from "../graph/tracked.js";
 import { edgeId, type GraphEdge, type GraphReader } from "../graph/types.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
@@ -32,6 +33,8 @@ export interface CompiledMutation {
   readonly described?: readonly string[];
   readonly writes: readonly string[];
   readonly intent: string;
+  /** The record a merge kept, when the act merged one into it (FR-173): the op says so. */
+  readonly mergedInto?: string;
 }
 
 /** Whether an act takes the framework's `id` argument: it creates, and has no `id` of its own. */
@@ -189,6 +192,17 @@ export function compileMutation<S extends AnySchema>(
   const minted = new Set<string>();
   // An id any record holds, seen or not: a minted id never lands on one.
   const held = (id: string) => reader.has(id) || graph.has(id) || minted.has(id);
+  let mergedInto: string | undefined;
+  /** Every link touching a record, each once, taken off; what it reached is read. */
+  const unlink = (id: string): Set<GraphEdge> => {
+    const touching = new Set([...graph.outEdges(id), ...graph.inEdges(id)]);
+    for (const edge of touching) {
+      reader.getNode(edge.from);
+      reader.getNode(edge.to);
+      primitives.push({ op: "remove-edge", edge });
+    }
+    return touching;
+  };
 
   const context: MutationContext<S> = {
     graph: reader,
@@ -203,14 +217,7 @@ export function compileMutation<S extends AnySchema>(
     removeNode(id) {
       const node = reader.getNode(id) && graph.getNode(id);
       if (!node) throw new MissingRecordError(id, `Cannot remove missing node "${id}"`);
-      const touching = new Map<string, GraphEdge>();
-      for (const edge of graph.outEdges(id)) touching.set(edgeId(edge), edge);
-      for (const edge of graph.inEdges(id)) touching.set(edgeId(edge), edge);
-      for (const edge of touching.values()) {
-        reader.getNode(edge.from);
-        reader.getNode(edge.to);
-        primitives.push({ op: "remove-edge", edge });
-      }
+      unlink(id);
       primitives.push({ op: "remove-node", node });
     },
     patchNode(id, fields) {
@@ -226,6 +233,22 @@ export function compileMutation<S extends AnySchema>(
       }
       if (Object.keys(after).length === 0) return;
       primitives.push({ op: "patch-node", id, before, after });
+    },
+    // The archived mark is a patch like any other (FR-173): nothing when it is already so.
+    archiveNode: (id) => context.patchNode(id, { [ARCHIVED]: true }),
+    unarchiveNode: (id) => context.patchNode(id, { [ARCHIVED]: undefined }),
+    mergeNode(gone, into) {
+      const kept = reader.getNode(into) && graph.getNode(into);
+      if (!kept) throw new MissingRecordError(into, `Cannot merge into missing node "${into}"`);
+      if (gone === into || isArchived(kept)) throw new GraphError(gone === into ? "Cannot merge a record into itself" : "Cannot merge into an archived record");
+      // THE KEPT ONE TAKES THE LINKS, but never a link to itself or one it has; then the duplicate is archived.
+      const has = new Set([...graph.outEdges(into), ...graph.inEdges(into)].map(edgeId));
+      for (const edge of unlink(gone)) {
+        const next = { kind: edge.kind, from: edge.from === gone ? into : edge.from, to: edge.to === gone ? into : edge.to };
+        if (next.from !== next.to && !has.has(edgeId(next))) has.add(edgeId(next)), primitives.push({ op: "add-edge", edge: next });
+      }
+      context.archiveNode(gone);
+      mergedInto = into;
     },
     addEdge(edge) {
       primitives.push({ op: "add-edge", edge });
@@ -294,23 +317,7 @@ export function compileMutation<S extends AnySchema>(
 
   definition.apply(context, args);
 
-  const writes = new Set<string>();
-  for (const primitive of primitives) {
-    switch (primitive.op) {
-      case "add-node":
-      case "remove-node":
-        writes.add(primitive.node.id);
-        break;
-      case "patch-node":
-        writes.add(primitive.id);
-        break;
-      case "add-edge":
-      case "remove-edge":
-        writes.add(primitive.edge.from);
-        writes.add(primitive.edge.to);
-        break;
-    }
-  }
+  const writes = new Set(primitives.flatMap(writesOf));
 
   // Its own reader, so what the sentence read is known apart from what the act read (FR-55).
   const wording = new TrackedReader<NodeOfSchema<S>>(options.seen ?? graph);
@@ -326,5 +333,6 @@ export function compileMutation<S extends AnySchema>(
     ...(definition.describe ? { described: wording.reads() } : {}),
     writes: [...writes],
     intent,
+    ...(mergedInto !== undefined ? { mergedInto } : {}),
   };
 }

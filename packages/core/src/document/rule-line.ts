@@ -343,7 +343,10 @@ function call(e: Extract<Expr, { t: "call" }>, kind: Kind, r: Reader): Parts {
     }
     case "all": {
       const of = quoted(0);
-      return [name(of ? r.plural(of) : "everything")];
+      // Which records, when the rule asks for the archived (FR-173).
+      const asked = e.args[1]?.t === "lit" ? e.args[1].value : undefined;
+      const which = asked === true ? [word("archived")] : asked === "all" ? [word("archived or not")] : [];
+      return asked === true ? [...which, name(of ? r.plural(of) : "everything")] : [name(of ? r.plural(of) : "everything"), ...which];
     }
     case "fact": {
       const of = quoted(0);

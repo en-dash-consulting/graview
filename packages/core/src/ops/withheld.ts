@@ -1,4 +1,4 @@
-import { UNSET, type Primitive } from "../graph/primitives.js";
+import { UNSET, writesOf, type Primitive } from "../graph/primitives.js";
 import type { AnyGraphNode, GraphEdge } from "../graph/types.js";
 import { actingAs } from "../permissions/policy.js";
 import type { Principal } from "../permissions/types.js";
@@ -26,19 +26,8 @@ export function isWithheld(op: Pick<Operation, "withheld">): boolean {
   return op.withheld === true;
 }
 
-/** The record ids a primitive touches. */
-export function touchedBy(primitive: Primitive): readonly string[] {
-  switch (primitive.op) {
-    case "add-node":
-    case "remove-node":
-      return [primitive.node.id];
-    case "patch-node":
-      return [primitive.id];
-    case "add-edge":
-    case "remove-edge":
-      return [primitive.edge.from, primitive.edge.to];
-  }
-}
+/** The record ids a primitive touches: the ones it writes. */
+export const touchedBy: (primitive: Primitive) => readonly string[] = writesOf;
 
 /**
  * WHAT ONE SEAT IS SERVED (FR-55): the judgment a log is redacted by.

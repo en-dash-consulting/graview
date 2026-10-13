@@ -60,19 +60,29 @@ const both = (a: ArrangeOption | undefined, b: ArrangeOption | undefined): Arran
   };
 };
 
-const ARRANGEMENT_WORDS = ["sort", "filter", "group", "q"] as const;
+const ARRANGEMENT_WORDS = ["sort", "filter", "group", "q", "archived"] as const;
 
 export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: ArrangingOptions<S> = {}): Arranging<S> {
   const { store } = useGraview<S>();
   const { view, go } = useNavigation();
-  const all = props.nodes ?? [];
+  const said = ARRANGEMENT_WORDS.some((word) => view.within?.[word] !== undefined);
+  const asked = said ? arrangementOf(view) : (options.arrangedBy ?? {});
+  /*
+   * WHICH RECORDS (FR-173). A lens is handed the live ones; asked for the
+   * archived — `in.archived=true` or `all`, or `archived` in what the app
+   * opens it arranged by — it draws its kind's records from the graph.
+   */
+  const handed = props.nodes ?? [];
+  const archivedKind = options.kind ?? handed[0]?.kind ?? props.node?.kind;
+  const all =
+    asked.archived !== undefined && asked.archived !== false && archivedKind !== undefined && !options.subject
+      ? (store.graph.nodesOfKind(archivedKind as never, { archived: asked.archived }) as readonly NodeOfSchema<S>[])
+      : handed;
   const subject = options.subject ?? (options.only ? all.filter(options.only) : all);
   const rest = options.subject ? [] : options.only ? all.filter((node) => !options.only!(node)) : [];
   const kind = options.kind ?? subject[0]?.kind;
   const allow = both(options.allow, options.lensAllows);
 
-  const said = ARRANGEMENT_WORDS.some((word) => view.within?.[word] !== undefined);
-  const asked = said ? arrangementOf(view) : (options.arrangedBy ?? {});
   const offers = kind ? arrangeable(store.schema, String(kind)) : undefined;
   const arrangement = offers ? admitArrangement(asked, offers).arrangement : {};
   const arranged = arrange(subject, allow === false ? {} : arrangement, {

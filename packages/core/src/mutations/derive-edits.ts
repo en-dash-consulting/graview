@@ -285,42 +285,77 @@ export function deriveRemoveMutations<S extends AnySchema>(
   schema: S,
   mutations: readonly AnyMutationDefinition<S>[],
 ): AnyMutationDefinition<S>[] {
+  return perKind(schema, mutations).filter((mutation) => mutation.derived?.act === "remove");
+}
+
+/**
+ * SET ASIDE, NEVER LOST (FR-173).
+ *
+ * A record was present or removed; tidying an app meant deleting. Archive
+ * keeps the record — its fields, its links, its history — and takes it out
+ * of lists, the Scene, counts, computed fields and rules; its own page and
+ * search still find it, marked, with "Bring it back". Merge is two records
+ * that are one thing: the kept one (`into`) takes the links, the other is
+ * archived with `mergedInto` on its op. Each is a derived act per kind,
+ * `archive-<kind>`, `unarchive-<kind>` and `merge-<kind>`, logged and
+ * undoable like everything else, and permitted through the acts that make
+ * the kind, as a remove is — a grant may name each on its own. An app that
+ * declares an act of the same name keeps it.
+ */
+export function deriveArchiveMutations<S extends AnySchema>(
+  schema: S,
+  mutations: readonly AnyMutationDefinition<S>[],
+): AnyMutationDefinition<S>[] {
+  return perKind(schema, mutations).filter((mutation) => mutation.derived?.act !== "remove");
+}
+
+/** The acts every kind is given whatever it declares: remove, archive, unarchive and merge, each on the record as `id`. */
+function perKind<S extends AnySchema>(schema: S, mutations: readonly AnyMutationDefinition<S>[]): AnyMutationDefinition<S>[] {
   const taken = new Set(mutations.map((mutation) => mutation.name));
   const derived: AnyMutationDefinition<S>[] = [];
   for (const definition of schema.definitions) {
     const kind = definition.kind;
-    const name = removeMutationName(kind);
-    if (taken.has(name)) continue;
     const noun = nounOf(definition, kind);
-    derived.push({
-      name,
-      derived: { kind, act: "remove" },
-      title: `Remove the ${noun}`,
-      description: `Take this ${noun} out of the graph, with every tie it has. Undo puts it back.`,
-      subject: { kinds: [kind], arg: "id" },
-      destructive: true,
-      idempotent: true,
-      input: z.object({ id: refTo([kind]) }) as never,
-      describe: (args, graph) => {
-        const id = (args as { id: string }).id;
-        const node = graph.getNode(id);
-        // What files go with it (FR-162): the host decides what becomes of their bytes.
-        // Each file once, however many of its fields hold it.
-        const files = node ? new Set(Object.values(node).flatMap((value) => filesOf(value).map((file) => file.href))).size : 0;
-        return `Remove ${node ? labelOf(definition, node) : id}${files ? ` and its ${files} file${files > 1 ? "s" : ""}` : ""}`;
-      },
-      apply(ctx, args) {
-        ctx.removeNode((args as { id: string }).id);
-      },
-    } as AnyMutationDefinition<S>);
+    const named = (graph: { getNode(id: string): unknown }, id: unknown): string => {
+      const node = graph.getNode(String(id));
+      return node ? labelOf(definition, node as never) : String(id);
+    };
+    const ref = refTo([kind]);
+    for (const [act, verb, title, description] of [
+      ["remove", "Remove", `Remove the ${noun}`, `Take this ${noun} out of the graph, with every tie it has. Undo puts it back.`],
+      ["archive", "Archive", `Archive the ${noun}`, `Set this ${noun} aside, with its ties and history kept.`],
+      ["unarchive", "Bring back", "Bring it back", `Bring this archived ${noun} back.`],
+      ["merge", "Merge", `Merge into another ${noun}`, `The other takes this ${noun}'s ties, and this one is archived.`],
+    ] as const) {
+      const name = `${act}-${kind}`;
+      if (taken.has(name)) continue;
+      derived.push({
+        name,
+        derived: { kind, act },
+        title,
+        description,
+        subject: { kinds: [kind], arg: "id" },
+        ...(act === "remove" ? { destructive: true } : {}),
+        idempotent: true,
+        input: z.object(act === "merge" ? { id: ref, into: ref } : { id: ref }) as never,
+        describe: (args: Record<string, unknown>, graph) => {
+          const node = act === "remove" && graph.getNode(String(args["id"]));
+          // What files a removed record takes with it (FR-162): the host decides what becomes of their bytes. Each file once, however many of its fields hold it.
+          const files = node ? new Set(Object.values(node).flatMap((value) => filesOf(value).map((file) => file.href))).size : 0;
+          return `${verb} ${named(graph, args["id"])}${act === "merge" ? ` into ${named(graph, args["into"])}` : ""}${files ? ` and its ${files} file${files > 1 ? "s" : ""}` : ""}`;
+        },
+        // `removeNode`, `archiveNode`, `unarchiveNode` or `mergeNode`, on the record (and the one it is merged into).
+        apply: (ctx, args: Record<string, unknown>) => (ctx[`${act}Node`] as (id: unknown, into: unknown) => void)(args["id"], args["into"]),
+      } as AnyMutationDefinition<S>);
+    }
   }
   return derived;
 }
 
-/** Every act the framework derives for a declaration: the edits, then the removes. */
+/** Every act the framework derives for a declaration: the edits, then each kind's remove, archive, unarchive and merge. */
 export function deriveMutations<S extends AnySchema>(
   schema: S,
   mutations: readonly AnyMutationDefinition<S>[],
 ): AnyMutationDefinition<S>[] {
-  return [...deriveEditMutations(schema, mutations), ...deriveRemoveMutations(schema, mutations)];
+  return [...deriveEditMutations(schema, mutations), ...perKind(schema, mutations)];
 }

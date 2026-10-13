@@ -1,3 +1,4 @@
+import { archivedFrom, type Archived } from "./graph/archived.js";
 import type { Arrangement, ArrangementWords, Condition, DateBucket, Grouping, Sort } from "./arrangement.js";
 
 /*
@@ -20,8 +21,11 @@ import type { Arrangement, ArrangementWords, Condition, DateBucket, Grouping, So
 const BUCKETS: readonly DateBucket[] = ["day", "week", "month", "year", "decade"];
 
 export function parseArrangement(words: ArrangementWords): Arrangement {
-  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping; query?: string } = {};
+  const out: { sort?: Sort; filter?: Condition[]; group?: Grouping; query?: string; archived?: Archived } = {};
   if (words.q && words.q.trim().length > 0) out.query = words.q;
+  // `true` or `all`: which records (FR-173); anything else is the live ones.
+  const archived = archivedFrom(words.archived);
+  if (archived) out.archived = archived;
   if (words.sort) {
     const [by, direction] = words.sort.split(":");
     if (by) out.sort = { by, direction: direction === "desc" ? "desc" : "asc" };

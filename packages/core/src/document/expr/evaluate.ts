@@ -1,3 +1,4 @@
+import { isArchived, type Archived } from "../../graph/archived.js";
 import { withArticle } from "../../schema/define-node.js";
 import { isoToday } from "../../days.js";
 import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
@@ -287,10 +288,20 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
         return new NodeSet(nodes);
       }
       case "all": {
-        arity(1);
-        const nodes = ctx.graph.nodesOfKind(word(0));
+        /*
+         * THE LIVE RECORDS of a kind, unless the rule asks for others
+         * (FR-173): all('task', true) the archived ones, all('task', 'all')
+         * both. An archived record counts in no rule that does not ask.
+         */
+        arity(1, 2);
+        const nodes = ctx.graph.nodesOfKind(word(0), { archived: e.args.length === 2 ? (arg(1) as Archived) : false });
         spend(nodes.length, e.at);
         return new NodeSet(nodes);
+      }
+      case "archived": {
+        // Whether a record is archived: the subject's own, or the one given (FR-173).
+        arity(0, 1);
+        return isArchived(e.args.length === 1 ? arg(0) : subject);
       }
       case "count":
         arity(1);
@@ -451,5 +462,5 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
 /** The names of every function the language knows — the check reports any other. */
 export const FUNCTIONS = [
   "out", "in", "all", "count", "exists", "every", "some", "sum", "min", "max", "present", "len",
-  "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either", "fact",
+  "contains", "startsWith", "lower", "today", "now", "date", "days", "hours", "if", "first", "sort", "either", "fact", "archived",
 ] as const;

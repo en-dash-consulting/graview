@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 4605,
+  "gzipped": 1725,
+  "note": "Raised when a record came to be archived and brought back (FR-173): every kind's archive, unarchive and merge acts, the graph's reads that reach the live records unless asked, search marking an archived hit, a lens and a list taking `archived`, and an archived record's page saying so with \"Bring it back\". 4_605 / 1_725 more than main after FR-179 (1_767_822 / 563_991); raised by that growth. Measured at 1_772_427 / 565_716."
+}

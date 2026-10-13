@@ -16,12 +16,14 @@ export function arrangementOf(view: ViewState): Arrangement {
     ...(within["filter"] ? { filter: within["filter"] } : {}),
     ...(within["group"] ? { group: within["group"] } : {}),
     ...(within["q"] ? { q: within["q"] } : {}),
+    // `in.archived=true` or `all`: which records the lens draws (FR-173).
+    ...(within["archived"] ? { archived: within["archived"] } : {}),
   });
 }
 
 export function withArrangement(view: ViewState, arrangement: Arrangement): ViewState {
   const words = formatArrangement(arrangement);
   let next = view;
-  for (const key of ["sort", "filter", "group", "q"] as const) next = withWithin(next, key, words[key] ?? null);
+  for (const key of ["sort", "filter", "group", "q", "archived"] as const) next = withWithin(next, key, words[key] ?? null);
   return next;
 }

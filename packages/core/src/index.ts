@@ -66,6 +66,8 @@ export type {
 
 // Graph — the reactive in-memory model the framework owns.
 export { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
+export { ARCHIVED, archivedFrom, isArchived } from "./graph/archived.js";
+export type { Archived, ArchivedOption } from "./graph/archived.js";
 export type { ApplyPrimitivesOptions, GraphListener, GraphOptions } from "./graph/graph.js";
 export { diffSnapshots, EMPTY_DIFF, isEmptyDiff } from "./graph/diff.js";
 export type { GraphDiff, NodeChange } from "./graph/diff.js";
@@ -145,6 +147,7 @@ export type {
 export { argumentsTaken, compileMutation, defineMutation, takesAnId } from "./mutations/define-mutation.js";
 export type { CompiledMutation } from "./mutations/define-mutation.js";
 export {
+  deriveArchiveMutations,
   deriveEditMutations,
   deriveMutations,
   deriveRemoveMutations,
@@ -169,6 +172,7 @@ export type { RefCandidate, RefResolution } from "./labels.js";
 export type {
   AnyMutationDefinition,
   MutationCall,
+  DerivedAct,
   MutationContext,
   MutationDefinition,
   MutationDefinitionSpec,

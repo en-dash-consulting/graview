@@ -1,5 +1,5 @@
 import type { GraviewApp } from "../app.js";
-import { deriveEditMutations, deriveRemoveMutations } from "../mutations/derive-edits.js";
+import { deriveArchiveMutations, deriveEditMutations, deriveRemoveMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
 
 /**
@@ -76,8 +76,8 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   const declaredMutations = app.mutations ?? [];
   const derivedEdits = deriveEditMutations(app.schema, declaredMutations);
   const derivedRemoves = deriveRemoveMutations(app.schema, declaredMutations);
-  // Declared and derived: a grant may name `edit-<kind>` or `remove-<kind>`, and a repair may too.
-  const mutations = new Map([...declaredMutations, ...derivedEdits, ...derivedRemoves].map((m) => [m.name, m]));
+  // Declared and derived: a grant may name `edit-<kind>`, `remove-<kind>`, `archive-<kind>`, `unarchive-<kind>` or `merge-<kind>`, and a repair may too.
+  const mutations = new Map([...declaredMutations, ...derivedEdits, ...derivedRemoves, ...deriveArchiveMutations(app.schema, declaredMutations)].map((m) => [m.name, m]));
   const invariants = new Map((app.invariants ?? []).map((i) => [i.name, i]));
 
   const add = (f: Finding) => findings.push(f);

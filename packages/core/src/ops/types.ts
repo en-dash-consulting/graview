@@ -98,6 +98,12 @@ export interface Operation {
    * op without it reads as before, and folds the same.
    */
   readonly enabledModules?: readonly string[];
+  /**
+   * THE RECORD THIS ONE WAS MERGED INTO (FR-173). Set on the op of a merge:
+   * the duplicate is archived, its links moved to the kept record named
+   * here, and both histories stay in the log. Undone as one, like any op.
+   */
+  readonly mergedInto?: string;
 }
 
 export interface Batch {
