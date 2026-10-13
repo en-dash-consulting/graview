@@ -25,7 +25,14 @@ const hive = defineNode("hive", {
   noun: "hive",
 });
 const schema = createSchema([hive]);
-const app = defineApp({ name: "Co-op", schema, lenses: [{ name: "columns", title: "How the hives are", bindings: { hive: { column: "status" } } }] });
+const app = defineApp({
+  name: "Co-op",
+  schema,
+  lenses: [
+    { name: "columns", title: "How the hives are", bindings: { hive: { column: "status" } } },
+    { name: "blocks", title: "A dozen hives", on: "hive", options: { blocks: [{ list: "all('hive')", as: "row", limit: 12 }] } },
+  ],
+});
 const store = (many: number) =>
   new Store({
     schema,
@@ -42,6 +49,17 @@ const contextOf = (many: number): PageContext<typeof schema> => ({
 describe("the home", () => {
   it("counts in the page's locale", () => {
     expect(renderToStaticMarkup(<PagesApp context={contextOf(1201)} initialPath="/" />)).toContain('data-testid="standing">1,201 hives.</h2>');
+  });
+
+  it("says how many a list cut short leaves, in the page's locale", async () => {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<PagesApp context={contextOf(1201)} initialPath="/places/a-dozen-hives" />));
+    const seeAll = () => host.querySelector('[data-testid="see-all"]');
+    for (let tick = 0; tick < 100 && !seeAll(); tick += 1) await act(async () => new Promise((resolve) => setTimeout(resolve, 10)));
+    expect(seeAll()?.textContent).toBe("See all 1,201 hives");
+    await act(async () => root.unmount());
   });
 
   it("draws a picture in a card that is a link without a link inside it", async () => {

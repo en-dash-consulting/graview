@@ -491,6 +491,8 @@ async function pagesWalk(browser, { width, scheme, seat, who }) {
   await visit("the places", "/pages/places", '[data-testid="places"], [data-testid="gallery"]');
   await visit("the timetable's place", "/pages/places/the-timetable", '[data-testid="place-lens"]');
   await visit("the coverage's place", "/pages/places/what-the-talks-are-about", '[data-testid="place-lens"]');
+  // A list cut short, and the way to the rest of it (the ninth walk, W-198).
+  await visit("a dozen talks, and the way to the rest", "/pages/places/a-dozen-talks", '[data-testid="see-all"]');
   await visit("the problems the seed was written with", "/pages/problems", '[data-testid="repairs"]');
   await visit("a search for a name ten records share", "/pages/search?q=Opening%20Remarks", '[data-testid="search-hit"]');
   await visit("a search that folds an accent", "/pages/search?q=zoe%20lamarre", '[data-testid="search-hit"]');

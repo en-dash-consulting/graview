@@ -42,6 +42,12 @@ export const gauntletApp = defineApp({
       bindings: { talk: { start: "startsAt" }, workshop: { start: "startsAt" } },
       options: { today: "2026-09-28", range: "week", horizon: { years: 10, title: "Ten editions" } },
     },
+    /*
+     * A LIST CUT SHORT, drawn from blocks: twelve talks of thousands, and
+     * "See all" under them on the routed face — a state no
+     * harness reached until the ninth walk, whose count was said bare (W-198).
+     */
+    { name: "blocks", title: "A dozen talks", on: "talk", options: { blocks: [{ list: "all('talk')", as: "row", limit: 12 }] } },
   ],
 });
 
