@@ -536,9 +536,9 @@ function ChipRows({ offers, chips, schema, graph, kind, arrangement, has, choose
 }
 
 const CHIP_CSS = `
-.graview-arrange-chips{display:grid;gap:6px;margin-top:8px;min-width:0}
-.graview-arrange-chip-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
-.graview-arrange-chip-label{margin-right:2px;font-size:.8125rem;color:var(--graview-ink-muted)}
+.graview-arrange-chips,.graview-arrange-chip-row{display:contents}
+@container (max-width:519px){.graview-arrange-chips{display:flex;flex:1 1 10rem;align-items:center;gap:6px;min-width:0;overflow-x:auto;scrollbar-width:none}.graview-arrange-chip-label{margin:0}.graview-arrange-chip{flex:0 0 auto;white-space:nowrap}}
+.graview-arrange-chip-label{margin:0 0 0 8px;font-size:.8125rem;color:var(--graview-ink-muted)}
 .graview-arrange-chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;max-width:100%;box-sizing:border-box;margin:0;padding:0 10px;border:1px solid var(--graview-edge);border-radius:999px;background:var(--graview-panel);font:inherit;font-size:.8125rem;line-height:1.2;color:var(--graview-ink);cursor:pointer;overflow-wrap:anywhere;text-align:left}
 .graview-arrange-chip:hover{border-color:var(--graview-edge-bright,var(--graview-edge))}
 .graview-arrange-chip[aria-pressed=true]{border-color:var(--graview-accent);background:color-mix(in srgb,var(--graview-accent) 12%,var(--graview-panel));font-weight:600}

@@ -340,13 +340,14 @@ export function ArrangeBar(props: ArrangeBarProps) {
             />
           </label>
         ) : null}
+        {/* On the line itself, wrapping after its words: a list's first record stays near the top. */}
+        {chipped.length > 0 && props.chips ? (
+          // The chips come with the lists' module, fetched as the list is first drawn: a lens's line never carries them.
+          <Suspense fallback={null}>
+            <Chips offers={chipped} chips={props.chips} schema={schema} graph={graph} kind={kind} arrangement={arrangement} has={has} choose={choose} testId={id} />
+          </Suspense>
+        ) : null}
       </div>
-      {chipped.length > 0 && props.chips ? (
-        // The chips come with the lists' module, fetched as the list is first drawn: a lens's line never carries them.
-        <Suspense fallback={null}>
-          <Chips offers={chipped} chips={props.chips} schema={schema} graph={graph} kind={kind} arrangement={arrangement} has={has} choose={choose} testId={id} />
-        </Suspense>
-      ) : null}
     </div>
   );
 }

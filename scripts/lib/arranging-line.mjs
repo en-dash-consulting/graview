@@ -11,8 +11,13 @@
  * rota's shifts, and `verify-chrome-quiet` of Cloud's workshop.
  */
 
-/** How far a list's first record stands from the top of the page's content, at most, by the window's width. */
-export const FIRST_RECORD_WITHIN = { desk: 210, phone: 240 };
+/**
+ * How far a list's first record stands from the top of the page's content,
+ * at most, by the window's width. A phone's line holds Filter as a word of
+ * its own and the list's choices as a rail of chips beside "Arrange" (the
+ * Roadmap's f-filters-that-scale): one row of them more than the 240 it was.
+ */
+export const FIRST_RECORD_WITHIN = { desk: 210, phone: 275 };
 
 /** The page's head, measured: where its content begins (under the bar), where the first record is, and what arranges it. */
 export function listHead(page) {
