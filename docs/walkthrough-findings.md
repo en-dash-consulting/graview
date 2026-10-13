@@ -4628,3 +4628,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/core/src/watched.ts` (`tellTheWatchItsNames`)
 - harness that should have caught it: none — the gauntlet's worded booleans ("Here", "Not here yet") share nothing with their keys spoken
 - status: fixed in "walkthrough: setup · a yes the kind words itself is its own word to the watch" · criterion: `packages/core/tests/unit/a-watching-harness-is-told.test.ts` "does not count a yes the kind words itself as its key spoken" (verified failing without the fix); the journeys on walk9 report nothing of it
+
+### W-194 · The journeys read a filter heading drawn a moment late as no heading, and its entries as none
+- stage: setup (the journeys on walk9, and the rota's committed verdict) · face: scene · width: 1440 and 390 · scheme: light
+- impact: blocks a job's measure — "Narrowing the hives by boxes" on the scene with the pointer, at both widths: "“Filter” offers no boxes to narrow the hives by", where a person who pressed Filter found Boxes in the list and eight entries under it; the rota's verdict on main says the same of its shifts ("offers no from")
+- class: harness-or-setup-itself
+- expected: a heading of the Filter list is looked for once the list is there, as a person looks
+- actual: since the list's headings start closed (the Roadmap's f-filters-that-scale), the journeys open the field's heading first — with `isVisible`, which does not wait, 140 milliseconds after the press; on the scene the list arrives later than that, so the heading was taken for absent and the closed entries under it for none. The keyboard's way, slower, found them
+- where it belongs: `scripts/lib/journeys.mjs` (the narrow job)
+- harness that should have caught it: the journeys' own `appears`, written for exactly this (a dead end decided with one look) and not used here
+- status: fixed — on main the same morning, by "A harness waits for the Filter list's headings to be drawn before opening one, since the list is fetched at the first press" (9f239f17), which the walk's own fix met in the rebase and gave way to · criterion: the journeys' "narrow" on the scene with the pointer, a dead end at both widths on walk9 before, done in both after (104 of 104 runs)
