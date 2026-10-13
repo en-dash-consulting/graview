@@ -348,6 +348,13 @@ export interface LayoutOptions {
    */
   readonly plainGroups?: readonly string[];
   /**
+   * Whether a picture opened from altitude stands in a panel BESIDE the map
+   * (the desk's Shell and the embed's scene). Then a focused plain group's
+   * stop is in that panel, as a lens is: its district stays shut and nothing
+   * is drawn in the middle of the city for it.
+   */
+  readonly besideTheMap?: boolean;
+  /**
    * THE ORDER A BLANK INSTALLATION FILLS ITS KINDS — `beginning(app).order`
    * — which is the order the city is walked in. Sorted ids otherwise, which
    * is deterministic too, only less meaningful.
@@ -395,7 +402,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },

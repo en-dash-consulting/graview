@@ -607,12 +607,17 @@ function useCardActs<S extends AnySchema>() {
       const card = kindOfCard(node.id);
       const lit = card !== null && (found?.byKind[card] ?? 0) > 0;
       /*
-       * A DISTRICT WITH NO PICTURE OF ITS OWN, OPENED FROM ALTITUDE, IS
-       * LISTED BESIDE THE MAP where a panel is drawn — not opened in place
-       * as a card of chips floating over its neighbors.
+       * A DISTRICT WITH NO PICTURE OF ITS OWN, OPENED FROM ALTITUDE, OPENS
+       * TO ITS STOP BESIDE THE MAP, in the panel a lens opens in: its own
+       * focus, at altitude, so it takes the place of a lens or another
+       * kind's stop open there (one panel at a time), the address says so,
+       * and Back returns to what was open before. It used to be chosen,
+       * which listed it beside the map only when nothing was open — with a
+       * lens open, the lens stayed and the district opened behind it.
        */
       if (besideTheMap && card !== null && view.overview && !ownPictureOf(node) && !(lit && view.q)) {
-        setSelection([node.id]);
+        setView((current) => withWithin({ ...withFocus(current, `aggregate:${card}`), relation: null }, "view", null));
+        setSelection([]);
         return;
       }
       setView((current) =>

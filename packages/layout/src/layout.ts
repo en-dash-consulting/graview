@@ -453,7 +453,8 @@ export function layout<S extends AnySchema>(
      * `@graview/primitives`, which now says where the members are instead.
      */
     for (const kind of focusKinds) {
-      if (groupIsPlain) expanded.add(kindCardId(kind));
+      // Beside the map, a plain group's stop is in the panel: its district stays shut, as a pictured one's does.
+      if (groupIsPlain && options.besideTheMap !== true) expanded.add(kindCardId(kind));
       else expanded.delete(kindCardId(kind));
     }
   }
@@ -466,7 +467,7 @@ export function layout<S extends AnySchema>(
   const driveIn = screenKind !== undefined && (options.screens?.[screenKind]?.length ?? 0) > 0;
   /** The picture standing in the middle from altitude, when there is one: ground the city must not take. */
   let stamp: { x: number; y: number; width: number; height: number } | undefined;
-  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain && !driveIn) {
+  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain && !driveIn && !(groupFocus && options.besideTheMap === true)) {
     stamp = {
       x: railLeft + (spanW - overviewW) / 2,
       y: opts.height * 0.53 - overviewH / 2,

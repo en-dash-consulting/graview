@@ -157,7 +157,7 @@ try {
 
   /* ------------------------------------------------- what a person does in one */
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: "dark" });
-  const page = await context.newPage();
+  let page = await context.newPage();
   page.on("pageerror", (error) => report.pageErrors.push(`walk: ${String(error.message).slice(0, 200)}`));
   const open = async (hash) => {
     await page.goto(`${at("gauntlet")}/?theme=dark&as=u-4f1c9a${hash}`, { waitUntil: "load", timeout: 120_000 });
@@ -165,6 +165,85 @@ try {
     await page.waitForSelector('[data-testid="kind-stop"]', { timeout: 15_000 });
     await page.waitForTimeout(500);
   };
+
+  /*
+   * ONE PANEL BESIDE THE MAP AT A TIME. With a lens open from altitude,
+   * opening a kind that has none — a double press on its district, or Enter
+   * on it — shows that kind's stop in the panel in the lens's place, the
+   * address says so, the keyboard is on its heading, and Back returns to the
+   * lens. Lens to lens, kind to lens and kind to kind alike.
+   */
+  const panels = () =>
+    page.evaluate(() => ({
+      hash: decodeURIComponent(location.hash),
+      panels: [...document.querySelectorAll("[data-graview-map-panel]")].map((one) => one.getAttribute("data-testid")),
+      stop: document.querySelector('[data-graview-map-panel] [data-testid="kind-stop"]')?.getAttribute("data-graview-kind-stop") ?? null,
+      lens: document.querySelector('[data-testid="lens-panel"]')?.getAttribute("aria-label") ?? null,
+      focus: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null,
+      opened: document.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-members').length,
+      anyStop: document.querySelector('[data-testid="kind-stop"]') !== null,
+    }));
+  const openDistrict = async (kind, how = "double") => {
+    const sign = page.locator(`[data-graview-past-edge="kind:${kind}"]`).first();
+    if ((await sign.count()) > 0) {
+      await sign.click();
+      await page.waitForTimeout(600);
+    }
+    const card = page.locator(`[data-graview-view="kind:${kind}"]`).first();
+    if (how === "double") {
+      const box = await card.boundingBox();
+      await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+    } else {
+      // From the keyboard: Enter chooses the district, Enter again opens it.
+      await card.focus();
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(400);
+      await page.keyboard.press("Enter");
+    }
+    await page.waitForTimeout(1500);
+    return panels();
+  };
+  const pressLens = async (as) => {
+    await page.locator(`[data-testid="app-place-scene:talk:${as}"]`).first().click();
+    await page.waitForTimeout(1500);
+    return panels();
+  };
+  for (const [width, scheme] of [
+    [1440, "dark"],
+    [390, "light"],
+  ]) {
+    const phone = width < 600;
+    const one = await browser.newContext({ viewport: { width, height: phone ? 844 : 900 }, colorScheme: scheme, ...(phone ? { isMobile: true, hasTouch: true } : {}) });
+    const tab = await one.newPage();
+    tab.on("pageerror", (error) => report.pageErrors.push(`swap ${width}: ${String(error.message).slice(0, 200)}`));
+    const was = page;
+    // eslint-disable-next-line no-global-assign
+    page = tab;
+    await tab.goto(`${at("gauntlet")}/?theme=${scheme}&as=u-4f1c9a#overview=1&focus=aggregate%3Atalk&in.view=the-timetable`, { waitUntil: "load", timeout: 120_000 });
+    await tab.waitForFunction(() => "__graviewReady" in window, undefined, { timeout: 120_000 });
+    await tab.waitForSelector('[data-testid="lens-panel"]', { timeout: 15_000 }).catch(() => undefined);
+    await tab.waitForTimeout(1200);
+    const swap = { lens: await panels() };
+    swap.lensToKind = await openDistrict("room");
+    swap.kindToKind = await openDistrict("staff", phone ? "double" : "keys");
+    await tab.goBack();
+    await tab.waitForTimeout(1200);
+    swap.backToKind = await panels();
+    await tab.goBack();
+    await tab.waitForTimeout(1200);
+    swap.backToLens = await panels();
+    if (!phone) {
+      // A kind's stop open from altitude, then a lens chosen on the bar: the lens is what is drawn, and no stop.
+      await tab.goto(`${at("gauntlet")}/?theme=${scheme}&as=u-4f1c9a#overview=1&focus=aggregate%3Atopic`, { waitUntil: "load", timeout: 120_000 });
+      await tab.waitForFunction(() => "__graviewReady" in window, undefined, { timeout: 120_000 });
+      await tab.waitForSelector('[data-graview-map-panel] [data-testid="kind-stop"]', { timeout: 15_000 }).catch(() => undefined);
+      await tab.waitForTimeout(1200);
+      swap.kindToLens = await pressLens("what-the-talks-are-about").catch(async (error) => ({ error: String(error.message).split("\n")[0], seen: await tab.evaluate(() => [decodeURIComponent(location.hash), [...document.querySelectorAll("[data-testid^=drive-in]")].map((one) => one.getAttribute("data-testid"))]) }));
+    }
+    report.walks[`swap${width}`] = swap;
+    page = was;
+    await one.close();
+  }
 
   // A problem opens its rows, in the rule's words.
   await open("#focus=aggregate%3Aroom");
@@ -251,6 +330,18 @@ report.checks = {
   aChipNarrowsInOnePress: /\d/.test(walks.chip?.said ?? "") && (walks.chip?.rows ?? 0) > 0 && walks.chip.rows < 34,
   // A table names records, never their ids.
   noIdIsShown: stops.every((one) => !one.present || (one.ids ?? []).length === 0),
+  // With a lens open from altitude, opening a lens-less kind shows that kind's stop and no lens panel — one panel at a time, at a desk and a phone.
+  withALensOpenOpeningAKindShowsItsStopAndNoLens: [1440, 390].every((width) => {
+    const swap = walks[`swap${width}`];
+    const only = (one, kind) => one?.stop === kind && one.panels.length === 1 && new RegExp(`focus=aggregate:${kind}(&|$)`).test(one.hash) && !one.hash.includes("in.view=") && one.opened === 0;
+    return swap?.lens?.lens === "The timetable" && only(swap.lensToKind, "room") && only(swap.kindToKind, "staff");
+  }),
+  // Opened, the keyboard is on the stop's heading.
+  theKeyboardLandsOnTheStopsHeading: [1440, 390].every((width) => walks[`swap${width}`]?.lensToKind?.focus === "kind-stop-title"),
+  // Back returns kind to kind, then to the lens.
+  backReturnsToWhatWasOpen: [1440, 390].every((width) => walks[`swap${width}`]?.backToKind?.stop === "room" && walks[`swap${width}`]?.backToLens?.lens === "The timetable" && walks[`swap${width}`]?.backToLens?.stop === null),
+  // A lens pressed with a kind's stop open takes its place.
+  aLensTakesAStopsPlace: Boolean(walks.swap1440?.kindToLens?.panels) && walks.swap1440.kindToLens.anyStop === false && walks.swap1440.kindToLens.hash.includes("focus=aggregate:talk") && walks.swap1440.kindToLens.hash.includes("in.view=what-the-talks-are-about"),
   // A row right-clicked opens its record's acts, as a record does anywhere.
   aRowOpensItsActsOnARightClick: walks.rowMenu?.open === true && /sel=room:/.test(walks.rowMenu?.chosen ?? ""),
   // Every row is its record to the scene (`data-graview-pick`), chosen and right-clicked as a record is.

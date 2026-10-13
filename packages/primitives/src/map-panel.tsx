@@ -5,7 +5,7 @@ import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
 import { useKit, ViewBoundary } from "@graview/react/drawing";
 import type { MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
-import { useGraph, useGraview, useNavigation, useViolations, type ViewComponent } from "@graview/react/provider";
+import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, type ViewComponent } from "@graview/react/provider";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { barPanes } from "./bar-panes-door.js";
 import { problemsNamed } from "./problem-count.js";
@@ -233,6 +233,8 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
     [store, kind, graph, view.past, definition],
   );
   const named = registration?.title ?? place?.title ?? pluralLabel(store.schema, kind);
+  // A kind with no picture of its own draws its stop here, which heads itself: the panel says nothing over it.
+  const derived = View !== undefined && isDefaultView(View);
   const chosen = selection.filter((id) => store.graph.getNode(id) !== undefined);
   const close = () => go(withWithin(withFocus(view, null), "view", null));
   return (
@@ -243,7 +245,7 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
       sheetHeight="60%"
       onClose={close}
       head={
-        <>
+        derived ? null : <>
           <div style={eyebrow}>{pluralLabel(store.schema, kind)}</div>
           <h2 style={title} data-testid="lens-panel-title">{named}</h2>
           <p style={quiet}>
