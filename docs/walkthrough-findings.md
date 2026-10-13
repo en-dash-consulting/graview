@@ -4625,9 +4625,9 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - class: harness-or-setup-itself (also: data-shape-not-in-fixtures)
 - expected: a word the declaration says — a yes worded "Queen seen" — is never the key's words, even where the key spoken says the same
 - actual: the store tells the watch which spoken keys the declaration words otherwise (`queenSeen`, labeled "Queen", spoken "Queen seen"), less the words it declares; it counted an enum's worded values among those, and a boolean's not, so the home's inspection card saying "Queen seen" was reported on every page that drew it
-- where it belongs: `packages/core/src/watched.ts` (`tellTheWatchItsNames`)
+- where it belongs: what the watch learns of the declaration — `packages/core/src/watched.ts` then, `scripts/lib/watch.mjs` (`namesOf`) since the store hands itself over (below)
 - harness that should have caught it: none — the gauntlet's worded booleans ("Here", "Not here yet") share nothing with their keys spoken
-- status: fixed in "walkthrough: setup · a yes the kind words itself is its own word to the watch" · criterion: `packages/core/tests/unit/a-watching-harness-is-told.test.ts` "does not count a yes the kind words itself as its key spoken" (verified failing without the fix); the journeys on walk9 report nothing of it
+- status: fixed in "walkthrough: setup · a yes the kind words itself is its own word to the watch", and moved with the rest of the watch's reading of a store out of core in "A store hands itself to a watching harness, and the watch reads its words" — the hosted page's budget needed the room for this walk's fixes · criterion: `tests/the-watch-reads-a-stores-names.test.ts` "does not count a yes the kind words itself as its key spoken" (first verified failing without the fix in core's `a-watching-harness-is-told.test.ts`); the journeys on walk9 report nothing of it
 
 ### W-194 · The journeys read a filter heading drawn a moment late as no heading, and its entries as none
 - stage: setup (the journeys on walk9, and the rota's committed verdict) · face: scene · width: 1440 and 390 · scheme: light

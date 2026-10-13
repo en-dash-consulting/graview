@@ -31,7 +31,7 @@ import { PermissionDeniedError, type Policy, type Principal, type Refusal } from
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
-import { tellTheWatchItsNames, tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
+import { tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
 import { capitalize } from "./capital.js";
 import { dayOf, type Tick } from "./clock.js";
 import { pluralOf } from "./schema/define-node.js";
@@ -540,7 +540,6 @@ export class Store<S extends AnySchema> {
       this.keeper = keepLinkMutation(options.schema);
       this.mutations.set(KEEP_LINK, this.keeper);
     }
-    tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
     const horizon = given("horizon", options.horizon);
     const validate = { validate: this.validate };

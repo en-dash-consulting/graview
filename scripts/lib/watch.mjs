@@ -51,6 +51,138 @@ export const watchFile = (script, engine = "chromium") =>
   resolve(repoRoot, "docs/watch", `${script}${engine === "chromium" ? "" : `.${engine}`}.json`);
 
 /* ------------------------------------------------------------------ */
+/* What the watch learns from a store. Plain functions with no closure */
+/* over Node: put into the page beside `watchInPage`, and imported by  */
+/* the tests that hold them.                                           */
+/* ------------------------------------------------------------------ */
+
+/*
+ * THE STORE IS HANDED OVER; THE WATCH READS IT. The declaration's names,
+ * what a seat may not see and who signed what were worked out by
+ * `@graview/core` and told to the watch — 2.4 KB that every reader of a
+ * hosted page downloaded for a harness's sake, and the room the ninth
+ * walk's fixes needed (the hosted page's budget). The store hands itself
+ * over (`watch.store`, `watch.seat`) and the watch works the words out
+ * here, as core did.
+ */
+
+/** A key in words: "plannedAt" → "Planned at", as `humanizeField` says it. */
+export function spoken(field) {
+  const words = String(field)
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/** The declaration's names, and the words it has for them: what the watch's `learn` takes. */
+export function namesOf(store) {
+  const schema = store.schema;
+  const policy = store.policy;
+  const mutations = typeof store.allMutations === "function" ? store.allMutations() : [];
+  const ids = [];
+  const words = [];
+  /*
+   * THE KEY'S WORDS WHERE THE DECLARATION HAS ITS OWN. "Vin" over a field
+   * the kind calls "VIN", "suv" in a picker the record says "SUV" in: a
+   * single word passes for prose, so these are caught only where they are
+   * the whole of what is shown.
+   */
+  const unsaid = [];
+  const fieldsOf = (definition) => definition.fields?.shape ?? {};
+  for (const definition of schema.definitions) {
+    ids.push(definition.kind);
+    // A kind with a noun of its own is never shown by its id: "vehicle" where the declaration says "car".
+    if (definition.noun && spoken(definition.kind).toLowerCase() !== definition.noun.toLowerCase()) unsaid.push(definition.kind);
+    for (const [key, field] of Object.entries(fieldsOf(definition))) {
+      const declared = definition.display?.labels?.[key];
+      if (declared !== undefined && spoken(key) !== declared) unsaid.push(spoken(key));
+      const entries = field?.def?.entries;
+      const format = definition.display?.format?.[key];
+      for (const value of entries && typeof entries === "object" ? Object.values(entries) : []) {
+        if (typeof value !== "string") continue;
+        ids.push(value);
+        if (!format) continue;
+        const said = format(value);
+        /*
+         * The raw value only where the declaration says the same word another
+         * way ("suv" for "SUV"): a value that is an ordinary word ("open",
+         * "new") is a word the interface also says, and its spoken form
+         * ("Mon") one a calendar prints.
+         */
+        if (said !== value && said.toLowerCase() === value.toLowerCase()) unsaid.push(value);
+      }
+    }
+    words.push(definition.plural ?? "", definition.noun ?? "", definition.description ?? "");
+    ids.push(...Object.keys(fieldsOf(definition)));
+    for (const label of Object.values(definition.display?.labels ?? {})) words.push(label);
+    for (const [name, edge] of Object.entries(definition.edges ?? {})) {
+      ids.push(name);
+      // An edge's name spoken ("Drives", "On show at") where it has words of its own ("the test drives booked in it").
+      if (edge.description || edge.inverse) unsaid.push(spoken(name));
+      words.push(edge.description ?? "", edge.inverse ?? "");
+    }
+  }
+  for (const mutation of mutations) {
+    ids.push(mutation.name);
+    words.push(mutation.title ?? "");
+  }
+  for (const grant of policy?.grants ?? []) if (grant.roles !== "*") ids.push(...grant.roles);
+  ids.push(...(policy?.roles ?? []));
+  // A word one kind declares is never another's key: "Status" is a test drive's own label even where a car says "Availability".
+  const declared = new Set();
+  for (const definition of schema.definitions) {
+    // A kind's own words: what a picker asks for ("Owner") is a noun, not an edge's name.
+    declared.add(definition.plural ?? "");
+    declared.add(spoken(definition.noun ?? definition.kind));
+    for (const label of Object.values(definition.display?.labels ?? {})) declared.add(label);
+    for (const [key, field] of Object.entries(fieldsOf(definition))) {
+      const format = definition.display?.format?.[key];
+      const entries = field?.def?.entries;
+      if (!format && !definition.display?.labels?.[key]) declared.add(spoken(key));
+      // A value is said by its format, or spoken plainly where there is none ("Given", a talk's state).
+      if (entries && typeof entries === "object") for (const value of Object.values(entries)) declared.add(format ? format(value) : spoken(String(value)));
+      /*
+       * A yes or a no the kind words itself is its own word too (W-193): a
+       * hive's `queenSeen` labeled "Queen" and said "Queen seen" when true
+       * says, in the declaration's words, what its key spoken also says.
+       */
+      if (format && !entries)
+        try {
+          declared.add(String(format(true)).trim()).add(String(format(false)).trim());
+        } catch {
+          // A format that is not a yes or a no's says nothing of one.
+        }
+    }
+  }
+  return { ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)) };
+}
+
+/**
+ * WHAT THIS SEAT MAY NOT SEE: the names (and email addresses) of the
+ * records the policy's `sees` keeps from it, less any a record it may see
+ * shares. Nothing where the policy says nothing of sight.
+ */
+export function unseenOf(store, principal) {
+  if (!store.policy?.sees?.length) return null;
+  const unseen = new Set();
+  const seen = new Set();
+  for (const node of store.graph.allNodes()) {
+    const definition = store.schema.tryDefinition(node.kind);
+    const name = definition?.label ? definition.label(node) : typeof node.label === "string" && node.label.length > 0 ? node.label : node.id;
+    const said = [name, ...Object.values(node).filter((value) => typeof value === "string" && /^[^\s@]+@[^\s@]+$/.test(value))];
+    for (const word of said) (store.sees(principal, node.id) ? seen : unseen).add(word);
+  }
+  return [...unseen].filter((word) => word.length >= 5 && !seen.has(word));
+}
+
+/** Who signed what, where no record is theirs: a seat's id is a name too. */
+export function authorsOf(store) {
+  return [...new Set(store.log.all().map((op) => op.author?.id).filter((id) => typeof id === "string" && store.graph.getNode(id) === undefined))];
+}
+
+/* ------------------------------------------------------------------ */
 /* In the page. Serialized by addInitScript: no closure over Node.     */
 /* ------------------------------------------------------------------ */
 
@@ -284,6 +416,21 @@ function watchInPage() {
       unseen = escaped.length ? new RegExp(`(?<![\\p{L}\\p{N}])(${escaped.join("|")})(?![\\p{L}\\p{N}])`, "u") : null;
       schedule();
     },
+    /* A store, once it holds its graph: the declaration's names, and who has signed what. */
+    store(store) {
+      const watch = window.__graviewWatch;
+      watch.learn(namesOf(store));
+      const authors = authorsOf(store);
+      if (authors.length > 0) watch.learn({ ids: authors, words: [] });
+    },
+    /* A seat sat down at a surface (`from`), and again as the graph changes: what it may not see. */
+    seat(store, principal, from) {
+      const watch = window.__graviewWatch;
+      const words = unseenOf(store, principal);
+      if (words) watch.unseen({ words, ...(from ? { from } : {}) });
+      const authors = authorsOf(store);
+      if (authors.length > 0) watch.learn({ ids: authors, words: [] });
+    },
     refused(refusal) {
       report(
         "offered-then-refused",
@@ -407,7 +554,8 @@ export function watched(browser, engine) {
     if (attached.has(context)) return;
     attached.add(context);
     await context.exposeBinding("__graviewWatchReport", (_source, violation) => record(violation));
-    await context.addInitScript(watchInPage);
+    // The page's watch, and what it reads a store with beside it.
+    await context.addInitScript({ content: `${spoken}\n${namesOf}\n${unseenOf}\n${authorsOf}\n(${watchInPage})();` });
     context.on("page", (page) => listen(page));
     for (const page of context.pages()) listen(page);
   };

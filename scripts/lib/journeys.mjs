@@ -220,7 +220,10 @@ export function storeHookInPage() {
   const watch = window.__graviewWatch;
   if (!watch) return;
   window.__journeyStores = [];
+  // The watch reads a store's names when it is handed one; the journeys keep it too.
+  const handed = watch.store;
   watch.store = (store) => {
+    handed?.(store);
     window.__journeyStores.push(store);
     // The seat: whoever the interface last asked the policy about.
     for (const method of ["kindsKeptFrom", "permittedMutations", "mayAdminister"]) {

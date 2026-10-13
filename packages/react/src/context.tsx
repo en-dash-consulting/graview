@@ -14,7 +14,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { openingOf, sayIn, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, type Place, type PagesArrangement } from "@graview/core";
+import { openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, type PagesArrangement } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
@@ -471,10 +471,7 @@ export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S
   useEffect(() => {
     if (!(globalThis as { __graviewWatch?: unknown }).__graviewWatch) return;
     const seat = principal ?? ANONYMOUS;
-    const tell = () => {
-      tellTheWatchWhatIsUnseen(store as never, seat, from);
-      tellTheWatchItsAuthors(store as never);
-    };
+    const tell = () => tellTheWatchWhatIsUnseen(store, seat, from);
     tell();
     let soon: ReturnType<typeof setTimeout> | undefined;
     const off = store.subscribe(() => {
