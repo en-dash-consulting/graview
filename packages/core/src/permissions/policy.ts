@@ -1,6 +1,7 @@
 import type { AnyMutationDefinition } from "../mutations/types.js";
 import type { AnySchema } from "../schema/schema.js";
 import { humanizeField, withArticle } from "../schema/define-node.js";
+import { listed } from "../capital.js";
 import type { Grant, Policy, Principal, Refusal } from "./types.js";
 
 const matches = (allowed: readonly string[] | "*", value: string): boolean =>
@@ -47,8 +48,7 @@ export interface PolicyWords {
 
 /** "a sales manager", "a sales manager or a salesperson". */
 function rolesSaid(roles: readonly string[]): string {
-  const spoken = roles.map((role) => withArticle(humanizeField(role).toLowerCase()));
-  return spoken.length <= 1 ? (spoken[0] ?? "") : `${spoken.slice(0, -1).join(", ")} or ${spoken[spoken.length - 1]}`;
+  return listed(roles.map((role) => withArticle(humanizeField(role).toLowerCase())), "or");
 }
 
 /**

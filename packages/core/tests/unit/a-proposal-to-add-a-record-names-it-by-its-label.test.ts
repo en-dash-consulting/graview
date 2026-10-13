@@ -30,6 +30,16 @@ const CLOUD = {
       label: "{name} ({tier})",
       fields: { name: { type: "string", required: true }, tier: { type: "enum", options: ["free", "team"] }, seats: { type: "integer" } },
     },
+    // The Graview Roadmap's feature: why it sits in its layer is a sentence held in a `string`, not a `text`.
+    feature: {
+      fields: {
+        name: { type: "string", required: true },
+        layer: { type: "enum", options: ["framework", "cloud"] },
+        layerWhy: { type: "string" },
+        status: { type: "enum", options: ["planned", "building", "shipped"] },
+        release: { type: "string" },
+      },
+    },
   },
   acts: {
     // The act the studio derives for a new kind: `creates`, every field asked.
@@ -41,6 +51,7 @@ const CLOUD = {
       effects: [{ create: "revenue-stream", set: { maturity: "$stage", name: "$called" } }],
     },
     "add-plan": { title: "Add a plan", creates: "plan" },
+    "add-feature": { title: "Add a feature", creates: "feature" },
   },
   brand: { currency: "USD" },
 };
@@ -80,5 +91,19 @@ describe("a proposal to add a record", () => {
   it("is the line the log keeps once it is applied", () => {
     const op = store.apply({ name: "add-revenue-stream", args: { maturity: "nascent", name: "Graview Cloud SaaS" } }).ops[0]!;
     expect(op.intent).toBe("Add a revenue stream: Graview Cloud SaaS (nascent)");
+  });
+
+  it("leaves out a string that is a sentence, as it leaves out a long text: over 40 characters, or words that end in a stop", () => {
+    expect(
+      said("add-feature", {
+        name: "Named edits for the people kind, grants and sights",
+        layer: "framework",
+        layerWhy: "editDocument's ops, their previews and their sentences are @graview/core.",
+        status: "building",
+        release: "0.1.28",
+      }),
+    ).toBe("Add a feature: Named edits for the people kind, grants and sights (framework, building, 0.1.28)");
+    expect(said("add-feature", { name: "Search", layerWhy: "It is the core's.", release: "0.1.28" })).toBe("Add a feature: Search (0.1.28)");
+    expect(said("add-feature", { name: "Search", layerWhy: "core", release: "v0.1.28." })).toBe("Add a feature: Search (core, v0.1.28.)");
   });
 });

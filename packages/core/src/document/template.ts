@@ -2,6 +2,7 @@ import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { dayAsRead, ISO_DAY, isoToday } from "../days.js";
+import { listed } from "../capital.js";
 
 /*
  * TEMPLATES: "{name}", "{status} · {quote|money}", "{fills.name}".
@@ -90,11 +91,6 @@ function inWords(n: number): string {
   return n % 10 === 0 ? TENS[n / 10]! : `${TENS[Math.floor(n / 10)]}-${ONES[n % 10]}`;
 }
 
-/** "A", "A and B", "A, B and C". */
-function joined(items: readonly string[]): string {
-  return items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
-}
-
 /** The plural English makes of a noun: offers, parties, boxes. */
 function pluralOf(noun: string): string {
   if (/[^aeiou]y$/i.test(noun)) return `${noun.slice(0, -1)}ies`;
@@ -112,11 +108,11 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
     return count === 1 ? args[0] : (args[1] ?? pluralOf(args[0]));
   }
   if (value === null) return "—";
-  if (value instanceof NodeSet) return format === "count" ? String(value.nodes.length) : format === "and" ? joined(value.nodes.map(called)) : value.nodes.map(called).join(", ");
+  if (value instanceof NodeSet) return format === "count" ? String(value.nodes.length) : format === "and" ? listed(value.nodes.map(called)) : value.nodes.map(called).join(", ");
   if (Array.isArray(value)) {
     if (format === "count") return String(value.length);
     const each = value.map((v) => show(v as Value, undefined, today, [], money));
-    return format === "and" ? joined(each) : each.join(", ");
+    return format === "and" ? listed(each) : each.join(", ");
   }
   if (typeof value === "object") return called(value as AnyGraphNode);
   switch (format) {

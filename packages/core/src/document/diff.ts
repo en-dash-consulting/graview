@@ -6,6 +6,7 @@ import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 import { capitalize } from "../capital.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
  * WHAT A CHANGE TO THE APP MEANS, IN WORDS — and whether data would move.
@@ -139,6 +140,7 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     // Its roles follow its fields the same way: only a different field for a role is said.
     const wasRoles = Object.fromEntries(Object.entries(was.fieldRoles ?? {}).map(([role, field]) => [role, movedTo.get(field) ?? field]).filter(([, field]) => Object.hasOwn(now.fields, field!)));
     if (!same(wasRoles, now.fieldRoles ?? {})) sentences.push(`Which of ${withArticle(kind)}'s fields is its time, its author or a lens's role changes.`);
+    if (!was.people !== !now.people) sentences.push(peopleSentence(after.kinds, continues.get(kind) ?? kind, now.people === true));
   }
   sentences.push(...factSentences(before.computed, after.computed));
   for (const [section, noun] of [["acts", "act"], ["rules", "rule"]] as const) {
@@ -148,7 +150,7 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     for (const n of keys(a)) if (!(n in b)) sentences.push(`The ${noun} "${(a as Record<string, { title?: string }>)[n]!.title ?? n}" is removed.`);
     for (const n of keys(b)) if (n in a && !same((a as Record<string, unknown>)[n], (b as Record<string, unknown>)[n])) sentences.push(`The ${noun} "${(b as Record<string, { title?: string }>)[n]!.title ?? n}" changes.`);
   }
-  if (!same(before.policy, after.policy) || !same(before.roles, after.roles)) sentences.push("Who may do what changes.");
+  sentences.push(...policySentences(before, after));
   if (!same(before.brand?.accent, after.brand?.accent)) sentences.push("The app's colors change.");
   sentences.push(...brandSentences(before.brand ?? {}, after.brand ?? {}, after.name));
   // The app's money (FR-100), said apart from its colors.
@@ -283,4 +285,36 @@ function pagesSentences(before: Arrangement, after: Arrangement): string[] {
   if (!same(before?.pages, after?.pages)) out.push(after?.pages === undefined ? "The switch calls the pages Pages again." : `The switch calls the pages "${after.pages}".`);
   if (out.length === 0) out.push("The app's pages change.");
   return out;
+}
+
+/**
+ * Who may do and see what (FR-170), in the words its edits say: a role, a
+ * grant or a sight added or taken away, the first of either and the last.
+ * A change those do not say — grants reordered — is "Who may do what changes."
+ */
+function policySentences(before: GraviewDocument, after: GraviewDocument): string[] {
+  if (same(before.policy, after.policy) && same(before.roles, after.roles)) return [];
+  const out: string[] = [];
+  /** What is in `a` and not in `b`, each one as often as it is there more. */
+  const less = <T>(a: readonly T[], b: readonly T[]): T[] => {
+    const left = b.map((one) => canonicalize(one));
+    return a.filter((one) => {
+      const at = left.indexOf(canonicalize(one));
+      if (at < 0) return true;
+      left.splice(at, 1);
+      return false;
+    });
+  };
+  for (const role of less(after.roles ?? [], before.roles ?? [])) out.push(`${capitalize(whoWords([role]))} is a new role.`);
+  const [was, now] = [before.policy, after.policy];
+  if (!now) out.push("The app has no policy now: everyone may do anything and sees everything.");
+  else {
+    if (!was) out.push(FIRST_GRANT);
+    out.push(...less(was?.grants ?? [], now.grants).map((grant) => grantGone(before, grant)), ...less(now.grants, was?.grants ?? []).map((grant) => grantSentence(after, grant)));
+    if (now.grants.length === 0 && (was?.grants.length ?? 0) > 0) out.push(NO_GRANT_LEFT);
+    if (!was?.sees?.length && now.sees?.length) out.push(FIRST_SIGHT);
+    out.push(...less(was?.sees ?? [], now.sees ?? []).map((sight) => sightGone(before, sight)), ...less(now.sees ?? [], was?.sees ?? []).map((sight) => sightSentence(after, sight)));
+    if (was?.sees?.length && !now.sees?.length) out.push(NO_SIGHT_LEFT);
+  }
+  return out.length > 0 ? out : ["Who may do what changes."];
 }

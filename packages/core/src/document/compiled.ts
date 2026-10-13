@@ -424,9 +424,9 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
         if (arg && input[arg] !== undefined) given.push(field);
       }
       const label = labelFor(node as unknown as AnyGraphNode).trim();
-      // Said once: what the label already says, a no and a long text are not said again.
+      // Said once: what the label already says, a no, a long text and a sentence held in a string (over 40 characters, or words ending in a stop) are not said again.
       const rest = given
-        .filter((field) => node[field] !== false && fields[field]!.type !== "text" && labelFor({ ...node, [field]: undefined } as unknown as AnyGraphNode).trim() === label)
+        .filter((field) => node[field] !== false && fields[field]!.type !== "text" && !/[^]{41}| .*[.!?]$/.test(node[field] as string) &&labelFor({ ...node, [field]: undefined } as unknown as AnyGraphNode).trim() === label)
         .map((field) => (node[field] === true ? (fields[field]!.label ?? humanizeField(field)) : formatValue(node[field] as Value, fields[field]!.format as never, today(), [], money)));
       return label && rest.length > 0 ? `${label} (${rest.join(", ")})` : label;
     };

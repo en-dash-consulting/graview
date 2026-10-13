@@ -124,6 +124,9 @@ yesterday and now the button is gone.
    - A document act's `"to": "$me"` (or `"set": { "champion": "$me" }`) is
      the acting person's record — the tool stops asking who, a seat with no
      record is refused with a sentence, and only that person can undo it.
+   - A document says each by a named edit, previewed in words: `set-people`
+     (`kind`, `people`), `add-grant` / `remove-grant`, `add-sight` /
+     `remove-sight` (a removal names it by roles and acts or kinds).
 
 ## Worked examples
 

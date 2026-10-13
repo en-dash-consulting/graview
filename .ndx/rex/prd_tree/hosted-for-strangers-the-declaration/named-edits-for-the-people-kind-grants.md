@@ -1,0 +1,28 @@
+---
+id: "1abc350c-e5bf-4eee-87c4-7c67287a10db"
+level: "feature"
+title: "Named edits for the people kind, grants and sights (FR-170)"
+status: "completed"
+priority: "high"
+tags:
+  - "graview-cloud"
+  - "FR-170"
+source: "Graview Cloud's brief after 0.1.27: no op sets people on an existing kind and none touches policy, so an own-end grant or a sight via a relation is a raw JSON patch; and the Graview Roadmap's line for a new feature carried its layerWhy sentence in parentheses"
+startedAt: "2026-10-12T20:30:00.000Z"
+completedAt: "2026-10-13T00:30:00.000Z"
+endedAt: "2026-10-13T00:30:00.000Z"
+acceptanceCriteria:
+  - "editDocument takes set-people (kind, people), add-grant / remove-grant (roles, mutations, kinds, self, ownEnd, describe) and add-sight / remove-sight (roles, kinds, own, via)"
+  - "set-people with true refuses a second people kind with a sentence (people-ambiguous); false clears it; a move is false then true in one change"
+  - "remove-grant and remove-sight name their target by what it says (roles and acts or kinds, in any order, other keys given matching too), never by index; two matches are refused asking for the key that tells them apart"
+  - "Each says what it did in the declaration's words: nouns, plurals, act titles and relation names, never an act's id"
+  - "diffDocuments previews the change in the same sentences"
+  - "What the change leaves the people and the policy saying is refused by the checker's codes: people-unsaid, sight-via-unknown-edge, sight-via-misses-people, grant-own-end-without-link"
+  - "The Secret Santa's and the idea board's people, grants and sights are made from nothing by named edits alone, equal to their fixtures"
+  - "The studio says the grants, sights and people kind it changed as these ops"
+  - "A creating act's line leaves out a sentence held in a string: 'Add a feature: Named edits for the people kind, grants and sights (framework, building, 0.1.28)'"
+  - "A hosted page's first load is no larger"
+description: "add-kind and add-act passed people: true and $me through, but nothing set people on a kind already there and no op touched the policy, so a builder's forms and a chat's propose_change could not offer an own-end grant or a sight via a relation as a named change with a preview in words. And on the live Graview Roadmap a feature's layerWhy, a string field holding a sentence, stood in the parentheses of the line that offered it."
+lastModified: "2026-10-13T00:30:00.000Z"
+resolution: "Shipped in #243: the five ops in packages/core/src/document/edit.ts, their sentences in packages/core/src/document/policy-words.ts and the preview in diff.ts, the studio's grants, sights and people as ops in packages/studio/src/edits.ts, and madeLabel in compiled.ts leaving out a value over 40 characters or words ending in a stop."
+---
