@@ -1,6 +1,8 @@
 import type { AnySchema } from "@graview/core";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
-import { applyAffordance, deriveAffordances, previewAffordance, type Affordance, type AffordanceSet, type DeriveOptions } from "@graview/tools";
+// From the deriving alone (`@graview/tools/derive`): the tools' index would bring the seat's whole surface with every face that draws an act.
+import { applyAffordance, deriveAffordances, previewAffordance, type DeriveOptions } from "@graview/tools/derive";
+import type { Affordance, AffordanceSet } from "@graview/tools";
 import { useMemo } from "react";
 import { useGraph, useGraview } from "./context.js";
 

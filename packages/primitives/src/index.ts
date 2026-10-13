@@ -12,6 +12,7 @@ export {
   AgentSeat,
   AnswerArgs,
   BackOut,
+  fetchInspector,
   Inspector,
   nameOf,
   OverviewButton,

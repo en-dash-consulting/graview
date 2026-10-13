@@ -5,9 +5,12 @@ import { EMPTY_VIEW } from "@graview/layout";
 import { GraviewProvider, createViews } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { Inspector, registerDefaultViews } from "../../src/index.js";
+import { fetchInspector, Inspector, registerDefaultViews } from "../../src/index.js";
+
+// The pane is fetched when it is first wanted; here, before anything is drawn.
+beforeAll(() => fetchInspector());
 
 /**
  * THE NEXT QUESTION TAKES THE KEYBOARD. "Put a car on sale" asks its fuel

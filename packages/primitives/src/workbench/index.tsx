@@ -14,7 +14,7 @@
  */
 
 export * from "./answer-args.js";
-export * from "./inspector.js";
+export * from "./inspector-door.js";
 export * from "./following.js";
 export * from "./standing.js";
 export * from "./activity.js";

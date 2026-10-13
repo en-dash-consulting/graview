@@ -17,7 +17,7 @@ export { SeatField } from "./seat-field.js";
 export { DraftDoor } from "./draft-door.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 export { LinesKey } from "./lines-key.js";
-export { Inspector } from "./workbench/inspector.js";
+export { Inspector } from "./workbench/inspector-door.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";

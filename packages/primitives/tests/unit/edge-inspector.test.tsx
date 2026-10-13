@@ -2,9 +2,12 @@ import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/c
 import { EMPTY_VIEW, edgeSelectionId, kindCardId } from "@graview/layout";
 import { GraviewProvider, createViews } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { Inspector, registerDefaultViews, relationWords } from "../../src/index.js";
+import { fetchInspector, Inspector, registerDefaultViews, relationWords } from "../../src/index.js";
+
+// The pane is fetched when it is first wanted; here, before anything is drawn.
+beforeAll(() => fetchInspector());
 
 /**
  * A selected LINE gets an inspector about the relation: the declaration's

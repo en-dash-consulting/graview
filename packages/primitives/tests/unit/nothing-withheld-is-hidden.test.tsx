@@ -2,9 +2,12 @@ import { bindSchema, createSchema, defineNode, nodeRef, Store, type Principal } 
 import { EMPTY_VIEW } from "@graview/layout";
 import { GraviewProvider, createViews } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { Inspector, registerDefaultViews } from "../../src/index.js";
+import { fetchInspector, Inspector, registerDefaultViews } from "../../src/index.js";
+
+// The pane is fetched when it is first wanted; here, before anything is drawn.
+beforeAll(() => fetchInspector());
 
 /**
  * NOTHING WITHHELD IS HIDDEN. A producer standing on a song may credit
