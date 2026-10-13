@@ -372,6 +372,7 @@ export function batchesOf(ops: readonly Operation[], undone: ReadonlySet<string>
       // What the gesture was for, when its caller said; else its first op's own sentence.
       intent: first.batchIntent ?? first.intent,
       at: first.at,
+      ...(first.lineage ? { lineage: first.lineage } : {}),
       ops,
       undone: ops.every((op) => undone.has(op.id)),
     };

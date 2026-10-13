@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T07:20:17.951Z",
+  "at": "2026-10-13T05:25:34.958Z",
   "engine": "chromium",
   "checks": {
     "everyLineIsDrawable": true,
@@ -51,7 +51,7 @@
       "lines": 0
     }
   ],
-  "scrolled": 3,
   "lines": 1,
+  "unexercised": "no app here has a member inside a scroller, so the scroll claim went unasked",
   "passed": true
 }

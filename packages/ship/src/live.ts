@@ -1,5 +1,5 @@
 import type { GraphSnapshot } from "./snapshot.js";
-import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type MutationCall, type Operation, type Presence, type Principal, type RefusalReason } from "@graview/core";
+import { WIRE_PROTOCOL, type FieldConflict, type FieldRevision, type Lineage, type MutationCall, type Operation, type Presence, type Principal, type RefusalReason } from "@graview/core";
 export { REFUSAL_REASONS } from "@graview/core";
 export type { RefusalReason, WireRefusal } from "@graview/core";
 
@@ -97,9 +97,11 @@ export type LiveClientMessage =
       readonly batch?: string;
       readonly base?: readonly FieldRevision[];
       readonly via?: string;
+      /** What the change was based on and how sure (FR-172), checked by the store as `ApplyOptions.lineage`. */
+      readonly lineage?: Lineage;
     }
   /** Batches to take back, judged as the seat that asks. `via` is a claim, as on a call. */
-  | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string; readonly via?: string }
+  | { readonly t: "undo"; readonly cid: string; readonly batches: readonly string[]; readonly intent?: string; readonly batch?: string; readonly via?: string; readonly lineage?: Lineage }
   /**
    * Where this client is, as `POST /graview/here` takes it. Who it is —
    * the key, the kind, for whom — is the server's to say from the seat;

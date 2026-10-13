@@ -1,5 +1,6 @@
 import type { Primitive } from "../graph/primitives.js";
 import type { MutationCall } from "../mutations/types.js";
+import type { Lineage } from "./lineage.js";
 
 export interface Author {
   /**
@@ -104,6 +105,22 @@ export interface Operation {
    * here, and both histories stay in the log. Undone as one, like any op.
    */
   readonly mergedInto?: string;
+  /**
+   * WHAT IT WAS BASED ON, AND HOW SURE ITS MAKER WAS (FR-172), when the
+   * caller said (`ApplyOptions.lineage`). On the op rather than its author:
+   * an author is the same for every change a seat makes, and a basis is
+   * this change's own. A confidence below 1 makes what it links
+   * provisional until a person touches it (`linkProvenance`).
+   * Withheld with the rest of an op a seat may not see.
+   */
+  readonly lineage?: Lineage;
+  /**
+   * THE LINEAGE OF WHAT AN UNDO TOOK BACK (FR-172): set on an undo whose
+   * target carried one, so a host reading the log can tell that a
+   * suggestion was declined — "do not make this again" — without the
+   * target, which a compacted log may no longer hold.
+   */
+  readonly undoneLineage?: Lineage;
 }
 
 export interface Batch {
@@ -112,6 +129,8 @@ export interface Batch {
   readonly intent: string;
   readonly at: string;
   readonly ops: readonly Operation[];
+  /** What the gesture was based on, when its first op said (FR-172). */
+  readonly lineage?: Lineage;
   /** True when every op in the batch has been inverted by a later op. */
   readonly undone: boolean;
 }

@@ -209,6 +209,16 @@ describe("merge", () => {
     expect(store.graph.in("t-milk-2", "holds").map((n) => n.id)).toEqual(["later"]);
   });
 
+  it("says what an unsure merge was based on, and its undo keeps that as what it declined (FR-172)", () => {
+    const store = storeOf();
+    const lineage = { basis: "Same words, same list", confidence: 0.7 };
+    const result = merge(store, "t-milk-2", "t-milk", { author: { kind: "agent", id: "tidying" }, lineage });
+    expect(result.ops[0]).toMatchObject({ mergedInto: "t-milk", lineage });
+    const undone = store.undo(result.batch);
+    expect(undone.ops[0]).toMatchObject({ undoes: result.ops[0]!.id, undoneLineage: lineage });
+    expect(store.graph.isArchived("t-milk-2")).toBe(false);
+  });
+
   it("does not merge a record into itself, or into an archived one", () => {
     const store = storeOf();
     expect(() => merge(store, "t-milk", "t-milk")).toThrow(/into itself/);

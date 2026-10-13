@@ -20,6 +20,8 @@ import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
+import { lineageOf, type Lineage } from "./ops/lineage.js";
+import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
@@ -154,6 +156,14 @@ export interface ApplyOptions {
   /** What the change came through — `web`, `mcp:<client>`, `view:<name>`, `api`, `cli` — recorded on each op (FR-06). */
   readonly via?: Via;
   /**
+   * WHAT THE CHANGE WAS BASED ON, AND HOW SURE ITS MAKER WAS (FR-172):
+   * recorded on each op, checked first (`lineageOf`: a basis of 1–500
+   * characters, a confidence from 0 to 1). A confidence below 1 from
+   * anyone but a person makes what the change links provisional until a
+   * person touches it.
+   */
+  readonly lineage?: Lineage;
+  /**
    * A HOST'S LAST WORD, BY WHAT THE CHANGE WOULD DO. Asked once the calls
    * (or the undo) are compiled and applied, before anything is kept, with
    * the store's own plan of them: no second rehearsal on a copy. Whatever
@@ -248,6 +258,8 @@ export interface AppendOp {
   readonly at?: string;
   readonly undoes?: string;
   readonly via?: Via;
+  /** What it was based on (FR-172), checked as `ApplyOptions.lineage` is. */
+  readonly lineage?: Lineage;
 }
 
 /** `{ [key]: value }` where the value is said, and nothing where it is not: an optional key left off rather than undefined. */
@@ -414,6 +426,8 @@ export class Store<S extends AnySchema> {
   readonly graph: Graph<S>;
   readonly log: OperationLog;
   private readonly mutations = new Map<string, AnyMutationDefinition<S>>();
+  /** The store's own "Keep this link" (FR-172), when the app declared none by that name. */
+  private keeper: AnyMutationDefinition<S> | undefined;
   private readonly invariants: readonly InvariantDefinition<S>[];
   private readonly invariantOptions: EvaluateOptions<S>;
   readonly policy: Policy | undefined;
@@ -490,6 +504,11 @@ export class Store<S extends AnySchema> {
      */
     for (const mutation of deriveMutations(options.schema, options.mutations ?? [])) {
       this.mutations.set(mutation.name, mutation);
+    }
+    // "Keep this link" (FR-172): answered by every store, offered by no list. An app's own `keep-link` keeps its name.
+    if (!this.mutations.has(KEEP_LINK)) {
+      this.keeper = keepLinkMutation(options.schema);
+      this.mutations.set(KEEP_LINK, this.keeper);
     }
     tellTheWatchItsNames(options.schema, this.mutations.values(), options.policy);
 
@@ -645,11 +664,12 @@ export class Store<S extends AnySchema> {
   }
 
   allMutations(): AnyMutationDefinition<S>[] {
-    return [...this.mutations.values()].filter((mutation) => !this.mutationDisabled(mutation));
+    return [...this.mutations.values()].filter((mutation) => mutation !== this.keeper && !this.mutationDisabled(mutation));
   }
 
   /** The declared acts a derived act resolves its permission through. */
   private viaOf(mutation: AnyMutationDefinition<S> | undefined): readonly string[] | undefined {
+    if (mutation !== undefined && mutation === this.keeper) return keepLinkVia(this.mutations.values());
     if (!mutation?.derived) return undefined;
     return derivedVia(this.schema, [...this.mutations.values()], mutation);
   }
@@ -1177,6 +1197,7 @@ export class Store<S extends AnySchema> {
   private applying(calls: readonly MutationCall[], options: ApplyOptions, context?: InvariantContext): ApplyResult<S> {
     const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? this.by;
+    const lineage = lineageOf(options.lineage);
     const ops: Operation[] = [];
     const allPrimitives: Primitive[] = [];
     const reads = new Set<string>();
@@ -1265,6 +1286,7 @@ export class Store<S extends AnySchema> {
           ...given("mergedInto", compiled.mergedInto),
           at: this.now(),
           ...given("via", options.via),
+          ...given("lineage", lineage),
         };
         this.graph.applyPrimitives(op.primitives);
         this.log.append(op);
@@ -1405,6 +1427,7 @@ export class Store<S extends AnySchema> {
         at: made.at ?? this.now(),
         ...given("undoes", made.undoes),
         ...given("via", made.via),
+        ...given("lineage", lineageOf(made.lineage)),
       };
       if (taken.has(op.id)) throw new GraphError(`Op "${op.id}" (${op.intent}) is already in the log`, "A host-made op needs an id of its own; leave `id` out and the store mints one.");
       taken.add(op.id);
@@ -1441,6 +1464,7 @@ export class Store<S extends AnySchema> {
     const before = this.violations();
     const rollback = this.graph.snapshot();
     const intent = options.intent ?? "Apply a change";
+    const lineage = lineageOf(options.lineage);
     const recorded = primitives.map(normalize);
     const ops: Operation[] = [];
     if (recorded.length > 0) {
@@ -1457,6 +1481,7 @@ export class Store<S extends AnySchema> {
         writes: [...new Set(recorded.flatMap(writesOf))],
         at: this.now(),
         ...given("via", options.via),
+        ...given("lineage", lineage),
       };
       this.graph.applyPrimitives(op.primitives);
       this.log.append(op);
@@ -1564,6 +1589,7 @@ export class Store<S extends AnySchema> {
     }
 
     const batch = options.batch ?? this.mintBatch("undo");
+    const lineage = lineageOf(options.lineage);
 
     /*
      * Undo is a CHANGE, and it is judged like one.
@@ -1614,6 +1640,9 @@ export class Store<S extends AnySchema> {
         at: this.now(),
         undoes: target.id,
         ...given("via", options.via),
+        ...given("lineage", lineage),
+        // What was declined, kept on the declining (FR-172): "do not make this again".
+        ...given("undoneLineage", target.lineage),
       };
       this.graph.applyPrimitives(op.primitives, { restoring: putsBack(target) });
       this.log.append(op);
@@ -1869,6 +1898,7 @@ export class Store<S extends AnySchema> {
       batch,
       ...given("intent", head.batchIntent),
       ...given("via", head.via),
+      ...given("lineage", head.lineage),
     };
     if (head.undoes !== undefined) {
       const targets = ops.map((op) => this.log.get(op.undoes ?? ""));

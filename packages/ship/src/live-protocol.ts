@@ -26,6 +26,7 @@ import {
   type Principal,
   type Store,
   type WireRefusal,
+  type Lineage,
 } from "@graview/core";
 import { argumentWords } from "@graview/core/words";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
@@ -389,6 +390,8 @@ interface Change {
   readonly base: unknown;
   /** The via the client claimed, for the host's `viaOf` to judge; never read without one. */
   readonly claimed: string | undefined;
+  /** What the client said the change was based on (FR-172); the store checks it, and refuses one that is not a lineage. */
+  readonly lineage: unknown;
 }
 
 /** What judging a change came to: a stale write, a refusal, the host's word on what it would do, or the ops it landed in the store. */
@@ -1002,7 +1005,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
             if (answer) throw new NotAdmitted(answer);
           }
         : undefined;
-      const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch, ...(admitting ? { admit: admitting } : {}) };
+      const applying = { author: seat, via, ...(change.intent ? { intent: change.intent } : {}), batch, ...(admitting ? { admit: admitting } : {}), ...(change.lineage !== undefined ? { lineage: change.lineage as Lineage } : {}) };
       result = change.t === "undo" ? store.undo(change.batches, applying) : store.applyAll(change.calls, applying);
     } catch (error) {
       taking = undefined;
@@ -1027,6 +1030,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     batch: message.batch,
     base: message.t === "call" ? message.base : undefined,
     claimed: claimOfVia(message.via),
+    lineage: message.lineage,
   });
 
   /** What a change came through: the host's word, or a claim its `viaOf` accepts (FR-52). */
@@ -1324,7 +1328,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
     },
     async post(text, asked) {
       const said = answering(asked);
-      let body: { calls?: unknown; undo?: unknown; intent?: unknown; batch?: unknown; base?: unknown; via?: unknown };
+      let body: { calls?: unknown; undo?: unknown; intent?: unknown; batch?: unknown; base?: unknown; via?: unknown; lineage?: unknown };
       try {
         body = text.length === 0 ? {} : (JSON.parse(text) as typeof body);
       } catch {
@@ -1340,6 +1344,7 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
         batch: body.batch,
         base: undo ? undefined : body.base,
         claimed: claimOfVia(body.via),
+        lineage: body.lineage,
       };
       const via = viaFor({ seat: asked.seat, via: asked.via, ...(asked.build ? { hostBuild: asked.build } : {}) }, change);
       // Sent again after its answer was lost — or offered again on a new declaration, or after a reload (FR-43, FR-44, FR-49): only ever the asker's own ops.

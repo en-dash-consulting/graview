@@ -1,5 +1,6 @@
 import { edgeWords, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { failureWords } from "@graview/core/words";
+import { linkProvenance, provenanceWords } from "@graview/core/provenance";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, usePopover, useSelection } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
@@ -223,6 +224,8 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
    * they work"); what is left to say is how it reads from the other end —
    * "From North lot: who works here" — and nothing when that was not declared.
    */
+  const provenance = edge ? linkProvenance(store, edge) : undefined;
+  const unsure = provenance?.provisional ? provenance : undefined;
   const edgeSaid = edge
     ? (() => {
         const declared = (store.schema.tryDefinition(store.graph.getNode(edge.from)?.kind ?? "")?.edges as
@@ -650,6 +653,12 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
               style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}
             >
               {edgeSaid}
+            </p>
+          ) : null}
+          {/* A link made less than sure says so where its acts are, a long press's answer as much as a click's (FR-172). */}
+          {unsure ? (
+            <p data-testid="edge-provisional" style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}>
+              {provenanceWords(unsure)}
             </p>
           ) : null}
           <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>

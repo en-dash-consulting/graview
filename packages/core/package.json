@@ -45,6 +45,10 @@
       "types": "./dist/arrange.d.ts",
       "default": "./dist/arrange.js"
     },
+    "./provenance": {
+      "types": "./dist/provenance.d.ts",
+      "default": "./dist/provenance.js"
+    },
     "./words": {
       "types": "./dist/words.d.ts",
       "default": "./dist/words.js"

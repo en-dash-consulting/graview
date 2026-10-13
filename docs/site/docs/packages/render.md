@@ -32,11 +32,11 @@ It is published rather than withheld because `@graview/react` depends on this pa
 
 The compositor, the WGSL and the `html-in-canvas` platform bindings move with the browser feature they are built on.
 
-## What it exports (23)
+## What it exports (25)
 
 Read off the package's own barrel, so this is what is there today.
 
-`CONNECTOR_DASH`, `connectorStroke`, `connectorStyle`, `connectorWidth`, `distinguishable`, `fromLayout`, `hitTest`, `hueFor`, `IDENTITY`, `invertPlaneTransform`, `isAffine`, `LIGHT_PLANE_STYLES`, `mixStyles`, `perspectiveProbeMatrix`, `PLANE_STYLES`, `PLANES`, `planeTransform`, `planFrame`, `PointerRouter`, `styleFor`, `toDOMMatrix`, `toLocal`, `transformFor`
+`CONNECTOR_DASH`, `connectorStroke`, `connectorStyle`, `connectorWidth`, `distinguishable`, `fromLayout`, `hitTest`, `hueFor`, `IDENTITY`, `invertPlaneTransform`, `isAffine`, `LIGHT_PLANE_STYLES`, `mixStyles`, `perspectiveProbeMatrix`, `PLANE_STYLES`, `PLANES`, `planeTransform`, `planFrame`, `PointerRouter`, `PROVISIONAL_DASH`, `PROVISIONAL_OPACITY`, `styleFor`, `toDOMMatrix`, `toLocal`, `transformFor`
 
 ---
 

@@ -55,7 +55,7 @@ import { useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type He
 import { whereIsIn } from "./where-drawn.js";
 import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
-import { Lines, RelationCaptions } from "./scene-lines.js";
+import { Lines, provisionalLines, RelationCaptions } from "./scene-lines.js";
 import { railInset } from "./rails.js";
 import { useSeatDrawn } from "./seat-talk.js";
 import { useLayoutOptions } from "./scene-options.js";
@@ -1049,6 +1049,8 @@ export function Scene<S extends AnySchema>({
         stageRef={wrapperRef}
         store={store}
         graphNodes={nodes}
+        // Links made less than sure and not yet kept by a person, drawn as such (FR-172).
+        {...((provisional) => (provisional ? { provisional } : {}))(provisionalLines(store))}
         /*
          * A LINE IS A THING. Clicking one that stands for exactly one edge
          * selects the relation itself — the inspector then says what it is
