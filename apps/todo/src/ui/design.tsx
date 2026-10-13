@@ -877,6 +877,10 @@ function Acts({
     openFirst ? (actions.affordances.find((one) => one.open.length > 0)?.id ?? null) : null,
   );
   const [failed, setFailed] = useState<string | null>(null);
+  const [more, setMore] = useState(false);
+  // What takes the record away — archive, merge, remove — waits one press behind the rest (FR-173).
+  const aside = actions.affordances.filter((affordance) => affordance.destructive || affordance.setsAside);
+  const shown = more || aside.length < 2 ? actions.affordances : actions.affordances.filter((affordance) => !aside.includes(affordance));
   if (actions.affordances.length === 0 && actions.withheld.length === 0) return null;
   return (
     <section className="th-section" data-testid="record-actions">
@@ -886,13 +890,14 @@ function Acts({
         </header>
       ) : null}
       <div className="th-controls">
-        {actions.affordances.map((affordance) => (
+        {shown.map((affordance) => (
           <button
             key={affordance.id}
             type="button"
             className={`th-btn${open === affordance.id ? " on" : ""}`}
             data-affordance={affordance.id}
             data-rank={affordance.rank}
+            autoFocus={more && affordance === aside[0]}
             aria-expanded={open === affordance.id}
             onClick={() => {
               setFailed(null);
@@ -913,6 +918,11 @@ function Acts({
             {affordance.open.length > 0 ? `${affordance.label} …` : affordance.label}
           </button>
         ))}
+        {shown.length < actions.affordances.length ? (
+          <button type="button" className="th-btn th-quiet" aria-expanded={false} onClick={() => setMore(true)}>
+            Show {actions.affordances.length - shown.length} more
+          </button>
+        ) : null}
       </div>
       {actions.affordances.map((affordance) =>
         open === affordance.id ? <Ask key={affordance.id} affordance={affordance} context={context} onDone={() => setOpen(null)} /> : null,
