@@ -15,14 +15,27 @@ import { todoMutations } from "./mutations.js";
  * to stop people doing the thing the app is for teaches the wrong lesson
  * about what one is for. What the member cannot do is decide who else is
  * here.
+ *
+ * A grant to every role is a door, not a key (the ninth walk, W-201):
+ * riding it, a derived edit, archive, merge or remove reaches only the
+ * records that seat made. So the list's acts are granted twice: to every
+ * seat, which may work the list and change what it wrote down itself, and
+ * to the two roles by name, who keep the whole list — "Change the task" on
+ * a task somebody else added is the keeper's and the member's too.
  */
+const LIST_ACTS = todoMutations.map((mutation) => mutation.name);
 const theList: Policy = {
   roles: ["keeper", "member"],
   grants: [
     {
       roles: "*",
-      mutations: todoMutations.map((mutation) => mutation.name),
+      mutations: LIST_ACTS,
       describe: "Everybody here works the list: adding, finishing, planning, moving and dropping.",
+    },
+    {
+      roles: ["keeper", "member"],
+      mutations: LIST_ACTS,
+      describe: "The keeper and the members keep every task and list, whoever wrote it down.",
     },
   ],
 };

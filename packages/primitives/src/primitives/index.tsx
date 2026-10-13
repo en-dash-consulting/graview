@@ -1,5 +1,5 @@
 import { useViewMode } from "@graview/react/provider";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useViewportHeight, useWidth, VISUALLY_HIDDEN } from "./measure.js";
 
 /* Their own file, so the frame reaches them without this one (FR-104): `@graview/primitives/frame`. */
@@ -114,6 +114,15 @@ function useOverflowing(ref: { current: HTMLElement | null }): boolean {
   return overflowing;
 }
 
+/**
+ * WHAT THE FRAME AROUND A LENS ALREADY CALLS IT. The panel beside the map
+ * heads a lens with its name, and the lens's own panel said the same name
+ * again a hundred pixels under it ("The lists", twice, on one screen). A
+ * panel whose title is the name above it leaves the title, and
+ * the count beside it, to the frame.
+ */
+export const NamedAbove = createContext<string | null>(null);
+
 /** The default container: a titled box. Most views are one of these. */
 /** A panel's title: a heading of the level asked for, else the label it has always been. */
 function Title({ level, style, children }: { readonly level: 1 | 2 | 3 | 4 | undefined; readonly style: CSSProperties; readonly children: ReactNode }) {
@@ -148,6 +157,7 @@ export function Panel({
    */
   const mode = useViewMode();
   const page = (variant ?? (mode === "fullscreen" ? "page" : "card")) === "page";
+  const namedAbove = useContext(NamedAbove);
   return (
     <div
       data-graview-primitive="panel"
@@ -202,7 +212,7 @@ export function Panel({
           Implicated in a problem.
         </span>
       ) : null}
-      {title === undefined ? null : (
+      {title === undefined || title === namedAbove ? null : (
         /*
           * THE HEADING WRAPS RATHER THAN RUNNING OFF THE EDGE.
           *

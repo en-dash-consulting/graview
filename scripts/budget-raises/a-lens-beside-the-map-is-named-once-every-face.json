@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 211,
+  "gzipped": 89,
+  "note": "Raised when a lens beside the map came to be named once (its own panel leaves the name to the panel's head) and the studio came to say it draws no panel beside its map, so its \"open\" opens a district again; found by the nightly before 0.1.29. 211 / 71 to 89 more than main (1_837_744 / 596_082), the gzipped size moving by a few bytes between builds; raised by that growth. Measured at 1_837_955 / 596_153 and 596_171."
+}
