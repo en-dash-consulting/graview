@@ -10,7 +10,7 @@ export {
   withPicture,
   AGGREGATE_PREFIX,
 } from "./ids.js";
-export { holdLayout, layout, marqueeHeightFor, panLayout, planeOf, ROSTER_MOST, ROSTER_ROW, rosterHeight, rosterRows, SCREEN_LEASH_CELLS, type NameWidth } from "./layout.js";
+export { holdLayout, layout, marqueeHeightFor, panLayout, planeOf, ROSTER_MOST, ROSTER_ROW, rosterHeight, rosterRows, type NameWidth } from "./layout.js";
 export { easeInOut, interpolate } from "./interpolate.js";
 export { rankKinds } from "./rank.js";
 export type { KindRank, KindRanking } from "./rank.js";
@@ -19,6 +19,7 @@ export { DEFAULT_OPTIONS } from "./types.js";
 export type {
   Aggregate,
   Connector,
+  DistrictStates,
   Layout,
   LayoutNode,
   LayoutOptions,
@@ -52,7 +53,7 @@ export type { EdgeRef, Pin, ViewState } from "./view-state.js";
 export { areaOf, boxOf, centroidOf, estimateWidth, fitLabel, overlaps, spanAt } from "./label-fit.js";
 export type { FitOptions, FitPoint, FittedLabel, LabelBox, Measure } from "./label-fit.js";
 export { cameraLimit, collides, districtsPastTheEdge, panForZoom, placeCity } from "./city.js";
-export type { CityCard, PastTheEdge, PlacedCard } from "./city.js";
+export type { CityCard, Nameplate, PastTheEdge, PlacedCard } from "./city.js";
 export type { CityFrame } from "./types.js";
 export { bandAggregateWords, bandCaps, bandOf, chooseGrouping, isBandAggregate, packRuns, runOf, shares } from "./band.js";
 export type { BandItem, BandOptions, Relevance } from "./band.js";

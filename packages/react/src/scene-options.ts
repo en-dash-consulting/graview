@@ -25,11 +25,9 @@ export function useLayoutOptions<S extends AnySchema>(
   options: LayoutOptions | undefined,
   size: { width: number; height: number } | null,
   unit: number,
-  nameWidth: LayoutOptions["nameWidth"],
   /** Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
   seated: boolean,
   cityZoom: number,
-  screenHeight: number | undefined,
   /** The graph's tick: the log only grows when the graph changes. */
   nodes: unknown,
 ): LayoutOptions {
@@ -66,7 +64,6 @@ export function useLayoutOptions<S extends AnySchema>(
     () => ({
       ...options,
       cityZoom,
-      ...(screenHeight !== undefined ? { screenHeight } : {}),
       // What is not drawn for this seat at this stop: a workspace's disabled
       // modules, and the administered ones this seat may not see or has not
       // asked to — one set, from the provider, so every surface agrees.
@@ -80,7 +77,13 @@ export function useLayoutOptions<S extends AnySchema>(
        * the altitude control and the key stand in, in proportion, so an
        * embed a paragraph wide does not give a third of itself to chrome.
        */
-      inset: railInset(size?.width ?? 1200),
+      /*
+       * THE CORNER THE ALTITUDE CONTROL AND THE KEY STAND IN, and nothing of
+       * the city opened under them: the districts and their names open
+       * clear of the chrome; the zoom at the foot when no ask field keeps it.
+       */
+      inset: { ...railInset(size?.width ?? 1200), top: 8, bottom: seated ? 0 : 56 },
+      chrome: [{ x: (size?.width ?? 1200) - 176, y: 0, width: 176, height: 100 }],
       // The reader's own text size, which the cards are sized in: the city
       // grows with the words rather than holding them at a fixed 230×97.
       unit,
@@ -111,7 +114,6 @@ export function useLayoutOptions<S extends AnySchema>(
         (held[place.kind] ??= []).push({ as: place.as, title: place.title, ...(place.across ? { across: place.across } : {}) });
         return held;
       }, {}),
-      nameWidth,
       ...(size
         ? {
             width: size.width,
@@ -129,6 +131,6 @@ export function useLayoutOptions<S extends AnySchema>(
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, screenHeight, nameWidth, seated],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated],
   );
 }

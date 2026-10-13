@@ -292,6 +292,8 @@ export function ResolvedView<S extends AnySchema>({
     ...(node.opened ? { opened: true } : {}),
     ...(node.openedRows !== undefined ? { openedRows: node.openedRows } : {}),
     ...(node.plot ? { plot: node.plot } : {}),
+    ...(node.nameplate ? { nameplate: node.nameplate } : {}),
+    ...(node.states ? { states: node.states } : {}),
     ...(node.aggregate?.retired ? { retired: node.aggregate.retired } : {}),
     ...(node.rank ? { rank: node.rank } : {}),
     ...(node.nestedUnder ? { nestedUnder: node.nestedUnder } : {}),
@@ -328,6 +330,8 @@ export function ResolvedView<S extends AnySchema>({
     node.rank ?? "",
     node.nestedUnder ?? "",
     node.plot ? `${node.plot.col},${node.plot.row},${node.plot.side}` : "",
+    node.nameplate ?? "",
+    node.states ? node.states.values.map((one) => one.count).join(",") : "",
     node.aggregate ? idsKey(node.aggregate.memberIds) : "",
     node.aggregate?.retired ?? "",
     // Hashed once per set, as the members are: a search lights hundreds, and joining them was every host's every render.

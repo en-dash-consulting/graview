@@ -461,11 +461,13 @@ ${/* DRAWN AS TILES, one cell each. A repeating gradient at the lattice's
     linear-gradient(to top left, transparent calc(50% - 0.5px), var(--graview-lattice-line) calc(50% - 0.5px), var(--graview-lattice-line) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
     linear-gradient(to top right, transparent calc(50% - 0.5px), var(--graview-lattice-line) calc(50% - 0.5px), var(--graview-lattice-line) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
     linear-gradient(to top left, transparent calc(50% - 0.5px), var(--graview-lattice-line) calc(50% - 0.5px), var(--graview-lattice-line) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+  ${/* A cell's height is its width times the tilt: a half at an angle, all of it from straight above. */ ""}
+  --graview-lattice-rise: calc(var(--graview-lattice-tile) * var(--graview-lattice-tilt, 0.5));
   background-size:
-    var(--graview-lattice-tile) calc(var(--graview-lattice-tile) / 2),
-    var(--graview-lattice-tile) calc(var(--graview-lattice-tile) / 2),
-    calc(var(--graview-lattice-tile) / 2) calc(var(--graview-lattice-tile) / 4),
-    calc(var(--graview-lattice-tile) / 2) calc(var(--graview-lattice-tile) / 4);
+    var(--graview-lattice-tile) var(--graview-lattice-rise),
+    var(--graview-lattice-tile) var(--graview-lattice-rise),
+    calc(var(--graview-lattice-tile) / 2) calc(var(--graview-lattice-rise) / 2),
+    calc(var(--graview-lattice-tile) / 2) calc(var(--graview-lattice-rise) / 2);
   ${/* Anchored where the city's cell (0,0) meets the canvas, so a plot placed
      by the map sits ON the grid a person can see, and pans with it. */ ""}
   background-position: var(--graview-lattice-x, 0px) var(--graview-lattice-y, 0px);

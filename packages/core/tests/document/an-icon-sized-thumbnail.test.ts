@@ -159,11 +159,12 @@ describe("an icon-sized thumbnail (FR-130)", () => {
   it("leaves every other picture byte for byte as it was", () => {
     const all = (options: (t: Template) => Parameters<typeof sceneThumbnail>[1]) =>
       sha(templates.flatMap((t) => (["light", "dark"] as const).map((scheme) => sceneThumbnail(t.document, { scheme, ...options(t) }))).join("\n"));
-    expect(all(() => ({}))).toBe("7a38855afb50dae9");
-    expect(all((t) => ({ counts: t.counts }))).toBe("f3697c708914d72c");
-    expect(all((t) => ({ counts: t.counts, fit: "content" }))).toBe("b32eaeaaad9b10a5");
-    expect(all(() => ({ fit: "content", width: 264, height: 132 }))).toBe("24ec0d2cb88d3a1c");
-    expect(all(() => ({ width: 32, height: 32 }))).toBe("c385788805febe59");
-    expect(all(() => ({ width: 32, height: 32, fit: "content" }))).toBe("6ab478c1e783fd78");
+    // The map reads upstream to downstream now (Roadmap f-map-readable): every picture moved with it, deliberately.
+    expect(all(() => ({}))).toBe("e6c05cd63e737b17");
+    expect(all((t) => ({ counts: t.counts }))).toBe("7c68139d3c51568a");
+    expect(all((t) => ({ counts: t.counts, fit: "content" }))).toBe("7aa7cca7d62b77e3");
+    expect(all(() => ({ fit: "content", width: 264, height: 132 }))).toBe("8d044f62421a381a");
+    expect(all(() => ({ width: 32, height: 32 }))).toBe("52fe5bc5336f62d0");
+    expect(all(() => ({ width: 32, height: 32, fit: "content" }))).toBe("21b72862ac537a3c");
   });
 });

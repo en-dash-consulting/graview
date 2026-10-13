@@ -183,7 +183,12 @@ export function SceneViewHost({
    * near end of the arc is treated as 1.6 planes back rather than 2, which is
    * what makes the arc curve away instead of lying flat.
    */
-  const at = node.plane - (1 - (node.depth ?? 1)) * 0.55;
+  /*
+   * A DISTRICT ON THE MAP IS THE SUBJECT, NOT ATMOSPHERE: from altitude it
+   * stands on its plot at its own size, unblurred, its name as crisp as the
+   * ground under it — the far districts of a map are not further away.
+   */
+  const at = frontY !== undefined ? 0 : node.plane - (1 - (node.depth ?? 1)) * 0.55;
   const lower = Math.max(0, Math.min(2, Math.floor(at))) as 0 | 1 | 2;
   const upper = Math.max(0, Math.min(2, Math.ceil(at))) as 0 | 1 | 2;
   const style =

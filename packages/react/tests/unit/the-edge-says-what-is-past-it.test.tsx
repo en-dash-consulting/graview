@@ -93,6 +93,16 @@ describe("on the ground", () => {
         </GraviewProvider>,
       );
     });
+    /*
+     * The city opens whole in the window (Roadmap f-map-readable): nothing is
+     * past an edge until the camera comes closer, so it is brought in.
+     */
+    expect(host.querySelectorAll("[data-graview-past-edge]")).toHaveLength(0);
+    for (let i = 0; i < 6; i++) {
+      await act(async () => {
+        host.querySelector<HTMLButtonElement>('[data-testid="zoom-in"]')!.click();
+      });
+    }
     const signs = [...host.querySelectorAll<HTMLButtonElement>("[data-graview-past-edge]")];
     expect(signs.length).toBeGreaterThan(0);
     const sign = signs[0]!;

@@ -1,5 +1,5 @@
-import type { IsoFace, IsoWash, Scheme } from "@graview/core";
-import { isoShade, layer, SCENE_LAYERS } from "@graview/core";
+import type { Scheme } from "@graview/core";
+import { layer, SCENE_LAYERS } from "@graview/core";
 import { MARQUEE_GAP, MARQUEE_NAME_FLOOR, MARQUEE_WIDTH } from "@graview/layout/sizes";
 import { baseSheet, GRAVIEW_BRAND, withinTheBox, type Brand, type ThemeCssOptions } from "./theme.js";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
@@ -19,11 +19,8 @@ import { SPEC_VIEW_CSS } from "./spec-css.js";
  * order, and each still carries its note.
  */
 
-const face = (f: IsoFace): string => `${f.saturation}% ${f.lightness}%`;
-const wash = (f: IsoWash): string => `${face(f)} / ${f.alpha}`;
 
 function sceneSheet(scheme: Scheme): string {
-  const iso = isoShade(scheme);
   return `
 ${/* What theme.ts drew for the scene alone, before FR-104's own rules and
    in the order it drew them: the altitude control, the kind's card, its
@@ -567,47 +564,6 @@ ${/* From altitude a district is a village on its plot, not a card: hovering
   background: transparent;
 }
 
-${/* THE GROUND UNDER A DISTRICT: its plot, drawn. Four lattice corners in
-   the kind's hue, a curb, a cast shadow toward the light — the arithmetic
-   the layout already did, made visible, so a district stands on land
-   rather than floating on a hatch. Fades in with the altitude number the
-   lattice fades in with; a hand-placed district's curb is dashed, which is
-   the pinned mark on the ground rather than a box over the drawing. */ ""}
-.graview-plots {
-  z-index: ${SCENE_LAYERS.plots};
-  opacity: var(--graview-altitude);
-  transition: opacity 640ms cubic-bezier(0.33, 0, 0.2, 1);
-}
-.graview-plot-tile {
-  fill: hsl(var(--graview-hue, 200) ${wash(iso.plot)});
-  stroke: hsl(var(--graview-hue, 200) ${wash(iso.plotEdge)});
-  stroke-width: 1;
-  stroke-linejoin: round;
-  pointer-events: auto;
-  cursor: pointer;
-  filter: drop-shadow(${scheme === "light" ? "5px 4px 6px rgba(20,30,32,0.14)" : "6px 5px 8px rgba(0,0,0,0.4)"});
-  transition: fill 170ms ease;
-}
-.graview-plot-tile:hover {
-  fill: hsl(var(--graview-hue, 200) 45% ${scheme === "light" ? "58%" : "48%"} / ${scheme === "light" ? "0.2" : "0.3"});
-}
-.graview-plot[data-graview-pinned] .graview-plot-tile {
-  stroke-dasharray: 4 3;
-}
-${/* THE VILLAGE on the tile: one small iso building per member in the kind's
-   own faces (the same roof and walls the block had), a flagged member's roof
-   in the warning color, a selected member's building lit in the accent.
-   Architecture, not controls: the tile under them takes the click. */ ""}
-.graview-village { pointer-events: none; }
-.graview-building polygon { stroke-width: 0.8; }
-.graview-building[data-graview-flagged] .graview-iso-roof { fill: var(--graview-warn); stroke: var(--graview-warn); }
-.graview-building[data-graview-selected] polygon { stroke: var(--graview-accent); stroke-width: 1.4; }
-.graview-building[data-graview-selected] .graview-iso-roof { fill: color-mix(in oklab, var(--graview-accent) 45%, var(--graview-panel)); }
-.graview-village-rest {
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  fill: var(--graview-ink-muted);
-}
 ${/* THE RIBBONS between districts: one per relation, as wide as the links
    along it (the width is set on each), in the ground's ink and quiet at
    rest; the relation a person points at, or the Key asks about, or a chosen
@@ -693,9 +649,25 @@ ${/* THE OPEN CHEVRON APPEARS WHEN REACHED FOR. Drawn on every plate at
    altitude it was noise times the number of districts; it shows on hover,
    on keyboard focus, and while the district is open — and stays a real
    button in between, so Tab still finds it and Enter still opens. */ ""}
-[data-graview-altitude] .graview-kind-open {
-  opacity: 0.5;
+[data-graview-altitude] .graview-kind-open,
+[data-graview-altitude] .graview-kind-past {
+  opacity: 0;
   transition: opacity 150ms ease;
+}
+[data-graview-altitude] .graview-kind-card:hover .graview-kind-past,
+[data-graview-altitude] .graview-kind-card:focus-within .graview-kind-past {
+  opacity: 1;
+}
+${/* Beside the name rather than in it: the name is measured for its three things. */ ""}
+[data-graview-altitude] .graview-kind-face .graview-kind-open {
+  position: absolute;
+  left: calc(100% + 2px);
+  top: 1px;
+}
+[data-graview-altitude] .graview-kind-face .graview-kind-past {
+  position: absolute;
+  right: calc(100% + 2px);
+  top: 1px;
 }
 ${/* Quiet: the chevron alone until reached for. Never opacity zero — a
    button nobody can see is a button a driven browser cannot press either,
@@ -1007,81 +979,131 @@ ${/* The panel stands above the card, inside the scene, and never clips: the
   font-variant-numeric: tabular-nums;
   color: var(--graview-ink-faint);
 }
-.graview-iso-roof {
-  fill: hsl(var(--graview-hue, 200) ${face(iso.roof)});
-  stroke: ${iso.roofEdge};
-  stroke-width: 1;
-}
-.graview-iso-right {
-  fill: hsl(var(--graview-hue, 200) ${face(iso.right)});
-}
-.graview-iso-left {
-  fill: hsl(var(--graview-hue, 200) ${face(iso.left)});
-}
-${/* A SIGNPOST at the plot's front corner. From altitude the nameplate stood
-   at the top of the card — over the back row of the village — and the
-   screen had to clear it. It is planted at the front vertex of the tile
-   now, on a short post, where a sign stands at the entrance to a place;
-   the scene says where that vertex is in --graview-front-y. */ ""}
+${/* THE NAME UNDER A DISTRICT, from altitude: under the plot's front
+   corner, on a solid backing at a fixed size on the screen, saying three
+   things — what it is, how many, how many have a problem — and, for a kind
+   with a status, the bar of where its records stand. The name used to be
+   words haloed on the ground with marks after them that nobody could read
+   ("PEOPLE 10 ◆ •") and the lens names hanging under it, over the next
+   district's buildings. The lens names are in the bar and come up on hover;
+   the rest is gone. Where two names would collide the layout says which
+   one is quieter (data-graview-nameplate): short is the name and the count,
+   none comes back when the district is reached for. */ ""}
 [data-graview-altitude] .graview-kind-face {
   position: absolute !important;
   left: 50% !important;
   top: 2% !important;
   transform: translateX(-50%);
   width: max-content;
-  ${/* Wider than the block when the name is: a label overflows its building
-     the way a map label does. "REQUIRE / MENTS" on two lines does not. */ ""}
   max-width: none;
   white-space: nowrap;
   height: auto !important;
-  flex-direction: row !important;
+  ${/* A grid of two: the name and its count on one line, the bar across both under them. */ ""}
+  display: grid !important;
+  grid-template-columns: auto auto;
   align-items: baseline !important;
-  gap: 7px !important;
-  padding: 3px 4px !important;
-  ${/* TEXT ON THE PLOT, NOT A CAPSULE (FR-117). Every district's name stood
-     in a pill — "PEOPLE 2 ◆ open ▾" — so the city read as a row of buttons
-     and the one capsule that meant "press" did not stand out. A map writes
-     a district's name on the ground: the words, haloed in the ground's own
-     color so a lattice line or a roof under them never cuts a letter. */ ""}
-  border-color: transparent !important;
-  border-radius: 0 !important;
-  background: none !important;
-  box-shadow: none !important;
-  text-shadow: 0 0 3px var(--graview-ground), 0 0 6px var(--graview-ground), 0 0 10px var(--graview-ground);
+  column-gap: 6px !important;
+  row-gap: 3px !important;
+  padding: 1px 6px 2px !important;
+  line-height: 1.25;
+  border: 1px solid var(--graview-edge) !important;
+  border-radius: 5px !important;
+  background: var(--graview-panel) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, ${scheme === "light" ? "0.08" : "0.3"}) !important;
   z-index: ${SCENE_LAYERS.tag};
 }
-${/* How much of it is in trouble, as the name's baseline rather than a bar over a capsule. */ ""}
-[data-graview-altitude] .graview-kind-face > [data-graview-tally] {
-  top: auto !important;
-  bottom: 0;
-  height: 2px !important;
-}
-[data-graview-altitude] .graview-kind-face > [data-graview-tally]:not([data-graview-broken]) {
-  opacity: 0;
-}
 [data-graview-altitude] [data-graview-plot] .graview-kind-face {
-  top: calc(var(--graview-front-y) - 22px) !important;
+  top: calc(var(--graview-front-y) + 4px) !important;
 }
-[data-graview-altitude] [data-graview-plot] .graview-kind-face::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  width: 1px;
-  height: 10px;
-  background: var(--graview-ink-faint);
+[data-graview-altitude] .graview-kind-face > div {
+  gap: 6px !important;
+}
+.graview-district-problems {
+  color: var(--graview-warn);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+[data-graview-altitude] .graview-kind-face > .graview-kind-members {
+  grid-column: 1 / -1;
+}
+.graview-district-states {
+  display: flex;
+  grid-column: 1 / -1;
+  ${/* Its words never widen the name: the bar is as wide as the name, or its least. */ ""}
+  contain: inline-size;
+  min-width: 168px;
+  height: 13px;
+  gap: 1px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.graview-district-states > span {
+  flex-basis: 0;
+  min-width: 2px;
+  font-size: 0.625rem;
+  line-height: 13px;
+  padding: 0 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--graview-ink);
+  background: color-mix(in oklab, var(--graview-ink) ${scheme === "light" ? "24%" : "34%"}, var(--graview-panel));
+}
+.graview-district-states > [data-graview-tier="active"] {
+  color: var(--graview-panel);
+  background: color-mix(in oklab, var(--graview-ink) ${scheme === "light" ? "72%" : "78%"}, var(--graview-panel));
+}
+.graview-district-states > [data-graview-tier="done"] {
+  color: var(--graview-ink-muted);
+  background: color-mix(in oklab, var(--graview-ink) 8%, var(--graview-panel));
+}
+[data-graview-nameplate^="short"] .graview-district-states {
+  display: none;
+}
+${/* Over the plot and its blocks, or beside it, where the ground under it is the next district's. */ ""}
+[data-graview-altitude] [data-graview-plot] .graview-kind-face[data-graview-nameplate$="above"] {
+  top: calc(-4px - 0.45 * var(--graview-lattice-cell)) !important;
+  transform: translate(-50%, -100%);
+}
+[data-graview-altitude] [data-graview-plot] .graview-kind-face[data-graview-nameplate$="aside"] {
+  left: calc(100% + 4px) !important;
+  top: calc(var(--graview-center-y) - 11px) !important;
+  transform: none;
+}
+[data-graview-nameplate="none"] {
+  opacity: 0;
+  pointer-events: none;
+}
+[data-graview-altitude] .graview-kind-card:hover [data-graview-nameplate],
+[data-graview-altitude] .graview-kind-card:focus-within [data-graview-nameplate] {
+  opacity: 1;
+  pointer-events: auto;
+}
+[data-graview-altitude] [data-graview-plot]:hover,
+[data-graview-altitude] [data-graview-plot]:focus-within {
+  z-index: ${SCENE_LAYERS.opened} !important;
 }
 ${/* A landmark WITHOUT a plot — a nested card — keeps its plate floating
-   above the drawing rather than across its head; one on a plot stands at
-   the signpost like every other district (the rule above). */ ""}
+   above the drawing rather than across its head. */ ""}
 [data-graview-altitude] [data-graview-landmark]:not([data-graview-plot] *) .graview-kind-face {
   top: 0 !important;
   transform: translate(-50%, calc(-100% - 7px));
 }
-${/* The drive-in's board hangs UNDER the signpost, in the ground the layout
-   reserved for it below the tile's front corner, not over the village. */ ""}
+${/* THE SHOWINGS COME UP WHEN THE DISTRICT IS REACHED FOR: under its name,
+   on a backing of their own, and in the bar's place list always. */ ""}
 [data-graview-altitude] .graview-drive-in {
-  top: calc(var(--graview-front-y, 42px) + 12px);
+  ${/* Straight under the name, touching it, so the hand that reached for the name reaches the showings without crossing a gap. */ ""}
+  top: calc(var(--graview-front-y, 42px) + var(--graview-plate-h, 26px));
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: var(--graview-panel);
+  box-shadow: var(--graview-lift-low);
+  transition: opacity 150ms ease;
+}
+[data-graview-altitude] .graview-kind-card:not(:hover):not(:focus-within) .graview-drive-in:not([data-graview-showing]) {
+  opacity: 0;
+  pointer-events: none;
 }
 ${/* An OPENED district's listing takes the ground under the signpost; the
    board steps up over the village, which the listing covers anyway. */ ""}
@@ -1128,6 +1150,15 @@ ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
 }
 .graview-zoom-button:hover:not(:disabled) {
   background: var(--graview-edge);
+}
+.graview-zoom-above {
+  margin-left: 2px;
+  padding: 0 8px;
+  font-size: 0.75rem;
+  color: var(--graview-ink-muted);
+}
+.graview-zoom-above[aria-pressed="true"] {
+  color: var(--graview-accent);
 }
 .graview-zoom-button:disabled {
   opacity: 0.35;

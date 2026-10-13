@@ -270,7 +270,7 @@ async function verifyAltitudeCut() {
         cut.grid === "0" &&
         cut.overview &&
         cut.markWing === "0" &&
-        /^Down/.test(cut.controlLabel ?? "") &&
+        /^Close the map/.test(cut.controlLabel ?? "") &&
         errors.length === 0,
       registeredPropertiesDisabled: unsupported,
       gridOpacityAt250ms: cut.grid,

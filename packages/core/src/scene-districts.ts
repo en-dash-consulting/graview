@@ -1,6 +1,7 @@
 import type { GraviewApp } from "./app.js";
 import { beginning } from "./beginning.js";
-import { cityMap, villageCap, villageOf, type Building, type Plot } from "./city.js";
+import { cityMap, type Plot } from "./city.js";
+import { villageCap, villageOf, type Building } from "./village.js";
 import type { AnySchema } from "./schema/schema.js";
 import { pluralOf } from "./schema/define-node.js";
 import { hueFor } from "./theme/derive.js";

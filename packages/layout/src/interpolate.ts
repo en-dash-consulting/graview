@@ -193,6 +193,7 @@ function mixCity(from: CityFrame | undefined, to: CityFrame | undefined, t: numb
   if (!to) return from;
   return {
     cell: lerp(from.cell, to.cell, t),
+    ...(from.tilt !== undefined || to.tilt !== undefined ? { tilt: lerp(from.tilt ?? 0.5, to.tilt ?? 0.5, t) } : {}),
     originX: lerp(from.originX, to.originX, t),
     originY: lerp(from.originY, to.originY, t),
     pan: { x: lerp(from.pan.x, to.pan.x, t), y: lerp(from.pan.y, to.pan.y, t) },
@@ -232,6 +233,8 @@ function mix(a: LayoutNode, b: LayoutNode, t: number, opacity: number): Interpol
        here, a district mid-flight to altitude has no plot, and the ground
        under it and the roads to it have nothing to stand on. */
     ...(b.plot ? { plot: b.plot } : {}),
+    ...(b.nameplate ? { nameplate: b.nameplate } : {}),
+    ...(b.states ? { states: b.states } : {}),
     ...(b.screenOf ? { screenOf: b.screenOf } : {}),
     ...(b.depth === undefined ? {} : { depth: lerp(a.depth ?? 1, b.depth, t) }),
     ...(b.natural ? { natural: b.natural } : {}),

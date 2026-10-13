@@ -1,0 +1,341 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Recon",
+  "description": "A research engagement: who we talked to, what we asked, what we found, and what we are doing about it.",
+  "kinds": {
+    "person": {
+      "noun": "person",
+      "plural": "People",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "people": true
+    },
+    "session": {
+      "noun": "session",
+      "plural": "Sessions",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "held": {
+          "type": "date"
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "planned",
+            "held",
+            "written-up"
+          ],
+          "default": "planned",
+          "required": true
+        }
+      },
+      "edges": {
+        "with": {
+          "to": [
+            "person"
+          ],
+          "description": "who was in the room",
+          "inverse": "sessions"
+        }
+      }
+    },
+    "question": {
+      "noun": "question",
+      "plural": "Questions",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "open",
+            "answered",
+            "dropped"
+          ],
+          "default": "open",
+          "required": true
+        }
+      },
+      "edges": {
+        "asked-in": {
+          "to": [
+            "session"
+          ],
+          "description": "where it was asked",
+          "inverse": "questions"
+        }
+      }
+    },
+    "finding": {
+      "noun": "finding",
+      "plural": "Findings",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "confidence": {
+          "type": "enum",
+          "options": [
+            "hunch",
+            "likely",
+            "confirmed"
+          ],
+          "default": "hunch",
+          "required": true
+        }
+      },
+      "edges": {
+        "answers": {
+          "to": [
+            "question"
+          ],
+          "description": "the question it answers",
+          "inverse": "findings"
+        },
+        "from": {
+          "to": [
+            "session"
+          ],
+          "description": "where it came up",
+          "inverse": "findings"
+        }
+      }
+    },
+    "opportunity": {
+      "noun": "opportunity",
+      "plural": "Opportunities",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "stage": {
+          "type": "enum",
+          "options": [
+            "spotted",
+            "sized",
+            "pitched",
+            "won",
+            "passed"
+          ],
+          "default": "spotted",
+          "required": true
+        }
+      },
+      "edges": {
+        "rests-on": {
+          "to": [
+            "finding"
+          ],
+          "description": "the findings it rests on",
+          "inverse": "opportunities"
+        }
+      }
+    },
+    "action": {
+      "noun": "action",
+      "plural": "Actions",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "open",
+            "doing",
+            "done"
+          ],
+          "default": "open",
+          "required": true
+        },
+        "due": {
+          "type": "date"
+        }
+      },
+      "edges": {
+        "for": {
+          "to": [
+            "opportunity"
+          ],
+          "cardinality": "one",
+          "description": "the opportunity it moves",
+          "inverse": "actions"
+        },
+        "owner": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "one",
+          "description": "who does it",
+          "inverse": "actions"
+        }
+      }
+    },
+    "deliverable": {
+      "noun": "deliverable",
+      "plural": "Deliverables",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "drafting",
+            "review",
+            "sent"
+          ],
+          "default": "drafting",
+          "required": true
+        }
+      },
+      "edges": {
+        "draws": {
+          "to": [
+            "finding",
+            "opportunity"
+          ],
+          "description": "what it draws on",
+          "inverse": "deliverables"
+        }
+      }
+    },
+    "budget": {
+      "noun": "budget line",
+      "plural": "Budget",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "amount": {
+          "type": "number"
+        }
+      },
+      "edges": {
+        "funds": {
+          "to": [
+            "deliverable",
+            "action"
+          ],
+          "description": "what it pays for",
+          "inverse": "funded by"
+        }
+      }
+    },
+    "note": {
+      "noun": "note",
+      "plural": "Notes",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "body": {
+          "type": "text"
+        }
+      }
+    },
+    "theme": {
+      "noun": "theme",
+      "plural": "Themes",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-action": {
+      "title": "Add an action",
+      "creates": "action",
+      "description": "Something somebody will do."
+    },
+    "set-action-status": {
+      "title": "Set the status",
+      "on": "action",
+      "description": "Say where an action stands.",
+      "args": {
+        "status": {
+          "type": "enum",
+          "options": [
+            "open",
+            "doing",
+            "done"
+          ],
+          "required": true
+        }
+      },
+      "sets": {
+        "status": "$status"
+      }
+    }
+  },
+  "rules": {
+    "action-on-time": {
+      "title": "An action is done by its due date",
+      "over": "action",
+      "when": "status != 'done' && present(due)",
+      "require": "days(today(), due) >= 0",
+      "says": "{name} is overdue"
+    },
+    "action-has-owner": {
+      "title": "An action has an owner",
+      "over": "action",
+      "when": "status == 'doing'",
+      "require": "present(owner)",
+      "says": "{name} is being done by nobody"
+    }
+  },
+  "lenses": [
+    {
+      "name": "columns",
+      "title": "Actions by status",
+      "bindings": {
+        "action": {
+          "column": "status"
+        }
+      }
+    },
+    {
+      "name": "columns",
+      "title": "The pipeline",
+      "bindings": {
+        "opportunity": {
+          "column": "stage"
+        }
+      }
+    },
+    {
+      "name": "calendar",
+      "title": "Due dates",
+      "requiredRoles": [
+        "start"
+      ],
+      "bindings": {
+        "action": {
+          "start": "due"
+        }
+      }
+    }
+  ]
+}

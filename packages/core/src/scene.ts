@@ -10,8 +10,10 @@
  * hosted page loads first. The scene, the layout and a host drawing a
  * thumbnail import it from here.
  */
-export { BLOCK, cityExtent, cityMap, heightOf, MAX_SIDE, plotsOverlap, roadsOf, sharedEdges, sideFor, toIso, villageCap, villageOf } from "./city.js";
-export type { Building, CityHints, CityMap, Plot, Road } from "./city.js";
+export { BLOCK, cityExtent, cityMap, districtState, MAX_SIDE, plotsOverlap, sharedEdges, sideFor, TILTED, toIso, TOP_DOWN } from "./city.js";
+export type { CityHints, CityMap, DistrictState, Plot, Road, StateTier } from "./city.js";
+export { districtBlocks, heightOf, roadsOf, TIER_HEIGHT, villageCap, villageOf } from "./village.js";
+export type { Block, Building, LaneRest } from "./village.js";
 export { sceneDistricts } from "./scene-districts.js";
 export type { SceneDistrict, SceneDistrictOptions } from "./scene-districts.js";
 export { sceneThumbnail } from "./document/thumbnail.js";

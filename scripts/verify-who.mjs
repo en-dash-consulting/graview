@@ -127,6 +127,8 @@ try {
   const marquee = await a.$('[data-testid^="drive-in-"] button');
   let showing = null;
   if (marquee) {
+    // A district's showings come up when it is reached for: the keyboard reaches it here, as a hand's hover does.
+    await marquee.focus();
     await marquee.click();
     await a.waitForTimeout(1300);
     showing = await a.evaluate(() => location.hash);

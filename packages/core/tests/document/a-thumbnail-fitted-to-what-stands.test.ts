@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createSchema, defineApp, defineNode, z } from "../../src/index.js";
 import { compileDocumentWithoutCheck, type GraviewDocument } from "../../src/document/index.js";
-import { sceneDistricts, sceneThumbnail, toIso, villageCap } from "../../src/scene.js";
+import { BLOCK, sceneDistricts, sceneThumbnail, toIso, villageCap } from "../../src/scene.js";
 
 /*
  * FR-107. At a card's size, 264 × 132, the faithful thumbnail keeps each
@@ -95,12 +95,19 @@ describe("a thumbnail fitted to what stands (FR-107)", () => {
   });
 
   for (const t of templates) {
-    it(`draws every district of ${t.id} plainly at 264 × 132: a plot at least 80 px wide, every building at least 16 px, the drawing filling at least 60% of the tile`, () => {
+    /*
+     * The map reads upstream to downstream, left to right (Roadmap
+     * f-map-readable), so a chain of three kinds is a row of three plots: it
+     * reaches across the tile rather than filling it, and a plot is a third
+     * of the row less its street. 76 px, where the packed map that came
+     * before gave 80.
+     */
+    it(`draws every district of ${t.id} plainly at 264 × 132: a plot at least 76 px wide, every building at least 16 px, the drawing reaching across the tile`, () => {
       const svg = sceneThumbnail(t.document, { counts: t.counts, ...FITTED });
       const m = measure(svg);
       expect(m.plots.map((p) => p.kind).sort()).toEqual(Object.keys(t.document.kinds).sort());
       for (const plot of m.plots) {
-        expect(plot.box.maxX - plot.box.minX, `${t.id}: ${plot.kind}`).toBeGreaterThanOrEqual(80);
+        expect(plot.box.maxX - plot.box.minX, `${t.id}: ${plot.kind}`).toBeGreaterThanOrEqual(76);
         // Inside the tile: nothing cropped off.
         expect(plot.box.minX).toBeGreaterThanOrEqual(0);
         expect(plot.box.maxX).toBeLessThanOrEqual(m.width);
@@ -112,7 +119,8 @@ describe("a thumbnail fitted to what stands (FR-107)", () => {
       expect(m.drawn.minY).toBeGreaterThanOrEqual(0);
       expect(m.drawn.maxX).toBeLessThanOrEqual(m.width + 0.5);
       expect(m.drawn.maxY).toBeLessThanOrEqual(m.height + 0.5);
-      expect(m.fill, t.id).toBeGreaterThanOrEqual(0.6);
+      // Fitted: as large as the tile lets it be, across its width or down its height.
+      expect(Math.max((m.drawn.maxX - m.drawn.minX) / m.width, (m.drawn.maxY - m.drawn.minY) / m.height), t.id).toBeGreaterThanOrEqual(0.8);
     });
   }
 
@@ -159,7 +167,8 @@ describe("a thumbnail fitted to what stands (FR-107)", () => {
     const vendor = defineNode("vendor", { fields: z.object({ label: z.string() }) });
     const app = defineApp({ name: "Vendors", schema: createSchema([vendor]) });
     const m = measure(sceneThumbnail(app, { counts: { vendor: 400 }, ...FITTED }));
-    expect(m.roofs).toHaveLength(villageCap(4));
+    // On its whole block, as a fitted district stands.
+    expect(m.roofs).toHaveLength(villageCap(BLOCK));
     for (const roof of m.roofs) expect(roof.maxX - roof.minX).toBeGreaterThanOrEqual(16);
   });
 

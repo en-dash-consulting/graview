@@ -10,6 +10,7 @@ import {
   type ViewMeta,
   type ViewRegistry,
 } from "@graview/core";
+import type { DistrictStates } from "@graview/layout";
 import type { ComponentType } from "react";
 
 /**
@@ -76,6 +77,10 @@ export interface ViewProps<S extends AnySchema, K extends KindOfSchema<S> = Kind
   readonly opened?: boolean;
   /** The rows of members an opened district has room for (the layout's `openedRows`). */
   readonly openedRows?: number;
+  /** From altitude, how much the name under the district says at this scale (the layout's `nameplate`). */
+  readonly nameplate?: "full" | "short" | "full-above" | "short-above" | "full-aside" | "short-aside" | "none";
+  /** From altitude, how many of the district's records stand at each value of its main choice (the layout's `states`). */
+  readonly states?: DistrictStates;
   /**
    * The district's address in the city, when it is drawn at altitude: its
    * corner in lattice cells and how many cells it takes on a side today —

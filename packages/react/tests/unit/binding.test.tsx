@@ -2,6 +2,7 @@ import { bindSchema, createSchema, DARK, defineNode, LIGHT, nodeRef, Store, type
 import { EMPTY_VIEW, aggregateId, fromUrl, kindCardId, layout, toUrl, withZoom } from "@graview/layout";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeAll, describe, expect, it } from "vitest";
+import { cityGround } from "../../src/scene-root.js";
 import { z } from "zod";
 import {
   createViews,
@@ -501,6 +502,9 @@ describe("a selection, mapped onto what is drawn", () => {
     await import("../../src/ribbons-layer.js");
     for (let tick = 0; tick < 20 && ribbons(graview()).length === 0; tick += 1) await new Promise((resolve) => setTimeout(resolve, 10));
   });
+
+  // The ground of the city is fetched the first time the scene rises; here it is fetched before the picture is drawn to a string.
+  beforeAll(() => cityGround.load());
 
   it("draws each relation as a ribbon between the districts from up there, and no line in the air", () => {
     const html = graview();

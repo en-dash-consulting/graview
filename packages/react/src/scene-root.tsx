@@ -1,5 +1,5 @@
 import { SCENE_LAYERS } from "@graview/core";
-import { toIso } from "@graview/core/scene";
+import { toIso, TOP_DOWN } from "@graview/core/city";
 import type { SceneNode } from "./scene-node.js";
 import type { AnySchema, Store } from "@graview/core";
 import {
@@ -9,7 +9,6 @@ import {
   kindOfCard,
   kindsOf,
   layout,
-  marqueeHeightFor,
   withFocus,
   withOverview,
   withPan,
@@ -52,8 +51,7 @@ import { kitConnector, useKit } from "./kit.js";
 // The scene searches: it hands the provider the matcher as it is fetched (FR-179).
 matchWith({ search, touchWeights });
 import type { PointerStore } from "./pointer.js";
-import { MarqueeRoomContext, useMarqueeNameWidth } from "./drawn.js";
-import { Plots } from "./plots.js";
+import type { PlotsProps } from "./plots.js";
 import { Occupants } from "./occupants.js";
 import { EdgeSigns } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
@@ -642,8 +640,37 @@ const Ribbons = /* @__PURE__ */ ribbonsModule.part(
   { what: "The relations", quiet: true },
 );
 
+const ABOVE_KEY = "graview:map-from-above";
+/** Whether this person looks at the city from straight above: their own way of looking, kept in this browser when it can be. */
+function useFromAbove(): [boolean, (above: boolean) => void] {
+  const [above, setAbove] = useState(() => {
+    try {
+      return globalThis.localStorage?.getItem(ABOVE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const choose = useCallback((next: boolean) => {
+    setAbove(next);
+    try {
+      globalThis.localStorage?.setItem(ABOVE_KEY, next ? "1" : "0");
+    } catch {
+      // Not kept: it holds for this visit.
+    }
+  }, []);
+  return [above, choose];
+}
+
+/*
+ * THE GROUND OF THE CITY — its plots, their blocks, the roads and their
+ * rules — fetched the first time the scene rises: a page that never looks
+ * from altitude never carries it (`plots.tsx`).
+ */
+export const cityGround = lazyModule(retryingImport(() => import("./plots.js")));
+const Plots = cityGround.part((module, props: PlotsProps) => <module.Plots {...props} />, { quiet: true });
+
 /** SCENE FURNITURE in the ground's other corner: the way a map carries its own zoom. */
-function ZoomControls({ zoom, zoomBy }: { readonly zoom: number; readonly zoomBy: (factor: number) => void }) {
+function ZoomControls({ zoom, zoomBy, above, setAbove }: { readonly zoom: number; readonly zoomBy: (factor: number) => void; readonly above: boolean; readonly setAbove: (above: boolean) => void }) {
   /** One way to zoom: its sign, the step it takes, and whether the zoom has gone as far as it goes that way. */
   const button = (way: "out" | "in", sign: string, factor: number, disabled: boolean) => (
     <button
@@ -673,6 +700,17 @@ function ZoomControls({ zoom, zoomBy }: { readonly zoom: number; readonly zoomBy
         {Math.round(zoom * 100)}%
       </span>
       {button("in", "+", 1.25, zoom >= ZOOM_MAX - 1e-6)}
+      {/* FROM ABOVE: the same ground seen straight down, every block flat and its state its shade — a person's own way of looking, kept in this browser. */}
+      <button
+        type="button"
+        className="graview-zoom-button graview-zoom-above"
+        data-testid="from-above"
+        aria-pressed={above}
+        title={above ? "See the city at an angle again" : "See the city from straight above"}
+        onClick={() => setAbove(!above)}
+      >
+        From above
+      </button>
     </div>
   );
 }
@@ -702,10 +740,6 @@ export function Scene<S extends AnySchema>({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
   const unit = useRootUnit();
-  // The marquee's names measured in the face the scene draws them in (FR-118), for the room under each signpost.
-  const nameWidth = useMarqueeNameWidth(wrapperRef, unit, brand);
-  // The room the layout reserves for a marquee of those names, handed to the districts that draw one (132: the district's own width, unused).
-  const marqueeRoom = useMemo(() => (titles: readonly string[]) => marqueeHeightFor(titles, 132, nameWidth), [nameWidth]);
 
   // Pinch and ctrl+wheel: altitude from the ground, zoom about the pointer from above; the plain wheel pans. See scene-hand.ts.
   const { zoomAbout, panBy } = useWheelAndPinch({ stage: wrapperRef, view, setView });
@@ -727,7 +761,9 @@ export function Scene<S extends AnySchema>({
    */
   const closer = 1;
   const [zoom, zoomLive, setZoom] = useHandZoom(view.overview);
-  const sized = useLayoutOptions<S>(options, size, unit, nameWidth, seated, closer * zoom, undefined, nodes);
+  const [above, setAbove] = useFromAbove();
+  const seenFrom = useMemo(() => (above ? { ...options, tilt: TOP_DOWN } : options), [options, above]);
+  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, nodes);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
   // A district under the hand is placed here while it is dragged, and written into the view on release.
@@ -826,7 +862,7 @@ export function Scene<S extends AnySchema>({
   const drawnActivity = (id: string) => activityOf(frame.nodes.find((node) => node.id === id));
   /** How far down its card a plot's foot (`share` 1) or middle (2) stands, from the city's own origin and the pan. */
   const plotY = (city: NonNullable<Layout["city"]>, node: SceneNode, plot: NonNullable<SceneNode["plot"]>, share: number) =>
-    city.originY + panned.y + toIso(plot.col + plot.side / 2, plot.row + plot.side / share, city.cell).y - node.y;
+    city.originY + panned.y + toIso(plot.col + plot.side / share, plot.row + plot.side / share, city.cell, city.tilt).y - node.y;
   // The stage's extent: what the ground, its layers and its lines are all drawn over.
   const extent = { width: result.width, height: result.height };
   const stage = { position: "relative", zIndex: SCENE_LAYERS.stage, ...extent } as const;
@@ -878,7 +914,6 @@ export function Scene<S extends AnySchema>({
   ));
 
   return (
-    <MarqueeRoomContext.Provider value={marqueeRoom}>
     <div
       ref={wrapperRef}
       className={`graview-ground${className ? ` ${className}` : ""}`}
@@ -938,6 +973,7 @@ export function Scene<S extends AnySchema>({
         ...(frame.city
           ? {
               ["--graview-lattice-cell" as string]: `${frame.city.cell.toFixed(2)}px`,
+              ["--graview-lattice-tilt" as string]: (frame.city.tilt ?? 0.5).toFixed(3),
               // The tween's own pan, not the live one: the ground moves with the cards it is under.
               ["--graview-lattice-x" as string]: `${(frame.city.originX + frame.city.pan.x).toFixed(1)}px`,
               ["--graview-lattice-y" as string]: `${(frame.city.originY + frame.city.pan.y).toFixed(1)}px`,
@@ -957,6 +993,8 @@ export function Scene<S extends AnySchema>({
         * THE GROUND: every district's plot as a tile, under the cards and
         * over the fields, from the same origin and pan the lattice rides.
         */}
+      {frame.city ? (
+      <Suspense fallback={null}>
       <Plots
         frame={frame}
         {...extent}
@@ -964,6 +1002,7 @@ export function Scene<S extends AnySchema>({
         pan={frame.city ? frame.city.pan : panned}
         brand={brand}
         pinned={pinnedIds}
+        close={closer * zoom > 1.2}
         swallowed={swallow}
         // A tile is its district: focusing it means the kind's aggregate, never the card's own id.
         onFocus={(id) => {
@@ -971,6 +1010,8 @@ export function Scene<S extends AnySchema>({
           if (kind !== null) setView((current) => withFocus(current, aggregateId(kind)));
         }}
       />
+      </Suspense>
+      ) : null}
       {/* THE RELATIONS, one ribbon each between the districts they join (see ribbons-layer.tsx). */}
       {view.overview && frame.city ? (
         <Suspense fallback={null}>
@@ -1030,7 +1071,7 @@ export function Scene<S extends AnySchema>({
           }}
         />
       ) : null}
-      {view.overview ? <ZoomControls zoom={zoom} zoomBy={(factor) => zoomAbout.current(factor)} /> : null}
+      {view.overview ? <ZoomControls zoom={zoom} zoomBy={(factor) => zoomAbout.current(factor)} above={above} setAbove={setAbove} /> : null}
       <Lines
         frame={frame}
         focusId={view.focusId}
@@ -1098,6 +1139,5 @@ export function Scene<S extends AnySchema>({
       />
       {children}
     </div>
-    </MarqueeRoomContext.Provider>
   );
 }

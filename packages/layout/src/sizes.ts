@@ -90,3 +90,4 @@ export const ROSTER_KEPT = 4;
 export const ROSTER_CHROME = 64;
 export const rosterRows = (count: number): number => Math.max(1, Math.min(ROSTER_MOST, count));
 export const rosterHeight = (rows: number): number => rows * ROSTER_ROW + ROSTER_CHROME;
+

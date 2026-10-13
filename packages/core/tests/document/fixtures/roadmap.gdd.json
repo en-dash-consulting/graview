@@ -1,0 +1,164 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Roadmap",
+  "description": "A product's roadmap: areas, the features in them, the requests that asked for them, and the releases that shipped them.",
+  "kinds": {
+    "person": {
+      "noun": "person",
+      "plural": "People",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "people": true
+    },
+    "area": {
+      "noun": "area",
+      "plural": "Areas",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "request": {
+      "noun": "request",
+      "plural": "Requests",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "new",
+            "accepted",
+            "declined"
+          ],
+          "default": "new",
+          "required": true
+        }
+      },
+      "edges": {
+        "from": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "one",
+          "description": "who asked",
+          "inverse": "requests"
+        }
+      }
+    },
+    "brief": {
+      "noun": "brief",
+      "plural": "Briefs",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "edges": {
+        "gathers": {
+          "to": [
+            "request"
+          ],
+          "description": "the requests it answers",
+          "inverse": "briefs"
+        }
+      }
+    },
+    "feature": {
+      "noun": "feature",
+      "plural": "Features",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "idea",
+            "planned",
+            "building",
+            "shipped"
+          ],
+          "default": "idea",
+          "required": true
+        }
+      },
+      "edges": {
+        "in": {
+          "to": [
+            "area"
+          ],
+          "cardinality": "one",
+          "description": "its area",
+          "inverse": "features"
+        },
+        "asked": {
+          "to": [
+            "request",
+            "brief"
+          ],
+          "description": "what asked for it",
+          "inverse": "features"
+        },
+        "release": {
+          "to": [
+            "release"
+          ],
+          "cardinality": "one",
+          "description": "the release that ships it",
+          "inverse": "features"
+        }
+      }
+    },
+    "release": {
+      "noun": "release",
+      "plural": "Releases",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "planned",
+            "out"
+          ],
+          "default": "planned",
+          "required": true
+        }
+      }
+    }
+  },
+  "rules": {
+    "shipped-has-release": {
+      "title": "A shipped feature names its release",
+      "over": "feature",
+      "when": "status == 'shipped'",
+      "require": "present(release)",
+      "says": "{name} shipped in no release"
+    }
+  },
+  "lenses": [
+    {
+      "name": "columns",
+      "title": "Features by status",
+      "bindings": {
+        "feature": {
+          "column": "status"
+        }
+      }
+    }
+  ]
+}

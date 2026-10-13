@@ -394,7 +394,9 @@ describe("an opened district says which member is in trouble", () => {
   );
 
   it("counts the trouble on the card", () => {
-    expect(opened).toContain("⚠ 2");
+    // From altitude the name says how many (2) and, apart from it, how many have a problem (1).
+    expect(opened).toContain("⚠ 1");
+    expect(opened).toContain('data-graview-problems="1"');
   });
 
   it("marks the member that is in trouble, and only that one", () => {

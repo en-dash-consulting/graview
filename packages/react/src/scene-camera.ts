@@ -1,4 +1,4 @@
-import { toIso } from "@graview/core/scene";
+import { toIso } from "@graview/core/city";
 import { cameraLimit, kindCardId, kindsOfAggregate, type InterpolatedLayout, type Layout, type ViewState } from "@graview/layout";
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 
@@ -48,6 +48,8 @@ export function useCameraFlights({
    * remembers where each district's plot was in the last altitude frame.
    */
   const stood = useRef<Map<string, { x: number; y: number }>>(new Map());
+  /* How tall the board stands, to the nearest sixteen pixels: a picture that grows is flown to again. */
+  const tall = Math.round((result.nodes.find((node) => node.id === screenId)?.height ?? 0) / 16);
   const wasAloft = useRef(view.overview ?? false);
   const glide = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -102,14 +104,18 @@ export function useCameraFlights({
       x: (village ? wantedX : Math.max(-limit.x, Math.min(limit.x, wantedX))) - pan.x,
       y: (village ? wantedY : Math.max(-limit.y, Math.min(limit.y, wantedY))) - pan.y,
     });
-    // Only when the focus lands, or the camera flies closer: a person's own pan afterwards is theirs.
-  }, [screenId, view.overview, closer]);
+    /*
+     * Only when the focus lands, the camera flies closer, or the picture on
+     * the board is another one — or the same one drawn to another height, as
+     * a month is taller than a week: a person's own pan afterwards is theirs.
+     */
+  }, [screenId, view.overview, closer, view.within?.["view"], tall]);
   if (frame.city) {
     // Remembered every altitude frame: where each plot's center is on the canvas right now.
     const remembered = new Map<string, { x: number; y: number }>();
     for (const node of frame.nodes) {
       if (!node.plot || Math.round(node.plane) !== 2) continue;
-      const center = toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell);
+      const center = toIso(node.plot.col + node.plot.side / 2, node.plot.row + node.plot.side / 2, frame.city.cell, frame.city.tilt);
       remembered.set(node.id, { x: frame.city.originX + panned.x + center.x, y: frame.city.originY + panned.y + center.y });
     }
     stood.current = remembered;

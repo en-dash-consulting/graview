@@ -170,15 +170,21 @@ export function OverviewButton() {
     if (kind) return pluralLabel(store.schema, kind);
     return store.graph.getNode(target)?.label ?? null;
   })();
-  const label = overview ? (landing ? `Down to ${landing}` : "Down") : "Up";
+  /*
+   * FROM ALTITUDE IT CLOSES THE MAP. "Down to Actions by status" read as a
+   * heading nobody could place; the control says what pressing it does, and
+   * where it lands is said with it, to the keyboard and on hover.
+   */
+  const label = overview ? "Close the map" : "Up";
+  const said = overview && landing ? `Close the map, down to ${landing}` : label;
   return (
     <button
       type="button"
       data-testid="overview"
       className="graview-altitude-control"
       aria-pressed={overview}
-      aria-label={label}
-      title={overview ? `${label} — back down into the view` : "Up — the whole thing, from above"}
+      aria-label={said}
+      title={overview ? said : "Up — the whole thing, from above"}
       // A view state, so it is a URL, the back button works, and the cards
       // already on screen fly out into the ring rather than being replaced.
       onClick={() => (overview ? descend() : go(withOverview(view, true)))}
