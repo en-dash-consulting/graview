@@ -39,6 +39,7 @@ let browser;
 let vite;
 let garden;
 let catalog;
+let program;
 
 const hygiene = (page) =>
   page.evaluate(() => ({
@@ -834,6 +835,87 @@ async function aLargeListHasAWayThrough() {
   };
 }
 
+async function aListReadsOnOneScale() {
+  /*
+   * A LIST READS WELL BY DEFAULT (the gauntlet's Program, the derived face
+   * with nothing of its own). Nick, on its Sessions grouped by day: the
+   * title very large, every row's name bold and wrapping to a third and
+   * fourth line on a phone so every row shouted, "Sep 25, 2017" under a
+   * heading that said "Sep 25, 2017", the glance pushed to the right edge
+   * at whatever x its length left it, and the Ask box over the last rows.
+   * Read at a desk and a phone at the reader's 16px, and on a phone at 32.
+   */
+  const seen = [];
+  for (const { width, height, root } of [{ width: 1440, height: 900, root: 16 }, { width: 390, height: 844, root: 16 }, { width: 390, height: 844, root: 32 }]) {
+    const page = await browser.newPage({ viewport: { width, height } });
+    for (const path of ["/pages/sessions?group=day&sort=label", "/pages/talks"]) {
+      await page.goto(`${at("gauntlet")}${path}`, { waitUntil: "load", timeout: 120_000 });
+      await page.waitForSelector('[data-testid="records"] li', { timeout: 120_000 });
+      await page.evaluate((size) => { document.documentElement.style.fontSize = `${size}px`; }, root);
+      await page.waitForTimeout(500);
+      const read = await page.evaluate((root) => {
+        const px = (element) => (element ? Number.parseFloat(getComputedStyle(element).fontSize) : null);
+        // The four steps of the theme's scale, at this root.
+        const steps = [0.833, 1, 1.2, 1.728].map((step) => step * root);
+        const rows = [...document.querySelectorAll('[data-testid="records"] li')].slice(0, 60);
+        const names = rows.map((row) => row.querySelector("a"));
+        const glances = rows.map((row) => row.querySelector(".graview-row-glance")).filter(Boolean);
+        const heads = [...document.querySelectorAll('[data-testid="list-group"] > h2, [data-testid="list-section"] > h2')];
+        const sizes = {
+          title: px(document.querySelector("[data-graview-page-title]")),
+          description: px(document.querySelector("[data-graview-page-title]")?.closest("header")?.querySelector(":scope > p") ?? null),
+          name: px(names[0]),
+          glance: px(glances[0]),
+          heading: px(heads[0]),
+        };
+        const leading = Number.parseFloat(getComputedStyle(names[0]).lineHeight);
+        // Each group's own words — its heading less its count — said again on one of its rows.
+        const repeats = [...document.querySelectorAll('[data-testid="list-group"]')].flatMap((group) => {
+          const said = (group.querySelector("h2")?.firstChild?.textContent ?? "").trim();
+          return [...group.querySelectorAll("li")].filter((row) => said && (row.textContent ?? "").includes(said)).map((row) => `${said} in “${(row.textContent ?? "").trim().slice(0, 60)}”`);
+        });
+        return {
+          sizes,
+          offScale: Object.entries(sizes).filter(([, size]) => size !== null && !steps.some((step) => Math.abs(step - size) < 0.6)).map(([part, size]) => `${part} ${size}px`),
+          nameWeight: Number.parseInt(getComputedStyle(names[0]).fontWeight, 10),
+          groups: document.querySelectorAll('[data-testid="list-group"]').length,
+          repeats: repeats.slice(0, 3),
+          longerThanTwoLines: names.filter((name) => name.getBoundingClientRect().height > 2 * leading + 1).length,
+          heights: [...new Set(rows.map((row) => Math.round(row.getBoundingClientRect().height)))],
+          glances: glances.length,
+          glanceXs: [...new Set(glances.map((glance) => Math.round(glance.getBoundingClientRect().left)))],
+          scrolls: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        };
+      }, root);
+      seen.push({ path, width, root, ...read, ...(await hygiene(page)), end: await endClearsTheFoot(page) });
+    }
+    await page.close();
+  }
+  const sessions = seen.filter((one) => one.path.startsWith("/pages/sessions"));
+  report.checks.noListRowRepeatsTheFieldItsGroupHeadingSays = {
+    seen: sessions.map(({ width, root, groups, repeats }) => ({ width, root, groups, repeats })),
+    ok: sessions.length === 3 && sessions.every((one) => one.groups > 0 && one.repeats.length === 0),
+  };
+  report.checks.rowTitlesClampToTwoLinesAndRowsAreOneOfTwoHeights = {
+    seen: seen.map(({ path, width, root, longerThanTwoLines, heights }) => ({ path, width, root, longerThanTwoLines, heights })),
+    // At 32px a glance may wrap under its name on a phone; the name never runs past two lines.
+    ok: seen.every((one) => one.longerThanTwoLines === 0 && (one.root !== 16 || one.heights.length <= 2)),
+  };
+  const desk = seen.find((one) => one.width === 1440 && one.path === "/pages/talks");
+  report.checks.theDatesDownAListShareAnXOnADesk = {
+    seen: desk ? { glances: desk.glances, xs: desk.glanceXs } : null,
+    ok: Boolean(desk && desk.glances >= 20 && desk.glanceXs.length === 1),
+  };
+  report.checks.theLastRowScrollsClearOfTheAskBox = {
+    seen: seen.map(({ path, width, root, end }) => ({ path, width, root, ...end })),
+    ok: seen.filter((one) => one.root === 16).every((one) => one.end.ok),
+  };
+  report.checks.aListsTypeComesFromTheScale = {
+    seen: seen.map(({ path, width, root, sizes, offScale, nameWeight, scrolls, bigEnoughToHit }) => ({ path, width, root, sizes, offScale, nameWeight, scrolls, bigEnoughToHit })),
+    ok: seen.every((one) => one.offScale.length === 0 && one.nameWeight <= 500 && !one.scrolls),
+  };
+}
+
 async function aShortPageKeepsTheAskFieldAtTheWindowsFoot() {
   /* A design's short page (the almanac's two gardeners): its paper fills the window, and the ask field stands at the window's foot. */
   const seen = [];
@@ -1106,6 +1188,9 @@ try {
   // Discography's 479 albums, for a large list's way through.
   catalog = await startVite("discography", portFor("discography"));
   await aLargeListHasAWayThrough();
+  // The gauntlet's Program, the derived face with nothing of its own, for a list that reads well by default.
+  program = await startVite("gauntlet", portFor("gauntlet"));
+  await aListReadsOnOneScale();
   await aShortPageKeepsTheAskFieldAtTheWindowsFoot();
   await theMapOnAPhone();
   const { deskGallery, phoneGallery } = await theLandingIsAGallery();
@@ -1125,6 +1210,9 @@ try {
   }
   if (catalog) {
     catalog.stop();
+  }
+  if (program) {
+    program.stop();
   }
 }
 

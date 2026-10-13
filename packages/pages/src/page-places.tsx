@@ -175,7 +175,6 @@ function KindOnPage<S extends AnySchema>({ context, kind }: { context: PageConte
           <span
             key={node.id}
             style={{
-              fontSize: "1.0625rem",
               padding: "8px 14px",
               // A record is a card (FR-117).
               borderRadius: 8,
@@ -352,7 +351,7 @@ export function GalleryCard<S extends AnySchema>({ context, entry }: { context: 
                 color: "var(--graview-ink)",
               }}
             >
-              <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: "1.0625rem" }}>No {pluralOf(store, entry.kind).toLowerCase()} yet</span>
+              <span style={{ fontFamily: DISPLAY, fontWeight: "var(--graview-weight-display)" }}>No {pluralOf(store, entry.kind).toLowerCase()} yet</span>
               {beginning ? <span style={quiet}>Begin with “{beginning.label}”</span> : null}
             </span>
           </span>
@@ -361,7 +360,7 @@ export function GalleryCard<S extends AnySchema>({ context, entry }: { context: 
       <span style={{ display: "grid", gap: 2, minWidth: 0 }}>
         <span style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
           {isPlace ? null : <KindMark kind={entry.kind} brand={brand} schema={store.schema} size={8} />}
-          <span style={{ fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, lineHeight: 1.3, overflowWrap: "anywhere" }}>{entry.title}</span>
+          <span style={{ fontFamily: DISPLAY, fontSize: "var(--graview-text-heading)", fontWeight: "var(--graview-weight-display)", lineHeight: 1.3, overflowWrap: "anywhere", textWrap: "balance" }}>{entry.title}</span>
         </span>
         <span style={quiet}>
           {entry.place ? overOf(store, entry.place.kind, entry.place.across) : overOf(store, entry.kind)}

@@ -17,7 +17,7 @@ import { DerivedForm } from "./form.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { PageMain, PageTitle } from "./page-shell.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
-import { DISPLAY, KindMark, capitalize, eyebrow, h2, lede, link, plain, pluralOf, quiet, rule } from "./page-typography.js";
+import { KindMark, ROWS_CSS, capitalize, eyebrow, h2, lede, link, pluralOf, quiet, rule } from "./page-typography.js";
 import { pluralSlug, recordPath } from "./registry.js";
 
 /**
@@ -52,6 +52,7 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
 
   return (
     <PageMain context={context}>
+      <style>{ROWS_CSS}</style>
       <header style={{ display: "grid", gap: 12 }}>
         <p style={eyebrow}>Search</p>
         <PageTitle context={context} data-testid="search-heading">
@@ -108,31 +109,25 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
       {kinds.map((kind) => (
         // A track the width it was given, and words that break: a hit told apart by its VIN at a
         // reader's 200% was a word wider than a phone, and the whole page scrolled sideways.
-        <section key={kind} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 0, minWidth: 0 }} data-testid="search-group" data-kind={kind}>
-          <h2 style={{ ...h2, fontSize: "1.0625rem", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+        <section key={kind} className="graview-list" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", minWidth: 0 }} data-testid="search-group" data-kind={kind}>
+          <h2 className="graview-group-head" style={{ alignItems: "center" }}>
             <KindMark kind={kind} brand={brand} schema={store.schema} size={8} />
             {/* The heading is the kind's list, narrowed by the same words. */}
             <Link to={`/${pluralSlug(store.schema, kind)}?${new URLSearchParams({ q: asked }).toString()}`} style={link} data-testid="search-kind-link">
               {pluralOf(store, kind)}
             </Link>
-            <span style={quiet}>{found.byKind[kind]}</span>
+            <span>{found.byKind[kind]}</span>
           </h2>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 0 }}>
+          <ul className="graview-rows">
             {records
               .filter((hit) => hit.kind === kind)
               .map((hit) => (
-                <li
-                  key={hit.id}
-                  data-testid="search-hit"
-                  data-about="node"
-                  style={{ display: "grid", gap: 2, padding: "12px 0", minWidth: 0, borderTop: "1px solid var(--graview-edge)" }}
-                >
-                  <Link to={recordPath(store.schema, kind, hit.id)} style={{ ...plain, fontFamily: DISPLAY, fontSize: "1.1875rem", fontWeight: 600, lineHeight: 1.3, overflowWrap: "anywhere" }}>
+                <li key={hit.id} data-testid="search-hit" data-about="node" className="graview-row">
+                  <Link to={recordPath(store.schema, kind, hit.id)} className="graview-row-title" {...(hit.label.length > 60 ? { title: hit.label } : {})}>
                     {hit.flagged ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
                     {hit.label}
-                    {hit.apart ? <span style={quiet}> · {hit.apart}</span> : null}
-                    {hit.current ? null : <span style={quiet}> · past</span>}
                   </Link>
+                  {hit.apart || !hit.current ? <span className="graview-row-glance">{[hit.apart, hit.current ? "" : "past"].filter(Boolean).join(" · ")}</span> : null}
                   <WhyLine why={hit.why} />
                 </li>
               ))}

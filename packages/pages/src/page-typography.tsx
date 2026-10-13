@@ -1,4 +1,4 @@
-import { excerpt, pluralLabel } from "@graview/core";
+import { LOCAL_LAYERS, excerpt, pluralLabel } from "@graview/core";
 import { KindFigure } from "@graview/primitives/pages";
 import {
   humanizeField,
@@ -16,17 +16,24 @@ import { readableFields } from "@graview/core/words";
 
 
 /*
- * A reading column, a real scale. The scene's chrome is set at 14px because
- * it is chrome; a page is read, so it gets the size a page gets. Headings
- * take the brand's display face through the token the theme already sets —
- * as a variable, never a `font` shorthand, which would silently beat it.
+ * A READING COLUMN, ONE SCALE.
+ *
+ * The scene's chrome is set at 14px because it is chrome; a page is read.
+ * Its sizes are the theme's four steps of one scale — a minor third from
+ * the reader's own rem (`--graview-text-small`, `-body`, `-heading`,
+ * `-title`) — so a reader's larger text moves them all together, an app's
+ * own stylesheet can set a step, and no page invents a size between two of
+ * them. Headings take the brand's display face and weight from the theme's
+ * own heading rule (never a `font` shorthand here, which would beat it).
  */
+export const SMALL = "var(--graview-text-small)";
+export const BODY = "var(--graview-text-body)";
 export const DISPLAY = "var(--graview-font-display, var(--graview-font-body, system-ui))";
 export const column: React.CSSProperties = {
   maxWidth: 760,
   margin: "0 auto",
-  // The end clears the seat's field, which stands over the foot (`--graview-foot-room`, set by the field).
-  padding: "40px 20px max(96px, var(--graview-foot-room, 0px))",
+  // The end clears what stands over the foot: the seat's field says its measured height (`--graview-foot-room`), a phone its home bar.
+  padding: "40px 20px max(96px, calc(var(--graview-foot-room, 0px) + env(safe-area-inset-bottom, 0px)))",
   display: "grid",
   /*
    * A TRACK THAT MAY BE NARROWER THAN WHAT IS IN IT.
@@ -54,42 +61,45 @@ export const WIDE = 1160;
 export const wide: React.CSSProperties = { ...column, maxWidth: WIDE };
 export const h1: React.CSSProperties = {
   margin: 0,
-  fontFamily: DISPLAY,
-  fontSize: "clamp(30px, 4.6vw, 40px)",
-  lineHeight: 1.12,
-  fontWeight: 600,
+  fontSize: "var(--graview-text-title)",
+  lineHeight: 1.2,
   letterSpacing: "-0.012em",
   overflowWrap: "anywhere",
+  textWrap: "balance",
 };
 export const h2: React.CSSProperties = {
   margin: 0,
-  fontFamily: DISPLAY,
-  fontSize: "1.4375rem",
-  lineHeight: 1.25,
-  fontWeight: 600,
-  letterSpacing: "-0.006em",
+  fontSize: "var(--graview-text-heading)",
+  lineHeight: 1.3,
+  textWrap: "balance",
 };
 export const eyebrow: React.CSSProperties = {
   margin: 0,
-  fontSize: "0.8125rem",
-  letterSpacing: "0.14em",
+  fontSize: SMALL,
+  letterSpacing: "0.08em",
   textTransform: "uppercase",
   color: "var(--graview-ink-muted)",
 };
+// The sentence under a title: secondary, at the reading size, in the muted ink.
 export const lede: React.CSSProperties = {
   margin: 0,
-  fontSize: "1.1875rem",
-  lineHeight: 1.5,
+  fontSize: BODY,
   color: "var(--graview-ink-muted)",
-  maxWidth: "58ch",
+  maxWidth: "60ch",
 };
-export const quiet: React.CSSProperties = { color: "var(--graview-ink-muted)", fontSize: "0.9375rem" };
+export const quiet: React.CSSProperties = { color: "var(--graview-ink-muted)", fontSize: SMALL };
 export const rule: React.CSSProperties = { borderTop: "1px solid var(--graview-edge)", paddingTop: 24 };
-// A link is a target: tall enough for a fingertip without leaving the line.
+/*
+ * A link is a target, tall enough for a fingertip without leaving the line:
+ * in the accent `graview check` holds to 4.5:1 on the ground ("a link on a
+ * page"), the same visited or not, its underline a hairline a little below
+ * the words in its own color at half strength.
+ */
 export const link: React.CSSProperties = {
-  color: "inherit",
-  textDecorationColor: "var(--graview-edge-bright)",
-  textUnderlineOffset: 3,
+  color: "var(--graview-accent)",
+  textDecorationColor: "color-mix(in srgb, currentColor 50%, transparent)",
+  textDecorationThickness: 1,
+  textUnderlineOffset: "0.2em",
   display: "inline-flex",
   alignItems: "center",
   minHeight: 24,
@@ -110,9 +120,41 @@ export const plain: React.CSSProperties = {
   alignItems: "center",
   minHeight: 24,
 };
+
+/*
+ * A LIST'S ROWS, ONE ANATOMY (a kind's list and the search's hits).
+ *
+ * A row is its record's name and its glance. The name is the row: reading
+ * size, medium weight, two lines at most (the rest on its page, and in its
+ * title when it is long), the link stretched over the whole row. The glance
+ * is secondary — small, muted — and on a desk stands in a column of its
+ * own beside the names, one column for the whole list (a subgrid), so the
+ * dates down a list start at one x; where the list is narrower than 36rem
+ * it stands under the name. A row is one line or two, never more, so a
+ * list keeps two heights. A group's heading is small and semibold, its
+ * count beside it, over the rows' own hairline; over the framework's own
+ * rows it stays at the top of the scroll on a desk while they pass under
+ * it, on the ground the face stands on (a design's rows keep their own).
+ */
+export const ROWS_CSS = `.graview-list{container-type:inline-size}
+.graview-rows{display:grid;grid-template-columns:minmax(0,1fr);column-gap:1.5rem;margin:0;padding:0;list-style:none;border-top:1px solid var(--graview-edge)}
+.graview-row{grid-column:1/-1;display:grid;grid-template-columns:subgrid;align-items:baseline;align-content:center;position:relative;box-sizing:border-box;min-height:2.75rem;padding:.5rem 0;border-bottom:1px solid var(--graview-edge);overflow-wrap:anywhere}
+.graview-row-title{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:24px;color:inherit;text-decoration:none;font-size:var(--graview-text-body);font-weight:500;line-height:1.3;text-wrap:pretty;hyphens:manual}
+.graview-row-title::after{content:"";position:absolute;inset:0}
+.graview-row-title:focus-visible{outline:0}
+.graview-row-title:focus-visible::after{outline:2px solid var(--graview-accent);outline-offset:-2px;border-radius:var(--graview-radius-sm)}
+.graview-row:hover .graview-row-title{text-decoration:underline 1px color-mix(in srgb,currentColor 50%,transparent);text-underline-offset:.2em}
+.graview-row:active .graview-row-title{color:var(--graview-accent)}
+.graview-row :is(a,button):not(.graview-row-title){position:relative}
+.graview-row-glance,.graview-row>[data-testid=search-why]{font-size:var(--graview-text-small);line-height:1.5;color:var(--graview-ink-muted)}
+.graview-row>[data-testid=search-why]{grid-column:1/-1}
+.graview-group-head{display:flex;gap:.5em;align-items:baseline;margin:0;padding:.375rem 0;font-family:var(--graview-font-body);font-size:var(--graview-text-small);font-weight:var(--graview-weight-label);line-height:1.3;letter-spacing:.02em;scroll-margin-top:4rem}
+.graview-group-head>span{color:var(--graview-ink-muted);font-weight:var(--graview-weight-body)}
+@container (min-width:36rem){.graview-rows{grid-template-columns:minmax(0,1fr) fit-content(40%)}.graview-group-head:has(+.graview-rows){position:sticky;top:0;z-index:${LOCAL_LAYERS.raised};background:var(--graview-ground)}}`;
+
 export const button: React.CSSProperties = {
   font: "inherit",
-  fontSize: "0.9375rem",
+  fontSize: SMALL,
   padding: "8px 14px",
   borderRadius: "var(--graview-radius-sm, 8px)",
   border: "1px solid var(--graview-edge-bright)",

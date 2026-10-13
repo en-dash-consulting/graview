@@ -7,7 +7,7 @@ import { DerivedForm } from "./form.js";
 import { recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { SeatQuestions } from "./page-map.js";
-import { KindMark, button, column, eyebrow, h1, h2, lede, link, plain, quiet, rule } from "./page-typography.js";
+import { KindMark, SMALL, button, column, eyebrow, h1, h2, lede, link, plain, quiet, rule } from "./page-typography.js";
 import { PageMain, PageTitle } from "./page-shell.js";
 
 
@@ -88,11 +88,11 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
                 <li key={one.name} data-graview-rule={one.name} style={{ display: "grid", gap: 2 }}>
                   <span style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 12, rowGap: 2 }}>
                     {line ? <RuleLineView line={line} schema={store.schema} {...(brand ? { brand } : {})} style={{ flex: "1 1 18rem" }} /> : <span style={{ flex: "1 1 18rem", fontWeight: 550 }}>{title}</span>}
-                    <span style={{ ...quiet, fontSize: "0.875rem", color: broken > 0 ? "var(--graview-warn)" : "var(--graview-ink-faint)" }}>
+                    <span style={{ ...quiet, color: broken > 0 ? "var(--graview-warn)" : "var(--graview-ink-faint)" }}>
                       {broken === 0 ? "holds" : `broken in ${broken} ${broken === 1 ? "place" : "places"}`}
                     </span>
                   </span>
-                  {line && title.trim().length > 0 ? <span style={{ ...quiet, fontSize: "0.875rem" }}>{title}</span> : null}
+                  {line && title.trim().length > 0 ? <span style={quiet}>{title}</span> : null}
                 </li>
               );
             })}
@@ -113,8 +113,8 @@ export function ProblemSaid({ violation, schema, brand }: { readonly violation: 
   const title = problemTitle(violation);
   return (
     <div style={{ display: "grid", gap: 2 }} data-testid="problem-line" title={ownSentence(violation)}>
-      <RuleLineView line={violation.line} schema={schema} {...(brand ? { brand } : {})} lead="none" style={{ color: "var(--graview-warn)", fontSize: "1.0625rem" }} />
-      {title ? <span style={{ ...quiet, fontSize: "0.875rem" }}>{title}</span> : null}
+      <RuleLineView line={violation.line} schema={schema} {...(brand ? { brand } : {})} lead="none" style={{ color: "var(--graview-warn)" }} />
+      {title ? <span style={quiet}>{title}</span> : null}
     </div>
   );
 }
@@ -172,7 +172,7 @@ export function Repairs<S extends AnySchema>({
                 key={at}
                 data-testid="withheld"
                 data-withheld={verdict.refusal.wouldNeed.join(",") || "nobody"}
-                style={{ margin: 0, fontSize: "0.875rem", color: "var(--graview-ink-muted)" }}
+                style={{ ...quiet, margin: 0 }}
               >
                 <s>{repair.label}</s> — {verdict.refusal.message}
               </p>
@@ -240,12 +240,12 @@ export function Repairs<S extends AnySchema>({
         />
       ) : null}
       {opened && !asking && (opened.missing ?? []).length > 0 ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.875rem" }}>
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: SMALL }}>
           “{opened.label}” names {opened.mutation}, which this app does not declare.
         </p>
       ) : null}
       {failed ? (
-        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: "0.875rem" }}>
+        <p data-testid="refused" role="alert" style={{ margin: 0, color: "var(--graview-warn)", fontSize: SMALL }}>
           {failed}
         </p>
       ) : null}

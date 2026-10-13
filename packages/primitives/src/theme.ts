@@ -306,6 +306,11 @@ ${layerVariables()}
   --graview-weight-display: ${type.weights.display};
   --graview-weight-body: ${type.weights.body};
   --graview-weight-label: ${type.weights.label};
+  ${/* A page's type, one scale (a minor third, 1.2, from the reader's own rem): a secondary fact, reading text, a section, a page's title. */ ""}
+  --graview-text-small: .833rem;
+  --graview-text-body: 1rem;
+  --graview-text-heading: 1.2rem;
+  --graview-text-title: 1.728rem;
   ${/* Shape, as tokens, so a component never has to know whose product it is. */ ""}
   --graview-radius: ${shape.radius}px;
   --graview-radius-sm: ${shape.radiusSmall}px;

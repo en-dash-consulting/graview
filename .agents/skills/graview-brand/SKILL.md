@@ -152,7 +152,9 @@ because the whole look is one serializable declaration:
   (unset, each is the framework's: `SHAPE` and `TYPOGRAPHY` in
   `@graview/core`; a page outside the app dressed to match reads
   `shapeOf(brand)`, `typographyOf(brand)` and `isoShade(scheme)`, never
-  copied numbers);
+  copied numbers); a page's sizes are one scale the theme writes as
+  `--graview-text-small`, `-body`, `-heading` and `-title` — "larger
+  pages" sets those in the app's stylesheet, never a component's size;
 - **kind colors** → `accents` hues per kind;
 - **per-kind layout** → register a view over the registry cell, the same
   authoring move as everything else (see graview-node-kind).

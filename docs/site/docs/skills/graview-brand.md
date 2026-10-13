@@ -69,7 +69,7 @@ This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editori
 - **palette** → change `accent` (or supply explicit scheme tokens) and let `brandFromAccent` move lightness the minimum distance that clears AA;
 - **lines** → `kit.connectors` ("right-angled lines", "hide the grows-in lines", "make tended-by dashed and navy") and the ground's `kit.grid`;
 - **feel** → `shape.radius` (square = formal) and `shape.density` (tight = dense) — one number each;
-- **voice** → `typography.body/display/mono` with real fallback stacks (unset, each is the framework's: `SHAPE` and `TYPOGRAPHY` in `@graview/core`; a page outside the app dressed to match reads `shapeOf(brand)`, `typographyOf(brand)` and `isoShade(scheme)`, never copied numbers);
+- **voice** → `typography.body/display/mono` with real fallback stacks (unset, each is the framework's: `SHAPE` and `TYPOGRAPHY` in `@graview/core`; a page outside the app dressed to match reads `shapeOf(brand)`, `typographyOf(brand)` and `isoShade(scheme)`, never copied numbers); a page's sizes are one scale the theme writes as `--graview-text-small`, `-body`, `-heading` and `-title` — "larger pages" sets those in the app's stylesheet, never a component's size;
 - **kind colors** → `accents` hues per kind;
 - **per-kind layout** → register a view over the registry cell, the same authoring move as everything else (see graview-node-kind).
 

@@ -1,9 +1,9 @@
 {
-  "at": "2026-10-13T12:20:08.946Z",
+  "at": "2026-10-13T21:31:54.577Z",
   "engine": "chromium",
   "apps": {
     "todo": {
-      "port": 6403,
+      "port": 7103,
       "jobs": {
         "make-task": {
           "says": "Making a task",
@@ -12,7 +12,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 1716,
+              "ms": 1682,
               "steps": [
                 "the Tasks link (1)",
                 "\"Add a task\" (1)",
@@ -25,7 +25,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 21,
-              "ms": 1787,
+              "ms": 1792,
               "steps": [
                 "the Tasks link (7)",
                 "\"Add a task\" (10)",
@@ -37,7 +37,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 16,
-              "ms": 2103,
+              "ms": 2118,
               "steps": [
                 "\"Today\" (12)",
                 "its acts (1)",
@@ -49,7 +49,7 @@
             "scene/390/pointer": {
               "done": false,
               "presses": 1,
-              "ms": 10881,
+              "ms": 10889,
               "deadEnd": "\"Add a task\" is not on the screen",
               "steps": [
                 "\"Today\" (1)"
@@ -59,7 +59,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 19,
-              "ms": 2136,
+              "ms": 2157,
               "steps": [
                 "\"Today\" (15)",
                 "its acts (1)",
@@ -71,7 +71,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 1963,
+              "ms": 1991,
               "steps": [
                 "the menu (1)",
                 "the Tasks link (1)",
@@ -95,7 +95,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 26,
-              "ms": 1986,
+              "ms": 2077,
               "steps": [
                 "the menu (8)",
                 "the Tasks link (3)",
@@ -113,7 +113,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1647,
+              "ms": 1652,
               "steps": [
                 "Find \"redirect\" (2)",
                 "\"Redirect the post\" (1)"
@@ -123,7 +123,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 1680,
+              "ms": 1682,
               "steps": [
                 "Find \"redirect\" (11)",
                 "\"Redirect the post\" (5)"
@@ -133,7 +133,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 3,
-              "ms": 1369,
+              "ms": 1363,
               "steps": [
                 "Find \"redirect\" (2)"
               ],
@@ -142,7 +142,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1462,
+              "ms": 1479,
               "steps": [
                 "the way to Find (1)",
                 "Find \"redirect\" (3)"
@@ -152,7 +152,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 3,
-              "ms": 1368,
+              "ms": 1369,
               "steps": [
                 "Find \"redirect\" (2)"
               ],
@@ -161,7 +161,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1805,
+              "ms": 1806,
               "steps": [
                 "the way to Find (1)",
                 "Find \"redirect\" (3)",
@@ -172,7 +172,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 1331,
+              "ms": 1303,
               "steps": [
                 "Find \"redirect\" (2)"
               ],
@@ -181,7 +181,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 1810,
+              "ms": 1804,
               "steps": [
                 "the way to Find (5)",
                 "Find \"redirect\" (6)",
@@ -198,7 +198,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1021,
+              "ms": 1015,
               "steps": [
                 "the record's name (1)"
               ],
@@ -207,7 +207,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 18,
-              "ms": 1089,
+              "ms": 1096,
               "steps": [
                 "the record's name (15)"
               ],
@@ -216,7 +216,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 1103,
+              "ms": 1089,
               "steps": [
                 "the record's name (14)"
               ],
@@ -225,7 +225,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1025,
+              "ms": 1036,
               "steps": [
                 "the record's name (1)"
               ],
@@ -234,7 +234,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 21,
-              "ms": 1144,
+              "ms": 1122,
               "steps": [
                 "the record's name (18)"
               ],
@@ -243,7 +243,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1040,
+              "ms": 1122,
               "steps": [
                 "the record's name (1)"
               ],
@@ -252,7 +252,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1054,
+              "ms": 1038,
               "steps": [
                 "the record's name (1)"
               ],
@@ -261,7 +261,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 1092,
+              "ms": 1071,
               "steps": [
                 "the record's name (10)"
               ],
@@ -276,7 +276,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 652,
+              "ms": 657,
               "steps": [
                 "\"This has to happen first\" (1)",
                 "the Task * (2)",
@@ -286,23 +286,23 @@
             },
             "pages/1440/keyboard": {
               "done": true,
-              "presses": 13,
-              "ms": 814,
+              "presses": 15,
+              "ms": 818,
               "steps": [
-                "\"This has to happen first\" (7)",
-                "the Task * (4)",
+                "\"This has to happen first\" (8)",
+                "the Task * (5)",
                 "the form's button (2)"
               ],
               "violations": []
             },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 33,
-              "ms": 2434,
+              "presses": 41,
+              "ms": 2462,
               "steps": [
                 "its acts (13)",
-                "\"This has to happen first\" (13)",
-                "the filter of choices (5)",
+                "\"This has to happen first\" (19)",
+                "the filter of choices (7)",
                 "a choice (2)"
               ],
               "violations": []
@@ -310,7 +310,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 2353,
+              "ms": 2322,
               "steps": [
                 "its acts (1)",
                 "\"This has to happen first\" (1)",
@@ -321,12 +321,12 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 39,
-              "ms": 2460,
+              "presses": 47,
+              "ms": 2559,
               "steps": [
                 "its acts (19)",
-                "\"This has to happen first\" (13)",
-                "the filter of choices (5)",
+                "\"This has to happen first\" (19)",
+                "the filter of choices (7)",
                 "a choice (2)"
               ],
               "violations": []
@@ -334,7 +334,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 657,
+              "ms": 767,
               "steps": [
                 "\"This has to happen first\" (1)",
                 "the Task * (2)",
@@ -345,7 +345,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 2339,
+              "ms": 2346,
               "steps": [
                 "its acts (1)",
                 "\"This has to happen first\" (1)",
@@ -356,11 +356,11 @@
             },
             "pages/390/keyboard": {
               "done": true,
-              "presses": 13,
-              "ms": 798,
+              "presses": 15,
+              "ms": 873,
               "steps": [
-                "\"This has to happen first\" (7)",
-                "the Task * (4)",
+                "\"This has to happen first\" (8)",
+                "the Task * (5)",
                 "the form's button (2)"
               ],
               "violations": []
@@ -373,7 +373,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1166,
+              "ms": 1175,
               "steps": [
                 "the Tasks link (1)",
                 "\"Filter\" (1)",
@@ -385,7 +385,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 30,
-              "ms": 1326,
+              "ms": 1338,
               "steps": [
                 "the Tasks link (7)",
                 "\"Filter\" (17)",
@@ -397,7 +397,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 19,
-              "ms": 1848,
+              "ms": 1799,
               "steps": [
                 "the folded districts (6)",
                 "Tasks in the menu (4)",
@@ -410,7 +410,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1776,
+              "ms": 1740,
               "steps": [
                 "the folded districts (1)",
                 "Tasks in the menu (1)",
@@ -422,18 +422,18 @@
             },
             "scene/1440/keyboard": {
               "done": false,
-              "presses": 6,
-              "ms": 10571,
+              "presses": 7,
+              "ms": 10573,
               "deadEnd": "there is no \"Filter\" to narrow the tasks with",
               "steps": [
-                "the Tasks district (6)"
+                "the Tasks district (7)"
               ],
               "violations": []
             },
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1377,
+              "ms": 1379,
               "steps": [
                 "the menu (1)",
                 "the Tasks link (1)",
@@ -446,7 +446,7 @@
             "scene/1440/pointer": {
               "done": false,
               "presses": 1,
-              "ms": 10479,
+              "ms": 10480,
               "deadEnd": "there is no \"Filter\" to narrow the tasks with",
               "steps": [
                 "the Tasks district (1)"
@@ -456,7 +456,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 26,
-              "ms": 1413,
+              "ms": 1400,
               "steps": [
                 "the menu (8)",
                 "the Tasks link (3)",
@@ -493,7 +493,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 8,
-              "ms": 373,
+              "ms": 376,
               "steps": [
                 "Activity (6)",
                 "undo (2)"
@@ -503,7 +503,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 411,
+              "ms": 374,
               "steps": [
                 "Activity (1)",
                 "undo (1)"
@@ -513,7 +513,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 431,
+              "ms": 419,
               "steps": [
                 "Activity (11)",
                 "undo (2)"
@@ -532,7 +532,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 406,
+              "ms": 407,
               "steps": [
                 "Activity (1)",
                 "undo (1)"
@@ -542,7 +542,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 994,
+              "ms": 969,
               "steps": [
                 "undo (2)"
               ],
@@ -556,7 +556,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 684,
+              "ms": 646,
               "steps": [
                 "the Problems link (1)",
                 "a repair (1)"
@@ -566,7 +566,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 708,
+              "ms": 750,
               "steps": [
                 "the Problems link (12)",
                 "a repair (5)"
@@ -576,7 +576,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 9,
-              "ms": 826,
+              "ms": 830,
               "steps": [
                 "the problems (7)",
                 "the problem (1)",
@@ -587,7 +587,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 840,
+              "ms": 843,
               "steps": [
                 "the problems (1)",
                 "the problem (1)",
@@ -598,7 +598,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 14,
-              "ms": 899,
+              "ms": 854,
               "steps": [
                 "the problems (12)",
                 "the problem (1)",
@@ -609,7 +609,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 677,
+              "ms": 718,
               "steps": [
                 "the Problems link (1)",
                 "a repair (1)"
@@ -619,7 +619,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 879,
+              "ms": 871,
               "steps": [
                 "the problems (1)",
                 "the problem (1)",
@@ -630,7 +630,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 12,
-              "ms": 689,
+              "ms": 738,
               "steps": [
                 "the Problems link (6)",
                 "a repair (6)"
@@ -645,21 +645,21 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 0,
-              "ms": 1,
+              "ms": 2,
               "steps": [],
               "violations": []
             },
             "pages/1440/keyboard": {
               "done": true,
               "presses": 0,
-              "ms": 1,
+              "ms": 2,
               "steps": [],
               "violations": []
             },
             "scene/390/keyboard": {
               "done": true,
               "presses": 9,
-              "ms": 351,
+              "ms": 345,
               "steps": [
                 "its acts (9)"
               ],
@@ -668,7 +668,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 327,
+              "ms": 320,
               "steps": [
                 "its acts (1)"
               ],
@@ -677,7 +677,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 9,
-              "ms": 381,
+              "ms": 420,
               "steps": [
                 "its acts (9)"
               ],
@@ -686,14 +686,14 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 0,
-              "ms": 2,
+              "ms": 1,
               "steps": [],
               "violations": []
             },
             "scene/1440/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 331,
+              "ms": 322,
               "steps": [
                 "its acts (1)"
               ],
@@ -711,7 +711,7 @@
       }
     },
     "seedbed": {
-      "port": 6404,
+      "port": 7104,
       "jobs": {
         "make-gardener": {
           "says": "Making a gardener",
@@ -720,19 +720,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2250,
-              "steps": [
-                "the Gardeners district (1)",
-                "its acts (1)",
-                "\"Welcome a gardener\" (1)",
-                "the field it asks for (2)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 6,
-              "ms": 2256,
+              "ms": 2205,
               "steps": [
                 "the Gardeners district (1)",
                 "its acts (1)",
@@ -744,7 +732,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 16,
-              "ms": 2263,
+              "ms": 2230,
               "steps": [
                 "the Gardeners district (12)",
                 "its acts (1)",
@@ -753,10 +741,22 @@
               ],
               "violations": []
             },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2276,
+              "steps": [
+                "the Gardeners district (1)",
+                "its acts (1)",
+                "\"Welcome a gardener\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
             "scene/390/keyboard": {
               "done": true,
               "presses": 14,
-              "ms": 2336,
+              "ms": 2361,
               "steps": [
                 "the Gardeners district (10)",
                 "its acts (1)",
@@ -768,7 +768,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1791,
+              "ms": 1794,
               "steps": [
                 "the Gardeners link (1)",
                 "\"Welcome a gardener\" (1)",
@@ -780,7 +780,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 1665,
+              "ms": 1683,
               "steps": [
                 "the Gardeners link (6)",
                 "\"Welcome a gardener\" (9)",
@@ -791,7 +791,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 1911,
+              "ms": 1941,
               "steps": [
                 "the menu (1)",
                 "the Gardeners link (1)",
@@ -804,7 +804,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 19,
-              "ms": 1834,
+              "ms": 1788,
               "steps": [
                 "the menu (9)",
                 "the Gardeners link (2)",
@@ -822,20 +822,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 2367,
-              "steps": [
-                "the Plots district (1)",
-                "its acts (1)",
-                "\"Stake out a plot\" (1)",
-                "the field it asks for (2)",
-                "the field it asks for (2)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 9,
-              "ms": 2400,
+              "ms": 2375,
               "steps": [
                 "the Plots district (1)",
                 "its acts (1)",
@@ -847,10 +834,10 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 21,
-              "ms": 2395,
+              "presses": 22,
+              "ms": 2407,
               "steps": [
-                "the Plots district (15)",
+                "the Plots district (16)",
                 "its acts (1)",
                 "\"Stake out a plot\" (1)",
                 "the field it asks for (1)",
@@ -858,12 +845,25 @@
               ],
               "violations": []
             },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 9,
+              "ms": 2419,
+              "steps": [
+                "the Plots district (1)",
+                "its acts (1)",
+                "\"Stake out a plot\" (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 21,
-              "ms": 2381,
+              "presses": 22,
+              "ms": 2459,
               "steps": [
-                "the Plots district (15)",
+                "the Plots district (16)",
                 "its acts (1)",
                 "\"Stake out a plot\" (1)",
                 "the field it asks for (1)",
@@ -874,7 +874,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 1727,
+              "ms": 1711,
               "steps": [
                 "the Plots link (1)",
                 "\"Stake out a plot\" (1)",
@@ -887,7 +887,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 21,
-              "ms": 1677,
+              "ms": 1646,
               "steps": [
                 "the Plots link (7)",
                 "\"Stake out a plot\" (10)",
@@ -899,7 +899,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 1976,
+              "ms": 1945,
               "steps": [
                 "the menu (1)",
                 "the Plots link (1)",
@@ -913,7 +913,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 26,
-              "ms": 1716,
+              "ms": 1717,
               "steps": [
                 "the menu (9)",
                 "the Plots link (3)",
@@ -932,7 +932,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 11,
-              "ms": 3482,
+              "ms": 3483,
               "steps": [
                 "Find \"plot\" (2)",
                 "its acts (1)",
@@ -941,10 +941,22 @@
               ],
               "violations": []
             },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 40,
+              "ms": 3875,
+              "steps": [
+                "Find \"plot\" (2)",
+                "its acts (17)",
+                "\"Sow something\" (9)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 12,
-              "ms": 3664,
+              "ms": 3636,
               "steps": [
                 "the way to Find (1)",
                 "Find \"plot\" (3)",
@@ -954,22 +966,10 @@
               ],
               "violations": []
             },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 39,
-              "ms": 3841,
-              "steps": [
-                "Find \"plot\" (2)",
-                "its acts (16)",
-                "\"Sow something\" (9)",
-                "the field it asks for (1)"
-              ],
-              "violations": []
-            },
             "scene/390/keyboard": {
               "done": true,
               "presses": 34,
-              "ms": 3739,
+              "ms": 3729,
               "steps": [
                 "Find \"plot\" (2)",
                 "its acts (11)",
@@ -981,7 +981,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 1895,
+              "ms": 1855,
               "steps": [
                 "the Plantings link (1)",
                 "\"Sow something\" (1)",
@@ -994,7 +994,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 27,
-              "ms": 2003,
+              "ms": 2000,
               "steps": [
                 "the Plantings link (8)",
                 "\"Sow something\" (11)",
@@ -1006,7 +1006,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 10,
-              "ms": 2099,
+              "ms": 2005,
               "steps": [
                 "the menu (1)",
                 "the Plantings link (1)",
@@ -1020,7 +1020,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 27,
-              "ms": 1987,
+              "ms": 2034,
               "steps": [
                 "the menu (9)",
                 "the Plantings link (4)",
@@ -1039,20 +1039,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 11,
-              "ms": 2641,
-              "steps": [
-                "the Rotations district (1)",
-                "its acts (1)",
-                "\"Put a plot on the rotation\" (1)",
-                "a choice (1)",
-                "a choice (1)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 11,
-              "ms": 2672,
+              "ms": 2563,
               "steps": [
                 "the Rotations district (1)",
                 "its acts (1)",
@@ -1065,7 +1052,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 22,
-              "ms": 2728,
+              "ms": 2657,
               "steps": [
                 "the Rotations district (12)",
                 "its acts (1)",
@@ -1075,10 +1062,23 @@
               ],
               "violations": []
             },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 11,
+              "ms": 2669,
+              "steps": [
+                "the Rotations district (1)",
+                "its acts (1)",
+                "\"Put a plot on the rotation\" (1)",
+                "a choice (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
             "scene/390/keyboard": {
               "done": true,
               "presses": 22,
-              "ms": 2672,
+              "ms": 2646,
               "steps": [
                 "the Rotations district (12)",
                 "its acts (1)",
@@ -1091,7 +1091,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 11,
-              "ms": 1232,
+              "ms": 1229,
               "steps": [
                 "the Rotations link (1)",
                 "\"Put a plot on the rotation\" (1)",
@@ -1104,7 +1104,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 36,
-              "ms": 1789,
+              "ms": 2087,
               "steps": [
                 "the Rotations link (9)",
                 "\"Put a plot on the rotation\" (12)",
@@ -1117,7 +1117,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 12,
-              "ms": 1458,
+              "ms": 1478,
               "steps": [
                 "the menu (1)",
                 "the Rotations link (1)",
@@ -1131,7 +1131,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 41,
-              "ms": 1834,
+              "ms": 1841,
               "steps": [
                 "the menu (9)",
                 "the Rotations link (5)",
@@ -1151,18 +1151,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 1383,
-              "steps": [
-                "the Rules district (1)",
-                "its acts (1)",
-                "\"Agree every plot has a caretaker\" (1)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 3,
-              "ms": 1361,
+              "ms": 1364,
               "steps": [
                 "the Rules district (1)",
                 "its acts (1)",
@@ -1173,9 +1162,20 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 12,
-              "ms": 1422,
+              "ms": 1496,
               "steps": [
                 "the Rules district (10)",
+                "its acts (1)",
+                "\"Agree every plot has a caretaker\" (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1358,
+              "steps": [
+                "the Rules district (1)",
                 "its acts (1)",
                 "\"Agree every plot has a caretaker\" (1)"
               ],
@@ -1184,7 +1184,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 12,
-              "ms": 1451,
+              "ms": 1470,
               "steps": [
                 "the Rules district (10)",
                 "its acts (1)",
@@ -1195,7 +1195,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 1106,
+              "ms": 1125,
               "steps": [
                 "the Rules link (1)",
                 "\"Agree every plot has a caretaker\" (1)",
@@ -1206,7 +1206,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 19,
-              "ms": 1171,
+              "ms": 1241,
               "steps": [
                 "the Rules link (10)",
                 "\"Agree every plot has a caretaker\" (8)",
@@ -1217,7 +1217,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1307,
+              "ms": 1260,
               "steps": [
                 "the menu (1)",
                 "the Rules link (1)",
@@ -1229,7 +1229,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 19,
-              "ms": 1268,
+              "ms": 1275,
               "steps": [
                 "the menu (9)",
                 "the Rules link (6)",
@@ -1246,7 +1246,16 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 1188,
+              "ms": 1190,
+              "steps": [
+                "Find \"ravi\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 3,
+              "ms": 1254,
               "steps": [
                 "Find \"ravi\" (2)"
               ],
@@ -1255,26 +1264,17 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1355,
+              "ms": 1361,
               "steps": [
                 "the way to Find (1)",
                 "Find \"ravi\" (3)"
               ],
               "violations": []
             },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 3,
-              "ms": 1252,
-              "steps": [
-                "Find \"ravi\" (2)"
-              ],
-              "violations": []
-            },
             "scene/390/keyboard": {
               "done": true,
               "presses": 3,
-              "ms": 1263,
+              "ms": 1258,
               "steps": [
                 "Find \"ravi\" (2)"
               ],
@@ -1283,7 +1283,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1525,
+              "ms": 1551,
               "steps": [
                 "Find \"ravi\" (2)",
                 "\"Ravi\" (1)"
@@ -1293,7 +1293,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 19,
-              "ms": 1589,
+              "ms": 1656,
               "steps": [
                 "Find \"ravi\" (12)",
                 "\"Ravi\" (6)"
@@ -1303,7 +1303,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1681,
+              "ms": 1685,
               "steps": [
                 "the way to Find (1)",
                 "Find \"ravi\" (3)",
@@ -1314,7 +1314,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 1703,
+              "ms": 1705,
               "steps": [
                 "the way to Find (5)",
                 "Find \"ravi\" (6)",
@@ -1331,16 +1331,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 735,
-              "steps": [
-                "the record's name (1)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 4,
-              "ms": 746,
+              "ms": 745,
               "steps": [
                 "the record's name (1)"
               ],
@@ -1349,16 +1340,25 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 16,
-              "ms": 800,
+              "ms": 791,
               "steps": [
                 "the record's name (13)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 750,
+              "steps": [
+                "the record's name (1)"
               ],
               "violations": []
             },
             "scene/390/keyboard": {
               "done": true,
               "presses": 14,
-              "ms": 771,
+              "ms": 766,
               "steps": [
                 "the record's name (11)"
               ],
@@ -1367,7 +1367,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 705,
+              "ms": 728,
               "steps": [
                 "the record's name (1)"
               ],
@@ -1376,7 +1376,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 813,
+              "ms": 793,
               "steps": [
                 "the record's name (14)"
               ],
@@ -1385,7 +1385,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 710,
+              "ms": 720,
               "steps": [
                 "the record's name (1)"
               ],
@@ -1394,7 +1394,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 14,
-              "ms": 746,
+              "ms": 772,
               "steps": [
                 "the record's name (11)"
               ],
@@ -1409,18 +1409,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 1636,
-              "steps": [
-                "its acts (1)",
-                "\"Name a caretaker\" (1)",
-                "a choice (1)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 3,
-              "ms": 1624,
+              "ms": 1639,
               "steps": [
                 "its acts (1)",
                 "\"Name a caretaker\" (1)",
@@ -1430,19 +1419,30 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 34,
-              "ms": 1762,
+              "presses": 35,
+              "ms": 1790,
               "steps": [
-                "its acts (20)",
+                "its acts (21)",
                 "\"Name a caretaker\" (7)",
                 "a choice (7)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1616,
+              "steps": [
+                "its acts (1)",
+                "\"Name a caretaker\" (1)",
+                "a choice (1)"
               ],
               "violations": []
             },
             "scene/390/keyboard": {
               "done": true,
               "presses": 29,
-              "ms": 1675,
+              "ms": 1689,
               "steps": [
                 "its acts (15)",
                 "\"Name a caretaker\" (7)",
@@ -1453,7 +1453,7 @@
             "pages/1440/pointer": {
               "done": false,
               "presses": 0,
-              "ms": 10727,
+              "ms": 10721,
               "deadEnd": "\"Name a caretaker\" is not on the screen",
               "steps": [],
               "violations": []
@@ -1461,7 +1461,7 @@
             "pages/1440/keyboard": {
               "done": false,
               "presses": 0,
-              "ms": 10723,
+              "ms": 10718,
               "deadEnd": "\"Name a caretaker\" is not on the screen",
               "steps": [],
               "violations": []
@@ -1469,7 +1469,7 @@
             "pages/390/pointer": {
               "done": false,
               "presses": 0,
-              "ms": 10719,
+              "ms": 10716,
               "deadEnd": "\"Name a caretaker\" is not on the screen",
               "steps": [],
               "violations": []
@@ -1477,7 +1477,7 @@
             "pages/390/keyboard": {
               "done": false,
               "presses": 0,
-              "ms": 10714,
+              "ms": 10722,
               "deadEnd": "\"Name a caretaker\" is not on the screen",
               "steps": [],
               "violations": []
@@ -1490,18 +1490,7 @@
             "scene/1440/pointer": {
               "done": false,
               "presses": 2,
-              "ms": 11300,
-              "deadEnd": "there is no \"Filter\" to narrow the plots with",
-              "steps": [
-                "the Plots district (1)",
-                "Down to Plots (1)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": false,
-              "presses": 2,
-              "ms": 11417,
+              "ms": 11319,
               "deadEnd": "there is no \"Filter\" to narrow the plots with",
               "steps": [
                 "the Plots district (1)",
@@ -1511,30 +1500,41 @@
             },
             "scene/1440/keyboard": {
               "done": false,
-              "presses": 26,
-              "ms": 11444,
+              "presses": 28,
+              "ms": 11511,
               "deadEnd": "there is no \"Filter\" to narrow the plots with",
               "steps": [
-                "the Plots district (15)",
-                "Down to Plots (11)"
+                "the Plots district (16)",
+                "Down to Plots (12)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": false,
+              "presses": 2,
+              "ms": 11413,
+              "deadEnd": "there is no \"Filter\" to narrow the plots with",
+              "steps": [
+                "the Plots district (1)",
+                "Down to Plots (1)"
               ],
               "violations": []
             },
             "scene/390/keyboard": {
               "done": false,
-              "presses": 26,
-              "ms": 11484,
+              "presses": 28,
+              "ms": 11489,
               "deadEnd": "there is no \"Filter\" to narrow the plots with",
               "steps": [
-                "the Plots district (15)",
-                "Down to Plots (11)"
+                "the Plots district (16)",
+                "Down to Plots (12)"
               ],
               "violations": []
             },
             "pages/1440/pointer": {
               "done": false,
               "presses": 1,
-              "ms": 10542,
+              "ms": 10526,
               "deadEnd": "there is no \"Filter\" to narrow the plots with",
               "steps": [
                 "the Plots link (1)"
@@ -1544,7 +1544,7 @@
             "pages/1440/keyboard": {
               "done": false,
               "presses": 7,
-              "ms": 10519,
+              "ms": 10537,
               "deadEnd": "there is no \"Filter\" to narrow the plots with",
               "steps": [
                 "the Plots link (7)"
@@ -1554,7 +1554,7 @@
             "pages/390/pointer": {
               "done": false,
               "presses": 2,
-              "ms": 10690,
+              "ms": 10681,
               "deadEnd": "there is no \"Filter\" to narrow the plots with",
               "steps": [
                 "the menu (1)",
@@ -1565,7 +1565,7 @@
             "pages/390/keyboard": {
               "done": false,
               "presses": 12,
-              "ms": 10691,
+              "ms": 10687,
               "deadEnd": "there is no \"Filter\" to narrow the plots with",
               "steps": [
                 "the menu (9)",
@@ -1582,17 +1582,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 425,
-              "steps": [
-                "Activity (1)",
-                "undo (1)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 2,
-              "ms": 386,
+              "ms": 410,
               "steps": [
                 "Activity (1)",
                 "undo (1)"
@@ -1602,9 +1592,19 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 10,
-              "ms": 396,
+              "ms": 417,
               "steps": [
                 "Activity (9)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 387,
+              "steps": [
+                "Activity (1)",
                 "undo (1)"
               ],
               "violations": []
@@ -1612,7 +1612,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 7,
-              "ms": 366,
+              "ms": 383,
               "steps": [
                 "Activity (6)",
                 "undo (1)"
@@ -1622,7 +1622,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 970,
+              "ms": 967,
               "steps": [
                 "undo (1)"
               ],
@@ -1631,7 +1631,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 971,
+              "ms": 966,
               "steps": [
                 "undo (2)"
               ],
@@ -1640,7 +1640,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 956,
+              "ms": 974,
               "steps": [
                 "undo (1)"
               ],
@@ -1649,7 +1649,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 976,
+              "ms": 962,
               "steps": [
                 "undo (2)"
               ],
@@ -1663,18 +1663,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 856,
-              "steps": [
-                "the problems (1)",
-                "the problem (1)",
-                "its repair (1)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 3,
-              "ms": 933,
+              "ms": 875,
               "steps": [
                 "the problems (1)",
                 "the problem (1)",
@@ -1685,9 +1674,20 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 12,
-              "ms": 855,
+              "ms": 844,
               "steps": [
                 "the problems (10)",
+                "the problem (1)",
+                "its repair (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 959,
+              "steps": [
+                "the problems (1)",
                 "the problem (1)",
                 "its repair (1)"
               ],
@@ -1696,7 +1696,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 9,
-              "ms": 930,
+              "ms": 941,
               "steps": [
                 "the problems (7)",
                 "the problem (1)",
@@ -1707,7 +1707,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 653,
+              "ms": 638,
               "steps": [
                 "the Problems link (1)",
                 "a repair (1)"
@@ -1717,7 +1717,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 18,
-              "ms": 733,
+              "ms": 721,
               "steps": [
                 "the Problems link (13)",
                 "a repair (5)"
@@ -1727,7 +1727,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 633,
+              "ms": 631,
               "steps": [
                 "the Problems link (1)",
                 "a repair (1)"
@@ -1737,7 +1737,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 12,
-              "ms": 674,
+              "ms": 682,
               "steps": [
                 "the Problems link (6)",
                 "a repair (6)"
@@ -1749,7 +1749,7 @@
       }
     },
     "rota": {
-      "port": 6405,
+      "port": 7105,
       "jobs": {
         "make-shift": {
           "says": "Making a shift",
@@ -1757,10 +1757,10 @@
           "runs": {
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 21,
-              "ms": 3660,
+              "presses": 23,
+              "ms": 3632,
               "steps": [
-                "the Shifts district (7)",
+                "the Shifts district (9)",
                 "its acts (1)",
                 "\"Add a shift\" (1)",
                 "a choice (3)",
@@ -1774,7 +1774,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 23,
-              "ms": 4185,
+              "ms": 4169,
               "steps": [
                 "the folded districts (6)",
                 "Shifts in the menu (3)",
@@ -1791,7 +1791,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 15,
-              "ms": 1866,
+              "ms": 1888,
               "steps": [
                 "the Shifts link (1)",
                 "\"Add a shift\" (1)",
@@ -1807,9 +1807,28 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 19,
-              "ms": 15218,
+              "ms": 15169,
               "steps": [
                 "the Shifts district (1)",
+                "Up (1)",
+                "the Shifts district (1)",
+                "its acts (1)",
+                "\"Add a shift\" (1)",
+                "a choice (1)",
+                "the field it asks for (2)",
+                "a choice (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 20,
+              "ms": 15720,
+              "steps": [
+                "the folded districts (1)",
+                "Shifts in the menu (1)",
                 "Up (1)",
                 "the Shifts district (1)",
                 "its acts (1)",
@@ -1825,7 +1844,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 30,
-              "ms": 1981,
+              "ms": 2005,
               "steps": [
                 "the Shifts link (6)",
                 "\"Add a shift\" (9)",
@@ -1840,7 +1859,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 16,
-              "ms": 2311,
+              "ms": 2320,
               "steps": [
                 "the menu (1)",
                 "the Shifts link (1)",
@@ -1857,7 +1876,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 36,
-              "ms": 2217,
+              "ms": 2210,
               "steps": [
                 "the menu (8)",
                 "the Shifts link (2)",
@@ -1869,25 +1888,6 @@
                 "the Until * (2)"
               ],
               "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 20,
-              "ms": 15787,
-              "steps": [
-                "the folded districts (1)",
-                "Shifts in the menu (1)",
-                "Up (1)",
-                "the Shifts district (1)",
-                "its acts (1)",
-                "\"Add a shift\" (1)",
-                "a choice (1)",
-                "the field it asks for (2)",
-                "a choice (1)",
-                "the field it asks for (2)",
-                "the field it asks for (2)"
-              ],
-              "violations": []
             }
           }
         },
@@ -1897,10 +1897,10 @@
           "runs": {
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 13,
-              "ms": 2313,
+              "presses": 15,
+              "ms": 2330,
               "steps": [
-                "the Locations district (9)",
+                "the Locations district (11)",
                 "its acts (1)",
                 "\"Add a location\" (1)",
                 "the field it asks for (1)"
@@ -1910,12 +1910,11 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 11,
-              "ms": 2775,
+              "ms": 1826,
               "steps": [
                 "the folded districts (6)",
                 "Locations in the menu (1)",
-                "its acts (1)",
-                "\"Add a location\" (1)",
+                "\"Add a location\" (2)",
                 "the field it asks for (1)"
               ],
               "violations": []
@@ -1923,7 +1922,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 1927,
+              "ms": 1935,
               "steps": [
                 "the menu (1)",
                 "the Locations link (1)",
@@ -1936,12 +1935,24 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 13755,
+              "ms": 13740,
               "steps": [
                 "the Locations district (1)",
                 "Up (1)",
                 "the Locations district (1)",
                 "its acts (1)",
+                "\"Add a location\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 1819,
+              "steps": [
+                "the folded districts (1)",
+                "Locations in the menu (1)",
                 "\"Add a location\" (1)",
                 "the field it asks for (2)"
               ],
@@ -1962,7 +1973,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 1937,
+              "ms": 2005,
               "steps": [
                 "the menu (1)",
                 "the Locations link (1)",
@@ -1975,27 +1986,12 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 21,
-              "ms": 1803,
+              "ms": 1827,
               "steps": [
                 "the menu (8)",
                 "the Locations link (3)",
                 "\"Add a location\" (8)",
                 "the Name * (1)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 9,
-              "ms": 14290,
-              "steps": [
-                "the folded districts (1)",
-                "Locations in the menu (1)",
-                "Up (1)",
-                "the Locations district (1)",
-                "its acts (1)",
-                "\"Add a location\" (1)",
-                "the field it asks for (2)"
               ],
               "violations": []
             }
@@ -2007,10 +2003,10 @@
           "runs": {
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 14,
-              "ms": 3356,
+              "presses": 15,
+              "ms": 3344,
               "steps": [
-                "the Volunteers district (6)",
+                "the Volunteers district (7)",
                 "its acts (1)",
                 "\"Add a volunteer\" (1)",
                 "the field it asks for (1)",
@@ -2022,7 +2018,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 18,
-              "ms": 3905,
+              "ms": 3945,
               "steps": [
                 "the folded districts (6)",
                 "Volunteers in the menu (4)",
@@ -2037,7 +2033,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 2533,
+              "ms": 2535,
               "steps": [
                 "the Volunteers link (1)",
                 "\"Add a volunteer\" (1)",
@@ -2051,9 +2047,26 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 14,
-              "ms": 14913,
+              "ms": 14900,
               "steps": [
                 "the Volunteers district (1)",
+                "Up (1)",
+                "the Volunteers district (1)",
+                "its acts (1)",
+                "\"Add a volunteer\" (1)",
+                "the field it asks for (2)",
+                "the field it asks for (2)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 15,
+              "ms": 15440,
+              "steps": [
+                "the folded districts (1)",
+                "Volunteers in the menu (1)",
                 "Up (1)",
                 "the Volunteers district (1)",
                 "its acts (1)",
@@ -2067,7 +2080,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 23,
-              "ms": 2351,
+              "ms": 2366,
               "steps": [
                 "the Volunteers link (7)",
                 "\"Add a volunteer\" (10)",
@@ -2080,7 +2093,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 10,
-              "ms": 2749,
+              "ms": 2769,
               "steps": [
                 "the menu (1)",
                 "the Volunteers link (1)",
@@ -2095,7 +2108,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 26,
-              "ms": 2559,
+              "ms": 2533,
               "steps": [
                 "the menu (8)",
                 "the Volunteers link (4)",
@@ -2103,23 +2116,6 @@
                 "the Name * (1)",
                 "the Phone * (2)",
                 "the Most per week * (2)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 15,
-              "ms": 15471,
-              "steps": [
-                "the folded districts (1)",
-                "Volunteers in the menu (1)",
-                "Up (1)",
-                "the Volunteers district (1)",
-                "its acts (1)",
-                "\"Add a volunteer\" (1)",
-                "the field it asks for (2)",
-                "the field it asks for (2)",
-                "the field it asks for (2)"
               ],
               "violations": []
             }
@@ -2131,7 +2127,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 3,
-              "ms": 1394,
+              "ms": 1391,
               "steps": [
                 "Find \"thursday\" (2)"
               ],
@@ -2140,7 +2136,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 3,
-              "ms": 1383,
+              "ms": 1388,
               "steps": [
                 "Find \"thursday\" (2)"
               ],
@@ -2149,7 +2145,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1648,
+              "ms": 1681,
               "steps": [
                 "Find \"thursday\" (2)",
                 "\"Thursday baby group\" (1)"
@@ -2159,16 +2155,26 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 1314,
+              "ms": 1336,
               "steps": [
                 "Find \"thursday\" (2)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1457,
+              "steps": [
+                "the way to Find (1)",
+                "Find \"thursday\" (3)"
               ],
               "violations": []
             },
             "pages/1440/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 1679,
+              "ms": 1689,
               "steps": [
                 "Find \"thursday\" (11)",
                 "\"Thursday baby group\" (5)"
@@ -2178,7 +2184,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1793,
+              "ms": 1796,
               "steps": [
                 "the way to Find (1)",
                 "Find \"thursday\" (3)",
@@ -2196,16 +2202,6 @@
                 "\"Thursday baby group\" (6)"
               ],
               "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 4,
-              "ms": 1503,
-              "steps": [
-                "the way to Find (1)",
-                "Find \"thursday\" (3)"
-              ],
-              "violations": []
             }
           }
         },
@@ -2216,7 +2212,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 16,
-              "ms": 1085,
+              "ms": 1086,
               "steps": [
                 "the record's name (13)"
               ],
@@ -2225,7 +2221,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 1065,
+              "ms": 1072,
               "steps": [
                 "the record's name (14)"
               ],
@@ -2234,7 +2230,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 997,
+              "ms": 1004,
               "steps": [
                 "the record's name (1)"
               ],
@@ -2243,7 +2239,16 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1004,
+              "ms": 1005,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 992,
               "steps": [
                 "the record's name (1)"
               ],
@@ -2252,7 +2257,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 18,
-              "ms": 1073,
+              "ms": 1101,
               "steps": [
                 "the record's name (15)"
               ],
@@ -2261,7 +2266,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 998,
+              "ms": 1004,
               "steps": [
                 "the record's name (1)"
               ],
@@ -2270,18 +2275,9 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 1039,
+              "ms": 1055,
               "steps": [
                 "the record's name (10)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 4,
-              "ms": 1006,
-              "steps": [
-                "the record's name (1)"
               ],
               "violations": []
             }
@@ -2294,7 +2290,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 36,
-              "ms": 1716,
+              "ms": 1788,
               "steps": [
                 "its acts (14)",
                 "\"Hold it somewhere else\" (13)",
@@ -2305,7 +2301,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 35,
-              "ms": 1691,
+              "ms": 1690,
               "steps": [
                 "its acts (13)",
                 "\"Hold it somewhere else\" (13)",
@@ -2316,7 +2312,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 664,
+              "ms": 659,
               "steps": [
                 "\"Hold it somewhere else\" (1)",
                 "the Location * (2)",
@@ -2327,7 +2323,18 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 1625,
+              "ms": 1647,
+              "steps": [
+                "its acts (1)",
+                "\"Hold it somewhere else\" (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 3,
+              "ms": 1622,
               "steps": [
                 "its acts (1)",
                 "\"Hold it somewhere else\" (1)",
@@ -2337,11 +2344,11 @@
             },
             "pages/1440/keyboard": {
               "done": true,
-              "presses": 25,
-              "ms": 841,
+              "presses": 19,
+              "ms": 814,
               "steps": [
-                "\"Hold it somewhere else\" (13)",
-                "the Location * (10)",
+                "\"Hold it somewhere else\" (10)",
+                "the Location * (7)",
                 "the form's button (2)"
               ],
               "violations": []
@@ -2349,7 +2356,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 653,
+              "ms": 657,
               "steps": [
                 "\"Hold it somewhere else\" (1)",
                 "the Location * (2)",
@@ -2359,23 +2366,12 @@
             },
             "pages/390/keyboard": {
               "done": true,
-              "presses": 25,
-              "ms": 1016,
+              "presses": 19,
+              "ms": 1132,
               "steps": [
-                "\"Hold it somewhere else\" (13)",
-                "the Location * (10)",
+                "\"Hold it somewhere else\" (10)",
+                "the Location * (7)",
                 "the form's button (2)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 3,
-              "ms": 1614,
-              "steps": [
-                "its acts (1)",
-                "\"Hold it somewhere else\" (1)",
-                "a choice (1)"
               ],
               "violations": []
             }
@@ -2386,10 +2382,10 @@
           "runs": {
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 27,
-              "ms": 1397,
+              "presses": 29,
+              "ms": 1461,
               "steps": [
-                "the Shifts district (7)",
+                "the Shifts district (9)",
                 "\"Filter\" (15)",
                 "\"From\" (3)",
                 "\"at most 08:20\" (2)"
@@ -2399,7 +2395,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 16,
-              "ms": 1751,
+              "ms": 1774,
               "steps": [
                 "the folded districts (6)",
                 "Shifts in the menu (3)",
@@ -2412,7 +2408,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1184,
+              "ms": 1193,
               "steps": [
                 "the Shifts link (1)",
                 "\"Filter\" (1)",
@@ -2424,9 +2420,22 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1381,
+              "ms": 1385,
               "steps": [
                 "the Shifts district (1)",
+                "\"Filter\" (1)",
+                "\"From\" (1)",
+                "\"at most 08:20\" (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 1762,
+              "steps": [
+                "the folded districts (1)",
+                "Shifts in the menu (1)",
                 "\"Filter\" (1)",
                 "\"From\" (1)",
                 "\"at most 08:20\" (1)"
@@ -2436,7 +2445,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 27,
-              "ms": 1235,
+              "ms": 1231,
               "steps": [
                 "the Shifts link (6)",
                 "\"Filter\" (16)",
@@ -2448,7 +2457,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1380,
+              "ms": 1344,
               "steps": [
                 "the menu (1)",
                 "the Shifts link (1)",
@@ -2461,26 +2470,13 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 22,
-              "ms": 1372,
+              "ms": 1377,
               "steps": [
                 "the menu (8)",
                 "the Shifts link (2)",
                 "\"Filter\" (7)",
                 "\"From\" (3)",
                 "\"at most 08:20\" (2)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 5,
-              "ms": 1786,
-              "steps": [
-                "the folded districts (1)",
-                "Shifts in the menu (1)",
-                "\"Filter\" (1)",
-                "\"From\" (1)",
-                "\"at most 08:20\" (1)"
               ],
               "violations": []
             }
@@ -2493,7 +2489,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 417,
+              "ms": 415,
               "steps": [
                 "Activity (11)",
                 "undo (2)"
@@ -2503,7 +2499,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 8,
-              "ms": 366,
+              "ms": 370,
               "steps": [
                 "Activity (6)",
                 "undo (2)"
@@ -2522,7 +2518,17 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 419,
+              "ms": 407,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 416,
               "steps": [
                 "Activity (1)",
                 "undo (1)"
@@ -2532,7 +2538,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 958,
+              "ms": 957,
               "steps": [
                 "undo (2)"
               ],
@@ -2541,7 +2547,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 964,
+              "ms": 968,
               "steps": [
                 "undo (1)"
               ],
@@ -2550,19 +2556,9 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 981,
+              "ms": 960,
               "steps": [
                 "undo (2)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 2,
-              "ms": 452,
-              "steps": [
-                "Activity (1)",
-                "undo (1)"
               ],
               "violations": []
             }
@@ -2574,7 +2570,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 33,
-              "ms": 1294,
+              "ms": 1303,
               "steps": [
                 "the problems (12)",
                 "the problem (1)",
@@ -2586,7 +2582,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 28,
-              "ms": 1307,
+              "ms": 1416,
               "steps": [
                 "the problems (7)",
                 "the problem (1)",
@@ -2610,7 +2606,19 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1250,
+              "ms": 1251,
+              "steps": [
+                "the problems (1)",
+                "the problem (1)",
+                "its repair (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/390/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1251,
               "steps": [
                 "the problems (1)",
                 "the problem (1)",
@@ -2622,7 +2630,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 21,
-              "ms": 1265,
+              "ms": 1232,
               "steps": [
                 "the Problems link (12)",
                 "a repair (4)",
@@ -2634,7 +2642,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1135,
+              "ms": 1157,
               "steps": [
                 "the Problems link (1)",
                 "a repair (1)",
@@ -2646,24 +2654,12 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 16,
-              "ms": 1204,
+              "ms": 1302,
               "steps": [
                 "the Problems link (6)",
                 "a repair (5)",
                 "the Volunteer * (3)",
                 "the form's button (2)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": true,
-              "presses": 4,
-              "ms": 1252,
-              "steps": [
-                "the problems (1)",
-                "the problem (1)",
-                "its repair (1)",
-                "a choice (1)"
               ],
               "violations": []
             }
@@ -2674,10 +2670,10 @@
           "runs": {
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 8,
+              "presses": 10,
               "ms": 528,
               "steps": [
-                "the Shifts district (7)",
+                "the Shifts district (9)",
                 "its acts (1)"
               ],
               "violations": []
@@ -2685,7 +2681,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 10,
-              "ms": 1098,
+              "ms": 1104,
               "steps": [
                 "the folded districts (6)",
                 "Shifts in the menu (3)",
@@ -2696,7 +2692,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 495,
+              "ms": 477,
               "steps": [
                 "the Shifts link (1)"
               ],
@@ -2705,17 +2701,28 @@
             "scene/1440/pointer": {
               "done": false,
               "presses": 1,
-              "ms": 6226,
+              "ms": 6221,
               "deadEnd": "\"Add a shift\" is not offered to Sam, viewer, and nothing says it is not theirs",
               "steps": [
                 "the Shifts district (1)"
               ],
               "violations": []
             },
+            "scene/390/pointer": {
+              "done": false,
+              "presses": 2,
+              "ms": 6793,
+              "deadEnd": "\"Add a shift\" is not offered to Sam, viewer, and nothing says it is not theirs",
+              "steps": [
+                "the folded districts (1)",
+                "Shifts in the menu (1)"
+              ],
+              "violations": []
+            },
             "pages/1440/keyboard": {
               "done": true,
               "presses": 6,
-              "ms": 499,
+              "ms": 503,
               "steps": [
                 "the Shifts link (6)"
               ],
@@ -2724,7 +2731,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 672,
+              "ms": 692,
               "steps": [
                 "the menu (1)",
                 "the Shifts link (1)"
@@ -2734,21 +2741,10 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 10,
-              "ms": 730,
+              "ms": 662,
               "steps": [
                 "the menu (8)",
                 "the Shifts link (2)"
-              ],
-              "violations": []
-            },
-            "scene/390/pointer": {
-              "done": false,
-              "presses": 2,
-              "ms": 6810,
-              "deadEnd": "\"Add a shift\" is not offered to Sam, viewer, and nothing says it is not theirs",
-              "steps": [
-                "the folded districts (1)",
-                "Shifts in the menu (1)"
               ],
               "violations": []
             }
@@ -2757,40 +2753,16 @@
       }
     },
     "discography": {
-      "port": 6407,
+      "port": 7107,
       "jobs": {
         "make-song": {
           "says": "Making a song",
           "act": "add-song",
           "runs": {
-            "scene/1440/pointer": {
-              "done": true,
-              "presses": 6,
-              "ms": 2462,
-              "steps": [
-                "the Songs district (1)",
-                "its acts (1)",
-                "\"Add a song\" (1)",
-                "the field it asks for (2)"
-              ],
-              "violations": []
-            },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 16,
-              "ms": 2593,
-              "steps": [
-                "the Songs district (12)",
-                "its acts (1)",
-                "\"Add a song\" (1)",
-                "the field it asks for (1)"
-              ],
-              "violations": []
-            },
             "pages/1440/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1940,
+              "ms": 2028,
               "steps": [
                 "the Songs link (1)",
                 "\"Add a song\" (1)",
@@ -2810,10 +2782,34 @@
                 }
               ]
             },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2828,
+              "steps": [
+                "the Songs district (1)",
+                "its acts (1)",
+                "\"Add a song\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 16,
+              "ms": 2555,
+              "steps": [
+                "the Songs district (12)",
+                "its acts (1)",
+                "\"Add a song\" (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2880,
+              "ms": 2756,
               "steps": [
                 "the Songs district (1)",
                 "its acts (1)",
@@ -2825,7 +2821,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 16,
-              "ms": 2597,
+              "ms": 2651,
               "steps": [
                 "the Songs district (12)",
                 "its acts (1)",
@@ -2837,7 +2833,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 3420,
+              "ms": 3464,
               "steps": [
                 "the Songs link (6)",
                 "\"Add a song\" (9)",
@@ -2859,7 +2855,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2217,
+              "ms": 2186,
               "steps": [
                 "the menu (1)",
                 "the Songs link (1)",
@@ -2883,7 +2879,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 23,
-              "ms": 4066,
+              "ms": 3650,
               "steps": [
                 "the menu (8)",
                 "the Songs link (2)",
@@ -2909,36 +2905,10 @@
           "says": "Making an album",
           "act": "add-album",
           "runs": {
-            "scene/1440/pointer": {
-              "done": true,
-              "presses": 7,
-              "ms": 2779,
-              "steps": [
-                "the Albums district (1)",
-                "its acts (1)",
-                "\"Add a release\" (1)",
-                "the field it asks for (2)",
-                "a choice (1)"
-              ],
-              "violations": []
-            },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 19,
-              "ms": 2693,
-              "steps": [
-                "the Albums district (14)",
-                "its acts (1)",
-                "\"Add a release\" (1)",
-                "the field it asks for (1)",
-                "a choice (1)"
-              ],
-              "violations": []
-            },
             "pages/1440/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 1975,
+              "ms": 1875,
               "steps": [
                 "the Albums link (1)",
                 "\"Add a release\" (1)",
@@ -2959,10 +2929,36 @@
                 }
               ]
             },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 7,
+              "ms": 2775,
+              "steps": [
+                "the Albums district (1)",
+                "its acts (1)",
+                "\"Add a release\" (1)",
+                "the field it asks for (2)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 19,
+              "ms": 2717,
+              "steps": [
+                "the Albums district (14)",
+                "its acts (1)",
+                "\"Add a release\" (1)",
+                "the field it asks for (1)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 2773,
+              "ms": 2742,
               "steps": [
                 "the Albums district (1)",
                 "its acts (1)",
@@ -2975,7 +2971,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 15,
-              "ms": 2642,
+              "ms": 2863,
               "steps": [
                 "the Albums district (10)",
                 "its acts (1)",
@@ -2988,7 +2984,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 22,
-              "ms": 4276,
+              "ms": 4335,
               "steps": [
                 "the Albums link (7)",
                 "\"Add a release\" (10)",
@@ -3011,7 +3007,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 2155,
+              "ms": 2122,
               "steps": [
                 "the menu (1)",
                 "the Albums link (1)",
@@ -3036,7 +3032,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 27,
-              "ms": 4704,
+              "ms": 4421,
               "steps": [
                 "the menu (8)",
                 "the Albums link (3)",
@@ -3063,34 +3059,10 @@
           "says": "Making an artist",
           "act": "add-artist",
           "runs": {
-            "scene/1440/pointer": {
-              "done": true,
-              "presses": 6,
-              "ms": 2438,
-              "steps": [
-                "the Artists district (1)",
-                "its acts (1)",
-                "\"Add an artist\" (1)",
-                "the field it asks for (2)"
-              ],
-              "violations": []
-            },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 21,
-              "ms": 2405,
-              "steps": [
-                "the Artists district (17)",
-                "its acts (1)",
-                "\"Add an artist\" (1)",
-                "the field it asks for (1)"
-              ],
-              "violations": []
-            },
             "pages/1440/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1872,
+              "ms": 1869,
               "steps": [
                 "the Artists link (1)",
                 "\"Add an artist\" (1)",
@@ -3110,10 +3082,34 @@
                 }
               ]
             },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2467,
+              "steps": [
+                "the Artists district (1)",
+                "its acts (1)",
+                "\"Add an artist\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 21,
+              "ms": 2412,
+              "steps": [
+                "the Artists district (17)",
+                "its acts (1)",
+                "\"Add an artist\" (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2434,
+              "ms": 2453,
               "steps": [
                 "the Artists district (1)",
                 "its acts (1)",
@@ -3125,7 +3121,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 18,
-              "ms": 2440,
+              "ms": 2407,
               "steps": [
                 "the Artists district (14)",
                 "its acts (1)",
@@ -3137,7 +3133,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 21,
-              "ms": 2736,
+              "ms": 2685,
               "steps": [
                 "the Artists link (8)",
                 "\"Add an artist\" (11)",
@@ -3159,7 +3155,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2182,
+              "ms": 2168,
               "steps": [
                 "the menu (1)",
                 "the Artists link (1)",
@@ -3183,7 +3179,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 25,
-              "ms": 3607,
+              "ms": 3294,
               "steps": [
                 "the menu (8)",
                 "the Artists link (4)",
@@ -3209,34 +3205,10 @@
           "says": "Making a theme",
           "act": "add-theme",
           "runs": {
-            "scene/1440/pointer": {
-              "done": true,
-              "presses": 6,
-              "ms": 2276,
-              "steps": [
-                "the Themes district (1)",
-                "its acts (1)",
-                "\"Add a theme\" (1)",
-                "the field it asks for (2)"
-              ],
-              "violations": []
-            },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 13,
-              "ms": 2287,
-              "steps": [
-                "the Themes district (9)",
-                "its acts (1)",
-                "\"Add a theme\" (1)",
-                "the field it asks for (1)"
-              ],
-              "violations": []
-            },
             "pages/1440/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1711,
+              "ms": 1719,
               "steps": [
                 "the menu (1)",
                 "the Themes link (1)",
@@ -3256,10 +3228,34 @@
                 }
               ]
             },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2272,
+              "steps": [
+                "the Themes district (1)",
+                "its acts (1)",
+                "\"Add a theme\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 13,
+              "ms": 2368,
+              "steps": [
+                "the Themes district (9)",
+                "its acts (1)",
+                "\"Add a theme\" (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2291,
+              "ms": 2303,
               "steps": [
                 "the Themes district (1)",
                 "its acts (1)",
@@ -3271,7 +3267,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 2253,
+              "ms": 2264,
               "steps": [
                 "the Themes district (9)",
                 "its acts (1)",
@@ -3283,7 +3279,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 20,
-              "ms": 1665,
+              "ms": 1708,
               "steps": [
                 "the menu (11)",
                 "the Themes link (1)",
@@ -3305,7 +3301,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1703,
+              "ms": 1737,
               "steps": [
                 "the menu (1)",
                 "the Themes link (1)",
@@ -3328,7 +3324,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 18,
-              "ms": 1742,
+              "ms": 1702,
               "steps": [
                 "the menu (8)",
                 "the Themes link (5)",
@@ -3353,34 +3349,10 @@
           "says": "Making an era",
           "act": "add-era",
           "runs": {
-            "scene/1440/pointer": {
-              "done": true,
-              "presses": 6,
-              "ms": 2249,
-              "steps": [
-                "the Eras district (1)",
-                "its acts (1)",
-                "\"Add an era\" (1)",
-                "the field it asks for (2)"
-              ],
-              "violations": []
-            },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 18,
-              "ms": 2205,
-              "steps": [
-                "the Eras district (14)",
-                "its acts (1)",
-                "\"Add an era\" (1)",
-                "the field it asks for (1)"
-              ],
-              "violations": []
-            },
             "pages/1440/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 1828,
+              "ms": 1837,
               "steps": [
                 "the menu (1)",
                 "the Eras link (1)",
@@ -3401,10 +3373,34 @@
                 }
               ]
             },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 6,
+              "ms": 2203,
+              "steps": [
+                "the Eras district (1)",
+                "its acts (1)",
+                "\"Add an era\" (1)",
+                "the field it asks for (2)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 18,
+              "ms": 2245,
+              "steps": [
+                "the Eras district (14)",
+                "its acts (1)",
+                "\"Add an era\" (1)",
+                "the field it asks for (1)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2237,
+              "ms": 2219,
               "steps": [
                 "the Eras district (1)",
                 "its acts (1)",
@@ -3416,7 +3412,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 18,
-              "ms": 2233,
+              "ms": 2210,
               "steps": [
                 "the Eras district (14)",
                 "its acts (1)",
@@ -3428,7 +3424,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 27,
-              "ms": 1852,
+              "ms": 1774,
               "steps": [
                 "the menu (11)",
                 "the Eras link (2)",
@@ -3451,7 +3447,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 1854,
+              "ms": 1852,
               "steps": [
                 "the menu (1)",
                 "the Eras link (1)",
@@ -3475,7 +3471,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 25,
-              "ms": 1930,
+              "ms": 1870,
               "steps": [
                 "the menu (8)",
                 "the Eras link (6)",
@@ -3500,10 +3496,20 @@
         "find": {
           "says": "Finding a song by part of its name",
           "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1680,
+              "steps": [
+                "Find \"digital\" (2)",
+                "\"Gone Digital\" (1)"
+              ],
+              "violations": []
+            },
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 1381,
+              "ms": 1389,
               "steps": [
                 "Find \"digital\" (2)"
               ],
@@ -3512,26 +3518,16 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 9,
-              "ms": 1494,
+              "ms": 1475,
               "steps": [
                 "Find \"digital\" (2)"
-              ],
-              "violations": []
-            },
-            "pages/1440/pointer": {
-              "done": true,
-              "presses": 4,
-              "ms": 1655,
-              "steps": [
-                "Find \"digital\" (2)",
-                "\"Gone Digital\" (1)"
               ],
               "violations": []
             },
             "scene/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1557,
+              "ms": 1559,
               "steps": [
                 "the way to Find (1)",
                 "Find \"digital\" (3)"
@@ -3541,7 +3537,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 9,
-              "ms": 1479,
+              "ms": 1493,
               "steps": [
                 "Find \"digital\" (2)"
               ],
@@ -3550,7 +3546,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 20,
-              "ms": 1847,
+              "ms": 1798,
               "steps": [
                 "Find \"digital\" (12)",
                 "\"Gone Digital\" (7)"
@@ -3560,7 +3556,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1859,
+              "ms": 1819,
               "steps": [
                 "the way to Find (1)",
                 "Find \"digital\" (3)",
@@ -3571,7 +3567,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 1960,
+              "ms": 2058,
               "steps": [
                 "the way to Find (5)",
                 "Find \"digital\" (6)",
@@ -3585,28 +3581,10 @@
           "says": "Renaming a song on its record",
           "act": "edit-song",
           "runs": {
-            "scene/1440/pointer": {
-              "done": true,
-              "presses": 4,
-              "ms": 1171,
-              "steps": [
-                "the record's name (1)"
-              ],
-              "violations": []
-            },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 13,
-              "ms": 1298,
-              "steps": [
-                "the record's name (10)"
-              ],
-              "violations": []
-            },
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1368,
+              "ms": 1392,
               "steps": [
                 "\"Change the song\" (1)",
                 "the Name (2)",
@@ -3626,10 +3604,28 @@
                 }
               ]
             },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1157,
+              "steps": [
+                "the record's name (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 13,
+              "ms": 1307,
+              "steps": [
+                "the record's name (10)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1136,
+              "ms": 1160,
               "steps": [
                 "the record's name (1)"
               ],
@@ -3638,7 +3634,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 14,
-              "ms": 1226,
+              "ms": 1304,
               "steps": [
                 "the record's name (11)"
               ],
@@ -3647,7 +3643,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 10,
-              "ms": 1252,
+              "ms": 1278,
               "steps": [
                 "\"Change the song\" (6)",
                 "the Name (3)"
@@ -3669,7 +3665,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1469,
+              "ms": 1491,
               "steps": [
                 "\"Change the song\" (1)",
                 "the Name (2)",
@@ -3692,7 +3688,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 10,
-              "ms": 1249,
+              "ms": 1409,
               "steps": [
                 "\"Change the song\" (6)",
                 "the Name (3)"
@@ -3717,34 +3713,10 @@
           "says": "Tying a song to another with \"Put it on a release\"",
           "act": "put-on",
           "runs": {
-            "scene/1440/pointer": {
-              "done": true,
-              "presses": 5,
-              "ms": 2762,
-              "steps": [
-                "its acts (1)",
-                "\"Put it on a release\" (1)",
-                "the filter of choices (2)",
-                "a choice (1)"
-              ],
-              "violations": []
-            },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 39,
-              "ms": 2925,
-              "steps": [
-                "its acts (11)",
-                "\"Put it on a release\" (17)",
-                "the filter of choices (9)",
-                "a choice (2)"
-              ],
-              "violations": []
-            },
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 754,
+              "ms": 745,
               "steps": [
                 "\"Put it on a release\" (1)",
                 "the Album * (2)",
@@ -3763,10 +3735,34 @@
                 }
               ]
             },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 5,
+              "ms": 2773,
+              "steps": [
+                "its acts (1)",
+                "\"Put it on a release\" (1)",
+                "the filter of choices (2)",
+                "a choice (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 39,
+              "ms": 2971,
+              "steps": [
+                "its acts (11)",
+                "\"Put it on a release\" (17)",
+                "the filter of choices (9)",
+                "a choice (2)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 2723,
+              "ms": 2707,
               "steps": [
                 "its acts (1)",
                 "\"Put it on a release\" (1)",
@@ -3778,7 +3774,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 40,
-              "ms": 2824,
+              "ms": 2811,
               "steps": [
                 "its acts (12)",
                 "\"Put it on a release\" (17)",
@@ -3790,7 +3786,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 901,
+              "ms": 1007,
               "steps": [
                 "\"Put it on a release\" (9)",
                 "the Album * (6)",
@@ -3812,7 +3808,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 826,
+              "ms": 803,
               "steps": [
                 "\"Put it on a release\" (1)",
                 "the Album * (2)",
@@ -3834,7 +3830,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 1011,
+              "ms": 927,
               "steps": [
                 "\"Put it on a release\" (9)",
                 "the Album * (6)",
@@ -3858,10 +3854,22 @@
         "narrow": {
           "says": "Narrowing the songs by track",
           "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 4,
+              "ms": 1351,
+              "steps": [
+                "the Songs link (1)",
+                "\"Filter\" (1)",
+                "\"Track\" (1)",
+                "\"at most 10\" (1)"
+              ],
+              "violations": []
+            },
             "scene/1440/pointer": {
               "done": false,
               "presses": 2,
-              "ms": 11391,
+              "ms": 11374,
               "deadEnd": "there is no \"Filter\" to narrow the songs with",
               "steps": [
                 "the Songs district (1)",
@@ -3872,7 +3880,7 @@
             "scene/1440/keyboard": {
               "done": false,
               "presses": 20,
-              "ms": 11713,
+              "ms": 11498,
               "deadEnd": "there is no \"Filter\" to narrow the songs with",
               "steps": [
                 "the Songs district (12)",
@@ -3880,22 +3888,10 @@
               ],
               "violations": []
             },
-            "pages/1440/pointer": {
-              "done": true,
-              "presses": 4,
-              "ms": 1361,
-              "steps": [
-                "the Songs link (1)",
-                "\"Filter\" (1)",
-                "\"Track\" (1)",
-                "\"at most 10\" (1)"
-              ],
-              "violations": []
-            },
             "scene/390/pointer": {
               "done": false,
               "presses": 2,
-              "ms": 11425,
+              "ms": 11376,
               "deadEnd": "there is no \"Filter\" to narrow the songs with",
               "steps": [
                 "the Songs district (1)",
@@ -3906,7 +3902,7 @@
             "scene/390/keyboard": {
               "done": false,
               "presses": 20,
-              "ms": 12021,
+              "ms": 11778,
               "deadEnd": "there is no \"Filter\" to narrow the songs with",
               "steps": [
                 "the Songs district (12)",
@@ -3917,7 +3913,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 29,
-              "ms": 1535,
+              "ms": 1598,
               "steps": [
                 "the Songs link (6)",
                 "\"Filter\" (19)",
@@ -3929,7 +3925,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1547,
+              "ms": 1554,
               "steps": [
                 "the menu (1)",
                 "the Songs link (1)",
@@ -3942,7 +3938,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 23,
-              "ms": 1728,
+              "ms": 1755,
               "steps": [
                 "the menu (8)",
                 "the Songs link (2)",
@@ -3958,30 +3954,10 @@
           "says": "Taking the last change back",
           "act": "edit-song",
           "runs": {
-            "scene/1440/pointer": {
-              "done": true,
-              "presses": 2,
-              "ms": 460,
-              "steps": [
-                "Activity (1)",
-                "undo (1)"
-              ],
-              "violations": []
-            },
-            "scene/1440/keyboard": {
-              "done": true,
-              "presses": 12,
-              "ms": 448,
-              "steps": [
-                "Activity (11)",
-                "undo (1)"
-              ],
-              "violations": []
-            },
             "pages/1440/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 624,
+              "ms": 617,
               "steps": [
                 "undo (1)"
               ],
@@ -3998,6 +3974,26 @@
                 }
               ]
             },
+            "scene/1440/pointer": {
+              "done": true,
+              "presses": 2,
+              "ms": 456,
+              "steps": [
+                "Activity (1)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
+            "scene/1440/keyboard": {
+              "done": true,
+              "presses": 12,
+              "ms": 462,
+              "steps": [
+                "Activity (11)",
+                "undo (1)"
+              ],
+              "violations": []
+            },
             "scene/390/pointer": {
               "done": true,
               "presses": 2,
@@ -4011,7 +4007,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 7,
-              "ms": 505,
+              "ms": 462,
               "steps": [
                 "Activity (6)",
                 "undo (1)"
@@ -4021,7 +4017,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 607,
+              "ms": 608,
               "steps": [
                 "undo (2)"
               ],
@@ -4041,7 +4037,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 617,
+              "ms": 638,
               "steps": [
                 "undo (1)"
               ],
@@ -4061,7 +4057,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 617,
+              "ms": 597,
               "steps": [
                 "undo (2)"
               ],
@@ -4083,13 +4079,13 @@
         "repair": {
           "says": "Getting from a problem to its repair",
           "runs": {
+            "pages/1440/pointer": {
+              "skipped": "nothing is broken in the example"
+            },
             "scene/1440/pointer": {
               "skipped": "nothing is broken in the example"
             },
             "scene/1440/keyboard": {
-              "skipped": "nothing is broken in the example"
-            },
-            "pages/1440/pointer": {
               "skipped": "nothing is broken in the example"
             },
             "scene/390/pointer": {
@@ -4112,10 +4108,19 @@
         "refused": {
           "says": "Being told an act is not yours before pressing it",
           "runs": {
+            "pages/1440/pointer": {
+              "done": true,
+              "presses": 1,
+              "ms": 600,
+              "steps": [
+                "the Songs link (1)"
+              ],
+              "violations": []
+            },
             "scene/1440/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 672,
+              "ms": 675,
               "steps": [
                 "the Songs district (1)",
                 "its acts (1)"
@@ -4125,26 +4130,17 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 633,
+              "ms": 649,
               "steps": [
                 "the Songs district (12)",
                 "its acts (1)"
               ],
               "violations": []
             },
-            "pages/1440/pointer": {
-              "done": true,
-              "presses": 1,
-              "ms": 606,
-              "steps": [
-                "the Songs link (1)"
-              ],
-              "violations": []
-            },
             "scene/390/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 735,
+              "ms": 744,
               "steps": [
                 "the Songs district (1)",
                 "its acts (1)"
@@ -4154,7 +4150,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 13,
-              "ms": 643,
+              "ms": 682,
               "steps": [
                 "the Songs district (12)",
                 "its acts (1)"
@@ -4164,7 +4160,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 6,
-              "ms": 704,
+              "ms": 670,
               "steps": [
                 "the Songs link (6)"
               ],
@@ -4173,7 +4169,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 784,
+              "ms": 798,
               "steps": [
                 "the menu (1)",
                 "the Songs link (1)"
@@ -4183,7 +4179,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 10,
-              "ms": 932,
+              "ms": 921,
               "steps": [
                 "the menu (8)",
                 "the Songs link (2)"
@@ -4195,7 +4191,7 @@
       }
     },
     "gauntlet": {
-      "port": 6401,
+      "port": 7101,
       "jobs": {
         "make-talk": {
           "says": "Making a talk",
@@ -4204,7 +4200,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 4720,
+              "ms": 4630,
               "steps": [
                 "the Talks district (1)",
                 "its acts (1)",
@@ -4217,10 +4213,10 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 29,
-              "ms": 4292,
+              "presses": 31,
+              "ms": 4490,
               "steps": [
-                "the Talks district (20)",
+                "the Talks district (22)",
                 "its acts (1)",
                 "\"Submit a talk\" (1)",
                 "a choice (4)",
@@ -4232,7 +4228,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 5144,
+              "ms": 5260,
               "steps": [
                 "the Talks district (1)",
                 "its acts (1)",
@@ -4245,10 +4241,10 @@
             },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 27,
-              "ms": 4731,
+              "presses": 28,
+              "ms": 4591,
               "steps": [
-                "the Talks district (18)",
+                "the Talks district (19)",
                 "its acts (1)",
                 "\"Submit a talk\" (1)",
                 "a choice (4)",
@@ -4260,7 +4256,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 3070,
+              "ms": 3102,
               "steps": [
                 "the Talks link (1)",
                 "\"Submit a talk\" (1)",
@@ -4285,7 +4281,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 21,
-              "ms": 5384,
+              "ms": 5460,
               "steps": [
                 "the Talks link (6)",
                 "\"Submit a talk\" (9)",
@@ -4309,7 +4305,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 10,
-              "ms": 3174,
+              "ms": 3220,
               "steps": [
                 "the menu (1)",
                 "the Talks link (1)",
@@ -4335,7 +4331,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 27,
-              "ms": 5498,
+              "ms": 5276,
               "steps": [
                 "the menu (8)",
                 "the Talks link (2)",
@@ -4366,7 +4362,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 4477,
+              "ms": 4524,
               "steps": [
                 "the Speakers district (1)",
                 "its acts (1)",
@@ -4378,10 +4374,10 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 24,
-              "ms": 4207,
+              "presses": 25,
+              "ms": 4141,
               "steps": [
-                "the Speakers district (18)",
+                "the Speakers district (19)",
                 "its acts (1)",
                 "\"Add a speaker\" (1)",
                 "the field it asks for (1)",
@@ -4392,7 +4388,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 4764,
+              "ms": 4908,
               "steps": [
                 "the Speakers district (1)",
                 "its acts (1)",
@@ -4404,10 +4400,10 @@
             },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 20,
-              "ms": 4527,
+              "presses": 21,
+              "ms": 4385,
               "steps": [
-                "the Speakers district (14)",
+                "the Speakers district (15)",
                 "its acts (1)",
                 "\"Add a speaker\" (1)",
                 "the field it asks for (1)",
@@ -4418,7 +4414,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 2992,
+              "ms": 2931,
               "steps": [
                 "the Speakers link (1)",
                 "\"Add a speaker\" (1)",
@@ -4442,7 +4438,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 21,
-              "ms": 4493,
+              "ms": 4387,
               "steps": [
                 "the Speakers link (7)",
                 "\"Add a speaker\" (10)",
@@ -4465,7 +4461,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 3100,
+              "ms": 3140,
               "steps": [
                 "the menu (1)",
                 "the Speakers link (1)",
@@ -4490,7 +4486,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 26,
-              "ms": 4094,
+              "ms": 4032,
               "steps": [
                 "the menu (8)",
                 "the Speakers link (3)",
@@ -4520,7 +4516,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 3706,
+              "ms": 3770,
               "steps": [
                 "the Sessions district (1)",
                 "its acts (1)",
@@ -4531,10 +4527,10 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 22,
-              "ms": 3342,
+              "presses": 23,
+              "ms": 3334,
               "steps": [
-                "the Sessions district (16)",
+                "the Sessions district (17)",
                 "its acts (1)",
                 "\"Add a session\" (1)",
                 "the field it asks for (1)"
@@ -4544,7 +4540,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 3969,
+              "ms": 3930,
               "steps": [
                 "the Sessions district (1)",
                 "its acts (1)",
@@ -4555,10 +4551,10 @@
             },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 18,
-              "ms": 3552,
+              "presses": 19,
+              "ms": 3583,
               "steps": [
-                "the Sessions district (12)",
+                "the Sessions district (13)",
                 "its acts (1)",
                 "\"Add a session\" (1)",
                 "the field it asks for (1)"
@@ -4568,7 +4564,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 2118,
+              "ms": 2146,
               "steps": [
                 "the Sessions link (1)",
                 "\"Add a session\" (1)",
@@ -4591,7 +4587,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 24,
-              "ms": 4499,
+              "ms": 4169,
               "steps": [
                 "the Sessions link (8)",
                 "\"Add a session\" (11)",
@@ -4613,7 +4609,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 2209,
+              "ms": 2329,
               "steps": [
                 "the menu (1)",
                 "the Sessions link (1)",
@@ -4637,7 +4633,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 28,
-              "ms": 3370,
+              "ms": 3374,
               "steps": [
                 "the menu (8)",
                 "the Sessions link (4)",
@@ -4666,7 +4662,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 12,
-              "ms": 3947,
+              "ms": 3991,
               "steps": [
                 "the Workshops district (1)",
                 "its acts (1)",
@@ -4678,10 +4674,10 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 21,
-              "ms": 3663,
+              "presses": 22,
+              "ms": 3615,
               "steps": [
-                "the Workshops district (13)",
+                "the Workshops district (14)",
                 "its acts (1)",
                 "\"Add a workshop\" (1)",
                 "the field it asks for (1)",
@@ -4692,7 +4688,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 12,
-              "ms": 4249,
+              "ms": 4247,
               "steps": [
                 "the Workshops district (1)",
                 "its acts (1)",
@@ -4704,10 +4700,10 @@
             },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 21,
-              "ms": 3764,
+              "presses": 22,
+              "ms": 3804,
               "steps": [
-                "the Workshops district (13)",
+                "the Workshops district (14)",
                 "its acts (1)",
                 "\"Add a workshop\" (1)",
                 "the field it asks for (1)",
@@ -4718,7 +4714,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 2288,
+              "ms": 2300,
               "steps": [
                 "the Workshops link (1)",
                 "\"Add a workshop\" (1)",
@@ -4742,7 +4738,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 34,
-              "ms": 3207,
+              "ms": 3204,
               "steps": [
                 "the Workshops link (9)",
                 "\"Add a workshop\" (13)",
@@ -4765,7 +4761,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 10,
-              "ms": 2443,
+              "ms": 2486,
               "steps": [
                 "the menu (1)",
                 "the Workshops link (1)",
@@ -4790,7 +4786,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 37,
-              "ms": 2853,
+              "ms": 2748,
               "steps": [
                 "the menu (8)",
                 "the Workshops link (5)",
@@ -4820,7 +4816,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 13,
-              "ms": 4707,
+              "ms": 4767,
               "steps": [
                 "the Rooms district (1)",
                 "its acts (1)",
@@ -4835,7 +4831,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 23,
-              "ms": 4184,
+              "ms": 4348,
               "steps": [
                 "the Rooms district (14)",
                 "its acts (1)",
@@ -4850,7 +4846,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 13,
-              "ms": 4991,
+              "ms": 4982,
               "steps": [
                 "the Rooms district (1)",
                 "its acts (1)",
@@ -4865,7 +4861,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 19,
-              "ms": 4570,
+              "ms": 4473,
               "steps": [
                 "the Rooms district (10)",
                 "its acts (1)",
@@ -4880,7 +4876,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 9,
-              "ms": 2572,
+              "ms": 2501,
               "steps": [
                 "the Rooms link (1)",
                 "\"Add a room\" (1)",
@@ -4905,7 +4901,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 29,
-              "ms": 2580,
+              "ms": 2764,
               "steps": [
                 "the Rooms link (10)",
                 "\"Add a room\" (13)",
@@ -4929,7 +4925,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 10,
-              "ms": 2709,
+              "ms": 2778,
               "steps": [
                 "the menu (1)",
                 "the Rooms link (1)",
@@ -4955,7 +4951,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 31,
-              "ms": 2644,
+              "ms": 2643,
               "steps": [
                 "the menu (8)",
                 "the Rooms link (6)",
@@ -4986,7 +4982,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 3315,
+              "ms": 3392,
               "steps": [
                 "the Topics district (1)",
                 "its acts (1)",
@@ -4997,10 +4993,10 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 19,
-              "ms": 2964,
+              "presses": 20,
+              "ms": 3155,
               "steps": [
-                "the Topics district (15)",
+                "the Topics district (16)",
                 "its acts (1)",
                 "\"Add a topic\" (1)",
                 "the field it asks for (1)"
@@ -5010,7 +5006,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 3607,
+              "ms": 3642,
               "steps": [
                 "the Topics district (1)",
                 "its acts (1)",
@@ -5021,10 +5017,10 @@
             },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 19,
-              "ms": 3302,
+              "presses": 20,
+              "ms": 3256,
               "steps": [
-                "the Topics district (15)",
+                "the Topics district (16)",
                 "its acts (1)",
                 "\"Add a topic\" (1)",
                 "the field it asks for (1)"
@@ -5034,7 +5030,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2248,
+              "ms": 2222,
               "steps": [
                 "the menu (1)",
                 "the Topics link (1)",
@@ -5058,7 +5054,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 28,
-              "ms": 2283,
+              "ms": 2213,
               "steps": [
                 "the menu (11)",
                 "the Topics link (1)",
@@ -5081,7 +5077,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 6,
-              "ms": 2161,
+              "ms": 2171,
               "steps": [
                 "the menu (1)",
                 "the Topics link (1)",
@@ -5105,7 +5101,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 28,
-              "ms": 2199,
+              "ms": 2193,
               "steps": [
                 "the menu (8)",
                 "the Topics link (7)",
@@ -5134,7 +5130,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 3727,
+              "ms": 3785,
               "steps": [
                 "the Staff district (1)",
                 "its acts (1)",
@@ -5146,10 +5142,10 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 25,
-              "ms": 3574,
+              "presses": 26,
+              "ms": 3351,
               "steps": [
-                "the Staff district (20)",
+                "the Staff district (21)",
                 "its acts (1)",
                 "\"Add a staff member\" (1)",
                 "the field it asks for (1)",
@@ -5160,7 +5156,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 4017,
+              "ms": 3954,
               "steps": [
                 "the Staff district (1)",
                 "its acts (1)",
@@ -5172,10 +5168,10 @@
             },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 21,
-              "ms": 3748,
+              "presses": 22,
+              "ms": 3644,
               "steps": [
-                "the Staff district (16)",
+                "the Staff district (17)",
                 "its acts (1)",
                 "\"Add a staff member\" (1)",
                 "the field it asks for (1)",
@@ -5186,7 +5182,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 2255,
+              "ms": 2163,
               "steps": [
                 "the menu (1)",
                 "the Staff link (1)",
@@ -5211,7 +5207,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 32,
-              "ms": 2640,
+              "ms": 2673,
               "steps": [
                 "the menu (11)",
                 "the Staff link (2)",
@@ -5235,7 +5231,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 8,
-              "ms": 2131,
+              "ms": 2231,
               "steps": [
                 "the menu (1)",
                 "the Staff link (1)",
@@ -5260,7 +5256,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 32,
-              "ms": 2611,
+              "ms": 2593,
               "steps": [
                 "the menu (8)",
                 "the Staff link (8)",
@@ -5289,7 +5285,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 3,
-              "ms": 2486,
+              "ms": 2485,
               "steps": [
                 "Find \"incremental\" (2)"
               ],
@@ -5298,7 +5294,7 @@
             "scene/1440/keyboard": {
               "done": false,
               "presses": 131,
-              "ms": 2637,
+              "ms": 2394,
               "deadEnd": "the keys do not reach \"A Practical Guide to Incremental Type Checking at Scale, as Learned from the Kubernetes Upgrade We Kept Postponing\" in the Find strip",
               "steps": [
                 "Find \"incremental\" (2)"
@@ -5308,7 +5304,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 2601,
+              "ms": 2636,
               "steps": [
                 "the way to Find (1)",
                 "Find \"incremental\" (3)"
@@ -5318,7 +5314,7 @@
             "scene/390/keyboard": {
               "done": false,
               "presses": 131,
-              "ms": 2469,
+              "ms": 2826,
               "deadEnd": "the keys do not reach \"A Practical Guide to Incremental Type Checking at Scale, as Learned from the Kubernetes Upgrade We Kept Postponing\" in the Find strip",
               "steps": [
                 "Find \"incremental\" (2)"
@@ -5328,7 +5324,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 2581,
+              "ms": 2640,
               "steps": [
                 "Find \"incremental\" (2)",
                 "\"A Practical Guide to Incremental Type Checking at Scale, as Learned from the Kubernetes Upgrade We Kept Postponing\" (1)"
@@ -5338,7 +5334,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 67,
-              "ms": 2916,
+              "ms": 2921,
               "steps": [
                 "Find \"incremental\" (12)",
                 "\"A Practical Guide to Incremental Type Checking at Scale, as Learned from the Kubernetes Upgrade We Kept Postponing\" (54)"
@@ -5348,7 +5344,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 2596,
+              "ms": 2661,
               "steps": [
                 "the way to Find (1)",
                 "Find \"incremental\" (3)",
@@ -5359,7 +5355,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 51,
-              "ms": 2938,
+              "ms": 2911,
               "steps": [
                 "the way to Find (5)",
                 "Find \"incremental\" (6)",
@@ -5376,7 +5372,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1451,
+              "ms": 1464,
               "steps": [
                 "the record's name (1)"
               ],
@@ -5385,7 +5381,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 16,
-              "ms": 1575,
+              "ms": 1715,
               "steps": [
                 "the record's name (13)"
               ],
@@ -5394,7 +5390,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1252,
+              "ms": 1246,
               "steps": [
                 "the record's name (1)"
               ],
@@ -5403,7 +5399,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 17,
-              "ms": 1363,
+              "ms": 1349,
               "steps": [
                 "the record's name (14)"
               ],
@@ -5412,7 +5408,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1234,
+              "ms": 1265,
               "steps": [
                 "the record's name (1)"
               ],
@@ -5432,7 +5428,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 24,
-              "ms": 1356,
+              "ms": 1324,
               "steps": [
                 "the record's name (21)"
               ],
@@ -5452,7 +5448,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1247,
+              "ms": 1238,
               "steps": [
                 "the record's name (1)"
               ],
@@ -5472,7 +5468,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 18,
-              "ms": 1273,
+              "ms": 1282,
               "steps": [
                 "the record's name (15)"
               ],
@@ -5527,7 +5523,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 2899,
+              "ms": 2865,
               "steps": [
                 "the Talks district (1)",
                 "Down to Talks (1)",
@@ -5539,11 +5535,11 @@
             },
             "scene/1440/keyboard": {
               "done": true,
-              "presses": 71,
-              "ms": 3800,
+              "presses": 75,
+              "ms": 4025,
               "steps": [
-                "the Talks district (20)",
-                "Down to Talks (16)",
+                "the Talks district (22)",
+                "Down to Talks (18)",
                 "\"Filter\" (28)",
                 "\"Length\" (5)",
                 "\"at most 30 min\" (2)"
@@ -5553,7 +5549,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 3374,
+              "ms": 2643,
               "steps": [
                 "the Talks district (1)",
                 "Down to Talks (1)",
@@ -5565,11 +5561,11 @@
             },
             "scene/390/keyboard": {
               "done": true,
-              "presses": 59,
-              "ms": 3984,
+              "presses": 62,
+              "ms": 3934,
               "steps": [
-                "the Talks district (18)",
-                "Down to Talks (16)",
+                "the Talks district (19)",
+                "Down to Talks (18)",
                 "\"Filter\" (18)",
                 "\"Length\" (5)",
                 "\"at most 30 min\" (2)"
@@ -5579,7 +5575,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 4,
-              "ms": 1745,
+              "ms": 1858,
               "steps": [
                 "the Talks link (1)",
                 "\"Filter\" (1)",
@@ -5591,7 +5587,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 29,
-              "ms": 1857,
+              "ms": 1846,
               "steps": [
                 "the Talks link (6)",
                 "\"Filter\" (18)",
@@ -5603,7 +5599,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 5,
-              "ms": 1940,
+              "ms": 2002,
               "steps": [
                 "the menu (1)",
                 "the Talks link (1)",
@@ -5616,7 +5612,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 23,
-              "ms": 1872,
+              "ms": 1857,
               "steps": [
                 "the menu (8)",
                 "the Talks link (2)",
@@ -5635,7 +5631,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 584,
+              "ms": 622,
               "steps": [
                 "Activity (1)",
                 "undo (1)"
@@ -5645,7 +5641,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 12,
-              "ms": 741,
+              "ms": 791,
               "steps": [
                 "Activity (11)",
                 "undo (1)"
@@ -5655,7 +5651,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 2,
-              "ms": 744,
+              "ms": 679,
               "steps": [
                 "Activity (1)",
                 "undo (1)"
@@ -5665,7 +5661,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 7,
-              "ms": 678,
+              "ms": 659,
               "steps": [
                 "Activity (6)",
                 "undo (1)"
@@ -5675,7 +5671,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 821,
+              "ms": 806,
               "steps": [
                 "undo (1)"
               ],
@@ -5695,7 +5691,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 788,
+              "ms": 786,
               "steps": [
                 "undo (2)"
               ],
@@ -5715,7 +5711,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 808,
+              "ms": 827,
               "steps": [
                 "undo (1)"
               ],
@@ -5735,7 +5731,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 2,
-              "ms": 788,
+              "ms": 798,
               "steps": [
                 "undo (2)"
               ],
@@ -5760,7 +5756,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 2374,
+              "ms": 2384,
               "steps": [
                 "the problems (1)",
                 "the problem (1)",
@@ -5772,7 +5768,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 44,
-              "ms": 2619,
+              "ms": 2865,
               "steps": [
                 "the problems (12)",
                 "the problem (1)",
@@ -5784,7 +5780,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 2706,
+              "ms": 2538,
               "steps": [
                 "the problems (1)",
                 "the problem (1)",
@@ -5796,7 +5792,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 39,
-              "ms": 2928,
+              "ms": 2701,
               "steps": [
                 "the problems (7)",
                 "the problem (1)",
@@ -5808,7 +5804,7 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 1395,
+              "ms": 1365,
               "steps": [
                 "the Problems link (1)",
                 "a repair (1)",
@@ -5831,7 +5827,7 @@
             "pages/1440/keyboard": {
               "done": true,
               "presses": 29,
-              "ms": 1562,
+              "ms": 1539,
               "steps": [
                 "the Problems link (13)",
                 "a repair (4)",
@@ -5854,7 +5850,7 @@
             "pages/390/pointer": {
               "done": true,
               "presses": 7,
-              "ms": 1363,
+              "ms": 1375,
               "steps": [
                 "the Problems link (1)",
                 "a repair (1)",
@@ -5877,7 +5873,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 23,
-              "ms": 1476,
+              "ms": 1480,
               "steps": [
                 "the Problems link (6)",
                 "a repair (5)",
@@ -5905,7 +5901,7 @@
             "scene/1440/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 623,
+              "ms": 595,
               "steps": [
                 "its acts (1)"
               ],
@@ -5914,7 +5910,7 @@
             "scene/1440/keyboard": {
               "done": true,
               "presses": 14,
-              "ms": 533,
+              "ms": 528,
               "steps": [
                 "its acts (14)"
               ],
@@ -5923,7 +5919,7 @@
             "scene/390/pointer": {
               "done": true,
               "presses": 1,
-              "ms": 479,
+              "ms": 483,
               "steps": [
                 "its acts (1)"
               ],
@@ -5932,7 +5928,7 @@
             "scene/390/keyboard": {
               "done": true,
               "presses": 15,
-              "ms": 457,
+              "ms": 501,
               "steps": [
                 "its acts (15)"
               ],
@@ -5941,14 +5937,14 @@
             "pages/1440/pointer": {
               "done": true,
               "presses": 0,
-              "ms": 2,
+              "ms": 1,
               "steps": [],
               "violations": []
             },
             "pages/1440/keyboard": {
               "done": true,
               "presses": 0,
-              "ms": 1,
+              "ms": 2,
               "steps": [],
               "violations": []
             },
@@ -5962,7 +5958,7 @@
             "pages/390/keyboard": {
               "done": true,
               "presses": 0,
-              "ms": 5,
+              "ms": 2,
               "steps": [],
               "violations": []
             }
@@ -6200,7 +6196,7 @@
     {
       "app": "gauntlet",
       "job": "narrow",
-      "says": "gauntlet: Narrowing the talks by length on the scene on a laptop from the keyboard takes 71 presses; on the pages on a laptop with the pointer, 4."
+      "says": "gauntlet: Narrowing the talks by length on the scene on a laptop from the keyboard takes 75 presses; on the pages on a laptop with the pointer, 4."
     },
     {
       "app": "gauntlet",
@@ -6209,13 +6205,13 @@
     },
     {
       "app": "gauntlet",
-      "job": "refused",
-      "says": "gauntlet: Being told an act is not yours before pressing it on the scene on a phone from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 0."
+      "job": "narrow",
+      "says": "gauntlet: Narrowing the talks by length on the scene on a phone from the keyboard takes 62 presses; on the pages on a laptop with the pointer, 4."
     },
     {
       "app": "gauntlet",
-      "job": "narrow",
-      "says": "gauntlet: Narrowing the talks by length on the scene on a phone from the keyboard takes 59 presses; on the pages on a laptop with the pointer, 4."
+      "job": "refused",
+      "says": "gauntlet: Being told an act is not yours before pressing it on the scene on a phone from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 0."
     },
     {
       "app": "gauntlet",
@@ -6258,19 +6254,34 @@
       "says": "gauntlet: Taking the last change back on the scene on a laptop from the keyboard takes 12 presses; on the pages on a laptop with the pointer, 1."
     },
     {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" on the scene on a laptop from the keyboard takes 47 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "seedbed",
+      "job": "relate",
+      "says": "seedbed: Tying a plot to another with \"Name a caretaker\" on the scene on a laptop from the keyboard takes 35 presses; on the scene on a laptop with the pointer, 3."
+    },
+    {
       "app": "rota",
       "job": "relate",
       "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the scene on a phone from the keyboard takes 35 presses; on the scene on a laptop with the pointer, 3."
     },
     {
-      "app": "seedbed",
+      "app": "todo",
       "job": "relate",
-      "says": "seedbed: Tying a plot to another with \"Name a caretaker\" on the scene on a laptop from the keyboard takes 34 presses; on the scene on a laptop with the pointer, 3."
+      "says": "todo: Tying a task to another with \"This has to happen first\" on the scene on a phone from the keyboard takes 41 presses; on the pages on a laptop with the pointer, 4."
     },
     {
       "app": "seedbed",
       "job": "undo",
       "says": "seedbed: Taking the last change back on the scene on a laptop from the keyboard takes 10 presses; on the pages on a laptop with the pointer, 1."
+    },
+    {
+      "app": "rota",
+      "job": "refused",
+      "says": "rota: Being told an act is not yours before pressing it on the scene on a laptop from the keyboard takes 10 presses; on the pages on a laptop with the pointer, 1."
     },
     {
       "app": "rota",
@@ -6291,11 +6302,6 @@
       "app": "discography",
       "job": "refused",
       "says": "discography: Being told an act is not yours before pressing it on the pages on a phone from the keyboard takes 10 presses; on the pages on a laptop with the pointer, 1."
-    },
-    {
-      "app": "todo",
-      "job": "relate",
-      "says": "todo: Tying a task to another with \"This has to happen first\" on the scene on a laptop from the keyboard takes 39 presses; on the pages on a laptop with the pointer, 4."
     },
     {
       "app": "discography",
@@ -6329,21 +6335,6 @@
     },
     {
       "app": "rota",
-      "job": "relate",
-      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the pages on a laptop from the keyboard takes 25 presses; on the scene on a laptop with the pointer, 3."
-    },
-    {
-      "app": "rota",
-      "job": "relate",
-      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the pages on a phone from the keyboard takes 25 presses; on the scene on a laptop with the pointer, 3."
-    },
-    {
-      "app": "todo",
-      "job": "relate",
-      "says": "todo: Tying a task to another with \"This has to happen first\" on the scene on a phone from the keyboard takes 33 presses; on the pages on a laptop with the pointer, 4."
-    },
-    {
-      "app": "rota",
       "job": "repair",
       "says": "rota: Getting from a problem to its repair on the scene on a laptop from the keyboard takes 33 presses; on the scene on a laptop with the pointer, 4."
     },
@@ -6358,14 +6349,14 @@
       "says": "rota: Taking the last change back on the scene on a phone from the keyboard takes 8 presses; on the pages on a laptop with the pointer, 1."
     },
     {
-      "app": "rota",
-      "job": "refused",
-      "says": "rota: Being told an act is not yours before pressing it on the scene on a laptop from the keyboard takes 8 presses; on the pages on a laptop with the pointer, 1."
-    },
-    {
       "app": "todo",
       "job": "narrow",
       "says": "todo: Narrowing the tasks by blocked on the pages on a laptop from the keyboard takes 30 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "rota",
+      "job": "narrow",
+      "says": "rota: Narrowing the shifts by from on the scene on a laptop from the keyboard takes 29 presses; on the pages on a laptop with the pointer, 4."
     },
     {
       "app": "discography",
@@ -6405,11 +6396,6 @@
     {
       "app": "rota",
       "job": "narrow",
-      "says": "rota: Narrowing the shifts by from on the scene on a laptop from the keyboard takes 27 presses; on the pages on a laptop with the pointer, 4."
-    },
-    {
-      "app": "rota",
-      "job": "narrow",
       "says": "rota: Narrowing the shifts by from on the pages on a laptop from the keyboard takes 27 presses; on the pages on a laptop with the pointer, 4."
     },
     {
@@ -6436,6 +6422,16 @@
       "app": "seedbed",
       "job": "find",
       "says": "seedbed: Finding a gardener by part of its name on the pages on a laptop from the keyboard takes 19 presses; on the scene on a laptop with the pointer, 3."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the pages on a laptop from the keyboard takes 19 presses; on the scene on a laptop with the pointer, 3."
+    },
+    {
+      "app": "rota",
+      "job": "relate",
+      "says": "rota: Tying a shift to another with \"Hold it somewhere else\" on the pages on a phone from the keyboard takes 19 presses; on the scene on a laptop with the pointer, 3."
     },
     {
       "app": "gauntlet",
@@ -6570,7 +6566,7 @@
     {
       "app": "discography",
       "job": "make-era",
-      "says": "discography: Making an era on the pages on a laptop from the keyboard takes 27 presses; on the scene on a laptop with the pointer, 6."
+      "says": "discography: Making an era on the pages on a laptop from the keyboard takes 27 presses; on the pages on a laptop with the pointer, 6."
     },
     {
       "app": "gauntlet",
@@ -6578,14 +6574,14 @@
       "says": "gauntlet: Renaming a talk on its record on the pages on a phone from the keyboard takes 18 presses; on the scene on a laptop with the pointer, 4."
     },
     {
+      "app": "seedbed",
+      "job": "make-planting",
+      "says": "seedbed: Making a planting on the scene on a laptop from the keyboard takes 40 presses; on the pages on a laptop with the pointer, 9."
+    },
+    {
       "app": "todo",
       "job": "find",
       "says": "todo: Finding a task by part of its name on the pages on a phone from the keyboard takes 13 presses; on the scene on a phone from the keyboard, 3."
-    },
-    {
-      "app": "seedbed",
-      "job": "make-planting",
-      "says": "seedbed: Making a planting on the scene on a laptop from the keyboard takes 39 presses; on the pages on a laptop with the pointer, 9."
     },
     {
       "app": "seedbed",
@@ -6645,7 +6641,7 @@
     {
       "app": "discography",
       "job": "make-era",
-      "says": "discography: Making an era on the pages on a phone from the keyboard takes 25 presses; on the scene on a laptop with the pointer, 6."
+      "says": "discography: Making an era on the pages on a phone from the keyboard takes 25 presses; on the pages on a laptop with the pointer, 6."
     },
     {
       "app": "gauntlet",
@@ -6708,9 +6704,14 @@
       "says": "gauntlet: Renaming a talk on its record on the scene on a laptop from the keyboard takes 16 presses; on the scene on a laptop with the pointer, 4."
     },
     {
+      "app": "gauntlet",
+      "job": "make-talk",
+      "says": "gauntlet: Making a talk on the scene on a laptop from the keyboard takes 31 presses; on the scene on a laptop with the pointer, 8."
+    },
+    {
       "app": "discography",
       "job": "make-album",
-      "says": "discography: Making an album on the pages on a phone from the keyboard takes 27 presses; on the scene on a laptop with the pointer, 7."
+      "says": "discography: Making an album on the pages on a phone from the keyboard takes 27 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "seedbed",
@@ -6726,6 +6727,16 @@
       "app": "gauntlet",
       "job": "make-workshop",
       "says": "gauntlet: Making a workshop on the pages on a laptop from the keyboard takes 34 presses; on the pages on a laptop with the pointer, 9."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" on the pages on a laptop from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "todo",
+      "job": "relate",
+      "says": "todo: Tying a task to another with \"This has to happen first\" on the pages on a phone from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 4."
     },
     {
       "app": "seedbed",
@@ -6749,8 +6760,8 @@
     },
     {
       "app": "gauntlet",
-      "job": "make-talk",
-      "says": "gauntlet: Making a talk on the scene on a laptop from the keyboard takes 29 presses; on the scene on a laptop with the pointer, 8."
+      "job": "make-staff",
+      "says": "gauntlet: Making a staff member on the scene on a laptop from the keyboard takes 26 presses; on the scene on a laptop with the pointer, 7."
     },
     {
       "app": "discography",
@@ -6764,8 +6775,8 @@
     },
     {
       "app": "gauntlet",
-      "job": "make-staff",
-      "says": "gauntlet: Making a staff member on the scene on a laptop from the keyboard takes 25 presses; on the scene on a laptop with the pointer, 7."
+      "job": "make-speaker",
+      "says": "gauntlet: Making a speaker on the scene on a laptop from the keyboard takes 25 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "seedbed",
@@ -6785,17 +6796,17 @@
     {
       "app": "discography",
       "job": "change",
-      "says": "discography: Renaming a song on its record on the scene on a phone from the keyboard takes 14 presses; on the scene on a laptop with the pointer, 4."
+      "says": "discography: Renaming a song on its record on the scene on a phone from the keyboard takes 14 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "gauntlet",
+      "job": "make-talk",
+      "says": "gauntlet: Making a talk on the scene on a phone from the keyboard takes 28 presses; on the scene on a laptop with the pointer, 8."
     },
     {
       "app": "gauntlet",
       "job": "make-room",
       "says": "gauntlet: Making a room on the pages on a phone from the keyboard takes 31 presses; on the pages on a laptop with the pointer, 9."
-    },
-    {
-      "app": "gauntlet",
-      "job": "make-speaker",
-      "says": "gauntlet: Making a speaker on the scene on a laptop from the keyboard takes 24 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "gauntlet",
@@ -6815,12 +6826,22 @@
     {
       "app": "gauntlet",
       "job": "make-talk",
-      "says": "gauntlet: Making a talk on the scene on a phone from the keyboard takes 27 presses; on the scene on a laptop with the pointer, 8."
+      "says": "gauntlet: Making a talk on the pages on a phone from the keyboard takes 27 presses; on the scene on a laptop with the pointer, 8."
     },
     {
       "app": "gauntlet",
-      "job": "make-talk",
-      "says": "gauntlet: Making a talk on the pages on a phone from the keyboard takes 27 presses; on the scene on a laptop with the pointer, 8."
+      "job": "make-topic",
+      "says": "gauntlet: Making a topic on the scene on a laptop from the keyboard takes 20 presses; on the scene on a laptop with the pointer, 6."
+    },
+    {
+      "app": "gauntlet",
+      "job": "make-topic",
+      "says": "gauntlet: Making a topic on the scene on a phone from the keyboard takes 20 presses; on the scene on a laptop with the pointer, 6."
+    },
+    {
+      "app": "gauntlet",
+      "job": "make-session",
+      "says": "gauntlet: Making a session on the scene on a laptop from the keyboard takes 23 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "gauntlet",
@@ -6838,16 +6859,6 @@
       "says": "todo: Renaming a task on its record on the pages on a phone from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 4."
     },
     {
-      "app": "todo",
-      "job": "relate",
-      "says": "todo: Tying a task to another with \"This has to happen first\" on the pages on a laptop from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 4."
-    },
-    {
-      "app": "todo",
-      "job": "relate",
-      "says": "todo: Tying a task to another with \"This has to happen first\" on the pages on a phone from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 4."
-    },
-    {
       "app": "rota",
       "job": "change",
       "says": "rota: Renaming a shift on its record on the pages on a phone from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 4."
@@ -6855,7 +6866,7 @@
     {
       "app": "discography",
       "job": "change",
-      "says": "discography: Renaming a song on its record on the scene on a laptop from the keyboard takes 13 presses; on the scene on a laptop with the pointer, 4."
+      "says": "discography: Renaming a song on its record on the scene on a laptop from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 4."
     },
     {
       "app": "gauntlet",
@@ -6878,39 +6889,29 @@
       "says": "discography: Making a song on the scene on a phone from the keyboard takes 16 presses; on the pages on a laptop with the pointer, 5."
     },
     {
-      "app": "gauntlet",
-      "job": "make-topic",
-      "says": "gauntlet: Making a topic on the scene on a laptop from the keyboard takes 19 presses; on the scene on a laptop with the pointer, 6."
+      "app": "seedbed",
+      "job": "make-plot",
+      "says": "seedbed: Making a plot on the scene on a laptop from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 7."
     },
     {
-      "app": "gauntlet",
-      "job": "make-topic",
-      "says": "gauntlet: Making a topic on the scene on a phone from the keyboard takes 19 presses; on the scene on a laptop with the pointer, 6."
+      "app": "seedbed",
+      "job": "make-plot",
+      "says": "seedbed: Making a plot on the scene on a phone from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "discography",
       "job": "make-album",
-      "says": "discography: Making an album on the pages on a laptop from the keyboard takes 22 presses; on the scene on a laptop with the pointer, 7."
+      "says": "discography: Making an album on the pages on a laptop from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "gauntlet",
-      "job": "make-session",
-      "says": "gauntlet: Making a session on the scene on a laptop from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 7."
+      "job": "make-staff",
+      "says": "gauntlet: Making a staff member on the scene on a phone from the keyboard takes 22 presses; on the scene on a laptop with the pointer, 7."
     },
     {
       "app": "todo",
       "job": "make-task",
       "says": "todo: Making a task on the pages on a laptop from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 7."
-    },
-    {
-      "app": "seedbed",
-      "job": "make-plot",
-      "says": "seedbed: Making a plot on the scene on a laptop from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 7."
-    },
-    {
-      "app": "seedbed",
-      "job": "make-plot",
-      "says": "seedbed: Making a plot on the scene on a phone from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "seedbed",
@@ -6930,12 +6931,12 @@
     {
       "app": "discography",
       "job": "make-era",
-      "says": "discography: Making an era on the scene on a laptop from the keyboard takes 18 presses; on the scene on a laptop with the pointer, 6."
+      "says": "discography: Making an era on the scene on a laptop from the keyboard takes 18 presses; on the pages on a laptop with the pointer, 6."
     },
     {
       "app": "discography",
       "job": "make-era",
-      "says": "discography: Making an era on the scene on a phone from the keyboard takes 18 presses; on the scene on a laptop with the pointer, 6."
+      "says": "discography: Making an era on the scene on a phone from the keyboard takes 18 presses; on the pages on a laptop with the pointer, 6."
     },
     {
       "app": "discography",
@@ -6950,22 +6951,17 @@
     {
       "app": "gauntlet",
       "job": "make-speaker",
-      "says": "gauntlet: Making a speaker on the pages on a laptop from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 7."
+      "says": "gauntlet: Making a speaker on the scene on a phone from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "gauntlet",
-      "job": "make-staff",
-      "says": "gauntlet: Making a staff member on the scene on a phone from the keyboard takes 21 presses; on the scene on a laptop with the pointer, 7."
+      "job": "make-speaker",
+      "says": "gauntlet: Making a speaker on the pages on a laptop from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "rota",
       "job": "make-volunteer",
       "says": "rota: Making a volunteer on the pages on a phone from the keyboard takes 26 presses; on the pages on a laptop with the pointer, 9."
-    },
-    {
-      "app": "gauntlet",
-      "job": "make-speaker",
-      "says": "gauntlet: Making a speaker on the scene on a phone from the keyboard takes 20 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "seedbed",
@@ -6980,7 +6976,12 @@
     {
       "app": "discography",
       "job": "make-album",
-      "says": "discography: Making an album on the scene on a laptop from the keyboard takes 19 presses; on the scene on a laptop with the pointer, 7."
+      "says": "discography: Making an album on the scene on a laptop from the keyboard takes 19 presses; on the pages on a laptop with the pointer, 7."
+    },
+    {
+      "app": "gauntlet",
+      "job": "make-session",
+      "says": "gauntlet: Making a session on the scene on a phone from the keyboard takes 19 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "gauntlet",
@@ -6998,11 +6999,6 @@
       "says": "discography: Making a theme on the scene on a phone from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 5."
     },
     {
-      "app": "gauntlet",
-      "job": "make-session",
-      "says": "gauntlet: Making a session on the scene on a phone from the keyboard takes 18 presses; on the pages on a laptop with the pointer, 7."
-    },
-    {
       "app": "rota",
       "job": "make-volunteer",
       "says": "rota: Making a volunteer on the pages on a laptop from the keyboard takes 23 presses; on the pages on a laptop with the pointer, 9."
@@ -7013,14 +7009,29 @@
       "says": "gauntlet: Making a room on the scene on a laptop from the keyboard takes 23 presses; on the pages on a laptop with the pointer, 9."
     },
     {
-      "app": "discography",
-      "job": "change",
-      "says": "discography: Renaming a song on its record on the pages on a laptop from the keyboard takes 10 presses; on the scene on a laptop with the pointer, 4."
+      "app": "rota",
+      "job": "make-location",
+      "says": "rota: Making a location on the scene on a laptop from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 6."
     },
     {
       "app": "discography",
       "job": "change",
-      "says": "discography: Renaming a song on its record on the pages on a phone from the keyboard takes 10 presses; on the scene on a laptop with the pointer, 4."
+      "says": "discography: Renaming a song on its record on the pages on a laptop from the keyboard takes 10 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "discography",
+      "job": "change",
+      "says": "discography: Renaming a song on its record on the pages on a phone from the keyboard takes 10 presses; on the pages on a laptop with the pointer, 4."
+    },
+    {
+      "app": "gauntlet",
+      "job": "make-workshop",
+      "says": "gauntlet: Making a workshop on the scene on a laptop from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 9."
+    },
+    {
+      "app": "gauntlet",
+      "job": "make-workshop",
+      "says": "gauntlet: Making a workshop on the scene on a phone from the keyboard takes 22 presses; on the pages on a laptop with the pointer, 9."
     },
     {
       "app": "rota",
@@ -7028,29 +7039,14 @@
       "says": "rota: Making a shift on the pages on a phone from the keyboard takes 36 presses; on the pages on a laptop with the pointer, 15."
     },
     {
-      "app": "gauntlet",
-      "job": "make-workshop",
-      "says": "gauntlet: Making a workshop on the scene on a laptop from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 9."
-    },
-    {
-      "app": "gauntlet",
-      "job": "make-workshop",
-      "says": "gauntlet: Making a workshop on the scene on a phone from the keyboard takes 21 presses; on the pages on a laptop with the pointer, 9."
-    },
-    {
       "app": "todo",
       "job": "make-task",
       "says": "todo: Making a task on the scene on a phone from the keyboard takes 16 presses; on the pages on a laptop with the pointer, 7."
     },
     {
-      "app": "rota",
-      "job": "make-location",
-      "says": "rota: Making a location on the scene on a laptop from the keyboard takes 13 presses; on the pages on a laptop with the pointer, 6."
-    },
-    {
       "app": "discography",
       "job": "make-album",
-      "says": "discography: Making an album on the scene on a phone from the keyboard takes 15 presses; on the scene on a laptop with the pointer, 7."
+      "says": "discography: Making an album on the scene on a phone from the keyboard takes 15 presses; on the pages on a laptop with the pointer, 7."
     },
     {
       "app": "gauntlet",
@@ -7079,5 +7075,5 @@
     }
   ],
   "regressions": [],
-  "took": 362
+  "took": 359
 }

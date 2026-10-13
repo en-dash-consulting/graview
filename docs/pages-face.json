@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T05:23:31.287Z",
+  "at": "2026-10-13T21:38:22.682Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -95,8 +95,8 @@
           "under": 48,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 248,
-          "fromTop": 200,
+          "first": 242,
+          "fromTop": 194,
           "lines": 1,
           "selects": 0,
           "count": "10 of 12 tasks",
@@ -118,15 +118,15 @@
           "under": 48,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 214,
-          "fromTop": 166,
+          "first": 203,
+          "fromTop": 155,
           "lines": 1,
           "selects": 0,
           "count": "1 reason",
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 277,
+            "end": 267,
             "feet": [
               846
             ],
@@ -141,8 +141,8 @@
           "under": 93,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 362,
-          "fromTop": 269,
+          "first": 367,
+          "fromTop": 274,
           "lines": 1,
           "selects": 0,
           "count": "10 of 12 tasks",
@@ -164,15 +164,15 @@
           "under": 93,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 272,
-          "fromTop": 179,
+          "first": 248,
+          "fromTop": 155,
           "lines": 1,
           "selects": 0,
           "count": "1 reason",
           "countedInAnEyebrow": false,
           "scrolls": false,
           "end": {
-            "end": 364,
+            "end": 341,
             "feet": [
               790
             ],
@@ -439,7 +439,7 @@
       "bigEnoughToHit": []
     },
     "theAssistantIsOnThePage": {
-      "said": "\"Pay the deposit\" was due 28 Aug 2026.",
+      "said": "\"Pay the deposit\" was due Aug 28, 2026.",
       "offers": [
         "What's wrong with Pay the deposit?",
         "Tasks due this week",
@@ -448,11 +448,11 @@
       "ok": true
     },
     "aGroundedQuestionIsAnswered": {
-      "answered": "Went to Pay the deposit. Pay the deposit — a task (not finished, due 28 Aug 2026, day Tue). The list it is on: Today. Why this is here: The landlord holds the d",
+      "answered": "Went to Pay the deposit. Pay the deposit — a task (not finished, due Aug 28, 2026, day Tue). The list it is on: Today. Why this is here: The landlord holds the ",
       "ok": true
     },
     "aProposalAppliesFromThePage": {
-      "said": "hy this is here: The landlord holds the date for 48 hours once the deposit…. Trouble: \"Pay the deposit\" was due 28 Aug 2026.Finish \"Pay the deposit\"Do itNot now",
+      "said": "y this is here: The landlord holds the date for 48 hours once the deposit…. Trouble: \"Pay the deposit\" was due Aug 28, 2026.Finish \"Pay the deposit\"Do itNot now",
       "ok": true
     },
     "phoneAsk": {
@@ -501,8 +501,8 @@
           "under": 48,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 241,
-          "fromTop": 193,
+          "first": 230,
+          "fromTop": 182,
           "lines": 1,
           "selects": 0,
           "count": "1 planting",
@@ -514,8 +514,8 @@
           "under": 93,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 328,
-          "fromTop": 235,
+          "first": 329,
+          "fromTop": 236,
           "lines": 1,
           "selects": 0,
           "count": "1 planting",
@@ -577,7 +577,7 @@
           "selects": 0,
           "eyebrow": false,
           "indexCut": false,
-          "jumped": 65
+          "jumped": 64
         },
         {
           "width": 1280,
@@ -595,7 +595,7 @@
           "selects": 0,
           "eyebrow": false,
           "indexCut": false,
-          "jumped": 65
+          "jumped": 64
         },
         {
           "width": 390,
@@ -614,6 +614,272 @@
           "eyebrow": false,
           "indexCut": false,
           "jumped": 64
+        }
+      ],
+      "ok": true
+    },
+    "noListRowRepeatsTheFieldItsGroupHeadingSays": {
+      "seen": [
+        {
+          "width": 1440,
+          "root": 16,
+          "groups": 30,
+          "repeats": []
+        },
+        {
+          "width": 390,
+          "root": 16,
+          "groups": 30,
+          "repeats": []
+        },
+        {
+          "width": 390,
+          "root": 32,
+          "groups": 30,
+          "repeats": []
+        }
+      ],
+      "ok": true
+    },
+    "rowTitlesClampToTwoLinesAndRowsAreOneOfTwoHeights": {
+      "seen": [
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 1440,
+          "root": 16,
+          "longerThanTwoLines": 0,
+          "heights": [
+            59,
+            44
+          ]
+        },
+        {
+          "path": "/pages/talks",
+          "width": 1440,
+          "root": 16,
+          "longerThanTwoLines": 0,
+          "heights": [
+            44,
+            59
+          ]
+        },
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 390,
+          "root": 16,
+          "longerThanTwoLines": 0,
+          "heights": [
+            59
+          ]
+        },
+        {
+          "path": "/pages/talks",
+          "width": 390,
+          "root": 16,
+          "longerThanTwoLines": 0,
+          "heights": [
+            61,
+            79
+          ]
+        },
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 390,
+          "root": 32,
+          "longerThanTwoLines": 0,
+          "heights": [
+            116
+          ]
+        },
+        {
+          "path": "/pages/talks",
+          "width": 390,
+          "root": 32,
+          "longerThanTwoLines": 0,
+          "heights": [
+            196
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "theDatesDownAListShareAnXOnADesk": {
+      "seen": {
+        "glances": 60,
+        "xs": [
+          831
+        ]
+      },
+      "ok": true
+    },
+    "theLastRowScrollsClearOfTheAskBox": {
+      "seen": [
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 1440,
+          "root": 16,
+          "end": 745,
+          "feet": [
+            846
+          ],
+          "last": "button act-open-add-session",
+          "ok": true
+        },
+        {
+          "path": "/pages/talks",
+          "width": 1440,
+          "root": 16,
+          "end": 745,
+          "feet": [
+            846
+          ],
+          "last": "button act-open-submit-talk",
+          "ok": true
+        },
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 390,
+          "root": 16,
+          "end": 689,
+          "feet": [
+            790
+          ],
+          "last": "button act-open-add-session",
+          "ok": true
+        },
+        {
+          "path": "/pages/talks",
+          "width": 390,
+          "root": 16,
+          "end": 689,
+          "feet": [
+            790
+          ],
+          "last": "button act-open-submit-talk",
+          "ok": true
+        },
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 390,
+          "root": 32,
+          "end": 633,
+          "feet": [
+            790
+          ],
+          "last": "button act-open-add-session",
+          "ok": true
+        },
+        {
+          "path": "/pages/talks",
+          "width": 390,
+          "root": 32,
+          "end": 633,
+          "feet": [
+            790
+          ],
+          "last": "button act-open-submit-talk",
+          "ok": true
+        }
+      ],
+      "ok": true
+    },
+    "aListsTypeComesFromTheScale": {
+      "seen": [
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 1440,
+          "root": 16,
+          "sizes": {
+            "title": 27.648,
+            "description": 16,
+            "name": 16,
+            "glance": null,
+            "heading": 13.328
+          },
+          "offScale": [],
+          "nameWeight": 500,
+          "scrolls": false,
+          "bigEnoughToHit": []
+        },
+        {
+          "path": "/pages/talks",
+          "width": 1440,
+          "root": 16,
+          "sizes": {
+            "title": 27.648,
+            "description": 16,
+            "name": 16,
+            "glance": 13.328,
+            "heading": 13.328
+          },
+          "offScale": [],
+          "nameWeight": 500,
+          "scrolls": false,
+          "bigEnoughToHit": []
+        },
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 390,
+          "root": 16,
+          "sizes": {
+            "title": 27.648,
+            "description": 16,
+            "name": 16,
+            "glance": null,
+            "heading": 13.328
+          },
+          "offScale": [],
+          "nameWeight": 500,
+          "scrolls": false,
+          "bigEnoughToHit": []
+        },
+        {
+          "path": "/pages/talks",
+          "width": 390,
+          "root": 16,
+          "sizes": {
+            "title": 27.648,
+            "description": 16,
+            "name": 16,
+            "glance": 13.328,
+            "heading": 13.328
+          },
+          "offScale": [],
+          "nameWeight": 500,
+          "scrolls": false,
+          "bigEnoughToHit": []
+        },
+        {
+          "path": "/pages/sessions?group=day&sort=label",
+          "width": 390,
+          "root": 32,
+          "sizes": {
+            "title": 55.296,
+            "description": 32,
+            "name": 32,
+            "glance": null,
+            "heading": 26.656
+          },
+          "offScale": [],
+          "nameWeight": 500,
+          "scrolls": false,
+          "bigEnoughToHit": []
+        },
+        {
+          "path": "/pages/talks",
+          "width": 390,
+          "root": 32,
+          "sizes": {
+            "title": 55.296,
+            "description": 32,
+            "name": 32,
+            "glance": 26.656,
+            "heading": 26.656
+          },
+          "offScale": [],
+          "nameWeight": 500,
+          "scrolls": false,
+          "bigEnoughToHit": []
         }
       ],
       "ok": true
@@ -687,12 +953,12 @@
       "ok": true
     },
     "aNewPageOpensAtItsTop": {
-      "pressedFrom": 1370,
+      "pressedFrom": 1284,
       "landedAt": {
         "path": "/pages/rules",
         "scrollY": 0
       },
-      "cameBackTo": 1370,
+      "cameBackTo": 1284,
       "ok": true
     },
     "theBarIsOneRow": {

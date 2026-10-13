@@ -622,14 +622,14 @@ const KIND_STOP_CSS = `
 .graview-kind-stop :is(.graview-kind-stop-link,.graview-kind-stop-rule,.graview-kind-stop-name button,.graview-kind-stop-row-acts button,.graview-kind-stop-fact,.graview-kind-stop-switch button){box-shadow:none}
 .graview-kind-stop-head{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 16px}
 .graview-kind-stop-title{flex:1 1 16rem;min-width:0}
-.graview-kind-stop-title h2{margin:0;outline-offset:2px;font-size:1.25rem;line-height:1.25;overflow-wrap:anywhere}
+.graview-kind-stop-title h2{margin:0;outline-offset:2px;font-size:var(--graview-text-heading);line-height:1.3;overflow-wrap:anywhere}
 .graview-kind-stop-title p{margin:2px 0 0;font-size:.875rem;color:var(--graview-ink-muted);overflow-wrap:anywhere}
 .graview-kind-stop-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .graview-kind-stop-primary,.graview-kind-stop-quiet{min-height:32px;padding:0 14px;border-radius:8px;font-size:.875rem}
 .graview-kind-stop-primary{border:1px solid var(--graview-accent);background:var(--graview-accent);color:var(--graview-accent-ink);font-weight:600}
 .graview-kind-stop-quiet{border:1px solid var(--graview-edge);background:transparent;color:var(--graview-ink)}
 .graview-kind-stop-ask{flex:1 1 100%;min-width:0;padding:10px 12px;border:1px solid var(--graview-edge);border-radius:10px}
-.graview-kind-stop-failed{flex:1 1 100%;margin:0;font-size:.8125rem;color:var(--graview-warn)}
+.graview-kind-stop-failed{flex:1 1 100%;margin:0;font-size:var(--graview-text-small);color:var(--graview-warn)}
 .graview-kind-stop-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .graview-kind-stop-going-on{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:.875rem}
 .graview-kind-stop-going-on>li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0}
@@ -644,7 +644,7 @@ const KIND_STOP_CSS = `
 .graview-kind-stop-problem-rows{list-style:none;margin:2px 0 6px 18px;padding:0;max-width:44rem}
 .graview-kind-stop-link{min-height:28px;padding:0 4px;border:0;background:none;color:var(--graview-accent);text-decoration:underline;text-underline-offset:2px}
 .graview-kind-stop-link:disabled{opacity:.6;cursor:default}
-.graview-kind-stop-shape{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:.8125rem}
+.graview-kind-stop-shape{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:var(--graview-text-small)}
 .graview-kind-stop-switch{display:inline-flex;border:1px solid var(--graview-edge);border-radius:8px;overflow:hidden}
 .graview-kind-stop-switch button{min-height:28px;padding:0 12px;border:0;background:transparent;color:var(--graview-ink-muted)}
 .graview-kind-stop-switch button+button{border-left:1px solid var(--graview-edge)}
@@ -659,9 +659,9 @@ const KIND_STOP_CSS = `
 .graview-kind-stop-table td{color:var(--graview-ink)}
 .graview-kind-stop-table td>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .graview-kind-stop-table td[data-short]{white-space:nowrap;font-variant-numeric:tabular-nums}
-.graview-kind-stop-table thead th{border-top:0;font-size:.75rem;font-weight:600;letter-spacing:.04em;color:var(--graview-ink-muted)}
+.graview-kind-stop-table thead th{border-top:0;font-size:var(--graview-text-small);font-weight:600;letter-spacing:.04em;color:var(--graview-ink-muted)}
 .graview-kind-stop-name{font-weight:500;min-width:8rem;max-width:22rem}
-.graview-kind-stop-name button{display:inline-block;min-width:24px;min-height:24px;padding:0;border:0;background:none;color:var(--graview-ink);font-weight:600;text-align:left;text-decoration:underline;text-decoration-color:var(--graview-edge);text-underline-offset:3px}
+.graview-kind-stop-name button{display:inline-block;min-width:24px;min-height:24px;padding:0;border:0;background:none;color:var(--graview-ink);font-weight:500;text-align:left;text-decoration:underline;text-decoration-color:var(--graview-edge);text-underline-offset:3px}
 .graview-kind-stop-name button:hover{text-decoration-color:currentColor}
 .graview-kind-stop-own-row{display:inline-block;max-width:100%;cursor:pointer}
 .graview-kind-stop-flag{margin-left:6px;color:var(--graview-warn)}

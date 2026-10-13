@@ -437,15 +437,15 @@ body { font: var(--graview-weight-body) 1rem/1.5 var(--graview-font-body); -webk
 .gv-masthead a { display: inline-flex; align-items: center; gap: 10px; color: var(--graview-ink-muted); text-decoration: none; font-weight: 600; }
 .gv-mark { height: 28px; width: auto; }
 h1, h2, h3, h4, h5, h6 { font-family: var(--graview-font-display); font-weight: var(--graview-weight-display); line-height: 1.2; margin: 0.6em 0 0.3em; break-after: avoid-page; }
-h1 { font-size: 2.25rem; margin-top: 0.4em; }
-h2 { font-size: 1.375rem; }
-h3 { font-size: 1.125rem; }
-a { color: var(--graview-accent); }
+h1 { font-size: 1.728rem; margin-top: 0.4em; text-wrap: balance; }
+h2 { font-size: 1.2rem; text-wrap: balance; }
+h3 { font-size: 1rem; }
+a { color: var(--graview-accent); text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
 .gv-head { display: grid; gap: 6px; margin-bottom: 20px; }
 .gv-head h1, .gv-head p { margin: 0; }
-.gv-eyebrow { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--graview-ink-muted); }
+.gv-eyebrow { font-size: 0.833rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graview-ink-muted); }
 .gv-eyebrow a { color: inherit; text-decoration: none; }
-.gv-lede { font-size: 1.1875rem; color: var(--graview-ink-muted); max-width: 40rem; }
+.gv-lede { font-size: 1rem; color: var(--graview-ink-muted); max-width: 40rem; }
 .gv-quiet { color: var(--graview-ink-muted); }
 .gv-text { margin: 4px 0; }
 .gv-text[data-tone="warn"], .gv-text[data-tone="bad"] { color: var(--graview-bad); }
@@ -454,19 +454,19 @@ a { color: var(--graview-accent); }
 .gv-problems { border-left: 3px solid var(--graview-warn); background: var(--graview-panel-warning); padding: 10px 16px; border-radius: 0 var(--graview-radius) var(--graview-radius) 0; }
 .gv-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 24px; margin: 8px 0; }
 .gv-fields div { break-inside: avoid; }
-.gv-fields dt { font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--graview-ink-muted); }
-.gv-fields dd { margin: 0; font-size: 1.0625rem; overflow-wrap: anywhere; white-space: pre-line; }
-.gv-badge { display: inline-block; padding: 1px 8px; border: 1px solid var(--graview-edge-bright); border-radius: 999px; font-size: 0.8125rem; }
+.gv-fields dt { font-size: 0.833rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graview-ink-muted); }
+.gv-fields dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+.gv-badge { display: inline-block; padding: 1px 8px; border: 1px solid var(--graview-edge-bright); border-radius: 999px; font-size: 0.833rem; }
 .gv-figure strong { font-size: 1.75rem; font-family: var(--graview-font-display); }
 .gv-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 10px; }
 .gv-card { background: var(--graview-panel); border: 1px solid var(--graview-edge); border-radius: var(--graview-radius); padding: 12px 14px; break-inside: avoid; }
-.gv-card-title { margin: 0 0 4px; font-size: 1.0625rem; }
+.gv-card-title { margin: 0 0 4px; font-size: 1rem; }
 .gv-card-title a, .gv-rows a, .gv-names a { color: var(--graview-ink); text-decoration: none; }
 .gv-rows, .gv-names { list-style: none; margin: 0; padding: 0; }
 .gv-rows > li { padding: 8px 0; border-bottom: 1px solid var(--graview-edge); break-inside: avoid; }
-.gv-rows > li > a { font-size: 1.0625rem; }
+.gv-rows > li > a { font-weight: 500; }
 .gv-names { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-.gv-glance { color: var(--graview-ink-muted); font-size: 0.9375rem; }
+.gv-glance { color: var(--graview-ink-muted); font-size: 0.833rem; }
 .gv-glance > .gv-text, .gv-glance > p { display: inline; margin: 0; }
 .gv-glance > .gv-text:not(:last-child)::after, .gv-glance > p:not(:last-child)::after { content: " · "; }
 @media print {
