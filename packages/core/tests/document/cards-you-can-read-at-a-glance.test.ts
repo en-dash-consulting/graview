@@ -32,6 +32,15 @@ describe("an excerpt", () => {
     expect(excerpt("One line\nand the next, with no stop at all", 20)).toBe("One line and the…");
   });
 
+  it("is not cut short at an abbreviation's stop: a first sentence is more than a word or two", () => {
+    expect(excerpt("Dr. Okafor reviews every request before it is built, and says why when she turns one down.")).toBe(
+      "Dr. Okafor reviews every request before it is built, and says why when she turns one down.",
+    );
+    expect(excerpt("E.g. a garden, a shed or a porch: whatever the house has room for. And more after it.")).toBe("E.g. a garden, a shed or a porch: whatever the house has room for.");
+    // A short first sentence that is a sentence still ends the excerpt.
+    expect(excerpt("Ship it on Friday. Then the notes, the release and the long tail after it.")).toBe("Ship it on Friday.");
+  });
+
   it("is told a whole number of characters, from 20 to 1000, and says so when it is not", () => {
     expect(() => parseTemplate("{summary|excerpt: 'eighty'}")).toThrow(/excerpt is told at most how many characters/);
     expect(() => parseTemplate("{summary|excerpt: 5}")).toThrow(/20 to 1000/);
