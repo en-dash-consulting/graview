@@ -21,11 +21,13 @@ import { defOf } from "./schema/zod.js";
  * THE MAP READS UPSTREAM TO DOWNSTREAM. A kind whose records point at
  * another's stands after it: a session names its people, a question its
  * session, a finding its question, so People, Sessions, Questions and
- * Findings stand left to right in that order — a topological order of the
- * declared relations, each kind one column past the furthest kind it
- * points at, a cycle broken where the walk meets it. Kinds in one column
- * stand one above the other, near the kinds they point at. A kind tied to
- * no other kind stands in the margin under the rest, so a note pinned to
+ * Findings stand in that order along one of the ground's axes, up and to
+ * the right on the screen — a topological order of the declared
+ * relations, each kind one place past the furthest kind it points at, a
+ * cycle broken where the walk meets it. Kinds of one place stand side by
+ * side along the other axis, near the kinds they point at, so the map is
+ * rows of districts each on a line of the lattice. A kind tied to no other
+ * kind stands in a row of its own beside the rest, so a note pinned to
  * nothing is not put in the middle of the work. Placed in the order the
  * declaration fills its kinds (`beginning(app).order`, or sorted ids when
  * nobody said), so ties break the same way every time; a kind declaring
@@ -33,11 +35,11 @@ import { defOf } from "./schema/zod.js";
  *
  * Units are LATTICE CELLS on the isometric ground, not pixels. `col` runs
  * down-right along one diagonal, `row` down-left along the other; a plot
- * occupies `side × side` cells from its corner. Plots sit on a block grid
- * one `BLOCK` apart, every other block, so a column of the map is a column
- * on the screen and the street between two plots is wide enough for the
- * name under each. Turned UPRIGHT (`upright`) — for a window taller than it
- * is wide — the same map stands top to bottom instead of left to right.
+ * occupies `side × side` cells from its corner. Plots stand a `PITCH` —
+ * a block and a cell — apart along both axes, so every row of the map lies
+ * on one line of the lattice with a straight street in the gutter beside
+ * it. Turned UPRIGHT (`upright`) — for a window taller than it is wide —
+ * the chain runs down and to the right instead, folded into bands.
  */
 
 export interface Plot {
@@ -56,6 +58,12 @@ export interface Plot {
 export const MAX_SIDE = 3;
 /** Block pitch: the largest side plus one cell of street. */
 export const BLOCK = MAX_SIDE + 1;
+/**
+ * How far apart, in cells, two districts of the map stand along either of
+ * the ground's axes: a block, and a street a cell wider, room for the
+ * ribbons running down it a cell clear of either curb.
+ */
+export const PITCH = BLOCK + 1;
 
 export interface CityHints {
   /** The kind chain a blank installation fills, first to last. */
@@ -64,8 +72,10 @@ export interface CityHints {
   readonly counts?: Readonly<Record<string, number>>;
   /** Hand-laid plots, by kind. Used verbatim; a declared `plot` on the kind wins first. */
   readonly plots?: Readonly<Record<string, { readonly col: number; readonly row: number }>>;
-  /** Stand the map top to bottom rather than left to right: the same columns, turned for a tall window. */
+  /** Run the map down the screen, folded into bands, rather than up and to the right: for a tall window. */
   readonly upright?: boolean;
+  /** How far apart districts stand along the ground's axes, in cells: `PITCH` unless names need more room. */
+  readonly pitch?: number;
 }
 
 export type CityMap = ReadonlyMap<string, Plot>;
@@ -167,12 +177,29 @@ export function cityMap(schema: AnySchema, hints: CityHints = {}): CityMap {
   for (const kind of order) if (linked.has(kind)) (columns[column.get(kind)!] ??= []).push(kind);
   const slot = new Map<string, number>();
   /*
-   * A column of the map is a column on the screen — two blocks across from
-   * the next — and the kinds of one column stand one block apart down it,
-   * on every other block of the lattice, so a street runs round each.
-   * Turned upright, the same with the axes swapped.
+   * THE MAP LIES ALONG THE GROUND'S OWN AXES. Upstream to downstream runs
+   * along one of the lattice's two axes — up and to the right on the
+   * screen, as a street in an isometric city does — and the kinds of one
+   * column stand along the other, a row of districts on each line. Every
+   * row is on one line of the lattice, so the street in the gutter in
+   * front of it is one straight run, and a ribbon between two districts
+   * of a row runs straight down it; one between two rows bends once. They
+   * were laid on the lattice's diagonal, which reads left to right but put
+   * every row across the grain of the ground, so no street could run
+   * along one. Turned upright for a tall window, upstream to downstream
+   * runs down and to the right instead.
    */
-  const at = (i: number, j: number) => (hints.upright ? { col: (i + j) * BLOCK, row: (i - j) * BLOCK } : { col: (i + j) * BLOCK, row: (j - i) * BLOCK });
+  /*
+   * In a tall window a long chain folds: as many columns to a band as there
+   * are bands, each band a row along the ground's down-and-right axis, the
+   * next band beside it — so a phone holds the city at a size it can read,
+   * and a ribbon from one band to the next bends once.
+   */
+  const fold = Math.max(1, Math.ceil(Math.sqrt(columns.length)));
+  const depth = Math.max(1, ...columns.map((list) => list?.length ?? 0));
+  const pitch = Math.max(PITCH, Math.round(hints.pitch ?? PITCH));
+  const at = (i: number, j: number) =>
+    hints.upright ? { col: (i % fold) * pitch, row: (Math.floor(i / fold) * (depth + 1) + j) * pitch } : { col: j * pitch, row: i === 0 ? 0 : -i * pitch };
   const free = (cell: { col: number; row: number }) => !taken.some((other) => plotsOverlap(other, cell));
   const place = (kind: string, i: number, from: number): number => {
     let j = from;
@@ -197,9 +224,10 @@ export function cityMap(schema: AnySchema, hints: CityHints = {}): CityMap {
     }
   });
   /*
-   * THE MARGIN: kinds tied to nothing, under the map and a row apart from
-   * it — rows under its columns when it reads left to right, rows after its
-   * last when it reads top to bottom — as wide as the map is.
+   * THE MARGIN: kinds tied to nothing, in rows of their own a place apart
+   * from the map and parallel to it — beside its rows when it runs up and
+   * to the right, after its last band when it runs down — as wide as the
+   * map is.
    */
   const loose = order.filter((kind) => !linked.has(kind) && !plots.has(kind));
   const across = Math.max(hints.upright ? deepest : columns.length, Math.ceil(Math.sqrt(loose.length * 2)), 1);

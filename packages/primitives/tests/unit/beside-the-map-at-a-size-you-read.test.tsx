@@ -173,3 +173,21 @@ describe("a district chosen from altitude", () => {
     await unmount();
   });
 });
+
+describe("on a phone", () => {
+  it("rises as a sheet from the foot and says how tall it stands, so the city is laid out above it, with what was chosen in sight", async () => {
+    const desk = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, top: 0, right: 390, bottom: 844, width: 390, height: 844, toJSON: () => ({}) }) as DOMRect;
+    try {
+      const { host, unmount } = await mounted(aloft, [kindCardId("area")]);
+      const panel = host.querySelector('[data-testid="district-panel"]')!;
+      expect(panel.getAttribute("data-graview-map-panel")).toBe("sheet");
+      const said = [...panel.querySelectorAll("style")].map((style) => style.textContent ?? "").join("");
+      expect(said).toContain("--graview-sheet: 52%");
+      expect(said).not.toContain("--graview-dock");
+      await unmount();
+    } finally {
+      Element.prototype.getBoundingClientRect = desk;
+    }
+  });
+});

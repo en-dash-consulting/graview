@@ -33,178 +33,357 @@ export interface Lattice {
   readonly tilt?: number | undefined;
 }
 
-/**
- * A DISTRICT'S GROUND ON THE CANVAS: its plot's diamond, from origin zero,
- * at the tilt the city is seen at — its center, and how far its side and its
- * back and front corners reach from it.
- */
-export interface Tile {
-  readonly cx: number;
-  readonly cy: number;
-  /** Half its width: the left and right corners are this far either side. */
-  readonly hw: number;
-  /** Half its height: the back and front corners are this far above and below. */
-  readonly hh: number;
+/** A box on the canvas, from origin zero: a district's name card the ribbons go round. */
+export interface Box {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
 }
 
-export function tileOf(plot: PlotLike, cell: number, tilt = 0.5): Tile {
-  const back = toIso(plot.col, plot.row, cell, tilt);
-  const right = toIso(plot.col + plot.side, plot.row, cell, tilt);
-  const front = toIso(plot.col + plot.side, plot.row + plot.side, cell, tilt);
-  return { cx: back.x, cy: (back.y + front.y) / 2, hw: right.x - back.x, hh: (front.y - back.y) / 2 };
-}
-
-const corner = (tile: Tile, which: "left" | "right" | "back" | "front"): Point =>
-  which === "left" ? { x: tile.cx - tile.hw, y: tile.cy } : which === "right" ? { x: tile.cx + tile.hw, y: tile.cy } : which === "back" ? { x: tile.cx, y: tile.cy - tile.hh } : { x: tile.cx, y: tile.cy + tile.hh };
-
-/** Whether a point stands on a tile's ground, a hair inside its curb. */
-const onTile = (p: Point, tile: Tile): boolean => Math.abs(p.x - tile.cx) / tile.hw + Math.abs(p.y - tile.cy) / tile.hh < 0.97;
-
-/** Whether a run crosses the ground of any tile but the two it joins. */
-export function crossesAny(points: readonly Point[], tiles: readonly Tile[]): boolean {
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1]!;
-    const b = points[i]!;
-    const steps = Math.max(8, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 6));
-    for (let k = 0; k <= steps; k++) {
-      const p = { x: a.x + ((b.x - a.x) * k) / steps, y: a.y + ((b.y - a.y) * k) / steps };
-      if (tiles.some((tile) => onTile(p, tile))) return true;
-    }
-  }
-  return false;
-}
+/** The grid a ribbon is routed on: half a lattice cell, so a street can run down the middle of a one-cell gutter. */
+const STEP = 0.5;
+/** How far out from a curb the streets run, in cells, and how near to one no street may come. */
+const OUT = 1;
+const CLEAR = 0.76;
+/** What a bend costs, in cells: enough that a ribbon bends only where it must. */
+const BEND = 3;
+/** How far from every district, in cells, the ground starts to cost more to cross: a ribbon keeps to the streets between districts, not the open ground beyond them. */
+const NEAR = 3;
+/** How much less a stretch another ribbon already runs along costs: ribbons that can share a street do. */
+const SHARED = 0.6;
 
 /**
- * WHERE A RIBBON RUNS, decided for all of them at once: the shortest honest
- * way along the ground between its two districts.
+ * WHERE EACH RIBBON RUNS, ON THE GROUND.
  *
- * - Between neighbors — nothing standing between them — a straight run from
- *   the corner of one that faces the other to the corner of the other that
- *   faces it.
- * - Between two in one row with others between, along the row's street: the
- *   strip of ground just in front of its districts, which every district in
- *   the row touches at its front corner and none stands on.
- * - Between two in one column, along the column's street: the strip just
- *   beside its districts' right-hand corners.
- * - Otherwise one bend: along the street beside the first district's column
- *   to the second's row street, and along that to it — or the other way
- *   about, whichever crosses no district.
- *
- * Ribbons that share a street lie side by side in it, each its own width
- * apart, so a corridor several relations use is a bundle rather than one
- * line drawn over another. Nothing is bowed to look like a road: every run
- * is straight, and a bend is where a street meets another.
+ * The ground is a lattice, and a line drawn on it runs along one of its two
+ * axes — the diagonals a person sees the grid in. A ribbon leaves its
+ * district from the middle of a curb, runs along the gutters between the
+ * districts on the lattice's own lines, and comes into the other district
+ * at the middle of a curb: never across a district, never behind a
+ * district's name card, and with as few bends as the ground allows — none
+ * or one between neighbors. A stretch another ribbon already runs costs
+ * less, so relations that can share a street do, and those sharing one lie
+ * side by side in it, each its own width apart. Routed on the lattice and
+ * drawn through `toIso`, so it lies on the ground at whatever tilt the city
+ * is seen at.
  */
-export function routeRibbons(
-  ribbons: readonly { readonly key: string; readonly from: string; readonly to: string; readonly width: number }[],
-  tiles: ReadonlyMap<string, Tile>,
-): Map<string, Point[]> {
-  const all = [...tiles.values()];
-  const others = (a: Tile, b: Tile) => all.filter((tile) => tile !== a && tile !== b);
-  const sameRow = (a: Tile, b: Tile) => Math.abs(a.cy - b.cy) < 0.25 * Math.min(a.hh, b.hh);
-  const sameCol = (a: Tile, b: Tile) => Math.abs(a.cx - b.cx) < 0.25 * Math.min(a.hw, b.hw);
-  // How far apart neighbors stand: a straight run longer than a neighbor's reach crosses empty ground nobody lives on.
-  const nearest = all.map((a) => Math.min(...all.filter((b) => b !== a).map((b) => Math.hypot(a.cx - b.cx, a.cy - b.cy))));
-  const reach = 1.6 * (nearest.filter(Number.isFinite).sort((x, y) => x - y)[Math.floor(nearest.length / 2)] ?? Infinity);
-  const gap = 10;
-
-  type Street = { readonly axis: "h" | "v"; readonly at: number; readonly sign: 1 | -1 };
-  type Plan = { readonly key: string; readonly width: number; readonly build: (offset: (street: Street) => number) => Point[]; readonly streets: readonly Street[] };
-  const plans: Plan[] = [];
-  for (const ribbon of ribbons) {
-    const a = tiles.get(ribbon.from);
-    const b = tiles.get(ribbon.to);
-    if (!a || !b || a === b) continue;
-    const between = others(a, b);
-    // 1. Neighbors: straight, corner to facing corner.
-    const facing: [Point, Point] = sameRow(a, b)
-      ? [corner(a, b.cx > a.cx ? "right" : "left"), corner(b, b.cx > a.cx ? "left" : "right")]
-      : sameCol(a, b)
-        ? [corner(a, b.cy > a.cy ? "front" : "back"), corner(b, b.cy > a.cy ? "back" : "front")]
-        : nearestCorners(a, b);
-    const straight = [...facing];
-    const long = Math.hypot(facing[1].x - facing[0].x, facing[1].y - facing[0].y) > reach && !sameRow(a, b) && !sameCol(a, b);
-    if (!crossesAny(straight, between) && !long) {
-      plans.push({ key: ribbon.key, width: ribbon.width, streets: [], build: () => straight });
-      continue;
-    }
-    const frontStreet = (tile: Tile): Street => ({ axis: "h", at: tile.cy + tile.hh + gap, sign: 1 });
-    const sideStreet = (tile: Tile, right: boolean): Street => ({ axis: "v", at: right ? tile.cx + tile.hw + gap : tile.cx - tile.hw - gap, sign: right ? 1 : -1 });
-    // 2. One row: along the street in front of it.
-    if (sameRow(a, b)) {
-      const street = frontStreet(a.cy + a.hh > b.cy + b.hh ? a : b);
-      plans.push({ key: ribbon.key, width: ribbon.width, streets: [street], build: (offset) => {
-        const y = street.at + offset(street);
-        return [corner(a, "front"), { x: a.cx, y }, { x: b.cx, y }, corner(b, "front")];
-      } });
-      continue;
-    }
-    // 3. One column: along the street beside it.
-    if (sameCol(a, b)) {
-      const street = sideStreet(a.hw > b.hw ? a : b, true);
-      plans.push({ key: ribbon.key, width: ribbon.width, streets: [street], build: (offset) => {
-        const x = street.at + offset(street);
-        return [corner(a, "right"), { x, y: a.cy }, { x, y: b.cy }, corner(b, "right")];
-      } });
-      continue;
-    }
-    // 4. One bend: beside one district's column, then along the other's row street.
-    const toward = b.cx > a.cx;
-    const viaA = { col: sideStreet(a, toward), row: frontStreet(b) };
-    const viaB = { col: sideStreet(b, !toward), row: frontStreet(a) };
-    const firstWay = (offset: (street: Street) => number): Point[] => {
-      const x = viaA.col.at + offset(viaA.col);
-      const y = viaA.row.at + offset(viaA.row);
-      return [corner(a, toward ? "right" : "left"), { x, y: a.cy }, { x, y }, { x: b.cx, y }, corner(b, "front")];
-    };
-    const otherWay = (offset: (street: Street) => number): Point[] => {
-      const x = viaB.col.at + offset(viaB.col);
-      const y = viaB.row.at + offset(viaB.row);
-      return [corner(a, "front"), { x: a.cx, y }, { x, y }, { x, y: b.cy }, corner(b, toward ? "left" : "right")];
-    };
-    const none = () => 0;
-    const firstClear = !crossesAny(firstWay(none), between);
-    const otherClear = !crossesAny(otherWay(none), between);
-    const length = (points: readonly Point[]) => points.reduce((sum, p, i) => (i === 0 ? 0 : sum + Math.hypot(p.x - points[i - 1]!.x, p.y - points[i - 1]!.y)), 0);
-    const useFirst = firstClear && (!otherClear || length(firstWay(none)) <= length(otherWay(none)));
-    plans.push(useFirst || !otherClear ? { key: ribbon.key, width: ribbon.width, streets: [viaA.col, viaA.row], build: firstWay } : { key: ribbon.key, width: ribbon.width, streets: [viaB.col, viaB.row], build: otherWay });
-  }
-
-  // The bundles: each street's ribbons side by side, away from the districts it runs beside.
-  const id = (street: Street) => `${street.axis}:${Math.round(street.at)}:${street.sign}`;
-  const used = new Map<string, number>();
-  const offsets = new Map<string, Map<string, number>>();
-  for (const plan of plans) {
-    for (const street of plan.streets) {
-      const taken = used.get(id(street)) ?? 0;
-      const mine = offsets.get(plan.key) ?? new Map<string, number>();
-      mine.set(id(street), street.sign * (taken + plan.width / 2));
-      offsets.set(plan.key, mine);
-      used.set(id(street), taken + plan.width + 2);
-    }
-  }
+export function routeOnTheGround(input: {
+  readonly ribbons: readonly { readonly key: string; readonly from: string; readonly to: string; readonly width: number }[];
+  readonly plots: ReadonlyMap<string, PlotLike>;
+  readonly cell: number;
+  readonly tilt?: number | undefined;
+  /** The districts' name cards, on the canvas from origin zero. */
+  readonly labels?: readonly Box[];
+}): Map<string, Point[]> {
+  const { ribbons, plots, cell } = input;
+  const tilt = input.tilt ?? 0.5;
+  const labels = input.labels ?? [];
+  const all = [...plots.values()];
   const out = new Map<string, Point[]>();
-  for (const plan of plans) out.set(plan.key, plan.build((street) => offsets.get(plan.key)?.get(id(street)) ?? 0));
+  if (all.length === 0 || cell <= 0) return out;
+  const minCol = Math.min(...all.map((p) => p.col)) - 3;
+  const minRow = Math.min(...all.map((p) => p.row)) - 3;
+  const maxCol = Math.max(...all.map((p) => p.col + p.side)) + 3;
+  const maxRow = Math.max(...all.map((p) => p.row + p.side)) + 3;
+  const width = Math.round((maxCol - minCol) / STEP) + 1;
+  const height = Math.round((maxRow - minRow) / STEP) + 1;
+  const colOf = (i: number) => minCol + i * STEP;
+  const rowOf = (j: number) => minRow + j * STEP;
+  const pad = 4;
+  // Whether the name cards are heeded: where they leave no way at all, a ribbon passes under them rather than not at all.
+  let heed = true;
+  const underLabel = (col: number, row: number) => {
+    if (!heed) return false;
+    const p = toIso(col, row, cell, tilt);
+    return labels.some((box) => p.x > box.x - pad && p.x < box.x + box.width + pad && p.y > box.y - pad && p.y < box.y + box.height + pad);
+  };
+  // A street keeps a cell clear of every curb, so the ribbons in it lie in the gutter, not on its edge.
+  const onPlot = (col: number, row: number) => all.some((p) => col > p.col - CLEAR && col < p.col + p.side + CLEAR && row > p.row - CLEAR && row < p.row + p.side + CLEAR);
+  // Every grid point a ribbon may pass through: off every district, and out from under every name card — or, where they leave no way, off every district.
+  const heeding = new Uint8Array(width * height);
+  const plain = new Uint8Array(width * height);
+  for (let i = 0; i < width; i++) {
+    for (let j = 0; j < height; j++) {
+      const col = colOf(i);
+      const row = rowOf(j);
+      plain[j * width + i] = onPlot(col, row) ? 0 : 1;
+      heeding[j * width + i] = plain[j * width + i] && !underLabel(col, row) ? 1 : 0;
+    }
+  }
+  let free = heeding;
+  // How far each grid point is from the nearest district: past NEAR, every step costs as much again for each cell further.
+  const away = new Float32Array(width * height);
+  for (let i = 0; i < width; i++) {
+    for (let j = 0; j < height; j++) {
+      const col = colOf(i);
+      const row = rowOf(j);
+      away[j * width + i] = Math.min(...all.map((p) => Math.max(0, p.col - col, col - (p.col + p.side), p.row - row, row - (p.row + p.side))));
+    }
+  }
+  // An edge is free when its middle is too: a name card can sit between two grid points.
+  const edgeFree = (i: number, j: number, di: number, dj: number) => {
+    const col = colOf(i) + (di * STEP) / 2;
+    const row = rowOf(j) + (dj * STEP) / 2;
+    return !onPlot(col, row) && !underLabel(col, row);
+  };
+  /*
+   * The doors of a district: the grid points a cell out from the middle
+   * stretch of each of its four curbs, each with the point on the curb it
+   * steps in to. Not its corners — a ribbon meets a curb, not a point.
+   */
+  const doors = (plot: PlotLike): { i: number; j: number; out: number; curb: { col: number; row: number } }[] => {
+    const found: { i: number; j: number; out: number; curb: { col: number; row: number } }[] = [];
+    const along = (from: number, side: number) => {
+      const steps: number[] = [];
+      // On the router's grid, so two doors facing each other across a street line up.
+      const margin = Math.min(1, side / 3);
+      for (let t = Math.ceil((from + margin) / STEP - 1e-9) * STEP; t <= from + side - margin + 1e-9; t += STEP) steps.push(t);
+      return steps;
+    };
+    // `out` is the heading that leaves the curb straight: a ribbon meets a curb square on.
+    const add = (col: number, row: number, out: number, curb: { col: number; row: number }) => {
+      const i = Math.round((col - minCol) / STEP);
+      const j = Math.round((row - minRow) / STEP);
+      if (i >= 0 && j >= 0 && i < width && j < height && free[j * width + i]) found.push({ i, j, out, curb });
+    };
+    for (const row of along(plot.row, plot.side)) {
+      add(plot.col - OUT, row, 1, { col: plot.col, row });
+      add(plot.col + plot.side + OUT, row, 0, { col: plot.col + plot.side, row });
+    }
+    for (const col of along(plot.col, plot.side)) {
+      add(col, plot.row - OUT, 3, { col, row: plot.row });
+      add(col, plot.row + plot.side + OUT, 2, { col, row: plot.row + plot.side });
+    }
+    return found;
+  };
+
+  const used = new Map<string, string[]>();
+  const edgeKey = (i: number, j: number, i2: number, j2: number) => (i < i2 || (i === i2 && j < j2) ? `${i},${j}-${i2},${j2}` : `${i2},${j2}-${i},${j}`);
+  const DIRS = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ] as const;
+  const routes = new Map<string, { cells: { i: number; j: number }[]; start: { col: number; row: number }; end: { col: number; row: number } }>();
+  for (const ribbon of ribbons) {
+    const a = plots.get(ribbon.from);
+    const b = plots.get(ribbon.to);
+    if (!a || !b || a === b) continue;
+    let reached = -1;
+    let starts: ReturnType<typeof doors> = [];
+    let goal = new Map<number, ReturnType<typeof doors>[number]>();
+    let back: Int32Array = new Int32Array(0);
+    let best = Infinity;
+    /*
+     * Round the name cards where that is a way at all and not a long way
+     * round — on a phone the cards are as big as the streets, and a ribbon
+     * sent out past the window to clear them says less than one passing
+     * under a card. Else, as a street runs under a sign, under them.
+     */
+    const found: { reached: number; starts: typeof starts; goal: typeof goal; back: Int32Array; best: number }[] = [];
+    for (const pass of [true, false]) {
+    reached = -1;
+    best = Infinity;
+    heed = pass;
+    free = pass ? heeding : plain;
+    starts = doors(a);
+    const ends = doors(b);
+    if (starts.length === 0 || ends.length === 0) {
+      found.push({ reached: -1, starts, goal, back, best });
+      continue;
+    }
+    goal = new Map(ends.map((door) => [door.j * width + door.i, door]));
+    const toB = (i: number, j: number) => {
+      const col = colOf(i);
+      const row = rowOf(j);
+      return (Math.max(0, b.col - col, col - (b.col + b.side)) + Math.max(0, b.row - row, row - (b.row + b.side))) * SHARED;
+    };
+    // A* over (point, heading): a step costs its length, a bend BEND, a stretch already run less.
+    const states = width * height * 4;
+    const cost = new Float64Array(states).fill(Infinity);
+    back = new Int32Array(states).fill(-1);
+    const heap = new MinHeap();
+    // Leaving square on: a door's state heads out of the curb, so a turn straight after it is a bend.
+    for (const door of starts) {
+      const s = (door.j * width + door.i) * 4 + door.out;
+      cost[s] = 0;
+      heap.push(s, toB(door.i, door.j));
+    }
+    const INTO = [1, 0, 3, 2];
+    while (heap.size > 0) {
+      const f = heap.peekKey();
+      if (f >= best) break;
+      const s = heap.pop();
+      const node = Math.floor(s / 4);
+      const d = s % 4;
+      const i = node % width;
+      const j = Math.floor(node / width);
+      const door = goal.get(node);
+      if (door) {
+        // Arriving square on costs nothing more; arriving along the curb is one more bend.
+        const total = cost[s]! + (d === INTO[door.out] ? 0 : BEND);
+        if (total < best) {
+          best = total;
+          reached = s;
+        }
+        continue;
+      }
+      for (let nd = 0; nd < 4; nd++) {
+        const [di, dj] = DIRS[nd]!;
+        const i2 = i + di;
+        const j2 = j + dj;
+        if (i2 < 0 || j2 < 0 || i2 >= width || j2 >= height || !free[j2 * width + i2] || !edgeFree(i, j, di, dj)) continue;
+        const step = STEP * (used.has(edgeKey(i, j, i2, j2)) ? SHARED : 1) * (1 + Math.max(0, away[j2 * width + i2]! - NEAR)) + (nd === d ? 0 : BEND);
+        const s2 = (j2 * width + i2) * 4 + nd;
+        const next = cost[s]! + step;
+        if (next < cost[s2]!) {
+          cost[s2] = next;
+          back[s2] = s;
+          heap.push(s2, next + toB(i2, j2));
+        }
+      }
+    }
+    found.push({ reached, starts, goal, back, best });
+    }
+    heed = true;
+    free = heeding;
+    const [round, under] = found as [(typeof found)[number] | undefined, (typeof found)[number] | undefined];
+    const chosen = round && round.reached !== -1 && (!under || under.reached === -1 || round.best <= 1.3 * under.best + 2) ? round : under;
+    if (!chosen || chosen.reached === -1) continue;
+    ({ reached, starts, goal, back } = chosen);
+    const cells: { i: number; j: number }[] = [];
+    for (let s = reached; s !== -1; s = back[s]!) {
+      const node = Math.floor(s / 4);
+      const last = cells[cells.length - 1];
+      const here = { i: node % width, j: Math.floor(node / width) };
+      if (!last || last.i !== here.i || last.j !== here.j) cells.push(here);
+    }
+    cells.reverse();
+    for (let k = 1; k < cells.length; k++) {
+      const key = edgeKey(cells[k - 1]!.i, cells[k - 1]!.j, cells[k]!.i, cells[k]!.j);
+      used.set(key, [...(used.get(key) ?? []), ribbon.key]);
+    }
+    const first = starts.find((door) => door.i === cells[0]!.i && door.j === cells[0]!.j)!;
+    const last = goal.get(cells[cells.length - 1]!.j * width + cells[cells.length - 1]!.i)!;
+    routes.set(ribbon.key, { cells, start: first.curb, end: last.curb });
+  }
+
+  /*
+   * THE BUNDLES. A run's lane is its place among the ribbons sharing the
+   * stretch it runs, in one order for every stretch, so a bundle keeps its
+   * order round a bend; each lane is its ribbon's width apart from the last,
+   * across the run, on the ground.
+   */
+  const widthOf = new Map(ribbons.map((ribbon) => [ribbon.key, ribbon.width]));
+  const order = new Map(ribbons.map((ribbon, index) => [ribbon.key, index]));
+  // How far apart, on the canvas, two runs a cell apart across the ground lie.
+  const pxPerCell = (cell * tilt) / Math.sqrt(1 + tilt * tilt);
+  /*
+   * A STREET IS A LINE OF THE LATTICE, and a ribbon keeps its lane along
+   * the whole of it: every ribbon that runs on a line anywhere is given its
+   * place across it, so one joining or leaving the bundle part way along
+   * moves no other ribbon sideways.
+   */
+  const lineOf = (axis: "col" | "row", at: { col: number; row: number }) => (axis === "col" ? `r${at.row.toFixed(2)}` : `c${at.col.toFixed(2)}`);
+  const lines = new Map<string, Set<string>>();
+  for (const [key, route] of routes) {
+    for (let k = 1; k < route.cells.length; k++) {
+      const a = route.cells[k - 1]!;
+      const b = route.cells[k]!;
+      const line = lineOf(a.i !== b.i ? "col" : "row", { col: colOf(a.i), row: rowOf(a.j) });
+      lines.set(line, (lines.get(line) ?? new Set<string>()).add(key));
+    }
+  }
+  for (const [key, route] of routes) {
+    // The whole way, on the lattice: in from the curb, along the grid, and out to the other curb.
+    const way = [route.start, ...route.cells.map((at) => ({ col: colOf(at.i), row: rowOf(at.j) })), route.end];
+    const gridEdge = (k: number) => (k >= 2 && k <= route.cells.length ? edgeKey(route.cells[k - 2]!.i, route.cells[k - 2]!.j, route.cells[k - 1]!.i, route.cells[k - 1]!.j) : null);
+    // The straight runs: where the heading stays the same.
+    const runs: { from: number; to: number; axis: "col" | "row" }[] = [];
+    for (let k = 1; k < way.length; k++) {
+      const axis = Math.abs(way[k]!.col - way[k - 1]!.col) > 1e-9 ? "col" : "row";
+      const open = runs[runs.length - 1];
+      if (open && open.axis === axis) open.to = k;
+      else runs.push({ from: k - 1, to: k, axis });
+    }
+    if (runs.length === 0) continue;
+    const shift = runs.map((run) => {
+      // A stub in from a curb is no street: it stays where it meets the curb.
+      if (!Array.from({ length: run.to - run.from }, (_, n) => gridEdge(run.from + 1 + n)).some((edge) => edge !== null)) return 0;
+      const sharing = lines.get(lineOf(run.axis, way[run.from]!)) ?? new Set<string>();
+      if (!sharing.has(key)) return 0;
+      const bundle = [...sharing].sort((x, y) => (order.get(x) ?? 0) - (order.get(y) ?? 0));
+      const total = bundle.reduce((sum, other) => sum + (widthOf.get(other) ?? 2) + 2, 0) - 2;
+      let at = -total / 2;
+      for (const other of bundle) {
+        if (other === key) return (at + (widthOf.get(other) ?? 2) / 2) / pxPerCell;
+        at += (widthOf.get(other) ?? 2) + 2;
+      }
+      return 0;
+    });
+    // A run along the col axis holds its row and is moved across by changing it, and the other way about; a corner takes one from each.
+    const held = (index: number) => {
+      const run = runs[index]!;
+      const at = way[run.from]!;
+      return run.axis === "col" ? { row: at.row + shift[index]! } : { col: at.col + shift[index]! };
+    };
+    const merge = (one: { col?: number; row?: number }, other: { col?: number; row?: number }, fallback: { col: number; row: number }) => ({ col: one.col ?? other.col ?? fallback.col, row: one.row ?? other.row ?? fallback.row });
+    const points = [merge(held(0), {}, way[0]!)];
+    for (let index = 0; index + 1 < runs.length; index++) points.push(merge(held(index), held(index + 1), way[runs[index]!.to]!));
+    points.push(merge(held(runs.length - 1), {}, way[way.length - 1]!));
+    out.set(key, points.map((p) => toIso(p.col, p.row, cell, tilt)));
+  }
   return out;
 }
 
-/** The pair of corners, one on each tile, nearest each other. */
-function nearestCorners(a: Tile, b: Tile): [Point, Point] {
-  const sides = ["left", "right", "back", "front"] as const;
-  let best: [Point, Point] = [corner(a, "right"), corner(b, "left")];
-  let gap = Infinity;
-  for (const one of sides) {
-    for (const other of sides) {
-      const p = corner(a, one);
-      const q = corner(b, other);
-      const d = Math.hypot(p.x - q.x, p.y - q.y);
-      if (d < gap) {
-        gap = d;
-        best = [p, q];
-      }
+/** The least-first queue the ground's router takes its next step from. */
+class MinHeap {
+  private readonly items: number[] = [];
+  private readonly keys: number[] = [];
+  get size(): number {
+    return this.items.length;
+  }
+  peekKey(): number {
+    return this.keys[0] ?? Infinity;
+  }
+  push(item: number, key: number): void {
+    this.items.push(item);
+    this.keys.push(key);
+    let at = this.items.length - 1;
+    while (at > 0) {
+      const up = (at - 1) >> 1;
+      if (this.keys[up]! <= this.keys[at]!) break;
+      this.swap(at, up);
+      at = up;
     }
   }
-  return best;
+  pop(): number {
+    const top = this.items[0]!;
+    const lastItem = this.items.pop()!;
+    const lastKey = this.keys.pop()!;
+    if (this.items.length > 0) {
+      this.items[0] = lastItem;
+      this.keys[0] = lastKey;
+      let at = 0;
+      for (;;) {
+        const left = 2 * at + 1;
+        const right = left + 1;
+        let least = at;
+        if (left < this.items.length && this.keys[left]! < this.keys[least]!) least = left;
+        if (right < this.items.length && this.keys[right]! < this.keys[least]!) least = right;
+        if (least === at) break;
+        this.swap(at, least);
+        at = least;
+      }
+    }
+    return top;
+  }
+  private swap(a: number, b: number): void {
+    [this.items[a], this.items[b]] = [this.items[b]!, this.items[a]!];
+    [this.keys[a], this.keys[b]] = [this.keys[b]!, this.keys[a]!];
+  }
 }
 
 /**

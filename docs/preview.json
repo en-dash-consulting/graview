@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T05:35:35.700Z",
+  "at": "2026-10-13T12:26:20.788Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/org.gdd.json",
   "seed": "packages/core/tests/document/fixtures/org.seed.json",
@@ -17,12 +17,12 @@
     "theSceneDrawsTheGraphAtTheOverviewsAddress": {
       "first": {
         "sceneOn": true,
-        "districts": 309,
+        "districts": 312,
         "path": "/places/overview"
       },
       "again": {
         "sceneOn": true,
-        "districts": 309,
+        "districts": 312,
         "path": "/places/overview"
       },
       "ok": true
@@ -35,7 +35,7 @@
     },
     "shotsWritesAPngForEachNamedPlace": {
       "status": 0,
-      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-45YinL",
+      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-UL1kkO",
       "pngs": [
         true,
         true,

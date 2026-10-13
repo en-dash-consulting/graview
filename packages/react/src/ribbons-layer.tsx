@@ -1,14 +1,14 @@
 import type { AnySchema } from "@graview/core";
 import type { InterpolatedLayout } from "@graview/layout";
-import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { districtOf, mapChoice, ribbonsOf, ribbonSentence } from "./map-choice.js";
 import { ribbonWidth } from "./ribbon-width.js";
-import { loopPoints, midpointOf, onCanvas, pathOf, routeRibbons, tileOf, type PlotLike, type Point, type Tile } from "./ribbons.js";
+import { loopPoints, midpointOf, onCanvas, pathOf, routeOnTheGround, type Box, type PlotLike, type Point } from "./ribbons.js";
 
 /**
  * THE RELATIONS FROM ALTITUDE: one ribbon per relation between two
  * districts, as wide as the links along it, the short way along the
- * ground between them so it never crosses a third district (`routeRibbons`)
+ * ground between them so it never crosses a third district (`routeOnTheGround`)
  * — and saying what it is when
  * pointed at: "146 features → 14 areas, the part it lives in".
  *
@@ -57,12 +57,41 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
   const cell = city?.cell ?? 0;
   const drawable = ribbons.filter((ribbon) => plots.has(ribbon.from) && plots.has(ribbon.to) && !hiddenKinds.has(ribbon.from) && !hiddenKinds.has(ribbon.to) && kitDraws(ribbon.edge));
   const tilt = city?.tilt ?? 0.5;
+  /*
+   * THE DISTRICTS' NAME CARDS, where they were drawn: a ribbon goes round
+   * them rather than behind them. Measured once the picture has landed, on
+   * the canvas from the city's origin, so a pan moves nothing here.
+   */
+  const [labels, setLabels] = useState<readonly Box[]>([]);
+  const labelsKey = labels.map((box) => `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}`).join(";");
+  const [svg, setSvg] = useState<SVGSVGElement | null>(null);
+  const settled = frame.t >= 1;
+  useLayoutEffect(() => {
+    const ground = svg?.parentElement;
+    if (!ground || !city || !settled) return;
+    const box = ground.getBoundingClientRect();
+    const ox = city.originX + pan.x;
+    const oy = city.originY + pan.y;
+    const found = [...ground.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face')].flatMap((el) => {
+      const at = el.getBoundingClientRect();
+      return at.width > 0 && at.height > 0 ? [{ x: at.left - box.left - ox, y: at.top - box.top - oy, width: at.width, height: at.height }] : [];
+    });
+    const key = found.map((one) => `${Math.round(one.x)},${Math.round(one.y)},${Math.round(one.width)},${Math.round(one.height)}`).join(";");
+    if (key !== labelsKey) setLabels(found);
+    // Measured again when the plots or the city's scale move the cards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [svg, settled, plotsKey, cell, tilt]);
   const routed = useMemo(() => {
     if (cell === 0) return [];
     const loops = new Map<string, number>();
     const most = Math.max(0, ...drawable.map((ribbon) => ribbon.links));
-    const tiles = new Map<string, Tile>([...plots].map(([kind, plot]) => [kind, tileOf(plot, cell, tilt)]));
-    const runs = routeRibbons(drawable.map((ribbon) => ({ key: ribbon.key, from: ribbon.from, to: ribbon.to, width: ribbonWidth(ribbon.links, most) })), tiles);
+    const runs = routeOnTheGround({
+      ribbons: drawable.map((ribbon) => ({ key: ribbon.key, from: ribbon.from, to: ribbon.to, width: ribbonWidth(ribbon.links, most) })),
+      plots,
+      cell,
+      tilt,
+      labels,
+    });
     return drawable.flatMap((ribbon) => {
       let points: Point[] | undefined;
       if (ribbon.from === ribbon.to) {
@@ -75,7 +104,7 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
     });
     // `plotsKey` stands for the plots; `drawable` follows the ribbons and the kit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cell, tilt, plotsKey, ribbons, kitDraws, hiddenKinds]);
+  }, [cell, tilt, plotsKey, ribbons, kitDraws, hiddenKinds, labelsKey]);
 
   /*
    * POINTED AT, NEVER PRESSED. A ribbon runs up to its districts' curbs,
@@ -86,8 +115,6 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
    */
   const bands = useRef<{ key: string; points: readonly Point[]; reach: number }[]>([]);
   const at = useRef({ x: 0, y: 0 });
-  // The drawn ribbons' own element, kept as state so the ground is listened to whenever they are drawn.
-  const [svg, setSvg] = useState<SVGSVGElement | null>(null);
   at.current = city ? { x: city.originX + pan.x, y: city.originY + pan.y } : { x: 0, y: 0 };
   useEffect(() => {
     const ground = svg?.parentElement;

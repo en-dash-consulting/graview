@@ -574,10 +574,17 @@ try {
     standing,
     switched,
     midway,
+    plot,
     landed,
-    /* Mid-tween the lens is nearer the plot's column than the center's. */
+    /*
+     * Mid-tween the lens is on its way from the plot: between the plot's
+     * column and the middle it lands in, at neither end. (It was "nearer the
+     * plot than the middle", which held only while the district stood near
+     * the middle; upstream districts now stand at the city's left, and a
+     * tween eased out is past halfway at a hundred milliseconds.)
+     */
     movedFromThePlot:
-      midway !== null && plotX !== null && Math.abs(midway.x - plotX) < Math.abs(midway.x - centerX) + 40,
+      midway !== null && plotX !== null && Math.min(plotX, centerX) + 20 < midway.x && midway.x < Math.max(plotX, centerX) - 20,
   };
   await drive.close();
 } catch (error) {
@@ -740,13 +747,31 @@ try {
      * as a leap only when it came within 50 ms of the one before.
      */
     const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > Math.max(20, travel * 0.6) && one.t - seen[at - 1].t < 50).length;
-    return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1] };
+    /*
+     * AND WHERE IT STANDS. A picture opens beside the map now, and the city
+     * is laid out again in the room left: at the same cell when the room's
+     * height is what held it, so what travels is where the ground stands.
+     * The same rule for the lattice's origin as for its cell.
+     */
+    const xs = [...new Set(seen.map((one) => one.x))];
+    const shift = Math.abs((seen[seen.length - 1]?.x ?? 0) - (seen[0]?.x ?? 0));
+    const xJumps = seen.filter((one, at) => at > 0 && Math.abs(one.x - seen[at - 1].x) > Math.max(20, shift * 0.6) && one.t - seen[at - 1].t < 50).length;
+    return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x };
   });
   report.checks = {
     ...(report.checks ?? {}),
     theCityPansBesideAnOpenPicture: onThePicture,
     // Many small steps and no leap: the ground eased from one cell to the other.
-    theGroundTravelsWithTheCards: { ...travel, ok: travel.steps >= 5 && travel.jumps === 0 && travel.last !== travel.first },
+    theGroundTravelsWithTheCards: {
+      ...travel,
+      // Whatever moved — the cell, where the ground stands, or both — eased there in many small steps and no leap, and something moved.
+      ok:
+        travel.jumps === 0 &&
+        travel.xJumps === 0 &&
+        (travel.last !== travel.first || travel.xLast !== travel.xFirst) &&
+        (travel.last === travel.first || travel.steps >= 5) &&
+        (travel.xLast === travel.xFirst || travel.xSteps >= 5),
+    },
   };
   report.camera = { start, zoomedIn, wheelAt: open, wheeled, buttonOut, buttonIn, dragged, onThePicture };
   await cam.close();

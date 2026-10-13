@@ -35,7 +35,8 @@ export function MapPanel<S extends AnySchema>() {
   if (!view.overview) return null;
   const showing = mapPanelShows(mapChoice(selection, view, (id) => store.graph.getNode(id)?.kind as string | undefined));
   if (!showing) return null;
-  if (showing.what !== "record" && hiddenKinds.has(showing.kind)) return null;
+  // A district the declaration has not got — an address from another app, a kind since removed — has nothing to list.
+  if (showing.what !== "record" && (hiddenKinds.has(showing.kind) || !(store.schema.kinds as readonly string[]).includes(showing.kind))) return null;
   return (
     <Suspense fallback={null}>
       <Panel showing={showing} />

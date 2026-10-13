@@ -1,5 +1,5 @@
 import { type AnySchema } from "@graview/core";
-import { cityMap, toIso, type CityMap, type Plot } from "@graview/core/city";
+import { cityMap, PITCH, toIso, type CityMap, type Plot } from "@graview/core/city";
 import type { CityFrame, Layout } from "./types.js";
 
 /**
@@ -8,8 +8,9 @@ import type { CityFrame, Layout } from "./types.js";
  * The map is the declaration's (`cityMap`): a kind's plot never moves
  * because of what happened today. What this file decides is how the
  * lattice meets the canvas — ONE scale and ONE translate, so the city keeps
- * its shape at every width — and which way up it stands: left to right in
- * a wide window, top to bottom in a tall one, whichever draws it larger.
+ * its shape at every width — and which way up it stands: up and to the
+ * right along the ground in a wide window, down it in a tall one, whichever
+ * draws it larger.
  *
  * THE WHOLE CITY OPENS IN THE WINDOW. The cell is the largest at which
  * every plot, and the name under it, stands inside the room the canvas
@@ -109,6 +110,8 @@ export function placeCity(
     readonly plots?: Readonly<Record<string, { col: number; row: number }>>;
     /** A factor on the fitted cell: the camera brought closer, the city allowed past the window. */
     readonly zoom?: number;
+    /** The kinds whose districts are chosen: a city drawn past the window keeps these, and their names, inside it. */
+    readonly keep?: readonly string[];
     /** The pan baked into the cards, recorded on the frame so the ground can tween with them. */
     readonly pan?: { readonly x: number; readonly y: number };
     /** A cell's height over its width: 0.5 at an angle, 1 from straight above. */
@@ -153,9 +156,8 @@ export function placeCity(
       // A district too full for its rows says `+n` off its left edge: room for it, so the count is never cut by the window.
       minX = Math.min(minX, x - Math.max(half + (card.count > 12 ? 30 : 0), name / 2));
       maxX = Math.max(maxX, x + Math.max(half, name / 2));
-      // The tallest block stands about a cell above the plot's far corner.
-      // The tallest block over the back corner, and a short name over that: the top row may say its name above itself.
-      minY = Math.min(minY, y - half * tilt - cell * RISE - UNDER - plate(card).short.height);
+      // The tallest block stands about a cell above the plot's far corner; a name is always under its plot.
+      minY = Math.min(minY, y - half * tilt - cell * RISE);
       maxY = Math.max(maxY, y + half * tilt + UNDER + plate(card).short.height);
     }
     return { minX, maxX, minY, maxY };
@@ -174,17 +176,22 @@ export function placeCity(
   };
 
   /*
-   * WHICH WAY UP. The map read left to right in a wide window and top to
-   * bottom in a tall one: whichever stands the city larger, wide when the
+   * WHICH WAY UP. The map runs up and to the right in a wide window and
+   * down in a tall one: whichever stands the city larger, wide when the
    * two are equal — the way a thumbnail, with no window, draws it.
    */
-  const wideMap = cityMap(schema, { ...(options.order ? { order: options.order } : {}), counts, ...(options.plots ? { plots: options.plots } : {}) });
-  const tallMap = cityMap(schema, { ...(options.order ? { order: options.order } : {}), counts, ...(options.plots ? { plots: options.plots } : {}), upright: true });
-  const wide = fit(shapeOf(wideMap));
-  const tall = fit(shapeOf(tallMap));
-  const map = canvas.height > canvas.width && tall >= wide ? tallMap : wideMap;
-  const shape = shapeOf(map);
-  const fitted = map === tallMap ? tall : wide;
+  const mapsAt = (pitch: number) => {
+    const hints = { ...(options.order ? { order: options.order } : {}), counts, ...(options.plots ? { plots: options.plots } : {}), pitch };
+    const wideMap = cityMap(schema, hints);
+    const tallMap = cityMap(schema, { ...hints, upright: true });
+    const wide = fit(shapeOf(wideMap));
+    const tall = fit(shapeOf(tallMap));
+    const map = canvas.height > canvas.width && tall >= wide ? tallMap : wideMap;
+    return { map, fitted: map === tallMap ? tall : wide };
+  };
+  let shape: ReturnType<typeof shapeOf> = [];
+  let map: CityMap = new Map();
+  let fitted = 0;
 
   /** The city at `cell`, its middle at the room's middle shifted by `shift`; each district's box is its plot's. */
   const at = (cell: number, shift = { x: 0, y: 0 }) => {
@@ -208,6 +215,32 @@ export function placeCity(
     });
   };
   type Drawn = ReturnType<typeof draw>[number];
+  /*
+   * A NAME STANDS UNDER ITS OWN DISTRICT, never beside a neighbor or over
+   * one, where it would read as the neighbor's. Where the names under
+   * their districts would meet one another or another district's ground,
+   * the districts stand further apart — a wider street, on the same
+   * lattice — rather than any name moving: the narrowest spacing at which
+   * every name fits under its own district, whole or short.
+   */
+  const fitsUnder = (drawn: readonly Drawn[], window = true) => {
+    const said: Box[] = [];
+    // In the order the names are said below, most pressing first, and clear of the chrome as they must be.
+    const pressing = [...drawn].sort((a, b) => (b.card.weight ?? b.card.count) - (a.card.weight ?? a.card.count) || cards.indexOf(a.card) - cards.indexOf(b.card));
+    return pressing.filter((one) =>
+      [plate(one.card), plate(one.card).short].some((size) => {
+        const box = plateBox(one, size);
+        const clear =
+          (!window || (box.x >= 0 && box.y >= 0 && box.x + box.width <= canvas.width && box.y + box.height <= canvas.height)) &&
+          !said.some((other) => collides(box, other, 4)) &&
+          !drawn.some((other) => other !== one && onDiamond(box, other, other.halfW, other.halfH)) &&
+          !avoid.some((other) => collides(box, other, 0));
+        if (clear) said.push(box);
+        return clear;
+      }),
+    ).length;
+  };
+
   /** Where a name stands: under the plot's front corner, over its back corner and the blocks on it, or beside its right corner. */
   const plateBox = (one: Drawn, size: { width: number; height: number }, at: "under" | "above" | "aside" = "under"): Box =>
     at === "aside"
@@ -232,6 +265,24 @@ export function placeCity(
       const name = plateBox(one, plate(one.card).short);
       return one.x - one.halfW >= 0 && one.x + one.halfW <= canvas.width && one.y - one.halfH >= 0 && name.x >= 0 && name.x + name.width <= canvas.width && name.y + name.height <= canvas.height;
     });
+  /*
+   * Where no spacing lets every name stand under its district — a phone,
+   * with names as wide as the city — the spacing that says the most of
+   * them, the narrowest of those: a wider street that says no more names
+   * only draws the city smaller.
+   */
+  let best = { pitch: PITCH, said: -1 };
+  for (const pitch of [PITCH, PITCH + 1, PITCH + 2, PITCH + 3, PITCH + 5, PITCH + 7]) {
+    ({ map, fitted } = mapsAt(pitch));
+    shape = shapeOf(map);
+    const said = fitsUnder(draw(at(fitted)));
+    if (said > best.said) best = { pitch, said };
+    if (said === cards.length) break;
+  }
+  if (best.pitch !== PITCH + 7 || best.said !== cards.length) {
+    ({ map, fitted } = mapsAt(best.pitch));
+    shape = shapeOf(map);
+  }
   let where = at(fitted);
   if (avoid.length > 0 && blocked(draw(where))) {
     let found: typeof where | undefined;
@@ -256,16 +307,72 @@ export function placeCity(
   }
 
   /*
+   * CLOSE ENOUGH TO READ. Where no spacing says every name inside the
+   * window — a phone, whose names are as wide as its city — the camera
+   * starts closer, by the least that lets every name stand under its own
+   * district: the city runs past the window's edges, the signs on those
+   * edges say what is there, and a finger pans to it. A city drawn whole
+   * but too small to name is a city nobody can press.
+   */
+  const closerBy = (where: { originX: number; originY: number; cell: number }, by: number) => {
+    const mid = { x: canvas.width / 2, y: canvas.height / 2 };
+    return { cell: where.cell * by, originX: mid.x + (where.originX - mid.x) * by, originY: mid.y + (where.originY - mid.y) * by };
+  };
+  let closer = 1;
+  if (fitsUnder(draw(where)) < cards.length) {
+    /*
+     * Each spacing at the least closer camera that names every district,
+     * and of those the one whose city stands smallest on the screen: a
+     * wider street can say them all from further out. Where none does
+     * within three times closer, the one that says the most.
+     */
+    let chosen = { said: fitsUnder(draw(where), false), area: Infinity, pitch: -1, by: 1 };
+    const before = { map, shape, fitted, where };
+    for (const pitch of [PITCH, PITCH + 1, PITCH + 2, PITCH + 3, PITCH + 5, PITCH + 7]) {
+      ({ map, fitted } = mapsAt(pitch));
+      shape = shapeOf(map);
+      const from = at(fitted);
+      for (let by = 1; by <= 3.001; by += 0.1) {
+        const said = fitsUnder(draw(closerBy(from, by)), false);
+        const e = extentAt(shape, fitted * by);
+        const area = (e.maxX - e.minX) * (e.maxY - e.minY);
+        if (said > chosen.said || (said === chosen.said && area < chosen.area)) chosen = { said, area, pitch, by };
+        if (said === cards.length) break;
+      }
+    }
+    if (chosen.pitch < 0) ({ map, shape, fitted, where } = before);
+    else {
+      ({ map, fitted } = mapsAt(chosen.pitch));
+      shape = shapeOf(map);
+      closer = chosen.by;
+      where = closerBy(at(fitted), closer);
+    }
+    /*
+     * WHAT IS CHOSEN STAYS IN SIGHT: a city drawn past the window moves,
+     * the least it can, to keep the chosen district and its name inside —
+     * the sheet it opened takes the foot of a phone, and a district past
+     * the edge could not be pressed again or asked for its acts.
+     */
+    const kept = draw(where).filter((one) => options.keep?.includes(one.card.kind));
+    if (kept.length > 0) {
+      const boxes = kept.flatMap((one) => [{ x: one.x - one.halfW, y: one.y - one.halfH, width: one.halfW * 2, height: one.halfH * 2 }, plateBox(one, plate(one.card))]);
+      const left = Math.min(...boxes.map((b) => b.x));
+      const right = Math.max(...boxes.map((b) => b.x + b.width));
+      const top = Math.min(...boxes.map((b) => b.y));
+      const bottom = Math.max(...boxes.map((b) => b.y + b.height));
+      const by = (low: number, high: number, span: number) => (high - low > span - 16 ? span / 2 - (low + high) / 2 : low < 8 ? 8 - low : high > span - 8 ? span - 8 - high : 0);
+      where = { ...where, originX: where.originX + by(left, right, canvas.width), originY: where.originY + by(top, bottom, canvas.height) };
+    }
+  }
+
+  /*
    * FLYING CLOSER. The fit above is the whole map in the window; a zoom is
    * the camera brought in afterwards, about the canvas's middle, so the map
    * keeps its shape and only the cell grows — the city may run past the
    * window, and the camera pans to reach it. The names stay their size.
    */
   const zoom = options.zoom && options.zoom !== 1 ? options.zoom : 1;
-  if (zoom !== 1) {
-    const mid = { x: canvas.width / 2, y: canvas.height / 2 };
-    where = { cell: where.cell * zoom, originX: mid.x + (where.originX - mid.x) * zoom, originY: mid.y + (where.originY - mid.y) * zoom };
-  }
+  if (zoom !== 1) where = closerBy(where, zoom);
   const drawn = draw(where);
 
   /*
@@ -280,13 +387,10 @@ export function placeCity(
   const sayOf = new Map<string, Nameplate>();
   const order = [...drawn].sort((a, b) => (b.card.weight ?? b.card.count) - (a.card.weight ?? a.card.count) || cards.indexOf(a.card) - cards.indexOf(b.card));
   for (const one of order) {
+    // Under its own district, whole or short: never over it or beside it, where it would read as a neighbor's.
     const sizes: [Nameplate, { width: number; height: number }, "under" | "above" | "aside"][] = [
       ["full", plate(one.card), "under"],
-      ["full-above", plate(one.card), "above"],
       ["short", plate(one.card).short, "under"],
-      ["short-above", plate(one.card).short, "above"],
-      ["full-aside", plate(one.card), "aside"],
-      ["short-aside", plate(one.card).short, "aside"],
     ];
     let chosen: Nameplate = "none";
     /*
@@ -299,12 +403,12 @@ export function placeCity(
     const first = one === order[0];
     type Try = readonly [Nameplate, { width: number; height: number }, "under" | "above" | "aside", boolean];
     const as = (over: boolean, kind: string): Try[] => sizes.filter(([name]) => name.startsWith(kind)).map(([n, size, at]) => [n, size, at, over] as const);
-    // Its whole name first, on clear ground and then over a neighbor's; only then its short name the same two ways.
-    const tries: Try[] = first ? [...as(false, "full"), ...as(true, "full"), ...as(false, "short"), ...as(true, "short")] : sizes.map(([n, size, at]) => [n, size, at, false] as const);
+    // On clear ground first, whole and then short; only then over a neighbor's, whole and then short.
+    const tries: Try[] = first ? [...as(false, "full"), ...as(false, "short"), ...as(true, "full"), ...as(true, "short")] : sizes.map(([n, size, at]) => [n, size, at, false] as const);
     for (const [name, size, at, over] of tries) {
       const box = plateBox(one, size, at);
       // Past the window's edge only counts for the whole map; flown closer, the camera pans to it.
-      const inside = zoom !== 1 || (box.x >= 0 && box.y >= 0 && box.x + box.width <= canvas.width && box.y + box.height <= canvas.height);
+      const inside = zoom !== 1 || closer !== 1 || (box.x >= 0 && box.y >= 0 && box.x + box.width <= canvas.width && box.y + box.height <= canvas.height);
       const clear =
         inside &&
         !said.some((other) => collides(box, other, 4)) &&
