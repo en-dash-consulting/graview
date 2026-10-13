@@ -7,7 +7,8 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it, vi } from "vitest";
 import { erin, lin, offersApp, offersSeed } from "../../../../scripts/fixtures/offers-app.js";
-import { guestView, mountGuestView } from "../../src/host/index.js";
+import { mountGuestView } from "../../src/host/frame.js";
+import { guestView } from "../../src/host/index.js";
 import { createGuestHost } from "../../src/host/session.js";
 import { GUEST_PROTOCOL, type GuestProps, type HostHello, type HostMessage } from "../../src/protocol.js";
 

@@ -1247,18 +1247,19 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <h1 id="h-what">@graview/guest</h1>
       <p class="lede" style="margin-top: 18px;"><code>@graview/guest</code> is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Guest views: somebody else's React or plain script in a sandboxed frame, or a hardened classic worker drawing a component kit, shown only what the viewer may see, able only to ask for acts the viewer's seat then applies.</p>
       <div class="cta"><div class="cta-line"><code>pnpm add @graview/guest</code><button type="button" class="copy" data-copy="pnpm add @graview/guest">Copy</button></div></div>
-      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/host/views</code>, <code>@graview/guest/headless</code>, <code>@graview/guest/headless/node</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/build</code>, <code>@graview/guest/cli</code>, <code>@graview/guest/client</code>, <code>@graview/guest/client.js</code></p>
+      <p class="sm dim" style="margin-top: 14px;">Entry points: <code>@graview/guest</code>, <code>@graview/guest/react</code>, <code>@graview/guest/host</code>, <code>@graview/guest/host/frame</code>, <code>@graview/guest/host/worker</code>, <code>@graview/guest/host/views</code>, <code>@graview/guest/headless</code>, <code>@graview/guest/headless/node</code>, <code>@graview/guest/worker</code>, <code>@graview/guest/worker/view</code>, <code>@graview/guest/build</code>, <code>@graview/guest/cli</code>, <code>@graview/guest/client</code>, <code>@graview/guest/client.js</code></p>
     </section>
     <section id="readme" aria-labelledby="h-readme">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-readme">What it is</h2></div>
 <p>A view somebody else wrote — a recipe card, a bespoke dashboard, React or plain script — drawn in an iframe that can see only what the viewer may see and can only ask. The host pushes the view's props as the viewer sees them; the guest asks for an act by name, and the host applies it as the viewer, so the policy refuses on the guest's behalf exactly as it would refuse a click. The rail says the act came through the view.</p>
 <h3>In the host</h3>
-<div class="code" data-scroller><pre><code class="language-ts">import { guestView, mountGuestView } from "@graview/guest/host";
+<div class="code" data-scroller><pre><code class="language-ts">import { guestView } from "@graview/guest/host";
 
 views.register("recipe", { fidelity: "full", cardinality: "one" },
   guestView({ url: "https://cards.example/recipe.html", name: "recipe-card" }));
 
-// Or without React, into any element:
+// Or without React, into any element (`guestView` fetches this as it is first drawn):
+import { mountGuestView } from "@graview/guest/host/frame";
 const frame = mountGuestView(element, { url, view: "recipe-card", store, principal, input: () =&gt; ({ node: { id } }) });
 frame.update();   // the input moved
 frame.dispose();</code></pre></div>

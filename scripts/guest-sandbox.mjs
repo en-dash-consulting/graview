@@ -240,7 +240,7 @@ function protocolClaims({ seen, answers, wire, log, heard, stats, went }) {
 
 async function frameSuite() {
   const hostJs = await bundle(`
-import { mountGuestView } from "./packages/guest/dist/host/index.js";
+import { mountGuestView } from "./packages/guest/dist/host/frame.js";
 ${SHOWROOM}
 localStorage.setItem("host-secret", "sk-host-storage");
 const frames = {

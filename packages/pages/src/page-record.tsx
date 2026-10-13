@@ -1,4 +1,5 @@
-import { describeNode, humanizeField, isWithheld, pageSections, type AnySchema, type Violation } from "@graview/core";
+import { humanizeField, isWithheld, type AnySchema, type Violation } from "@graview/core";
+import { describeNode, pageSections } from "@graview/core/words";
 import { DefaultViewElsewhere, EditableValue, Files, LongValue, pageSays, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";

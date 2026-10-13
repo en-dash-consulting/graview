@@ -10,6 +10,9 @@ import * as importing from "../../src/import/index.js";
 import * as jsonSchema from "../../src/json-schema.js";
 import * as main from "../../src/index.js";
 import * as scene from "../../src/scene.js";
+import * as search from "../../src/search.js";
+import * as seat from "../../src/seat.js";
+import * as words from "../../src/words.js";
 
 /*
  * THE MAIN ENTRY CARRIES ONLY WHAT A PAGE DRAWS WITH. A hosted page imports
@@ -27,10 +30,14 @@ const OFF_THE_PAGE = {
   "@graview/core/forms": { from: forms, names: ["formArgs", "formComplete", "formField", "formFields", "undecidableArguments"] },
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "statusColumns"] },
-  "@graview/core/check": { from: check, names: ["checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt"] },
+  "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt"] },
   "@graview/core/scene": { from: scene, names: ["BLOCK", "cityExtent", "cityMap", "heightOf", "MAX_SIDE", "plotsOverlap", "roadsOf", "sharedEdges", "sideFor", "toIso", "villageCap", "villageOf", "sceneDistricts", "sceneThumbnail"] },
   "@graview/core/figures": { from: figures, names: ["FIGURES", "FIGURE_NAMES", "figureBrief", "figureFaults", "figureSvg"] },
   "@graview/core/json-schema": { from: jsonSchema, names: ["mutationToolSchema", "nodeJsonSchema", "schemaJson", "toJsonSchema"] },
+  // FR-179: the matcher, a record and an argument said in words, and what the seat and the seeding read.
+  "@graview/core/search": { from: search, names: ["actsOn", "describeSearched", "fold", "fragmentOf", "matchNode", "parseQuery", "search", "searchableFields", "squeeze", "strengthOf", "touchWeights"] },
+  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "failureWords", "isLongText", "pageSections", "readableFields", "tellApart", "viaSaid"] },
+  "@graview/core/seat": { from: seat, names: ["answerSeenBy", "beginning", "placesFrom", "placesOf"] },
 } as const;
 
 describe("the entries a hosted page imports up front", () => {

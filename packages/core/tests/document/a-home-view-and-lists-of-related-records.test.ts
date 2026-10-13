@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { checkApp } from "../../src/cli/check.js";
 import { describeApp } from "../../src/cli/describe.js";
-import { createSchema, declaredLenses, defineApp, defineNode, placesOf, z, type GraviewApp } from "../../src/index.js";
+import { createSchema, declaredLenses, defineApp, defineNode, z, type GraviewApp } from "../../src/index.js";
+import { placesOf } from "../../src/seat.js";
 import { toDocument, validateViewSpecs, type Finding } from "../../src/document/index.js";
 import { compileDocument } from "../../src/check.js";
 

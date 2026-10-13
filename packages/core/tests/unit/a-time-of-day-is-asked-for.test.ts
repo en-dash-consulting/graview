@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { describeArg, isoDate } from "../../src/index.js";
+import { isoDate } from "../../src/index.js";
+import { describeArg } from "../../src/words.js";
 import { formFields } from "../../src/forms.js";
 
 /**

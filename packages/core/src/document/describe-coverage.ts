@@ -1,6 +1,7 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { AnySchema } from "../schema/schema.js";
-import { counted, isCurrent, labelOf, readableFields } from "../schema/define-node.js";
+import { counted, isCurrent, labelOf } from "../schema/define-node.js";
+import { readableFields } from "../schema/reading.js";
 import { walkKinds } from "../schema/path.js";
 import type { DescribedItem, DescribedPart } from "./describe-place.js";
 

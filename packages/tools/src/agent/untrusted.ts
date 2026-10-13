@@ -1,4 +1,5 @@
-import { describeArg, nameOfAuthor, type AnySchema, type Author, type Principal, type SearchResult, type Store } from "@graview/core";
+import { nameOfAuthor, type AnySchema, type Author, type Principal, type SearchResult, type Store } from "@graview/core";
+import { describeArg } from "@graview/core/words";
 
 /**
  * OTHER PEOPLE'S WORDS ARE DATA (FR-10).

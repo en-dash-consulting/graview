@@ -1,4 +1,5 @@
-import { pluralOf, placesOf, type AnySchema, type AppPlace, type GraviewApp, type LensDeclaration, type ShippedLensName } from "@graview/core";
+import { pluralOf, type AnySchema, type AppPlace, type GraviewApp, type LensDeclaration, type ShippedLensName } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { checkApp, compileDocument } from "@graview/core/check";
 import { diffDocuments, editDocument, type DocumentEdit, type GraviewDocument } from "@graview/core/document";
 import { lensEditOf, takeBackEditOf, type AddLensEdit, type RemoveLensEdit } from "./draft.js";

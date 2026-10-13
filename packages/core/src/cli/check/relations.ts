@@ -1,4 +1,5 @@
-import { describeArg, nodeRefArgs, type ArgShape } from "../../mutations/node-ref.js";
+import { describeArg, type ArgShape } from "../../mutations/arg-shape.js";
+import { nodeRefArgs } from "../../mutations/node-ref.js";
 import { roleProblem } from "../../document/facts-and-roles.js";
 import { documentOf } from "../../document/to-document.js";
 import { withArticle } from "../../schema/define-node.js";

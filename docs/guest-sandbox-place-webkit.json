@@ -1,0 +1,243 @@
+{
+  "at": "2026-10-13T04:10:54.737Z",
+  "transport": "place",
+  "engine": "webkit",
+  "claims": {
+    "the pages face lists the worker view among the app's places, by its title": {
+      "ok": true
+    },
+    "on the pages face the worker view is the place \"The packages\", among the Pictures in the place list, labeled as its title and with its author said": {
+      "ok": true,
+      "detail": {
+        "label": "Offers · The packages",
+        "author": "Made by Claude for Nick",
+        "heading": "The packages",
+        "kinds": "offer package",
+        "scheme": "light",
+        "packages": [
+          {
+            "id": "package:start",
+            "title": "A way in",
+            "offers": [
+              "Team coaching",
+              "AI strategy sprint"
+            ]
+          },
+          {
+            "id": "package:full",
+            "title": "The whole thing",
+            "offers": [
+              "Team coaching",
+              "AI strategy sprint",
+              "Copernicus build"
+            ]
+          },
+          {
+            "id": "package:later",
+            "title": "Later on",
+            "offers": [
+              "Copernicus build"
+            ]
+          }
+        ],
+        "background": "rgb(255, 255, 255)",
+        "text": "\n    \n      The packages\n      \n          \n            recommendedA way in$36,000\n            Team coaching$12,000AI strategy sprint$24,000\n          \n          \n            alternativeThe whole thing$72,000\n            Team coaching$12,000AI strategy sprint$24,000Copernicus build$36,000\n          \n          \n            laterLater on$36,000\n            Copernicus build$36,000\n          \n    "
+      }
+    },
+    "it lists each package's offers, from the offers and the includes edges it reads": {
+      "ok": true,
+      "detail": [
+        {
+          "id": "package:start",
+          "title": "A way in",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint"
+          ]
+        },
+        {
+          "id": "package:full",
+          "title": "The whole thing",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint",
+            "Copernicus build"
+          ]
+        },
+        {
+          "id": "package:later",
+          "title": "Later on",
+          "offers": [
+            "Copernicus build"
+          ]
+        }
+      ]
+    },
+    "an offer Lin may not see is not in what the view was handed or drew": {
+      "ok": true,
+      "detail": [
+        {
+          "id": "package:start",
+          "title": "A way in",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint"
+          ]
+        },
+        {
+          "id": "package:full",
+          "title": "The whole thing",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint",
+            "Copernicus build"
+          ]
+        },
+        {
+          "id": "package:later",
+          "title": "Later on",
+          "offers": [
+            "Copernicus build"
+          ]
+        }
+      ]
+    },
+    "it was handed only the kind it attaches to and the kind it reads": {
+      "ok": true,
+      "detail": "offer package"
+    },
+    "on the Graview face the stop of \"The packages\" draws the worker view in the scene": {
+      "ok": true,
+      "detail": {
+        "packages": [
+          "A way in",
+          "The whole thing",
+          "Later on"
+        ]
+      }
+    },
+    "on the Graview face too, the offer Lin may not see is nowhere": {
+      "ok": true,
+      "detail": [
+        {
+          "id": "package:start",
+          "title": "A way in",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint"
+          ]
+        },
+        {
+          "id": "package:full",
+          "title": "The whole thing",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint",
+            "Copernicus build"
+          ]
+        },
+        {
+          "id": "package:later",
+          "title": "Later on",
+          "offers": [
+            "Copernicus build"
+          ]
+        }
+      ]
+    },
+    "Erin, who may see every offer, is shown the margin review in the same package": {
+      "ok": true,
+      "detail": [
+        {
+          "id": "package:start",
+          "title": "A way in",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint",
+            "Internal margin review"
+          ]
+        },
+        {
+          "id": "package:full",
+          "title": "The whole thing",
+          "offers": [
+            "Team coaching",
+            "AI strategy sprint",
+            "Copernicus build"
+          ]
+        },
+        {
+          "id": "package:later",
+          "title": "Later on",
+          "offers": [
+            "Copernicus build"
+          ]
+        }
+      ]
+    },
+    "in light the packages take the app's light panel": {
+      "ok": true,
+      "detail": {
+        "light": "rgb(255, 255, 255)",
+        "lightPanel": "rgb(255, 255, 255)"
+      }
+    },
+    "toggling the app to dark restyles the view and pushes it the dark theme, though the system says light": {
+      "ok": true,
+      "detail": {
+        "dark": "rgba(19, 27, 52, 0.96)",
+        "darkPanel": "rgba(19, 27, 52, 0.96)",
+        "system": false,
+        "scheme": "dark"
+      }
+    },
+    "on the pages face, a view's link to a record goes to that record's page": {
+      "ok": true,
+      "detail": {
+        "heading": "Team coaching",
+        "region": false
+      }
+    },
+    "a view's <a href=\"https://…\"> is drawn as text: no href, not a link": {
+      "ok": true,
+      "detail": {
+        "href": null,
+        "role": null,
+        "text": "Somewhere else"
+      }
+    },
+    "on the pages face, a view's link to a place, followed with Enter, goes to that place": {
+      "ok": true
+    },
+    "graview.navigate to no record and no place stays, and tells the host's problems why, naming the places": {
+      "ok": true,
+      "detail": [
+        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"the-packages\", \"what-we-heard\"."
+      ]
+    },
+    "and says the same in the view's console": {
+      "ok": true,
+      "detail": [
+        "\"projections\" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: \"the-packages\", \"what-we-heard\"."
+      ]
+    },
+    "graview.navigate(\"the-packages\"), a bare string that is no record but a place's slug, goes to that place": {
+      "ok": true
+    },
+    "on the Graview face, a view's link to a place goes to that place": {
+      "ok": true
+    },
+    "on the Graview face, a view's link to a record goes to that record, chosen": {
+      "ok": true
+    },
+    "no view failed": {
+      "ok": true
+    },
+    "the page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

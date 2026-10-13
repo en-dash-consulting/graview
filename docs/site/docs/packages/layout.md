@@ -6,7 +6,7 @@
 pnpm add @graview/layout
 ```
 
-Entry points: `@graview/layout`, `@graview/layout/view`
+Entry points: `@graview/layout`, `@graview/layout/view`, `@graview/layout/sizes`
 
 ## What it is
 

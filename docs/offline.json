@@ -1,0 +1,260 @@
+{
+  "at": "2026-10-13T04:10:29.801Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "checks": {
+    "aMenuNeverOfflineIsWhole": {
+      "engines": {
+        "chromium": {
+          "line": null,
+          "retry": false,
+          "hostActions": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "controls": 10,
+          "keyboard": "host-action"
+        },
+        "webkit": {
+          "line": null,
+          "retry": false,
+          "hostActions": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "controls": 10,
+          "keyboard": "profile"
+        },
+        "firefox": {
+          "line": null,
+          "retry": false,
+          "hostActions": [
+            "Change the app",
+            "Your apps",
+            "Report this app"
+          ],
+          "controls": 10,
+          "keyboard": "host-action"
+        }
+      },
+      "held": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "offlineTheMenuSaysSoInOneLine": {
+      "engines": {
+        "chromium": {
+          "menu": {
+            "line": "The rest of your menu will load when you're back online. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "refused": 3,
+          "errors": []
+        },
+        "webkit": {
+          "menu": {
+            "line": "The rest of your menu will load when you're back online. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "refused": 0,
+          "errors": []
+        },
+        "firefox": {
+          "menu": {
+            "line": "The rest of your menu will load when you're back online. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "refused": 1,
+          "errors": []
+        }
+      },
+      "held": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "backOnlineTheNextOpenIsTheWholeMenu": {
+      "engines": {
+        "chromium": {
+          "menu": {
+            "line": null,
+            "retry": false,
+            "hostActions": [
+              "Change the app",
+              "Your apps",
+              "Report this app"
+            ],
+            "controls": 10,
+            "keyboard": "host-action"
+          },
+          "whole": 10,
+          "reloaded": false,
+          "asked": [
+            "(as built)",
+            "?retry=1",
+            "?retry=2",
+            "?retry=3"
+          ]
+        },
+        "webkit": {
+          "menu": {
+            "line": null,
+            "retry": false,
+            "hostActions": [
+              "Change the app",
+              "Your apps",
+              "Report this app"
+            ],
+            "controls": 10,
+            "keyboard": "host-action"
+          },
+          "whole": 10,
+          "reloaded": false,
+          "asked": [
+            "(as built)"
+          ]
+        },
+        "firefox": {
+          "menu": {
+            "line": null,
+            "retry": false,
+            "hostActions": [
+              "Change the app",
+              "Your apps",
+              "Report this app"
+            ],
+            "controls": 10,
+            "keyboard": "host-action"
+          },
+          "whole": 10,
+          "reloaded": false,
+          "asked": [
+            "(as built)",
+            "?retry=4"
+          ]
+        }
+      },
+      "held": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "tryAgainBringsItInPlaceAndKeepsTheKeyboard": {
+      "engines": {
+        "chromium": {
+          "first": {
+            "line": "The rest of your menu didn't load. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "stillAway": {
+            "line": "The rest of your menu didn't load. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "arrived": {
+            "line": null,
+            "retry": false,
+            "hostActions": [
+              "Change the app",
+              "Your apps",
+              "Report this app"
+            ],
+            "controls": 10,
+            "keyboard": "host-action"
+          }
+        },
+        "webkit": {
+          "first": {
+            "line": "The rest of your menu didn't load. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "stillAway": {
+            "line": "The rest of your menu didn't load. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "arrived": {
+            "line": null,
+            "retry": false,
+            "hostActions": [
+              "Change the app",
+              "Your apps",
+              "Report this app"
+            ],
+            "controls": 10,
+            "keyboard": "host-action"
+          }
+        },
+        "firefox": {
+          "first": {
+            "line": "The rest of your menu didn't load. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "stillAway": {
+            "line": "The rest of your menu didn't load. Try again",
+            "retry": true,
+            "hostActions": [],
+            "controls": 1,
+            "keyboard": "lazy-part-retry"
+          },
+          "arrived": {
+            "line": null,
+            "retry": false,
+            "hostActions": [
+              "Change the app",
+              "Your apps",
+              "Report this app"
+            ],
+            "controls": 10,
+            "keyboard": "host-action"
+          }
+        }
+      },
+      "held": {
+        "chromium": true,
+        "webkit": true,
+        "firefox": true
+      },
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "passed": true
+}

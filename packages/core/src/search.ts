@@ -1,9 +1,10 @@
 import { addressOf } from "./address.js";
 import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrangement.js";
-import { describeArg } from "./mutations/node-ref.js";
+import { describeArg } from "./mutations/arg-shape.js";
 import type { Operation } from "./ops/types.js";
 import type { Principal } from "./permissions/types.js";
-import { actTitle, humanizeField, isCurrent, labelOf, pluralLabel, pluralOf as pluralOfKind, readableFields, tellApart } from "./schema/define-node.js";
+import { actTitle, humanizeField, isCurrent, labelOf, pluralLabel, pluralOf as pluralOfKind } from "./schema/define-node.js";
+import { readableFields, tellApart } from "./schema/reading.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { hidesFrom, seesId } from "./seen.js";

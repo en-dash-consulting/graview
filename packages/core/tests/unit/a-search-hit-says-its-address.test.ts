@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { addressOf, createSchema, defineNode, search, Store, type Hit, type Policy, type Principal } from "../../src/index.js";
+import { addressOf, createSchema, defineNode, Store, type Hit, type Policy, type Principal } from "../../src/index.js";
+import { search } from "../../src/search.js";
 
 /**
  * A SEARCH HIT SAYS ITS ADDRESS (FR-129).

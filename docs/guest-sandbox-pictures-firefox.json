@@ -1,0 +1,117 @@
+{
+  "at": "2026-10-13T04:12:45.322Z",
+  "transport": "pictures",
+  "engine": "firefox",
+  "claims": {
+    "the view draws only the job Ana is on: the porch repair, not the roof survey": {
+      "ok": true,
+      "detail": [
+        "job:porch"
+      ]
+    },
+    "it draws the porch's photographs from blob: URLs of the page, which the host made from the bytes": {
+      "ok": true,
+      "detail": {
+        "step": {
+          "scheme": "blob",
+          "sameOrigin": true
+        },
+        "porch": {
+          "scheme": "blob",
+          "sameOrigin": true
+        }
+      }
+    },
+    "the step's photograph is the file on the record, byte for byte, at its own size (40×20), with its caption as its alt": {
+      "ok": true,
+      "detail": {
+        "natural": [
+          40,
+          20
+        ],
+        "alt": "The cracked step",
+        "bytes": 93
+      }
+    },
+    "the porch's photograph, 1600 pixels across, is handed made smaller to the 400 the view draws a picture at": {
+      "ok": true,
+      "detail": {
+        "natural": [
+          400,
+          250
+        ],
+        "handed": 2330,
+        "stored": 7088
+      }
+    },
+    "the SVG plan and the PDF quote are handed as their name, type and size, with no address": {
+      "ok": true,
+      "detail": [
+        "plan.svg image/svg+xml 200",
+        "quote.pdf application/pdf 1800"
+      ]
+    },
+    "nothing the view drew names a path on the host": {
+      "ok": true,
+      "detail": {
+        "named": 0
+      }
+    },
+    "the host fetched each of the porch's two pictures once, with the reader's session": {
+      "ok": true,
+      "detail": [
+        {
+          "path": "/graview/files/porch-3f9a.png",
+          "signed": true
+        },
+        {
+          "path": "/graview/files/step-77c1.png",
+          "signed": true
+        }
+      ]
+    },
+    "the roof's photograph, on a record Ana may not see, was never asked for; nor the SVG or the PDF": {
+      "ok": true,
+      "detail": [
+        {
+          "url": "http://127.0.0.1:6192/graview/files/porch-3f9a.png",
+          "type": "fetch"
+        },
+        {
+          "url": "http://127.0.0.1:6192/graview/files/step-77c1.png",
+          "type": "fetch"
+        }
+      ]
+    },
+    "every request for a picture was the host's fetch, never an image the view loaded": {
+      "ok": true,
+      "detail": [
+        {
+          "url": "http://127.0.0.1:6192/graview/files/porch-3f9a.png",
+          "type": "fetch"
+        },
+        {
+          "url": "http://127.0.0.1:6192/graview/files/step-77c1.png",
+          "type": "fetch"
+        }
+      ]
+    },
+    "nothing else was requested": {
+      "ok": true,
+      "detail": []
+    },
+    "no view failed, and nothing was left out": {
+      "ok": true,
+      "detail": {
+        "failures": [],
+        "problems": []
+      }
+    },
+    "the page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

@@ -1,4 +1,4 @@
-import { GraphError } from "../graph/graph.js";
+import { InvalidArguments } from "./invalid-arguments.js";
 import type { AnySchema } from "../schema/schema.js";
 import { fieldWords, humanizeField } from "../schema/define-node.js";
 
@@ -38,20 +38,6 @@ export function argumentWords(
     };
   }
   return { label: fieldWords(undefined, name), option: (value) => humanizeField(value) };
-}
-
-/** Arguments a mutation refused, each with where it was and what was wrong. */
-export class InvalidArguments extends GraphError {
-  constructor(
-    readonly mutation: string,
-    readonly issues: readonly { readonly path: readonly PropertyKey[]; readonly message: string }[],
-  ) {
-    super(
-      `Invalid arguments for mutation "${mutation}"`,
-      issues.map((issue) => `${issue.path.map(String).join(".") || "(root)"}: ${issue.message}`).join("; "),
-    );
-    this.name = "InvalidArguments";
-  }
 }
 
 /**

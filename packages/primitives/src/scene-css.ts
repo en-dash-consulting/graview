@@ -1,6 +1,6 @@
 import type { IsoFace, IsoWash, Scheme } from "@graview/core";
 import { isoShade, layer, SCENE_LAYERS } from "@graview/core";
-import { MARQUEE_GAP, MARQUEE_NAME_FLOOR, MARQUEE_WIDTH } from "@graview/layout/view";
+import { MARQUEE_GAP, MARQUEE_NAME_FLOOR, MARQUEE_WIDTH } from "@graview/layout/sizes";
 import { baseSheet, GRAVIEW_BRAND, withinTheBox, type Brand, type ThemeCssOptions } from "./theme.js";
 import { SPEC_VIEW_CSS } from "./spec-css.js";
 

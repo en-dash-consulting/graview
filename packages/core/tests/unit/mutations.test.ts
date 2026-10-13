@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { argShape } from "../../src/index.js";
+import { argShape } from "../../src/words.js";
 
 describe("an argument says what sort of answer it wants", () => {
   /*

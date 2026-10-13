@@ -45,7 +45,7 @@ A shell with a rail of its own says `surface("shell", Shell, { without:
 "package"], hide: ["party"], first: "The offers" }`. `order` sorts
 gallery, nav, city; `hide` drops kinds from the home only; `first` (place,
 kind or `"home"`) opens both faces; `primary` stands on the bar.
-`placesOf(app)` lists them.
+`placesOf(app)` (`/seat`) lists them.
 **Home as data** (FR-81): `home`, blocks as in `graview-node-kind`
 (`views.home`), replaces this body, and the app opens on it (FR-136).
 

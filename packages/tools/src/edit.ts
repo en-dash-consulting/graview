@@ -6,7 +6,6 @@
  * every page imports before anything is drawn.
  */
 import {
-  argShape,
   fieldsWrittenBy,
   nodeRefArgs,
   type AnySchema,
@@ -14,6 +13,7 @@ import {
   type Store,
   defOf,
 } from "@graview/core";
+import { argShape } from "@graview/core/words";
 import type { OpenParameter } from "./types.js";
 
 /**

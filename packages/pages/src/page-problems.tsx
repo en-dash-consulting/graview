@@ -1,4 +1,5 @@
-import { brokenWords, failureWords, labelOf, violationsTouching, type AnySchema, type Brand, type Principal, type Repair, type Store, type Violation } from "@graview/core";
+import { brokenWords, labelOf, violationsTouching, type AnySchema, type Brand, type Principal, type Repair, type Store, type Violation } from "@graview/core";
+import { failureWords } from "@graview/core/words";
 import { ownSentence, problemTitle, RuleLineView, useLined, useRuleLines } from "@graview/primitives/pages";
 import { Link } from "react-router-dom";
 import { useRef, useState, type ReactNode } from "react";

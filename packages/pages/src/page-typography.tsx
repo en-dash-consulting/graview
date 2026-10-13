@@ -2,7 +2,6 @@ import { excerpt, pluralLabel } from "@graview/core";
 import { KindFigure } from "@graview/primitives/pages";
 import {
   humanizeField,
-  readableFields,
   type AnyNodeDefinition,
   type AnySchema,
   type Brand,
@@ -13,6 +12,7 @@ import {
   orderKinds,
   type PagesArrangement,
 } from "@graview/core";
+import { readableFields } from "@graview/core/words";
 
 
 /*

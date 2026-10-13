@@ -39,7 +39,8 @@ export async function readDeclaration(repoRoot, dir) {
   if (!app?.schema) return null;
   // The same module instance the app imported, or node refs read as plain strings.
   const require = createRequire(resolve(repoRoot, "apps", dir, "package.json"));
-  const core = await import(pathToFileURL(require.resolve("@graview/core")).href);
+  // What an argument asks for is `@graview/core/words`'s (FR-179).
+  const core = { ...(await import(pathToFileURL(require.resolve("@graview/core")).href)), ...(await import(pathToFileURL(require.resolve("@graview/core/words")).href)) };
   return { app, core };
 }
 

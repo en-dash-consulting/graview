@@ -24,13 +24,11 @@
  * on the hosted page imports it, so its weight is nobody's but the caller's.
  */
 import {
-  describeNode,
   humanizeField,
   isCurrent,
   labelOf,
   markHref,
   pluralOf,
-  readableFields,
   recordPath,
   SCHEMES,
   shapeOf,
@@ -45,6 +43,7 @@ import {
   type Store,
   type ThemeTokens,
 } from "@graview/core";
+import { describeNode, readableFields } from "@graview/core/words";
 import { withComputed } from "@graview/core/blocks";
 import { describePlace, type DescribedItem, type DescribedPart, type PlaceDescription } from "@graview/core/describe";
 

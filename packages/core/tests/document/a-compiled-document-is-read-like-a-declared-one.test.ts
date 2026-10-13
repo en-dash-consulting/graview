@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { argShape, defineNode, descriptionOf, nodeRef, nodeRefArgs, z } from "../../src/index.js";
+import { defineNode, descriptionOf, nodeRef, nodeRefArgs, z } from "../../src/index.js";
+import { argShape } from "../../src/words.js";
 import { formFields } from "../../src/forms.js";
 import { mutationToolSchema } from "../../src/schema/json-schema.js";
 import { readDocument } from "../../src/document/index.js";

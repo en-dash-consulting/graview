@@ -1,5 +1,5 @@
 import type { AnySchema } from "../schema/schema.js";
-import { isLongText } from "../schema/define-node.js";
+import { isLongText } from "../schema/reading.js";
 import { fieldSpecOf } from "./field-spec.js";
 import type { Finding } from "./findings.js";
 import { blockLenses, holdsFiles, own, subjectless, validateAll, type KindNames, type Vocabulary } from "./views.js";

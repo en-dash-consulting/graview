@@ -1,5 +1,4 @@
 import {
-  argumentWords,
   FieldRevisions,
   InvalidArguments,
   UnknownMutationError,
@@ -28,6 +27,7 @@ import {
   type Store,
   type WireRefusal,
 } from "@graview/core";
+import { argumentWords } from "@graview/core/words";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
 /**

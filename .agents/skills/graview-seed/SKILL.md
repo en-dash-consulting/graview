@@ -20,7 +20,7 @@ rather than a list of calls somebody applies by hand.
 input, are together a chain: a feature cannot be made until a zone exists.
 
 ```ts
-import { beginning } from "@graview/core";
+import { beginning } from "@graview/core/seat";
 const chain = beginning(app);
 chain.roots;        // kinds that can begin with nothing in the graph
 chain.doors;        // the acts that are the way in

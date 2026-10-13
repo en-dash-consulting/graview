@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { defineApp, placesOf, Store, type AnySchema } from "@graview/core";
+import { defineApp, Store, type AnySchema } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { PagesApp } from "@graview/pages";
 import { createViews } from "@graview/react/provider";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { lin, offersApp, offersSeed } from "../../../../scripts/fixtures/offers-app.js";
 import { guestView } from "../../src/host/index.js";
 
@@ -41,8 +42,9 @@ describe("a guest view registered with a title", () => {
     const root = createRoot(host);
     await act(async () => root.render(<PagesApp context={{ store: store(), views: registered() as never, principal: lin }} initialPath="/places/the-price-sheet" />));
     await act(async () => new Promise((done) => setTimeout(done, 20)));
+    // The frame's host is fetched as the view is first drawn (FR-179).
+    await vi.waitFor(() => expect(host.querySelector('iframe[data-guest-view="prices"]')).not.toBeNull());
     const frame = host.querySelector<HTMLIFrameElement>('iframe[data-guest-view="prices"]');
-    expect(frame).not.toBeNull();
     expect(frame!.getAttribute("title")).toBe("The price sheet");
     expect(host.querySelector("[data-graview-page-title]")?.textContent).toBe("The price sheet");
     await act(async () => root.unmount());

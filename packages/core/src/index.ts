@@ -25,13 +25,12 @@ export { defOf, descriptionOf } from "./schema/zod.js";
 export type { ZodDef } from "./schema/zod.js";
 
 // Schema — the single declaration everything else derives from.
-export { defineNode, isCurrent, labelOf, describeNode, tellApart } from "./schema/define-node.js";
+export { defineNode, isCurrent, labelOf } from "./schema/define-node.js";
 // A picture or a document on a record (FR-162), and the host that stores them (FR-163).
 export { fileKindOf, filesOf, isFileValue, isImage, safeFileHref } from "./schema/files.js";
 export type { FileValue, HostFiles } from "./schema/files.js";
 export { fileField, imageField } from "./schema/file-field.js";
 export { nameOfAuthor } from "./who.js";
-export { viaSaid } from "./via.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
 export type {
@@ -126,19 +125,7 @@ export type {
 } from "./arrangement.js";
 
 // Search — one matcher finds a record, a kind, a place, an act or a rule; the graph is the result list.
-export {
-  actsOn,
-  describeSearched,
-  fold,
-  fragmentOf,
-  matchNode,
-  parseQuery,
-  search,
-  searchableFields,
-  squeeze,
-  strengthOf,
-  touchWeights,
-} from "./search.js";
+// The matcher itself is `@graview/core/search`: a page fetches it when somebody first searches (FR-179).
 export type {
   Hit,
   HitAbout,
@@ -168,14 +155,10 @@ export {
   subjectKindsOf,
   unwrittenFields,
 } from "./mutations/derive-edits.js";
-export {
-  argShape,
-  describeArg,
-  nodeRef,
-  nodeRefArgs,
-  nodeRefKinds,
-} from "./mutations/node-ref.js";
-export type { ArgShape, NodeRefArg } from "./mutations/node-ref.js";
+export { nodeRef, nodeRefArgs, nodeRefKinds } from "./mutations/node-ref.js";
+export type { NodeRefArg } from "./mutations/node-ref.js";
+// What an argument asks for (`argShape`, `describeArg`) is `@graview/core/words`', fetched with what asks (FR-179).
+export type { ArgShape } from "./mutations/arg-shape.js";
 // Records named the way people name them: a node argument takes a label (FR-33).
 export { nameKey } from "./labels.js";
 export type { RefCandidate, RefResolution } from "./labels.js";
@@ -251,9 +234,9 @@ export {
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
 export { excerpt } from "./excerpt.js";
-export { actTitle, article, counted, pluralLabel, pluralOf, edgeWords, fieldWords, humanizeField, isLongText, nounOf, pageSections, readableFields, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export { actTitle, article, counted, pluralLabel, pluralOf, edgeWords, fieldWords, humanizeField, nounOf, summarize, valueWords, withArticle } from "./schema/define-node.js";
 export { dayAsRead, daysAsRead } from "./days.js";
-export type { FieldSection } from "./schema/define-node.js";
+export type { FieldSection } from "./schema/reading.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";
 export { checkKitContrast, connectorHueColor, connectorKitFor, DEFAULT_KIT, kitVariables, resolveKit } from "./theme/kit.js";
@@ -266,7 +249,7 @@ export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/typ
 export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
 export type { RecordedLog, Records } from "./permissions/sight.js";
-export { answerSeenBy, hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
+export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen } from "./watched.js";
 
@@ -309,7 +292,6 @@ export { createViewRegistry, FIDELITIES, kindPath, placePath, placeSlug, recordP
 export {
   SHIPPED_LENSES,
   SHIPPED_LENS_NAMES,
-  arrangementFindings,
   bindsOf,
   declaredLenses,
   isShippedLens,
@@ -322,13 +304,13 @@ export {
   OVERVIEW_SLUG,
   pagesTitle,
   sceneTitle,
-  placesFrom,
-  placesOf,
   requiredRolesOf,
 } from "./places.js";
 // A place's address under a host's base path, and back (FR-106).
 export { addressOf, basePathOf, pathWithin } from "./address.js";
-export type { AppPlace, DeclaredLenses, DrawnLens, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
+// Every place an app has (`placesOf`, `placesFrom`) is `@graview/core/seat`'s, and judging the arrangement (`arrangementFindings`) `@graview/core/check`'s (FR-179).
+export type { DeclaredLenses, DrawnLens, Opening, PlaceFinding, ShippedLensName, UndrawnLens } from "./places.js";
+export type { AppPlace } from "./app-places.js";
 export type {
   Cardinality,
   PagesArrangement,
@@ -364,7 +346,7 @@ export { bindSchema } from "./bind.js";
 export type { SchemaBinding } from "./bind.js";
 
 // App bundle, checks and generated agent docs.
-export { argumentWords, failureWords, InvalidArguments } from "./mutations/words.js";
+export { InvalidArguments } from "./mutations/invalid-arguments.js";
 export { resolveModules } from "./modules.js";
 export { declareInstallation, INSTALLATION_MODULE } from "./installation.js";
 export type { Installation, InstallationOf, InstallationOptions } from "./installation.js";
@@ -400,7 +382,7 @@ export type {
   LocalBridgeAsk,
   LocalBridgeStatus,
 } from "./intelligence-bridge.js";
-export { beginning } from "./beginning.js";
+// The order things are made in is `@graview/core/seat`'s, fetched with the seeding and the scene that read it (FR-179).
 export type { Beginning, KindBeginning } from "./beginning.js";
 export { defineApp } from "./app.js";
 export type { EntityBinding, GraviewApp, LensDeclaration } from "./app.js";

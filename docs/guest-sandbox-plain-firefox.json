@@ -1,0 +1,94 @@
+{
+  "at": "2026-10-13T04:12:05.706Z",
+  "transport": "plain",
+  "engine": "firefox",
+  "claims": {
+    "the skill's list lens, written from the guide alone, runs as its plain source: Lin's three offers, cheapest first": {
+      "ok": true,
+      "detail": [
+        "Team coaching",
+        "AI strategy sprint",
+        "Copernicus build"
+      ]
+    },
+    "its note, typed and pressed by Lin, is applied as Lin, through the view, and the view says so": {
+      "ok": true,
+      "detail": {
+        "notes": [
+          {
+            "author": "party:lifelogics",
+            "via": "view:offers",
+            "intent": "Note “They want the coaching first”"
+          }
+        ],
+        "said": "Noted."
+      }
+    },
+    "its rows link to their records": {
+      "ok": true,
+      "detail": [
+        {
+          "record": "offer:coaching"
+        }
+      ]
+    },
+    "the skill's home, written from the guide alone, runs as its plain source: it leads with the recommended package and its total, and a card for each": {
+      "ok": true,
+      "detail": {
+        "lead": "A way in",
+        "figure": "$36,000",
+        "cards": [
+          "A way in",
+          "The whole thing",
+          "Later on"
+        ],
+        "ring": "47.13"
+      }
+    },
+    "its cards link to the place": {
+      "ok": true
+    },
+    "LifeLogics' package lens runs as its plain source": {
+      "ok": true,
+      "detail": [
+        "A way in",
+        "The whole thing",
+        "Later on"
+      ]
+    },
+    "a source that says import, even in a string, is refused before it runs, and says why": {
+      "ok": true,
+      "detail": {
+        "failure": {
+          "reason": "source",
+          "detail": "It says import: a view loads nothing, so the word may not appear in it at all, even in a string or a comment."
+        },
+        "started": false
+      }
+    },
+    "no other view failed": {
+      "ok": true,
+      "detail": {
+        "loader": {
+          "reason": "source",
+          "detail": "It says import: a view loads nothing, so the word may not appear in it at all, even in a string or a comment."
+        }
+      }
+    },
+    "the page made no request but its own": {
+      "ok": true,
+      "detail": {
+        "out": [],
+        "attacker": [
+          "/favicon.ico"
+        ]
+      }
+    },
+    "the page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

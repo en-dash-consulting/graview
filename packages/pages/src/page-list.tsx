@@ -1,19 +1,17 @@
 import { ArrangeBar, Files, pageSays } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement, throughEdges } from "@graview/core/arrange";
 import {
-  describeSearched,
   humanizeField,
   nounOf,
   isCurrent,
   labelOf,
-  matchNode,
-  parseQuery,
   type AnySchema,
   type Arrangeable,
   type Arrangement,
   type Condition,
   type NodeOfSchema,
 } from "@graview/core";
+import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { firstPicture, withComputed } from "@graview/core/blocks";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import { useId, useRef, useState, type ComponentType, type ReactNode } from "react";

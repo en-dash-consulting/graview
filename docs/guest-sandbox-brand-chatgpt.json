@@ -1,0 +1,146 @@
+{
+  "at": "2026-10-13T04:12:33.380Z",
+  "transport": "brand",
+  "engine": "chromium",
+  "policy": {
+    "name": "chatgpt",
+    "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; worker-src blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; style-src-attr 'unsafe-inline'; img-src 'self' data: https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; font-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; connect-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; media-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; object-src 'none'; frame-src 'none'; base-uri 'self'",
+    "sandbox": "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+  },
+  "claims": {
+    "the view's name is the app's wordmark, \"En Dash\", and its heading is drawn in the app's display face, as the app's own headings and wordmark are": {
+      "ok": true,
+      "detail": {
+        "name": "En Dash",
+        "scheme": "data",
+        "natural": [
+          48,
+          24
+        ],
+        "viewFont": "Georgia, \"Times New Roman\", serif",
+        "viewRadius": "4px",
+        "radiusSaid": "4px",
+        "pushes": 2,
+        "appHeadingFont": "Georgia, \"Times New Roman\", serif",
+        "wordmark": {
+          "text": "En Dash",
+          "font": "Georgia, \"Times New Roman\", serif"
+        },
+        "marked": false,
+        "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My",
+        "bytes": 192
+      }
+    },
+    "its corners are the app's radius, by var(--graview-radius) and props.theme.radius alike": {
+      "ok": true,
+      "detail": {
+        "viewRadius": "4px",
+        "said": "4px"
+      }
+    },
+    "its logo is the brand's inline SVG, byte for byte, at the SVG's own size": {
+      "ok": true,
+      "detail": {
+        "natural": [
+          48,
+          24
+        ],
+        "scheme": "data",
+        "bytes": 192
+      }
+    },
+    "the logo is handed as a data: image, since the policy's img-src has no blob:": {
+      "ok": true,
+      "detail": {
+        "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My"
+      }
+    },
+    "after the brand changes, the view says \"En Dash Consulting\" in the new display face, as the app's wordmark and headings do": {
+      "ok": true,
+      "detail": {
+        "name": "En Dash Consulting",
+        "scheme": "data",
+        "natural": [
+          36,
+          18
+        ],
+        "viewFont": "\"Courier New\", Courier, monospace",
+        "viewRadius": "16px",
+        "radiusSaid": "16px",
+        "pushes": 4,
+        "appHeadingFont": "\"Courier New\", Courier, monospace",
+        "wordmark": {
+          "text": "En Dash Consulting",
+          "font": "\"Courier New\", Courier, monospace"
+        },
+        "marked": true,
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAASCAIAAA",
+        "bytes": 89
+      }
+    },
+    "and takes the new radius": {
+      "ok": true,
+      "detail": {
+        "viewRadius": "16px",
+        "said": "16px"
+      }
+    },
+    "and draws the new logo, byte for byte, at its own size (36×18)": {
+      "ok": true,
+      "detail": {
+        "natural": [
+          36,
+          18
+        ],
+        "scheme": "data",
+        "bytes": 89
+      }
+    },
+    "it followed the brand by being pushed it, not redrawn: the same region and the same image element, one push more": {
+      "ok": true,
+      "detail": {
+        "marked": true,
+        "pushes": [
+          2,
+          4
+        ]
+      }
+    },
+    "the PNG at the page's own address was fetched once, by the host: the view loaded nothing": {
+      "ok": true,
+      "detail": {
+        "served": [
+          "/graview/assets/logo.png",
+          "/graview/assets/logo.png"
+        ],
+        "requests": [
+          {
+            "type": "fetch",
+            "url": "http://localhost:6193/graview/assets/logo.png"
+          },
+          {
+            "type": "image",
+            "url": "http://localhost:6193/graview/assets/logo.png"
+          }
+        ],
+        "appMarks": 1,
+        "otherImages": 0,
+        "inView": 0
+      }
+    },
+    "nothing else was requested": {
+      "ok": true,
+      "detail": []
+    },
+    "no view failed": {
+      "ok": true,
+      "detail": []
+    },
+    "the page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

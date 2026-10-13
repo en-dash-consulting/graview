@@ -1,0 +1,155 @@
+{
+  "at": "2026-10-13T04:11:25.279Z",
+  "transport": "record",
+  "engine": "firefox",
+  "claims": {
+    "on the scene, a custom view of one record is drawn and the record's own fields are drawn under it, the draft editable": {
+      "ok": true,
+      "detail": {
+        "view": true,
+        "heading": "Email to Todd",
+        "paragraphs": [
+          "Todd,",
+          "Thank you for making the time on Thursday. What follows is the plan for the Farm Bureau POM workshop as we left it, with the three changes your team asked for and the one we still owe you an answer on.",
+          "The morning opens with the field data. Each county lead brings last season's yield sheets and the soil reports, and we walk them together before anybody proposes anything. We heard clearly that the last workshop started with the model and lost the room; this one starts with the farms. We have set aside ninety minutes for it and will not shorten it, whatever else runs long. The sheets are printed, not projected, so people can write on them and take them home.",
+          "The afternoon is the practice of management itself: three short sessions on scouting, on timing applications against the forecast, and on keeping the records a buyer now asks for. Each is led by a grower who does it, with one of our agronomists beside them to answer the questions the grower would rather not. Lunch is on site, and the barn is booked until six in case the last session wants to keep going, which in our experience it does.",
+          "The three changes. First, the county leads asked to see the attendance list a week ahead, so they can bring the right people from their own boards; we will send it on the Monday before, with each name's county and what they grow. Second, the session on records moves to the afternoon's end, because it is the one people stay late for, and a session people stay late for should not have a coffee break cut into the middle of it. Third, every handout is in large print as well as the usual size, and the room has the hearing loop switched on; two of your members asked, and it costs nothing to do it for everybody.",
+          "For the day itself: doors at eight, coffee and the sign-in sheet by the barn's east door, and the first session at half past. We will have two people at the gate pointing cars to the field behind the barn, since the yard fills by nine. If it rains the morning moves to the machine shed, which holds sixty seated and has power for the projector we will not be using. Anyone who needs to leave early can take the afternoon's handouts at lunch; nothing in the afternoon depends on having been there for the whole of the morning.",
+          "What we still owe you is the cost of bringing the extension office's soil lab to the barn for the day. They have quoted a range, and we will have the number by the end of next week. If it is over what the grant allows we will propose bringing samples to them instead, the week before, and handing the results out in the morning session. Either way nothing else in the plan moves.",
+          "With thanks, and talk soon,\nNick"
+        ],
+        "fields": true,
+        "draftEditable": "set-draft",
+        "below": true,
+        "facts": false,
+        "acts": false,
+        "author": "Made by Claude, for nick"
+      }
+    },
+    "the view draws the draft formatted: each paragraph its own, read off props.node": {
+      "ok": true,
+      "detail": {
+        "heading": "Email to Todd",
+        "drawn": 8,
+        "paragraphs": 8
+      }
+    },
+    "on Pages, the record's page is the view, then its facts and what can be done": {
+      "ok": true,
+      "detail": {
+        "view": true,
+        "heading": "Email to Todd",
+        "paragraphs": [
+          "Todd,",
+          "Thank you for making the time on Thursday. What follows is the plan for the Farm Bureau POM workshop as we left it, with the three changes your team asked for and the one we still owe you an answer on.",
+          "The morning opens with the field data. Each county lead brings last season's yield sheets and the soil reports, and we walk them together before anybody proposes anything. We heard clearly that the last workshop started with the model and lost the room; this one starts with the farms. We have set aside ninety minutes for it and will not shorten it, whatever else runs long. The sheets are printed, not projected, so people can write on them and take them home.",
+          "The afternoon is the practice of management itself: three short sessions on scouting, on timing applications against the forecast, and on keeping the records a buyer now asks for. Each is led by a grower who does it, with one of our agronomists beside them to answer the questions the grower would rather not. Lunch is on site, and the barn is booked until six in case the last session wants to keep going, which in our experience it does.",
+          "The three changes. First, the county leads asked to see the attendance list a week ahead, so they can bring the right people from their own boards; we will send it on the Monday before, with each name's county and what they grow. Second, the session on records moves to the afternoon's end, because it is the one people stay late for, and a session people stay late for should not have a coffee break cut into the middle of it. Third, every handout is in large print as well as the usual size, and the room has the hearing loop switched on; two of your members asked, and it costs nothing to do it for everybody.",
+          "For the day itself: doors at eight, coffee and the sign-in sheet by the barn's east door, and the first session at half past. We will have two people at the gate pointing cars to the field behind the barn, since the yard fills by nine. If it rains the morning moves to the machine shed, which holds sixty seated and has power for the projector we will not be using. Anyone who needs to leave early can take the afternoon's handouts at lunch; nothing in the afternoon depends on having been there for the whole of the morning.",
+          "What we still owe you is the cost of bringing the extension office's soil lab to the barn for the day. They have quoted a range, and we will have the number by the end of next week. If it is over what the grant allows we will propose bringing samples to them instead, the week before, and handing the results out in the morning session. Either way nothing else in the plan moves.",
+          "With thanks, and talk soon,\nNick"
+        ],
+        "fields": false,
+        "draftEditable": null,
+        "below": null,
+        "facts": true,
+        "acts": true,
+        "author": "Made by Claude, for nick"
+      }
+    },
+    "with replaces: \"page\", on the scene the view is drawn alone, without the record's fields": {
+      "ok": true,
+      "detail": {
+        "view": true,
+        "heading": "Email to Todd",
+        "paragraphs": [
+          "Todd,",
+          "Thank you for making the time on Thursday. What follows is the plan for the Farm Bureau POM workshop as we left it, with the three changes your team asked for and the one we still owe you an answer on.",
+          "The morning opens with the field data. Each county lead brings last season's yield sheets and the soil reports, and we walk them together before anybody proposes anything. We heard clearly that the last workshop started with the model and lost the room; this one starts with the farms. We have set aside ninety minutes for it and will not shorten it, whatever else runs long. The sheets are printed, not projected, so people can write on them and take them home.",
+          "The afternoon is the practice of management itself: three short sessions on scouting, on timing applications against the forecast, and on keeping the records a buyer now asks for. Each is led by a grower who does it, with one of our agronomists beside them to answer the questions the grower would rather not. Lunch is on site, and the barn is booked until six in case the last session wants to keep going, which in our experience it does.",
+          "The three changes. First, the county leads asked to see the attendance list a week ahead, so they can bring the right people from their own boards; we will send it on the Monday before, with each name's county and what they grow. Second, the session on records moves to the afternoon's end, because it is the one people stay late for, and a session people stay late for should not have a coffee break cut into the middle of it. Third, every handout is in large print as well as the usual size, and the room has the hearing loop switched on; two of your members asked, and it costs nothing to do it for everybody.",
+          "For the day itself: doors at eight, coffee and the sign-in sheet by the barn's east door, and the first session at half past. We will have two people at the gate pointing cars to the field behind the barn, since the yard fills by nine. If it rains the morning moves to the machine shed, which holds sixty seated and has power for the projector we will not be using. Anyone who needs to leave early can take the afternoon's handouts at lunch; nothing in the afternoon depends on having been there for the whole of the morning.",
+          "What we still owe you is the cost of bringing the extension office's soil lab to the barn for the day. They have quoted a range, and we will have the number by the end of next week. If it is over what the grant allows we will propose bringing samples to them instead, the week before, and handing the results out in the morning session. Either way nothing else in the plan moves.",
+          "With thanks, and talk soon,\nNick"
+        ],
+        "fields": false,
+        "draftEditable": null,
+        "below": null,
+        "facts": false,
+        "acts": false,
+        "author": "Made by Claude, for nick"
+      }
+    },
+    "with replaces: \"page\", on Pages the view is the page under its heading, without facts or acts": {
+      "ok": true,
+      "detail": {
+        "view": true,
+        "heading": "Email to Todd",
+        "paragraphs": [
+          "Todd,",
+          "Thank you for making the time on Thursday. What follows is the plan for the Farm Bureau POM workshop as we left it, with the three changes your team asked for and the one we still owe you an answer on.",
+          "The morning opens with the field data. Each county lead brings last season's yield sheets and the soil reports, and we walk them together before anybody proposes anything. We heard clearly that the last workshop started with the model and lost the room; this one starts with the farms. We have set aside ninety minutes for it and will not shorten it, whatever else runs long. The sheets are printed, not projected, so people can write on them and take them home.",
+          "The afternoon is the practice of management itself: three short sessions on scouting, on timing applications against the forecast, and on keeping the records a buyer now asks for. Each is led by a grower who does it, with one of our agronomists beside them to answer the questions the grower would rather not. Lunch is on site, and the barn is booked until six in case the last session wants to keep going, which in our experience it does.",
+          "The three changes. First, the county leads asked to see the attendance list a week ahead, so they can bring the right people from their own boards; we will send it on the Monday before, with each name's county and what they grow. Second, the session on records moves to the afternoon's end, because it is the one people stay late for, and a session people stay late for should not have a coffee break cut into the middle of it. Third, every handout is in large print as well as the usual size, and the room has the hearing loop switched on; two of your members asked, and it costs nothing to do it for everybody.",
+          "For the day itself: doors at eight, coffee and the sign-in sheet by the barn's east door, and the first session at half past. We will have two people at the gate pointing cars to the field behind the barn, since the yard fills by nine. If it rains the morning moves to the machine shed, which holds sixty seated and has power for the projector we will not be using. Anyone who needs to leave early can take the afternoon's handouts at lunch; nothing in the afternoon depends on having been there for the whole of the morning.",
+          "What we still owe you is the cost of bringing the extension office's soil lab to the barn for the day. They have quoted a range, and we will have the number by the end of next week. If it is over what the grant allows we will propose bringing samples to them instead, the week before, and handing the results out in the morning session. Either way nothing else in the plan moves.",
+          "With thanks, and talk soon,\nNick"
+        ],
+        "fields": false,
+        "draftEditable": null,
+        "below": null,
+        "facts": false,
+        "acts": false,
+        "author": "Made by Claude, for nick"
+      }
+    },
+    "\"Edit draft\" opens a textarea the host filled with the whole draft, its line breaks kept": {
+      "ok": true,
+      "detail": {
+        "length": 2669,
+        "expected": 2669,
+        "breaks": 15
+      }
+    },
+    "editing the prefilled draft and pressing the act saves it with its line breaks intact, as Nick, through the view": {
+      "ok": true,
+      "detail": {
+        "saved": "n moves.\n\nWith thanks, and talk soon,\nNick\n\nP.S. The barn has parking for forty.",
+        "breaks": 17,
+        "log": {
+          "via": "view:deliverable",
+          "author": "person:nick"
+        }
+      }
+    },
+    "the view draws the saved draft, its new paragraph its own": {
+      "ok": true,
+      "detail": {
+        "drawn": 9
+      }
+    },
+    "a seat that may not write the draft gets no prefilled writable field": {
+      "ok": true,
+      "detail": {
+        "length": 0
+      }
+    },
+    "prefill never hands a field the seat may not see: the memo Rae may not see fills nothing and is nowhere in the view": {
+      "ok": true,
+      "detail": ""
+    },
+    "her press on the act changes nothing": {
+      "ok": true
+    },
+    "no view failed": {
+      "ok": true,
+      "detail": []
+    },
+    "the page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "passed": true
+}

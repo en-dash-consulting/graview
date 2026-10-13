@@ -33,6 +33,8 @@ describe("a guest view in a branded app", () => {
       </GraviewProvider>,
     );
     await act(async () => draw(brandOf("En Dash", "#0a5")));
+    // The frame's host is fetched as the view is first drawn (FR-179).
+    await vi.waitFor(() => expect(host.querySelector('iframe[data-guest-view="card"]')).not.toBeNull());
     const iframe = host.querySelector<HTMLIFrameElement>('iframe[data-guest-view="card"]')!;
     const posted = vi.spyOn(iframe.contentWindow!, "postMessage");
     window.dispatchEvent(new MessageEvent("message", { data: { graview: "guest-ready", protocol: GUEST_PROTOCOL }, origin: "null", source: iframe.contentWindow }));

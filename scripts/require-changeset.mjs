@@ -18,6 +18,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { saysCompatibility, surfacesTouched } from "./lib/surfaces.mjs";
+import { HOSTED_BUDGET_NAMES } from "./lib/bundle-budget.mjs";
+import { raiseSaid } from "./lib/hosted-page.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -46,6 +48,29 @@ try {
 }
 
 const changed = git("diff", "--name-only", range).split("\n").filter(Boolean);
+
+/*
+ * A HOSTED PAGE SPENT ON PURPOSE, AND SAID (FR-179). A raise of a hosted
+ * page's budget is a file in scripts/budget-raises/ that names the changeset
+ * shipping it; that changeset arrives in the same pull request and says the
+ * kilobytes the raise adds up front, so no change spends more of Cloud's
+ * first load than its own words say.
+ */
+const addedHere = (dir) => git("diff", "--name-only", "--diff-filter=A", range, "--", dir).split("\n").filter(Boolean);
+const addedChangesets = new Set(addedHere(".changeset").map((file) => file.replace(/^\.changeset\//, "")));
+const hostedRaisesAdded = addedHere("scripts/budget-raises")
+  .filter((file) => file.endsWith(".json"))
+  .map((file) => ({ file, raise: JSON.parse(readFileSync(resolve(repoRoot, file), "utf8")) }))
+  .filter(({ raise }) => HOSTED_BUDGET_NAMES.includes(raise.budget));
+const unsaid = hostedRaisesAdded.filter(({ raise }) => !addedChangesets.has(raise.changeset) || !readFileSync(resolve(repoRoot, ".changeset", raise.changeset), "utf8").includes(raiseSaid(raise)));
+if (unsaid.length > 0) {
+  process.stderr.write(
+    `These raise a hosted page's budget, and no changeset this pull request adds says what they spend up front:\n` +
+      unsaid.map(({ file, raise }) => `  ${file}: ${raiseSaid(raise)} more up front on "${raise.budget}", changeset "${raise.changeset ?? "(none named)"}"\n`).join("") +
+      `\nName the changeset in the raise ("changeset": "<name>.md"), add it here, and say the kilobytes in it.\n`,
+  );
+  process.exit(1);
+}
 const touchedPackages = [
   ...new Set(
     changed

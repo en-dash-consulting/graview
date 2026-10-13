@@ -9,10 +9,10 @@ import {
   PermissionDeniedError,
   seenBy,
   Store,
-  viaSaid,
   type Policy,
   type Principal,
 } from "../../src/index.js";
+import { viaSaid } from "../../src/words.js";
 
 /**
  * FR-06 and FR-17. "Claude, for Nick, via chat" is a fact in the log; an agent

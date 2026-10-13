@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { defineNode, readableFields, z } from "../../src/index.js";
+import { defineNode, z } from "../../src/index.js";
+import { readableFields } from "../../src/words.js";
 
 /**
  * A YES OR NO THE KIND WORDS ITSELF IS SAID WHOLE (W-187). A member's

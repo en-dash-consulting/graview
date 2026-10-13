@@ -5,7 +5,7 @@ import { diffDocuments, editDocument, planMigration, readDocument, toDocument, t
 import { createSchema, defineApp, defineNode, refusalOf, Store, z, type AnySchema, type GraviewApp } from "../../src/index.js";
 import { formFields } from "../../src/forms.js";
 import { mutationToolSchema } from "../../src/schema/json-schema.js";
-import { argShape } from "../../src/mutations/node-ref.js";
+import { argShape } from "../../src/mutations/arg-shape.js";
 
 /**
  * FR-114. A NUMBER FIELD MAY SAY ITS RANGE.

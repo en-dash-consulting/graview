@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createGuestHost } from "../../src/host/index.js";
+import { createGuestHost } from "../../src/host/frame.js";
 import type { GuestProps } from "../../src/protocol.js";
 import { bethan, inbox, settle, showroom, staff, UNSEEN } from "./showroom.js";
 

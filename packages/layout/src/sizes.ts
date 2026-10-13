@@ -2,8 +2,12 @@
  * WHAT A CARD'S MARQUEE AND AN OPENED DISTRICT'S ROSTER TAKE, in arithmetic
  * the layout and the views that draw them share. Apart from `layout.ts` so
  * a view that sizes itself does not carry the city that is laid out with it
- * (`@graview/layout/view`, FR-57).
+ * (FR-57), and apart from `@graview/layout/view` so a page that reads where
+ * its reader is carries none of it before a view is drawn: it is
+ * `@graview/layout/sizes`, with the estimate of a line's width (FR-179).
  */
+export { estimateWidth } from "./estimate.js";
+export type { Measure } from "./estimate.js";
 
 /*
  * The showings are NAMES now (FR-118): one per line, each whole, wrapped

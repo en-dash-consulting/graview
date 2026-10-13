@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createSchema, defineApp, defineNode, fragmentOf, isLongText, pageSections, readableFields } from "../../src/index.js";
+import { createSchema, defineApp, defineNode } from "../../src/index.js";
+import { isLongText, pageSections, readableFields } from "../../src/words.js";
+import { fragmentOf } from "../../src/search.js";
 import { checkApp } from "../../src/check.js";
 
 /**

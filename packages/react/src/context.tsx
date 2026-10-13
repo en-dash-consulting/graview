@@ -13,7 +13,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { openingOf, search, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, touchWeights, type Place, type PagesArrangement } from "@graview/core";
+import { openingOf, tellTheWatchItsAuthors, tellTheWatchWhatIsUnseen, type Place, type PagesArrangement } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
@@ -964,6 +964,33 @@ export function GraviewProvider<S extends AnySchema>({
  */
 const FoundContext = createContext<SearchResult | null>(null);
 
+/*
+ * THE MATCHER ARRIVES WITH WHAT SEARCHES (FR-179). The provider draws every
+ * face and the bar before anybody searches, and a page's first chunk carried
+ * the matcher for it. It is `@graview/core/search`'s now, and what reads the
+ * words — the scene, its Find box, the districts that light their hits —
+ * imports it and hands it here (`matchWith`) as it is fetched; until then
+ * there is nothing to find, since nothing that searches has been drawn.
+ */
+export interface Matcher {
+  readonly search: typeof import("@graview/core/search").search;
+  readonly touchWeights: typeof import("@graview/core/search").touchWeights;
+}
+let matcher: Matcher | undefined;
+const matcherArrives = new Set<() => void>();
+const awaitMatcher = (arrived: () => void) => {
+  matcherArrives.add(arrived);
+  return () => void matcherArrives.delete(arrived);
+};
+const theMatcher = () => matcher;
+
+/** Hand the provider the matcher: called by what searches, as it is fetched. */
+export function matchWith(given: Matcher): void {
+  if (matcher) return;
+  matcher = given;
+  for (const arrived of [...matcherArrives]) arrived();
+}
+
 function FoundProvider({ children }: { children: ReactNode }) {
   const { store, view, views, principal, hiddenKinds, selection } = useGraview();
   const nodes = useGraph();
@@ -975,14 +1002,15 @@ function FoundProvider({ children }: { children: ReactNode }) {
    * invariant and the whole log, on every keystroke.
    */
   const searching = Boolean(q && q.trim().length > 0);
+  const matching = useSyncExternalStore(awaitMatcher, theMatcher, theMatcher);
   const standing = useMemo(
     () =>
-      searching
-        ? { flagged: new Set(store.violations().flatMap((violation) => violation.nodeIds)), touched: touchWeights(store.log.all()) }
+      searching && matching
+        ? { flagged: new Set(store.violations().flatMap((violation) => violation.nodeIds)), touched: matching.touchWeights(store.log.all()) }
         : null,
     // `nodes` is the graph's tick.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [store, nodes, searching],
+    [store, nodes, searching, matching],
   );
   // The kind the person is in: the district they went into, or the kind of the record they are on.
   const inKind = focusId
@@ -991,8 +1019,8 @@ function FoundProvider({ children }: { children: ReactNode }) {
       (kindsOfAggregate(focusId).length === 1 ? kindsOfAggregate(focusId)[0] : undefined)
     : undefined;
   const found = useMemo(() => {
-    if (!q || !standing) return null;
-    return search(store, q, {
+    if (!q || !standing || !matching) return null;
+    return matching.search(store, q, {
       ...(inKind ? { inKind } : {}),
       principal,
       places: views.places(),

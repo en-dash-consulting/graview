@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { addressOf, basePathOf, createSchema, defineApp, defineNode, pathWithin, placesOf, z } from "../../src/index.js";
+import { addressOf, basePathOf, createSchema, defineApp, defineNode, pathWithin, z } from "../../src/index.js";
+import { placesOf } from "../../src/seat.js";
 
 /**
  * AN ADDRESS UNDER A BASE PATH (FR-106). A host that owns the page gives the

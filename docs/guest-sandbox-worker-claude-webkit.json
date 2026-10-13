@@ -1,0 +1,705 @@
+{
+  "at": "2026-10-13T04:10:15.014Z",
+  "transport": "worker",
+  "engine": "webkit",
+  "policy": {
+    "name": "claude",
+    "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self' data:; media-src 'self' blob: data:; worker-src 'self' blob:; frame-src 'self' blob: data:; base-uri 'self'; object-src 'none'; frame-ancestors 'self' http://127.0.0.1:6192; form-action 'self'; webrtc 'block'",
+    "sandbox": "allow-scripts allow-forms",
+    "widgetOrigin": "null"
+  },
+  "claims": {
+    "the card and the hostile guest, built by buildGuestBundle, are classic scripts with nothing to load at run time": {
+      "ok": true,
+      "detail": {
+        "card": [],
+        "hostile": [],
+        "spinner": [],
+        "busy": [],
+        "builder": []
+      }
+    },
+    "every guest was started as a classic worker from a blob: URL": {
+      "ok": true,
+      "detail": [
+        {
+          "url": "blob:",
+          "type": "classic"
+        },
+        {
+          "url": "blob:",
+          "type": "classic"
+        },
+        {
+          "url": "blob:",
+          "type": "classic"
+        },
+        {
+          "url": "blob:",
+          "type": "classic"
+        },
+        {
+          "url": "blob:",
+          "type": "classic"
+        },
+        {
+          "url": "blob:",
+          "type": "classic"
+        }
+      ]
+    },
+    "no guest failed to start": {
+      "ok": true,
+      "detail": [
+        [
+          "builder",
+          "slow"
+        ],
+        [
+          "spinner",
+          "silent"
+        ]
+      ]
+    },
+    "the card was drawn in the widget's page, from the kit": {
+      "ok": true,
+      "detail": "<div id=\"card\"><div class=\"graview-guest\" role=\"group\" aria-label=\"card\" data-guest-view=\"card\"><section data-gv=\"card\" class=\"graview-guest-card\"><strong data-gv=\"title\" class=\"graview-guest-title\">Golf</strong><strong data-gv=\"title\" class=\"graview-guest-title\">Bethan Okonkwo</strong><strong data-"
+    },
+    "the card was shown the cars and Bethan, and nobody else": {
+      "ok": true,
+      "detail": {
+        "strangers": [],
+        "first": [
+          {
+            "id": "car:golf",
+            "kind": "car",
+            "label": "Golf"
+          },
+          {
+            "id": "shopper:bethan",
+            "kind": "shopper",
+            "label": "Bethan Okonkwo",
+            "email": "bethan@mail.example"
+          }
+        ]
+      }
+    },
+    "nothing a guest received names what Bethan may not see, or a secret of the host's": {
+      "ok": true,
+      "detail": []
+    },
+    "the card's own act was applied": {
+      "ok": true,
+      "detail": {
+        "type": "answer",
+        "id": 1,
+        "ok": true,
+        "intent": "Ask Is the Golf still there?"
+      }
+    },
+    "an act on a record she may not see was refused, in words that do not name it": {
+      "ok": true,
+      "detail": {
+        "type": "answer",
+        "id": 2,
+        "ok": false,
+        "reason": "refused",
+        "message": "Not permitted: “Ask” — a shopper or a staff can."
+      }
+    },
+    "an act her roles do not grant was refused": {
+      "ok": true,
+      "detail": {
+        "type": "answer",
+        "id": 3,
+        "ok": false,
+        "reason": "refused",
+        "message": "Not permitted: “Retire a car” on a car — a staff can."
+      }
+    },
+    "every applied act is Bethan's, through the view that asked": {
+      "ok": true,
+      "detail": [
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 0"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 1"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 2"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 3"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        }
+      ]
+    },
+    "the card's act is in the log as Bethan's, via view:card": {
+      "ok": true,
+      "detail": [
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 0"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 1"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 2"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 3"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        }
+      ]
+    },
+    "a forged act, posted outside the port, changed nothing": {
+      "ok": true,
+      "detail": [
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 0"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 1"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 2"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 3"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        }
+      ]
+    },
+    "a flood of acts was applied no further than the frame's allowance of five": {
+      "ok": true,
+      "detail": {
+        "applied": 4,
+        "stats": {
+          "card": {
+            "applied": 1,
+            "refused": 2,
+            "dropped": 1
+          },
+          "hostile": {
+            "applied": 4,
+            "refused": 113,
+            "dropped": 86
+          }
+        }
+      }
+    },
+    "the rest of the flood was answered rate-limited or dropped unread past the message allowance": {
+      "ok": true,
+      "detail": {
+        "limited": 112,
+        "stats": {
+          "card": {
+            "applied": 1,
+            "refused": 2,
+            "dropped": 1
+          },
+          "hostile": {
+            "applied": 4,
+            "refused": 113,
+            "dropped": 86
+          }
+        }
+      }
+    },
+    "navigation went only to what Bethan may see": {
+      "ok": true,
+      "detail": [
+        "car:golf"
+      ]
+    },
+    "the viewer's press on the card's button is what asked": {
+      "ok": true,
+      "detail": [
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 0"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 1"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 2"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:hostile",
+          "intent": "Ask Flood 3"
+        },
+        {
+          "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        }
+      ]
+    },
+    "nothing outside the kit was drawn": {
+      "ok": true,
+      "detail": [
+        "div",
+        "section",
+        "strong",
+        "button",
+        "a",
+        "p"
+      ]
+    },
+    "what was not drawn was written down as refused": {
+      "ok": true,
+      "detail": [
+        {
+          "reason": "element",
+          "element": "script"
+        },
+        {
+          "reason": "element",
+          "element": "iframe"
+        },
+        {
+          "reason": "element",
+          "element": "img"
+        },
+        {
+          "reason": "element",
+          "element": "a"
+        },
+        {
+          "reason": "element",
+          "element": "gv-evil"
+        },
+        {
+          "reason": "url",
+          "element": "gv-link",
+          "name": "href"
+        },
+        {
+          "reason": "url",
+          "element": "gv-link",
+          "name": "href"
+        },
+        {
+          "reason": "url",
+          "element": "gv-link",
+          "name": "href"
+        }
+      ]
+    },
+    "a link the guest gave a javascript:, http: or data: address was drawn with none": {
+      "ok": true,
+      "detail": {
+        "links": [
+          null,
+          null,
+          null
+        ],
+        "refused": [
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          },
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          },
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          }
+        ]
+      }
+    },
+    "a link the card drew opens apart from the chat: noopener noreferrer, no referrer, a new tab": {
+      "ok": true,
+      "detail": [
+        {
+          "href": "https://recipes.example/golf",
+          "rel": "noopener noreferrer",
+          "referrerpolicy": "no-referrer",
+          "target": "_blank"
+        },
+        {
+          "href": null,
+          "rel": "noopener noreferrer",
+          "referrerpolicy": "no-referrer",
+          "target": "_blank"
+        }
+      ]
+    },
+    "a link to an origin the host does not list was drawn with no href, and one it lists with its own": {
+      "ok": true,
+      "detail": {
+        "cardLinks": [
+          {
+            "href": "https://recipes.example/golf",
+            "rel": "noopener noreferrer",
+            "referrerpolicy": "no-referrer",
+            "target": "_blank"
+          },
+          {
+            "href": null,
+            "rel": "noopener noreferrer",
+            "referrerpolicy": "no-referrer",
+            "target": "_blank"
+          }
+        ],
+        "refused": [
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          },
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          },
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          },
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          },
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          },
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          },
+          {
+            "reason": "url",
+            "element": "gv-link",
+            "name": "href"
+          }
+        ]
+      }
+    },
+    "a second ready, and a forged act, were dropped unread": {
+      "ok": true,
+      "detail": {
+        "card": {
+          "applied": 1,
+          "refused": 2,
+          "dropped": 1
+        },
+        "hostile": {
+          "applied": 4,
+          "refused": 113,
+          "dropped": 86
+        }
+      }
+    },
+    "no guest reached the chat's origin": {
+      "ok": true,
+      "detail": []
+    },
+    "a guest that spins after ready is stopped as silent within limits.silentMs (1500 ms) and one interval of it": {
+      "ok": true,
+      "detail": {
+        "spun": 1505,
+        "failedAt": {
+          "builder": 420,
+          "spinner": 1557
+        },
+        "drewAt": {
+          "spinner": 52.00000000000001
+        },
+        "pulse": {
+          "last": 5021,
+          "longest": 136.99999999999994,
+          "ticks": 37
+        },
+        "spinnerStopped": true,
+        "busyRunning": true,
+        "building": {
+          "last": 5021,
+          "longest": 52,
+          "ticks": 5
+        },
+        "builderStopped": true
+      }
+    },
+    "the widget's page kept its own timer while a guest spun, never more than 250 ms between 50 ms ticks": {
+      "ok": true,
+      "detail": {
+        "last": 5021,
+        "longest": 136.99999999999994,
+        "ticks": 37
+      }
+    },
+    "a guest that is busy but yields, for three times silentMs, is kept": {
+      "ok": true,
+      "detail": {
+        "failures": [
+          [
+            "builder",
+            "slow"
+          ],
+          [
+            "spinner",
+            "silent"
+          ]
+        ],
+        "busyRunning": true
+      }
+    },
+    "a guest that builds and takes away a thousand badges a hundred times a message is stopped as slow, and the widget's timer kept time while it built, never more than 250 ms between 50 ms ticks": {
+      "ok": true,
+      "detail": {
+        "failures": [
+          [
+            "builder",
+            "slow"
+          ]
+        ],
+        "building": {
+          "last": 5021,
+          "longest": 52,
+          "ticks": 5
+        },
+        "stopped": true
+      }
+    },
+    "inside the guest's worker, fetch, XMLHttpRequest, WebSocket, EventSource, WebTransport, importScripts, indexedDB, caches, navigator.storage, BroadcastChannel, Worker and SharedWorker are all absent": {
+      "ok": true,
+      "detail": []
+    },
+    "the worker's global, own and inherited, symbols included, names nothing outside the allowlist": {
+      "ok": true,
+      "detail": []
+    },
+    "hardening removed every name it meant to, and the global takes no new one": {
+      "ok": true,
+      "detail": {
+        "removed": 222,
+        "stuck": [],
+        "sealed": true
+      }
+    },
+    "self.constructor.prototype holds none of them": {
+      "ok": true,
+      "detail": []
+    },
+    "no prototype on the global's chain holds any of them": {
+      "ok": true,
+      "detail": []
+    },
+    "globalThis is the same hardened global": {
+      "ok": true,
+      "detail": {
+        "same": true,
+        "has": []
+      }
+    },
+    "Function('return this')() and every function constructor make nothing": {
+      "ok": true,
+      "detail": {
+        "functionThis": {
+          "ok": false,
+          "error": "EvalError"
+        },
+        "functionConstructor": {
+          "ok": false,
+          "error": "EvalError"
+        },
+        "asyncFunction": {
+          "ok": false,
+          "error": "EvalError"
+        },
+        "generatorFunction": {
+          "ok": false,
+          "error": "EvalError"
+        },
+        "asyncGeneratorFunction": {
+          "ok": false,
+          "error": "EvalError"
+        },
+        "evalInSelf": false,
+        "indirectEval": {
+          "ok": false,
+          "error": "TypeError"
+        },
+        "timerString": {
+          "ok": false,
+          "error": "TypeError"
+        },
+        "intervalString": {
+          "ok": false,
+          "error": "TypeError"
+        }
+      }
+    },
+    "eval is gone, by name and indirectly": {
+      "ok": true,
+      "detail": {
+        "evalInSelf": false,
+        "indirect": {
+          "ok": false,
+          "error": "TypeError"
+        }
+      }
+    },
+    "a string handed to setTimeout or setInterval runs nothing": {
+      "ok": true,
+      "detail": {
+        "setTimeout": {
+          "ok": false,
+          "error": "TypeError"
+        },
+        "setInterval": {
+          "ok": false,
+          "error": "TypeError"
+        }
+      }
+    },
+    "navigator and location are gone, from the global and from the polyfill's window": {
+      "ok": true,
+      "detail": {
+        "self": false,
+        "window": false,
+        "defaultView": false,
+        "location": false
+      }
+    },
+    "there is no nested context to post to, and no worker to start": {
+      "ok": true,
+      "detail": []
+    },
+    "nothing reachable from the polyfilled DOM, the global or the guest's API is a removed API": {
+      "ok": true,
+      "detail": {
+        "visited": 1015,
+        "leaks": []
+      }
+    },
+    "an error's stack hands back no removed API and no port, and there is no onerror to listen on": {
+      "ok": true,
+      "detail": {
+        "stack": {
+          "api": true,
+          "handed": [],
+          "leaks": []
+        },
+        "errors": {
+          "onerror": false,
+          "onunhandledrejection": false,
+          "addEventListener": false,
+          "onmessage": false
+        }
+      }
+    },
+    "there is no Blob to make a script of, nor importScripts to run one": {
+      "ok": true,
+      "detail": {
+        "blob": false,
+        "url": false,
+        "importScripts": false
+      }
+    },
+    "what hardening left stays: no name added to the global or a prototype, none kept replaced or deleted": {
+      "ok": true,
+      "detail": {
+        "addGlobal": {
+          "ok": false,
+          "error": "TypeError"
+        },
+        "addToPrototype": {
+          "ok": false,
+          "error": "TypeError"
+        },
+        "replaceKept": {
+          "ok": false,
+          "error": "TypeError"
+        },
+        "deleteKept": {
+          "ok": false,
+          "error": "TypeError"
+        },
+        "frozen": true
+      }
+    },
+    "the host page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "findings": {
+    "moduleBlobWorker": "ran"
+  },
+  "hardening": {
+    "removed": 222,
+    "reached": 1015,
+    "stackApi": true,
+    "stackHandedBack": []
+  },
+  "stats": {
+    "card": {
+      "applied": 1,
+      "refused": 2,
+      "dropped": 1
+    },
+    "hostile": {
+      "applied": 4,
+      "refused": 113,
+      "dropped": 86
+    }
+  },
+  "passed": true
+}

@@ -1,4 +1,5 @@
-import { actTitle, argShape, edgeWords, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { actTitle, edgeWords, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { argShape } from "@graview/core/words";
 import type { Affordance, AffordanceProvider, Observation, OpenParameter } from "../types.js";
 
 const BASE_SCORE = 40;

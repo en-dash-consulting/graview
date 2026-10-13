@@ -18,6 +18,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve, sep } from "node:path";
+import { gzipSync } from "node:zlib";
+import { HOSTED_BUDGET_NAMES, readRaises } from "./bundle-budget.mjs";
 
 /** What each face fetches as it is first drawn (`@graview/embed`'s doors). */
 export const FACE_DOORS = {
@@ -188,8 +190,28 @@ export const FACE_DOORS = {
  * the list's arranging moved behind a door of its own (its lists fetched
  * when one is first opened), so nothing of it is up front. 579.7 KB, which
  * leaves Cloud's shell 15.3 KB under its 595.
+ *
+ * THEN THE HEADROOM CAME BACK (FR-179). 0.1.28 measured 587 206 bytes
+ * (573.4 KB, 199.2 KB gzipped) against 579.7, and Cloud's shell 562 of its
+ * 570. What only a fetched face, a form or the seat uses left the barrels a
+ * page imports up front — the matcher (`@graview/core/search`, handed to
+ * the provider by the scene and the Find box that search), a record read
+ * in words and an argument's shape (`@graview/core/words`), an act's
+ * answer to its seat, every place an app has and the order things are made
+ * in (`@graview/core/seat`), the grammar of an address's arrangement apart
+ * from what a kind can be arranged by, a card's sizes
+ * (`@graview/layout/sizes`) — and a frame guest's host is fetched as the
+ * view is first drawn (`@graview/guest/host/frame`): 556 818 bytes
+ * (543.8 KB, 187.4 KB gzipped) over main with FR-174, FR-175, FR-177 and
+ * the pages' filters, 32 388 fewer than main before it (589 206). The base is that with
+ * 10.2 KB of room (4.1 KB gzipped) — the 8 KB or so that FR-171, FR-172,
+ * FR-173, FR-176 and FR-178 need up front, landing beside this, and a
+ * little over — and it is not edited upward again: a change that spends more files
+ * a raise in `scripts/budget-raises/` naming `"a hosted page"`, the bytes
+ * it adds, and the changeset that says the kilobytes it adds up front
+ * (`hostedRaises`).
  */
-export const HOSTED_PAGE_BUDGET = { minified: 579.7 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BASE = { minified: 554.0 * 1024, gzipped: 191.5 * 1024, zod: 150 * 1024 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -304,8 +326,71 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * the same few bytes, took it to 546 566 (533.75 KB): still under 533.8 KB.
  * The bar ranking its places over both, the same as the page that
  * compiles, took it to 547 775 (534.9 KB): 535.2 KB.
+ *
+ * FR-179 took it from 0.1.28's 546 203 bytes (533.4 KB, 185.1 KB gzipped)
+ * to 515 126 (503.1 KB, 173.1 KB gzipped), 32 390 fewer than main before
+ * it (547 516), by the same moves as the page that compiles (above). The
+ * base is that with 10.4 KB of room (4.4 KB gzipped) for the same five
+ * features, raised only as that one is: by a file in
+ * `scripts/budget-raises/` naming `"a hosted page handed a compiled app"`
+ * and its changeset.
  */
-export const HOSTED_PAGE_COMPILED_BUDGET = { minified: 535.2 * 1024 };
+export const HOSTED_PAGE_COMPILED_BASE = { minified: 513.5 * 1024, gzipped: 177.5 * 1024 };
+
+/*
+ * A RAISE OF A HOSTED PAGE'S BUDGET SAYS ITSELF (FR-179). Each hosted page's
+ * budget is its base plus the raises filed for it in `scripts/budget-raises/`
+ * — `{ "budget": "a hosted page", "minified": <bytes>, "gzipped": <bytes>,
+ * "changeset": "<name>.md", "note": "…" }` — and a raise names the changeset
+ * that ships it, which says the kilobytes it adds up front as this writes
+ * them (`raiseSaid`: "1.2 KB"). A changeset that is still pending is read
+ * here, so the test fails the change that spends more than it says; on a
+ * pull request, `scripts/require-changeset.mjs` also asks that the raise and
+ * its changeset arrive together.
+ */
+export const raiseSaid = (raise) => `${(raise.minified / 1024).toFixed(1)} KB`;
+
+/** The hosted raises among `raises`, each judged: a budget it names, whole bytes, a note, and the changeset that says it. */
+export function hostedRaises(raises, { changesets } = {}) {
+  const hosted = raises.filter((raise) => HOSTED_BUDGET_NAMES.includes(raise.budget));
+  for (const raise of hosted) {
+    const where = `scripts/budget-raises/${raise.file ?? "(a raise)"}`;
+    for (const size of ["minified", "gzipped"]) {
+      if (!Number.isInteger(raise[size]) || raise[size] <= 0) throw new Error(`${where} must say how many bytes ${size} it adds to ${raise.budget} up front, as a whole number above 0`);
+    }
+    if (typeof raise.note !== "string" || raise.note.trim().length < 20) throw new Error(`${where} carries no note: say what grew, why, and what it measured, in a sentence`);
+    if (typeof raise.changeset !== "string" || !/^[\w.-]+\.md$/.test(raise.changeset)) throw new Error(`${where} names no changeset: a hosted page's raise names the changeset that says it ("changeset": "<name>.md")`);
+    const text = changesets?.(raise.changeset);
+    if (text !== undefined && !text.includes(raiseSaid(raise))) {
+      throw new Error(`${where} adds ${raiseSaid(raise)} to ${raise.budget} up front, and .changeset/${raise.changeset} does not say so: say "${raiseSaid(raise)}" more up front in it`);
+    }
+  }
+  return hosted;
+}
+
+/** A pending changeset's text, or undefined once it has been spent by a release. */
+export const pendingChangeset = (repo) => (name) => {
+  const path = join(repo, ".changeset", name);
+  return existsSync(path) ? readFileSync(path, "utf8") : undefined;
+};
+
+/** A hosted page's base with the raises filed for it. */
+export function withHostedRaises(base, name, raises) {
+  const mine = raises.filter((raise) => raise.budget === name);
+  return {
+    ...base,
+    minified: base.minified + mine.reduce((sum, raise) => sum + raise.minified, 0),
+    gzipped: base.gzipped + mine.reduce((sum, raise) => sum + raise.gzipped, 0),
+    raises: mine.map((raise) => raise.file),
+  };
+}
+
+const REPO = resolve(dirname(new URL(import.meta.url).pathname), "..", "..");
+export const HOSTED_RAISES = hostedRaises(readRaises(), { changesets: pendingChangeset(REPO) });
+/** What the page that compiles holds to up front: its base, and every raise filed for it. */
+export const HOSTED_PAGE_BUDGET = withHostedRaises(HOSTED_PAGE_BASE, HOSTED_BUDGET_NAMES[0], HOSTED_RAISES);
+/** What the page handed a compiled app holds to up front. */
+export const HOSTED_PAGE_COMPILED_BUDGET = withHostedRaises(HOSTED_PAGE_COMPILED_BASE, HOSTED_BUDGET_NAMES[1], HOSTED_RAISES);
 
 /** What only compiling a document needs, none of which a page handed a compiled app carries up front. */
 export const COMPILER_MODULES = [
@@ -412,6 +497,8 @@ export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY, { minif
     logLevel: "silent",
   });
   const outputs = result.metafile.outputs;
+  /** The metafile's name for a chunk as built: each is named by its own hash. */
+  const outputOf = (file) => Object.keys(outputs).find((key) => key.split("/").pop() === file.path.split(sep).pop());
   /** A chunk and every chunk it imports outright: what is fetched before it runs. */
   const closure = (from) => {
     const found = new Set([from]);
@@ -457,14 +544,17 @@ export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY, { minif
   const upFront = byPackage(eager);
   const minified = bytes(eager);
   const zod = upFront.zod ?? 0;
+  // Gzipped as a server sends it: each chunk on its own.
+  const gzipped = minify ? result.outputFiles.filter((file) => eager.has(outputOf(file))).reduce((sum, file) => sum + gzipSync(file.contents, { level: 9 }).length, 0) : 0;
+  const budget = entry === HOSTED_PAGE_ENTRY ? HOSTED_PAGE_BUDGET : entry === HOSTED_PAGE_COMPILED_ENTRY ? HOSTED_PAGE_COMPILED_BUDGET : undefined;
   return {
-    upFront: { minified, zod, chunks: eager.size, packages: upFront, modules: byModule(eager) },
+    upFront: { minified, gzipped, zod, chunks: eager.size, packages: upFront, modules: byModule(eager) },
     whenAsked: { minified: bytes(lazy), chunks: lazy.length, packages: byPackage(lazy), doors },
     beforeDrawn: faces,
-    budget: HOSTED_PAGE_BUDGET,
+    budget,
     metafile: result.metafile,
     files: result.outputFiles,
-    over: minified > HOSTED_PAGE_BUDGET.minified || zod > HOSTED_PAGE_BUDGET.zod,
+    over: budget !== undefined && (minified > budget.minified || (minify && gzipped > budget.gzipped) || zod > (budget.zod ?? Infinity)),
   };
 }
 

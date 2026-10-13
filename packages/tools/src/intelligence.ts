@@ -1,6 +1,5 @@
 import {
   pluralOf,
-  argShape,
   labelOf,
   nodeRefArgs,
   type AnySchema,
@@ -8,6 +7,7 @@ import {
   type Store,
   defOf,
 } from "@graview/core";
+import { argShape } from "@graview/core/words";
 import { formFields, type FormField } from "@graview/core/forms";
 import type { Affordance, AffordanceProvider, OpenParameter } from "./types.js";
 

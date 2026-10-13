@@ -1,4 +1,5 @@
-import { placesOf, type AnySchema, type Store } from "@graview/core";
+import { type AnySchema, type Store } from "@graview/core";
+import { placesOf } from "@graview/core/seat";
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { aiThroughDevServer, NO_AI_SAID, seatResponder } from "../../src/index.js";

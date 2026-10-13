@@ -5,7 +5,8 @@ import { compileDocument } from "../../src/check.js";
 import { describePlace } from "../../src/document/describe-place.js";
 import { checkApp } from "../../src/cli/check.js";
 import { describeApp } from "../../src/cli/describe.js";
-import { declaredLenses, placesOf, Store, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
+import { declaredLenses, Store, type AnySchema, type GraviewApp, type Principal } from "../../src/index.js";
+import { placesOf } from "../../src/seat.js";
 import { columnMoves, statusColumns } from "../../src/describe.js";
 
 /**

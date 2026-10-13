@@ -1,10 +1,14 @@
-import { actsOn, counted, type AnySchema, type Hit } from "@graview/core";
+import { counted, type AnySchema, type Hit } from "@graview/core";
+import { actsOn, search, touchWeights } from "@graview/core/search";
 import { kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withPicture, withQuery, withSelection } from "@graview/layout/view";
 import { useKit } from "@graview/react/drawing";
-import { POPOVER_STYLE, useFound, useGraview, usePopover, useSeatTalkState, useViolations } from "@graview/react/provider";
+import { matchWith, POPOVER_STYLE, useFound, useGraview, usePopover, useSeatTalkState, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
+
+// The Find box searches: it hands the provider the matcher as it is fetched (FR-179).
+matchWith({ search, touchWeights });
 
 /**
  * THE FIND BOX. The graph is the result list.

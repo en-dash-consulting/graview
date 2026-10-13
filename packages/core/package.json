@@ -45,6 +45,18 @@
       "types": "./dist/arrange.d.ts",
       "default": "./dist/arrange.js"
     },
+    "./words": {
+      "types": "./dist/words.d.ts",
+      "default": "./dist/words.js"
+    },
+    "./seat": {
+      "types": "./dist/seat.d.ts",
+      "default": "./dist/seat.js"
+    },
+    "./search": {
+      "types": "./dist/search.d.ts",
+      "default": "./dist/search.js"
+    },
     "./forms": {
       "types": "./dist/forms.d.ts",
       "default": "./dist/forms.js"

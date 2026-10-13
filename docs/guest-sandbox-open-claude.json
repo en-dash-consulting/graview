@@ -1,0 +1,508 @@
+{
+  "at": "2026-10-13T04:10:43.786Z",
+  "transport": "open",
+  "engine": "chromium",
+  "policy": "Claude (claudemcpcontent.com /mcp_apps header, observed 2026-10-04)",
+  "claims": {
+    "a worker view draws a styled card grid, an SVG bar chart and a CSS-animated progress ring": {
+      "ok": true,
+      "detail": {
+        "cards": 2,
+        "bars": 4,
+        "grid": "grid",
+        "columns": 17,
+        "cardBackground": "rgb(255, 255, 255)",
+        "cardBorder": "rgba(24, 33, 58, 0.12)",
+        "panel": "rgb(255, 255, 255)",
+        "edge": "rgba(24, 33, 58, 0.12)",
+        "accent": "rgb(0, 23, 105)",
+        "ring": "rgb(0, 23, 105)",
+        "stop": "rgb(0, 23, 105)",
+        "barFill": "url(\"#barFill\")",
+        "animation": "spin",
+        "svgNamespace": "http://www.w3.org/2000/svg"
+      }
+    },
+    "in light, the cards take the app's panel and edge, and the ring and the bars the app's accent": {
+      "ok": true,
+      "detail": {
+        "cards": 2,
+        "bars": 4,
+        "grid": "grid",
+        "columns": 17,
+        "cardBackground": "rgb(255, 255, 255)",
+        "cardBorder": "rgba(24, 33, 58, 0.12)",
+        "panel": "rgb(255, 255, 255)",
+        "edge": "rgba(24, 33, 58, 0.12)",
+        "accent": "rgb(0, 23, 105)",
+        "ring": "rgb(0, 23, 105)",
+        "stop": "rgb(0, 23, 105)",
+        "barFill": "url(\"#barFill\")",
+        "animation": "spin",
+        "svgNamespace": "http://www.w3.org/2000/svg"
+      }
+    },
+    "the progress ring turns: its keyframes are drawn and running": {
+      "ok": true,
+      "detail": {
+        "before": "matrix(0.000193731, 1, -1, 0.000193731, 0, 0)",
+        "after": "matrix(-0.984759, 0.173925, -0.173925, -0.984759, 0, 0)"
+      }
+    },
+    "after the app's toggle to dark, the same view takes the dark panel, edge and accent": {
+      "ok": true,
+      "detail": {
+        "light": {
+          "cards": 2,
+          "bars": 4,
+          "grid": "grid",
+          "columns": 17,
+          "cardBackground": "rgb(255, 255, 255)",
+          "cardBorder": "rgba(24, 33, 58, 0.12)",
+          "panel": "rgb(255, 255, 255)",
+          "edge": "rgba(24, 33, 58, 0.12)",
+          "accent": "rgb(0, 23, 105)",
+          "ring": "rgb(0, 23, 105)",
+          "stop": "rgb(0, 23, 105)",
+          "barFill": "url(\"#barFill\")",
+          "animation": "spin",
+          "svgNamespace": "http://www.w3.org/2000/svg"
+        },
+        "dark": {
+          "cards": 2,
+          "bars": 4,
+          "grid": "grid",
+          "columns": 17,
+          "cardBackground": "rgba(19, 27, 52, 0.96)",
+          "cardBorder": "rgba(164, 178, 222, 0.18)",
+          "panel": "rgba(19, 27, 52, 0.96)",
+          "edge": "rgba(164, 178, 222, 0.18)",
+          "accent": "rgb(154, 171, 255)",
+          "ring": "rgb(154, 171, 255)",
+          "stop": "rgb(154, 171, 255)",
+          "barFill": "url(\"#barFill\")",
+          "animation": "spin",
+          "svgNamespace": "http://www.w3.org/2000/svg"
+        }
+      }
+    },
+    "CSS url() in background is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in background-image is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in border-image is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in border-image-source is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in list-style is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in list-style-image is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in cursor is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in content is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in mask is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in mask-image is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in -webkit-mask-image is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in filter is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in clip-path is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in shape-outside is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in offset-path is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in fill is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in stroke is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in marker is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "CSS url() in --custom is removed, and nothing was asked for it": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "@import is refused, by url() and by string": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "@font-face is refused, and the font it named is asked for nowhere": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "an escaped url, u\\72l(…), is refused": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "image-set() is refused": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "SVG <image href> and <image xlink:href> are not drawn, nor <feImage>": {
+      "ok": true,
+      "detail": [
+        "style",
+        "style",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "p",
+        "p",
+        "p",
+        "svg",
+        "use",
+        "a",
+        "img",
+        "img",
+        "img",
+        "div",
+        "div",
+        "div"
+      ]
+    },
+    "SVG <use> of another document is drawn with no reference": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "<a href=\"https:…\"> is drawn as text, with no href, and pressing it goes nowhere": {
+      "ok": true,
+      "detail": {
+        "link": {
+          "href": null,
+          "text": "a link out"
+        },
+        "url": "http://127.0.0.1:6192/"
+      }
+    },
+    "srcset is not drawn": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "an <img> with an address is drawn with none": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "a <link rel=preconnect> built in code is not drawn, and nothing connected to its host": {
+      "ok": true,
+      "detail": {
+        "tags": [
+          "style",
+          "style",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "div",
+          "p",
+          "p",
+          "p",
+          "svg",
+          "use",
+          "a",
+          "img",
+          "img",
+          "img",
+          "div",
+          "div",
+          "div"
+        ]
+      }
+    },
+    "inline handlers are not drawn, and the image, the click and the button set none off": {
+      "ok": true,
+      "detail": {
+        "hits": []
+      }
+    },
+    "<iframe>, <object>, <embed> and <form> are not drawn, and a press on what was drawn submits nothing": {
+      "ok": true,
+      "detail": [
+        "style",
+        "style",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "div",
+        "p",
+        "p",
+        "p",
+        "svg",
+        "use",
+        "a",
+        "img",
+        "img",
+        "img",
+        "div",
+        "div",
+        "div"
+      ]
+    },
+    "a fixed overlay stays in the view's region: drawn in place, and the app's bar and footer are still on top where they are": {
+      "ok": true,
+      "detail": {
+        "overlay": {
+          "position": "static",
+          "rect": {
+            "x": 0,
+            "y": 818.875,
+            "width": 2621.234375,
+            "height": 23.1875,
+            "top": 818.875,
+            "right": 2621.234375,
+            "bottom": 842.0625,
+            "left": 0
+          }
+        },
+        "sheetOverlay": {
+          "position": "static"
+        },
+        "region": {
+          "x": 0,
+          "y": 195.375,
+          "width": 2621.234375,
+          "height": 669.875,
+          "top": 195.375,
+          "right": 2621.234375,
+          "bottom": 865.25,
+          "left": 0
+        },
+        "atBar": "bar",
+        "atFoot": "foot"
+      }
+    },
+    "a view's stylesheet never reaches its region's :host, however the selector is spelled (:-->host, :<!--host), and the app's bar stays on top": {
+      "ok": true,
+      "detail": {
+        "cover": {
+          "x": 16,
+          "y": 1076.09375,
+          "width": 900,
+          "height": 48,
+          "top": 1076.09375,
+          "right": 916,
+          "bottom": 1124.09375,
+          "left": 16
+        },
+        "sheet": ".cover { position: absolute; top: 0; left: 0; width: 100vw; height: 48px; z-index: 2147483647; background: rgb(200, 0, 0); }",
+        "at": "bar",
+        "contain": "content",
+        "overflow": "clip"
+      }
+    },
+    "a view's own rule for header still styles what it drew, drawn as a div": {
+      "ok": true,
+      "detail": {
+        "tag": "div",
+        "color": "rgb(1, 2, 3)"
+      }
+    },
+    "what was not drawn was written down as refused": {
+      "ok": true,
+      "detail": {
+        "count": 44
+      }
+    },
+    "zero requests left the page from any view's region: the page made none but its own": {
+      "ok": true,
+      "detail": []
+    },
+    "the attacker's server was never asked, nor even connected to": {
+      "ok": true,
+      "detail": {
+        "requests": [],
+        "connections": 0
+      }
+    },
+    "inside the view's worker, the network, storage, channels, nested workers and code from text are gone, and graview is kept frozen": {
+      "ok": true,
+      "detail": {
+        "absent": {
+          "fetch": true,
+          "XMLHttpRequest": true,
+          "WebSocket": true,
+          "EventSource": true,
+          "importScripts": true,
+          "indexedDB": true,
+          "caches": true,
+          "BroadcastChannel": true,
+          "Worker": true,
+          "SharedWorker": true,
+          "Blob": true,
+          "URL": true,
+          "eval": true
+        },
+        "graviewFrozen": true,
+        "graviewKept": true,
+        "replace": "TypeError",
+        "functionMakesNothing": "EvalError",
+        "stuck": []
+      }
+    },
+    "no view failed": {
+      "ok": true,
+      "detail": []
+    },
+    "the page throws nothing": {
+      "ok": true,
+      "detail": []
+    }
+  },
+  "pageErrors": [],
+  "attacker": {
+    "requests": [],
+    "connections": 0
+  },
+  "requests": [
+    "http://127.0.0.1:6192/",
+    "http://localhost:6193/proxy/claude.html",
+    "blob:null/6e2bb2e1-f5ef-4a52-ba1a-6ec23ea21d8b",
+    "blob:null/b48a3e52-c21c-4430-9af1-1e7412f07d4f",
+    "blob:null/6f12358d-50a9-46e9-bc8e-51e12e01ad2a",
+    "blob:null/ad39653d-dd48-4919-8392-57d2a680e443",
+    "blob:null/7a76e0ff-0f2f-4cda-a6c2-a8b05aac3a69"
+  ],
+  "passed": true
+}

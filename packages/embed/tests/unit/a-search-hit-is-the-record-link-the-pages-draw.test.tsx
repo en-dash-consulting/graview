@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-import { createSchema, defineApp, defineNode, pluralLabel, search, Store, z, type Hit, type Principal } from "@graview/core";
+import { createSchema, defineApp, defineNode, pluralLabel, Store, z, type Hit, type Principal } from "@graview/core";
+import { search } from "@graview/core/search";
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { mount, type PagesEmbedHandle, type PagesEmbedOptions } from "../../src/pages.js";

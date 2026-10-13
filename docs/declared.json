@@ -1,0 +1,2336 @@
+{
+  "at": "2026-10-13T04:10:53.430Z",
+  "engine": "chromium",
+  "document": "packages/core/tests/document/fixtures/every-lens.gdd.json",
+  "checks": {
+    "everyDeclaredLensIsAPictureInThePlaceList": {
+      "titles": [
+        "The week",
+        "The month",
+        "Who covers what",
+        "The floor",
+        "The building",
+        "Who may do what",
+        "Who keeps the hall",
+        "By day"
+      ],
+      "pictures": [
+        "The floor",
+        "The week",
+        "The month",
+        "Who covers what",
+        "The building",
+        "Who may do what",
+        "Who keeps the hall",
+        "By day"
+      ],
+      "ok": true
+    },
+    "everyDeclaredLensIsADriveInFromAltitude": {
+      "marquees": [
+        "members: Who may do what",
+        "members: Who keeps the hall",
+        "rooms: The building",
+        "seats: The floor",
+        "shifts: The week",
+        "shifts: The month",
+        "shifts: Who covers what",
+        "shifts: By day"
+      ],
+      "ok": true
+    },
+    "theSceneOpensOnTheFirstPlace": {
+      "stop": "#focus=aggregate%3Aseat&in.view=the-floor",
+      "scenePressed": true,
+      "ok": true
+    },
+    "eachPlacesStopDrawsItsLensInTheScene": {
+      "drawn": {
+        "The week": {
+          "stop": "#focus=aggregate%3Ashift&in.view=the-week",
+          "titled": true
+        },
+        "The month": {
+          "stop": "#focus=aggregate%3Ashift&in.view=the-month",
+          "titled": true
+        },
+        "Who covers what": {
+          "stop": "#focus=aggregate%3Ashift&in.view=who-covers-what",
+          "titled": true
+        },
+        "The floor": {
+          "stop": "#focus=aggregate%3Aseat&in.view=the-floor",
+          "titled": true
+        },
+        "The building": {
+          "stop": "#focus=aggregate%3Aroom&in.view=the-building",
+          "titled": true
+        },
+        "Who may do what": {
+          "stop": "#focus=aggregate%3Amember&in.view=who-may-do-what",
+          "titled": true
+        },
+        "Who keeps the hall": {
+          "stop": "#focus=aggregate%3Amember&in.view=who-keeps-the-hall",
+          "titled": true
+        },
+        "By day": {
+          "stop": "#focus=aggregate%3Ashift&in.view=by-day",
+          "titled": true
+        }
+      },
+      "ok": true
+    },
+    "everyDeclaredLensHasItsPageOnThePagesFace": {
+      "pages": {
+        "The week": {
+          "heading": "The week",
+          "lens": true,
+          "drawn": true
+        },
+        "The month": {
+          "heading": "The month",
+          "lens": true,
+          "drawn": true
+        },
+        "Who covers what": {
+          "heading": "Who covers what",
+          "lens": true,
+          "drawn": true
+        },
+        "The floor": {
+          "heading": "The floor",
+          "lens": true,
+          "drawn": true
+        },
+        "The building": {
+          "heading": "The building",
+          "lens": true,
+          "drawn": true
+        },
+        "Who may do what": {
+          "heading": "Who may do what",
+          "lens": true,
+          "drawn": true
+        },
+        "Who keeps the hall": {
+          "heading": "Who keeps the hall",
+          "lens": true,
+          "drawn": true
+        },
+        "By day": {
+          "heading": "By day",
+          "lens": true,
+          "drawn": true
+        }
+      },
+      "ok": true
+    },
+    "thePagesFaceOpensOnTheFirstPlace": {
+      "opened": "The floor",
+      "ok": true
+    },
+    "theHomeFollowsTheDeclaredOrderLessTheHiddenKind": {
+      "kinds": [
+        "/volunteers",
+        "/seats",
+        "/shifts",
+        "/members"
+      ],
+      "nav": [
+        "/",
+        "/volunteers",
+        "/seats",
+        "/shifts",
+        "/members",
+        "/places/the-week",
+        "/rooms",
+        "/places/the-month",
+        "/places/who-covers-what",
+        "/places/the-floor",
+        "/places/the-building",
+        "/places/who-may-do-what",
+        "/places/who-keeps-the-hall",
+        "/places/by-day",
+        "/map"
+      ],
+      "gallery": [
+        "/places/the-floor",
+        "/places/the-week",
+        "/places/the-month",
+        "/places/who-covers-what",
+        "/places/by-day",
+        "/places/the-building",
+        "/places/who-may-do-what",
+        "/places/who-keeps-the-hall",
+        "/volunteers"
+      ],
+      "ok": true
+    },
+    "theHiddenKindIsReachedByLinkNavAndSearch": {
+      "byLink": true,
+      "byNav": true,
+      "bySearch": true,
+      "ok": true
+    },
+    "theFrontPageMadeOfDataIsTheHomeOnThePagesFace": {
+      "pages": {
+        "1440×900 light": {
+          "present": true,
+          "headings": [
+            "h2 A small start, on three fronts.",
+            "h3 The offers",
+            "h3 The way in",
+            "h3 For afterwards",
+            "h3 Open questions"
+          ],
+          "figures": [
+            "$21,000",
+            "3",
+            "$8,400",
+            "$12,600",
+            "$10,500",
+            "$2,800"
+          ],
+          "listed": [
+            "pkg-start",
+            "offer-workshop",
+            "offer-analysis",
+            "offer-suite",
+            "offer-advice",
+            "q-ci",
+            "q-budget"
+          ],
+          "links": 7,
+          "spills": false,
+          "fits": true
+        },
+        "1440×900 dark": {
+          "present": true,
+          "headings": [
+            "h2 A small start, on three fronts.",
+            "h3 The offers",
+            "h3 The way in",
+            "h3 For afterwards",
+            "h3 Open questions"
+          ],
+          "figures": [
+            "$21,000",
+            "3",
+            "$8,400",
+            "$12,600",
+            "$10,500",
+            "$2,800"
+          ],
+          "listed": [
+            "pkg-start",
+            "offer-workshop",
+            "offer-analysis",
+            "offer-suite",
+            "offer-advice",
+            "q-ci",
+            "q-budget"
+          ],
+          "links": 7,
+          "spills": false,
+          "fits": true
+        },
+        "390×844 light": {
+          "present": true,
+          "headings": [
+            "h2 A small start, on three fronts.",
+            "h3 The offers",
+            "h3 The way in",
+            "h3 For afterwards",
+            "h3 Open questions"
+          ],
+          "figures": [
+            "$21,000",
+            "3",
+            "$8,400",
+            "$12,600",
+            "$10,500",
+            "$2,800"
+          ],
+          "listed": [
+            "pkg-start",
+            "offer-workshop",
+            "offer-analysis",
+            "offer-suite",
+            "offer-advice",
+            "q-ci",
+            "q-budget"
+          ],
+          "links": 7,
+          "spills": false,
+          "fits": true
+        },
+        "390×844 dark": {
+          "present": true,
+          "headings": [
+            "h2 A small start, on three fronts.",
+            "h3 The offers",
+            "h3 The way in",
+            "h3 For afterwards",
+            "h3 Open questions"
+          ],
+          "figures": [
+            "$21,000",
+            "3",
+            "$8,400",
+            "$12,600",
+            "$10,500",
+            "$2,800"
+          ],
+          "listed": [
+            "pkg-start",
+            "offer-workshop",
+            "offer-analysis",
+            "offer-suite",
+            "offer-advice",
+            "q-ci",
+            "q-budget"
+          ],
+          "links": 7,
+          "spills": false,
+          "fits": true
+        }
+      },
+      "ok": true
+    },
+    "theFrontPageMadeOfDataIsWhereTheAppOpensAndNothingFloatsOverTheScene": {
+      "opening": {
+        "1440×900 light": {
+          "face": "pages",
+          "present": true,
+          "headings": [
+            "h2 A small start, on three fronts.",
+            "h3 The offers",
+            "h3 The way in",
+            "h3 For afterwards",
+            "h3 Open questions"
+          ],
+          "figures": [
+            "$21,000",
+            "3",
+            "$8,400",
+            "$12,600",
+            "$10,500",
+            "$2,800"
+          ],
+          "listed": [
+            "pkg-start",
+            "offer-workshop",
+            "offer-analysis",
+            "offer-suite",
+            "offer-advice",
+            "q-ci",
+            "q-budget"
+          ],
+          "links": 7,
+          "spills": false,
+          "fits": true
+        },
+        "1440×900 dark": {
+          "face": "pages",
+          "present": true,
+          "headings": [
+            "h2 A small start, on three fronts.",
+            "h3 The offers",
+            "h3 The way in",
+            "h3 For afterwards",
+            "h3 Open questions"
+          ],
+          "figures": [
+            "$21,000",
+            "3",
+            "$8,400",
+            "$12,600",
+            "$10,500",
+            "$2,800"
+          ],
+          "listed": [
+            "pkg-start",
+            "offer-workshop",
+            "offer-analysis",
+            "offer-suite",
+            "offer-advice",
+            "q-ci",
+            "q-budget"
+          ],
+          "links": 7,
+          "spills": false,
+          "fits": true
+        },
+        "390×844 light": {
+          "face": "pages",
+          "present": true,
+          "headings": [
+            "h2 A small start, on three fronts.",
+            "h3 The offers",
+            "h3 The way in",
+            "h3 For afterwards",
+            "h3 Open questions"
+          ],
+          "figures": [
+            "$21,000",
+            "3",
+            "$8,400",
+            "$12,600",
+            "$10,500",
+            "$2,800"
+          ],
+          "listed": [
+            "pkg-start",
+            "offer-workshop",
+            "offer-analysis",
+            "offer-suite",
+            "offer-advice",
+            "q-ci",
+            "q-budget"
+          ],
+          "links": 7,
+          "spills": false,
+          "fits": true
+        },
+        "390×844 dark": {
+          "face": "pages",
+          "present": true,
+          "headings": [
+            "h2 A small start, on three fronts.",
+            "h3 The offers",
+            "h3 The way in",
+            "h3 For afterwards",
+            "h3 Open questions"
+          ],
+          "figures": [
+            "$21,000",
+            "3",
+            "$8,400",
+            "$12,600",
+            "$10,500",
+            "$2,800"
+          ],
+          "listed": [
+            "pkg-start",
+            "offer-workshop",
+            "offer-analysis",
+            "offer-suite",
+            "offer-advice",
+            "q-ci",
+            "q-budget"
+          ],
+          "links": 7,
+          "spills": false,
+          "fits": true
+        }
+      },
+      "scene": {
+        "1440×900 light scene": {
+          "over": false
+        },
+        "1440×900 light graview": {
+          "over": false
+        },
+        "1440×900 dark scene": {
+          "over": false
+        },
+        "1440×900 dark graview": {
+          "over": false
+        },
+        "390×844 light scene": {
+          "over": false
+        },
+        "390×844 light graview": {
+          "over": false
+        },
+        "390×844 dark scene": {
+          "over": false
+        },
+        "390×844 dark graview": {
+          "over": false
+        }
+      },
+      "ok": true
+    },
+    "aListedRecordOnTheFrontPageIsALinkToItsPage": {
+      "followed": "The small start",
+      "ok": true
+    },
+    "theFourLensesMadeOfDataDrawOnBothFaces": {
+      "lenses": {
+        "The offers 1440×900 light": {
+          "onPage": {
+            "present": true,
+            "headings": [
+              "h3 The way in",
+              "h3 For afterwards"
+            ],
+            "figures": [
+              "$8,400",
+              "$12,600",
+              "$10,500",
+              "$2,800"
+            ],
+            "listed": [
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice"
+            ],
+            "links": 4,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [
+              "h4 The way in",
+              "h4 For afterwards"
+            ],
+            "figures": [
+              "$8,400",
+              "$12,600",
+              "$10,500",
+              "$2,800"
+            ],
+            "listed": [
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice"
+            ],
+            "links": 4,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "The offers 1440×900 dark": {
+          "onPage": {
+            "present": true,
+            "headings": [
+              "h3 The way in",
+              "h3 For afterwards"
+            ],
+            "figures": [
+              "$8,400",
+              "$12,600",
+              "$10,500",
+              "$2,800"
+            ],
+            "listed": [
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice"
+            ],
+            "links": 4,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [
+              "h4 The way in",
+              "h4 For afterwards"
+            ],
+            "figures": [
+              "$8,400",
+              "$12,600",
+              "$10,500",
+              "$2,800"
+            ],
+            "listed": [
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice"
+            ],
+            "links": 4,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "The offers 390×844 light": {
+          "onPage": {
+            "present": true,
+            "headings": [
+              "h3 The way in",
+              "h3 For afterwards"
+            ],
+            "figures": [
+              "$8,400",
+              "$12,600",
+              "$10,500",
+              "$2,800"
+            ],
+            "listed": [
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice"
+            ],
+            "links": 4,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [
+              "h4 The way in",
+              "h4 For afterwards"
+            ],
+            "figures": [
+              "$8,400",
+              "$12,600",
+              "$10,500",
+              "$2,800"
+            ],
+            "listed": [
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice"
+            ],
+            "links": 4,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "The offers 390×844 dark": {
+          "onPage": {
+            "present": true,
+            "headings": [
+              "h3 The way in",
+              "h3 For afterwards"
+            ],
+            "figures": [
+              "$8,400",
+              "$12,600",
+              "$10,500",
+              "$2,800"
+            ],
+            "listed": [
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice"
+            ],
+            "links": 4,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [
+              "h4 The way in",
+              "h4 For afterwards"
+            ],
+            "figures": [
+              "$8,400",
+              "$12,600",
+              "$10,500",
+              "$2,800"
+            ],
+            "listed": [
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice"
+            ],
+            "links": 4,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "The packages 1440×900 light": {
+          "onPage": {
+            "present": true,
+            "headings": [],
+            "figures": [
+              "$21,000",
+              "$69,300",
+              "$16,800"
+            ],
+            "listed": [
+              "pkg-start",
+              "offer-workshop",
+              "offer-analysis",
+              "pkg-whole",
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice",
+              "pkg-later",
+              "offer-advice"
+            ],
+            "links": 10,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [],
+            "figures": [
+              "$21,000",
+              "$69,300",
+              "$16,800"
+            ],
+            "listed": [
+              "pkg-start",
+              "offer-workshop",
+              "offer-analysis",
+              "pkg-whole",
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice",
+              "pkg-later",
+              "offer-advice"
+            ],
+            "links": 10,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "The packages 1440×900 dark": {
+          "onPage": {
+            "present": true,
+            "headings": [],
+            "figures": [
+              "$21,000",
+              "$69,300",
+              "$16,800"
+            ],
+            "listed": [
+              "pkg-start",
+              "offer-workshop",
+              "offer-analysis",
+              "pkg-whole",
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice",
+              "pkg-later",
+              "offer-advice"
+            ],
+            "links": 10,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [],
+            "figures": [
+              "$21,000",
+              "$69,300",
+              "$16,800"
+            ],
+            "listed": [
+              "pkg-start",
+              "offer-workshop",
+              "offer-analysis",
+              "pkg-whole",
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice",
+              "pkg-later",
+              "offer-advice"
+            ],
+            "links": 10,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "The packages 390×844 light": {
+          "onPage": {
+            "present": true,
+            "headings": [],
+            "figures": [
+              "$21,000",
+              "$69,300",
+              "$16,800"
+            ],
+            "listed": [
+              "pkg-start",
+              "offer-workshop",
+              "offer-analysis",
+              "pkg-whole",
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice",
+              "pkg-later",
+              "offer-advice"
+            ],
+            "links": 10,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [],
+            "figures": [
+              "$21,000",
+              "$69,300",
+              "$16,800"
+            ],
+            "listed": [
+              "pkg-start",
+              "offer-workshop",
+              "offer-analysis",
+              "pkg-whole",
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice",
+              "pkg-later",
+              "offer-advice"
+            ],
+            "links": 10,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "The packages 390×844 dark": {
+          "onPage": {
+            "present": true,
+            "headings": [],
+            "figures": [
+              "$21,000",
+              "$69,300",
+              "$16,800"
+            ],
+            "listed": [
+              "pkg-start",
+              "offer-workshop",
+              "offer-analysis",
+              "pkg-whole",
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice",
+              "pkg-later",
+              "offer-advice"
+            ],
+            "links": 10,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [],
+            "figures": [
+              "$21,000",
+              "$69,300",
+              "$16,800"
+            ],
+            "listed": [
+              "pkg-start",
+              "offer-workshop",
+              "offer-analysis",
+              "pkg-whole",
+              "offer-workshop",
+              "offer-analysis",
+              "offer-suite",
+              "offer-advice",
+              "pkg-later",
+              "offer-advice"
+            ],
+            "links": 10,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "What we heard 1440×900 light": {
+          "onPage": {
+            "present": true,
+            "headings": [
+              "h3 What hurts",
+              "h3 What they could do",
+              "h3 What they asked for",
+              "h3 What is simply true"
+            ],
+            "figures": [],
+            "listed": [
+              "note-slow",
+              "offer-analysis",
+              "offer-suite",
+              "note-tests",
+              "offer-suite",
+              "note-records",
+              "note-ai",
+              "offer-workshop",
+              "note-pilot",
+              "offer-workshop",
+              "offer-analysis",
+              "note-size"
+            ],
+            "links": 12,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [
+              "h4 What hurts",
+              "h4 What they could do",
+              "h4 What they asked for",
+              "h4 What is simply true"
+            ],
+            "figures": [],
+            "listed": [
+              "note-slow",
+              "offer-analysis",
+              "offer-suite",
+              "note-tests",
+              "offer-suite",
+              "note-records",
+              "note-ai",
+              "offer-workshop",
+              "note-pilot",
+              "offer-workshop",
+              "offer-analysis",
+              "note-size"
+            ],
+            "links": 12,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "What we heard 1440×900 dark": {
+          "onPage": {
+            "present": true,
+            "headings": [
+              "h3 What hurts",
+              "h3 What they could do",
+              "h3 What they asked for",
+              "h3 What is simply true"
+            ],
+            "figures": [],
+            "listed": [
+              "note-slow",
+              "offer-analysis",
+              "offer-suite",
+              "note-tests",
+              "offer-suite",
+              "note-records",
+              "note-ai",
+              "offer-workshop",
+              "note-pilot",
+              "offer-workshop",
+              "offer-analysis",
+              "note-size"
+            ],
+            "links": 12,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [
+              "h4 What hurts",
+              "h4 What they could do",
+              "h4 What they asked for",
+              "h4 What is simply true"
+            ],
+            "figures": [],
+            "listed": [
+              "note-slow",
+              "offer-analysis",
+              "offer-suite",
+              "note-tests",
+              "offer-suite",
+              "note-records",
+              "note-ai",
+              "offer-workshop",
+              "note-pilot",
+              "offer-workshop",
+              "offer-analysis",
+              "note-size"
+            ],
+            "links": 12,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "What we heard 390×844 light": {
+          "onPage": {
+            "present": true,
+            "headings": [
+              "h3 What hurts",
+              "h3 What they could do",
+              "h3 What they asked for",
+              "h3 What is simply true"
+            ],
+            "figures": [],
+            "listed": [
+              "note-slow",
+              "offer-analysis",
+              "offer-suite",
+              "note-tests",
+              "offer-suite",
+              "note-records",
+              "note-ai",
+              "offer-workshop",
+              "note-pilot",
+              "offer-workshop",
+              "offer-analysis",
+              "note-size"
+            ],
+            "links": 12,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [
+              "h4 What hurts",
+              "h4 What they could do",
+              "h4 What they asked for",
+              "h4 What is simply true"
+            ],
+            "figures": [],
+            "listed": [
+              "note-slow",
+              "offer-analysis",
+              "offer-suite",
+              "note-tests",
+              "offer-suite",
+              "note-records",
+              "note-ai",
+              "offer-workshop",
+              "note-pilot",
+              "offer-workshop",
+              "offer-analysis",
+              "note-size"
+            ],
+            "links": 12,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "What we heard 390×844 dark": {
+          "onPage": {
+            "present": true,
+            "headings": [
+              "h3 What hurts",
+              "h3 What they could do",
+              "h3 What they asked for",
+              "h3 What is simply true"
+            ],
+            "figures": [],
+            "listed": [
+              "note-slow",
+              "offer-analysis",
+              "offer-suite",
+              "note-tests",
+              "offer-suite",
+              "note-records",
+              "note-ai",
+              "offer-workshop",
+              "note-pilot",
+              "offer-workshop",
+              "offer-analysis",
+              "note-size"
+            ],
+            "links": 12,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [
+              "h4 What hurts",
+              "h4 What they could do",
+              "h4 What they asked for",
+              "h4 What is simply true"
+            ],
+            "figures": [],
+            "listed": [
+              "note-slow",
+              "offer-analysis",
+              "offer-suite",
+              "note-tests",
+              "offer-suite",
+              "note-records",
+              "note-ai",
+              "offer-workshop",
+              "note-pilot",
+              "offer-workshop",
+              "offer-analysis",
+              "note-size"
+            ],
+            "links": 12,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "Open questions 1440×900 light": {
+          "onPage": {
+            "present": true,
+            "headings": [],
+            "figures": [],
+            "listed": [
+              "q-ci",
+              "q-budget"
+            ],
+            "links": 2,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [],
+            "figures": [],
+            "listed": [
+              "q-ci",
+              "q-budget"
+            ],
+            "links": 2,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "Open questions 1440×900 dark": {
+          "onPage": {
+            "present": true,
+            "headings": [],
+            "figures": [],
+            "listed": [
+              "q-ci",
+              "q-budget"
+            ],
+            "links": 2,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [],
+            "figures": [],
+            "listed": [
+              "q-ci",
+              "q-budget"
+            ],
+            "links": 2,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "Open questions 390×844 light": {
+          "onPage": {
+            "present": true,
+            "headings": [],
+            "figures": [],
+            "listed": [
+              "q-ci",
+              "q-budget"
+            ],
+            "links": 2,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [],
+            "figures": [],
+            "listed": [
+              "q-ci",
+              "q-budget"
+            ],
+            "links": 2,
+            "spills": false,
+            "fits": true
+          }
+        },
+        "Open questions 390×844 dark": {
+          "onPage": {
+            "present": true,
+            "headings": [],
+            "figures": [],
+            "listed": [
+              "q-ci",
+              "q-budget"
+            ],
+            "links": 2,
+            "spills": false,
+            "fits": true
+          },
+          "onPicture": {
+            "present": true,
+            "headings": [],
+            "figures": [],
+            "listed": [
+              "q-ci",
+              "q-budget"
+            ],
+            "links": 2,
+            "spills": false,
+            "fits": true
+          }
+        }
+      },
+      "ok": true
+    },
+    "aPackageListsItsOffersAndANoteTheOffersThatAnswerIt": {
+      "pack": [
+        "offer-workshop",
+        "offer-analysis",
+        "offer-suite",
+        "offer-advice"
+      ],
+      "note": [
+        "offer-workshop",
+        "offer-analysis"
+      ],
+      "ok": true
+    },
+    "aStatusBoardDrawsOnBothFacesInTheFieldsOrder": {
+      "boards": {
+        "pages 1440×900 light": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "moves": 4,
+          "spills": false
+        },
+        "scene 1440×900 light": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "moves": 4,
+          "spills": false
+        },
+        "pages 1440×900 dark": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "moves": 4,
+          "spills": false
+        },
+        "scene 1440×900 dark": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "moves": 4,
+          "spills": false
+        },
+        "pages 390×844 light": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "moves": 4,
+          "spills": false
+        },
+        "scene 390×844 light": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "moves": 4,
+          "spills": false
+        },
+        "pages 390×844 dark": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "moves": 4,
+          "spills": false
+        },
+        "scene 390×844 dark": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "moves": 4,
+          "spills": false
+        }
+      },
+      "ok": true
+    },
+    "aColumnIsAnnouncedByItsLensFirst": {
+      "boards": {
+        "pages 1440×900 light": {
+          "names": [
+            "The board · Todo, 2",
+            "The board · Doing, 1",
+            "The board · Done, 1"
+          ],
+          "found": 1
+        },
+        "scene 1440×900 light": {
+          "names": [
+            "The board · Todo, 2",
+            "The board · Doing, 1",
+            "The board · Done, 1"
+          ],
+          "found": 1
+        },
+        "pages 1440×900 dark": {
+          "names": [
+            "The board · Todo, 2",
+            "The board · Doing, 1",
+            "The board · Done, 1"
+          ],
+          "found": 1
+        },
+        "scene 1440×900 dark": {
+          "names": [
+            "The board · Todo, 2",
+            "The board · Doing, 1",
+            "The board · Done, 1"
+          ],
+          "found": 1
+        },
+        "pages 390×844 light": {
+          "names": [
+            "The board · Todo, 2",
+            "The board · Doing, 1",
+            "The board · Done, 1"
+          ],
+          "found": 1
+        },
+        "scene 390×844 light": {
+          "names": [
+            "The board · Todo, 2",
+            "The board · Doing, 1",
+            "The board · Done, 1"
+          ],
+          "found": 1
+        },
+        "pages 390×844 dark": {
+          "names": [
+            "The board · Todo, 2",
+            "The board · Doing, 1",
+            "The board · Done, 1"
+          ],
+          "found": 1
+        },
+        "scene 390×844 dark": {
+          "names": [
+            "The board · Todo, 2",
+            "The board · Doing, 1",
+            "The board · Done, 1"
+          ],
+          "found": 1
+        }
+      },
+      "ok": true
+    },
+    "aCardMovedByTheKeyboardIsTheActAndUndoPutsItBack": {
+      "boards": {
+        "pages 1440×900 light": {
+          "reached": true,
+          "offered": [
+            "Doing",
+            "Done"
+          ],
+          "focusedFirst": true,
+          "after": [
+            [
+              "todo",
+              "1",
+              [
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "2",
+              [
+                "t1",
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "kept": "t1",
+          "said": "Moved “Write the brief” to Doing.Undo",
+          "undone": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ]
+        },
+        "scene 1440×900 light": {
+          "reached": true,
+          "offered": [
+            "Doing",
+            "Done"
+          ],
+          "focusedFirst": true,
+          "after": [
+            [
+              "todo",
+              "1",
+              [
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "2",
+              [
+                "t1",
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "kept": "t1",
+          "said": "Moved “Write the brief” to Doing.Undo",
+          "undone": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ]
+        },
+        "pages 1440×900 dark": {
+          "reached": true,
+          "offered": [
+            "Doing",
+            "Done"
+          ],
+          "focusedFirst": true,
+          "after": [
+            [
+              "todo",
+              "1",
+              [
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "2",
+              [
+                "t1",
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "kept": "t1",
+          "said": "Moved “Write the brief” to Doing.Undo",
+          "undone": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ]
+        },
+        "scene 1440×900 dark": {
+          "reached": true,
+          "offered": [
+            "Doing",
+            "Done"
+          ],
+          "focusedFirst": true,
+          "after": [
+            [
+              "todo",
+              "1",
+              [
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "2",
+              [
+                "t1",
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "kept": "t1",
+          "said": "Moved “Write the brief” to Doing.Undo",
+          "undone": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ]
+        },
+        "pages 390×844 light": {
+          "reached": true,
+          "offered": [
+            "Doing",
+            "Done"
+          ],
+          "focusedFirst": true,
+          "after": [
+            [
+              "todo",
+              "1",
+              [
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "2",
+              [
+                "t1",
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "kept": "t1",
+          "said": "Moved “Write the brief” to Doing.Undo",
+          "undone": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ]
+        },
+        "scene 390×844 light": {
+          "reached": true,
+          "offered": [
+            "Doing",
+            "Done"
+          ],
+          "focusedFirst": true,
+          "after": [
+            [
+              "todo",
+              "1",
+              [
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "2",
+              [
+                "t1",
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "kept": "t1",
+          "said": "Moved “Write the brief” to Doing.Undo",
+          "undone": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ]
+        },
+        "pages 390×844 dark": {
+          "reached": true,
+          "offered": [
+            "Doing",
+            "Done"
+          ],
+          "focusedFirst": true,
+          "after": [
+            [
+              "todo",
+              "1",
+              [
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "2",
+              [
+                "t1",
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "kept": "t1",
+          "said": "Moved “Write the brief” to Doing.Undo",
+          "undone": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ]
+        },
+        "scene 390×844 dark": {
+          "reached": true,
+          "offered": [
+            "Doing",
+            "Done"
+          ],
+          "focusedFirst": true,
+          "after": [
+            [
+              "todo",
+              "1",
+              [
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "2",
+              [
+                "t1",
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ],
+          "kept": "t1",
+          "said": "Moved “Write the brief” to Doing.Undo",
+          "undone": [
+            [
+              "todo",
+              "2",
+              [
+                "t1",
+                "t3"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "1",
+              [
+                "t4"
+              ]
+            ]
+          ]
+        }
+      },
+      "ok": true
+    },
+    "aViewerWithoutTheActSeesNoMoveAndOnlyTheirOwnCounted": {
+      "viewers": {
+        "pages 1440×900 light": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "1",
+              [
+                "t1"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "0",
+              []
+            ]
+          ],
+          "moves": 0,
+          "spills": false
+        },
+        "scene 1440×900 light": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "1",
+              [
+                "t1"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "0",
+              []
+            ]
+          ],
+          "moves": 0,
+          "spills": false
+        },
+        "pages 1440×900 dark": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "1",
+              [
+                "t1"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "0",
+              []
+            ]
+          ],
+          "moves": 0,
+          "spills": false
+        },
+        "scene 1440×900 dark": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "1",
+              [
+                "t1"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "0",
+              []
+            ]
+          ],
+          "moves": 0,
+          "spills": false
+        },
+        "pages 390×844 light": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "1",
+              [
+                "t1"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "0",
+              []
+            ]
+          ],
+          "moves": 0,
+          "spills": false
+        },
+        "scene 390×844 light": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "1",
+              [
+                "t1"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "0",
+              []
+            ]
+          ],
+          "moves": 0,
+          "spills": false
+        },
+        "pages 390×844 dark": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "1",
+              [
+                "t1"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "0",
+              []
+            ]
+          ],
+          "moves": 0,
+          "spills": false
+        },
+        "scene 390×844 dark": {
+          "present": true,
+          "columns": [
+            [
+              "todo",
+              "1",
+              [
+                "t1"
+              ]
+            ],
+            [
+              "doing",
+              "1",
+              [
+                "t2"
+              ]
+            ],
+            [
+              "done",
+              "0",
+              []
+            ]
+          ],
+          "moves": 0,
+          "spills": false
+        }
+      },
+      "ok": true
+    },
+    "aCardDraggedOntoAColumnIsTheSameAct": {
+      "dragged": {
+        "tried": true,
+        "present": true,
+        "columns": [
+          [
+            "todo",
+            "1",
+            [
+              "t1"
+            ]
+          ],
+          [
+            "doing",
+            "1",
+            [
+              "t2"
+            ]
+          ],
+          [
+            "done",
+            "2",
+            [
+              "t3",
+              "t4"
+            ]
+          ]
+        ],
+        "moves": 4,
+        "spills": false
+      },
+      "ok": true
+    },
+    "aStatusBoardIsADriveInFromAltitude": {
+      "marquees": [
+        "tasks: The board"
+      ],
+      "ok": true
+    },
+    "aCoverageCellOverAPathSelectsWhatItJoins": {
+      "chosen": {
+        "scene 1440×900": {
+          "joins": [
+            "p-ryan",
+            "sk-seo",
+            "st-ryan-seo"
+          ],
+          "shape": "matrix",
+          "lines": [
+            {
+              "id": "p-ryan",
+              "lands": true
+            },
+            {
+              "id": "sk-seo",
+              "lands": true
+            }
+          ],
+          "ryan": "lit",
+          "seo": "lit",
+          "val": "dimmed",
+          "cellSays": "",
+          "proxies": 0,
+          "heading": null
+        },
+        "pages 1440×900": {
+          "joins": [
+            "p-ryan",
+            "sk-seo",
+            "st-ryan-seo"
+          ],
+          "shape": "matrix",
+          "lines": [
+            {
+              "id": "p-ryan",
+              "lands": true
+            },
+            {
+              "id": "sk-seo",
+              "lands": true
+            }
+          ],
+          "ryan": "lit",
+          "seo": "lit",
+          "val": "dimmed",
+          "cellSays": "",
+          "proxies": 0,
+          "heading": "Strengths"
+        },
+        "scene 390×844": {
+          "joins": [
+            "p-ryan",
+            "sk-seo",
+            "st-ryan-seo"
+          ],
+          "shape": "stacked",
+          "lines": [
+            {
+              "id": "p-ryan",
+              "lands": true
+            }
+          ],
+          "ryan": "lit",
+          "seo": null,
+          "val": "dimmed",
+          "cellSays": "SEO",
+          "proxies": 0,
+          "heading": null
+        },
+        "pages 390×844": {
+          "joins": [
+            "p-ryan",
+            "sk-seo",
+            "st-ryan-seo"
+          ],
+          "shape": "stacked",
+          "lines": [
+            {
+              "id": "p-ryan",
+              "lands": true
+            }
+          ],
+          "ryan": "lit",
+          "seo": null,
+          "val": "dimmed",
+          "cellSays": "SEO",
+          "proxies": 0,
+          "heading": "Strengths"
+        }
+      },
+      "ok": true
+    },
+    "aChosenCellDrawsNothingToADistrict": {
+      "proxies": {
+        "scene 1440×900": 0,
+        "pages 1440×900": 0,
+        "scene 390×844": 0,
+        "pages 390×844": 0
+      },
+      "ok": true
+    },
+    "aRecordPageListsEveryRecordUnderAPagesBudget": {
+      "routed": {
+        "listed": 98,
+        "dashes": 0
+      },
+      "scene": {
+        "listed": 98,
+        "dashes": 0
+      },
+      "ok": true
+    },
+    "noPageThrew": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "passed": true
+}

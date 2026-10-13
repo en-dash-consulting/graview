@@ -1,4 +1,5 @@
-import { readableFields, Store } from "@graview/core";
+import { Store } from "@graview/core";
+import { readableFields } from "@graview/core/words";
 import { awkwardApp, awkwardGraph } from "@graview/core/testing";
 import { describe, expect, it } from "vitest";
 import { recordFacts } from "../../src/index.js";

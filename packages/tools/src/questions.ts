@@ -3,7 +3,6 @@ import {
   humanizeField,
   nounOf,
   labelOf,
-  readableFields,
   withArticle,
   type AnySchema,
   type InvariantDefinition,
@@ -12,6 +11,7 @@ import {
   defOf,
   descriptionOf,
 } from "@graview/core";
+import { readableFields } from "@graview/core/words";
 import { formFields, type FormField } from "@graview/core/forms";
 
 /**

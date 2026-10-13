@@ -22,6 +22,9 @@ export default defineConfig({
       "@graview/core/typed": fileURLToPath(new URL("./packages/core/src/typed.ts", import.meta.url)),
       "@graview/core/blocks": fileURLToPath(new URL("./packages/core/src/blocks.ts", import.meta.url)),
       "@graview/core/arrange": fileURLToPath(new URL("./packages/core/src/arrange.ts", import.meta.url)),
+      "@graview/core/search": fileURLToPath(new URL("./packages/core/src/search.ts", import.meta.url)),
+      "@graview/core/words": fileURLToPath(new URL("./packages/core/src/words.ts", import.meta.url)),
+      "@graview/core/seat": fileURLToPath(new URL("./packages/core/src/seat.ts", import.meta.url)),
       "@graview/core/forms": fileURLToPath(new URL("./packages/core/src/forms.ts", import.meta.url)),
       "@graview/core/lines": fileURLToPath(new URL("./packages/core/src/lines.ts", import.meta.url)),
       "@graview/core/json-schema": fileURLToPath(new URL("./packages/core/src/json-schema.ts", import.meta.url)),
@@ -39,6 +42,7 @@ export default defineConfig({
       "@graview/core": src("core"),
       // The narrow entries (FR-57): the subpath first, or the bare-name alias swallows it.
       "@graview/layout/view": fileURLToPath(new URL("./packages/layout/src/view.ts", import.meta.url)),
+      "@graview/layout/sizes": fileURLToPath(new URL("./packages/layout/src/sizes.ts", import.meta.url)),
       "@graview/layout": src("layout"),
       "@graview/tools/cli": fileURLToPath(new URL("./packages/tools/src/cli.ts", import.meta.url)),
       "@graview/tools/frame": fileURLToPath(new URL("./packages/tools/src/frame.ts", import.meta.url)),
@@ -72,6 +76,7 @@ export default defineConfig({
       "@graview/embed/pages": fileURLToPath(new URL("./packages/embed/src/pages.tsx", import.meta.url)),
       "@graview/embed": src("embed"),
       // The subpaths first, or the bare-name alias swallows them.
+      "@graview/guest/host/frame": fileURLToPath(new URL("./packages/guest/src/host/frame.ts", import.meta.url)),
       "@graview/guest/host/worker": fileURLToPath(new URL("./packages/guest/src/host/worker.ts", import.meta.url)),
       "@graview/guest/host/views": fileURLToPath(new URL("./packages/guest/src/host/views.ts", import.meta.url)),
       "@graview/guest/headless/node": fileURLToPath(new URL("./packages/guest/src/headless/node.ts", import.meta.url)),

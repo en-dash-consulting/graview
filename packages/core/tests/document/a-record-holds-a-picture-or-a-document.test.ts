@@ -13,7 +13,6 @@ import {
   filesOf,
   imageField,
   isFileValue,
-  readableFields,
   refusalOf,
   safeFileHref,
   Store,
@@ -22,7 +21,8 @@ import {
   type FileValue,
   type GraviewApp,
 } from "../../src/index.js";
-import { argShape } from "../../src/mutations/node-ref.js";
+import { readableFields } from "../../src/words.js";
+import { argShape } from "../../src/mutations/arg-shape.js";
 import { mutationToolSchema } from "../../src/json-schema.js";
 
 /**

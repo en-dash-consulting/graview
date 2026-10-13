@@ -10,12 +10,13 @@ The rail says the act came through the view.
 ## In the host
 
 ```ts
-import { guestView, mountGuestView } from "@graview/guest/host";
+import { guestView } from "@graview/guest/host";
 
 views.register("recipe", { fidelity: "full", cardinality: "one" },
   guestView({ url: "https://cards.example/recipe.html", name: "recipe-card" }));
 
-// Or without React, into any element:
+// Or without React, into any element (`guestView` fetches this as it is first drawn):
+import { mountGuestView } from "@graview/guest/host/frame";
 const frame = mountGuestView(element, { url, view: "recipe-card", store, principal, input: () => ({ node: { id } }) });
 frame.update();   // the input moved
 frame.dispose();

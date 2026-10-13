@@ -7,9 +7,10 @@
  * locales cut to English, the studio stubbed out (lib/hosted-page.mjs) — and
  * writes docs/hosted-page.json: what the page loads up front, package by
  * package, what each door it opens only when asked costs, and its claims:
- * at most 567 KB minified up front, at most 150 KB of it zod's, and at most
- * 523 KB handed a compiled app (`HOSTED_PAGE_BUDGET`,
- * `HOSTED_PAGE_COMPILED_BUDGET`) — and docs/hosted-page.md, the same by
+ * up front at most its budget minified and gzipped, at most 150 KB of it
+ * zod's, and handed a compiled app at most that page's budget
+ * (`HOSTED_PAGE_BUDGET`, `HOSTED_PAGE_COMPILED_BUDGET`: each a base and the
+ * raises filed for it, FR-179) — and docs/hosted-page.md, the same by
  * package as the release notes carry it.
  *
  * No browser and no port: it reads esbuild's metafile, so it runs first.
@@ -38,9 +39,11 @@ const handed = await measureHostedPage(repoRoot, HOSTED_PAGE_COMPILED_ENTRY);
 const compilerUpFront = COMPILER_MODULES.filter((module) => Object.keys(handed.upFront.modules).includes(module));
 const checks = {
   atMostTheBudgetMinifiedUpFront: { kb: kb(upFront.minified), budgetKb: kb(HOSTED_PAGE_BUDGET.minified), ok: upFront.minified <= HOSTED_PAGE_BUDGET.minified },
+  atMostTheBudgetGzippedUpFront: { kb: kb(upFront.gzipped), budgetKb: kb(HOSTED_PAGE_BUDGET.gzipped), ok: upFront.gzipped <= HOSTED_PAGE_BUDGET.gzipped },
   atMost150KbOfZodUpFront: { kb: kb(upFront.zod), budgetKb: kb(HOSTED_PAGE_BUDGET.zod), ok: upFront.zod <= HOSTED_PAGE_BUDGET.zod },
   theStudioIsNotCarried: { ok: !Object.keys(upFront.packages).includes("@graview/studio") && !Object.keys(whenAsked.packages).includes("@graview/studio") },
   handedACompiledAppAtMostItsBudgetUpFront: { kb: kb(handed.upFront.minified), budgetKb: kb(HOSTED_PAGE_COMPILED_BUDGET.minified), ok: handed.upFront.minified <= HOSTED_PAGE_COMPILED_BUDGET.minified },
+  handedACompiledAppAtMostItsBudgetGzippedUpFront: { kb: kb(handed.upFront.gzipped), budgetKb: kb(HOSTED_PAGE_COMPILED_BUDGET.gzipped), ok: handed.upFront.gzipped <= HOSTED_PAGE_COMPILED_BUDGET.gzipped },
   handedACompiledAppCarriesNoCompilerUpFront: { carried: compilerUpFront, ok: compilerUpFront.length === 0 && handed.whenAsked.doors.some((door) => door.module === "core/src/document/compile.ts") },
 };
 const passed = Object.values(checks).every((check) => check.ok);
@@ -48,14 +51,15 @@ const verdict = {
   at: new Date().toISOString(),
   page: "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
   checks,
-  upFront: { kb: kb(upFront.minified), chunks: upFront.chunks, packagesKb: inKb(upFront.packages), ownNeedKb: kb(own.upFront.minified) },
+  upFront: { kb: kb(upFront.minified), gzippedKb: kb(upFront.gzipped), bytes: upFront.minified, gzippedBytes: upFront.gzipped, chunks: upFront.chunks, packagesKb: inKb(upFront.packages), ownNeedKb: kb(own.upFront.minified) },
+  budget: { minified: Math.floor(HOSTED_PAGE_BUDGET.minified), gzipped: Math.floor(HOSTED_PAGE_BUDGET.gzipped), raises: HOSTED_PAGE_BUDGET.raises },
   whenAsked: {
     kb: kb(whenAsked.minified),
     chunks: whenAsked.chunks,
     packagesKb: inKb(whenAsked.packages),
     doors: whenAsked.doors.map((door) => ({ module: door.module, kb: kb(door.minified), packagesKb: inKb(door.packages) })),
   },
-  handedACompiledApp: { kb: kb(handed.upFront.minified), savedKb: kb(upFront.minified - handed.upFront.minified), packagesKb: inKb(handed.upFront.packages) },
+  handedACompiledApp: { kb: kb(handed.upFront.minified), gzippedKb: kb(handed.upFront.gzipped), bytes: handed.upFront.minified, gzippedBytes: handed.upFront.gzipped, budget: { minified: Math.floor(HOSTED_PAGE_COMPILED_BUDGET.minified), gzipped: Math.floor(HOSTED_PAGE_COMPILED_BUDGET.gzipped), raises: HOSTED_PAGE_COMPILED_BUDGET.raises }, savedKb: kb(upFront.minified - handed.upFront.minified), packagesKb: inKb(handed.upFront.packages) },
   // What each face fetches as it is first drawn, on top of what is up front: not one of the claims, said so a face moved out of the first chunk is not called smaller.
   beforeEachFaceDraws: {
     ...Object.fromEntries(Object.entries(measured.beforeDrawn).map(([face, one]) => [face, { kb: kb(one.minified), fetchedKb: kb(one.fetched) }])),
@@ -73,8 +77,8 @@ process.stdout.write(
     .join(", ")}\n`,
 );
 process.stdout.write(`the first chunk's own need: ${kb(own.upFront.minified)} KB; the other ${kb(upFront.minified - own.upFront.minified)} KB up front is code only a door uses, reached through an index\n`);
-process.stdout.write(`handed the compiled app (FR-123): ${kb(handed.upFront.minified)} KB up front, ${kb(upFront.minified - handed.upFront.minified)} KB less\n`);
+process.stdout.write(`handed the compiled app (FR-123): ${kb(handed.upFront.minified)} KB up front (${kb(handed.upFront.gzipped)} KB gzipped), ${kb(upFront.minified - handed.upFront.minified)} KB less\n`);
 for (const door of whenAsked.doors) process.stdout.write(`when asked: ${door.module} +${kb(door.minified)} KB\n`);
 for (const [face, one] of Object.entries(measured.beforeDrawn)) process.stdout.write(`before the ${face} face draws: ${kb(one.minified)} KB (${kb(one.fetched)} KB of it fetched as it is drawn)\n`);
-process.stdout.write(`${passed ? "a hosted page holds to its budget" : "a hosted page is over its budget"}: ${kb(upFront.minified)} KB up front, ${kb(upFront.zod)} KB of it zod\n`);
+process.stdout.write(`${passed ? "a hosted page holds to its budget" : "a hosted page is over its budget"}: ${kb(upFront.minified)} KB up front (${kb(upFront.gzipped)} KB gzipped), ${kb(upFront.zod)} KB of it zod\n`);
 process.exit(passed ? 0 : 1);
