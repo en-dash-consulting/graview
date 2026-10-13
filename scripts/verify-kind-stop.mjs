@@ -80,6 +80,22 @@ const measure = () => {
     .map(({ el, at }) => `${el.getAttribute("data-testid") ?? el.textContent?.trim().slice(0, 24)} ${Math.round(at.width)}×${Math.round(at.height)}`);
   const cells = [...stop.querySelectorAll("table td, table th")].map((el) => el.textContent?.trim() ?? "");
   const heading = document.getElementById(stop.getAttribute("aria-labelledby") ?? "");
+  // Contrast of a row's "⋯" glyph against the stop's ground, and whether its edge is drawn at rest.
+  const rgb = (text) => (text.match(/[\d.]+/g) ?? []).slice(0, 4).map(Number);
+  const lum = ([r, g, b]) => [r, g, b].map((v) => (v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const ground = (el) => {
+    for (let at = el; at; at = at.parentElement) {
+      const c = rgb(getComputedStyle(at).backgroundColor);
+      if (c.length === 3 || (c[3] ?? 1) > 0.5) return c;
+    }
+    return [255, 255, 255];
+  };
+  const acts = stop.querySelector('[data-testid="kind-stop-row-acts"]');
+  const ratio = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+  const actsContrast = acts ? Math.round(ratio(rgb(getComputedStyle(acts).color), ground(acts)) * 100) / 100 : null;
+  const actsEdge = acts ? getComputedStyle(acts).borderTopStyle !== "none" && rgb(getComputedStyle(acts).borderTopColor)[3] !== 0 && getComputedStyle(acts).borderTopColor !== "rgba(0, 0, 0, 0)" : null;
+  const picks = stop.querySelectorAll('[data-testid="kind-stop-table"] tbody tr[data-graview-pick]').length;
+  const holes = [...stop.querySelectorAll('[data-testid="kind-stop-table"] tbody td[data-label]')].filter((td) => (td.textContent ?? "").trim() === "").length;
   return {
     present: true,
     shape: stop.getAttribute("data-graview-shape"),
@@ -94,6 +110,10 @@ const measure = () => {
     sideways: document.documentElement.scrollWidth > innerWidth + 1,
     insideSideways: stop.scrollWidth > stop.clientWidth + 1,
     small: small.slice(0, 6),
+    actsContrast,
+    actsEdge,
+    picks,
+    holes,
     chips,
     moreChip,
   };
@@ -151,6 +171,13 @@ try {
   await page.click('[data-testid="kind-stop-problems"] button[aria-expanded]');
   await page.waitForSelector('[data-testid="kind-stop-problem-rows"] li', { timeout: 5000 }).catch(() => undefined);
   report.walks.problemRows = await page.evaluate(() => document.querySelector('[data-testid="kind-stop-problem-rows"]')?.textContent?.trim().slice(0, 160) ?? null);
+
+  // A row is its record: right-clicked, its acts open as a record's do anywhere in the scene.
+  await page.click('[data-testid="kind-stop-table"] tbody tr[data-graview-pick] td[data-label]', { button: "right" });
+  await page.waitForSelector('[data-testid="context-menu"] [data-affordance]', { timeout: 5000 }).catch(() => undefined);
+  report.walks.rowMenu = await page.evaluate(() => ({ open: document.querySelector('[data-testid="context-menu"] [data-affordance]') !== null, chosen: decodeURIComponent(location.hash) }));
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
 
   // The creating act asks in place, and putting the ask away gives the keyboard back to the act.
   await page.click('[data-testid="kind-stop-primary"]');
@@ -224,6 +251,14 @@ report.checks = {
   aChipNarrowsInOnePress: /\d/.test(walks.chip?.said ?? "") && (walks.chip?.rows ?? 0) > 0 && walks.chip.rows < 34,
   // A table names records, never their ids.
   noIdIsShown: stops.every((one) => !one.present || (one.ids ?? []).length === 0),
+  // A row right-clicked opens its record's acts, as a record does anywhere.
+  aRowOpensItsActsOnARightClick: walks.rowMenu?.open === true && /sel=room:/.test(walks.rowMenu?.chosen ?? ""),
+  // Every row is its record to the scene (`data-graview-pick`), chosen and right-clicked as a record is.
+  everyRowIsItsRecord: stops.every((one) => !one.present || one.rows === 0 || one.picks === one.rows),
+  // A row's "⋯" is unmistakably a control: its glyph at 3:1 against the row at least, a visible edge.
+  aRowsActsAreVisible: stops.every((one) => !one.present || one.rows === 0 || (one.actsContrast >= 3 && one.actsEdge)),
+  // An empty value is said, never a hole.
+  noCellIsAHole: stops.every((one) => !one.present || one.holes === 0),
   // A row's name goes to its record.
   aRowGoesToItsRecord: /focus=staff:/.test(walks.wentTo?.hash ?? ""),
   // The act asks in place; put away, the keyboard is back on the act.

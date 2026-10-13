@@ -494,7 +494,12 @@ function KindTable<S extends AnySchema>({
     const name = labelOf(definition, node as never);
     const problems = flagged.has(node.id) ? said(node.id) : [];
     return (
-      <tr key={node.id} data-graview-record={node.id} data-flagged={problems.length > 0 || undefined}>
+      /*
+       * THE ROW IS ITS RECORD, as a record is anywhere in the scene: pressed, it
+       * is chosen; right-clicked, long-pressed or given the menu key, its acts
+       * open. Not a tab stop of its own — its name and its "⋯" are.
+       */
+      <tr key={node.id} data-graview-pick={node.id} tabIndex={-1} data-graview-record={node.id} data-flagged={problems.length > 0 || undefined}>
         <th scope="row" className="graview-kind-stop-name">
           {RowView ? (
             /* The kind's own line (FR-37), a target for its record: pressed, chosen; pressed again, gone to. */
@@ -516,8 +521,9 @@ function KindTable<S extends AnySchema>({
         {columns.map((column) => {
           const cell = cellOf(schema, node, column, graph);
           return (
-            <td key={column.key} data-label={column.label} data-short={(cell.text.length > 0 && cell.text.length <= 14) || undefined} {...(cell.title ? { title: cell.title } : {})}>
-              {cell.text ? <span>{cell.text}</span> : null}
+            <td key={column.key} data-label={column.label} data-short={(cell.text.length > 0 && cell.text.length <= 14) || undefined} data-empty={cell.text ? undefined : ""} {...(cell.title ? { title: cell.title } : {})}>
+              {/* A value it has not got is said quietly, never a hole: a dash, read as "none". */}
+              {cell.text ? <span>{cell.text}</span> : <><b aria-hidden="true">—</b><i className="graview-kind-stop-hidden">none</i></>}
             </td>
           );
         })}
@@ -650,8 +656,10 @@ const KIND_STOP_CSS = `
 .graview-kind-stop-flag{margin-left:6px;color:var(--graview-warn)}
 .graview-kind-stop-group th{padding-top:12px;font-weight:600;color:var(--graview-ink)}
 .graview-kind-stop-row-acts{width:1%;white-space:nowrap;text-align:right}
-.graview-kind-stop-row-acts button{min-width:32px;min-height:28px;border:1px solid transparent;border-radius:7px;background:none;color:var(--graview-ink-muted);font-size:1rem;line-height:1}
-.graview-kind-stop-row-acts button:hover{border-color:var(--graview-edge);color:var(--graview-ink)}
+.graview-kind-stop-row-acts button{min-width:32px;min-height:28px;border:1px solid var(--graview-edge-bright,var(--graview-edge));border-radius:7px;background:none;color:var(--graview-ink);font-size:1.125rem;font-weight:700;line-height:1}
+.graview-kind-stop-row-acts button:hover{background:color-mix(in srgb,var(--graview-ink) 8%,transparent)}
+.graview-kind-stop-table td[data-empty] b{font-weight:400;color:var(--graview-ink-faint)}
+.graview-kind-stop-table tr[data-graview-pick]{cursor:default}
 .graview-kind-stop-more{margin:10px 0 0;font-size:.875rem}
 @container (max-width: 559px){
 .graview-kind-stop{padding:12px}
@@ -661,7 +669,6 @@ const KIND_STOP_CSS = `
 .graview-kind-stop-table,.graview-kind-stop-table tbody,.graview-kind-stop-table tr{display:block}
 .graview-kind-stop-table tr{position:relative;padding:8px 40px 8px 0;border-top:1px solid var(--graview-edge)}
 .graview-kind-stop-table th,.graview-kind-stop-table td{display:block;padding:1px 0;border:0}
-.graview-kind-stop-table td:empty{display:none}
 .graview-kind-stop-table td>span{display:inline}
 .graview-kind-stop-table td[data-short]{white-space:normal}
 .graview-kind-stop-table td[data-label]::before{content:attr(data-label) " · ";color:var(--graview-ink-muted)}
