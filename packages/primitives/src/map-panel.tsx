@@ -1,4 +1,4 @@
-import { counted, edgeWords, isCurrent, labelOf, layer, nounOf, pluralLabel, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { counted, edgeWords, isCurrent, labelOf, layer, nounOf, numberAsRead, pluralLabel, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { aggregateId, kindCardId, withFocus, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 // Drawn only with the scene, whose face has fetched `@graview/react` already.
 import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
@@ -396,10 +396,19 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
         .sort((a, b) => a.name.localeCompare(b.name)),
     [store, kind, graph, view.past, definition],
   );
-  const relations = useMemo(
-    () => ribbonsOf(store.graph.allEdges(), (id) => store.graph.getNode(id)?.kind as string | undefined).filter((ribbon) => ribbon.from === kind || ribbon.to === kind),
-    [store, kind, graph],
-  );
+  /*
+   * Counted over the records the district counts (W-198): its head says
+   * "280 hives", the ones on this side of the horizon, so its relations do
+   * not say "299 hives → 14 apiaries" of the same district.
+   */
+  const relations = useMemo(() => {
+    const current = (id: string): boolean => {
+      const node = store.graph.getNode(id);
+      return node !== undefined && (view.past === true || isCurrent(store.schema.tryDefinition(node.kind as string), node));
+    };
+    const edges = store.graph.allEdges().filter((edge) => current(edge.from) && current(edge.to));
+    return ribbonsOf(edges, (id) => store.graph.getNode(id)?.kind as string | undefined).filter((ribbon) => ribbon.from === kind || ribbon.to === kind);
+  }, [store, kind, graph, view.past]);
   // A district that stops being asked about takes its question with it.
   useEffect(() => () => setEmphasis(null), [setEmphasis]);
   const plural = pluralLabel(store.schema, kind);
@@ -445,8 +454,8 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
                   onBlur={() => setEmphasis(null)}
                 >
                   <span style={{ flex: "1 1 auto", minWidth: 0 }}>{ribbonSentence(store.schema, ribbon)}</span>
-                  <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", fontVariantNumeric: "tabular-nums" }} title={`${ribbon.links} links`}>
-                    {ribbon.links}
+                  <span style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", fontVariantNumeric: "tabular-nums" }} title={`${numberAsRead(ribbon.links)} links`}>
+                    {numberAsRead(ribbon.links)}
                   </span>
                 </div>
               </li>

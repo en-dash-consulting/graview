@@ -4668,3 +4668,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/core/src/graph/graph.ts` (`applyPrimitives`), `packages/core/src/graph/diff.ts`
 - harness that should have caught it: none — the gauntlet's data is awkward, not large, and `pnpm verify scale` times the scene's drawing, not a change
 - status: fixed in "walkthrough: G · a change costs what it touches" · the diff is of the records and links the primitives name (and the links a removed record takes), in the graph's order, and a record held unchanged is not compared. 100 appends: 3,067 → 114 milliseconds; the 200-row import: 9,789 → 240. Criterion: `packages/core/tests/unit/a-change-costs-what-it-touches.test.ts` — no field of an untouched record is read (verified failing without the fix), and the diff equals the whole comparison's for adds, patches, removals and the links a removal takes
+
+### W-198 · "7540 inspections", and "299 hives → 14 apiaries" under a head that says 280
+- stage: A and D (the home, the map's district panel, a static page) · face: scene, pages and static · width: 1440 and 390 · scheme: light
+- impact: cosmetic — a hole in a known class's check: every count past a thousand was said bare ("7540 inspections" on the home and in `renderPlace`, "7347 inspections → 299 hives" in the panel, "7347" beside it), and the Hives panel's relations counted the nineteen dead-outs its own head ("280 hives") leaves past the horizon
+- class: prose-wrong-for-the-domain (also: says-something-untrue, data-shape-not-in-fixtures)
+- expected: a count is a figure said in the page's locale, as FR-178 says every figure is; a panel's relations count what its head counts
+- actual: `counted` — the one sentence every face counts a kind with — wrote `${count}`; the panel's link counts were drawn as numbers; and its relations were read over every live link, current or past. No example has a kind past a thousand records, so FR-178's tests never met a count that needed a separator
+- where it belongs: `packages/core/src/schema/define-node.ts` (`counted`), `packages/primitives/src/map-panel.tsx`
+- harness that should have caught it: the class's check for a bare number is "none yet" — the watch reads no figure as prose; the gauntlet's counts are small
+- status: fixed in "walkthrough: A · a count is said in the page's locale, and the panel counts what its head counts" · criteria: `packages/core/tests/unit/a-count-is-said-in-the-pages-locale.test.ts` and `packages/primitives/tests/unit/the-district-panel-counts-what-its-head-counts.test.tsx` (both verified failing without the fix)
