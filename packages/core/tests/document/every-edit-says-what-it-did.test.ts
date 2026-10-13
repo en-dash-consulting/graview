@@ -83,3 +83,29 @@ describe("a rename that moves the tools says so", () => {
     expect(outcome.said.join(" ")).not.toMatch(/tools/);
   });
 });
+
+/*
+ * WHAT GOES WITH A KIND OR A FIELD IS NAMED AS A PERSON READS IT. A kind
+ * removed said "so are act draw" — the act's id, under a plural verb for
+ * one thing — where removing the act itself says "The act "Draw a match"
+ * is removed". An act or a rule that goes with something is said by its
+ * title, as everywhere else.
+ */
+describe("what goes with a removed kind or field is named by its title", () => {
+  const santa = readDocument(JSON.parse(readFileSync(new URL("./fixtures/secret-santa.gdd.json", import.meta.url), "utf8"))).document!;
+
+  it("a kind removed names the act that goes with it by its title", () => {
+    const outcome = editDocument(santa, [{ op: "remove-kind", kind: "match" }]);
+    if (!outcome.ok) throw new Error(JSON.stringify(outcome.findings));
+    expect(outcome.said).toEqual(['The match kind is removed, and every match with it; so is the act "Draw a match".']);
+  });
+
+  it("a field removed names the acts and rules that go with it by their titles", () => {
+    const outcome = editDocument(vendors, [{ op: "remove-field", kind: "vendor", field: "quote" }]);
+    if (!outcome.ok) throw new Error(JSON.stringify(outcome.findings));
+    const [said] = outcome.said;
+    expect(said).toContain('the act "Set the quote"');
+    expect(said).toContain('the rule "A booked vendor has a quote"');
+    expect(said).not.toMatch(/\bact set-quote\b|\brule booked-needs-quote\b/);
+  });
+});

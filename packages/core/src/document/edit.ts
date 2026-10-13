@@ -1339,14 +1339,14 @@ class Editor {
     for (const [name, act] of Object.entries(this.doc.acts ?? {}) as [string, Doc][]) {
       const on = asArray(act.on);
       if (act.creates === kind || (act.effects ?? []).some((x: Doc) => x.create === kind) || (on.includes(kind) && on.length === 1)) {
+        gone.push(titled("act", name, act));
         this.removeActQuietly(name);
-        gone.push(`act ${name}`);
       } else if (on.includes(kind)) act.on = on.filter((k) => k !== kind);
     }
     for (const [name, rule] of Object.entries(this.doc.rules ?? {}) as [string, Doc][]) {
       if (rule.over === kind || exprMentions(this.doc, rule.when, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" }) || exprMentions(this.doc, rule.require, rule.over === "graph" ? NONE : new Set([rule.over]), { t: "kind", from: kind, to: "\u0000" })) {
         delete this.doc.rules[name];
-        gone.push(`rule ${name}`);
+        gone.push(titled("rule", name, rule));
       }
     }
     if (this.doc.views?.[kind] && !Array.isArray(this.doc.views[kind])) {
@@ -1398,7 +1398,7 @@ class Editor {
       if (Object.keys(this.doc.pages).length === 0) delete this.doc.pages;
     }
     for (const f of [...this.fills]) if (f.kind === kind) this.fills.splice(this.fills.indexOf(f), 1);
-    this.said.push(`The ${kind} kind is removed, and every ${kind} with it${gone.length ? `; so are ${listOf(gone)}` : ""}.`);
+    this.said.push(`The ${kind} kind is removed, and every ${kind} with it${gone.length ? `; so ${gone.length === 1 ? "is" : "are"} ${listOf(gone)}` : ""}.`);
   }
 
   // ── fields ──
@@ -1693,7 +1693,7 @@ class Editor {
     for (const [name, rule] of Object.entries(this.doc.rules ?? {}) as [string, Doc][]) {
       if (!rule.repairs) continue;
       const kept = rule.repairs.filter((r: Doc) => r.act !== act);
-      if (kept.length !== rule.repairs.length) gone.push(`the "${rule.repairs.find((r: Doc) => r.act === act)?.label ?? act}" repair of rule ${name}`);
+      if (kept.length !== rule.repairs.length) gone.push(`the "${rule.repairs.find((r: Doc) => r.act === act)?.label ?? act}" repair of ${titled("rule", name, rule)}`);
       if (kept.length > 0) rule.repairs = kept;
       else delete rule.repairs;
     }
@@ -1982,14 +1982,14 @@ class Editor {
         }
       }
       if (uses) {
-        gone.push(`act ${name}`, ...this.removeActQuietly(name));
+        gone.push(titled("act", name, act), ...this.removeActQuietly(name));
       }
     }
     for (const [name, rule] of Object.entries(doc.rules ?? {}) as [string, Doc][]) {
       const ctx: Kinds = rule.over === "graph" ? NONE : new Set([rule.over]);
       if (exprMentions(doc, rule.when, ctx, r) || exprMentions(doc, rule.require, ctx, r) || templateMentions(doc, rule.says, ctx, r)) {
         delete doc.rules[name];
-        gone.push(`rule ${name}`);
+        gone.push(titled("rule", name, rule));
       }
     }
     if (doc.rules && Object.keys(doc.rules).length === 0) delete doc.rules;
@@ -2258,6 +2258,8 @@ function mapBlocks(blocks: unknown[], f: (b: Record<string, unknown>) => Record<
 
 // ── words for what changed ───────────────────────────────────────────────────
 
+/** An act or a rule that goes with something, as a person reads it: 'the act "Draw a match"', by its id only when it has no title. */
+const titled = (what: "act" | "rule", name: string, spec: Doc): string => `the ${what} "${spec.title ?? name}"`;
 const withA = (noun: string) => `${/^[aeiou]/i.test(noun) ? "an" : "a"} ${noun}`;
 const nounOf = (doc: Doc, kind: string): string => nounWords(doc.kinds, kind);
 /** A kind's plural as a person reads it: "packages", "people and teams". */
