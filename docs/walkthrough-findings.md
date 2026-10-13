@@ -4598,3 +4598,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/core/src/invariants/engine.ts`, `packages/core/src/bind.ts`
 - harness that should have caught it: the class's check is "none yet" — nothing compiles a skill's words against the binding; the FR's test cast its way past it
 - status: fixed in "walkthrough: C · a rule that reads the clock says so without a cast" · criterion: `packages/core/tests/unit/a-rule-that-reads-the-clock-says-so-without-a-cast.test.ts`, compiled by `pnpm typecheck` (three `TS2353` errors without the fix, verified)
+
+### W-191 · The day turning says 34 problems mended that are still broken
+- stage: C (a rule about the day, judged as the day turns: `store.tick`, FR-176) · face: — (every face that hears the tick, and the activity's "broke") · width: — · scheme: —
+- impact: costs a job — "see what is wrong": on the co-op's 299 hives, `store.tick("2026-11-20")` answered 34 problems cleared and 280 appeared, when none had cleared and 246 had appeared; every one of the 34 was a hive still unopened, its message now saying 60 days where it had said 22
+- class: says-something-untrue (also: data-shape-not-in-fixtures)
+- expected: a problem whose rule, record and name are the same and whose words changed is the problem it was — neither made nor mended
+- actual: `problemsMoved` knows a problem by its message unless its rule has a line (FR-159), and a rule that is a function says its count in its message; so the day turning, or an act that leaves such a rule broken and changes its count, said the problem twice, once mended and once made. FR-176's fixture's rules are in the rule language, whose problems carry a line
+- where it belongs: `packages/core/src/store.ts` (`problemsMoved`)
+- harness that should have caught it: the class's check is "none yet"; no fixture had a function rule that counts in its message
+- status: fixed in "walkthrough: C · a problem reworded is not mended" · reworded problems are paired off one for one by rule, record and name before anything is called made or mended. Criterion: `packages/core/tests/unit/a-problem-reworded-is-not-mended.test.ts` (both cases verified failing without the fix)

@@ -313,7 +313,40 @@ export function problemsMoved(rules: readonly Pick<InvariantDefinition, "name" |
   const key = (v: Violation) => violationKey(v, shaped);
   const was = new Set(before.map(key));
   const is = new Set(after.map(key));
-  return { introduces: after.filter((v) => !was.has(key(v))), resolves: before.filter((v) => !is.has(key(v))) };
+  const introduces = after.filter((v) => !was.has(key(v)));
+  const resolves = before.filter((v) => !is.has(key(v)));
+  if (introduces.length === 0 || resolves.length === 0) return { introduces, resolves };
+  /*
+   * REWORDED IS NOT MENDED (the ninth walk, W-191). A rule that is a
+   * function says its count in its message — "not opened for 22 days" —
+   * so the day turning, or an act that leaves it broken, rewords it. The
+   * same rule about the same record under the same name, said differently,
+   * is the problem it was: paired off one for one, it is neither made nor
+   * mended.
+   */
+  const who = (v: Violation) => (v.subjectId === undefined ? undefined : `${v.invariant}|${v.subjectId}|${v.label ?? ""}`);
+  const left = new Map<string, number>();
+  for (const v of resolves) {
+    const one = who(v);
+    if (one !== undefined) left.set(one, (left.get(one) ?? 0) + 1);
+  }
+  const paired = new Map<string, number>();
+  const made = introduces.filter((v) => {
+    const one = who(v);
+    const open = one === undefined ? 0 : (left.get(one) ?? 0);
+    if (open === 0 || one === undefined) return true;
+    left.set(one, open - 1);
+    paired.set(one, (paired.get(one) ?? 0) + 1);
+    return false;
+  });
+  const mended = resolves.filter((v) => {
+    const one = who(v);
+    const open = one === undefined ? 0 : (paired.get(one) ?? 0);
+    if (open === 0 || one === undefined) return true;
+    paired.set(one, open - 1);
+    return false;
+  });
+  return { introduces: made, resolves: mended };
 }
 
 /**
