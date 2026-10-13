@@ -49,6 +49,7 @@ const WEDDING = {
   acts: {
     "add-vendor": { title: "Add a vendor", creates: "vendor" },
     "add-event": { title: "Add an event", creates: "event" },
+    book: { title: "Book for an event", on: "vendor", connects: "serves" },
   },
   brand: { currency: "USD" },
 };

@@ -27,6 +27,7 @@ import {
   humanizeField,
   isCurrent,
   labelOf,
+  localeFor,
   markHref,
   pluralOf,
   recordPath,
@@ -64,8 +65,15 @@ export interface RenderPlaceOptions {
    */
   readonly viewer?: Principal;
   readonly look?: StaticLook;
-  /** The day it is, for dates said relatively ("due tomorrow"); today when unsaid. */
+  /** The day it is, for dates said relatively ("due tomorrow"); the store's day when unsaid — the day it was ticked or pinned to, else today. */
   readonly today?: string;
+  /**
+   * THE READER'S LOCALE (FR-178), as a host passes it to the routed face:
+   * days, times and numbers are said in it, and the document says it as
+   * its `lang`. Unsaid, the brand's `locale`, else en-US; a tag the
+   * runtime cannot say anything in is en-US.
+   */
+  readonly locale?: string;
   /**
    * Put before every address a link on the page names (`/tasks/task-1`), so
    * a record's name leads to the app's own page for it — the routed face's
@@ -114,7 +122,9 @@ export function renderPlace<S extends AnySchema>(
   const base = (options.base ?? "").replace(/\/$/, "");
   const seen = store.seenBy(viewer);
   const asked = typeof place === "string" ? recordOfAddress(seen, place) ?? place : place;
-  const described = describePlace(store, viewer, asked, { app: declaration, ...(options.today ? { today: options.today } : {}) });
+  // Said in the reader's locale, else the brand's the page wears: the describer reads it off the app's brand, as every face does.
+  const locale = localeFor(options.locale ?? brand.locale ?? declaration.brand?.locale);
+  const described = describePlace(store, viewer, asked, { app: { ...declaration, brand: { ...brand, locale } }, ...(options.today ? { today: options.today } : {}) });
 
   /*
    * A KIND KEPT FROM THIS SEAT IS NOT THERE: an administered module's kinds
@@ -134,14 +144,14 @@ export function renderPlace<S extends AnySchema>(
     const d = described.description;
     title = d.place.title;
     if (d.drawnBy === "record") writeRecord(write, seen as unknown as Store<AnySchema>, d, kept);
-    else if (d.place.kind !== null && d.drawnBy === "derived") writeList(write, seen as unknown as Store<AnySchema>, d);
+    else if (d.place.kind !== null && d.drawnBy === "derived") writeList(write, seen as unknown as Store<AnySchema>, d, locale);
     else writePlace(write, d);
   }
   const found = there;
   const head = title === appName ? title : `${title} — ${appName}`;
   const masthead = writeMasthead(brand, appName, base);
   const html =
-    `<!doctype html>\n<html lang="en" data-graview-static="" data-scheme="${scheme}">\n<head>\n<meta charset="utf-8">\n` +
+    `<!doctype html>\n<html lang="${esc(locale)}" data-graview-static="" data-scheme="${scheme}">\n<head>\n<meta charset="utf-8">\n` +
     `<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(head)}</title>\n<style>\n${css}\n</style>\n</head>\n` +
     `<body>\n<div class="gv-page">\n${masthead}\n<main>\n${write.out()}\n</main>\n</div>\n</body>\n</html>\n`;
   return { html, css, title: head, found };
@@ -205,7 +215,7 @@ function writeRecord(write: Writer, seen: Store<AnySchema>, d: PlaceDescription,
 }
 
 /** A kind's list: its plural, its declared description, how many there are, and each record as its row says it — or, with no row declared, its name and its glance. */
-function writeList(write: Writer, seen: Store<AnySchema>, d: PlaceDescription): void {
+function writeList(write: Writer, seen: Store<AnySchema>, d: PlaceDescription, locale: string): void {
   const kind = d.place.kind!;
   const definition = seen.schema.tryDefinition(kind);
   const members = seen.graph.nodesOfKind(kind).filter((node) => isCurrent(definition, node));
@@ -216,7 +226,7 @@ function writeList(write: Writer, seen: Store<AnySchema>, d: PlaceDescription): 
   write.raw(`</header>`);
   // Everything after the list's own heading, with each plain row given the glance the routed list shows beside the name.
   const rest = d.parts.filter((part, index) => !(index === 0 && part.t === "heading" && part.level === 1));
-  write.parts(rest.map((part) => (part.t === "list" ? { ...part, groups: part.groups.map((group) => ({ ...group, items: group.items.map((item) => glanced(seen, item)) })) } : part)), 1);
+  write.parts(rest.map((part) => (part.t === "list" ? { ...part, groups: part.groups.map((group) => ({ ...group, items: group.items.map((item) => glanced(seen, item, locale)) })) } : part)), 1);
 }
 
 /** The home, or a declared place: what `describePlace` says it shows, under its own heading, a section to a page in print. */
@@ -248,13 +258,13 @@ function writePlace(write: Writer, d: PlaceDescription): void {
 }
 
 /** A plain row (its name alone) given what a glance at the record says — the default card's facts, as the routed list shows them. */
-function glanced(seen: Store<AnySchema>, item: DescribedItem): DescribedItem {
+function glanced(seen: Store<AnySchema>, item: DescribedItem, locale: string): DescribedItem {
   if (item.parts.length > 0) return item;
   const node = seen.graph.getNode(item.id);
   if (!node) return item;
   const definition = seen.schema.tryDefinition(node.kind);
   const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(seen.schema, seen.graph as never, node as never) : node;
-  const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [item.title], glance: true });
+  const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [item.title], glance: true, locale });
   return { ...item, parts: fields.map((field) => ({ t: "text", text: field.alone })) };
 }
 

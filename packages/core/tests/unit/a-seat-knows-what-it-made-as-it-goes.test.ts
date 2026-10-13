@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { bindSchema, createSchema, defineNode, OperationLog, recordsOf, seesId, Store, type Operation, type Policy, type Principal } from "../../src/index.js";
+import { bindSchema, createSchema, defineNode, OperationLog, recordsOf, seesId, Store, type Operation, type Policy, type Principal, seatMark } from "../../src/index.js";
 
 /**
  * FR-51. A record a seat made is its own, and the judgment of what it sees
@@ -61,7 +61,7 @@ describe("who made each record is kept as the log goes (FR-51 b)", () => {
   it("names the first maker, not the undo that put a record back, and forgets an op the log cut back", () => {
     const store = make();
     const made = store.apply({ name: "jot", args: { label: "Venue" } }, { author: ada });
-    const id = "note:venue.person-ada";
+    const id = `note:venue.${seatMark("person:ada")}`;
     expect(recordsOf(store.log).creatorOf(id)).toBe("person:ada");
     // Undone, then put back by cy undoing the undo: still ada's.
     const undo = store.undo(made.ops[0]!.batch, { author: ada });
@@ -89,13 +89,13 @@ describe("who made each record is kept as the log goes (FR-51 b)", () => {
     store.apply({ name: "jot", args: { label: "Cake" } }, { author: ada });
     store.apply({ name: "jot", args: { label: "Band" } }, { author: bo });
     const adaSees = seesId(store, ada);
-    expect(adaSees("note:cake.person-ada")).toBe(true);
+    expect(adaSees(`note:cake.${seatMark("person:ada")}`)).toBe(true);
     store.compact(store.log.checkpointAt(schema, store.log.length));
     expect(store.log.all()).toHaveLength(0);
     store.apply({ name: "jot", args: { label: "Flowers" } }, { author: ada });
-    expect(adaSees("note:cake.person-ada")).toBe(true);
-    expect(adaSees("note:band.person-bo")).toBe(false);
-    expect(adaSees("note:flowers.person-ada")).toBe(true);
+    expect(adaSees(`note:cake.${seatMark("person:ada")}`)).toBe(true);
+    expect(adaSees(`note:band.${seatMark("person:bo")}`)).toBe(false);
+    expect(adaSees(`note:flowers.${seatMark("person:ada")}`)).toBe(true);
   });
 
   it("reads only the commit's ops after a commit, however long the log is", () => {

@@ -6,7 +6,7 @@ import type { Batch, Operation } from "./ops/types.js";
 import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
-import { actingAs, isSystem } from "./permissions/policy.js";
+import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
 import { recordsOf, sees } from "./permissions/sight.js";
 import type { Policy, Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -49,6 +49,25 @@ function turnedOff(store: Judged, principal: Principal): ReadonlySet<string> {
 export function hidesFrom(store: Judged, principal: Principal): boolean {
   if (isSystem(principal)) return false;
   return (store.policy?.sees?.length ?? 0) > 0 || turnedOff(store, principal).size > 0;
+}
+
+/**
+ * WHICH KINDS A SEAT SEES EVERY RECORD OF (FR-55): by a sight that is not
+ * only its own (`own`, `via`), with the kind's module on. Asked without a
+ * kind, whether it sees every record of every kind — nothing kept from it
+ * at all. What an act or an import may mint for the seat, and whether it
+ * may ask for an id, turn on it: an id is unique across the whole store,
+ * so one minted or asked for where a record the seat may not see could
+ * hold it would tell the seat that record is there.
+ */
+export function seesEveryRecord(store: Judged & { readonly schema: { readonly kinds: readonly string[] } }, author: Principal): (kind?: string) => boolean {
+  if (!hidesFrom(store, author)) return () => true;
+  const off = store.modules?.disabledKinds ?? NOTHING;
+  const sights = store.policy?.sees ?? [];
+  const acting = actingAs(author);
+  const full = (kind: string) => !off.has(kind) && (sights.length === 0 || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via));
+  const everything = store.schema.kinds.every(full);
+  return (kind) => everything || (kind !== undefined && full(kind));
 }
 
 /**

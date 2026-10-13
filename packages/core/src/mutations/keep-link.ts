@@ -1,4 +1,6 @@
 import * as z from "../schema/zod.js";
+import { MissingRecordError } from "../graph/graph.js";
+import { edgeId } from "../graph/types.js";
 import { labelOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyMutationDefinition } from "./types.js";
@@ -32,6 +34,16 @@ export function keepLinkMutation<S extends AnySchema>(schema: S): AnyMutationDef
     // A link that is not there is refused by the graph itself, as missing.
     apply(ctx, args) {
       const { kind, from, to } = args as { kind: string; from: string; to: string };
+      /*
+       * AND ONE TO A RECORD THE SEAT MAY NOT SEE IS NOT THERE FOR IT (FR-55):
+       * its ends are plain ids, which a seat can guess, so it is refused in
+       * the graph's own words, alike whether the hidden record holds the
+       * link or nothing does. `ctx.graph` is what the seat is served.
+       */
+      if (!ctx.graph.getNode(from) || !ctx.graph.getNode(to)) {
+        const id = edgeId({ kind, from, to });
+        throw new MissingRecordError(id, `Cannot remove missing edge ${id}`);
+      }
       ctx.removeEdge({ kind, from, to });
       ctx.addEdge({ kind, from, to });
     },

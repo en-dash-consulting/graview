@@ -2,12 +2,15 @@ import type { Primitive } from "../graph/primitives.js";
 import type { GraphEdge } from "../graph/types.js";
 import type { Violation } from "../invariants/types.js";
 import { nameKey } from "../labels.js";
-import { slug } from "../mutations/define-mutation.js";
+import { mintId, slug } from "../mutations/define-mutation.js";
+import { nodeRefArgs } from "../mutations/node-ref.js";
 import type { Author, Operation, Via } from "../ops/types.js";
 import type { Principal } from "../permissions/types.js";
 import { article, counted, edgeWords, fieldWords, labelOf, nounOf, valueWords } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
+import { actingAs } from "../permissions/policy.js";
+import { seesEveryRecord } from "../seen.js";
 import { problemsMoved, type PlannedChange, type Store } from "../store.js";
 import { andList, coerceCell, orList, splitCell } from "./coerce.js";
 import { ImportMappingError, readMapping, fieldSpecFor, type ImportColumn, type ImportMapping } from "./mapping.js";
@@ -120,13 +123,16 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
   const ignored = header.filter((column) => !columns.some((one) => one.column === column));
 
   const forbidden = policyRefusal(store, kind, noun, by);
+  /** The importer's own view: what a one-to-one link already holds is judged by what they see (FR-55). */
+  const seen = store.seenBy(by);
+  const mayLink = linking(store, by);
   const taken = new Set<string>();
   /** The rows planned so far, by their label's key: a later row may link to one. */
   const plannedByName = new Map<string, { id: string; kind: string; label: string }[]>();
   /** Far records whose one link of a relation this import has already given. */
   const filled = new Set<string>();
   const outcomes: ImportRowOutcome[] = [];
-  const planned: { node: Record<string, unknown> & { id: string; kind: string }; edges: GraphEdge[]; label: string }[] = [];
+  const planned: { node: Record<string, unknown> & { id: string; kind: string }; edges: GraphEdge[]; replaced: GraphEdge[]; label: string }[] = [];
   const say = sentences(preview);
 
   for (const { row, cells } of records) {
@@ -180,9 +186,11 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     }
 
     const label = labelFor(definition, kind, fields, row);
-    const id = reasons.length === 0 ? mint(store, taken, kind, label) : `import:${row}`;
+    const id = reasons.length === 0 ? mint(store, seen, by, taken, kind, label) : `import:${row}`;
     const links: ImportLink[] = [];
     const edges: GraphEdge[] = [];
+    /** Links a hidden record held that a one-to-one link this row makes takes, as an act's `setSingleSource` takes them (FR-55). */
+    const replaced: GraphEdge[] = [];
     for (const column of columns) {
       if (column.as !== "relation") continue;
       const raw = cells[column.column];
@@ -205,12 +213,20 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
         }
         const edge = column.direction === "out" ? { kind: column.relation, from: id, to: found.id } : { kind: column.relation, from: found.id, to: id };
         if (edges.some((one) => one.kind === edge.kind && one.from === edge.from && one.to === edge.to)) continue;
+        // Made by the acts that make such a link, as a press on one would be: a grant's kinds, its own end, an agent's `may`.
+        const refusal = mayLink(column.relation, found.id, found.kind);
+        if (refusal) {
+          reasons.push(refusal);
+          continue;
+        }
         if (column.direction === "in" && column.one) {
-          const holds = store.graph.out(found.id, column.relation).length > 0 || filled.has(`${column.relation} ${found.id}`);
+          const holds = seen.graph.out(found.id, column.relation).length > 0 || filled.has(`${column.relation} ${found.id}`);
           if (holds) {
             reasons.push(`${found.label} already has its one “${edgeWords(schema, found.kind, column.relation, "out")}”`);
             continue;
           }
+          // One the importer may not see holds it: taken, and said to nobody, as an act setting a single source takes it.
+          replaced.push(...store.graph.outEdges(found.id, column.relation));
         }
         edges.push(edge);
         links.push({ relation: column.relation, direction: column.direction, id: found.id, label: found.label });
@@ -225,7 +241,7 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
     for (const edge of edges) if (edge.to === id) filled.add(`${edge.kind} ${edge.from}`);
     const key = nameKey(label);
     plannedByName.set(key, [...(plannedByName.get(key) ?? []), { id, kind, label }]);
-    planned.push({ node: { ...fields, id, kind }, edges, label });
+    planned.push({ node: { ...fields, id, kind }, edges, replaced, label });
     outcomes.push({ row, made: true, id, label, fields, links, refused: [], sentence: say.made(row, label, links) });
   }
 
@@ -238,7 +254,7 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
   const batchIntent = options.intent ?? `Import ${counted(schema, kind, made)}`;
   const via = options.via ?? "import";
   const appended = planned.map((one) => ({
-    primitives: [{ op: "add-node", node: one.node } as Primitive, ...one.edges.map((edge) => ({ op: "add-edge", edge }) as Primitive)],
+    primitives: [{ op: "add-node", node: one.node } as Primitive, ...one.edges.map((edge) => ({ op: "add-edge", edge }) as Primitive), ...one.replaced.map((edge) => ({ op: "remove-edge", edge }) as Primitive)],
     author: options.by,
     intent: `Add ${article(noun)} ${noun}: ${one.label}`,
     batchIntent,
@@ -258,14 +274,15 @@ export function importRows<S extends AnySchema>(store: Store<S>, kind: string, r
       ...one,
     })) as unknown as Operation[];
     const size = store.graph.size;
+    const taken = planned.reduce((sum, one) => sum + one.replaced.length, 0);
     options.admit({
       ops,
       primitives: appended.flatMap((one) => one.primitives),
       added: { nodes: made, edges: linked },
-      removed: { nodes: 0, edges: 0 },
+      removed: { nodes: 0, edges: taken },
       changed: { nodes: 0 },
       nodesAfter: size.nodes + made,
-      edgesAfter: size.edges + linked,
+      edgesAfter: size.edges + linked - taken,
     });
   }
   const before = store.violations();
@@ -347,12 +364,66 @@ function labelFor(definition: AnyNodeDefinition, kind: string, fields: Record<st
   return words?.trim() ?? `${nounOf(definition, kind)} from row ${row}`;
 }
 
-/** An id as an act's `freshId` mints one: `<kind>:<label>`, numbered past one already held. */
-function mint<S extends AnySchema>(store: Store<S>, taken: ReadonlySet<string>, kind: string, label: string): string {
-  const base = `${kind}:${slug(label)}`;
-  let id = base;
-  for (let n = 2; store.graph.has(id) || taken.has(id); n++) id = `${base}-${n}`;
-  return id;
+/**
+ * An id as the importer's own act's `freshId` would mint it: `<kind>:<label>`,
+ * numbered past one they see — and, for a kind they may not see every record
+ * of, their own (FR-55), so the id says nothing of a record kept from them.
+ */
+function mint<S extends AnySchema>(store: Store<S>, seen: Store<S>, by: Principal, taken: ReadonlySet<string>, kind: string, label: string): string {
+  return mintId(`${kind}:${slug(label)}`, {
+    seen: (id) => seen.graph.has(id) || taken.has(id),
+    held: (id) => store.graph.has(id) || taken.has(id),
+    limited: !seesEveryRecord(store, by)(kind),
+    me: actingAs(by).id,
+  });
+}
+
+/**
+ * WHETHER THE IMPORTER MAY MAKE A LINK, asked of the acts that make links of
+ * its relation (their `connects`) as a press on one would be: the record at
+ * the far end handed to the argument that takes it, so a grant's kinds, a
+ * `self` grant, an own-end grant and an agent's `may` all answer as they
+ * would. Where no policy is declared a person may link anything, as they may
+ * make anything; where one is, a relation no act makes is linked by nobody.
+ * Answers the refusal in words, or undefined.
+ */
+function linking<S extends AnySchema>(store: Store<S>, by: Principal): (relation: string, far: string, farKind: string) => string | undefined {
+  const asked = new Map<string, string | undefined>();
+  return (relation, far, farKind) => {
+    const key = `${relation}\u0000${far}`;
+    if (asked.has(key)) return asked.get(key);
+    let answer: string | undefined;
+    if (store.policy !== undefined || by.kind === "agent") {
+      const linkers = store.allMutations().filter((mutation) => !mutation.derived && (mutation.connects ?? []).includes(relation));
+      if (linkers.length === 0) {
+        if (store.policy !== undefined) answer = `nothing in this app links ${linkWords(store, relation, farKind)} that way, so none can be imported`;
+      } else {
+        for (const linker of linkers) {
+          const subject = linker.subject?.arg;
+          const takes = (kinds: readonly string[]) => kinds.includes("*") || kinds.includes(farKind);
+          const refs = nodeRefArgs(linker.input);
+          const at = refs.find((ref) => ref.name !== subject && takes(ref.kinds))?.name ?? (subject !== undefined && refs.some((ref) => ref.name === subject && takes(ref.kinds)) ? subject : undefined);
+          const verdict = store.permits({ name: linker.name, args: at === undefined ? {} : { [at]: far } }, by);
+          if (verdict.ok) {
+            answer = undefined;
+            break;
+          }
+          answer ??= verdict.refusal.message;
+        }
+      }
+    }
+    asked.set(key, answer);
+    return answer;
+  };
+}
+
+/** "a vendor to a tag": the two ends of a relation, as a sentence says them. */
+function linkWords<S extends AnySchema>(store: Store<S>, relation: string, farKind: string): string {
+  const owner = (store.schema as AnySchema).definitions.find((definition) => Object.hasOwn((definition.edges ?? {}) as object, relation));
+  const far = nounOf(store.schema.tryDefinition(farKind), farKind);
+  if (!owner) return `anything to ${article(far)} ${far}`;
+  const near = nounOf(owner, owner.kind);
+  return `${article(near)} ${near} to ${article(far)} ${far}`;
 }
 
 function withoutIds(node: unknown): Record<string, unknown> {

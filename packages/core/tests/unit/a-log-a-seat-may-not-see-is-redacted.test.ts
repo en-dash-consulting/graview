@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { seatMark } from "../../src/index.js";
 import { z } from "zod";
 import {
   bindSchema,
@@ -93,7 +94,7 @@ function showroom() {
   const theirs = store.apply({ name: "ask", args: { shopperId: "shopper:freya", label: "Finance on the Golf" } }, { author: freya });
   const mine = store.apply({ name: "ask", args: { shopperId: "shopper:bethan", label: "Is it still there" } }, { author: bethan });
   const renamed = store.apply({ name: "rename-car", args: { id: "car:golf", label: "Golf GTI" } }, { author: staff });
-  const compared = store.apply({ name: "compare", args: { id: "enquiry:is-it-still-there.shopper-bethan", other: "shopper:freya" } }, { author: staff });
+  const compared = store.apply({ name: "compare", args: { id: `enquiry:is-it-still-there.${seatMark("shopper:bethan")}`, other: "shopper:freya" } }, { author: staff });
   return { store, theirs, mine, renamed, compared };
 }
 
@@ -110,7 +111,7 @@ describe("a log a seat may not fully see", () => {
     const { store } = showroom();
     const said = JSON.stringify(store.seenBy(bethan).log.all().filter(isWithheld));
     // What it wrote into a record the seat sees is the seat's to see; its sentence, author and call are not.
-    for (const secret of ["shopper:freya", "Finance", "enquiry:finance-on-the-golf.shopper-freya", "Compare", "staff:rhian"]) expect(said).not.toContain(secret);
+    for (const secret of ["shopper:freya", "Finance", `enquiry:finance-on-the-golf.${seatMark("shopper:freya")}`, "Compare", "staff:rhian"]) expect(said).not.toContain(secret);
     expect(store.seenBy(bethan).batches().filter((batch) => batch.ops.every(isWithheld)).map((batch) => batch.intent)).toEqual([WITHHELD_INTENT, WITHHELD_INTENT]);
   });
 

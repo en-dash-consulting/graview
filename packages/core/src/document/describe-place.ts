@@ -146,7 +146,7 @@ const columnsAt = (width: number) => Math.max(1, Math.floor((Math.min(width, FAC
 export function describePlace<S extends AnySchema>(store: Store<S>, principal: Principal, place: string | AppPlace, options: DescribePlaceOptions<S>): DescribePlaceResult {
   const { app } = options;
   const width = options.width ?? 1440;
-  const today = options.today ?? isoToday();
+  const today = options.today ?? store.today() ?? isoToday();
   const seen = store.seenBy(principal);
   const schema = seen.schema as AnySchema;
   const graph = seen.graph as unknown as GraphReader;

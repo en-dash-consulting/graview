@@ -99,6 +99,35 @@ export function slug(label: string): string {
   );
 }
 
+/**
+ * A SEAT'S OWN MARK ON THE IDS IT MINTS (FR-55): seven letters and digits
+ * that are the same for the same seat on any store — so a page's guess and
+ * its host's answer agree — and that do not spell who the seat is. An id
+ * a seat minted is read by every seat that sees the record, and one that
+ * may not see the seat's own record was told it by `room:green.person-gus`.
+ */
+export function seatMark(me: string): string {
+  let hash = 0x811c9dc5;
+  for (let at = 0; at < me.length; at++) hash = Math.imul(hash ^ me.charCodeAt(at), 0x01000193);
+  return (hash >>> 0).toString(36).padStart(7, "0");
+}
+
+/**
+ * AN ID MINTED FOR A SEAT (FR-55), from `base` (`room:green`): stepping only
+ * past what the seat `seen`s; where it may not see every record of the
+ * kind (`limited`), its own — `room:green.<seatMark>`, which no label and no
+ * other seat mints — and where a step would still land on an id something
+ * holds, or the seat is nobody, a suffix no guess collides with. What an
+ * act's `freshId` and an import mint alike.
+ */
+export function mintId(base: string, at: { readonly seen: (id: string) => boolean; readonly held: (id: string) => boolean; readonly limited: boolean; readonly me?: string | undefined }): string {
+  if (at.limited && at.me === undefined) return unguessable(base, at.held);
+  const own = at.limited ? `${base}.${seatMark(at.me!)}` : base;
+  let id = own;
+  for (let n = 2; at.seen(id); n++) id = `${own}-${n}`;
+  return at.held(id) ? unguessable(own, at.held) : id;
+}
+
 /** An id from `base` no guess collides with: a random suffix, drawn again (never seen to be) while anything holds it. */
 function unguessable(base: string, held: (id: string) => boolean): string {
   let id;
@@ -293,23 +322,14 @@ export function compileMutation<S extends AnySchema>(
        * past what it sees is the seat's own to know; stepping past a hidden
        * record would tell it one is there ("Green" made `room:green-2` with
        * no room:green in sight). Where a kind may hold records the seat does
-       * not see, its ids are the seat's own — `room:green.person-gus`: a
+       * not see, its ids are the seat's own — `room:green.<its mark>`: a
        * slug never holds a dot, so no other seat's label mints one — and
        * the seat steps only past those it sees. Where a step would land on
        * a hidden record anyway (an id somebody asked for), and for a seat
        * that is nobody, the suffix is one no guess collides with.
        */
       const seen = (one: string) => (options.seen ? options.seen.has(one) : graph.has(one)) || minted.has(one);
-      const limited = options.seesInFull !== undefined && !options.seesInFull(prefix);
-      if (limited && options.me === undefined) {
-        const id = unguessable(base, held);
-        minted.add(id);
-        return id;
-      }
-      const own = limited ? `${base}.${slug(options.me!)}` : base;
-      let id = own;
-      for (let n = 2; seen(id); n++) id = `${own}-${n}`;
-      if (held(id)) id = unguessable(own, held);
+      const id = mintId(base, { seen, held, limited: options.seesInFull !== undefined && !options.seesInFull(prefix), me: options.me });
       minted.add(id);
       return id;
     },
