@@ -468,10 +468,10 @@ Until then, every commit is "walkthrough: <stage> · <finding>", with the
 criterion in the same commit as the fix — and for a known class, the
 criterion is the shared check's.
 
-Eight walks have been run (31, 19, 19, 16, 32, 29, 22 and 14 findings,
+Nine walks have been run (31, 19, 19, 16, 32, 29, 22, 14 and 13 findings,
 every one fixed with a criterion or carried open by name); none kept the
 log still. The first six added no class the first had not; the seventh
-added two and the eighth one. The eighth found the journeys themselves
+added two, the eighth one and the ninth none. The eighth found the journeys themselves
 blind for eight days (W-176, W-178): a walk starts by asking whether the
 instrument it starts from walked anything. The seventh starts from the journeys and the ledger: the
 watch, the gauntlet and the ledger hold the classes six walks found, so
