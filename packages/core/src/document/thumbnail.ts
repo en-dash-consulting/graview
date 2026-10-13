@@ -1,5 +1,6 @@
 import type { GraviewApp } from "../app.js";
-import { heightOf, MAX_SIDE, toIso, villageCap, villageOf, type Plot } from "../city.js";
+import { BLOCK, toIso, type Plot } from "../city.js";
+import { heightOf, villageCap, villageOf } from "../village.js";
 import { sceneDistricts, type SceneDistrict } from "../scene-districts.js";
 import { colorsIn, hsl, type Rgba } from "../theme/contrast.js";
 import { isoShade, type IsoFace } from "../theme/look.js";
@@ -264,8 +265,8 @@ const UNSAID_CELLS: readonly (readonly (readonly [number, number])[])[] = (() =>
   return choices;
 })();
 
-/** The district on its whole block: the same corner, the largest side. */
-const wholeBlock = (plot: Plot): Plot => ({ col: plot.col, row: plot.row, side: MAX_SIDE });
+/** The district on its whole block: the same corner, all of its block but a half-cell of street. */
+const wholeBlock = (plot: Plot): Plot => ({ col: plot.col, row: plot.row, side: BLOCK });
 
 function standingFitted(district: SceneDistrict, scheme: Scheme, rung: Rung, said: boolean): { readonly stands: Standing[]; readonly narrowest: number } {
   const plot = wholeBlock(district.plot);

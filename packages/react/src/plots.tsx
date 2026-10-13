@@ -1,9 +1,10 @@
-import { hueFor, type Brand } from "@graview/core";
-import { toIso, villageOf, type Building } from "@graview/core/scene";
+import { labelOf, numberAsRead, SCENE_LAYERS, type Brand, type Scheme } from "@graview/core";
+import { districtBlocks, districtState, TIER_HEIGHT, toIso, type Building, type StateTier } from "@graview/core/scene";
 import type { InterpolatedLayout } from "@graview/layout";
-import { memo, useCallback, useRef, type CSSProperties, type ReactElement } from "react";
-import { useGraview } from "./context.js";
+import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactElement } from "react";
+import { useGraph, useGraview } from "./context.js";
 import { useFlagged } from "./emphasis.js";
+import { ownRecords, useSinceLastVisit } from "./last-visit.js";
 
 /*
  * THE GROUND UNDER A DISTRICT. The layout gives every district a plot on
@@ -24,6 +25,8 @@ export interface City {
   readonly cell: number;
   readonly originX: number;
   readonly originY: number;
+  /** A cell's height over its width: 0.5 at an angle, 1 from straight above. */
+  readonly tilt?: number;
 }
 export interface PlotLike {
   readonly col: number;
@@ -34,7 +37,7 @@ export interface PlotLike {
 /** The four corners of a plot's tile on the canvas: back, right, front, left — clockwise from the top. */
 export function tileCorners(plot: PlotLike, city: City, pan: Point = { x: 0, y: 0 }): [Point, Point, Point, Point] {
   const at = (col: number, row: number): Point => {
-    const iso = toIso(col, row, city.cell);
+    const iso = toIso(col, row, city.cell, city.tilt);
     return { x: city.originX + pan.x + iso.x, y: city.originY + pan.y + iso.y };
   };
   return [
@@ -56,6 +59,10 @@ export interface PlotsProps {
   readonly brand?: Brand | undefined;
   /** Which district ids are hand-placed: their curb is dashed, as the pinned mark. */
   readonly pinned?: ReadonlySet<string>;
+  /** The camera has come down past the whole map: the blocks say their names. */
+  readonly close?: boolean;
+  /** The day overdue is judged against (ISO date). */
+  readonly today?: string;
   /** The scene's own flag for a click that a drag is about to produce: a pan that ends on a tile is not a press. */
   readonly swallowed?: { readonly current: boolean };
   onFocus?(id: string): void;
@@ -74,12 +81,19 @@ export interface PlotsProps {
  * members are the same, so dragging one district redraws that district and
  * its tile, not every building in the city on every frame.
  */
-export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onFocus }: PlotsProps): ReactElement | null {
-  const { selection } = useGraview();
+export function Plots({ frame, width, height, pan, pinned, close, today, swallowed, onFocus }: PlotsProps): ReactElement | null {
+  const { selection, store, scheme, principal } = useGraview();
+  const nodes = useGraph();
+  /* What somebody else wrote since this seat last left, and what is its own (last-visit.ts). */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const ops = useMemo(() => store.log.all(), [store, nodes]);
+  const recent = useSinceLastVisit(ops, store.schema.kinds as readonly string[], principal);
+  const own = useMemo(() => ownRecords(store.graph, ops, principal?.id), [store, ops, principal?.id]);
   const flagged = useFlagged();
   const city = frame.city;
   const tiles = frame.nodes.filter((node) => node.plot !== undefined && Math.round(node.plane) === 2);
   const cell = city?.cell ?? 0;
+  const tilt = city?.tilt ?? 0.5;
   // The callback is read when the tile is pressed, so a new one each render redraws nothing.
   const focus = useRef(onFocus);
   focus.current = onFocus;
@@ -89,27 +103,64 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
     return true;
   }, [swallowed]);
 
-  /* EACH PLOT'S GROUND, kept while that plot and its members are unchanged. */
+  /*
+   * EACH PLOT'S GROUND, kept while that plot and where its members stand
+   * are unchanged: a row of blocks per value of the kind's main choice
+   * (`districtState`), back row first in the declared order, each block as
+   * tall as its value reads — done flat, active raised.
+   */
   const drawn = useRef(new Map<string, PlotDrawing>());
   const kept = new Map<string, PlotDrawing>();
   for (const node of tiles) {
     const members = node.aggregate?.memberIds ?? [];
-    const key = `${cell}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${members.join(",")}`;
+    const state = districtState(store.schema, node.kind);
+    const valueOf = (id: string) => (state ? (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[state.field] : undefined);
+    const key = `${cell}|${tilt}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${members.map((id) => `${id}=${String(valueOf(id))}`).join(",")}`;
     const held = drawn.current.get(node.id);
     if (held && held.key === key) {
       kept.set(node.id, held);
       continue;
     }
-    const at0 = { cell, originX: 0, originY: 0 };
+    const at0 = { cell, originX: 0, originY: 0, tilt };
     const none = { x: 0, y: 0 };
-    const { buildings, rest } = villageOf(node.plot!, members);
+    const definition = store.schema.tryDefinition(node.kind);
+    const nameOf = (id: string) => {
+      const record = store.graph.getNode(id);
+      return record ? labelOf(definition, record) : id;
+    };
+    const lanes: string[][] = state ? state.values.map(() => []) : [[]];
+    const tiers: StateTier[] = state ? [...state.tiers] : ["waiting"];
+    for (const id of members) {
+      const at = state ? state.values.indexOf(valueOf(id) as string) : 0;
+      if (at >= 0) lanes[at]!.push(id);
+      else {
+        if (lanes.length === tiers.length) {
+          lanes.push([]);
+          tiers.push("waiting");
+        }
+        lanes[lanes.length - 1]!.push(id);
+      }
+    }
+    const { blocks, rests } = districtBlocks(node.plot!, lanes, tiers.map((tier) => TIER_HEIGHT[tier]));
     const corners = tileCorners(node.plot!, at0, none);
+    // A record's due date past and not done: overdue, lit like a problem.
+    const due = state ? dueField(store.schema, node.kind) : undefined;
     kept.set(node.id, {
       key,
       tile: points(corners),
-      front: corners[2]!,
-      rest,
-      buildings: buildings.map((building) => ({ id: building.id, ...buildingFaces(building, at0, none) })),
+      rests: rests.map((rest) => ({ count: rest.count, at: toIso(rest.col, rest.row, cell, tilt) })),
+      buildings: blocks.map((block) => {
+        const record = due ? (store.graph.getNode(block.id) as Record<string, unknown> | undefined) : undefined;
+        const when = record?.[due!];
+        return {
+          id: block.id,
+          tier: tiers[block.lane]!,
+          overdue: typeof when === "string" && tiers[block.lane] !== "done" && when.slice(0, 10) < (today ?? new Date().toISOString().slice(0, 10)),
+          name: nameOf(block.id),
+          width: block.footprint * cell,
+          ...buildingFaces(block, at0, none),
+        };
+      }),
     });
   }
   drawn.current = kept;
@@ -118,58 +169,86 @@ export function Plots({ frame, width, height, pan, brand, pinned, swallowed, onF
   const style: CSSProperties = { position: "absolute", left: 0, top: 0, pointerEvents: "none", overflow: "visible" };
   const chosenKey = selection.join("\n");
   const flaggedKey = flagged.join("\n");
+  const recentKey = recent ? [...recent].join("\n") : "";
+  const ownKey = own ? [...own].join("\n") : "";
   return (
+    <>
+    <style>{groundCss(scheme)}</style>
     <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length}>
       <g transform={`translate(${(city.originX + pan.x).toFixed(1)} ${(city.originY + pan.y).toFixed(1)})`}>
         {tiles.map((node) => (
           <PlotTile
             key={node.id}
             id={node.id}
-            hue={Math.round(hueFor(node.kind, brand?.accents))}
             drawing={kept.get(node.id)!}
             pinned={pinned?.has(node.id) ?? false}
             chosenKey={chosenKey}
             flaggedKey={flaggedKey}
+            recentKey={recentKey}
+            ownKey={ownKey}
+            named={close ?? false}
             press={press}
           />
         ))}
       </g>
     </svg>
+    </>
   );
 }
 
-/** One plot's ground at origin zero: its tile, and the village standing on it. */
+/** One plot's ground at origin zero: its tile, and the blocks standing on it. */
 interface PlotDrawing {
   /** What it was drawn from, so it is drawn again only when that changes. */
   readonly key: string;
   readonly tile: string;
-  readonly front: Point;
-  readonly rest: number;
-  readonly buildings: readonly { readonly id: string; readonly roof: string; readonly left: string; readonly right: string }[];
+  /** A row's records it had no room for, counted at the row's own end. */
+  readonly rests: readonly { readonly count: number; readonly at: Point }[];
+  readonly buildings: readonly {
+    readonly id: string;
+    readonly tier: StateTier;
+    readonly overdue: boolean;
+    readonly name: string;
+    /** How wide the block is on the screen, so a name is written on it only once there is room. */
+    readonly width: number;
+    readonly roof: string;
+    readonly left: string;
+    readonly right: string;
+    readonly top: Point;
+  }[];
 }
+
+/** A block's name is written over it once the block is this wide on the screen: coming down, the blocks are named. */
+const NAMED_FROM = 34;
 
 const PlotTile = memo(function PlotTile({
   id,
-  hue,
   drawing,
   pinned,
   chosenKey,
   flaggedKey,
+  recentKey,
+  ownKey,
+  named,
   press,
 }: {
   readonly id: string;
-  readonly hue: number;
   readonly drawing: PlotDrawing;
   readonly pinned: boolean;
-  /** The selection and the flags as keys, so a tile compares them by value. */
+  /** The selection, the flags, the changed and the own as keys, so a tile compares them by value. */
   readonly chosenKey: string;
   readonly flaggedKey: string;
+  readonly recentKey: string;
+  readonly ownKey: string;
+  /** Come down past the whole map: the blocks wide enough for a name say it. */
+  readonly named: boolean;
   readonly press: (id: string) => boolean;
 }) {
   const chosen = new Set(chosenKey.split("\n"));
   const broken = new Set(flaggedKey.split("\n"));
+  const recent = new Set(recentKey.split("\n"));
+  const own = new Set(ownKey.split("\n"));
   return (
-    <g className="graview-plot" data-graview-plot={id} data-graview-pinned={pinned ? "" : undefined} style={{ ["--graview-hue" as string]: hue }}>
+    <g className="graview-plot" data-graview-plot={id} data-graview-pinned={pinned ? "" : undefined}>
       <polygon
         className="graview-plot-tile"
         points={drawing.tile}
@@ -177,32 +256,46 @@ const PlotTile = memo(function PlotTile({
           if (press(id)) event.stopPropagation();
         }}
       />
-      {/* THE VILLAGE: one building per member, back to front, the square in the middle kept for the hall. */}
+      {/* THE BLOCKS: a row per value, back to front; a problem lit, a change since you were here aglow, your own marked. */}
       {drawing.buildings.length > 0 ? (
-        <g className="graview-village" data-graview-village={drawing.buildings.length} data-graview-rest={drawing.rest || undefined}>
-          {drawing.buildings.map((faces) => (
+        <g className="graview-village" data-graview-village={drawing.buildings.length} data-graview-rest={drawing.rests.reduce((sum, rest) => sum + rest.count, 0) || undefined}>
+          {drawing.buildings.map((block) => (
             <g
-              key={faces.id}
+              key={block.id}
               className="graview-building"
-              data-graview-building={faces.id}
-              data-graview-flagged={broken.has(faces.id) ? "" : undefined}
-              data-graview-selected={chosen.has(faces.id) ? "" : undefined}
+              data-graview-building={block.id}
+              data-graview-tier={block.tier}
+              data-graview-flagged={broken.has(block.id) || block.overdue ? "" : undefined}
+              data-graview-overdue={block.overdue ? "" : undefined}
+              data-graview-recent={recent.has(block.id) ? "" : undefined}
+              data-graview-own={own.has(block.id) ? "" : undefined}
+              data-graview-selected={chosen.has(block.id) ? "" : undefined}
             >
-              <polygon className="graview-iso-left" points={faces.left} />
-              <polygon className="graview-iso-right" points={faces.right} />
-              <polygon className="graview-iso-roof" points={faces.roof} />
+              <polygon className="graview-iso-left" points={block.left} />
+              <polygon className="graview-iso-right" points={block.right} />
+              <polygon className="graview-iso-roof" points={block.roof} />
+              {named && block.width >= NAMED_FROM ? (
+                <text className="graview-building-name" x={block.top.x} y={block.top.y - 3} textAnchor="middle">
+                  {block.name.length * 6 > block.width * 1.6 ? `${block.name.slice(0, Math.max(1, Math.floor((block.width * 1.6) / 6) - 1))}…` : block.name}
+                </text>
+              ) : null}
             </g>
           ))}
-          {drawing.rest > 0 ? (
-            <text className="graview-village-rest" x={drawing.front.x} y={drawing.front.y - 4} textAnchor="middle">
-              +{drawing.rest}
+          {drawing.rests.map((rest, i) => (
+            <text key={i} className="graview-village-rest" x={rest.at.x - 3} y={rest.at.y + 4} textAnchor="end">
+              +{numberAsRead(rest.count)}
             </text>
-          ) : null}
+          ))}
         </g>
       ) : null}
     </g>
   );
 });
+
+/** A kind's due date, by the name such a field goes by; undefined when it has none. */
+function dueField(schema: { tryDefinition(kind: string): { readonly fields: { readonly shape?: unknown } } | undefined }, kind: string): string | undefined {
+  return Object.keys((schema.tryDefinition(kind)?.fields.shape ?? {}) as Record<string, unknown>).find((name) => /^(due|deadline|due[-_ ]?(on|date|at|by))$/i.test(name));
+}
 
 /* ------------------------------------------------------------ the village */
 
@@ -210,17 +303,19 @@ const PlotTile = memo(function PlotTile({
  * WHERE THE MEMBERS STAND is @graview/core's (`villageOf`), so a picture
  * drawn without a browser (`sceneThumbnail`) puts them where this does.
  */
-export { heightOf, villageCap, villageOf } from "@graview/core/scene";
+export { districtBlocks, heightOf, villageCap, villageOf } from "@graview/core/scene";
 export type { Building } from "@graview/core/scene";
 
 /** The three faces of one building on the canvas, from its foot cell. */
 export function buildingFaces(building: Building, city: City, pan: Point): { readonly roof: string; readonly left: string; readonly right: string; readonly top: Point } {
   const half = building.footprint / 2;
   const at = (col: number, row: number, lift = 0): Point => {
-    const iso = toIso(col, row, city.cell);
+    const iso = toIso(col, row, city.cell, city.tilt);
     return { x: city.originX + pan.x + iso.x, y: city.originY + pan.y + iso.y - lift };
   };
-  const rise = building.footprint * city.cell * 0.5 * building.height;
+  // A wall shows as much as the ground is tilted away from straight above: none at all from there.
+  const tilt = Math.min(1, city.tilt ?? 0.5);
+  const rise = building.footprint * city.cell * 0.5 * building.height * (Math.sqrt(1 - tilt * tilt) / Math.sqrt(0.75));
   const back = at(building.col - half, building.row - half, rise);
   const right = at(building.col + half, building.row - half, rise);
   const front = at(building.col + half, building.row + half, rise);
@@ -242,5 +337,44 @@ export function buildingFaces(building: Building, city: City, pan: Point): { rea
 export function toLattice(point: Point, city: City, pan: Point): { readonly col: number; readonly row: number } {
   const x = point.x - city.originX - pan.x;
   const y = point.y - city.originY - pan.y;
-  return { col: x / city.cell + (2 * y) / city.cell, row: (2 * y) / city.cell - x / city.cell };
+  const t = city.tilt ?? 0.5;
+  return { col: x / city.cell + y / (city.cell * t), row: y / (city.cell * t) - x / city.cell };
 }
+
+/*
+ * THE GROUND'S OWN RULES, fetched with the ground: the scene draws the city
+ * only from altitude, so a page that never rises never carries them.
+ *
+ * COLOR CARRIES STATE, NOT KIND. Every district stands on the same neutral
+ * ground in the ground's own ink — a kind is told by its name and where it
+ * stands, not by a hue of its own — so the strong colors are left for what
+ * needs seeing. The blocks, a row per value: waiting in a middle gray,
+ * active darker (and taller), done flat and pale; a record with a problem,
+ * or past its due date and not done, lit in the warning color; one
+ * somebody else changed since you were last here aglow in the accent; your
+ * own with an ink rim; a selected one in the accent. A hand-placed district's curb is dashed.
+ */
+function groundCss(scheme: Scheme): string {
+  const light = scheme === "light";
+  const mix = (share: string, of = "var(--graview-ink)") => `color-mix(in oklab, ${of} ${share}, var(--graview-panel))`;
+  return `.graview-plots{z-index:${SCENE_LAYERS.plots};opacity:var(--graview-altitude);transition:opacity 640ms cubic-bezier(.33,0,.2,1)}
+.graview-plot-tile{fill:color-mix(in oklab,var(--graview-ink) ${light ? 5 : 9}%,transparent);stroke:color-mix(in oklab,var(--graview-ink) ${light ? 22 : 30}%,transparent);stroke-linejoin:round;pointer-events:auto;cursor:pointer}
+.graview-plot-tile:hover{fill:color-mix(in oklab,var(--graview-ink) ${light ? 10 : 16}%,transparent)}
+.graview-plot[data-graview-pinned] .graview-plot-tile{stroke-dasharray:4 3}
+.graview-village{pointer-events:none}
+.graview-building{--s:${light ? 30 : 40}%}
+.graview-building[data-graview-tier=active]{--s:${light ? 64 : 70}%}
+.graview-building polygon{stroke:var(--graview-panel);stroke-width:.6;stroke-opacity:.6;fill:${mix("var(--s)")}}
+.graview-building .graview-iso-left{fill:${mix(`calc(var(--s) + ${light ? 15 : -10}%)`)}}
+.graview-building .graview-iso-right{fill:${mix(`calc(var(--s) + ${light ? 8 : -16}%)`)}}
+.graview-building[data-graview-tier=done] polygon{fill:${mix(light ? "13%" : "18%")}}
+.graview-building[data-graview-flagged] polygon{fill:var(--graview-warn);stroke:var(--graview-warn)}
+.graview-building[data-graview-flagged] .graview-iso-left{fill:color-mix(in oklab,var(--graview-warn) 80%,var(--graview-ink))}
+.graview-building[data-graview-recent]{filter:drop-shadow(0 0 2px color-mix(in oklab,var(--graview-accent) 70%,transparent))}
+.graview-building[data-graview-own] .graview-iso-roof{stroke:var(--graview-ink);stroke-width:1.4;stroke-opacity:1}
+.graview-building[data-graview-selected] polygon{stroke:var(--graview-accent);stroke-width:1.4;stroke-opacity:1}
+.graview-building[data-graview-selected] .graview-iso-roof{fill:${mix("45%", "var(--graview-accent)")}}
+.graview-building-name{font-size:.625rem;fill:var(--graview-ink);paint-order:stroke;stroke:var(--graview-ground);stroke-width:3px}
+.graview-village-rest{font-size:.6875rem;font-variant-numeric:tabular-nums;fill:var(--graview-ink-muted)}`;
+}
+

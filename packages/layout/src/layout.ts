@@ -1,17 +1,18 @@
-import { marqueeHeightFor, ROSTER_ROW, ROSTER_KEPT, ROSTER_CHROME, rosterRows, rosterHeight } from "./sizes.js";
+import { ROSTER_ROW, ROSTER_KEPT, ROSTER_CHROME, rosterRows, rosterHeight } from "./sizes.js";
 export { MARQUEE_WIDTH, marqueeHeightFor, ROSTER_ROW, ROSTER_MOST, rosterRows, rosterHeight, type NameWidth } from "./sizes.js";
 import { isCurrent, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
-import { toIso } from "@graview/core/scene";
+import { districtState } from "@graview/core/city";
 import {
   DEFAULT_OPTIONS,
   type Aggregate,
+  type DistrictStates,
   type Layout,
   type LayoutNode,
   type LayoutOptions,
   type Plane,
 } from "./types.js";
 import { bandCaps, bandOf, packRuns, runOf, type BandItem } from "./band.js";
-import { placeCity } from "./city.js";
+import { nameplateSize, placeCity } from "./city.js";
 import { rankKinds } from "./rank.js";
 import type { ViewState } from "./view-state.js";
 
@@ -50,43 +51,6 @@ const CARD_MIN_HEIGHT = 60;
    capitals — drawn at plane two's 0.9, so 12.6 — needs the room 11.25px
    did not. */
 const DISTRICT_MIN_WIDTH = 160;
-
-/**
- * A billboard cut to its picture is never shorter than this, in the lens's
- * own pixels. An empty lens — a header over no rows yet — measured to a
- * strip one line tall, which read as a label, not a screen; at this height
- * the room under the header is visibly an empty screen.
- */
-/**
- * HOW FAR A BILLBOARD MAY BE MOVED FROM ITS OWN PLOT, in city cells.
- *
- * Cells rather than pixels so the same pin holds at every zoom: a board
- * nudged two cells north is two cells north whether the city is flown close
- * or seen whole. Two is about a village's width — enough to shift a board
- * off whatever it was covering, not enough for it to read as a picture of
- * somewhere else.
- */
-export const SCREEN_LEASH_CELLS = 2;
-
-const SCREEN_MIN_NATURAL_HEIGHT = 240;
-
-/*
- * The width a drive-in screen is never drawn under: the picture is the
- * interface scaled, and below this its words are not words. In the
- * reader's unit, like the districts.
- */
-const DRIVE_IN_MIN_WIDTH = 300;
-
-
-/*
- * A district's nameplate is a pill drawn by the stylesheet, not the card's
- * box: on a landmark it floats above the box by its own height and a gap,
- * and it is as wide as its words. The screen keeps this much clear of the
- * box's top, and other districts' boxes reach this much further sideways,
- * so a screen never stands on a plate.
- */
-const PLATE_CLEARANCE = 52;
-const PLATE_REACH = 60;
 
 function shelf(
   count: number,
@@ -494,18 +458,15 @@ export function layout<S extends AnySchema>(
     }
   }
   /**
-   * A DRIVE-IN, when the focused group's kind has a named picture: the
-   * screen will stand on that kind's plot once the city is placed, so the
-   * city need not slide aside for it. The showing is the one the address
-   * names, or the first the kind has.
+   * A KIND WITH A NAMED PICTURE, focused from altitude: its picture opens in
+   * the panel beside the map, at a size a person reads, so nothing stands
+   * in the middle of the city for it and the city keeps all its ground.
    */
   const screenKind = groupFocus && !groupIsPlain && focusKinds.length === 1 ? focusKinds[0]! : undefined;
-  const showings = screenKind ? (options.screens?.[screenKind] ?? []) : [];
-  const showing = showings.find((one) => one.as === state.within?.["view"]) ?? showings[0];
-  const driveIn = screenKind !== undefined && showing !== undefined;
+  const driveIn = screenKind !== undefined && (options.screens?.[screenKind]?.length ?? 0) > 0;
   /** The picture standing in the middle from altitude, when there is one: ground the city must not take. */
   let stamp: { x: number; y: number; width: number; height: number } | undefined;
-  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain) {
+  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain && !driveIn) {
     stamp = {
       x: railLeft + (spanW - overviewW) / 2,
       y: opts.height * 0.53 - overviewH / 2,
@@ -936,39 +897,58 @@ export function layout<S extends AnySchema>(
    * district is on the corner a person remembers. `placeCity` keeps the
    * collision shrink as a safety net; the placement is the map's.
    */
+  const flaggedIds = opts.relevance?.flagged;
+  /** Where a district's records stand, by its kind's main choice: one count per value, and those with none. */
+  const statesOf = (kind: string, memberIds: readonly string[]): { states?: DistrictStates } => {
+    const state = districtState(schema, kind);
+    if (!state) return {};
+    const counts = state.values.map(() => 0);
+    let none = 0;
+    for (const id of memberIds) {
+      const at = state.values.indexOf((graph.getNode(id) as Record<string, unknown> | undefined)?.[state.field] as string);
+      if (at < 0) none++;
+      else counts[at]!++;
+    }
+    return {
+      states: {
+        field: state.field,
+        values: [...state.values.map((value, i) => ({ value, tier: state.tiers[i]!, count: counts[i]! })), ...(none > 0 ? [{ value: null, tier: "waiting" as const, count: none }] : [])],
+      },
+    };
+  };
   const city = state.overview
     ? placeCity(
-        slotted.map((item) => ({
-          id: item.id,
-          kind: item.kind,
-          count: item.aggregate?.memberIds.length ?? 0,
-          // An opened district lays its members out inside its plot: room
-          // for a small grid, in the reader's unit.
-          opened: expanded.has(item.id) ? rosterHeight(rosterRows(item.aggregate?.memberIds.length ?? 0)) * unit : 0,
-          openedMin: expanded.has(item.id) ? rosterHeight(Math.min(ROSTER_KEPT, rosterRows(item.aggregate?.memberIds.length ?? 0))) * unit : 0,
-          // A district with showings carries their marquee under its name:
-          // its buttons, wrapped to the card, in the reader's unit.
-          ...((options.screens?.[item.kind]?.length ?? 0) > 0
-            ? { marquee: marqueeHeightFor((options.screens?.[item.kind] ?? []).map((place) => place.title), DISTRICT_MIN_WIDTH * unit, options.nameWidth) * unit }
-            : {}),
-        })),
+        slotted.map((item) => {
+          const members = item.aggregate?.memberIds ?? [];
+          const problems = flaggedIds ? members.filter((id) => flaggedIds.has(id)).length : 0;
+          return {
+            id: item.id,
+            kind: item.kind,
+            count: members.length,
+            // An opened district lists its members under its name, in the reader's unit.
+            opened: expanded.has(item.id) ? rosterHeight(rosterRows(members.length)) * unit : 0,
+            openedMin: expanded.has(item.id) ? rosterHeight(Math.min(ROSTER_KEPT, rosterRows(members.length))) * unit : 0,
+            nameplate: nameplateSize(item.aggregate?.label ?? pluralOf(schema, item.kind), members.length, problems, districtState(schema, item.kind) !== undefined, unit),
+            weight: problems * 1000 + members.length,
+          };
+        }),
         schema,
-        contextSize,
         { width: opts.width, height: opts.height },
-        opts.inset ?? {},
+        // The corner's chrome, where it is said, is kept clear box by box rather than as a rail down the whole right edge.
+        opts.chrome ? { ...opts.inset, right: Math.min(opts.inset?.right ?? 0, 8) } : (opts.inset ?? {}),
         {
           ...(opts.cityOrder ? { order: opts.cityOrder } : {}),
           ...(opts.plots ? { plots: opts.plots } : {}),
-          scale: unit,
-          minHeight: CARD_MIN_HEIGHT * unit,
           ...(options.cityZoom && options.cityZoom !== 1 ? { zoom: options.cityZoom } : {}),
+          ...(options.tilt !== undefined ? { tilt: options.tilt } : {}),
           // Recorded, not applied: the cards already carry it, and the ground reads it to ride the same tween.
           pan: { x: state.pan?.x ?? 0, y: state.pan?.y ?? 0 },
-          ...(stamp && !driveIn ? { avoid: [stamp] } : {}),
+          ...(stamp || opts.chrome?.length ? { avoid: [...(stamp ? [stamp] : []), ...(opts.chrome ?? [])] } : {}),
         },
       )
     : null;
   const plotOf = new Map(city?.placed.map((card) => [card.id, card.plot]) ?? []);
+  const plateOf = new Map(city?.placed.map((card) => [card.id, card.nameplate]) ?? []);
   const contextPositions: {
     x: number;
     y: number;
@@ -1039,8 +1019,9 @@ export function layout<S extends AnySchema>(
      * starts wrapping. The same mistake as the row's, one multiplication
      * later. Proportion is right until it crosses the floor.
      */
-    const width = Math.max(Math.min(slotW, DISTRICT_MIN_WIDTH * unit), slotW * shrink);
-    const height = Math.max(CARD_MIN_HEIGHT * unit, slotH * shrink);
+    // A district's box at altitude is its plot's: the name under it is the stylesheet's, at a fixed size.
+    const width = city ? slotW : Math.max(Math.min(slotW, DISTRICT_MIN_WIDTH * unit), slotW * shrink);
+    const height = city ? slotH : Math.max(CARD_MIN_HEIGHT * unit, slotH * shrink);
     slotOf.set(item.id, {
       // Centered across the slot it was allotted, sitting on its baseline.
       x: position.x + (slotW - width) / 2,
@@ -1234,154 +1215,11 @@ export function layout<S extends AnySchema>(
       ...(item.nestedUnder ? { nestedUnder: item.nestedUnder } : {}),
       ...(item.beyond ? { beyond: item.beyond } : {}),
       ...(plotOf.has(item.id) ? { plot: plotOf.get(item.id)! } : {}),
+      ...(plateOf.has(item.id) ? { nameplate: plateOf.get(item.id)! } : {}),
+      ...(city && item.aggregate ? statesOf(item.kind, item.aggregate.memberIds) : {}),
       depth: item.depth,
     });
   });
-
-  /*
-   * THE SCREEN STANDS ON ITS PLOT. Anchored to the plot's far edge — the
-   * top vertex of its diamond — centered on the plot, sized by the plot's
-   * side so a bigger neighborhood has a bigger screen, floored so its
-   * words can be read, and shrunk only as a last resort until it covers
-   * no other district's nameplate. A picture over two kinds stands on the
-   * road between their plots. The same natural size and shrink as before:
-   * the interface, scaled, never re-laid-out small.
-   */
-  if (driveIn && city && stamp && state.focusId) {
-    const frame = city.frame;
-    const own = city.map.get(screenKind!);
-    const other = showing?.across ? city.map.get(showing.across) : undefined;
-    if (own) {
-      const cornerOf = (plot: { col: number; row: number; side: number }) => {
-        const top = toIso(plot.col, plot.row, frame.cell);
-        const center = toIso(plot.col + plot.side / 2, plot.row + plot.side / 2, frame.cell);
-        return {
-          top: { x: frame.originX + top.x, y: frame.originY + top.y },
-          center: { x: frame.originX + center.x, y: frame.originY + center.y },
-        };
-      };
-      const mine = cornerOf(own);
-      /*
-       * ON ITS OWN PLOT, always. A picture across two kinds — skills down,
-       * drills across — used to stand on the road between their plots, and
-       * landed on the other village with its own district's signpost and
-       * board buried under it: the lens read as the drills', not the
-       * skills'. Its rows are its kind; it stands at that village's back
-       * curb, and the road to the other kind is already on the ground.
-       */
-      void other;
-      const anchorX = mine.center.x;
-      /*
-       * Its foot is on the plot's far curb — the back vertex of the diamond.
-       * The nameplate no longer stands there (it is a signpost at the front
-       * corner from altitude), so the screen needs no clearance above its
-       * own card: it is a billboard at the back of the village.
-       */
-      const anchorBottom = mine.top.y + frame.cell * 0.1;
-      /*
-       * Cut to the picture. The lens lays itself out in a box as tall as the
-       * window (`naturalH`) so nothing in it ever scrolls; the billboard
-       * shows only as much of that box as the lens actually drew, when the
-       * scene has measured it. Never taller than the box — a lens cannot
-       * draw past it.
-       */
-      const drawnH =
-        opts.screenHeight !== undefined && opts.screenHeight > 0
-          ? Math.min(naturalH, Math.max(SCREEN_MIN_NATURAL_HEIGHT, Math.round(opts.screenHeight)))
-          : naturalH;
-      const aspect = drawnH / naturalW;
-      /*
-       * THE BILLBOARD IS THE POINT OF FLYING CLOSER. Chosen from altitude,
-       * a lens is what the reader came to see, and it was capped at half
-       * the span and under half the height — a window into the picture
-       * rather than the picture — and the caps were the window's, so
-       * zooming grew the city under it and never the board. It may take
-       * most of the span now, and the caps grow with the zoom past the
-       * "closer" the choice already brought, so zooming in enlarges the
-       * board the way it enlarges everything else.
-       */
-      const grown = Math.max(1, (options.cityZoom ?? 1) / 1.5);
-      const roomW = spanW * 0.78 * grown;
-      const roomH = opts.height * 0.72 * grown;
-      const floor = Math.min(DRIVE_IN_MIN_WIDTH * unit, spanW * 0.5);
-      let width = Math.max(floor, Math.min(roomW, own.side * frame.cell * 2.4));
-      if (width * aspect > roomH) width = roomH / aspect;
-      const others = [...placed.values()].filter((node) => node.plane === 2 && node.id !== kindCardId(screenKind!));
-      const boxAt = (w: number) => {
-        const h = w * aspect;
-        // Its foot on the curb, wherever that is: a billboard held inside the
-        // window's top slid down over its own village; the camera brings it in.
-        const y = anchorBottom - h;
-        return { x: anchorX - w / 2, y, width: w, height: h };
-      };
-      let box = boxAt(width);
-      /*
-       * Another district's NAMEPLATE is wider than its box and floats above
-       * it — a label overflows its building the way a map label does — so
-       * the box is inflated by what the plate can reach before the screen
-       * is judged against it.
-       */
-      /*
-       * The plate is a SIGNPOST at the plot's front corner now, so the reach
-       * to guard is below the card's foot, not above its top — and a
-       * district's own village fills its box, so the box itself counts.
-       */
-      const covers = (b: { x: number; y: number; width: number; height: number }) =>
-        others.some((card) => {
-          const unpanned = {
-            x: card.x - (state.pan?.x ?? 0) - PLATE_REACH * unit,
-            y: card.y - (state.pan?.y ?? 0),
-            width: card.width + PLATE_REACH * unit * 2,
-            height: card.height + PLATE_CLEARANCE * unit,
-          };
-          return b.x < unpanned.x + unpanned.width && unpanned.x < b.x + b.width && b.y < unpanned.y + unpanned.height && unpanned.y < b.y + b.height;
-        });
-      for (let w = width; covers(box) && w > floor + 1; w = Math.max(floor, w * 0.92)) box = boxAt(w);
-      const at = nodes.findIndex((node) => node.id === state.focusId);
-      if (at !== -1) {
-        /*
-         * A BILLBOARD CAN BE MOVED, ON A LEASH.
-         *
-         * Its home is the back curb of its own plot, which is where it
-         * belongs: a picture of a kind, standing on that kind's land. But a
-         * board planted to the millimeter is furniture, and a person wants
-         * to nudge it off whatever it is covering.
-         *
-         * So a pin moves it, and the leash is what keeps it a picture OF
-         * this village rather than a sheet floating over the city. Measured
-         * in the city's own cells, so the same pin holds at every zoom —
-         * pin it two cells north and it is two cells north whether you are
-         * flown close or looking down on the whole map.
-         *
-         * Clamped HERE rather than where the drag is made, because a pin
-         * arrives from a link as readily as from a hand, and a leash that
-         * only the hand respects is not a leash.
-         */
-        const home = { x: box.x, y: box.y };
-        const held = state.pins[nodes[at]!.id];
-        const wandered = held ? { x: held.x - home.x, y: held.y - home.y } : { x: 0, y: 0 };
-        const reach = Math.hypot(wandered.x, wandered.y);
-        const leash = SCREEN_LEASH_CELLS * frame.cell;
-        const pulled = reach > leash ? leash / reach : 1;
-        const stand = {
-          x: home.x + wandered.x * pulled,
-          y: home.y + wandered.y * pulled,
-        };
-        const raised: LayoutNode = {
-          ...nodes[at]!,
-          x: stand.x + (state.pan?.x ?? 0),
-          y: stand.y + (state.pan?.y ?? 0),
-          width: box.width,
-          height: box.height,
-          natural: { width: naturalW, height: drawnH },
-          screenOf: screenKind!,
-          ...(held ? { pinned: true } : {}),
-        };
-        nodes[at] = raised;
-        placed.set(raised.id, raised);
-      }
-    }
-  }
 
   return {
     nodes,

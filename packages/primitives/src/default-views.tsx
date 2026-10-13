@@ -3,6 +3,7 @@ import { retryingImport } from "@graview/core/retry";
 import {
   humanizeField,
   labelOf,
+  numberAsRead,
   nounOf,
   type AnyNodeDefinition,
   type AnySchema,
@@ -14,7 +15,7 @@ import { describeNode, readableFields } from "@graview/core/words";
 import { firstPicture, withComputed } from "@graview/core/blocks";
 import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withPast, withPicture, withWithin } from "@graview/layout/view";
 import { rosterRows } from "@graview/layout/sizes";
-import { useKit, useMarqueeRoom, useReached } from "@graview/react/drawing";
+import { useKit, useReached } from "@graview/react/drawing";
 import {
   BesideTheMap,
   createViews,
@@ -229,6 +230,16 @@ const NAME_FLOOR = 11 / 15;
  * hover. Measured from the name's own width, which a transform does not
  * change, and again whenever the box is resized.
  */
+/*
+ * WHERE A DISTRICT'S RECORDS STAND, the bar under its name from altitude:
+ * fetched when the scene first rises, since only the map draws it
+ * (`states-bar.tsx`).
+ */
+const StatesBar = lazyModule(retryingImport(() => import("./states-bar.js"))).part(
+  (bar, props: Parameters<typeof import("./states-bar.js").StatesBar>[0]) => <bar.StatesBar {...props} />,
+  { quiet: true },
+);
+
 function DistrictName({ text, accent }: { readonly text: string; readonly accent: boolean }) {
   const box = useRef<HTMLSpanElement>(null);
   const words = useRef<HTMLSpanElement>(null);
@@ -623,10 +634,11 @@ export function registerDefaultViews<S extends AnySchema>(
        */
       const showings = view.overview && !hiddenKinds.has(String(kind)) ? views.places().filter((place) => place.kind === String(kind)) : [];
       // The room the scene's layout reserved for these names, so the room kept under the signpost is the room the city made.
-      const marqueeRoom = useMarqueeRoom();
       const showingNow = props.focused ? (view.within?.["view"] ?? showings[0]?.as) : undefined;
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
+      /* FROM ALTITUDE THE NAME SAYS THREE THINGS: what the district is, how many, and how many have a problem — and, for a kind with a status, the bar of where they stand. */
+      const altitude = (view.overview ?? false) && props.nestedUnder === undefined;
       const accent = props.focused || props.raised;
       /*
        * A kind the focus does not touch is QUIETER, not hidden.
@@ -652,7 +664,7 @@ export function registerDefaultViews<S extends AnySchema>(
       const listed = besideTheMap ? selection.length === 1 && selection[0] === kindCardId(String(kind)) : (props.opened ?? false);
       // What the selection reaches — never what a search lit, which is counted apart below.
       const reached = useReached();
-      const tied = accent
+      const tied = accent || altitude
         ? 0
         : members.filter((member) => reached.includes(member.id) && !chosen.has(member.id)).length;
       /*
@@ -750,7 +762,8 @@ export function registerDefaultViews<S extends AnySchema>(
              * the layout's own, from the names as the scene measured them,
              * and the building sizes from what is left.
              */
-            ["--graview-marquee-room" as string]: showings.length > 0 && marqueeRoom ? `${marqueeRoom(showings.map((place) => place.title)) + (figure ? 4 : 42)}px` : "0px",
+            // How tall the name under the district stands, for the showings that hang from it.
+            ["--graview-plate-h" as string]: props.states && (props.nameplate ?? "full").startsWith("full") ? "42px" : "26px",
           }}
         >
           {/*
@@ -792,6 +805,7 @@ export function registerDefaultViews<S extends AnySchema>(
           <div
           className="graview-kind-face"
           data-graview-opened={props.opened || undefined}
+          data-graview-nameplate={altitude ? (props.nameplate ?? "full") : undefined}
           style={{
             display: "flex",
             flexDirection: "column",
@@ -846,7 +860,7 @@ export function registerDefaultViews<S extends AnySchema>(
             * covered by exactly the card it sits next to. Nothing ever
             * overlaps the top.
             */}
-          {!nested && members.length > 0 ? (
+          {!nested && !altitude && members.length > 0 ? (
             <div
               data-graview-tally={members.length}
               data-graview-broken={broken || undefined}
@@ -920,7 +934,7 @@ export function registerDefaultViews<S extends AnySchema>(
             <span
               style={{
                 fontVariantNumeric: "tabular-nums",
-                color: trouble ? "var(--graview-warn)" : saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
+                color: trouble && !altitude ? "var(--graview-warn)" : saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
               }}
             >
               {/*
@@ -929,8 +943,13 @@ export function registerDefaultViews<S extends AnySchema>(
                 * it is — the same honesty the actions strip gives when a kind
                 * has no verbs.
                 */}
-              {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : `${trouble ? `${flag} ` : ""}${members.length}`}
+              {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : `${trouble && !altitude ? `${flag} ` : ""}${numberAsRead(members.length)}`}
             </span>
+            {altitude && trouble ? (
+              <span className="graview-district-problems" data-graview-problems={broken} title={`${broken} of ${members.length} ${broken === 1 ? "has a problem" : "have problems"}`}>
+                {`${flag} ${numberAsRead(broken)}`}
+              </span>
+            ) : null}
             {/*
               * What sits BEHIND THE HORIZON, advertised where it dropped
               * from. Pressing it widens the view to the past — an ordinary
@@ -981,7 +1000,7 @@ export function registerDefaultViews<S extends AnySchema>(
               * Derived: a view the app registered rather than the generic one
               * the framework fell back to.
               */}
-            {props.hasOwnView ? (
+            {props.hasOwnView && !altitude ? (
               <span
                 title={`${plural} has a view of its own`}
                 aria-label="has its own view"
@@ -1041,6 +1060,11 @@ export function registerDefaultViews<S extends AnySchema>(
               </button>
             ) : null}
           </div>
+          {altitude && props.states ? (
+            <Suspense fallback={null}>
+              <StatesBar states={props.states} definition={definition} />
+            </Suspense>
+          ) : null}
           {props.opened ? (
             /*
              * BUILDINGS. An opened neighborhood lays its members out inside

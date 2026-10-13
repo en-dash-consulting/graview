@@ -5,6 +5,12 @@ export type Plane = 0 | 1 | 2;
  * legitimate view of a kind, which is why grouping and semantic zoom are one
  * mechanism running in both directions.
  */
+/** How many of a district's records stand at each value of its main choice field. */
+export interface DistrictStates {
+  readonly field: string;
+  readonly values: readonly { readonly value: string | null; readonly tier: "waiting" | "active" | "done"; readonly count: number }[];
+}
+
 export interface Aggregate {
   readonly kind: string;
   readonly memberIds: readonly string[];
@@ -158,6 +164,19 @@ export interface LayoutNode {
    */
   readonly plot?: { readonly col: number; readonly row: number; readonly side: number };
   /**
+   * HOW MUCH THE NAME UNDER A DISTRICT SAYS at this scale: all of it, its
+   * name and count, or nothing until the camera comes closer — where two
+   * names would stand on each other, the less pressing gives way.
+   */
+  readonly nameplate?: "full" | "short" | "full-above" | "short-above" | "full-aside" | "short-aside" | "none";
+  /**
+   * WHERE ITS RECORDS STAND, from altitude: the kind's main choice field
+   * (`districtState`) and how many stand at each value, in declared order —
+   * a last entry with no value counts those that have none. Absent for a
+   * kind with no such field.
+   */
+  readonly states?: DistrictStates;
+  /**
    * THE SCREEN OF A DRIVE-IN: this plane-0 node is a kind's own picture,
    * standing on that kind's plot from altitude rather than floating in the
    * middle. Names the kind, so the audience strip in front of it can be
@@ -234,6 +253,8 @@ export interface CityFrame {
   readonly extent: { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
   /** How much of an opened district's roster the city kept room for: 1 is all of it. */
   readonly openedShare?: number;
+  /** How the ground is seen: a cell's height over its width, a half at an angle and one from straight above. Absent is a half. */
+  readonly tilt?: number;
 }
 
 export interface Layout {
@@ -310,7 +331,13 @@ export interface LayoutOptions {
    * The ring and the focused card center within what is left, so a
    * district is never drawn under a pane. Nothing is reserved by default.
    */
-  readonly inset?: { readonly left?: number; readonly right?: number };
+  readonly inset?: { readonly left?: number; readonly right?: number; readonly top?: number; readonly bottom?: number };
+  /**
+   * CHROME STANDING ON THE PICTURE, in canvas pixels: the corner controls
+   * over the ground. From altitude no district, and no district's name, is
+   * opened under them.
+   */
+  readonly chrome?: readonly { readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
   /**
    * Kinds whose group is shown by the framework's own list rather than a
    * view the app wrote. From altitude a focused group of such a kind is its
@@ -343,15 +370,11 @@ export interface LayoutOptions {
    */
   readonly cityZoom?: number;
   /**
-   * HOW TALL THE PICTURE ON THE BILLBOARD ACTUALLY DRAWS, in the lens's own
-   * natural pixels, measured by whoever renders it. A lens is laid out in a
-   * box as tall as the window so it never scrolls, but a short lens fills
-   * only the top of it — and a billboard sized to the whole box stood its
-   * picture a village's height above the curb, floating over the next
-   * district with empty room beneath. Cut to what is drawn, the picture's
-   * foot is on the curb. Absent (or not yet measured): the whole box.
+   * HOW THE CITY IS SEEN: a cell's height over its width on the screen —
+   * 0.5 at the angle the city has always stood at, 1 from straight above,
+   * where every block lies flat and its state is its shade alone.
    */
-  readonly screenHeight?: number;
+  readonly tilt?: number;
   /**
    * HOW WIDE A SHOWING'S NAME IS DRAWN, in the brand's own face, measured
    * by whoever renders it (FR-118). The room under a district's signpost is
@@ -372,7 +395,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "screenHeight" | "nameWidth">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },

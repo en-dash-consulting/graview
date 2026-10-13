@@ -910,7 +910,14 @@ try {
     seen: results.tiles,
     ok: results.tiles.length > 0 && results.tiles.every((one) => (one.viewport.startsWith(`${DESK.width}`) ? one.tiles.length >= ORG_PLACES.length : one.tiles.length > 0) && one.tiles.every((tile) => tile.whole)),
   };
-  report.checks.aDistrictsNamesKeepToTheirRoomInAWideBrandFace = {
+  /*
+   * A district's showings come up under its name when it is reached for
+   * (Roadmap f-map-readable), on a backing of their own over whatever is
+   * below — the layout no longer keeps a room for them, so how far past the
+   * plot they reach is said, not held. What is held: every name is drawn,
+   * and none stands on another district's names.
+   */
+  report.checks.aDistrictsShowingsStandOnNoOtherNamesInAWideBrandFace = {
     seen: results.marquees,
     ok:
       results.marquees.length === engines.length * SCHEMES.length * 2 &&
@@ -918,7 +925,7 @@ try {
         (one) =>
           one.seen.length > 0 &&
           one.seen.reduce((sum, marquee) => sum + marquee.names, 0) >= ORG_PLACES.length &&
-          one.seen.every((marquee) => marquee.names > 0 && marquee.over !== null && marquee.over <= 1 && marquee.onAnother.length === 0),
+          one.seen.every((marquee) => marquee.names > 0 && marquee.onAnother.length === 0),
       ),
   };
   report.checks.aSkillRowKeepsItsLevelAndProgressWholeOnBothFaces = { seen: results.skillRows, ok: results.skillRows.length === engines.length * SCHEMES.length * 2 && results.skillRows.every((one) => one.badge === "Lv 3" && one.badgeWhole && one.progress === "3 of 5" && one.progressWhole) };

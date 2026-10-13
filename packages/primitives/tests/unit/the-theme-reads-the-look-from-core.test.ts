@@ -1,4 +1,4 @@
-import { brandFromAccent, isoShade, SCHEMES, SHAPE, shapeOf, TYPOGRAPHY, typographyOf, type Brand } from "@graview/core";
+import { brandFromAccent, SCHEMES, SHAPE, shapeOf, TYPOGRAPHY, typographyOf, type Brand } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { GRAVIEW_BRAND, themeCss } from "../../src/index.js";
 
@@ -35,12 +35,8 @@ describe("themeCss reads the look from core", () => {
         expect(css).toContain(`--graview-font-body: ${type.body};`);
         expect(css).toContain(`--graview-font-display: ${type.display};`);
         expect(css).toContain(`--graview-font-mono: ${type.mono};`);
-        const iso = isoShade(scheme);
-        const face = (f: { saturation: number; lightness: number }) => `${f.saturation}% ${f.lightness}%`;
-        expect(css).toContain(`.graview-iso-roof { fill: hsl(var(--graview-hue, 200) ${face(iso.roof)}); stroke: ${iso.roofEdge};`);
-        expect(css).toContain(`.graview-iso-right { fill: hsl(var(--graview-hue, 200) ${face(iso.right)}); }`);
-        expect(css).toContain(`.graview-iso-left { fill: hsl(var(--graview-hue, 200) ${face(iso.left)}); }`);
-        expect(css).toContain(`.graview-plot-tile { fill: hsl(var(--graview-hue, 200) ${face(iso.plot)} / ${iso.plot.alpha}); stroke: hsl(var(--graview-hue, 200) ${face(iso.plotEdge)} / ${iso.plotEdge.alpha});`);
+        // The city's ground is drawn in the ground's own ink by state, not in a kind's lit hue: its rules came off this sheet with the ground (Roadmap f-map-shows-state).
+        expect(css).not.toContain(".graview-iso-roof");
       });
     }
   }
@@ -50,6 +46,5 @@ describe("themeCss reads the look from core", () => {
     expect(css).toContain(`--graview-radius: ${SHAPE.radius}px;`);
     expect(css).toContain("--graview-radius: 8px;");
     expect(css).toContain("--graview-pad: 15px;");
-    expect(flat(themeCss("dark"))).toContain(".graview-iso-left { fill: hsl(var(--graview-hue, 200) 38% 13%); }");
   });
 });

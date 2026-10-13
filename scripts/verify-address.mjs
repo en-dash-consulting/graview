@@ -383,6 +383,8 @@ try {
           await go(`${BASE}/places/overview#overview=1`);
           await tab.waitForTimeout(600);
           one.lensUp = await scene();
+          // A district's showings come up when it is reached for: the keyboard reaches it here, as a hand's hover does.
+          await tab.focus('[data-testid="showing-the-board"]', { timeout: 10_000 });
           await tab.dblclick('[data-testid="showing-the-board"]', { timeout: 10_000 });
           await tab.waitForTimeout(1200);
           one.lensDown = await scene();

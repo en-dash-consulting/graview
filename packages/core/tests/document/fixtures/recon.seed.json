@@ -1,0 +1,1314 @@
+{
+ "nodes": [
+  {
+   "id": "person-0",
+   "kind": "person",
+   "name": "Ana",
+   "role": "partner"
+  },
+  {
+   "id": "person-1",
+   "kind": "person",
+   "name": "Ben",
+   "role": "analyst"
+  },
+  {
+   "id": "person-2",
+   "kind": "person",
+   "name": "Cleo",
+   "role": "client"
+  },
+  {
+   "id": "person-3",
+   "kind": "person",
+   "name": "Dev",
+   "role": "partner"
+  },
+  {
+   "id": "person-4",
+   "kind": "person",
+   "name": "Eli",
+   "role": "analyst"
+  },
+  {
+   "id": "person-5",
+   "kind": "person",
+   "name": "Fay",
+   "role": "client"
+  },
+  {
+   "id": "person-6",
+   "kind": "person",
+   "name": "Gus",
+   "role": "partner"
+  },
+  {
+   "id": "person-7",
+   "kind": "person",
+   "name": "Hana",
+   "role": "analyst"
+  },
+  {
+   "id": "person-8",
+   "kind": "person",
+   "name": "Ivo",
+   "role": "client"
+  },
+  {
+   "id": "person-9",
+   "kind": "person",
+   "name": "Jo",
+   "role": "partner"
+  },
+  {
+   "id": "session-0",
+   "kind": "session",
+   "name": "Session 1",
+   "held": "2026-09-22",
+   "status": "written-up"
+  },
+  {
+   "id": "session-1",
+   "kind": "session",
+   "name": "Session 2",
+   "held": "2026-09-25",
+   "status": "written-up"
+  },
+  {
+   "id": "session-2",
+   "kind": "session",
+   "name": "Session 3",
+   "held": "2026-09-28",
+   "status": "held"
+  },
+  {
+   "id": "session-3",
+   "kind": "session",
+   "name": "Session 4",
+   "held": "2026-10-01",
+   "status": "held"
+  },
+  {
+   "id": "session-4",
+   "kind": "session",
+   "name": "Session 5",
+   "held": "2026-10-04",
+   "status": "planned"
+  },
+  {
+   "id": "session-5",
+   "kind": "session",
+   "name": "Session 6",
+   "held": "2026-10-07",
+   "status": "planned"
+  },
+  {
+   "id": "question-0",
+   "kind": "question",
+   "name": "Question 1",
+   "status": "answered"
+  },
+  {
+   "id": "question-1",
+   "kind": "question",
+   "name": "Question 2",
+   "status": "open"
+  },
+  {
+   "id": "question-2",
+   "kind": "question",
+   "name": "Question 3",
+   "status": "answered"
+  },
+  {
+   "id": "question-3",
+   "kind": "question",
+   "name": "Question 4",
+   "status": "dropped"
+  },
+  {
+   "id": "question-4",
+   "kind": "question",
+   "name": "Question 5",
+   "status": "open"
+  },
+  {
+   "id": "question-5",
+   "kind": "question",
+   "name": "Question 6",
+   "status": "answered"
+  },
+  {
+   "id": "question-6",
+   "kind": "question",
+   "name": "Question 7",
+   "status": "open"
+  },
+  {
+   "id": "question-7",
+   "kind": "question",
+   "name": "Question 8",
+   "status": "answered"
+  },
+  {
+   "id": "question-8",
+   "kind": "question",
+   "name": "Question 9",
+   "status": "dropped"
+  },
+  {
+   "id": "finding-0",
+   "kind": "finding",
+   "name": "Finding 1",
+   "confidence": "confirmed"
+  },
+  {
+   "id": "finding-1",
+   "kind": "finding",
+   "name": "Finding 2",
+   "confidence": "likely"
+  },
+  {
+   "id": "finding-2",
+   "kind": "finding",
+   "name": "Finding 3",
+   "confidence": "hunch"
+  },
+  {
+   "id": "finding-3",
+   "kind": "finding",
+   "name": "Finding 4",
+   "confidence": "confirmed"
+  },
+  {
+   "id": "finding-4",
+   "kind": "finding",
+   "name": "Finding 5",
+   "confidence": "likely"
+  },
+  {
+   "id": "finding-5",
+   "kind": "finding",
+   "name": "Finding 6",
+   "confidence": "hunch"
+  },
+  {
+   "id": "finding-6",
+   "kind": "finding",
+   "name": "Finding 7",
+   "confidence": "confirmed"
+  },
+  {
+   "id": "finding-7",
+   "kind": "finding",
+   "name": "Finding 8",
+   "confidence": "likely"
+  },
+  {
+   "id": "finding-8",
+   "kind": "finding",
+   "name": "Finding 9",
+   "confidence": "hunch"
+  },
+  {
+   "id": "finding-9",
+   "kind": "finding",
+   "name": "Finding 10",
+   "confidence": "confirmed"
+  },
+  {
+   "id": "finding-10",
+   "kind": "finding",
+   "name": "Finding 11",
+   "confidence": "likely"
+  },
+  {
+   "id": "finding-11",
+   "kind": "finding",
+   "name": "Finding 12",
+   "confidence": "hunch"
+  },
+  {
+   "id": "opportunity-0",
+   "kind": "opportunity",
+   "name": "Opportunity 1",
+   "stage": "spotted"
+  },
+  {
+   "id": "opportunity-1",
+   "kind": "opportunity",
+   "name": "Opportunity 2",
+   "stage": "sized"
+  },
+  {
+   "id": "opportunity-2",
+   "kind": "opportunity",
+   "name": "Opportunity 3",
+   "stage": "pitched"
+  },
+  {
+   "id": "opportunity-3",
+   "kind": "opportunity",
+   "name": "Opportunity 4",
+   "stage": "won"
+  },
+  {
+   "id": "opportunity-4",
+   "kind": "opportunity",
+   "name": "Opportunity 5",
+   "stage": "passed"
+  },
+  {
+   "id": "opportunity-5",
+   "kind": "opportunity",
+   "name": "Opportunity 6",
+   "stage": "sized"
+  },
+  {
+   "id": "opportunity-6",
+   "kind": "opportunity",
+   "name": "Opportunity 7",
+   "stage": "spotted"
+  },
+  {
+   "id": "action-0",
+   "kind": "action",
+   "name": "Action 1",
+   "status": "done",
+   "due": "2026-09-12"
+  },
+  {
+   "id": "action-1",
+   "kind": "action",
+   "name": "Action 2",
+   "status": "done",
+   "due": "2026-09-13"
+  },
+  {
+   "id": "action-2",
+   "kind": "action",
+   "name": "Action 3",
+   "status": "done",
+   "due": "2026-09-14"
+  },
+  {
+   "id": "action-3",
+   "kind": "action",
+   "name": "Action 4",
+   "status": "done",
+   "due": "2026-09-15"
+  },
+  {
+   "id": "action-4",
+   "kind": "action",
+   "name": "Action 5",
+   "status": "done",
+   "due": "2026-09-16"
+  },
+  {
+   "id": "action-5",
+   "kind": "action",
+   "name": "Action 6",
+   "status": "done",
+   "due": "2026-09-17"
+  },
+  {
+   "id": "action-6",
+   "kind": "action",
+   "name": "Action 7",
+   "status": "done",
+   "due": "2026-09-18"
+  },
+  {
+   "id": "action-7",
+   "kind": "action",
+   "name": "Action 8",
+   "status": "done",
+   "due": "2026-09-19"
+  },
+  {
+   "id": "action-8",
+   "kind": "action",
+   "name": "Action 9",
+   "status": "done",
+   "due": "2026-09-20"
+  },
+  {
+   "id": "action-9",
+   "kind": "action",
+   "name": "Action 10",
+   "status": "done",
+   "due": "2026-09-21"
+  },
+  {
+   "id": "action-10",
+   "kind": "action",
+   "name": "Action 11",
+   "status": "done",
+   "due": "2026-09-22"
+  },
+  {
+   "id": "action-11",
+   "kind": "action",
+   "name": "Action 12",
+   "status": "done",
+   "due": "2026-09-23"
+  },
+  {
+   "id": "action-12",
+   "kind": "action",
+   "name": "Action 13",
+   "status": "done",
+   "due": "2026-09-24"
+  },
+  {
+   "id": "action-13",
+   "kind": "action",
+   "name": "Action 14",
+   "status": "done",
+   "due": "2026-09-25"
+  },
+  {
+   "id": "action-14",
+   "kind": "action",
+   "name": "Action 15",
+   "status": "doing",
+   "due": "2026-10-07"
+  },
+  {
+   "id": "action-15",
+   "kind": "action",
+   "name": "Action 16",
+   "status": "doing",
+   "due": "2026-10-06"
+  },
+  {
+   "id": "action-16",
+   "kind": "action",
+   "name": "Action 17",
+   "status": "doing",
+   "due": "2026-11-01"
+  },
+  {
+   "id": "action-17",
+   "kind": "action",
+   "name": "Action 18",
+   "status": "doing",
+   "due": "2026-11-02"
+  },
+  {
+   "id": "action-18",
+   "kind": "action",
+   "name": "Action 19",
+   "status": "doing",
+   "due": "2026-11-03"
+  },
+  {
+   "id": "action-19",
+   "kind": "action",
+   "name": "Action 20",
+   "status": "doing",
+   "due": "2026-11-04"
+  },
+  {
+   "id": "action-20",
+   "kind": "action",
+   "name": "Action 21",
+   "status": "doing",
+   "due": "2026-11-05"
+  },
+  {
+   "id": "action-21",
+   "kind": "action",
+   "name": "Action 22",
+   "status": "doing",
+   "due": "2026-11-06"
+  },
+  {
+   "id": "action-22",
+   "kind": "action",
+   "name": "Action 23",
+   "status": "open",
+   "due": "2026-10-07"
+  },
+  {
+   "id": "action-23",
+   "kind": "action",
+   "name": "Action 24",
+   "status": "open",
+   "due": "2026-10-06"
+  },
+  {
+   "id": "action-24",
+   "kind": "action",
+   "name": "Action 25",
+   "status": "open",
+   "due": "2026-10-09"
+  },
+  {
+   "id": "action-25",
+   "kind": "action",
+   "name": "Action 26",
+   "status": "open",
+   "due": "2026-10-08"
+  },
+  {
+   "id": "action-26",
+   "kind": "action",
+   "name": "Action 27",
+   "status": "open",
+   "due": "2026-11-11"
+  },
+  {
+   "id": "action-27",
+   "kind": "action",
+   "name": "Action 28",
+   "status": "open",
+   "due": "2026-11-12"
+  },
+  {
+   "id": "action-28",
+   "kind": "action",
+   "name": "Action 29",
+   "status": "open",
+   "due": "2026-11-13"
+  },
+  {
+   "id": "action-29",
+   "kind": "action",
+   "name": "Action 30",
+   "status": "open",
+   "due": "2026-11-14"
+  },
+  {
+   "id": "action-30",
+   "kind": "action",
+   "name": "Action 31",
+   "status": "open",
+   "due": "2026-11-15"
+  },
+  {
+   "id": "deliverable-0",
+   "kind": "deliverable",
+   "name": "Deliverable 1",
+   "status": "sent"
+  },
+  {
+   "id": "deliverable-1",
+   "kind": "deliverable",
+   "name": "Deliverable 2",
+   "status": "review"
+  },
+  {
+   "id": "deliverable-2",
+   "kind": "deliverable",
+   "name": "Deliverable 3",
+   "status": "drafting"
+  },
+  {
+   "id": "deliverable-3",
+   "kind": "deliverable",
+   "name": "Deliverable 4",
+   "status": "drafting"
+  },
+  {
+   "id": "budget-0",
+   "kind": "budget",
+   "name": "Line 1",
+   "amount": 1000
+  },
+  {
+   "id": "budget-1",
+   "kind": "budget",
+   "name": "Line 2",
+   "amount": 2000
+  },
+  {
+   "id": "budget-2",
+   "kind": "budget",
+   "name": "Line 3",
+   "amount": 3000
+  },
+  {
+   "id": "budget-3",
+   "kind": "budget",
+   "name": "Line 4",
+   "amount": 4000
+  },
+  {
+   "id": "budget-4",
+   "kind": "budget",
+   "name": "Line 5",
+   "amount": 5000
+  },
+  {
+   "id": "note-0",
+   "kind": "note",
+   "name": "Note 1"
+  },
+  {
+   "id": "note-1",
+   "kind": "note",
+   "name": "Note 2"
+  },
+  {
+   "id": "note-2",
+   "kind": "note",
+   "name": "Note 3"
+  },
+  {
+   "id": "theme-0",
+   "kind": "theme",
+   "name": "Theme 1"
+  },
+  {
+   "id": "theme-1",
+   "kind": "theme",
+   "name": "Theme 2"
+  },
+  {
+   "id": "theme-2",
+   "kind": "theme",
+   "name": "Theme 3"
+  },
+  {
+   "id": "theme-3",
+   "kind": "theme",
+   "name": "Theme 4"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e1",
+   "from": "session-0",
+   "to": "person-0",
+   "kind": "with"
+  },
+  {
+   "id": "e2",
+   "from": "session-0",
+   "to": "person-3",
+   "kind": "with"
+  },
+  {
+   "id": "e3",
+   "from": "session-1",
+   "to": "person-1",
+   "kind": "with"
+  },
+  {
+   "id": "e4",
+   "from": "session-1",
+   "to": "person-4",
+   "kind": "with"
+  },
+  {
+   "id": "e5",
+   "from": "session-2",
+   "to": "person-2",
+   "kind": "with"
+  },
+  {
+   "id": "e6",
+   "from": "session-2",
+   "to": "person-5",
+   "kind": "with"
+  },
+  {
+   "id": "e7",
+   "from": "session-3",
+   "to": "person-3",
+   "kind": "with"
+  },
+  {
+   "id": "e8",
+   "from": "session-3",
+   "to": "person-6",
+   "kind": "with"
+  },
+  {
+   "id": "e9",
+   "from": "session-4",
+   "to": "person-4",
+   "kind": "with"
+  },
+  {
+   "id": "e10",
+   "from": "session-4",
+   "to": "person-7",
+   "kind": "with"
+  },
+  {
+   "id": "e11",
+   "from": "session-5",
+   "to": "person-5",
+   "kind": "with"
+  },
+  {
+   "id": "e12",
+   "from": "session-5",
+   "to": "person-8",
+   "kind": "with"
+  },
+  {
+   "id": "e13",
+   "from": "question-0",
+   "to": "session-0",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e14",
+   "from": "question-1",
+   "to": "session-1",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e15",
+   "from": "question-2",
+   "to": "session-2",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e16",
+   "from": "question-3",
+   "to": "session-3",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e17",
+   "from": "question-4",
+   "to": "session-4",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e18",
+   "from": "question-5",
+   "to": "session-5",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e19",
+   "from": "question-6",
+   "to": "session-0",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e20",
+   "from": "question-7",
+   "to": "session-1",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e21",
+   "from": "question-8",
+   "to": "session-2",
+   "kind": "asked-in"
+  },
+  {
+   "id": "e22",
+   "from": "finding-0",
+   "to": "question-0",
+   "kind": "answers"
+  },
+  {
+   "id": "e23",
+   "from": "finding-0",
+   "to": "session-0",
+   "kind": "from"
+  },
+  {
+   "id": "e24",
+   "from": "finding-1",
+   "to": "question-1",
+   "kind": "answers"
+  },
+  {
+   "id": "e25",
+   "from": "finding-1",
+   "to": "session-1",
+   "kind": "from"
+  },
+  {
+   "id": "e26",
+   "from": "finding-2",
+   "to": "question-2",
+   "kind": "answers"
+  },
+  {
+   "id": "e27",
+   "from": "finding-2",
+   "to": "session-2",
+   "kind": "from"
+  },
+  {
+   "id": "e28",
+   "from": "finding-3",
+   "to": "question-3",
+   "kind": "answers"
+  },
+  {
+   "id": "e29",
+   "from": "finding-3",
+   "to": "session-3",
+   "kind": "from"
+  },
+  {
+   "id": "e30",
+   "from": "finding-4",
+   "to": "question-4",
+   "kind": "answers"
+  },
+  {
+   "id": "e31",
+   "from": "finding-4",
+   "to": "session-4",
+   "kind": "from"
+  },
+  {
+   "id": "e32",
+   "from": "finding-5",
+   "to": "question-5",
+   "kind": "answers"
+  },
+  {
+   "id": "e33",
+   "from": "finding-5",
+   "to": "session-5",
+   "kind": "from"
+  },
+  {
+   "id": "e34",
+   "from": "finding-6",
+   "to": "question-6",
+   "kind": "answers"
+  },
+  {
+   "id": "e35",
+   "from": "finding-6",
+   "to": "session-0",
+   "kind": "from"
+  },
+  {
+   "id": "e36",
+   "from": "finding-7",
+   "to": "question-7",
+   "kind": "answers"
+  },
+  {
+   "id": "e37",
+   "from": "finding-7",
+   "to": "session-1",
+   "kind": "from"
+  },
+  {
+   "id": "e38",
+   "from": "finding-8",
+   "to": "question-8",
+   "kind": "answers"
+  },
+  {
+   "id": "e39",
+   "from": "finding-8",
+   "to": "session-2",
+   "kind": "from"
+  },
+  {
+   "id": "e40",
+   "from": "finding-9",
+   "to": "question-0",
+   "kind": "answers"
+  },
+  {
+   "id": "e41",
+   "from": "finding-9",
+   "to": "session-3",
+   "kind": "from"
+  },
+  {
+   "id": "e42",
+   "from": "finding-10",
+   "to": "question-1",
+   "kind": "answers"
+  },
+  {
+   "id": "e43",
+   "from": "finding-10",
+   "to": "session-4",
+   "kind": "from"
+  },
+  {
+   "id": "e44",
+   "from": "finding-11",
+   "to": "question-2",
+   "kind": "answers"
+  },
+  {
+   "id": "e45",
+   "from": "finding-11",
+   "to": "session-5",
+   "kind": "from"
+  },
+  {
+   "id": "e46",
+   "from": "opportunity-0",
+   "to": "finding-0",
+   "kind": "rests-on"
+  },
+  {
+   "id": "e47",
+   "from": "opportunity-1",
+   "to": "finding-1",
+   "kind": "rests-on"
+  },
+  {
+   "id": "e48",
+   "from": "opportunity-2",
+   "to": "finding-2",
+   "kind": "rests-on"
+  },
+  {
+   "id": "e49",
+   "from": "opportunity-3",
+   "to": "finding-3",
+   "kind": "rests-on"
+  },
+  {
+   "id": "e50",
+   "from": "opportunity-4",
+   "to": "finding-4",
+   "kind": "rests-on"
+  },
+  {
+   "id": "e51",
+   "from": "opportunity-5",
+   "to": "finding-5",
+   "kind": "rests-on"
+  },
+  {
+   "id": "e52",
+   "from": "opportunity-6",
+   "to": "finding-6",
+   "kind": "rests-on"
+  },
+  {
+   "id": "e53",
+   "from": "action-0",
+   "to": "opportunity-0",
+   "kind": "for"
+  },
+  {
+   "id": "e54",
+   "from": "action-0",
+   "to": "person-0",
+   "kind": "owner"
+  },
+  {
+   "id": "e55",
+   "from": "action-1",
+   "to": "opportunity-1",
+   "kind": "for"
+  },
+  {
+   "id": "e56",
+   "from": "action-1",
+   "to": "person-1",
+   "kind": "owner"
+  },
+  {
+   "id": "e57",
+   "from": "action-2",
+   "to": "opportunity-2",
+   "kind": "for"
+  },
+  {
+   "id": "e58",
+   "from": "action-2",
+   "to": "person-2",
+   "kind": "owner"
+  },
+  {
+   "id": "e59",
+   "from": "action-3",
+   "to": "opportunity-3",
+   "kind": "for"
+  },
+  {
+   "id": "e60",
+   "from": "action-3",
+   "to": "person-3",
+   "kind": "owner"
+  },
+  {
+   "id": "e61",
+   "from": "action-4",
+   "to": "opportunity-4",
+   "kind": "for"
+  },
+  {
+   "id": "e62",
+   "from": "action-4",
+   "to": "person-4",
+   "kind": "owner"
+  },
+  {
+   "id": "e63",
+   "from": "action-5",
+   "to": "opportunity-5",
+   "kind": "for"
+  },
+  {
+   "id": "e64",
+   "from": "action-5",
+   "to": "person-5",
+   "kind": "owner"
+  },
+  {
+   "id": "e65",
+   "from": "action-6",
+   "to": "opportunity-6",
+   "kind": "for"
+  },
+  {
+   "id": "e66",
+   "from": "action-6",
+   "to": "person-6",
+   "kind": "owner"
+  },
+  {
+   "id": "e67",
+   "from": "action-7",
+   "to": "opportunity-0",
+   "kind": "for"
+  },
+  {
+   "id": "e68",
+   "from": "action-7",
+   "to": "person-7",
+   "kind": "owner"
+  },
+  {
+   "id": "e69",
+   "from": "action-8",
+   "to": "opportunity-1",
+   "kind": "for"
+  },
+  {
+   "id": "e70",
+   "from": "action-8",
+   "to": "person-8",
+   "kind": "owner"
+  },
+  {
+   "id": "e71",
+   "from": "action-9",
+   "to": "opportunity-2",
+   "kind": "for"
+  },
+  {
+   "id": "e72",
+   "from": "action-9",
+   "to": "person-9",
+   "kind": "owner"
+  },
+  {
+   "id": "e73",
+   "from": "action-10",
+   "to": "opportunity-3",
+   "kind": "for"
+  },
+  {
+   "id": "e74",
+   "from": "action-10",
+   "to": "person-0",
+   "kind": "owner"
+  },
+  {
+   "id": "e75",
+   "from": "action-11",
+   "to": "opportunity-4",
+   "kind": "for"
+  },
+  {
+   "id": "e76",
+   "from": "action-11",
+   "to": "person-1",
+   "kind": "owner"
+  },
+  {
+   "id": "e77",
+   "from": "action-12",
+   "to": "opportunity-5",
+   "kind": "for"
+  },
+  {
+   "id": "e78",
+   "from": "action-12",
+   "to": "person-2",
+   "kind": "owner"
+  },
+  {
+   "id": "e79",
+   "from": "action-13",
+   "to": "opportunity-6",
+   "kind": "for"
+  },
+  {
+   "id": "e80",
+   "from": "action-13",
+   "to": "person-3",
+   "kind": "owner"
+  },
+  {
+   "id": "e81",
+   "from": "action-14",
+   "to": "opportunity-0",
+   "kind": "for"
+  },
+  {
+   "id": "e82",
+   "from": "action-14",
+   "to": "person-4",
+   "kind": "owner"
+  },
+  {
+   "id": "e83",
+   "from": "action-15",
+   "to": "opportunity-1",
+   "kind": "for"
+  },
+  {
+   "id": "e84",
+   "from": "action-15",
+   "to": "person-5",
+   "kind": "owner"
+  },
+  {
+   "id": "e85",
+   "from": "action-16",
+   "to": "opportunity-2",
+   "kind": "for"
+  },
+  {
+   "id": "e86",
+   "from": "action-17",
+   "to": "opportunity-3",
+   "kind": "for"
+  },
+  {
+   "id": "e87",
+   "from": "action-17",
+   "to": "person-7",
+   "kind": "owner"
+  },
+  {
+   "id": "e88",
+   "from": "action-18",
+   "to": "opportunity-4",
+   "kind": "for"
+  },
+  {
+   "id": "e89",
+   "from": "action-18",
+   "to": "person-8",
+   "kind": "owner"
+  },
+  {
+   "id": "e90",
+   "from": "action-19",
+   "to": "opportunity-5",
+   "kind": "for"
+  },
+  {
+   "id": "e91",
+   "from": "action-19",
+   "to": "person-9",
+   "kind": "owner"
+  },
+  {
+   "id": "e92",
+   "from": "action-20",
+   "to": "opportunity-6",
+   "kind": "for"
+  },
+  {
+   "id": "e93",
+   "from": "action-20",
+   "to": "person-0",
+   "kind": "owner"
+  },
+  {
+   "id": "e94",
+   "from": "action-21",
+   "to": "opportunity-0",
+   "kind": "for"
+  },
+  {
+   "id": "e95",
+   "from": "action-21",
+   "to": "person-1",
+   "kind": "owner"
+  },
+  {
+   "id": "e96",
+   "from": "action-22",
+   "to": "opportunity-1",
+   "kind": "for"
+  },
+  {
+   "id": "e97",
+   "from": "action-22",
+   "to": "person-2",
+   "kind": "owner"
+  },
+  {
+   "id": "e98",
+   "from": "action-23",
+   "to": "opportunity-2",
+   "kind": "for"
+  },
+  {
+   "id": "e99",
+   "from": "action-23",
+   "to": "person-3",
+   "kind": "owner"
+  },
+  {
+   "id": "e100",
+   "from": "action-24",
+   "to": "opportunity-3",
+   "kind": "for"
+  },
+  {
+   "id": "e101",
+   "from": "action-24",
+   "to": "person-4",
+   "kind": "owner"
+  },
+  {
+   "id": "e102",
+   "from": "action-25",
+   "to": "opportunity-4",
+   "kind": "for"
+  },
+  {
+   "id": "e103",
+   "from": "action-25",
+   "to": "person-5",
+   "kind": "owner"
+  },
+  {
+   "id": "e104",
+   "from": "action-26",
+   "to": "opportunity-5",
+   "kind": "for"
+  },
+  {
+   "id": "e105",
+   "from": "action-26",
+   "to": "person-6",
+   "kind": "owner"
+  },
+  {
+   "id": "e106",
+   "from": "action-27",
+   "to": "opportunity-6",
+   "kind": "for"
+  },
+  {
+   "id": "e107",
+   "from": "action-27",
+   "to": "person-7",
+   "kind": "owner"
+  },
+  {
+   "id": "e108",
+   "from": "action-28",
+   "to": "opportunity-0",
+   "kind": "for"
+  },
+  {
+   "id": "e109",
+   "from": "action-28",
+   "to": "person-8",
+   "kind": "owner"
+  },
+  {
+   "id": "e110",
+   "from": "action-29",
+   "to": "opportunity-1",
+   "kind": "for"
+  },
+  {
+   "id": "e111",
+   "from": "action-29",
+   "to": "person-9",
+   "kind": "owner"
+  },
+  {
+   "id": "e112",
+   "from": "action-30",
+   "to": "opportunity-2",
+   "kind": "for"
+  },
+  {
+   "id": "e113",
+   "from": "action-30",
+   "to": "person-0",
+   "kind": "owner"
+  },
+  {
+   "id": "e114",
+   "from": "deliverable-0",
+   "to": "finding-0",
+   "kind": "draws"
+  },
+  {
+   "id": "e115",
+   "from": "deliverable-1",
+   "to": "finding-1",
+   "kind": "draws"
+  },
+  {
+   "id": "e116",
+   "from": "deliverable-2",
+   "to": "finding-2",
+   "kind": "draws"
+  },
+  {
+   "id": "e117",
+   "from": "deliverable-3",
+   "to": "finding-3",
+   "kind": "draws"
+  },
+  {
+   "id": "e118",
+   "from": "budget-0",
+   "to": "deliverable-0",
+   "kind": "funds"
+  },
+  {
+   "id": "e119",
+   "from": "budget-1",
+   "to": "deliverable-1",
+   "kind": "funds"
+  },
+  {
+   "id": "e120",
+   "from": "budget-2",
+   "to": "deliverable-2",
+   "kind": "funds"
+  },
+  {
+   "id": "e121",
+   "from": "budget-3",
+   "to": "deliverable-3",
+   "kind": "funds"
+  },
+  {
+   "id": "e122",
+   "from": "budget-4",
+   "to": "deliverable-0",
+   "kind": "funds"
+  }
+ ]
+}

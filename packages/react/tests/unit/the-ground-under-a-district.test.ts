@@ -1,4 +1,4 @@
-import { toIso } from "@graview/core/scene";
+import { BLOCK, MAX_SIDE, toIso } from "@graview/core/scene";
 import { describe, expect, it } from "vitest";
 import { buildingFaces, heightOf, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
 import { curbToCurb, streetPoints } from "../../src/ribbons.js";
@@ -106,9 +106,10 @@ describe("a ribbon runs curb to curb", () => {
   });
 
   it("runs along the gutters between blocks, never through a third plot", () => {
-    const a = { col: 0, row: 0, side: 4 };
-    const between = { col: 5, row: 0, side: 4 };
-    const b = { col: 10, row: 0, side: 4 };
+    // Three plots in a row on the block grid, each at its largest side.
+    const a = { col: 0, row: 0, side: MAX_SIDE };
+    const between = { col: BLOCK, row: 0, side: MAX_SIDE };
+    const b = { col: 2 * BLOCK, row: 0, side: MAX_SIDE };
     const street = streetPoints(a, b);
     // Every leg holds one coordinate: a lattice line.
     for (let i = 1; i < street.length; i++) {

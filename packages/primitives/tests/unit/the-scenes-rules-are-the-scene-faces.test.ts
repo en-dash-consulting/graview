@@ -44,7 +44,15 @@ const SCENE_FILES = [
  * the framework's views, which only the scene's planes draw: no other face
  * asks a group for a glyph. Its names are the scene's though the file is not.
  */
-const SCENE_CELLS: Record<string, string> = { "graview-kind-": "primitives/src/default-views.tsx", "graview-drive-in": "primitives/src/default-views.tsx" };
+const SCENE_CELLS: Record<string, string> = {
+  "graview-kind-": "primitives/src/default-views.tsx",
+  "graview-drive-in": "primitives/src/default-views.tsx",
+  // The name under a district from altitude, and the bar of where its records stand (Roadmap f-map-readable, f-map-shows-state).
+  "graview-district-states": "primitives/src/states-bar.tsx",
+  "graview-district-": "primitives/src/default-views.tsx",
+  "data-graview-nameplate": "primitives/src/default-views.tsx",
+  "data-graview-tier": "primitives/src/states-bar.tsx",
+};
 const packages = resolve(import.meta.dirname, "../../..");
 const sources: [string, string][] = [];
 const walk = (dir: string) => {

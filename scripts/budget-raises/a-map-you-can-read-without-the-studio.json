@@ -1,0 +1,6 @@
+{
+  "budget": "embed without the studio",
+  "minified": 100,
+  "gzipped": 450,
+  "note": "Raised when the map from altitude came to read and to say where things stand (Roadmap f-map-readable, f-map-shows-state): the city laid out by how kinds relate, the name under each district said whole, short, over or beside its plot, the altitude control and the trail saying what they do, and the ground of the city, the bar of states and the Key's legend fetched when the scene first rises. Most of the map's own code is in chunks fetched as the scene rises; what is left is the district card and the layout of the map, at the cost of one more chunk loaded first. 86 / 437 more than main (685_332 / 179_405). Measured at 685_418 / 179_842."
+}

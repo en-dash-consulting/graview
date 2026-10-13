@@ -506,8 +506,9 @@ describe("a rail reserved for chrome, at altitude", () => {
     const cards = result.nodes.filter((node) => node.aggregate);
     expect(cards.length).toBeGreaterThan(2);
     for (const card of cards) expect(card.x, card.id).toBeGreaterThanOrEqual(rail);
-    const center = cards.reduce((sum, card) => sum + card.x + card.width / 2, 0) / cards.length;
-    expect(Math.abs(center - (rail + (1280 - rail) / 2))).toBeLessThan(40);
+    // The city — its plots and the names under them — stands in the middle of what is left.
+    const extent = result.city!.extent;
+    expect(Math.abs(extent.x + extent.width / 2 - (rail + (1280 - rail) / 2))).toBeLessThan(40);
   });
 
   it("keeps the nearest district whole in a short canvas", () => {
@@ -629,14 +630,16 @@ describe("a card is the size of the words in it", () => {
     expect(silent).toEqual(said);
   });
 
-  it("grows the cards when the reader asks for bigger words", () => {
-    const before = cards(16);
-    const after = cards(32);
-    expect(after).toHaveLength(before.length);
-    for (const [index, card] of after.entries()) {
-      expect(card.width, card.id).toBeGreaterThan(before[index]!.width);
-      expect(card.height, card.id).toBeGreaterThan(before[index]!.height);
-    }
+  /*
+   * FROM ALTITUDE A DISTRICT IS ITS PLOT, AND THE WORDS ARE ITS NAME. The
+   * name under each plot is set in the reader's unit at a fixed size on
+   * the screen, so bigger words take more of the window: the city draws
+   * smaller to keep them, and never past the room it has.
+   */
+  it("makes room for bigger words: the city draws smaller to keep the names the reader's size", () => {
+    const cell = (unit: number) => layout(graph(), schema, view({ overview: true }), { width: 1600, height: 900, unit }).city!.cell;
+    expect(cards(32)).toHaveLength(cards(16).length);
+    expect(cell(32)).toBeLessThan(cell(16));
   });
 
   it("keeps the ring a ring: no district ever stands in another", () => {
@@ -655,19 +658,18 @@ describe("a card is the size of the words in it", () => {
     }
   });
 
-  it("gives ground back rather than growing past the room it has", () => {
+  it("keeps the whole city in the room however big the words, and lets a name say less before it stands on another", () => {
     /*
      * Sixty-four pixels to the rem is four times the browser's own — far
-     * more than the ring can honor with this many districts — so the cards
-     * take what is left and stop. Bigger than they were, and never so big
-     * that the picture stops being a picture.
+     * more than the window can honor with every name whole — so the city
+     * stays inside the window and the names that would collide say less.
      */
-    const asked = cards(64);
-    const base = cards(16);
-    for (const [index, card] of asked.entries()) {
-      expect(card.width).toBeGreaterThanOrEqual(base[index]!.width);
-      expect(card.width).toBeLessThan(base[index]!.width * 4);
+    for (const card of cards(64)) {
+      expect(card.x, card.id).toBeGreaterThanOrEqual(0);
+      expect(card.x + card.width, card.id).toBeLessThanOrEqual(1600);
     }
+    const said = (unit: number) => cards(unit).filter((card) => card.nameplate === "full").length;
+    expect(said(64)).toBeLessThanOrEqual(said(16));
   });
 });
 
@@ -779,7 +781,6 @@ describe("the kinds sit on a flat shelf, and rise into a city on the ring", () =
     const nearest = ringed.reduce((a, b) => (a.y + a.height > b.y + b.height ? a : b));
     const furthest = ringed.reduce((a, b) => (a.y < b.y ? a : b));
     expect(nearest.depth!).toBeLessThan(furthest.depth!);
-    expect(nearest.width).toBeGreaterThan(furthest.width);
   });
 
   it("keeps the raised plane clear of the shelf", () => {

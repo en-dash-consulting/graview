@@ -24,6 +24,7 @@
       "@graview/core/json-schema": ["./packages/core/src/json-schema.ts"],
       "@graview/core/check": ["./packages/core/src/check.ts"],
       "@graview/core/scene": ["./packages/core/src/scene.ts"],
+      "@graview/core/city": ["./packages/core/src/city.ts"],
       "@graview/core/figures": ["./packages/core/src/figures.ts"],
       "@graview/core/compiled": ["./packages/core/src/compiled.ts"],
       "@graview/core/describe": ["./packages/core/src/describe.ts"],

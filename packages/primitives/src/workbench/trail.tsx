@@ -182,10 +182,8 @@ export function Trail({
           title="Put the camera and everything you dragged back where the layout wanted them"
           style={chip}
         >
-          moved
-          <span aria-hidden="true" style={{ opacity: 0.7 }}>
-            ×
-          </span>
+          {/* Said as what pressing it does: "moved ×" read as a mark nobody could explain. */}
+          Reset view
         </button>
       ),
     });

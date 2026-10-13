@@ -137,7 +137,13 @@ export function RecordLinks({ frame, width, height, stageRef, tick, store, graph
       const unsure = link.lands === "record" ? unsureOf?.(link.edge, link.direction === "out" ? link.self : other, link.direction === "out" ? other : link.self) : undefined;
       lines.push({ key: `${link.self}|${link.edge}|${link.direction}|${link.lands}|${other}`, link, d, end: p1, said: unsure !== undefined ? `${said} · unsure` : said, ...(unsure !== undefined ? { unsure } : {}) });
     }
-    const labels = placeLabels(lines.map((line) => ({ key: line.key, x: line.end.x, y: line.end.y - 6, width: Math.min(260, 14 + line.said.length * 6.6), height: 20 })));
+    /* A link's words never stand on a district's name: the names under the plots are placed first. */
+    const plates: Box[] = [];
+    for (const el of stage.querySelectorAll(".graview-kind-face[data-graview-nameplate]")) {
+      const box = visibleRect(el, stage);
+      if (box) plates.push(box);
+    }
+    const labels = placeLabels(lines.map((line) => ({ key: line.key, x: line.end.x, y: line.end.y - 6, width: Math.min(260, 14 + line.said.length * 6.6), height: 20 })), plates);
     setDrawn({ lines, labels, reached: [...reached], districts: [...districts] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recordsKey, view.overview, frame, nodes, tick, width, height, stageRef, store]);

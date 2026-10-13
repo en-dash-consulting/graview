@@ -33,6 +33,10 @@
       "types": "./dist/scene.d.ts",
       "default": "./dist/scene.js"
     },
+    "./city": {
+      "types": "./dist/city.d.ts",
+      "default": "./dist/city.js"
+    },
     "./check": {
       "types": "./dist/check.d.ts",
       "default": "./dist/check.js"

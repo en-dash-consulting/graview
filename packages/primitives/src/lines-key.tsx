@@ -1,9 +1,13 @@
 import { layer, type AnySchema } from "@graview/core";
-import { useGraph, useGraview } from "@graview/react/provider";
+import { retryingImport } from "@graview/core/retry";
+import { lazyModule, useGraph, useGraview, useNavigation } from "@graview/react/provider";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { KEY_PANE_WIDTH, RelationKey } from "./relation-key.js";
 // The Key is drawn with the scene, whose face has fetched `@graview/react` already.
 import { ribbonWidth } from "@graview/react";
+
+/* What the map's marks mean, fetched when the Key is first opened over the map (`map-key.tsx`). */
+const MapKey = lazyModule(retryingImport(() => import("./map-key.js"))).part((key) => <key.MapKey />, { quiet: true });
 
 /**
  * THE KEY TO THE LINES, BESIDE UP.
@@ -16,6 +20,7 @@ import { ribbonWidth } from "@graview/react";
  */
 export function LinesKey<S extends AnySchema>() {
   const { store } = useGraview<S>();
+  const { view } = useNavigation();
   const nodes = useGraph<S>();
   const any = useMemo(() => store.graph.allEdges().length > 0, [store, nodes]);
   const [open, setOpen] = useState(false);
@@ -92,9 +97,11 @@ export function LinesKey<S extends AnySchema>() {
             boxShadow: "var(--graview-lift-high)",
           }}
         >
+          {view.overview ? <MapKey /> : null}
           <RelationKey<S> inside widthOf={ribbonWidth} />
         </div>
       ) : null}
     </div>
   );
 }
+

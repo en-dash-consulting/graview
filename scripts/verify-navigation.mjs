@@ -292,8 +292,8 @@ try {
     await page.waitForTimeout(400);
     const card = await page.$(`[data-graview-view="kind:${kind}"]`);
     const box = await card.boundingBox();
-    // The card's own top edge: never a chip, never the open control.
-    await page.mouse.dblclick(box.x + 14, box.y + 6);
+    // The district's own ground, in the middle of its plot: never its name, never the open control.
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
     await page.waitForTimeout(900);
     const at = await page.evaluate(() => location.hash);
     await page.goBack();
@@ -526,6 +526,7 @@ try {
       url: location.hash,
     };
   });
+  await drive.focus('[data-testid="showing-the-month"]');
   await drive.click('[data-testid="showing-the-month"]');
   await drive.waitForTimeout(600);
   const switched = await drive.evaluate(() => ({
@@ -536,11 +537,13 @@ try {
      Captured mid-tween, because the fault was two pictures over each other for the length of it. */
   const panelTitle = () => drive.evaluate(() => document.querySelector('[data-testid="lens-panel-title"]')?.textContent ?? null);
   const before = await panelTitle();
+  await drive.focus('[data-testid="showing-the-lists"]');
   await drive.click('[data-testid="showing-the-lists"]');
   await drive.waitForTimeout(1200);
   // One panel, now the lists': the tasks' picture gave way rather than standing beside it.
   const afterSwitch = { title: await panelTitle(), panels: await drive.evaluate(() => document.querySelectorAll('[data-testid="lens-panel"]').length) };
   // Back to the tasks' month for the descent below.
+  await drive.focus('[data-testid="showing-the-month"]');
   await drive.click('[data-testid="showing-the-month"]');
   await drive.waitForTimeout(1200);
   /* Open: the panel's own control is the way to the place; capture mid-tween. */
@@ -974,10 +977,10 @@ report.verdict = {
     report.control?.ground?.label === "Up" &&
     report.control?.ground?.name === "Up" &&
     report.control?.ground?.pressed === "false",
-  // From altitude the control says where you land: "Down to <place>".
-  theControlSaysDownToFromAltitude:
-    /^Down to /.test(report.control?.altitude?.label ?? "") &&
-    /^Down to /.test(report.control?.altitude?.name ?? "") &&
+  // From altitude the control says what pressing it does — "Close the map" — and, to the keyboard, where you land.
+  theControlSaysCloseTheMapFromAltitude:
+    report.control?.altitude?.label === "Close the map" &&
+    /^Close the map, down to /.test(report.control?.altitude?.name ?? "") &&
     report.control?.altitude?.pressed === "true",
   theMarkHasTwoStates:
     near(report.control?.ground?.wingOpacity, 0.75) && near(report.control?.altitude?.wingOpacity, 0),

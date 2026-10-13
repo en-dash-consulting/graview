@@ -87,8 +87,12 @@ export function linksOfRecords(
  * label already placed there — a few labels at one district are a short
  * column, not a pile. Boxes are in stage pixels.
  */
-export function placeLabels(labels: readonly { readonly key: string; readonly x: number; readonly y: number; readonly width: number; readonly height: number }[]): Map<string, { x: number; y: number }> {
-  const placed: { x: number; y: number; width: number; height: number }[] = [];
+export function placeLabels(
+  labels: readonly { readonly key: string; readonly x: number; readonly y: number; readonly width: number; readonly height: number }[],
+  /** What is already said where a label must not go: the districts' own names. */
+  taken: readonly { readonly x: number; readonly y: number; readonly width: number; readonly height: number }[] = [],
+): Map<string, { x: number; y: number }> {
+  const placed: { x: number; y: number; width: number; height: number }[] = [...taken];
   const at = new Map<string, { x: number; y: number }>();
   const clash = (box: { x: number; y: number; width: number; height: number }) =>
     placed.some((other) => box.x < other.x + other.width && other.x < box.x + box.width && box.y < other.y + other.height && other.y < box.y + box.height);

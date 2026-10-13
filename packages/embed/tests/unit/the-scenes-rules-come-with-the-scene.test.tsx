@@ -41,18 +41,18 @@ describe("the scene's rules come with the scene", () => {
     const { host, sheets, unmount } = await drawn("graview");
     const scope = host.querySelector("section")!.className;
     const frame = sheets.findIndex((css) => css.includes("--graview-font-body"));
-    const scene = sheets.findIndex((css) => css.includes(".graview-plot-tile"));
+    const scene = sheets.findIndex((css) => css.includes(".graview-zoom-button"));
     expect(frame).toBeGreaterThanOrEqual(0);
     expect(scene).toBeGreaterThan(frame);
-    expect(sheets[frame]).not.toContain(".graview-plot-tile");
-    expect(sheets[scene]).toContain(`:where(.${scope}) .graview-plot-tile`);
+    expect(sheets[frame]).not.toContain(".graview-zoom-button");
+    expect(sheets[scene]).toContain(`:where(.${scope}) .graview-zoom-button`);
     await unmount();
   });
 
   it("are not on a page that draws the pages face", async () => {
     const { sheets, unmount } = await drawn("pages");
     expect(sheets.some((css) => css.includes("--graview-font-body"))).toBe(true);
-    expect(sheets.some((css) => css.includes(".graview-plot-tile"))).toBe(false);
+    expect(sheets.some((css) => css.includes(".graview-zoom-button"))).toBe(false);
     await unmount();
   });
 });

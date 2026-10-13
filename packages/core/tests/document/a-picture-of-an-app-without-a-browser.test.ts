@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createSchema, defineApp, defineNode, hueFor, isoShade, z } from "../../src/index.js";
-import { sceneDistricts, villageCap, sceneThumbnail } from "../../src/scene.js";
+import { MAX_SIDE, sceneDistricts, villageCap, sceneThumbnail } from "../../src/scene.js";
 import { hsl } from "../../src/theme/contrast.js";
 import { compileDocumentWithoutCheck, type GraviewDocument } from "../../src/document/index.js";
 
@@ -111,7 +111,7 @@ describe("a picture of an app without a browser", () => {
     const blocks = (svg: string) => (svg.match(/stroke="#ffffff"/g) ?? []).length;
     expect(blocks(sceneThumbnail(vendors))).toBe(2);
     expect(blocks(sceneThumbnail(vendors, { counts: { vendor: 5 } }))).toBe(1 + 5);
-    const cap = villageCap(4);
+    const cap = villageCap(MAX_SIDE);
     expect(blocks(sceneThumbnail(vendors, { counts: { vendor: 500, category: 1 } }))).toBe(cap + 1);
     expect(sceneThumbnail(vendors, { counts: { vendor: 5 } })).toContain("<title>vendors: 5</title>");
     // Nonsense counts are no members, not a crash.
@@ -129,7 +129,7 @@ describe("a picture of an app without a browser", () => {
     const counts = Object.fromEntries(kinds.map((k) => [k.kind, 40]));
     const svg = sceneThumbnail(twelve, { counts });
     const roofs = (svg.match(/stroke="#ffffff"/g) ?? []).length;
-    expect(roofs).toBe(12 * villageCap(4));
+    expect(roofs).toBe(12 * villageCap(MAX_SIDE));
     // Every district's buildings, as many as sceneDistricts says stand there.
     expect(sceneDistricts(twelve, { counts }).reduce((sum, d) => sum + d.village.length, 0)).toBe(roofs);
     // 51 194 bytes when this was written: whole units and relative faces, about 170 bytes a building.

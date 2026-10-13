@@ -36,14 +36,14 @@ describe("the city at altitude", () => {
     expect(result.city!.cell).toBeGreaterThan(0);
     const cards = result.nodes.filter((node) => node.plane === 2);
     expect(cards.every((card) => card.plot !== undefined)).toBe(true);
-    expect(cards.find((card) => card.id === kindCardId("week"))!.plot).toEqual({ col: 0, row: 0, side: 1 });
-    /* Two people: a side of two. */
+    expect(cards.find((card) => card.id === kindCardId("week"))!.plot).toEqual({ col: 0, row: 0, side: 2 });
+    /* Two people: still the least side, two. */
     expect(cards.find((card) => card.id === kindCardId("person"))!.plot!.side).toBe(2);
   });
 
-  it("has the same shape at 1280 and at 390: one scale, one translate", () => {
+  it("has the same shape at 1280 and at 640: one scale, one translate", () => {
     const wide = districts(1280, 800);
-    const phone = districts(390, 640);
+    const phone = districts(640, 420);
     const center = (card: { x: number; y: number; width: number; height: number }) => ({ x: card.x + card.width / 2, y: card.y + card.height / 2 });
     const pairs = [
       [kindCardId("week"), kindCardId("duty")],
@@ -76,7 +76,55 @@ describe("the city at altitude", () => {
     expect(lowest.depth).toBeLessThan(highest.depth!);
     expect(lowest.depth).toBeCloseTo(1 - 1 * 0.65, 5);
     expect(highest.depth).toBeCloseTo(1, 5);
-    expect(lowest.width).toBeGreaterThan(highest.width);
+  });
+
+  it("reads upstream to downstream, left to right in a wide window and top to bottom in a tall one", () => {
+    const at = (cards: ReturnType<typeof districts>, kind: string) => {
+      const card = cards.find((one) => one.id === kindCardId(kind))!;
+      return { x: card.x + card.width / 2, y: card.y + card.height / 2 };
+    };
+    // A person does a duty, a duty is in a week: week, duty, person.
+    const wide = districts(1280, 800);
+    expect(at(wide, "week").x).toBeLessThan(at(wide, "duty").x);
+    expect(at(wide, "duty").x).toBeLessThan(at(wide, "person").x);
+    const tall = districts(390, 640);
+    expect(at(tall, "week").y).toBeLessThan(at(tall, "duty").y);
+    expect(at(tall, "duty").y).toBeLessThan(at(tall, "person").y);
+    // The note is tied to nothing: in the margin, under the rest.
+    for (const kind of ["week", "duty", "person"]) expect(at(wide, "note").y, kind).toBeGreaterThan(at(wide, kind).y);
+  });
+
+  it("opens with every district and its name inside the window, clear of the chrome in its corner", () => {
+    const chrome = { x: 1280 - 176, y: 0, width: 176, height: 100 };
+    for (const [width, height] of [[1280, 800], [390, 640]] as const) {
+      const result = layout(graph(), schema, overview, { width, height, cityOrder: ["week", "duty", "person", "note"], chrome: [{ ...chrome, x: width - 176 }] });
+      for (const card of result.nodes.filter((node) => node.plot)) {
+        expect(card.x, `${width}: ${card.id}`).toBeGreaterThanOrEqual(0);
+        expect(card.y, `${width}: ${card.id}`).toBeGreaterThanOrEqual(0);
+        expect(card.x + card.width, `${width}: ${card.id}`).toBeLessThanOrEqual(width);
+        expect(card.y + card.height, `${width}: ${card.id}`).toBeLessThanOrEqual(height);
+        const inCorner = card.x + card.width > width - 176 && card.y < 100;
+        expect(inCorner, `${width}: ${card.id} under the corner's chrome`).toBe(false);
+      }
+      const extent = result.city!.extent;
+      expect(extent.x).toBeGreaterThanOrEqual(0);
+      expect(extent.x + extent.width).toBeLessThanOrEqual(width);
+    }
+  });
+
+  it("caps a plot's side, so a kind of hundreds stands on three cells as a kind of five does", () => {
+    const many = Graph.from(schema, {
+      nodes: [
+        ...Array.from({ length: 300 }, (_, i) => ({ id: `p${i}`, kind: "person", label: `P${i}` })),
+        ...Array.from({ length: 5 }, (_, i) => ({ id: `d${i}`, kind: "duty", label: `D${i}` })),
+      ] as never,
+      edges: [],
+    });
+    const cards = layout(many, schema, overview, { width: 1280, height: 800 }).nodes.filter((node) => node.plot);
+    const side = (kind: string) => cards.find((card) => card.id === kindCardId(kind))!.plot!.side;
+    expect(side("person")).toBe(3);
+    expect(side("duty")).toBe(3);
+    expect(side("week")).toBe(2);
   });
 
   it("keeps the plot through interpolate.mix mid-tween", () => {
@@ -104,8 +152,8 @@ describe("the city at altitude", () => {
       { id: "kind:week", kind: "week", count: 1, opened: 0 },
       { id: "kind:duty", kind: "duty", count: 1, opened: 0 },
     ];
-    const a = placeCity(cards, schema, { width: 200, height: 80 }, { width: 900, height: 600 });
-    const b = placeCity(cards, schema, { width: 200, height: 80 }, { width: 900, height: 600 });
+    const a = placeCity(cards, schema, { width: 900, height: 600 });
+    const b = placeCity(cards, schema, { width: 900, height: 600 });
     expect(a).toEqual(b);
     expect(a.placed.map((card) => card.plot)).toEqual([...a.map.values()].filter((plot) => plot.col !== undefined).slice(0, 2).length === 2 ? a.placed.map((card) => a.map.get(card.id.slice(5))!) : []);
   });
