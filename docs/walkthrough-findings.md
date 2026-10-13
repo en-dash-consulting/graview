@@ -4658,3 +4658,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/core/src/import/rows.ts` (`labelFor`)
 - harness that should have caught it: none — the import's tests drive a document, never a declaration written in TypeScript
 - status: fixed in "walkthrough: G · a sheet without a name column is refused in words" · a label that says nothing, or throws, names the row as one with no name does. Criterion: `packages/core/tests/unit/a-sheet-without-a-name-column-is-refused-in-words.test.ts` (both verified failing without the fix)
+
+### W-197 · At the co-op's size every change costs 30 milliseconds, and a sheet of 200 rows ten seconds
+- stage: G (bringing a season in from a spreadsheet) and setup (seeding at real size) · face: every face, and a host's import · width: — · scheme: —
+- impact: costs a job — importing 200 inspections into a co-op of 8,500 records and 16,000 links kept them in 9.8 seconds (the preview in 29 milliseconds); `store.append` of 100 records took 3.1 seconds; seeding the co-op through its own acts took four minutes and forty seconds. Every act a person takes paid the same toll, about 30 milliseconds at this size and growing with it
+- class: data-shape-not-in-fixtures
+- expected: a change costs what it touches
+- actual: `Graph.applyPrimitives` diffed the whole graph before and after every change, building maps of every record and link and comparing every record's every field through `JSON.stringify`, for the one record and two links an inspection adds. A profile of 100 appends: 2,859 of 2,909 milliseconds in `diffSnapshots`. No fixture is a tenth of this size
+- where it belongs: `packages/core/src/graph/graph.ts` (`applyPrimitives`), `packages/core/src/graph/diff.ts`
+- harness that should have caught it: none — the gauntlet's data is awkward, not large, and `pnpm verify scale` times the scene's drawing, not a change
+- status: fixed in "walkthrough: G · a change costs what it touches" · the diff is of the records and links the primitives name (and the links a removed record takes), in the graph's order, and a record held unchanged is not compared. 100 appends: 3,067 → 114 milliseconds; the 200-row import: 9,789 → 240. Criterion: `packages/core/tests/unit/a-change-costs-what-it-touches.test.ts` — no field of an untouched record is read (verified failing without the fix), and the diff equals the whole comparison's for adds, patches, removals and the links a removal takes

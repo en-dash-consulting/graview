@@ -37,6 +37,22 @@ export type GraphListener<S extends AnySchema> = (
   diff: GraphDiff<NodeOfSchema<S>>,
 ) => void;
 
+
+interface Touched {
+  readonly nodes: ReadonlySet<string>;
+  readonly edges: ReadonlySet<string>;
+  /** Every record at an end of a touched link: a link is looked up only where one of these is. */
+  readonly ends: ReadonlySet<string>;
+}
+
+/** The part of a snapshot a batch touched, in the snapshot's order. */
+function within<N extends { readonly id: string }>(snapshot: { readonly nodes: readonly N[]; readonly edges: readonly GraphEdge[] }, touched: Touched): { nodes: N[]; edges: GraphEdge[] } {
+  return {
+    nodes: touched.nodes.size === 0 ? [] : snapshot.nodes.filter((node) => touched.nodes.has(node.id)),
+    edges: touched.edges.size === 0 ? [] : snapshot.edges.filter((edge) => touched.ends.has(edge.from) && touched.edges.has(edgeId(edge))),
+  };
+}
+
 /**
  * A validator's complaint, said in words.
  *
@@ -260,6 +276,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    */
   applyPrimitives(primitives: readonly Primitive[], options: ApplyPrimitivesOptions = {}): GraphDiff<NodeOfSchema<S>> {
     const before = this.snapshot();
+    const touched = this.touchedBy(primitives);
     /*
      * ALL OR NOTHING. A primitive that fails used to leave the ones before
      * it applied, so a host rehearsed every repair and migration on a copy
@@ -274,9 +291,40 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
       this.restore(before);
       throw error;
     }
-    const diff = diffSnapshots(before, this.snapshot());
+    /*
+     * WHAT CHANGED IS WHAT WAS TOUCHED (the ninth walk, W-197). The diff
+     * compared every record and link before and after, each record field by
+     * field through JSON — some 30 milliseconds an act on a co-op of 8,500
+     * records and 16,000 links, so a sheet of 200 rows took ten seconds to
+     * keep and the seed four minutes to make. Only what a primitive names
+     * can differ — the record it adds, removes or patches, the link it adds
+     * or removes, and the links a removed record takes with it — so the diff
+     * is of those alone, in the graph's own order.
+     */
+    const diff = diffSnapshots(within(before, touched), within(this.snapshot(), touched));
     this.emit(diff);
     return diff;
+  }
+
+  /** The records and links a batch of primitives can change, as it stands before them. */
+  private touchedBy(primitives: readonly Primitive[]): Touched {
+    const nodes = new Set<string>();
+    const edges = new Set<string>();
+    const ends = new Set<string>();
+    const link = (edge: GraphEdge) => {
+      edges.add(edgeId(edge));
+      ends.add(edge.from);
+      ends.add(edge.to);
+    };
+    for (const primitive of primitives) {
+      if (primitive.op === "add-node") nodes.add(primitive.node.id);
+      else if (primitive.op === "patch-node") nodes.add(primitive.id);
+      else if (primitive.op === "remove-node") {
+        nodes.add(primitive.node.id);
+        for (const edge of [...this.outEdges(primitive.node.id), ...this.inEdges(primitive.node.id)]) link(edge);
+      } else link(primitive.edge);
+    }
+    return { nodes, edges, ends };
   }
 
   /** Applies primitives to a throwaway copy — used for previewing a diff. */
