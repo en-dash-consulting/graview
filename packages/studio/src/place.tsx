@@ -2,7 +2,7 @@ import { INSTALLATION_MODULE, layer, type AnySchema, type GraviewApp, type Migra
 import type { CheckResult } from "@graview/core/check";
 import type { DocumentEdit, Finding, GraviewDocument } from "@graview/core/document";
 import { EMPTY_VIEW, withWithin } from "@graview/layout";
-import { GraviewProvider, Scene, createViews, useGraview, useGraviewIfAny, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
+import { BesideTheMap, GraviewProvider, Scene, createViews, useGraview, useGraviewIfAny, useNavigation, useTheKeyboardLandsSomewhere } from "@graview/react";
 import { ActivityRail, AgentSeat, Inspector, Places, registerDefaultViews } from "@graview/primitives";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -363,6 +363,14 @@ function StudioOverlay<S extends AnySchema>({
   }, []);
 
   return (
+    /*
+     * NO PANEL BESIDE THIS MAP. The studio opens inside a face that lists a
+     * district beside its own map (the Shell, an embed's scene face), and the
+     * context reaches through the portal: "open" on the kinds district chose
+     * it for a panel the studio does not draw, and nothing opened. Here a
+     * district opens in place, as a card of its records.
+     */
+    <BesideTheMap.Provider value={false}>
     <GraviewProvider<StudioSchema>
       store={studio.store}
       views={views}
@@ -546,6 +554,7 @@ function StudioOverlay<S extends AnySchema>({
       )}
     </div>
     </GraviewProvider>
+    </BesideTheMap.Provider>
   );
 }
 

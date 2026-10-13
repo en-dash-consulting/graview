@@ -552,19 +552,40 @@ try {
     const b = document.querySelector('[data-graview-plot="kind:task"]')?.getBoundingClientRect();
     return b ? { x: b.x + b.width / 2, y: b.y + b.height / 2 } : null;
   });
+  /*
+   * WATCHED EVERY FRAME, not read once at a hundred and ten milliseconds.
+   * On the nightly's runner (and under GRAVIEW_SLOW=4) the press took longer
+   * than that to reach the first frame of the tween, so the one reading saw
+   * the lens still on its plot and called a descent that then tweened all
+   * the way a jump. Where the lens stood on each frame for a second after
+   * the press is the question; the claim below asks whether any of those
+   * frames had it between the plot and the middle.
+   */
+  const watching = drive.evaluate(
+    () =>
+      new Promise((done) => {
+        const seen = [];
+        const started = performance.now();
+        const frame = () => {
+          const b = document.querySelector('[data-graview-view="aggregate:task"]')?.getBoundingClientRect();
+          if (b) seen.push({ t: Math.round(performance.now() - started), x: b.x + b.width / 2, y: b.y + b.height / 2, width: b.width });
+          if (performance.now() - started < 1400) requestAnimationFrame(frame);
+          else done(seen);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
   await drive.click('[data-testid="lens-panel-open"]');
-  await drive.waitForTimeout(110);
-  const midway = await drive.evaluate(() => {
-    const el = document.querySelector('[data-graview-view="aggregate:task"]');
-    const b = el?.getBoundingClientRect();
-    return b ? { x: b.x + b.width / 2, y: b.y + b.height / 2, width: b.width } : null;
-  });
-  await drive.waitForTimeout(1000);
+  const frames = await watching;
+  await drive.waitForTimeout(300);
   const landed = await drive.evaluate(() => ({
     url: location.hash,
     up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
   }));
   const plotX = plot ? plot.x : null;
+  const between = (x) => plotX !== null && Math.min(plotX, centerX) + 20 < x && x < Math.max(plotX, centerX) - 20;
+  // The first frame on its way, else the frame nearest halfway: what the report shows as midway.
+  const midway = frames.find((one) => between(one.x)) ?? frames[Math.floor(frames.length / 2)] ?? null;
   report.driveIn = {
     marquee,
     tiles,
@@ -574,6 +595,7 @@ try {
     standing,
     switched,
     midway,
+    frames: frames.length,
     plot,
     landed,
     /*
@@ -581,10 +603,10 @@ try {
      * column and the middle it lands in, at neither end. (It was "nearer the
      * plot than the middle", which held only while the district stood near
      * the middle; upstream districts now stand at the city's left, and a
-     * tween eased out is past halfway at a hundred milliseconds.)
+     * tween eased out is past halfway at a hundred milliseconds.) Some frame
+     * after the press, not the frame at a fixed time: a jump has none.
      */
-    movedFromThePlot:
-      midway !== null && plotX !== null && Math.min(plotX, centerX) + 20 < midway.x && midway.x < Math.max(plotX, centerX) - 20,
+    movedFromThePlot: frames.some((one) => between(one.x)),
   };
   await drive.close();
 } catch (error) {

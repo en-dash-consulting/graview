@@ -74,6 +74,25 @@ describe("who is here, and what each of them may do", () => {
     }
   });
 
+  it("lets the keeper and the member change, archive and remove a task neither of them wrote down", () => {
+    /*
+     * The shipped tasks were made by nobody at these seats. A grant to every
+     * role reaches only what a seat made (W-201), so the derived acts on
+     * them come from the grant naming both roles — and the menu offered no
+     * "Change the task" on "Pay the deposit" until it said so.
+     */
+    const s = store();
+    for (const who of [KEEPER, MEMBER]) {
+      expect(s.permits({ name: "edit-task", args: { id: "t-deposit", label: "Pay it" } }, who).ok).toBe(true);
+      expect(s.permits({ name: "archive-task", args: { id: "t-deposit" } }, who).ok).toBe(true);
+      expect(s.permits({ name: "remove-task", args: { id: "t-deposit" } }, who).ok).toBe(true);
+    }
+    // A seat with no role still works the list, and changes only what it made.
+    const passerby = { kind: "human" as const, id: "passerby" };
+    expect(s.permits({ name: "finish", args: { taskId: "t-deposit" } }, passerby).ok).toBe(true);
+    expect(s.permits({ name: "edit-task", args: { id: "t-deposit", label: "Pay it" } }, passerby).ok).toBe(false);
+  });
+
   it("makes a person's record their own profile: theirs to edit, read-only to another member", () => {
     const s = store();
     // The derived edit names its subject `id`, as every derived edit does.

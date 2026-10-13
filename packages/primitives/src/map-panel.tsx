@@ -4,6 +4,7 @@ import { aggregateId, kindCardId, withFocus, withOverview, withPicture, withWith
 import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
 import { ViewBoundary } from "@graview/react/drawing";
 import type { MapPanelShowing } from "./map-panel-door.js";
+import { NamedAbove } from "./primitives/index.js";
 import { useGraph, useGraview, useNavigation, type ViewComponent } from "@graview/react/provider";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
@@ -278,9 +279,12 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
         }}
       >
         {View ? (
-          <ViewBoundary kind={kind} {...(registration?.title ? { view: registration.title } : {})}>
-            <View nodes={members} label={named} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(chosen.length > 0 ? { implicated: chosen } : {})} />
-          </ViewBoundary>
+          /* The head names it; the lens's own panel does not say it again under it. */
+          <NamedAbove.Provider value={named}>
+            <ViewBoundary kind={kind} {...(registration?.title ? { view: registration.title } : {})}>
+              <View nodes={members} label={named} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(chosen.length > 0 ? { implicated: chosen } : {})} />
+            </ViewBoundary>
+          </NamedAbove.Provider>
         ) : null}
       </div>
     </PanelFrame>
