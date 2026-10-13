@@ -1,6 +1,7 @@
 import type { FieldSpec } from "../document/schema.js";
 import { nameKey } from "../labels.js";
 import { slug } from "../mutations/define-mutation.js";
+import { isAppAddress } from "../schema/app-link.js";
 
 /**
  * A CELL, READ AS THE FIELD IT GOES IN (FR-177). A spreadsheet holds what a
@@ -222,6 +223,11 @@ export function coerceCell(spec: FieldSpec, input: unknown, said: string, option
     case "image":
     case "file":
       return { ok: false, why: `${said} holds a file, which a cell cannot carry` };
+    case "app-link": {
+      // Another app's address (FR-171), as it is written: @owner/app, an id, or an https:// address.
+      const text = String(input).trim();
+      return isAppAddress(text) ? { ok: true, value: text } : { ok: false, why: `${quoted} under ${said} is not another app's address` };
+    }
   }
 }
 

@@ -94,6 +94,12 @@ export interface ReadableField {
    * and its words are their names. A glance leaves them out of its words.
    */
   readonly files?: readonly FileValue[];
+  /**
+   * ANOTHER APP'S ADDRESS (FR-171), where the field links to one: a record
+   * draws it as the app the host's `resolveApp` names, never as the
+   * address. A glance leaves it out of its words, as it does a file.
+   */
+  readonly app?: string;
   /** The field name in words, after `display.labels` and humanizing. */
   readonly label: string;
   /** The value in words, after `display.format` and the built-in defaults: a day as a person reads it, a choice as it is declared. */

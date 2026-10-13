@@ -57,7 +57,7 @@ const expression = str(1, 2000);
 const template = str(1, 300);
 
 /** `image` and `file` hold what the host stored (FR-162): a `FileValue`, its `href` a path on the host. */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file"] as const;
+export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file", "app-link"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const FieldSpec = z

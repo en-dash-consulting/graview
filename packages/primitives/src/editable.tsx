@@ -7,6 +7,7 @@ import type { EditableField } from "@graview/tools";
 import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
 import { TextBody } from "./text-body.js";
 import { Files } from "./files-door.js";
+import { AppLink } from "./app-link-door.js";
 
 /**
  * One field's value, changeable where it is shown when something can change
@@ -333,7 +334,8 @@ export function Fields<S extends AnySchema>({
                 <div key={field.key} style={{ display: "contents" }}>
                   <dt style={{ ...LABEL, whiteSpace: "nowrap" }}>{labels[field.key] ?? field.label}</dt>
                   <dd style={{ margin: 0, minWidth: 0 }}>
-                    <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} stored={field.stored} />
+                    {/* Another app, as the host names it (FR-171), changed beside it. */}
+                    {field.app ? <AppLink address={field.app} as="record" nodeId={node.id} field={field.key} /> : <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} stored={field.stored} />}
                   </dd>
                 </div>
               ),

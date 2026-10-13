@@ -541,6 +541,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.people ? { people: context.people } : {})}
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
+      resolveApp={context.resolveApp ?? outer?.resolveApp /* The host's way to name another app (FR-171): the face's own, else the provider's it is drawn inside. */}
       {...(context.app ? { app: context.app } : {})}
     >
       {routed}

@@ -3,6 +3,7 @@ import type {
   Brand,
   GraviewApp,
   HostFiles,
+  ResolveApp,
   NodeOfSchema,
   Person,
   Presence,
@@ -195,6 +196,8 @@ export interface GraviewContextValue<S extends AnySchema> {
    * once, in code — a reader is never asked which machine answers.
    */
   readonly ai: HostAi;
+  /** THE HOST'S WAY TO NAME ANOTHER APP (`resolveApp` on the provider, FR-171), where an app-link field asks it. */
+  readonly resolveApp?: ResolveApp | undefined;
   /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
   readonly movedByHand: boolean;
   noteMoved(): void;
@@ -425,6 +428,13 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * host takes no files.
    */
   readonly files?: HostFiles | undefined;
+  /**
+   * THE HOST'S WAY TO NAME ANOTHER APP (FR-171): `resolveApp(address,
+   * viewer)` answers an app-link field's app — its name, icon, home
+   * headline and where it opens — `{ denied: true }` when this viewer may
+   * not open it, or null. Unsaid, the field draws its address plainly.
+   */
+  readonly resolveApp?: ResolveApp | undefined;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -488,6 +498,7 @@ export function GraviewProvider<S extends AnySchema>({
   providers,
   ai = NO_AI,
   files,
+  resolveApp,
   view,
   onViewChange,
   children,
@@ -879,6 +890,7 @@ export function GraviewProvider<S extends AnySchema>({
       sharing,
       session,
       ai,
+      resolveApp,
       movedByHand,
       noteMoved,
       emphasis,
@@ -925,6 +937,7 @@ export function GraviewProvider<S extends AnySchema>({
       sharing,
       session,
       ai,
+      resolveApp,
       movedByHand,
       noteMoved,
       emphasis,

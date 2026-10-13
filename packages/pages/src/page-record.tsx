@@ -1,6 +1,6 @@
 import { humanizeField, isWithheld, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
-import { DefaultViewElsewhere, EditableValue, Files, LongValue, pageSays, useLined } from "@graview/primitives/pages";
+import { AppLink, DefaultViewElsewhere, EditableValue, Files, LongValue, pageSays, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -223,7 +223,14 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                     <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
                       <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
                       <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere", minWidth: 0 }}>
-                        {inPlace ? <EditableValue<S> nodeId={id} field={field.key} value={field.value} stored={field.stored} /> : field.value}
+                        {field.app ? (
+                          // Another app, as the host names it (FR-171), changed beside it where the face changes values in place.
+                          <AppLink address={field.app} as="record" {...(inPlace ? { nodeId: id, field: field.key } : {})} />
+                        ) : inPlace ? (
+                          <EditableValue<S> nodeId={id} field={field.key} value={field.value} stored={field.stored} />
+                        ) : (
+                          field.value
+                        )}
                       </dd>
                     </div>
                   ),

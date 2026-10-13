@@ -216,6 +216,8 @@ function Control<S extends AnySchema>({
             type={spec.control === "date" ? (spec.time ? "datetime-local" : "date") : "text"}
             name={spec.name}
             required={!spec.optional}
+            // Another app's address (FR-171): what it takes, said where it is typed.
+            {...(spec.control === "text" && spec.app ? { placeholder: "@owner/app or https://…" } : {})}
             value={typeof value === "string" ? value : ""}
             onChange={(event) => onChange(event.target.value)}
             data-graview-part="control"

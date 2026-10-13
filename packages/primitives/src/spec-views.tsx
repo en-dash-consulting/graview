@@ -9,6 +9,7 @@ import { KindFigure } from "./figure.js";
 import { Panel } from "./primitives/index.js";
 import { hasShape, TextBody } from "./text-body.js";
 import { Files } from "./files-door.js";
+import { AppLink } from "./app-link-door.js";
 
 /*
  * VIEWS AS DATA, DRAWN (FR-03).
@@ -146,7 +147,10 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
           <span className="graview-spec-label">{block.label}</span>
           {/* A value with lines in it keeps them (FR-146): a field block stays one span, its breaks drawn where they stand. */}
           <span className="graview-spec-value" {...(hasShape(block.text) ? { style: { whiteSpace: "pre-line" } } : {})}>
-            {block.href ? (
+            {block.app ? (
+              // Another app, as the host names it (FR-171), above the link the whole card is.
+              <AppLink address={block.app} />
+            ) : block.href ? (
               <a className="graview-spec-link" href={block.href} rel="noopener noreferrer" target="_blank">
                 {block.text}
               </a>

@@ -1,10 +1,13 @@
-import { ArrangeBar, Files, pageSays } from "@graview/primitives/pages";
+import { AppLink, ArrangeBar, Files, pageSays } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement, throughEdges } from "@graview/core/arrange";
 import {
   humanizeField,
   nounOf,
+  isAppAddress,
+  isAppLinkField,
   isCurrent,
   labelOf,
+  type AnyNodeDefinition,
   type AnySchema,
   type Arrangeable,
   type Arrangement,
@@ -52,6 +55,13 @@ export const ARRANGE_FROM = 8;
  * letters, or the years — jumps through it.
  */
 export const LARGE_LIST = 40;
+
+/** A record's first link to another app (FR-171), in its kind's declared order: what its row names beside its facts. */
+function firstAppLink(node: Readonly<Record<string, unknown>>, definition: AnyNodeDefinition | undefined): string | undefined {
+  const shape = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {};
+  const key = Object.keys(shape).find((one) => isAppLinkField(shape[one]) && isAppAddress(node[one]));
+  return key === undefined ? undefined : (node[key] as string);
+}
 
 /** What a design hands its row: the record's name, its address, whether it is in a problem, and its glance. */
 export interface ListRowFacts {
@@ -250,6 +260,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const why = typed.words ? matchNode(definition, node, typed.words) : undefined;
     // Its first picture, small, beside its name (FR-162) — not down a large list's index.
     const picture = large ? undefined : firstPicture(node as Record<string, unknown>, definition);
+    // Another app it links, by the name the host gives it (FR-171).
+    const app = firstAppLink(node as Record<string, unknown>, definition);
     // A large list is read down a column: each record one line, its glance at the line's end.
     return (
       <li
@@ -278,6 +290,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
           {label}
         </Link>
         {said ? <span style={large ? { ...quiet, flex: "0 1 auto", minWidth: 0, fontSize: "0.875rem" } : quiet}>{said}</span> : null}
+        {app ? <AppLink address={app} style={large ? { flex: "0 1 auto", fontSize: "0.875rem" } : { fontSize: "0.9375rem", justifySelf: "start" }} /> : null}
         {why ? <WhyLine why={why} /> : null}
       </li>
     );

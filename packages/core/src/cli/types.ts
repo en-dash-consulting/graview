@@ -50,6 +50,7 @@ const HOLDS: Partial<Record<FieldSpec["type"], string>> = {
   email: "An email address.",
   image: "A picture the host stored: its href a path on the host.",
   file: "A file the host stored: its href a path on the host.",
+  "app-link": "Another app's address: @owner/app, its id, or its https:// address.",
 };
 
 /** A field's comment: its description, the words it is shown by, and what a string of its type holds. */

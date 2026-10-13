@@ -1,4 +1,4 @@
-import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
+import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -120,6 +120,13 @@ export interface PageContext<S extends AnySchema> {
    * says, and without one a file field's editor says this host takes none.
    */
   readonly files?: HostFiles;
+  /**
+   * THE HOST'S WAY TO NAME ANOTHER APP (FR-171): an app-link field draws as
+   * the app `resolveApp` answers — its name, icon and home headline, linked
+   * to it — "linked app (no access)" where it says this viewer may not open
+   * it, and its address plainly where there is none.
+   */
+  readonly resolveApp?: ResolveApp;
   /**
    * The app these pages are of, for the provider under them when `views`
    * is given: the seat's tools and a host's turn describe its places with

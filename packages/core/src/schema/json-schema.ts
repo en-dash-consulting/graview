@@ -1,6 +1,7 @@
 import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
+import { isAppLinkField } from "./app-link.js";
 import type { AnySchema } from "./schema.js";
 import type { AnyNodeDefinition } from "./types.js";
 
@@ -29,6 +30,8 @@ type ZodStringDef = { readonly type?: string; readonly format?: string; readonly
  * with `.regex(…)` is the author's, and is kept.
  */
 function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
+  // Another app's address (FR-171), beside its pattern: an agent sets an address, not a name.
+  if (isAppLinkField(ctx.zodSchema)) ctx.jsonSchema["x-graview-app-link"] = true;
   const def = (ctx.zodSchema as { _zod?: { def?: ZodStringDef } })._zod?.def;
   if (!def || def.type !== "string" || typeof def.format !== "string" || def.format === "regex") return;
   const js = ctx.jsonSchema;

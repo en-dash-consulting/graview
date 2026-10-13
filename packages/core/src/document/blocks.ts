@@ -217,7 +217,8 @@ type Unkeyed =
   | { readonly t: "title"; readonly text: string; readonly problem?: string }
   | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly problem?: string }
   | { readonly t: "badge"; readonly text: string; readonly tone: ViewTone; readonly problem?: string }
-  | { readonly t: "field"; readonly field: string; readonly label: string; readonly text: string; readonly href?: string; readonly problem?: string }
+  /** `app`: another app's address (FR-171), drawn as the app the host's `resolveApp` names. */
+  | { readonly t: "field"; readonly field: string; readonly label: string; readonly text: string; readonly href?: string; readonly app?: string; readonly problem?: string }
   /** A record's files, as the block shows them: `text` names them, for whoever cannot see them. */
   | { readonly t: "image"; readonly field: string; readonly label: string; readonly as: "thumb" | "gallery"; readonly files: readonly FileValue[]; readonly text: string; readonly problem?: string }
   | { readonly t: "progress"; readonly label: string; readonly value?: number; readonly max?: number; readonly text: string; readonly problem?: string }
@@ -358,7 +359,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       } else raw = Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : undefined;
       const href = ctx.fields[block.field]?.type === "url" && block.as === undefined ? safeHref(raw) : undefined;
       const text = safely(() => fieldText(block.field, raw, ctx, block.as, block.currency)) ?? NOTHING;
-      return withProblem({ t: "field", field: block.field, label, text, ...(href ? { href } : {}) }, problem);
+      const app = ctx.fields[block.field]?.type === "app-link" && block.as === undefined && typeof raw === "string" ? raw : undefined;
+      return withProblem({ t: "field", field: block.field, label, text, ...(href ? { href } : {}), ...(app ? { app } : {}) }, problem);
     }
     case "image": {
       // About no one record there are no files: the check says so of the home's blocks.

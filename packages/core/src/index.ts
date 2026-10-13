@@ -30,6 +30,10 @@ export { defineNode, isCurrent, labelOf } from "./schema/define-node.js";
 export { fileKindOf, filesOf, isFileValue, isImage, safeFileHref } from "./schema/files.js";
 export type { FileValue, HostFiles } from "./schema/files.js";
 export { fileField, imageField } from "./schema/file-field.js";
+// A link to another app (FR-171): its address on a record, and the host that says what it is called.
+export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
+export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";
+export { appLinkField } from "./schema/app-link-field.js";
 export { nameOfAuthor } from "./who.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";

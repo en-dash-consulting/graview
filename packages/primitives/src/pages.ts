@@ -18,6 +18,9 @@ export { EditableValue, LongValue } from "./editable.js";
 // A record's pictures and documents, drawn and put there, fetched with the first one drawn (FR-162, FR-163).
 export { Files } from "./files-door.js";
 export type { FilesProps } from "./files-door.js";
+// Another app on a record, as the host names it (FR-171), fetched with the first one drawn.
+export { AppLink } from "./app-link-door.js";
+export type { AppLinkProps } from "./app-link-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 export { KindFigure } from "./figure.js";
 export { ownSentence, problemLine, problemTitle, RuleLineView, RuleParts, useLined, useRuleLines } from "./rule-line.js";
