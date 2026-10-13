@@ -61,6 +61,7 @@ export default defineConfig({
       "@graview/primitives/pages": fileURLToPath(new URL("./packages/primitives/src/pages.ts", import.meta.url)),
       "@graview/primitives/scene": fileURLToPath(new URL("./packages/primitives/src/scene.ts", import.meta.url)),
       "@graview/primitives": src("primitives"),
+      "@graview/pages/static": fileURLToPath(new URL("./packages/pages/src/static.ts", import.meta.url)),
       "@graview/pages": src("pages"),
       "@graview/ship/browser": fileURLToPath(new URL("./packages/ship/src/browser.ts", import.meta.url)),
       "@graview/ship/runtime": fileURLToPath(new URL("./packages/ship/src/runtime.ts", import.meta.url)),

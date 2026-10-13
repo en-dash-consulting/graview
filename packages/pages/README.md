@@ -58,5 +58,13 @@ this package serves lists, records, forms, problems and history as ordinary link
   every page. Still derivation: nothing here is a per-app template, and an app overrides a
   cell the same way it overrides a view.
 
+- **A page is also a string (FR-174).** `@graview/pages/static` renders a place without a
+  browser: `renderPlace(store, declaration, place, { viewer, look })` answers `{ html, css,
+  title, found }` — a list, a record, a declared place or the home as one self-contained
+  document in the app's look, with no script, under the viewer's sight, printable (each
+  section of a place a page of its own). It imports no React, so a Worker re-renders a fixed
+  link — a schedule as a PDF — on each change. `staticCss` is its sheet alone. See
+  `docs/static-pages.md`.
+
 The host applies `themeCss` from `@graview/primitives` (or supplies its own `--graview-*`
 tokens); the default pages render entirely from those tokens.

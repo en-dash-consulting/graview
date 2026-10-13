@@ -501,6 +501,7 @@ export default defineConfig({
       "@graview/primitives/montserrat.css": framework("primitives/fonts/montserrat.css"),
       "@graview/primitives/montserrat-latin.woff2": framework("primitives/fonts/montserrat-latin.woff2"),
       "@graview/primitives": framework("primitives/src/index.ts"),
+      "@graview/pages/static": framework("pages/src/static.ts"),
       "@graview/pages": framework("pages/src/index.ts"),
       // The browser entry, so the file adapter's node:fs never meets the bundler.
       "@graview/ship/browser": framework("ship/src/browser.ts"),

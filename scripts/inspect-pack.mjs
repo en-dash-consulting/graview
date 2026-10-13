@@ -43,7 +43,11 @@ const REQUIRED = [/(^|\/)dist\/index\.js$/, /(^|\/)dist\/index\.d\.ts$/, /(^|\/)
  * (scripts/build-preview-page.mjs), and a tarball packed before it was
  * built previews nothing.
  */
-const REQUIRED_IN = { graview: [/^dist\/preview\/index\.html$/, /^dist\/preview\/page\.js$/] };
+const REQUIRED_IN = {
+  graview: [/^dist\/preview\/index\.html$/, /^dist\/preview\/page\.js$/],
+  // A place rendered to static HTML off the browser (FR-174): an entry of its own, which nothing on a page imports.
+  "@graview/pages": [/^dist\/static\.js$/, /^dist\/static\.d\.ts$/],
+};
 
 const packDir = mkdtempSync(join(tmpdir(), "graview-pack-"));
 const report = { at: new Date().toISOString(), packages: {} };
