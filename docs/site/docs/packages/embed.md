@@ -1,6 +1,6 @@
 # @graview/embed
 
-`@graview/embed` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.
+`@graview/embed` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Mount a declared Graview app into any element — the scene, the Graview, or the routed pages — without the Shell, sized and themed within the element.
 
 ```sh
 pnpm add @graview/embed

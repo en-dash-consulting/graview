@@ -804,7 +804,7 @@ main.page > section > .lede { max-width: 60ch; }
   gap: 40px; align-items: center;
   padding-top: 40px !important; min-height: calc(100vh - 58px);
 }
-.hero h1 { font-size: clamp(36px, 4.6vw, 60px); max-width: 13ch; }
+.hero h1 { font-size: clamp(34px, 3.9vw, 54px); max-width: 16ch; }
 .hero .lede { margin-top: 22px; }
 .hero .cta { margin-top: 28px; max-width: 100%; }
 .hero .cta-line { padding: 14px 16px; }

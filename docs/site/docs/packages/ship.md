@@ -1,6 +1,6 @@
 # @graview/ship
 
-`@graview/ship` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.
+`@graview/ship` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.
 
 ```sh
 pnpm add @graview/ship

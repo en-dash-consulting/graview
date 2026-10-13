@@ -1,6 +1,6 @@
 # @graview/pages
 
-`@graview/pages` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The traditional face: a routed webapp derived from the same declaration that drives the scene.
+`@graview/pages` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The traditional face: a routed webapp derived from the same declaration that drives the scene.
 
 ```sh
 pnpm add @graview/pages

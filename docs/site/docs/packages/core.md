@@ -1,6 +1,6 @@
 # @graview/core
 
-`@graview/core` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.
+`@graview/core` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The graph, the log, the schema and the checker. Everything a Graview app declares, and the CLI that verifies it.
 
 ```sh
 pnpm add @graview/core

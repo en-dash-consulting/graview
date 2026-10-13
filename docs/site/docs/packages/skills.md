@@ -1,6 +1,6 @@
 # @graview/skills
 
-`@graview/skills` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.
+`@graview/skills` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.
 
 ```sh
 pnpm add @graview/skills

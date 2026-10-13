@@ -1,6 +1,6 @@
 # @graview/studio
 
-`@graview/studio` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.
+`@graview/studio` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.
 
 ```sh
 pnpm add @graview/studio

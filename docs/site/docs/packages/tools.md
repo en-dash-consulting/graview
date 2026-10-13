@@ -1,6 +1,6 @@
 # @graview/tools
 
-`@graview/tools` is one of the 14 npm packages of Graview, a TypeScript framework for agent-native apps built as isometric scenes. Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.
+`@graview/tools` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. Derived affordances and the agent tool surface, generated from the same declarations; graview mcp and graview apply host it against a real store.
 
 ```sh
 pnpm add @graview/tools

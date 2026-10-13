@@ -352,7 +352,7 @@ if (!LOGO) throw new Error("docs/site/index.html has no <a class=\"logo\"> in it
 const SITE = "https://graview.dev";
 
 /** What Graview is, in the words every page that has to say it uses. */
-const DEFINITION = "a TypeScript framework for agent-native apps built as isometric scenes";
+const DEFINITION = "a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration";
 
 /** How many chapters the long version has, spelled, counted the way site-numbers.mjs counts them. */
 const CHAPTERS = spelled([...readFileSync(at("docs/site/progression.html"), "utf8").matchAll(/id="chapter-\d+"/g)].length);

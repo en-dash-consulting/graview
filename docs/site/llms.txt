@@ -1,6 +1,6 @@
 # Graview
 
-> Graview is an agent-native TypeScript framework and visual language for apps built as isometric scenes, made by En Dash for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives an isometric scene, a routed web app, the permissions, a checker and a typed tool for every act from that one declaration. Graview Cloud (https://graview.cloud) is the hosted product built on it.
+> Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong. Graview Cloud (https://graview.cloud) is the hosted product built on it.
 
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
@@ -69,7 +69,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 
 ## Graview Cloud
 
-- [Graview Cloud](https://graview.cloud): Graview Cloud is the hosted product built on Graview, from En Dash, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You say what you are organizing in ChatGPT or Claude, or start from a template, and it becomes an app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
+- [Graview Cloud](https://graview.cloud): Graview Cloud is the hosted product built on Graview, from En Dash, for people who don’t write TypeScript, in private alpha and invite-only at [graview.cloud](https://graview.cloud/). You keep working in the AI you already use: say what you are organizing in Claude or ChatGPT, or start from a template, and it becomes a shared, live app at its own address for the people you invite. An app and its whole history export as one file that opens in the framework on your own machine.
 
 ## Optional
 
