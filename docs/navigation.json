@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T07:54:15.499Z",
+  "at": "2026-10-13T08:46:02.199Z",
   "engine": "chromium",
   "steps": [
     {
@@ -95,9 +95,9 @@
       "registered": true
     },
     "altitude": {
-      "label": "Down to What is left",
+      "label": "Close the map",
       "pressed": "true",
-      "name": "Down to What is left",
+      "name": "Close the map, down to What is left",
       "wingOpacity": 0,
       "registered": true
     },
@@ -105,7 +105,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.539087,
+      "wingOpacity": 0.565435,
       "registered": true
     },
     "groundAgain": {
@@ -258,9 +258,9 @@
       "up": true
     },
     "midway": {
-      "x": 287.75492095947266,
-      "y": 340.81468200683594,
-      "width": 346
+      "x": 471.7143096923828,
+      "y": 425.5780029296875,
+      "width": 1200
     },
     "landed": {
       "url": "#focus=aggregate%3Atask&in.view=the-month",
@@ -274,17 +274,17 @@
       "ok": true
     },
     "theGroundTravelsWithTheCards": {
-      "steps": 22,
+      "steps": 19,
       "jumps": 0,
-      "first": 105,
-      "last": 59,
+      "first": 101,
+      "last": 77,
       "ok": true
     }
   },
   "camera": {
     "start": {
-      "cell": 58.89,
-      "latticeX": 571.4,
+      "cell": 77.14,
+      "latticeX": 131.7,
       "pan": null,
       "level": "100%",
       "reach": [
@@ -293,13 +293,13 @@
       ]
     },
     "zoomedIn": {
-      "cell": 153.81,
-      "latticeX": 430.2,
+      "cell": 201.47,
+      "latticeX": -784.2,
       "pan": "-449.66,90.99",
       "level": "261%",
       "reach": [
-        605,
-        373
+        661,
+        397
       ]
     },
     "wheelAt": {
@@ -307,43 +307,43 @@
       "y": 160
     },
     "wheeled": {
-      "cell": 153.81,
-      "latticeX": 370.2,
+      "cell": 201.47,
+      "latticeX": -844.2,
       "pan": "-509.66,10.99",
       "level": "261%",
       "reach": [
-        605,
-        373
+        661,
+        397
       ]
     },
     "buttonOut": {
-      "cell": 123.05,
-      "latticeX": 372.2,
+      "cell": 161.18,
+      "latticeX": -591.2,
       "pan": "-407.73,8.79",
       "level": "209%",
       "reach": [
-        413,
+        449,
         373
       ]
     },
     "buttonIn": {
-      "cell": 153.81,
-      "latticeX": 370.2,
+      "cell": 201.47,
+      "latticeX": -844.2,
       "pan": "-509.66,10.99",
       "level": "261%",
       "reach": [
-        605,
-        373
+        661,
+        397
       ]
     },
     "dragged": {
-      "cell": 153.81,
-      "latticeX": 274.6,
-      "pan": "-605.31,10.99",
+      "cell": 201.47,
+      "latticeX": -995.3,
+      "pan": "-660.74,10.99",
       "level": "261%",
       "reach": [
-        605,
-        373
+        661,
+        397
       ]
     },
     "onThePicture": {
@@ -429,7 +429,7 @@
     "theFocusIsNotNamedAgainOverThePicture": true,
     "escapeGetsYouHome": true,
     "theControlSaysUpOnTheGround": true,
-    "theControlSaysDownToFromAltitude": true,
+    "theControlSaysCloseTheMapFromAltitude": true,
     "theMarkHasTwoStates": true,
     "theMarkMovesAsTheSceneDoes": true,
     "theControlComesBackDown": true,

@@ -1,7 +1,6 @@
-import { BLOCK, MAX_SIDE, toIso } from "@graview/core/scene";
+import { toIso } from "@graview/core/scene";
 import { describe, expect, it } from "vitest";
 import { buildingFaces, heightOf, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
-import { curbToCurb, streetPoints } from "../../src/ribbons.js";
 
 /**
  * A TILE IS THE PLOT THE LAYOUT COMPUTED. Its corners are the plot's four
@@ -82,7 +81,7 @@ describe("a district is a village", () => {
   });
 });
 
-describe("a ribbon runs curb to curb", () => {
+describe("the lattice, run backwards", () => {
   const city = { cell: 40, originX: 500, originY: 300 };
   const pan = { x: 0, y: 0 };
 
@@ -92,47 +91,4 @@ describe("a ribbon runs curb to curb", () => {
     expect(back.col).toBeCloseTo(7, 6);
     expect(back.row).toBeCloseTo(3, 6);
   });
-
-  it("starts at one plot's curb and ends at the other's, not at their centers", () => {
-    const a = { col: 0, row: 0, side: 2 };
-    const b = { col: 10, row: 0, side: 2 };
-    const road = curbToCurb(streetPoints(a, b), a, b);
-    expect(road.length).toBeGreaterThanOrEqual(2);
-    const first = road[0]!;
-    const last = road[road.length - 1]!;
-    // The ribbon leaves a across its front curb (row 2) and enters b across its near curb (col 10).
-    expect(first.row).toBeCloseTo(2, 1);
-    expect(last.col).toBeCloseTo(10, 1);
-  });
-
-  it("runs along the gutters between blocks, never through a third plot", () => {
-    // Three plots in a row on the block grid, each at its largest side.
-    const a = { col: 0, row: 0, side: MAX_SIDE };
-    const between = { col: BLOCK, row: 0, side: MAX_SIDE };
-    const b = { col: 2 * BLOCK, row: 0, side: MAX_SIDE };
-    const street = streetPoints(a, b);
-    // Every leg holds one coordinate: a lattice line.
-    for (let i = 1; i < street.length; i++) {
-      const p = street[i - 1]!;
-      const q = street[i]!;
-      expect(Math.abs(p.col - q.col) < 1e-9 || Math.abs(p.row - q.row) < 1e-9).toBe(true);
-    }
-    // And no point of the street, sampled finely, is inside the plot in between.
-    for (let i = 1; i < street.length; i++) {
-      const p = street[i - 1]!;
-      const q = street[i]!;
-      for (let t = 0; t <= 1; t += 0.05) {
-        const col = p.col + (q.col - p.col) * t;
-        const row = p.row + (q.row - p.row) * t;
-        const inside = col > between.col && col < between.col + between.side && row > between.row && row < between.row + between.side;
-        expect(inside).toBe(false);
-      }
-    }
-  });
-
-  it("is two legs when the plots share a gutter and no more than four otherwise", () => {
-    expect(streetPoints({ col: 0, row: 0, side: 1 }, { col: 5, row: 0, side: 1 }).length).toBeLessThanOrEqual(5);
-    expect(streetPoints({ col: 0, row: 0, side: 1 }, { col: 10, row: 10, side: 1 }).length).toBeLessThanOrEqual(5);
-  });
 });
-

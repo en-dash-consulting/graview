@@ -3,12 +3,13 @@ import type { InterpolatedLayout } from "@graview/layout";
 import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { districtOf, mapChoice, ribbonsOf, ribbonSentence } from "./map-choice.js";
 import { ribbonWidth } from "./ribbon-width.js";
-import { curbToCurb, loopPoints, midpointOf, onCanvas, pathOf, ribbonLanes, streetPoints, type PlotLike, type Point } from "./ribbons.js";
+import { loopPoints, midpointOf, onCanvas, pathOf, routeRibbons, tileOf, type PlotLike, type Point, type Tile } from "./ribbons.js";
 
 /**
  * THE RELATIONS FROM ALTITUDE: one ribbon per relation between two
- * districts, as wide as the links along it, in the gutters between the
- * blocks so it never crosses a third district — and saying what it is when
+ * districts, as wide as the links along it, the short way along the
+ * ground between them so it never crosses a third district (`routeRibbons`)
+ * — and saying what it is when
  * pointed at: "146 features → 14 areas, the part it lives in".
  *
  * At rest every ribbon is drawn and no record has a line of its own. With a
@@ -55,28 +56,26 @@ export function Ribbons({ frame, width, height, pan, store, graphVersion: nodes,
   const plotsKey = [...plots].map(([kind, plot]) => `${kind}:${plot.col},${plot.row},${plot.side}`).join(";");
   const cell = city?.cell ?? 0;
   const drawable = ribbons.filter((ribbon) => plots.has(ribbon.from) && plots.has(ribbon.to) && !hiddenKinds.has(ribbon.from) && !hiddenKinds.has(ribbon.to) && kitDraws(ribbon.edge));
+  const tilt = city?.tilt ?? 0.5;
   const routed = useMemo(() => {
     if (cell === 0) return [];
-    const lanes = ribbonLanes(drawable.filter((ribbon) => ribbon.from !== ribbon.to));
     const loops = new Map<string, number>();
     const most = Math.max(0, ...drawable.map((ribbon) => ribbon.links));
+    const tiles = new Map<string, Tile>([...plots].map(([kind, plot]) => [kind, tileOf(plot, cell, tilt)]));
+    const runs = routeRibbons(drawable.map((ribbon) => ({ key: ribbon.key, from: ribbon.from, to: ribbon.to, width: ribbonWidth(ribbon.links, most) })), tiles);
     return drawable.flatMap((ribbon) => {
-      const from = plots.get(ribbon.from)!;
-      const to = plots.get(ribbon.to)!;
-      let points: Point[];
+      let points: Point[] | undefined;
       if (ribbon.from === ribbon.to) {
         const index = loops.get(ribbon.from) ?? 0;
         loops.set(ribbon.from, index + 1);
-        points = onCanvas(loopPoints(from, index), { cell });
-      } else {
-        points = onCanvas(curbToCurb(streetPoints(from, to, lanes.get(ribbon.key) ?? 0), from, to), { cell });
-      }
-      if (points.length < 2) return [];
+        points = onCanvas(loopPoints(plots.get(ribbon.from)!, index), { cell, tilt });
+      } else points = runs.get(ribbon.key);
+      if (!points || points.length < 2) return [];
       return [{ ribbon, points, d: pathOf(points), middle: midpointOf(points), width: ribbonWidth(ribbon.links, most) }];
     });
     // `plotsKey` stands for the plots; `drawable` follows the ribbons and the kit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cell, plotsKey, ribbons, kitDraws, hiddenKinds]);
+  }, [cell, tilt, plotsKey, ribbons, kitDraws, hiddenKinds]);
 
   /*
    * POINTED AT, NEVER PRESSED. A ribbon runs up to its districts' curbs,

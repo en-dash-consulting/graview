@@ -17,13 +17,21 @@ export function StatesBar({ states, definition }: { readonly states: NonNullable
     <div className="graview-district-states" role="img" aria-label={said} title={said}>
       {states.values.map((one, i) => {
         if (one.count === 0) return null;
-        // The room a segment has, at the bar's least width and its 10px figures.
-        const room = (one.count / total) * 168;
+        /*
+         * The room a segment has, at the bar's least width less the hairlines
+         * between segments, against its 10px figures and its padding. A
+         * segment says its count and value where they fit whole, its count
+         * alone where only that does, and nothing where not even that does —
+         * never a figure cut to "1…". Its words are always on its title.
+         */
+        const shown = states.values.filter((other) => other.count > 0).length;
+        const room = (one.count / total) * (168 - (shown - 1));
         const count = numberAsRead(one.count);
         const long = `${count} ${words(one.value)}`;
+        const fits = (text: string) => text.length * 6.2 + 8 <= room;
         return (
-          <span key={i} data-graview-tier={one.tier} style={{ flexGrow: one.count }}>
-            {long.length * 5.2 + 6 <= room ? long : count.length * 5.2 + 6 <= room ? count : ""}
+          <span key={i} data-graview-tier={one.tier} style={{ flexGrow: one.count }} title={long}>
+            {fits(long) ? long : fits(count) ? count : ""}
           </span>
         );
       })}
