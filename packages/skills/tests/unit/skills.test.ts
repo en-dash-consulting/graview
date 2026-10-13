@@ -51,6 +51,7 @@ describe("the skills package", () => {
       "graview-seed",
       "graview-ship",
       "graview-studio",
+      "graview-view-drawing",
       "graview-worker-view",
     ]);
   });
