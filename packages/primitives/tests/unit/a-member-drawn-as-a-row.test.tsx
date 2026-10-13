@@ -1,11 +1,14 @@
+// @vitest-environment jsdom
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { createSchema, defineNode, Store, z } from "@graview/core";
 import { EMPTY_VIEW } from "@graview/layout";
 import { PagesApp } from "@graview/pages";
 import { DefaultView, registerDefaultViews } from "@graview/primitives";
 import { createViews, GraviewProvider, type ViewProps } from "@graview/react";
-import type { ComponentType } from "react";
+import { act, type ComponentType } from "react";
+import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 /**
  * FR-37: a record shown as one line among many is a cell a view can claim
@@ -31,28 +34,43 @@ const store = () =>
 const Row = (props: ViewProps<S>) => <span data-testid="own-row">{(props.node as { label: string }).label} · {(props.node as { status: string }).status}</span>;
 const withRow = () => registerDefaultViews(schema, createViews(schema)).register("vendor", { cardinality: "one", fidelity: "glyph" }, Row);
 
-function group(views: ReturnType<typeof withRow>) {
+/** A focused group gone into: the kind's stop, drawn in the page (it is fetched as a district is first gone into). */
+beforeAll(async () => {
+  await import("../../src/kind-stop.js");
+});
+async function group(views: ReturnType<typeof withRow>): Promise<string> {
   const s = store();
   const Group = views.lookup("vendor", { cardinality: "many", fidelity: "full" }) as ComponentType<ViewProps<S>>;
-  return renderToStaticMarkup(
-    <GraviewProvider store={s} views={views} initialView={EMPTY_VIEW}>
-      <Group nodes={s.graph.nodesOfKind("vendor") as never} label="Vendors" cardinality="many" fidelity="full" mode="scene" selected={false} focused />
-    </GraviewProvider>,
-  );
+  const host = document.createElement("div");
+  document.body.append(host);
+  const root = createRoot(host);
+  await act(async () => {
+    root.render(
+      // Vendors have a status, so their stop opens to a board; the members are rows in its table.
+      <GraviewProvider store={s} views={views} initialView={{ ...EMPTY_VIEW, within: { as: "table" } }}>
+        <Group nodes={s.graph.nodesOfKind("vendor") as never} label="Vendors" cardinality="many" fidelity="full" mode="scene" selected={false} focused />
+      </GraviewProvider>,
+    );
+  });
+  for (let tick = 0; tick < 5 && !host.querySelector('[data-testid="kind-stop"]'); tick++) await act(async () => new Promise((done) => setTimeout(done, 10)));
+  const html = host.innerHTML;
+  await act(async () => root.render(null));
+  host.remove();
+  return html;
 }
 
 describe("a member drawn as a row", () => {
-  it("draws a registered row view for each member of a focused group, each a target for its record", () => {
-    const html = group(withRow());
+  it("draws a registered row view for each member of a focused group, each a target for its record", async () => {
+    const html = await group(withRow());
     expect(html.match(/data-testid="own-row"/g)).toHaveLength(2);
     expect(html).toMatch(/data-graview-pick="bloom"[^>]*>.*?data-testid="own-row"/);
     expect(html).toContain("Petal · researching");
   });
 
-  it("keeps the label chips where the kind has no row of its own", () => {
-    const html = group(registerDefaultViews(schema, createViews(schema)));
-    expect(html).not.toContain("data-graview-rows");
-    expect(html).toContain('data-graview-primitive="roster"');
+  it("names each member in the stop's table where the kind has no row of its own", async () => {
+    const html = await group(registerDefaultViews(schema, createViews(schema)));
+    expect(html).not.toContain('data-testid="own-row"');
+    expect(html).toMatch(/data-testid="kind-stop-row-go"[^>]*>Bloom &amp; Co</);
   });
 
   it("draws a registered row view on the list page, the whole line the way to the record", () => {

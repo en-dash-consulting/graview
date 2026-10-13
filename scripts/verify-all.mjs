@@ -62,6 +62,8 @@ const CHAIN = [
   ["lines", "verify-lines.mjs"],
   ["shrunk", "verify-shrunk.mjs"],
   ["navigation", "verify-navigation.mjs"],
+  // A kind with no picture of its own opens to its stop: what it is, what is going on, its first act, a board or a table its data chooses — every example, a desk and a phone, light and dark.
+  ["kind-stop", "verify-kind-stop.mjs"],
   ["menu", "verify-menu.mjs"],
   // The seat as a guide: a quiet field that grows into a conversation, on both faces, in three engines.
   ["seat-guide", "verify-seat-guide.mjs"],

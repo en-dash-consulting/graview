@@ -54,6 +54,19 @@ already set a record aside.
    app's look, under the viewer's sight, the same words the routed face
    says. It imports no React, so a Worker renders it on each change.
 
+5. **Know what a kind opens to before you draw it a picture.** Gone into
+   with no lens of its own (`#focus=aggregate:room`), a kind opens to its
+   stop: its plural, count and description; its creating act first ("Add a
+   room"), asked in place; how many are overdue or due this week on its due
+   date; its problems counted by rule, each opening its repairs; what
+   changed since this reader last looked; and a picture its data chooses —
+   a board by its main choice (`status`, `stage`, `state`, `phase` or the
+   lifecycle's field) up to 300 records, a calendar where today's month has
+   short records on its main date, else a table of its glance and its
+   relations, 50 rows at a time. "Keep as a lens" declares that picture
+   (`add-lens`). So give a kind a lifecycle or a `status`, a `glance`, and
+   a creating act with a `title` before you write it a view.
+
 ## Then find out whether it worked
 
 ```sh
