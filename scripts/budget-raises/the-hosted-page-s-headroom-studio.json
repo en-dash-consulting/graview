@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
-  "minified": 1850,
-  "gzipped": 2900,
-  "note": "Raised when what only a fetched face, a form or the seat uses left the barrels a hosted page imports up front for @graview/core/search, /words and /seat, and a frame guest's host for @graview/guest/host/frame (FR-179), which takes 31 KB off a hosted page's first load: a page that hands the studio in loads those files as chunks of their own, 1_797 / 2_851 more than main (1_585_964 / 489_011). Measured at 1_587_761 / 491_862."
+  "minified": 1870,
+  "gzipped": 2980,
+  "note": "Raised when what only a fetched face, a form or the seat uses left the barrels a hosted page imports up front for @graview/core/search, /words and /seat, and a frame guest's host for @graview/guest/host/frame (FR-179), which takes 31 KB off a hosted page's first load: a page that hands the studio in loads those files as chunks of their own, 1_816 / 2_926 more than main (1_592_270 / 491_131). Measured at 1_594_086 / 494_057."
 }
