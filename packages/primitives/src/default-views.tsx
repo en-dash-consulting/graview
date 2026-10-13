@@ -41,6 +41,11 @@ const ArrangeBar = lazyModule(retryingImport(() => import("./arrange-bar.js"))).
   (bar, props: Parameters<typeof import("./arrange-bar.js").ArrangeBar>[0]) => <bar.ArrangeBar {...props} />,
   { what: "Arranging this list" },
 );
+/* A district gone into: its stop, fetched the first time one is (`kind-stop.tsx`). */
+const KindStopPart = lazyModule(retryingImport(() => import("./kind-stop.js"))).part(
+  (stop, props: import("./kind-stop.js").KindStopProps) => <stop.KindStop {...props} />,
+  { what: "This list" },
+);
 import { Connections } from "./connections.js";
 import { askForProblems } from "./map-asks.js";
 import { EditableTitle, Fields } from "./editable.js";
@@ -514,7 +519,22 @@ export function registerDefaultViews<S extends AnySchema>(
       );
     };
 
-    const Group = (props: ViewProps<S>) => {
+    /*
+     * GONE INTO, A KIND OPENS TO SOMETHING USEFUL: its stop (`kind-stop.tsx`)
+     * — what the set is, what is going on in it, its first act, and a board,
+     * a calendar or a table its data chooses — fetched when a district is
+     * first gone into. Until it is here, the list it used to be.
+     */
+    const Group = (props: ViewProps<S>) =>
+      props.fidelity === "full" ? (
+        <Suspense fallback={<GroupList {...props} />}>
+          <KindStopPart kind={String(kind)} members={props.nodes ?? []} {...(props.flagged ? { flagged: props.flagged } : {})} {...(props.label ? { label: props.label } : {})} />
+        </Suspense>
+      ) : (
+        <GroupList {...props} />
+      );
+
+    const GroupList = (props: ViewProps<S>) => {
       const { brand, store, views } = useGraview<S>();
       const { view, go } = useNavigation();
       const members = props.nodes ?? [];

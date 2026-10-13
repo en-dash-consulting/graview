@@ -920,6 +920,22 @@ function fromRecipe<S extends AnySchema>(recipe: DraftRecipe, reading: Reading, 
   return { title, said: `${LENS_WORDS[recipe.lens]} ${named.detail}.`, kind: recipe.kind, lens, drawn: judged.drawn, edit: lensEditOf(lens), by: "template", asks, recipe };
 }
 
+/**
+ * A DRAFT FROM A RECIPE, with no ask at all: what a kind's own stop draws
+ * when the app declared no picture of it (`@graview/primitives`' kind
+ * stop) — a board by its main choice, a calendar of its main date, a list
+ * — made, titled and judged exactly as a draft the seat was asked for, so
+ * keeping it is the same `add-lens` edit. A plain list of every record is
+ * titled "Every <noun>": the kind's own plural is its list page's address.
+ */
+export function recipeDraft<S extends AnySchema>(recipe: DraftRecipe, options: DraftOptions<S>): DraftResult {
+  const reading = readApp(seenSchema(options.app.schema as AnySchema, options.sight));
+  const info = reading.info(recipe.kind);
+  if (!info) return { failed: "Couldn't draw that: Nothing by that name here." };
+  const plain = recipe.lens === "blocks" && !recipe.group && !recipe.sort && !recipe.where?.length && recipe.title === undefined;
+  return fromRecipe(plain ? { ...recipe, title: freeTitle(`Every ${info.noun}`, options.app) } : recipe, reading, options, []);
+}
+
 // ── drafting ────────────────────────────────────────────────────────────────
 
 /** The kinds an intent can be drawn over, best first. */
