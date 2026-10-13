@@ -278,7 +278,9 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         parts = say(resolved(null, {}), 0, "views.home");
       } else {
         drawnBy = "derived";
-        const hidden = new Set(app.pages?.hide ?? []);
+        // Not a kind kept from this seat (an administered module's it does not administer, one it sees none of) or a disabled module's: the routed home lists neither (FR-174).
+        const kept = store.kindsKeptFrom(principal);
+        const hidden = new Set([...(app.pages?.hide ?? []), ...kept, ...store.modules.disabledKinds]);
         const shown = orderKinds(schema.kinds as readonly string[], app.pages?.order).filter((kind) => !hidden.has(kind));
         parts.push({ t: "heading", level: 1, text: app.name ?? "Home" });
         for (const kind of shown) {

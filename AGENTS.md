@@ -148,7 +148,7 @@ pinned at 1.49.1 on purpose.
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`,
   `./figures`, `./blocks`, `./describe`, `./arrange`, `./forms`, `./json-schema`, `./typed`, `./sync`, `./snapshot`, `./conformance`, `./scaffold`,
   `./testing` and the `./document.schema.json` the build writes; layout's `./view`; react's `./provider` and `./drawing`;
-  tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep` and `./turn`; embed's `./pages`;
+  tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep` and `./turn`; embed's `./pages`; pages' `./static` (a place as static HTML, no React);
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and
   `scripts/inspect-pack.mjs` asserts against the real tarball.
 - **Node 22.** Top-level await in the scaffolded app, and the engines field
