@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
-  "minified": 2550,
-  "gzipped": 1050,
-  "note": "Raised when a district's problem count on the map and on the ground became a control (the shared button, the panel's problems section, the signal between them): 2_507 / 1_025 more than main (1_603_322 / 501_361). Measured at 1_605_829 / 502_386."
+  "minified": 2660,
+  "gzipped": 1080,
+  "note": "Raised when a district's problem count on the map and on the ground became a control (the shared button, the panel's problems section, the signal between them): 2_507 / 1_025 more than main (1_603_322 / 501_361). Measured at 1_605_829 / 502_386. A district's name no longer takes a drag from altitude: +103 / +29 more. Measured at 1_605_932 / 502_415."
 }

@@ -1,8 +1,11 @@
 ---
 "@graview/primitives": patch
 "@graview/react": patch
+"@graview/layout": patch
 ---
 
 A district's "⚠ 3" on the map is a control. It was dead text: the name card said a district had problems and nothing on the map said which. It is a button now, a fingertip tall, named for what it opens ("3 problems in Tasks"), and its hover says the first problem in the rule's own sentence. Pressed, or Enter or Space on it, it chooses the district and brings its problems up at the head of the panel beside the map (the sheet on a phone): the bar's own rows, each in the words the problems list uses, with the number of ways to fix it, and a press that chooses the record it names and opens its acts — the repairs lead. The count is the bar's source, the broken rules that name one of the district's records, so the card, the panel and the bar never say two things; the records they name are outlined on the map while the panel is open, and the keyboard goes back to the count when the panel is put away, never to the page. A district's member count is a plain number everywhere — it says "36 rooms" on hover — and is never painted as the warning: the flat district cards on the ground and a group's header used to show "⚠ 36" on a district with one problem, because some member was flagged. They say "36" and, apart from it, the same "⚠ 1" button, which from the ground rises to the map with the problems open. A row's "+n" says what it is on hover. The panel's problems section has a proper heading with a visible focus, and a problem's sentence is said once, with how many ways to fix it beneath.
 
-Compatibility: additive. A district card's problem count is a button where it was a span; nothing a host wrote reaches it.
+A district's name is not moved by hand from altitude. The city is laid out by the data and a name stands under its own plot; a drag that starts on a name is the ground's own gesture, the one empty ground makes, and pans the city, plot and name together; it writes no pin. The name is still pressed to choose it and double-pressed to go in. A `pin.kind:<kind>` an old bookmark carries is ignored from altitude, and no plot wears the pinned curb for one. A record's card is still moved by hand, and a district's pin on the ground is as it was.
+
+Compatibility: additive. A district card's problem count is a button where it was a span; nothing a host wrote reaches it. A district's pin is ignored from altitude, which moves a district a bookmark had placed back under its plot.

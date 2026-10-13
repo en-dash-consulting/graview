@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 5000,
-  "gzipped": 1900,
-  "note": "Raised when a district's problem count on the map and on the ground became a control (the shared button, the panel's problems section, the signal between them): the panel's problems section rides the scene's chunks. 4_946 / 1_882 more than main (1_837_955 / 596_179). Measured at 1_842_901 / 598_061."
+  "minified": 5110,
+  "gzipped": 1950,
+  "note": "Raised when a district's problem count on the map and on the ground became a control (the shared button, the panel's problems section, the signal between them): the panel's problems section rides the scene's chunks. 4_946 / 1_882 more than main (1_837_955 / 596_179). Measured at 1_842_901 / 598_061. A district's name no longer takes a drag from altitude (the scene's drag handler and the layout's pin rule): +103 / +47 more. Measured at 1_843_004 / 598_108."
 }
