@@ -67,7 +67,26 @@ function whenIdle(then: () => void): () => void {
 export function Inspector({ placement = "float" }: { readonly placement?: InspectorPlacement } = {}) {
   const { menuAt, setMenuAt, registerActsDoor } = useGraview<AnySchema>();
   const { selection } = useSelection();
-  useEffect(() => whenIdle(() => pane.prefetch()), []);
+  /*
+   * Fetched when the page is first idle — or, sooner, the moment somebody
+   * first presses a pointer or a key on the page, since a selection or a
+   * card's acts may follow it before the page was ever idle.
+   */
+  useEffect(() => {
+    if (pane.current) return;
+    const reach = () => {
+      stop();
+      pane.prefetch();
+    };
+    const cancelIdle = whenIdle(reach);
+    const events = ["pointerdown", "keydown"] as const;
+    for (const event of events) document.addEventListener(event, reach, { capture: true, passive: true });
+    function stop() {
+      cancelIdle();
+      for (const event of events) document.removeEventListener(event, reach, { capture: true });
+    }
+    return stop;
+  }, []);
   /*
    * THE KEYBOARD'S RIGHT-CLICK. The acts key on a card opens this menu at
    * the card, with the keyboard in it, as a right-click opens it at the
