@@ -2,12 +2,13 @@ import { counted, edgeWords, isCurrent, labelOf, layer, nounOf, numberAsRead, pl
 import { aggregateId, kindCardId, withFocus, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 // Drawn only with the scene, whose face has fetched `@graview/react` already.
 import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
-import { ViewBoundary } from "@graview/react/drawing";
+import { useKit, ViewBoundary } from "@graview/react/drawing";
 import type { MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
 import { useGraph, useGraview, useNavigation, useViolations, type ViewComponent } from "@graview/react/provider";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { barPanes } from "./bar-panes-door.js";
+import { problemsNamed } from "./problem-count.js";
 import { problemsAsked, putDownProblemsAsked, subscribeToProblemsAsked } from "./map-asks.js";
 
 // The problems' rows are the bar's own (`ProblemRows`), fetched with its panes: one set of words, one set of repairs.
@@ -435,6 +436,7 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
    * counts these, and presses to here.
    */
   const everyProblem = useViolations<S>();
+  const flag = useKit().marks.flag;
   const problems = useMemo(() => {
     const ids = new Set(members.map((member) => member.id));
     return everyProblem.filter((violation) => violation.nodeIds.some((id) => ids.has(id)));
@@ -493,9 +495,14 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
         <section aria-label="Problems" data-testid="district-problems" data-graview-problems={problems.length}>
           {/* The records that are broken stand out on the map while this is open. */}
           <style>{`${lit.map((id) => `.graview-ground[data-graview-altitude] .graview-building[data-graview-building="${CSS.escape(id)}"] polygon`).join(",\n")} { stroke: var(--graview-accent); stroke-width: 2.2; stroke-opacity: 1; }`}</style>
-          <h3 ref={problemsHead} tabIndex={-1} style={{ ...heading, outline: "revert-layer" }} data-testid="district-problems-heading">
-            {problems.length === 1 ? "1 problem" : `${numberAsRead(problems.length)} problems`}{" "}
-            <span style={{ fontWeight: 400, color: "var(--graview-ink-faint)" }}>· in {plural.toLowerCase()}</span>
+          <h3
+            ref={problemsHead}
+            tabIndex={-1}
+            data-testid="district-problems-heading"
+            style={{ display: "flex", alignItems: "baseline", gap: 8, margin: 0, padding: "14px 18px 8px", fontSize: "0.9375rem", fontWeight: 600, color: "var(--graview-warn)", borderTop: "1px solid var(--graview-edge)", scrollMarginTop: 0, outlineOffset: -2 }}
+          >
+            <span aria-hidden="true">{flag}</span>
+            <span style={{ color: "var(--graview-ink)" }}>{problemsNamed(problems.length, plural)}</span>
           </h3>
           <ol style={listStyle} data-testid="district-problem-rows">
             <Suspense fallback={null}>

@@ -359,6 +359,45 @@ try {
   const closed = await problems.evaluate(() => ({ panel: document.querySelector('[data-testid="district-panel"]') !== null, onBody: document.activeElement === document.body || document.activeElement === null }));
   report.districtProblems = { asButton, opened, closed };
   await problems.close();
+  /*
+   * THE SAME TRUE THING ON THE GROUND. The flat district cards along the foot
+   * of the ground painted the MEMBER count in the warning color with a ⚠ —
+   * "⚠ 12" on a district with two problems. They say the members as a plain
+   * count, with its own title, and the problems as the same button: the same
+   * number, named, and pressing it rises to the map with the problems open.
+   */
+  const ground = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  ground.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await ground.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+  await ground.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await ground.waitForSelector('[data-graview-view^="kind:"] .graview-district-problems', { timeout: 15_000 }).catch(() => {});
+  const onTheGround = await ground.evaluate(() => {
+    const button = document.querySelector('[data-graview-view^="kind:"] .graview-district-problems');
+    const card = button?.closest('[data-graview-view^="kind:"]');
+    const members = [...(card?.querySelectorAll("span[title]") ?? [])].find((el) => /^\d[\d,]* /.test(el.getAttribute("title") ?? "") && !el.contains(button));
+    return {
+      up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+      name: button?.getAttribute("aria-label") ?? null,
+      said: button?.getAttribute("data-graview-problems") ?? null,
+      members: members?.textContent?.trim() ?? null,
+      membersTitle: members?.getAttribute("title") ?? null,
+      // The count itself never carries the mark.
+      markOnTheMembers: members ? members.textContent.includes("⚠") : null,
+      height: button?.getBoundingClientRect().height ?? 0,
+      kind: button?.getAttribute("data-testid")?.replace("district-problems-", "") ?? null,
+    };
+  });
+  if (onTheGround.kind) {
+    await ground.focus(`[data-testid="district-problems-${onTheGround.kind}"]`);
+    await ground.keyboard.press("Enter");
+    await ground.waitForSelector('[data-testid="district-problem-rows"] li', { timeout: 10_000 }).catch(() => {});
+  }
+  onTheGround.risen = await ground.evaluate(() => ({
+    up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+    rows: document.querySelectorAll('[data-testid="district-problem-rows"] li').length,
+  }));
+  report.districtProblems.onTheGround = onTheGround;
+  await ground.close();
 
   /*
    * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
@@ -1098,7 +1137,14 @@ report.verdict = {
     String(report.districtProblems.opened.rows) === report.districtProblems.asButton[0].said &&
     report.districtProblems.opened.said === report.districtProblems.asButton[0].said &&
     report.districtProblems.closed.panel === false &&
-    report.districtProblems.closed.onBody === false,
+    report.districtProblems.closed.onBody === false &&
+    // On the ground the card says its members plainly and the problems as the same control, which rises to the map with them open.
+    report.districtProblems.onTheGround?.markOnTheMembers === false &&
+    /^\d+ problems? in /.test(report.districtProblems.onTheGround.name ?? "") &&
+    report.districtProblems.onTheGround.height >= 24 &&
+    /^\d/.test(report.districtProblems.onTheGround.membersTitle ?? "") &&
+    report.districtProblems.onTheGround.risen.up === true &&
+    String(report.districtProblems.onTheGround.risen.rows) === report.districtProblems.onTheGround.said,
   aDistrictWithoutOneIsListedBesideTheMap:
     (report.districts?.withoutOne ?? "").includes("sel=kind%3Areason") &&
     !(report.districts?.withoutOne ?? "").includes("expand=") &&

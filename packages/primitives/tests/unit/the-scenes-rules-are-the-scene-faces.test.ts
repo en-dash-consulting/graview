@@ -48,6 +48,7 @@ const SCENE_CELLS: Record<string, string> = {
   "graview-kind-": "primitives/src/default-views.tsx",
   "graview-drive-in": "primitives/src/default-views.tsx",
   // The name under a district from altitude, and the bar of where its records stand (Roadmap f-map-readable, f-map-shows-state).
+  "graview-district-problems": "primitives/src/problem-count.tsx",
   "graview-district-states": "primitives/src/states-bar.tsx",
   "graview-district-": "primitives/src/default-views.tsx",
   "data-graview-nameplate": "primitives/src/default-views.tsx",
