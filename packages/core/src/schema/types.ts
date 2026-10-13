@@ -191,6 +191,14 @@ export interface NodeDefinitionSpec<
    */
   readonly people?: boolean;
   /**
+   * `false`: ITS RECORDS ARE NOT SET ASIDE (FR-173). The kind is given no
+   * `archive-<kind>`, `unarchive-<kind>` or `merge-<kind>`: what it holds
+   * is kept or removed, never archived — a declaration's own parts in the
+   * studio, say, where a kind or a field is either in the app or not.
+   * `remove-<kind>` is still given. Absent, the kind archives.
+   */
+  readonly archives?: false;
+  /**
    * VALUES WORKED OUT, NOT WRITTEN (FR-83): a name and an expression of the
    * rule language (`@graview/core/document`), read like a stored field by
    * every template, view spec, rule, sum and sort — `net: "sum(out('includes'),

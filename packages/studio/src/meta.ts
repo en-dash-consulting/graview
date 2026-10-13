@@ -36,6 +36,8 @@ export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "d
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const kindNode = defineNode("kind", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "A kind of thing the app keeps track of.",
   plural: "kinds",
   fields: z.object({
@@ -67,6 +69,8 @@ export const kindNode = defineNode("kind", {
 });
 
 export const fieldNode = defineNode("field", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "A field a kind carries: its name, its type, whether it must be given.",
   plural: "fields",
   fields: z.object({
@@ -91,6 +95,8 @@ export const fieldNode = defineNode("field", {
  * computed field is no field — no act writes it, no form asks for it.
  */
 export const computedNode = defineNode("computed", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "A value a kind works out from what it holds, in the rule language — read like a field, never stored or written.",
   plural: "computed fields",
   fields: z.object({
@@ -109,6 +115,8 @@ export const computedNode = defineNode("computed", {
 });
 
 export const edgeNode = defineNode("edge", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "A relation one kind may have to another, with a reading from each end.",
   plural: "edges",
   fields: z.object({
@@ -129,6 +137,8 @@ export const edgeNode = defineNode("edge", {
 });
 
 export const actNode = defineNode("act", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "A named change: what it is called, what it creates, connects, severs or writes, and what it acts on.",
   plural: "acts",
   fields: z.object({
@@ -164,6 +174,8 @@ export const actNode = defineNode("act", {
 });
 
 export const ruleNode = defineNode("rule", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "An invariant the graph is held to, and the acts that put it right.",
   plural: "rules",
   fields: z.object({
@@ -202,6 +214,8 @@ export const ruleNode = defineNode("rule", {
 });
 
 export const roleNode = defineNode("role", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   /*
    * A SEAT'S STANDING, and nothing else that happens to be called a role.
    *
@@ -221,6 +235,8 @@ export const roleNode = defineNode("role", {
 });
 
 export const grantNode = defineNode("grant", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "One permission: these roles may take these acts, on these kinds.",
   plural: "grants",
   fields: z.object({
@@ -244,6 +260,8 @@ export const grantNode = defineNode("grant", {
 });
 
 export const sightNode = defineNode("sight", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   /*
    * WHO SEES WHAT, as a node like a grant is (FR-02). The studio carried a
    * checkout's `sees` through untouched and had no act for one, so a sight
@@ -271,6 +289,8 @@ export const sightNode = defineNode("sight", {
 });
 
 export const lensNode = defineNode("lens", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "A named way of looking at the graph, and the slots it asks an app to fill.",
   plural: "lenses",
   fields: z.object({
@@ -291,6 +311,8 @@ export const lensNode = defineNode("lens", {
 });
 
 export const brandNode = defineNode("brand", {
+  // A part of the declaration is in the app or not: never set aside (FR-173).
+  archives: false,
   description: "The installation's own name and voice.",
   plural: "brands",
   fields: z.object({ label, body: z.string().optional(), display: z.string().optional() }),

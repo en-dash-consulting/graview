@@ -328,7 +328,7 @@ function perKind<S extends AnySchema>(schema: S, mutations: readonly AnyMutation
       ["merge", "Merge", `Merge into another ${noun}`, `The other takes this ${noun}'s ties, and this one is archived.`],
     ] as const) {
       const name = `${act}-${kind}`;
-      if (taken.has(name)) continue;
+      if (taken.has(name) || (act !== "remove" && definition.archives === false)) continue;
       derived.push({
         name,
         derived: { kind, act },
