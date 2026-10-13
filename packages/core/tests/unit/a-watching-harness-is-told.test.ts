@@ -54,6 +54,23 @@ describe("a store in a watched page", () => {
     expect(told.words).toContain("who sold it");
   });
 
+  it("does not count a yes the kind words itself as its key spoken, where the two agree (W-193)", () => {
+    const heard: string[] = [];
+    (globalThis as { __graviewWatch?: unknown }).__graviewWatch = { learn: ({ unsaid }: { unsaid?: string[] }) => heard.push(...(unsaid ?? [])) };
+    const inspection = defineNode("inspection", {
+      fields: z.object({ label: z.string(), queenSeen: z.boolean(), marked: z.boolean().optional(), broodFrames: z.number() }),
+      display: {
+        labels: { queenSeen: "Queen", marked: "Mark", broodFrames: "Brood" },
+        format: { queenSeen: (value) => (value ? "Queen seen" : "Queen not seen"), marked: (value) => (value ? "Marked" : "Not marked") },
+      },
+    });
+    new Store({ schema: createSchema([inspection]) });
+    // "Queen seen" is what the declaration says of a hive whose queen was seen; "Brood frames" is only the key spoken.
+    expect(heard).not.toContain("Queen seen");
+    expect(heard).not.toContain("Marked");
+    expect(heard).toContain("Brood frames");
+  });
+
   it("tells the watch when the policy refuses a press, and who pressed", () => {
     const told = listen();
     const store = new Store({ schema, mutations: [close], policy, snapshot });

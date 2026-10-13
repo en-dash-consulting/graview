@@ -26,6 +26,17 @@ interface Watch {
 
 const theWatch = (): Watch | undefined => (globalThis as { __graviewWatch?: Watch }).__graviewWatch;
 
+/** A field that holds a yes or a no, optional or not. */
+function isBoolean(field: unknown): boolean {
+  let def = (field as { def?: { type?: string; innerType?: unknown } } | undefined)?.def;
+  for (let depth = 0; def && depth < 4; depth += 1) {
+    if (def.type === "boolean") return true;
+    if (def.type !== "optional" && def.type !== "nullable" && def.type !== "default") return false;
+    def = (def.innerType as { def?: { type?: string; innerType?: unknown } } | undefined)?.def;
+  }
+  return false;
+}
+
 /** The declaration's names, and the words it has for them. */
 export function tellTheWatchItsNames(
   schema: AnySchema,
@@ -98,6 +109,12 @@ export function tellTheWatchItsNames(
       if (!format && !definition.display?.labels?.[key]) declared.add(humanizeField(key));
       // A value is said by its format, or spoken plainly where there is none ("Given", a talk's state).
       if (entries && typeof entries === "object") for (const value of Object.values(entries)) declared.add(format ? format(value) : humanizeField(String(value)));
+      /*
+       * A yes or a no the kind words itself is its own word too (W-193): a
+       * hive's `queenSeen` labeled "Queen" and said "Queen seen" when true
+       * says, in the declaration's words, what its key spoken also says.
+       */
+      if (format && isBoolean(field)) for (const value of [true, false]) declared.add(String(format(value)).trim());
     }
   }
   watch.learn({ ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)) });

@@ -4618,3 +4618,13 @@ from the first run (the eighth walk's W-176 and W-178 hold).
 - where it belongs: `packages/tools/src/providers/schema.ts`, `packages/tools/src/derive.ts` (the seat is handed to the providers)
 - harness that should have caught it: the journeys' "refused" job, which did (four of eight ways); the watch judges what is drawn, and an act never drawn has no reason to be missing from
 - status: fixed in "walkthrough: F · an act kept from a seat says so even when it could not be asked" · an act the policy refuses the seat is let through to be withheld with its sentence; only an act the seat may take waits for a candidate. Criterion: `packages/tools/tests/unit/an-act-kept-from-a-seat-says-so-even-when-it-could-not-be-asked.test.ts` (a beginning and an act on a record; both verified failing without the fix), and the journeys' "refused" on walk9
+
+### W-193 · The watch calls "Queen seen" a key spoken, where it is the declaration's own word for a yes
+- stage: setup (the journeys on walk9) · face: pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job's measure — every job of thirteen on the pages, at both widths and with either hand, was said to "break machine-words-shown: “Queen seen” is shown in the key's words … where the declaration says it otherwise", eleven lines at the head of the friction list over nothing a person would call wrong
+- class: harness-or-setup-itself (also: data-shape-not-in-fixtures)
+- expected: a word the declaration says — a yes worded "Queen seen" — is never the key's words, even where the key spoken says the same
+- actual: the store tells the watch which spoken keys the declaration words otherwise (`queenSeen`, labeled "Queen", spoken "Queen seen"), less the words it declares; it counted an enum's worded values among those, and a boolean's not, so the home's inspection card saying "Queen seen" was reported on every page that drew it
+- where it belongs: `packages/core/src/watched.ts` (`tellTheWatchItsNames`)
+- harness that should have caught it: none — the gauntlet's worded booleans ("Here", "Not here yet") share nothing with their keys spoken
+- status: fixed in "walkthrough: setup · a yes the kind words itself is its own word to the watch" · criterion: `packages/core/tests/unit/a-watching-harness-is-told.test.ts` "does not count a yes the kind words itself as its key spoken" (verified failing without the fix); the journeys on walk9 report nothing of it
