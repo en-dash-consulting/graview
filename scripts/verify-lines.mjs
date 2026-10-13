@@ -51,6 +51,11 @@ const APPS = [
       ["focused, with a relation shown", "/?theme=light&today=2026-09-01#focus=rule-order&relation=task&zoom=1"],
       ["in the dark", "/?theme=dark&today=2026-09-01#overview=1"],
     ],
+    /* A chosen record's links from altitude: wide with its panel docked, and narrow with its sheet. */
+    chosen: [
+      ["a task chosen from altitude", 1440, 900, "/?theme=light&today=2026-09-01#focus=t-post&overview=1&zoom=1&sel=t-post&pin.t-post=690.29%2C261.93"],
+      ["a task chosen from altitude on a phone", 390, 844, "/?theme=light&today=2026-09-01#overview=1&sel=t-post"],
+    ],
   },
   {
     app: "seedbed",
@@ -191,9 +196,42 @@ async function settled(page) {
   return reading;
 }
 
-const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [] };
+/*
+ * A CHOSEN RECORD'S LINK ENDS WHERE IT POINTS. Its end dot lies on the far
+ * record's building or chip, and a dashed one on its district's ground —
+ * never on empty ground, and never on the chosen record's own card (a chip
+ * of the card saying the same thing is not the far record drawn). Read from
+ * the painted path, as above.
+ */
+const RECORD_LINKS = () => {
+  const stage = document.querySelector(".graview-record-links")?.parentElement;
+  const s = stage?.getBoundingClientRect() ?? { left: 0, top: 0 };
+  const rel = (el) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height };
+  };
+  const cards = [...document.querySelectorAll("[data-graview-view][data-graview-selected]:not([data-graview-view^='kind:'])")];
+  // What is drawn as a far end: a building or a district's ground, and none of what stands inside the chosen record's own card.
+  const targets = [...document.querySelectorAll("[data-graview-building], [data-graview-plot] .graview-plot-tile")].filter((el) => !cards.some((card) => card.contains(el))).map(rel);
+  const chips = [...document.querySelectorAll("[data-graview-pick]")].filter((el) => cards.some((card) => card !== el && card.contains(el))).map(rel);
+  const inside = (box, p, slack) => p.x >= box.x - slack && p.x <= box.x + box.w + slack && p.y >= box.y - slack && p.y <= box.y + box.h + slack;
+  return [...document.querySelectorAll(".graview-record-link")].map((g) => {
+    const dot = g.querySelector("circle");
+    const tail = g.querySelector("path")?.getAttribute("d")?.match(/(-?[\d.]+) (-?[\d.]+)\s*$/);
+    const end = dot ? { x: Number(dot.getAttribute("cx")), y: Number(dot.getAttribute("cy")) } : tail ? { x: Number(tail[1]), y: Number(tail[2]) } : null;
+    return {
+      lands: g.getAttribute("data-graview-lands"),
+      edge: g.getAttribute("data-graview-link"),
+      end,
+      onTarget: end !== null && targets.some((box) => inside(box, end, 4)),
+      onItsOwnCard: end !== null && !targets.some((box) => inside(box, end, 4)) && chips.some((box) => inside(box, end, 2)),
+    };
+  });
+};
 
-for (const { app, port, states } of APPS) {
+const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [], recordLinks: 0 };
+
+for (const { app, port, states, chosen = [] } of APPS) {
   const served = await serving(app, port, repoRoot);
   const browser = await launchEngine(ENGINE, { headless: true });
   try {
@@ -239,6 +277,18 @@ for (const { app, port, states } of APPS) {
 
       await page.close();
     }
+    for (const [what, width, height, path] of chosen) {
+      const page = await browser.newPage({ viewport: { width, height } });
+      await page.goto(`${served.url}${path}`, { waitUntil: "load" });
+      await page.waitForFunction(() => document.querySelector("[data-graview-stage]") !== null, null, { timeout: 30_000 }).catch(() => {});
+      await page.waitForTimeout(2400);
+      for (const link of await page.evaluate(RECORD_LINKS)) {
+        report.recordLinks += 1;
+        if (!link.onTarget) report.faults.push(`${app} ${what}: a ${link.edge} link ends where nothing is drawn (${link.end ? `${Math.round(link.end.x)},${Math.round(link.end.y)}` : "no end"})`);
+        if (link.onItsOwnCard) report.faults.push(`${app} ${what}: a ${link.edge} link ends on the chosen record's own card`);
+      }
+      await page.close();
+    }
   } catch (error) {
     report.faults.push(`${app}: ${String(error).slice(0, 160)}`);
   } finally {
@@ -251,12 +301,13 @@ report.lines = report.seen.reduce((sum, one) => sum + one.lines, 0);
 report.checks.everyLineIsDrawable = !report.faults.some((f) => /not a number|empty path/.test(f));
 report.checks.everyLineStaysInThePicture = !report.faults.some((f) => /leaves the stage/.test(f));
 report.checks.everyLineLandsOnSomething = !report.faults.some((f) => /neither end on anything/.test(f));
+report.checks.everyRecordLinkEndsWhereItPoints = !report.faults.some((f) => /ends where nothing is drawn|ends on the chosen record/.test(f));
 report.checks.nothingThrew = !report.faults.some((f) => /Error|Timeout/.test(f));
 /*
  * A HARNESS THAT PASSES ON NOTHING IS THEATER: with no lines on any page
  * every claim above is vacuously true and the run has checked nothing.
  */
-report.checks.thereWereLinesToCheck = report.lines > 0;
+report.checks.thereWereLinesToCheck = report.lines > 0 && report.recordLinks > 0;
 if (report.lines === 0) report.faults.push("no connectors anywhere: the harness checked nothing");
 
 /*
