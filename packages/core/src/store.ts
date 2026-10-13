@@ -26,7 +26,7 @@ import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
-import { creatorsBefore } from "./permissions/sight.js";
+import { creatorsBefore, recordsOf } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -774,6 +774,8 @@ export class Store<S extends AnySchema> {
         }
         return far;
       },
+      // Who made the record a derived act is about: riding only everybody's grant, it reaches what this principal made (W-201).
+      mutation?.derived && (() => recordsOf(this.log).creatorOf(id as string)),
     );
   }
 
