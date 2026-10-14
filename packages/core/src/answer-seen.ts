@@ -5,6 +5,7 @@ import type { InvariantDefinition, Violation } from "./invariants/types.js";
 import type { Operation } from "./ops/types.js";
 import { servePrimitives, type FieldWriter } from "./ops/served.js";
 import { writersOf } from "./ops/writers.js";
+import { withoutKeptFields } from "./ops/kept-fields.js";
 import { namesUnseen, redact, WITHHELD_INTENT } from "./ops/withheld.js";
 import { actingAs } from "./permissions/policy.js";
 import { recordsOf } from "./permissions/sight.js";
@@ -111,6 +112,8 @@ export function answerSeenBy<
         ? servePrimitives(answer.primitives as readonly Primitive[], lens.timeline, { served: (node, writer) => lens.servedWith(node, writer), edgeClean: (edge) => !namesUnseen(edge, lens.sees), sees: lens.sees }, actingAs(principal).id)
         : redact([{ id: "", seq: 0, batch: "", author: { kind: "system" }, intent: "", mutation: null, primitives: answer.primitives as never, inverse: [], reads: [], writes: [], at: "" }], lens)[0]!.primitives;
   }
+  // What a change wrote of a field the seat may not see is no part of what it is told (Roadmap f-field-sight).
+  if (lens.kept && out["primitives"]) out["primitives"] = withoutKeptFields(out["primitives"] as readonly Primitive[], lens);
   // Records the seat is served, and no id that names nothing: a hidden record and an absent one are left out alike (FR-55).
   if (answer.reads) out["reads"] = answer.reads.filter((id) => lens.shows(id) && has(id));
   if (answer.writes) out["writes"] = answer.writes.filter(lens.shows);

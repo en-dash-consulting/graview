@@ -405,6 +405,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       kinds: read.out(sight.id, "shows").map((kind) => kindName.get(kind.id) ?? name(kind)),
       ...(bool(sight, "own") ? { own: true } : {}),
       ...(str(sight, "via") ? { via: str(sight, "via")! } : {}),
+      ...(list(sight, "fields") ? { fields: list(sight, "fields")! } : {}),
+      ...(list(sight, "hide")?.length ? { hide: list(sight, "hide")! } : {}),
       ...(str(sight, "describe") ? { describe: str(sight, "describe")! } : {}),
     }))
     .filter((sight) => sight.kinds.length > 0);

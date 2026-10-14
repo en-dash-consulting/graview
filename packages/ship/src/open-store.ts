@@ -1,3 +1,5 @@
+// A store this server opens judges a sight that hides a field (Roadmap f-field-sight).
+import "@graview/core/field-sight";
 import {
   assertReadable,
   formatStamp,

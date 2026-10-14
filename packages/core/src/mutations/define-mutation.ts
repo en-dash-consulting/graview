@@ -152,7 +152,7 @@ export function compileMutation<S extends AnySchema>(
      * in words it may not see has written its own words, and an act that
      * wrote nothing would tell it the guess was the hidden value.
      */
-    readonly keepUnchanged?: (value: unknown) => boolean;
+    readonly keepUnchanged?: (value: unknown, field: string, node: object) => boolean;
     /**
      * THE GRAPH THE ACT READS (FR-55): its author's view. Its body, its
      * guard, its refusal and its sentence read only what the author may
@@ -176,6 +176,14 @@ export function compileMutation<S extends AnySchema>(
      * whether or not anybody holds it. Absent, the seat sees everything.
      */
     readonly seesInFull?: (kind?: string) => boolean;
+    /**
+     * WHAT THE ACT WROTE, ASKED BEFORE ITS SENTENCE IS WORDED (Roadmap
+     * f-field-sight): a write of a field the author may not see is refused
+     * here, and the list handed back is filled, as the sentence is worded,
+     * with the fields of records it reads (`<id>#<field>`), so a seat that
+     * may not see one is served the op withheld. `@graview/core/field-sight` sets it.
+     */
+    readonly check?: (primitives: readonly Primitive[], definition: AnyMutationDefinition<S>) => readonly string[];
   } = {},
 ): CompiledMutation {
   /*
@@ -256,7 +264,7 @@ export function compileMutation<S extends AnySchema>(
       const after: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(fields)) {
         const current = (node as Record<string, unknown>)[key];
-        if (JSON.stringify(current) === JSON.stringify(value) && !options.keepUnchanged?.(value)) continue;
+        if (JSON.stringify(current) === JSON.stringify(value) && !options.keepUnchanged?.(value, key, node)) continue;
         before[key] = current;
         after[key] = value;
       }
@@ -336,6 +344,7 @@ export function compileMutation<S extends AnySchema>(
   };
 
   definition.apply(context, args);
+  const quoted = options.check?.(primitives, definition);
 
   const writes = new Set(primitives.flatMap(writesOf));
 
@@ -350,7 +359,7 @@ export function compileMutation<S extends AnySchema>(
   return {
     primitives,
     reads: [...new Set([...reader.reads(), ...wording.reads()])],
-    ...(definition.describe ? { described: wording.reads() } : {}),
+    ...(definition.describe ? { described: [...wording.reads(), ...(quoted ?? [])] } : {}),
     writes: [...writes],
     intent,
     ...(mergedInto !== undefined ? { mergedInto } : {}),

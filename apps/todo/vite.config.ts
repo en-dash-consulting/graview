@@ -34,6 +34,7 @@ export default defineConfig({
       "@graview/core/search": fileURLToPath(new URL("../../packages/core/src/search.ts", import.meta.url)),
       "@graview/core/words": fileURLToPath(new URL("../../packages/core/src/words.ts", import.meta.url)),
       "@graview/core/seat": fileURLToPath(new URL("../../packages/core/src/seat.ts", import.meta.url)),
+      "@graview/core/field-sight": fileURLToPath(new URL("../../packages/core/src/field-sight.ts", import.meta.url)),
       "@graview/core/check": fileURLToPath(new URL("../../packages/core/src/check.ts", import.meta.url)),
       "@graview/core/scene": fileURLToPath(new URL("../../packages/core/src/scene.ts", import.meta.url)),
       "@graview/core/city": fileURLToPath(new URL("../../packages/core/src/city.ts", import.meta.url)),

@@ -463,6 +463,7 @@ export default defineConfig({
       "@graview/core/search": framework("core/src/search.ts"),
       "@graview/core/words": framework("core/src/words.ts"),
       "@graview/core/seat": framework("core/src/seat.ts"),
+      "@graview/core/field-sight": framework("core/src/field-sight.ts"),
       "@graview/core/provenance": framework("core/src/provenance.ts"),
       "@graview/core/forms": framework("core/src/forms.ts"),
       "@graview/core/lines": framework("core/src/lines.ts"),

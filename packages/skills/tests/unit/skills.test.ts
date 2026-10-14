@@ -50,6 +50,7 @@ describe("the skills package", () => {
       "graview-port-app",
       "graview-seed",
       "graview-ship",
+      "graview-sight",
       "graview-studio",
       "graview-view-drawing",
       "graview-worker-view",

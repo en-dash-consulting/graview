@@ -1,7 +1,31 @@
 import type { Epoch } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
 import { actingAs, grantsTo, isSystem } from "./policy.js";
+import type { SeatLens } from "../ops/withheld.js";
+import type { Judged } from "../seen.js";
 import type { Policy, Principal } from "./types.js";
+
+/** Which fields of a record a seat may not see: a test of a field, or undefined when it sees them all. */
+export type FieldsKept = (node: { readonly id: string; readonly kind: string }) => ((field: string) => boolean) | undefined;
+
+/**
+ * A SIGHT THAT SHOWS ONLY SOME FIELDS (Roadmap f-field-sight) — `hide` or
+ * `fields` — is judged by `@graview/core/field-sight`, which fills these in
+ * as it loads: a host that serves seats loads it (`@graview/ship`'s
+ * `openStore` and server routes do). Until it is loaded such a sight shows nothing,
+ * so a store that cannot judge a field keeps the record rather than serve
+ * the field. A store that holds only what its host served one seat
+ * (`openRemote`'s) turns it `on` as a mirror: the host judged it, and it
+ * shows what it was served.
+ */
+export const FIELD_SIGHT: {
+  /** Whether a sight that shows only some fields shows anything: field sight is loaded, or the store is a mirror. */
+  on?: boolean;
+  /** A seat's lens, made to keep the fields its sight keeps. */
+  lens?: (lens: SeatLens, store: Judged, principal: Principal) => SeatLens;
+  /** The fields one seat may not see, record by record; undefined when it sees every one. */
+  keptFrom?: (store: Judged, principal: Principal) => FieldsKept | undefined;
+} = {};
 
 /** The edges a graph can be asked about, to say what is joined to whom. */
 interface Joined {
@@ -184,7 +208,8 @@ export function sees(
   if (!policy?.sees?.length) return true;
   // The system sees what it keeps; an agent sees what it AND its person may (FR-06, FR-17).
   if (isSystem(principal)) return true;
-  const sights = policy.sees.filter((sight) => sight.kinds.includes(node.kind));
+  // A sight that shows only some fields shows nothing until they can be judged: it fails closed (Roadmap f-field-sight).
+  const sights = policy.sees.filter((sight) => sight.kinds.includes(node.kind) && (FIELD_SIGHT.on || !(sight.hide || sight.fields)));
   if (sights.length === 0) return false;
   principal = actingAs(principal);
   return sights.some((sight) => {

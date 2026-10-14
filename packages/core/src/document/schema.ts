@@ -228,6 +228,7 @@ export const GrantSpec = z.strictObject({
  * by nobody but the system (a host that gives its owners everything serves
  * them as the system, or names them in a sight).
  */
+const fieldNames = z.optional(some(name("field"), 1));
 export const SightSpec = z.strictObject({
   roles: z.union([some(name("role"), 1), z.literal("*")]),
   kinds: some(name("kind"), 1),
@@ -235,6 +236,10 @@ export const SightSpec = z.strictObject({
   own: z.optional(z.boolean()),
   /** Only the records this relation joins to the principal's own record of the people kind. */
   via: z.optional(edgeName),
+  /** Only these fields of the records it shows (Roadmap f-field-sight); sights add up. */
+  fields: fieldNames,
+  /** Every field but these of the records it shows: kept from the roles, on every surface, and not theirs to write. */
+  hide: fieldNames,
 });
 export type SightSpec = z.infer<typeof SightSpec>;
 

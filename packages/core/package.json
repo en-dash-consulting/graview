@@ -61,6 +61,10 @@
       "types": "./dist/seat.d.ts",
       "default": "./dist/seat.js"
     },
+    "./field-sight": {
+      "types": "./dist/field-sight.d.ts",
+      "default": "./dist/field-sight.js"
+    },
     "./search": {
       "types": "./dist/search.d.ts",
       "default": "./dist/search.js"
@@ -146,7 +150,10 @@
     "dist",
     "README.md"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/field-sight.js",
+    "./src/field-sight.ts"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/en-dash-consulting/graview.git",

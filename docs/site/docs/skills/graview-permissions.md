@@ -1,6 +1,6 @@
 # graview-permissions
 
-`graview-permissions` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
+`graview-permissions` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -42,7 +42,7 @@ The coach sees "Show the installation" in the person's menu on the app bar and t
 
 **Pointing at a person?** `declareInstallation({ …, required: true })`. An edge into a module the app can turn off earns a `module-edge-leak` warning, and for people the only answer is "it is never off" — an installation without people is a household of one, not a disabled module. Say it once and the checker stops asking.
 
-1. **Say who sees what, for every kind.** `sees` keeps records from seats the way grants keep acts: once there is one sight, a kind no sight names is seen by nobody but the system (`sight-unnamed-kind` says which). `{ roles: "*", kinds: ["car"] }` is the shop window; `own: true` keeps a kind to a seat's own records — theirs, joined to theirs, or made by them. A served store sends a seat only what it sees, withholds the rest of the log in place, and refuses an act that names a record it may not — a document's act that sets the record at the other end of a link (`setsOther`) too: that record is its `to`, refused as missing. A record whose required reference names a kind its seat may not see is withheld whole (`sight-hides-required-ref` says which role loses which kind): let the role see the target, or make the field optional.
+1. **Say who sees what, for every kind — and which fields.** `sees` keeps records (and, with `hide` or `fields`, some of their fields) from seats the way grants keep acts. It is a job of its own: the `graview-sight` skill.
 
 1. **Say which kind is the people.** `people: true` on one kind (a document's `"people": true`; the installation's `user` says it): a record of it whose id is a principal's id IS that person. Then: - `{ roles: ["participant"], kinds: ["match"], via: "givenBy" }` shows a seat a match only where `givenBy` joins it to their own record — each Secret Santa giver sees their match, not the one they receive in (`own` would show both). - `{ mutations: ["take-back"], ownEnd: true }` holds a connect or sever to the seat's own end of the link: a voter takes back their own vote. Every link the act touches is held, so a connect on a relation of one that would replace somebody else's is refused. - A document act's `"to": "$me"` (or `"set": { "champion": "$me" }`) is the acting person's record — the tool stops asking who, a seat with no record is refused with a sentence, and only that person can undo it. - A document says each by a named edit, previewed in words: `set-people` (`kind`, `people`), `add-grant` / `remove-grant`, `add-sight` / `remove-sight` (a removal names it by roles and acts or kinds).
 
@@ -60,9 +60,7 @@ pnpm build && npx graview check ./dist/domain/app.js
 
 The checker reports `mutation-unreachable-by-any-role` (declared and unreachable), `role-may-do-nothing` (a role that can neither run a mutation nor see a kind; a viewer that only reads is not reported, since reading is the point of it), `grant-unknown-mutation` and `grant-unknown-kind`. All four are silent at runtime and obvious at build time, and the person who finds them otherwise is the person standing in front of a button they cannot press. Report the output. The people have theirs: `people-ambiguous` (two kinds say it), `people-unsaid` (a `via`, an `ownEnd` or a `$me` and no people kind), `sight-via-misses-people` (a relation that never reaches them) and `grant-own-end-without-link`.
 
-`act-reads-hidden-kind` (a warning, FR-105) names an act, a role that may run it and a kind that role may not see, which the act reads: its condition, its refusal, a value it sets in a document (on its subject or the other record) or the links it `replaces`; what it declares it `reads` in TypeScript (`reads: ["memo"]` — an `apply` is never read, so say it). The store hides the records; the act's answer can still tell that one exists. Let the role see the kind, keep the act from it, or read only what it sees.
-
-A seat's problems are judged over what it sees: a rule counting `fact('proposed')` says 3 to the owner and 1, or nothing, to a guest who sees one. `rule-says-hidden-fact` (a warning) names each rule whose message says a fact over a kind some role told of it may not see in full.
+What a sight keeps, and the checks that say so (`act-reads-hidden-kind`, `rule-says-hidden-fact`, the `sight-*` codes), are `graview-sight`'s.
 
 **And try it.** Two tests that matter more than the check:
 

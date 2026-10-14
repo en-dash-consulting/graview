@@ -7,7 +7,7 @@ import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
-import { recordsOf, sees } from "./permissions/sight.js";
+import { FIELD_SIGHT, recordsOf, sees } from "./permissions/sight.js";
 import type { Policy, Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { Store } from "./store.js";
@@ -267,7 +267,8 @@ function lensFor(store: Judged, principal: Principal): { readonly lens: SeatLens
       // A pinned lens is already of one moment: pinning it again is itself.
       pin: pinned ? () => lens : () => pinWith(fresh()),
     };
-    return lens;
+    // Keeping what its sight keeps of a record's fields, when field sight is loaded (Roadmap f-field-sight).
+    return FIELD_SIGHT.lens?.(lens, store, principal) ?? lens;
   };
   function pinWith(memo: Judgments): SeatLens {
     // Who wrote what is read only when a field names what the seat may not see: a seat that sees all of it never asks.

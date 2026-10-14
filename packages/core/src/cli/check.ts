@@ -42,6 +42,7 @@ import {
   checkHiddenReads,
   checkFactRules,
   checkClockRules,
+  checkFieldSight,
 } from "./check/index.js";
 import type { CheckContext, Finding } from "./check/context.js";
 
@@ -100,6 +101,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkEditableFields(ctx);
   checkPolicy(ctx);
   checkPeople(ctx);
+  checkFieldSight(ctx);
   checkPalette(ctx);
   checkLensBindings(ctx);
   checkDeclaredLenses(ctx);

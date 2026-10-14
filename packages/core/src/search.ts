@@ -8,6 +8,7 @@ import { actTitle, humanizeField, isCurrent, labelOf, pluralLabel, pluralOf as p
 import { readableFields, tellApart } from "./schema/reading.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
+import { FIELD_SIGHT } from "./permissions/sight.js";
 import { hidesFrom, seesId } from "./seen.js";
 import type { Store } from "./store.js";
 import { kindPath, onePerPicture, placePath, sharesItsName, type Place } from "./views/types.js";
@@ -512,6 +513,8 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
    * names a record the seat may not open.
    */
   const sighted = hidesFrom(store, principal) ? seesId(store, principal) : undefined;
+  // A record some of whose fields its sight keeps is searched as the seat is served it: no hit on what it may not read (Roadmap f-field-sight).
+  const served = FIELD_SIGHT.keptFrom?.(store, principal) && store.seenBy(principal).graph;
   const at = (path: string) => addressOf(path, options.basePath === undefined ? {} : { basePath: options.basePath });
   const ctx: ArrangeContext = { schema, graph: store.graph as unknown as ArrangeGraph, flagged, ...(today ? { today } : {}) };
 
@@ -529,10 +532,12 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
      * said "add is:any" — to somebody who had just named the past by name.
      */
     const namesThePast = asksForThePast(definition, own);
-    for (const node of store.graph.nodesOfKind(kind as never, { archived }) as unknown as ({ id: string; kind: string } & Record<string, unknown>)[]) {
+    for (const whole of store.graph.nodesOfKind(kind as never, { archived }) as unknown as ({ id: string; kind: string } & Record<string, unknown>)[]) {
+      if (sighted && !sighted(whole.id)) continue;
+      const node = served ? (served.getNode(whole.id) as typeof whole | undefined) : whole;
+      if (!node) continue;
       const current = isCurrent(definition, node, today);
       if (!past && !namesThePast && !current) continue;
-      if (sighted && !sighted(node.id)) continue;
       if (onlyPast && current) continue;
       if (!own.every((condition) => conditionHolds(ctx, node, condition))) continue;
       if (isWords.includes("flagged") && !flagged.has(node.id)) continue;
@@ -625,7 +630,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
    * by the screen reader that speaks it — and "Gone Digital, Gone Digital"
    * is a choice nobody can make.
    */
-  const alike = shown.flatMap((hit) => (hit.about === "node" ? [store.graph.getNode(hit.id) as unknown as { id: string; kind: string } & Record<string, unknown>] : [])).filter(Boolean);
+  const alike = shown.flatMap((hit) => (hit.about === "node" ? [(served || store.graph).getNode(hit.id) as unknown as { id: string; kind: string } & Record<string, unknown>] : [])).filter(Boolean);
   const apart = tellApart(alike, (named) => schema.tryDefinition(named));
   const hits = shown.map((hit) => (hit.about === "node" && apart.has(hit.id) ? { ...hit, apart: apart.get(hit.id)! } : hit));
   const total = Object.values(byKind).reduce((sum, count) => sum + count, 0);
@@ -658,9 +663,10 @@ export function actsOn<S extends AnySchema>(
   words: string,
   options: { readonly principal?: Principal; readonly limit?: number } = {},
 ): readonly Extract<Hit, { about: "act" }>[] {
-  const subject = store.graph.getNode(subjectId);
-  if (!subject) return [];
   const principal = options.principal ?? { kind: "human" };
+  // Its name as the seat is served the record: a label never reads a field kept from it (Roadmap f-field-sight).
+  const subject = (FIELD_SIGHT.keptFrom?.(store, principal) ? store.seenBy(principal) : store).graph.getNode(subjectId);
+  if (!subject) return [];
   if (store.kindsKeptFrom(principal).has(subject.kind as string)) return [];
   const asked = tokensOf(words);
   const said = labelOf(store.schema.tryDefinition(subject.kind as string), subject as never);
