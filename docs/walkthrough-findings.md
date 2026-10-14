@@ -4812,3 +4812,13 @@ committed verdict, and walk10's first run finished 60 of its 84 runs.
 - where it belongs: `packages/pages/src/router.tsx` (`PagesApp`), which now holds the seat a reader takes there too, so the face and its menu sit in one seat
 - harness that should have caught it: the watch over the journeys, which did; the verdict was committed with it in
 - status: fixed in "walkthrough: F · the person on the pages is named by their seat" · the face hands its provider the seats, and a seat taken from the menu is the face's principal until the app hands it another. Criterion: `packages/pages/tests/unit/the-person-on-the-pages-is-named-by-their-seat.test.tsx` (verified failing without the fix)
+
+### W-208 · "Close the map, down to The logbook" lands on "Who went where"
+- stage: D (two titled lenses over the callouts) · face: scene · width: 1440 · scheme: light
+- impact: costs a job — going down into the callouts from the map: the control promised the calendar, the coverage grid was drawn, and the bar marked "Who went where" as where you were, so a person looking for the logbook pressed again from the bar
+- class: says-something-untrue (also: faces-disagree)
+- expected: the control says the picture the district draws when the view names none
+- actual: the district draws the last picture registered for its kind, as the registry resolves it and the bar marks it; the control alone named the first
+- where it belongs: `packages/primitives/src/workbench/back-out.tsx` (`OverviewButton`)
+- harness that should have caught it: none — no example has two titled pictures over one kind that the map descends to
+- status: fixed in "walkthrough: D · down says the picture it lands on" · the control names the last registered, as everything else does. Criterion: `packages/primitives/tests/unit/down-says-the-picture-it-lands-on.test.tsx` (verified failing without the fix)
