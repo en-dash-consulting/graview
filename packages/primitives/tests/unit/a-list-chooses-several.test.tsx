@@ -70,6 +70,36 @@ describe("a list chooses several", () => {
     expect(latest.chosen).toEqual([]);
   });
 
+  it("is one Tab stop among its boxes, and the arrows move between them and Space chooses: three records in six keys", () => {
+    draw();
+    expect(ROWS.map((id) => box(id).tabIndex)).toEqual([0, -1, -1, -1, -1]);
+    act(() => box("a").focus());
+    const keys: KeyboardEventInit[] = [{ key: " " }, { key: "ArrowDown" }, { key: "ArrowDown" }, { key: " " }, { key: "ArrowDown" }, { key: " " }];
+    for (const init of keys) {
+      const on = document.activeElement as HTMLInputElement;
+      key(on, init);
+      // Space on a box is the box's own key: the browser presses it.
+      if (init.key === " ") press(on);
+    }
+    expect(latest.chosen).toEqual(["a", "c", "d"]);
+    expect(document.activeElement).toBe(box("d"));
+    // Tab comes back to the box the keyboard was last on.
+    expect(ROWS.map((id) => box(id).tabIndex)).toEqual([-1, -1, -1, 0, -1]);
+    key(box("d"), { key: "Home" });
+    expect(document.activeElement).toBe(box("a"));
+    key(box("a"), { key: "End" });
+    expect(document.activeElement).toBe(box("e"));
+  });
+
+  it("chooses every row it passes with Shift and an arrow, from where the choosing began", () => {
+    draw();
+    act(() => box("b").focus());
+    key(box("b"), { key: "ArrowDown", shiftKey: true });
+    key(box("c"), { key: "ArrowDown", shiftKey: true });
+    expect(latest.chosen).toEqual(["b", "c", "d"]);
+    expect(document.activeElement).toBe(box("d"));
+  });
+
   it("puts down a record that leaves the list", () => {
     const root = draw();
     press(box("a"));

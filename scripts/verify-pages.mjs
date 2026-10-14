@@ -1199,6 +1199,20 @@ async function severalTasksAreOneChange() {
   await desk.waitForTimeout(300);
   const put = { bar: await desk.locator('[data-testid="several-bar"]').count(), inList: await desk.evaluate(() => document.activeElement?.closest("[data-graview-choosable]") !== null) };
   report.checks.theKeyboardChoosesAndPutsDown = { one, all, reaches, put, ok: one === "1 task chosen" && all === `${before} tasks chosen` && reaches && put.bar === 0 && put.inList };
+
+  // The boxes are one Tab stop and the arrows move between them: three tasks in Space, ↓, Space, ↓, Space; Shift with ↓ chooses as it goes.
+  await boxes.nth(0).focus();
+  for (const key of ["Space", "ArrowDown", "Space", "ArrowDown", "Space"]) await desk.keyboard.press(key);
+  const arrowed = await barSays(desk);
+  const stops = await desk.evaluate(() => [...document.querySelectorAll("[data-graview-choose-box]")].filter((box) => box.tabIndex >= 0).length);
+  await desk.keyboard.press("Escape");
+  await desk.waitForTimeout(300);
+  await boxes.nth(0).focus();
+  for (const key of ["Space", "Shift+ArrowDown", "Shift+ArrowDown", "Shift+ArrowDown"]) await desk.keyboard.press(key);
+  const extended = await barSays(desk);
+  await desk.keyboard.press("Escape");
+  await desk.waitForTimeout(300);
+  report.checks.theArrowsChooseRowsFromOneTabStop = { arrowed, extended, stops, ok: arrowed === "3 tasks chosen" && extended === "4 tasks chosen" && stops === 1 };
   await desk.close();
 
   const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();

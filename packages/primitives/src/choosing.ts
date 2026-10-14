@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type InputHTMLAttributes, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent, type InputHTMLAttributes, type KeyboardEvent, type MouseEvent, type PointerEvent, type RefObject } from "react";
 
 /*
  * CHOOSING SEVERAL RECORDS ON A LIST.
@@ -9,7 +9,12 @@ import { useCallback, useEffect, useMemo, useRef, useState, type InputHTMLAttrib
  * and always once one is chosen), Shift with a press to choose everything
  * between, Cmd/Ctrl-A for the whole list, Escape to put the choice down —
  * and on a phone, a long press on a row, after which a tap chooses rather
- * than opens. What is done with the chosen is the selection bar's
+ * than opens. The boxes are ONE stop for Tab, wherever the keyboard last
+ * was among them (a roving tab stop): the arrows move between the rows'
+ * boxes, Home and End to the first and the last, Space chooses the row it
+ * is on, and Shift with an arrow chooses every row from where the choosing
+ * began to the one it moves to — three records are a Tab, Space, two
+ * arrows and two Spaces. What is done with the chosen is the selection bar's
  * (`several-bar.tsx`), fetched with the first one chosen: a list nobody
  * chooses from carries this and nothing more.
  *
@@ -35,6 +40,7 @@ export interface Choosing {
   readonly listProps: {
     readonly ref: RefObject<HTMLElement | null>;
     readonly onKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
+    readonly onFocus: (event: FocusEvent<HTMLElement>) => void;
     readonly onPointerDown: (event: PointerEvent<HTMLElement>) => void;
     readonly onPointerMove: (event: PointerEvent<HTMLElement>) => void;
     readonly onPointerUp: () => void;
@@ -49,6 +55,11 @@ export interface Choosing {
   readonly list: RefObject<HTMLElement | null>;
 }
 
+/** The record a row's box chooses, when the target is one. */
+const boxOf = (target: EventTarget | null): string | undefined => (target instanceof HTMLInputElement ? (target.dataset["graviewChooseBox"] ?? undefined) : undefined);
+/** The arrows' moves along the list, by key. */
+const STEPS: Readonly<Record<string, number>> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1, Home: -Infinity, End: Infinity };
+
 const rowOf = (target: EventTarget | null): HTMLElement | null => (target instanceof Element ? target.closest<HTMLElement>("[data-graview-choose]") : null);
 const typing = (target: EventTarget | null) => target instanceof HTMLElement && (target.isContentEditable || (target instanceof HTMLInputElement && target.type !== "checkbox") || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement);
 
@@ -57,6 +68,9 @@ export function useChoosing(order: readonly string[]): Choosing {
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set());
   const anchor = useRef<string | null>(null);
   const list = useRef<HTMLElement | null>(null);
+  // The one box Tab stops at: the last the keyboard was on, else the first row's.
+  const [at, setAt] = useState<string | null>(null);
+  const stopAt = at !== null && order.includes(at) ? at : order[0];
   // Only what is still on the list is chosen: a record arranged away or gone is put down.
   const chosen = useMemo(() => order.filter((id) => picked.has(id)), [order, picked]);
   const shown = useMemo(() => new Set(order), [order]);
@@ -102,6 +116,25 @@ export function useChoosing(order: readonly string[]): Choosing {
     ref: list,
     onKeyDown: (event) => {
       if (typing(event.target)) return;
+      // The arrows move between the rows' boxes; with Shift, the rows passed are chosen.
+      const on = boxOf(event.target);
+      const step = STEPS[event.key];
+      if (on !== undefined && step !== undefined && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        const from = order.indexOf(on);
+        const to = order[Math.max(0, Math.min(order.length - 1, from + (Number.isFinite(step) ? step : step > 0 ? order.length : -order.length)))];
+        event.preventDefault();
+        event.stopPropagation();
+        if (to === undefined || to === on) return;
+        if (event.shiftKey) {
+          const start = anchor.current !== null && order.includes(anchor.current) ? anchor.current : on;
+          const [a, b] = [order.indexOf(start), order.indexOf(to)].sort((x, y) => x - y);
+          setPicked((now) => new Set([...now, ...order.slice(a, b! + 1)]));
+          anchor.current = start;
+        }
+        setAt(to);
+        list.current?.querySelector<HTMLInputElement>(`[data-graview-choose-box="${CSS.escape(to)}"]`)?.focus();
+        return;
+      }
       if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "a") {
         event.preventDefault();
         event.stopPropagation();
@@ -116,6 +149,10 @@ export function useChoosing(order: readonly string[]): Choosing {
         event.preventDefault();
         toggle(row.dataset["graviewChoose"]!, event.shiftKey);
       }
+    },
+    onFocus: (event) => {
+      const on = boxOf(event.target);
+      if (on !== undefined) setAt(on);
     },
     onPointerDown: (event) => {
       swallow.current = false;
@@ -183,6 +220,8 @@ export function useChoosing(order: readonly string[]): Choosing {
     className: "graview-choose-box",
     "data-graview-choose-box": id,
     "aria-label": `Choose ${label}`,
+    // One stop for Tab among the boxes: the arrows go from it to the rest.
+    tabIndex: id === stopAt ? 0 : -1,
     checked: picked.has(id),
     onChange: () => undefined,
     onClick: (event) => {
@@ -201,7 +240,7 @@ export function useChoosing(order: readonly string[]): Choosing {
  */
 export const CHOOSING_CSS = `
 .graview-choose-box{width:24px;height:24px;margin:0;accent-color:var(--graview-accent);cursor:pointer;opacity:0}
-[data-graview-choose]:hover .graview-choose-box,.graview-choose-box:focus-visible,.graview-choose-box:checked,[data-graview-choosing] .graview-choose-box{opacity:1}
+[data-graview-choose]:hover .graview-choose-box,[data-graview-choose]:focus-within .graview-choose-box,.graview-choose-box:focus-visible,.graview-choose-box:checked,[data-graview-choosing] .graview-choose-box{opacity:1}
 [data-graview-choose]{-webkit-touch-callout:none}
 [data-graview-choosing] [data-graview-choose]{-webkit-user-select:none;user-select:none}
 `;

@@ -1204,9 +1204,15 @@ export const JOBS = {
           await person.press(box, `the box of the ${at === 0 ? "first" : at === 1 ? "second" : "third"}`);
         } else {
           const pressed = person.presses;
-          await person.reach(box, "a row's box");
+          const on = () => box.evaluate((el) => el === document.activeElement).catch(() => false);
+          if (at === 0) await person.reach(box, "a row's box");
+          else {
+            // The boxes are one Tab stop: the arrows go from the last one chosen to the next.
+            for (let step = 0; step < 200 && !(await on()); step++) await person.key("ArrowDown");
+            if (!(await on())) throw new DeadEnd(`the arrows do not reach the ${at === 1 ? "second" : "third"} row's box`);
+          }
           await person.key("Space");
-          person.note("a row's box, and Space", pressed);
+          person.note(at === 0 ? "a row's box, and Space" : "the arrows to a row's box, and Space", pressed);
           await person.settle();
         }
       }
