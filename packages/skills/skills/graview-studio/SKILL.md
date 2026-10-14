@@ -69,7 +69,10 @@ any other.
    Without the studio, `editDocument` covers the rest of a document too:
    `add-lens` (`replace` retitles; `at` puts one back), `remove-lens`,
    `set-home`, `arrange-pages` (`order`, `hide`, `first`, `scene` and `pages` — the switch's words; `null` clears),
-   `set-computed` (`expr: null` removes it and what reads it), and
+   `set-computed` (`expr: null` removes it and what reads it),
+   `set-format` (a number's `format` — `money`, `percent`, `duration` —
+   and `unit`, `null` clears; said in words, "money in USD — 10000 reads
+   $10,000"), and
    `set-view` for a kind's slot, `slot: "home"`, or `lens: "<title>"`.
    Blocks are checked as they are set. A rename reaches lenses, the home,
    pages and computed expressions through the parser; removing a field or

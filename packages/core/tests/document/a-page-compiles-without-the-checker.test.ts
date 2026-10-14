@@ -21,7 +21,8 @@ describe("a document compiled without the checker", () => {
     expect(unjudged.app.schema.kinds).toEqual(judged.app.schema.kinds);
     expect(unjudged.app.mutations!.map((m) => m.name)).toEqual(judged.app.mutations!.map((m) => m.name));
     expect(unjudged.findings.filter((f) => f.code.startsWith("check:"))).toEqual([]);
-    expect(judged.findings.filter((f) => !f.code.startsWith("check:"))).toEqual(unjudged.findings);
+    // The checker's own sentences about the document are its too: vendors' money, said in no currency.
+    expect(judged.findings.filter((f) => !f.code.startsWith("check:") && f.code !== "money-currency")).toEqual(unjudged.findings);
   });
 
   it("still refuses what the document itself gets wrong", () => {

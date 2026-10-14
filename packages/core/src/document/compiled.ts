@@ -34,10 +34,11 @@ import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindSha
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
-import { formatValue, renderTemplate, type TemplatePart } from "./template.js";
+import { formatValue, renderTemplate, type Money, type TemplatePart } from "./template.js";
 import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
+import { markAmount } from "../schema/amount-mark.js";
 import { ISO_DAY, isoToday } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
@@ -192,7 +193,7 @@ export function defaultLabelField(spec: KindSpec): string | undefined {
  * (FR-57). The checks, their messages and their definitions are the ones
  * classic's methods make.
  */
-export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
+export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): z.ZodMiniType {
   let schema: z.ZodMiniType;
   switch (spec.type) {
     case "string":
@@ -253,6 +254,8 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
   // A phone, a place and a duration say so, for a face to say and link each.
   markTyped(schema, spec.type);
   if (spec.description) schema = schema.check(z.describe(spec.description));
+  // What a number is said as — money in the app's currency, a percent — read by every face, every form and every tool.
+  if ((spec.type === "number" || spec.type === "integer") && (spec.format || spec.unit)) markAmount(schema, { ...money, ...(spec.format ? { format: spec.format } : {}), ...(spec.unit ? { unit: spec.unit } : {}) });
   return optional ? z.optional(schema) : schema;
 }
 
@@ -261,7 +264,7 @@ const noRecord = (id: string): never => {
   throw new ActRefusal(`there is no record "${id}"`, "invalid");
 };
 
-const argSchema = (arg: ArgPlan): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
+const argSchema = (arg: ArgPlan, money: Money): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional, money) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
 
 /*
  * An act's own refusal is the framework's typed one (FR-110), which a host
@@ -350,7 +353,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   const madeAs = new Map<string, Record<string, unknown>>();
   const definitions = Object.entries(document.kinds).map(([kind, spec]) => {
     const shape: Record<string, z.ZodMiniType> = {};
-    for (const [field, f] of Object.entries(spec.fields)) shape[field] = fieldSchema(f, !f.required);
+    for (const [field, f] of Object.entries(spec.fields)) shape[field] = fieldSchema(f, !f.required, money);
     const { label: labelParts, describe: describeParts } = plan.kinds[kind] ?? {};
     const computed = Object.entries(spec.computed ?? {}).map(([name, field]) => [name, typeof field === "string" ? { expr: field } : field] as const);
     // A computed field's words are said like a field's: its label, where it has one.
@@ -402,7 +405,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const { title, effects, guard, refusal, destructive, idempotent, creates, connects, severs, writes, writesOther, sets } = planned;
     const args = new Map(planned.args);
     const shape: Record<string, z.ZodMiniType> = {};
-    for (const [arg, a] of args) shape[arg] = argSchema(a);
+    for (const [arg, a] of args) shape[arg] = argSchema(a, money);
     const subjectKinds: readonly string[] = [act.on ?? []].flat();
     const exprs = new Map(planned.exprs);
     /*

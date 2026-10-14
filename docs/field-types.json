@@ -1,0 +1,1344 @@
+{
+  "at": "2026-10-14T02:42:43.438Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "schemes": [
+    "light",
+    "dark"
+  ],
+  "width": 1280,
+  "checks": {
+    "aRecordsPhoneIsGroupedAndCallsIt": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 29,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 29,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        }
+      ],
+      "ok": true
+    },
+    "aRecordsPlaceOpensTheReadersMapsAppApart": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 29,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 29,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        }
+      ],
+      "ok": true
+    },
+    "aDurationIsSaidInHoursAndMinutes": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 29,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 29,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 30,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 36,
+              "height": 24
+            }
+          ],
+          "saysGrouped": true,
+          "saysDuration": true,
+          "saysMinutes": false
+        }
+      ],
+      "ok": true
+    },
+    "aSumOfDurationsIsSaidAsADuration": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "facts": {
+            "Name": "Autumn season",
+            "Time planned": "10 h",
+            "Time rehearsed": "2 h 15 min",
+            "Time to spare": "7 h 45 min",
+            "Rehearsals": "2"
+          }
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "facts": {
+            "Name": "Autumn season",
+            "Time planned": "10 h",
+            "Time rehearsed": "2 h 15 min",
+            "Time to spare": "7 h 45 min",
+            "Rehearsals": "2"
+          }
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "facts": {
+            "Name": "Autumn season",
+            "Time planned": "10 h",
+            "Time rehearsed": "2 h 15 min",
+            "Time to spare": "7 h 45 min",
+            "Rehearsals": "2"
+          }
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "facts": {
+            "Name": "Autumn season",
+            "Time planned": "10 h",
+            "Time rehearsed": "2 h 15 min",
+            "Time to spare": "7 h 45 min",
+            "Rehearsals": "2"
+          }
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "facts": {
+            "Name": "Autumn season",
+            "Time planned": "10 h",
+            "Time rehearsed": "2 h 15 min",
+            "Time to spare": "7 h 45 min",
+            "Rehearsals": "2"
+          }
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "facts": {
+            "Name": "Autumn season",
+            "Time planned": "10 h",
+            "Time rehearsed": "2 h 15 min",
+            "Time to spare": "7 h 45 min",
+            "Rehearsals": "2"
+          }
+        }
+      ],
+      "ok": true
+    },
+    "aDurationChangedInPlaceIsTypedAsWordsAndKeptAsMinutes": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "type": "text",
+          "kept": true,
+          "said": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "type": "text",
+          "kept": true,
+          "said": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "type": "text",
+          "kept": true,
+          "said": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "type": "text",
+          "kept": true,
+          "said": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "type": "text",
+          "kept": true,
+          "said": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "type": "text",
+          "kept": true,
+          "said": true
+        }
+      ],
+      "ok": true
+    },
+    "theFormAsksForAPhoneAndADurationAsThemselves": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "phoneType": "tel",
+          "durationType": "text",
+          "made": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "phoneType": "tel",
+          "durationType": "text",
+          "made": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "phoneType": "tel",
+          "durationType": "text",
+          "made": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "phoneType": "tel",
+          "durationType": "text",
+          "made": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "phoneType": "tel",
+          "durationType": "text",
+          "made": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "phoneType": "tel",
+          "durationType": "text",
+          "made": true
+        }
+      ],
+      "ok": true
+    },
+    "thePlacesCardsCallMapAndSayADuration": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "cards": [
+            {
+              "field": null,
+              "text": "(555) 123-4567",
+              "label": null,
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 116,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "St. Mark's Hall, 12 Elm Street, Springfield",
+              "label": null,
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 243,
+              "height": 39
+            },
+            {
+              "field": null,
+              "text": "+44 20 7946 0958",
+              "label": null,
+              "href": "tel:+442079460958",
+              "target": null,
+              "rel": null,
+              "width": 137,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "The Old Library",
+              "label": null,
+              "href": "https://maps.apple.com/?q=The%20Old%20Library",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 106,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "Town Hall",
+              "label": null,
+              "href": "https://maps.apple.com/?q=Town%20Hall",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 68,
+              "height": 24
+            }
+          ],
+          "said": [
+            "Who to call(555) 123-4567",
+            "VenueSt. Mark's Hall, 12 Elm Street, Springfield",
+            "Length1 h 30 min",
+            "Who to call+44 20 7946 0958",
+            "VenueThe Old Library",
+            "Length45 min",
+            "Who to call—",
+            "VenueTown Hall",
+            "Length2 h 30 min"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "cards": [
+            {
+              "field": null,
+              "text": "(555) 123-4567",
+              "label": null,
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 116,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "St. Mark's Hall, 12 Elm Street, Springfield",
+              "label": null,
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 243,
+              "height": 39
+            },
+            {
+              "field": null,
+              "text": "+44 20 7946 0958",
+              "label": null,
+              "href": "tel:+442079460958",
+              "target": null,
+              "rel": null,
+              "width": 137,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "The Old Library",
+              "label": null,
+              "href": "https://maps.apple.com/?q=The%20Old%20Library",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 106,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "Town Hall",
+              "label": null,
+              "href": "https://maps.apple.com/?q=Town%20Hall",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 68,
+              "height": 24
+            }
+          ],
+          "said": [
+            "Who to call(555) 123-4567",
+            "VenueSt. Mark's Hall, 12 Elm Street, Springfield",
+            "Length1 h 30 min",
+            "Who to call+44 20 7946 0958",
+            "VenueThe Old Library",
+            "Length45 min",
+            "Who to call—",
+            "VenueTown Hall",
+            "Length2 h 30 min"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "cards": [
+            {
+              "field": null,
+              "text": "(555) 123-4567",
+              "label": null,
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 116,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "St. Mark's Hall, 12 Elm Street, Springfield",
+              "label": null,
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 243,
+              "height": 38
+            },
+            {
+              "field": null,
+              "text": "+44 20 7946 0958",
+              "label": null,
+              "href": "tel:+442079460958",
+              "target": null,
+              "rel": null,
+              "width": 137,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "The Old Library",
+              "label": null,
+              "href": "https://maps.apple.com/?q=The%20Old%20Library",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 107,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "Town Hall",
+              "label": null,
+              "href": "https://maps.apple.com/?q=Town%20Hall",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 69,
+              "height": 24
+            }
+          ],
+          "said": [
+            "Who to call(555) 123-4567",
+            "VenueSt. Mark's Hall, 12 Elm Street, Springfield",
+            "Length1 h 30 min",
+            "Who to call+44 20 7946 0958",
+            "VenueThe Old Library",
+            "Length45 min",
+            "Who to call—",
+            "VenueTown Hall",
+            "Length2 h 30 min"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "cards": [
+            {
+              "field": null,
+              "text": "(555) 123-4567",
+              "label": null,
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 116,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "St. Mark's Hall, 12 Elm Street, Springfield",
+              "label": null,
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 243,
+              "height": 38
+            },
+            {
+              "field": null,
+              "text": "+44 20 7946 0958",
+              "label": null,
+              "href": "tel:+442079460958",
+              "target": null,
+              "rel": null,
+              "width": 137,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "The Old Library",
+              "label": null,
+              "href": "https://maps.apple.com/?q=The%20Old%20Library",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 107,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "Town Hall",
+              "label": null,
+              "href": "https://maps.apple.com/?q=Town%20Hall",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 69,
+              "height": 24
+            }
+          ],
+          "said": [
+            "Who to call(555) 123-4567",
+            "VenueSt. Mark's Hall, 12 Elm Street, Springfield",
+            "Length1 h 30 min",
+            "Who to call+44 20 7946 0958",
+            "VenueThe Old Library",
+            "Length45 min",
+            "Who to call—",
+            "VenueTown Hall",
+            "Length2 h 30 min"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "cards": [
+            {
+              "field": null,
+              "text": "(555) 123-4567",
+              "label": null,
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 117,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "St. Mark's Hall, 12 Elm Street, Springfield",
+              "label": null,
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 243,
+              "height": 39
+            },
+            {
+              "field": null,
+              "text": "+44 20 7946 0958",
+              "label": null,
+              "href": "tel:+442079460958",
+              "target": null,
+              "rel": null,
+              "width": 137,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "The Old Library",
+              "label": null,
+              "href": "https://maps.apple.com/?q=The%20Old%20Library",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 108,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "Town Hall",
+              "label": null,
+              "href": "https://maps.apple.com/?q=Town%20Hall",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 69,
+              "height": 24
+            }
+          ],
+          "said": [
+            "Who to call(555) 123-4567",
+            "VenueSt. Mark's Hall, 12 Elm Street, Springfield",
+            "Length1 h 30 min",
+            "Who to call+44 20 7946 0958",
+            "VenueThe Old Library",
+            "Length45 min",
+            "Who to call—",
+            "VenueTown Hall",
+            "Length2 h 30 min"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "cards": [
+            {
+              "field": null,
+              "text": "(555) 123-4567",
+              "label": null,
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 117,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "St. Mark's Hall, 12 Elm Street, Springfield",
+              "label": null,
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 243,
+              "height": 39
+            },
+            {
+              "field": null,
+              "text": "+44 20 7946 0958",
+              "label": null,
+              "href": "tel:+442079460958",
+              "target": null,
+              "rel": null,
+              "width": 137,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "The Old Library",
+              "label": null,
+              "href": "https://maps.apple.com/?q=The%20Old%20Library",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 108,
+              "height": 24
+            },
+            {
+              "field": null,
+              "text": "Town Hall",
+              "label": null,
+              "href": "https://maps.apple.com/?q=Town%20Hall",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 69,
+              "height": 24
+            }
+          ],
+          "said": [
+            "Who to call(555) 123-4567",
+            "VenueSt. Mark's Hall, 12 Elm Street, Springfield",
+            "Length1 h 30 min",
+            "Who to call+44 20 7946 0958",
+            "VenueThe Old Library",
+            "Length45 min",
+            "Who to call—",
+            "VenueTown Hall",
+            "Length2 h 30 min"
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "theScenesRecordPanelLinksThemAsThePageDoes": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 26,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 31,
+              "height": 24
+            }
+          ],
+          "saysDuration": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 26,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 31,
+              "height": 24
+            }
+          ],
+          "saysDuration": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 26,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 31,
+              "height": 24
+            }
+          ],
+          "saysDuration": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 26,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 31,
+              "height": 24
+            }
+          ],
+          "saysDuration": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 26,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 31,
+              "height": 24
+            }
+          ],
+          "saysDuration": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "links": [
+            {
+              "field": "contact",
+              "text": "Call",
+              "label": "Call (555) 123-4567",
+              "href": "tel:5551234567",
+              "target": null,
+              "rel": null,
+              "width": 26,
+              "height": 24
+            },
+            {
+              "field": "venue",
+              "text": "Map",
+              "label": "Open St. Mark's Hall, 12 Elm Street, Springfield in maps",
+              "href": "https://maps.apple.com/?q=St.%20Mark's%20Hall%2C%2012%20Elm%20Street%2C%20Springfield",
+              "target": "_blank",
+              "rel": "noopener noreferrer",
+              "width": 31,
+              "height": 24
+            }
+          ],
+          "saysDuration": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageErrors": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "ok": true
+}

@@ -3,6 +3,8 @@ import { fieldWords, labelOf, nounOf, valueWords, type ReadableField } from "./d
 import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
 import { fieldSays, typedHref, typedWords } from "./field-words.js";
+import { amountOf } from "./amount-mark.js";
+import { sayAmount } from "../document/amount.js";
 import type { AnyNodeDefinition, PageFields } from "./types.js";
 
 /*
@@ -174,9 +176,13 @@ export function readableFields(
     // A phone, a place or a duration, said as one: "(555) 123-4567", "1 h 30 min".
     const typed = format ? undefined : fieldSays(definition, key);
     const href = typedHref(typed, value);
+    // A number said as its field declares it: money in the app's currency, a fraction as a percent ("$10,000", never 10000).
+    const amount = !format && !typed && typeof value === "number" ? amountOf((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]) : undefined;
     const text = format
       ? format(value)
-      : typedWords(typed, value, options.locale) ??
+      : amount
+        ? sayAmount(value as number, amount)
+        : typedWords(typed, value, options.locale) ??
         (Array.isArray(value) || typeof value === "boolean"
         ? // Nobody says "false". A boolean is a state, and the words for a
           // state are words.

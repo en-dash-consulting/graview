@@ -1,0 +1,45 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The deals",
+  "description": "A small studio's deals: what each is worth, the share it keeps, and the hours it takes.",
+  "brand": { "currency": "USD" },
+  "kinds": {
+    "deal": {
+      "noun": "deal",
+      "plural": "deals",
+      "label": "{name}",
+      "describe": "{name} for {amount}",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "amount": { "type": "number", "format": "money", "required": true },
+        "margin": { "type": "number", "format": "percent" },
+        "effort": { "type": "number", "format": "duration" },
+        "weight": { "type": "number", "unit": "kg" },
+        "fee": { "type": "number", "unit": "EUR" },
+        "stage": { "type": "enum", "options": ["lead", "won", "lost"], "default": "lead", "required": true }
+      },
+      "glance": ["amount", "stage"]
+    }
+  },
+  "acts": {
+    "add-deal": { "title": "Add a deal", "creates": "deal", "description": "Put a deal on the books." },
+    "set-amount": {
+      "title": "Set the amount",
+      "on": "deal",
+      "description": "Say what a deal is worth.",
+      "args": { "amount": { "type": "number", "required": true } },
+      "sets": { "amount": "$amount" }
+    },
+    "set-stage": {
+      "title": "Set the stage",
+      "on": "deal",
+      "description": "Say where a deal stands.",
+      "args": { "stage": { "type": "enum", "options": ["lead", "won", "lost"], "required": true } },
+      "sets": { "stage": "$stage" }
+    }
+  },
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "lenses": [{ "name": "columns", "title": "The pipeline", "bindings": { "deal": { "column": "stage" } } }]
+}

@@ -14,6 +14,8 @@ import { fileWords } from "../schema/file-fields.js";
 import { momentAsRead, numberAsRead } from "../days.js";
 import { fieldSays, typedHref, typedWords } from "../schema/field-words.js";
 import type { TypedField } from "../schema/typed-fields.js";
+import { amountOf } from "../schema/amount-mark.js";
+import { sayAmount } from "./amount.js";
 
 /*
  * BLOCKS, RESOLVED — what a list of blocks says, worked out once, for every
@@ -282,7 +284,9 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext): { reado
         problem ??= `{${part.source ?? ""}}: ${judged.problem}`;
         return NOTHING;
       }
-      return formatValue(judged.value, part.format, ctx.today, part.formatArgs, ctx.money);
+      // A field named bare (`{price}`) is said as it declares: money as money.
+      const amount = !part.format && part.expr?.t === "ident" && typeof judged.value === "number" ? amountAt(ctx, part.expr.name) : undefined;
+      return amount ? sayAmount(judged.value as number, amount) : formatValue(judged.value, part.format, ctx.today, part.formatArgs, ctx.money);
     })
     .join("");
   return problem ? { text, problem } : { text };
@@ -311,6 +315,8 @@ const typedOf = (ctx: BlockContext, key: string): TypedField | undefined => {
   const type = ctx.fields[key]?.type;
   return type === "phone" || type === "place" || type === "duration" ? type : fieldSays(ctx.definition, key);
 };
+/** What the record's field is said as, where its declaration says (`markAmount`): a field named bare, `{price}`, is said as money. */
+const amountAt = (ctx: BlockContext, key: string) => amountOf((ctx.definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]);
 
 function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof VIEW_FIELD_FORMATS)[number] | undefined, currency?: string): string {
   if (value === null || value === undefined || value === "") return NOTHING;
@@ -324,6 +330,9 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
   if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today, [], ctx.money);
   if (spec?.type === "datetime" && typeof value === "string") return momentAsRead(value, ctx.money?.locale);
   if (spec?.type === "enum" && typeof value === "string") return valueWords(ctx.definition, key, value);
+  // A number said as its field declares it: money in the app's currency, a fraction as a percent.
+  const amount = typeof value === "number" ? amountAt(ctx, key) : undefined;
+  if (amount) return sayAmount(value as number, amount);
   if (typeof value === "number") return numberAsRead(value, ctx.money?.locale, {});
   const files = filesOf(value);
   if (files[0]) return files.map(fileWords).join(", ");

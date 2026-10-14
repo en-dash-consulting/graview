@@ -18,6 +18,9 @@ import { computedOf } from "../document/computed.js";
 import { placePath } from "../views/types.js";
 import { dayAsRead, DEFAULT_LOCALE, numberAsRead, timeAsRead } from "../days.js";
 import { formatMoney } from "../document/template.js";
+import { amountOf } from "../schema/amount-mark.js";
+import { amountMark, amountSentence } from "../schema/amount-words.js";
+import { sayAmount } from "../document/amount.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -404,6 +407,29 @@ export function describeApp<S extends AnySchema>(
     for (const line of worked) lines.push(`  ${line}`);
     if (facts.length > 0) lines.push("Facts of the whole graph: read as fact('<name>') in any expression, written by nothing, worked out from what the reader may see.");
     for (const line of facts) lines.push(`  ${line}`);
+  }
+
+  /*
+   * WHAT A NUMBER IS. A field marked money is said "$10,000" on every face
+   * and is kept as 10000; an agent that knows so sets 10000, never the
+   * words, and says it back as money. A percent is kept as a fraction.
+   */
+  const amounts = kinds.flatMap((kind) => {
+    const definition = app.schema.tryDefinition(kind);
+    const shape = ((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}) as Record<string, unknown>;
+    return Object.entries(shape).flatMap(([name, field]) => {
+      const marked = amountOf(field);
+      if (!marked) return [];
+      const mark = amountMark(marked);
+      const example = mark.format === "percent" ? 0.15 : mark.format === "duration" ? 90 : 1250.5;
+      const said = sayAmount(example, mark);
+      return [`${kind} · ${name}: ${amountSentence(mark)} ${example} is said "${said}".`];
+    });
+  });
+  if (amounts.length > 0) {
+    lines.push("", "## Amounts");
+    lines.push("Kept as plain numbers and said as their fields declare on every face: set the number, never the words.");
+    for (const line of amounts) lines.push(`  ${line}`);
   }
 
   /*

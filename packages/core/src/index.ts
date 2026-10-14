@@ -173,6 +173,7 @@ export { nodeRef, nodeRefArgs, nodeRefKinds } from "./mutations/node-ref.js";
 export type { NodeRefArg } from "./mutations/node-ref.js";
 // What an argument asks for (`argShape`, `describeArg`) is `@graview/core/words`', fetched with what asks (FR-179).
 export type { ArgShape } from "./mutations/arg-shape.js";
+export type { AmountMark } from "./schema/amount-mark.js";
 // Records named the way people name them: a node argument takes a label (FR-33).
 export { nameKey } from "./labels.js";
 export type { RefCandidate, RefResolution } from "./labels.js";
