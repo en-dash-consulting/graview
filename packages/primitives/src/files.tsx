@@ -1,7 +1,7 @@
 import { fieldWords, filesOf, isFileValue, isImage, LOCAL_LAYERS, type FileValue, type HostFiles } from "@graview/core";
 import { fileFieldsOf, fileWords } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
-import { useGraview, useHostFiles, useNode } from "@graview/react/provider";
+import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider";
 import { useEffect, useId, useRef, useState, type ClipboardEvent, type CSSProperties, type DragEvent, type ReactNode } from "react";
 import { resample } from "./resample.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -136,10 +136,38 @@ export async function send(prepared: Prepared, host: HostFiles, image: boolean):
 const ROUND = "var(--graview-radius, 8px)";
 const QUIET: CSSProperties = { color: "var(--graview-ink-muted)", fontSize: "0.8125rem" };
 
+/**
+ * A FILE REMOVED SINCE THE MOMENT DRAWN (Roadmap f-playback): the host says
+ * it no longer keeps the bytes (`HostFiles.kept`), or — while somebody
+ * looks back — the picture did not load. Said, never a broken picture.
+ */
+function useRemovedLater(file: FileValue): readonly [boolean, () => void] {
+  const host = useHostFiles();
+  const lookingBack = usePlayback()?.past != null;
+  const [failed, setFailed] = useState(false);
+  return [host?.kept?.(file.href) === false || (lookingBack && failed), () => setFailed(true)] as const;
+}
+
+function RemovedLater({ file, style }: { readonly file: FileValue; readonly style?: CSSProperties }) {
+  return (
+    <span
+      role="img"
+      aria-label={`${fileWords(file)}, removed later`}
+      data-graview-removed-later={file.href}
+      style={{ display: "grid", placeItems: "center", textAlign: "center", padding: 4, boxSizing: "border-box", fontSize: "0.6875rem", lineHeight: 1.2, color: "var(--graview-ink-muted)", border: "1px dashed var(--graview-edge-bright)", borderRadius: ROUND, ...style }}
+    >
+      removed later
+    </span>
+  );
+}
+
 /** One picture, small: on a card, a row, an `image` block's `thumb`. */
 function FileThumb({ file, size = 56, style }: { readonly file: FileValue; readonly size?: number; readonly style?: CSSProperties }) {
+  const [gone, failed] = useRemovedLater(file);
+  if (gone) return <RemovedLater file={file} style={{ width: size, height: size, flex: "none", ...style }} />;
   return (
     <img
+      onError={failed}
       src={file.href}
       alt={fileWords(file)}
       width={size}
@@ -149,6 +177,22 @@ function FileThumb({ file, size = 56, style }: { readonly file: FileValue; reado
       data-graview-thumb={file.href}
       style={{ width: size, height: size, objectFit: "cover", borderRadius: ROUND, display: "block", flex: "none", background: "var(--graview-edge)", ...style }}
     />
+  );
+}
+
+/** One picture of a gallery, opening full size; one removed since the moment drawn is said so, and opens nothing. */
+function GalleryPicture({ file, onOpen }: { readonly file: FileValue; readonly onOpen: (button: HTMLButtonElement) => void }) {
+  const [gone, failed] = useRemovedLater(file);
+  if (gone) return <RemovedLater file={file} style={{ width: "100%", aspectRatio: "1" }} />;
+  return (
+    <button
+      type="button"
+      aria-label={`Open ${fileWords(file)} full size`}
+      onClick={(event) => onOpen(event.currentTarget)}
+      style={{ padding: 0, border: 0, background: "none", cursor: "zoom-in", display: "block", width: "100%", borderRadius: ROUND }}
+    >
+      <img src={file.href} alt={fileWords(file)} loading="lazy" decoding="async" onError={failed} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: ROUND, display: "block", background: "var(--graview-edge)" }} />
+    </button>
   );
 }
 
@@ -175,17 +219,13 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
         <ul data-graview-gallery="" aria-label={label} style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 8 }}>
           {pictures.map((file, index) => (
             <li key={file.href} style={{ minWidth: 0 }}>
-              <button
-                type="button"
-                aria-label={`Open ${fileWords(file)} full size`}
-                onClick={(event) => {
-                  opener.current = event.currentTarget;
+              <GalleryPicture
+                file={file}
+                onOpen={(button) => {
+                  opener.current = button;
                   setOpen(index);
                 }}
-                style={{ padding: 0, border: 0, background: "none", cursor: "zoom-in", display: "block", width: "100%", borderRadius: ROUND }}
-              >
-                <img src={file.href} alt={fileWords(file)} loading="lazy" decoding="async" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: ROUND, display: "block", background: "var(--graview-edge)" }} />
-              </button>
+              />
             </li>
           ))}
         </ul>

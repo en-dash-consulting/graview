@@ -8,6 +8,7 @@ import * as document from "../../src/document/index.js";
 import * as figures from "../../src/figures.js";
 import * as fieldSight from "../../src/field-sight.js";
 import * as forms from "../../src/forms.js";
+import * as history from "../../src/history.js";
 import * as importing from "../../src/import/index.js";
 import * as jsonSchema from "../../src/json-schema.js";
 import * as main from "../../src/index.js";
@@ -30,6 +31,8 @@ import * as markdown from "../../src/markdown.js";
  */
 const OFF_THE_PAGE = {
   "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement", "throughEdges"] },
+  // Roadmap f-playback: the timeline around `store.at`, fetched when somebody opens the past.
+  "@graview/core/history": { from: history, names: ["declarationAt", "declarationSentence", "makerOf", "makerWords", "pastAt", "restoreBatches", "ticksOf"] },
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },
   "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "whatBlocksSay", "computedNames", "computedValues", "withComputed", "factNames", "factValues", "blockContextFor", "CARD_BUDGET", "PAGE_BUDGET", "fieldSpecOf", "fileFieldsOf", "fileWords", "firstPicture"] },
   "@graview/core/field-sight": { from: fieldSight, names: ["fieldsKept", "keptFrom", "partialKinds", "withoutKeptFields"] },

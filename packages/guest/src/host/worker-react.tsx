@@ -1,6 +1,6 @@
 import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markReplacesPage, useGoTo, useGraviewIfAny, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { useContext, useEffect, useRef, useState, type ComponentType } from "react";
+import { DefaultDrawnElsewhere, isDefaultView, markReplacesPage, useGoTo, useGraviewIfAny, usePlayback, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
 import type { GuestViewInput } from "./session.js";
@@ -60,6 +60,21 @@ interface MountProps {
   readonly tick?: unknown;
 }
 
+/**
+ * A SCRIPT VIEW AS IT STOOD AT THE MOMENT DRAWN (Roadmap f-playback): the
+ * code the host hands for this view at that seq (`history.viewAt`) — or
+ * `null` when the view did not exist then — and the definition itself at
+ * now, or where the host does not say. The log holds no view's code; the
+ * host does.
+ */
+function useDefinitionThen(definition: WorkerViewDefinition): WorkerViewDefinition | null {
+  const playback = usePlayback();
+  const seq = playback?.past?.seq;
+  const viewAt = playback?.host?.viewAt;
+  const then = useMemo(() => (seq === undefined || !viewAt ? undefined : viewAt(definition.manifest.name, seq)), [viewAt, seq, definition]);
+  return useMemo(() => (then === null ? null : then === undefined ? definition : { ...definition, worker: then as WorkerViewCode }), [then, definition]);
+}
+
 /** The region a worker view is drawn in, mounted when it is drawn; the host's half is fetched then. */
 function WorkerViewMount({ definition, store, principal, input, goTo, places, scheme, brand, onFailure, drawsItsOwn, tick }: MountProps) {
   const holder = useRef<HTMLDivElement>(null);
@@ -116,7 +131,10 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const [failed, setFailed] = useState<WorkerViewFailure | null>(null);
     const latest = useRef(props);
     latest.current = props;
+    const then = useDefinitionThen(definition);
     if (!graview) return null;
+    /* Not made yet at the moment drawn: the kind's own face, as where it fails. */
+    if (then === null) return Fallback && !(elsewhere && isDefaultView(Fallback) && !replaces) ? <Fallback {...props} /> : null;
     /* Past its limits, the kind's own face — what the registry drew there before — in its place (FR-94); nothing, where the surface is that face already. */
     if (failed && Fallback) return elsewhere && isDefaultView(Fallback) && !replaces ? null : <Fallback {...props} />;
     /*
@@ -128,7 +146,7 @@ export function workerView(definition: WorkerViewDefinition, options: { readonly
     const Beside = options.beside && !(elsewhere && isDefaultView(options.beside)) ? options.beside : undefined;
     const mount = (
       <WorkerViewMount
-        definition={definition}
+        definition={then}
         store={graview.store}
         principal={graview.principal}
         input={() => inputOf(latest.current)}
@@ -209,10 +227,12 @@ export function workerHome(definition: WorkerViewDefinition, options: { readonly
     const graview = useGraviewIfAny<AnySchema>();
     const goTo = useGoTo();
     const [failed, setFailed] = useState<WorkerViewFailure | null>(null);
-    if (failed && Fallback) return <Fallback context={context} />;
+    const then = useDefinitionThen(definition);
+    if ((failed || then === null) && Fallback) return <Fallback context={context} />;
+    if (then === null) return null;
     return (
       <WorkerViewMount
-        definition={definition}
+        definition={then}
         store={context.store}
         principal={context.principal ?? graview?.principal ?? { kind: "human" }}
         goTo={goTo}

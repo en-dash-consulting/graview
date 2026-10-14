@@ -309,7 +309,7 @@ export type {
 } from "./validate-graph.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { MODULES_AUTHOR, PREVIEW_BATCH, problemsMoved, ReceiveError, shapedRules, Store, UnknownMutationError, violationKey } from "./store.js";
+export { MODULES_AUTHOR, PastError, PREVIEW_BATCH, problemsMoved, ReceiveError, shapedRules, Store, UnknownMutationError, violationKey } from "./store.js";
 export type {
   Adopt,
   AdoptResult,
@@ -318,6 +318,8 @@ export type {
   ApplyResult,
   BatchPreview,
   CompactOptions,
+  PastDeclaration,
+  PastPoint,
   PlannedChange,
   Preview,
   PreviewOptions,

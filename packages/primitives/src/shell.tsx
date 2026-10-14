@@ -16,6 +16,7 @@ import { AppBar, type BarFind } from "./app-bar.js";
 import { useScenePlaces } from "./scene-places.js";
 import { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
 import { SceneWayBack } from "./scene-way-back.js";
+import { PastBar } from "./past-bar.js";
 import { BackOut, Inspector, OverviewButton, Standing } from "./workbench/index.js";
 import { useFavicon } from "./app-title.js";
 import { useViewportHeight } from "./primitives/measure.js";
@@ -271,6 +272,8 @@ export function Shell<S extends AnySchema>({
         <Inspector placement="menu" />
         {/* After an act, the way back on the board, and ⌘Z (FR-153): as on the pages. */}
         <SceneWayBack />
+        {/* The app as it was, and the way through it (Roadmap f-playback): over the picture while the timeline is open. */}
+        <PastBar face="scene" />
       </main>
       <Notices board={board} anchor={scene} />
     </div>

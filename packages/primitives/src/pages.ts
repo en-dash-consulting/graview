@@ -56,3 +56,6 @@ export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
 export type { Choosing } from "./choosing.js";
 export { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
 export type { SeveralBarProps } from "./several-door.js";
+// The app as it was (Roadmap f-playback): the timeline, fetched when somebody first looks back.
+export { PastBar, prefetchTimeline } from "./past-bar.js";
+export type { TimelineFace } from "./past-bar.js";

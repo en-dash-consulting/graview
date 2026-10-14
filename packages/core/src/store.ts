@@ -19,7 +19,7 @@ import type {
 import { compileMutation } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
-import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
+import { foldOp, OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
@@ -137,6 +137,50 @@ export interface StoreOptions<S extends AnySchema> {
    * a person with no name.
    */
   readonly principal?: Author | Principal;
+  /**
+   * HOW OFTEN `at` KEEPS A POINT TO FOLD FROM (Roadmap f-playback): every
+   * this-many ops, in memory, as a seek passes it. Default 64.
+   */
+  readonly pastEvery?: number;
+  /** A store of the past (`at`): read, never changed. Set by `at` itself. */
+  readonly past?: PastPoint;
+}
+
+/**
+ * WHERE A STORE OF THE PAST STANDS (Roadmap f-playback): the seq it was
+ * folded to, when the last op before it was made, and the point it was
+ * folded from — a kept checkpoint, an epoch or the horizon — with how many
+ * ops that took.
+ */
+export interface PastPoint {
+  /** The ops before this seq are in it; none after. */
+  readonly seq: number;
+  /** When the last op in it was made; absent at the very start. */
+  readonly at?: string;
+  /** The seq the fold began at. */
+  readonly foldedFrom: number;
+  /** How many ops it folded to get here. */
+  readonly folded: number;
+}
+
+/**
+ * THE DECLARATION A MOMENT WAS MADE UNDER, when a host knows it was another
+ * one (Roadmap f-playback): what `at` folds and judges the past with in
+ * place of the store's own. Read only: a store of the past offers no act.
+ */
+export interface PastDeclaration {
+  readonly schema: AnySchema;
+  readonly invariants?: readonly InvariantDefinition<AnySchema>[];
+  readonly policy?: Policy;
+  readonly modules?: ModuleMap;
+}
+
+/** A change asked of a store of the past (Roadmap f-playback): the past is read, never changed. */
+export class PastError extends GraphError {
+  constructor(at: PastPoint) {
+    super(`This is the app as it stood${at.at ? ` at ${at.at}` : " at the start"}: the past is read, never changed`);
+    this.name = "PastError";
+  }
 }
 
 export interface ApplyOptions {
@@ -497,9 +541,18 @@ export class Store<S extends AnySchema> {
    * that slept through midnight never leaves the store on yesterday.
    */
   private ticked: { readonly day: string; readonly on: string } | undefined;
+  /** Where this store stands in the past, when it is one (`at`): read, never changed. */
+  readonly past: PastPoint | undefined;
+  private readonly opened: StoreOptions<S>;
+  /** The points `at` folds from, oldest first, each with the id of the op before it, so a log cut back and grown again is not trusted. */
+  private pastMarks: { readonly seq: number; readonly id: string | undefined; readonly base: GraphSnapshot }[] = [];
+  /** The graph where the log begins, worked back from the end when no epoch says it (`rewound`). */
+  private rewind: { readonly firstId: string | undefined; readonly base: GraphSnapshot } | undefined;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
+    this.opened = options;
+    this.past = options.past;
     this.schema = options.schema;
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
@@ -518,7 +571,8 @@ export class Store<S extends AnySchema> {
     this.batchTag = options.batchIds ? undefined : tag;
     this.mintBatch = options.batchIds ?? ((kind) => `${kind}:${tag}:${++this.counter}`);
 
-    for (const mutation of options.mutations ?? []) {
+    // A store of the past offers no act: not one declared, derived or kept (Roadmap f-playback).
+    for (const mutation of options.past ? [] : (options.mutations ?? [])) {
       if (this.mutations.has(mutation.name)) {
         throw new GraphError(`Duplicate mutation "${mutation.name}"`);
       }
@@ -532,11 +586,11 @@ export class Store<S extends AnySchema> {
      * invariants — and by the policy, through the acts that already write or
      * create the kind (see `permits`). Nothing an app declares is replaced.
      */
-    for (const mutation of deriveMutations(options.schema, options.mutations ?? [])) {
+    for (const mutation of options.past ? [] : deriveMutations(options.schema, options.mutations ?? [])) {
       this.mutations.set(mutation.name, mutation);
     }
     // "Keep this link" (FR-172): answered by every store, offered by no list. An app's own `keep-link` keeps its name.
-    if (!this.mutations.has(KEEP_LINK)) {
+    if (!options.past && !this.mutations.has(KEEP_LINK)) {
       this.keeper = keepLinkMutation(options.schema);
       this.mutations.set(KEEP_LINK, this.keeper);
     }
@@ -574,8 +628,137 @@ export class Store<S extends AnySchema> {
      * Only the DEFAULT generators are wound forward; an app that supplies
      * its own `ids` owns their uniqueness.
      */
+    if (options.past) return;
     this.countPastTheLog();
     tellTheWatchOfAStore(this);
+  }
+
+  /** Refuses any change to a store of the past (Roadmap f-playback). */
+  private stillNow(): void {
+    if (this.past) throw new PastError(this.past);
+  }
+
+  /**
+   * THE APP AS IT STOOD (Roadmap f-playback): a store read, never changed,
+   * holding the graph and the log as they were before `when` — a seq (the
+   * ops before it are in, none after), or a time (every op made at or
+   * before it). Its graph, its log, its problems and its sight are the
+   * past's own: `seenBy` on it serves a seat what that seat could see then,
+   * and a seat's view of this store answers `at` under the same sight. It
+   * offers no act — not one declared or derived — and refuses every change
+   * (`PastError`).
+   *
+   * A seek folds from the nearest point it can: an epoch at or before
+   * `when`, or a point this store kept in memory every `pastEvery` ops as
+   * an earlier seek passed it — never the whole log twice. `declaration` is
+   * the one the moment was made under, when a host knows it was another
+   * (`@graview/core/history` keeps them, with the sentence each said);
+   * absent, the store's own. A seq behind the undo horizon (FR-23) is in
+   * the archive, not here, and is refused.
+   */
+  at(when: number | string | Date, options: { readonly declaration?: PastDeclaration | undefined } = {}): Store<S> {
+    const log = this.log;
+    const first = log.horizon;
+    const seq = typeof when === "number" ? when : this.seqAt(when);
+    if (!Number.isInteger(seq) || seq < first || seq > log.length) {
+      throw new RangeError(`No moment at seq ${seq}: this store holds seqs ${first} to ${log.length}${first > 0 ? "; what is before its horizon is in the archive" : ""}`);
+    }
+    const ops = log.all();
+    const declared = options.declaration;
+    const schema = (declared?.schema ?? this.schema) as S;
+    const epochs = log.epochs().filter((epoch) => epoch.seq <= seq);
+    const epoch = epochs.at(-1);
+    const start = epoch?.seq ?? first;
+    // A kept point is trusted while the op before it is the one it was taken after.
+    const idBefore = (at: number) => (at > first ? ops[at - 1 - first]?.id : undefined);
+    this.pastMarks = this.pastMarks.filter((mark) => mark.seq <= log.length && idBefore(mark.seq) === mark.id);
+    const mark = [...this.pastMarks].reverse().find((one) => one.seq >= start && one.seq <= seq);
+    const from = mark?.seq ?? start;
+    const base = (mark?.base ?? epoch?.base ?? this.rewound()) as GraphSnapshot<NodeOfSchema<S>>;
+    // Judged as the store judges, so a default filled in on the way in is filled in again; a base the declaration no longer fits is held as written.
+    let graph: Graph<S>;
+    try {
+      graph = Graph.from(schema, base, { validate: this.validate });
+    } catch {
+      graph = Graph.from(schema, base, { validate: false });
+    }
+    const every = Math.max(1, this.opened.pastEvery ?? 64);
+    const keep = (after: number, id: string | undefined) => {
+      if (this.pastMarks.some((one) => one.seq === after)) return;
+      this.pastMarks.push({ seq: after, id, base: graph.snapshot() });
+      this.pastMarks.sort((a, b) => a.seq - b.seq);
+    };
+    for (let next = from; next < seq; next++) {
+      const op = ops[next - first]!;
+      try {
+        foldOp(graph, op);
+      } catch {
+        // An op that lands on nothing under this declaration is passed over: the past is shown, never refused.
+      }
+      if ((next + 1) % every === 0 && next + 1 < seq) keep(next + 1, op.id);
+    }
+    // A long fold keeps where it ended too, so scrubbing about here folds little.
+    if (seq - from >= every) keep(seq, idBefore(seq));
+    const at = ops[seq - 1 - first]?.at ?? epoch?.at;
+    const o = this.opened;
+    return new Store<S>({
+      schema,
+      invariants: (declared?.invariants ?? this.invariants) as readonly InvariantDefinition<S>[],
+      invariantOptions: this.invariantOptions,
+      ...given("policy", declared ? declared.policy : this.policy),
+      ...given("modules", declared?.modules ?? this.declaredModules),
+      ...given("enabledModules", this.startingModules),
+      ...given("intelligence", o.intelligence),
+      ...given("principal", o.principal),
+      log: ops.slice(0, seq - first),
+      epochs,
+      ...(first > 0 && !epochs.some((one) => one.horizon) ? { horizon: first } : {}),
+      snapshot: graph.snapshot(),
+      validate: false,
+      now: this.now,
+      past: { seq, ...given("at", at), foldedFrom: from, folded: seq - from },
+    });
+  }
+
+  /**
+   * THE GRAPH WHERE THE LOG BEGINS, when no epoch says it (Roadmap
+   * f-playback): a store reopened with its log and its graph but not the
+   * epoch its seed began (a page's browser adapter keeps none) did not
+   * begin empty, so the past is not folded from empty. It is the graph
+   * after the log — the first epoch past it, else the graph held — with
+   * each op's inverse put back, newest first. Kept while the log begins
+   * with the same op.
+   */
+  private rewound(): GraphSnapshot {
+    const ops = this.log.all();
+    const first = this.log.horizon;
+    const firstId = ops[0]?.id;
+    if (this.rewind && this.rewind.firstId === firstId) return this.rewind.base;
+    const later = this.log.epochs().find((epoch) => epoch.seq > first);
+    const graph = Graph.from(this.schema, (later?.base ?? this.graph.snapshot()) as GraphSnapshot<NodeOfSchema<S>>, { validate: false });
+    for (let at = (later?.seq ?? this.log.length) - 1; at >= first; at--) {
+      try {
+        graph.applyPrimitives(ops[at - first]!.inverse, { restoring: true });
+      } catch {
+        // An inverse that lands on nothing is passed over, as a fold passes over an op that does.
+      }
+    }
+    const base = graph.snapshot();
+    this.rewind = { firstId, base };
+    return base;
+  }
+
+  /**
+   * THE SEQ A TIME FALLS AT (Roadmap f-playback): every op made at or
+   * before `when` is before it. Before the first op the log holds, its
+   * horizon; after the last, its length.
+   */
+  seqAt(when: string | Date): number {
+    const time = typeof when === "string" ? Date.parse(when) : when.getTime();
+    if (Number.isNaN(time)) throw new RangeError(`“${String(when)}” is not a time`);
+    const ops = this.log.all();
+    const after = ops.findIndex((op) => Date.parse(op.at) > time);
+    return after === -1 ? this.log.length : this.log.horizon + after;
   }
 
   /** Winds the default op and batch counters past every id the log holds, and past the horizon (FR-23). */
@@ -637,6 +820,7 @@ export class Store<S extends AnySchema> {
    * when the set is the one the store already has.
    */
   setEnabledModules(enabled: readonly string[] | undefined, options: { readonly via?: Via; readonly batch?: string } = {}): Operation | undefined {
+    this.stillNow();
     const before = this.modules.enabled;
     const after = resolveModules(this.declaredModules, enabled).enabled;
     const off = [...before].filter((name) => !after.has(name));
@@ -744,6 +928,8 @@ export class Store<S extends AnySchema> {
      * repair as the starter seat, which may only add, and the press met
      * "starter may not take-off here" (W-110).
      */
+    // The app as it was is read, never changed (Roadmap f-playback): a control asking says so rather than offering a press.
+    if (this.past) return { ok: false, refusal: { mutation: call.name, wouldNeed: [], message: "Nothing changes while you look back." } } as ReturnType<typeof permits>;
     const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     const mutation = this.mutations.get(call.name);
@@ -1218,6 +1404,7 @@ export class Store<S extends AnySchema> {
    * (`openRemote` sends each one down the wire).
    */
   private applying(calls: readonly MutationCall[], options: ApplyOptions, context?: InvariantContext): ApplyResult<S> {
+    this.stillNow();
     const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? this.by;
     const lineage = lineageOf(options.lineage);
@@ -1372,6 +1559,7 @@ export class Store<S extends AnySchema> {
    * sequence must keep it themselves; `openRemote` does.
    */
   receive(ops: readonly Operation[], options: { readonly applied?: boolean } = {}): readonly Operation[] {
+    this.stillNow();
     const known = new Set(this.log.all().map((op) => op.id));
     const fresh = ops.filter((op) => !known.has(op.id));
     if (fresh.length === 0) return [];
@@ -1430,6 +1618,7 @@ export class Store<S extends AnySchema> {
    * lands. Subscribers hear one change, and every op undoes like any other.
    */
   append(ops: readonly AppendOp[], options: { readonly batch?: string } = {}): readonly Operation[] {
+    this.stillNow();
     if (ops.length === 0) return [];
     const taken = new Set(this.log.all().map((op) => op.id));
     let batch: string | undefined;
@@ -1482,6 +1671,7 @@ export class Store<S extends AnySchema> {
    * primitive that does not fit leaves the store as it was and throws.
    */
   applyPrimitives(primitives: readonly Primitive[], options: ApplyOptions = {}): ApplyResult<S> {
+    this.stillNow();
     const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? this.by;
     const before = this.violations();
@@ -1588,6 +1778,7 @@ export class Store<S extends AnySchema> {
 
   /** `undo` itself, kept apart for the same reason as `applying`. */
   private undoing(batchIds: string | readonly string[], options: ApplyOptions): ApplyResult<S> {
+    this.stillNow();
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
     const author = options.author ?? this.by;
     /*
@@ -1774,6 +1965,7 @@ export class Store<S extends AnySchema> {
    * never flickers through the states in between.
    */
   rebase(change: Rebase): RebaseResult<S> {
+    this.stillNow();
     const settling = new Set([...change.pending, ...(change.drop ?? [])]);
     const all = this.log.all();
     const first = all.findIndex((op) => settling.has(op.batch));
@@ -1866,6 +2058,7 @@ export class Store<S extends AnySchema> {
    * store did not hold before and the re-applied ones.
    */
   adopt(state: Adopt<S>): AdoptResult<S> {
+    this.stillNow();
     const dropped = new Set(state.drop ?? []);
     const pending = (state.pending ?? []).filter((batch) => !dropped.has(batch));
     const held = this.log.all();
@@ -2003,6 +2196,7 @@ export class Store<S extends AnySchema> {
    * Ship's `opened.compact()` archives first and calls this after.
    */
   compact(checkpoint: Epoch): LogArchive {
+    this.stillNow();
     return this.log.compact(checkpoint);
   }
 }

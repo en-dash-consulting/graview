@@ -243,3 +243,6 @@ export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from 
 // A declared lens draws (FR-79): each titled lens a place, from the declaration alone; the arrangement beside them (FR-80).
 export { fetchDeclaredLenses, fetchHomeView, registerDeclaredLenses } from "./declared-lens-doors.js";
 export { declaredViews } from "./declared-views.js";
+// The app as it was (Roadmap f-playback): the timeline, fetched when somebody first looks back.
+export { PastBar, prefetchTimeline } from "./past-bar.js";
+export type { TimelineFace } from "./past-bar.js";

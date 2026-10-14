@@ -30,3 +30,6 @@ export { viewsCss } from "./views-css.js";
 export { SceneBarTools, SceneTrail, useCallLog } from "./scene-bar.js";
 /* The way back after an act, on the scene as on the pages (FR-152, FR-153): an offer on the board, and ⌘Z. */
 export { SceneWayBack } from "./scene-way-back.js";
+// The app as it was (Roadmap f-playback): the timeline, fetched when somebody first looks back.
+export { PastBar, prefetchTimeline } from "./past-bar.js";
+export type { TimelineFace } from "./past-bar.js";

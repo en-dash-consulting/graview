@@ -1,7 +1,8 @@
 import { humanizeField, isWithheld, nameOfAuthor, type AnySchema, type Author } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
-import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
+import { POPOVER_STYLE, useGraview, useLiveStore, usePlayback, usePopover } from "@graview/react/provider";
+import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
 import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
@@ -21,6 +22,8 @@ export interface Change {
   readonly basis?: string;
   readonly touched: readonly string[];
   readonly batch: string;
+  /** The moment just after it: `store.at(seq)` shows the app as it was once it was made (Roadmap f-playback). */
+  readonly seq: number;
   /**
    * A CHANGE YOU CANNOT SEE (FR-16): every op of it was withheld from this
    * seat. Shown as having happened, with nothing it touched and no undo.
@@ -43,8 +46,10 @@ export interface Change {
  * tell them apart.
  */
 export function useRecentChanges(limit = 4): readonly Change[] {
-  const { store } = useGraview<AnySchema>();
-  const nodes = useGraph();
+  const { store: shown, principal } = useGraview<AnySchema>();
+  /* What has happened is now's, whichever moment the face draws (Roadmap f-playback). */
+  const store = useLiveStore(shown, principal);
+  const length = store.log.length;
   return useMemo(
     () =>
       [...store.batches()]
@@ -60,9 +65,12 @@ export function useRecentChanges(limit = 4): readonly Change[] {
           // What a withheld op touched is not said, even the part this seat may see.
           touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
           batch: batch.id,
+          seq: batch.ops.at(-1)!.seq + 1,
           ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
         })),
-    [store, nodes, limit],
+    // The log only grows at its end, an undo too: its length says when to read it again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, length, limit],
   );
 }
 
@@ -84,15 +92,19 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
    * In any app with one, a person could not take back the edit they had
    * just made, and the row they made it on said "you".
    */
-  const { store, principal, noteSeat } = useGraview<AnySchema>();
-  const nodes = useGraph();
+  const { store: shown, principal, noteSeat } = useGraview<AnySchema>();
+  /* Taken back from now's log; not offered at all while somebody looks back (Roadmap f-playback). */
+  const store = useLiveStore(shown, principal);
+  const lookingBack = usePlayback()?.open ?? false;
+  const length = store.log.length;
   const [refused, setRefused] = useState<string | null>(null);
   const check = useMemo(
     () => store.canUndo(batch),
-    [store, batch, nodes],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, batch, length],
   );
 
-  if (!check.ok && check.ops.length === 0) return null;
+  if (lookingBack || (!check.ok && check.ops.length === 0)) return null;
   const blocked = !check.ok;
   const alsoNeeded = blocked ? check.includeBatches : [];
 
@@ -153,6 +165,36 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
         </span>
       ) : null}
     </span>
+  );
+}
+
+/**
+ * "SHOW THE APP AS IT WAS HERE" (Roadmap f-playback): the face draws the
+ * app as it stood just after this change, with the timeline to scrub on
+ * from there. The timeline is fetched as a pointer comes near.
+ */
+export function ShowAsItWas({ seq, intent }: { readonly seq: number; readonly intent: string }) {
+  const playback = usePlayback();
+  if (!playback) return null;
+  const here = playback.past?.seq === seq;
+  return (
+    <button
+      type="button"
+      data-testid="show-past"
+      aria-label={`Show the app as it was after “${intent}”`}
+      title="Show the app as it was here"
+      aria-pressed={here}
+      onPointerEnter={prefetchTimeline}
+      onFocus={prefetchTimeline}
+      onClick={() => playback.show(seq)}
+      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 24, minWidth: 24, padding: "1px 6px", fontSize: "0.75rem", flex: "0 0 auto" }}
+    >
+      <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M2.5 8 a5.5 5.5 0 1 0 1.6-3.9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M2 2.5 V5.5 H5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M8 5 V8 L10 9.25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </button>
   );
 }
 
@@ -235,7 +277,9 @@ export function ActivityRail({
   readonly seat?: ReactNode;
 }) {
   const changes = useRecentChanges();
-  const { store, principal, seats, people } = useGraview<AnySchema>();
+  const { store: shown, principal, seats, people } = useGraview<AnySchema>();
+  /* Named from now's records, whichever moment the face draws (Roadmap f-playback). */
+  const store = useLiveStore(shown, principal);
   const running = calls.some((call) => call.phase === "running");
 
   /*
@@ -464,6 +508,7 @@ export function ActivityRail({
                       <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
                       {change.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {change.basis}</span> : null}
                     </span>
+                    {change.batch ? <ShowAsItWas seq={change.seq} intent={change.intent} /> : null}
                     {change.batch ? <UndoTurn batch={change.batch} /> : null}
                   </div>
                   <div
