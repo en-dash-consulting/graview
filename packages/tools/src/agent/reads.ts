@@ -129,7 +129,7 @@ export function withinReadChars(tool: string, data: unknown): unknown {
 
 /** `search_graph`: the hits without every match's id — what a picture lights, not what a model reads — and how many more. */
 export function searchRead(found: SearchResult, marked: SearchResult): unknown {
-  const { matched: _matched, ...answer } = marked;
+  const { matched: _matched, later: _later, ...answer } = marked;
   const shown = found.hits.filter((hit) => hit.about === "node").length;
   return found.total > shown ? { ...answer, more: `and ${found.total - shown} more records match: narrow the words, or add kind:<kind>.` } : answer;
 }

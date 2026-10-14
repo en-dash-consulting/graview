@@ -1,4 +1,4 @@
-import { AppLink, ArrangeBar, Files, pageSays } from "@graview/primitives/pages";
+import { AppLink, ArrangeBar, CHOOSING_CSS, Files, pageSays, prefetchSeveral, SeveralBarDoor, useChoosing } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement, throughEdges } from "@graview/core/arrange";
 import {
   archivedFrom,
@@ -8,6 +8,7 @@ import {
   isAppLinkField,
   isCurrent,
   labelOf,
+  LOCAL_LAYERS,
   type AnyNodeDefinition,
   type AnySchema,
   type Arrangeable,
@@ -18,7 +19,7 @@ import {
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { firstPicture, withComputed } from "@graview/core/blocks";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
-import { useId, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";
 import { DerivedForm } from "./form.js";
@@ -243,7 +244,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const label = labelOf(definition, node);
     if (ownRowOf) {
       return (
-        <li key={node.id} data-testid="record-row" style={{ minWidth: 0 }}>
+        <li key={node.id} data-testid="record-row" style={{ minWidth: 0 }} {...chooseAt(node.id)}>
+          {box(node, label)}
           {ownRowOf(node as NodeOfSchema<S>, { label, href: recordPath(store.schema, kind, node.id), flagged: flagged.has(node.id), glance: glance(unsaid(node), definition, label) })}
         </li>
       );
@@ -258,7 +260,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
       const rest = Object.fromEntries(Object.entries(unsaid(node)).filter(([key]) => !rowSays?.fields.has(key)));
       const facts = rowSays ? glance(rest, definition, rowSays.title ?? label) : "";
       return (
-        <li key={node.id} data-testid="record-row" style={{ position: "relative", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 2, padding: "10px 0", borderTop: "1px solid var(--graview-edge)" }}>
+        <li key={node.id} data-testid="record-row" style={{ position: "relative", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 2, paddingBlock: 10, borderTop: "1px solid var(--graview-edge)" }} {...chooseAt(node.id)}>
+          {box(node, label)}
           <div style={{ flex: "1 1 14rem", minWidth: 0 }}>
             <RowView node={node as never} cardinality="one" fidelity="glyph" mode="fullscreen" selected={false} {...(flagged.has(node.id) ? { flagged: [node.id] } : {})} />
           </div>
@@ -288,7 +291,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     );
     // The name, then its glance in a column of its own (`ROWS_CSS`).
     return (
-      <li key={node.id} className="graview-row">
+      <li key={node.id} className="graview-row" {...chooseAt(node.id)}>
+        {box(node, label)}
         {picture ? (
           <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
             <Files as="thumb" file={picture} />
@@ -357,6 +361,39 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
         return out;
       }, [])
     : undefined;
+  /*
+   * SEVERAL AT ONCE: a box at each row's start chooses it, and the bar over
+   * the face acts on every one chosen as one change (`useChoosing`, the
+   * selection bar fetched with the first). Offered where this seat may run
+   * some act on one of these at all.
+   */
+  // The records in the order they are drawn — by group, by section, else as arranged — which a range and Cmd/Ctrl-A read.
+  const drawn = arranged.grouped && grouping ? arranged.groups.flatMap((group) => group.nodes) : sections && sections.length > 1 ? sections.flatMap((section) => section.nodes) : members;
+  const order = useMemo(() => drawn.map((node) => node.id), [drawn.map((node) => node.id).join("\n")]); // eslint-disable-line react-hooks/exhaustive-deps
+  const choosing = useChoosing(order);
+  const choosable = (principal ? store.permittedMutations(principal) : store.permittedMutations()).some((mutation) => {
+    const kinds = mutation.subject?.kinds as readonly string[] | "*" | undefined;
+    return kinds !== undefined && (kinds === "*" || kinds.includes(kind));
+  });
+  const box = (node: (typeof members)[number], label: string) =>
+    choosable ? (
+      <span className="graview-choose-at">
+        <input {...choosing.boxProps(node.id, label)} onPointerEnter={prefetchSeveral} onFocus={prefetchSeveral} />
+      </span>
+    ) : null;
+  const chooseAt = (id: string) => (choosable ? { "data-graview-choose": id } : {});
+  const acted = useCallback(
+    (still: readonly string[]) => {
+      choosing.choose(still);
+      // The keyboard goes back to the list: on what is still chosen, else the list itself.
+      requestAnimationFrame(() => {
+        const list = choosing.list.current;
+        const first = still[0] === undefined ? null : list?.querySelector<HTMLElement>(`[data-graview-choose-box="${CSS.escape(still[0])}"]`);
+        (first ?? list)?.focus({ preventScroll: true });
+      });
+    },
+    [choosing],
+  );
   // The framework's own rows are `ROWS_CSS`'s; a design's rows and a declared row keep their list.
   const rowsStyle: React.CSSProperties | undefined =
     layout === "grid"
@@ -457,8 +494,21 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
           />
         ) : null}
         <style>{ROWS_CSS}</style>
+        {choosable ? <style>{CHOOSING_CSS + LIST_CHOOSING_CSS}</style> : null}
         {/* The rows measure the room they are given, not the window: a list in a narrow embed on a desk stacks as on a phone. */}
-        <div className="graview-list">
+        <div
+          className="graview-list"
+          {...(choosable
+            ? {
+                ...choosing.listProps,
+                ref: choosing.list as React.RefObject<HTMLDivElement>,
+                tabIndex: -1,
+                "data-graview-choosable": "",
+                "aria-label": choosing.chosen.length > 0 ? `${plural}, ${choosing.chosen.length} chosen` : plural,
+                role: "group",
+              }
+            : {})}
+        >
         {members.length === 0 && typed.words ? (
           /* Honest about nothing: what was searched, and the way forward below — the name already in it. */
           <p style={lede} data-testid="none-yet">
@@ -536,6 +586,19 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
           </ul>
         )}
         </div>
+        {choosable ? (
+          <SeveralBarDoor
+            store={store as never}
+            chosen={choosing.chosen}
+            {...(principal ? { principal } : {})}
+            {...(invariantContext ? { context: invariantContext } : {})}
+            anchor={anchorOf}
+            of={order.length}
+            onChooseAll={() => choosing.choose(order)}
+            onClear={choosing.clear}
+            onActed={acted}
+          />
+        ) : null}
         {retired > 0 ? (
           <Link to={withWord(search, "filter", "is:any")} style={{ ...link, ...quiet, justifySelf: "start" }} data-testid="past-link">
             +{retired} past
@@ -589,6 +652,24 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     </Frame>
   );
 }
+
+/** The bar stands at the foot of the embed the list is drawn in, or of the window. */
+const anchorOf = (): HTMLElement | null => document.querySelector<HTMLElement>("[data-graview-choosable]")?.closest<HTMLElement>("[data-embed-content]") ?? null;
+
+/*
+ * THE BOXES' COLUMN on the framework's list: at each row's start, over the
+ * row's own link; on a phone, only once a long press has chosen something,
+ * so a list read on a phone is the list it was.
+ */
+const LIST_CHOOSING_CSS = `
+.graview-list[data-graview-choosable]{outline:none}
+.graview-list [data-graview-choose]{position:relative;padding-left:34px}
+.graview-choose-at{position:absolute;left:2px;top:0;bottom:0;z-index:${LOCAL_LAYERS.raised};display:flex;align-items:center}
+@media (pointer: coarse){
+.graview-list:not([data-graview-choosing]) [data-graview-choose]{padding-left:0}
+.graview-list:not([data-graview-choosing]) .graview-choose-at{display:none}
+}
+`;
 
 /** A design's own main holds the list: no column of its own. */
 function BareFrame({ children }: { readonly context: unknown; readonly children?: ReactNode }) {

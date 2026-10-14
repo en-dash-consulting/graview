@@ -100,6 +100,8 @@ const CHAIN = [
   ["files", "verify-files.mjs"],
   // A record that links another app drawn as the app its host names, refused as no access, plainly without a resolver, on both faces at desk width, in three engines (FR-171).
   ["app-links", "verify-app-links.mjs"],
+  // A phone drawn as a tel: link grouped for its reader, a place as a link to the reader's maps app, a duration said "1 h 30 min", typed as words and summed, on both faces at desk width, in three engines.
+  ["field-types", "verify-field-types.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
   ["address", "verify-address.mjs"],
   // An app fills the phone after it turns, at the screen's height on both faces and in the Shell, in Chromium and WebKit (FR-165).

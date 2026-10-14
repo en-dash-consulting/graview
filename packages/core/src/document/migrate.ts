@@ -6,6 +6,8 @@ import { hasRange, outsideRange, rangeWords } from "./range.js";
 import type { FieldSpec, FieldType, GraviewDocument } from "./schema.js";
 import { filesOf, isFileValue, isImage, type FileValue } from "../schema/files.js";
 import { isAppAddress } from "../schema/app-link.js";
+import { PHONE } from "../schema/typed-fields.js";
+import { parseDuration } from "../schema/field-words.js";
 
 /*
  * A CHANGE TO AN APP THAT KEEPS ITS DATA (docs/operations.md §4).
@@ -137,6 +139,20 @@ export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown 
       // Another app's address (FR-171): a word that is one is kept as it is.
       const t = asText(value)?.trim();
       return isAppAddress(t) ? t : undefined;
+    }
+    case "phone": {
+      // Words that can be a phone number are kept as they were written.
+      const t = asText(value)?.trim();
+      return t && t.length <= 40 && PHONE.test(t) ? t : undefined;
+    }
+    case "place": {
+      const t = asText(value)?.trim();
+      return t && t.length <= 300 ? t : undefined;
+    }
+    case "duration": {
+      // A number is minutes; words are read as a length of time is typed: "1h 30m", "1:30", "1.5 h".
+      const n = parseDuration(value);
+      return n === undefined || outsideRange(n, to, "") !== undefined ? undefined : n;
     }
     case "url":
     case "email": {

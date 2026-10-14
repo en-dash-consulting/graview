@@ -1135,6 +1135,105 @@ async function aPageDrawsWithWhatThePictureNeeds() {
   }
 }
 
+/*
+ * SEVERAL TASKS ARE ONE CHANGE. Every act on a page was on one record, so
+ * marking six tasks done was six rounds. On todo's tasks: a box at a row's
+ * start chooses it, Shift chooses a range, the bar says how many and offers
+ * the acts they share; "Mark it done" does all three as one change, and one
+ * take-back puts all three back. From the keyboard, Space chooses and
+ * Cmd/Ctrl-A chooses the list, Escape puts it down and the keyboard stays
+ * in the list. On a phone, a long press on a row chooses it without opening
+ * it, a tap chooses the next, and the same act runs once.
+ */
+const rowsDrawn = (page) => page.evaluate(() => document.querySelectorAll("[data-graview-choose]").length);
+const barSays = (page) => page.locator('[data-testid="several-count"]').textContent({ timeout: 5_000 }).catch(() => null);
+async function severalTasksAreOneChange() {
+  const desk = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+  await desk.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
+  await desk.waitForSelector("[data-graview-choose-box]", { timeout: 20_000 });
+  const before = await rowsDrawn(desk);
+  const boxes = desk.locator("[data-graview-choose-box]");
+  const names = await desk.evaluate(() => [...document.querySelectorAll("[data-graview-choose-box]")].slice(0, 3).map((box) => box.getAttribute("aria-label")));
+  await boxes.nth(0).hover();
+  await boxes.nth(0).click();
+  await boxes.nth(2).hover();
+  await boxes.nth(2).click({ modifiers: ["Shift"] });
+  await desk.waitForSelector('[data-testid="several-bar"]', { timeout: 10_000 });
+  const chosen = {
+    said: await barSays(desk),
+    heard: await desk.evaluate(() => document.querySelector('[data-testid="several-count"]')?.getAttribute("role")),
+    acts: await desk.locator('[data-testid="several-act"]').allTextContents(),
+    names,
+  };
+  report.checks.severalTasksAreChosenAndSaidByCount = chosen;
+  await desk.click('[data-testid="several-act"][data-mutation="finish"]', { timeout: 5_000 });
+  await desk.waitForTimeout(800);
+  const done = {
+    rows: await rowsDrawn(desk),
+    bar: await desk.locator('[data-testid="several-bar"]').count(),
+    offer: (await desk.locator('[data-testid="page-undo"]').allTextContents()).join(" "),
+    focus: await desk.evaluate(() => (document.activeElement && document.activeElement !== document.body ? document.activeElement.className || document.activeElement.tagName : "body")),
+  };
+  await desk.click('[data-testid="page-undo"]');
+  await desk.waitForTimeout(600);
+  const back = await rowsDrawn(desk);
+  report.checks.severalTasksAreChosenAndSaidByCount = { ...chosen, ok: chosen.said === "3 tasks chosen" && chosen.heard === "status" && chosen.acts[0] === "Mark it done" && chosen.names.every((name) => /^Choose /.test(name ?? "")) };
+  report.checks.threeTasksAreMarkedDoneAsOneChangeWithOneUndo = { before, done, back, ok: done.rows === before - 3 && done.bar === 0 && /Mark it done — 3 tasks/.test(done.offer) && back === before && done.focus !== "body" };
+
+  // The keyboard alone: Space on a box, Cmd/Ctrl-A for the list, Escape to put it down.
+  await boxes.nth(1).focus();
+  await desk.keyboard.press("Space");
+  const one = await barSays(desk);
+  await desk.keyboard.press("ControlOrMeta+a");
+  await desk.waitForTimeout(300);
+  const all = await barSays(desk);
+  // The bar's acts are next in the keyboard's order after the list.
+  await boxes.last().focus();
+  let reaches = false;
+  for (let press = 0; press < 8 && !reaches; press += 1) {
+    await desk.keyboard.press("Tab");
+    reaches = await desk.evaluate(() => document.activeElement?.closest('[data-testid="several-bar"]') !== null);
+  }
+  await boxes.nth(1).focus();
+  await desk.keyboard.press("Escape");
+  await desk.waitForTimeout(300);
+  const put = { bar: await desk.locator('[data-testid="several-bar"]').count(), inList: await desk.evaluate(() => document.activeElement?.closest("[data-graview-choosable]") !== null) };
+  report.checks.theKeyboardChoosesAndPutsDown = { one, all, reaches, put, ok: one === "1 task chosen" && all === `${before} tasks chosen` && reaches && put.bar === 0 && put.inList };
+  await desk.close();
+
+  const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
+  await phone.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
+  await phone.waitForSelector("[data-graview-choose]", { timeout: 20_000 });
+  const rows = phone.locator("[data-graview-choose]");
+  const atRest = await phone.evaluate(() => [...document.querySelectorAll("[data-graview-choose-box]")].filter((box) => box.getBoundingClientRect().width > 0).length);
+  const phoneBefore = await rowsDrawn(phone);
+  const touch = await phone.context().newCDPSession(phone);
+  const held = await rows.nth(0).boundingBox();
+  await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: held.x + held.width / 2, y: held.y + held.height / 2 }] });
+  await phone.waitForTimeout(700);
+  await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await phone.waitForTimeout(500);
+  const pressed = { said: await barSays(phone), path: await phone.evaluate(() => location.pathname) };
+  for (const at of [1, 2]) {
+    const box = await rows.nth(at).boundingBox();
+    await phone.touchscreen.tap(box.x + box.width / 2, box.y + Math.min(box.height / 2, 20));
+    await phone.waitForTimeout(300);
+  }
+  const tapped = { said: await barSays(phone), path: await phone.evaluate(() => location.pathname) };
+  await phone.locator('[data-testid="several-act"][data-mutation="finish"]').tap();
+  await phone.waitForTimeout(800);
+  const after = { rows: await rowsDrawn(phone), offer: (await phone.locator('[data-testid="page-undo"]').allTextContents()).join(" ") };
+  report.checks.onAPhoneALongPressChoosesAndOneActDoesThree = {
+    atRest,
+    pressed,
+    tapped,
+    after,
+    ok: atRest === 0 && pressed.said === "1 task chosen" && pressed.path === "/pages/tasks" && tapped.said === "3 tasks chosen" && tapped.path === "/pages/tasks" && after.rows === phoneBefore - 3 && /Mark it done — 3 tasks/.test(after.offer),
+  };
+  report.checks.phoneChoosing = await hygiene(phone);
+  await phone.close();
+}
+
 try {
   vite = await startVite("todo", portFor("todo"));
   browser = await launchEngine(ENGINE, { headless: true });
@@ -1159,6 +1258,7 @@ try {
   await aRecordEditsWhereItIsShown(desk2);
   await theProblemsPageIsAnInbox(desk2);
   await desk2.close();
+  await severalTasksAreOneChange();
 
   await everyRouteOfTheOwnFaceIsReachable(axeSource);
   await theCalendarIsReachable(axeSource);

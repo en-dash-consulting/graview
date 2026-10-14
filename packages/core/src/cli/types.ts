@@ -29,6 +29,7 @@ export function fieldType(spec: FieldSpec): string {
       return union(spec.options ?? []);
     case "number":
     case "integer":
+    case "duration":
       return "number";
     case "boolean":
       return "boolean";
@@ -51,6 +52,9 @@ const HOLDS: Partial<Record<FieldSpec["type"], string>> = {
   image: "A picture the host stored: its href a path on the host.",
   file: "A file the host stored: its href a path on the host.",
   "app-link": "Another app's address: @owner/app, its id, or its https:// address.",
+  phone: "A phone number, as it was written.",
+  place: "An address or a place's name, linked to the reader's maps app.",
+  duration: "A length of time, in whole minutes.",
 };
 
 /** A field's comment: its description, the words it is shown by, and what a string of its type holds. */

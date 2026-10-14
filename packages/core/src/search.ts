@@ -25,12 +25,16 @@ import { markdownWords } from "./excerpt-of.js";
  * This is the one matcher behind all of them. It is headless, derived from
  * the declaration (what `readableFields` would show is what is searchable;
  * `display.hide` is the opt-out), policy-honest (what a seat may not see is
- * not a hit) and not fuzzy: a typo is answered with nothing and the words
- * shown back, which is honest and cheap. See docs/search.md.
+ * not a hit), and exact first: a near hit — a typo, another form of the
+ * word, a word a host's model says means the same — fills in only when the
+ * exact ones are few, ranked after them and said as near. See docs/search.md.
  */
 
-/** How a hit matched, strongest first. */
-export type MatchStrength = "exact" | "prefix" | "word" | "part" | "field";
+/** How a hit matched, strongest first. `near` is a record found by a word close to the one typed. */
+export type MatchStrength = "exact" | "prefix" | "word" | "part" | "field" | "near";
+
+/** How a near hit was near: the word misspelled, another form of it, or a meaning the host's ranker gave. */
+export type NearBy = "spelling" | "stem" | "meaning";
 
 /** Why a hit is shown: the field that matched and the words around the match. */
 export interface Why {
@@ -41,6 +45,12 @@ export interface Why {
   /** The matching text, cut to a window around the first match: "…the van on Friday…". */
   readonly fragment: string;
   readonly strength: MatchStrength;
+  /** On a near hit: the word typed that was not found as typed — "florist". */
+  readonly asked?: string;
+  /** On a near hit: the record's own word that answered it — "flowers". */
+  readonly matched?: string;
+  /** On a near hit: how it was near. */
+  readonly by?: NearBy;
 }
 
 export type Hit =
@@ -55,6 +65,12 @@ export type Hit =
       /** Set on an archived record (FR-173): found, said so, and ranked after the live ones. */
       readonly archived?: true;
       readonly flagged: boolean;
+      /**
+       * Set on a record found by a word near the one typed rather than the
+       * word itself — a typo, another form, a meaning — ranked after every
+       * exact hit; `why` says which word answered (`matched`) and how (`by`).
+       */
+      readonly near?: true;
       /** What tells it apart from another hit of the same name — "single" beside "album". */
       readonly apart?: string;
       /**
@@ -128,7 +144,50 @@ export interface SearchResult {
    * "is this one of them", and a capped list would dim real matches.
    */
   readonly matched: readonly string[];
+  /**
+   * THE HOST'S RANKER, STILL ANSWERING: when `rank` was given and the exact
+   * hits were few, the same result with the ranker's near hits merged in,
+   * as they arrive. Resolves to this result when the ranker fails or adds
+   * nothing. Absent when the ranker was not asked.
+   */
+  readonly later?: Promise<SearchResult>;
 }
+
+/**
+ * ONE RECORD A RANKER MAY SCORE: a record this seat sees, in the kinds
+ * searched, past the conditions, that the words did not find exactly — its
+ * id, its kind, its name and the texts it is searched by.
+ */
+export interface NearCandidate {
+  readonly id: string;
+  readonly kind: string;
+  readonly label: string;
+  /** Every text the record is searched by — its name and each readable field. */
+  readonly texts: readonly { readonly field: string; readonly reading: string; readonly text: string }[];
+}
+
+/**
+ * A RANKER'S SCORE FOR ONE CANDIDATE: 0–1, nearer higher. Return only what
+ * is near; a record left out is not a hit. `matched` names the record's own
+ * word the query was near ("flowers" for "the florist"), for the strip and
+ * the agent to say.
+ */
+export interface NearScore {
+  readonly id: string;
+  readonly score: number;
+  readonly matched?: string;
+}
+
+/**
+ * THE HOST'S RANKER (embeddings, a model): the words and the candidates in,
+ * the near ones' scores out, at once or later. It is handed only records the
+ * seat may see — the framework filters by the seat's sight, the kinds and
+ * the conditions first, and never sends a hidden record's text.
+ */
+export type SearchRanker = (query: string, candidates: readonly NearCandidate[]) => readonly NearScore[] | Promise<readonly NearScore[]>;
+
+/** Near hits fill in when the exact record hits are fewer than this. */
+export const NEAR_BELOW = 5;
 
 export interface SearchOptions {
   /** Who is looking. A kind this principal may not see yields no hits of any sort. */
@@ -172,6 +231,19 @@ export interface SearchOptions {
    * archived. `is:archived` in the words asks for those alone.
    */
   readonly archived?: Archived;
+  /**
+   * NEAR HITS (no model): when the exact record hits are fewer than
+   * `NEAR_BELOW`, records whose words are near the typed ones — a typo
+   * (one letter off in a word of 4–7, two in a longer one), another form of
+   * the word ("planted", "plants" for "plant") — follow them, said as near.
+   * True when unsaid; false asks for exact hits only.
+   */
+  readonly near?: boolean;
+  /**
+   * THE HOST'S RANKER: asked, under the same rule, with the candidates this
+   * seat sees; its near hits arrive on `later`. Never asked when `near` is false.
+   */
+  readonly rank?: SearchRanker | undefined;
 }
 
 /*
@@ -350,7 +422,139 @@ export function searchableFields(schema: AnySchema, kind: string): readonly { re
   return fields;
 }
 
-const TIER: Record<MatchStrength, number> = { exact: 0, prefix: 1, word: 2, part: 3, field: 4 };
+const TIER: Record<MatchStrength, number> = { exact: 0, prefix: 1, word: 2, part: 3, field: 4, near: 5 };
+
+/*
+ * NEAR WORDS, WITH NO MODEL. A word typed is near a word of the record when
+ * they are one form of a word ("plants", "planted", "planting" are "plant")
+ * or one slip apart — a letter missing, extra, wrong or two swapped — in a
+ * word of four to seven letters, two in a longer one. A short word is never
+ * near another: "van" is not "can". A number is never near another either.
+ */
+
+/** Words a near search does without when others were typed: "the florist" asks for the florist. */
+const SMALL_WORDS = new Set(["a", "an", "the", "of", "and", "or", "for", "to", "in", "on", "at", "by", "with", "my", "our", "is"]);
+
+/** A word's plain form: plurals, -ing and -ed taken off, and a closing e, so "baked" and "bake" agree. */
+export function stemOf(word: string): string {
+  let stem = word;
+  if (stem.length > 4 && stem.endsWith("ies")) stem = `${stem.slice(0, -3)}y`;
+  else if (stem.length > 4 && /(ss|x|ch|sh|z)es$/.test(stem)) stem = stem.slice(0, -2);
+  else if (stem.length > 3 && stem.endsWith("s") && !/(ss|us|is)$/.test(stem)) stem = stem.slice(0, -1);
+  for (const end of ["ing", "ed"]) {
+    if (stem.length > end.length + 2 && stem.endsWith(end)) {
+      stem = stem.slice(0, -end.length);
+      // "running" is "run", "planned" is "plan"; "falling" stays "fall".
+      if (/([b-df-hj-km-np-rtv-z])\1$/.test(stem)) stem = stem.slice(0, -1);
+      break;
+    }
+  }
+  return stem.length > 3 && stem.endsWith("e") ? stem.slice(0, -1) : stem;
+}
+
+/** The slips between two words — insertions, deletions, substitutions and swaps of neighbors — or `most + 1` once it is past `most`. */
+export function slipsBetween(a: string, b: string, most: number): number {
+  if (Math.abs(a.length - b.length) > most) return most + 1;
+  let before: number[] = [];
+  let previous = Array.from({ length: b.length + 1 }, (_, at) => at);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    let least = i;
+    for (let j = 1; j <= b.length; j++) {
+      let slips = Math.min(previous[j]! + 1, row[j - 1]! + 1, previous[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) slips = Math.min(slips, before[j - 2]! + 1);
+      row[j] = slips;
+      if (slips < least) least = slips;
+    }
+    if (least > most) return most + 1;
+    before = previous;
+    previous = row;
+  }
+  return previous[b.length]!;
+}
+
+/*
+ * Whether one typed word is near one word of a record, kept per typed word:
+ * a Find box asks the same word of the same vocabulary on every keystroke
+ * that does not change it, and a catalog's vocabulary is the size of its
+ * words, not of its records.
+ */
+const nearHeld = new Map<string, Map<string, NearBy | null>>();
+function nearWord(word: string, token: string): NearBy | undefined {
+  let held = nearHeld.get(word);
+  if (!held) {
+    if (nearHeld.size >= 64) nearHeld.clear();
+    nearHeld.set(word, (held = new Map()));
+  }
+  let by = held.get(token);
+  if (by === undefined) {
+    by = nearWordOnce(word, token) ?? null;
+    held.set(token, by);
+  }
+  return by ?? undefined;
+}
+
+function nearWordOnce(word: string, token: string): NearBy | undefined {
+  if (/\d/.test(word)) return undefined;
+  const stem = stemOf(word);
+  if (stem.length >= 3 && (stemOf(token) === stem || (stem.length >= 4 && token.startsWith(stem)))) return "stem";
+  const most = word.length < 4 ? 0 : word.length <= 7 ? 1 : 2;
+  if (most === 0) return undefined;
+  if (slipsBetween(word, token, most) <= most) return "spelling";
+  // A slip in a word still being typed: "flowr" is the start of "flowers".
+  if (word.length >= 5) {
+    for (let length = word.length - most; length <= word.length + most; length++) {
+      if (length < token.length && slipsBetween(word, token.slice(0, length), most) <= most) return "spelling";
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Whether a record is near the words: every word typed (the small ones
+ * aside, when there are others) found on it as typed or near, at least one
+ * of them near. The why names the first near one — the word typed, the
+ * record's word that answered it, the field it is in.
+ */
+function nearNode(texts: readonly Text[], asked: readonly string[]): Why | undefined {
+  const words = asked.length > 1 ? asked.filter((word) => !SMALL_WORDS.has(word)) : asked;
+  if (words.length === 0) return undefined;
+  let first: { readonly text: Text; readonly asked: string; readonly matched: string; readonly by: NearBy } | undefined;
+  for (const word of words) {
+    let found: { readonly text: Text; readonly matched: string; readonly by?: NearBy } | undefined;
+    for (const text of texts) {
+      for (const token of foldedOf(text.text).tokens) {
+        if (token.startsWith(word)) {
+          found = { text, matched: token };
+          break;
+        }
+        const by = found ? undefined : nearWord(word, token);
+        if (by) found = { text, matched: token, by };
+      }
+      if (found && !found.by) break;
+    }
+    if (!found) return undefined;
+    if (found.by && !first) first = { text: found.text, asked: word, matched: found.matched, by: found.by };
+  }
+  if (!first) return undefined;
+  return { field: first.text.field, reading: first.text.reading, fragment: fragmentOf(first.text.text, [first.matched]), strength: "near", asked: first.asked, matched: first.matched, by: first.by };
+}
+
+/** The why of a hit a host's ranker found: the field carrying the word it named, else the name. */
+function meantBy(texts: readonly Text[], words: string, matched: string | undefined): Why {
+  const asked = tokensOf(words).filter((word) => !SMALL_WORDS.has(word)).join(" ") || words;
+  const said = matched === undefined ? [] : tokensOf(matched);
+  const text = (said.length > 0 && texts.find((one) => said.every((word) => foldedOf(one.text).tokens.some((token) => token.startsWith(word))))) || texts[0]!;
+  return {
+    field: text.field,
+    reading: text.reading,
+    fragment: fragmentOf(text.text, said),
+    strength: "near",
+    asked,
+    matched: matched ?? text.text,
+    by: "meaning",
+  };
+}
 
 /**
  * Whether a node answers the words, and why.
@@ -420,7 +624,7 @@ function kindStrength(schema: AnySchema, kind: string, words: readonly string[])
   return best;
 }
 
-type Ranked = { hit: Hit; tier: number; inKind: number; near: number; past: number; touched: number; flagged: number; name: string; id: string; archived?: number };
+type Ranked = { hit: Hit; nearly?: number; tier: number; inKind: number; near: number; past: number; touched: number; flagged: number; name: string; id: string; archived?: number };
 
 /*
  * Alphabetical as `localeCompare` with these options says it, from one
@@ -432,6 +636,8 @@ const byName = (a: string, b: string): number => (names ??= new Intl.Collator(un
 
 /** The ranking, as one comparison: live before archived, how it matched, the kind the person is in, near, current, touched, flagged, alphabetical, id. */
 const byRank = (a: Ranked, b: Ranked): number =>
+  // A near hit after every exact one, the nearest first.
+  (a.nearly ?? 0) - (b.nearly ?? 0) ||
   // An archived record after every live one, however well it matched (FR-173).
   (a.archived ?? 0) - (b.archived ?? 0) ||
   a.tier - b.tier ||
@@ -519,6 +725,37 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
 
   const ranked: Ranked[] = [];
   const byKind: Record<string, number> = {};
+  type Node = { id: string; kind: string } & Record<string, unknown>;
+  // What passed the seat's sight, the kinds and the conditions but not the words: where near hits are looked for.
+  const misses: { readonly node: Node; readonly kind: string; readonly definition: AnyNodeDefinition | undefined; readonly current: boolean }[] = [];
+  const add = (node: Node, kind: string, definition: AnyNodeDefinition | undefined, current: boolean, why: Why, score?: number): void => {
+    const label = labelOf(definition, node);
+    byKind[kind] = (byKind[kind] ?? 0) + 1;
+    ranked.push({
+      hit: {
+        about: "node",
+        id: node.id,
+        kind,
+        label,
+        why,
+        current,
+        flagged: flagged.has(node.id),
+        address: at(`${listPath(definition, kind)}/${encodeURIComponent(node.id)}`),
+        ...(score === undefined ? {} : { near: true as const }),
+        ...(isArchived(node) ? { archived: true as const } : {}),
+      },
+      ...(score === undefined ? {} : { nearly: 2 - score }),
+      tier: TIER[why.strength],
+      inKind: kind === options.inKind ? 0 : 1,
+      near: near.has(node.id) ? 0 : 1,
+      past: current ? 0 : 1,
+      archived: isArchived(node) ? 1 : 0,
+      touched: -(touched.get(node.id) ?? 0),
+      flagged: flagged.has(node.id) ? 0 : 1,
+      name: label,
+      id: node.id,
+    });
+  };
 
   for (const kind of kinds) {
     const definition = schema.tryDefinition(kind);
@@ -531,7 +768,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
      * said "add is:any" — to somebody who had just named the past by name.
      */
     const namesThePast = asksForThePast(definition, own);
-    for (const node of store.graph.nodesOfKind(kind as never, { archived }) as unknown as ({ id: string; kind: string } & Record<string, unknown>)[]) {
+    for (const node of store.graph.nodesOfKind(kind as never, { archived }) as unknown as Node[]) {
       const current = isCurrent(definition, node, today);
       if (!past && !namesThePast && !current) continue;
       if (sighted && !sighted(node.id)) continue;
@@ -545,21 +782,25 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
           : own[0]
             ? { field: own[0].key, reading: humanizeField(own[0].key), fragment: `${own[0].key}:${own[0].value}`, strength: "field" as const }
             : { field: "is", reading: "Is", fragment: `is:${narrowingIs[0]!}`, strength: "field" as const };
+      if (why) add(node, kind, definition, current, why);
+      else if (words.length > 0) misses.push({ node, kind, definition, current });
+    }
+  }
+
+  /*
+   * NEAR, WHEN EXACT IS FEW. A typo or another form of the word finds the
+   * record the words meant, after every exact hit and said as near; a host's
+   * ranker is asked about the same candidates — only what this seat sees —
+   * and what it scores arrives on `later`.
+   */
+  const nearing = options.near !== false && words.length > 0 && ranked.length < NEAR_BELOW && misses.length > 0;
+  const spelled = new Set<string>();
+  if (nearing) {
+    for (const miss of misses) {
+      const why = nearNode(textsOf(miss.definition, miss.node), words);
       if (!why) continue;
-      const label = labelOf(definition, node);
-      byKind[kind] = (byKind[kind] ?? 0) + 1;
-      ranked.push({
-        hit: { about: "node", id: node.id, kind, label, why, current, flagged: flagged.has(node.id), address: at(`${listPath(definition, kind)}/${encodeURIComponent(node.id)}`), ...(isArchived(node) ? { archived: true as const } : {}) },
-        tier: TIER[why.strength],
-        inKind: kind === options.inKind ? 0 : 1,
-        near: near.has(node.id) ? 0 : 1,
-        past: current ? 0 : 1,
-        archived: isArchived(node) ? 1 : 0,
-        touched: -(touched.get(node.id) ?? 0),
-        flagged: flagged.has(node.id) ? 0 : 1,
-        name: label,
-        id: node.id,
-      });
+      spelled.add(miss.node.id);
+      add(miss.node, miss.kind, miss.definition, miss.current, why, why.by === "stem" ? 0.9 : 0.8);
     }
   }
 
@@ -616,32 +857,53 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     }
   }
 
-  ranked.sort(byRank);
-  const limit = options.limit ?? 50;
-  const shown = ranked.slice(0, limit).map((entry) => entry.hit);
-  /*
-   * Two hits of one name say what tells them apart — a single and its
-   * album, both "Blue Hour", by the fact that differs; a song and an album,
-   * both "Gone Digital", by their nouns. Across kinds too: the strip heads
-   * each kind, but a row is read alone — by the pointer that lands on it,
-   * by the screen reader that speaks it — and "Gone Digital, Gone Digital"
-   * is a choice nobody can make.
-   */
-  const alike = shown.flatMap((hit) => (hit.about === "node" ? [store.graph.getNode(hit.id) as unknown as { id: string; kind: string } & Record<string, unknown>] : [])).filter(Boolean);
-  const apart = tellApart(alike, (named) => schema.tryDefinition(named));
-  const hits = shown.map((hit) => (hit.about === "node" && apart.has(hit.id) ? { ...hit, apart: apart.get(hit.id)! } : hit));
-  const total = Object.values(byKind).reduce((sum, count) => sum + count, 0);
-  const matched = ranked.flatMap((entry) => (entry.hit.about === "node" ? [entry.hit.id] : []));
-  const acts = options.subject && kinds.includes(String(store.graph.getNode(options.subject)?.kind)) ? actsOn(store, options.subject, parsed.words, { principal }) : [];
-  return {
-    hits: [...hits, ...acts],
-    words: parsed.words,
-    conditions,
-    searched,
-    byKind,
-    total,
-    matched,
+  const answer = (): SearchResult => {
+    ranked.sort(byRank);
+    const limit = options.limit ?? 50;
+    const shown = ranked.slice(0, limit).map((entry) => entry.hit);
+    /*
+     * Two hits of one name say what tells them apart — a single and its
+     * album, both "Blue Hour", by the fact that differs; a song and an album,
+     * both "Gone Digital", by their nouns. Across kinds too: the strip heads
+     * each kind, but a row is read alone — by the pointer that lands on it,
+     * by the screen reader that speaks it — and "Gone Digital, Gone Digital"
+     * is a choice nobody can make.
+     */
+    const alike = shown.flatMap((hit) => (hit.about === "node" ? [store.graph.getNode(hit.id) as unknown as Node] : [])).filter(Boolean);
+    const apart = tellApart(alike, (named) => schema.tryDefinition(named));
+    const hits = shown.map((hit) => (hit.about === "node" && apart.has(hit.id) ? { ...hit, apart: apart.get(hit.id)! } : hit));
+    const total = Object.values(byKind).reduce((sum, count) => sum + count, 0);
+    const matched = ranked.flatMap((entry) => (entry.hit.about === "node" ? [entry.hit.id] : []));
+    const acts = options.subject && kinds.includes(String(store.graph.getNode(options.subject)?.kind)) ? actsOn(store, options.subject, parsed.words, { principal }) : [];
+    return { hits: [...hits, ...acts], words: parsed.words, conditions, searched, byKind: { ...byKind }, total, matched };
   };
+  const first = answer();
+  const rank = options.rank;
+  if (!nearing || !rank) return first;
+  const candidates: NearCandidate[] = misses
+    .filter((miss) => !spelled.has(miss.node.id))
+    .map(({ node, kind, definition }) => ({ id: node.id, kind, label: labelOf(definition, node), texts: textsOf(definition, node) }));
+  if (candidates.length === 0) return first;
+  const later = (async (): Promise<SearchResult> => {
+    let scores: readonly NearScore[];
+    try {
+      scores = await rank(parsed.words, candidates);
+    } catch {
+      return first;
+    }
+    const missed = new Map(misses.filter((miss) => !spelled.has(miss.node.id)).map((miss) => [miss.node.id, miss]));
+    let added = false;
+    for (const { id, score, matched } of Array.isArray(scores) ? scores : []) {
+      const miss = missed.get(id);
+      // Only a candidate it was handed, once, and only a score that says near.
+      if (!miss || !(score > 0)) continue;
+      missed.delete(id);
+      added = true;
+      add(miss.node, miss.kind, miss.definition, miss.current, meantBy(textsOf(miss.definition, miss.node), parsed.words, typeof matched === "string" ? matched : undefined), Math.min(1, score));
+    }
+    return added ? answer() : first;
+  })();
+  return { ...first, later };
 }
 
 /**

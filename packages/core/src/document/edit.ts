@@ -1562,9 +1562,9 @@ class Editor {
     if (e.type === "list") f.of = e.of ?? f.of ?? "string";
     else delete f.of;
     if (e.format) f.format = e.format;
-    else if (e.type !== "number" && e.type !== "integer") delete f.format;
+    else if (e.type !== "number" && e.type !== "integer" && e.type !== "duration") delete f.format;
     // A range is a number's (FR-114): a field that is no longer one lets it go.
-    if (e.type !== "number" && e.type !== "integer") for (const key of ["min", "max", "step"]) delete f[key];
+    if (e.type !== "number" && e.type !== "integer" && e.type !== "duration") for (const key of ["min", "max", "step"]) delete f[key];
     if (f.default !== undefined && coerce(f.default, was, f) === undefined) delete f.default;
     else if (f.default !== undefined) f.default = coerce(f.default, was, f);
     if (was === e.type && e.type === "text") this.said.push(`${e.kind}'s ${e.field} ${e.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);
@@ -1575,7 +1575,7 @@ class Editor {
   private setRange(i: number, e: Doc) {
     const f = this.field(i, e.kind, e.field);
     if (!f) return;
-    if (f.type !== "number" && f.type !== "integer") return this.fail(i, "field", `${e.field} is ${f.type === "integer" ? "an" : "a"} ${f.type}, not a number; a range belongs on a number or integer field`);
+    if (f.type !== "number" && f.type !== "integer" && f.type !== "duration") return this.fail(i, "field", `${e.field} is ${f.type === "integer" ? "an" : "a"} ${f.type}, not a number; a range belongs on a number, integer or duration field`);
     const next: Doc = { ...f };
     for (const key of ["min", "max", "step"]) {
       if (e[key] === null) delete next[key];

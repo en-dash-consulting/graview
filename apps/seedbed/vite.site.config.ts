@@ -42,6 +42,7 @@ export default defineConfig({
       "@graview/tools/draft": fileURLToPath(new URL("../../packages/tools/src/draft.ts", import.meta.url)),
       "@graview/tools/keep": fileURLToPath(new URL("../../packages/tools/src/keep.ts", import.meta.url)),
       "@graview/tools/turn": fileURLToPath(new URL("../../packages/tools/src/turn.ts", import.meta.url)),
+      "@graview/tools/several": fileURLToPath(new URL("../../packages/tools/src/several.ts", import.meta.url)),
       "@graview/tools": pkg("tools"),
       "@graview/render/gpu": fileURLToPath(new URL("../../packages/render/src/gpu.ts", import.meta.url)),
       "@graview/render": pkg("render"),

@@ -26,8 +26,8 @@ agent tool that walks the graph.
        label: z.string().min(1).max(60),
        kickOff: z.string(),
        opponent: z.string(),
-       // Host-kept picture ("image"/"file"); `appLinkField()` ("app-link")
-       // is another app's address, drawn as the app `resolveApp` names.
+       // Host-kept picture ("image"/"file"); appLinkField() another app,
+       // named by resolveApp; phoneField(), placeField(), durationField().
        crest: imageField().optional(),
      }),
      plural: "Fixtures",

@@ -140,8 +140,10 @@ export function ChatPanel<S extends AnySchema>({
         via: () => viaNow.current,
         // The app it is mounted with, so `describe_place` says what a lens or the home shows.
         ...(app ? { app } : {}),
+        // The host's ranker, so the seat's search_graph finds near words as Find does.
+        near: ai.near,
       }),
-    [store, principal, author, views, app],
+    [store, principal, author, views, app, ai.near],
   );
   /* THE GRAPH FIRST, THE HOST'S MODEL AFTER IT: a host that passes `respond` answers in its place. */
   const answer = useMemo<Responder<S>>(() => respond ?? seatResponder<S>(ai), [respond, ai]);

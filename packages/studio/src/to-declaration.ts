@@ -7,8 +7,11 @@ import {
   createSchema,
   defineInvariant,
   defineNode,
+  durationField,
   nodeRef,
   nodeRefArgs,
+  phoneField,
+  placeField,
   type AnyMutationDefinition,
   type AnySchema,
   type EdgeDeclaration,
@@ -118,6 +121,12 @@ export function zodFor(type: FieldType, required: boolean, options?: readonly st
       ? z.number()
       : type === "integer"
         ? z.number().int()
+        : type === "phone"
+          ? phoneField()
+          : type === "place"
+            ? placeField()
+            : type === "duration"
+              ? durationField()
         : type === "url"
           ? z.url()
           : type === "email"
@@ -141,6 +150,7 @@ export function defaultFor(type: FieldType, options?: readonly string[]): unknow
   switch (type) {
     case "number":
     case "integer":
+    case "duration":
       return 0;
     case "datetime":
       return new Date().toISOString();

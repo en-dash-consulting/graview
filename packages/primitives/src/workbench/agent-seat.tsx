@@ -72,7 +72,7 @@ export function AgentSeat<S extends AnySchema>({
   onCall,
   run,
 }: AgentSeatProps<S>) {
-  const { store, views, principal, registerSeatWho, noteSeat, session, app } = useGraview<S>();
+  const { store, views, principal, registerSeatWho, noteSeat, session, app, ai } = useGraview<S>();
   /*
    * ONE ROBOT for the tab's seat and its chat: the seat registers its name
    * and the chat writes as it, so the two surfaces are one body in the city.
@@ -97,8 +97,9 @@ export function AgentSeat<S extends AnySchema>({
         derive: () => ({ pins: loadPins() }),
         places: () => views.places(),
         ...(app ? { app } : {}),
+        near: ai.near,
       }),
-    [store, principal, who, session, views, app],
+    [store, principal, who, session, views, app, ai.near],
   );
   const agent = useMemo(() => createInAppAdapter(runtime), [runtime]);
   const [busy, setBusy] = useState(false);

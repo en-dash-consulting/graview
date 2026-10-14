@@ -146,6 +146,14 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
 
 /** What made a hit a hit, when it was not the name: "Notes: …the van on Friday…". */
 export function WhyLine({ why }: { why: Hit["why"] }) {
+  // A record a near word found says so, and which word of it answered: "Near “florist” — Tags: flowers".
+  if (why.strength === "near") {
+    return (
+      <span style={quiet} data-testid="search-why" data-near="">
+        Near “{why.asked}”{why.field === "label" ? "" : ` — ${why.reading}: ${why.fragment}`}
+      </span>
+    );
+  }
   if (why.field === "label") return null;
   return (
     <span style={quiet} data-testid="search-why">

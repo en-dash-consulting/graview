@@ -12,6 +12,8 @@ import { capitalize } from "../capital.js";
 import { filesOf, isImage, type FileValue } from "../schema/files.js";
 import { fileWords } from "../schema/file-fields.js";
 import { momentAsRead, numberAsRead } from "../days.js";
+import { fieldSays, typedHref, typedWords } from "../schema/field-words.js";
+import type { TypedField } from "../schema/typed-fields.js";
 
 /*
  * BLOCKS, RESOLVED — what a list of blocks says, worked out once, for every
@@ -304,12 +306,21 @@ export function safeHref(value: unknown): string | undefined {
   }
 }
 
+/** What a block's field holds where it is a phone, a place or a duration: the document's type, else the definition's mark. */
+const typedOf = (ctx: BlockContext, key: string): TypedField | undefined => {
+  const type = ctx.fields[key]?.type;
+  return type === "phone" || type === "place" || type === "duration" ? type : fieldSays(ctx.definition, key);
+};
+
 function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof VIEW_FIELD_FORMATS)[number] | undefined, currency?: string): string {
   if (value === null || value === undefined || value === "") return NOTHING;
   if (typeof value === "boolean") return value ? "yes" : "no";
   if (as) return formatValue(value as Value, as, ctx.today, [], currency ? { ...ctx.money, currency } : ctx.money);
   const spec = ctx.fields[key];
   if (ctx.definition?.display?.format?.[key]) return valueWords(ctx.definition, key, value);
+  // A phone, a place or a duration (a computed sum of durations too), said as one.
+  const typed = typedWords(typedOf(ctx, key), value, ctx.money?.locale);
+  if (typed !== undefined) return typed;
   if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today, [], ctx.money);
   if (spec?.type === "datetime" && typeof value === "string") return momentAsRead(value, ctx.money?.locale);
   if (spec?.type === "enum" && typeof value === "string") return valueWords(ctx.definition, key, value);
@@ -359,7 +370,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
         if (!judged.ok) problem = judged.problem;
         else raw = judged.value !== null && typeof judged.value === "object" ? formatValue(judged.value, undefined, ctx.today) : judged.value;
       } else raw = Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : undefined;
-      const href = ctx.fields[block.field]?.type === "url" && block.as === undefined ? safeHref(raw) : undefined;
+      // A web address, a phone (`tel:`) and a place (the reader's maps app) are links.
+      const href = block.as !== undefined ? undefined : ctx.fields[block.field]?.type === "url" ? safeHref(raw) : typedHref(typedOf(ctx, block.field), raw);
       const text = safely(() => fieldText(block.field, raw, ctx, block.as, block.currency)) ?? NOTHING;
       const app = ctx.fields[block.field]?.type === "app-link" && block.as === undefined && typeof raw === "string" ? raw : undefined;
       return withProblem({ t: "field", field: block.field, label, text, ...(href ? { href } : {}), ...(app ? { app } : {}) }, problem);

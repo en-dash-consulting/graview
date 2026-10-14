@@ -4,6 +4,7 @@ import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
 import { isMarkdownField } from "./markdown.js";
 import { excerptOf } from "../excerpt-of.js";
+import { fieldSays, typedHref, typedWords } from "./field-words.js";
 import type { AnyNodeDefinition, PageFields } from "./types.js";
 
 /*
@@ -181,9 +182,13 @@ export function readableFields(
       (!Array.isArray(value) || value.some((one) => typeof one === "object" && one !== null));
     if (nested && format === undefined) continue;
     const stored = files[0] ? files.map((file) => (file.caption ? `${file.name} — ${file.caption}` : file.name)).join(", ") : Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
+    // A phone, a place or a duration, said as one: "(555) 123-4567", "1 h 30 min".
+    const typed = format ? undefined : fieldSays(definition, key);
+    const href = typedHref(typed, value);
     const whole = format
       ? format(value)
-      : Array.isArray(value) || typeof value === "boolean"
+      : typedWords(typed, value, options.locale) ??
+        (Array.isArray(value) || typeof value === "boolean"
         ? // Nobody says "false". A boolean is a state, and the words for a
           // state are words.
           stored
@@ -199,7 +204,7 @@ export function readableFields(
           ? momentAsRead(value, options.locale)
           : typeof value === "string" && isChoice(definition, key)
             ? valueWords(definition, key, value)
-            : stored;
+            : stored);
     const long = typeof value === "string" && isLongText(definition, key, whole);
     /*
      * A GLANCE SAYS PROSE BY ITS START (FR-180): its first paragraph, line
@@ -214,7 +219,7 @@ export function readableFields(
     const alone =
       // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, stored, alone, long, ...(markdown ? { markdown: true as const } : {}), ...(files[0] ? { files } : {}), ...(app ? { app } : {}) });
+    fields.push({ key, label, value: text, stored, alone, long, ...(markdown ? { markdown: true as const } : {}), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(href ? { href } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;

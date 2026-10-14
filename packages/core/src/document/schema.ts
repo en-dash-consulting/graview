@@ -56,8 +56,12 @@ const sentence = str(1, 500);
 const expression = str(1, 2000);
 const template = str(1, 300);
 
-/** `image` and `file` hold what the host stored (FR-162): a `FileValue`, its `href` a path on the host. */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file", "app-link"] as const;
+/**
+ * `image` and `file` hold what the host stored (FR-162): a `FileValue`, its
+ * `href` a path on the host. `phone` and `place` are words drawn as a link to
+ * call and to a map; `duration` is a whole number of minutes, said "1 h 30 min".
+ */
+export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file", "app-link", "phone", "place", "duration"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const FieldSpec = z

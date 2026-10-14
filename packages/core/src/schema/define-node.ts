@@ -100,6 +100,11 @@ export interface ReadableField {
    * address. A glance leaves it out of its words, as it does a file.
    */
   readonly app?: string;
+  /**
+   * WHERE A PHONE OR A PLACE TAKES ITS READER: a `tel:` link, or the
+   * reader's maps app. A face draws the value as a link to it.
+   */
+  readonly href?: string;
   /** The field name in words, after `display.labels` and humanizing. */
   readonly label: string;
   /** The value in words, after `display.format` and the built-in defaults: a day as a person reads it, a choice as it is declared. */

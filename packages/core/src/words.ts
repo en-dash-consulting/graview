@@ -23,3 +23,6 @@ export { viaSaid } from "./via.js";
 export { excerptOf } from "./excerpt-of.js";
 // Whether a field is written in Markdown (FR-180), as a record is read.
 export { isMarkdownField } from "./schema/markdown.js";
+// A phone, a place and a duration, said, linked, and read from what was typed.
+export { fieldSays, mapsHref, parseDuration, sayDuration, sayPhone, telHref, typedHref, typedWords } from "./schema/field-words.js";
+export { typedFieldOf } from "./schema/typed-field-of.js";

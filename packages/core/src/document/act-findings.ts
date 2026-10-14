@@ -21,8 +21,8 @@ function rangeFindings(document: GraviewDocument): Finding[] {
   for (const [kind, spec] of Object.entries(document.kinds)) {
     for (const [field, f] of Object.entries(spec.fields)) {
       const at = `kinds.${kind}.fields.${field}`;
-      const numeric = f.type === "number" || f.type === "integer";
-      for (const key of ["min", "max", "step"] as const) if (!numeric && f[key] !== undefined) out.push(error("field-range", `${at}.${key}`, `"${key}" belongs only on a number or integer field`));
+      const numeric = f.type === "number" || f.type === "integer" || f.type === "duration";
+      for (const key of ["min", "max", "step"] as const) if (!numeric && f[key] !== undefined) out.push(error("field-range", `${at}.${key}`, `"${key}" belongs only on a number, integer or duration field`));
       if (numeric && f.min !== undefined && f.max !== undefined && f.min > f.max) out.push(error("field-range", `${at}.max`, `"max" (${f.max}) is below "min" (${f.min})`));
       if (numeric && f.step !== undefined && !(f.step > 0)) out.push(error("field-range", `${at}.step`, '"step" is more than zero, like 1 or 0.5'));
       // A default is a value the field takes, so it is inside the field's range.

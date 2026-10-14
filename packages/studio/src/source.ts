@@ -79,8 +79,9 @@ export function zodSource(type: FieldType, required: boolean, options?: readonly
     return required ? "markdownField()" : "markdownField().optional()";
   }
   // Another app's address (FR-171), a picture, a document (FR-162): the framework's own field, imported beside `z`.
-  if (type === "app-link" || type === "image" || type === "file") {
-    const helper = type === "app-link" ? "appLinkField" : type === "image" ? "imageField" : "fileField";
+  // A phone, a place and a length of time likewise: a tel: link, a map, minutes said "1 h 30 min".
+  if (type === "app-link" || type === "image" || type === "file" || type === "phone" || type === "place" || type === "duration") {
+    const helper = type === "app-link" ? "appLinkField" : type === "image" ? "imageField" : type === "file" ? "fileField" : (`${type}Field` as const);
     if (uses) uses[helper] = true;
     return required ? `${helper}()` : `${helper}().optional()`;
   }
@@ -108,7 +109,7 @@ export function zodSource(type: FieldType, required: boolean, options?: readonly
 }
 
 const defaultSource = (type: FieldType, options?: readonly string[]): string =>
-  type === "number" || type === "integer" ? "0" : type === "datetime" ? "new Date().toISOString()" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
+  type === "number" || type === "integer" || type === "duration" ? "0" : type === "datetime" ? "new Date().toISOString()" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
 
 /**
  * The lines of a `defineNode` the studio carries from the checkout rather
