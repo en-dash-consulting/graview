@@ -6,7 +6,7 @@ import { error, warning, type Finding } from "./findings.js";
 import { documentOf } from "./remembered.js";
 import { fieldOf } from "./field-spec.js";
 import { isRepeatField, repeatedBy, repeatKey } from "../repeat.js";
-import { FORMAT, FORMAT_VERSION, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
+import { FORMAT, FORMAT_VERSION, type ComputedSpec, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
 
 /**
  * A DECLARATION, WRITTEN AS A DOCUMENT (FR-01).
@@ -30,6 +30,17 @@ export interface ToDocumentResult {
 export { documentOf, rememberDocument } from "./remembered.js";
 
 /** Write an app as a declaration document, naming every surface the document cannot say. */
+/** A declaration's computed fields as a document says them: without `as`, an expression alone as its words. */
+function unsaid(computed: Readonly<Record<string, string | { readonly expr: string; readonly as?: string }>>): Record<string, ComputedSpec> {
+  return Object.fromEntries(
+    Object.entries(computed).map(([name, entry]) => {
+      if (typeof entry === "string") return [name, entry];
+      const { as: _, ...rest } = structuredClone(entry);
+      return [name, Object.keys(rest).length === 1 ? rest.expr : rest];
+    }),
+  ) as Record<string, ComputedSpec>;
+}
+
 export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentResult {
   const remembered = documentOf(app);
   if (remembered) return { document: remembered, findings: [] };
@@ -97,8 +108,8 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       ...(glance.length > 0 ? { glance } : {}),
       ...(page ? { page } : {}),
       ...(Object.keys(edges).length > 0 ? { edges: edges as KindSpec["edges"] } : {}),
-      // Computed fields are already data: an expression and its words (FR-83).
-      ...(definition?.computed && Object.keys(definition.computed).length > 0 ? { computed: structuredClone(definition.computed) } : {}),
+      // Computed fields are already data: an expression and its words (FR-83). `as` is the declaration's, or what a compile read; a document says neither.
+      ...(definition?.computed && Object.keys(definition.computed).length > 0 ? { computed: unsaid(definition.computed) } : {}),
       ...(definition?.fieldRoles ? { fieldRoles: { ...definition.fieldRoles } } : {}),
       ...(definition?.people ? { people: true } : {}),
       ...(definition?.archives === false ? { archives: false as const } : {}),

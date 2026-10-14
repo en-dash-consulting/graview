@@ -20,6 +20,7 @@ import { upgradeDocument } from "./upgrade.js";
 import { homeOf, validateViews, viewsOf } from "./views.js";
 import { farEnd } from "./far-end.js";
 import { parsedComputed, workedOutAlone } from "./computed.js";
+import { durationsOf } from "./durations.js";
 import { pageFieldFindings } from "./page-fields.js";
 import {
   build,
@@ -479,10 +480,13 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
     const labelField = defaultLabelField(spec);
     const labelSource = spec.label ?? (labelField ? `{${labelField}}` : undefined);
     const computed = parsedComputed(spec);
+    // Which of them work out a length of time, read from their parse here, where the parser is (`durations.ts`).
+    const durations = computed ? durationsOf(document, kind, [...computed]) : [];
     kinds[kind] = {
       ...(labelSource ? { label: saidAsDeclared(parseTemplate(labelSource), spec.fields) } : {}),
       ...(spec.describe ? { describe: saidAsDeclared(parseTemplate(spec.describe), spec.fields) } : {}),
       ...(computed ? { computed: [...computed] } : {}),
+      ...(durations.length > 0 ? { durations } : {}),
     };
   }
 

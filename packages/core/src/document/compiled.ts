@@ -104,6 +104,8 @@ export interface KindPlan {
   readonly describe?: readonly TemplatePart[];
   /** Its computed fields, parsed, in declaration order. */
   readonly computed?: readonly (readonly [string, Expr])[];
+  /** Those of them that work out a length of time, read from their parse as it was compiled (`durations.ts`): a face says them as durations. */
+  readonly durations?: readonly string[];
 }
 
 export interface ActPlan {
@@ -362,7 +364,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       // How a date repeats, kept beside it (`repeat.ts`); none (null) when it no longer does.
       if (f.repeats) shape[repeatKey(field)] = z.optional(repeatSchema());
     }
-    const { label: labelParts, describe: describeParts } = plan.kinds[kind] ?? {};
+    const { label: labelParts, describe: describeParts, durations } = plan.kinds[kind] ?? {};
     const computed = Object.entries(spec.computed ?? {}).map(([name, field]) => [name, typeof field === "string" ? { expr: field } : field] as const);
     // A computed field's words are said like a field's: its label, where it has one.
     const labels = Object.fromEntries([
@@ -390,7 +392,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...said("fieldRoles"),
       ...said("people"),
       archives: spec.archives,
-      ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
+      // As the document says them, each the compile read as a length of time saying `as: "duration"` (`durations.ts`).
+      ...(computed.length > 0 ? { computed: Object.fromEntries(computed.map(([n, c]) => [n, durations?.includes(n) ? { ...c, as: "duration" } : spec.computed![n]])) } : {}),
       ...(named || spec.glance || spec.page
         ? { display: { ...(named ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
         : {}),

@@ -285,17 +285,34 @@ describe("a TypeScript declaration's phone, place and duration fields", () => {
     expect(durationField().safeParse(1.5).success).toBe(false);
   });
 
-  it("say a computed sum of durations as a duration, and one declared as: \"duration\"", () => {
+  it("say a computed field declared as: \"duration\" as a duration, and read nothing from an expression's words", () => {
     const week = defineNode("week", {
       fields: z.object({ name: z.string(), extra: durationField().optional() }),
       edges: { sessions: { to: ["session"] } },
-      computed: { total: "sum(out('sessions'), length)", padded: { expr: "total + extra", label: "With extra" }, said: { expr: "extra * 2", as: "duration" }, count: "count(out('sessions'))" },
+      computed: { total: { expr: "sum(out('sessions'), length)", as: "duration" }, guessed: "sum(out('sessions'), length)", said: { expr: "extra * 2", as: "duration" }, count: "count(out('sessions'))" },
     });
     createSchema([session, week]);
     expect(fieldSays(week, "total")).toBe("duration");
-    expect(fieldSays(week, "padded")).toBe("duration");
     expect(fieldSays(week, "said")).toBe("duration");
+    // A TypeScript declaration has no compile step to read its parse: it says what it works out.
+    expect(fieldSays(week, "guessed")).toBeUndefined();
     expect(fieldSays(week, "count")).toBeUndefined();
+  });
+
+  it("read a document's computed durations from the parsed expression, not its words", () => {
+    const doc = sessions() as unknown as { kinds: Record<string, { computed: Record<string, string> }> };
+    // Words that looked like a sum of durations to a reading of the text, and are not one.
+    doc.kinds["project"]!.computed = {
+      spent: "sum(out('sessions'), length)",
+      negated: "-spent",
+      across: "budget - sum(in('sessions'), length)",
+      ratio: "spent / 2",
+    };
+    const project = compiled(doc).schema.tryDefinition("project");
+    expect(fieldSays(project, "spent")).toBe("duration");
+    expect(fieldSays(project, "negated")).toBe("duration");
+    expect(fieldSays(project, "across")).toBeUndefined();
+    expect(fieldSays(project, "ratio")).toBeUndefined();
   });
 
   it("are said by a record's facts as a document's are", () => {

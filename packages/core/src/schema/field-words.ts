@@ -1,7 +1,6 @@
 import { localeFor, numberAsRead } from "../days.js";
 import { typedFieldOf } from "./typed-field-of.js";
 import type { TypedField } from "./typed-fields.js";
-import { FELLOWS } from "./fellows.js";
 
 /*
  * A PHONE NUMBER, A PLACE AND A DURATION, SAID AND LINKED (`typed-fields.ts`
@@ -100,71 +99,21 @@ const ownField = (definition: Readable | undefined, key: string): TypedField | u
 };
 
 /*
- * A SUM OF DURATIONS IS A DURATION. A computed field works out a number, and
- * "the time a season was rehearsed" — `sum(out('rehearsals'), length)` over
- * a `duration` field — was said "135" where each rehearsal said "1 h 30
- * min". It says a duration where it is said to (`as: "duration"`), or where
- * it is a duration field of its own kind, a sum, least or most of one across
- * a relation (every kind declared beside it that has a field of that name
- * holds a duration in it), another computed field that is one, or two of
- * these added or taken apart. A duration times a rate, or a count, is a
- * number. Read as a record is first drawn, and remembered.
+ * A COMPUTED FIELD THAT WORKS OUT A LENGTH OF TIME says so: `as:
+ * "duration"` on its declaration, which a document's compile writes for each
+ * one it reads as a sum of durations from the parsed expression
+ * (`document/durations.ts`) and a TypeScript declaration says itself. A face
+ * reads that and nothing of the expression's words.
  */
-const WORKED_OUT = new WeakMap<object, Map<string, boolean>>();
-
-/** An expression's terms joined by `+` and `-` at its top level, outside every parenthesis and quote; a sign before the first term is a term of nothing. */
-function terms(expr: string): string[] {
-  const out: string[] = [];
-  let depth = 0;
-  let quote = "";
-  let from = 0;
-  for (let i = 0; i < expr.length; i++) {
-    const c = expr[i]!;
-    if (quote) quote = c === quote ? "" : quote;
-    else if (c === "'" || c === '"') quote = c;
-    else if (c === "(" || c === "[") depth++;
-    else if (c === ")" || c === "]") depth--;
-    else if ((c === "+" || c === "-") && depth === 0) {
-      out.push(expr.slice(from, i));
-      from = i + 1;
-    }
-  }
-  return [...out, expr.slice(from)].map((term) => term.trim());
-}
-
-/*
- * Read from the expression's words rather than its parse, so a face that
- * says a record carries no parser of its own: a term is a field (`length`),
- * a field across a relation (`session.length`), or a sum, least or most
- * whose value is a field (`sum(out('sessions'), length)`).
- */
-function worksOutADuration(definition: Readable, key: string, depth = 0): boolean {
-  const computed = definition.computed as Record<string, string | { readonly expr: string; readonly as?: string }> | undefined;
-  const entry = computed && Object.hasOwn(computed, key) ? computed[key]! : undefined;
-  if (entry === undefined || depth > 8) return false;
-  if (typeof entry === "object" && entry.as === "duration") return true;
-  const known = WORKED_OUT.get(definition) ?? new Map<string, boolean>();
-  WORKED_OUT.set(definition, known);
-  if (known.has(key)) return known.get(key)!;
-  const fellows = FELLOWS.get(definition) ?? [definition];
-  // Across a relation: every kind beside it that has a field of this name holds a duration in it.
-  const far = (name: string) => {
-    const types = fellows.filter((one) => Object.hasOwn(shapeOf(one), name)).map((one) => ownField(one, name));
-    return types.length > 0 && types.every((type) => type === "duration");
-  };
-  const lasts = (term: string): boolean => {
-    if (/^[A-Za-z_]\w*$/.test(term)) return ownField(definition, term) === "duration" || worksOutADuration(definition, term, depth + 1);
-    const across = /^[A-Za-z_][\w.]*\.([A-Za-z_]\w*)$/.exec(term) ?? /^(?:sum|min|max)\s*\([^]*,\s*(?:[A-Za-z_]\w*\.)*([A-Za-z_]\w*)\s*\)$/.exec(term);
-    return across !== null && far(across[1]!);
-  };
-  const says = terms(typeof entry === "string" ? entry : entry.expr).every(lasts);
-  known.set(key, says);
-  return says;
-}
+const workedOutAs = (definition: Readable, key: string): unknown => {
+  const computed = definition.computed as Record<string, string | { readonly as?: string }> | undefined;
+  const entry = computed && Object.hasOwn(computed, key) ? computed[key] : undefined;
+  return typeof entry === "object" ? entry.as : undefined;
+};
 
 /** What a kind's field holds where it is a phone, a place or a duration: a stored field's mark, or a computed field that works out a length of time. */
 export function fieldSays(definition: Readable | undefined, key: string): TypedField | undefined {
-  return ownField(definition, key) ?? (definition && worksOutADuration(definition, key) ? "duration" : undefined);
+  return ownField(definition, key) ?? (definition && workedOutAs(definition, key) === "duration" ? "duration" : undefined);
 }
 
 /** A phone, a place or a duration in words; undefined for a value that is not one. */
