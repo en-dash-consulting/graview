@@ -298,7 +298,7 @@ export function describeApp<S extends AnySchema>(
   // WHAT IS NEVER SET ASIDE (FR-173): a kind whose records are kept or removed has no archive, unarchive or merge.
   const kept = app.schema.definitions.filter((definition) => definition.archives === false).map((definition) => pluralOf(app.schema, definition.kind).toLowerCase());
   if (kept.length > 0) {
-    lines.push("", "## Never archived", `${capitalize(list(kept))} ${kept.length === 1 ? "is" : "are"} kept or removed, never archived or merged: no archive-, unarchive- or merge- act is offered on ${kept.length === 1 ? "it" : "them"}.`);
+    lines.push("", "## Never archived", `${capitalize(list(kept))} are kept or removed, never archived or merged: no archive-, unarchive- or merge- act is offered on them.`);
   }
 
   if (app.policy) {

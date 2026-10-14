@@ -30,7 +30,7 @@ describe("a document's kind that is never archived", () => {
   });
 
   it("is said by describeApp, and not when every kind archives", () => {
-    expect(describeApp(actsOf(neverArchived).app)).toMatch(/## Never archived\nCategories is kept or removed, never archived or merged/);
+    expect(describeApp(actsOf(neverArchived).app)).toMatch(/## Never archived\nCategories are kept or removed, never archived or merged/);
     expect(describeApp(actsOf(vendors).app)).not.toMatch(/Never archived/);
   });
 
