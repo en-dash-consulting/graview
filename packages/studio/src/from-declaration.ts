@@ -3,7 +3,7 @@ import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
-import { DECLARED_KIND, type FieldType } from "./meta.js";
+import { DECLARED_KIND, FIELD_TYPES, type FieldType } from "./meta.js";
 
 /*
  * A DECLARATION READ INTO THE GRAPH. Every kind, field, edge, act, rule,
@@ -33,6 +33,15 @@ interface ZodDef {
 const defOf = (type: unknown): ZodDef =>
   ((type as { def?: ZodDef }).def ?? (type as { _def?: ZodDef })._def ?? {}) as ZodDef;
 
+/*
+ * The types zod's own shape says, read below. Any other type the document
+ * reads a field as — a picture, a file, another app's address (FR-171), and
+ * whatever the document learns next — is taken in the document's words, so
+ * a type the document gains is one the studio reads without a line here.
+ */
+const READ_FROM_ZOD: ReadonlySet<string> = new Set(["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email"]);
+const isFieldType = (type: string): type is FieldType => (FIELD_TYPES as readonly string[]).includes(type);
+
 /** A zod field's type, as the studio names types. */
 export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly required: boolean; readonly options?: readonly string[] } {
   let def = defOf(type);
@@ -41,6 +50,8 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
     required = false;
     def = defOf(def.innerType);
   }
+  const tagged = fieldSpecOf(type)?.type;
+  if (tagged !== undefined && !READ_FROM_ZOD.has(tagged) && isFieldType(tagged)) return { type: tagged, required };
   switch (def.type) {
     case "number":
     case "int":
