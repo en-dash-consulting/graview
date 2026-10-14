@@ -1,7 +1,8 @@
 import { fieldOf } from "../document/field-spec.js";
 import type { FieldSpec } from "../document/schema.js";
 import { nameKey } from "../labels.js";
-import { article, edgeWords, fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "../schema/define-node.js";
+import { article, fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "../schema/define-node.js";
+import { edgeWords } from "../schema/value-words.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition, EdgeDeclaration } from "../schema/types.js";
 

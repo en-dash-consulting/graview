@@ -1,5 +1,7 @@
-import { numberAsRead, valueWords, type AnyNodeDefinition, type AnySchema } from "@graview/core";
+import { numberAsRead, type AnyNodeDefinition, type AnySchema } from "@graview/core";
+import { valueWords } from "@graview/core/words";
 import type { ViewProps } from "@graview/react/provider";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * WHERE A DISTRICT'S RECORDS STAND, as one bar under its name from

@@ -1,4 +1,5 @@
-import { edgeWords, humanizeField, labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
+import { humanizeField, labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { useGraph, useGraview } from "@graview/react/provider";
 import { Chip } from "./primitives/index.js";
 import { hueFor } from "@graview/render";

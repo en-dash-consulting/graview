@@ -1,4 +1,5 @@
-import { fieldWords, humanizeField as humanize, valueWords, type AnySchema } from "@graview/core";
+import { fieldWords, humanizeField as humanize, type AnySchema } from "@graview/core";
+import { valueWords } from "@graview/core/words";
 import { pageSections, parseDuration, readableFields } from "@graview/core/words";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";

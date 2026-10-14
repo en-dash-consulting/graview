@@ -46,6 +46,7 @@ export default defineConfig({
       // The narrow entries (FR-57): the subpath first, or the bare-name alias swallows it.
       "@graview/layout/view": fileURLToPath(new URL("./packages/layout/src/view.ts", import.meta.url)),
       "@graview/layout/sizes": fileURLToPath(new URL("./packages/layout/src/sizes.ts", import.meta.url)),
+      "@graview/layout/view-moves": fileURLToPath(new URL("./packages/layout/src/view-moves.ts", import.meta.url)),
       "@graview/layout": src("layout"),
       "@graview/tools/cli": fileURLToPath(new URL("./packages/tools/src/cli.ts", import.meta.url)),
       "@graview/tools/frame": fileURLToPath(new URL("./packages/tools/src/frame.ts", import.meta.url)),

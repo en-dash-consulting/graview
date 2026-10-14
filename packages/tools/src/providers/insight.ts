@@ -1,4 +1,5 @@
-import { counted, edgeWords, labelOf, type AnySchema } from "@graview/core";
+import { counted, labelOf, type AnySchema } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import type { AffordanceProvider, Observation } from "../types.js";
 
 /**

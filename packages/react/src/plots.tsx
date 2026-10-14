@@ -5,6 +5,7 @@ import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactEleme
 import { useGraph, useGraview } from "./context.js";
 import { useFlagged } from "./emphasis.js";
 import { ownRecords, useSinceLastVisit } from "./last-visit.js";
+import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * THE GROUND UNDER A DISTRICT. The layout gives every district a plot on

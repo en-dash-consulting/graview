@@ -33,6 +33,7 @@ import { useSceneGo } from "./seat-move.js";
 import { AnswerArgs } from "./workbench/answer-args.js";
 import { CHOOSING_CSS, useChoosing } from "./choosing.js";
 import { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * A KIND OPENS TO SOMETHING USEFUL.

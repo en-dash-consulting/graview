@@ -1,6 +1,8 @@
-import { counted, edgeWords, humanizeField, labelOf, SCENE_LAYERS, type AnySchema, type HasLog, type GraphReader, type NodeOfSchema } from "@graview/core";
+import { counted, humanizeField, labelOf, SCENE_LAYERS, type AnySchema, type HasLog, type GraphReader, type NodeOfSchema } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { provenanceWords, provisionalLinks } from "@graview/core/provenance";
-import { type InterpolatedLayout, edgeSelectionId, edgeOfSelection } from "@graview/layout";
+import { type InterpolatedLayout, edgeOfSelection } from "@graview/layout";
+import { edgeSelectionId } from "@graview/layout/view-moves";
 import { CONNECTOR_DASH, PROVISIONAL_DASH, PROVISIONAL_OPACITY, connectorStroke, styleFor } from "@graview/render";
 import { Suspense, useMemo, useLayoutEffect, useState } from "react";
 import type { ActivityMark } from "./activity.js";

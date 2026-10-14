@@ -1,5 +1,6 @@
 import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead } from "../days.js";
-import { fieldWords, labelOf, nounOf, valueWords, type ReadableField } from "./define-node.js";
+import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.js";
+import { valueWords } from "./value-words.js";
 import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
 import { isMarkdownField } from "./markdown.js";

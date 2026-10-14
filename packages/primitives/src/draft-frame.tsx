@@ -7,6 +7,7 @@ import { LINK } from "./chat.js";
 import { declaredLensView } from "./declared-lenses.js";
 import { useLensKeeping } from "./lens-keeping.js";
 import { problemsShown, useSceneGo } from "./seat-move.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * A VIEW THE SEAT DREW, IN PLACE OF THE PICTURE — fetched when the seat

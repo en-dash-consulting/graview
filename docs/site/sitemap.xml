@@ -10,14 +10,14 @@
   <url><loc>https://graview.dev/docs/getting-started.html</loc><lastmod>2026-10-11</lastmod><!-- 6bb6255c0037 --></url>
   <url><loc>https://graview.dev/docs/index.html</loc><lastmod>2026-10-14</lastmod><!-- f417aed1c14d --></url>
   <url><loc>https://graview.dev/docs/packages.html</loc><lastmod>2026-10-13</lastmod><!-- 6f4fc61c391e --></url>
-  <url><loc>https://graview.dev/docs/packages/core.html</loc><lastmod>2026-10-14</lastmod><!-- b240ccc5fc58 --></url>
+  <url><loc>https://graview.dev/docs/packages/core.html</loc><lastmod>2026-10-14</lastmod><!-- 9ce833e69ca7 --></url>
   <url><loc>https://graview.dev/docs/packages/create-graview.html</loc><lastmod>2026-10-13</lastmod><!-- fa515f35ebbf --></url>
   <url><loc>https://graview.dev/docs/packages/embed.html</loc><lastmod>2026-10-13</lastmod><!-- 289c76626201 --></url>
   <url><loc>https://graview.dev/docs/packages/graview.html</loc><lastmod>2026-10-13</lastmod><!-- 7ca9d8acc0d0 --></url>
   <url><loc>https://graview.dev/docs/packages/guest.html</loc><lastmod>2026-10-13</lastmod><!-- 9d219f428c6e --></url>
-  <url><loc>https://graview.dev/docs/packages/layout.html</loc><lastmod>2026-10-13</lastmod><!-- 4dfc1aeda70e --></url>
+  <url><loc>https://graview.dev/docs/packages/layout.html</loc><lastmod>2026-10-14</lastmod><!-- 6787d47aa42d --></url>
   <url><loc>https://graview.dev/docs/packages/pages.html</loc><lastmod>2026-10-13</lastmod><!-- a24e6dcfbd4a --></url>
-  <url><loc>https://graview.dev/docs/packages/primitives.html</loc><lastmod>2026-10-14</lastmod><!-- 45360629163e --></url>
+  <url><loc>https://graview.dev/docs/packages/primitives.html</loc><lastmod>2026-10-14</lastmod><!-- a3d5781f8d45 --></url>
   <url><loc>https://graview.dev/docs/packages/react.html</loc><lastmod>2026-10-13</lastmod><!-- b9908907e769 --></url>
   <url><loc>https://graview.dev/docs/packages/render.html</loc><lastmod>2026-10-13</lastmod><!-- 8ed22e9baa32 --></url>
   <url><loc>https://graview.dev/docs/packages/ship.html</loc><lastmod>2026-10-13</lastmod><!-- a447c3676983 --></url>
@@ -42,5 +42,5 @@
   <url><loc>https://graview.dev/docs/skills/graview-studio.html</loc><lastmod>2026-10-13</lastmod><!-- b89224b7f45b --></url>
   <url><loc>https://graview.dev/docs/skills/graview-view-drawing.html</loc><lastmod>2026-10-13</lastmod><!-- 3b0c997f5469 --></url>
   <url><loc>https://graview.dev/docs/skills/graview-worker-view.html</loc><lastmod>2026-10-13</lastmod><!-- 4d57a31a60cb --></url>
-  <url><loc>https://graview.dev/docs/stability.html</loc><lastmod>2026-10-14</lastmod><!-- 2585f9ccf74e --></url>
+  <url><loc>https://graview.dev/docs/stability.html</loc><lastmod>2026-10-14</lastmod><!-- b1bced0f992c --></url>
 </urlset>

@@ -1,4 +1,5 @@
-import { edgeWords, labelOf, type AnySchema, type Arrangement, type Violation } from "@graview/core";
+import { labelOf, type AnySchema, type Arrangement, type Violation } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { fieldSpecOf } from "@graview/core/blocks";
 import { districtState } from "@graview/core/city";
 import { readableFields } from "@graview/core/words";

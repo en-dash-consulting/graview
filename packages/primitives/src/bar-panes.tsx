@@ -9,6 +9,7 @@ import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.j
 export { Here } from "./here.js";
 /* What has happened, on the routed face's bar (FR-152): `BarActivity`. */
 export { ActivityRail } from "./workbench/activity.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * WHAT IS BEHIND THE BAR'S TOOLS (FR-131), fetched when one is first reached

@@ -1,6 +1,5 @@
 import {
   brokenWords,
-  edgeWords,
   weekdayAsRead,
   kindPath,
   labelOf,
@@ -17,6 +16,7 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { placesFrom } from "@graview/core/seat";
 import { readableFields } from "@graview/core/words";
 import { search, squeeze } from "@graview/core/search";

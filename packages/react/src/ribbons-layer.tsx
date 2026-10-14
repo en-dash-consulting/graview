@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElemen
 import { districtOf, mapChoice, ribbonsOf, ribbonSentence } from "./map-choice.js";
 import { ribbonWidth } from "./ribbon-width.js";
 import { loopPoints, midpointOf, onCanvas, pathOf, routeOnTheGround, type Box, type PlotLike, type Point } from "./ribbons.js";
+import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * THE RELATIONS FROM ALTITUDE: one ribbon per relation between two

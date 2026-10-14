@@ -2,7 +2,8 @@
 /* React's act() wants to know it is in a test environment. */
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
-import { EMPTY_VIEW, edgeSelectionId, type ViewState } from "@graview/layout";
+import { EMPTY_VIEW, type ViewState } from "@graview/layout";
+import { edgeSelectionId } from "@graview/layout/view-moves";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";

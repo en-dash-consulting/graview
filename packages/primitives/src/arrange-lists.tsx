@@ -1,7 +1,6 @@
 import {
   labelOf,
   LOCAL_LAYERS,
-  valueWords,
   type AnySchema,
   type Arrangeable,
   type ArrangeOffer,
@@ -11,9 +10,11 @@ import {
   type Condition,
   type DateBucket,
 } from "@graview/core";
+import { valueWords } from "@graview/core/words";
 import { conditionHolds, matches } from "@graview/core/arrange";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { directionWords, inSentence, TYPED_FROM } from "./arrange-bar.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * THE ARRANGING LINE'S LISTS: what "Sort", "Group", "Filter" and "Arrange"

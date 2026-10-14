@@ -1,5 +1,6 @@
 import { humanizeField, SCENE_LAYERS } from "@graview/core";
-import { type Connector, edgeSelectionId, edgeOfSelection } from "@graview/layout";
+import { type Connector, edgeOfSelection } from "@graview/layout";
+import { edgeSelectionId } from "@graview/layout/view-moves";
 import { CONNECTOR_DASH, PROVISIONAL_DASH, PROVISIONAL_OPACITY, connectorStroke, connectorWidth } from "@graview/render";
 import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";

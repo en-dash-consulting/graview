@@ -26,6 +26,7 @@ import { problemsMoved, type Store } from "./store.js";
 export { brokenLineOf, ruleLineOf } from "./document/rule-line.js";
 export { problemWords, ruleLineWords, ruleSpacing, ruleSpoken, ruleText } from "./invariants/line.js";
 export type { LineWords, LinedRule } from "./document/rule-line.js";
+import "./index.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /** A document field's declared format: a margin a percent, a price money in its unit, a date a day. */
 function formatsOf(declared: NonNullable<RuleShapeSource["declared"]>): NonNullable<LineWords["formatOf"]> {

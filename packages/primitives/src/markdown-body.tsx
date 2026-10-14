@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { headingLevel, markdownBlocks, type MarkdownBlock, type MarkdownInline } from "@graview/core/markdown";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * PROSE WRITTEN IN MARKDOWN, DRAWN (FR-180): fetched the first time a record

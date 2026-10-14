@@ -1,4 +1,5 @@
-import { counted, edgeWords, type AnySchema } from "@graview/core";
+import { counted, type AnySchema } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 
 /*
  * WHAT THE MAP IS ASKED, AND WHAT ITS RELATIONS ARE — without the map.

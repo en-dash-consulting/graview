@@ -1,4 +1,5 @@
-import { counted, edgeWords, isCurrent, labelOf, layer, nounOf, numberAsRead, pluralLabel, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { counted, isCurrent, labelOf, layer, nounOf, numberAsRead, pluralLabel, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { aggregateId, kindCardId, withFocus, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 // Drawn only with the scene, whose face has fetched `@graview/react` already.
 import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
@@ -10,6 +11,7 @@ import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyn
 import { barPanes } from "./bar-panes-door.js";
 import { problemsNamed } from "./problem-count.js";
 import { problemsAsked, putDownProblemsAsked, subscribeToProblemsAsked } from "./map-asks.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 // The problems' rows are the bar's own (`ProblemRows`), fetched with its panes: one set of words, one set of repairs.
 type RowsProps = Parameters<typeof import("./bar-panes.js").ProblemRows>[0];

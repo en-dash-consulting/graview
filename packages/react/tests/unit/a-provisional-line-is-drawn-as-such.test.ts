@@ -1,5 +1,5 @@
 import { createSchema, defineNode, KEEP_LINK, Store } from "@graview/core";
-import { edgeSelectionId } from "@graview/layout";
+import { edgeSelectionId } from "@graview/layout/view-moves";
 import { PROVISIONAL_DASH, CONNECTOR_DASH } from "@graview/render";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";

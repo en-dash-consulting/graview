@@ -486,6 +486,7 @@ export default defineConfig({
       "@graview/core": framework("core/src/index.ts"),
       "@graview/layout/view": framework("layout/src/view.ts"),
       "@graview/layout/sizes": framework("layout/src/sizes.ts"),
+      "@graview/layout/view-moves": framework("layout/src/view-moves.ts"),
       "@graview/layout": framework("layout/src/index.ts"),
       "@graview/tools/cli": framework("tools/src/cli.ts"),
       "@graview/tools/frame": framework("tools/src/frame.ts"),

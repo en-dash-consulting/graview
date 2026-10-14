@@ -12,6 +12,24 @@
  * Nothing in this module's files may import a barrel: not this package's,
  * and not `@graview/react` (`@graview/react/provider` instead).
  */
+/*
+ * TIED DOORS (the headroom after 0.1.29). A bundler splits what a page loads
+ * first by WHICH of its doors (each part fetched with `import()`) reach each
+ * file: the frame's files reached by the inspector and the seat's panel went
+ * in one chunk, those reached by the inspector alone in another, and a page
+ * fetched twenty-three chunks before it drew — each with its own list of
+ * names in and out, each compressed alone. A door is fetched by a page that
+ * has already drawn its frame, so each door imports the barrel the page drew
+ * first — this one, `@graview/react/provider` or `@graview/core` — for
+ * nothing but that: the files every door reaches are then one set, and a
+ * hosted page loads thirteen chunks before it draws, about 4 KB gzipped
+ * less. The import costs a door nothing at run time (what it names is
+ * already there). Only a barrel every page that fetches the door has drawn
+ * first: the embed's faces and a guest's host are fetched by pages that
+ * never load `@graview/embed`'s or `@graview/guest/host`'s whole barrel, and
+ * a door tied to one of those carried it in.
+ * `a-hosted-page-keeps-to-its-budget` counts the chunks.
+ */
 /* The sheet without the scene's own rules: the scene face draws those (`sceneCss`, from `./scene`) — FR-104. */
 export { DARK, GRAVIEW_BRAND, LIGHT, SCHEMES, themeBaseCss, themeVariables } from "./theme.js";
 export type { Brand, Scheme, ThemeCssOptions, ThemeTokens } from "./theme.js";
@@ -21,9 +39,8 @@ export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, F
 export { scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, type ScenePlaces } from "./scene-places.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export type { HostAction } from "./profile.js";
-export { createNoticeBoard, NoticeBoardContext, Notices, TOAST_MS } from "./notices.js";
+export { createNoticeBoard, fetchNotices, NoticeBoardContext, Notices, TOAST_MS } from "./notices.js";
 export { appKeyOf, readerLenses } from "./reader-lenses.js";
-export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { Standing, StandingDot, standingWords } from "./workbench/standing.js";
 export { descentTarget } from "./workbench/descent.js";

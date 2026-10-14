@@ -1,6 +1,7 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { NoticeBoard } from "./notices.js";
 import { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, WAY_BACK_MS } from "./way-back.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /** The one offer on the board: an act's own replaces the one before. */
 const OFFER = "way-back";

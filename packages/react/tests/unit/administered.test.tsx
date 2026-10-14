@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { createSchema, declareInstallation, defineNode, Store, type Principal } from "@graview/core";
-import { EMPTY_VIEW, withShown } from "@graview/layout";
+import { EMPTY_VIEW } from "@graview/layout";
+import { withShown } from "@graview/layout/view-moves";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";

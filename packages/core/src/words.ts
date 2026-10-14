@@ -5,7 +5,9 @@
  * `isLongText`, `describeNode`), two records of one name told apart
  * (`tellApart`), what an argument asks for (`argShape`, `describeArg`), an
  * argument and a refusal in the record's own words (`argumentWords`,
- * `failureWords`) and the channel a change came through (`viaSaid`).
+ * `failureWords`), the channel a change came through (`viaSaid`), and a
+ * field's value and a relation in the declaration's words (`valueWords`,
+ * `edgeWords`).
  *
  * Apart from `@graview/core` because a bundler places a whole file in a
  * page's first chunk when the first chunk can reach it and any chunk uses
@@ -19,6 +21,7 @@ export { describeNode, isLongText, pageSections, readableFields, tellApart } fro
 export { argShape, describeArg } from "./mutations/arg-shape.js";
 export { argumentWords, failureWords } from "./mutations/words.js";
 export { viaSaid } from "./via.js";
+export { edgeWords, valueWords } from "./schema/value-words.js";
 // A text's start at a glance, Markdown's syntax taken out (FR-180): what a row, a card, a describe line and a search hit say of prose.
 export { excerptOf } from "./excerpt-of.js";
 // Whether a field is written in Markdown (FR-180), as a record is read.

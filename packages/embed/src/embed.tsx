@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { BarFindContext, descentTarget, fetchFrameworkViews, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
+import { BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { SeatStart } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
@@ -91,7 +91,8 @@ export function preload(...faces: readonly EmbedFace[]): Promise<void> {
   const asked = faces.length > 0 ? faces : (["scene", "pages", "picture"] as const);
   const doors = new Set<{ fetch(): Promise<void> }>(asked.flatMap((face): { fetch(): Promise<void> }[] => (face === "pages" ? [pages] : face === "picture" ? [picture] : [scene, sceneKeeping])));
   // Resolved when they are here or did not arrive: a face that did not is asked for again as it is drawn (FR-139).
-  return Promise.all([...doors].map((one) => one.fetch())).then(
+  // What draws a notice too: every face draws them.
+  return Promise.all([...[...doors].map((one) => one.fetch()), fetchNotices()]).then(
     () => undefined,
     () => undefined,
   );
