@@ -3,7 +3,7 @@ import { edgeWords } from "@graview/core/words";
 import { aggregateId, kindCardId, withFocus, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 // Drawn only with the scene, whose face has fetched `@graview/react` already.
 import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
-import { useKit, ViewBoundary } from "@graview/react/drawing";
+import { useFlagged, useKit, ViewBoundary } from "@graview/react/drawing";
 import type { MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
 import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, ViewModeProvider, type ViewComponent } from "@graview/react/provider";
@@ -253,6 +253,8 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
   // A kind with no picture of its own draws its stop here, which heads itself: the panel says nothing over it.
   const derived = View !== undefined && isDefaultView(View);
   const chosen = selection.filter((id) => store.graph.getNode(id) !== undefined);
+  // What a rule names, marked in the lens where it stands, as its own place marks it.
+  const flagged = useFlagged();
   const close = () => go(withWithin(withFocus(view, null), "view", null));
   return (
     <PanelFrame
@@ -324,7 +326,7 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
               */}
             <ViewModeProvider mode="fullscreen">
               <ViewBoundary kind={kind} {...(registration?.title ? { view: registration.title } : {})}>
-                <View nodes={members} label={named} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(chosen.length > 0 ? { implicated: chosen } : {})} />
+                <View nodes={members} label={named} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(chosen.length > 0 ? { implicated: chosen } : {})} {...(flagged.length > 0 ? { flagged } : {})} />
               </ViewBoundary>
             </ViewModeProvider>
           </NamedAbove.Provider>

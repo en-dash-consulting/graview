@@ -255,6 +255,12 @@ export interface CityFrame {
   readonly openedShare?: number;
   /** How the ground is seen: a cell's height over its width, a half at an angle and one from straight above. Absent is a half. */
   readonly tilt?: number;
+  /**
+   * The showings hanging under a district's name — the names of the
+   * pictures of the district a lens is open on — as boxes from the top left
+   * of that district's card: ground no name and no sign at the edge stands on.
+   */
+  readonly showings?: readonly { readonly id: string; readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
 }
 
 export interface Layout {

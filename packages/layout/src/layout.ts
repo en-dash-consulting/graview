@@ -1,4 +1,4 @@
-import { ROSTER_ROW, ROSTER_KEPT, ROSTER_CHROME, rosterRows, rosterHeight } from "./sizes.js";
+import { MARQUEE_WIDTH, marqueeHeightFor, ROSTER_ROW, ROSTER_KEPT, ROSTER_CHROME, rosterRows, rosterHeight } from "./sizes.js";
 export { MARQUEE_WIDTH, marqueeHeightFor, ROSTER_ROW, ROSTER_MOST, rosterRows, rosterHeight, type NameWidth } from "./sizes.js";
 import { isCurrent, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
 import { districtState } from "@graview/core/city";
@@ -934,6 +934,15 @@ export function layout<S extends AnySchema>(
             openedMin: expanded.has(item.id) ? rosterHeight(Math.min(ROSTER_KEPT, rosterRows(members.length))) * unit : 0,
             nameplate: nameplateSize(item.aggregate?.label ?? pluralOf(schema, item.kind), members.length, problems, districtState(schema, item.kind) !== undefined, unit),
             weight: problems * 1000 + members.length,
+            // The focused district's showings hang under its name: ground no other name is placed on.
+            ...(focusKinds.includes(item.kind) && (options.screens?.[item.kind]?.length ?? 0) > 0
+              ? {
+                  marquee: {
+                    width: MARQUEE_WIDTH + 12, // its padding, 6 a side, as the scene draws the showings from altitude
+                    height: marqueeHeightFor(options.screens![item.kind]!.map((place) => place.title), MARQUEE_WIDTH, options.nameWidth) + 8,
+                  },
+                }
+              : {}),
           };
         }),
         schema,

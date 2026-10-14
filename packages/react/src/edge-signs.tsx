@@ -33,6 +33,17 @@ export function EdgeSigns({
 }): ReactElement | null {
   const past = districtsPastTheEdge(result);
   if (past.length === 0) return null;
+  /*
+   * CLEAR OF THE SHOWINGS. A district a lens is open on hangs the names of
+   * its pictures under its own; on a phone the sign for a district past the
+   * left edge stood on them, over "The quarter". A sign whose place along
+   * its edge would cover them steps past them, down (or right) if there is
+   * room and else up (or left).
+   */
+  const showings = (result.city?.showings ?? []).flatMap((hung) => {
+    const card = result.nodes.find((node) => node.id === hung.id);
+    return card ? [{ left: card.x + hung.x, top: card.y + hung.y, right: card.x + hung.x + hung.width, bottom: card.y + hung.y + hung.height }] : [];
+  });
   const signs: ReactElement[] = [];
   for (const side of ["left", "right", "top", "bottom"] as const) {
     // The reader's window: a panel over the scene is not part of it (`Layout.visible`).
@@ -41,17 +52,17 @@ export function EdgeSigns({
     let last = -Infinity;
     const onSide = past.filter((one) => one.side === side).sort((a, b) => a.along - b.along);
     for (const one of onSide) {
-      const at = Math.max(MARGIN, Math.min(span - MARGIN, Math.max(one.along, last + SPACING)));
-      last = at;
       const plural = pluralLabel(schema, one.kind);
+      const { at, inset } = clearOf(showings, side, Math.max(MARGIN, Math.min(span - MARGIN, Math.max(one.along, last + SPACING))), signLength(plural), seen, span);
+      last = at;
       const place: CSSProperties =
         side === "left"
-          ? { left: 6, top: at, transform: "translateY(-50%)" }
+          ? { left: inset, top: at, transform: "translateY(-50%)" }
           : side === "right"
-            ? { right: "calc(6px + var(--graview-dock, 0px))", top: at, transform: "translateY(-50%)" }
+            ? { right: `calc(${inset}px + var(--graview-dock, 0px))`, top: at, transform: "translateY(-50%)" }
             : side === "top"
-              ? { top: 6, left: at, transform: "translateX(-50%)" }
-              : { bottom: "calc(6px + var(--graview-sheet, 0px))", left: at, transform: "translateX(-50%)" };
+              ? { top: inset, left: at, transform: "translateX(-50%)" }
+              : { bottom: `calc(${inset}px + var(--graview-sheet, 0px))`, left: at, transform: "translateX(-50%)" };
       signs.push(
         <button
           key={one.id}
@@ -80,6 +91,45 @@ export function EdgeSigns({
     }
   }
   return <>{signs}</>;
+}
+
+/** How long a sign is across its edge, about: its words at 0.75rem, its arrow and its padding. */
+const signLength = (plural: string) => (plural.length + 2) * 7.4 + 22;
+/** How far a sign reaches along its edge from where it stands: half its height, or half its length. */
+const HALF_TALL = SPACING / 2;
+/** How far in from its edge a sign stands. */
+const EDGE_INSET = 6;
+
+/**
+ * Where a sign stands clear of the showings: where it was asked to, else
+ * just past the showings along its edge, else — no room along it — beside
+ * them, as far in from its edge as they reach.
+ */
+function clearOf(
+  showings: readonly { readonly left: number; readonly top: number; readonly right: number; readonly bottom: number }[],
+  side: PastTheEdge["side"],
+  at: number,
+  length: number,
+  seen: { readonly width: number; readonly height: number },
+  span: number,
+): { readonly at: number; readonly inset: number } {
+  const across = side === "left" || side === "right";
+  // The sign's box at `along`, from the edge it stands on.
+  const box = (along: number) =>
+    across
+      ? { left: side === "left" ? EDGE_INSET : seen.width - EDGE_INSET - length, right: side === "left" ? EDGE_INSET + length : seen.width - EDGE_INSET, top: along - HALF_TALL, bottom: along + HALF_TALL }
+      : { left: along - length / 2, right: along + length / 2, top: side === "top" ? EDGE_INSET : seen.height - EDGE_INSET - SPACING, bottom: side === "top" ? EDGE_INSET + SPACING : seen.height - EDGE_INSET };
+  const covers = (along: number) => showings.find((hung) => { const b = box(along); return b.left < hung.right && hung.left < b.right && b.top < hung.bottom && hung.top < b.bottom; });
+  const hung = covers(at);
+  if (!hung) return { at, inset: EDGE_INSET };
+  const half = across ? HALF_TALL : length / 2;
+  const after = (across ? hung.bottom : hung.right) + half + 4;
+  const before = (across ? hung.top : hung.left) - half - 4;
+  if (after <= span - MARGIN && !covers(after)) return { at: after, inset: EDGE_INSET };
+  if (before >= MARGIN && !covers(before)) return { at: before, inset: EDGE_INSET };
+  // Beside them: in from its edge past where they reach.
+  const reach = side === "left" ? hung.right : side === "right" ? seen.width - hung.left : side === "top" ? hung.bottom : seen.height - hung.top;
+  return { at, inset: Math.max(EDGE_INSET, reach + 4) };
 }
 
 const SIGN: CSSProperties = {
