@@ -4,9 +4,10 @@ import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { isAppLinkField } from "./app-link.js";
 import type { AnySchema } from "./schema.js";
+import { writeJsonSchema, type JsonSchema } from "./to-json-schema.js";
 import type { AnyNodeDefinition } from "./types.js";
 
-export type JsonSchema = Record<string, unknown>;
+export type { JsonSchema };
 
 /**
  * One source, three outputs: the same Zod declaration produces runtime
@@ -14,7 +15,7 @@ export type JsonSchema = Record<string, unknown>;
  * definition needs. Nothing is written twice, so nothing drifts.
  */
 export function toJsonSchema(schema: unknown): JsonSchema {
-  return z.toJSONSchema(schema as z.ZodMiniType, { io: "input", unrepresentable: "any", override: formatsByName as never }) as JsonSchema;
+  return writeJsonSchema(schema, formatsByName);
 }
 
 /** zod's names for string formats that JSON Schema calls something else; the rest are the same word. */
@@ -30,7 +31,7 @@ type ZodStringDef = { readonly type?: string; readonly format?: string; readonly
  * A string format says `format` and nothing else; a pattern the author wrote
  * with `.regex(…)` is the author's, and is kept.
  */
-function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
+export function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
   // Another app's address (FR-171), beside its pattern: an agent sets an address, not a name.
   if (isAppLinkField(ctx.zodSchema)) ctx.jsonSchema["x-graview-app-link"] = true;
   const def = (ctx.zodSchema as { _zod?: { def?: ZodStringDef } })._zod?.def;
