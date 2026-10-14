@@ -1,5 +1,63 @@
 # @graview/render
 
+## 0.1.29
+
+### Patch Changes
+
+- 7966f5d: A change says what it was based on, and a link made less than sure is drawn as such until a person keeps it (FR-172). An author said who moved and nothing said why one change was made or how sure its maker was, so a background actor that links and prunes on its own ("Graview, tidying") could not show its reasons or be told apart from a person's work. An op may now carry `lineage: { basis, confidence?, model? }` — given as `ApplyOptions.lineage` to `apply`, `applyAll`, `applyPrimitives` and `undo`, or on an `AppendOp` — checked before anything is kept (a basis of 1–500 characters, a confidence from 0 to 1, a model of 1–120) and kept in the log, on the batch and on the wire. On the op rather than its author, because an author is the same for every change a seat makes and a basis is this change's own. It is said where the change is: "based on “both name 12 Harbor Street” · 60% sure · jev-1" on a record page's history line and in the scene's recent changes, and a record page says what the record was made on. A link whose making op was less than sure, by anyone but a person, is provisional: the scene draws it in short dashes and quieter, its basis on hover and in its acts when it is pressed or long-pressed, and a record page marks it "unsure", the mark saying the basis and offering "Keep this link". Keeping it is `keep-link` (`KEEP_LINK`), an act every store answers to and no list offers, which takes the link away and puts it back as the person's op; any person's op that takes the link away does too, and undoing the keep makes it provisional again. An undo of a change with a lineage keeps it as `undoneLineage`, so a host can read "do not make this again" — a merge (FR-173) as much as a link. `@graview/core/provenance` is the one answer every face and host reads — `linkProvenance(store, edge)`, `isProvisional`, `provisionalLinks`, `provenanceWords` — fetched with what draws a link, so the hosted page's first load stays under its budget. Nothing in the framework decides what to link.
+  
+  Compatibility: ops gain two optional fields, `lineage` and `undoneLineage`, additive within op format 1: an op without them reads and folds as before, and a build that predates them keeps them on an op it receives. `Batch` gains an optional `lineage`. The wire's `call` and `undo`, on the socket and over `POST /graview/ops`, may carry `lineage`; a change whose lineage is not one is refused as `invalid`, and a server that predates it ignores the field. Every store answers to `keep-link` (`{ kind, from, to }`), which no list of acts — `allMutations`, `permittedMutations`, an agent's tools — offers; an app that declares its own `keep-link` keeps it. Stored formats, the document format, check finding codes and derived tool names and input schemas are unchanged. `capabilities().shipped` gains FR-172. What a host does: a background actor passes `lineage` with each change it makes, reads `linkProvenance` or `provisionalLinks` for what a person has not yet kept, and reads an undo's `undoneLineage` for what a person declined.
+- Updated dependencies [523149b]
+- Updated dependencies [7966f5d]
+- Updated dependencies [fcf84de]
+- Updated dependencies [a43f829]
+- Updated dependencies [55ec52b]
+- Updated dependencies [6764d85]
+- Updated dependencies [dbe0a28]
+- Updated dependencies [3f607a8]
+- Updated dependencies [42dbfb7]
+- Updated dependencies [a5c260f]
+- Updated dependencies [3accacb]
+- Updated dependencies [3cd624d]
+- Updated dependencies [774d39c]
+- Updated dependencies [933761a]
+- Updated dependencies [2d3f806]
+- Updated dependencies [dedefed]
+- Updated dependencies
+- Updated dependencies [8e09c51]
+- Updated dependencies [307f2d4]
+- Updated dependencies [11deba2]
+- Updated dependencies [15c033b]
+- Updated dependencies [3b06199]
+- Updated dependencies [861b0b4]
+- Updated dependencies [ed76a10]
+- Updated dependencies [df64e2b]
+- Updated dependencies [1076b0c]
+- Updated dependencies [c893321]
+- Updated dependencies [332fbeb]
+- Updated dependencies [ee15ae3]
+- Updated dependencies [488aba6]
+- Updated dependencies [4dbb23e]
+- Updated dependencies [d8dc4c6]
+- Updated dependencies [a047696]
+- Updated dependencies [b61f093]
+- Updated dependencies [0b722e4]
+- Updated dependencies [b61f093]
+- Updated dependencies [3c16f27]
+- Updated dependencies [4dbb23e]
+- Updated dependencies [93a7636]
+- Updated dependencies [73a9750]
+- Updated dependencies [4c545b7]
+- Updated dependencies [0d585ba]
+- Updated dependencies [5197748]
+- Updated dependencies [952e526]
+- Updated dependencies [4b12e16]
+- Updated dependencies [8da8189]
+- Updated dependencies [7da616c]
+- Updated dependencies [fc3b1f2]
+  - @graview/core@0.1.29
+  - @graview/layout@0.1.29
+
 ## 0.1.28
 
 ### Patch Changes

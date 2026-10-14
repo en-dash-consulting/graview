@@ -1,7 +1,0 @@
----
-"@graview/core": patch
----
-
-An import makes only the links its importer may make, and mints ids that say nothing of what it may not see (FR-177, FR-55). `importRows` asked only whether the importer may add the kind, so a helper who may add a vendor and not book one booked fifty from a sheet's Event column, and an own-end grant ("you, on your own end") was never asked of a link at all. Each link a row makes is now asked of the acts that make links of its relation (their `connects`) as a press on one would be, with the record at the far end handed to the argument that takes it — a grant's kinds, a `self` or own-end grant and an agent's `may` answer as they would — and a row with a link its importer may not make is refused in the policy's words ("Not permitted: “Book for an event” on a vendor — a planner can."). Where a policy is declared, a relation no act makes is linked by nobody; where none is, a person links what they name, as before. A record's id is minted as the importer's own act would mint it — its own, for a kind they may not see every record of — where it stepped past a record they could not see (`vendor:bloom-co-2` with no Bloom & Co in sight). A one-to-one link a row gives a record the importer sees is judged by what they see: one a hidden record held is taken as an act's `setSingleSource` takes it, where the row was refused "already has its one".
-
-Compatibility: unchanged on every surface. An import under a policy may refuse a row it made before: one whose link no act the importer may run makes.
