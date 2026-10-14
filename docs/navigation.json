@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-14T00:45:10.270Z",
+  "at": "2026-10-14T01:53:39.462Z",
   "engine": "chromium",
   "steps": [
     {
@@ -105,7 +105,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565533,
+      "wingOpacity": 0.565435,
       "registered": true
     },
     "groundAgain": {
@@ -163,7 +163,7 @@
         "name": "2 problems in Tasks",
         "said": "2",
         "title": "2 problems in Tasks — \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\" (and 1 more). Press to see them and how to fix them.",
-        "width": 36.125,
+        "width": 35.671875,
         "height": 24
       }
     ],
@@ -252,6 +252,142 @@
       "groundWidth": 1560,
       "overlapsGround": true,
       "gapIsGround": true
+    }
+  },
+  "coveredTab": {
+    "390": {
+      "before": {
+        "kind:list": "clear",
+        "kind:reason": "off the screen",
+        "kind:rule": "covered",
+        "kind:task": "off the screen"
+      },
+      "landed": [
+        {
+          "id": "kind:list",
+          "was": "clear",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:list",
+          "was": "clear",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:list",
+          "was": "clear",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:reason",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:reason",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        }
+      ]
+    },
+    "1440": {
+      "before": {
+        "kind:list": "covered",
+        "kind:reason": "off the screen",
+        "kind:rule": "off the screen",
+        "kind:task": "partly"
+      },
+      "landed": [
+        {
+          "id": "kind:reason",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:reason",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:rule",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:rule",
+          "was": "off the screen",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "partly",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "partly",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "partly",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "partly",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        },
+        {
+          "id": "kind:task",
+          "was": "partly",
+          "coveredWhenLanded": false,
+          "afterwards": "clear"
+        }
+      ]
     }
   },
   "removed": {
@@ -356,9 +492,9 @@
       "up": true
     },
     "midway": {
-      "t": 282,
-      "x": 238.3511962890625,
-      "y": 547.0351104736328,
+      "t": 285,
+      "x": 226.91781616210938,
+      "y": 549.7952423095703,
       "width": 1200
     },
     "frames": 81,
@@ -546,6 +682,7 @@
     "aDistrictsProblemCountIsAControlThatRevealsItsProblems": true,
     "aDistrictsNameDoesNotMoveWhenDragged": true,
     "theMapPanelFloatsOverTheMapInsteadOfRunningFlushToItsEdges": true,
+    "tabNeverLandsOnADistrictThePanelCovers": true,
     "aDistrictWithoutOneIsListedBesideTheMap": true,
     "typingLightsAndALitDistrictLandsNarrowed": true,
     "theFindBoxIsACombobox": true,

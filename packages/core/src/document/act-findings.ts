@@ -1,3 +1,4 @@
+import { derivedActOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
 import { withArticle } from "../schema/define-node.js";
 import { farEnd } from "./far-end.js";
 import { error, type Finding } from "./findings.js";
@@ -103,5 +104,16 @@ function meFindings(name: string, act: ActSpec, document: GraviewDocument): Find
 
 /** Every range, other-end and `$me` finding of a document, in its order: fields, then acts. */
 export function actFindings(document: GraviewDocument): Finding[] {
-  return [...rangeFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...meFindings(name, act, document)])];
+  return [...rangeFindings(document), ...neverArchivedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...meFindings(name, act, document)])];
+}
+
+/** A grant naming the archive, unarchive or merge of a kind that says `"archives": false` (FR-173): an act the app does not have. */
+function neverArchivedFindings(document: GraviewDocument): Finding[] {
+  return (document.policy?.grants ?? []).flatMap((grant, i) =>
+    asArray(grant.mutations === "*" ? [] : grant.mutations).flatMap((name) => {
+      const derived = derivedActOf(name);
+      if (!derived || document.acts?.[name] || document.kinds[derived.kind]?.archives !== false || givenWhenNeverArchived(derived.act)) return [];
+      return [error("grant-act", `policy.grants.${i}.mutations`, `"${name}" is not an act this document has: ${derived.kind} says "archives": false, so it is kept or removed, never archived`, `name edit-${derived.kind} or remove-${derived.kind} instead`)];
+    }),
+  );
 }

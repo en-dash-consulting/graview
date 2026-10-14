@@ -2,7 +2,7 @@ import type { AnyMutationDefinition, GraphEdge, GraphSnapshot, AnySchema, Gravie
 import { fieldTypeOf } from "./from-declaration.js";
 import { computedFor, pageWhile } from "./to-declaration.js";
 import type { FieldType } from "./meta.js";
-import { printZod, type ZodUses } from "./zod-source.js";
+import { helpersUsed, printZod, type ZodUses } from "./zod-source.js";
 
 /*
  * THE DECLARATION WRITTEN BACK AS CODE — the same files `graview create`
@@ -71,17 +71,19 @@ export class Read {
   }
 }
 
-/** The phone, place and duration fields the written lines call, for the file's import: "durationField, " and the rest, in order. */
-const typedHelpers = (lines: readonly string[], names: readonly string[] = ["durationField"]): string => names.filter((name) => lines.some((line) => line.includes(`${name}()`))).map((name) => `${name}, `).join("");
-
-export function zodSource(type: FieldType, required: boolean, options?: readonly string[]): string {
+export function zodSource(type: FieldType, required: boolean, options?: readonly string[], uses?: ZodUses): string {
+  // Another app's address (FR-171), a picture, a document (FR-162): the framework's own field, imported beside `z`.
+  // A phone, a place and a length of time likewise: a tel: link, a map, minutes said "1 h 30 min".
+  if (type === "app-link" || type === "image" || type === "file" || type === "phone" || type === "place" || type === "duration") {
+    const helper = type === "app-link" ? "appLinkField" : type === "image" ? "imageField" : type === "file" ? "fileField" : (`${type}Field` as const);
+    if (uses) uses[helper] = true;
+    return required ? `${helper}()` : `${helper}().optional()`;
+  }
   const base =
     type === "number"
       ? "z.number()"
       : type === "integer"
         ? "z.number().int()"
-        : type === "phone" || type === "place" || type === "duration"
-          ? `${type}Field()`
         : type === "url"
           ? "z.url()"
           : type === "email"
@@ -211,7 +213,7 @@ export function kindLines(
       const printed = same ? printZod(own, uses) : null;
       if (printed !== null) return printed;
     }
-    return zodSource(field.type, field.required, field.options);
+    return zodSource(field.type, field.required, field.options, uses);
   };
   const edges = read.in(kind.id, "from-kind");
   const lifecycleField = str(kind, "lifecycleField");
@@ -248,6 +250,7 @@ export function kindLines(
   // The drawing is part of the declaration, so it is part of the file.
   if (str(kind, "figure")) lines.push(`  figure: ${q(str(kind, "figure")!)},`);
   if (bool(kind, "people")) lines.push(`  people: true,`);
+  if (bool(kind, "neverArchived")) lines.push(`  archives: false,`);
   // What the kind works out (FR-83), as an app writes it: the expression, or the expression with its words.
   const computed = computedFor(read, kind);
   if (computed) {
@@ -319,7 +322,7 @@ export function actLines(
     const kindNode = read.ofKind("kind").find((node) => label(node) === kind);
     const fields = kindNode ? fieldsOf(read, kindNode).filter((field) => field.name !== "label") : [];
     const asked = fields.filter((field) => field.required && field.type !== "list");
-    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options)}`).join("")} }),`);
+    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options, uses)}`).join("")} }),`);
     lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.label}\`,`);
     body.push(`    ctx.addNode({`);
     body.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
@@ -337,7 +340,7 @@ export function actLines(
   } else {
     const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
     for (const kindNode of read.ofKind("kind")) if (on.includes(label(kindNode))) for (const field of fieldsOf(read, kindNode)) declared.set(field.name, { type: field.type, options: field.options });
-    lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options) : "z.string().optional()"}`).join("")} }),`);
+    lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options, uses) : "z.string().optional()"}`).join("")} }),`);
     lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})}\`,`);
     if (writes.length > 0) {
       body.push(`    const patch: Record<string, unknown> = {};`);
@@ -460,7 +463,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const schemaUses: ZodUses = { nodeRef: false, isoDate: false };
   const kindText = kinds.flatMap((kind) => ["", ...kindLines(read, kind, options.base, keptFormats, schemaUses)]);
   const schemaTs = [
-    `import { ${schemaUses.appLinkField ? "appLinkField, " : ""}createSchema, defineNode, ${typedHelpers(kindText)}${schemaUses.isoDate ? "isoDate, " : ""}${typedHelpers(kindText, ["phoneField", "placeField"])}z } from "@graview/core";`,
+    `import { ${helpersUsed(schemaUses)}createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}z } from "@graview/core";`,
     ``,
     `/*`,
     ` * ${name}'s kinds, written by the studio. The shape is the declaration's;`,
@@ -482,7 +485,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     return ["", ...actLines(read, act, kept, checkout as AnyMutationDefinition | undefined, actUses)];
   });
   const mutationsTs = [
-    `import { ${actUses.appLinkField ? "appLinkField, " : ""}bindSchema, ${typedHelpers(actText)}${actUses.isoDate ? "isoDate, " : ""}nodeRef, ${typedHelpers(actText, ["phoneField", "placeField"])}z, type GraphReader } from "@graview/core";`,
+    `import { ${helpersUsed(actUses)}bindSchema, ${actUses.isoDate ? "isoDate, " : ""}nodeRef, z, type GraphReader } from "@graview/core";`,
     `import { ${schemaVar} } from "./schema.js";`,
     ``,
     `const { defineMutation } = bindSchema(${schemaVar});`,

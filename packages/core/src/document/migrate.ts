@@ -1,3 +1,4 @@
+import { ARCHIVED, isArchived } from "../graph/archived.js";
 import { UNSET, type Primitive } from "../graph/primitives.js";
 import type { GraphEdge } from "../graph/types.js";
 import { canonicalize } from "./canonical.js";
@@ -36,7 +37,7 @@ export interface MigrationPlan {
   readonly primitives: readonly Primitive[];
   /** What happens, counted, in sentences. Empty when nothing moves. */
   readonly words: readonly string[];
-  readonly counts: { readonly moved: number; readonly coerced: number; readonly defaulted: number; readonly filled: number; readonly cleared: number; readonly removedNodes: number; readonly removedEdges: number };
+  readonly counts: { readonly moved: number; readonly coerced: number; readonly defaulted: number; readonly filled: number; readonly cleared: number; readonly removedNodes: number; readonly removedEdges: number; readonly broughtBack: number };
   /** Values a field that is required (and has no default) would still lack after the migration. */
   readonly missingRequired: number;
   /**
@@ -171,7 +172,7 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 
 export function planMigration(before: GraviewDocument, after: GraviewDocument, graph: StoredGraph, options: { readonly fills?: readonly MigrationFill[] } = {}): MigrationPlan {
   const primitives: Primitive[] = [];
-  const counts = { moved: 0, coerced: 0, defaulted: 0, filled: 0, cleared: 0, removedNodes: 0, removedEdges: 0 };
+  const counts = { moved: 0, coerced: 0, defaulted: 0, filled: 0, cleared: 0, removedNodes: 0, removedEdges: 0, broughtBack: 0 };
   let missingRequired = 0;
   const fills = options.fills ?? [];
   const words: string[] = [];
@@ -248,6 +249,18 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
       next[fill.field] = value;
       counts.filled++;
       note(`${newKind}'s ${fill.field} filled in${fill.from !== undefined ? ` from ${fill.from}` : ""}`);
+    }
+    /*
+     * AN ARCHIVED RECORD STAYS ARCHIVED (FR-173) — unless its kind is now
+     * never archived, when nothing could bring it back: it is brought back
+     * in the same op, and said.
+     */
+    if (isArchived(node)) {
+      if (after.kinds[newKind]!.archives !== false) next[ARCHIVED] = true;
+      else {
+        counts.broughtBack++;
+        note(`archived ${newKind} record(s) brought back, since ${newKind} is now kept or removed, never archived`);
+      }
     }
     // Only what this change brings counts: a requirement new to the field, or a required value it clears (a narrowed range, a dropped option). A record that already lacked one is not made worse.
     for (const [field, spec] of Object.entries(now)) {

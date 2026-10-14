@@ -1,5 +1,5 @@
 import { createSchema, defineNode, nodeRef, type AnyMutationDefinition, type GraviewApp } from "@graview/core";
-import { renameIn, type DeclaredKinds, type NameChange } from "@graview/core/document";
+import { FIELD_TYPES as DOCUMENT_FIELD_TYPES, renameIn, type DeclaredKinds, type NameChange } from "@graview/core/document";
 import { z } from "zod";
 
 /*
@@ -27,12 +27,14 @@ const label = z.string().min(1);
 export const DECLARED_KIND = "declared:";
 
 /**
- * A field's types: the declaration document's own (FR-54), so a field a
+ * A field's types: the declaration document's own list (FR-54), so a field a
  * document declares is read as what it is — an integer, a date and time, a
- * link, an address, a long text, a phone, a place, a duration — and handed back the same, never as the
- * nearest type the studio happened to know.
+ * link, an address, a long text, a picture, another app (FR-171) — and
+ * handed back the same, never as the nearest type the studio happened to
+ * know. It is the document's list, not a copy of it: a type the document
+ * learns is one the studio offers, with nothing here to remember.
  */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "phone", "place", "duration"] as const;
+export const FIELD_TYPES = DOCUMENT_FIELD_TYPES;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const kindNode = defineNode("kind", {
@@ -63,9 +65,11 @@ export const kindNode = defineNode("kind", {
     figure: z.string().optional(),
     /** This kind stands for the people: a record of it whose id is a principal's is that person (Roadmap f-people-kind). */
     people: z.boolean().optional(),
+    /** Its records are kept or removed, never archived or merged: the declaration's `archives: false` (FR-173). */
+    neverArchived: z.boolean().optional(),
   }),
   label: (node) => node.label,
-  display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when", people: "stands for the people" } },
+  display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when", people: "stands for the people", neverArchived: "never archived" } },
 });
 
 export const fieldNode = defineNode("field", {

@@ -149,6 +149,8 @@ export const KindSpec = z.strictObject({
   renamedFrom: z.optional(z.string().check(z.regex(NAME))),
   /** This kind stands for the people: a record of it whose id is a member's principal id is that member (`$me`, `self`, `own`, `via`, `ownEnd`). */
   people: z.optional(z.boolean()),
+  /** `false`: its records are kept or removed, never archived — the kind is given no `archive-`, `unarchive-` or `merge-<kind>` (FR-173). */
+  archives: z.optional(z.literal(false)),
 });
 export type KindSpec = z.infer<typeof KindSpec>;
 

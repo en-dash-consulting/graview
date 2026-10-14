@@ -1,4 +1,4 @@
-import { DERIVED_ACTS, derivedActOf, derivedActsOf } from "../mutations/derived-names.js";
+import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
 import { z } from "zod";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
@@ -38,7 +38,7 @@ import { accentProblem } from "../theme/accent.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize, listed as listOf } from "../capital.js";
 import { quoted } from "./quote.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, archivesSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -113,6 +113,7 @@ export const EDIT_OPS = [
   "arrange-pages",
   "set-computed",
   "set-people",
+  "set-archives",
   "add-grant",
   "remove-grant",
   "add-sight",
@@ -227,6 +228,8 @@ const SHAPES: Record<EditOp, z.ZodType> = {
     .strict(),
   // Who the people are, and who may do and see what (FR-170): a grant and a sight as the document holds one.
   "set-people": z.object({ op: z.literal("set-people"), kind: kindName, people: z.boolean() }).strict(),
+  // Whether a kind's records are archived and merged, or only kept and removed (FR-173).
+  "set-archives": z.object({ op: z.literal("set-archives"), kind: kindName, archives: z.boolean() }).strict(),
   "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
   "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
   "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
@@ -823,6 +826,8 @@ class Editor {
         return this.setComputed(i, e);
       case "set-people":
         return this.setPeople(i, e);
+      case "set-archives":
+        return this.setArchives(i, e);
       case "add-grant":
       case "remove-grant":
       case "add-sight":
@@ -1186,6 +1191,25 @@ class Editor {
     this.said.push(peopleSentence(this.doc.kinds, e.kind, e.people, already));
   }
 
+  /** A kind's records kept or removed, never archived (FR-173) — or archived and merged again. */
+  private setArchives(i: number, e: Doc) {
+    const spec = this.kind(i, e.kind);
+    if (!spec) return;
+    const already = (spec.archives !== false) === e.archives;
+    if (!e.archives && !already) {
+      // A grant that names one of the three acts would name an act the app no longer has.
+      const gone = new Set(["archive", "unarchive", "merge"].map((verb) => `${verb}-${e.kind}`).filter((act) => !this.doc.acts?.[act]));
+      const grant = (this.doc.policy?.grants ?? []).find((g: Doc) => Array.isArray(g.mutations) && g.mutations.some((m: string) => gone.has(m)));
+      if (grant) {
+        const named: string[] = grant.mutations.filter((m: string) => gone.has(m));
+        return this.failAs("grant-unknown-mutation", i, "archives", `a grant names ${listOf(named.map((m) => `"${m}"`))}, which ${pluralOf(this.doc.kinds, e.kind)} would no longer have`, `{"op": "remove-grant", "roles": ${JSON.stringify(grant.roles)}, "mutations": ${JSON.stringify(grant.mutations)}} first, in the same change`);
+      }
+      spec.archives = false;
+    } else if (e.archives) delete spec.archives;
+    if (!already) this.toolsMoved.add(`archive-${e.kind}, unarchive-${e.kind} and merge-${e.kind} ${e.archives ? "are offered" : "are gone"}`);
+    this.said.push(archivesSentence(this.doc.kinds, e.kind, e.archives, already));
+  }
+
   /** A grant or a sight as the document holds one, or undefined having said why not. */
   private policyPart(i: number, e: Doc, sight: boolean): Doc | undefined {
     const { op: _op, ...rest } = e;
@@ -1208,7 +1232,7 @@ class Editor {
     if (!sight && part.mutations !== "*") {
       for (const [n, act] of part.mutations.entries()) {
         const derived = derivedActOf(act);
-        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind])) continue;
+        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)))) continue;
         return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf)].join(", ")}`);
       }
     }

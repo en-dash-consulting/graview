@@ -1,5 +1,8 @@
 import {
+  appLinkField,
   bindsOf,
+  fileField,
+  imageField,
   createSchema,
   defineInvariant,
   defineNode,
@@ -103,7 +106,13 @@ export function computedFor(graph: { in(to: string, kind: string): readonly ({ r
 /** The zod type a studio field declares. */
 export function zodFor(type: FieldType, required: boolean, options?: readonly string[]): z.ZodType {
   const base: z.ZodType =
-    type === "number"
+    type === "app-link"
+      ? appLinkField()
+      : type === "image"
+        ? imageField()
+        : type === "file"
+          ? fileField()
+          : type === "number"
       ? z.number()
       : type === "integer"
         ? z.number().int()
@@ -308,6 +317,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(lifecycleField && retired ? { lifecycle: { field: lifecycleField, retired: retired[0] === "date" ? ("date" as const) : retired } } : {}),
       ...(str(kind, "figure") ? { figure: str(kind, "figure")! } : {}),
       ...(bool(kind, "people") ? { people: true } : {}),
+      ...(bool(kind, "neverArchived") ? { archives: false } : {}),
       ...(computed ? { computed } : {}),
       // What the studio has no act for is CARRIED, not dropped — a glance may say a computed field too.
       ...kept(base, name(kind), shape, new Set(Object.keys(computed ?? {}))),

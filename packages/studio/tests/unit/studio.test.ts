@@ -116,7 +116,7 @@ describe("the declaration is a graph", () => {
   it("reads every kind, field, edge, act, rule, role, grant, lens and brand in as a node with a stable id", () => {
     const graph = declarationToGraph(garden);
     const ids = graph.nodes.map((node) => node.id);
-    expect(ids).toEqual(expect.arrayContaining(["declared:gardener", "declared:plot", "field:plot.label", "field:plot.size", "field:plot.status", "edge:plot.tended-by", "act:tend", "act:untend", "act:add-plot", "rule:every-plot-tended", "role:coordinator", "role:gardener", "grant:1", "grant:2", "lens:coverage", "brand"]));
+    expect(ids).toEqual(expect.arrayContaining(["declared:gardener", "declared:plot", "field:plot.label", "field:plot.size", "field:plot.status", "edge:plot.tended-by", "act:tend", "act:untend", "act:add-plot", "rule:every-plot-tended", "role:coordinator", "role:gardener", "grant:1", "grant:2", "lens:coverage@gardener,plot", "brand"]));
     expect(graph.nodes.find((node) => node.id === "field:plot.status")).toMatchObject({ type: "enum", required: true, options: ["open", "retired"] });
     expect(graph.nodes.find((node) => node.id === "act:tend")).toMatchObject({ fromTheOtherEnd: "Take on a plot", targetArg: "gardener" });
     expect(graph.nodes.find((node) => node.id === "field:gardener.phone")).toMatchObject({ type: "string", required: false });
@@ -152,7 +152,7 @@ describe("the declaration is a graph", () => {
      */
     expect(roles.sort()).toEqual(["coordinator", "gardener"]);
     expect(graph.edges.filter((edge) => edge.kind === "requires")).toEqual([]);
-    expect(graph.nodes.find((node) => node.id === "lens:coverage")).toMatchObject({
+    expect(graph.nodes.find((node) => node.id === "lens:coverage@gardener,plot")).toMatchObject({
       requires: ["rows", "columns", "link"],
     });
 

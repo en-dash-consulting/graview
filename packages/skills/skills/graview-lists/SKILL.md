@@ -46,7 +46,8 @@ already set a record aside.
    fields and rules; its own page and search still find it, marked. A list
    says "+3 archived" and opens them at `?archived=true`; a rule reads them
    with `all('feature', true)` (`'all'` for both) and `archived()`. A kind
-   that should never be archived says `archives: false` in `defineNode`.
+   that should never be archived says `archives: false` in `defineNode` (a
+   document's `"archives": false`; the edit `set-archives`).
 
 4. **Print a place when a fixed link wants one.** `renderPlace(store, app,
    "/requests", { viewer, locale })` from `@graview/pages/static` answers

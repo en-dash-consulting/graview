@@ -696,9 +696,9 @@ export class Store<S extends AnySchema> {
     return [...this.mutations.values()].filter((mutation) => mutation !== this.keeper && !this.mutationDisabled(mutation));
   }
 
-  /** The declared acts a derived act resolves its permission through. */
-  private viaOf(mutation: AnyMutationDefinition<S> | undefined): readonly string[] | undefined {
-    if (mutation !== undefined && mutation === this.keeper) return keepLinkVia(this.mutations.values());
+  /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
+  private viaOf(mutation: AnyMutationDefinition<S> | undefined, call?: MutationCall): readonly string[] | undefined {
+    if (mutation !== undefined && mutation === this.keeper) return keepLinkVia(this.mutations.values(), call?.args["kind"]);
     if (!mutation?.derived) return undefined;
     return derivedVia(this.schema, [...this.mutations.values()], mutation);
   }
@@ -760,7 +760,7 @@ export class Store<S extends AnySchema> {
       principal,
       call.name,
       this.subjectKindOf(call, principal),
-      this.viaOf(mutation),
+      this.viaOf(mutation, call),
       typeof id === "string" ? id : undefined,
       this.words,
       () => {

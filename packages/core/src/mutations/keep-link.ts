@@ -18,7 +18,7 @@ export const KEEP_LINK = "keep-link";
  * Every store answers to it and no list offers it: it is not one of the
  * app's acts, and a face offers it beside the link it would keep (a line's
  * acts, a record page's mark). It goes over the wire like any call, and is
- * permitted to whoever may make or break links or make records
+ * permitted to whoever may make or break links of its relation
  * (`keepLinkVia`).
  */
 export function keepLinkMutation<S extends AnySchema>(schema: S): AnyMutationDefinition<S> {
@@ -51,8 +51,11 @@ export function keepLinkMutation<S extends AnySchema>(schema: S): AnyMutationDef
 }
 
 /**
- * Who may keep a link: whoever may run a declared act that makes or breaks
- * links, or makes records — the policy's own grants, read again.
+ * Who may keep a link of a relation: whoever may run a declared act that
+ * makes or breaks links of THAT relation — the policy's own grants, read
+ * again. A seat that may link a lease to its property may keep such a link,
+ * and is not thereby the judge of a link between two people; a link of a
+ * relation no act makes or breaks is kept by nobody a policy names.
  */
-export const keepLinkVia = <S extends AnySchema>(mutations: Iterable<AnyMutationDefinition<S>>): readonly string[] =>
-  [...mutations].filter((one) => !one.derived && one.name !== KEEP_LINK && (one.connects?.length || one.severs?.length || one.creates?.length)).map((one) => one.name);
+export const keepLinkVia = <S extends AnySchema>(mutations: Iterable<AnyMutationDefinition<S>>, relation: unknown): readonly string[] =>
+  [...mutations].filter((one) => !one.derived && one.name !== KEEP_LINK && typeof relation === "string" && (one.connects?.includes(relation) || one.severs?.includes(relation))).map((one) => one.name);

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 76,
+  "gzipped": 51,
+  "note": "Raised when the Shell came to take resolveApp itself (FR-171): the context an app-link asks before the provider's, in a module of its own. 76 / 51 more. Measured at 1_877_833 / 610_572."
+}

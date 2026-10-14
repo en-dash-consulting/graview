@@ -16,7 +16,7 @@ describe("a lens taken away in the studio", () => {
     const compiled = compileDocument(workshop);
     if (!compiled.ok) throw new Error("the workshop did not compile");
     const studio = createStudio(compiled.app as never, { document: workshop } as never);
-    const lens = studio.store.graph.allNodes().find((node) => node.kind === "lens" && node.id.endsWith("email-to-todd"));
+    const lens = studio.store.graph.allNodes().find((node) => node.kind === "lens" && node.id.includes(":email-to-todd"));
     expect(lens).toBeDefined();
     studio.store.apply({ name: "remove-lens", args: { id: lens!.id } } as never);
     expect(studio.edits()).toEqual([{ op: "remove-lens", title: "Email to Todd", on: "deliverable" }]);
