@@ -110,12 +110,22 @@ export function authorship<S extends AnySchema>(store: Store<S>, caller: Princip
 
 const wrap = (text: string, author: Author, by: Authorship): UntrustedText => ({ untrusted: true, authoredBy: by.say(author), text });
 
-/** Search hits whose words — a record's name, the fragment that matched — somebody else wrote. */
+/** Who wrote the word a host's ranker said a near hit was near by: the host, not the app. */
+export const RANKER = "the host's ranker";
+
+/**
+ * Search hits whose words — a record's name, the fragment that matched —
+ * somebody else wrote, and the word a host's ranker said a near hit
+ * matched (`by: "meaning"`), which is the host's text, not the record's.
+ */
 export function markHits(result: SearchResult, by: Authorship): SearchResult {
   return {
     ...result,
     hits: result.hits.map((hit) => {
       if (hit.about !== "node") return hit;
+      if (hit.why.by === "meaning" && hit.why.matched !== undefined) {
+        hit = { ...hit, why: { ...hit.why, matched: { untrusted: true, authoredBy: RANKER, text: hit.why.matched } } } as never;
+      }
       const record = by.recordBy(hit.id);
       if (!record) return hit;
       const fragmentBy = by.prose(hit.kind, hit.why.field) ? by.fieldBy(hit.id, hit.why.field) : record;

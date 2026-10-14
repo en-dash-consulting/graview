@@ -541,6 +541,9 @@ function nearNode(texts: readonly Text[], asked: readonly string[]): Why | undef
   return { field: first.text.field, reading: first.text.reading, fragment: fragmentOf(first.text.text, [first.matched]), strength: "near", asked: first.asked, matched: first.matched, by: first.by };
 }
 
+/** The most characters of a ranker's `matched` a hit says: "flowers", not a paragraph. */
+export const MATCHED_MOST = 80;
+
 /** The why of a hit a host's ranker found: the field carrying the word it named, else the name. */
 function meantBy(texts: readonly Text[], words: string, matched: string | undefined): Why {
   const asked = tokensOf(words).filter((word) => !SMALL_WORDS.has(word)).join(" ") || words;
@@ -552,7 +555,8 @@ function meantBy(texts: readonly Text[], words: string, matched: string | undefi
     fragment: fragmentOf(text.text, said),
     strength: "near",
     asked,
-    matched: matched ?? text.text,
+    // A host's words, kept to a word or a phrase: the strip says it, and an agent reads it as the host's (`markHits`).
+    matched: (matched ?? text.text).slice(0, MATCHED_MOST),
     by: "meaning",
   };
 }

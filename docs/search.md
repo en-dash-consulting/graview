@@ -92,7 +92,9 @@ exact hit and said as near — `near: true` on the hit, and a `why` with
   the kinds, the horizon and the conditions — and answers scores (0–1) with
   the record's word that was near. "The florist" finds Bloom & Co by its
   tags, "flowers". Its hits arrive on `result.later`: Find shows the exact
-  hits at once and these when they come; `search_graph` waits for them.
+  hits at once and these when they come, asking the host only once the
+  typing pauses; `search_graph` waits for them, and hands an agent the
+  ranker's word (at most 80 characters) marked as the host's, untrusted.
 
 The strip's row for a near hit reads "Bloom & Co" over "Near “florist” —
 tags: flowers". Going to a record by name and the conversation's "things

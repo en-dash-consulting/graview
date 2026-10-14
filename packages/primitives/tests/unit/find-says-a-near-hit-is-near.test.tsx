@@ -69,10 +69,15 @@ describe("Find says a near hit is near", () => {
       handed.push(...candidates.map((candidate) => candidate.id));
       return new Promise((resolve) => (answer = resolve));
     };
+    let handedAtOnce: string[] = [];
     const { first, then } = await strip("the florist", near, async () => {
+      handedAtOnce = [...handed];
+      // The host is asked once the typing pauses (300 ms), not on the keystroke.
+      await new Promise((resolve) => setTimeout(resolve, 350));
       answer([{ id: "v-bloom", score: 0.7, matched: "flowers" }]);
       await Promise.resolve();
     });
+    expect(handedAtOnce).toEqual([]);
     expect(handed).toContain("v-bloom");
     expect(first.rows).toEqual([]);
     expect(then.rows).toEqual([{ near: true, text: "Bloom & CoNear “florist” — tags: flowers" }]);
