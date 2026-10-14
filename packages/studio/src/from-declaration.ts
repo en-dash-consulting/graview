@@ -1,9 +1,10 @@
-import { isRepeatField, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf } from "@graview/core";
+import { bindsOf, isRepeatField, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf, type LensDeclaration } from "@graview/core";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
+import { isMarkdownField } from "@graview/core/words";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
-import { DECLARED_KIND, type FieldType } from "./meta.js";
+import { DECLARED_KIND, FIELD_TYPES, type FieldType } from "./meta.js";
 
 /*
  * A DECLARATION READ INTO THE GRAPH. Every kind, field, edge, act, rule,
@@ -33,6 +34,15 @@ interface ZodDef {
 const defOf = (type: unknown): ZodDef =>
   ((type as { def?: ZodDef }).def ?? (type as { _def?: ZodDef })._def ?? {}) as ZodDef;
 
+/*
+ * The types zod's own shape says, read below. Any other type the document
+ * reads a field as — a picture, a file, another app's address (FR-171), and
+ * whatever the document learns next — is taken in the document's words, so
+ * a type the document gains is one the studio reads without a line here.
+ */
+const READ_FROM_ZOD: ReadonlySet<string> = new Set(["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email"]);
+const isFieldType = (type: string): type is FieldType => (FIELD_TYPES as readonly string[]).includes(type);
+
 /** A zod field's type, as the studio names types. */
 export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly required: boolean; readonly options?: readonly string[] } {
   let def = defOf(type);
@@ -41,6 +51,8 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
     required = false;
     def = defOf(def.innerType);
   }
+  const tagged = fieldSpecOf(type)?.type;
+  if (tagged !== undefined && !READ_FROM_ZOD.has(tagged) && isFieldType(tagged)) return { type: tagged, required };
   switch (def.type) {
     case "number":
     case "int":
@@ -58,7 +70,7 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
     case "string": {
       // A link, an address or a date and time is a string zod checks; the document's reading says which.
       const said = fieldSpecOf(type)?.type;
-      return { type: said === "url" || said === "email" || said === "date" || said === "datetime" ? said : "string", required };
+      return { type: said === "url" || said === "email" || said === "date" || said === "datetime" || said === "text" ? said : "string", required };
     }
     default:
       return { type: "string", required };
@@ -89,6 +101,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(def.lifecycle ? { lifecycleField: def.lifecycle.field, retired: def.lifecycle.retired === "date" ? ["date"] : def.lifecycle.retired.map(String) } : {}),
       ...(def.figure ? { figure: def.figure } : {}),
       ...(def.people ? { people: true } : {}),
+      ...(def.archives === false ? { neverArchived: true } : {}),
     });
     const fields = shapeOf(def.fields);
     for (const [name, type] of Object.entries(fields)) {
@@ -108,6 +121,8 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
         ...(typed.options ? { options: [...typed.options] } : {}),
         ...(isRepeatField(fields[repeatKey(name)]) ? { repeats: true } : {}),
         ...(def.display?.labels?.[name] ? { description: def.display.labels[name] } : {}),
+        // Written in Markdown (FR-180): the declaration's mark, or the document's format.
+        ...(typed.type === "text" && (isMarkdownField(type) || document?.kinds[def.kind]?.fields[name]?.format === "markdown") ? { markdown: true } : {}),
       });
       edges.push({ kind: "of", from: id, to: kindId(def.kind) });
     }
@@ -277,7 +292,36 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
 
 export type { z };
 
-/** A lens's node id in the studio: its name, and its title's address word when it has one. */
-export function lensNodeId(lens: { readonly name: string; readonly title?: string }): string {
-  return lens.title ? `lens:${lens.name}:${placeSlug(lens.title)}` : `lens:${lens.name}`;
+/** A lens as the studio reads its id from it: a declaration's, or a document's lens as JSON. */
+export interface LensIdentity {
+  readonly name: string;
+  readonly title?: string;
+  readonly on?: string;
+  readonly binds?: "fields" | "entities";
+  readonly bindings?: unknown;
+}
+
+/** The kinds a lens stands on: its `on`, or the kinds its bindings name — keyed by kind, or each slot's `kind`. */
+export function lensKinds(lens: LensIdentity): readonly string[] {
+  if (lens.on) return [lens.on];
+  const bindings = lens.bindings;
+  if (bindings === null || typeof bindings !== "object" || Array.isArray(bindings)) return [];
+  const entries = Object.entries(bindings as Record<string, unknown>);
+  const kinds =
+    bindsOf(lens as LensDeclaration) === "entities"
+      ? entries.map(([, slot]) => (slot !== null && typeof slot === "object" ? (slot as { kind?: unknown }).kind : undefined)).filter((kind): kind is string => typeof kind === "string")
+      : entries.map(([kind]) => kind);
+  return [...new Set(kinds)].sort();
+}
+
+/**
+ * A lens's node id in the studio: its name, its title's address word when
+ * it has one, and the kinds it stands on. Two lenses of one name and one
+ * title on different kinds are two places (the checker keeps a title per
+ * kind), so the kinds are part of the id — read from the lens alone, so the
+ * same declaration read twice gives the same ids however many lenses it has.
+ */
+export function lensNodeId(lens: LensIdentity): string {
+  const kinds = lensKinds(lens);
+  return `lens:${lens.name}${lens.title ? `:${placeSlug(lens.title)}` : ""}${kinds.length > 0 ? `@${kinds.join(",")}` : ""}`;
 }

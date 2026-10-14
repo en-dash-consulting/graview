@@ -25,6 +25,7 @@ export default defineConfig({
       "@graview/core/json-schema": fileURLToPath(new URL("../../packages/core/src/json-schema.ts", import.meta.url)),
       "@graview/core/search": fileURLToPath(new URL("../../packages/core/src/search.ts", import.meta.url)),
       "@graview/core/words": fileURLToPath(new URL("../../packages/core/src/words.ts", import.meta.url)),
+      "@graview/core/markdown": fileURLToPath(new URL("../../packages/core/src/markdown.ts", import.meta.url)),
       "@graview/core/seat": fileURLToPath(new URL("../../packages/core/src/seat.ts", import.meta.url)),
       "@graview/core/check": fileURLToPath(new URL("../../packages/core/src/check.ts", import.meta.url)),
       "@graview/core/scene": fileURLToPath(new URL("../../packages/core/src/scene.ts", import.meta.url)),
@@ -45,6 +46,7 @@ export default defineConfig({
       "@graview/tools/draft": fileURLToPath(new URL("../../packages/tools/src/draft.ts", import.meta.url)),
       "@graview/tools/keep": fileURLToPath(new URL("../../packages/tools/src/keep.ts", import.meta.url)),
       "@graview/tools/turn": fileURLToPath(new URL("../../packages/tools/src/turn.ts", import.meta.url)),
+      "@graview/tools/several": fileURLToPath(new URL("../../packages/tools/src/several.ts", import.meta.url)),
       "@graview/tools": pkg("tools"),
       // The subpath first: a bare-name alias would swallow it.
       "@graview/render/gpu": fileURLToPath(

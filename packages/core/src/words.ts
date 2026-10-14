@@ -21,3 +21,10 @@ export { argumentWords, failureWords } from "./mutations/words.js";
 export { viaSaid } from "./via.js";
 // A date that repeats, in words: "Every Tuesday, next Oct 27".
 export { repeatAsRead, repeatingDateAsRead } from "./repeat-words.js";
+// A text's start at a glance, Markdown's syntax taken out (FR-180): what a row, a card, a describe line and a search hit say of prose.
+export { excerptOf } from "./excerpt-of.js";
+// Whether a field is written in Markdown (FR-180), as a record is read.
+export { isMarkdownField } from "./schema/markdown.js";
+// A phone, a place and a duration, said, linked, and read from what was typed.
+export { fieldSays, mapsHref, parseDuration, sayDuration, sayPhone, telHref, typedHref, typedWords } from "./schema/field-words.js";
+export { typedFieldOf } from "./schema/typed-field-of.js";

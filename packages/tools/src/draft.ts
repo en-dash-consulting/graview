@@ -214,7 +214,7 @@ function seenSchema(schema: AnySchema, sight: DraftSight | undefined): AnySchema
 
 // ── the declaration, read for drawing ────────────────────────────────────────
 
-type FieldType = "string" | "text" | "number" | "integer" | "boolean" | "date" | "datetime" | "enum" | "list" | "url" | "email";
+type FieldType = "string" | "text" | "number" | "integer" | "boolean" | "date" | "datetime" | "enum" | "list" | "url" | "email" | "phone" | "place" | "duration";
 
 interface FieldInfo {
   readonly name: string;
@@ -289,7 +289,7 @@ function readApp(schema: AnySchema): Reading {
 
 const fieldOf = (info: KindInfo, name: string | undefined) => (name === undefined ? undefined : info.fields.find((field) => field.name === name));
 const isDate = (field: FieldInfo | undefined) => field?.type === "date" || field?.type === "datetime";
-const isNumber = (field: FieldInfo | undefined) => field?.type === "number" || field?.type === "integer";
+const isNumber = (field: FieldInfo | undefined) => field?.type === "number" || field?.type === "integer" || field?.type === "duration";
 
 // ── the ask, read ────────────────────────────────────────────────────────────
 

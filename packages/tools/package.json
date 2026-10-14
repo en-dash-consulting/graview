@@ -44,6 +44,10 @@
     "./turn": {
       "types": "./dist/turn.d.ts",
       "default": "./dist/turn.js"
+    },
+    "./several": {
+      "types": "./dist/several.d.ts",
+      "default": "./dist/several.js"
     }
   },
   "scripts": {

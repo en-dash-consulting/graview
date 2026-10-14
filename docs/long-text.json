@@ -1,0 +1,2948 @@
+{
+  "at": "2026-10-14T02:36:40.806Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "schemes": [
+    "light",
+    "dark"
+  ],
+  "screens": [
+    {
+      "face": "pages",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "face": "pages",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "face": "graview",
+      "width": 1280,
+      "height": 800
+    }
+  ],
+  "expected": {
+    "paragraphs": 10,
+    "numbered": 4,
+    "bulleted": 6,
+    "declared": {
+      "pages": [
+        "Due",
+        "Name",
+        "Status",
+        "Summary",
+        "Subject line",
+        "Draft"
+      ],
+      "graview": [
+        "Due",
+        "Status",
+        "Summary",
+        "Subject line",
+        "Draft"
+      ]
+    },
+    "paged": {
+      "pages": [
+        "Subject line",
+        "Draft",
+        "Schedule",
+        "Due",
+        "Status",
+        "Details",
+        "Name",
+        "Summary"
+      ],
+      "graview": [
+        "Subject line",
+        "Draft",
+        "Schedule",
+        "Due",
+        "Status",
+        "Details",
+        "Summary"
+      ]
+    }
+  },
+  "checks": {
+    "theDraftKeepsItsParagraphsAndLists": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6,
+          "olStart": "1"
+        }
+      ],
+      "ok": true
+    },
+    "theDraftSpansTheRecordsWidth": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "room": {
+            "left": 20,
+            "top": 316,
+            "right": 370,
+            "bottom": 3187,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 767,
+            "right": 370,
+            "bottom": 3187,
+            "width": 350
+          },
+          "spans": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "room": {
+            "left": 260,
+            "top": 271,
+            "right": 1020,
+            "bottom": 1806,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 512,
+            "right": 1020,
+            "bottom": 1806,
+            "width": 760
+          },
+          "spans": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "room": {
+            "left": 246,
+            "right": 914,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1413,
+            "width": 668
+          },
+          "spans": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "room": {
+            "left": 20,
+            "top": 316,
+            "right": 370,
+            "bottom": 3187,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 767,
+            "right": 370,
+            "bottom": 3187,
+            "width": 350
+          },
+          "spans": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "room": {
+            "left": 260,
+            "top": 271,
+            "right": 1020,
+            "bottom": 1806,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 512,
+            "right": 1020,
+            "bottom": 1806,
+            "width": 760
+          },
+          "spans": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "room": {
+            "left": 246,
+            "right": 914,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1413,
+            "width": 668
+          },
+          "spans": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "room": {
+            "left": 20,
+            "top": 316,
+            "right": 370,
+            "bottom": 3160,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 761,
+            "right": 370,
+            "bottom": 3160,
+            "width": 350
+          },
+          "spans": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "room": {
+            "left": 260,
+            "top": 271,
+            "right": 1020,
+            "bottom": 1783,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 509,
+            "right": 1020,
+            "bottom": 1783,
+            "width": 760
+          },
+          "spans": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "room": {
+            "left": 246,
+            "right": 914,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1389,
+            "width": 668
+          },
+          "spans": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "room": {
+            "left": 20,
+            "top": 316,
+            "right": 370,
+            "bottom": 3160,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 761,
+            "right": 370,
+            "bottom": 3160,
+            "width": 350
+          },
+          "spans": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "room": {
+            "left": 260,
+            "top": 271,
+            "right": 1020,
+            "bottom": 1783,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 509,
+            "right": 1020,
+            "bottom": 1783,
+            "width": 760
+          },
+          "spans": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "room": {
+            "left": 246,
+            "right": 914,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1389,
+            "width": 668
+          },
+          "spans": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "room": {
+            "left": 20,
+            "top": 316,
+            "right": 370,
+            "bottom": 3217,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 767,
+            "right": 370,
+            "bottom": 3217,
+            "width": 350
+          },
+          "spans": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "room": {
+            "left": 260,
+            "top": 271,
+            "right": 1020,
+            "bottom": 1810,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 512,
+            "right": 1020,
+            "bottom": 1810,
+            "width": 760
+          },
+          "spans": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "room": {
+            "left": 246,
+            "right": 914,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1417,
+            "width": 668
+          },
+          "spans": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "room": {
+            "left": 20,
+            "top": 316,
+            "right": 370,
+            "bottom": 3217,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 767,
+            "right": 370,
+            "bottom": 3217,
+            "width": 350
+          },
+          "spans": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "room": {
+            "left": 260,
+            "top": 271,
+            "right": 1020,
+            "bottom": 1810,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 512,
+            "right": 1020,
+            "bottom": 1810,
+            "width": 760
+          },
+          "spans": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "room": {
+            "left": 246,
+            "right": 914,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1417,
+            "width": 668
+          },
+          "spans": true
+        }
+      ],
+      "ok": true
+    },
+    "theDraftsLabelStandsAboveIt": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "label": "Draft",
+          "labelBox": {
+            "left": 20,
+            "top": 738,
+            "right": 370,
+            "bottom": 763,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 767,
+            "right": 370,
+            "bottom": 3187,
+            "width": 350
+          },
+          "above": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 260,
+            "top": 483,
+            "right": 1020,
+            "bottom": 508,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 512,
+            "right": 1020,
+            "bottom": 1806,
+            "width": 760
+          },
+          "above": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 246,
+            "top": 281,
+            "right": 914,
+            "bottom": 306,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1413,
+            "width": 668
+          },
+          "above": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "label": "Draft",
+          "labelBox": {
+            "left": 20,
+            "top": 738,
+            "right": 370,
+            "bottom": 763,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 767,
+            "right": 370,
+            "bottom": 3187,
+            "width": 350
+          },
+          "above": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 260,
+            "top": 483,
+            "right": 1020,
+            "bottom": 508,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 512,
+            "right": 1020,
+            "bottom": 1806,
+            "width": 760
+          },
+          "above": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 246,
+            "top": 281,
+            "right": 914,
+            "bottom": 306,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1413,
+            "width": 668
+          },
+          "above": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "label": "Draft",
+          "labelBox": {
+            "left": 20,
+            "top": 732,
+            "right": 370,
+            "bottom": 757,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 761,
+            "right": 370,
+            "bottom": 3160,
+            "width": 350
+          },
+          "above": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 260,
+            "top": 480,
+            "right": 1020,
+            "bottom": 505,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 509,
+            "right": 1020,
+            "bottom": 1783,
+            "width": 760
+          },
+          "above": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 246,
+            "top": 281,
+            "right": 914,
+            "bottom": 306,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1389,
+            "width": 668
+          },
+          "above": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "label": "Draft",
+          "labelBox": {
+            "left": 20,
+            "top": 732,
+            "right": 370,
+            "bottom": 757,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 761,
+            "right": 370,
+            "bottom": 3160,
+            "width": 350
+          },
+          "above": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 260,
+            "top": 480,
+            "right": 1020,
+            "bottom": 505,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 509,
+            "right": 1020,
+            "bottom": 1783,
+            "width": 760
+          },
+          "above": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 246,
+            "top": 281,
+            "right": 914,
+            "bottom": 306,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1389,
+            "width": 668
+          },
+          "above": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "label": "Draft",
+          "labelBox": {
+            "left": 20,
+            "top": 738,
+            "right": 370,
+            "bottom": 763,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 767,
+            "right": 370,
+            "bottom": 3217,
+            "width": 350
+          },
+          "above": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 260,
+            "top": 483,
+            "right": 1020,
+            "bottom": 508,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 512,
+            "right": 1020,
+            "bottom": 1810,
+            "width": 760
+          },
+          "above": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 246,
+            "top": 281,
+            "right": 914,
+            "bottom": 306,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1417,
+            "width": 668
+          },
+          "above": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "label": "Draft",
+          "labelBox": {
+            "left": 20,
+            "top": 738,
+            "right": 370,
+            "bottom": 763,
+            "width": 350
+          },
+          "valueBox": {
+            "left": 20,
+            "top": 767,
+            "right": 370,
+            "bottom": 3217,
+            "width": 350
+          },
+          "above": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 260,
+            "top": 483,
+            "right": 1020,
+            "bottom": 508,
+            "width": 760
+          },
+          "valueBox": {
+            "left": 260,
+            "top": 512,
+            "right": 1020,
+            "bottom": 1810,
+            "width": 760
+          },
+          "above": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "label": "Draft",
+          "labelBox": {
+            "left": 246,
+            "top": 281,
+            "right": 914,
+            "bottom": 306,
+            "width": 668
+          },
+          "valueBox": {
+            "left": 246,
+            "top": 312,
+            "right": 914,
+            "bottom": 1417,
+            "width": 668
+          },
+          "above": true
+        }
+      ],
+      "ok": true
+    },
+    "theFactsFollowTheDeclaredOrder": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Name",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "order": [
+            "Due",
+            "Status",
+            "Summary",
+            "Subject line",
+            "Draft"
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "theFactsFollowTheKindsPageWithTheRestUnderDetails": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Name",
+            "Summary"
+          ]
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "found": true,
+          "order": [
+            "Subject line",
+            "Draft",
+            "Schedule",
+            "Due",
+            "Status",
+            "Details",
+            "Summary"
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "theDraftIsEditedInATextAreaThatKeepsItsLines": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "opened": true,
+          "named": "Draft",
+          "kept": true,
+          "tall": true
+        }
+      ],
+      "ok": true
+    },
+    "aParagraphAddedInPlaceIsStoredWithTheOthers": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 390,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "pages",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "face": "graview",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 390,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "pages",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "face": "graview",
+          "width": 1280,
+          "storedRight": true,
+          "paragraphsAfter": 11
+        }
+      ],
+      "ok": true
+    },
+    "aCardsTextBlockKeepsTheParagraphsAndLists": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 390,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "found": true,
+          "paragraphs": 10,
+          "numbered": 4,
+          "bulleted": 6
+        }
+      ],
+      "ok": true
+    },
+    "aMarkdownBodyRendersAsProseWithNoSyntaxShowing": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "markdown": true,
+          "headings": 2,
+          "items": 8,
+          "tables": 1,
+          "blocks": 1,
+          "code": 3,
+          "strong": 1,
+          "emphasis": 1,
+          "quotes": 1,
+          "links": [
+            "https://graview.dev/docs/stability"
+          ],
+          "syntax": []
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "markdown": true,
+          "headings": 0,
+          "items": 43,
+          "tables": 0,
+          "blocks": 0,
+          "code": 54,
+          "strong": 0,
+          "emphasis": 0,
+          "quotes": 0,
+          "links": [],
+          "syntax": []
+        }
+      ],
+      "ok": true
+    },
+    "aListRowSaysATextFieldAsOneExcerptLineWithNoMarkdownSyntax": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1440,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-0128",
+          "found": true,
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "breaks": false,
+          "syntax": [],
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 390,
+          "id": "brief-markdown",
+          "found": true,
+          "said": "Sent · Markdown in a text field…",
+          "breaks": false,
+          "syntax": [],
+          "expected": "Markdown in a text field…"
+        }
+      ],
+      "ok": true
+    },
+    "hostileMarkdownRunsNothing": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1440,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 390,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1440,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 390,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1440,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 390,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1440,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 390,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1440,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 390,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1440,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 390,
+          "dialogs": [],
+          "found": true,
+          "pwned": null,
+          "markup": [],
+          "handlers": [],
+          "links": [],
+          "words": true,
+          "wider": false
+        }
+      ],
+      "ok": true
+    },
+    "noPageErrors": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "ok": true
+}

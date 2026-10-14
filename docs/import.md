@@ -95,9 +95,45 @@ and the rest still land. `result` says `made`, `linked`, `refused`, the columns
 `ignored`, the rows each with its sentence, `batch`, `ops`, and the problems the
 import `introduces` (rules it broke that were not broken before).
 
+## A sheet of records the app already has
+
+Imported again — corrected, a quote raised, an email fixed — a sheet makes
+every record a second time, unless the import is told how a row finds the
+record it already is:
+
+```ts
+importRows(store, "vendor", rows, mapping, { by: person, match: "label" });
+importRows(store, "vendor", rows, mapping, { by: person, match: { column: "Email", field: "email" } });
+```
+
+`"label"` finds a record of the kind called what the row would call it;
+`{ column, field }` one whose `field` holds what the row has under `column`
+(read by the field's type; a word, case and spacing aside). It looks among the
+live records the importer sees. A row that finds one **changes** it: only the
+fields the row has, and only those whose value differs, through the kind's
+edit act (`edit-<kind>`), so the policy is asked as a press on "Change" would
+be; and it links what it names that the record is not yet linked to (a
+relation to one replaces the link it had). A row that finds none makes a
+record, as before. Each row says which:
+
+- "Row 2 would change Bloom & Co (Quote: 1000 → 1200)."
+- "Row 3 would leave Petal Press as is."
+- "Row 4 would make New Florist."
+
+and the totals, "3 rows: 1 vendor would be made, 1 would be changed, 1 would be
+left as is." A row is refused, in words, when two records answer to it ("2
+vendors answer to “Twin Bakery”, and a row changes one"), when the one that
+answers is archived ("Old Florist is archived; bring it back first"), when a
+row above already makes or changes it, or when it changes a field the edit act
+does not (one an act of its own writes). The changes, the records made and the
+links are still **one batch**, one undo. `proposeMapping` suggests a `match` —
+a key column such as an email or a code, else the column the name is read from
+— and says it in `matchSaid`; it is never applied unless passed.
+
 ## Who may import
 
-The importer is held to the acts that **create** the kind: who may bring one
+The importer is held to the acts that **create** the kind (and, for a row that
+changes a record under `match`, to its edit act): who may bring one
 into being by hand may bring one in from a sheet. A policy that refuses every
 such act to them, or an agent's `may` that names none, refuses every row in its
 own words ("Not permitted: “Add a vendor” — a planner can."). A kind of a module
@@ -117,9 +153,10 @@ nothing: the log, the graph and the subscribers are as they were.
   changes would hand a sheet's worth of records to a model for no reason. A
   host that wants a chat to import exposes `importRows` behind its own tool,
   with the rows the person handed it.
-- **Not a sync.** An import makes records; it does not match a row to a record
-  already there. Importing the same sheet twice makes each record twice (the
-  second numbered `-2`). Two-way sync is `@graview/core/sync`.
+- **Not a sync.** Without `match` an import makes records and does not look for
+  one already there: importing the same sheet twice makes each record twice
+  (the second numbered `-2`). With it, a row changes the record it finds, and
+  never removes one the sheet leaves out. Two-way sync is `@graview/core/sync`.
 - **Not several kinds at once.** One import, one kind; a sheet that holds
   vendors and their events is two imports, the events first so the vendors can
   name them.

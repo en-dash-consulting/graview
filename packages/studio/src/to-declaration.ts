@@ -1,10 +1,17 @@
 import {
+  appLinkField,
+  markdownField,
   bindsOf,
+  fileField,
+  imageField,
   createSchema,
   defineInvariant,
   defineNode,
+  durationField,
   nodeRef,
   nodeRefArgs,
+  phoneField,
+  placeField,
   repeatField,
   repeatKey,
   type AnyMutationDefinition,
@@ -21,6 +28,7 @@ import {
   type Sight,
 } from "@graview/core";
 import { expressionRule } from "@graview/core/document";
+import { isMarkdownField } from "@graview/core/words";
 import { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
 import { fieldTypeOf, lensNodeId } from "./from-declaration.js";
@@ -100,12 +108,27 @@ export function computedFor(graph: { in(to: string, kind: string): readonly ({ r
 }
 
 /** The zod type a studio field declares. */
-export function zodFor(type: FieldType, required: boolean, options?: readonly string[]): z.ZodType {
+export function zodFor(type: FieldType, required: boolean, options?: readonly string[], markdown?: boolean): z.ZodType {
   const base: z.ZodType =
-    type === "number"
+    // Prose written in Markdown (FR-180).
+    type === "text" && markdown
+      ? markdownField()
+      : type === "app-link"
+      ? appLinkField()
+      : type === "image"
+        ? imageField()
+        : type === "file"
+          ? fileField()
+          : type === "number"
       ? z.number()
       : type === "integer"
         ? z.number().int()
+        : type === "phone"
+          ? phoneField()
+          : type === "place"
+            ? placeField()
+            : type === "duration"
+              ? durationField()
         : type === "url"
           ? z.url()
           : type === "email"
@@ -129,6 +152,7 @@ export function defaultFor(type: FieldType, options?: readonly string[]): unknow
   switch (type) {
     case "number":
     case "integer":
+    case "duration":
       return 0;
     case "datetime":
       return new Date().toISOString();
@@ -254,6 +278,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       required: bool(field, "required"),
       options: list(field, "options"),
       repeats: bool(field, "repeats"),
+      markdown: bool(field, "markdown"),
     }));
 
   const definitions = read.ofKind("kind").map((kind) => {
@@ -273,8 +298,9 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
         was !== undefined &&
         was.type === field.type &&
         was.required === field.required &&
-        (was.options ?? []).join("|") === (field.options ?? []).join("|");
-      shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options);
+        (was.options ?? []).join("|") === (field.options ?? []).join("|") &&
+        isMarkdownField(own) === field.markdown;
+      shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options, field.markdown);
       // A date that repeats keeps how beside it, as the framework's own field.
       if (field.repeats && (field.type === "date" || field.type === "datetime")) shape[repeatKey(field.name)] = repeatField();
     }
@@ -303,6 +329,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(lifecycleField && retired ? { lifecycle: { field: lifecycleField, retired: retired[0] === "date" ? ("date" as const) : retired } } : {}),
       ...(str(kind, "figure") ? { figure: str(kind, "figure")! } : {}),
       ...(bool(kind, "people") ? { people: true } : {}),
+      ...(bool(kind, "neverArchived") ? { archives: false } : {}),
       ...(computed ? { computed } : {}),
       // What the studio has no act for is CARRIED, not dropped — a glance may say a computed field too.
       ...kept(base, name(kind), shape, new Set(Object.keys(computed ?? {}))),

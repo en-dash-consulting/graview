@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
-  "minified": 11706,
-  "gzipped": 4609,
-  "note": "Raised when a date came to repeat (the Roadmap's f-recurring-dates): the repeat's check, the occurrence math and the three acts on one occurrence (skip, detach, split) with the store, which a rule and a hosted page need as it loads; and, fetched with what draws them, the words that say a repeat, the picker beside a record's date and in a form, and the calendar drawing each occurrence. 11_706 / 4_609 more than the branch it was made from (1_621_829 / 508_461), while a hosted page's first load is 5_780 / 2_335 bytes larger (5_401 / 2_226 handed a compiled app) and stays under its budgets. Measured at 1_633_535 / 513_070."
+  "minified": 11774,
+  "gzipped": 4589,
+  "note": "Raised when a date came to repeat (the Roadmap's f-recurring-dates): the repeat's check, the occurrence math and the three acts on one occurrence (skip, detach, split) with the store, which a rule and a hosted page need as it loads; and, fetched with what draws them, the words that say a repeat (\"Every Tuesday, next Oct 27\"), the picker beside a record's date and in a form, and the calendar drawing each occurrence. 11_774 / 4_589 more than batch/0-1-29-fixes at 8600ae04 (1_668_072 / 526_997), while a hosted page's first load is 5_797 / 2_381 bytes larger (5_425 / 2_274 handed a compiled app) and stays under its budgets. Measured at 1_679_846 / 531_586."
 }

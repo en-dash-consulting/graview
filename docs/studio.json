@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T15:09:42.272Z",
+  "at": "2026-10-14T01:42:40.414Z",
   "engine": "chromium",
   "checks": {
     "theDoorBelongsToWhoeverKeepsTheApp": {
@@ -11,6 +11,7 @@
       "districts": [
         "kind:act",
         "kind:brand",
+        "kind:computed",
         "kind:edge",
         "kind:field",
         "kind:grant",
@@ -69,7 +70,7 @@
     },
     "theDeclarationAnswersForItself": {
       "answered": [
-        "6 kinds: list (2 fields, 1 relation), task (7 fields, 1 relation), rule (4 fields, 0 relations), reason (1 field, 1 relation), user (4 fields, 0 relations) and invitation (4 fields, 1 relation). There are 17 acts and 3 rules."
+        "6 kinds: list (2 fields, 1 relation), task (8 fields, 1 relation), rule (4 fields, 0 relations), reason (1 field, 1 relation), user (4 fields, 0 relations) and invitation (4 fields, 1 relation). There are 17 acts and 3 rules."
       ],
       "ok": true
     },
@@ -110,10 +111,9 @@
       "goneAgain": true,
       "ok": true
     },
-    "whatTheKeylessRungCannotReadItOffersAWayOutOf": {
-      "said": "This graph holds 6 kinds, 22 fields, 4 edges, 17 acts, 3 rules, 2 roles, 3 grant",
-      "offered": true,
-      "opensThePicker": true,
+    "whatTheDeclarationCannotReadWithNoModelItSaysSo": {
+      "said": "I can answer about what's in this app. Open questions need AI. Set ANTHROPIC_API_KEY when you start the dev server to turn it on.",
+      "pickers": [],
       "ok": true
     },
     "aModelsAnswerBecomesSeveralFormsYouCanCorrect": {
@@ -158,8 +158,100 @@
     "aStudioHandedInWaitsForNoChunk": {
       "fetched": [
         "entry.js",
-        "chunk-ZOKDILRX.js"
+        "chunk-B7SEHG6X.js",
+        "chunk-O2EVG46R.js",
+        "chunk-PGQ4V7F3.js",
+        "chunk-75PKSDWA.js",
+        "chunk-TKPG6NPO.js",
+        "chunk-5FZPIYBD.js",
+        "chunk-YTMUHXZQ.js",
+        "chunk-46GBWW54.js",
+        "chunk-6NPHTEGZ.js",
+        "chunk-MPL4JRVD.js",
+        "chunk-XNUDPCQQ.js",
+        "chunk-OQKCWYAY.js",
+        "chunk-QX3KKQEA.js",
+        "chunk-BSDDTJOU.js",
+        "chunk-6G4OVDCF.js",
+        "chunk-3P7PDM3P.js",
+        "chunk-L5I7GOIZ.js",
+        "chunk-KRCL2DOG.js",
+        "chunk-C4IY7ZOU.js",
+        "chunk-3H7GTOFT.js",
+        "chunk-KDLRN5LP.js",
+        "chunk-DDJ7TVQS.js",
+        "chunk-VTNY3XCB.js",
+        "chunk-WDD6LVLK.js",
+        "chunk-HWNZINLZ.js",
+        "chunk-IRE7ZKYG.js",
+        "chunk-SRQBMWQX.js",
+        "chunk-I6WGZVRI.js",
+        "chunk-VNQAAU5M.js",
+        "chunk-GRJDCWMI.js",
+        "chunk-H237O7YY.js",
+        "chunk-ZPTNVQAK.js",
+        "chunk-UGJJ5LL3.js",
+        "chunk-2A2UWX7J.js",
+        "chunk-D4BAJ7FN.js",
+        "chunk-SDSXVIQZ.js",
+        "chunk-TWVEAUJN.js",
+        "chunk-NYLVO63D.js",
+        "chunk-HBZC2PAC.js",
+        "chunk-EQB27GDR.js",
+        "chunk-B6URZ2SR.js",
+        "chunk-H2E43EPC.js",
+        "chunk-M2FSFKHL.js",
+        "chunk-TMYHRNEB.js",
+        "chunk-PKUWBXG6.js",
+        "chunk-ZLUNUTCC.js",
+        "chunk-ZEEY4U53.js",
+        "chunk-5T54WIIC.js",
+        "chunk-QCZSXRJ7.js",
+        "chunk-Q6SGTPZL.js",
+        "chunk-PNSKXOEL.js",
+        "chunk-D6XRF7MH.js",
+        "chunk-3RM3YIP7.js",
+        "chunk-GPM4G3F4.js",
+        "chunk-EBQXTZTS.js",
+        "chunk-C5NOHSZB.js",
+        "chunk-73GYXK6I.js",
+        "chunk-63VE7HEG.js",
+        "chunk-FMMAOORG.js",
+        "chunk-3QDCN3NY.js",
+        "chunk-SA4RVN64.js",
+        "chunk-4Q644NSR.js",
+        "chunk-YLHFVNCN.js",
+        "chunk-PPFZHUTD.js",
+        "chunk-VWTDAIWE.js",
+        "chunk-TZYLX357.js",
+        "chunk-QY5C2NND.js",
+        "chunk-YHCVLKSI.js",
+        "chunk-7MH55FY5.js",
+        "chunk-DBTYYVLI.js",
+        "chunk-U67V476Y.js",
+        "scene-face-YF6ZMP7Y.js",
+        "ribbons-layer-SXZDXCYX.js",
+        "plots-PHRNHFTW.js",
+        "framework-views-SQ2K54LP.js",
+        "chunk-BVEN26WD.js",
+        "states-bar-3PMVUEQM.js",
+        "bar-panes-SQDYIBKP.js",
+        "inspector-NJ352GVG.js",
+        "scene-way-back-door-SKRWU5UT.js",
+        "record-links-layer-F2Z2W36L.js"
       ],
+      "later": [
+        "scene-face-YF6ZMP7Y.js",
+        "ribbons-layer-SXZDXCYX.js",
+        "plots-PHRNHFTW.js",
+        "framework-views-SQ2K54LP.js",
+        "chunk-BVEN26WD.js",
+        "states-bar-3PMVUEQM.js",
+        "bar-panes-SQDYIBKP.js",
+        "inspector-NJ352GVG.js",
+        "scene-way-back-door-SKRWU5UT.js"
+      ],
+      "studioLater": [],
       "ok": true
     },
     "anEditorTheHostOffersItToSeesTheStudio": {
@@ -172,6 +264,12 @@
       "mainsInTheEmbed": 0,
       "violations": [],
       "landmarks": [],
+      "ok": true
+    },
+    "anApplyWithNothingChangedAsksTheHostNothing": {
+      "said": "unchanged",
+      "text": "Nothing to apply: the declaration is as the studio opened it. Change something, then Apply.",
+      "handed": 0,
       "ok": true
     },
     "aHostThatRefusesIsShownRefusingAndTheEditsStay": {
@@ -204,6 +302,21 @@
           }
         ]
       ],
+      "ok": true
+    },
+    "aHostsRefusalIsHeadedInItsOwnWords": {
+      "heading": "Not previewed: this host previews only what an edit says.",
+      "ok": true
+    },
+    "theHostsOwnButtonHeadingAndCodeAreAsTheHostStyledThem": {
+      "dark": {
+        "embedScheme": "dark",
+        "changed": []
+      },
+      "light": {
+        "embedScheme": "light",
+        "changed": []
+      },
       "ok": true
     },
     "theHostsPageThrowsNothing": {

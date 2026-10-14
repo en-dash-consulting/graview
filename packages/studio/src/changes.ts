@@ -80,10 +80,10 @@ export function sourceChanges(before: Reading, after: Reading, base?: GraviewApp
     const had = new Map(fieldsOf(was, old).map((field) => [field.name, field]));
     const has = new Map(fieldsOf(now, kind).map((field) => [field.name, field]));
     for (const [name, field] of has) {
-      const zod = zodSource(field.type, field.required, field.options);
+      const zod = zodSource(field.type, field.required, field.options, undefined, field.markdown);
       const prior = had.get(name);
       if (!prior) changes.push({ what: "add-field", kind: label(kind), field: name, zod });
-      else if (zodSource(prior.type, prior.required, prior.options) !== zod) changes.push({ what: "change-field", kind: label(kind), field: name, zod });
+      else if (zodSource(prior.type, prior.required, prior.options, undefined, prior.markdown) !== zod) changes.push({ what: "change-field", kind: label(kind), field: name, zod });
     }
     for (const name of had.keys()) if (!has.has(name)) changes.push({ what: "remove-field", kind: label(kind), field: name });
   }

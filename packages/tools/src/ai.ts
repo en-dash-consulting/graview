@@ -1,3 +1,4 @@
+import type { SearchRanker } from "@graview/core";
 import type { ToolDefinition } from "./agent/tools.js";
 import type { Completion } from "./intelligence.js";
 import type { Decide } from "./providers/jev.js";
@@ -54,6 +55,15 @@ export interface HostAi {
   readonly turn?: (turn: HostTurn) => Promise<string>;
   /** A decision provider (`jevDecide(...)`): typed questions in, answers with a confidence out. */
   readonly decide?: Decide;
+  /**
+   * THE HOST'S RANKER FOR FIND (embeddings, a model): when the words find
+   * few records exactly, it is handed the words and the records this seat
+   * sees — never a hidden one, nor its text — and answers the near ones'
+   * scores, at once or later. Find shows the exact hits at once and these
+   * as they arrive, said as near; `search_graph` answers them as
+   * `near: true`. Unsaid, near hits come from spelling and word forms alone.
+   */
+  readonly near?: SearchRanker;
   /**
    * A model in the reader's browser (Chrome's built-in model, else WebLLM
    * over WebGPU — a download of a gigabyte or two). Off unless the host

@@ -56,8 +56,12 @@ const sentence = str(1, 500);
 const expression = str(1, 2000);
 const template = str(1, 300);
 
-/** `image` and `file` hold what the host stored (FR-162): a `FileValue`, its `href` a path on the host. */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file", "app-link"] as const;
+/**
+ * `image` and `file` hold what the host stored (FR-162): a `FileValue`, its
+ * `href` a path on the host. `phone` and `place` are words drawn as a link to
+ * call and to a map; `duration` is a whole number of minutes, said "1 h 30 min".
+ */
+export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file", "app-link", "phone", "place", "duration"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const FieldSpec = z
@@ -71,7 +75,8 @@ export const FieldSpec = z
     of: z.optional(z.enum(["string", "number", "date", "image", "file"])),
     default: z.optional(z.unknown()),
     unit: z.optional(str(undefined, 12)),
-    format: z.optional(z.enum(["money", "percent", "duration"])),
+    /** How a number is shown (`money`, `percent`, `duration`), or that a `text` field is written in Markdown (FR-180; the checker's `field-format` says which goes where). */
+    format: z.optional(z.enum(["money", "percent", "duration", "markdown"])),
     /** A number's range (FR-114): the least and the most it may be, and the step its values are whole multiples of (JSON Schema's `multipleOf`). */
     min: z.optional(z.number()),
     max: z.optional(z.number()),
@@ -152,6 +157,8 @@ export const KindSpec = z.strictObject({
   renamedFrom: z.optional(z.string().check(z.regex(NAME))),
   /** This kind stands for the people: a record of it whose id is a member's principal id is that member (`$me`, `self`, `own`, `via`, `ownEnd`). */
   people: z.optional(z.boolean()),
+  /** `false`: its records are kept or removed, never archived — the kind is given no `archive-`, `unarchive-` or `merge-<kind>` (FR-173). */
+  archives: z.optional(z.literal(false)),
 });
 export type KindSpec = z.infer<typeof KindSpec>;
 

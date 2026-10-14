@@ -122,10 +122,10 @@ type Get<T, K extends string> = T extends { readonly [P in K]?: infer V } ? NonN
 type Keys<T> = [T] extends [never] ? never : T extends object ? keyof T & string : never;
 type Simplify<T> = { [K in keyof T]: T[K] } & {};
 
-/** What a field of one declared type holds: its options for an enum, a number for a number, words for the rest. */
+/** What a field of one declared type holds: its options for an enum, a number for a number (and a duration, in minutes), words for the rest. */
 export type ValueOf<F> = F extends { readonly type: "enum"; readonly options: readonly (infer O)[] }
   ? O
-  : F extends { readonly type: "number" | "integer" }
+  : F extends { readonly type: "number" | "integer" | "duration" }
     ? number
     : F extends { readonly type: "boolean" }
       ? boolean

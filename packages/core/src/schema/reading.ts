@@ -4,6 +4,9 @@ import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
 import { repeatingDateAsRead } from "../repeat-words.js";
 import { isRepeatField } from "../repeat.js";
+import { isMarkdownField } from "./markdown.js";
+import { excerptOf } from "../excerpt-of.js";
+import { fieldSays, typedHref, typedWords } from "./field-words.js";
 import type { AnyNodeDefinition, PageFields } from "./types.js";
 
 /*
@@ -114,6 +117,13 @@ export function readableFields(
      * full facts keep every field — that is where each is changed.
      */
     readonly glance?: boolean;
+    /**
+     * PROSE SAID BY ITS START (FR-180): a long text or Markdown read as its
+     * first paragraph, line or about 160 characters, the syntax taken out.
+     * A glance always is; a line about a record (a seat's answer, a table's
+     * cell) asks for it without a glance's choice of fields.
+     */
+    readonly excerpt?: boolean;
     /** The app's locale its days are said in (FR-178): a reader's a host passed wins, and the page's when unsaid. */
     readonly locale?: string | undefined;
   } = {},
@@ -149,7 +159,9 @@ export function readableFields(
     const files = format ? [] : filesOf(value);
     if (files[0] && options.glance) continue;
     // Another app's address (FR-171) is drawn as the app, not said on a glance.
-    const app = !format && typeof value === "string" && isAppLinkField((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]) ? value : undefined;
+    const schema = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key];
+    const app = !format && typeof value === "string" && isAppLinkField(schema) ? value : undefined;
+    const markdown = !format && typeof value === "string" && isMarkdownField(schema);
     if (app && options.glance) continue;
     /*
      * A NESTED OBJECT HAS NO ONE-LINE RENDERING, and inventing one is worse
@@ -175,9 +187,13 @@ export function readableFields(
     // A date that repeats says how, and the next one: "Every Tuesday, next Oct 27".
     const repeated = typeof value === "string" && !format ? repeatingDateAsRead(value, node[`${key}Repeat`], { locale: options.locale }) : undefined;
     const stored = files[0] ? files.map((file) => (file.caption ? `${file.name} — ${file.caption}` : file.name)).join(", ") : Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
-    const text = format
+    // A phone, a place or a duration, said as one: "(555) 123-4567", "1 h 30 min".
+    const typed = format ? undefined : fieldSays(definition, key);
+    const href = typedHref(typed, value);
+    const whole = format
       ? format(value)
-      : Array.isArray(value) || typeof value === "boolean"
+      : typedWords(typed, value, options.locale) ??
+        (Array.isArray(value) || typeof value === "boolean"
         ? // Nobody says "false". A boolean is a state, and the words for a
           // state are words.
           stored
@@ -195,7 +211,14 @@ export function readableFields(
           ? momentAsRead(value, options.locale)
           : typeof value === "string" && isChoice(definition, key)
             ? valueWords(definition, key, value)
-            : stored;
+            : stored);
+    const long = typeof value === "string" && isLongText(definition, key, whole);
+    /*
+     * A GLANCE SAYS PROSE BY ITS START (FR-180): its first paragraph, line
+     * or about 160 characters, Markdown's syntax taken out. A row, a card,
+     * a describe line all read a glance; the record's page reads it whole.
+     */
+    const text = (options.glance || options.excerpt) && !format && (long || markdown) ? excerptOf(whole, { markdown }) : whole;
 
     if (said.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
     if (options.glance && (typeof value === "string" || typeof value === "number") && said.some((line) => saysAsWords(line, text))) continue;
@@ -203,7 +226,7 @@ export function readableFields(
     const alone =
       // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(isRepeatField(shapeOf?.[`${key}Repeat`]) ? { repeats: true as const } : {}) });
+    fields.push({ key, label, value: text, stored, alone, long, ...(markdown ? { markdown: true as const } : {}), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(href ? { href } : {}), ...(isRepeatField(shapeOf?.[`${key}Repeat`]) ? { repeats: true as const } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;

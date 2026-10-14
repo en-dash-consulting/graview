@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 4056,
+  "gzipped": 1636,
+  "note": "Raised by near words in Find: a typo or another form of a word finds the record, said as near, and a host ranker (HostAi.near) adds near hits as they arrive; the matcher (stemming, slips, the ranker seam) is fetched with Find, and the hosted page grows only by the provider waiting for the ranker (121 B minified, 70 B gzipped up front, within its budget unraised). Measured at 1880731 / 611719 against 1876675 / 610083 on batch/0-1-29-fixes before it."
+}

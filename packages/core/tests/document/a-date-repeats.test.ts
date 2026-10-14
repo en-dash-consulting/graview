@@ -4,6 +4,7 @@ import { documentTypes } from "../../src/cli/types.js";
 import { DocumentSpec, diffDocuments, editDocument, planMigration, toDocument, type GraviewDocument } from "../../src/document/index.js";
 import { createSchema, defineApp, defineNode, refusalOf, repeatField, Store, z, type AnySchema, type GraviewApp } from "../../src/index.js";
 import { nodeJsonSchema } from "../../src/json-schema.js";
+import { fieldSpecOf } from "../../src/blocks.js";
 
 /**
  * A DATE THAT REPEATS: a weekly practice, a monthly bill.
@@ -163,6 +164,11 @@ describe("a document's date that repeats", () => {
     const plan = planMigration(club(), doc as unknown as GraviewDocument, { nodes: [TUESDAYS], edges: [] });
     const patch = plan.primitives.find((p) => p.op === "patch-node") as { after: Record<string, unknown> } | undefined;
     expect(patch?.after).toMatchObject({ meetsAt: "2026-10-20T18:00", meetsAtRepeat: { every: "week", on: ["tue"] } });
+  });
+
+  it("reads back as a date and time, so a face that asks which fields are dates finds it", () => {
+    const shape = (compiled().schema.definition("practice").fields as unknown as { shape: Record<string, unknown> }).shape;
+    expect(fieldSpecOf(shape["startsAt"])).toMatchObject({ type: "datetime" });
   });
 
   it("is written in its types and its JSON Schema", () => {

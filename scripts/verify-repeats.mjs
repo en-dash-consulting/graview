@@ -5,8 +5,8 @@
  * A date field declared `"repeats": true` keeps its first occurrence and,
  * beside it, how it repeats; the occurrences are worked out, never stored.
  * The app is a running club's document mounted the way Cloud mounts one
- * (`scripts/fixtures/repeats/club.gdd.json`): "Tuesday run" every Tuesday
- * since Sep 1, the Oct 13 one skipped, and a one-off "Club dinner" on
+ * (`scripts/fixtures/repeats/club.gdd.json`): "Tuesday run" every Tuesday at
+ * six since Sep 1, the Oct 13 one skipped, and a one-off "Club dinner" on
  * Oct 24. The page's clock is held at noon on Wednesday, Oct 21, 2026.
  *
  * At desk width, in three engines and both schemes, it asks:
@@ -15,7 +15,7 @@
  *   on every Tuesday the grid shows — each marked as a repeat, the skipped
  *   one left out — and the dinner once; the stop counts the practice among
  *   what falls in the next seven days, by its next occurrence; the record's
- *   page says "Every Tuesday, next Oct 27"; and its control
+ *   page says "Every Tuesday at 6:00 PM, next Oct 27"; and its control
  *   beside the date changes how it repeats, said back in words as it is
  *   chosen, and kept by the act that writes it.
  *
@@ -196,9 +196,9 @@ try {
         });
         await shot(page, "picker");
         await page.locator('[data-graview-repeat-keep="startsAt"]').click();
-        const kept = await until(page, () => page.evaluate((facts) => (document.querySelector(facts)?.textContent ?? "").includes("Every Tuesday and Thursday, next Oct 22"), facts));
+        const kept = await until(page, () => page.evaluate((facts) => (document.querySelector(facts)?.textContent ?? "").includes("Every Tuesday and Thursday at 6:00 PM, next Oct 22"), facts));
         seen.changed.push({ ...where, before, chosen, labeled, kept });
-        return { said: said.includes("Every Tuesday, next Oct 27") };
+        return { said: said.includes("Every Tuesday at 6:00 PM, next Oct 27") };
       });
     }
     await browser.close();
@@ -219,12 +219,12 @@ report.checks.theCalendarDrawsEachOccurrenceOfAWeeklyPracticeMarkedAndLeavesOutT
 };
 report.checks.theKindsStopCountsAPracticeByItsNextOccurrenceAndSaysIt = {
   seen: seen.soon,
-  ok: all(seen.soon, (one) => /^2\s+in the next 7 days/.test(one.soon ?? "") && (one.row ?? "").includes("Every Tuesday, next Oct 27")),
+  ok: all(seen.soon, (one) => /^2\s+in the next 7 days by starts$/.test(one.soon ?? "") && (one.row ?? "").includes("Every Tuesday at 6:00 PM, next Oct 27")),
 };
 report.checks.theRecordSaysHowItRepeatsAndTheNextOne = { seen: seen.said, ok: all(seen.said, (one) => one.said) };
 report.checks.theControlBesideTheDateChangesHowItRepeatsSaidInWords = {
   seen: seen.changed,
-  ok: all(seen.changed, (one) => one.before === "Every Tuesday" && one.chosen === "Every Tuesday and Thursday" && one.labeled && one.kept),
+  ok: all(seen.changed, (one) => one.before === "Every Tuesday at 6:00 PM" && one.chosen === "Every Tuesday and Thursday at 6:00 PM" && one.labeled && one.kept),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

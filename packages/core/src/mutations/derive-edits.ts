@@ -6,6 +6,7 @@ import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { nodeRefArgs, refTo } from "./node-ref.js";
 import { ActRefusal } from "../refused.js";
+import { excerpt } from "../excerpt.js";
 import type { AnyMutationDefinition } from "./types.js";
 import { deriveRepeatMutations } from "./derive-repeats.js";
 
@@ -200,7 +201,8 @@ export function deriveEditMutations<S extends AnySchema>(
             let said: string;
             try {
               // Files by their names (FR-162), never the host's addresses.
-              said = format ? String(format(value)) : filesOf(value).length > 0 ? filesOf(value).map((file) => file.name).join(", ") : JSON.stringify(value);
+              // Prose by its start (FR-180): a history line is not the whole brief again.
+              said = format ? String(format(value)) : filesOf(value).length > 0 ? filesOf(value).map((file) => file.name).join(", ") : JSON.stringify(typeof value == "string" && value.length > 60 ? excerpt(value, 60) : value);
             } catch {
               said = JSON.stringify(value);
             }

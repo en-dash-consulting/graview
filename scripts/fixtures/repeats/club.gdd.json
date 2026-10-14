@@ -13,7 +13,7 @@
       "label": "{title}",
       "fields": {
         "title": { "type": "string", "required": true },
-        "startsAt": { "type": "date", "required": true, "repeats": true, "label": "Starts" },
+        "startsAt": { "type": "datetime", "required": true, "repeats": true, "label": "Starts" },
         "place": { "type": "string" }
       }
     }

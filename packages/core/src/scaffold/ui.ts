@@ -356,12 +356,12 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
       {facts.fields.length > 0 ? (
         <dl style={{ ...pageStyles.rule, margin: 0, display: "grid", gridTemplateColumns: "minmax(0, max-content) minmax(0, 1fr)", gap: "6px 18px" }} data-testid="record-fields">
           {facts.fields.map((field) =>
-            /* Prose — a draft, a note — spans the page under its label, its paragraphs and lists kept. */
+            /* Prose — a draft, a note — spans the page under its label, its paragraphs and lists kept; Markdown drawn as prose (FR-180). */
             field.long ? (
               <div key={field.key} style={{ gridColumn: "1 / -1", display: "grid", gap: 4, marginTop: 6 }}>
                 <dt style={pageStyles.quiet}>{field.label}</dt>
                 <dd style={{ margin: 0 }}>
-                  <TextBody text={field.value} />
+                  <TextBody text={field.value} markdown={field.markdown} />
                 </dd>
               </div>
             ) : (

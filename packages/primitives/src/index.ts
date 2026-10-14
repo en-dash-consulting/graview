@@ -48,10 +48,15 @@ export type { Arranging, ArrangingOptions } from "./lens/arranging.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
-export { EditableTitle, EditableValue, Fields, humanize, LongValue } from "./editable.js";
+export { EditableTitle, EditableValue, FieldLink, Fields, humanize, LongValue } from "./editable.js";
 // A record's pictures and documents (FR-162, FR-163): drawn, and put there through the host's files.
 export { Files } from "./files-door.js";
 export type { FilesProps } from "./files-door.js";
+// Choosing several records on a list, and the bar that acts on them all at once (fetched with the first one chosen).
+export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
+export type { Choosing } from "./choosing.js";
+export { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
+export type { SeveralBarProps } from "./several-door.js";
 export { AppLink } from "./app-link-door.js";
 export type { AppLinkProps } from "./app-link-door.js";
 // How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.

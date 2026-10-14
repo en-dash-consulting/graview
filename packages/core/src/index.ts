@@ -38,6 +38,10 @@ export { appLinkField } from "./schema/app-link-field.js";
 export { dateOn, isRepeat, isRepeatField, nextOccurrence, occurrences, repeatedBy, repeatKey, validRepeat, WEEKDAYS } from "./repeat.js";
 export type { Repeat, Weekday } from "./repeat.js";
 export { repeatField } from "./schema/repeat-field.js";
+export { markdownField } from "./schema/markdown-field.js";
+// A phone, a place and a length of time: a tel: link, a link to the reader's maps app, minutes said "1 h 30 min".
+export type { TypedField } from "./schema/typed-fields.js";
+export { durationField, phoneField, placeField } from "./schema/typed-field-builders.js";
 export { nameOfAuthor } from "./who.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
@@ -140,9 +144,13 @@ export type {
   Hit,
   HitAbout,
   MatchStrength,
+  NearBy,
+  NearCandidate,
+  NearScore,
   ParsedQuery,
   SearchCondition,
   SearchOptions,
+  SearchRanker,
   SearchResult,
   Why,
 } from "./search.js";

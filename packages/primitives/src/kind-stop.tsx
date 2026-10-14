@@ -1,5 +1,5 @@
 import { arrange, arrangeable, throughEdges } from "@graview/core/arrange";
-import { counted, dayAsRead, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
+import { counted, dayAsRead, fieldWords, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
 import { failureWords } from "@graview/core/words";
 import { kindCardId, withFocus, withOverview, withWithin, type ViewState } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance } from "@graview/react";
@@ -31,6 +31,8 @@ import { useLensKeeping } from "./lens-keeping.js";
 import { appKeyOf } from "./reader-lenses.js";
 import { useSceneGo } from "./seat-move.js";
 import { AnswerArgs } from "./workbench/answer-args.js";
+import { CHOOSING_CSS, useChoosing } from "./choosing.js";
+import { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
 
 /*
  * A KIND OPENS TO SOMETHING USEFUL.
@@ -335,7 +337,7 @@ function GoingOn<S extends AnySchema>({ kind, plural, members, today, arrangemen
             {numberAsRead(dates.soon)} {dates.due ? "due" : ""} in the next 7 days
           </button>
         ) : null}
-        <span className="graview-kind-stop-quiet-text"> by {field.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()}</span>
+        <span className="graview-kind-stop-quiet-text"> by {fieldWords(schema.tryDefinition(kind), field).toLowerCase()}</span>
       </li>,
     );
   }
@@ -482,10 +484,37 @@ function KindTable<S extends AnySchema>({
   plural: string;
   arrangement: Arrangement;
 }) {
-  const { store, views, view: stop, selection, setSelection, setMenuAt } = useGraview<S>();
+  const { store, views, view: stop, selection, setSelection, setMenuAt, principal } = useGraview<S>();
   const { go } = useNavigation();
   const schema = store.schema as AnySchema;
   const graph = store.graph as never;
+  /*
+   * SEVERAL AT ONCE (`choosing.ts`): a box at each row's start, Shift for a
+   * range, Cmd/Ctrl-A for every record the table holds, Escape to put them
+   * down, a long press on a phone; the bar acts on all of them as one
+   * change. Offered where this seat may run some act on one of these.
+   */
+  // In the order the rows are drawn: by group where it is grouped.
+  const order = useMemo(() => (groups ? groups.flatMap((group) => group.nodes) : nodes).map((node) => node.id), [nodes, groups]);
+  const choosing = useChoosing(order);
+  const choosable = useMemo(
+    () =>
+      store.permittedMutations(principal).some((mutation) => {
+        const kinds = mutation.subject?.kinds as readonly string[] | "*" | undefined;
+        return kinds !== undefined && (kinds === "*" || kinds.includes(kind));
+      }),
+    [store, principal, kind],
+  );
+  const table = useRef<HTMLDivElement | null>(null);
+  const acted = (still: readonly string[]) => {
+    choosing.choose(still);
+    requestAnimationFrame(() => {
+      const list = choosing.list.current;
+      const first = still[0] === undefined ? null : list?.querySelector<HTMLElement>(`[data-graview-choose-box="${CSS.escape(still[0])}"]`);
+      (first ?? list)?.focus({ preventScroll: true });
+    });
+  };
+  const all = choosing.chosen.length;
   /* A kind the app gave a line of its own (one × glyph) is drawn as that line, as its list page draws it. */
   const own = views.lookup(kind as never, { cardinality: "one", fidelity: "glyph" });
   const RowView = own !== undefined && !isDefaultView(own) ? (own as ViewComponent<S>) : undefined;
@@ -509,7 +538,12 @@ function KindTable<S extends AnySchema>({
        * is chosen; right-clicked, long-pressed or given the menu key, its acts
        * open. Not a tab stop of its own — its name and its "⋯" are.
        */
-      <tr key={node.id} data-graview-pick={node.id} tabIndex={-1} data-graview-record={node.id} data-flagged={problems.length > 0 || undefined}>
+      <tr key={node.id} data-graview-pick={node.id} tabIndex={-1} data-graview-record={node.id} data-flagged={problems.length > 0 || undefined} {...(choosable ? { "data-graview-choose": node.id } : {})}>
+        {choosable ? (
+          <td className="graview-choose-at">
+            <input {...choosing.boxProps(node.id, name)} onPointerEnter={prefetchSeveral} onFocus={prefetchSeveral} />
+          </td>
+        ) : null}
         <th scope="row" className="graview-kind-stop-name">
           {RowView ? (
             /* The kind's own line (FR-37), a target for its record: pressed, chosen; pressed again, gone to. */
@@ -561,11 +595,44 @@ function KindTable<S extends AnySchema>({
     return drawn.map(row);
   };
   return (
-    <div className="graview-kind-stop-table-at">
+    <div
+      className="graview-kind-stop-table-at"
+      {...(choosable
+        ? {
+            ...choosing.listProps,
+            ref: (element: HTMLDivElement | null) => {
+              table.current = element;
+              choosing.list.current = element;
+            },
+            tabIndex: -1,
+            role: "group",
+            "aria-label": all > 0 ? `${plural}, ${all} chosen` : plural,
+            "data-graview-choosable": "",
+          }
+        : {})}
+    >
+      {choosable ? <style>{CHOOSING_CSS}</style> : null}
       <table className="graview-kind-stop-table" data-testid="kind-stop-table">
         <caption className="graview-kind-stop-hidden">{caption}</caption>
         <thead>
           <tr>
+            {choosable ? (
+              <td className="graview-choose-at graview-choose-all">
+                <input
+                  type="checkbox"
+                  className="graview-choose-box"
+                  data-testid="kind-stop-choose-all"
+                  aria-label={`Choose all ${numberAsRead(nodes.length)} ${plural.toLowerCase()}`}
+                  checked={all > 0 && all === nodes.length}
+                  ref={(element) => {
+                    if (element) element.indeterminate = all > 0 && all < nodes.length;
+                  }}
+                  onPointerEnter={prefetchSeveral}
+                  onFocus={prefetchSeveral}
+                  onChange={() => (all === nodes.length ? choosing.clear() : choosing.choose(order))}
+                />
+              </td>
+            ) : null}
             <th scope="col" aria-sort={sortedBy === "label" ? (arrangement.sort?.direction === "desc" ? "descending" : "ascending") : undefined}>
               Name
             </th>
@@ -584,7 +651,7 @@ function KindTable<S extends AnySchema>({
               left <= 0 ? null : (
                 <tbody key={group.key || "-"} data-graview-group={group.key}>
                   <tr className="graview-kind-stop-group">
-                    <th scope="rowgroup" colSpan={columns.length + 2}>
+                    <th scope="rowgroup" colSpan={columns.length + (choosable ? 3 : 2)}>
                       {group.label} <span className="graview-kind-stop-quiet-text">· {numberAsRead(group.nodes.length)}</span>
                     </th>
                   </tr>
@@ -594,6 +661,18 @@ function KindTable<S extends AnySchema>({
             )
           : <tbody>{body(nodes)}</tbody>}
       </table>
+      {choosable ? (
+        <SeveralBarDoor
+          store={store as never}
+          chosen={choosing.chosen}
+          principal={principal}
+          anchor={() => table.current?.closest<HTMLElement>('[data-testid="kind-stop"]') ?? null}
+          of={order.length}
+          onChooseAll={() => choosing.choose(order)}
+          onClear={choosing.clear}
+          onActed={acted}
+        />
+      ) : null}
       {nodes.length > shown ? (
         <p className="graview-kind-stop-more">
           <span className="graview-kind-stop-quiet-text" data-testid="kind-stop-shown">
@@ -672,6 +751,9 @@ const KIND_STOP_CSS = `
 .graview-kind-stop-table td[data-empty] b{font-weight:400;color:var(--graview-ink-faint)}
 .graview-kind-stop-table tr[data-graview-pick]{cursor:default}
 .graview-kind-stop-more{margin:10px 0 0;font-size:.875rem}
+.graview-kind-stop-table-at[data-graview-choosable]{outline:none}
+[data-graview-choosable]:hover .graview-choose-all .graview-choose-box{opacity:1}
+.graview-kind-stop-table .graview-choose-at{width:1%;padding-right:0;vertical-align:middle}
 @container (max-width: 559px){
 .graview-kind-stop{padding:12px}
 .graview-kind-stop-acts{flex:1 1 100%}
@@ -684,6 +766,13 @@ const KIND_STOP_CSS = `
 .graview-kind-stop-table td[data-short]{white-space:normal}
 .graview-kind-stop-table td[data-label]::before{content:attr(data-label) " · ";color:var(--graview-ink-muted)}
 .graview-kind-stop-row-acts{position:absolute;top:6px;right:0;width:auto}
+.graview-kind-stop-table [data-graview-choose]{padding-left:34px}
+.graview-kind-stop-table td.graview-choose-at{position:absolute;left:0;top:8px;width:auto;padding:0}
+.graview-kind-stop-table thead .graview-choose-at{position:static}
+}
+@media (pointer: coarse){
+.graview-kind-stop-table-at:not([data-graview-choosing]) .graview-choose-at{display:none}
+.graview-kind-stop-table-at:not([data-graview-choosing]) [data-graview-choose]{padding-left:0}
 }
 @media (pointer: coarse){
 .graview-kind-stop-primary,.graview-kind-stop-quiet,.graview-kind-stop-fact,.graview-kind-stop-rule,.graview-kind-stop-link,.graview-kind-stop-switch button,.graview-kind-stop-row-acts button{min-height:44px}

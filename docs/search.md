@@ -70,11 +70,37 @@ A `Hit` is one of:
 | `rule` | an invariant | the words are its name or label |
 
 Matching is on **squeezed text** (case, diacritics and punctuation aside),
-the way the conversation already matches a named node. No fuzzy matching in
-the first cut: a typo is answered with the empty state and the words shown
-back, which is honest and cheap. A semantic rung ("things about moving
-house") is a later intelligence provider behind the same seam, never the
-default.
+the way the conversation already matches a named node. The first cut had no
+fuzzy matching: a typo was answered with the empty state.
+
+**Near words (0.1.29).** When the words find fewer than five records
+exactly, the records a near word finds follow them, ranked after every
+exact hit and said as near — `near: true` on the hit, and a `why` with
+`strength: "near"`, the word `asked`, the record's word that `matched`, and
+`by` (`spelling`, `stem` or `meaning`):
+
+- **spelling**, no model: one slip (a letter missing, extra, wrong, or two
+  swapped) in a word of 4–7 letters, two in a longer one, against a whole
+  word or the start of one ("flowr" is the start of "flowers"). A word of
+  three letters or fewer is never near another, nor is a number.
+- **stem**, no model: another form of the word — plurals, -ing, -ed, a
+  closing e ("planting" finds "planted", "bouquet" finds "bouquets").
+- Words in any order already match; small words ("the", "a", "of") are left
+  aside in a near search when another word was typed.
+- **meaning**, the host's: a ranker (`HostAi.near`, `rank` on `search`) is
+  handed the words and the candidates — only records the seat may see, past
+  the kinds, the horizon and the conditions — and answers scores (0–1) with
+  the record's word that was near. "The florist" finds Bloom & Co by its
+  tags, "flowers". Its hits arrive on `result.later`: Find shows the exact
+  hits at once and these when they come; `search_graph` waits for them.
+
+The strip's row for a near hit reads "Bloom & Co" over "Near “florist” —
+tags: flowers". Going to a record by name and the conversation's "things
+called …" stay exact (`near: false`): a near word is something to offer,
+not a destination. Every word of the vocabulary is judged once per typed
+word and kept, so a near pass over 8,000–12,000 records costs a few
+milliseconds on top of the exact one (6–16 ms a keystroke in all, measured
+on the gauntlet's and the discography's records).
 
 Ranking, in order, stable by id:
 
@@ -164,9 +190,9 @@ derived already (`beginning(app)`, `DerivedForm`, the policy).
   product ever needs it.
 - Per-kind search configuration. `display.hide` and `fixed` already say
   what a person should not see or change; searchable is what is readable.
-- Fuzzy or semantic matching by default. Later, as an intelligence
-  provider with a confidence, behind the same seam, given by the host
-  like every other model.
+- Fuzzy or semantic matching ahead of exact matching. Near hits fill in
+  only when the exact ones are few, after them; meaning comes only from a
+  ranker the host gives, like every other model.
 - Saved searches as a feature. A search is a URL; saving one is bookmarking
   it. If products want named searches, they are stops with titles — the
   same shape as a named place — and can be added then.

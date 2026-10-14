@@ -4,6 +4,8 @@ import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { isAppLinkField } from "./app-link.js";
 import { EVERY, isRepeatField, WEEKDAYS } from "../repeat.js";
+import { isMarkdownField } from "./markdown.js";
+import { typedFieldOf } from "./typed-field-of.js";
 import type { AnySchema } from "./schema.js";
 import { writeJsonSchema, type JsonSchema } from "./to-json-schema.js";
 import type { AnyNodeDefinition } from "./types.js";
@@ -22,6 +24,13 @@ export function toJsonSchema(schema: unknown): JsonSchema {
 /** zod's names for string formats that JSON Schema calls something else; the rest are the same word. */
 const JSON_SCHEMA_FORMATS: Readonly<Record<string, string>> = { guid: "uuid", url: "uri", datetime: "date-time", json_string: "json-string" };
 
+/** What a phone, a place and a duration hold, for an agent, where the field says nothing of itself. */
+const TYPED_WORDS = {
+  phone: "A phone number as it is written, like +1 555 123 4567 or 020 7946 0958 ext. 12.",
+  place: "An address or a place's name, as a person would search a map for it.",
+  duration: "A length of time in whole minutes: 90 is 1 h 30 min.",
+} as const;
+
 type ZodStringDef = { readonly type?: string; readonly format?: string; readonly checks?: readonly { readonly _zod?: { readonly def?: { readonly format?: string; readonly pattern?: RegExp } } }[] };
 
 /*
@@ -39,6 +48,26 @@ export function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonS
   if (isRepeatField(ctx.zodSchema)) {
     ctx.jsonSchema["x-graview-repeat"] = true;
     if (!ctx.jsonSchema["type"] && !ctx.jsonSchema["anyOf"] && !ctx.jsonSchema["oneOf"]) Object.assign(ctx.jsonSchema, repeatJson());
+  }
+  // Prose in Markdown (FR-180): a caller writes Markdown, and it is kept as written.
+  if (isMarkdownField(ctx.zodSchema)) {
+    ctx.jsonSchema["contentMediaType"] = "text/markdown";
+    // Said in words too: not every tool caller reads `contentMediaType`.
+    const said = ctx.jsonSchema["description"];
+    if (!(typeof said === "string" && said.endsWith("Written in Markdown."))) ctx.jsonSchema["description"] = `${typeof said === "string" && said ? `${said.replace(/\.?$/, ".")} ` : ""}Written in Markdown.`;
+  }
+  /*
+   * A PHONE, A PLACE OR A DURATION says which (`x-graview-type`), so an agent
+   * sends the shape the field keeps: a phone as it is written, a place as an
+   * address or a name, and a duration as WHOLE MINUTES — 90, never "1h 30m".
+   * Where the field says nothing of itself, its description says the same.
+   */
+  const typed = typedFieldOf(ctx.zodSchema);
+  if (typed) {
+    const js = ctx.jsonSchema;
+    js["x-graview-type"] = typed;
+    if (typed === "duration") js["x-graview-unit"] = "minutes";
+    js["description"] ??= TYPED_WORDS[typed];
   }
   const def = (ctx.zodSchema as { _zod?: { def?: ZodStringDef } })._zod?.def;
   if (!def || def.type !== "string" || typeof def.format !== "string" || def.format === "regex") return;
