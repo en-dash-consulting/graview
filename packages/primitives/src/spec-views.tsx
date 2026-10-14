@@ -151,7 +151,8 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
               // Another app, as the host names it (FR-171), above the link the whole card is.
               <AppLink address={block.app} />
             ) : block.href ? (
-              <a className="graview-spec-link" href={block.href} rel="noopener noreferrer" target="_blank">
+              // A web address and a place open in a tab of their own; a phone's tel: link calls.
+              <a className="graview-spec-link" href={block.href} {...(block.href.startsWith("tel:") ? {} : { rel: "noopener noreferrer", target: "_blank" })}>
                 {block.text}
               </a>
             ) : (

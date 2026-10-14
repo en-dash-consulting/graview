@@ -55,6 +55,7 @@ import type { PlotsProps } from "./plots.js";
 import { Occupants } from "./occupants.js";
 import { EdgeSigns } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
+import { useKeyboardKeepsToWhatIsSeen } from "./scene-covered.js";
 import { useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
 import { whereIsIn } from "./where-drawn.js";
 import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
@@ -846,6 +847,8 @@ export function Scene<S extends AnySchema>({
   /** The view's own pan moved by so much, held within the camera's reach. */
   const nudge = (dx: number, dy: number, limit = cameraLimit(result)) =>
     setView((current) => withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy })));
+  // Tab passes over a card the panel covers, and the camera brings the one it lands on into the part that is seen.
+  useKeyboardKeepsToWhatIsSeen(wrapperRef, dock, (dx, dy) => nudge(dx, dy));
   panBy.current = (dx, dy) => {
     steer();
     const limit = cameraLimit(result);

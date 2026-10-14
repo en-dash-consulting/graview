@@ -22,7 +22,7 @@ import {
   type Violation,
 } from "@graview/core";
 import { answerSeenBy } from "@graview/core/seat";
-import { search } from "@graview/core/search";
+import { search, type SearchRanker } from "@graview/core/search";
 import { mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import { authorship, markHits } from "./untrusted.js";
 import { READ_HITS } from "./bounds.js";
@@ -85,6 +85,9 @@ const reads = lazily(() => import("./reads.js"));
  * specifier, as above.
  */
 const drafter = lazily(() => import("../draft.js"));
+
+/* One act on several records, fetched when a seat first does one. A literal specifier, as above. */
+const several = lazily(() => import("../several.js"));
 
 /**
  * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).
@@ -188,6 +191,12 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    */
   readonly places?: readonly Place[] | (() => readonly Place[]);
   /**
+   * THE HOST'S RANKER (`HostAi.near`): asked by `search_graph` when the
+   * exact hits are few, with only the records this seat sees, its near hits
+   * answered after the exact ones as `near: true`.
+   */
+  readonly near?: SearchRanker | undefined;
+  /**
    * The app whose places `describe_place` describes: its home, its lenses,
    * its views and its arrangement (FR-89). Without it a seat can still be
    * told what a kind's list, a record's page and the derived home show.
@@ -242,7 +251,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     name: "search_graph",
     title: "Find by name",
     description:
-      "Find things by name: records whose name or readable fields carry the words, and the kinds, places and rules the words name — each with why it matched. Reach for this before get_graph when you know what something is called. Words match the start of words, case and accents aside; key:value tokens narrow as a list's filter does (done:false, is:any for past records, kind:<kind>). Pass subject (a node id) to get the acts you may run on it as hits too.",
+      "Find things by name: records whose name or readable fields carry the words, and the kinds, places and rules the words name — each with why it matched. Reach for this before get_graph when you know what something is called. Words match the start of words, case and accents aside; key:value tokens narrow as a list's filter does (done:false, is:any for past records, kind:<kind>). Pass subject (a node id) to get the acts you may run on it as hits too. When few records match exactly, records with a near word follow — a typo, another form of the word, a meaning — each with near: true and why.matched, the record's own word that answered.",
     inputSchema: {
       type: "object",
       properties: {
@@ -380,6 +389,30 @@ const READ_TOOLS: readonly ToolDefinition[] = [
   },
 ];
 
+/*
+ * ONE ACT ON SEVERAL RECORDS (`@graview/tools/several`): what a person does
+ * with a selection on a list, the seat does with this — the same judging,
+ * the same one batch, the same refusals named per record.
+ */
+const ACT_ON_SEVERAL: ToolDefinition = {
+  name: "act_on_several",
+  title: "Do one act to several records",
+  description:
+    "Run one act on several records at once, as one change with one undo. act is the act (its tool name or its declared name), records the records it runs on (ids or names; each goes in the act's subject), args what every call shares (\"Set stage to Declined\" is args { stage: \"declined\" }). Each record is judged on its own: one this seat may not change is named with why, and the rest still apply. Returns the batch (undo_batch takes it all back), the records changed, those already so, and those refused.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      act: { type: "string", description: "The act to run on each record." },
+      records: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 200, description: "Ids or names of the records." },
+      args: { type: "object", description: "Arguments every call shares, besides the record." },
+    },
+    required: ["act", "records"],
+    additionalProperties: false,
+  },
+  mutating: true,
+  annotations: { title: "Do one act to several records", readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+};
+
 const LENS_SPEC = {
   type: "object",
   description: "A lens, as draft_view returns one.",
@@ -481,7 +514,7 @@ export interface ToolRuntime<S extends AnySchema> {
 /** Said on every act whose arguments name records: a name is resolved as well as an id (FR-33). */
 export const BY_NAME = "An argument that names a record takes its id or its name.";
 
-const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), DRAFT_VIEW.name, KEEP_LENS.name];
+const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, DRAFT_VIEW.name, KEEP_LENS.name];
 const MAX_NAME = 64;
 
 /**
@@ -592,7 +625,7 @@ function surfaceOf(
   const drawing = draftTools(drafts, readOnly);
   const definitions = readOnly
     ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
-    : [...READ_TOOLS, ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!))];
+    : [...READ_TOOLS, ACT_ON_SEVERAL, ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!))];
   return { definitions, names };
 }
 
@@ -768,14 +801,17 @@ export function createToolRuntime<S extends AnySchema>(
         case "search_graph": {
           const places = typeof options.places === "function" ? options.places() : options.places;
           const subject = typeof args["subject"] === "string" ? args["subject"] : undefined;
-          const found = search(seen, String(args["query"] ?? ""), {
+          const asked = search(seen, String(args["query"] ?? ""), {
             principal,
+            rank: options.near,
             // An agent's find reaches the live records unless it asks (FR-173).
             archived: archivedFrom(args["archived"]),
             limit: typeof args["limit"] === "number" && args["limit"] > 0 ? Math.min(args["limit"], READ_HITS) : READ_HITS,
             ...(places ? { places } : {}),
             ...(subject ? { subject, from: [subject] } : {}),
           });
+          // The host's ranker's near hits, when it was asked: an agent waits for them, as the strip shows them when they come.
+          const found = asked.later ? await asked.later : asked;
           return {
             ok: true,
             data: (await reads()).searchRead(found, markHits(found, authorship(seen, principal))),
@@ -874,6 +910,50 @@ export function createToolRuntime<S extends AnySchema>(
           const preview = answerSeenBy(store, principal, store.preview({ name: act, args: named.args }, undefined, { author: principal }));
           const spoken = spokenProblems(preview);
           return { ok: true, data: named.resolved.length > 0 ? { ...spoken, resolved: named.resolved } : spoken };
+        }
+
+        case "act_on_several": {
+          const asked = String(args["act"] ?? "");
+          const act = actNamed(asked) ?? asked;
+          const mutation = acts.find((one) => one.name === act);
+          if (!mutation || !permitted.has(act)) {
+            const verdict = mutation ? store.permits({ name: act, args: {} }, principal) : undefined;
+            if (verdict && !verdict.ok) return { ok: false, error: verdict.refusal.message, reason: "forbidden" };
+            return { ok: false, error: `There is no act "${asked}" this seat may run. Nothing was changed.`, reason: "invalid" };
+          }
+          const subject = mutation.subject;
+          if (!subject) return { ok: false, error: `"${actTitle(mutation)}" does not act on a record, so it cannot be run on several. Nothing was changed.`, reason: "invalid" };
+          const given = Array.isArray(args["records"]) ? (args["records"] as unknown[]).filter((one): one is string => typeof one === "string" && one.trim() !== "") : [];
+          if (given.length === 0) return { ok: false, error: "Name at least one record. Nothing was changed.", reason: "invalid" };
+          // Each record by its id or its name (FR-33), among those this seat may see; a name that is not one record refuses the whole call.
+          const ids: string[] = [];
+          const resolved: Resolved[] = [];
+          for (const value of given.slice(0, 200)) {
+            const found = store.resolveRef({ name: subject.arg, kinds: subject.kinds as readonly string[] }, value, principal);
+            if (!found.ok) return { ok: false, error: `${found.message} Nothing was changed.`, argument: "records", candidates: found.candidates };
+            ids.push(found.id);
+            if (found.by !== "id") resolved.push({ argument: "records", given: value, id: found.id, label: found.label });
+          }
+          const shared = resolve(act, { ...((args["args"] as Record<string, unknown> | undefined) ?? {}) });
+          if ("ok" in shared) return shared;
+          const outcome = (await several()).actOnSeveral(store, { mutation: act, subject: subject.arg, args: shared.args }, ids, {
+            author: principal,
+            ...viaNow(options.via),
+          });
+          const seenResult = outcome.result ? answerSeenBy(store, principal, outcome.result) : undefined;
+          return {
+            ok: true,
+            data: {
+              ...(outcome.batch ? { batch: outcome.batch, intent: outcome.intent } : {}),
+              applied: outcome.applied,
+              unchanged: outcome.unchanged,
+              refused: outcome.refused.map((one) => ({ record: one.id, label: one.label, error: one.message, reason: one.reason })),
+              ...(outcome.allOrNothing ? { keptNone: true } : {}),
+              ...(seenResult ? { introduces: seenResult.introduces.map(withoutLine), resolves: seenResult.resolves.map(withoutLine) } : {}),
+              ...(resolved.length > 0 || shared.resolved.length > 0 ? { resolved: [...resolved, ...shared.resolved] } : {}),
+            },
+            ...(seenResult ? { diff: seenResult.diff } : {}),
+          };
         }
 
         case "undo_batch": {

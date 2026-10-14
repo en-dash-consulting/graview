@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 10634,
+  "gzipped": 3658,
+  "note": "Raised when a tool's JSON Schema came to be written by graview from a schema's definition (core/src/schema/to-json-schema.ts) rather than by zod's writer, so that 20.6 KB of zod left the hosted page's first load: the studio handed in builds classic zod schemas, which keep zod's writer, and the seat's tools now carry graview's beside it. 10_634 / 3_658 more than batch/0-1-29-fixes (1_611_195 / 504_803). Measured at 1_621_829 / 508_461."
+}

@@ -53,6 +53,10 @@
       "types": "./dist/provenance.d.ts",
       "default": "./dist/provenance.js"
     },
+    "./markdown": {
+      "types": "./dist/markdown.d.ts",
+      "default": "./dist/markdown.js"
+    },
     "./words": {
       "types": "./dist/words.d.ts",
       "default": "./dist/words.js"

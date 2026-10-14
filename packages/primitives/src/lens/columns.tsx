@@ -1,7 +1,9 @@
 import { pluralLabel, counted, isCurrent, labelOf, LOCAL_LAYERS, type AnyGraphNode, type AnySchema } from "@graview/core";
 import { columnMoves, columnOf, statusColumns, type ColumnMove, type StatusColumn } from "@graview/core/describe";
 import { useGraph, useGraview, ViewModeProvider, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
+import { CHOOSING_CSS, useChoosing, type Choosing } from "../choosing.js";
+import { prefetchSeveral, SeveralBarDoor } from "../several-door.js";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel } from "../primitives/index.js";
 import { ListedLink, SaidAround } from "../spec-views.js";
@@ -72,6 +74,10 @@ const BOARD_CSS = `
 .graview-columns-menu button { text-align: left; }
 .graview-columns-said { margin: 0 0 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.8125rem; color: var(--graview-ink); }
 .graview-columns-said[data-tone="refused"] { color: var(--graview-warn); }
+.graview-columns-card[data-graview-choose] { position: relative; }
+.graview-columns-card .graview-choose-at { position: absolute; top: 6px; right: 6px; z-index: ${LOCAL_LAYERS.raised}; display: flex; }
+[data-graview-choosable] { outline: none; }
+@media (pointer: coarse) { [data-graview-choosable]:not([data-graview-choosing]) .graview-columns-card .graview-choose-at { display: none; } }
 `;
 
 export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions): ColumnsLens<S> {
@@ -164,6 +170,29 @@ function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; re
     const node = store.graph.getNode(id);
     return node ? labelOf(store.schema.tryDefinition(node.kind), node) : id;
   };
+  /*
+   * SEVERAL CARDS AT ONCE (`choosing.ts`): a box at each card's corner,
+   * Shift for a range in the board's reading order, Cmd/Ctrl-A for every
+   * card, Escape to put them down, a long press on a phone — and the bar
+   * moves or acts on them all as one change, with one undo.
+   */
+  const order = useMemo(() => boards.flatMap((board) => board.columns.flatMap((entry) => entry.cards.map((card) => card.id))), [boards]);
+  const choosing = useChoosing(order);
+  const choosable = useMemo(
+    () =>
+      store.permittedMutations(principal).some((mutation) => {
+        const kinds = mutation.subject?.kinds as readonly string[] | "*" | undefined;
+        return kinds !== undefined && (kinds === "*" || boards.some((board) => (kinds as readonly string[]).includes(board.kind)));
+      }),
+    [store, principal, boards],
+  );
+  const acted = (still: readonly string[]) => {
+    choosing.choose(still);
+    requestAnimationFrame(() => {
+      const first = still[0] === undefined ? null : root.current?.querySelector<HTMLElement>(`[data-graview-choose-box="${CSS_ESCAPE(still[0])}"]`);
+      (first ?? root.current)?.focus({ preventScroll: true });
+    });
+  };
   const movesOf = (card: Card, board: Board): readonly ColumnMove[] =>
     columnMoves(store, principal, card, board.field, board.columns.map((entry) => entry.column));
 
@@ -188,8 +217,16 @@ function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; re
   };
 
   return (
-    <div ref={root} data-testid="columns-lens">
+    <div
+      data-testid="columns-lens"
+      {...(choosable ? { ...choosing.listProps, tabIndex: -1, role: "group", "aria-label": choosing.chosen.length > 0 ? `${title}, ${choosing.chosen.length} chosen` : title, "data-graview-choosable": "" } : {})}
+      ref={(element: HTMLDivElement | null) => {
+        root.current = element;
+        choosing.list.current = element;
+      }}
+    >
       <style>{BOARD_CSS}</style>
+      {choosable ? <style>{CHOOSING_CSS}</style> : null}
       <p className="graview-columns-said" role="status" data-tone={said?.tone} data-testid="columns-said" style={said ? undefined : { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" }}>
         {said ? <span>{said.text}</span> : null}
         {said?.batch ? (
@@ -253,6 +290,7 @@ function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; re
                             key={card.id}
                             card={card}
                             moves={moves}
+                            {...(choosable ? { choosing } : {})}
                             labelOf={(to) => board.columns.find((entry) => entry.column.value === to)?.column.label ?? to}
                             onMove={(found, label) => move(card.id, found, label, "keyboard")}
                             onDrag={(on) => setDragging(on ? { id: card.id, to: moves.map((one) => one.to) } : null)}
@@ -268,6 +306,18 @@ function ColumnsBoard({ boards, title }: { readonly boards: readonly Board[]; re
           </div>
         </section>
       ))}
+      {choosable ? (
+        <SeveralBarDoor
+          store={store}
+          chosen={choosing.chosen}
+          principal={principal}
+          anchor={() => root.current?.closest<HTMLElement>('[data-testid="kind-stop"], [data-embed-content]') ?? null}
+          of={order.length}
+          onChooseAll={() => choosing.choose(order)}
+          onClear={choosing.clear}
+          onActed={acted}
+        />
+      ) : null}
     </div>
   );
 }
@@ -280,7 +330,9 @@ function ColumnCard({
   labelOf: columnLabel,
   onMove,
   onDrag,
+  choosing,
 }: {
+  readonly choosing?: Choosing;
   readonly card: Card;
   readonly moves: readonly ColumnMove[];
   readonly labelOf: (to: string) => string;
@@ -321,6 +373,7 @@ function ColumnCard({
       className="graview-spec-item graview-columns-card"
       data-graview-listed={card.id}
       data-as="card"
+      {...(choosing ? { "data-graview-choose": card.id } : {})}
       draggable={moves.length > 0 || undefined}
       onDragStart={(event) => {
         if (moves.length === 0) return;
@@ -340,6 +393,11 @@ function ColumnCard({
         <span className="graview-spec-item-name">{label}</span>
       )}
       <ListedLink node={card} label={label} />
+      {choosing ? (
+        <span className="graview-choose-at">
+          <input {...choosing.boxProps(card.id, label)} onPointerEnter={prefetchSeveral} onFocus={prefetchSeveral} />
+        </span>
+      ) : null}
       {moves.length > 0 ? (
         <div
           className="graview-columns-move"

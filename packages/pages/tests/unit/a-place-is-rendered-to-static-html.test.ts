@@ -238,6 +238,6 @@ describe("the entry", () => {
   it("imports nothing of React, the router, the DOM faces or the seat", () => {
     const source = readFileSync(new URL("../../src/static.ts", import.meta.url), "utf8");
     const imported = [...source.matchAll(/from "([^"]+)"/g)].map((match) => match[1]);
-    expect(imported.sort()).toEqual(["@graview/core", "@graview/core/blocks", "@graview/core/describe", "@graview/core/words"]);
+    expect(imported.sort()).toEqual(["@graview/core", "@graview/core/blocks", "@graview/core/describe", "@graview/core/markdown", "@graview/core/words"]);
   });
 });

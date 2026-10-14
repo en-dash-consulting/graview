@@ -1,4 +1,4 @@
-import { LOCAL_LAYERS, excerpt, pluralLabel } from "@graview/core";
+import { LOCAL_LAYERS, pluralLabel } from "@graview/core";
 import { KindFigure } from "@graview/primitives/pages";
 import {
   humanizeField,
@@ -12,7 +12,7 @@ import {
   orderKinds,
   type PagesArrangement,
 } from "@graview/core";
-import { readableFields } from "@graview/core/words";
+import { excerptOf, readableFields } from "@graview/core/words";
 
 
 /*
@@ -227,8 +227,8 @@ export function glance(
   // A bare number says nothing on its own — "12 · 8" is not a sentence —
   // so each fact is read the way it stands alone, the same words a card uses.
   return readableFields(node, definition, { limit: 3, said: [said], glance: true })
-    // A record's prose is said by its start on a glance — a sentence, or a line's worth — and whole on its page.
-    .map((field) => (field.long ? excerpt(field.alone, 100) : field.alone))
+    // A record's prose is said by its start on a glance — its first paragraph or a line's worth, Markdown's syntax taken out (FR-180) — and whole on its page.
+    .map((field) => (field.long ? excerptOf(field.stored, { markdown: field.markdown, most: 100 }) : field.alone))
     .join(" · ");
 }
 

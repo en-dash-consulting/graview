@@ -1,8 +1,9 @@
 import { LOCAL_LAYERS, safeFileHref, type AppResolution, type LinkedApp, type ResolveApp } from "@graview/core";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraviewIfAny } from "@graview/react/provider";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { EditableValue } from "./editable.js";
+import { ResolveAppContext } from "./resolve-app-context.js";
 
 /*
  * ANOTHER APP, ON A RECORD (FR-171).
@@ -110,7 +111,8 @@ function Icon({ icon }: { readonly icon: string | undefined }): ReactNode {
 /** The app the address names, as the host says it to this viewer. */
 function useLinkedApp(address: string): Answer {
   const context = useGraviewIfAny();
-  const resolve = context?.resolveApp;
+  // The Shell's own resolver first, where a host handed it one; the provider's otherwise.
+  const resolve = useContext(ResolveAppContext) ?? context?.resolveApp;
   const viewer: Viewer = context?.principal ?? NOBODY;
   const known = (): Answer => (resolve ? (ANSWERED.get(resolve)?.get(keyOf(address, viewer)) ?? "asking") : null);
   const [answer, setAnswer] = useState<Answer>(known);

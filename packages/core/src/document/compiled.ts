@@ -29,6 +29,7 @@ import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
 import { fileSchema } from "../schema/files.js";
 import { appLinkSchema } from "../schema/app-link.js";
+import { markTyped, PHONE } from "../schema/typed-fields.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
@@ -195,17 +196,26 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
   let schema: z.ZodMiniType;
   switch (spec.type) {
     case "string":
+    case "place":
+      // A place is a line of words, drawn as a link to the reader's maps app.
       schema = z.string().check(z.maxLength(500));
+      break;
+    case "phone":
+      schema = z.string().check(z.maxLength(40), z.regex(PHONE, "a phone number"));
       break;
     case "text":
       schema = z.string().check(z.maxLength(20_000));
+      // Prose written in Markdown (FR-180): the record's page draws it, every list says its start. The mark `schema/markdown.ts` reads, set here so a page's first chunk reaches no module a fetched one shares.
+      if (spec.format) (z.defOf(schema) as Record<symbol, 1>)[Symbol.for("@graview/core:markdown")] = 1;
       break;
     case "number":
-    case "integer": {
-      // Its range (FR-114) is the schema's: every form, tool and apply reads it from here.
+    case "integer":
+    case "duration": {
+      // Its range (FR-114) is the schema's: every form, tool and apply reads it from here. A duration is whole minutes, none less than none.
+      const min = spec.min ?? (spec.type === "duration" ? 0 : undefined);
       const range = [
-        ...(spec.type === "integer" ? [z.int()] : []),
-        ...(spec.min === undefined ? [] : [z.gte(spec.min)]),
+        ...(spec.type === "number" ? [] : [z.int()]),
+        ...(min === undefined ? [] : [z.gte(min)]),
         ...(spec.max === undefined ? [] : [z.lte(spec.max)]),
         ...(spec.step === undefined ? [] : [z.multipleOf(spec.step)]),
       ];
@@ -242,6 +252,8 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.email();
       break;
   }
+  // A phone, a place and a duration say so, for a face to say and link each.
+  markTyped(schema, spec.type);
   if (spec.description) schema = schema.check(z.describe(spec.description));
   return optional ? z.optional(schema) : schema;
 }
@@ -368,6 +380,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...said("figure"),
       ...said("fieldRoles"),
       ...said("people"),
+      archives: spec.archives,
       ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
       ...(named || spec.glance || spec.page
         ? { display: { ...(named ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }

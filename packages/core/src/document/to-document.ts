@@ -51,6 +51,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       computed?: KindSpec["computed"];
       fieldRoles?: Readonly<Record<string, string>>;
       people?: boolean;
+      archives?: false;
     };
     const at = `kinds.${kind}`;
     const fields: Record<string, FieldSpec> = {};
@@ -95,6 +96,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       ...(definition?.computed && Object.keys(definition.computed).length > 0 ? { computed: structuredClone(definition.computed) } : {}),
       ...(definition?.fieldRoles ? { fieldRoles: { ...definition.fieldRoles } } : {}),
       ...(definition?.people ? { people: true } : {}),
+      ...(definition?.archives === false ? { archives: false as const } : {}),
     } as KindSpec;
   }
 

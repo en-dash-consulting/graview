@@ -1,4 +1,4 @@
-import { DERIVED_ACTS, derivedActOf, derivedActsOf } from "../mutations/derived-names.js";
+import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
 import { z } from "zod";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
@@ -38,7 +38,7 @@ import { accentProblem } from "../theme/accent.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize, listed as listOf } from "../capital.js";
 import { quoted } from "./quote.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, archivesSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -113,6 +113,7 @@ export const EDIT_OPS = [
   "arrange-pages",
   "set-computed",
   "set-people",
+  "set-archives",
   "add-grant",
   "remove-grant",
   "add-sight",
@@ -141,7 +142,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "remove-kind": z.object({ op: z.literal("remove-kind"), kind: kindName }).strict(),
   "add-field": z.object({ op: z.literal("add-field"), kind: kindName, field: fieldName, fill: z.unknown().optional(), spec: z.record(z.string(), z.unknown()).optional() }).passthrough(),
   "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
-  "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "file"]).optional(), format: z.enum(["money", "percent", "duration"]).optional() }).strict(),
+  "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
   "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional() }).strict(),
   "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
   "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
@@ -227,6 +228,8 @@ const SHAPES: Record<EditOp, z.ZodType> = {
     .strict(),
   // Who the people are, and who may do and see what (FR-170): a grant and a sight as the document holds one.
   "set-people": z.object({ op: z.literal("set-people"), kind: kindName, people: z.boolean() }).strict(),
+  // Whether a kind's records are archived and merged, or only kept and removed (FR-173).
+  "set-archives": z.object({ op: z.literal("set-archives"), kind: kindName, archives: z.boolean() }).strict(),
   "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
   "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
   "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
@@ -823,6 +826,8 @@ class Editor {
         return this.setComputed(i, e);
       case "set-people":
         return this.setPeople(i, e);
+      case "set-archives":
+        return this.setArchives(i, e);
       case "add-grant":
       case "remove-grant":
       case "add-sight":
@@ -1186,6 +1191,25 @@ class Editor {
     this.said.push(peopleSentence(this.doc.kinds, e.kind, e.people, already));
   }
 
+  /** A kind's records kept or removed, never archived (FR-173) — or archived and merged again. */
+  private setArchives(i: number, e: Doc) {
+    const spec = this.kind(i, e.kind);
+    if (!spec) return;
+    const already = (spec.archives !== false) === e.archives;
+    if (!e.archives && !already) {
+      // A grant that names one of the three acts would name an act the app no longer has.
+      const gone = new Set(["archive", "unarchive", "merge"].map((verb) => `${verb}-${e.kind}`).filter((act) => !this.doc.acts?.[act]));
+      const grant = (this.doc.policy?.grants ?? []).find((g: Doc) => Array.isArray(g.mutations) && g.mutations.some((m: string) => gone.has(m)));
+      if (grant) {
+        const named: string[] = grant.mutations.filter((m: string) => gone.has(m));
+        return this.failAs("grant-unknown-mutation", i, "archives", `a grant names ${listOf(named.map((m) => `"${m}"`))}, which ${pluralOf(this.doc.kinds, e.kind)} would no longer have`, `{"op": "remove-grant", "roles": ${JSON.stringify(grant.roles)}, "mutations": ${JSON.stringify(grant.mutations)}} first, in the same change`);
+      }
+      spec.archives = false;
+    } else if (e.archives) delete spec.archives;
+    if (!already) this.toolsMoved.add(`archive-${e.kind}, unarchive-${e.kind} and merge-${e.kind} ${e.archives ? "are offered" : "are gone"}`);
+    this.said.push(archivesSentence(this.doc.kinds, e.kind, e.archives, already));
+  }
+
   /** A grant or a sight as the document holds one, or undefined having said why not. */
   private policyPart(i: number, e: Doc, sight: boolean): Doc | undefined {
     const { op: _op, ...rest } = e;
@@ -1216,7 +1240,7 @@ class Editor {
     if (!sight && part.mutations !== "*") {
       for (const [n, act] of part.mutations.entries()) {
         const derived = derivedActOf(act);
-        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind])) continue;
+        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)))) continue;
         return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf)].join(", ")}`);
       }
     }
@@ -1536,6 +1560,9 @@ class Editor {
     const f = this.field(i, e.kind, e.field);
     if (!f) return;
     if (e.type === "enum" && !e.options && !f.options) return this.fail(i, "options", `to make ${e.field} a choice, list its "options"`);
+    // Markdown is a text field's (FR-180); money, percent and duration a number's.
+    if (e.format === "markdown" && e.type !== "text") return this.fail(i, "format", `"markdown" is a text field's format; retype ${e.field} to {"type": "text", "format": "markdown"}`);
+    if (e.format && e.format !== "markdown" && e.type === "text") return this.fail(i, "format", `a text field is shown as written or as Markdown, not as ${e.format}`);
     const was = f.type;
     f.type = e.type;
     if (e.type === "enum") f.options = e.options ?? f.options;
@@ -1543,19 +1570,20 @@ class Editor {
     if (e.type === "list") f.of = e.of ?? f.of ?? "string";
     else delete f.of;
     if (e.format) f.format = e.format;
-    else if (e.type !== "number" && e.type !== "integer") delete f.format;
+    else if (e.type !== "number" && e.type !== "integer" && e.type !== "duration") delete f.format;
     // A range is a number's (FR-114): a field that is no longer one lets it go.
-    if (e.type !== "number" && e.type !== "integer") for (const key of ["min", "max", "step"]) delete f[key];
+    if (e.type !== "number" && e.type !== "integer" && e.type !== "duration") for (const key of ["min", "max", "step"]) delete f[key];
     if (f.default !== undefined && coerce(f.default, was, f) === undefined) delete f.default;
     else if (f.default !== undefined) f.default = coerce(f.default, was, f);
-    this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}; values that convert are kept.`);
+    if (was === e.type && e.type === "text") this.said.push(`${e.kind}'s ${e.field} ${e.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);
+    else this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}; values that convert are kept.`);
   }
 
   /** A number's range (FR-114): a key given sets it, `null` clears it, one left out stays. */
   private setRange(i: number, e: Doc) {
     const f = this.field(i, e.kind, e.field);
     if (!f) return;
-    if (f.type !== "number" && f.type !== "integer") return this.fail(i, "field", `${e.field} is ${f.type === "integer" ? "an" : "a"} ${f.type}, not a number; a range belongs on a number or integer field`);
+    if (f.type !== "number" && f.type !== "integer" && f.type !== "duration") return this.fail(i, "field", `${e.field} is ${f.type === "integer" ? "an" : "a"} ${f.type}, not a number; a range belongs on a number, integer or duration field`);
     const next: Doc = { ...f };
     for (const key of ["min", "max", "step"]) {
       if (e[key] === null) delete next[key];

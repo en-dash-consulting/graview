@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 5888,
+  "gzipped": 2421,
+  "note": "Raised with every face's when a text field came to be written in Markdown (FR-180): the studio reads a field's Markdown, writes it back as `markdownField()` and hands it back to a document as `retype-field` with `\"format\": \"markdown\"`, and the faces it is handed beside say a text field's start through `excerptOf`. 5_888 / 2_421 more than batch/0-1-29-fixes (1_662_184 / 524_570). Measured at 1_668_072 / 526_991."
+}

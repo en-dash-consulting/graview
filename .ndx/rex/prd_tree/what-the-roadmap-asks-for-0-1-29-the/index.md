@@ -41,3 +41,4 @@ description: "Every framework feature the Graview Roadmap holds at planned, afte
 | [What the 0.1.29 wave left: archives in documents, keep-link per relation, import upserts](./what-the-0-1-29-wave-left-archives-in.md) | pending |
 | [What the 0.1.29 wave left on the faces: covered districts, the Shell's resolveApp, the studio](./what-the-0-1-29-wave-left-on-the-faces.md) | pending |
 | [The hosted page's up-front weight: room again](./the-hosted-page-s-up-front-weight-room.md) | pending |
+| [Markdown in a text field, and every list says a text field as an excerpt (FR-180)](./markdown-in-a-text-field-and-every.md) | pending |

@@ -1,19 +1,19 @@
 {
-  "at": "2026-10-13T21:29:21.565Z",
+  "at": "2026-10-14T01:34:52.158Z",
   "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
   "checks": {
     "atMostTheBudgetMinifiedUpFront": {
-      "kb": 551,
-      "budgetKb": 554,
+      "kb": 530,
+      "budgetKb": 538,
       "ok": true
     },
     "atMostTheBudgetGzippedUpFront": {
-      "kb": 191,
-      "budgetKb": 192,
+      "kb": 185,
+      "budgetKb": 188,
       "ok": true
     },
     "atMost150KbOfZodUpFront": {
-      "kb": 55,
+      "kb": 34,
       "budgetKb": 150,
       "ok": true
     },
@@ -21,13 +21,13 @@
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetUpFront": {
-      "kb": 510,
-      "budgetKb": 514,
+      "kb": 489,
+      "budgetKb": 498,
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetGzippedUpFront": {
-      "kb": 177,
-      "budgetKb": 178,
+      "kb": 171,
+      "budgetKb": 174,
       "ok": true
     },
     "handedACompiledAppCarriesNoCompilerUpFront": {
@@ -36,16 +36,16 @@
     }
   },
   "upFront": {
-    "kb": 551,
-    "gzippedKb": 191,
-    "bytes": 563804,
-    "gzippedBytes": 195890,
+    "kb": 530,
+    "gzippedKb": 185,
+    "bytes": 542940,
+    "gzippedBytes": 189442,
     "chunks": 22,
     "packagesKb": {
-      "@graview/core": 178,
+      "@graview/core": 179,
       "react-dom": 176,
-      "zod": 55,
       "@graview/primitives": 46,
+      "zod": 34,
       "@graview/react": 29,
       "@graview/embed": 20,
       "@graview/ship": 17,
@@ -56,15 +56,15 @@
       "(the page)": 1,
       "@graview/tools": 0
     },
-    "ownNeedKb": 519
+    "ownNeedKb": 520
   },
   "budget": {
-    "minified": 567296,
-    "gzipped": 196096,
+    "minified": 550912,
+    "gzipped": 192512,
     "raises": []
   },
   "whenAsked": {
-    "kb": 978,
+    "kb": 990,
     "chunks": 91,
     "packagesKb": {
       "@graview/primitives": 338,
@@ -72,7 +72,7 @@
       "@graview/tools": 108,
       "@graview/react": 101,
       "@graview/pages": 90,
-      "@graview/core": 77,
+      "@graview/core": 87,
       "react-router": 44,
       "@graview/layout": 30,
       "@graview/embed": 4,
@@ -81,11 +81,23 @@
     },
     "doors": [
       {
+        "module": "primitives/src/draft-frame.tsx",
+        "kb": 406,
+        "packagesKb": {
+          "@graview/primitives": 166,
+          "@graview/react": 78,
+          "@graview/core": 72,
+          "@graview/tools": 46,
+          "@graview/layout": 30,
+          "@graview/render": 1
+        }
+      },
+      {
         "module": "primitives/src/kind-stop.tsx",
-        "kb": 402,
+        "kb": 404,
         "packagesKb": {
           "@graview/primitives": 173,
-          "@graview/react": 77,
+          "@graview/react": 78,
           "@graview/core": 60,
           "@graview/tools": 48,
           "@graview/layout": 30,
@@ -93,24 +105,12 @@
         }
       },
       {
-        "module": "primitives/src/draft-frame.tsx",
-        "kb": 394,
-        "packagesKb": {
-          "@graview/primitives": 166,
-          "@graview/react": 77,
-          "@graview/core": 62,
-          "@graview/tools": 46,
-          "@graview/layout": 30,
-          "@graview/render": 1
-        }
-      },
-      {
         "module": "primitives/src/declared-lenses.tsx",
-        "kb": 333,
+        "kb": 334,
         "packagesKb": {
           "@graview/primitives": 139,
-          "@graview/react": 77,
-          "@graview/core": 58,
+          "@graview/react": 78,
+          "@graview/core": 59,
           "@graview/layout": 30,
           "@graview/tools": 17,
           "@graview/render": 1
@@ -133,7 +133,7 @@
       },
       {
         "module": "embed/src/picture-face.tsx",
-        "kb": 275,
+        "kb": 276,
         "packagesKb": {
           "@graview/pages": 85,
           "@graview/primitives": 72,
@@ -147,11 +147,23 @@
         }
       },
       {
+        "module": "primitives/src/seat-panel.tsx",
+        "kb": 254,
+        "packagesKb": {
+          "@graview/react": 78,
+          "@graview/tools": 50,
+          "@graview/core": 47,
+          "@graview/primitives": 39,
+          "@graview/layout": 30,
+          "@graview/render": 1
+        }
+      },
+      {
         "module": "embed/src/scene-face.tsx",
-        "kb": 244,
+        "kb": 245,
         "packagesKb": {
           "@graview/primitives": 80,
-          "@graview/react": 77,
+          "@graview/react": 78,
           "@graview/core": 30,
           "@graview/layout": 30,
           "@graview/tools": 17,
@@ -160,26 +172,26 @@
         }
       },
       {
-        "module": "primitives/src/seat-panel.tsx",
-        "kb": 242,
+        "module": "primitives/src/workbench/inspector.tsx",
+        "kb": 230,
         "packagesKb": {
-          "@graview/react": 77,
-          "@graview/tools": 50,
-          "@graview/primitives": 39,
-          "@graview/core": 36,
+          "@graview/react": 78,
+          "@graview/tools": 46,
+          "@graview/core": 44,
           "@graview/layout": 30,
+          "@graview/primitives": 24,
           "@graview/render": 1
         }
       },
       {
-        "module": "primitives/src/workbench/inspector.tsx",
-        "kb": 218,
+        "module": "primitives/src/map-panel.tsx",
+        "kb": 181,
         "packagesKb": {
-          "@graview/react": 77,
-          "@graview/tools": 46,
-          "@graview/core": 33,
+          "@graview/react": 78,
+          "@graview/core": 30,
           "@graview/layout": 30,
-          "@graview/primitives": 24,
+          "@graview/primitives": 19,
+          "@graview/tools": 17,
           "@graview/render": 1
         }
       },
@@ -195,18 +207,6 @@
           "@graview/render": 1,
           "@graview/tools": 1,
           "@graview/layout": 0
-        }
-      },
-      {
-        "module": "primitives/src/map-panel.tsx",
-        "kb": 180,
-        "packagesKb": {
-          "@graview/react": 77,
-          "@graview/core": 30,
-          "@graview/layout": 30,
-          "@graview/primitives": 19,
-          "@graview/tools": 17,
-          "@graview/render": 1
         }
       },
       {
@@ -248,10 +248,10 @@
       },
       {
         "module": "tools/src/seat-model.ts",
-        "kb": 67,
+        "kb": 78,
         "packagesKb": {
           "@graview/tools": 38,
-          "@graview/core": 26
+          "@graview/core": 37
         }
       },
       {
@@ -274,7 +274,7 @@
         "kb": 59,
         "packagesKb": {
           "@graview/tools": 31,
-          "@graview/core": 25
+          "@graview/core": 26
         }
       },
       {
@@ -444,21 +444,21 @@
     ]
   },
   "handedACompiledApp": {
-    "kb": 510,
-    "gzippedKb": 177,
-    "bytes": 522021,
-    "gzippedBytes": 181157,
+    "kb": 489,
+    "gzippedKb": 171,
+    "bytes": 501163,
+    "gzippedBytes": 174715,
     "budget": {
-      "minified": 525824,
-      "gzipped": 181760,
+      "minified": 509440,
+      "gzipped": 177664,
       "raises": []
     },
     "savedKb": 41,
     "packagesKb": {
       "react-dom": 176,
       "@graview/core": 138,
-      "zod": 55,
       "@graview/primitives": 46,
+      "zod": 34,
       "@graview/react": 29,
       "@graview/embed": 20,
       "@graview/ship": 17,
@@ -472,11 +472,11 @@
   },
   "beforeEachFaceDraws": {
     "scene": {
-      "kb": 850,
-      "fetchedKb": 299
+      "kb": 831,
+      "fetchedKb": 300
     },
     "pages": {
-      "kb": 827,
+      "kb": 807,
       "fetchedKb": 277
     }
   },

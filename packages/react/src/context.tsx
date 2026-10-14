@@ -1026,7 +1026,7 @@ export function matchWith(given: Matcher): void {
 }
 
 function FoundProvider({ children }: { children: ReactNode }) {
-  const { store, view, views, principal, hiddenKinds, selection } = useGraview();
+  const { store, view, views, principal, hiddenKinds, selection, ai } = useGraview();
   const nodes = useGraph();
   const q = view.q;
   const focusId = view.focusId;
@@ -1064,10 +1064,15 @@ function FoundProvider({ children }: { children: ReactNode }) {
       touched: standing.touched,
       // The strip reads this many; the picture lights every match through `matched`.
       limit: 200,
+      rank: ai.near,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, q, principal, views, hiddenKinds, selection, focusId, inKind, standing]);
-  return <FoundContext.Provider value={found}>{children}</FoundContext.Provider>;
+  }, [store, q, principal, views, hiddenKinds, selection, focusId, inKind, standing, ai.near]);
+  // The exact hits at once; the host's ranker's near ones when they come, for the words they were asked of.
+  const [later, setLater] = useState<readonly [SearchResult, SearchResult]>();
+  // An answer for words since changed is kept beside the result it was for, and so never shown.
+  useEffect(() => void found?.later?.then((more) => setLater([found, more])), [found]);
+  return <FoundContext.Provider value={later?.[0] === found ? later[1] : found}>{children}</FoundContext.Provider>;
 }
 
 /*

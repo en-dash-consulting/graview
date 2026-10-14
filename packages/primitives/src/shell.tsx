@@ -1,4 +1,4 @@
-import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles } from "@graview/core";
+import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type ResolveApp } from "@graview/core";
 import { BesideTheMap, HostFilesContext, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { Responder, ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode, useRef } from "react";
@@ -19,6 +19,7 @@ import { SceneWayBack } from "./scene-way-back.js";
 import { BackOut, Inspector, OverviewButton, Standing } from "./workbench/index.js";
 import { useFavicon } from "./app-title.js";
 import { useViewportHeight } from "./primitives/measure.js";
+import { ResolveAppContext } from "./resolve-app-context.js";
 
 /**
  * The shell: everything an application's window holds that is not about
@@ -112,6 +113,14 @@ export interface ShellProps<S extends AnySchema> {
    * handed them: where a picture or a document put on a record is sent.
    */
   readonly files?: HostFiles;
+  /**
+   * THE HOST'S WAY TO NAME ANOTHER APP (FR-171), when the provider around
+   * the shell was not handed it: `resolveApp(address, viewer)` answers
+   * `{ name, icon?, headline?, href }`, `{ denied: true }` or `null`, and an
+   * app-link field draws as that app. Given here, it is asked before the
+   * provider's.
+   */
+  readonly resolveApp?: ResolveApp;
 }
 
 export function Shell<S extends AnySchema>({
@@ -133,6 +142,7 @@ export function Shell<S extends AnySchema>({
   ask = "field",
   notices,
   files,
+  resolveApp,
 }: ShellProps<S>) {
   const { brand, views, store } = useGraview<S>();
   const { view, go } = useNavigation();
@@ -267,5 +277,6 @@ export function Shell<S extends AnySchema>({
     </BesideTheMap.Provider>
     </NoticeBoardContext.Provider>
   );
-  return files ? <HostFilesContext.Provider value={files}>{drawn}</HostFilesContext.Provider> : drawn;
+  const resolved = resolveApp ? <ResolveAppContext.Provider value={resolveApp}>{drawn}</ResolveAppContext.Provider> : drawn;
+  return files ? <HostFilesContext.Provider value={files}>{resolved}</HostFilesContext.Provider> : resolved;
 }

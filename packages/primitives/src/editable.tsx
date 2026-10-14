@@ -1,5 +1,5 @@
 import { fieldWords, humanizeField as humanize, valueWords, type AnySchema } from "@graview/core";
-import { pageSections, readableFields } from "@graview/core/words";
+import { pageSections, parseDuration, readableFields } from "@graview/core/words";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
@@ -213,7 +213,7 @@ export function EditableValue<S extends AnySchema>({
           aria-label={humanize(field)}
           data-graview-field={field}
           type={
-            editable.shape.type === "number"
+            editable.shape.type === "number" && !editable.shape.duration
               ? "number"
               : editable.shape.type === "date"
                 ? editable.shape.time
@@ -222,6 +222,9 @@ export function EditableValue<S extends AnySchema>({
                 : "text"
           }
           // The field's range, as every form asks for it (FR-114).
+          // A length of time is typed as one: "1h 30m", "90" or "1:30".
+          {...(editable.shape.type === "number" && editable.shape.duration ? { placeholder: "1h 30m" } : {})}
+          {...(editable.shape.type === "text" && editable.shape.holds === "phone" ? { inputMode: "tel" as const, autoComplete: "tel" } : {})}
           {...(editable.shape.type === "number" && editable.shape.min !== undefined ? { min: editable.shape.min } : {})}
           {...(editable.shape.type === "number" && editable.shape.max !== undefined ? { max: editable.shape.max } : {})}
           {...(editable.shape.type === "number" && editable.shape.step !== undefined ? { step: editable.shape.step } : {})}
@@ -260,9 +263,52 @@ export function EditableValue<S extends AnySchema>({
   );
 }
 
-/** The typed value the mutation's input asked for, not the string it was typed as. */
+/** The typed value the mutation's input asked for, not the string it was typed as: a length of time as its minutes ("1h 30m" is 90). */
 function coerce(field: EditableField, draft: string): unknown {
-  return field.shape.type === "number" ? Number(draft) : draft;
+  return field.shape.type === "number" ? (field.shape.duration ? (parseDuration(draft) ?? draft) : Number(draft)) : field.shape.type === "text" && field.shape.holds ? draft.trim() : draft;
+}
+
+/**
+ * A PHONE OR A PLACE, AS WHERE IT LEADS: a `tel:` link that calls it, or a
+ * link that opens the place in the reader's maps app, in a tab of its own.
+ * Read-only, the value is the link. Where the value is changed in place it
+ * stays the control that changes it, and the link stands beside it — one
+ * target does one thing. At least 24 pixels either way, as every target is.
+ */
+export function FieldLink<S extends AnySchema>({
+  href,
+  field,
+  value,
+  stored,
+  nodeId,
+}: {
+  readonly href: string;
+  readonly field: string;
+  /** The value as a person reads it: "(555) 123-4567". */
+  readonly value: string;
+  readonly stored?: string;
+  /** The record whose value is changed beside the link, where this face changes values in place. */
+  readonly nodeId?: string;
+}) {
+  const call = href.startsWith("tel:");
+  const link = (words: string, label?: string) => (
+    <a
+      href={href}
+      data-graview-link={field}
+      {...(label ? { "aria-label": label } : {})}
+      {...(call ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+      style={{ display: "inline-flex", alignItems: "center", minHeight: 24, minWidth: 24, maxWidth: "100%", overflowWrap: "anywhere", color: "var(--graview-accent)" }}
+    >
+      {words}
+    </a>
+  );
+  if (nodeId === undefined) return link(value);
+  return (
+    <span style={{ display: "inline-flex", flexWrap: "wrap", alignItems: "center", gap: "0 10px", maxWidth: "100%" }}>
+      <EditableValue<S> nodeId={nodeId} field={field} value={value} {...(stored === undefined ? {} : { stored })} />
+      {link(call ? "Call" : "Map", call ? `Call ${value}` : `Open ${value} in maps`)}
+    </span>
+  );
 }
 
 /**
@@ -329,13 +375,20 @@ export function Fields<S extends AnySchema>({
               field.files ? (
                 <Files key={field.key} as="field" nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} files={field.files} labelStyle={LABEL} style={{ marginTop: 6 }} />
               ) : field.long ? (
-                <LongValue<S> key={field.key} nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} value={field.value} labelStyle={LABEL} style={{ gridColumn: "1 / -1", marginTop: 6 }} />
+                <LongValue<S> key={field.key} nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} value={field.value} markdown={field.markdown} labelStyle={LABEL} style={{ gridColumn: "1 / -1", marginTop: 6 }} />
               ) : (
                 <div key={field.key} style={{ display: "contents" }}>
                   <dt style={{ ...LABEL, whiteSpace: "nowrap" }}>{labels[field.key] ?? field.label}</dt>
                   <dd style={{ margin: 0, minWidth: 0 }}>
                     {/* Another app, as the host names it (FR-171), changed beside it. */}
-                    {field.app ? <AppLink address={field.app} as="record" nodeId={node.id} field={field.key} /> : <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} stored={field.stored} />}
+                    {field.app ? (
+                      <AppLink address={field.app} as="record" nodeId={node.id} field={field.key} />
+                    ) : field.href ? (
+                      // A phone to call, a place to map, changed beside the link.
+                      <FieldLink<S> href={field.href} field={field.key} value={field.value} stored={field.stored} nodeId={node.id} />
+                    ) : (
+                      <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} stored={field.stored} />
+                    )}
                   </dd>
                 </div>
               ),
@@ -395,22 +448,24 @@ interface LongValueProps {
   readonly labelStyle?: CSSProperties;
   readonly valueStyle?: CSSProperties;
   readonly style?: CSSProperties;
+  /** The field is written in Markdown (FR-180): drawn as prose, its syntax read, never shown. */
+  readonly markdown?: boolean | undefined;
 }
 
-function ReadProse({ field, label, value, labelStyle, valueStyle, style }: LongValueProps) {
+function ReadProse({ field, label, value, labelStyle, valueStyle, style, markdown }: LongValueProps) {
   return (
     <div data-graview-long={field} style={{ display: "grid", gap: 6, minWidth: 0, ...style }}>
       <dt style={labelStyle}>{label}</dt>
       <dd style={{ margin: 0, minWidth: 0, ...valueStyle }}>
         <div data-graview-field={field}>
-          <TextBody text={value} />
+          <TextBody text={value} markdown={markdown} />
         </div>
       </dd>
     </div>
   );
 }
 
-function EditableProse<S extends AnySchema>({ nodeId, field, label, value, labelStyle, valueStyle, style }: LongValueProps) {
+function EditableProse<S extends AnySchema>({ nodeId, field, label, value, labelStyle, valueStyle, style, markdown }: LongValueProps) {
   const { fields, commit } = useEditableFields<S>(nodeId);
   const editable = fields.find((candidate) => candidate.field === field && candidate.takesValue);
   const [editing, setEditing] = useState(false);
@@ -427,7 +482,7 @@ function EditableProse<S extends AnySchema>({ nodeId, field, label, value, label
     setEditing(false);
   };
   const words = label.toLowerCase();
-  const drawn = <TextBody text={value} />;
+  const drawn = <TextBody text={value} markdown={markdown} />;
 
   return (
     <div data-graview-long={field} style={{ display: "grid", gap: 6, minWidth: 0, ...style }}>
@@ -454,6 +509,7 @@ function EditableProse<S extends AnySchema>({ nodeId, field, label, value, label
               field={field}
               label={label}
               value={value}
+              {...(markdown ? { markdown: true } : {})}
               onCancel={() => close(true)}
               onSave={(draft, left) => {
                 close(!left);

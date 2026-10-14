@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 16333,
+  "gzipped": 6776,
+  "note": "Raised when a text field came to be written in Markdown (FR-180): the reader `@graview/core/markdown` (blocks and runs of words, linear, no HTML) and the element renderer `markdown-body.tsx`, fetched with the first Markdown a record draws; `excerptOf` (`excerpt-of.ts`), which says a text field's start with the syntax taken out on rows, cards, describe lines, table cells, search hits and a seat's lines; the editor's Preview; the checker's `field-format`; and the studio holding a field as Markdown. 16_333 / 6_776 more than batch/0-1-29-fixes (1_928_385 / 629_723), while a hosted page's first load is 171 / 114 bytes more. Measured at 1_944_718 / 636_499."
+}

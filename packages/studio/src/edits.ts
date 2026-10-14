@@ -1,7 +1,7 @@
 import { canonicalize, editDocument, error, parseExpr, printExpr, renameIn, type DeclaredKinds, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
 import { label, Read, type Node } from "./source.js";
 import { keptBy } from "./uneditable.js";
-import { lensNodeId } from "./from-declaration.js";
+import { lensNodeId, type LensIdentity } from "./from-declaration.js";
 import type { Reading } from "./to-declaration.js";
 
 /*
@@ -133,7 +133,10 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
         findings.push(unsaid(`kinds.${at.kind}.fields.${at.field}`, `${at.kind}'s ${at.field} is ${kept}, which the studio does not edit, so it cannot say what making it a ${type} does to that; retype it in the document, where that is decided with it`));
         continue;
       }
-      edits.push({ op: "retype-field", ...at, type, ...(type === "enum" && options ? { options } : {}) });
+      edits.push({ op: "retype-field", ...at, type, ...(type === "enum" && options ? { options } : {}), ...(type === "text" && field["markdown"] === true ? { format: "markdown" } : {}) });
+    } else if (type === "text" && (field["markdown"] === true) !== (old["markdown"] === true)) {
+      // Written in Markdown, or no longer (FR-180): the same type, said again with its format.
+      edits.push({ op: "retype-field", ...at, type, ...(field["markdown"] === true ? { format: "markdown" } : {}) });
     } else if (type === "enum" && !same(options, wasOptions)) {
       const had = wasOptions ?? [];
       const has = options ?? [];
@@ -156,6 +159,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       ...(field["required"] === true ? { required: true } : {}),
       ...(type === "enum" && options ? { options } : {}),
       ...(str(field, "description") ? { label: str(field, "description") } : {}),
+      ...(type === "text" && field["markdown"] === true ? { format: "markdown" } : {}),
     };
   };
   for (const [id, kind] of kindsAfter) {
@@ -204,6 +208,11 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
   // The people (FR-170): the kind that stops being them first, so a move is two edits that never say two kinds.
   const people = [...kindsAfter].flatMap(([id, kind]) => (kindsBefore.has(id) && (kindsBefore.get(id)!["people"] === true) !== (kind["people"] === true) ? [{ op: "set-people" as const, kind: label(kind), people: kind["people"] === true }] : []));
   edits.push(...people.sort((a, b) => Number(a.people) - Number(b.people)));
+  // Never archived (FR-173), on a kind that stays or one just added: a kind starts out archived when set aside.
+  for (const [id, kind] of kindsAfter) {
+    const was = kindsBefore.get(id)?.["neverArchived"] === true;
+    if (was !== (kind["neverArchived"] === true)) edits.push({ op: "set-archives", kind: label(kind), archives: was });
+  }
   const stillThere = (read: Read, from: string, edge: string) =>
     read
       .out(from, edge)
@@ -389,7 +398,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       if (!changed) continue;
       // A titled lens taken away is a place taken away: `remove-lens`, the edit that takes back a lens the seat kept.
       if (sort === "lens" && old && !node) {
-        const declared = (document.lenses ?? []).find((lens) => typeof lens["title"] === "string" && lensNodeId(lens as { name: string; title: string }) === id);
+        const declared = (document.lenses ?? []).find((lens) => typeof lens["title"] === "string" && lensNodeId(lens as unknown as LensIdentity) === id);
         if (declared) {
           edits.push({ op: "remove-lens", title: declared["title"] as string, ...(typeof declared["on"] === "string" ? { on: declared["on"] } : {}) });
           continue;

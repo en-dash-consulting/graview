@@ -154,6 +154,9 @@ function Picker({ children }: { children: React.ReactNode }) {
 type Words = (name: string) => { readonly label: string; readonly option: (value: string) => string };
 const plainWords: Words = (name) => ({ label: humanizeField(name), option: (value) => value });
 
+/** What a phone, a place and a length of time take, said where each is typed. */
+const HOLDS = { phone: "+1 555 123 4567", place: "An address or a place's name", duration: "1h 30m, 90 or 1:30" } as const;
+
 function Control<S extends AnySchema>({
   store,
   spec,
@@ -196,7 +199,11 @@ function Control<S extends AnySchema>({
       if (spec.control === "text" && spec.long) {
         return (
           <label data-graview-part="field" data-graview-field="text">
-            <span data-graview-part="label">{title}</span>
+            <span data-graview-part="label">
+              {title}
+              {/* Written in Markdown (FR-180): said where it is typed, quietly. */}
+              {spec.markdown ? <span style={{ fontWeight: "normal", color: "var(--graview-ink-faint)" }}> · Markdown</span> : null}
+            </span>
             <textarea
               name={spec.name}
               required={!spec.optional}
@@ -210,15 +217,18 @@ function Control<S extends AnySchema>({
         );
       }
       return (
-        <label data-graview-part="field" data-graview-field={spec.control}>
+        <label data-graview-part="field" data-graview-field={spec.control === "text" && spec.holds ? spec.holds : spec.control}>
           <span data-graview-part="label">{title}</span>
           <input
-            type={spec.control === "date" ? (spec.time ? "datetime-local" : "date") : "text"}
+            type={spec.control === "date" ? (spec.time ? "datetime-local" : "date") : spec.control === "text" && spec.holds === "phone" ? "tel" : "text"}
             name={spec.name}
             required={!spec.optional}
             // Another app's address (FR-171): what it takes, said where it is typed.
             {...(spec.control === "text" && spec.app ? { placeholder: "@owner/app or https://…" } : {})}
-            value={typeof value === "string" ? value : ""}
+            // A phone, a place and a length of time: what each takes, said where it is typed.
+            {...(spec.control === "text" && spec.holds ? { placeholder: HOLDS[spec.holds] } : {})}
+            {...(spec.control === "text" && spec.holds === "phone" ? { autoComplete: "tel" } : {})}
+            value={typeof value === "string" ? value : typeof value === "number" ? String(value) : ""}
             onChange={(event) => onChange(event.target.value)}
             data-graview-part="control"
           />

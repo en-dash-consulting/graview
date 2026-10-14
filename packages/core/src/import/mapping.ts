@@ -1,7 +1,7 @@
 import { fieldOf } from "../document/field-spec.js";
 import type { FieldSpec } from "../document/schema.js";
 import { nameKey } from "../labels.js";
-import { article, edgeWords, fieldWords, humanizeField, nounOf, pluralOf } from "../schema/define-node.js";
+import { article, edgeWords, fieldWords, humanizeField, labelOf, nounOf, pluralOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition, EdgeDeclaration } from "../schema/types.js";
 
@@ -15,6 +15,12 @@ export type ColumnTarget = string | { readonly field: string } | { readonly rela
 
 /** Column header → where its cells go. */
 export type ImportMapping = Readonly<Record<string, ColumnTarget>>;
+
+/**
+ * How a row finds the record it already is (`ImportOptions.match`): by what
+ * the row would call it, or by one column's value against one field.
+ */
+export type ImportMatch = "label" | { readonly column: string; readonly field: string };
 
 /** A column, read against the declaration. */
 export type ImportColumn =
@@ -137,6 +143,16 @@ export interface ProposedMapping {
   readonly unmatched: readonly string[];
   /** Required fields no column fills, by their words: every row would be refused for want of them. */
   readonly missing: readonly string[];
+  /**
+   * How a row could find the record it already is, to hand `importRows` as
+   * `match` when the sheet may hold records the app has: a column of a key —
+   * an email, a code, a reference — else the column the kind's name is read
+   * from. Unsaid where no column answers either way. Never applied on its
+   * own: importing without `match` makes every row.
+   */
+  readonly match?: ImportMatch;
+  /** The suggestion in words: "rows are matched to vendors by Email". */
+  readonly matchSaid?: string;
 }
 
 /** A header's words for comparing: case, accents, punctuation and a plural "s" aside. */
@@ -213,5 +229,26 @@ export function proposeMapping(declaration: SchemaLike, kind: string, header: re
     .filter((field) => !used.has(`field:${field}`))
     .filter((field) => fieldSpecFor(definition, field)?.spec.required === true && definition.defaults?.[field] === undefined)
     .map((field) => fieldWords(definition, field));
-  return { mapping, columns, unmatched, missing };
+  return { mapping, columns, unmatched, missing, ...matchFor(schema, definition, kind, columns) };
+}
+
+/** A field whose values name one record each: an email, a code, a key, a reference, an id of somebody else's. */
+const KEYISH = /^(e-?mail|code|sku|key|ref|reference|externalId|[a-z]+(Id|Code|Number|Ref))$/;
+const PROBE = "graview-import-probe";
+
+/** What `proposeMapping` suggests rows are matched by: a key column, else the column the name is read from. */
+function matchFor(schema: AnySchema, definition: AnyNodeDefinition, kind: string, columns: readonly ProposedColumn[]): { match?: ImportMatch; matchSaid?: string } {
+  const plural = pluralOf(schema, kind).toLowerCase();
+  const fieldColumns = columns.flatMap((one) => ("field" in one.target ? [{ column: one.column, field: one.target.field }] : []));
+  const keyed = fieldColumns.find(({ field }) => fieldSpecFor(definition, field)?.spec.type === "email" || KEYISH.test(field));
+  if (keyed) return { match: { column: keyed.column, field: keyed.field }, matchSaid: `rows are matched to ${plural} by ${keyed.column}` };
+  // The column the kind's name is read from: a record is called what that cell says.
+  const naming = fieldColumns.find(({ field }) => {
+    try {
+      return labelOf(definition, { id: "", kind, [field]: PROBE } as never) === PROBE;
+    } catch {
+      return false;
+    }
+  });
+  return naming ? { match: "label", matchSaid: `rows are matched to ${plural} by their name, under ${naming.column}` } : {};
 }

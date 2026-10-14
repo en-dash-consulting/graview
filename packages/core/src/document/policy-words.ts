@@ -79,6 +79,16 @@ export function peopleSentence(kinds: Kinds, kind: string, people: boolean, alre
   return already ? `${plural} were not the people who sign in.` : `${plural} are no longer the people who sign in.`;
 }
 
+/** Whether a kind's records are archived and merged, or only kept and removed (FR-173), as an edit and a preview say it. */
+export function archivesSentence(kinds: Kinds, kind: string, archives: boolean, already = false): string {
+  const plural = capitalize(pluralWords(kinds, kind));
+  const acts = (and: string) => `archive-${kind}, unarchive-${kind} ${and} merge-${kind}`;
+  if (archives) return already ? `${plural} can already be archived and merged.` : `${plural} can be archived and merged again: the app offers ${acts("and")}.`;
+  return already
+    ? `${plural} are already kept or removed, never archived.`
+    : `${plural} are kept or removed, never archived: the app no longer offers ${acts("or")}, and ${withA(nounWords(kinds, kind))} archived before is brought back when the change lands.`;
+}
+
 export const FIRST_GRANT = "The app gets a policy: from now on, only what a grant gives is allowed.";
 export const FIRST_SIGHT = "From now on, a kind no sight names is seen by nobody but the system.";
 export const NO_GRANT_LEFT = "No grant is left, so nobody but the system may do anything.";
