@@ -36,7 +36,7 @@ The author is a `Principal` — an author with roles — so what the log blames 
 
 `mcp` is MCP over stdio around this same runtime; `apply` is one act, a plan of many as one batch, or an undo, from a shell. Both open the store `graview serve` opens — a folder, SQLite, or a running server — and act under the seat you name, so the policy refuses there what it refuses here. Put `serve` and `mcp` in the app's scripts so the door is always there, and tell the agent the seed is a first-install snapshot: it changes the live graph through these, never by editing `example.json` and wiping. `graview mcp <entry> --list --roles …` prints the seat's tools as `tools/list` JSON — the catalog a host registers without writing one.
 
-1. **Say what a guess was based on.** A host applying an agent's inference passes `lineage: { basis, confidence, model }` with the author; a link made under 1 by anyone but a person is provisional until a person keeps it (`keep-link`; `@graview/core/provenance`).
+1. **Say what a guess was based on.** A host applying an agent's inference passes `lineage: { basis, confidence, model }` with the author; a link made under 1 by anyone but a person is provisional until a person keeps it (`keep-link`, permitted per relation; `@graview/core/provenance`).
 
 ### Worked examples
 

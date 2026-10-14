@@ -83,7 +83,7 @@ for the agent, stop: that path is the one that will drift.
 8. **Say what a guess was based on.** A host applying an agent's inference
    passes `lineage: { basis, confidence, model }` with the author; a link
    made under 1 by anyone but a person is provisional until a person keeps
-   it (`keep-link`; `@graview/core/provenance`).
+   it (`keep-link`, permitted per relation; `@graview/core/provenance`).
 
 ## Worked examples
 
