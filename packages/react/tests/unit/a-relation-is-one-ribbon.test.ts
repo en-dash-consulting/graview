@@ -166,4 +166,14 @@ describe("what the map is asked", () => {
     // An edge chosen, or an id the graph has not got, is neither.
     expect(mapChoice(["edge:x", "nobody"], { overview: true, focusId: null }, kindOfAny)).toEqual({ districts: [], records: [], lens: null });
   });
+
+  it("takes a record risen from as the record chosen, beside a panel, until something else is", () => {
+    expect(mapChoice([], { overview: true, focusId: "ana", beside: true }, kindOfAny).records).toEqual(["ana"]);
+    // Something chosen since is what is chosen.
+    expect(mapChoice(["bo"], { overview: true, focusId: "ana", beside: true }, kindOfAny).records).toEqual(["bo"]);
+    expect(mapChoice(["kind:person"], { overview: true, focusId: "ana", beside: true }, kindOfAny).records).toEqual([]);
+    // Without a panel the record stands in the middle of the city, and on the ground it is the ground's.
+    expect(mapChoice([], { overview: true, focusId: "ana" }, kindOfAny).records).toEqual([]);
+    expect(mapChoice([], { overview: false, focusId: "ana", beside: true }, kindOfAny).records).toEqual([]);
+  });
 });

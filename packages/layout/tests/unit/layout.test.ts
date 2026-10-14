@@ -586,6 +586,15 @@ describe("a rail reserved for chrome, at altitude", () => {
   });
 });
 
+describe("a focused record, from altitude", () => {
+  it("is not stamped over the city where a panel beside the map shows it, and is where there is none", () => {
+    const beside = layout(graph(), schema, view({ focusId: "week-1", overview: true }), { besideTheMap: true });
+    expect(beside.nodes.some((node) => node.plane === 0)).toBe(false);
+    const alone = layout(graph(), schema, view({ focusId: "week-1", overview: true }));
+    expect(alone.nodes.find((node) => node.plane === 0)?.id).toBe("week-1");
+  });
+});
+
 describe("a focused group, from altitude", () => {
   it("is its district, opened, when its picture is only the framework's list", () => {
     const result = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true }), { plainGroups: ["duty"] });

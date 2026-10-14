@@ -206,6 +206,8 @@ export function measureVisible(
   const inner =
     (preferBlock ? host.querySelector(".graview-kind-block") : null) ??
     host.querySelector('[data-graview-primitive="panel"], .graview-kind-face, .graview-kind-card') ??
+    // A chip in its slot is the chip, not the slot it was allotted: a line to the slot's edge stopped short of it.
+    host.querySelector(':scope > [data-graview-primitive="chip"]') ??
     host;
   // Cut down to what shows: a host half under a scroller's fold anchors a
   // line where its visible half is, and one wholly under it anchors none.

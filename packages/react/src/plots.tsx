@@ -66,6 +66,8 @@ export interface PlotsProps {
   readonly today?: string;
   /** The scene's own flag for a click that a drag is about to produce: a pan that ends on a tile is not a press. */
   readonly swallowed?: { readonly current: boolean };
+  /** The records chosen from altitude (`mapChoice`): each stands as a building of its own, ahead of the rest of its row. */
+  readonly chosen?: readonly string[];
   onFocus?(id: string): void;
 }
 
@@ -82,7 +84,7 @@ export interface PlotsProps {
  * members are the same, so dragging one district redraws that district and
  * its tile, not every building in the city on every frame.
  */
-export function Plots({ frame, width, height, pan, pinned, close, today, swallowed, onFocus }: PlotsProps): ReactElement | null {
+export function Plots({ frame, width, height, pan, pinned, close, today, swallowed, chosen = [], onFocus }: PlotsProps): ReactElement | null {
   const { selection, store, scheme, principal } = useGraview();
   const nodes = useGraph();
   /* What somebody else wrote since this seat last left, and what is its own (last-visit.ts). */
@@ -116,7 +118,9 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     const members = node.aggregate?.memberIds ?? [];
     const state = districtState(store.schema, node.kind);
     const valueOf = (id: string) => (state ? (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[state.field] : undefined);
-    const key = `${cell}|${tilt}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${members.map((id) => `${id}=${String(valueOf(id))}`).join(",")}`;
+    /* A chosen record is never one of the "+504": it stands first in its row, so its building is there to light and to draw its links from. */
+    const first = members.filter((id) => chosen.includes(id));
+    const key = `${cell}|${tilt}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${first.join(",")}|${members.map((id) => `${id}=${String(valueOf(id))}`).join(",")}`;
     const held = drawn.current.get(node.id);
     if (held && held.key === key) {
       kept.set(node.id, held);
@@ -131,7 +135,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     };
     const lanes: string[][] = state ? state.values.map(() => []) : [[]];
     const tiers: StateTier[] = state ? [...state.tiers] : ["waiting"];
-    for (const id of members) {
+    for (const id of first.length > 0 ? [...first, ...members.filter((id) => !first.includes(id))] : members) {
       const at = state ? state.values.indexOf(valueOf(id) as string) : 0;
       if (at >= 0) lanes[at]!.push(id);
       else {

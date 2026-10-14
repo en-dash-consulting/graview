@@ -164,6 +164,21 @@ describe("a record chosen from altitude", () => {
   });
 });
 
+describe("a record risen from", () => {
+  it("stands beside the map, its card and its links, and closing the panel leaves it rather than the map", async () => {
+    const seen: ViewState[] = [];
+    const { host, unmount } = await mounted({ ...aloft, focusId: "a1" }, [], (next) => seen.push(next));
+    const panel = host.querySelector('[data-testid="record-panel"]')!;
+    expect(panel.querySelector('[data-testid="record-panel-title"]')?.textContent).toBe("core");
+    expect(panel.querySelector('[data-graview-record-card="a1"]')).not.toBeNull();
+    expect([...panel.querySelectorAll('[data-graview-links="partOf"] [data-graview-record]')].map((row) => row.textContent)).toEqual(["Undo", "Search"]);
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="map-panel-close"]')!.click());
+    expect(seen.at(-1)?.focusId ?? null).toBeNull();
+    expect(seen.at(-1)?.overview).toBe(true);
+    await unmount();
+  });
+});
+
 describe("a district chosen from altitude", () => {
   it("lists its relations with how many each joins, and every record in it", async () => {
     const { host, unmount } = await mounted(aloft, [kindCardId("area")]);

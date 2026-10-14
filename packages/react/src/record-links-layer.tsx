@@ -48,7 +48,7 @@ export interface RecordLinksProps {
   readonly store: { readonly schema: AnySchema; readonly graph: { allEdges(): Iterable<{ readonly kind: string; readonly from: string; readonly to: string }>; getNode(id: string): ({ readonly id: string; readonly kind: string } & Record<string, unknown>) | undefined } };
   readonly graphVersion: unknown;
   readonly selection: readonly string[];
-  readonly view: { readonly overview?: boolean | undefined; readonly focusId: string | null };
+  readonly view: { readonly overview?: boolean | undefined; readonly focusId: string | null; readonly beside?: boolean };
   /** The scene's own rulers: what of an element shows in the stage, and the runs of a curve outside some boxes. */
   readonly rulers: {
     readonly visibleRect: (el: Element, stage: HTMLElement) => Box | null;
@@ -105,7 +105,8 @@ export function RecordLinks({ frame, width, height, stageRef, tick, store, graph
     const links = linksOfRecords(records, store.graph.allEdges(), kindOf, (id) => ownBox(id) !== null, store.schema);
     /* The districts' names are not crossed: a line passes under each one. */
     const names: Box[] = [];
-    for (const el of stage.querySelectorAll('[data-graview-view^="kind:"]')) {
+    // Their names, not the hosts they stand in: a district's host covers its whole plot, and a line clipped to it stopped at the first plot it reached.
+    for (const el of stage.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face')) {
       const box = visibleRect(el, stage);
       if (box) names.push(box);
     }

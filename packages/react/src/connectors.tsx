@@ -12,7 +12,7 @@ import {
   roundedPolylineD,
   routedQuadratic,
 } from "./routes.js";
-import { channelRoute } from "./channels.js";
+import { cardRoute, channelRoute } from "./channels.js";
 import { parallelOffsets } from "./parallel.js";
 import { altitudeOpacity, drawnBox, measureVisible, onScreen, stackOpacity } from "./where-drawn.js";
 import type { SceneNode } from "./scene-node.js";
@@ -166,8 +166,19 @@ export interface Strand {
   readonly toAnchor: string;
   /** Every other drawn box, so the line can dive under cards it merely crosses. */
   readonly obstacles: readonly Box[];
-  /** Both ends are chips of the relation band: every chip of it, so the line can take the gutters. */
+  /** Both ends are chips of the relation band, or one is the record's card: every chip of it and every caption over it, so the line can take the gutters. */
   readonly band?: readonly Box[];
+  /** One end is the focused record's card and the other a chip of the band: the card's box, and whether the card is the line's far (`to`) end. */
+  readonly tie?: {
+    readonly card: Box;
+    readonly chip: Box;
+    readonly cardIsTo: boolean;
+    /** The band's drawing it lands on, and the records that drawing stands for. */
+    readonly toward: string;
+    readonly holds: readonly string[];
+  };
+  /** The far records the tie stands for, when the card already names every one among its own: the card has said this relation. */
+  readonly said?: readonly string[];
   /**
    * The cards an end is drawn INSIDE, when it lands on a member: the line
    * is visible across them (that is what landing on a member means), but
@@ -381,7 +392,47 @@ export function connectorStrands(
     const box = boxes.get(node.id);
     if (box && Math.round(node.plane) === 1) bandBoxes.push(box);
   }
+  /*
+   * THE CAPTIONS ARE PART OF THE BAND: each run's words stand in the gutter
+   * above it, and a road along that gutter ran behind them. Their words
+   * (not the run-wide box that centers them) are rows a road goes round.
+   */
+  if (!overview && stageEl && typeof document !== "undefined") {
+    const stage = stageEl.getBoundingClientRect();
+    for (const caption of stageEl.querySelectorAll("[data-graview-relation] > span")) {
+      const r = caption.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) bandBoxes.push({ x: r.left - stage.left, y: r.top - stage.top, width: r.width, height: r.height });
+    }
+  }
   const bandFor = (a: string, b: string): Box[] | undefined => (!overview && inBand(a) && inBand(b) ? bandBoxes : undefined);
+  /*
+   * THE RECORD ON THE GROUND AND ITS BAND: a line from its card to a chip
+   * runs whole, through the gutters (`cardRoute`); and where the card
+   * already names that record among its own, the card has said the
+   * relation, so the line waits to be asked for (`said`).
+   */
+  const focus = overview ? undefined : nodes.find((node) => Math.round(node.plane) === 0 && !node.aggregate);
+  const tieOf = (connector: { from: string; to: string }, fromAnchor: string, toAnchor: string, edges: readonly { readonly from: string; readonly to: string }[]) => {
+    if (!focus) return {};
+    // The card's end is the card itself, not a chip inside it.
+    const cardIsTo = connector.to === focus.id && toAnchor === focus.id;
+    if (!cardIsTo && !(connector.from === focus.id && fromAnchor === focus.id)) return {};
+    const toward = cardIsTo ? connector.from : connector.to;
+    const cardBox = boxes.get(focus.id);
+    // The band's end is what the band draws for it: a chip, or a card of several whose member it is.
+    const chipBox = boxes.get(toward);
+    if (toward === focus.id || !inBand(toward) || !cardBox || !chipBox) return {};
+    // Every record the line stands for named anywhere in the card, scrolled into sight or not: a list that scrolls has still said it.
+    const card = hostOf(focus.id);
+    const named = (id: string) => card !== null && marksIn(card, pass).get(id)?.some((el) => !el.closest("[data-graview-offstage]")) === true;
+    const far = edges.map((edge) => (edge.from === focus.id ? edge.to : edge.from));
+    const said = far.length > 0 && far.every(named);
+    return {
+      band: bandBoxes,
+      tie: { card: cardBox, chip: chipBox, cardIsTo, toward, holds: byId.get(toward)?.aggregate?.memberIds ?? [toward] },
+      ...(said ? { said: far } : {}),
+    };
+  };
 
   const strands: Strand[] = [];
   for (const connector of connectors) {
@@ -416,6 +467,7 @@ export function connectorStrands(
         obstacles,
         hosts: [],
         ...(band ? { band } : {}),
+        ...tieOf(connector, connector.from, connector.to, edges),
       });
       continue;
     }
@@ -507,6 +559,7 @@ export function connectorStrands(
         ],
         ...(band ? { band } : {}),
         ...group,
+        ...tieOf(connector, group.fromAnchor, group.toAnchor, group.edges),
       });
     }
   }
@@ -609,7 +662,10 @@ export function Connectors({
   liveOf,
   onPickEdge,
   provisional,
+  pointed = null,
 }: {
+  /** The record a pointer is on or the keyboard is at: a tie the card has said is drawn for it. */
+  readonly pointed?: string | null;
   /**
    * The links still provisional (FR-172), by their selection id, each with
    * what to say of it: drawn in short dashes and quieter, and the sentence
@@ -716,6 +772,7 @@ export function Connectors({
     strands.map((strand) => ({ key: strand.key, a: strand.fromAnchor, b: strand.toAnchor })),
   );
 
+  const answered = new Set<string>();
   const drawn = strands.map((strand, lane) => {
         const { connector, fromBox, toBox } = strand;
         const fromCenter = { x: fromBox.x + fromBox.width / 2, y: fromBox.y + fromBox.height / 2 };
@@ -823,7 +880,8 @@ export function Connectors({
          * that crosses nothing, so it is drawn whole rather than clipped to
          * the pieces an arc left between the chips it ran under.
          */
-        const channeled = !self && strand.band ? channelRoute(fromBox, toBox, strand.band, lane) : null;
+        const tied = !self && strand.tie ? cardRoute(strand.tie.card, strand.tie.chip, strand.band ?? [], lane) : null;
+        const channeled = tied ? (strand.tie!.cardIsTo ? tied.reverse() : tied) : !self && strand.band ? channelRoute(fromBox, toBox, strand.band, lane) : null;
         const runs = self || orthogonal || channeled ? [] : clipQuadratic(curve, [fromBox, toBox, ...strand.obstacles]);
         const legs = channeled ? [channeled] : !self && orthogonal ? clipPolyline(bends(from, to), [fromBox, toBox, ...strand.obstacles]) : [];
         if (!self && runs.length === 0 && legs.length === 0) return null;
@@ -867,7 +925,12 @@ export function Connectors({
         const edgeChosen = edgeId !== null && selection.includes(edgeId);
         const unsure = edgeId !== null ? provisional?.get(edgeId) : undefined;
         const mine = strand.edges.some((edge) => chosenReal.has(edge.from) || chosenReal.has(edge.to));
-        const lit = !overview && chosenReal.size > 0 && mine;
+        // A tie drawn for the record a person points at is lit as a chosen one's is: it is what they asked for.
+        const toward = strand.tie?.toward ?? "";
+        const asked = strand.said !== undefined && pointed !== null && (strand.said.includes(pointed) || toward === pointed || strand.tie!.holds.includes(pointed)) && !answered.has(toward);
+        // One line to each drawing of the band, however many of the records it stands for are asked about.
+        if (asked) answered.add(toward);
+        const lit = (!overview && chosenReal.size > 0 && mine) || asked;
         const stressed = (emphasis !== null && connector.kind === emphasis) || edgeChosen;
         const live = liveOf?.(connector) !== undefined;
         /*
@@ -884,6 +947,14 @@ export function Connectors({
          * chosen, draws as asked.) Lines are a function of the choice.
          */
         if (!overview && !live && chosenReal.size > 0 && !mine && !stressed) return null;
+        /*
+         * THE CARD HAS SAID IT. A record's card that lists the records it is
+         * tied to, under the same words the band's captions say, has drawn
+         * every one of these relations; a line to each chip at rest said it
+         * again, a dozen times, across the band. The line is drawn for the
+         * record a person points at or chooses, in either place it is drawn.
+         */
+        if (strand.said !== undefined && !asked && !strand.said.some((id) => chosenReal.has(id)) && !stressed) return null;
         const opacity = overview
           ? altitudeOpacity({
               emphasized: emphasis !== null,
@@ -909,7 +980,11 @@ export function Connectors({
          */
         const far =
           lit && firstDrawn && lastDrawn
-            ? strand.edges.some((edge) => chosenReal.has(edge.from))
+            ? strand.tie
+              ? strand.tie.cardIsTo
+                ? firstDrawn
+                : lastDrawn
+              : strand.edges.some((edge) => chosenReal.has(edge.from))
               ? lastDrawn
               : firstDrawn
             : null;

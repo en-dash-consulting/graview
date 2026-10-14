@@ -187,12 +187,12 @@ try {
   /*
    * WHAT YOU CAN PRESS IS WHAT YOU CAN SEE.
    *
-   * A record read from altitude is drawn scaled inside a host the size of
-   * the layout's slot, and its content fills only part of that. The rest is
-   * invisible — and it must not be a target, or a district it happens to
-   * sit over stops answering. Hit-tested directly: a point inside the host
-   * but below the drawn content must resolve to something else; a point on
-   * the content must resolve to the record.
+   * A record read from altitude was drawn scaled inside a host the size of
+   * the layout's slot, its content filling only part of it, and the
+   * invisible rest had to be kept from taking presses meant for the
+   * districts under it. It stands in the panel beside the map now, at the
+   * size a person reads: nothing of it is stamped over the city, and its
+   * name in the panel is where a press on it lands.
    */
   /*
    * Reached by its address: a district's records are listed beside the map
@@ -205,18 +205,12 @@ try {
   report.hitArea = {
     ...(report.hitArea ?? {}),
     ...(await page.evaluate(() => {
-      const host = document.querySelector('[data-graview-view="t-deposit"]');
-      if (!host) return { host: null };
-      const box = host.getBoundingClientRect();
-      const content = host.querySelector("[data-graview-natural] > *") ?? host.firstElementChild;
-      const drawn = content.getBoundingClientRect();
-      const viewAt = (x, y) => document.elementFromPoint(x, y)?.closest("[data-graview-view]")?.dataset.graviewView ?? null;
-      return {
-        host: [box.width, box.height].map(Math.round),
-        drawn: [drawn.width, drawn.height].map(Math.round),
-        onContent: viewAt(drawn.left + drawn.width / 2, drawn.top + drawn.height / 2),
-        belowContent: drawn.bottom + 24 < box.bottom ? viewAt(drawn.left + drawn.width / 2, drawn.bottom + 24) : "no remainder",
-      };
+      const stamped = [...document.querySelectorAll('[data-graview-view="t-deposit"]')].filter((el) => !el.closest("[data-graview-map-panel]")).length;
+      const title = document.querySelector('[data-testid="record-panel"] [data-testid="record-panel-title"]');
+      if (!title) return { stamped, title: null };
+      const box = title.getBoundingClientRect();
+      const at = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return { stamped, title: title.textContent.trim(), pressedLandsOnIt: at !== null && title.contains(at) };
     })),
   };
 
@@ -1507,9 +1501,10 @@ report.verdict = {
   // The act that removes what you are standing in leaves you somewhere real.
   theStopSurvivesWhatItNames: report.removed?.ok === true,
   whatYouCanPressIsWhatYouCanSee:
-    report.hitArea?.onContent === "t-deposit" &&
-    report.hitArea?.belowContent !== "t-deposit" &&
-    report.hitArea?.belowContent !== "no remainder",
+    report.hitArea?.stamped === 0 &&
+    typeof report.hitArea?.title === "string" &&
+    report.hitArea.title.length > 0 &&
+    report.hitArea?.pressedLandsOnIt === true,
 };
 report.passed =
   Object.values(report.verdict).every(Boolean) &&
