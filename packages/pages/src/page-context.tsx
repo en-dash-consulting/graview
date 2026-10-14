@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
+import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -136,6 +136,13 @@ export interface PageContext<S extends AnySchema> {
   readonly resolveApp?: ResolveApp;
   /** What the host keeps outside the log, for playback (Roadmap f-playback): its declaration changes, and a script view's code at a moment. */
   readonly history?: HistoryHost;
+  /**
+   * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171): a linked record
+   * draws with its own card from its home app, as this viewer is told it,
+   * "linked record (no access)" where they may not open that app; linking
+   * picks from what it lists. Unsaid, the provider around them says.
+   */
+  readonly linkedRecords?: LinkedRecords;
   /**
    * The app these pages are of, for the provider under them when `views`
    * is given: the seat's tools and a host's turn describe its places with

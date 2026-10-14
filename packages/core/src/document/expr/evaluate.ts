@@ -4,6 +4,7 @@ import { isoToday } from "../../days.js";
 import { dateOn } from "../../repeat.js";
 import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
+import { linkedReaderOf, linkedRefsOf, type LinkedReader, type LinkedRecord, type LinkedRecordRef, type LinkedRelation } from "../../schema/linked.js";
 
 /*
  * THE RULE LANGUAGE, JUDGED.
@@ -33,6 +34,38 @@ export interface KindShape {
    * expression that reads them.
    */
   readonly computed?: ReadonlyMap<string, Expr>;
+  /**
+   * Relations to kinds in another app (FR-171), by the field each link is
+   * kept in: read like a relation — `forHouse.listPrice` — through the
+   * reader of whoever is looking (`EvalContext.linked`).
+   */
+  readonly linked?: ReadonlyMap<string, LinkedRelation>;
+}
+
+/** A link an expression walked and could not read: the viewer may not open the far app, or its record is not read (yet, or at all). */
+export interface UnreadLink {
+  readonly relation: string;
+  readonly ref: LinkedRecordRef;
+  readonly reason: "denied" | "unread";
+}
+
+/** A far record, as the rule language holds one: its fields this viewer may see, its label, and where it is. */
+const FAR = Symbol.for("@graview/core:far-record");
+
+/** Whether a value the language holds is a record of another app. */
+export const isFarRecord = (v: unknown): boolean => typeof v === "object" && v !== null && (v as { [FAR]?: true })[FAR] === true;
+
+function farRecord(record: LinkedRecord): AnyGraphNode {
+  const node = { ...record.fields, id: `@${record.address}/${record.kind}:${record.id}`, kind: `@${record.address}/${record.kind}`, label: record.label } as unknown as AnyGraphNode;
+  Object.defineProperty(node, FAR, { value: true });
+  return node;
+}
+
+/** What a link that could not be read says: whom it is kept from, or that it is not read. */
+export function unreadSaid(unread: UnreadLink): string {
+  // A far kind's noun is its own app's to say, and this app has no words for it: the link is said as one.
+  const what = `the linked record in ${unread.ref.address}`;
+  return unread.reason === "denied" ? `${what} is not one this viewer may open` : `${what} has not been read`;
 }
 
 /**
@@ -52,6 +85,14 @@ export interface EvalContext {
   readonly today?: string;
   readonly now?: string;
   readonly budget?: number;
+  /**
+   * How far records are read (FR-171), as whoever is looking: else the
+   * reader registered for the graph (`readLinkedThrough`), else none — and
+   * every link reads as unread.
+   */
+  readonly linked?: LinkedReader;
+  /** Told of each link walked that could not be read, so its reader can say so: the expression reads nothing there and goes on. */
+  readonly onUnread?: (unread: UnreadLink) => void;
 }
 
 export class ExprEvalError extends Error {
@@ -117,6 +158,24 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     const shape = ctx.kinds.get(node.kind);
     const worksOut = shape?.computed?.get(name);
     if (worksOut) return computed(node, name, worksOut, at);
+    /*
+     * A RELATION TO ANOTHER APP (FR-171): the records the link keeps, read
+     * as the viewer. One that cannot be read — not theirs to open, or not
+     * read — is not there, and is said (`onUnread`), never thrown.
+     */
+    const link = shape?.linked?.get(name);
+    if (link) {
+      const refs = linkedRefsOf(Object.hasOwn(node, name) ? node[name] : undefined, link);
+      spend(refs.length, at);
+      const reader = ctx.linked ?? linkedReaderOf(ctx.graph);
+      const records = refs.flatMap((ref) => {
+        const read = reader ? reader(ref) : ({ unread: true } as const);
+        if ("record" in read) return [farRecord(read.record)];
+        ctx.onUnread?.({ relation: name, ref, reason: "denied" in read ? "denied" : "unread" });
+        return [];
+      });
+      return link.cardinality === "one" ? (records[0] ?? null) : new NodeSet(records);
+    }
     // A record's OWN values only: `constructor` or `__proto__` is not a field of anything, and reading one would hand a template a function.
     const own = Object.hasOwn(node, name);
     if (shape?.fields.has(name) || own) {
@@ -131,6 +190,8 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
       return card === "one" ? (targets[0] ?? null) : new NodeSet(targets);
     }
     if (name === "id") return node.id;
+    // A far record holds only what this viewer may see there: what it does not hold reads as nothing.
+    if (isFarRecord(node)) return null;
     throw new ExprEvalError(`${withArticle(node.kind)} has no field or relation called "${name}"`, at);
   };
 

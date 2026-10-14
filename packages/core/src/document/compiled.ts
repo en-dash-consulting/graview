@@ -29,9 +29,11 @@ import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
 import { fileSchema } from "../schema/files.js";
 import { appLinkSchema } from "../schema/app-link.js";
+import { linkedEdges, localEdges, type LinkedReader } from "../schema/linked.js";
+import { linkedSchema } from "../schema/linked-schema.js";
 import { repeatKey, repeatSchema } from "../repeat.js";
 import { markTyped, PHONE } from "../schema/typed-fields.js";
-import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape, type Value } from "./expr/evaluate.js";
+import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, unreadSaid, type KindShape, type UnreadLink, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
@@ -343,10 +345,12 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   const shapes = new Map<string, KindShape>();
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const computed = plan.kinds[kind]?.computed;
+    const linked = linkedEdges(spec.edges);
     shapes.set(kind, {
-      fields: new Set(Object.keys(spec.fields)),
-      edges: new Map(Object.entries(spec.edges ?? {}).map(([name, e]) => [name, e.cardinality ?? "many"])),
+      fields: new Set([...Object.keys(spec.fields), ...linked.keys()]),
+      edges: new Map(Object.entries(localEdges(spec.edges)).map(([name, e]) => [name, e.cardinality ?? "many"])),
       ...(computed ? { computed: new Map(computed) } : {}),
+      ...(linked.size > 0 ? { linked } : {}),
     });
   }
   // No record is of the whole graph's shape: it is its facts alone.
@@ -364,6 +368,13 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       // How a date repeats, kept beside it (`repeat.ts`); none (null) when it no longer does.
       if (f.repeats) shape[repeatKey(field)] = z.optional(repeatSchema());
     }
+    /*
+     * A RELATION TO ANOTHER APP'S KINDS (FR-171) is kept on the record that
+     * links, under the relation's name — `house:h1`, or a list — so its edit,
+     * undo, history and sight are the record's own, and the far app is
+     * never written. Never required: a record is made before it is linked.
+     */
+    for (const [name, relation] of linkedEdges(spec.edges)) shape[name] = z.optional(linkedSchema(relation));
     const { label: labelParts, describe: describeParts, durations } = plan.kinds[kind] ?? {};
     const computed = Object.entries(spec.computed ?? {}).map(([name, field]) => [name, typeof field === "string" ? { expr: field } : field] as const);
     // A computed field's words are said like a field's: its label, where it has one.
@@ -376,7 +387,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const defaults = Object.fromEntries(Object.entries(spec.fields).filter(([, f]) => f.default !== undefined).map(([n, f]) => [n, f.default]));
     madeAs.set(kind, defaults);
     // A relation as the kind declares it, less the name it had in the version before, which is the migration's.
-    const edgeDecls = Object.fromEntries(Object.entries(spec.edges ?? {}).map(([n, { renamedFrom: _, ...e }]) => [n, e]));
+    const edgeDecls = Object.fromEntries(Object.entries(localEdges(spec.edges)).map(([n, { renamedFrom: _, ...e }]) => [n, e]));
     // What the definition says as the document says it, where it is said.
     const said = <K extends "plural" | "noun" | "description" | "figure" | "fieldRoles" | "lifecycle" | "people">(key: K) => (spec[key] ? { [key]: spec[key] } : {});
     return defineNode(kind, {
@@ -597,8 +608,10 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const { title, require, when, says } = plan.rules[name]!;
     const repairs = rule.repairs ?? [];
     // The store's day when it hands one (pinned, or ticked: FR-176), else the clock.
-    const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today()): Violation[] => {
-      const ctx = { graph, subject, kinds: shapes, today: day };
+    const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today(), linked?: LinkedReader): Violation[] => {
+      // A link to another app that could not be read is noted (FR-171): a rule that holds without it holds; one that does not cannot be judged, and says why.
+      const unread: UnreadLink[] = [];
+      const ctx = { graph, subject, kinds: shapes, today: day, ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u) };
       let holds: boolean;
       /*
        * A RULE THAT CANNOT ANSWER IS THE ENGINE'S TO SAY (FR-29). Out of
@@ -610,6 +623,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       try {
         if (when && evaluateExpr(when, ctx) !== true) return [];
         holds = evaluateExpr(require, ctx) === true;
+        if (!holds && unread.length > 0) throw new ExprEvalError(`it reads ${unreadSaid(unread[0]!)}`, 0);
       } catch (e) {
         if (e instanceof ExprBudgetError) throw new RuleBudgetError(e.sentence);
         if (e instanceof ExprEvalError) throw new Error(e.sentence);
@@ -646,8 +660,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     };
     invariants.push(
       (rule.over === "graph"
-        ? defineInvariant(name, { scope: "graph", ...declared, evaluate: ({ graph, today: day }: { graph: unknown; today?: string }) => judge(graph as GraphReader, null, day) } as never)
-        : defineInvariant(name, { scope: { kind: rule.over }, ...declared, evaluate: ({ graph, subject, today: day }: { graph: unknown; subject: unknown; today?: string }) => judge(graph as GraphReader, subject as AnyGraphNode, day) } as never)) as InvariantDefinition,
+        ? defineInvariant(name, { scope: "graph", ...declared, evaluate: ({ graph, today: day, context }: { graph: unknown; today?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, null, day, context?.linked) } as never)
+        : defineInvariant(name, { scope: { kind: rule.over }, ...declared, evaluate: ({ graph, subject, today: day, context }: { graph: unknown; subject: unknown; today?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, subject as AnyGraphNode, day, context?.linked) } as never)) as InvariantDefinition,
     );
   }
 

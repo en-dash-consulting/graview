@@ -1,10 +1,11 @@
-import { humanizeField, labelOf, nounOf, type AnySchema, type Store } from "@graview/core";
+import { humanizeField, labelOf, linkedRelationOf, nounOf, type AnySchema, type Store } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { amountBox, argumentWords, parseDuration, readAmount, tellApart } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraviewIfAny } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
 import { Files } from "../files-door.js";
+import { LinkedPicker } from "../linked-record-door.js";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 
@@ -115,6 +116,8 @@ export function AnswerArgs({
   const choices = choicesFor(parameter, shape);
   /* The record's own words for an argument that fills one of its fields: "Body style", "SUV" (see `argumentWords`). */
   const words = argumentWords(store.schema, store.allMutations().find((mutation) => mutation.name === affordance.mutation), parameter.name);
+  // A record in another app (FR-171), read off the act's own input.
+  const linked = linkedRelationOf(((store.allMutations().find((mutation) => mutation.name === affordance.mutation)?.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {})[parameter.name]);
   /*
    * A PICKER THAT DROPS CHOICES MAKES THE ACT IMPOSSIBLE, AND SAYS NOTHING.
    *
@@ -239,7 +242,13 @@ export function AnswerArgs({
         />
       ) : null}
 
-      {fileShape ? (
+      {linked ? (
+        /* A record in another app (FR-171) is answered by picking one there, from what the host lists for this seat. */
+        <div style={{ display: "grid", gap: 4 }}>
+          <LinkedPicker relation={linked} value={undefined} onChange={answer} label={words.label} />
+          {skip}
+        </div>
+      ) : fileShape ? (
         /* A picture or a document is answered by putting it there: the host's upload, then the act (FR-163). */
         <div style={{ display: "grid", gap: 4 }}>
           <Files as="control" value={undefined} onChange={answer} several={several} image={fileShape.image === true} label={words.label} />

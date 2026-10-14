@@ -1,7 +1,7 @@
 import { humanizeField, isArchived, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
-import { AppLink, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
+import { AppLink, LinkedRecordView, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -245,7 +245,10 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                     <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
                       <dt style={eyebrow}>{field.label}</dt>
                       <dd style={{ margin: 0, overflowWrap: "anywhere", minWidth: 0 }}>
-                        {field.app ? (
+                        {field.linked ? (
+                          // A record in another app (FR-171), with its own card from its home app, picked again beside it where the face changes values in place.
+                          <LinkedRecordView relation={field.linked.relation} refs={field.linked.refs} {...(inPlace ? { nodeId: id, field: field.key } : {})} />
+                        ) : field.app ? (
                           // Another app, as the host names it (FR-171), changed beside it where the face changes values in place.
                           <AppLink address={field.app} as="record" {...(inPlace ? { nodeId: id, field: field.key } : {})} />
                         ) : field.href ? (

@@ -1,4 +1,5 @@
 import * as z from "../schema/zod.js";
+import { LINKED_TARGET } from "../schema/linked.js";
 
 /*
  * THE GRAVIEW DECLARATION DOCUMENT, v1 — as data a stranger can hand us.
@@ -100,8 +101,16 @@ export const FieldSpec = z
   );
 export type FieldSpec = z.infer<typeof FieldSpec>;
 
+/**
+ * WHERE A RELATION GOES: a kind of this document (`"house"`), or a kind in
+ * ANOTHER APP the viewer can open (FR-171) — `@` + the app's address + `/`
+ * + its kind: `"@nick/house/house"`, `"@app_kf5eydr9z58jzf/house"`. A link
+ * to another app's record picks one there and leaves that app untouched.
+ */
+const edgeTarget = z.string().check(z.regex(new RegExp(`${NAME.source}|${LINKED_TARGET.source}`), 'a relation goes to a kind of this document, like "house", or of another app, like "@nick/house/house"'));
+
 export const EdgeSpec = z.strictObject({
-  to: z.union([some(name("kind"), 1), z.literal("*")]),
+  to: z.union([some(edgeTarget, 1), z.literal("*")]),
   cardinality: z.optional(z.enum(["one", "many"])),
   description: z.optional(sentence),
   inverse: z.optional(str(1, 80)),

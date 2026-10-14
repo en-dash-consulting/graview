@@ -21,6 +21,8 @@ import { formatMoney } from "../document/template.js";
 import { amountOf } from "../schema/amount-mark.js";
 import { amountMark, amountSentence } from "../schema/amount-words.js";
 import { sayAmount } from "../document/amount.js";
+import { linkedRelations } from "../schema/linked.js";
+import { linkedRelationWords } from "../linked.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -296,6 +298,18 @@ export function describeApp<S extends AnySchema>(
   if (people) {
     const noun = (people as { noun?: string }).noun ?? people.kind;
     lines.push("", "## The people", `The people are the ${pluralOf(app.schema, people.kind).toLowerCase()}: ${withArticle(noun)} whose id is a member's principal id is that member.`);
+  }
+
+  /*
+   * WHAT IT LINKS IN OTHER APPS (FR-171): a relation to another app's kind is
+   * read there as the viewer, and linked by picking a record there — say
+   * where it goes and how, since nothing of it is in this graph to see.
+   */
+  const linkedLines = app.schema.definitions.flatMap((definition) =>
+    [...linkedRelations(definition)].map(([name, relation]) => `  ${pluralOf(app.schema, definition.kind)}: ${linkedRelationWords(name, relation, acts.some((act) => act.name === `edit-${definition.kind}`) ? `edit-${definition.kind}` : undefined)}.`),
+  );
+  if (linkedLines.length > 0) {
+    lines.push("", "## Linked from other apps", "Each is a record in another app, read there as whoever is looking; one they may not open reads \"linked record (no access)\" and nothing of it. The other app is never changed by linking.", ...linkedLines);
   }
 
   // WHAT IS NEVER SET ASIDE (FR-173): a kind whose records are kept or removed has no archive, unarchive or merge.

@@ -34,6 +34,12 @@ export { fileField, imageField } from "./schema/file-field.js";
 export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
 export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";
 export { appLinkField } from "./schema/app-link-field.js";
+// A relation to a kind in another app (FR-171): the link kept on the record, and the host that reads the far record as the viewer.
+export { isLinkedTarget, linkedRefOf, linkedRefsOf, linkedRelationOf, linkedRelations, linkedValue, parseLinkedTarget, readLinkedThrough } from "./schema/linked.js";
+export type { LinkedRead, LinkedReader, LinkedRecord, LinkedRecordAnswer, LinkedRecordRef, LinkedRecords, LinkedRelation, LinkedSearch, LinkedViewer } from "./schema/linked.js";
+export { linkedRecordField } from "./schema/linked-field.js";
+export { linkedReads } from "./schema/linked-reads.js";
+export type { LinkedReads } from "./schema/linked-reads.js";
 // A date that repeats: the rule kept beside it, its occurrences worked out and never stored.
 export { dateOn, isRepeat, isRepeatField, nextOccurrence, occurrences, repeatedBy, repeatKey, validRepeat, WEEKDAYS } from "./repeat.js";
 export type { Repeat, Weekday } from "./repeat.js";

@@ -1,5 +1,8 @@
 import * as z from "./zod.js";
 import { defOf } from "./zod.js";
+import { APP_ADDRESS } from "./app-address.js";
+
+export { APP_ADDRESS, isAppAddress } from "./app-address.js";
 
 /*
  * A LINK TO ANOTHER APP (FR-171).
@@ -15,16 +18,10 @@ import { defOf } from "./zod.js";
  *
  * A hosted page loads this up front to build a document's fields, so it
  * holds that and no more; what draws one is `@graview/primitives`'s,
- * fetched with the first drawn. A relation whose `to` is another app's
- * kind, an expression that walks it and the history of the far value are
- * left for 0.2.
+ * fetched with the first drawn. A relation whose `to` is a KIND in another
+ * app — a record there, walked by an expression, its changes kept in this
+ * app's history — is `linked.ts`'s.
  */
-
-/** What an app-link field holds: `@owner/app`, an id, or an absolute http(s) address. */
-export const APP_ADDRESS = /^(?:https?:\/\/[^\s<>"'`\\]+|@?[A-Za-z0-9][\w.~-]*(?:\/[\w.~-]+)*)$/;
-
-/** Whether a value is another app's address: `@owner/app`, an app id, or an absolute http(s) address, of at most 500 characters. */
-export const isAppAddress = (value: unknown): value is string => typeof value === "string" && value.length < 501 && APP_ADDRESS.test(value);
 
 /*
  * WHICH FIELDS HOLD AN APP'S ADDRESS: a mark on the schema's def, as a file

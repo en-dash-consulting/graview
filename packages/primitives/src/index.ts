@@ -59,6 +59,9 @@ export { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
 export type { SeveralBarProps } from "./several-door.js";
 export { AppLink } from "./app-link-door.js";
 export type { AppLinkProps } from "./app-link-door.js";
+// A record in another app (FR-171): drawn with its own card, picked from what the host lists.
+export { LinkedPicker, LinkedRecordView } from "./linked-record-door.js";
+export type { LinkedPickerProps, LinkedRecordViewProps } from "./linked-record-door.js";
 // How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.
 export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
 export type { RepeatPickerProps } from "./repeat-picker-door.js";
