@@ -4749,3 +4749,36 @@ measured them today over every example and walk9:
 - repairs whose names repeat — not met: the co-op names each by its hive;
 - days said day first in an en-US app — fixed by FR-178: every day the walk
   read was "Oct 13, 2026".
+
+## The tenth walk — a mountain rescue team (2026-10-14)
+
+The tenth walk took a volunteer mountain rescue team: the callouts it is
+paged to, the members who go out (trainee, member, team leader), and the
+kit they carry, which must be checked every ninety days to be trusted on a
+rope — with a team leader, a member, a trainee and somebody browsing as
+seats, a policy that keeps a member's phone to the team leaders, a rule that
+reads the clock (kit past its check) and one that does not (a callout under
+way with nobody on it), and two titled lenses over the callouts (a calendar,
+"The logbook", and a coverage grid, "Who went where"). Scaffolded with
+`graview create ../walk10 --link . --name "Ridgeline Mountain Rescue" --kind
+callout --plural callouts --port 5650` from a fresh worktree of main that
+installed, built and passed its tests (746 files, 5,933 tests), then seeded
+through its own acts at real size: 64 members (eight retired), 178 pieces of
+kit, 1,459 callouts over eleven years and 15,444 links, 15 problems on the
+day.
+
+The committed verdicts it started from were both written before the last
+change to what they measure: `docs/journeys.json` at 02:22 UTC on the 14th,
+`docs/gauntlet.json` at 01:49, and the ties and the records beside the map
+(#271) merged after both. The journeys walked: every app was walked in the
+committed verdict, and walk10's first run finished 60 of its 84 runs.
+
+### W-204 · `graview create` beside a checkout installs the checkout, and the new app gets nothing
+- stage: setup (`graview create ../walk10 --link .` from a worktree that lives inside another checkout) · face: — · width: — · scheme: —
+- impact: blocks a job — starting the app: `pnpm install` ran in the new directory, found the pnpm workspace of the directory above it (which does not list the app), installed that workspace, said "Done", and left the app with no `node_modules`; create then said "graview did not install, so the authoring skills were not written" and printed forty type errors about modules it could not find
+- class: what-a-project-copies-is-wrong (also: harness-or-setup-itself)
+- expected: an app made anywhere installs itself; a workspace that lists it installs it as one of its own
+- actual: pnpm installs the nearest workspace going up, and nothing in create asked whether that was the app
+- where it belongs: `packages/core/src/cli/create.ts`
+- harness that should have caught it: `create-command.test.ts` runs in a temporary directory no workspace encloses; `pnpm smoke:create` the same
+- status: fixed in "walkthrough: setup · an app made inside another workspace installs itself" · where the install left no `node_modules` under an enclosing pnpm workspace, the app is made a workspace of its own (`pnpm-workspace.yaml`) and installed again, and create says why. Criterion: `packages/core/tests/unit/an-app-made-inside-another-workspace-installs-itself.test.ts` (verified failing without the fix)
