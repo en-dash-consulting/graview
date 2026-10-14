@@ -32,3 +32,12 @@ description: "Every framework feature the Graview Roadmap holds at planned, afte
 | [Selecting draws only the connections that explain it](./selecting-draws-only-the-connections.md) | pending |
 | [A lens opens at a size you can read](./a-lens-opens-at-a-size-you-can-read.md) | pending |
 | [A sharper statement on graview.dev](./a-sharper-statement-on-graview-dev.md) | pending |
+| [Money fields are said as currency on every default face](./money-fields-are-said-as-currency-on.md) | pending |
+| [Phone, place and duration field types](./phone-place-and-duration-field-types.md) | pending |
+| [Select several records on a page and act on them at once](./select-several-records-on-a-page-and.md) | pending |
+| [Fuzzy and semantic search behind the intelligence seam](./fuzzy-and-semantic-search-behind-the.md) | pending |
+| [A sight that hides a field, not only a kind](./a-sight-that-hides-a-field-not-only-a.md) | pending |
+| [Repeating dates: a weekly practice, a monthly bill](./repeating-dates-a-weekly-practice-a.md) | pending |
+| [What the 0.1.29 wave left: archives in documents, keep-link per relation, import upserts](./what-the-0-1-29-wave-left-archives-in.md) | pending |
+| [What the 0.1.29 wave left on the faces: covered districts, the Shell's resolveApp, the studio](./what-the-0-1-29-wave-left-on-the-faces.md) | pending |
+| [The hosted page's up-front weight: room again](./the-hosted-page-s-up-front-weight-room.md) | pending |
