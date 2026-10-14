@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-14T00:45:10.270Z",
+  "at": "2026-10-14T02:16:57.075Z",
   "engine": "chromium",
   "steps": [
     {
@@ -105,7 +105,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565533,
+      "wingOpacity": 0.565435,
       "registered": true
     },
     "groundAgain": {
@@ -163,7 +163,7 @@
         "name": "2 problems in Tasks",
         "said": "2",
         "title": "2 problems in Tasks — \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\" (and 1 more). Press to see them and how to fix them.",
-        "width": 36.125,
+        "width": 35.671875,
         "height": 24
       }
     ],
@@ -356,9 +356,9 @@
       "up": true
     },
     "midway": {
-      "t": 282,
-      "x": 238.3511962890625,
-      "y": 547.0351104736328,
+      "t": 284,
+      "x": 228.5133056640625,
+      "y": 549.4100799560547,
       "width": 1200
     },
     "frames": 81,
@@ -508,6 +508,24 @@
       "boxWidth": 247,
       "small": 0
     },
+    "typo": {
+      "rows": [
+        {
+          "near": true,
+          "text": "⚠ Pay the depositNear “depsoit”"
+        },
+        {
+          "near": true,
+          "text": "The landlord holds the date for 48 hours once the deposit…Near “depsoit”"
+        }
+      ],
+      "said": "Near “depsoit”",
+      "count": "1 task, 1 reason found, 2 of them near",
+      "lit": [
+        "kind:reason",
+        "kind:task"
+      ]
+    },
     "ok": true
   },
   "verdict": {
@@ -551,6 +569,7 @@
     "theFindBoxIsACombobox": true,
     "theDistrictOpensNarrowed": true,
     "theStripIsASheetOnAPhone": true,
+    "aTypoFindsTheRecordSaidAsNear": true,
     "theStopSurvivesWhatItNames": true,
     "whatYouCanPressIsWhatYouCanSee": true
   },

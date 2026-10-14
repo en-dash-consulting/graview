@@ -1067,6 +1067,24 @@ try {
     url: location.hash,
     lit: document.querySelectorAll(".graview-kind-card[data-graview-emphasis]").length,
   }));
+  /*
+   * A TYPO FINDS THE RECORD, SAID AS NEAR. "depsoit" is "deposit" with two
+   * letters swapped: the strip names the deposit task and says it is near
+   * the word typed, the count says so, and its district lights.
+   */
+  await find.keyboard.press("/");
+  await find.keyboard.type("depsoit", { delay: 40 });
+  await find.waitForTimeout(700);
+  const typo = await find.evaluate(() => ({
+    rows: [...document.querySelectorAll('[data-testid="find-hit"]')].map((el) => ({
+      near: el.hasAttribute("data-near"),
+      text: el.textContent ?? "",
+    })),
+    said: document.querySelector('[data-testid="find-near"]')?.textContent ?? "",
+    count: document.querySelector('[data-testid="find-count"]')?.textContent ?? "",
+    lit: [...document.querySelectorAll('.graview-kind-card[data-graview-emphasis="lit"]')].map((el) => el.closest("[data-graview-view]")?.getAttribute("data-graview-view")),
+  }));
+  await find.keyboard.press("Escape");
   await find.close();
 
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -1098,7 +1116,7 @@ try {
   await phone.close();
 
   report.search = {
-    reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone,
+    reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone, typo,
     ok:
       reached === "find-box" &&
       lit.url.includes("q=deposit") &&
@@ -1339,6 +1357,12 @@ report.verdict = {
     report.search?.onAPhone?.strip?.width >= report.search?.onAPhone?.width - 1 &&
     report.search?.onAPhone?.strip?.top >= report.search?.onAPhone?.boxBottom - 1 &&
     report.search?.onAPhone?.small === 0,
+  // "depsoit" finds "Pay the deposit": a row said as near the word typed, the count says how many are near, and its district lights.
+  aTypoFindsTheRecordSaidAsNear:
+    (report.search?.typo?.rows ?? []).some((row) => row.near && row.text.includes("Pay the deposit")) &&
+    /Near “depsoit”/.test(report.search?.typo?.said ?? "") &&
+    /near/.test(report.search?.typo?.count ?? "") &&
+    (report.search?.typo?.lit ?? []).includes("kind:task"),
   // The act that removes what you are standing in leaves you somewhere real.
   theStopSurvivesWhatItNames: report.removed?.ok === true,
   whatYouCanPressIsWhatYouCanSee:

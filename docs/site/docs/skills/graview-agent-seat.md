@@ -24,7 +24,7 @@ The author is a `Principal` — an author with roles — so what the log blames 
 
 1. **Report what it READ.** `useAttention(runtime)` pipes a settled read-only call's node ids into the picture, so a kind lights faintly where the agent looked. That is the half a diff cannot show, and the half that says whether to trust what it then did.
 
-1. **Find by name with `search_graph`, before `get_graph`.** It is the Find box's matcher: hits with why they matched, `key:value` conditions (`done:false`, `is:any` for the past, `kind:task`), and the records it names counted as reads. Reading the whole graph to scan it is the move a person with a search box never makes.
+1. **Find by name with `search_graph`, before `get_graph`.** It is the Find box's matcher: hits with why they matched, `key:value` conditions (`done:false`, `is:any` for the past, `kind:task`), and the records it names counted as reads; a `near: true` hit is a near word, not the name. Reading the whole graph to scan it is the move a person with a search box never makes.
 
 **Ask what a place shows with `describe_place`, before you say done.** `{ place: "home" | "<slug>" | "<record id>", width: 390 }` returns the headings, figures, lists (each record's title and what its card or row says), group headings, empty words and problems this seat would see, as data and text. It reads what the faces draw from (`describePlace`, from `@graview/core/describe`), so it is not a guess. Hand the runtime the app (`createToolRuntime(store, { app })`, `createMcpHttpHandler({ app })`) or it says only kinds and records. On a checkout: `graview describe <entry> --place home --seed seed.json --as partner --width 390`.
 

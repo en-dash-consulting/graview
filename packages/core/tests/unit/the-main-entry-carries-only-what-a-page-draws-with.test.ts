@@ -40,7 +40,7 @@ const OFF_THE_PAGE = {
   "@graview/core/figures": { from: figures, names: ["FIGURES", "FIGURE_NAMES", "figureBrief", "figureFaults", "figureSvg"] },
   "@graview/core/json-schema": { from: jsonSchema, names: ["mutationToolSchema", "nodeJsonSchema", "schemaJson", "toJsonSchema"] },
   // FR-179: the matcher, a record and an argument said in words, and what the seat and the seeding read.
-  "@graview/core/search": { from: search, names: ["actsOn", "describeSearched", "fold", "fragmentOf", "matchNode", "parseQuery", "search", "searchableFields", "squeeze", "strengthOf", "touchWeights"] },
+  "@graview/core/search": { from: search, names: ["NEAR_BELOW", "actsOn", "describeSearched", "fold", "fragmentOf", "matchNode", "parseQuery", "search", "searchableFields", "slipsBetween", "squeeze", "stemOf", "strengthOf", "touchWeights"] },
   "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "failureWords", "isLongText", "pageSections", "readableFields", "tellApart", "viaSaid"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "beginning", "placesFrom", "placesOf"] },
 } as const;

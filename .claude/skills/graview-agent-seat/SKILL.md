@@ -43,7 +43,8 @@ for the agent, stop: that path is the one that will drift.
 5. **Find by name with `search_graph`, before `get_graph`.** It is the Find
    box's matcher: hits with why they matched, `key:value` conditions
    (`done:false`, `is:any` for the past, `kind:task`), and the records it
-   names counted as reads. Reading the whole graph to scan it is the move a
+   names counted as reads; a `near: true` hit is a near word, not the name.
+   Reading the whole graph to scan it is the move a
    person with a search box never makes.
 
    **Ask what a place shows with `describe_place`, before you say done.**

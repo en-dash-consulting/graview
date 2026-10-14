@@ -668,6 +668,8 @@ export function graphResponder<S extends AnySchema>(
           ...(context.selection ? { from: context.selection } : {}),
           ...((options.today ?? context.today) ? { today: options.today ?? context.today } : {}),
           limit: 6,
+          // The reply says what things are called “…”: a near word is not what anything is called.
+          near: false,
         });
         const picks = found.hits.filter((hit): hit is Extract<Hit, { about: "node" }> => hit.about === "node");
         if (picks.length > 0) {
