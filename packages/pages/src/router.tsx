@@ -486,7 +486,7 @@ export function PagesRoutes<S extends AnySchema>({
 }
 
 export function PagesApp<S extends AnySchema>({
-  context: given,
+  context: handed,
   registry,
   basename,
   initialPath,
@@ -494,6 +494,16 @@ export function PagesApp<S extends AnySchema>({
   path,
   steering,
 }: PagesAppProps<S>) {
+  /*
+   * THE SEAT THE READER TOOK, where the app offers seats and no provider
+   * above holds them. The face names the person by their seat (the tenth
+   * walk found "user-lena" on the person's button: the seats never reached
+   * the provider), and once they reach it the person's menu offers "Sit as
+   * somebody else" — so the face sits there too, until the app hands it
+   * another principal.
+   */
+  const [taken, setTaken] = useState<{ readonly from: PageContext<S>["principal"]; readonly seat: NonNullable<PageContext<S>["principal"]> } | undefined>(undefined);
+  const given = taken !== undefined && taken.from === handed.principal ? { ...handed, principal: taken.seat } : handed;
   /*
    * WHAT THE SEAT MAY SEE. Every page reads `context.store`; under a policy
    * that says who sees what (`sees`), that store holds only what this seat
@@ -543,6 +553,8 @@ export function PagesApp<S extends AnySchema>({
       {...(context.settings ? { settings: context.settings } : {})}
       {...(context.presence && !outer ? { presence: context.presence } : {})}
       {...(context.people ? { people: context.people } : {})}
+      {...(context.seats ? { seats: context.seats } : {}) /* So the person's button names the seat, not its principal id. */}
+      onSeat={(seat) => (outer ? outer.takeSeat(seat) : setTaken({ from: handed.principal, seat }))}
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
       resolveApp={context.resolveApp ?? outer?.resolveApp /* The host's way to name another app (FR-171): the face's own, else the provider's it is drawn inside. */}

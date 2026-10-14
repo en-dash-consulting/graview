@@ -4802,3 +4802,13 @@ committed verdict, and walk10's first run finished 60 of its 84 runs.
 - where it belongs: `packages/core/src/scaffold/ui.ts` (`pagesTsx`); `apps/discography/src/ui/pages.tsx`, copied from it
 - harness that should have caught it: the journeys' "change" on the pages, which did; `scaffold.test.ts` pinned the ties' form and never asked what else a record offers
 - status: fixed in "walkthrough: E · the record page a project starts from offers every act" · the name is an `EditableValue` under the face's provider, and every affordance but a repair is offered, what takes the record away last. Criterion: `scaffold.test.ts` "offers every act the derivation offers on the record, and its name to change in place (W-206)" (verified failing without the fix), and the journeys' "change" on walk10's pages
+
+### W-207 · On the pages the person's button says "u-4f1c9a — you, your seat and your settings"
+- stage: setup (the committed verdict on main) and F (seats on the routed face) · face: pages · width: 1440 and 390 · scheme: light
+- impact: cosmetic — a hole in a known class's check, which the watch did catch: main's `docs/journeys.json` carries 36 lines of it, every job on the pages of the gauntlet ("u-4f1c9a") and the discography ("user-lena") at both widths and with either hand, in the button's name and its tooltip, at the head of the friction list. Nobody had read them
+- class: machine-words-shown (also: faces-disagree)
+- expected: the person is named by the seat the app offered them under, on the pages as on the scene
+- actual: the apps hand the routed face their `seats`; the face read them for its history ("Made by …"), and the provider it draws the bar under, with the person's button, was never handed them — so `nameOfAuthor` fell through to the principal's id
+- where it belongs: `packages/pages/src/router.tsx` (`PagesApp`), which now holds the seat a reader takes there too, so the face and its menu sit in one seat
+- harness that should have caught it: the watch over the journeys, which did; the verdict was committed with it in
+- status: fixed in "walkthrough: F · the person on the pages is named by their seat" · the face hands its provider the seats, and a seat taken from the menu is the face's principal until the app hands it another. Criterion: `packages/pages/tests/unit/the-person-on-the-pages-is-named-by-their-seat.test.tsx` (verified failing without the fix)
