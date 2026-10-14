@@ -1,5 +1,8 @@
 import {
+  appLinkField,
   bindsOf,
+  fileField,
+  imageField,
   createSchema,
   defineInvariant,
   defineNode,
@@ -100,7 +103,13 @@ export function computedFor(graph: { in(to: string, kind: string): readonly ({ r
 /** The zod type a studio field declares. */
 export function zodFor(type: FieldType, required: boolean, options?: readonly string[]): z.ZodType {
   const base: z.ZodType =
-    type === "number"
+    type === "app-link"
+      ? appLinkField()
+      : type === "image"
+        ? imageField()
+        : type === "file"
+          ? fileField()
+          : type === "number"
       ? z.number()
       : type === "integer"
         ? z.number().int()

@@ -2,7 +2,7 @@ import type { AnyMutationDefinition, GraphEdge, GraphSnapshot, AnySchema, Gravie
 import { fieldTypeOf } from "./from-declaration.js";
 import { computedFor, pageWhile } from "./to-declaration.js";
 import type { FieldType } from "./meta.js";
-import { printZod, type ZodUses } from "./zod-source.js";
+import { helpersUsed, printZod, type ZodUses } from "./zod-source.js";
 
 /*
  * THE DECLARATION WRITTEN BACK AS CODE — the same files `graview create`
@@ -71,7 +71,13 @@ export class Read {
   }
 }
 
-export function zodSource(type: FieldType, required: boolean, options?: readonly string[]): string {
+export function zodSource(type: FieldType, required: boolean, options?: readonly string[], uses?: ZodUses): string {
+  // Another app's address (FR-171), a picture, a document (FR-162): the framework's own field, imported beside `z`.
+  if (type === "app-link" || type === "image" || type === "file") {
+    const helper = type === "app-link" ? "appLinkField" : type === "image" ? "imageField" : "fileField";
+    if (uses) uses[helper] = true;
+    return required ? `${helper}()` : `${helper}().optional()`;
+  }
   const base =
     type === "number"
       ? "z.number()"
@@ -206,7 +212,7 @@ export function kindLines(
       const printed = same ? printZod(own, uses) : null;
       if (printed !== null) return printed;
     }
-    return zodSource(field.type, field.required, field.options);
+    return zodSource(field.type, field.required, field.options, uses);
   };
   const edges = read.in(kind.id, "from-kind");
   const lifecycleField = str(kind, "lifecycleField");
@@ -315,7 +321,7 @@ export function actLines(
     const kindNode = read.ofKind("kind").find((node) => label(node) === kind);
     const fields = kindNode ? fieldsOf(read, kindNode).filter((field) => field.name !== "label") : [];
     const asked = fields.filter((field) => field.required && field.type !== "list");
-    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options)}`).join("")} }),`);
+    lines.push(`  input: z.object({ label: z.string().min(1)${asked.map((field) => `, ${field.name}: ${zodSource(field.type, false, field.options, uses)}`).join("")} }),`);
     lines.push(`  describe: (args) => \`${str(act, "title") ?? actName}: \${args.label}\`,`);
     body.push(`    ctx.addNode({`);
     body.push(`      id: ctx.freshId(args.label, ${q(kind)}),`);
@@ -333,7 +339,7 @@ export function actLines(
   } else {
     const declared = new Map<string, { type: FieldType; options: string[] | undefined }>();
     for (const kindNode of read.ofKind("kind")) if (on.includes(label(kindNode))) for (const field of fieldsOf(read, kindNode)) declared.set(field.name, { type: field.type, options: field.options });
-    lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options) : "z.string().optional()"}`).join("")} }),`);
+    lines.push(`  input: z.object({ ${arg}: nodeRef(${subjectKinds})${writes.map((field) => `, ${field}: ${declared.has(field) ? zodSource(declared.get(field)!.type, false, declared.get(field)!.options, uses) : "z.string().optional()"}`).join("")} }),`);
     lines.push(`  describe: (args, graph) => \`${str(act, "title") ?? actName}: \${nameOf(graph as Reader, args.${arg})}\`,`);
     if (writes.length > 0) {
       body.push(`    const patch: Record<string, unknown> = {};`);
@@ -456,7 +462,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const schemaUses: ZodUses = { nodeRef: false, isoDate: false };
   const kindText = kinds.flatMap((kind) => ["", ...kindLines(read, kind, options.base, keptFormats, schemaUses)]);
   const schemaTs = [
-    `import { ${schemaUses.appLinkField ? "appLinkField, " : ""}createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}z } from "@graview/core";`,
+    `import { ${helpersUsed(schemaUses)}createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}z } from "@graview/core";`,
     ``,
     `/*`,
     ` * ${name}'s kinds, written by the studio. The shape is the declaration's;`,
@@ -478,7 +484,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     return ["", ...actLines(read, act, kept, checkout as AnyMutationDefinition | undefined, actUses)];
   });
   const mutationsTs = [
-    `import { ${actUses.appLinkField ? "appLinkField, " : ""}bindSchema, ${actUses.isoDate ? "isoDate, " : ""}nodeRef, z, type GraphReader } from "@graview/core";`,
+    `import { ${helpersUsed(actUses)}bindSchema, ${actUses.isoDate ? "isoDate, " : ""}nodeRef, z, type GraphReader } from "@graview/core";`,
     `import { ${schemaVar} } from "./schema.js";`,
     ``,
     `const { defineMutation } = bindSchema(${schemaVar});`,
