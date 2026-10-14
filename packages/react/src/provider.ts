@@ -55,3 +55,6 @@ export { lazyModule, retryLazyParts } from "./lazy-part.js";
 export { createSeatTalk, seatTalkKey, useSeatDrawn, useSeatTalkState } from "./seat-talk.js";
 export type { KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatSide, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions } from "./lazy-part.js";
+// The app as it was (Roadmap f-playback): the moment a face draws instead of now, held by its outermost provider.
+export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback } from "./past.js";
+export type { PastShown, Playback } from "./past.js";

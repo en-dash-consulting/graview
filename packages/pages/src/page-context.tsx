@@ -1,3 +1,4 @@
+import type { HistoryHost } from "@graview/core/history";
 import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, ReactViewRegistry } from "@graview/react/provider";
@@ -133,6 +134,8 @@ export interface PageContext<S extends AnySchema> {
    * it, and its address plainly where there is none.
    */
   readonly resolveApp?: ResolveApp;
+  /** What the host keeps outside the log, for playback (Roadmap f-playback): its declaration changes, and a script view's code at a moment. */
+  readonly history?: HistoryHost;
   /**
    * The app these pages are of, for the provider under them when `views`
    * is given: the seat's tools and a host's turn describe its places with

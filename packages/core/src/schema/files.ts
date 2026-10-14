@@ -49,6 +49,14 @@ export interface HostFiles {
   upload(file: Blob, name: string): Promise<FileValue>;
   readonly maxBytes: number;
   readonly kinds: readonly string[];
+  /**
+   * WHETHER THE HOST STILL KEEPS A FILE'S BYTES (Roadmap f-playback). The
+   * past holds every file a record ever held, and the bytes are the host's:
+   * one removed since is drawn as "removed later" rather than a broken
+   * picture. Unsaid, a file is drawn as kept, and one that does not load
+   * while somebody looks back is said to be removed later.
+   */
+  kept?(href: string): boolean;
 }
 
 /** Whether `href` is a path on the host: no scheme, no other host, no backslash, nothing that climbs. */

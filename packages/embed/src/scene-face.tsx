@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { DraftDoor, Inspector, LinesKey, MapPanel, OverviewButton, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, SeatField, ShowInstallation, useCallLog, viewsCss, type SeatStart } from "@graview/primitives/scene";
+import { DraftDoor, Inspector, LinesKey, MapPanel, OverviewButton, PastBar, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, SeatField, ShowInstallation, useCallLog, viewsCss, type SeatStart } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
 import { BesideTheMap, Scene, UrlSync } from "@graview/react";
@@ -53,6 +53,8 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, seat, sc
       <SceneBarTools<S> find={find} calls={calls} />
       {/* After an act, the way back on the board, and ⌘Z (FR-153): as on the pages, and the whole-page Shell. */}
       <SceneWayBack />
+      {/* The app as it was, and the way through it (Roadmap f-playback), as on the whole-page Shell. */}
+      <PastBar face="scene" />
     </div>
     </BesideTheMap.Provider>
   );

@@ -617,6 +617,9 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return (call: Parameters<Store<S>["preview"]>[0], context?: Parameters<Store<S>["preview"]>[1], options?: Parameters<Store<S>["preview"]>[2]) => target.preview(call, context, { author: principal, ...options });
         case "seenBy":
           return (other: Principal) => seenBy(target, other);
+        // The past as this seat could see it then (Roadmap f-playback): never the whole store's past through a seat's view.
+        case "at":
+          return (...args: Parameters<Store<S>["at"]>) => seenBy(target.at(...args), principal);
         case "seenFor":
           return principal;
         // A checkpoint taken through the seat's view is the one it is served.

@@ -160,11 +160,20 @@ export function checkUndo(
     };
   }
 
+  /*
+   * A CHANGE TAKEN BACK SINCE STANDS IN NOBODY'S WAY (Roadmap f-playback):
+   * an undo whose target also came after the earliest op here puts back
+   * what its target found, so the two leave the graph as if neither was
+   * made. Bringing the undo along would put its target back, which is why
+   * it is never offered as a batch to include; it simply does not block.
+   */
+  const seqOf = new Map(log.all().map((op) => [op.id, op.seq]));
   const blockedBy: UndoBlock[] = [];
   for (const op of log.all()) {
     if (op.seq <= earliest) continue;
     if (targets.has(op.batch)) continue;
     if (undone.has(op.id)) continue;
+    if (op.undoes !== undefined && (seqOf.get(op.undoes) ?? -1) > earliest) continue;
     const overlap = op.reads.filter((id) => writes.has(id));
     if (overlap.length > 0) blockedBy.push({ op, overlap });
   }

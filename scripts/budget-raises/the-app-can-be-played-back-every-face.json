@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 13243,
+  "gzipped": 5442,
+  "note": "Raised when the app came to be played back (the Roadmap's f-playback): `store.at` and the seam the faces read the moment from, which a hosted page loads up front, and, fetched when somebody first looks back, the timeline (its ticks, its player, Restore to here) with `@graview/core/history`, the row of Activity that opens it, a script view drawn from the code the host kept then, and a file removed since said to be removed later. Every face counts the lazy chunks too. 13_243 / 5_442 more than main at ec80d7fc (1_987_172 / 651_223), while a hosted page's first load is 4_006 / 1_458 bytes larger (4_006 / 1_477 handed a compiled app) and stays under its budgets. Measured at 2_000_415 / 656_665."
+}

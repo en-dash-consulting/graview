@@ -4,7 +4,7 @@ import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, HostFilesContext, useGraviewIfAny, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, HostFilesContext, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -13,7 +13,10 @@ import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, Def
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
-import { appKeyOf, BarFindContext, HeadingsUnder, registerReaderLenses, SpecLinks, type BarFind } from "@graview/primitives/pages";
+import { appKeyOf, BarFindContext, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind } from "@graview/primitives/pages";
+
+/** Who reads the face when the host names nobody. */
+const ANYONE = { kind: "human" } as const;
 import { OwnBarFind } from "./page-shell.js";
 import { recordPath } from "./registry.js";
 
@@ -427,6 +430,8 @@ export function PagesRoutes<S extends AnySchema>({
     <FaceRoot context={context} registry={registry}>
     <GoesByAddress context={context}>
     {frame(<>
+    {/* The app as it was, and the way through it (Roadmap f-playback): at the head of the page, under the bar. */}
+    <PastBar face="pages" />
     <RecordLinks context={inside}>
       <ScrollReset />
       <Routes>
@@ -510,7 +515,16 @@ export function PagesApp<S extends AnySchema>({
   const outer = useGraviewIfAny();
   // Days, times and numbers in the reader's locale, else the app's (FR-178), whether or not a provider is drawn under the pages.
   sayIn({ reader: given.locale ?? outer?.locale, app: given.brand?.locale ?? given.app?.brand?.locale });
-  const viewed = given.store.seenBy(given.principal ?? { kind: "human" });
+  /*
+   * THE MOMENT DRAWN (Roadmap f-playback): now, or the app as it stood at
+   * a moment somebody asked to see — the provider's this face is drawn
+   * inside when that one holds this store, else the face's own. Every page
+   * reads the one store, so the place a person is on is drawn as it was.
+   */
+  const seat = given.principal ?? ANYONE;
+  const playback = useOwnPlayback(given.store, seat, given.history);
+  const shown = playback.past && playback.live === given.store ? playback.past.store : given.store;
+  const viewed = shown.seenBy(seat);
   const context = viewed === given.store ? given : { ...given, store: viewed };
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
   const routed = (
@@ -554,7 +568,8 @@ export function PagesApp<S extends AnySchema>({
   ) : (
     routed
   );
-  const filed = context.files ? <HostFilesContext.Provider value={context.files}>{inner}</HostFilesContext.Provider> : inner;
+  const timed = <PlaybackContext.Provider value={playback as unknown as Playback}>{inner}</PlaybackContext.Provider>;
+  const filed = context.files ? <HostFilesContext.Provider value={context.files}>{timed}</HostFilesContext.Provider> : timed;
   if (initialPath !== undefined) {
     /*
      * THE TEST ROUTER CARRIES THE BASENAME TOO, OR THE TESTS ARE A LIE.

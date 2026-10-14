@@ -39,6 +39,8 @@ export const WAY_BACK_MS = 10_000;
  * offer to take back another's work.
  */
 export function lastChangeOf<S extends AnySchema>(store: Store<S>, principal?: Principal): LastChange | undefined {
+  // The app as it was is read, never changed (Roadmap f-playback): nothing there to take back.
+  if (store.past) return undefined;
   const batches = store.batches();
   for (let at = batches.length - 1; at >= 0; at--) {
     const batch = batches[at]!;

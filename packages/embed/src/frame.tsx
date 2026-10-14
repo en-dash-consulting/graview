@@ -1,3 +1,4 @@
+import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
@@ -270,6 +271,14 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly resolveApp?: ResolveApp;
   /**
+   * WHAT THE HOST KEEPS OUTSIDE THE LOG, FOR PLAYBACK (Roadmap f-playback):
+   * `declarations`, each change to the declaration with the seq it took
+   * effect at, its sentence and the declaration it began; and `viewAt(name,
+   * seq)`, a script view's code as it stood at a moment (`null`: it did not
+   * exist then). Unsaid, the past is drawn under today's declaration and views.
+   */
+  readonly history?: HistoryHost;
+  /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
    * the host is told the error's class and the framework module that
@@ -530,6 +539,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     ai: props.ai,
     files: props.files,
     resolveApp: props.resolveApp,
+    history: props.history,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,
