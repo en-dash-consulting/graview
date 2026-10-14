@@ -36,7 +36,8 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings } from "./brand-check.js";
+import { brandFindings, emojiIconSentence } from "./brand-check.js";
+import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
 import { isRecord as isObject, respellDocument } from "./respell.js";
@@ -176,7 +177,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       locale: z.union([z.string(), z.null()]).optional(),
       // The rest of the brand (FR-124, FR-125): each as the document holds it, null to clear it.
       logo: z.union([z.string().min(1), z.object({ src: z.string().min(1), alt: z.string().min(1).max(120).optional() }).strict(), z.null()]).optional(),
-      favicon: z.union([z.string().min(1), z.null()]).optional(),
+      favicon: z.union([z.string().min(1), z.object({ emoji: z.string() }).strict(), z.null()]).optional(),
       typography: z.union([z.object({ display: z.union([z.string().min(1).max(200), z.null()]).optional(), body: z.union([z.string().min(1).max(200), z.null()]).optional(), mono: z.union([z.string().min(1).max(200), z.null()]).optional() }).strict(), z.null()]).optional(),
       shape: z.union([z.object({ radius: z.union([z.number().min(0).max(32), z.null()]).optional(), density: z.union([z.number().min(0.75).max(1.5), z.null()]).optional() }).strict(), z.null()]).optional(),
       accents: z.union([z.record(z.string(), z.union([z.number().min(0).max(360), z.null()])), z.null()]).optional(),
@@ -563,7 +564,7 @@ class Editor {
     const emptyPart = (["typography", "shape", "accents"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
     if (emptyPart) return this.fail(i, emptyPart, `${emptyPart} names no part to set; name one, or give null to clear all of it`);
     const judged = brandFindings(
-      { ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
+      { ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
       { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
@@ -609,6 +610,7 @@ class Editor {
       const src = (mark: unknown) => (typeof mark === "string" ? mark : isObject(mark) ? mark["src"] : undefined);
       const alt = (mark: unknown) => (isObject(mark) && typeof mark["alt"] === "string" ? mark["alt"] : undefined);
       if (e[key] === null) this.said.push(`The app has no ${what}.`);
+      else if (key === "favicon" && emojiOf(e[key]) !== undefined) this.said.push(emojiIconSentence(emojiOf(e[key])!, brand["logo"] !== undefined));
       else if (was === undefined) this.said.push(`The app gets a ${what}.`);
       else if (canonicalize(was) === canonicalize(e[key])) this.said.push(`The ${what} stays as it was.`);
       else if (src(was) === src(e[key])) this.said.push(`The ${what} is said as ${quotedAtTheEnd(alt(e[key]) ?? brand["name"] ?? this.doc.name)}`);

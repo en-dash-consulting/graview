@@ -135,7 +135,9 @@ optional, and an edit for each — `set-brand` (`null` clears a key),
   shade it names.
 - **The icon** is set only by a face that owns the page; an embed on
   somebody else's page leaves theirs alone unless the host passes
-  `favicon: true`.
+  `favicon: true`. `"favicon": { "emoji": "🏡" }` — exactly one standard
+  emoji (👩🏽‍🌾 and 🇺🇸 count as one) — is the icon and, with no logo, the
+  mark; anything else is refused (`brand-emoji`).
 
 `describe_place("home")` says the app as the home draws it (its `masthead`):
 the name, the line under it,

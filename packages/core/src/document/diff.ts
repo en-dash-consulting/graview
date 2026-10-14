@@ -1,5 +1,7 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
+import { emojiIconSentence } from "./brand-check.js";
+import { emojiOf } from "../theme/marks.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import { narrows, rangeWords } from "./range.js";
 import { formatWords } from "./format-words.js";
@@ -198,6 +200,10 @@ function brandSentences(was: Brand, now: Brand, appName: string): string[] {
   const src = (logo: Brand["logo"]) => (typeof logo === "string" ? logo : logo?.src);
   for (const [what, a, b] of [["logo", src(was.logo), src(now.logo)], ["page icon", was.favicon, now.favicon]] as const) {
     if (same(a, b)) continue;
+    if (what === "page icon" && emojiOf(b) !== undefined) {
+      out.push(emojiIconSentence(emojiOf(b)!, now.logo !== undefined));
+      continue;
+    }
     out.push(b === undefined ? `The app has no ${what}.` : a === undefined ? `The app gets a ${what}.` : `The ${what} changes.`);
   }
   const alt = (logo: Brand["logo"]) => (typeof logo === "object" ? logo.alt : undefined);

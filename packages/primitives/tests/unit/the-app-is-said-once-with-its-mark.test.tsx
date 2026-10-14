@@ -49,6 +49,13 @@ describe("the app's title: its mark, its name, the line under it", () => {
     expect(renderToStaticMarkup(<AppTitle brand={brand({ logo: "javascript:alert(1)" })} />)).not.toContain("app-mark");
   });
 
+  it("draws the page icon's emoji as the mark when there is no logo, and the logo when there is", () => {
+    const html = renderToStaticMarkup(<AppTitle brand={brand({ favicon: { emoji: "👩🏽‍🌾" } })} />);
+    expect(html).toMatch(/<span class="graview-logo graview-emoji-mark" data-testid="app-mark" aria-hidden="true"[^>]*>👩🏽‍🌾<\/span>/);
+    expect(renderToStaticMarkup(<AppTitle brand={brand({ logo: LOGO, favicon: { emoji: "🏡" } })} />)).not.toContain("🏡");
+    expect(renderToStaticMarkup(<AppTitle brand={brand({ favicon: { emoji: "🏡🏡" } })} />)).not.toContain("app-mark");
+  });
+
   it("draws the line under the name only where it is asked for", () => {
     const withLine = brand({ subtitle: "Workshops, who came, and what each one left behind." });
     expect(renderToStaticMarkup(<AppTitle brand={withLine} subtitle />)).toContain(">Workshops, who came, and what each one left behind.</span>");

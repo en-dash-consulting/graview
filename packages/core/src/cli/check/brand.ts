@@ -1,4 +1,7 @@
 import { checkBrandContrast } from "../../theme/derive.js";
+import { emojiProblem } from "../../theme/marks.js";
+import { EMOJI_FIX, emojiSentence } from "../../document/brand-check.js";
+import { capitalize } from "../../capital.js";
 import { passingShade, ratioWords } from "../../theme/accent.js";
 import { TEXT_PAIRS } from "../../theme/types.js";
 import { checkKitContrast, resolveKit } from "../../theme/kit.js";
@@ -51,6 +54,12 @@ export function checkAccents<S extends AnySchema>(ctx: CheckContext<S>): void {
    * format with is said as a plain number everywhere — a brand decision
    * that looks applied and is not — so it is refused here by name.
    */
+  /* AN EMOJI AS THE APP'S ICON: exactly one standard emoji, or every face would draw something other than what was meant. */
+  const favicon = app.brand?.favicon;
+  if (typeof favicon === "object" && favicon !== null) {
+    const problem = emojiProblem(favicon.emoji);
+    if (problem) add({ severity: "error", code: "brand-emoji", where: "brand.favicon.emoji", message: `${capitalize(emojiSentence(favicon.emoji, problem))}.`, fix: `${capitalize(EMOJI_FIX)}.` });
+  }
   const { currency, locale } = app.brand ?? {};
   const formats = (options: Intl.NumberFormatOptions, at?: string) => {
     try {

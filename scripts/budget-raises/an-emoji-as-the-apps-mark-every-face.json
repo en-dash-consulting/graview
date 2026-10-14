@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 2385,
+  "gzipped": 795,
+  "note": "Raised when an app came to name one standard emoji as its page icon and, with no logo, its mark (Roadmap f-emoji-favicon): `emojiProblem` reading one grapheme with Intl.Segmenter and RGI_Emoji, the emoji drawn by `AppMark` and as an SVG page icon by `faviconHref`, `set-brand` taking `favicon: { emoji }` with the sentence it and the preview say, and the refusal (`brand-emoji`) the checker and an edit both write. 2_385 / 795 over the budget it met before, the gzipped figure moving some 15 bytes between builds. Measured at 1_989_612 / 652_148–652_150."
+}
