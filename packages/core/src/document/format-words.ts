@@ -10,9 +10,10 @@ import type { AmountMark } from "../schema/amount-mark.js";
  * approving a change reads what every face will show.
  */
 
-/** A number field's format in words, with what a value reads as; `undefined` for a plain number. */
+/** A number field's format in words, with what a value reads as; `undefined` for a plain number. A text field's Markdown is not a number's format, so it is said as itself. */
 export function formatWords(f: { readonly format?: string | undefined; readonly unit?: string | undefined }, brand?: { readonly currency?: string | undefined; readonly locale?: string | undefined }): string | undefined {
   if (!f.format && !f.unit) return undefined;
+  if (f.format === "markdown") return "written in Markdown";
   // A number shown as a duration is the duration type: whole minutes.
   if (f.format === "duration") return `a duration in whole minutes, as {"type": "duration"} is — 90 reads ${sayDuration(90, brand?.locale)}`;
   const mark = amountMark({ ...(brand?.currency ? { currency: brand.currency } : {}), ...(brand?.locale ? { locale: brand.locale } : {}), ...(f as AmountMark) });

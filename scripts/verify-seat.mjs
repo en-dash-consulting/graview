@@ -106,7 +106,7 @@ try {
       const searched = await page.evaluate(() => {
         const rows = [...document.querySelectorAll('[data-testid="activity"] li')];
         const row = rows.find((li) => /^read · Search graph/.test((li.querySelector("span:not([aria-hidden])")?.textContent ?? "").trim()));
-        const reads = row ? [...row.querySelectorAll('[data-testid="activity-reads"] [data-graview-pick]')].map((chip) => chip.getAttribute("data-graview-pick")) : [];
+        const reads = row ? [...row.querySelectorAll('[data-testid="activity-reads"] [data-testid="activity-record"]')].map((record) => record.getAttribute("data-record")) : [];
         return { listed: Boolean(row), reads, all: rows.map((li) => (li.textContent ?? "").trim().slice(0, 60)).slice(0, 6) };
       });
       check(`${app}: the seat finds what it changes with search_graph, and the rail shows what it read`,

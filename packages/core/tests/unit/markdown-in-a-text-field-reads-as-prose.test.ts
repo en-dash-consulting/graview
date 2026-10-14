@@ -7,6 +7,7 @@ import { isMarkdownField, readableFields } from "../../src/words.js";
 import { nodeJsonSchema } from "../../src/json-schema.js";
 import { compileDocument } from "../../src/check.js";
 import { editDocument } from "../../src/document/edit.js";
+import { diffDocuments } from "../../src/document/diff.js";
 import { fieldSpecOf } from "../../src/document/field-spec.js";
 import { capabilities } from "../../src/capabilities.js";
 
@@ -210,6 +211,18 @@ describe("the field, declared (FR-180)", () => {
     expect(back.document.kinds["brief"]!.fields["body"]).toMatchObject({ type: "text", format: "markdown" });
     const refused = editDocument(compiled.document, [{ op: "retype-field", kind: "brief", field: "line", type: "string", format: "markdown" }]);
     expect(refused.ok).toBe(false);
+  });
+
+  it("is said as Markdown in a change's preview, never as a number's format", () => {
+    const before = { format: "graview-document", formatVersion: 1, name: "Roadmap", kinds: { brief: { fields: { title: { type: "string", required: true }, body: { type: "text" } } } } };
+    const after = { ...before, kinds: { brief: { fields: { title: { type: "string", required: true }, body: { type: "text", format: "markdown" } } } } };
+    const said = diffDocuments(before as never, after as never).sentences.join(" ");
+    expect(said).toMatch(/brief's body is now written in Markdown/);
+    expect(said).not.toMatch(/undefined|said as|reads 12/);
+    const added = editDocument(before as never, [{ op: "add-field", kind: "brief", field: "notes", type: "text", format: "markdown" }]);
+    if (!added.ok) throw new Error(JSON.stringify(added.findings));
+    expect(added.said.join(" ")).toMatch(/brief gains a field, notes \(text, written in Markdown\)/);
+    expect(added.said.join(" ")).not.toMatch(/undefined/);
   });
 
   it("is named in what the framework has shipped", () => {

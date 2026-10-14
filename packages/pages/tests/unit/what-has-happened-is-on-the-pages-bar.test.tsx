@@ -69,4 +69,39 @@ describe("what has happened, on the routed face's bar", () => {
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
     await settled(() => expect(document.querySelector('[data-testid="activity"]')?.textContent ?? "").toContain("Pay the venue"));
   });
+
+  it("names a record that is still here as a button that goes to it, and one since removed as a label that does not look pressable", async () => {
+    const remove = defineMutation("remove-item", {
+      title: "Remove",
+      subject: { kinds: ["item"], arg: "id" },
+      input: z.object({ id: nodeRef(["item"]) }),
+      describe: () => "Remove it",
+      apply(ctx, args) {
+        ctx.removeNode(args.id);
+      },
+    });
+    const store = new Store({ schema, mutations: [rename, remove], invariants: [], snapshot: { nodes: [{ id: "i1", kind: "item", label: "Pay the deposit" }, { id: "i2", kind: "item", label: "Book the band" }] as never, edges: [] } });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<PagesApp context={{ store, principal: nina, views: createViews(schema) }} initialPath="/items" />));
+    unmount = () => act(async () => root.unmount());
+    await act(async () => void store.apply({ name: "rename-item", args: { id: "i1", label: "Pay the venue" } }, { author: nina }));
+    await act(async () => void store.apply({ name: "remove-item", args: { id: "i2" } }, { author: nina }));
+    await settled(() => expect(host.querySelector('[data-testid="activity-button"]')).not.toBeNull());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
+    await settled(() => expect(document.querySelectorAll('[data-testid="activity-record"]').length).toBe(1));
+
+    const activity = document.querySelector('[data-testid="activity"]')!;
+    // Nothing in it is a pick target only the scene answers: a record is a button, or a plain label.
+    expect(activity.querySelector("[data-graview-pick]")).toBeNull();
+    const records = [...activity.querySelectorAll<HTMLButtonElement>('[data-testid="activity-record"]')];
+    expect(records.map((button) => button.textContent)).toEqual(["Pay the venue"]);
+    expect(activity.textContent).toContain("Book the band");
+
+    await act(async () => records[0]!.click());
+    await settled(() => expect(document.querySelector('[data-testid="activity"]')).toBeNull());
+    // On the record's own page, whose heading is its name.
+    await settled(() => expect([...document.querySelectorAll("main h1, main h2")].map((heading) => heading.textContent).join(" | ")).toMatch(/Pay the venue/));
+  });
 });

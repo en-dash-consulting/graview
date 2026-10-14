@@ -1,7 +1,7 @@
-import { humanizeField, isWithheld, nameOfAuthor, type AnySchema, type Author } from "@graview/core";
+import { humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
-import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
+import { POPOVER_STYLE, useGoTo, useGraph, useGraview, usePopover } from "@graview/react/provider";
 import type { ToolCall } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
 import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
@@ -20,6 +20,8 @@ export interface Change {
   /** What it was based on and how sure, in words, when its maker said (FR-172). */
   readonly basis?: string;
   readonly touched: readonly string[];
+  /** What a record this change removed was called, read from the removal: it is no longer in the graph to ask. */
+  readonly removed?: Readonly<Record<string, string>>;
   readonly batch: string;
   /**
    * A CHANGE YOU CANNOT SEE (FR-16): every op of it was withheld from this
@@ -59,11 +61,19 @@ export function useRecentChanges(limit = 4): readonly Change[] {
           ...(batch.lineage ? { basis: lineageWords(batch.lineage) } : {}),
           // What a withheld op touched is not said, even the part this seat may see.
           touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
+          ...removedNames(store, batch.ops.filter((op) => !isWithheld(op))),
           batch: batch.id,
           ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
         })),
     [store, nodes, limit],
   );
+}
+
+/** The names of the records a change removed, from the records its removals carry. */
+function removedNames(store: { readonly schema: AnySchema }, ops: readonly { readonly primitives: readonly { readonly op: string; readonly node?: { readonly id: string; readonly kind: string } }[] }[]): { readonly removed?: Record<string, string> } {
+  const removed: Record<string, string> = {};
+  for (const op of ops) for (const primitive of op.primitives) if (primitive.op === "remove-node" && primitive.node) removed[primitive.node.id] = labelOf(store.schema.tryDefinition(primitive.node.kind), primitive.node as never);
+  return Object.keys(removed).length > 0 ? { removed } : {};
 }
 
 /**
@@ -212,6 +222,33 @@ export function StartFresh() {
   );
 }
 
+/**
+ * A RECORD NAMED IN THE ACTIVITY, AS SOMETHING THAT GOES THERE — or as a
+ * label where there is nowhere to go. A chip with a pick target was a pill
+ * that only the scene's own pointer handler answered: on Pages, in the
+ * popover, and from the keyboard on either face it looked pressable and did
+ * nothing. One that names a record still here is a button that goes to it
+ * (the face says how, through `useGoTo`) and closes the popover; a record
+ * since removed, or an argument that is a word rather than a record, is a
+ * plain label with no pointer and no focus.
+ */
+function Named({ id, label, go }: { readonly id: string; readonly label: string; readonly go: ((id: string) => void) | null }) {
+  if (!go) return <Chip label={label} />;
+  return (
+    <button
+      type="button"
+      data-testid="activity-record"
+      data-record={id}
+      title={`Go to ${label}`}
+      onClick={() => go(id)}
+      style={{ all: "unset", display: "inline-flex", cursor: "pointer", borderRadius: 7 }}
+      className="graview-activity-record"
+    >
+      <Chip label={label} />
+    </button>
+  );
+}
+
 export function ActivityRail({
   calls,
   seat,
@@ -250,6 +287,9 @@ export function ActivityRail({
    */
   const popover = usePopover("activity");
   const open = popover.open;
+  const goTo = useGoTo();
+  /* Only a record still in the graph goes anywhere; the popover closes behind the reader as they go. */
+  const goes = (id: string) => (store.graph.has(id) ? (to: string) => { popover.setOpen(false); goTo.record(to); } : null);
 
   if (seat === undefined && calls.length === 0 && changes.length === 0 && !remembers) return null;
 
@@ -395,7 +435,7 @@ export function ActivityRail({
                     <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
                       {/* Once each: a neighborhood read lists a node joined to it twice twice. */}
                       {[...new Set(call.reads)].slice(0, 3).map((id) => (
-                        <Chip key={id} label={nameOf(store, id)} pickId={id} />
+                        <Named key={id} id={id} label={nameOf(store, id)} go={goes(id)} />
                       ))}
                       {new Set(call.reads).size > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{new Set(call.reads).size - 3}</span> : null}
                     </div>
@@ -410,7 +450,7 @@ export function ActivityRail({
                         .filter((entry): entry is [string, string] => typeof entry[1] === "string")
                         .slice(0, 3)
                         .map(([name, value]) => (
-                          <Chip key={name} label={nameOf(store, value)} pickId={value} />
+                          <Named key={name} id={value} label={nameOf(store, value)} go={goes(value)} />
                         ))}
                     </div>
                   ) : null}
@@ -471,7 +511,7 @@ export function ActivityRail({
                     style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
                   >
                     {change.touched.slice(0, 4).map((id) => (
-                      <Chip key={id} label={nameOf(store, id)} pickId={id} />
+                      <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.removed?.[id] ?? nameOf(store, id))} go={goes(id)} />
                     ))}
                   </div>
                 </li>

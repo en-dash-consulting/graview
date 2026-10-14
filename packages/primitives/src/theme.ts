@@ -515,6 +515,13 @@ ${/* Chrome that arrives with a state settles in rather than popping. */ ""}
   outline-offset: 2px;
   border-radius: 7px;
 }
+.graview-activity-record:hover > [data-graview-primitive="chip"] {
+  filter: brightness(${scheme === "light" ? 0.96 : 1.18});
+}
+.graview-activity-record:focus-visible {
+  outline: 2px solid var(--graview-accent);
+  outline-offset: 2px;
+}
 ${/* On a board the keyboard ring hugs the DISC, not the disc-plus-label
    group: a rectangle drawn around a circle read as a mystery box on the
    pitch ("why does Left Midfield have this box?"), when all it ever said

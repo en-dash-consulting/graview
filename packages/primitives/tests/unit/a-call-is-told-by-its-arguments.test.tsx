@@ -92,7 +92,7 @@ describe("a call in the activity", () => {
     );
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
     const reads = host.querySelector('[data-testid="activity-reads"]')!;
-    expect([...reads.querySelectorAll('[data-graview-primitive="chip"]')].map((chip) => chip.getAttribute("data-graview-pick"))).toEqual([
+    expect([...reads.querySelectorAll('[data-graview-primitive="chip"]')].map((chip) => chip.getAttribute("title"))).toEqual([
       "trailer",
       "extractor",
     ]);

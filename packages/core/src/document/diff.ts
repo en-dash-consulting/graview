@@ -114,8 +114,8 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
         if (narrower) narrowedRanges.push({ kind, field });
         sentences.push(`${kind}'s ${field} now takes ${rangeWords(f)}, where it took ${rangeWords(old)}${narrower ? "; values outside it are cleared" : ""}.`);
       }
-      // What it is said as — money in USD, a percent — in words, with what a value reads as.
-      if (old.format !== f.format || old.unit !== f.unit) {
+      // What it is said as — money in USD, a percent — in words, with what a value reads as. A text field's Markdown is said above.
+      if (f.type !== "text" && (old.format !== f.format || old.unit !== f.unit)) {
         const now = formatWords(f, after.brand);
         const then = formatWords(old, before.brand);
         sentences.push(`${kind}'s ${field} is now said as ${now ?? "a plain number"}, where it was said as ${then?.replace(/ — .*/, "") ?? "a plain number"}; its values are kept.`);
