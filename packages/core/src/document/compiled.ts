@@ -368,7 +368,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...said("figure"),
       ...said("fieldRoles"),
       ...said("people"),
-      ...(spec.archives === false ? { archives: false } : {}),
+      archives: spec.archives,
       ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
       ...(named || spec.glance || spec.page
         ? { display: { ...(named ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }

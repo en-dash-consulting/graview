@@ -47,7 +47,7 @@ describe("a document's kind that is never archived", () => {
     const granted = { ...neverArchived, roles: ["planner"], policy: { grants: [{ roles: ["planner"], mutations: ["archive-category"] }] } };
     const compiled = compileDocument(granted);
     expect(compiled.ok).toBe(false);
-    expect(compiled.findings.find((finding) => finding.code === "grant-act")?.fix).toMatch(/"archives": false/);
+    expect(compiled.findings.find((finding) => finding.code === "grant-act")?.message).toMatch(/"archives": false/);
   });
 
   it("is set and unset by set-archives, which says what the app stops and starts offering", () => {
