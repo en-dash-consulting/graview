@@ -85,7 +85,7 @@ export function archivesSentence(kinds: Kinds, kind: string, archives: boolean, 
   if (archives) return already ? `${plural} can already be archived and merged.` : `${plural} can be archived and merged again: the app offers ${acts("and")}.`;
   return already
     ? `${plural} are already kept or removed, never archived.`
-    : `${plural} are kept or removed, never archived: the app no longer offers ${acts("or")}, and ${withA(nounWords(kinds, kind))} archived before stays out of the lists until they can be archived again.`;
+    : `${plural} are kept or removed, never archived: the app no longer offers ${acts("or")}, and ${withA(nounWords(kinds, kind))} archived before is brought back when the change lands.`;
 }
 
 export const FIRST_GRANT = "The app gets a policy: from now on, only what a grant gives is allowed.";

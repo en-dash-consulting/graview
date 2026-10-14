@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { compileDocument, describeApp } from "../../src/check.js";
-import { diffDocuments, editDocument, readDocument, toDocument } from "../../src/document/index.js";
+import { diffDocuments, editDocument, planMigration, readDocument, toDocument } from "../../src/document/index.js";
 import { createSchema, defineApp, defineNode, deriveMutations, z } from "../../src/index.js";
 
 /*
@@ -54,7 +54,7 @@ describe("a document's kind that is never archived", () => {
     const off = editDocument(vendors, [{ op: "set-archives", kind: "category", archives: false }]);
     if (!off.ok) throw new Error(JSON.stringify(off.findings));
     expect(off.document.kinds.category?.archives).toBe(false);
-    expect(off.said[0]).toBe("Categories are kept or removed, never archived: the app no longer offers archive-category, unarchive-category or merge-category, and a category archived before stays out of the lists until they can be archived again.");
+    expect(off.said[0]).toBe("Categories are kept or removed, never archived: the app no longer offers archive-category, unarchive-category or merge-category, and a category archived before is brought back when the change lands.");
     expect(off.said.join(" ")).toMatch(/The tools an agent is offered change: archive-category, unarchive-category and merge-category are gone/);
     // The preview of the same change says the same sentence.
     expect(diffDocuments(vendors, off.document).sentences).toContain(off.said[0]);
@@ -78,5 +78,44 @@ describe("a document's kind that is never archived", () => {
     // And add-grant refuses to name one on a kind that is never archived.
     const naming = editDocument(neverArchived, [{ op: "add-grant", roles: ["planner"], mutations: ["unarchive-category"] }]);
     expect(naming.ok).toBe(false);
+  });
+});
+
+/*
+ * AND NO RECORD IS LEFT WHERE NOTHING CAN BRING IT BACK. A kind turned to
+ * never archived has no `unarchive-<kind>`, so a record already archived
+ * would stay out of every list for good: the migration that lands the
+ * change brings each back in the same op, and says how many. Every other
+ * change keeps an archived record archived — a migration used to clear the
+ * mark on every record it touched, and said nothing.
+ */
+describe("a change landed on records already archived", () => {
+  const stored = {
+    nodes: [
+      { id: "category:flowers", kind: "category", name: "Flowers", $archived: true },
+      { id: "category:cake", kind: "category", name: "Cake", $archived: true },
+      { id: "category:music", kind: "category", name: "Music" },
+      { id: "vendor:bloom", kind: "vendor", name: "Bloom", status: "researching", $archived: true },
+    ],
+    edges: [],
+  };
+
+  it("keeps them archived where the kind still archives", () => {
+    const after = editDocument(vendors, [{ op: "add-field", kind: "category", field: "notes", spec: { type: "text" } }]);
+    if (!after.ok) throw new Error(JSON.stringify(after.findings));
+    const plan = planMigration(vendors, after.document, stored);
+    expect(plan.primitives).toEqual([]);
+    expect(plan.counts.broughtBack).toBe(0);
+  });
+
+  it("brings them back, in the same op and said, where the kind is now never archived — and only that kind's", () => {
+    const off = editDocument(vendors, [{ op: "set-archives", kind: "category", archives: false }]);
+    if (!off.ok) throw new Error(JSON.stringify(off.findings));
+    const plan = planMigration(vendors, off.document, stored);
+    expect(plan.counts.broughtBack).toBe(2);
+    expect(plan.words).toEqual(["2 archived category records brought back, since category is now kept or removed, never archived."]);
+    expect(plan.primitives.map((primitive) => (primitive.op === "patch-node" ? primitive.id : primitive.op))).toEqual(["category:flowers", "category:cake"]);
+    // Nothing is lost by it: the change is not one a person must acknowledge.
+    expect(plan.counts.cleared + plan.counts.removedNodes).toBe(0);
   });
 });
