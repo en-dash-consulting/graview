@@ -6,7 +6,8 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { PagesApp } from "../../src/index.js";
+import { createPageRegistry, PagesApp } from "../../src/index.js";
+import type { ReactNode } from "react";
 
 /**
  * WHAT HAS HAPPENED IS ON THE PAGES BAR (FR-152). The scene keeps every
@@ -103,5 +104,20 @@ describe("what has happened, on the routed face's bar", () => {
     await settled(() => expect(document.querySelector('[data-testid="activity"]')).toBeNull());
     // On the record's own page, whose heading is its name.
     await settled(() => expect([...document.querySelectorAll("main h1, main h2")].map((heading) => heading.textContent).join(" | ")).toMatch(/Pay the venue/));
+  });
+
+  it("is drawn once on the bar when a design under the bar replaces the shell", async () => {
+    /* The derived bar drew Activity in its tools and handed its own slot to the design's face controls, which drew it there too: two "Activity" buttons on todo's routed face. */
+    const store = new Store({ schema, mutations: [rename], invariants: [], snapshot: { nodes: [{ id: "i1", kind: "item", label: "Pay the deposit" }] as never, edges: [] } });
+    const Shell = ({ context, children }: { context: { barAbove?: boolean }; children: ReactNode }) => (context.barAbove ? <main>{children}</main> : <div>{children}</div>);
+    const registry = createPageRegistry(schema).surface("shell", Shell as never);
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<PagesApp context={{ store, principal: nina, views: createViews(schema) }} registry={registry as never} initialPath="/items" />));
+    unmount = () => act(async () => root.unmount());
+    await act(async () => void store.apply({ name: "rename-item", args: { id: "i1", label: "Pay the venue" } }, { author: nina }));
+    await settled(() => expect(host.querySelectorAll('[data-graview-app-bar] [data-testid="activity-button"]').length).toBeGreaterThan(0));
+    await settled(() => expect(host.querySelectorAll('[data-testid="activity-button"]')).toHaveLength(1));
   });
 });
