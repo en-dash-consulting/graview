@@ -392,6 +392,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...said("fieldRoles"),
       ...said("people"),
       archives: spec.archives,
+      ...(spec.tidying ? { tidying: spec.tidying } : {}),
       // As the document says them, each the compile read as a length of time saying `as: "duration"` (`durations.ts`).
       ...(computed.length > 0 ? { computed: Object.fromEntries(computed.map(([n, c]) => [n, durations?.includes(n) ? { ...c, as: "duration" } : spec.computed![n]])) } : {}),
       ...(named || spec.glance || spec.page

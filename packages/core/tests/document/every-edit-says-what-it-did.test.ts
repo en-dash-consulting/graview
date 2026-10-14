@@ -41,6 +41,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "set-computed": { op: "set-computed", kind: "category", name: "spent", expr: "sum(in('fills'), quote)", label: "Quoted" },
   "set-people": { op: "set-people", kind: "vendor", people: true },
   "set-archives": { op: "set-archives", kind: "category", archives: false },
+  "set-tidying": { op: "set-tidying", kind: "vendor", tidying: "no-links" },
   "add-grant": { op: "add-grant", roles: ["viewer"], mutations: ["book"], describe: "A viewer books what the planners chose." },
   "remove-grant": { op: "remove-grant", roles: ["viewer"], mutations: ["book"] },
   "add-sight": { op: "add-sight", roles: "*", kinds: ["vendor", "category"] },

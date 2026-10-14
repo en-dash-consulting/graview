@@ -108,6 +108,8 @@ export const EdgeSpec = z.strictObject({
   appendOnly: z.optional(z.boolean()),
   /** The name this relation had in the previous version: its links move. */
   renamedFrom: z.optional(z.string()),
+  /** `"never"`: no automated author makes or breaks this relation on its own (`@graview/core/tidying`). */
+  tidying: z.optional(z.literal("never")),
 });
 export type EdgeSpec = z.infer<typeof EdgeSpec>;
 
@@ -159,6 +161,8 @@ export const KindSpec = z.strictObject({
   people: z.optional(z.boolean()),
   /** `false`: its records are kept or removed, never archived — the kind is given no `archive-`, `unarchive-` or `merge-<kind>` (FR-173). */
   archives: z.optional(z.literal(false)),
+  /** What the app's own actor may do to its records on its own: `"never"` nothing, `"no-links"` all but link and unlink them (`@graview/core/tidying`). */
+  tidying: z.optional(z.enum(["never", "no-links"])),
 });
 export type KindSpec = z.infer<typeof KindSpec>;
 

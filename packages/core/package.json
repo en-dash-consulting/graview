@@ -53,6 +53,10 @@
       "types": "./dist/provenance.d.ts",
       "default": "./dist/provenance.js"
     },
+    "./tidying": {
+      "types": "./dist/tidying.d.ts",
+      "default": "./dist/tidying.js"
+    },
     "./markdown": {
       "types": "./dist/markdown.d.ts",
       "default": "./dist/markdown.js"

@@ -1,4 +1,4 @@
-import { ARCHIVED } from "../graph/archived.js";
+import { ARCHIVED, LEFT_ALONE } from "../graph/archived.js";
 import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
@@ -106,6 +106,8 @@ export function nodeJsonSchema(definition: AnyNodeDefinition): JsonSchema {
   // A stored record may be archived (FR-173): the framework's mark, never a declared field.
   const properties = js["properties"] as Record<string, JsonSchema> | undefined;
   if (properties) properties[ARCHIVED] = { type: "boolean", const: true, description: "Set when the record is archived: kept with its links and history, out of lists, counts and rules." };
+  // And a person may have said to leave it alone: no automated author changes it.
+  if (properties) properties[LEFT_ALONE] = { type: "boolean", const: true, description: "Set when a person said to leave the record alone: no automated author changes it." };
   return js;
 }
 

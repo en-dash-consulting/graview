@@ -615,6 +615,9 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
           return (call: Parameters<Store<S>["wouldChange"]>[0]) => target.wouldChange(call, principal);
         case "preview":
           return (call: Parameters<Store<S>["preview"]>[0], context?: Parameters<Store<S>["preview"]>[1], options?: Parameters<Store<S>["preview"]>[2]) => target.preview(call, context, { author: principal, ...options });
+        // The suggestions this seat may see: one naming a record kept from it is withheld, and not among them.
+        case "suggestions":
+          return (other?: Principal) => target.suggestions(other ?? principal);
         case "seenBy":
           return (other: Principal) => seenBy(target, other);
         case "seenFor":

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 19325,
+  "gzipped": 6000,
+  "note": "Raised when the app's own actor came to suggest what it is not sure of and to be held to what people said: the store's suggestions, declines and refusals (`ops/tidying.ts`), the Suggested tray on both faces' bars (`suggested.tsx`, fetched only while something waits), Activity's digest row with each change's lineage and undo (`ops/digest.ts`), \"Leave this one alone\" on the record's page and the scene's card, the agent's `list_suggestions`, `accept_suggestion` and `decline_suggestion`, and `set-tidying` in `editDocument` with its sentence and the checker's `tidying-redundant`. 19_325 / 6_000 more than main (1_987_172 / 651_212), while a hosted page's first load is 4_808 / 1_571 bytes more. Measured at 2_006_497 / 657_212."
+}

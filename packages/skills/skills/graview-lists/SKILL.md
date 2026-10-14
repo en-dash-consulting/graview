@@ -53,13 +53,31 @@ already set a record aside.
    that should never be archived says `archives: false` in `defineNode` (a
    document's `"archives": false`; the edit `set-archives`).
 
-4. **Print a place when a fixed link wants one.** `renderPlace(store, app,
+4. **Let the app's own actor tidy, and say what it may not.** An actor
+   that links and prunes on its own is an author that says
+   `automated: true` (`kind: "system"` or `"agent"`). What it is sure of it
+   applies with `lineage: { basis, confidence }`; what it is not it
+   suggests: `store.suggest(calls, { author, lineage })` keeps the calls in
+   the log, changes nothing, and they wait in the Suggested tray beside
+   Activity until a person accepts (made as them) or declines them;
+   `store.declined(calls)` says so, and the actor is refused the same change
+   again. Its run of changes is one Activity row, "Tidied 6 things today".
+   A person says "Leave this one alone" on a record (`leave-alone-<kind>`,
+   cleared by `allow-tidying-<kind>`; `isLeftAlone(store, id)`), and the
+   declaration says a kind is never tidied or never linked —
+   `tidying: "never" | "no-links"` on `defineNode`, `tidying: "never"` on a
+   relation; in a document the edit
+   `{"op": "set-tidying", "kind": "vendor", "tidying": "no-links"}` (with
+   `"relation"` for one relation, `"allowed"` to undo it). The store refuses
+   the actor each in a sentence.
+
+5. **Print a place when a fixed link wants one.** `renderPlace(store, app,
    "/requests", { viewer, locale })` from `@graview/pages/static` answers
    `{ html, css, title, found }`: one self-contained page, no script, in the
    app's look, under the viewer's sight, the same words the routed face
    says. It imports no React, so a Worker renders it on each change.
 
-5. **Know what a kind opens to before you draw it a picture.** Gone into
+6. **Know what a kind opens to before you draw it a picture.** Gone into
    with no lens of its own (`#focus=aggregate:room`), a kind opens to its
    stop: its plural, count and description; its creating act first ("Add a
    room"), asked in place; how many are overdue or due this week on its due
@@ -72,7 +90,7 @@ already set a record aside.
    (`add-lens`). So give a kind a lifecycle or a `status`, a `glance`, and
    a creating act with a `title` before you write it a view.
 
-6. **Let several be done at once — it is already there.** A kind's list, a
+7. **Let several be done at once — it is already there.** A kind's list, a
    kind's stop and a board choose records: a box at each row's start on a
    desk, Shift for a range, Cmd/Ctrl-A, Escape; the boxes one Tab stop, the
    arrows between them, Space to choose; a long press on a phone.
@@ -86,7 +104,7 @@ already set a record aside.
    `act_on_several` (`{ act, records, args }`). So declare acts on a
    `subject` with as few other arguments as they need.
 
-7. **Let a weekly practice be one record, not fifty.** A date that repeats
+8. **Let a weekly practice be one record, not fifty.** A date that repeats
    is `{ "type": "date", "repeats": true }` (or `"datetime"`) in a document,
    `startsAtRepeat: repeatField()` beside `startsAt` in TypeScript. The
    record keeps its first occurrence in the date and the rule beside it:
@@ -118,7 +136,9 @@ graview describe src/domain/app.ts --place requests --seed seed.json --width 390
 It says the list's headings, each record's card and what is filtered, as the
 page draws them. Archive one record by its act and ask again: it is gone
 from the list and the count, and `?archived=true` finds it. Undo the merge
-you tried; both records come back with their links.
+you tried; both records come back with their links. Have a test actor suggest a link and
+decline it from the tray: `store.suggest` of the same calls then refuses,
+and a record left alone refuses the actor's change by name.
 
 ## What the check cannot see
 

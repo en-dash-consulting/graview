@@ -24,6 +24,12 @@ export interface Lineage {
   readonly basis: string;
   readonly confidence?: number;
   readonly model?: string;
+  /**
+   * THE SUGGESTION THIS CHANGE ACCEPTED: the id of the op that proposed it
+   * (`store.acceptSuggestion`), so the log says which suggestion became
+   * which change and the suggestion is no longer waiting.
+   */
+  readonly suggestion?: string;
 }
 
 /** The longest basis an op keeps: a reason, not a transcript. */
@@ -39,16 +45,17 @@ export const LINEAGE_MODEL_LIMIT = 120;
  */
 export function lineageOf(value: unknown): Lineage | undefined {
   if (value === undefined) return undefined;
-  const { basis, confidence, model } = (value ?? {}) as Record<string, unknown>;
+  const { basis, confidence, model, suggestion } = (value ?? {}) as Record<string, unknown>;
   const said = typeof basis === "string" ? basis.trim() : "";
   const named = typeof model === "string" ? model.trim() : "";
   if (
     !said ||
     said.length > LINEAGE_BASIS_LIMIT ||
     (confidence !== undefined && !(typeof confidence === "number" && confidence >= 0 && confidence <= 1)) ||
-    (model !== undefined && !(named && named.length <= LINEAGE_MODEL_LIMIT))
+    (model !== undefined && !(named && named.length <= LINEAGE_MODEL_LIMIT)) ||
+    (suggestion !== undefined && !(typeof suggestion === "string" && suggestion.length > 0 && suggestion.length <= LINEAGE_MODEL_LIMIT))
   ) {
-    throw new GraphError("A lineage is { basis: 1–500 characters, confidence?: 0–1, model?: 1–120 characters }");
+    throw new GraphError("A lineage is { basis: 1–500 characters, confidence?: 0–1, model?: 1–120 characters, suggestion?: an op id }");
   }
-  return { basis: said, ...(confidence !== undefined ? { confidence } : {}), ...(named ? { model: named } : {}) } as Lineage;
+  return { basis: said, ...(confidence !== undefined ? { confidence } : {}), ...(named ? { model: named } : {}), ...(typeof suggestion === "string" ? { suggestion } : {}) } as Lineage;
 }

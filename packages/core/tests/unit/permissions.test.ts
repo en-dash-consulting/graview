@@ -169,8 +169,12 @@ describe("who may do what", () => {
     expect(store().permittedMutations(child).map((m) => m.name)).toEqual(["rename"]);
     // A parent's `*` reaches the derived removes; a child's named grant does not.
     expect(store().permittedMutations(parent).map((m) => m.name).sort()).toEqual([
+      "allow-tidying-duty",
+      "allow-tidying-person",
       "archive-duty",
       "archive-person",
+      "leave-alone-duty",
+      "leave-alone-person",
       "merge-duty",
       "merge-person",
       "reassign",

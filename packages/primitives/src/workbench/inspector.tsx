@@ -1,4 +1,4 @@
-import { InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { InvalidArguments, isLeftAlone, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { failureWords } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
@@ -691,6 +691,13 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
             ))}
           </div>
         </div>
+      ) : null}
+
+      {/* A record a person said to leave alone says so where its acts are: tidying passes it by, and "Allow tidying again" is among them. */}
+      {!edge && selection.length === 1 && isLeftAlone(store, selection[0]!) ? (
+        <p data-testid="left-alone" style={{ margin: 0, fontSize: "0.8125rem", lineHeight: 1.45, color: "var(--graview-ink-muted)" }}>
+          Left alone: nothing automated changes it.
+        </p>
       ) : null}
 
       {/* What is true about it. The pane has the room to say the whole

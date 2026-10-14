@@ -1,6 +1,9 @@
 import type { z } from "zod";
 import type { Figure } from "./figures.js";
 
+/** What an automated author may do to a kind's records on its own: nothing (`never`), or everything but link and unlink them (`no-links`). */
+export type KindTidying = "never" | "no-links";
+
 /** How many edges of a kind may leave one node. */
 export type EdgeCardinality = "one" | "many";
 
@@ -38,6 +41,13 @@ export interface EdgeDeclaration<TargetKind extends string = string> {
    * a reader of the schema learns the edge is append-only on purpose.
    */
   readonly appendOnly?: boolean;
+  /**
+   * `"never"`: NO AUTOMATED AUTHOR MAKES OR BREAKS THIS RELATION — the app's
+   * own actor, tidying, may suggest such a link and a person may make it,
+   * but nothing automated applies one (`@graview/core/tidying`). Absent,
+   * the relation is tidied like any other.
+   */
+  readonly tidying?: "never";
 }
 
 export type EdgeMap = Readonly<Record<string, EdgeDeclaration>>;
@@ -198,6 +208,14 @@ export interface NodeDefinitionSpec<
    * `remove-<kind>` is still given. Absent, the kind archives.
    */
   readonly archives?: false;
+  /**
+   * WHAT THE APP'S OWN ACTOR MAY DO HERE, ON ITS OWN (`@graview/core/tidying`):
+   * `"never"`, no automated author changes a record of this kind or its
+   * links — "never tidy this kind"; `"no-links"`, it may change their fields
+   * but never link or unlink them — "never auto-link Vendors". A person
+   * still may, and an actor may still suggest. Absent, the kind is tidied.
+   */
+  readonly tidying?: KindTidying;
   /**
    * VALUES WORKED OUT, NOT WRITTEN (FR-83): a name and an expression of the
    * rule language (`@graview/core/document`), read like a stored field by

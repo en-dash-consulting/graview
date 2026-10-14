@@ -1,7 +1,7 @@
-import { derivedActOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
+import { derivedActOf, givenWhenNeverArchived, givenWhenNeverTidied } from "../mutations/derived-names.js";
 import { withArticle } from "../schema/define-node.js";
 import { farEnd } from "./far-end.js";
-import { error, type Finding } from "./findings.js";
+import { error, warning, type Finding } from "./findings.js";
 import { outsideRange } from "./range.js";
 import type { ActSpec, GraviewDocument } from "./schema.js";
 
@@ -104,7 +104,31 @@ function meFindings(name: string, act: ActSpec, document: GraviewDocument): Find
 
 /** Every range, other-end and `$me` finding of a document, in its order: fields, then acts. */
 export function actFindings(document: GraviewDocument): Finding[] {
-  return [...rangeFindings(document), ...neverArchivedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...meFindings(name, act, document)])];
+  return [...rangeFindings(document), ...neverArchivedFindings(document), ...neverTidiedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...meFindings(name, act, document)])];
+}
+
+/**
+ * WHAT A DOCUMENT SAYS OF TIDYING, JUDGED (`@graview/core/tidying`): a grant
+ * naming leave-alone-<kind> or allow-tidying-<kind> of a kind never tidied,
+ * an act the app does not have; and a relation said never tidied on a kind
+ * that already is never tidied or never linked, which says nothing more.
+ */
+function neverTidiedFindings(document: GraviewDocument): Finding[] {
+  const grants = (document.policy?.grants ?? []).flatMap((grant, i) =>
+    asArray(grant.mutations === "*" ? [] : grant.mutations).flatMap((name) => {
+      const derived = derivedActOf(name);
+      if (!derived || document.acts?.[name] || document.kinds[derived.kind]?.tidying !== "never" || givenWhenNeverTidied(derived.act)) return [];
+      return [error("grant-act", `policy.grants.${i}.mutations`, `"${name}" is not an act this document has: ${derived.kind} says "tidying": "never", so no record of it is left alone one by one — all of them are`, `remove "${name}" from the grant`)];
+    }),
+  );
+  const relations = Object.entries(document.kinds).flatMap(([kind, spec]) =>
+    spec.tidying === undefined
+      ? []
+      : Object.entries(spec.edges ?? {}).flatMap(([relation, edge]) =>
+          edge.tidying === "never" ? [warning("tidying-redundant", `kinds.${kind}.edges.${relation}.tidying`, `${kind}'s "${relation}" says "tidying": "never", which ${kind}'s own "tidying": "${spec.tidying}" already says`, `drop it, or say the kind's tidying on the relations alone`)] : [],
+        ),
+  );
+  return [...grants, ...relations];
 }
 
 /** A grant naming the archive, unarchive or merge of a kind that says `"archives": false` (FR-173): an act the app does not have. */

@@ -466,6 +466,7 @@ export default defineConfig({
       "@graview/core/seat": framework("core/src/seat.ts"),
       "@graview/core/field-sight": framework("core/src/field-sight.ts"),
       "@graview/core/provenance": framework("core/src/provenance.ts"),
+      "@graview/core/tidying": framework("core/src/tidying.ts"),
       "@graview/core/forms": framework("core/src/forms.ts"),
       "@graview/core/lines": framework("core/src/lines.ts"),
       "@graview/core/json-schema": framework("core/src/json-schema.ts"),

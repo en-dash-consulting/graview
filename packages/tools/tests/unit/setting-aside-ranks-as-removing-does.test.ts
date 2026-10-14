@@ -52,7 +52,7 @@ const store = () =>
 describe("archive and merge in the offers", () => {
   it("come after the record's own acts and its edit, just ahead of remove", () => {
     const offered = deriveAffordances(store(), ["a"], { focus: "a" }).affordances.map((affordance) => affordance.mutation);
-    expect(offered.slice(-3)).toEqual(["archive-list", "merge-list", "remove-list"]);
+    expect(offered.slice(-4)).toEqual(["archive-list", "leave-alone-list", "merge-list", "remove-list"]);
     expect(offered.indexOf("close-list")).toBeLessThan(offered.indexOf("archive-list"));
     expect(offered.indexOf("rename-list")).toBeLessThan(offered.indexOf("archive-list"));
   });

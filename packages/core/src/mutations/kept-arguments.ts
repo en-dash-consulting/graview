@@ -1,4 +1,4 @@
-import { ARCHIVED } from "../graph/archived.js";
+import { MARKS } from "../graph/archived.js";
 import { actingAs, grantsTo, isSystem } from "../permissions/policy.js";
 import type { Policy, Principal } from "../permissions/types.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -60,7 +60,7 @@ export function argumentsNeverShown<S extends AnySchema>(
   const shown = (kind: string, field: string): boolean => {
     const granted = sights.filter((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting));
     if (!granted.some(partialSight)) return true;
-    return field === ARCHIVED || granted.some((sight) => !partialSight(sight) || ((sight.fields === undefined || sight.fields.includes(field)) && !sight.hide?.includes(field)));
+    return MARKS.has(field) || granted.some((sight) => !partialSight(sight) || ((sight.fields === undefined || sight.fields.includes(field)) && !sight.hide?.includes(field)));
   };
   const shape = Object.keys((mutation.input as { shape?: Record<string, unknown> }).shape ?? {});
   const written = new Map<string, boolean>();

@@ -17,6 +17,7 @@ import * as search from "../../src/search.js";
 import * as seat from "../../src/seat.js";
 import * as words from "../../src/words.js";
 import * as markdown from "../../src/markdown.js";
+import * as tidying from "../../src/tidying.js";
 
 /*
  * THE MAIN ENTRY CARRIES ONLY WHAT A PAGE DRAWS WITH. A hosted page imports
@@ -48,6 +49,8 @@ const OFF_THE_PAGE = {
   // FR-180: Markdown read into blocks, fetched with the first a page draws.
   "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "beginning", "placesFrom", "placesOf"] },
+  // What reads the app's own actor back: the suggestions and declines in a log, what the declaration lets it tidy, and Activity's digest.
+  "@graview/core/tidying": { from: tidying, names: ["declinedIn", "declinesIn", "digestWords", "foldDigests", "isSuggestionBatch", "LEFT_ALONE", "suggestionKey", "suggestionsIn", "tidyingOf", "tidyingRefusal"] },
 } as const;
 
 describe("the entries a hosted page imports up front", () => {
