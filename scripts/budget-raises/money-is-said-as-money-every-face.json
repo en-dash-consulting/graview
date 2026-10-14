@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 10605,
-  "gzipped": 3898,
-  "note": "Raised when a number field marked money, a percent or a unit came to be said as declared on every face and asked for as it is said: the amount's box, its symbol and the reading of \"$1,250.50\" (`amount-input.ts`, fetched with `@graview/core/words` as a form is drawn), the pages form's amount control, a record's edit in place and the strip's prompt, editDocument's `set-format` and its words (`format-words.ts`, `format-rules.ts`), the checker's `money-currency` and `field-format` for a number's format, and the tool schema's and describeApp's sentence for an amount (`amount-words.ts`). 10_605 / 3_898 more than batch/0-1-29-fixes at 8600ae04 (1_944_718 / 636_490). Measured at 1_955_323 / 640_388."
+  "minified": 10726,
+  "gzipped": 3888,
+  "note": "Raised when a number field marked money, a percent or a unit came to be said as declared on every face and asked for as it is said: the amount's box, its symbol and the reading of \"$1,250.50\" (`amount-input.ts`, fetched with `@graview/core/words` as a form is drawn), the pages form's amount control, a record's edit in place and the strip's prompt, editDocument's `set-format` and its words (`format-words.ts`, `format-rules.ts`), the checker's `money-currency` and `field-format` for a number's format, and the tool schema's and describeApp's sentence for an amount (`amount-words.ts`). 10_726 / 3_888 more than batch/0-1-29-fixes at 060182afb (1_961_947 / 642_048). Measured at 1_972_673 / 645_936."
 }
