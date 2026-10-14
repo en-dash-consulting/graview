@@ -520,6 +520,135 @@ try {
   }
 
   /*
+   * TAB NEVER LANDS ON A DISTRICT THE PANEL COVERS. The panel floats over
+   * the scene, and the city's fit keeps every district in the part the
+   * reader sees — until the reader comes closer: zoomed in, the city runs
+   * under the panel, and Tab walked into districts nobody could see, the
+   * focus ring drawn under the panel. A district wholly under it is passed
+   * over; one partly under it is brought into the part that is seen.
+   */
+  report.coveredTab = {};
+  for (const [width, height] of [[1440, 900], [390, 844]]) {
+    const covering = await browser.newPage({ viewport: { width, height } });
+    covering.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await covering.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Atask&in.view=the-week`, { waitUntil: "load" });
+    await covering.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await covering.waitForSelector("[data-graview-map-panel]", { timeout: 15_000 }).catch(() => {});
+    await covering.waitForTimeout(1200);
+    // Closer, about the middle of the part that is seen, so the city runs under the panel.
+    const seen = await covering.evaluate(() => {
+      const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+      const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
+      if (!ground || !panel) return null;
+      const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
+      return sheet ? { x: ground.left + ground.width / 2, y: ground.top + (panel.top - ground.top) / 2 } : { x: ground.left + (panel.left - ground.left) / 2, y: ground.top + ground.height / 2 };
+    });
+    if (seen) {
+      await covering.mouse.move(seen.x, seen.y);
+      await covering.keyboard.down("Control");
+      for (let i = 0; i < 6; i++) {
+        await covering.mouse.wheel(0, -120);
+        await covering.waitForTimeout(60);
+      }
+      await covering.keyboard.up("Control");
+    }
+    await covering.waitForSelector(".graview-ground[data-graview-settled]", { timeout: 5_000 }).catch(() => {});
+    await covering.waitForTimeout(700);
+    // Then the ground dragged toward the panel, far enough that the district nearest it goes under.
+    const toward = await covering.evaluate(() => {
+      const element = document.querySelector("[data-graview-map-panel]");
+      const panel = element?.getBoundingClientRect();
+      const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+      if (!panel || !ground) return null;
+      const sheet = element.getAttribute("data-graview-map-panel") === "sheet";
+      const seen = [...document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')]
+        .map((card) => card.getBoundingClientRect())
+        .filter((r) => r.right > ground.left && r.bottom > ground.top && (sheet ? r.bottom <= panel.top && r.top >= ground.top : r.right <= panel.left && r.left >= ground.left));
+      if (seen.length === 0) return null;
+      // The one nearest the panel, carried just past its edge.
+      const nearest = sheet ? seen.reduce((a, b) => (b.bottom > a.bottom ? b : a)) : seen.reduce((a, b) => (b.right > a.right ? b : a));
+      const from = sheet ? { x: ground.left + ground.width / 2, y: ground.top + 40 } : { x: ground.left + 40, y: ground.top + ground.height / 2 };
+      return { from, dx: sheet ? 0 : panel.left - nearest.left + 24, dy: sheet ? panel.top - nearest.top + 24 : 0 };
+    });
+    if (toward) {
+      await covering.mouse.move(toward.from.x, toward.from.y);
+      await covering.mouse.down();
+      for (let i = 1; i <= 20; i++) {
+        await covering.mouse.move(toward.from.x + (toward.dx * i) / 20, toward.from.y + (toward.dy * i) / 20);
+        await covering.waitForTimeout(16);
+      }
+      await covering.mouse.up();
+      await covering.waitForTimeout(900);
+    }
+    /** Where each district's card stands against the panel: wholly under it, partly, or clear. */
+    const standing = () =>
+      covering.evaluate(() => {
+        const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
+        const out = {};
+        if (!panel) return out;
+        const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+        for (const card of document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')) {
+          // What of it is on the screen: a card past the picture's edge is not under the panel.
+          const box = card.getBoundingClientRect();
+          const r = { left: Math.max(box.left, ground.left), right: Math.min(box.right, ground.right), top: Math.max(box.top, ground.top), bottom: Math.min(box.bottom, ground.bottom) };
+          if (r.right - r.left < 1 || r.bottom - r.top < 1) {
+            out[card.getAttribute("data-graview-view")] = "off the screen";
+            continue;
+          }
+          // Under the panel: on its side of the picture (a desk) or below its top (a phone), the gap to the edge with it.
+          const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
+          const inside = sheet ? r.top >= panel.top - 1 : r.left >= panel.left - 1;
+          const meets = r.left < panel.right - 1 && panel.left < r.right - 1 && r.top < panel.bottom - 1 && panel.top < r.bottom - 1;
+          out[card.getAttribute("data-graview-view")] = inside ? "covered" : meets ? "partly" : "clear";
+        }
+        return out;
+      });
+    const before = await standing();
+    // From the bar's last control, forward through the scene until the keyboard reaches the panel.
+    await covering.evaluate(() => document.querySelector('[data-testid="profile-button"]')?.focus());
+    const landed = [];
+    for (let i = 0; i < 80; i++) {
+      await covering.keyboard.press("Tab");
+      await covering.waitForTimeout(120);
+      const at = await covering.evaluate(() => {
+        const active = document.activeElement;
+        if (!active) return { where: "nothing" };
+        if (active.closest("[data-graview-map-panel]")) return { where: "panel" };
+        const card = active.closest('.graview-ground [data-graview-view^="kind:"]');
+        if (!card) return { where: "elsewhere" };
+        const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
+        const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+        const box = card.getBoundingClientRect();
+        const r = { left: Math.max(box.left, ground.left), right: Math.min(box.right, ground.right), top: Math.max(box.top, ground.top), bottom: Math.min(box.bottom, ground.bottom) };
+        const onScreen = r.right - r.left >= 1 && r.bottom - r.top >= 1;
+        const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
+        const inside = onScreen && panel && (sheet ? r.top >= panel.top - 1 : r.left >= panel.left - 1);
+        return { where: "district", id: card.getAttribute("data-graview-view"), inside: Boolean(inside) };
+      });
+      if (at.where === "panel") break;
+      if (at.where !== "district") continue;
+      // A district partly under the panel is brought into the part that is seen once the camera has moved.
+      await covering.waitForTimeout(500);
+      const after = await covering.evaluate((id) => {
+        const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
+        const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+        const r = document.querySelector(`.graview-ground [data-graview-view="${CSS.escape(id)}"]`)?.getBoundingClientRect();
+        if (!panel || !ground || !r) return null;
+        const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
+        // The part that is seen: the picture less the panel's side (a desk) or its foot (a phone).
+        const seen = sheet ? { left: ground.left, right: ground.right, top: ground.top, bottom: panel.top } : { left: ground.left, right: panel.left, top: ground.top, bottom: ground.bottom };
+        // A card larger than the part that is seen shows its start there; any other stands wholly in it.
+        const across = r.width <= seen.right - seen.left ? r.left >= seen.left - 1 && r.right <= seen.right + 1 : r.left >= seen.left - 1 && r.left < seen.right;
+        const down = r.height <= seen.bottom - seen.top ? r.top >= seen.top - 1 && r.bottom <= seen.bottom + 1 : r.top >= seen.top - 1 && r.top < seen.bottom;
+        return across && down ? "clear" : "under";
+      }, at.id);
+      landed.push({ id: at.id, was: before[at.id] ?? null, coveredWhenLanded: at.inside, afterwards: after });
+    }
+    report.coveredTab[width] = { before, landed };
+    await covering.close();
+  }
+
+  /*
    * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
    *
    * Every stop here is an id in the address, and ordinary acts remove
@@ -1306,6 +1435,18 @@ report.verdict = {
         (width === "390" ? one.left >= 4 && one.kind === "sheet" : one.kind === "dock" && one.top >= (report.mapPanel[width].top ?? 0))
       );
     }),
+  // Closer in, with the city running under the panel, Tab passes over a district wholly under it and brings one partly under it into
+  // the part that is seen — at 1440 and 390. Some district is covered, and Tab still reaches districts, or the claim says nothing.
+  tabNeverLandsOnADistrictThePanelCovers: ["1440", "390"].every((width) => {
+    const one = report.coveredTab?.[width];
+    if (!one) return false;
+    const covered = Object.values(one.before ?? {}).filter((standing) => standing === "covered").length;
+    return (
+      covered > 0 &&
+      one.landed.length > 0 &&
+      one.landed.every((landing) => landing.coveredWhenLanded === false && landing.afterwards === "clear")
+    );
+  }),
   // A kind without one opens to its stop beside the map, in the panel a lens opens in, rather than in place over its neighbors;
   // chosen, it is listed there, every record in it.
   aDistrictWithoutOneIsListedBesideTheMap:
