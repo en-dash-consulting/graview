@@ -17,7 +17,8 @@ describe("a list page", () => {
   it("keeps each row to the page and lets a long value break", () => {
     const html = renderToStaticMarkup(<PagesApp context={{ store }} initialPath="/shoppers" />);
     // The row is the shared anatomy (ROWS_CSS): a track no wider than the list, and a value that breaks inside it.
-    expect(html).toMatch(/<li class="graview-row"><a[^>]*href="\/shoppers\/s"/);
+    // Its box, which chooses it among several (FR: acting on several), stands before its name.
+    expect(html).toMatch(/<li class="graview-row"[^>]*><span class="graview-choose-at"><input[^>]*><\/span><a[^>]*href="\/shoppers\/s"/);
     expect(html).toMatch(/\.graview-rows\{[^}]*grid-template-columns:minmax\(0,1fr\)/);
     expect(html).toMatch(/\.graview-row\{[^}]*overflow-wrap:anywhere/);
   });

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 23756,
+  "gzipped": 9109,
+  "note": "Raised when several records came to be chosen and acted on at once: the boxes on a list's rows, the kind's stop and a board (`choosing.ts`, drawn with the list), and the selection bar with the acts a selection shares and one batch over all of them (`several-bar.tsx` and `@graview/tools/several`, fetched with the first one chosen), and the seat's `act_on_several`. 23_756 / 9_109 more than batch/0-1-29-fixes (1_876_675 / 610_083). Measured at 1_900_431 / 619_192."
+}

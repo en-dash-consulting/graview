@@ -19,6 +19,9 @@ export type {
 
 // The providers, individually, so an app can replace or reorder them.
 export { editableFields } from "./edit.js";
+// Acting on several records at once: the acts a selection shares, run as one batch with one undo.
+export { actOnSeveral, actsForSeveral } from "./several.js";
+export type { ActOnSeveralOptions, SeveralAct, SeveralActs, SeveralCall, SeveralOptions, SeveralOutcome, SeveralRefusal, SeveralWithheld } from "./several.js";
 export type { EditableField } from "./edit.js";
 export { invariantProvider } from "./providers/invariant.js";
 export { schemaProvider } from "./providers/schema.js";
