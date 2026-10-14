@@ -154,12 +154,8 @@ export function createViews<S extends AnySchema>(schema: S): ReactViewRegistry<S
 export function layerViews<S extends AnySchema>(base: ReactViewRegistry<S>, over: ReactViewRegistry<S>): ReactViewRegistry<S> {
   if (over === base) return base;
   for (const registration of over.registrations()) {
-    const meta = {
-      ...(registration.title ? { title: registration.title } : {}),
-      ...(registration.across ? { across: registration.across } : {}),
-      ...(registration.beside ? { beside: true } : {}),
-    };
-    base.register(registration.kind as KindOfSchema<S>, { cardinality: registration.cardinality, fidelity: registration.fidelity }, registration.view, meta);
+    // A registration says what its meta said — its title, across, beside and over — so it is replayed as its own meta.
+    base.register(registration.kind as KindOfSchema<S>, registration, registration.view, registration);
   }
   // The arrangement travels with the places it arranges (FR-80).
   const arranged = over.arrangement?.();

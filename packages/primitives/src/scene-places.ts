@@ -1,4 +1,4 @@
-import { OVERVIEW_PATH, type Place } from "@graview/core";
+import { onePerPicture, OVERVIEW_PATH, placeLabel, samePicture, type Place } from "@graview/core";
 import { aggregateId, EMPTY_VIEW, overviewFragment, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useMemo } from "react";
@@ -43,28 +43,34 @@ const keyOf = (place: Place): string => `scene:${place.kind}:${place.as}`;
  * whole thing's is `/places/overview` alone, FR-154), what a harness finds
  * it by (`data-place-path`).
  */
-export function scenePlacesOf(input: { readonly places: readonly Place[]; readonly hidden: ReadonlySet<string>; readonly view: ViewState }): ScenePlaces {
+export function scenePlacesOf(input: {
+  readonly places: readonly Place[];
+  readonly hidden: ReadonlySet<string>;
+  readonly view: ViewState;
+  /** The schema, to say whose a picture is when a different one shares its name ("The timetable · talks"). */
+  readonly schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined };
+}): ScenePlaces {
   const { view } = input;
-  const seen = new Set<string>();
-  const pictures = input.places.filter((place) => {
-    if (input.hidden.has(place.kind) || seen.has(keyOf(place))) return false;
-    seen.add(keyOf(place));
-    return true;
-  });
+  const all = input.places.filter((place) => !input.hidden.has(place.kind));
+  // Each picture once: one over several kinds is one tab, under the first of them, and either district is in it.
+  const pictures = onePerPicture(all);
   const to = (key: string, from: ViewState): ViewState | null => {
     // The whole thing is the scene from above, as "Up" rises to it: no picture in view.
     if (key === WHOLE_KEY) return withWithin(withOverview(from, true), "view", null);
     const place = pictures.find((one) => keyOf(one) === key);
-    return place ? withPicture(from, place.kind, place.as) : null;
+    if (!place) return null;
+    // A picture over several kinds is drawn on the district in focus when it is one of them, else on the first.
+    return withPicture(from, place.over?.find((one) => from.focusId === aggregateId(one)) ?? place.kind, place.as);
   };
   const places: BarPlace[] = [
     { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${overviewFragment(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },
-    ...pictures.map((place) => ({ key: keyOf(place), label: place.title, path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind })),
+    ...pictures.map((place) => ({ key: keyOf(place), label: placeLabel(place, all, input.schema), path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind })),
   ];
   // Which picture a district draws when the view names none: the last registered for its kind, as the registry resolves it.
   const showing = view.within?.["view"];
-  const drawnBy = (place: Place): boolean => view.focusId === aggregateId(place.kind) && (showing === undefined ? pictures.filter((one) => one.kind === place.kind).at(-1) === place : showing === place.as);
-  const here = pictures.find((place) => drawnBy(place) && (showing !== undefined || !view.overview));
+  const drawnBy = (place: Place): boolean => view.focusId === aggregateId(place.kind) && (showing === undefined ? all.filter((one) => one.kind === place.kind).at(-1) === place : showing === place.as);
+  const on = all.find((place) => drawnBy(place) && (showing !== undefined || !view.overview));
+  const here = on ? pictures.find((place) => samePicture(place, on)) : undefined;
   return { places, current: here ? keyOf(here) : WHOLE_KEY, to };
 }
 
@@ -73,10 +79,10 @@ export function scenePlacesOf(input: { readonly places: readonly Place[]; readon
  * holds: a press goes there, a step Back undoes it (the view is the address).
  */
 export function useScenePlaces(): { readonly places: readonly BarPlace[]; readonly current: string; readonly reach: BarGo } {
-  const { views, hiddenKinds } = useGraview();
+  const { store, views, hiddenKinds } = useGraview();
   const { view, go } = useNavigation();
   const registered = views.places();
-  const scene = useMemo(() => scenePlacesOf({ places: registered, hidden: hiddenKinds, view }), [registered, hiddenKinds, view]);
+  const scene = useMemo(() => scenePlacesOf({ places: registered, hidden: hiddenKinds, view, schema: store.schema }), [registered, hiddenKinds, view, store.schema]);
   const reach = useMemo<BarGo>(
     () => ({
       go: (place) => {

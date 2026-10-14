@@ -1,4 +1,4 @@
-import { type AnySchema } from "@graview/core";
+import { onePerPicture, type AnySchema } from "@graview/core";
 import { failureWords } from "@graview/core/words";
 import { withFocus, withOverview, withSelection } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance, useGraview, useSeatTalkState, useViolations, type SeatTalk } from "@graview/react";
@@ -184,7 +184,8 @@ function SeatHere({ here }: { readonly here?: string }) {
     subject: { id: subject.id, name: subject.name },
     violations,
     place: place ? { title: place.title, kind: place.kind as string } : null,
-    places: views.places().map((one) => ({ title: one.title, kind: one.kind as string, picture: true })),
+    // Each picture once, however many kinds it is over.
+    places: onePerPicture(views.places()).map((one) => ({ title: one.title, kind: one.kind as string, picture: true })),
     ...(today ? { today } : {}),
   };
   const line = whereLine(input);

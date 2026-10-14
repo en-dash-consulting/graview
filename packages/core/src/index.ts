@@ -318,7 +318,7 @@ export { dayOf, tickEachDay, untilTheDayTurns } from "./clock.js";
 export type { Tick } from "./clock.js";
 
 // Views — the cardinality x fidelity matrix.
-export { createViewRegistry, FIDELITIES, kindPath, placePath, placeSlug, recordPath, sharesItsName } from "./views/types.js";
+export { createViewRegistry, FIDELITIES, kindPath, onePerPicture, placeLabel, placePath, placeSlug, recordPath, samePicture, sharesItsName } from "./views/types.js";
 // Declared lenses that draw (FR-79), the arrangement (FR-80) and every place an app has.
 export {
   SHIPPED_LENSES,

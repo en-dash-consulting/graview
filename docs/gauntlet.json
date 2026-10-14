@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T21:40:30.599Z",
+  "at": "2026-10-14T00:49:28.471Z",
   "engine": "chromium",
   "states": [
     {
@@ -69,6 +69,23 @@
       "scheme": "light",
       "seat": "u-02d8c4",
       "reached": true
+    },
+    {
+      "state": "the scene's bar names each picture once",
+      "face": "scene",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "u-4f1c9a",
+      "reached": true,
+      "detail": {
+        "names": [
+          "The whole thing",
+          "What the talks are about",
+          "The timetable",
+          "A dozen workshops"
+        ],
+        "twice": []
+      }
     },
     {
       "state": "the talk district listed beside the map",
@@ -308,6 +325,31 @@
       "reached": true
     },
     {
+      "state": "the pages' bar names each place once",
+      "face": "pages",
+      "width": 1440,
+      "scheme": "light",
+      "seat": "u-4f1c9a",
+      "reached": true,
+      "detail": {
+        "names": [
+          "Home",
+          "Talks",
+          "Speakers",
+          "Sessions",
+          "Workshops",
+          "Rooms",
+          "Topics",
+          "Staff",
+          "What the talks are about",
+          "The timetable",
+          "A dozen workshops",
+          "Connections"
+        ],
+        "twice": []
+      }
+    },
+    {
       "state": "the talks, every one of two thousand",
       "face": "pages",
       "width": 1440,
@@ -526,6 +568,23 @@
       "reached": true,
       "detail": {
         "withheld": 0
+      }
+    },
+    {
+      "state": "the scene's bar names each picture once",
+      "face": "scene",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-02d8c4",
+      "reached": true,
+      "detail": {
+        "names": [
+          "The whole thing",
+          "What the talks are about",
+          "The timetable",
+          "A dozen workshops"
+        ],
+        "twice": []
       }
     },
     {
@@ -758,6 +817,31 @@
       }
     },
     {
+      "state": "the pages' bar names each place once",
+      "face": "pages",
+      "width": 390,
+      "scheme": "dark",
+      "seat": "u-02d8c4",
+      "reached": true,
+      "detail": {
+        "names": [
+          "Home",
+          "Talks",
+          "Speakers",
+          "Sessions",
+          "Workshops",
+          "Rooms",
+          "Topics",
+          "Staff",
+          "What the talks are about",
+          "The timetable",
+          "A dozen workshops",
+          "Connections"
+        ],
+        "twice": []
+      }
+    },
+    {
       "state": "the talks, every one of two thousand",
       "face": "pages",
       "width": 390,
@@ -984,6 +1068,7 @@
     "everyDistrictIsListedBesideTheMap": true,
     "everyAwkwardRecordIsReached": true,
     "theCalendarOverTwoKindsOpens": true,
+    "noTwoPlacesInTheBarShareAName": true,
     "whatASeatMayNotSeeIsKeptFromIt": true,
     "findingReachesAwkwardNames": true,
     "asksAndFormsOpenAndClose": true,
@@ -992,6 +1077,6 @@
     "noPageErrors": true
   },
   "missed": [],
-  "reached": "99 of 99 states",
+  "reached": "103 of 103 states",
   "passed": true
 }

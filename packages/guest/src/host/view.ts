@@ -508,7 +508,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
         onStyle: (css) => draw(["style", css]),
-        places: () => (options.places?.() ?? []).map((place) => place.as),
+        places: () => [...new Set((options.places?.() ?? []).map((place) => place.as))],
         ...(options.limits ? { limits: options.limits } : {}),
         limiter,
       });

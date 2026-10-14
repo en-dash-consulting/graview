@@ -10,7 +10,7 @@ import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { hidesFrom, seesId } from "./seen.js";
 import type { Store } from "./store.js";
-import { kindPath, placePath, sharesItsName, type Place } from "./views/types.js";
+import { kindPath, onePerPicture, placePath, sharesItsName, type Place } from "./views/types.js";
 import { capitalize, listed } from "./capital.js";
 
 /**
@@ -589,8 +589,9 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     }
 
     const places = options.places ?? [];
-    for (const place of places) {
-      if (!kinds.includes(place.kind) || (place.across && kept.has(place.across))) continue;
+    // A picture over several kinds is found once, under the first of them this seat searches.
+    for (const place of onePerPicture(places.filter((one) => kinds.includes(one.kind)))) {
+      if (place.across && kept.has(place.across)) continue;
       const strength = strengthOf(place.title, words);
       if (!strength) continue;
       const why: Why = { field: "title", reading: "Title", fragment: place.title, strength };

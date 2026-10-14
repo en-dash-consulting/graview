@@ -34,6 +34,9 @@ function drawn(element: ReactElement) {
   return { root, at: host };
 }
 
+/** A schema that names no plural: no picture here shares its name, so none is said by whose. */
+const NO_SCHEMA = { tryDefinition: () => undefined };
+
 /* Cloud's workshop: its home, three lists, two pictures and how the kinds connect. */
 const workshop: readonly BarPlace[] = [
   { key: "home", label: "Home", path: "/", group: "home" },
@@ -110,7 +113,7 @@ describe("the scene's places (FR-144)", () => {
   ];
 
   it("are the whole thing, then each picture the seat may see, grouped as on Pages, each at the scene's address for it", () => {
-    const scene = scenePlacesOf({ places: registered, hidden: new Set(["secret"]), view: EMPTY_VIEW });
+    const scene = scenePlacesOf({ places: registered, hidden: new Set(["secret"]), view: EMPTY_VIEW, schema: NO_SCHEMA });
     expect(scene.places.map((place) => [place.label, place.group])).toEqual([
       ["The whole thing", "home"],
       ["What the workshop covers", "pictures"],
@@ -127,7 +130,7 @@ describe("the scene's places (FR-144)", () => {
   });
 
   it("go where every other way to a picture goes: its kind in focus, on the ground, its picture in view — and the whole thing from above, where Up goes", () => {
-    const scene = scenePlacesOf({ places: registered, hidden: new Set(), view: { ...EMPTY_VIEW, overview: true } });
+    const scene = scenePlacesOf({ places: registered, hidden: new Set(), view: { ...EMPTY_VIEW, overview: true }, schema: NO_SCHEMA });
     const todd = scene.to("scene:deliverable:email-to-todd", { ...EMPTY_VIEW, overview: true })!;
     expect(todd.focusId).toBe("aggregate:deliverable");
     expect(todd.overview).toBeFalsy();
@@ -136,17 +139,17 @@ describe("the scene's places (FR-144)", () => {
     const whole = scene.to(WHOLE_KEY, todd)!;
     expect(whole.overview).toBe(true);
     expect(whole.within?.["view"]).toBeUndefined();
-    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: whole }).current).toBe(WHOLE_KEY);
+    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: whole, schema: NO_SCHEMA }).current).toBe(WHOLE_KEY);
     expect(scene.to("place:nowhere", todd)).toBeNull();
   });
 
   it("say which picture is in view: the one the view names, or the one its district draws when it names none; else the whole thing", () => {
-    const named = scenePlacesOf({ places: registered, hidden: new Set(), view: fromUrl("#focus=aggregate:deliverable&in.view=email-to-todd") });
+    const named = scenePlacesOf({ places: registered, hidden: new Set(), view: fromUrl("#focus=aggregate:deliverable&in.view=email-to-todd"), schema: NO_SCHEMA });
     expect(named.current).toBe("scene:deliverable:email-to-todd");
     // Aloft with a picture on its billboard: that picture is what the scene shows.
-    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: fromUrl("#focus=aggregate:decision&overview=1&in.view=what-the-workshop-covers") }).current).toBe("scene:decision:what-the-workshop-covers");
-    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: fromUrl("#focus=aggregate:decision") }).current).toBe("scene:decision:what-the-workshop-covers");
-    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: fromUrl("#focus=d1") }).current).toBe(WHOLE_KEY);
+    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: fromUrl("#focus=aggregate:decision&overview=1&in.view=what-the-workshop-covers"), schema: NO_SCHEMA }).current).toBe("scene:decision:what-the-workshop-covers");
+    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: fromUrl("#focus=aggregate:decision"), schema: NO_SCHEMA }).current).toBe("scene:decision:what-the-workshop-covers");
+    expect(scenePlacesOf({ places: registered, hidden: new Set(), view: fromUrl("#focus=d1"), schema: NO_SCHEMA }).current).toBe(WHOLE_KEY);
   });
 });
 
@@ -158,7 +161,7 @@ const faces = (pages: boolean): BarFaces => ({
 describe("the scene's place control (FR-144)", () => {
   it("names what is in view after the switch, and opens the whole thing and every picture, grouped as on Pages", () => {
     const went: string[] = [];
-    const scene = scenePlacesOf({ places: [{ kind: "deliverable", title: "Email to Todd", as: "email-to-todd" }], hidden: new Set(), view: EMPTY_VIEW });
+    const scene = scenePlacesOf({ places: [{ kind: "deliverable", title: "Email to Todd", as: "email-to-todd" }], hidden: new Set(), view: EMPTY_VIEW, schema: NO_SCHEMA });
     const { root, at } = drawn(
       <AppBar brand={undefined} name="Farm Bureau POM Workshop" home={{ go: () => undefined, current: false }} faces={faces(false)} places={workshop} current={null} reach={{}} tools={null} find={false} scenePlaces={{ places: scene.places, current: scene.current, reach: { go: (place) => went.push(place.key) } }} />,
     );

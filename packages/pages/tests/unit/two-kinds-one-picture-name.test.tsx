@@ -51,3 +51,25 @@ describe("two kinds, one picture's name", () => {
     expect(html).not.toContain("Opening talk");
   });
 });
+
+/**
+ * ONE PICTURE OVER BOTH KINDS is a different thing from two pictures that
+ * share a name: one calendar bound to talks and workshops (`over`) is one
+ * card, at one address, and its page draws both kinds.
+ */
+const onePicture = (): PageContext<typeof schema> => ({
+  ...context(),
+  views: registerDefaultViews(schema, createViews(schema))
+    .register("talk", { cardinality: "many", fidelity: "full" }, Timetable, { title: "The timetable", over: ["talk", "workshop"] })
+    .register("workshop", { cardinality: "many", fidelity: "full" }, Timetable, { title: "The timetable", over: ["talk", "workshop"] }),
+});
+
+describe("one picture over two kinds", () => {
+  it("is one card, at one address, and its page draws both kinds", () => {
+    const entries = galleryOf(onePicture()).filter((entry) => entry.key.startsWith("place:"));
+    expect(entries.map((entry) => [entry.title, entry.to])).toEqual([["The timetable", "/places/the-timetable"]]);
+    const html = renderToStaticMarkup(<PagesApp context={onePicture()} initialPath="/places/the-timetable" />);
+    expect(html).toContain("Opening talk");
+    expect(html).toContain("Clay workshop");
+  });
+});

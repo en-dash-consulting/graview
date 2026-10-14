@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T12:26:20.171Z",
+  "at": "2026-10-14T00:45:10.270Z",
   "engine": "chromium",
   "steps": [
     {
@@ -105,7 +105,7 @@
       "label": "Up",
       "pressed": "false",
       "name": "Up",
-      "wingOpacity": 0.565384,
+      "wingOpacity": 0.565533,
       "registered": true
     },
     "groundAgain": {
@@ -147,8 +147,8 @@
     }
   },
   "districts": {
-    "withAPicture": "#focus=aggregate%3Atask&overview=1&zoom=1",
-    "withoutOne": "#focus=t-deposit&overview=1&sel=kind%3Areason",
+    "withAPicture": "#focus=aggregate%3Atask&overview=1&zoom=1|stop=",
+    "withoutOne": "#focus=aggregate%3Areason&overview=1|stop=reason",
     "listed": {
       "panel": "dock",
       "rows": 1,
@@ -156,8 +156,106 @@
       "floating": 0
     }
   },
+  "districtProblems": {
+    "asButton": [
+      {
+        "tag": "BUTTON",
+        "name": "2 problems in Tasks",
+        "said": "2",
+        "title": "2 problems in Tasks — \"Order boxes\" is done, but it waits for \"Find someone who moves pianos\" (and 1 more). Press to see them and how to fix them.",
+        "width": 36.125,
+        "height": 24
+      }
+    ],
+    "opened": {
+      "panel": true,
+      "rows": 2,
+      "said": "2",
+      "keyboard": "district-problems-heading"
+    },
+    "closed": {
+      "panel": false,
+      "onBody": false
+    },
+    "onTheGround": {
+      "up": false,
+      "name": "2 problems in Tasks",
+      "said": "2",
+      "members": "12",
+      "membersTitle": "12 tasks",
+      "markOnTheMembers": false,
+      "height": 24.411376953125,
+      "kind": "task",
+      "risen": {
+        "up": true,
+        "rows": 2
+      }
+    }
+  },
+  "districtName": {
+    "resting": {
+      "dx": 0,
+      "dy": 4,
+      "tileX": 401,
+      "tileY": 488,
+      "hash": "#overview=1",
+      "pinned": 0
+    },
+    "dragged": {
+      "dx": 0,
+      "dy": 4,
+      "tileX": 529,
+      "tileY": 552,
+      "hash": "#overview=1&pan=128%2C64",
+      "pinned": 0
+    },
+    "bookmarked": {
+      "dx": 0,
+      "dy": 4,
+      "tileX": 401,
+      "tileY": 488,
+      "hash": "#overview=1&pin.kind%3Atask=40%2C40",
+      "pinned": 0
+    }
+  },
+  "mapPanel": {
+    "390": {
+      "kind": "sheet",
+      "right": 7,
+      "bottom": 7,
+      "left": 7,
+      "belowTheBar": true,
+      "top": 386,
+      "radius": 14,
+      "shadow": true,
+      "edge": true,
+      "under": [],
+      "groundRightGap": 0,
+      "groundBottomGap": 0,
+      "groundWidth": 390,
+      "overlapsGround": true,
+      "gapIsGround": true
+    },
+    "1560": {
+      "kind": "dock",
+      "right": 7,
+      "bottom": 7,
+      "left": 835,
+      "belowTheBar": true,
+      "top": 55,
+      "radius": 14,
+      "shadow": true,
+      "edge": true,
+      "under": [],
+      "groundRightGap": 0,
+      "groundBottomGap": 0,
+      "groundWidth": 1560,
+      "overlapsGround": true,
+      "gapIsGround": true
+    }
+  },
   "removed": {
-    "standingIn": "#focus=t-deposit&sel=t-deposit&pin.t-deposit=434%2C1.12",
+    "standingIn": "#focus=t-deposit&sel=t-deposit",
     "landedOn": "#focus=aggregate%3Alist",
     "views": 5,
     "pane": null,
@@ -246,7 +344,7 @@
       "panel": "dock",
       "title": "The week",
       "width": 718,
-      "right": 0,
+      "right": 7,
       "font": 14,
       "scaled": false,
       "onTop": true,
@@ -258,12 +356,14 @@
       "up": true
     },
     "midway": {
-      "x": 533.6623611450195,
-      "y": 564.2208404541016,
+      "t": 282,
+      "x": 238.3511962890625,
+      "y": 547.0351104736328,
       "width": 1200
     },
+    "frames": 81,
     "plot": {
-      "x": 193.70000457763672,
+      "x": 186.70000457763672,
       "y": 560.5500030517578
     },
     "landed": {
@@ -285,28 +385,28 @@
       "xSteps": 29,
       "xJumps": 0,
       "xFirst": 300,
-      "xLast": -59,
+      "xLast": -66,
       "ok": true
     }
   },
   "camera": {
     "start": {
       "cell": 101.04,
-      "latticeX": -58.9,
+      "latticeX": -65.9,
       "pan": null,
       "level": "100%",
       "reach": [
-        379,
+        373,
         373
       ]
     },
     "zoomedIn": {
       "cell": 263.88,
-      "latticeX": -1282.1,
-      "pan": "-449.66,90.99",
+      "latticeX": -1300.4,
+      "pan": "-460.95,90.99",
       "level": "261%",
       "reach": [
-        593,
+        600,
         649
       ]
     },
@@ -316,41 +416,41 @@
     },
     "wheeled": {
       "cell": 263.88,
-      "latticeX": -1342.1,
-      "pan": "-509.66,10.99",
+      "latticeX": -1360.4,
+      "pan": "-520.95,10.99",
       "level": "261%",
       "reach": [
-        593,
+        600,
         649
       ]
     },
     "buttonOut": {
       "cell": 211.11,
-      "latticeX": -989.5,
-      "pan": "-407.73,8.79",
+      "latticeX": -1005.5,
+      "pan": "-416.76,8.79",
       "level": "209%",
       "reach": [
-        395,
+        402,
         442
       ]
     },
     "buttonIn": {
       "cell": 263.88,
-      "latticeX": -1342.1,
-      "pan": "-509.66,10.99",
+      "latticeX": -1360.4,
+      "pan": "-520.95,10.99",
       "level": "261%",
       "reach": [
-        593,
+        600,
         649
       ]
     },
     "dragged": {
       "cell": 263.88,
-      "latticeX": -1425,
-      "pan": "-592.56,10.99",
+      "latticeX": -1439,
+      "pan": "-599.56,10.99",
       "level": "261%",
       "reach": [
-        593,
+        600,
         649
       ]
     },
@@ -443,6 +543,9 @@
     "theControlComesBackDown": true,
     "aNewStopStartsWhereTheLayoutPutsThings": true,
     "aDistrictWithAPictureGoesIntoIt": true,
+    "aDistrictsProblemCountIsAControlThatRevealsItsProblems": true,
+    "aDistrictsNameDoesNotMoveWhenDragged": true,
+    "theMapPanelFloatsOverTheMapInsteadOfRunningFlushToItsEdges": true,
     "aDistrictWithoutOneIsListedBesideTheMap": true,
     "typingLightsAndALitDistrictLandsNarrowed": true,
     "theFindBoxIsACombobox": true,

@@ -1,4 +1,4 @@
-import { counted, isCurrent, labelOf, type AnySchema, type Store, type Place } from "@graview/core";
+import { counted, isCurrent, labelOf, onePerPicture, placeLabel, sharesItsName, type AnySchema, type Store, type Place } from "@graview/core";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
@@ -35,19 +35,27 @@ export function placesOf<S extends AnySchema>(context: PageContext<S>): readonly
   return views.places().filter((place) => live.has(place.kind));
 }
 
+/** Every kind a picture is over that this seat sees: its own, or each kind of one picture over several. */
+function kindsOfPlace<S extends AnySchema>(context: PageContext<S>, place: Place): readonly string[] {
+  if (!place.over) return [place.kind];
+  const live = new Set(liveKinds(context.store, context.principal));
+  return place.over.filter((kind) => kind === place.kind || live.has(kind));
+}
+
 /*
- * TWO KINDS, ONE PICTURE'S NAME. "The timetable" over talks and over
- * workshops are two places the scene tells apart by kind; a page address
- * by name alone would send both to the first. A name only one kind uses
- * keeps its plain address; a shared one says whose with `?of=<plural>`.
+ * TWO KINDS, ONE PICTURE'S NAME. Two different pictures called "The
+ * timetable", one over talks and one over workshops, are two places the
+ * scene tells apart by kind; a page address by name alone would send both
+ * to the first. A name only one picture uses keeps its plain address — one
+ * picture over both kinds among them — and a shared one says whose with
+ * `?of=<plural>`.
  */
 /** The key a place is drawn under: its kind and its name, since a name alone can be shared. */
 export const placeKey = (place: Place): string => `place:${place.kind}:${place.as}`;
 
 /** A place's page address, saying whose it is only when another kind shares the name. */
 export function pathOfPlace<S extends AnySchema>(context: PageContext<S>, place: Place): string {
-  const shared = (context.views?.places() ?? []).some((other) => other.as === place.as && other.kind !== place.kind);
-  return placePath(place.as, shared ? pluralSlug(context.store.schema, place.kind) : undefined);
+  return placePath(place.as, sharesItsName(place, context.views?.places() ?? []) ? pluralSlug(context.store.schema, place.kind) : undefined);
 }
 
 function membersOf<S extends AnySchema>(store: Store<S>, kind: string) {
@@ -55,10 +63,10 @@ function membersOf<S extends AnySchema>(store: Store<S>, kind: string) {
   return store.graph.nodesOfKind(kind).filter((node) => isCurrent(definition, node));
 }
 
-/** "2 plots", "12 plantings across 4 plots" — how much a picture is over, in the schema's plurals. */
-function overOf<S extends AnySchema>(store: Store<S>, kind: string, across?: string): string {
+/** "2 plots", "12 plantings across 4 plots", "200 talks and 40 workshops" — how much a picture is over, in the schema's plurals. */
+function overOf<S extends AnySchema>(store: Store<S>, kinds: string | readonly string[], across?: string): string {
   const count = (n: number, of: string) => counted(store.schema, of, n);
-  const held = count(membersOf(store, kind).length, kind);
+  const held = (typeof kinds === "string" ? [kinds] : kinds).map((kind) => count(membersOf(store, kind).length, kind)).join(" and ");
   return across ? `${held} across ${count(membersOf(store, across).length, across)}` : held;
 }
 
@@ -74,7 +82,8 @@ function LensOnPage<S extends AnySchema>({ context, place, chosen }: { context: 
   const registration = views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as);
   const View = registration?.view as ComponentType<ViewProps<S>> | undefined;
   if (!View) return null;
-  const members = membersOf(store, place.kind);
+  // A picture over several kinds is handed every one of them: the page is the whole picture, not one district's share.
+  const members = kindsOfPlace(context, place).flatMap((kind) => membersOf(store, kind));
   const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
   /*
    * A LENS THAT THROWS SAYS SO IN ITS OWN PLACE, here as in the scene: the
@@ -218,10 +227,12 @@ export function galleryOf<S extends AnySchema>(context: PageContext<S>): readonl
    * `pages.hide` leaves off the home, which keep their lists and links.
    */
   const order = arrangedKinds(context);
-  const places = [...placesOf(context)].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
-  const pictured = new Set(places.map((place) => place.kind));
+  const all = placesOf(context);
+  // Each picture once: one over several kinds is one card, under the first of them in the declaration's order.
+  const places = onePerPicture([...all].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind)));
+  const pictured = new Set(places.flatMap((place) => place.over ?? [place.kind]));
   return [
-    ...places.map((place) => ({ key: placeKey(place), kind: place.kind, title: place.title, to: pathOfPlace(context, place), place })),
+    ...places.map((place) => ({ key: placeKey(place), kind: place.kind, title: placeLabel(place, all, store.schema), to: pathOfPlace(context, place), place })),
     ...homeKinds(context)
       .filter((kind) => !pictured.has(kind))
       .map((kind) => ({ key: `kind:${kind}`, kind, title: pluralOf(store, kind), to: `/${pluralSlug(store.schema, kind)}` })),
@@ -363,7 +374,7 @@ export function GalleryCard<S extends AnySchema>({ context, entry }: { context: 
           <span style={{ fontFamily: DISPLAY, fontSize: "var(--graview-text-heading)", fontWeight: "var(--graview-weight-display)", lineHeight: 1.3, overflowWrap: "anywhere", textWrap: "balance" }}>{entry.title}</span>
         </span>
         <span style={quiet}>
-          {entry.place ? overOf(store, entry.place.kind, entry.place.across) : overOf(store, entry.kind)}
+          {entry.place ? overOf(store, kindsOfPlace(context, entry.place), entry.place.across) : overOf(store, entry.kind)}
           {!isPlace && definition?.description ? ` · ${definition.description}` : null}
         </span>
       </span>
@@ -420,7 +431,7 @@ export function Gallery<S extends AnySchema>({ context }: { context: PageContext
 export function DefaultPlacesPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store } = context;
   useStoreTick(store);
-  const places = placesOf(context);
+  const places = onePerPicture(placesOf(context));
   const entries = galleryOf(context);
   return (
     <PageMain context={context} style={wide}>
@@ -506,13 +517,15 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           * kind's list page where it reads correctly.
           */}
         <p style={lede} data-testid="place-lede">
-          {overOf(store, place.kind, place.across)}.
+          {overOf(store, kindsOfPlace(context, place), place.across)}.
         </p>
         {/* What belongs to the picture alone: its kind as a list. The other places are the bar's (FR-138). */}
-        <p style={{ ...quiet, margin: 0 }}>
-          <Link to={`/${pluralSlug(store.schema, place.kind)}`} style={{ ...link, ...quiet }} data-testid="place-as-list">
-            All {plural.toLowerCase()} as a list →
-          </Link>
+        <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
+          {kindsOfPlace(context, place).map((kind, index) => (
+            <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...link, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
+              All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list →
+            </Link>
+          ))}
         </p>
       </header>
       {/*

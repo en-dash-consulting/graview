@@ -170,6 +170,20 @@ const showActs = async (page, id) => {
   await page.waitForSelector('[data-testid="context-menu"]', { timeout: 5000 }).catch(() => {});
   await page.waitForTimeout(300);
 };
+/**
+ * Every place the bar offers, by what it is called (in the bar on a desk, on
+ * the page's first line under it on a phone): those standing on the
+ * row and those folded under More (drawn, hidden, until it opens) alike.
+ */
+const barNames = (page) =>
+  page.evaluate(() => [...document.querySelectorAll('[data-testid="app-bar"] [data-place-path], [data-testid="app-place-line"] [data-place-path]')].map((entry) => (entry.lastElementChild?.textContent ?? entry.textContent ?? "").trim()));
+/** A bar that names no place twice, and names the timetable — one calendar over talks and workshops — once. */
+const namesEachPlaceOnce = async (page) => {
+  const names = await barNames(page);
+  const twice = names.filter((name, at) => names.indexOf(name) !== at);
+  return { reached: twice.length === 0 && names.filter((name) => name === "The timetable").length === 1, detail: { names, twice } };
+};
+
 /** Rise to altitude whichever way the toggle stands. */
 const rise = async (page) => {
   const up = await page.evaluate(() => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true");
@@ -226,6 +240,9 @@ async function sceneWalk(browser, { width, scheme, seat, who }) {
   const page = await newPage(browser, width, scheme);
   const where = { face: "scene", width, scheme, seat };
   await open(page, "/", { scheme, seat, hash: "#overview=1" });
+
+  /* The scene's bar read "The timetable · The timetable": one calendar over two kinds was a tab per kind. */
+  await reach(page, where, "the scene's bar names each picture once", () => namesEachPlaceOnce(page));
 
   for (const kind of ["talk", "speaker", "session"]) {
     await reach(page, where, `the ${kind} district listed beside the map`, async () => {
@@ -473,6 +490,10 @@ async function pagesWalk(browser, { width, scheme, seat, who }) {
       return { reached: await has(page, selector), detail: { wide: await page.evaluate(() => document.documentElement.scrollWidth) } };
     });
 
+  await reach(page, where, "the pages' bar names each place once", async () => {
+    await open(page, "/pages", { scheme, seat });
+    return namesEachPlaceOnce(page);
+  });
   await visit("the talks, every one of two thousand", "/pages/talks", '[data-testid="records"]');
   await visit("the talks, the past widened", "/pages/talks?filter=is%3Aany", '[data-testid="records"]');
   await visit("the speakers", "/pages/speakers", '[data-testid="records"]');
@@ -603,6 +624,8 @@ report.checks = {
     reached("the timetable over all ten editions") &&
     reached("the workshops' timetable, the calendar's second kind") &&
     reached("the timetable's place"),
+  // No two places in either face's bar share a name: one picture over two kinds is one tab (a lens is listed once).
+  noTwoPlacesInTheBarShareAName: reached("the scene's bar names each picture once") && reached("the pages' bar names each place once"),
   // What a seat may not see is not reached: the visitor is kept from the staff on both faces.
   whatASeatMayNotSeeIsKeptFromIt:
     !SEATS.some((seat) => !seesStaff(seat.id)) ||

@@ -196,7 +196,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       ...(options.reads ? { reads: options.reads } : {}),
       ...(pictures ? { hand: pictures.hand } : {}),
       theme,
-      ...(options.places ? { places: () => options.places!().map((place) => place.as), placesShown: options.places } : {}),
+      ...(options.places ? { places: () => [...new Set(options.places!().map((place) => place.as))], placesShown: options.places } : {}),
       ...(options.onNavigatePlace ? { onNavigatePlace: options.onNavigatePlace } : {}),
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
       onSize: options.onSize ?? ((height) => (iframe.style.height = `${height}px`)),
