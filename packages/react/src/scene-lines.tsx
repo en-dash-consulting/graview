@@ -4,10 +4,11 @@ import { provenanceWords, provisionalLinks } from "@graview/core/provenance";
 import { type InterpolatedLayout, edgeOfSelection } from "@graview/layout";
 import { edgeSelectionId } from "@graview/layout/view-moves";
 import { CONNECTOR_DASH, PROVISIONAL_DASH, PROVISIONAL_OPACITY, connectorStroke, styleFor } from "@graview/render";
-import { Suspense, useMemo, useLayoutEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useLayoutEffect, useRef, useState } from "react";
 import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";
-import { orthogonalPoints, polylineD, routePoint, routedQuadratic } from "./routes.js";
+import { orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
+import { channelRoute } from "./channels.js";
 import { clipQuadratic, Connectors, connectorStrands, tieRoute } from "./connectors.js";
 import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-node.js";
@@ -66,7 +67,10 @@ export function Lines<S extends AnySchema>({
   holding = false,
   provisional,
   focusId = null,
+  beside = false,
 }: {
+  /** A panel is drawn beside the map: from altitude, a record in focus is shown there and draws its links (`mapChoice`). */
+  readonly beside?: boolean;
   /** The links still provisional, by selection id, with what to say of each (FR-172; `provisionalLines`). */
   readonly provisional?: ReadonlyMap<string, string>;
   readonly frame: InterpolatedLayout;
@@ -104,10 +108,29 @@ export function Lines<S extends AnySchema>({
    * with the world, which is not a new frame, so they follow the hand.
    */
   const moving = frame.t < 1;
+  /*
+   * THE CAPTIONS ARE PLACED IN THE SAME COMMIT, measured from the same
+   * boxes, so the first measurement can come before them: a road along a
+   * gutter went behind words that were not there yet. Where they stood is
+   * kept with each measurement, and a frame later, if they stand elsewhere,
+   * the lines are measured again.
+   */
+  const captionsAt = useRef("");
+  const captionsNow = () => [...(stageRef.current?.querySelectorAll("[data-graview-relation] > span") ?? [])].map((el) => { const r = el.getBoundingClientRect(); return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)}`; }).join(" ");
   useLayoutEffect(() => {
     if (moving || holding) return;
+    captionsAt.current = captionsNow();
     setMeasured(connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frame, moving, holding, selection, overview, graphNodes, scheme, asked, stageRef]);
+  useEffect(() => {
+    if (moving || holding || overview || typeof requestAnimationFrame === "undefined") return;
+    const later = requestAnimationFrame(() => {
+      if (captionsNow() !== captionsAt.current) remeasure((n) => n + 1);
+    });
+    return () => cancelAnimationFrame(later);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [measured]);
 
   /*
    * A LINE POINTS AT WHERE A THING IS, NOT AT WHERE IT WAS.
@@ -161,6 +184,33 @@ export function Lines<S extends AnySchema>({
     };
   }, [stageRef, views]);
 
+  /*
+   * WHICH RECORD A PERSON IS AT: the pointer on it, or the keyboard. A tie
+   * the record's card has already said is drawn for that one (`said`);
+   * nobody is listened to while no tie waits on it.
+   */
+  const [pointed, point] = useState<string | null>(null);
+  const waiting = (measured ?? []).some((strand) => strand.said !== undefined);
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!waiting || stage === null) return;
+    const at = (event: Event) => {
+      const mark = (event.target as Element | null)?.closest?.("[data-graview-pick], [data-graview-view]");
+      point(mark?.getAttribute("data-graview-pick") ?? mark?.getAttribute("data-graview-view") ?? null);
+    };
+    const away = () => point(null);
+    stage.addEventListener("pointerover", at);
+    stage.addEventListener("focusin", at);
+    stage.addEventListener("pointerleave", away);
+    stage.addEventListener("focusout", away);
+    return () => {
+      stage.removeEventListener("pointerover", at);
+      stage.removeEventListener("focusin", at);
+      stage.removeEventListener("pointerleave", away);
+      stage.removeEventListener("focusout", away);
+    };
+  }, [waiting, stageRef]);
+
   if (moving) return null;
   /*
    * Without a DOM — the first render, a server — the lines stand on the
@@ -188,6 +238,7 @@ export function Lines<S extends AnySchema>({
         stageRef={stageRef}
         onPickEdge={onPickEdge}
         liveOf={liveOf}
+        pointed={pointed}
         {...(provisional ? { provisional } : {})}
       />
       {/*
@@ -195,9 +246,9 @@ export function Lines<S extends AnySchema>({
         * nothing else does: the ties and the lit connectors were three
         * manners of line at once, none saying which relation it was.
         */}
-      {overview && mapChoice(selection, { overview, focusId }, (id) => store.graph.getNode(id)?.kind as string | undefined).records.length > 0 ? (
+      {overview && mapChoice(selection, { overview, focusId, beside }, (id) => store.graph.getNode(id)?.kind as string | undefined).records.length > 0 ? (
         <Suspense fallback={null}>
-          <RecordLinks frame={frame} width={width} height={height} stageRef={stageRef} tick={asked} store={store} graphVersion={graphNodes} selection={selection} view={{ overview, focusId }} rulers={provisional ? { ...RULERS, unsureOf: (edge, from, to) => provisional.get(edgeSelectionId(edge, from, to)) } : RULERS} />
+          <RecordLinks frame={frame} width={width} height={height} stageRef={stageRef} tick={asked} store={store} graphVersion={graphNodes} selection={selection} view={{ overview, focusId, beside }} rulers={provisional ? { ...RULERS, unsureOf: (edge, from, to) => provisional.get(edgeSelectionId(edge, from, to)) } : RULERS} />
         </Suspense>
       ) : null}
       {overview ? null : <SelectionTies
@@ -267,6 +318,8 @@ type TieLine = {
   other: string;
   others: number;
   said?: string;
+  /** On the ground, from a chip of the band: the road through its gutters (`channelRoute`), drawn whole. */
+  points?: { x: number; y: number }[];
 };
 
 function SelectionTies<S extends AnySchema>({
@@ -482,6 +535,19 @@ function SelectionTies<S extends AnySchema>({
     return false;
   };
 
+  /* The band's chips and the words over them, which a road from a chip goes round. */
+  const band: Box[] = [];
+  if (!overview && stageRef.current) {
+    for (const node of nodes) {
+      if (Math.round(node.plane) !== 1) continue;
+      const box = measureVisible(stageRef.current, node.id, false);
+      if (box) band.push(box);
+    }
+    for (const caption of stageRef.current.querySelectorAll("[data-graview-relation] > span")) {
+      const r = caption.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) band.push({ x: r.left - stage.left, y: r.top - stage.top, width: r.width, height: r.height });
+    }
+  }
   const seen = new Map<string, TieLine>();
   const found: TieLine[] = [];
   for (const tie of ties) {
@@ -490,7 +556,13 @@ function SelectionTies<S extends AnySchema>({
     const selfHostEl = selfHost
       ? stageRef.current?.querySelector(`[data-graview-view="${CSS.escape(selfHost.id)}"]`)
       : null;
-    const fromCandidates = elementBoxes(tie.self, () => false);
+    /*
+     * A CHIP OF THE BAND IS THE THING: chosen there, its tie leaves the chip,
+     * not a mention of it in the record's card above, whose line then ran
+     * down through the card's own chips and across the band.
+     */
+    const ownChip = !overview && selfHost?.id === tie.self && Math.round(selfHost.plane) === 1 ? measureVisible(stageRef.current, selfHost.id, false) : null;
+    const fromCandidates = ownChip ? [ownChip] : elementBoxes(tie.self, () => false);
     const hasFromEl = fromCandidates.length > 0;
     if (!hasFromEl && selfHost) {
       const box = measureVisible(stageRef.current, selfHost.id, false) ?? drawnBox(selfHost, scheme);
@@ -605,7 +677,10 @@ function SelectionTies<S extends AnySchema>({
     }
     const route = tieRoute(fromBox, toBox);
     if (!route) continue;
-    const { from, to, control } = route;
+    const { from, control } = route;
+    // From a chip of the band, the road runs whole through its gutters, under nothing and over nothing.
+    const points = ownChip && fromBox === ownChip ? channelRoute(fromBox, toBox, band, found.length) : undefined;
+    const to = points ? points[points.length - 1]! : route.to;
     // The real edge this tie stands for, oriented the way the graph holds it.
     const oriented = [...store.graph.allEdges()].find(
       (edge) =>
@@ -626,6 +701,7 @@ function SelectionTies<S extends AnySchema>({
       control,
       fromBox,
       toBox,
+      ...(points ? { points } : {}),
       proxy: toProxy,
       edgeId: oriented ? edgeSelectionId(oriented.kind, oriented.from, oriented.to) : null,
     };
@@ -683,8 +759,9 @@ function SelectionTies<S extends AnySchema>({
         const unsure = line.edgeId ? provisional?.get(line.edgeId) : undefined;
         const quadratic = { p0: line.from, c: line.control, p1: line.to };
         // The route is the kit's call: the arc the layout chose, its chord, or two elbows.
-        const d =
-          connector.route === "orthogonal"
+        const d = line.points
+          ? roundedPolylineD(line.points, 10)
+          : connector.route === "orthogonal"
             ? polylineD([orthogonalPoints(line.from, line.to)])
             : (({ p0, c, p1 }) => `M ${p0.x} ${p0.y} Q ${c.x} ${c.y} ${p1.x} ${p1.y}`)(routedQuadratic(connector.route, quadratic));
         /*
@@ -703,8 +780,8 @@ function SelectionTies<S extends AnySchema>({
             p: { x: number; y: number },
           ) =>
             p.x >= box.x && p.x <= box.x + box.width && p.y >= box.y && p.y <= box.y + box.height;
-          const points: { x: number; y: number }[] = [];
-          for (let i = 0; i <= 40; i++) {
+          const points: { x: number; y: number }[] = line.points ? [...line.points] : [];
+          for (let i = 0; i <= (line.points ? -1 : 40); i++) {
             const point = routePoint(connector.route, quadratic, i / 40);
             if (inside(line.fromBox, point) || inside(line.toBox, point)) continue;
             points.push(point);

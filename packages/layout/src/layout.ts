@@ -470,7 +470,14 @@ export function layout<S extends AnySchema>(
   const driveIn = screenKind !== undefined && (options.screens?.[screenKind]?.length ?? 0) > 0;
   /** The picture standing in the middle from altitude, when there is one: ground the city must not take. */
   let stamp: { x: number; y: number; width: number; height: number } | undefined;
-  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain && !driveIn && !(groupFocus && options.besideTheMap === true)) {
+  /*
+   * A RECORD IN FOCUS, from altitude, beside a panel: the panel shows it at
+   * a size a person reads, and its building stands lit in its district.
+   * A card of it stamped over the city at a seventeenth of its size said
+   * the same thing unreadably, over the districts it covered.
+   */
+  const recordBeside = state.overview === true && focus !== undefined && options.besideTheMap === true;
+  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain && !driveIn && !(groupFocus && options.besideTheMap === true) && !recordBeside) {
     stamp = {
       x: railLeft + (spanW - overviewW) / 2,
       y: opts.height * 0.53 - overviewH / 2,
@@ -945,7 +952,8 @@ export function layout<S extends AnySchema>(
           ...(opts.plots ? { plots: opts.plots } : {}),
           ...(options.cityZoom && options.cityZoom !== 1 ? { zoom: options.cityZoom } : {}),
           // The chosen districts, and the one a lens is open on, stay in sight when the city runs past the window.
-          keep: [...(state.selection ?? []), ...(state.focusId ? [state.focusId] : [])].flatMap((id) => (id.startsWith("kind:") ? [id.slice(5)] : id.startsWith("aggregate:") && !id.includes("|") ? [id.slice(10)] : [])),
+          // And the district of a record in focus beside the panel: its building is lit, so it is in sight.
+          keep: [...(state.selection ?? []), ...(state.focusId ? [state.focusId] : [])].flatMap((id) => (id.startsWith("kind:") ? [id.slice(5)] : id.startsWith("aggregate:") && !id.includes("|") ? [id.slice(10)] : recordBeside && id === focus?.id ? [focus.kind as string] : [])),
           ...(options.tilt !== undefined ? { tilt: options.tilt } : {}),
           // Recorded, not applied: the cards already carry it, and the ground reads it to ride the same tween.
           pan: { x: state.pan?.x ?? 0, y: state.pan?.y ?? 0 },

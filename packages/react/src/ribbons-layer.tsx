@@ -35,7 +35,7 @@ export interface RibbonsProps {
   /** The graph's version: the relations are counted again when it changes. */
   readonly graphVersion: unknown;
   readonly selection: readonly string[];
-  readonly view: { readonly overview?: boolean | undefined; readonly focusId: string | null };
+  readonly view: { readonly overview?: boolean | undefined; readonly focusId: string | null; readonly beside?: boolean };
   /** A relation the Key or the panel is asking about. */
   readonly emphasis: string | null;
   readonly hiddenKinds: ReadonlySet<string>;

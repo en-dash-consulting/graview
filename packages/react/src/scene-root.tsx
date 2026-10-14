@@ -40,6 +40,7 @@ import { retryingImport } from "@graview/core/retry";
 import type { ActivityMark } from "./activity.js";
 import { lazyModule } from "./lazy-part.js";
 import { BesideTheMap } from "./beside-the-map.js";
+import { mapChoice } from "./map-choice.js";
 import { useActivity } from "./attention.js";
 import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
@@ -739,6 +740,8 @@ export function Scene<S extends AnySchema>({
 }: SceneProps) {
   const context = useGraview<S>();
   const { store, scheme, views, view, setView, selection, setSelection, setMenuAt, emphasis, brand, noteMoved, robots, seatTalk, motion } = context;
+  // A panel beside the map shows what is chosen from altitude, a record in focus among it (`mapChoice`).
+  const besideTheMap = useContext(BesideTheMap);
   /* Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
   const seated = useSeatDrawn(seatTalk);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -1012,7 +1015,7 @@ export function Scene<S extends AnySchema>({
             store={store}
             graphVersion={nodes}
             selection={selection}
-            view={view}
+            view={{ overview: view.overview, focusId: view.focusId, beside: besideTheMap }}
             emphasis={emphasis}
             hiddenKinds={context.hiddenKinds}
             drawn={kitDraws}
@@ -1036,6 +1039,7 @@ export function Scene<S extends AnySchema>({
         pinned={pinnedIds}
         close={closer * zoom > 1.2}
         swallowed={swallow}
+        {...(view.overview ? { chosen: mapChoice(selection, { overview: view.overview, focusId: view.focusId, beside: besideTheMap }, (id) => store.graph.getNode(id)?.kind as string | undefined).records } : {})}
         // A tile is its district: focusing it means the kind's aggregate, never the card's own id.
         onFocus={(id) => {
           const kind = kindOfCard(id);
@@ -1090,6 +1094,7 @@ export function Scene<S extends AnySchema>({
       <Lines
         frame={frame}
         focusId={view.focusId}
+        beside={besideTheMap}
         holding={inPlace}
         {...extent}
         scheme={scheme}

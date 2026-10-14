@@ -78,6 +78,17 @@ const APPS = [
     ],
   },
   {
+    /*
+     * A RECORD ON THE GROUND, ITS CARD OVER A BAND OF CHIPS IN GROUPS, and
+     * the same record risen from: the discography's artist whose card lists
+     * thirteen songs and releases under three headings.
+     */
+    app: "discography",
+    port: portFor("discography"),
+    states: [],
+    record: { id: "artist:skatterman-snug-brim", name: "Skatterman & Snug Brim", sizes: [[1440, 900], [390, 844]] },
+  },
+  {
     app: "rota",
     port: portFor("rota"),
     states: [
@@ -263,9 +274,83 @@ const GROUND_LINES = () => {
   return { lines: lines.length, said: said.length, repeated: said.length - new Set(said).size, loose, left: s.left };
 };
 
+/*
+ * EVERY LINE ON THE GROUND IS ONE LINE. With a record in focus, each line
+ * drawn — a tie from its card to a chip of the band, a road between two
+ * chips, a tie from a chosen chip to a district — is a single connected
+ * path (one subpath, not a run of dashes the chips and captions cut it
+ * into), whose two ends lie on drawings (the card, a chip, a card of the
+ * band or the shelf), and no stretch of it lies behind or across another
+ * drawing: sampled every few pixels along the painted path, nothing else is
+ * there but the ground. Read from the paths the browser painted.
+ */
+const WHOLE = (focus) => {
+  const stage = document.querySelector("[data-graview-stage]");
+  const drawings = [...document.querySelectorAll('[data-graview-primitive="chip"], [data-graview-primitive="panel"], [data-graview-pick], .graview-kind-card, .graview-kind-face, [data-graview-view][data-graview-plane="1"] > *')]
+    .filter((el) => !el.closest("[data-graview-offstage]"))
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.width > 2 && r.height > 2);
+  const words = [...document.querySelectorAll("[data-graview-relation] > span")].map((el) => el.getBoundingClientRect());
+  const card = document.querySelector(`[data-graview-view="${CSS.escape(focus)}"]`);
+  const cardBox = (card?.querySelector('[data-graview-primitive="panel"]') ?? card)?.getBoundingClientRect() ?? null;
+  const near = (r, p, slack) => p.x >= r.left - slack && p.x <= r.right + slack && p.y >= r.top - slack && p.y <= r.bottom + slack;
+  const inside = (r, p) => p.x > r.left + 1 && p.x < r.right - 1 && p.y > r.top + 1 && p.y < r.bottom - 1;
+  const lines = [];
+  for (const path of document.querySelectorAll("path[data-graview-connector], path[data-graview-tie]")) {
+    const d = path.getAttribute("d") ?? "";
+    const length = path.getTotalLength();
+    if (length < 2) continue;
+    const m = path.getScreenCTM();
+    const at = (t) => {
+      const p = path.getPointAtLength(t);
+      return { x: m.a * p.x + m.c * p.y + m.e, y: m.b * p.x + m.d * p.y + m.f };
+    };
+    const ends = [at(0), at(length)];
+    const covered = [];
+    for (let t = 6; t < length - 6; t += 4) {
+      const p = at(t);
+      const hit = document
+        .elementsFromPoint(p.x, p.y)
+        .find((el) => el.closest('[data-graview-primitive], [data-graview-pick], .graview-kind-card, .graview-kind-face') && !el.closest("[data-graview-offstage]"));
+      if (hit || words.some((r) => inside(r, p))) {
+        const by = hit ? (hit.closest("[data-graview-pick]")?.getAttribute("data-graview-pick") ?? hit.closest("[data-graview-view]")?.getAttribute("data-graview-view") ?? hit.tagName) : "a caption";
+        covered.push({ x: Math.round(p.x), y: Math.round(p.y), by });
+      }
+    }
+    const fromCard = [path.getAttribute("data-graview-from"), path.getAttribute("data-graview-to")].includes(focus);
+    lines.push({
+      kind: path.getAttribute("data-graview-connector") ?? path.getAttribute("data-graview-tie"),
+      from: path.getAttribute("data-graview-from"),
+      to: path.getAttribute("data-graview-to"),
+      subpaths: (d.match(/M/g) ?? []).length,
+      endsOnDrawings: ends.every((p) => drawings.some((r) => near(r, p, 2.5))),
+      oneEndOnTheCard: !fromCard || (cardBox !== null && ends.some((p) => near(cardBox, p, 2.5))),
+      covered: covered.slice(0, 3),
+      coveredCount: covered.length,
+    });
+  }
+  return { lines, stage: stage ? Math.round(stage.getBoundingClientRect().width) : 0 };
+};
+
+/* What altitude shows of a record risen from: the panel beside the map, and nothing of it stamped over the city. */
+const RISEN = (id) => {
+  const panel = document.querySelector("[data-graview-map-panel]");
+  const stamped = [...document.querySelectorAll(`[data-graview-view="${CSS.escape(id)}"]`)].filter((el) => !el.closest("[data-graview-map-panel]")).length;
+  return {
+    hash: location.hash,
+    overview: /overview=1/.test(location.hash),
+    panel: panel?.getAttribute("data-graview-map-panel") ?? null,
+    title: panel?.querySelector('[data-testid="record-panel-title"]')?.textContent?.trim() ?? null,
+    stamped,
+    building: document.querySelector(`[data-graview-building="${CSS.escape(id)}"]`) !== null,
+  };
+};
+
 const report = { at: new Date().toISOString(), engine: ENGINE, checks: {}, faults: [], seen: [], recordLinks: 0 };
 
-for (const { app, port, states, chosen = [], ground = [] } of APPS) {
+/* `--only=<app>` while iterating on one app's lines; the verdict is the whole run's. */
+const ONLY = process.argv.find((arg) => arg.startsWith("--only="))?.slice(7);
+for (const { app, port, states, chosen = [], ground = [], record } of APPS.filter((one) => !ONLY || one.app === ONLY)) {
   const served = await serving(app, port, repoRoot);
   const browser = await launchEngine(ENGINE, { headless: true });
   try {
@@ -361,6 +446,88 @@ for (const { app, port, states, chosen = [], ground = [] } of APPS) {
       }
       await page.close();
     }
+    for (const [width, height] of record?.sizes ?? []) {
+      const where = `${app} ${record.id} at ${width}`;
+      const page = await browser.newPage({ viewport: { width, height } });
+      const open = async (hash) => {
+        await page.goto(`${served.url}/?theme=light${hash}`, { waitUntil: "load" });
+        await page.waitForFunction(() => "__graviewReady" in window && document.querySelector("[data-graview-stage]") !== null, null, { timeout: 60_000 }).catch(() => {});
+        await page.waitForTimeout(2200);
+      };
+      report.ground = report.ground ?? { lines: 0, ties: 0, asked: 0 };
+      const judge = async (when) => {
+        const shot = await page.evaluate(WHOLE, record.id);
+        report.ground.lines += shot.lines.length;
+        report.ground.ties += shot.lines.filter((line) => line.from === record.id || line.to === record.id).length;
+        for (const line of shot.lines) {
+          const named = `${where}, ${when}: a ${line.kind} line ${line.from ?? ""}→${line.to ?? ""}`;
+          if (line.subpaths !== 1) report.faults.push(`${named} is ${line.subpaths} pieces, not one line`);
+          if (!line.endsOnDrawings) report.faults.push(`${named} ends where nothing is drawn`);
+          if (!line.oneEndOnTheCard) report.faults.push(`${named} does not end on the record's card`);
+          if (line.coveredCount > 0) report.faults.push(`${named} runs behind or across ${line.covered.map((c) => `${c.by} at ${c.x},${c.y}`).join("; ")}`);
+        }
+        return shot;
+      };
+      /* On the ground, at rest; then pointed at one of its chips in the band, and at one in its card. */
+      await open(`#focus=${encodeURIComponent(record.id)}`);
+      await judge("at rest");
+      for (const [which, selector] of [
+        ["a chip of the band pointed at", '[data-graview-view][data-graview-plane="1"] > *'],
+        ["a chip of its card pointed at", `[data-graview-view="${record.id}"] [data-graview-pick]`],
+      ]) {
+        const target = page.locator(selector).first();
+        if (!(await target.isVisible().catch(() => false))) continue;
+        await target.hover({ timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(500);
+        const shot = await judge(which);
+        const asked = shot.lines.filter((line) => line.from === record.id || line.to === record.id).length;
+        report.ground.asked += asked;
+        if (asked === 0) report.faults.push(`${where}, ${which}: no tie from the record's card is drawn for it`);
+      }
+      /* Up from it, every way: Up, the zoom-out control, ctrl+wheel, an address, and Back. */
+      const risen = async (how) => {
+        const seen = await page.evaluate(RISEN, record.id);
+        report.risen = [...(report.risen ?? []), { where, how, ...seen }];
+        if (!seen.overview) report.faults.push(`${where}, ${how}: did not rise (${seen.hash})`);
+        if (seen.title !== record.name) report.faults.push(`${where}, ${how}: the record is not in the panel beside the map (${seen.panel ?? "no panel"}, ${seen.title ?? "no title"})`);
+        if (seen.stamped > 0) report.faults.push(`${where}, ${how}: the record's card is drawn over the city`);
+        if (!seen.building) report.faults.push(`${where}, ${how}: the record's building is not drawn on the map`);
+      };
+      await open(`#focus=${encodeURIComponent(record.id)}`);
+      await page.locator('[data-testid="overview"]').click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(1600);
+      await risen("Up");
+      for (let press = 0; press < 2; press++) {
+        await page.locator('[data-testid="zoom-out"]').click({ timeout: 4000 }).catch(() => {});
+        await page.waitForTimeout(400);
+      }
+      await page.waitForTimeout(800);
+      await risen("the zoom-out control");
+      /* And down again: the ground, with the card. */
+      await page.locator('[data-testid="overview"]').click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(1600);
+      const down = await page.evaluate((id) => ({ hash: location.hash, card: document.querySelector(`[data-graview-stage] [data-graview-view="${CSS.escape(id)}"]`) !== null }), record.id);
+      report.descended = [...(report.descended ?? []), { where, ...down }];
+      if (/overview=1/.test(down.hash) || !down.card) report.faults.push(`${where}: closing the map does not return to the ground with the record's card (${down.hash})`);
+      await open(`#focus=${encodeURIComponent(record.id)}`);
+      await page.mouse.move(width / 2, height * 0.8);
+      await page.keyboard.down("Control");
+      for (let turn = 0; turn < 6; turn++) {
+        await page.mouse.wheel(0, 200);
+        await page.waitForTimeout(60);
+      }
+      await page.keyboard.up("Control");
+      await page.waitForTimeout(1600);
+      await risen("ctrl+wheel");
+      await open(`#focus=${encodeURIComponent(record.id)}&overview=1`);
+      await risen("an address");
+      await page.locator('[data-testid="record-panel-go"]').click({ timeout: 4000 }).catch(() => {});
+      await page.waitForTimeout(1600);
+      await page.goBack();
+      await page.waitForTimeout(1800);
+      await risen("Back");
+      await page.close();
+    }
   } catch (error) {
     report.faults.push(`${app}: ${String(error).slice(0, 160)}`);
   } finally {
@@ -376,6 +543,13 @@ report.checks.everyLineLandsOnSomething = !report.faults.some((f) => /neither en
 report.checks.everyRecordLinkEndsWhereItPoints = !report.faults.some((f) => /ends where nothing is drawn|ends on the chosen record/.test(f));
 report.checks.withNothingChosenNoRecordLevelConnectorIsDrawn = !report.faults.some((f) => /connectors are drawn with nothing chosen|could not be opened/.test(f)) && (report.groundAtRest ?? 0) === 0;
 report.checks.aChosenRecordDrawsExactlyItsOwnLinks = !report.faults.some((f) => /links are said|drawn twice|stay drawn|end where nothing/.test(f)) && (report.groundChosen ?? 0) > 0;
+report.checks.everyLineOnTheGroundIsOneWholeLineFromDrawingToDrawing =
+  (report.ground?.lines ?? 0) > 0 &&
+  (report.ground?.asked ?? 0) > 0 &&
+  !report.faults.some((f) => /pieces, not one line|ends where nothing is drawn|does not end on the record's card|no tie from the record's card/.test(f));
+report.checks.noLineOnTheGroundRunsBehindOrAcrossAnything = (report.ground?.lines ?? 0) > 0 && !report.faults.some((f) => /runs behind or across/.test(f));
+report.checks.aRecordRisenFromIsInThePanelBesideTheMapAndNotOverTheCity =
+  (report.risen ?? []).length >= 10 && !report.faults.some((f) => /did not rise|not in the panel beside the map|drawn over the city|building is not drawn|closing the map does not return/.test(f));
 report.checks.nothingThrew = !report.faults.some((f) => /Error|Timeout/.test(f));
 /*
  * A HARNESS THAT PASSES ON NOTHING IS THEATER: with no lines on any page

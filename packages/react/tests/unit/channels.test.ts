@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bandRows, channelRoute } from "../../src/channels.js";
+import { bandRows, cardRoute, channelRoute } from "../../src/channels.js";
 
 /*
  * A line between two chips of one band never crosses a third chip: it
@@ -49,9 +49,77 @@ describe("a line through the gutters", () => {
     }
   });
 
+  it("crosses a row through a gap that is clear of every box in it, however they overlap", () => {
+    // A caption wider than the card under it: the gap is past the caption's end, not the card's.
+    const card = { x: 51, y: 532, width: 228, height: 45 };
+    const words = { x: 33, y: 513, width: 264, height: 17 };
+    const above = { x: 51, y: 462, width: 228, height: 45 };
+    const below = { x: 51, y: 602, width: 228, height: 45 };
+    const points = channelRoute(below, above, [above, words, card, below]);
+    for (let i = 0; i < points.length - 1; i++) for (const box of [words, card]) expect(crosses(points[i]!, points[i + 1]!, box)).toBe(false);
+  });
+
   it("staggers lanes so two lines along one gutter do not lie on each other", () => {
     const a = channelRoute(band[0]!, band[3]!, band, 0);
     const b = channelRoute(band[1]!, band[2]!, band, 1);
     expect(a[1]!.y).not.toBe(b[1]!.y);
+  });
+});
+
+/*
+ * A TIE FROM A RECORD'S CARD TO A CHIP OF ITS BAND is one line: it leaves
+ * the card's edge facing the band, crosses no chip and no caption's words
+ * on the way, and arrives on the chip's own edge.
+ */
+describe("a tie from the card", () => {
+  const card = { x: 300, y: 300, width: 700, height: 220 };
+  // Each run's caption hangs just over its first chip, as the scene places it.
+  const captions = [
+    { x: 520, y: 581, width: 110, height: 17 },
+    { x: 380, y: 641, width: 240, height: 17 },
+  ];
+  const all = [...band, ...captions];
+  const onEdge = (p: { x: number; y: number }, box: { x: number; y: number; width: number; height: number }) =>
+    (Math.abs(p.y - box.y) < 0.01 || Math.abs(p.y - box.y - box.height) < 0.01) ? p.x >= box.x - 0.01 && p.x <= box.x + box.width + 0.01 : (Math.abs(p.x - box.x) < 0.01 || Math.abs(p.x - box.x - box.width) < 0.01) && p.y >= box.y && p.y <= box.y + box.height;
+
+  it("reaches every chip whole, past every other chip and every caption", () => {
+    for (const chip of band) {
+      const points = cardRoute(card, chip, all)!;
+      expect(points).not.toBeNull();
+      expect(points[0]!.y).toBe(card.y + card.height);
+      expect(points[0]!.x).toBeGreaterThanOrEqual(card.x);
+      expect(points[0]!.x).toBeLessThanOrEqual(card.x + card.width);
+      expect(onEdge(points[points.length - 1]!, chip), `ends on ${chip.x},${chip.y}`).toBe(true);
+      for (let i = 0; i < points.length - 1; i++) {
+        for (const box of all) {
+          if (box === chip) continue;
+          expect(crosses(points[i]!, points[i + 1]!, box), `to ${chip.x},${chip.y}: segment ${i} crosses ${box.x},${box.y}`).toBe(false);
+        }
+        // Every leg runs along an axis: a road, not a diagonal.
+        expect(points[i]!.x === points[i + 1]!.x || points[i]!.y === points[i + 1]!.y).toBe(true);
+      }
+    }
+  });
+
+  it("drops straight onto a chip right under the card", () => {
+    const chip = band[1]!;
+    const points = cardRoute(card, chip, all)!;
+    expect(points).toHaveLength(2);
+  });
+
+  it("comes in from the side where a caption's words cover the chip's whole top", () => {
+    const chip = { x: 40, y: 700, width: 100, height: 26 };
+    const words = { x: 20, y: 681, width: 140, height: 17 };
+    const points = cardRoute(card, chip, [chip, words])!;
+    const last = points[points.length - 1]!;
+    expect(last.y).toBeCloseTo(chip.y + chip.height / 2);
+    for (let i = 0; i < points.length - 1; i++) expect(crosses(points[i]!, points[i + 1]!, words)).toBe(false);
+  });
+
+  it("works upside down, to a band above the card", () => {
+    const low = { x: 300, y: 900, width: 700, height: 120 };
+    const points = cardRoute(low, band[5]!, band)!;
+    expect(points[0]!.y).toBe(low.y);
+    expect(onEdge(points[points.length - 1]!, band[5]!)).toBe(true);
   });
 });

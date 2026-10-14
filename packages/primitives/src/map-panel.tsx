@@ -6,6 +6,7 @@ import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
 import { useKit, ViewBoundary } from "@graview/react/drawing";
 import type { MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
+import { Fields } from "./editable.js";
 import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, type ViewComponent } from "@graview/react/provider";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { barPanes } from "./bar-panes-door.js";
@@ -347,7 +348,7 @@ function linkGroups(
 
 function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
   const actsAt = useActsAt();
-  const { store, view, setSelection } = useGraview<S>();
+  const { store, views, view, setSelection } = useGraview<S>();
   const { go } = useNavigation();
   const graph = useGraph<S>();
   const node = store.graph.getNode(id);
@@ -360,13 +361,24 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
     return other ? labelOf(store.schema.tryDefinition(other.kind), other as never) : of;
   };
   const noun = nounOf(store.schema.tryDefinition(kind), kind);
+  /*
+   * ITS CARD, AT A SIZE A PERSON READS: the kind's own card where the app
+   * drew one, and otherwise what the framework's card says of it beyond
+   * its name and its links — its fields, editable where an act writes
+   * them. Its links are the list under it.
+   */
+  const registration = views.resolve(kind as never, { cardinality: "one", fidelity: "full" });
+  const Card = registration?.view as ViewComponent<S> | undefined;
+  const ownCard = Card !== undefined && !isDefaultView(Card);
+  /* A record risen from (in focus, not chosen) is put away by leaving it, as a lens is. */
+  const close = () => (view.focusId === id ? go({ ...withFocus(view, null), selection: [] }) : setSelection([]));
   return (
     <PanelFrame
       label={`${name(id)}: its links`}
       testId="record-panel"
-      wide="min(360px, 40%)"
+      wide={ownCard ? "min(max(440px, 46%), 760px)" : "min(360px, 40%)"}
       sheetHeight="52%"
-      onClose={() => setSelection([])}
+      onClose={close}
       head={
         <>
           <div style={eyebrow}>{noun}</div>
@@ -383,6 +395,15 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
         </>
       }
     >
+      <div data-graview-record-card={id} style={{ padding: "8px 18px 0" }}>
+        {ownCard ? (
+          <ViewBoundary kind={kind}>
+            <Card node={node as never} fidelity="full" cardinality="one" mode="fullscreen" selected={false} />
+          </ViewBoundary>
+        ) : (
+          <Fields<S> id={id} shown={[name(id)]} />
+        )}
+      </div>
       {groups.length === 0 ? <p style={{ ...quiet, margin: "14px 18px" }}>No links yet.</p> : null}
       {groups.map((group) => (
         <section key={group.key} aria-label={group.words} data-graview-links={group.edge}>
