@@ -14,8 +14,8 @@
  *
  * Loaded, it fills in `FIELD_SIGHT` and teaches the store; until it is, a
  * sight with `hide` or `fields` shows nothing (it fails closed). A host
- * that serves seats loads it — `@graview/ship`'s `openStore` and server
- * routes import it — and a page whose host served it its
+ * that serves seats loads it — `@graview/ship`'s server entry
+ * imports it, a page that holds its whole store imports it once — and a page whose host served it its
  * seat's records already (`openRemote`) does not need to: the fields were
  * never sent. Apart from `@graview/core` so a hosted page carries none of
  * it up front.

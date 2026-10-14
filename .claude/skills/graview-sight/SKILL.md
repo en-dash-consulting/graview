@@ -57,10 +57,12 @@ to remember.
    a phone it may not see reads as none.
 
 3. **Load the judge where the store is.** Field sight is
-   `@graview/core/field-sight`: `@graview/ship`'s `openStore` (on the
-   server and in a page) loads it, and so do its server routes. A host or a page
-   that makes a `Store` of its own imports it once —
-   `import "@graview/core/field-sight";`. Without it a sight with `hide` or
+   `@graview/core/field-sight`: `@graview/ship`'s server entry loads it. A
+   page that holds the whole store (`openStore` from
+   `@graview/ship/browser`, or a `Store` of its own) imports it once —
+   `import "@graview/core/field-sight";`, as `apps/gauntlet/src/main.tsx`
+   does — and so does a host that serves seats without `@graview/ship`.
+   Without it a sight with `hide` or
    `fields` shows nothing: the store keeps the record rather than serve a
    field it cannot judge. A page `openRemote` opened needs nothing: its
    host judged what it was sent.

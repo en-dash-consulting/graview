@@ -12,7 +12,7 @@ export type FieldsKept = (node: { readonly id: string; readonly kind: string }) 
  * A SIGHT THAT SHOWS ONLY SOME FIELDS (Roadmap f-field-sight) — `hide` or
  * `fields` — is judged by `@graview/core/field-sight`, which fills these in
  * as it loads: a host that serves seats loads it (`@graview/ship`'s
- * `openStore` and server routes do). Until it is loaded such a sight shows nothing,
+ * server entry does). Until it is loaded such a sight shows nothing,
  * so a store that cannot judge a field keeps the record rather than serve
  * the field. A store that holds only what its host served one seat
  * (`openRemote`'s) turns it `on` as a mirror: the host judged it, and it
