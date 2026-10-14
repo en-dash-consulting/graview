@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { withShown } from "@graview/layout/view";
+import { withShown } from "@graview/layout/view-moves";
 import { useGraview, useNavigation } from "@graview/react/provider";
 
 /**

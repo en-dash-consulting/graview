@@ -40,7 +40,7 @@ export function actWords(document: GraviewDocument, act: string): string {
   const derived = derivedActOf(act);
   if (derived && document.kinds[derived.kind]) {
     const noun = nounWords(document.kinds, derived.kind);
-    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another` }[derived.act];
+    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another`, skip: "Skip this one", detach: "Change just this one", split: "Change from here" }[derived.act];
     return quoted(words);
   }
   return quoted(act);
@@ -63,7 +63,8 @@ export const grantGone = (document: GraviewDocument, grant: GrantWords): string 
 /** What a sight shows, without who: "matches, only those "givenBy" joins to their own participant". */
 export function sightWords(document: GraviewDocument, sight: SightWords): string {
   const person = peopleKinds(document.kinds)[0];
-  return `${listed(sight.kinds.map((kind) => pluralWords(document.kinds, kind)))}${sight.own ? ", only their own" : ""}${sight.via ? `, only those ${quoted(sight.via)} joins to their own ${person ? nounWords(document.kinds, person) : "record"}` : ""}`;
+  const fields = (names: readonly string[]) => listed(names.map((field) => spoken(field)));
+  return `${listed(sight.kinds.map((kind) => pluralWords(document.kinds, kind)))}${sight.own ? ", only their own" : ""}${sight.via ? `, only those ${quoted(sight.via)} joins to their own ${person ? nounWords(document.kinds, person) : "record"}` : ""}${sight.fields ? `, only their ${fields(sight.fields)}` : ""}${sight.hide?.length ? `, without their ${fields(sight.hide)}` : ""}`;
 }
 
 /** A sight, said: "A participant sees matches, only those "givenBy" joins to their own participant." */

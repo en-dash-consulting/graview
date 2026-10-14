@@ -13,7 +13,8 @@ import {
 } from "@graview/core";
 import { describeNode, readableFields } from "@graview/core/words";
 import { firstPicture, withComputed } from "@graview/core/blocks";
-import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withPast, withPicture, withWithin } from "@graview/layout/view";
+import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withPicture, withWithin } from "@graview/layout/view";
+import { withPast } from "@graview/layout/view-moves";
 import { rosterRows } from "@graview/layout/sizes";
 import { useKit, useReached } from "@graview/react/drawing";
 import {

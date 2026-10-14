@@ -1,6 +1,7 @@
 import { counted, type AnySchema, type Hit } from "@graview/core";
 import { actsOn, search, touchWeights } from "@graview/core/search";
-import { kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withPicture, withQuery, withSelection } from "@graview/layout/view";
+import { kindCardId, withFocus, withJackIn, withOverview, withPicture, withSelection } from "@graview/layout/view";
+import { withoutSearch, withQuery } from "@graview/layout/view-moves";
 import { useKit } from "@graview/react/drawing";
 import { matchWith, POPOVER_STYLE, useFound, useGraview, usePopover, useSeatTalkState, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";

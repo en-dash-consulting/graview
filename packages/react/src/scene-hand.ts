@@ -1,4 +1,5 @@
-import { kindOfCard, withOverview, withPan, withPin, type ViewState } from "@graview/layout/view";
+import { kindOfCard, withOverview, type ViewState } from "@graview/layout/view";
+import { withPan, withPin } from "@graview/layout/view-moves";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from "react";
 import type { SceneNode } from "./scene-node.js";
 

@@ -1,4 +1,5 @@
-import { edgeWords, humanizeField, labelOf, nounOf, type AnySchema, type Store } from "@graview/core";
+import { humanizeField, labelOf, nounOf, type AnySchema, type Store } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { amountBox, argumentWords, parseDuration, readAmount, tellApart } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraviewIfAny } from "@graview/react/provider";

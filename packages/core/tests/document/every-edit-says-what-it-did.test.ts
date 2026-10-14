@@ -17,6 +17,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "set-format": { op: "set-format", kind: "vendor", field: "quote", unit: "EUR" },
   "set-required": { op: "set-required", kind: "vendor", field: "notes", required: false },
   "set-default": { op: "set-default", kind: "category", field: "budget", default: 0 },
+  "set-repeats": { op: "set-repeats", kind: "vendor", field: "due", repeats: true },
   "remove-field": { op: "remove-field", kind: "vendor", field: "notes" },
   "add-relation": { op: "add-relation", kind: "vendor", relation: "recommendedBy", to: ["vendor"] },
   "rename-relation": { op: "rename-relation", kind: "vendor", relation: "fills", to: "covers" },

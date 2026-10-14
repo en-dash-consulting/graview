@@ -3,6 +3,7 @@ import type { ViewSpecsByKind } from "@graview/core/document";
 import { createViews, type ReactViewRegistry } from "@graview/react/provider";
 import { registerDefaultViews } from "./default-views.js";
 import { registerViewSpecs } from "./spec-views.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * THE FRAMEWORK'S OWN VIEWS FOR A SCHEMA: its default view for every cell,

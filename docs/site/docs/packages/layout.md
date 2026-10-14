@@ -6,7 +6,7 @@
 pnpm add @graview/layout
 ```
 
-Entry points: `@graview/layout`, `@graview/layout/view`, `@graview/layout/sizes`
+Entry points: `@graview/layout`, `@graview/layout/view`, `@graview/layout/sizes`, `@graview/layout/view-moves`
 
 ## What it is
 
@@ -22,11 +22,11 @@ Three planes — focus, relations, context — plus a fourth altitude above the 
 
 View state is a URL. Every stop has an address, the back button works, and `sameView` decides whether two addresses are the same place.
 
-## What it exports (65)
+## What it exports (58)
 
 Read off the package's own barrel, so this is what is there today.
 
-`AGGREGATE_PREFIX`, `aggregateId`, `areaOf`, `bandAggregateWords`, `bandCaps`, `bandOf`, `boxOf`, `cameraLimit`, `centroidOf`, `chooseGrouping`, `collides`, `DEFAULT_OPTIONS`, `districtsPastTheEdge`, `easeInOut`, `EDGE_SELECTION_PREFIX`, `edgeOfSelection`, `edgeSelectionId`, `EMPTY_VIEW`, `estimateWidth`, `fitLabel`, `fromUrl`, `holdLayout`, `interpolate`, `isAggregateId`, `isBandAggregate`, `KIND_PREFIX`, `kindCardId`, `kindOfCard`, `kindsOf`, `kindsOfAggregate`, `layout`, `marqueeHeightFor`, `NameWidth`, `overlaps`, `packRuns`, `panForZoom`, `panLayout`, `placeCity`, `planeOf`, `rankKinds`, `ROSTER_MOST`, `ROSTER_ROW`, `rosterHeight`, `rosterRows`, `runOf`, `sameView`, `shares`, `spanAt`, `toggleExpanded`, `toUrl`, `withFocus`, `withJackIn`, `withoutMoves`, `withoutSearch`, `withOverview`, `withPan`, `withPast`, `withPicture`, `withPin`, `withQuery`, `withRelation`, `withSelection`, `withShown`, `withWithin`, `withZoom`
+`AGGREGATE_PREFIX`, `aggregateId`, `areaOf`, `bandAggregateWords`, `bandCaps`, `bandOf`, `boxOf`, `cameraLimit`, `centroidOf`, `chooseGrouping`, `collides`, `DEFAULT_OPTIONS`, `districtsPastTheEdge`, `easeInOut`, `EDGE_SELECTION_PREFIX`, `edgeOfSelection`, `EMPTY_VIEW`, `estimateWidth`, `fitLabel`, `fromUrl`, `holdLayout`, `interpolate`, `isAggregateId`, `isBandAggregate`, `KIND_PREFIX`, `kindCardId`, `kindOfCard`, `kindsOf`, `kindsOfAggregate`, `layout`, `marqueeHeightFor`, `NameWidth`, `overlaps`, `packRuns`, `panForZoom`, `panLayout`, `placeCity`, `planeOf`, `rankKinds`, `ROSTER_MOST`, `ROSTER_ROW`, `rosterHeight`, `rosterRows`, `runOf`, `sameView`, `shares`, `spanAt`, `toggleExpanded`, `toUrl`, `withFocus`, `withJackIn`, `withoutMoves`, `withOverview`, `withPicture`, `withRelation`, `withSelection`, `withWithin`, `withZoom`
 
 ---
 

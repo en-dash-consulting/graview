@@ -6,14 +6,17 @@
  */
 export const DERIVED_ACTS = ["edit", "remove", "archive", "unarchive", "merge"] as const;
 
-export type DerivedActName = (typeof DERIVED_ACTS)[number];
+/** The acts a kind with a date that repeats is given besides (`derive-repeats.ts`): skip one, change just one, change from one on. */
+export const REPEAT_ACTS = ["skip", "detach", "split"] as const;
+
+export type DerivedActName = (typeof DERIVED_ACTS)[number] | (typeof REPEAT_ACTS)[number];
 
 /** Every derived act a kind has, by name. */
 export const derivedActsOf = (kind: string): string[] => DERIVED_ACTS.map((act) => `${act}-${kind}`);
 
 /** The derived act a name says and its kind: `archive-task` → archive, task. */
 export function derivedActOf(name: string): { readonly act: DerivedActName; readonly kind: string } | undefined {
-  const found = /^(edit|remove|archive|unarchive|merge)-(.+)$/.exec(name);
+  const found = /^(edit|remove|archive|unarchive|merge|skip|detach|split)-(.+)$/.exec(name);
   return found ? { act: found[1] as DerivedActName, kind: found[2]! } : undefined;
 }
 

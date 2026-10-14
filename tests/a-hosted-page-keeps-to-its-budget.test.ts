@@ -44,7 +44,7 @@ describe("a hosted page", () => {
     for (const name of ["react-dom", "zod", "@graview/core", "@graview/embed", "@graview/ship"]) expect(Object.keys(measured.upFront.packages)).toContain(name);
   });
 
-  it("carries at most its budget up front, minified and gzipped: 538.0 KB and 188.0 KB since the headroom after 0.1.29, and only a raise that names its changeset adds to either", () => {
+  it("carries at most its budget up front, minified and gzipped: 537.5 KB and 186.4 KB since the headroom after 0.1.29, and only a raise that names its changeset adds to either", () => {
     expect(measured.upFront.minified, `${(measured.upFront.minified / 1024).toFixed(1)} KB`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.minified);
     expect(measured.upFront.gzipped, `${(measured.upFront.gzipped / 1024).toFixed(1)} KB gzipped`).toBeLessThanOrEqual(HOSTED_PAGE_BUDGET.gzipped);
     expect(measured.over).toBe(false);
@@ -118,14 +118,34 @@ describe("a hosted page", () => {
     expect(packageOf("<stdin>")).toBe("(the page)");
   });
 
-  it("holds its bases' numbers, never edited upward: 538.0 KB (188.0 gzipped) up front, 150 KB of it zod's, and 497.5 KB (173.5 gzipped) handed a compiled app (the headroom after 0.1.29)", () => {
-    expect(HOSTED_PAGE_BASE).toEqual({ minified: 538.0 * 1024, gzipped: 188.0 * 1024, zod: 150 * 1024 });
-    expect(HOSTED_PAGE_COMPILED_BASE).toEqual({ minified: 497.5 * 1024, gzipped: 173.5 * 1024 });
+  it("holds its bases' numbers, never edited upward: 537.5 KB (186.4 gzipped) up front, 150 KB of it zod's, and 496.0 KB (172.0 gzipped) handed a compiled app (the headroom after 0.1.29)", () => {
+    expect(HOSTED_PAGE_BASE).toEqual({ minified: 537.5 * 1024, gzipped: 186.4 * 1024, zod: 150 * 1024 });
+    expect(HOSTED_PAGE_COMPILED_BASE).toEqual({ minified: 496.0 * 1024, gzipped: 172.0 * 1024 });
     // Both well under what 0.1.28 was held to (579.7 and 535.2 KB), and under what FR-179 left (554.0 and 513.5 KB): the room given back stays given back.
     expect(HOSTED_PAGE_BASE.minified).toBeLessThanOrEqual(579.7 * 1024 - 40 * 1024);
     expect(HOSTED_PAGE_COMPILED_BASE.minified).toBeLessThanOrEqual(535.2 * 1024 - 35 * 1024);
-    expect(HOSTED_PAGE_BASE.gzipped).toBeLessThan(191.5 * 1024);
-    expect(HOSTED_PAGE_COMPILED_BASE.gzipped).toBeLessThan(177.5 * 1024);
+    expect(HOSTED_PAGE_BASE.gzipped).toBeLessThan(188.0 * 1024);
+    expect(HOSTED_PAGE_COMPILED_BASE.gzipped).toBeLessThan(173.5 * 1024);
+  });
+
+  /*
+   * TIED DOORS (the headroom after 0.1.29, again). A bundler splits what a
+   * page loads first by which of its doors reach each file, and the page
+   * loaded 23 chunks before it drew, each compressed alone with its own
+   * names in and out. Each door imports the barrel the page drew first, so
+   * the files every door reaches are one set (`primitives/src/frame.ts`).
+   */
+  it("loads at most 13 chunks before it draws, handed a compiled app or not: every door is tied to what the page drew first", () => {
+    for (const page of [measured, handed] as unknown as { upFront: { chunks: number } }[]) expect(page.upFront.chunks).toBeLessThanOrEqual(13);
+  });
+
+  it("fetches what draws a notice with the first, and carries none of what only a fetched face says or moves: @graview/core/words, @graview/layout/view-moves", () => {
+    for (const page of [measured, handed]) {
+      for (const module of ["primitives/src/notice-stacks.tsx", "primitives/src/notice-place.ts", "core/src/schema/value-words.ts", "layout/src/view-moves.ts"]) {
+        expect(Object.keys(page.upFront.modules), module).not.toContain(module);
+      }
+      expect(page.whenAsked.doors.map((door) => door.module)).toContain("primitives/src/notice-stacks.tsx");
+    }
   });
 
   /*

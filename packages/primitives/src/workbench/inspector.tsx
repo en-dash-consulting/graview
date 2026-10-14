@@ -1,4 +1,5 @@
-import { edgeWords, InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { InvalidArguments, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { failureWords } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
@@ -8,6 +9,7 @@ import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 
 import { AnswerArgs, nameOf } from "./answer-args.js";
 import { VISUALLY_HIDDEN } from "../primitives/index.js";
 import type { InspectorPlacement } from "./inspector-door.js";
+import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * The pane itself (`Inspector` in `./inspector-door.tsx` draws it): what is

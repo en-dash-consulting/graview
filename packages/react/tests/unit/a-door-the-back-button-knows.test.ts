@@ -1,4 +1,5 @@
-import { EMPTY_VIEW, withShown, withWithin, withFocus, withSelection } from "@graview/layout";
+import { EMPTY_VIEW, withWithin, withFocus, withSelection } from "@graview/layout";
+import { withShown } from "@graview/layout/view-moves";
 import { describe, expect, it } from "vitest";
 import { adjustment } from "../../src/index.js";
 

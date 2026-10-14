@@ -101,6 +101,12 @@ export interface ReadableField {
    */
   readonly app?: string;
   /**
+   * A DATE THAT MAY REPEAT (`repeat.ts`): its value says how and the next
+   * one ("Every Tuesday, next Oct 27"), and a record draws, beside it, the
+   * control that changes how it repeats (`<field>Repeat`).
+   */
+  readonly repeats?: true;
+  /**
    * WHERE A PHONE OR A PLACE TAKES ITS READER: a `tel:` link, or the
    * reader's maps app. A face draws the value as a link to it.
    */
@@ -166,17 +172,6 @@ export function humanizeField(field: string): string {
  * "Planned at".
  */
 /**
- * One of a field's values, as the declaration says it: its `display.format`
- * where it has one ("SUV", "Plug-in hybrid"), else the value spoken. A
- * filter that offered "suv" and "plug-in-hybrid" beside a record that said
- * "SUV" and "Plug-in hybrid" read one field two ways.
- */
-export function valueWords(definition: AnyNodeDefinition | undefined, key: string, value: unknown): string {
-  const format = definition?.display?.format?.[key];
-  return format ? format(value) : typeof value === "string" ? humanizeField(value) : String(value);
-}
-
-/**
  * HOW MANY OF A KIND, in its words: "1 car", "3 cars", "1 test drive" —
  * the noun for one, the plural for the rest. Sentences that took the kind's
  * id for one ("1 vehicle", "1 test-drive") said the declaration's
@@ -206,25 +201,6 @@ export function pluralOf(schema: { tryDefinition(kind: string): { readonly plura
  */
 export function pluralLabel(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
   return capitalize(pluralOf(schema, kind));
-}
-
-/**
- * A RELATION IN WORDS, read from the end you are standing on (FR-142): from
- * the kind that declares it, its `description`; from the far end, its
- * `inverse`. Where the declaration says nothing, the key is spoken —
- * "partOf" is "part of", never `partOf` — so a sentence a person reads never
- * carries a key, whichever surface wrote it.
- */
-export function edgeWords(
-  schema: { tryDefinition(kind: string): { readonly edges?: unknown } | undefined },
-  ownerKind: string,
-  edgeKind: string,
-  direction: "out" | "in",
-): string {
-  const edges = schema.tryDefinition(ownerKind)?.edges as Readonly<Record<string, { readonly description?: string; readonly inverse?: string }>> | undefined;
-  const declared = edges && Object.hasOwn(edges, edgeKind) ? edges[edgeKind] : undefined;
-  const said = direction === "out" ? declared?.description : declared?.inverse;
-  return said ?? humanizeField(edgeKind).toLowerCase();
 }
 
 export function fieldWords(

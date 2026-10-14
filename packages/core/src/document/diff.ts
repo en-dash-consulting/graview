@@ -120,7 +120,12 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
         const then = formatWords(old, before.brand);
         sentences.push(`${kind}'s ${field} is now said as ${now ?? "a plain number"}, where it was said as ${then?.replace(/ — .*/, "") ?? "a plain number"}; its values are kept.`);
       }
-      if (!same({ ...old, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0, format: 0, unit: 0 }, { ...f, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0, format: 0, unit: 0 })) sentences.push(`${kind}'s ${field} is described differently.`);
+      // A date that repeats, or no longer does: how each record's repeated is dropped with it.
+      if (!old.repeats !== !f.repeats) {
+        if (old.repeats) removedFields.push({ kind, field: `${field}Repeat` });
+        sentences.push(f.repeats ? `${kind}'s ${field} may now repeat.` : `${kind}'s ${field} no longer repeats; how each ${kind} repeated is dropped.`);
+      }
+      if (!same({ ...old, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0, format: 0, unit: 0, repeats: 0 }, { ...f, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0, format: 0, unit: 0, repeats: 0 })) sentences.push(`${kind}'s ${field} is described differently.`);
     }
     for (const field of keys(was.fields)) {
       if (!now.fields[field] && ![...renamed.values()].includes(field)) {

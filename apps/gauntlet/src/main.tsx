@@ -1,3 +1,5 @@
+// The whole program is held in this page, so it judges a sight that hides a field itself (Roadmap f-field-sight).
+import "@graview/core/field-sight";
 import { aiThroughDevServer } from "@graview/tools";
 import { PagesApp } from "@graview/pages";
 import { themeCss, type Scheme } from "@graview/primitives";

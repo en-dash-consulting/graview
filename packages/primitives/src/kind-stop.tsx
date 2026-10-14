@@ -1,5 +1,5 @@
 import { arrange, arrangeable, throughEdges } from "@graview/core/arrange";
-import { counted, dayAsRead, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
+import { counted, dayAsRead, fieldWords, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
 import { failureWords } from "@graview/core/words";
 import { kindCardId, withFocus, withOverview, withWithin, type ViewState } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance } from "@graview/react";
@@ -33,6 +33,7 @@ import { useSceneGo } from "./seat-move.js";
 import { AnswerArgs } from "./workbench/answer-args.js";
 import { CHOOSING_CSS, useChoosing } from "./choosing.js";
 import { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * A KIND OPENS TO SOMETHING USEFUL.
@@ -337,7 +338,7 @@ function GoingOn<S extends AnySchema>({ kind, plural, members, today, arrangemen
             {numberAsRead(dates.soon)} {dates.due ? "due" : ""} in the next 7 days
           </button>
         ) : null}
-        <span className="graview-kind-stop-quiet-text"> by {field.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase()}</span>
+        <span className="graview-kind-stop-quiet-text"> by {fieldWords(schema.tryDefinition(kind), field).toLowerCase()}</span>
       </li>,
     );
   }

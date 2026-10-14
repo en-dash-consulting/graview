@@ -1,6 +1,7 @@
 import type { AnySchema } from "@graview/core";
 import type { ViewComponent, ViewProps } from "@graview/react/provider";
 import { compileBlocks, SpecPlace } from "./spec-views.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * THE HOME'S OWN VIEW (FR-81): the declaration's home blocks, about no one

@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
+import { isRepeatField, repeatedBy } from "../repeat.js";
 import { isMarkdownField } from "../schema/markdown.js";
 import { parseDuration } from "../schema/field-words.js";
 import { describeArg, unwrap } from "./arg-shape.js";
@@ -23,7 +24,9 @@ import { nodeRefKinds } from "./node-ref.js";
  * explaining itself) walks the tree; nothing downstream touches zod.
  */
 export type FormField =
-  | ScalarField
+    /** How a date repeats (`repeat.ts`), asked for with the picker beside the date it repeats (`of`). */
+  | { readonly control: "repeat"; readonly name: string; readonly optional: boolean; readonly of?: string }
+| ScalarField
   | { readonly control: "node"; readonly name: string; readonly optional: boolean; readonly kinds: readonly string[] }
   | { readonly control: "group"; readonly name: string; readonly optional: boolean; readonly fields: readonly FormField[] }
   | {
@@ -98,6 +101,11 @@ export function formField(name: string, schema: unknown): FormField {
 
   const kinds = nodeRefKinds(schema);
   if (kinds) return { control: "node", name, optional, kinds };
+
+  if (isRepeatField(schema)) {
+    const of = repeatedBy(name);
+    return { control: "repeat", name, optional, ...(of ? { of } : {}) };
+  }
 
   if (type === "boolean") return { control: "boolean", name, optional };
 

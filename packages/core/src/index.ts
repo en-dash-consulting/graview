@@ -34,6 +34,10 @@ export { fileField, imageField } from "./schema/file-field.js";
 export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
 export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";
 export { appLinkField } from "./schema/app-link-field.js";
+// A date that repeats: the rule kept beside it, its occurrences worked out and never stored.
+export { dateOn, isRepeat, isRepeatField, nextOccurrence, occurrences, repeatedBy, repeatKey, validRepeat, WEEKDAYS } from "./repeat.js";
+export type { Repeat, Weekday } from "./repeat.js";
+export { repeatField } from "./schema/repeat-field.js";
 export { markdownField } from "./schema/markdown-field.js";
 // A phone, a place and a length of time: a tel: link, a link to the reader's maps app, minutes said "1 h 30 min".
 export type { TypedField } from "./schema/typed-fields.js";
@@ -255,7 +259,7 @@ export {
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
 export { excerpt } from "./excerpt.js";
-export { actTitle, article, counted, pluralLabel, pluralOf, edgeWords, fieldWords, humanizeField, nounOf, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export { actTitle, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, nounOf, summarize, withArticle } from "./schema/define-node.js";
 // Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178).
 export {
   DEFAULT_LOCALE,
@@ -283,9 +287,9 @@ export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, SCENE_LAYER
 export type { Layer } from "./theme/layers.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
-export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
+export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
-export type { RecordedLog, Records } from "./permissions/sight.js";
+export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
 export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchWhatIsUnseen } from "./watched.js";

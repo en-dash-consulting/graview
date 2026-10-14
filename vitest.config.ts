@@ -26,6 +26,7 @@ export default defineConfig({
       "@graview/core/words": fileURLToPath(new URL("./packages/core/src/words.ts", import.meta.url)),
       "@graview/core/markdown": fileURLToPath(new URL("./packages/core/src/markdown.ts", import.meta.url)),
       "@graview/core/seat": fileURLToPath(new URL("./packages/core/src/seat.ts", import.meta.url)),
+      "@graview/core/field-sight": fileURLToPath(new URL("./packages/core/src/field-sight.ts", import.meta.url)),
       "@graview/core/provenance": fileURLToPath(new URL("./packages/core/src/provenance.ts", import.meta.url)),
       "@graview/core/forms": fileURLToPath(new URL("./packages/core/src/forms.ts", import.meta.url)),
       "@graview/core/lines": fileURLToPath(new URL("./packages/core/src/lines.ts", import.meta.url)),
@@ -46,6 +47,7 @@ export default defineConfig({
       // The narrow entries (FR-57): the subpath first, or the bare-name alias swallows it.
       "@graview/layout/view": fileURLToPath(new URL("./packages/layout/src/view.ts", import.meta.url)),
       "@graview/layout/sizes": fileURLToPath(new URL("./packages/layout/src/sizes.ts", import.meta.url)),
+      "@graview/layout/view-moves": fileURLToPath(new URL("./packages/layout/src/view-moves.ts", import.meta.url)),
       "@graview/layout": src("layout"),
       "@graview/tools/cli": fileURLToPath(new URL("./packages/tools/src/cli.ts", import.meta.url)),
       "@graview/tools/frame": fileURLToPath(new URL("./packages/tools/src/frame.ts", import.meta.url)),

@@ -1,4 +1,5 @@
 import { useGraview } from "@graview/react/provider";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * WHAT THE MAP'S MARKS MEAN, from altitude, at the head of the Key's pane:

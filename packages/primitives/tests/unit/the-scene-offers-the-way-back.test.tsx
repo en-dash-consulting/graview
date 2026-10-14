@@ -5,9 +5,9 @@ import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { createNoticeBoard, NoticeBoardContext, Notices, registerDefaultViews, SceneWayBack, WAY_BACK_MS, type NoticeBoard } from "../../src/index.js";
+import { createNoticeBoard, fetchNotices, NoticeBoardContext, Notices, registerDefaultViews, SceneWayBack, WAY_BACK_MS, type NoticeBoard } from "../../src/index.js";
 
 /**
  * THE SCENE OFFERS THE WAY BACK (FR-152, FR-153). Graview Cloud: on the
@@ -62,6 +62,9 @@ async function scene(store: Store<typeof schema>, board: NoticeBoard) {
   unmounts.push(() => act(async () => root.unmount()));
   return host;
 }
+
+// What draws a notice is fetched with the first; here it is fetched before.
+beforeAll(() => fetchNotices());
 
 const renameTo = (store: Store<typeof schema>, label: string, id = "i1") => act(async () => void store.apply({ name: "rename-item", args: { id, label } }, { author: nina }));
 const offered = (board: NoticeBoard) => board.list().find((one) => one.id === "way-back");

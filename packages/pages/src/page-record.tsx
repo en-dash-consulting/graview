@@ -1,7 +1,7 @@
 import { humanizeField, isArchived, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
-import { AppLink, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, useLined } from "@graview/primitives/pages";
+import { AppLink, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -252,7 +252,11 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                           // A phone to call, a place to map: the value is the link, or the link stands beside where it is changed.
                           <FieldLink<S> href={field.href} field={field.key} value={field.value} stored={field.stored} {...(inPlace ? { nodeId: id } : {})} />
                         ) : inPlace ? (
-                          <EditableValue<S> nodeId={id} field={field.key} value={field.value} stored={field.stored} />
+                          <>
+                            <EditableValue<S> nodeId={id} field={field.key} value={field.value} stored={field.stored} />
+                            {/* How a date repeats, changed beside it. */}
+                            {field.repeats ? <RepeatEditor nodeId={id} field={field.key} start={node?.[field.key]} value={node?.[`${field.key}Repeat`]} label={`${field.label} repeats`} /> : null}
+                          </>
                         ) : (
                           field.value
                         )}

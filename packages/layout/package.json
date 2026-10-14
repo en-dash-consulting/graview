@@ -16,6 +16,10 @@
     "./sizes": {
       "types": "./dist/sizes.d.ts",
       "default": "./dist/sizes.js"
+    },
+    "./view-moves": {
+      "types": "./dist/view-moves.d.ts",
+      "default": "./dist/view-moves.js"
     }
   },
   "scripts": {

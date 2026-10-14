@@ -2,13 +2,10 @@ import { createSchema, defineNode, Graph, type NodeOfSchema } from "@graview/cor
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
-  withoutSearch,
-  withQuery,
   withWithin,
   cameraLimit,
   aggregateId,
   edgeOfSelection,
-  edgeSelectionId,
   kindCardId,
   withSelection,
   easeInOut,
@@ -22,13 +19,12 @@ import {
   toUrl,
   withFocus,
   withJackIn,
-  withPan,
-  withPin,
   withOverview,
   withRelation,
   withZoom,
   type ViewState,
 } from "../../src/index.js";
+import { edgeSelectionId, withoutSearch, withPan, withPin, withQuery } from "../../src/view-moves.js";
 
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),

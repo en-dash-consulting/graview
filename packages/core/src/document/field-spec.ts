@@ -3,6 +3,7 @@ import { isAppLinkField } from "../schema/app-link.js";
 import { isMarkdownField } from "../schema/markdown.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { descriptionOf } from "../schema/zod.js";
+import { isMoment } from "../days.js";
 import type { FieldSpec } from "./schema.js";
 
 /*
@@ -52,7 +53,7 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
       if (format === "email") return { spec: { type: "email", ...base } };
       if (format === "url") return { spec: { type: "url", ...base } };
       if (format === "date") return { spec: { type: "date", ...base } };
-      if (format === "datetime") return { spec: { type: "datetime", ...base } };
+      if (format === "datetime" || checks.some((check) => check?.["fn"] === isMoment)) return { spec: { type: "datetime", ...base } };
       if (checks.some((check) => check?.["format"] === "regex" && DATE.test(String((check?.["pattern"] as RegExp | undefined)?.source ?? "")))) return { spec: { type: "date", ...base } };
       return { spec: { type: "string", ...base } };
     }

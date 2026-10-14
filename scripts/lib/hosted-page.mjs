@@ -223,14 +223,28 @@ export const FACE_DOORS = {
  * zod's writer and no chunk carries it: 542 940 bytes (530.2 KB, 185.0 KB
  * gzipped), 21 149 fewer (6 561 gzipped). The base is that with about 8 KB
  * of room (3 KB gzipped), lowered from 554.0 and 191.5.
+ *
+ * THEN THE CHUNKS (the headroom after 0.1.29, again). The round's own
+ * features, repeating dates and field-level sight among them, took the page
+ * to 549 727 bytes (536.8 KB, 187.9 KB gzipped): 144 bytes gzipped of room. Three moves gave it:
+ * every door imports the barrel the page drew first (TIED DOORS, in
+ * `primitives/src/frame.ts`), so the page loads 13 chunks before it draws
+ * where it loaded 23, each compressed alone with its own names in and out;
+ * what draws a notice is fetched with the first (`notice-stacks.tsx`, and
+ * `notice-place.ts` off `@graview/primitives/frame`); and what only fetched
+ * faces say left the barrels (`edgeWords` and `valueWords` to
+ * `@graview/core/words`, a face's moves to `@graview/layout/view-moves`):
+ * 541 994 bytes (529.3 KB, 182.9 KB gzipped), 7 733 fewer (5 114 gzipped).
+ * The base is that with about 8 KB of room (3.5 KB gzipped, for the money
+ * formats still to land and a margin), lowered from 538.0 and 188.0.
  */
-export const HOSTED_PAGE_BASE = { minified: 538.0 * 1024, gzipped: 188.0 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BASE = { minified: 537.5 * 1024, gzipped: 186.4 * 1024, zod: 150 * 1024 };
 
 /** What the page weighed before the last move that gave room back, said beside what it weighs now (docs/hosted-page.md, the release notes). */
 export const HOSTED_PAGE_BEFORE = {
-  move: "zod's JSON-Schema writer left the page (the headroom after 0.1.29)",
-  compiles: { minified: 564_089, gzipped: 196_002 },
-  handed: { minified: 522_312, gzipped: 181_285 },
+  move: "its doors were tied to what it draws first and what draws a notice came to be fetched with the first (the headroom after 0.1.29, again)",
+  compiles: { minified: 549_727, gzipped: 192_368 },
+  handed: { minified: 507_528, gzipped: 177_639 },
 };
 
 /** The vendors document Cloud's tests are written against, kept here too. */
@@ -359,9 +373,12 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * gzipped) to 501 163 (489.4 KB, 170.6 KB gzipped), the same 21 149 fewer
  * as the page that compiles (above): zod's JSON-Schema writer off the page.
  * The base is that with about 8 KB of room (2.9 KB gzipped), lowered from
- * 513.5 and 177.5.
+ * 513.5 and 177.5. The chunks, the notices and the barrels (above) took it
+ * from 507 528 bytes (495.6 KB, 173.5 KB gzipped) to 499 794 (488.1 KB,
+ * 168.5 KB gzipped), 7 734 fewer (5 109 gzipped): 496.0 KB (172.0 gzipped),
+ * lowered from 497.5 and 173.5.
  */
-export const HOSTED_PAGE_COMPILED_BASE = { minified: 497.5 * 1024, gzipped: 173.5 * 1024 };
+export const HOSTED_PAGE_COMPILED_BASE = { minified: 496.0 * 1024, gzipped: 172.0 * 1024 };
 
 /*
  * A RAISE OF A HOSTED PAGE'S BUDGET SAYS ITSELF (FR-179). Each hosted page's

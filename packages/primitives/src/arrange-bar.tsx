@@ -2,7 +2,6 @@ import { arrangeAllows, arrangeable, formatArrangement } from "@graview/core/arr
 import {
   dayAsRead,
   labelOf,
-  valueWords,
   type AnySchema,
   type Arrangeable,
   type ArrangeOffer,
@@ -12,11 +11,13 @@ import {
   type ArrangeNode,
   type Condition,
 } from "@graview/core";
+import { valueWords } from "@graview/core/words";
 import { retryingImport } from "@graview/core/retry";
 import { lazyModule, POPOVER_STYLE, usePopover } from "@graview/react/provider";
 import { Suspense, useEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 export { arrangementOf, withArrangement } from "./arrangement.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * ONE QUIET LINE FOR EVERY SURFACE THAT ARRANGES.

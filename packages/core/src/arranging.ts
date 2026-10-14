@@ -2,7 +2,8 @@ import { reaches, type Archived } from "./graph/archived.js";
 import { humanizeField, labelOf } from "./schema/define-node.js";
 import { tellApart } from "./schema/reading.js";
 import { matchNode, parseQuery } from "./search.js";
-import { dayAsRead, monthAsRead } from "./days.js";
+import { dayAsRead, isoToday, monthAsRead } from "./days.js";
+import { dateOn } from "./repeat.js";
 import {
   arrangeable,
   asRecord,
@@ -111,7 +112,7 @@ const compare = (a: unknown, b: unknown): number => {
 function sortValue(ctx: ArrangeContext, node: ArrangeNode, by: string): unknown {
   if (by === "label") return labelFor(ctx, node);
   const definition = ctx.schema.tryDefinition(node.kind);
-  if (definition && by in ((definition.fields.shape ?? {}) as Record<string, unknown>)) return fields(node)[by];
+  if (definition && by in ((definition.fields.shape ?? {}) as Record<string, unknown>)) return dateOn(fields(node), by, ctx.today ?? isoToday());
   const ends = farEnds(ctx.graph, node.id, by).map((end) => labelFor(ctx, end)).sort();
   return ends[0];
 }
@@ -239,7 +240,7 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
       );
   for (const node of ordered) {
     if (isField) {
-      const value = fields(node)[grouping.by];
+      const value = dateOn(fields(node), grouping.by, ctx.today ?? isoToday());
       if (value === undefined || value === null || value === "") {
         put("", none, node);
       } else if (type === "date") {

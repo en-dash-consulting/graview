@@ -1,5 +1,5 @@
 import { createSchema, defineNode, Store } from "@graview/core";
-import { edgeSelectionId } from "@graview/layout";
+import { edgeSelectionId } from "@graview/layout/view-moves";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { nameOf } from "../../src/index.js";

@@ -19,6 +19,7 @@
       "@graview/core/words": ["./packages/core/src/words.ts"],
       "@graview/core/markdown": ["./packages/core/src/markdown.ts"],
       "@graview/core/seat": ["./packages/core/src/seat.ts"],
+      "@graview/core/field-sight": ["./packages/core/src/field-sight.ts"],
       "@graview/core/provenance": ["./packages/core/src/provenance.ts"],
       "@graview/core/forms": ["./packages/core/src/forms.ts"],
       "@graview/core/lines": ["./packages/core/src/lines.ts"],

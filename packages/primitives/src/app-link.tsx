@@ -4,6 +4,7 @@ import { useGraviewIfAny } from "@graview/react/provider";
 import { useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { EditableValue } from "./editable.js";
 import { ResolveAppContext } from "./resolve-app-context.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * ANOTHER APP, ON A RECORD (FR-171).

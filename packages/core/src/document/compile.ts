@@ -258,6 +258,9 @@ function validate(document: GraviewDocument): Finding[] {
       if (f.default !== undefined && f.type === "enum" && !f.options?.includes(String(f.default))) {
         findings.push(error("default-option", `${at}.fields.${field}.default`, `"${String(f.default)}" is not one of ${field}'s options`));
       }
+      // How a date repeats is kept beside it, as `<field>Repeat`: nothing else of the kind may have that name.
+      const kept = `${field}Repeat`;
+      if (f.repeats && (spec.fields[kept] || spec.edges?.[kept] || spec.computed?.[kept])) findings.push(error("repeat-clash", `${at}.fields.${field}.repeats`, `${kind} already has "${kept}", where how ${field} repeats is kept`));
     }
   }
 

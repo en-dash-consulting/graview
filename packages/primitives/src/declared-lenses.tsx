@@ -11,6 +11,7 @@ import { reachLens } from "./lens/reach.js";
 import { createTimelineLens, type TimelineOptions } from "./lens/timeline.js";
 import { Panel } from "./primitives/index.js";
 import { compileBlocks, SpecPlace, type SpecBlock } from "./spec-views.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * A DECLARED LENS, MADE (FR-79): the shipped factory its name names, handed

@@ -11,8 +11,6 @@ import {
   layout,
   withFocus,
   withOverview,
-  withPan,
-  withPin,
   panLayout,
   withRelation,
   type InterpolatedLayout,
@@ -25,6 +23,7 @@ import {
   toggleExpanded,
   withWithin,
 } from "@graview/layout";
+import { withPan, withPin } from "@graview/layout/view-moves";
 import {
   Suspense,
   useCallback,

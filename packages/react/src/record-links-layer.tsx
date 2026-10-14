@@ -3,6 +3,7 @@ import type { InterpolatedLayout } from "@graview/layout";
 import { useLayoutEffect, useMemo, useState, type ReactElement } from "react";
 import { linksOfRecords, placeLabels, type LinkOfRecord } from "./record-links.js";
 import { mapChoice } from "./map-choice.js";
+import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /** The most records chosen at once whose links are drawn: past it the picture is a hairball, and the panel lists them. */
 const DRAWN_FOR_AT_MOST = 4;

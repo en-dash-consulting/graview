@@ -1,6 +1,7 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { AnySchema } from "../schema/schema.js";
-import { fieldWords, valueWords } from "../schema/define-node.js";
+import { fieldWords } from "../schema/define-node.js";
+import { valueWords } from "../schema/value-words.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";

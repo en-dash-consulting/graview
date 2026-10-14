@@ -4,6 +4,7 @@ import { actOnSeveral, actsForSeveral, type SeveralAct, type SeveralOutcome } fr
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { FOOT_MOVED, placeAtTheFoot } from "./notice-place.js";
 import { AnswerArgs } from "./workbench/answer-args.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * THE SELECTION BAR: what is done with the records a list has chosen

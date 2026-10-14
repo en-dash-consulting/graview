@@ -1,5 +1,6 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store } from "@graview/core";
-import { EMPTY_VIEW, edgeSelectionId, kindCardId } from "@graview/layout";
+import { EMPTY_VIEW, kindCardId } from "@graview/layout";
+import { edgeSelectionId } from "@graview/layout/view-moves";
 import { GraviewProvider, createViews } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeAll, describe, expect, it } from "vitest";

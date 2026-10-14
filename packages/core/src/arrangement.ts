@@ -4,6 +4,8 @@ import { humanizeField, isCurrent } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { capitalize } from "./capital.js";
+import { dateOn } from "./repeat.js";
+import { isoToday } from "./days.js";
 
 /**
  * ARRANGEMENT IS A CAPABILITY OF THE DECLARATION, not of a view.
@@ -349,7 +351,8 @@ export function conditionHolds(ctx: ArrangeContext, node: ArrangeNode, condition
   }
   const shape = (definition?.fields.shape ?? {}) as Record<string, unknown>;
   if (condition.key in shape) {
-    const value = fields(node)[condition.key];
+    // A date that repeats is judged by its next occurrence.
+    const value = dateOn(fields(node), condition.key, ctx.today ?? isoToday());
     const type = fieldType(shape[condition.key]);
     if (type === "date") {
       const [op, date] = condition.value.split(":");

@@ -289,11 +289,6 @@ export function sameView(a: ViewState, b: ViewState): boolean {
  */
 export const EDGE_SELECTION_PREFIX = "edge:";
 
-export function edgeSelectionId(kind: string, from: string, to: string): string {
-  const part = (value: string): string => encodeURIComponent(value);
-  return `${EDGE_SELECTION_PREFIX}${part(kind)}:${part(from)}:${part(to)}`;
-}
-
 export interface EdgeRef {
   readonly kind: string;
   readonly from: string;
@@ -327,7 +322,8 @@ export function edgeOfSelection(id: string): EdgeRef | null {
  * descending, and zooming in or out all leave the moves behind. The old stop
  * keeps them in its own address, so Back returns to the picture you arranged.
  */
-function leavingTheStop(state: ViewState): ViewState {
+/** Put everything the user moved back where the layout wanted it: what leaving a stop does. */
+export function withoutMoves(state: ViewState): ViewState {
   const { pan: _drop, ...rest } = state;
   return { ...rest, pins: {} };
 }
@@ -340,7 +336,7 @@ export function withFocus(state: ViewState, focusId: string | null): ViewState {
    * opened the next one — People, say — narrowed by "van" with no search
    * in sight. The search itself (`q`) is the whole picture's and stays.
    */
-  const left = leavingTheStop(state);
+  const left = withoutMoves(state);
   return { ...(left.within?.["q"] !== undefined ? withWithin(left, "q", null) : left), focusId };
 }
 
@@ -368,7 +364,7 @@ export function withWithin(state: ViewState, key: string, value: string | null):
 }
 
 export function withOverview(state: ViewState, overview: boolean): ViewState {
-  if (overview !== state.overview) state = leavingTheStop(state);
+  if (overview !== state.overview) state = withoutMoves(state);
   if (!overview) {
     /*
      * OPEN DISTRICTS STAY AT ALTITUDE. Opening a kind card up on the ring
@@ -386,45 +382,6 @@ export function withOverview(state: ViewState, overview: boolean): ViewState {
   return { ...state, overview };
 }
 
-/** Show or hide a module drawn only for those who administer it. */
-export function withShown(state: ViewState, module: string, shown: boolean): ViewState {
-  const held = new Set(state.shown ?? []);
-  if (shown) held.add(module);
-  else held.delete(module);
-  if (held.size === 0) {
-    const { shown: _drop, ...rest } = state;
-    return rest;
-  }
-  return { ...state, shown: [...held].sort() };
-}
-
-/** Look for words across the picture, or stop looking. Blank is no search. */
-export function withQuery(state: ViewState, q: string | null): ViewState {
-  if (q === null || q.trim().length === 0) {
-    const { q: _drop, ...rest } = state;
-    return rest;
-  }
-  return { ...state, q };
-}
-
-/**
- * Stop looking: the search, and the words it carried into the district it
- * lit. A row's own words — typed there, different from the search — stay.
- */
-export function withoutSearch(state: ViewState): ViewState {
-  const carried = state.q !== undefined && state.within?.["q"] === state.q;
-  return withQuery(carried ? withWithin(state, "q", null) : state, null);
-}
-
-/** Widen the horizon to include the past, or narrow it back to now. */
-export function withPast(state: ViewState, past: boolean): ViewState {
-  if (!past) {
-    const { past: _drop, ...rest } = state;
-    return rest;
-  }
-  return { ...state, past: true };
-}
-
 /**
  * Change what is selected. An empty selection leaves no key behind — the
  * default state serializes to the default URL.
@@ -439,7 +396,7 @@ export function withSelection(state: ViewState, selection: readonly string[]): V
 
 /** Zoom the focus in close, or back out. */
 export function withZoom(state: ViewState, zoom: boolean): ViewState {
-  if (zoom !== (state.zoom === true)) state = leavingTheStop(state);
+  if (zoom !== (state.zoom === true)) state = withoutMoves(state);
   if (!zoom) {
     const { zoom: _drop, ...rest } = state;
     return rest;
@@ -457,32 +414,4 @@ export function toggleExpanded(state: ViewState, aggregateId: string): ViewState
   if (open.has(aggregateId)) open.delete(aggregateId);
   else open.add(aggregateId);
   return { ...state, expanded: [...open].sort() };
-}
-
-/**
- * Move the camera. `null` puts it back.
- *
- * Panning is an ADJUSTMENT of the stop you are on rather than a new stop —
- * the same reason a pin is. `useUrlSync` replaces rather than pushes for both,
- * so one drag is one history entry rather than sixty, and Back still means
- * "the place I was before", not "one pixel ago".
- */
-export function withPan(state: ViewState, pan: Pin | null): ViewState {
-  if (pan === null || (pan.x === 0 && pan.y === 0)) {
-    const { pan: _drop, ...rest } = state;
-    return rest;
-  }
-  return { ...state, pan };
-}
-
-/** Put everything the user moved back where the layout wanted it. */
-export function withoutMoves(state: ViewState): ViewState {
-  return leavingTheStop(state);
-}
-
-export function withPin(state: ViewState, id: string, pin: Pin | null): ViewState {
-  const pins = { ...state.pins };
-  if (pin === null) delete pins[id];
-  else pins[id] = pin;
-  return { ...state, pins };
 }

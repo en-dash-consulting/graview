@@ -1,4 +1,5 @@
-import { edgeWords, pluralLabel, layer, resolveKit, type AnySchema } from "@graview/core";
+import { pluralLabel, layer, resolveKit, type AnySchema } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { kitConnector, useKit } from "@graview/react/drawing";
 import { useGraph, useGraview, useGraviewIfAny, useNavigation, useSelection } from "@graview/react/provider";
 import {

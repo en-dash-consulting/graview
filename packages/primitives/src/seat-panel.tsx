@@ -11,6 +11,7 @@ import { ChatPanel, LINK, QUIET_BUTTON } from "./chat.js";
 import { useSubject } from "./subject.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { AnswerArgs } from "./workbench/index.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * THE OPEN SEAT — fetched when the seat is first opened (`seat-field.tsx`).

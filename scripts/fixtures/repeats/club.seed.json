@@ -1,0 +1,7 @@
+{
+  "nodes": [
+    { "id": "tuesdays", "kind": "practice", "title": "Tuesday run", "startsAt": "2026-09-01T18:00", "startsAtRepeat": { "every": "week", "on": ["tue"], "except": ["2026-10-13"] }, "place": "The track" },
+    { "id": "dinner", "kind": "practice", "title": "Club dinner", "startsAt": "2026-10-24T19:00", "place": "The Anchor" }
+  ],
+  "edges": []
+}

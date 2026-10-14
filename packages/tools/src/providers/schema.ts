@@ -1,4 +1,5 @@
-import { actTitle, edgeWords, isArchived, KEEP_LINK, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { actTitle, isArchived, KEEP_LINK, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { argShape } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
 import type { Affordance, AffordanceProvider, Observation, OpenParameter } from "../types.js";
