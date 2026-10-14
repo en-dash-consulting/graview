@@ -28,6 +28,7 @@ import {
   isCurrent,
   labelOf,
   localeFor,
+  emojiMark,
   markHref,
   pluralOf,
   recordPath,
@@ -298,7 +299,12 @@ function slugOf(seen: Store<AnySchema>, kind: string): string {
 /** The app's name and its mark, at the head of every page. */
 function writeMasthead(brand: Brand, name: string, base: string): string {
   const mark = markHref(brand.logo);
-  const logo = mark && (mark.startsWith("data:image/") || /^https?:/i.test(mark) || !mark.startsWith("/") || base === "") ? `<img class="gv-mark" src="${attr(mark.startsWith("/") ? `${base}${mark}` : mark)}" alt="">` : "";
+  const emoji = emojiMark(brand);
+  const logo = emoji
+    ? `<span class="gv-mark" aria-hidden="true">${esc(emoji)}</span>`
+    : mark && (mark.startsWith("data:image/") || /^https?:/i.test(mark) || !mark.startsWith("/") || base === "")
+      ? `<img class="gv-mark" src="${attr(mark.startsWith("/") ? `${base}${mark}` : mark)}" alt="">`
+      : "";
   return `<header class="gv-masthead"><a href="${attr(`${base}/`)}">${logo}<span>${esc(name)}</span></a></header>`;
 }
 
@@ -439,6 +445,7 @@ body { font: var(--graview-weight-body) 1rem/1.5 var(--graview-font-body); -webk
 .gv-page { max-width: 60rem; margin: 0 auto; padding: 24px 16px 48px; }
 .gv-masthead a { display: inline-flex; align-items: center; gap: 10px; color: var(--graview-ink-muted); text-decoration: none; font-weight: 600; }
 .gv-mark { height: 28px; width: auto; }
+span.gv-mark { font-size: 1.5rem; line-height: 28px; }
 h1, h2, h3, h4, h5, h6 { font-family: var(--graview-font-display); font-weight: var(--graview-weight-display); line-height: 1.2; margin: 0.6em 0 0.3em; break-after: avoid-page; }
 h1 { font-size: 1.728rem; margin-top: 0.4em; text-wrap: balance; }
 h2 { font-size: 1.2rem; text-wrap: balance; }

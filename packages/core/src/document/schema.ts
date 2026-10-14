@@ -282,7 +282,8 @@ export const BrandSpec = z.strictObject({
    * in, how round and how roomy, a hue per kind, and the scheme it prefers.
    */
   logo: z.optional(z.union([str(1, MARK_MAX), z.strictObject({ src: str(1, MARK_MAX), alt: z.optional(str(1, 120)) })])),
-  favicon: z.optional(str(1, MARK_MAX)),
+  // A page icon: a mark as the logo is one, or `{ "emoji": "🏡" }` — one standard emoji, the app's mark where it has no logo (`brand-emoji`).
+  favicon: z.optional(z.union([str(1, MARK_MAX), z.strictObject({ emoji: z.string() })])),
   typography: z.optional(z.strictObject({ display: z.optional(str(1, 200)), body: z.optional(str(1, 200)), mono: z.optional(str(1, 200)) })),
   shape: z.optional(
     z.strictObject({

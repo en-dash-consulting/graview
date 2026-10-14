@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 2409,
+  "gzipped": 920,
+  "note": "Raised with every face's when an app came to name one standard emoji as its page icon and, with no logo, its mark (Roadmap f-emoji-favicon): the studio hands the brand back through `editDocument`'s `set-brand`, which now judges `favicon: { emoji }` (`emojiProblem`, `brand-emoji`) and says it in the sentence the preview says, and the bar draws the emoji where there is no logo. 2_409 / 920 over the budget it met before, the gzipped figure moving some 15 bytes between builds. Measured at 1_705_880 / 539_267–539_282."
+}
