@@ -1,4 +1,5 @@
 import type { AnyMutationDefinition, GraphEdge, GraphSnapshot, AnySchema, GraviewApp, PageFields } from "@graview/core";
+import { isMarkdownField } from "@graview/core/words";
 import { fieldTypeOf } from "./from-declaration.js";
 import { computedFor, pageWhile } from "./to-declaration.js";
 import type { FieldType } from "./meta.js";
@@ -71,7 +72,12 @@ export class Read {
   }
 }
 
-export function zodSource(type: FieldType, required: boolean, options?: readonly string[], uses?: ZodUses): string {
+export function zodSource(type: FieldType, required: boolean, options?: readonly string[], uses?: ZodUses, markdown?: boolean): string {
+  // Prose written in Markdown (FR-180): the framework's own field, imported beside `z`.
+  if (type === "text" && markdown) {
+    if (uses) uses.markdownField = true;
+    return required ? "markdownField()" : "markdownField().optional()";
+  }
   // Another app's address (FR-171), a picture, a document (FR-162): the framework's own field, imported beside `z`.
   // A phone, a place and a length of time likewise: a tel: link, a map, minutes said "1 h 30 min".
   if (type === "app-link" || type === "image" || type === "file" || type === "phone" || type === "place" || type === "duration") {
@@ -171,12 +177,14 @@ function carried(
 }
 
 /** A kind's fields, as the graph holds them. */
-export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined }[] {
+export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined; markdown: boolean }[] {
   return read.in(kind.id, "of").map((field) => ({
     name: label(field),
     type: (str(field, "type") ?? "string") as FieldType,
     required: bool(field, "required"),
     options: list(field, "options"),
+    // Written in Markdown (FR-180).
+    markdown: str(field, "type") === "text" && bool(field, "markdown"),
   }));
 }
 
@@ -209,11 +217,12 @@ export function kindLines(
       const same =
         was.type === field.type &&
         was.required === field.required &&
-        (was.options ?? []).join("|") === (field.options ?? []).join("|");
+        (was.options ?? []).join("|") === (field.options ?? []).join("|") &&
+        isMarkdownField(own) === field.markdown;
       const printed = same ? printZod(own, uses) : null;
       if (printed !== null) return printed;
     }
-    return zodSource(field.type, field.required, field.options, uses);
+    return zodSource(field.type, field.required, field.options, uses, field.markdown);
   };
   const edges = read.in(kind.id, "from-kind");
   const lifecycleField = str(kind, "lifecycleField");

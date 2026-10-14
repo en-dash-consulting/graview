@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-14T02:46:06.456Z",
+  "at": "2026-10-14T01:55:16.396Z",
   "results": [
     {
       "name": "hosted",
@@ -7,19 +7,14 @@
       "took": 1
     },
     {
-      "name": "field-types",
+      "name": "studio",
       "code": 0,
-      "took": 28
+      "took": 39
     },
     {
-      "name": "pages",
+      "name": "navigation",
       "code": 0,
-      "took": 137
-    },
-    {
-      "name": "declared",
-      "code": 0,
-      "took": 203
+      "took": 97
     }
   ]
 }

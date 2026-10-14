@@ -47,6 +47,7 @@ import {
 import { describeNode, readableFields } from "@graview/core/words";
 import { withComputed } from "@graview/core/blocks";
 import { describePlace, type DescribedItem, type DescribedPart, type PlaceDescription } from "@graview/core/describe";
+import { markdownHtml } from "@graview/core/markdown";
 
 /** How the page looks: the app's brand (its own, unsaid) in one of its two schemes. */
 export interface StaticLook {
@@ -321,10 +322,12 @@ class Writer {
 
   /** Parts as the faces draw them: headings, lines, badges, facts as a list of terms, figures, lists of cards or rows. */
   parts(parts: readonly DescribedPart[], depth: number): void {
-    let fields: { label: string; text: string }[] = [];
+    let fields: { label: string; text: string; long?: true; markdown?: true }[] = [];
     const flush = () => {
       if (fields.length === 0) return;
-      this.raw(`<dl class="gv-fields">${fields.map((field) => `<div><dt>${esc(field.label)}</dt><dd>${esc(field.text)}</dd></div>`).join("")}</dl>`);
+      // Prose the record's width, its lines kept; Markdown drawn as prose (FR-180), its headings under the page's, no HTML of its own.
+      const value = (field: (typeof fields)[number]) => (field.markdown ? `<dd class="gv-md">${markdownHtml(field.text, { headingsFrom: depth + 1 })}</dd>` : `<dd>${esc(field.text)}</dd>`);
+      this.raw(`<dl class="gv-fields">${fields.map((field) => `<div${field.long || field.markdown ? ' class="gv-long"' : ""}><dt>${esc(field.label)}</dt>${value(field)}</div>`).join("")}</dl>`);
       fields = [];
     };
     for (const part of parts) {
@@ -456,6 +459,19 @@ a { color: var(--graview-accent); text-decoration-thickness: 1px; text-underline
 .gv-fields div { break-inside: avoid; }
 .gv-fields dt { font-size: 0.833rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--graview-ink-muted); }
 .gv-fields dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+.gv-fields .gv-long { grid-column: 1 / -1; }
+.gv-fields dd.gv-md { white-space: normal; line-height: 1.6; }
+.gv-md > :first-child { margin-top: 0; }
+.gv-md h3, .gv-md h4, .gv-md h5, .gv-md h6 { font-size: 1em; margin: 0.9em 0 0.3em; }
+.gv-md p, .gv-md ul, .gv-md ol, .gv-md blockquote, .gv-md pre { margin: 0 0 0.7em; }
+.gv-md li > p { margin: 0; }
+.gv-md blockquote { padding-inline-start: 0.9em; border-inline-start: 3px solid var(--graview-edge); color: var(--graview-ink-muted); }
+.gv-md code { font-family: var(--graview-font-mono); font-size: 0.9em; }
+.gv-md pre { overflow-x: auto; padding: 0.7em 0.9em; background: var(--graview-panel-muted, transparent); border-radius: 8px; white-space: pre; overflow-wrap: normal; }
+.gv-md hr { border: 0; border-top: 1px solid var(--graview-edge); }
+.gv-md [data-graview-md-table] { overflow-x: auto; }
+.gv-md table { border-collapse: collapse; }
+.gv-md th, .gv-md td { padding: 0.35em 0.7em; border-bottom: 1px solid var(--graview-edge); text-align: start; vertical-align: top; }
 .gv-badge { display: inline-block; padding: 1px 8px; border: 1px solid var(--graview-edge-bright); border-radius: 999px; font-size: 0.833rem; }
 .gv-figure strong { font-size: 1.75rem; font-family: var(--graview-font-display); }
 .gv-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 10px; }

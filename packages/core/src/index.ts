@@ -34,6 +34,7 @@ export { fileField, imageField } from "./schema/file-field.js";
 export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
 export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";
 export { appLinkField } from "./schema/app-link-field.js";
+export { markdownField } from "./schema/markdown-field.js";
 // A phone, a place and a length of time: a tel: link, a link to the reader's maps app, minutes said "1 h 30 min".
 export type { TypedField } from "./schema/typed-fields.js";
 export { durationField, phoneField, placeField } from "./schema/typed-field-builders.js";

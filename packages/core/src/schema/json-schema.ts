@@ -3,6 +3,7 @@ import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { isAppLinkField } from "./app-link.js";
+import { isMarkdownField } from "./markdown.js";
 import { typedFieldOf } from "./typed-field-of.js";
 import { amountOf } from "./amount-mark.js";
 import { amountMark, amountSentence } from "./amount-words.js";
@@ -44,6 +45,13 @@ type ZodStringDef = { readonly type?: string; readonly format?: string; readonly
 export function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
   // Another app's address (FR-171), beside its pattern: an agent sets an address, not a name.
   if (isAppLinkField(ctx.zodSchema)) ctx.jsonSchema["x-graview-app-link"] = true;
+  // Prose in Markdown (FR-180): a caller writes Markdown, and it is kept as written.
+  if (isMarkdownField(ctx.zodSchema)) {
+    ctx.jsonSchema["contentMediaType"] = "text/markdown";
+    // Said in words too: not every tool caller reads `contentMediaType`.
+    const said = ctx.jsonSchema["description"];
+    if (!(typeof said === "string" && said.endsWith("Written in Markdown."))) ctx.jsonSchema["description"] = `${typeof said === "string" && said ? `${said.replace(/\.?$/, ".")} ` : ""}Written in Markdown.`;
+  }
   /*
    * A PHONE, A PLACE OR A DURATION says which (`x-graview-type`), so an agent
    * sends the shape the field keeps: a phone as it is written, a place as an

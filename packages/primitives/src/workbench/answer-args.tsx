@@ -379,7 +379,7 @@ export function AnswerArgs({
           <input
             autoFocus
             type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" && !shape.duration && !amount ? "number" : shape.type === "text" && shape.holds === "phone" ? "tel" : "text"}
-            {...(amount ? { inputMode: amount.format === "duration" ? ("text" as const) : ("decimal" as const), "data-graview-amount": amount.format ?? "unit" } : {})}
+            {...(amount ? { inputMode: "decimal" as const, "data-graview-amount": amount.format ?? "unit" } : {})}
             /*
              * A FIELD IS ASKED FOR IN WORDS. `dependsOn` and `label` are the
              * declaration's identifiers; the pages face has always humanized

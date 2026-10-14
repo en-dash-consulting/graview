@@ -1,7 +1,7 @@
 import { derivedActOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
 import { withArticle } from "../schema/define-node.js";
 import { farEnd } from "./far-end.js";
-import { error, warning, type Finding } from "./findings.js";
+import { error, type Finding } from "./findings.js";
 import { outsideRange } from "./range.js";
 import type { ActSpec, GraviewDocument } from "./schema.js";
 
@@ -28,26 +28,9 @@ function rangeFindings(document: GraviewDocument): Finding[] {
       // A default is a value the field takes, so it is inside the field's range.
       const outside = f.default !== undefined ? outsideRange(f.default, f, field) : undefined;
       if (outside) out.push(error("default-range", `${at}.default`, outside));
-      out.push(...formatFindings(document, at, f));
     }
   }
   return out;
-}
-
-/**
- * WHAT A NUMBER IS SAID AS. A format is a number's: on any other field it
- * says nothing, and is said to. Money is said in a currency — the field's
- * own (`"unit": "EUR"`) or the app's (`brand.currency`) — and without one
- * every face says a bare 10,000 where the author meant $10,000.
- */
-function formatFindings(document: GraviewDocument, at: string, f: GraviewDocument["kinds"][string]["fields"][string]): Finding[] {
-  if (!f.format) return [];
-  const numeric = f.type === "number" || f.type === "integer";
-  if (!numeric) return [warning("field-format", `${at}.format`, `"format": "${f.format}" says how a number is said, and this is ${withArticle(f.type)} field: its values are said as written`, "make it a number field, or take the format off")];
-  if (f.format === "money" && !/^[A-Z]{3}$/.test(f.unit ?? "") && !document.brand?.currency) {
-    return [warning("money-currency", `${at}.format`, "this money has no currency to be said in, so every face says it as a bare number (10,000, not $10,000)", `say the app's currency once, { "brand": { "currency": "USD" } }, or the field's own, "unit": "EUR"`)];
-  }
-  return [];
 }
 
 /**

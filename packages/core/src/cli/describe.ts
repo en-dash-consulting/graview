@@ -421,7 +421,7 @@ export function describeApp<S extends AnySchema>(
       const marked = amountOf(field);
       if (!marked) return [];
       const mark = amountMark(marked);
-      const example = mark.format === "percent" ? 0.15 : mark.format === "duration" ? 90 : 1250.5;
+      const example = mark.format === "percent" ? 0.15 : 1250.5;
       const said = sayAmount(example, mark);
       return [`${kind} · ${name}: ${amountSentence(mark)} ${example} is said "${said}".`];
     });

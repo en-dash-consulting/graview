@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
+import { isMarkdownField } from "../schema/markdown.js";
 import { parseDuration } from "../schema/field-words.js";
 import { describeArg, unwrap } from "./arg-shape.js";
 import type { AmountMark } from "../schema/amount-mark.js";
@@ -52,6 +53,8 @@ export interface ScalarField {
   readonly long?: true;
   /** Another app's address (FR-171): asked for as one — `@owner/app`, its id, or its https:// address. */
   readonly app?: true;
+  /** Prose written in Markdown (FR-180): asked for in a text area, and said to be Markdown. */
+  readonly markdown?: true;
   /**
    * A phone number or a place, asked for in a text box as one; or a length
    * of time, asked for in a text box that takes "1h 30m", "90" or "1:30"
@@ -63,7 +66,7 @@ export interface ScalarField {
   readonly max?: number;
   /** What a number's values are whole multiples of (FR-114): an input's `step`. */
   readonly step?: number;
-  /** What a number is said as — money in its currency, a percent, a duration — so it is asked for as one: "$1,250.50". */
+  /** What a number is said as — money in its currency, a percent, a measure — so it is asked for as one: "$1,250.50". */
   readonly amount?: AmountMark;
 }
 
@@ -156,7 +159,7 @@ export function formField(name: string, schema: unknown): FormField {
   }
 
   const scalar = describeArg(schema);
-  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}), ...(scalar.holds ? { holds: scalar.holds } : {}) };
+  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}), ...(isMarkdownField(field) ? { markdown: true as const } : {}), ...(scalar.holds ? { holds: scalar.holds } : {}) };
   // A length of time is typed as words ("1h 30m") and sent as minutes.
   if (scalar.type === "number" && scalar.duration) return { control: "text", name, optional, holds: "duration" };
   if (scalar.type === "date") return { control: "date", name, optional, ...(scalar.time ? { time: true as const } : {}) };

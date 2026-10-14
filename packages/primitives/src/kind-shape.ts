@@ -217,7 +217,8 @@ export function tableColumns(schema: AnySchema, kind: string, nodes: readonly No
 export function cellOf(schema: AnySchema, node: Node, column: TableColumn, graph: EdgeReader): { readonly text: string; readonly title?: string } {
   if (column.about === "field") {
     const definition = schema.tryDefinition(node.kind);
-    const field = readableFields(node, definition, {}).find((one) => one.key === column.key);
+    // A glance's reading: prose said by its start, Markdown's syntax taken out (FR-180).
+    const field = readableFields(node, definition, { excerpt: true }).find((one) => one.key === column.key);
     return { text: field?.value ?? "" };
   }
   const edges = column.direction === "out" ? graph.outEdges(node.id) : graph.inEdges(node.id);

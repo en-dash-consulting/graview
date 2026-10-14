@@ -130,6 +130,13 @@ export interface ReadableField {
    * edits it in a text area.
    */
   readonly long: boolean;
+  /**
+   * WRITTEN IN MARKDOWN (FR-180): the declaration says so
+   * (`markdownField()`, `{"type": "text", "format": "markdown"}`). A
+   * record's page draws it as prose; a glance says its start with the
+   * syntax taken out.
+   */
+  readonly markdown?: true;
 }
 
 /** `effectiveFrom` shown to a person is a schema leaking through a surface. */

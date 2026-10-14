@@ -33,7 +33,8 @@ function rangeSaid(field: FieldWords): string | undefined {
 export function keptBy(field: FieldWords | undefined): readonly KeptProperty[] {
   if (!field) return [];
   return [
-    ...(field.format ? [{ property: "format" as const, said: `shown as ${field.format}` }] : []),
+    // Markdown is a text field's, and the studio changes it (FR-180); a number's format it keeps.
+    ...(field.format && field.format !== "markdown" ? [{ property: "format" as const, said: `shown as ${field.format}` }] : []),
     ...(field.unit ? [{ property: "unit" as const, said: `counted in ${field.unit}` }] : []),
     ...(field.of ? [{ property: "of" as const, said: `a list of ${field.of}s` }] : []),
     ...(rangeSaid(field) ? [{ property: "range" as const, said: `taken ${rangeSaid(field)}` }] : []),

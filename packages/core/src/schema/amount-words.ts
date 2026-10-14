@@ -29,8 +29,6 @@ export function amountSentence(mark: AmountMark): string {
       return mark.currency ? `An amount of money in ${mark.currency}: a plain number, 1250.5 for 1,250.50 ${mark.currency}.` : "An amount of money, in no named currency: a plain number.";
     case "percent":
       return "A fraction said as a percent: 0.15 is 15%.";
-    case "duration":
-      return `A length of time in ${/^s/i.test(mark.unit ?? "") ? "seconds" : /^h/i.test(mark.unit ?? "") ? "hours" : /^d/i.test(mark.unit ?? "") ? "days" : "minutes"}.`;
     default:
       return mark.unit ? `A number of ${mark.unit}.` : "A number.";
   }

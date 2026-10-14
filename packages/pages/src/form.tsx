@@ -158,7 +158,7 @@ function AmountControl({ title, name, optional, amount, value, onChange }: { tit
         {box.prefix ? <span data-graview-part="amount-symbol" aria-hidden="true">{box.prefix}</span> : null}
         <input
           type="text"
-          inputMode={amount.format === "duration" ? "text" : "decimal"}
+          inputMode="decimal"
           name={name}
           required={!optional}
           placeholder={box.placeholder}
@@ -244,7 +244,11 @@ function Control<S extends AnySchema>({
       if (spec.control === "text" && spec.long) {
         return (
           <label data-graview-part="field" data-graview-field="text">
-            <span data-graview-part="label">{title}</span>
+            <span data-graview-part="label">
+              {title}
+              {/* Written in Markdown (FR-180): said where it is typed, quietly. */}
+              {spec.markdown ? <span style={{ fontWeight: "normal", color: "var(--graview-ink-faint)" }}> · Markdown</span> : null}
+            </span>
             <textarea
               name={spec.name}
               required={!spec.optional}
@@ -276,7 +280,7 @@ function Control<S extends AnySchema>({
         </label>
       );
     case "number":
-      // Money, a percent, a duration: asked for as it is said — "$" beside "1,250.50" — and read as typed.
+      // Money, a percent, a measure: asked for as it is said — "$" beside "1,250.50" — and read as typed.
       if (spec.amount) return <AmountControl title={title} name={spec.name} optional={spec.optional} amount={spec.amount} value={value} onChange={onChange} />;
       return (
         <label data-graview-part="field" data-graview-field={spec.control}>

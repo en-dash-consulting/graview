@@ -59,7 +59,7 @@ const HOLDS: Partial<Record<FieldSpec["type"], string>> = {
 
 /** A field's comment: its description, the words it is shown by, and what a string of its type holds. */
 function fieldNote(spec: FieldSpec): string | undefined {
-  const said = [spec.description, spec.label ? `Shown as "${spec.label}"` : undefined, HOLDS[spec.type], spec.unit ? `In ${spec.unit}` : undefined].filter((part): part is string => Boolean(part));
+  const said = [spec.description, spec.label ? `Shown as "${spec.label}"` : undefined, spec.format === "markdown" ? "Markdown, drawn as prose on the record's page" : HOLDS[spec.type], spec.unit ? `In ${spec.unit}` : undefined].filter((part): part is string => Boolean(part));
   return said.length > 0 ? said.map((part) => (/[.!?]$/.test(part) ? part : `${part}.`)).join(" ") : undefined;
 }
 

@@ -83,6 +83,8 @@ export const fieldNode = defineNode("field", {
     required: z.boolean(),
     options: z.array(z.string()).optional(),
     description: z.string().optional(),
+    /** A text field written in Markdown (FR-180): `{"type": "text", "format": "markdown"}`, `markdownField()`. */
+    markdown: z.boolean().optional(),
   }),
   edges: {
     of: { to: ["kind"], cardinality: "one", description: "the kind it belongs to", inverse: "its fields" },
@@ -446,6 +448,7 @@ export const addField = act("add-field", {
     required: z.boolean(),
     options: z.array(z.string()).optional(),
     description: z.string().optional(),
+    markdown: z.boolean().optional(),
   }),
   describe: (args, graph) => `Add the field ${args.label} to ${(graph.getNode(args.kind) as { label?: string } | undefined)?.label ?? args.kind}`,
   apply(ctx, args) {
@@ -460,6 +463,8 @@ export const addField = act("add-field", {
       required: args.required,
       ...(args.options ? { options: args.options } : {}),
       ...(args.description ? { description: args.description } : {}),
+      // Markdown is a text field's (FR-180).
+      ...(args.markdown && args.type === "text" ? { markdown: true } : {}),
     });
     ctx.addEdge({ kind: "of", from: id, to: args.kind });
   },
@@ -567,13 +572,16 @@ const fieldLabel = (graph: Reader, id: string): string => {
 
 export const retypeField = act("retype-field", {
   title: "Change the field's type",
-  description: "Make a field another type. An enum is given its options; a field made anything else lets them go.",
+  description: "Make a field another type. An enum is given its options; a field made anything else lets them go. A text field may be written in Markdown.",
   subject: { kinds: ["field"], arg: "id" },
-  writes: ["type", "options"],
-  input: z.object({ id: nodeRef(["field"]), type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1)).min(1).optional() }),
-  describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} a ${args.type}`,
+  writes: ["type", "options", "markdown"],
+  input: z.object({ id: nodeRef(["field"]), type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1)).min(1).optional(), markdown: z.boolean().optional() }),
+  describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} a ${args.type}${args.type === "text" && args.markdown ? " written in Markdown" : ""}`,
   apply(ctx, args) {
-    const field = ctx.graph.getNode(args.id) as { options?: readonly string[] } | undefined;
+    const field = ctx.graph.getNode(args.id) as { options?: readonly string[]; markdown?: boolean } | undefined;
+    // Markdown is a text field's (FR-180): said where the type is text, let go where it is not.
+    const markdown = args.type === "text" && (args.markdown ?? field?.markdown) === true;
+    if (markdown !== (field?.markdown === true)) ctx.patchNode(args.id, { markdown: markdown ? true : undefined });
     if (args.type === "enum") {
       const options = args.options ?? field?.options;
       if (!options || options.length === 0) throw new Error(`${nameOf(ctx, args.id)} is made an enum, and an enum names its options: give them`);

@@ -302,7 +302,8 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
   /** A short, true sentence about one record: what it is, three facts, and its trouble. */
   const describeRecord = (node: AnyNode): string => {
     const definition = definitionOf(node.kind);
-    const facts = readableFields(node, definition, { limit: 3 })
+    // Prose by its start (FR-180): a sentence about a record is not its whole brief.
+    const facts = readableFields(node, definition, { limit: 3, excerpt: true })
       .map((field) => (field.alone.startsWith(field.label) ? field.alone : `${field.label.toLowerCase()} ${field.alone}`))
       .join(", ");
     const trouble = seen.violations().filter((violation) => violation.nodeIds.includes(node.id));

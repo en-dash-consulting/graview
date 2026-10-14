@@ -77,7 +77,7 @@ describe("an edit says a field's format in words, and a format alone can change"
     expect(added.ok && added.said).toEqual(["deal gains a field, deposit (number, money in USD — 10000 reads $10,000)."]);
     const refused = editDocument(deals, [{ op: "add-field", kind: "deal", field: "notes", type: "string", format: "money" }]);
     expect(refused.ok).toBe(false);
-    expect(!refused.ok && refused.findings[0]!.message).toMatch(/says how a number is said, and this field is a string/);
+    expect(!refused.ok && refused.findings[0]!.message).toMatch(/"format": "money" is a number's format, and this field is a string/);
   });
 
   it("retype-field with a format says it", () => {
@@ -102,6 +102,46 @@ describe("an edit says a field's format in words, and a format alone can change"
     // A format belongs on a number.
     expect(editDocument(deals, [{ op: "set-format", kind: "deal", field: "name", format: "money" }]).ok).toBe(false);
     expect(editDocument(deals, [{ op: "set-format", kind: "deal", field: "amount" }]).ok).toBe(false);
+  });
+});
+
+describe("a number shown as a duration is the duration type", () => {
+  it("is said, asked for and told to a model as {\"type\": \"duration\"} is, and the checker notes the type says it once", () => {
+    const app = compiled();
+    const add = app.mutations!.find((mutation) => mutation.name === "add-deal")!;
+    expect(formFields(add.input).find((field) => field.name === "effort")).toMatchObject({ control: "text", holds: "duration" });
+    const effort = (mutationToolSchema(add as never).inputSchema as { properties: Record<string, Record<string, unknown>> }).properties["effort"]!;
+    expect(effort).toMatchObject({ "x-graview-type": "duration", "x-graview-unit": "minutes" });
+    expect(effort["x-graview-format"]).toBeUndefined();
+    const noted = compileDocument(deals).findings.find((finding) => finding.code === "field-format");
+    expect(noted).toMatchObject({ severity: "note", path: "kinds.deal.fields.effort.format" });
+  });
+});
+
+describe("one field-format, for a number's format and Markdown alike", () => {
+  it("warns of a number's format on a text field and refuses Markdown on a number, in one sentence family", () => {
+    const odd = structuredClone(deals);
+    odd.kinds.deal.fields.notes = { type: "text", format: "money" };
+    odd.kinds.deal.fields.weight = { type: "number", format: "markdown" };
+    const found = compileDocument(odd).findings.filter((finding) => finding.code === "field-format" && finding.severity !== "note");
+    expect(found.map((finding) => [finding.path, finding.severity, finding.message])).toEqual([
+      ["kinds.deal.fields.weight.format", "error", 'deal\'s weight: "format": "markdown" is a text field\'s format, and this field is a number'],
+      ["kinds.deal.fields.notes.format", "warning", 'deal\'s notes: "format": "money" is a number\'s format, and this field is a text'],
+    ]);
+  });
+
+  it("set-format writes Markdown on a text field and clears it, and refuses a number's format there", () => {
+    const withNotes = { ...structuredClone(deals) };
+    withNotes.kinds.deal.fields.notes = { type: "text" };
+    const on = editDocument(withNotes, [{ op: "set-format", kind: "deal", field: "notes", format: "markdown" }]);
+    expect(on.ok && on.said).toEqual(["deal's notes is now written in Markdown, drawn as prose on the record's page; its values are kept."]);
+    if (!on.ok) return;
+    expect(on.document.kinds["deal"]!.fields["notes"]).toEqual({ type: "text", format: "markdown" });
+    const off = editDocument(on.document, [{ op: "set-format", kind: "deal", field: "notes", format: null }]);
+    expect(off.ok && off.document.kinds["deal"]!.fields["notes"]).toEqual({ type: "text" });
+    const refused = editDocument(withNotes, [{ op: "set-format", kind: "deal", field: "notes", format: "money" }]);
+    expect(!refused.ok && refused.findings[0]!.message).toMatch(/"format": "money" is a number's format, and this field is a text/);
+    expect(editDocument(deals, [{ op: "set-format", kind: "deal", field: "amount", format: "markdown" }]).ok).toBe(false);
   });
 });
 
@@ -158,14 +198,10 @@ describe("a form asks for an amount as it is said", () => {
     expect(amountInBox(10000, money)).toBe("10,000");
   });
 
-  it("reads a percent as a fraction, a duration in its unit, and money written for another locale", () => {
+  it("reads a percent as a fraction, and money written for another locale", () => {
     expect(readAmount("15%", { format: "percent" })).toBe(0.15);
     expect(readAmount("12.5", { format: "percent" })).toBe(0.125);
     expect(amountInBox(0.125, { format: "percent" })).toBe("12.5");
-    expect(readAmount("1 h 30 min", { format: "duration" })).toBe(90);
-    expect(readAmount("1:30", { format: "duration" })).toBe(90);
-    expect(readAmount("90", { format: "duration" })).toBe(90);
-    expect(readAmount("4:27", { format: "duration", unit: "s" })).toBe(267);
     expect(readAmount("1.250,50 €", { format: "money", currency: "EUR", locale: "de-DE" })).toBe(1250.5);
     expect(readAmount("12 kg", { unit: "kg" })).toBe(12);
   });

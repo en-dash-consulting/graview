@@ -236,6 +236,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                       field={field.key}
                       label={field.label}
                       value={field.value}
+                      markdown={field.markdown}
                       style={{ gridColumn: "1 / -1", gap: 4 }}
                       labelStyle={eyebrow}
                       valueStyle={{ lineHeight: 1.6 }}

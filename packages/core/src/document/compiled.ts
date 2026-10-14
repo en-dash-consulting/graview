@@ -206,6 +206,8 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
       break;
     case "text":
       schema = z.string().check(z.maxLength(20_000));
+      // Prose written in Markdown (FR-180): the record's page draws it, every list says its start. The mark `schema/markdown.ts` reads, set here so a page's first chunk reaches no module a fetched one shares.
+      if (spec.format) (z.defOf(schema) as Record<symbol, 1>)[Symbol.for("@graview/core:markdown")] = 1;
       break;
     case "number":
     case "integer":
@@ -251,11 +253,12 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
       schema = z.email();
       break;
   }
-  // A phone, a place and a duration say so, for a face to say and link each.
-  markTyped(schema, spec.type);
+  // A phone, a place and a duration say so, for a face to say and link each. A number shown as a duration IS one: whole minutes, said, typed and told to a model as the duration type is.
+  const numeric = spec.type === "number" || spec.type === "integer";
+  markTyped(schema, numeric && spec.format === "duration" ? "duration" : spec.type);
   if (spec.description) schema = schema.check(z.describe(spec.description));
-  // What a number is said as — money in the app's currency, a percent — read by every face, every form and every tool.
-  if ((spec.type === "number" || spec.type === "integer") && (spec.format || spec.unit)) markAmount(schema, { ...money, ...(spec.format ? { format: spec.format } : {}), ...(spec.unit ? { unit: spec.unit } : {}) });
+  // What a number is said as — money in the app's currency, a percent, a measure — read by every face, every form and every tool.
+  if (numeric && (spec.format === "money" || spec.format === "percent" || (!spec.format && spec.unit))) markAmount(schema, { ...money, ...(spec.format ? { format: spec.format } : {}), ...(spec.unit ? { unit: spec.unit } : {}) });
   return optional ? z.optional(schema) : schema;
 }
 

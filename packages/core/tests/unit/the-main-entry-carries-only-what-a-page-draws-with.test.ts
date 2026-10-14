@@ -15,6 +15,7 @@ import * as scene from "../../src/scene.js";
 import * as search from "../../src/search.js";
 import * as seat from "../../src/seat.js";
 import * as words from "../../src/words.js";
+import * as markdown from "../../src/markdown.js";
 
 /*
  * THE MAIN ENTRY CARRIES ONLY WHAT A PAGE DRAWS WITH. A hosted page imports
@@ -41,7 +42,9 @@ const OFF_THE_PAGE = {
   "@graview/core/json-schema": { from: jsonSchema, names: ["mutationToolSchema", "nodeJsonSchema", "schemaJson", "toJsonSchema"] },
   // FR-179: the matcher, a record and an argument said in words, and what the seat and the seeding read.
   "@graview/core/search": { from: search, names: ["NEAR_BELOW", "actsOn", "describeSearched", "fold", "fragmentOf", "matchNode", "parseQuery", "search", "searchableFields", "slipsBetween", "squeeze", "stemOf", "strengthOf", "touchWeights"] },
-  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "failureWords", "isLongText", "pageSections", "readableFields", "tellApart", "viaSaid", "amountBox", "amountInBox", "readAmount", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf"] },
+  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "excerptOf", "failureWords", "isLongText", "isMarkdownField", "pageSections", "readableFields", "tellApart", "viaSaid", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf", "amountBox", "amountInBox", "readAmount"] },
+  // FR-180: Markdown read into blocks, fetched with the first a page draws.
+  "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "beginning", "placesFrom", "placesOf"] },
 } as const;
 

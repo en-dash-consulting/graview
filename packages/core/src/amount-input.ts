@@ -1,5 +1,4 @@
 import { localeFor, numberAsRead } from "./days.js";
-import { durationScale, sayAmount } from "./document/amount.js";
 import type { AmountMark } from "./schema/amount-mark.js";
 
 /*
@@ -47,11 +46,6 @@ export function amountBox(mark: AmountMark): AmountBox {
     return { ...(symbol ? (before ? { prefix: symbol } : { suffix: symbol }) : {}), placeholder, hint: name ? `in ${name}` : mark.currency ? `in ${mark.currency}` : "an amount of money" };
   }
   if (mark.format === "percent") return { suffix: "%", placeholder: numberAsRead(15, locale), hint: "as a percent" };
-  if (mark.format === "duration") {
-    const scale = durationScale(mark.unit);
-    const unit = scale === 1 ? "seconds" : scale === 3600 ? "hours" : scale === 86_400 ? "days" : "minutes";
-    return { placeholder: scale === 60 ? "1 h 30 min" : numberAsRead(2, locale), hint: `in ${unit}, or like 1 h 30 min` };
-  }
   return { ...(mark.unit ? { suffix: mark.unit } : {}), placeholder: "", hint: mark.unit ? `in ${mark.unit}` : "a number" };
 }
 
@@ -60,7 +54,6 @@ export function amountInBox(value: number | undefined, mark: AmountMark): string
   if (value === undefined || !Number.isFinite(value)) return "";
   if (mark.format === "money") return numberAsRead(value, mark.locale, Number.isInteger(value) ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (mark.format === "percent") return numberAsRead(value * 100, mark.locale, { maximumFractionDigits: 4 });
-  if (mark.format === "duration") return sayAmount(value, mark);
   return numberAsRead(value, mark.locale, { maximumFractionDigits: 6 });
 }
 
@@ -89,30 +82,13 @@ function plainNumber(text: string, locale: string | undefined): number | undefin
 
 /**
  * THE NUMBER A PERSON'S TEXT MEANS for an amount: "$1,250.50" is 1250.5;
- * "15%" of a percent is 0.15; "1 h 30 min" of a duration in minutes is 90.
+ * "15%" of a percent is 0.15.
  * Its currency's symbol or code, spaces and group separators are let be;
  * `undefined` where it is no number at all, for the form to say so.
  */
 export function readAmount(text: string, mark: AmountMark | undefined): number | undefined {
   const raw = text.trim();
   if (raw === "") return undefined;
-  if (mark?.format === "duration") {
-    const pieces = [...raw.matchAll(/(\d+(?:[.,]\d+)?)\s*(d(?:ays?)?|h(?:ours?|rs?)?|m(?:in(?:utes?|s)?)?|s(?:ec(?:onds?|s)?)?)\b/gi)];
-    if (pieces.length > 0 && raw.replace(/(\d+(?:[.,]\d+)?)\s*[a-z]+/gi, "").trim() === "") {
-      const seconds = pieces.reduce((sum, [, n, unit]) => {
-        const u = unit!.toLowerCase();
-        const size = u.startsWith("d") ? 86_400 : u.startsWith("h") ? 3600 : u.startsWith("s") ? 1 : 60;
-        return sum + Number(n!.replace(",", ".")) * size;
-      }, 0);
-      return seconds / durationScale(mark.unit);
-    }
-    const clock = /^(\d+):([0-5]\d)$/.exec(raw);
-    // "1:30" is an hour and a half where the field counts minutes or more, a minute and a half where it counts seconds.
-    if (clock) {
-      const scale = durationScale(mark.unit);
-      return ((Number(clock[1]) * 60 + Number(clock[2])) * (scale === 1 ? 1 : 60)) / scale;
-    }
-  }
   const symbol = mark?.format === "money" && mark.currency ? currencyParts(mark).symbol : undefined;
   let t = raw;
   if (symbol) t = t.split(symbol).join("");

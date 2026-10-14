@@ -62,7 +62,8 @@ export type DescribedPart =
   | { readonly t: "heading"; readonly level: number; readonly text: string }
   | { readonly t: "text"; readonly text: string; readonly tone?: string }
   | { readonly t: "badge"; readonly text: string }
-  | { readonly t: "field"; readonly label: string; readonly text: string }
+  /** `long`: prose, drawn the record's width with its lines kept (FR-147); `markdown`: written in Markdown, drawn as prose (FR-180). */
+  | { readonly t: "field"; readonly label: string; readonly text: string; readonly long?: true; readonly markdown?: true }
   | { readonly t: "figure"; readonly text: string; readonly label?: string }
   | { readonly t: "progress"; readonly label: string; readonly text: string }
   | {
@@ -259,7 +260,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
     for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale }))) {
       if (section.title) parts.push({ t: "heading", level: 2, text: section.title });
-      for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value });
+      for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value, ...(field.long ? { long: true as const } : {}), ...(field.markdown ? { markdown: true as const } : {}) });
     }
   } else {
     const at = found!;

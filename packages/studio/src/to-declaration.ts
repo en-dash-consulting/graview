@@ -1,5 +1,6 @@
 import {
   appLinkField,
+  markdownField,
   bindsOf,
   fileField,
   imageField,
@@ -25,6 +26,7 @@ import {
   type Sight,
 } from "@graview/core";
 import { expressionRule } from "@graview/core/document";
+import { isMarkdownField } from "@graview/core/words";
 import { z } from "zod";
 import { DECLARED_KIND, type FieldType } from "./meta.js";
 import { fieldTypeOf, lensNodeId } from "./from-declaration.js";
@@ -104,9 +106,12 @@ export function computedFor(graph: { in(to: string, kind: string): readonly ({ r
 }
 
 /** The zod type a studio field declares. */
-export function zodFor(type: FieldType, required: boolean, options?: readonly string[]): z.ZodType {
+export function zodFor(type: FieldType, required: boolean, options?: readonly string[], markdown?: boolean): z.ZodType {
   const base: z.ZodType =
-    type === "app-link"
+    // Prose written in Markdown (FR-180).
+    type === "text" && markdown
+      ? markdownField()
+      : type === "app-link"
       ? appLinkField()
       : type === "image"
         ? imageField()
@@ -270,6 +275,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       type: (str(field, "type") ?? "string") as FieldType,
       required: bool(field, "required"),
       options: list(field, "options"),
+      markdown: bool(field, "markdown"),
     }));
 
   const definitions = read.ofKind("kind").map((kind) => {
@@ -289,8 +295,9 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
         was !== undefined &&
         was.type === field.type &&
         was.required === field.required &&
-        (was.options ?? []).join("|") === (field.options ?? []).join("|");
-      shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options);
+        (was.options ?? []).join("|") === (field.options ?? []).join("|") &&
+        isMarkdownField(own) === field.markdown;
+      shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options, field.markdown);
     }
     const edges: Record<string, EdgeDeclaration> = {};
     for (const edge of read.in(kind.id, "from-kind")) {

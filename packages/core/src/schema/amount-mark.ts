@@ -2,7 +2,7 @@ import { defOf } from "./zod.js";
 
 /*
  * WHAT A NUMBER FIELD IS SAID AS, on its schema: money in a currency, a
- * fraction said as a percent, a duration, a measure in a unit. Every face
+ * fraction said as a percent, a measure in a unit. Every face
  * that reads a record says the value by it ("$10,000", never 10000), a form
  * asks for "$1,250.50" by it, a tool's schema tells a model the number is
  * money in USD. A mark on the schema's def, as a file field is marked
@@ -12,10 +12,10 @@ import { defOf } from "./zod.js";
  */
 const AMOUNT = Symbol.for("@graview/core:amount");
 
-/** A number's declared format, and the currency and locale it is said in where it is money. */
+/** A number's declared format, and the currency and locale it is said in where it is money. A number shown as a duration is the duration type's (`markTyped`), never an amount. */
 export interface AmountMark {
-  readonly format?: "money" | "percent" | "duration";
-  /** A duration's unit ("minutes" unless "s", "h" or "d"), or a measure's ("kg"). */
+  readonly format?: "money" | "percent";
+  /** A measure's unit ("kg"), or a currency of its own ("EUR"). */
   readonly unit?: string;
   readonly currency?: string;
   readonly locale?: string;
