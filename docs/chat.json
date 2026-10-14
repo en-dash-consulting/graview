@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-12T03:55:21.766Z",
+  "at": "2026-10-14T02:16:57.020Z",
   "engine": "chromium",
   "checks": {
     "itFloatsAtTheFoot": {
@@ -89,7 +89,7 @@
     },
     "aBrokenModelLeavesTheGraphsAnswer": {
       "grounded": "omeone who moves pianos\"Do itNot nowFinish \"Pay the deposit\"Do itNot nowDo all 2",
-      "floored": " wrong, or say a change in its own words — like \"Add a task\".(AI didn't answer just now, so this is from the app alone.)",
+      "floored": " change in its own words — like \"Add a task\".(AI didn't answer just now: the model is down. This is from the app alone.)",
       "flooredNote": null,
       "ok": true
     }

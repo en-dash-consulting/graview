@@ -22,7 +22,7 @@ import {
   type Violation,
 } from "@graview/core";
 import { answerSeenBy } from "@graview/core/seat";
-import { search } from "@graview/core/search";
+import { search, type SearchRanker } from "@graview/core/search";
 import { mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import { authorship, markHits } from "./untrusted.js";
 import { READ_HITS } from "./bounds.js";
@@ -188,6 +188,12 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    */
   readonly places?: readonly Place[] | (() => readonly Place[]);
   /**
+   * THE HOST'S RANKER (`HostAi.near`): asked by `search_graph` when the
+   * exact hits are few, with only the records this seat sees, its near hits
+   * answered after the exact ones as `near: true`.
+   */
+  readonly near?: SearchRanker | undefined;
+  /**
    * The app whose places `describe_place` describes: its home, its lenses,
    * its views and its arrangement (FR-89). Without it a seat can still be
    * told what a kind's list, a record's page and the derived home show.
@@ -242,7 +248,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     name: "search_graph",
     title: "Find by name",
     description:
-      "Find things by name: records whose name or readable fields carry the words, and the kinds, places and rules the words name — each with why it matched. Reach for this before get_graph when you know what something is called. Words match the start of words, case and accents aside; key:value tokens narrow as a list's filter does (done:false, is:any for past records, kind:<kind>). Pass subject (a node id) to get the acts you may run on it as hits too.",
+      "Find things by name: records whose name or readable fields carry the words, and the kinds, places and rules the words name — each with why it matched. Reach for this before get_graph when you know what something is called. Words match the start of words, case and accents aside; key:value tokens narrow as a list's filter does (done:false, is:any for past records, kind:<kind>). Pass subject (a node id) to get the acts you may run on it as hits too. When few records match exactly, records with a near word follow — a typo, another form of the word, a meaning — each with near: true and why.matched, the record's own word that answered.",
     inputSchema: {
       type: "object",
       properties: {
@@ -768,14 +774,17 @@ export function createToolRuntime<S extends AnySchema>(
         case "search_graph": {
           const places = typeof options.places === "function" ? options.places() : options.places;
           const subject = typeof args["subject"] === "string" ? args["subject"] : undefined;
-          const found = search(seen, String(args["query"] ?? ""), {
+          const asked = search(seen, String(args["query"] ?? ""), {
             principal,
+            rank: options.near,
             // An agent's find reaches the live records unless it asks (FR-173).
             archived: archivedFrom(args["archived"]),
             limit: typeof args["limit"] === "number" && args["limit"] > 0 ? Math.min(args["limit"], READ_HITS) : READ_HITS,
             ...(places ? { places } : {}),
             ...(subject ? { subject, from: [subject] } : {}),
           });
+          // The host's ranker's near hits, when it was asked: an agent waits for them, as the strip shows them when they come.
+          const found = asked.later ? await asked.later : asked;
           return {
             ok: true,
             data: (await reads()).searchRead(found, markHits(found, authorship(seen, principal))),

@@ -139,9 +139,13 @@ export type {
   Hit,
   HitAbout,
   MatchStrength,
+  NearBy,
+  NearCandidate,
+  NearScore,
   ParsedQuery,
   SearchCondition,
   SearchOptions,
+  SearchRanker,
   SearchResult,
   Why,
 } from "./search.js";

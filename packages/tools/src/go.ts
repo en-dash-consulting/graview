@@ -331,7 +331,8 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
 
   /** Records by name, under the seat's sight: the one meant, or the several the words find. */
   const recordsNamed = (words: string): { one?: AnyNode; picks: NodeHit[] } => {
-    const found = search(store, words, { principal, today, limit: 6, ...(context.selection ? { from: context.selection } : {}) });
+    // Going by name goes to what is called that: a near word is Find's to offer, not a destination.
+    const found = search(store, words, { principal, today, limit: 6, near: false, ...(context.selection ? { from: context.selection } : {}) });
     const picks = found.hits.filter((hit): hit is NodeHit => hit.about === "node" && visible.has(hit.kind) && graph.getNode(hit.id) !== undefined);
     const exact = picks.filter((hit) => hit.why.field === "label" && hit.why.strength === "exact");
     if (exact.length === 1) return { one: graph.getNode(exact[0]!.id)!, picks };
