@@ -5,7 +5,8 @@ import { parent, world } from "../support/hidden-phones.js";
 /**
  * A SIGHT THAT HIDES A FIELD FAILS CLOSED UNTIL IT CAN BE JUDGED (Roadmap
  * f-field-sight). Judging one is `@graview/core/field-sight`'s, which a
- * host that serves seats loads (`@graview/ship`'s `openStore` and server) and a hosted page does not carry up front. A store without it
+ * host that serves seats loads (`@graview/ship`'s `openStore` and server)
+ * and a hosted page does not carry up front. A store without it
  * cannot keep a field, so it keeps the record: a sight with `hide` or
  * `fields` shows nothing — never the whole record. A store whose host
  * already served it what one seat may see (`openRemote`'s) is a mirror and
