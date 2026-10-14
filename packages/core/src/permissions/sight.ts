@@ -3,7 +3,7 @@ import type { Operation } from "../ops/types.js";
 import { actingAs, grantsTo, isSystem } from "./policy.js";
 import type { SeatLens } from "../ops/withheld.js";
 import type { Judged } from "../seen.js";
-import type { Policy, Principal } from "./types.js";
+import type { Policy, Principal, Sight } from "./types.js";
 
 /** Which fields of a record a seat may not see: a test of a field, or undefined when it sees them all. */
 export type FieldsKept = (node: { readonly id: string; readonly kind: string }) => ((field: string) => boolean) | undefined;
@@ -15,17 +15,30 @@ export type FieldsKept = (node: { readonly id: string; readonly kind: string }) 
  * server entry does). Until it is loaded such a sight shows nothing,
  * so a store that cannot judge a field keeps the record rather than serve
  * the field. A store that holds only what its host served one seat
- * (`openRemote`'s) turns it `on` as a mirror: the host judged it, and it
- * shows what it was served.
+ * (`openRemote`'s) is put in `served` as a mirror: the host judged it, and
+ * IT shows what it was served — that store alone, never another store the
+ * same page holds whole.
  */
 export const FIELD_SIGHT: {
-  /** Whether a sight that shows only some fields shows anything: field sight is loaded, or the store is a mirror. */
+  /** Whether field sight is loaded: a sight that shows only some fields shows what it shows, in every store. */
   on?: boolean;
+  /** The stores that hold only what their host served one seat: each shows what it holds, though field sight is not loaded. */
+  readonly served: WeakSet<object>;
   /** A seat's lens, made to keep the fields its sight keeps. */
   lens?: (lens: SeatLens, store: Judged, principal: Principal) => SeatLens;
   /** The fields one seat may not see, record by record; undefined when it sees every one. */
   keptFrom?: (store: Judged, principal: Principal) => FieldsKept | undefined;
-} = {};
+} = { served: new WeakSet() };
+
+/** Whether a sight shows only some fields: an allow list, or fields it hides. */
+export const partialSight = (sight: Sight): boolean => sight.fields !== undefined || (sight.hide?.length ?? 0) > 0;
+
+/**
+ * WHETHER A STORE MAY SHOW A SIGHT THAT SHOWS ONLY SOME FIELDS: field sight
+ * is loaded and keeps them, or the store is a mirror of what its host
+ * served (`FIELD_SIGHT.served`). Otherwise such a sight shows nothing.
+ */
+export const fieldsJudged = (store: object): boolean => FIELD_SIGHT.on === true || FIELD_SIGHT.served.has(store);
 
 /** The edges a graph can be asked about, to say what is joined to whom. */
 interface Joined {
@@ -204,12 +217,14 @@ export function sees(
   graph: Joined,
   /** Who made a record, from the log; without it, `own` reads the graph alone. */
   records?: Pick<Records, "creatorOf">,
+  /** Whether a sight that shows only some fields may show the record (`fieldsJudged`); without it, only when field sight is loaded. */
+  judged: boolean = FIELD_SIGHT.on === true,
 ): boolean {
   if (!policy?.sees?.length) return true;
   // The system sees what it keeps; an agent sees what it AND its person may (FR-06, FR-17).
   if (isSystem(principal)) return true;
   // A sight that shows only some fields shows nothing until they can be judged: it fails closed (Roadmap f-field-sight).
-  const sights = policy.sees.filter((sight) => sight.kinds.includes(node.kind) && (FIELD_SIGHT.on || !(sight.hide || sight.fields)));
+  const sights = policy.sees.filter((sight) => sight.kinds.includes(node.kind) && (judged || !partialSight(sight)));
   if (sights.length === 0) return false;
   principal = actingAs(principal);
   return sights.some((sight) => {

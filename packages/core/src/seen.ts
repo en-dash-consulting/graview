@@ -7,7 +7,7 @@ import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
-import { FIELD_SIGHT, recordsOf, sees } from "./permissions/sight.js";
+import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees } from "./permissions/sight.js";
 import type { Policy, Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { Store } from "./store.js";
@@ -65,7 +65,9 @@ export function seesEveryRecord(store: Judged & { readonly schema: { readonly ki
   const off = store.modules?.disabledKinds ?? NOTHING;
   const sights = store.policy?.sees ?? [];
   const acting = actingAs(author);
-  const full = (kind: string) => !off.has(kind) && (sights.length === 0 || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via));
+  // A sight that shows only some fields shows no record until they can be judged: it fails closed here as in `sees`.
+  const judged = fieldsJudged(store);
+  const full = (kind: string) => !off.has(kind) && (sights.length === 0 || sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, acting) && !sight.own && !sight.via && (judged || !partialSight(sight))));
   const everything = store.schema.kinds.every(full);
   return (kind) => everything || (kind !== undefined && full(kind));
 }
@@ -88,10 +90,10 @@ export function seesId(store: Judged, principal: Principal): (id: string) => boo
     if (!store.policy?.sees?.length && off.size === 0) return true;
     const records = recordsOf(store.log);
     const node = store.graph.getNode(id);
-    if (node) return !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records);
+    if (node) return !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records, fieldsJudged(store));
     const kind = records.kindOf(id);
     if (kind === undefined) return true;
-    return !off.has(kind) && sees(store.policy, principal, { id, kind }, { out: () => [], in: () => [] }, records);
+    return !off.has(kind) && sees(store.policy, principal, { id, kind }, { out: () => [], in: () => [] }, records, fieldsJudged(store));
   };
 }
 
@@ -113,7 +115,7 @@ function pinnedSight(store: Judged, principal: Principal, judged: Map<string, bo
     if (held !== undefined) return held;
     let seen: boolean;
     const node = store.graph.getNode(id);
-    if (node) seen = !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records);
+    if (node) seen = !off.has(node.kind) && sees(store.policy, principal, node, store.graph, records, fieldsJudged(store));
     else {
       const kind = records.kindOf(id);
       // A string that names no record is nothing to keep, and not judged: most strings in a log are not ids. A caller that keeps a reading is told it was asked.
@@ -121,7 +123,7 @@ function pinnedSight(store: Judged, principal: Principal, judged: Map<string, bo
         unnamed?.add(id);
         return true;
       }
-      seen = !off.has(kind) && sees(store.policy, principal, { id, kind }, NO_LINKS, records);
+      seen = !off.has(kind) && sees(store.policy, principal, { id, kind }, NO_LINKS, records, fieldsJudged(store));
     }
     judged.set(id, seen);
     return seen;

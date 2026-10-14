@@ -23,7 +23,7 @@ import {
 } from "@graview/core";
 import { answerSeenBy } from "@graview/core/seat";
 import { search, type SearchRanker } from "@graview/core/search";
-import { mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
+import { argumentsNeverShown, mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import { authorship, markHits } from "./untrusted.js";
 import { READ_HITS } from "./bounds.js";
 import {
@@ -575,8 +575,20 @@ function toolNames(acts: readonly string[]): ReadonlyMap<string, string> {
   return names;
 }
 
-/** One act as the tool a model is offered: its schema, its title and what it does. */
-function actTool(mutation: AnyMutationDefinition, name: string): ToolDefinition {
+/** A tool's schema without the arguments a seat is not offered: their properties, and the requirement of any. */
+function without(schema: JsonSchema, kept: ReadonlySet<string>): JsonSchema {
+  if (kept.size === 0) return schema;
+  const properties = Object.fromEntries(Object.entries((schema["properties"] ?? {}) as Record<string, JsonSchema>).filter(([name]) => !kept.has(name)));
+  const required = ((schema["required"] ?? []) as string[]).filter((name) => !kept.has(name));
+  return { ...schema, properties, ...(schema["required"] ? { required } : {}) };
+}
+
+/**
+ * One act as the tool a model is offered: its schema, its title and what
+ * it does — without an argument that writes a field the seat's sight never
+ * shows it, so the tool does not name one (Roadmap f-field-sight).
+ */
+function actTool(mutation: AnyMutationDefinition, name: string, kept: ReadonlySet<string>): ToolDefinition {
   const tool = mutationToolSchema(mutation);
   const title = actTitle(mutation);
   const description = tool.nodeRefs.length > 0 ? `${tool.description}${/[.!?]$/.test(tool.description) ? "" : "."} ${BY_NAME}` : tool.description;
@@ -584,7 +596,7 @@ function actTool(mutation: AnyMutationDefinition, name: string): ToolDefinition 
     name,
     title,
     description,
-    inputSchema: tool.inputSchema,
+    inputSchema: without(tool.inputSchema, kept),
     mutating: true,
     annotations: {
       title,
@@ -619,13 +631,15 @@ function surfaceOf(
   acts: readonly AnyMutationDefinition[],
   permitted: ReadonlySet<string>,
   readOnly: boolean,
-  drafts?: "draw" | "keep",
+  drafts: "draw" | "keep" | undefined,
+  /** The arguments of an act this seat is not offered (`argumentsNeverShown`). */
+  kept: (act: AnyMutationDefinition) => ReadonlySet<string>,
 ): { readonly definitions: readonly ToolDefinition[]; readonly names: ReadonlyMap<string, string> } {
   const names = toolNames(acts.map((act) => act.name));
   const drawing = draftTools(drafts, readOnly);
   const definitions = readOnly
     ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
-    : [...READ_TOOLS, ACT_ON_SEVERAL, ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!))];
+    : [...READ_TOOLS, ACT_ON_SEVERAL, ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act)))];
   return { definitions, names };
 }
 
@@ -666,7 +680,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts);
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never));
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -694,7 +708,9 @@ export function createToolRuntime<S extends AnySchema>(
    */
   const acts = store.allMutations() as unknown as AnyMutationDefinition[];
   const permitted = new Set(store.permittedMutations(principal).map((mutation) => mutation.name));
-  const { definitions, names } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts ? (options.drafts.keep ? "keep" : "draw") : undefined);
+  const { definitions, names } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts ? (options.drafts.keep ? "keep" : "draw") : undefined, (act) =>
+    argumentsNeverShown(store.schema as AnySchema, store.policy, principal, act as never),
+  );
   const hash = surfaceHash(definitions);
   /** A tool's name, or an act's declared one, as the act it runs. */
   const actNamed = (name: string): string | undefined => {

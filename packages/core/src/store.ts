@@ -26,7 +26,7 @@ import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
-import { creatorsBefore, recordsOf } from "./permissions/sight.js";
+import { creatorsBefore, fieldsJudged, partialSight, recordsOf } from "./permissions/sight.js";
 import { PermissionDeniedError, type Policy, type Principal, type Refusal } from "./permissions/types.js";
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
@@ -967,9 +967,11 @@ export class Store<S extends AnySchema> {
     const sights = this.policy?.sees ?? [];
     if (sights.length > 0 && !isSystem(principal)) {
       const creatable = new Set(this.permittedMutations(principal).flatMap((mutation) => mutation.creates ?? []));
+      // A sight that shows only some fields shows nothing until they can be judged, as `sees` says (Roadmap f-field-sight).
+      const judged = fieldsJudged(this);
       // Every kind: once a policy says who sees what, a kind no sight names is seen by nobody.
       for (const kind of this.schema.kinds as readonly string[]) {
-        const seeing = sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, principal) && ((!sight.own && !sight.via) || principal.id !== undefined));
+        const seeing = sights.some((sight) => sight.kinds.includes(kind) && grantsTo(sight, principal) && ((!sight.own && !sight.via) || principal.id !== undefined) && (judged || !partialSight(sight)));
         if (!seeing && !creatable.has(kind)) kept.add(kind);
       }
     }

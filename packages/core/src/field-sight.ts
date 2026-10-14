@@ -33,7 +33,7 @@ import type { Operation } from "./ops/types.js";
 import { keptOf, withoutKeptFields } from "./ops/kept-fields.js";
 import { namesUnseen, whole, withhold, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
-import { FIELD_SIGHT, recordsOf, type FieldsKept, type Records } from "./permissions/sight.js";
+import { FIELD_SIGHT, partialSight, recordsOf, type FieldsKept, type Records } from "./permissions/sight.js";
 import type { Policy, Principal, Sight } from "./permissions/types.js";
 import { labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
@@ -48,8 +48,7 @@ interface Joined {
 
 type Node = { readonly id: string; readonly kind: string };
 
-/** Whether a sight shows only some fields: an allow list, or fields it hides. */
-const partial = (sight: Sight): boolean => sight.fields !== undefined || (sight.hide?.length ?? 0) > 0;
+const partial = partialSight;
 
 const PARTIAL = new WeakMap<object, ReadonlySet<string>>();
 
