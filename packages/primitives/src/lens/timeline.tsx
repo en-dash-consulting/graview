@@ -296,6 +296,19 @@ function spanEmphasis(emphasis: Emphasis, hue: number): CSSProperties {
 /** Below this share of the window, a span is a moment rather than a duration. */
 const MOMENT_RATIO = 0.045;
 const GUTTER = 52;
+/*
+ * HOW TALL ONE STEP OF THE AXIS IS, AT THE LEAST.
+ *
+ * The grid is positioned in percentages of its own box, so it was exactly
+ * as tall as whatever held it said — and a holder that said nothing (the
+ * panel beside the map, whose body is as tall as what it holds) gave it
+ * none: the week drew its day names, half of one hour's label and not one
+ * shift. A step between two rules is never shorter than a label and room
+ * to read a block between them; a holder with more room still stretches it.
+ */
+const STEP_AT_LEAST = 44;
+/** And the whole grid, however few steps the window has. */
+const GRID_AT_LEAST = 240;
 
 /**
  * The lens's aggregate view.
@@ -393,7 +406,7 @@ export function TimelineView<S extends AnySchema>({
           ))}
         </div>
 
-        <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+        <div data-graview-timeline-grid="" style={{ position: "relative", flex: 1, minHeight: Math.max(GRID_AT_LEAST, Math.ceil(range / tick) * STEP_AT_LEAST) }}>
           {ticks.map((at, index) => (
             <div
               key={at}

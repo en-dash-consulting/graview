@@ -426,6 +426,109 @@ try {
       motion.scroll === "auto",
   };
 
+  /* ------------------------------------------ the week beside the map */
+  /*
+   * THE WEEK, OPENED FROM ALTITUDE, IS THE WEEK. Pressed on the shifts'
+   * marquee it opens in the panel beside the map (a sheet on a phone), and
+   * it drew a sliver sixty pixels tall: the day names, half an hour's label,
+   * and not one shift — the grid is placed in percentages of its own box,
+   * and the panel's body gave it no height. Here: the grid is tall enough to
+   * read, every shift in the week is a block on it with a height of its own
+   * and inside the panel, and nothing in the panel scrolls but the panel.
+   */
+  const weekBeside = {};
+  for (const [width, height] of [[1440, 900], [390, 844]]) {
+    const beside = await browser.newPage({ viewport: { width, height } });
+    beside.on("pageerror", (error) => errors.push(error.message));
+    await beside.goto(`${at("rota")}/?today=2026-09-14#overview=1&focus=aggregate%3Ashift&in.view=the-week`, { waitUntil: "load" });
+    await beside.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
+    await beside.waitForSelector('[data-testid="lens-panel"] [data-graview-lens]', { timeout: 20_000 }).catch(() => undefined);
+    await beside.waitForTimeout(1400);
+    weekBeside[width] = await beside.evaluate(() => {
+      const panel = document.querySelector('[data-testid="lens-panel"]');
+      const lens = panel?.querySelector("[data-graview-lens]") ?? null;
+      const body = lens?.parentElement ?? null;
+      const grid = panel?.querySelector("[data-graview-timeline-grid]") ?? null;
+      const box = lens?.getBoundingClientRect();
+      // How many shifts the district holds: its blocks and any it had no room for.
+      const village = document.querySelector('[data-graview-plot="kind:shift"] .graview-village');
+      const shifts = Number(village?.getAttribute("data-graview-village") ?? 0) + Number(village?.getAttribute("data-graview-rest") ?? 0);
+      const blocks = [...(panel?.querySelectorAll("[data-graview-span]") ?? [])].map((el) => el.getBoundingClientRect());
+      const scrollsInside = [...(panel?.querySelectorAll("*") ?? [])].filter((el) => {
+        if (el === body) return false;
+        const style = getComputedStyle(el);
+        return (/(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight + 1) || (/(auto|scroll)/.test(style.overflowX) && el.scrollWidth > el.clientWidth + 1);
+      }).length;
+      return {
+        panel: panel?.getAttribute("data-graview-map-panel") ?? null,
+        gridHeight: grid ? Math.round(grid.getBoundingClientRect().height) : 0,
+        shifts,
+        blocks: blocks.length,
+        thinnest: blocks.length ? Math.round(Math.min(...blocks.map((b) => b.height))) : 0,
+        outside: box ? blocks.filter((b) => b.left < box.left - 1 || b.right > box.right + 1).length : blocks.length,
+        scrollsInside,
+        pageSideways: document.documentElement.scrollWidth > innerWidth + 1,
+      };
+    });
+    await beside.close();
+  }
+  report.checks.theWeekBesideTheMapDrawsEveryShift = {
+    ...weekBeside,
+    ok: Object.values(weekBeside).every(
+      (one) =>
+        one.panel !== null &&
+        one.gridHeight >= 240 &&
+        one.shifts > 0 &&
+        one.blocks === one.shifts &&
+        one.thinnest >= 12 &&
+        one.outside === 0 &&
+        one.scrollsInside === 0 &&
+        !one.pageSideways,
+    ),
+  };
+
+  /*
+   * NO TWO RECORD NAMES ON A DISTRICT LIE OVER EACH OTHER. Come down on the
+   * city and a district's blocks say their names; every block wrote its own
+   * over itself whatever stood beside it, and the shifts' ten names were one
+   * smudge. A name is said where it has room and the rest wait for the
+   * camera to come closer: at every step down, no two overlap, and the
+   * closest step still names blocks.
+   */
+  const namesAt = [];
+  const ground = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  ground.on("pageerror", (error) => errors.push(error.message));
+  await ground.goto(`${at("rota")}/?today=2026-09-14#overview=1&focus=aggregate%3Ashift&in.view=the-week`, { waitUntil: "load" });
+  await ground.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
+  await ground.waitForTimeout(1200);
+  for (let step = 0; step < 4; step++) {
+    await ground.click('[data-testid="zoom-in"]');
+    await ground.waitForTimeout(900);
+    namesAt.push(
+      await ground.evaluate(() => {
+        let names = 0;
+        const overlapping = [];
+        for (const plot of document.querySelectorAll(".graview-plot")) {
+          const said = [...plot.querySelectorAll(".graview-building-name")].map((text) => ({ box: text.getBoundingClientRect(), name: text.textContent }));
+          names += said.length;
+          for (let i = 0; i < said.length; i++) {
+            for (let j = i + 1; j < said.length; j++) {
+              const a = said[i].box;
+              const b = said[j].box;
+              if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) overlapping.push(`${said[i].name} / ${said[j].name}`);
+            }
+          }
+        }
+        return { zoom: document.querySelector('[data-testid="zoom-level"]')?.textContent ?? null, names, overlapping };
+      }),
+    );
+  }
+  await ground.close();
+  report.checks.noTwoRecordNamesOnADistrictOverlap = {
+    steps: namesAt,
+    ok: namesAt.every((step) => step.overlapping.length === 0) && (namesAt.at(-1)?.names ?? 0) > 0,
+  };
+
   report.pageErrors = errors;
   report.passed = Object.values(report.checks).every((check) => check.ok) && errors.length === 0;
 } catch (error) {

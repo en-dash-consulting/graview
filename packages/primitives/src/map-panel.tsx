@@ -6,7 +6,7 @@ import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
 import { useKit, ViewBoundary } from "@graview/react/drawing";
 import type { MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
-import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, type ViewComponent } from "@graview/react/provider";
+import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, ViewModeProvider, type ViewComponent } from "@graview/react/provider";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { barPanes } from "./bar-panes-door.js";
 import { problemsNamed } from "./problem-count.js";
@@ -284,7 +284,16 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
 .graview-ground[data-graview-altitude] [data-graview-view^="kind:"]:not([data-graview-view="${kindCardId(kind)}"]) { opacity: 0.4; }`}</style>
       <div
         data-graview-lens={place?.as ?? ""}
-        style={{ padding: "8px 12px 16px", minHeight: "100%", boxSizing: "border-box" }}
+        /*
+         * THE LENS TAKES THE PANEL'S REMAINING HEIGHT. A grid whose one row
+         * is the room left under the head, and grows past it with what it
+         * holds: a lens that fills its box (the week, a timetable) is given
+         * a box as tall as the panel, rather than a height of "auto" its
+         * percentages came to nothing against; a lens taller than that grows
+         * and the panel's own body scrolls — never a second scroll inside it.
+         * One column no wider than the panel, so nothing pushes it sideways.
+         */
+        style={{ padding: "8px 12px 16px", minHeight: "100%", boxSizing: "border-box", display: "grid", gridTemplateRows: "1fr", gridTemplateColumns: "minmax(0, 1fr)", alignItems: "start" }}
         onClick={(event) => {
           const id = pickedFrom(event.target);
           if (!id || store.graph.getNode(id) === undefined) return;
@@ -307,9 +316,17 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
         {View ? (
           /* The head names it; the lens's own panel does not say it again under it. */
           <NamedAbove.Provider value={named}>
-            <ViewBoundary kind={kind} {...(registration?.title ? { view: registration.title } : {})}>
-              <View nodes={members} label={named} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(chosen.length > 0 ? { implicated: chosen } : {})} />
-            </ViewBoundary>
+            {/*
+              * DRAWN AS A PAGE, as its own place draws it: the panel is the
+              * page here, so the lens's panel is no card inside it with a
+              * scroll box of its own — the mode its props say, said to the
+              * primitives too.
+              */}
+            <ViewModeProvider mode="fullscreen">
+              <ViewBoundary kind={kind} {...(registration?.title ? { view: registration.title } : {})}>
+                <View nodes={members} label={named} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(chosen.length > 0 ? { implicated: chosen } : {})} />
+              </ViewBoundary>
+            </ViewModeProvider>
           </NamedAbove.Provider>
         ) : null}
       </div>
