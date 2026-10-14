@@ -1,5 +1,6 @@
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
+import { isMarkdownField } from "../schema/markdown.js";
 import { descriptionOf } from "../schema/zod.js";
 import type { FieldSpec } from "./schema.js";
 
@@ -39,6 +40,8 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
   if (file) return { spec: { type: file, ...base } };
   // Another app's address (FR-171): `appLinkField()`.
   if (isAppLinkField(schema)) return { spec: { type: "app-link", ...base } };
+  // Prose written in Markdown (FR-180): `markdownField()`.
+  if (isMarkdownField(schema)) return { spec: { type: "text", format: "markdown", ...base } };
   switch (def["type"]) {
     case "string": {
       const format = def["format"];

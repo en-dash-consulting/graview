@@ -98,6 +98,8 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
         droppedOptions.push({ kind, field, options: dropped });
         sentences.push(`${kind}'s ${field} no longer offers ${dropped.map((o) => `"${o}"`).join(", ")}; records holding ${dropped.length === 1 ? "it" : "them"} are cleared.`);
       }
+      // Written in Markdown or not (FR-180): the values are kept as written either way; only how the record's page draws them changes.
+      if (old.type === f.type && f.type === "text" && (old.format === "markdown") !== (f.format === "markdown")) sentences.push(`${kind}'s ${field} ${f.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is no longer Markdown; it is drawn as written"}.`);
       const added = (f.options ?? []).filter((o) => !(old.options ?? []).includes(o));
       if (added.length > 0) sentences.push(`${kind}'s ${field} now also offers ${added.map((o) => `"${o}"`).join(", ")}.`);
       if (f.required && !old.required && f.default === undefined) {

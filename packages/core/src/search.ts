@@ -12,6 +12,7 @@ import { hidesFrom, seesId } from "./seen.js";
 import type { Store } from "./store.js";
 import { kindPath, onePerPicture, placePath, sharesItsName, type Place } from "./views/types.js";
 import { capitalize, listed } from "./capital.js";
+import { markdownWords } from "./excerpt-of.js";
 
 /**
  * SEARCH IS ONE SEAM, and the graph is the result list.
@@ -321,7 +322,8 @@ function textsRead(definition: AnyNodeDefinition | undefined, node: { id: string
      * open task. A state is asked for as a condition: `done:false`.
      */
     if (typeof node[field.key] === "boolean") continue;
-    texts.push({ field: field.key, reading: field.label, text: field.value });
+    // Markdown is found by its words and shown as words (FR-180): "**van**" is "van" in a hit's line.
+    texts.push({ field: field.key, reading: field.label, text: field.markdown ? markdownWords(field.value) : field.value });
   }
   return texts;
 }

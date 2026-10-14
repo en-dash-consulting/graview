@@ -1,6 +1,7 @@
 import { bindsOf, nodeRefArgs, placeSlug, requiredRolesOf, type LensDeclaration } from "@graview/core";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
+import { isMarkdownField } from "@graview/core/words";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
 import type { z } from "zod";
 import { DECLARED_KIND, FIELD_TYPES, type FieldType } from "./meta.js";
@@ -69,7 +70,7 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
     case "string": {
       // A link, an address or a date and time is a string zod checks; the document's reading says which.
       const said = fieldSpecOf(type)?.type;
-      return { type: said === "url" || said === "email" || said === "datetime" ? said : "string", required };
+      return { type: said === "url" || said === "email" || said === "datetime" || said === "text" ? said : "string", required };
     }
     default:
       return { type: "string", required };
@@ -115,6 +116,8 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
         required: typed.required,
         ...(typed.options ? { options: [...typed.options] } : {}),
         ...(def.display?.labels?.[name] ? { description: def.display.labels[name] } : {}),
+        // Written in Markdown (FR-180): the declaration's mark, or the document's format.
+        ...(typed.type === "text" && (isMarkdownField(type) || document?.kinds[def.kind]?.fields[name]?.format === "markdown") ? { markdown: true } : {}),
       });
       edges.push({ kind: "of", from: id, to: kindId(def.kind) });
     }

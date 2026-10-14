@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
+import { isMarkdownField } from "../schema/markdown.js";
 import { describeArg, unwrap } from "./arg-shape.js";
 import { nodeRefKinds } from "./node-ref.js";
 
@@ -50,6 +51,8 @@ export interface ScalarField {
   readonly long?: true;
   /** Another app's address (FR-171): asked for as one — `@owner/app`, its id, or its https:// address. */
   readonly app?: true;
+  /** Prose written in Markdown (FR-180): asked for in a text area, and said to be Markdown. */
+  readonly markdown?: true;
   readonly options?: readonly string[];
   readonly min?: number;
   readonly max?: number;
@@ -146,7 +149,7 @@ export function formField(name: string, schema: unknown): FormField {
   }
 
   const scalar = describeArg(schema);
-  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}) };
+  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}), ...(isMarkdownField(field) ? { markdown: true as const } : {}) };
   if (scalar.type === "date") return { control: "date", name, optional, ...(scalar.time ? { time: true as const } : {}) };
   if (scalar.type === "number") {
     return {

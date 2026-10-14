@@ -1,4 +1,5 @@
 import { isAppLinkField, isoDate, nodeRefKinds } from "@graview/core";
+import { isMarkdownField } from "@graview/core/words";
 
 /*
  * A CHECKOUT'S OWN ZOD, WRITTEN BACK AS IT WAS WRITTEN.
@@ -72,11 +73,13 @@ export interface ZodUses {
   /** A picture or a document (FR-162), as the studio declared one. */
   imageField?: boolean;
   fileField?: boolean;
+  /** Prose written in Markdown (FR-180). */
+  markdownField?: boolean;
 }
 
 /** The framework helpers a printed schema calls beside `z`, as an import list's leading names. */
 export const helpersUsed = (uses: ZodUses): string =>
-  (["appLinkField", "fileField", "imageField"] as const)
+  (["appLinkField", "fileField", "imageField", "markdownField"] as const)
     .filter((name) => uses[name])
     .map((name) => `${name}, `)
     .join("");
@@ -109,6 +112,11 @@ export function printZod(type: unknown, uses: ZodUses = { nodeRef: false, isoDat
   if (isAppLinkField(type)) {
     uses.appLinkField = true;
     return "appLinkField()";
+  }
+  // Prose written in Markdown (FR-180): its mark is not in a zod chain, so it is written as the framework's field.
+  if (isMarkdownField(type)) {
+    uses.markdownField = true;
+    return "markdownField()";
   }
   if (type === isoDate || (def.type === "string" && String(checkOf(def.checks?.[0]).pattern) === String(checkOf(defOf(isoDate).checks?.[0]).pattern) && def.checks?.length === 1)) {
     uses.isoDate = true;

@@ -19,3 +19,7 @@ export { describeNode, isLongText, pageSections, readableFields, tellApart } fro
 export { argShape, describeArg } from "./mutations/arg-shape.js";
 export { argumentWords, failureWords } from "./mutations/words.js";
 export { viaSaid } from "./via.js";
+// A text's start at a glance, Markdown's syntax taken out (FR-180): what a row, a card, a describe line and a search hit say of prose.
+export { excerptOf } from "./excerpt-of.js";
+// Whether a field is written in Markdown (FR-180), as a record is read.
+export { isMarkdownField } from "./schema/markdown.js";

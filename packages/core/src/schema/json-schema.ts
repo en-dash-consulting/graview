@@ -3,6 +3,7 @@ import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { isAppLinkField } from "./app-link.js";
+import { isMarkdownField } from "./markdown.js";
 import type { AnySchema } from "./schema.js";
 import { writeJsonSchema, type JsonSchema } from "./to-json-schema.js";
 import type { AnyNodeDefinition } from "./types.js";
@@ -34,6 +35,13 @@ type ZodStringDef = { readonly type?: string; readonly format?: string; readonly
 export function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
   // Another app's address (FR-171), beside its pattern: an agent sets an address, not a name.
   if (isAppLinkField(ctx.zodSchema)) ctx.jsonSchema["x-graview-app-link"] = true;
+  // Prose in Markdown (FR-180): a caller writes Markdown, and it is kept as written.
+  if (isMarkdownField(ctx.zodSchema)) {
+    ctx.jsonSchema["contentMediaType"] = "text/markdown";
+    // Said in words too: not every tool caller reads `contentMediaType`.
+    const said = ctx.jsonSchema["description"];
+    if (!(typeof said === "string" && said.endsWith("Written in Markdown."))) ctx.jsonSchema["description"] = `${typeof said === "string" && said ? `${said.replace(/\.?$/, ".")} ` : ""}Written in Markdown.`;
+  }
   const def = (ctx.zodSchema as { _zod?: { def?: ZodStringDef } })._zod?.def;
   if (!def || def.type !== "string" || typeof def.format !== "string" || def.format === "regex") return;
   const js = ctx.jsonSchema;

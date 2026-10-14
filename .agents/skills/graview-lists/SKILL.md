@@ -36,7 +36,11 @@ already set a record aside.
    sentence or about 140 characters cut at a word, `{summary|excerpt: 80}`
    at most 80 (20 to 1000) — and leave the whole text to the record's page.
    A list cut by its `limit` says "See all 120 features" and goes to the
-   kind's list.
+   kind's list. Prose written in Markdown says so —
+   `{"type": "text", "format": "markdown"}`, or `markdownField()` — and the
+   record's page draws it as prose (headings, lists, links, code; no HTML),
+   while a row, a card, a describe line and a search hit say its first
+   paragraph or about 160 characters with the syntax taken out.
 
 3. **Set records aside instead of deleting them.** Every kind has
    `archive-<kind>` and `unarchive-<kind>` (`{ id }`, "Bring it back") and

@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { lazy, Suspense, type CSSProperties } from "react";
 
 /*
  * PROSE KEEPS ITS SHAPE (FR-146).
@@ -17,6 +17,10 @@ import type { CSSProperties } from "react";
  * Nothing else. It is not markdown: no emphasis, no links, no headings, no
  * HTML. Every word is a text node React writes, so a value can never become
  * markup, whatever it holds.
+ *
+ * A field its declaration says is Markdown (FR-180) is drawn as Markdown:
+ * `markdown` fetches that renderer the first time one is drawn, and draws
+ * the plain shape meanwhile.
  */
 
 /** One block of prose: a paragraph of lines, or a list of items. */
@@ -79,12 +83,36 @@ const BODY: CSSProperties = { display: "grid", gap: "0.7em", minWidth: 0, overfl
 const BLOCK: CSSProperties = { margin: 0 };
 const LIST: CSSProperties = { margin: 0, paddingInlineStart: "1.6em", display: "grid", gap: "0.3em" };
 
+/* The Markdown renderer, fetched with the first Markdown a page draws (FR-180). */
+const MarkdownBody = lazy(() => import("./markdown-body.js"));
+
 /**
  * Plain text drawn with its paragraphs, line breaks and lists kept: <p>,
  * <br>, <ol> and <ul>, every word a text node. `className` and the data
- * attribute let a surface style it as its own.
+ * attribute let a surface style it as its own. `markdown`: the text is
+ * Markdown (FR-180), drawn as prose — headings under the page's own from
+ * `headingsFrom` (3), links to the web and mail only.
  */
-export function TextBody({ text, className, style }: { readonly text: string; readonly className?: string; readonly style?: CSSProperties }) {
+export function TextBody({
+  text,
+  className,
+  style,
+  markdown,
+  headingsFrom,
+}: {
+  readonly text: string;
+  readonly className?: string;
+  readonly style?: CSSProperties;
+  readonly markdown?: boolean | undefined;
+  readonly headingsFrom?: number;
+}) {
+  if (markdown) {
+    return (
+      <Suspense fallback={<TextBody text={text} {...(className ? { className } : {})} {...(style ? { style } : {})} />}>
+        <MarkdownBody text={text} {...(className ? { className } : {})} {...(style ? { style } : {})} {...(headingsFrom ? { headingsFrom } : {})} />
+      </Suspense>
+    );
+  }
   return (
     <div data-graview-text-body="" {...(className ? { className } : {})} style={{ ...BODY, ...style }}>
       {textBlocks(text).map((block, index) =>

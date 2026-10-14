@@ -142,7 +142,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "remove-kind": z.object({ op: z.literal("remove-kind"), kind: kindName }).strict(),
   "add-field": z.object({ op: z.literal("add-field"), kind: kindName, field: fieldName, fill: z.unknown().optional(), spec: z.record(z.string(), z.unknown()).optional() }).passthrough(),
   "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
-  "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "file"]).optional(), format: z.enum(["money", "percent", "duration"]).optional() }).strict(),
+  "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
   "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional() }).strict(),
   "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
   "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
@@ -1552,6 +1552,9 @@ class Editor {
     const f = this.field(i, e.kind, e.field);
     if (!f) return;
     if (e.type === "enum" && !e.options && !f.options) return this.fail(i, "options", `to make ${e.field} a choice, list its "options"`);
+    // Markdown is a text field's (FR-180); money, percent and duration a number's.
+    if (e.format === "markdown" && e.type !== "text") return this.fail(i, "format", `"markdown" is a text field's format; retype ${e.field} to {"type": "text", "format": "markdown"}`);
+    if (e.format && e.format !== "markdown" && e.type === "text") return this.fail(i, "format", `a text field is shown as written or as Markdown, not as ${e.format}`);
     const was = f.type;
     f.type = e.type;
     if (e.type === "enum") f.options = e.options ?? f.options;
@@ -1564,7 +1567,8 @@ class Editor {
     if (e.type !== "number" && e.type !== "integer") for (const key of ["min", "max", "step"]) delete f[key];
     if (f.default !== undefined && coerce(f.default, was, f) === undefined) delete f.default;
     else if (f.default !== undefined) f.default = coerce(f.default, was, f);
-    this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}; values that convert are kept.`);
+    if (was === e.type && e.type === "text") this.said.push(`${e.kind}'s ${e.field} ${e.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);
+    else this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}; values that convert are kept.`);
   }
 
   /** A number's range (FR-114): a key given sets it, `null` clears it, one left out stays. */

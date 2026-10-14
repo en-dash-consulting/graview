@@ -329,7 +329,7 @@ export function Fields<S extends AnySchema>({
               field.files ? (
                 <Files key={field.key} as="field" nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} files={field.files} labelStyle={LABEL} style={{ marginTop: 6 }} />
               ) : field.long ? (
-                <LongValue<S> key={field.key} nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} value={field.value} labelStyle={LABEL} style={{ gridColumn: "1 / -1", marginTop: 6 }} />
+                <LongValue<S> key={field.key} nodeId={node.id} field={field.key} label={labels[field.key] ?? field.label} value={field.value} markdown={field.markdown} labelStyle={LABEL} style={{ gridColumn: "1 / -1", marginTop: 6 }} />
               ) : (
                 <div key={field.key} style={{ display: "contents" }}>
                   <dt style={{ ...LABEL, whiteSpace: "nowrap" }}>{labels[field.key] ?? field.label}</dt>
@@ -395,22 +395,24 @@ interface LongValueProps {
   readonly labelStyle?: CSSProperties;
   readonly valueStyle?: CSSProperties;
   readonly style?: CSSProperties;
+  /** The field is written in Markdown (FR-180): drawn as prose, its syntax read, never shown. */
+  readonly markdown?: boolean | undefined;
 }
 
-function ReadProse({ field, label, value, labelStyle, valueStyle, style }: LongValueProps) {
+function ReadProse({ field, label, value, labelStyle, valueStyle, style, markdown }: LongValueProps) {
   return (
     <div data-graview-long={field} style={{ display: "grid", gap: 6, minWidth: 0, ...style }}>
       <dt style={labelStyle}>{label}</dt>
       <dd style={{ margin: 0, minWidth: 0, ...valueStyle }}>
         <div data-graview-field={field}>
-          <TextBody text={value} />
+          <TextBody text={value} markdown={markdown} />
         </div>
       </dd>
     </div>
   );
 }
 
-function EditableProse<S extends AnySchema>({ nodeId, field, label, value, labelStyle, valueStyle, style }: LongValueProps) {
+function EditableProse<S extends AnySchema>({ nodeId, field, label, value, labelStyle, valueStyle, style, markdown }: LongValueProps) {
   const { fields, commit } = useEditableFields<S>(nodeId);
   const editable = fields.find((candidate) => candidate.field === field && candidate.takesValue);
   const [editing, setEditing] = useState(false);
@@ -427,7 +429,7 @@ function EditableProse<S extends AnySchema>({ nodeId, field, label, value, label
     setEditing(false);
   };
   const words = label.toLowerCase();
-  const drawn = <TextBody text={value} />;
+  const drawn = <TextBody text={value} markdown={markdown} />;
 
   return (
     <div data-graview-long={field} style={{ display: "grid", gap: 6, minWidth: 0, ...style }}>
@@ -454,6 +456,7 @@ function EditableProse<S extends AnySchema>({ nodeId, field, label, value, label
               field={field}
               label={label}
               value={value}
+              {...(markdown ? { markdown: true } : {})}
               onCancel={() => close(true)}
               onSave={(draft, left) => {
                 close(!left);

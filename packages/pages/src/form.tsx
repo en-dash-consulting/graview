@@ -196,7 +196,11 @@ function Control<S extends AnySchema>({
       if (spec.control === "text" && spec.long) {
         return (
           <label data-graview-part="field" data-graview-field="text">
-            <span data-graview-part="label">{title}</span>
+            <span data-graview-part="label">
+              {title}
+              {/* Written in Markdown (FR-180): said where it is typed, quietly. */}
+              {spec.markdown ? <span style={{ fontWeight: "normal", color: "var(--graview-ink-faint)" }}> · Markdown</span> : null}
+            </span>
             <textarea
               name={spec.name}
               required={!spec.optional}

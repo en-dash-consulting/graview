@@ -34,6 +34,7 @@ export { fileField, imageField } from "./schema/file-field.js";
 export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
 export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";
 export { appLinkField } from "./schema/app-link-field.js";
+export { markdownField } from "./schema/markdown-field.js";
 export { nameOfAuthor } from "./who.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";

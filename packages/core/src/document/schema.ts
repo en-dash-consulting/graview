@@ -71,7 +71,8 @@ export const FieldSpec = z
     of: z.optional(z.enum(["string", "number", "date", "image", "file"])),
     default: z.optional(z.unknown()),
     unit: z.optional(str(undefined, 12)),
-    format: z.optional(z.enum(["money", "percent", "duration"])),
+    /** How a number is shown (`money`, `percent`, `duration`), or that a `text` field is written in Markdown (FR-180; the checker's `field-format` says which goes where). */
+    format: z.optional(z.enum(["money", "percent", "duration", "markdown"])),
     /** A number's range (FR-114): the least and the most it may be, and the step its values are whole multiples of (JSON Schema's `multipleOf`). */
     min: z.optional(z.number()),
     max: z.optional(z.number()),

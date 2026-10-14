@@ -199,6 +199,8 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       break;
     case "text":
       schema = z.string().check(z.maxLength(20_000));
+      // Prose written in Markdown (FR-180): the record's page draws it, every list says its start. The mark `schema/markdown.ts` reads, set here so a page's first chunk reaches no module a fetched one shares.
+      if (spec.format) (z.defOf(schema) as Record<symbol, 1>)[Symbol.for("@graview/core:markdown")] = 1;
       break;
     case "number":
     case "integer": {
