@@ -436,6 +436,39 @@ try {
    * read, every shift in the week is a block on it with a height of its own
    * and inside the panel, and nothing in the panel scrolls but the panel.
    */
+  /*
+   * THE WEEK'S WORDS, read in a page: every block's name broken only between
+   * words (a word sliced at the block's edge is broken too, unless the name
+   * says so with an ellipsis), and every day's head over its own column and
+   * whole. Handed the scope to read in: the panel, or the page.
+   */
+  const readTheWeek = (scope) => {
+    const root = scope ? document.querySelector(scope) : document;
+    const brokenWords = [];
+    for (const name of root?.querySelectorAll("[data-graview-span]:not([data-graview-moment]) > div") ?? []) {
+      const style = getComputedStyle(name);
+      const text = name.firstChild;
+      if (text?.nodeType === 3) {
+        for (const word of text.data.matchAll(/\S+/g)) {
+          const range = document.createRange();
+          range.setStart(text, word.index);
+          range.setEnd(text, word.index + word[0].length);
+          if (new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size > 1) brokenWords.push(`${text.data}: ${word[0]}`);
+        }
+      }
+      if (name.scrollWidth > name.clientWidth + 1 && style.textOverflow !== "ellipsis") brokenWords.push(`${name.textContent} (cut at the edge)`);
+    }
+    const heads = [...(root?.querySelectorAll("[data-graview-day-head]") ?? [])];
+    const columns = [...(root?.querySelectorAll("[data-graview-day-column]") ?? [])];
+    const offColumn = heads.filter((head, i) => {
+      const at = head.getBoundingClientRect();
+      const under = columns[i]?.getBoundingClientRect();
+      const middle = at.left + at.width / 2;
+      return !under || middle < under.left || middle > under.right || Math.abs(at.width - under.width) > 1;
+    }).map((head) => head.textContent);
+    const cutHeads = heads.filter((head) => head.scrollWidth > head.clientWidth + 1).map((head) => head.textContent);
+    return { brokenWords, heads: heads.map((head) => head.textContent), offColumn, cutHeads };
+  };
   const weekBeside = {};
   for (const [width, height] of [[1440, 900], [390, 844]]) {
     const beside = await browser.newPage({ viewport: { width, height } });
@@ -444,6 +477,7 @@ try {
     await beside.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
     await beside.waitForSelector('[data-testid="lens-panel"] [data-graview-lens]', { timeout: 20_000 }).catch(() => undefined);
     await beside.waitForTimeout(1400);
+    const words = await beside.evaluate(readTheWeek, '[data-testid="lens-panel"]');
     weekBeside[width] = await beside.evaluate(() => {
       const panel = document.querySelector('[data-testid="lens-panel"]');
       const lens = panel?.querySelector("[data-graview-lens]") ?? null;
@@ -468,8 +502,12 @@ try {
         outside: box ? blocks.filter((b) => b.left < box.left - 1 || b.right > box.right + 1).length : blocks.length,
         scrollsInside,
         pageSideways: document.documentElement.scrollWidth > innerWidth + 1,
+        // The shifts with a problem, marked in the week as the plot marks them.
+        flagged: panel?.querySelectorAll("[data-graview-span][data-graview-flagged]").length ?? 0,
+        flaggedOnThePlot: document.querySelectorAll('[data-graview-plot="kind:shift"] .graview-building[data-graview-flagged]').length,
       };
     });
+    weekBeside[width] = { ...weekBeside[width], brokenWords: words.brokenWords };
     await beside.close();
   }
   report.checks.theWeekBesideTheMapDrawsEveryShift = {
@@ -483,8 +521,80 @@ try {
         one.thinnest >= 12 &&
         one.outside === 0 &&
         one.scrollsInside === 0 &&
-        !one.pageSideways,
+        !one.pageSideways &&
+        one.brokenWords.length === 0 &&
+        one.flaggedOnThePlot > 0 &&
+        one.flagged === one.flaggedOnThePlot,
     ),
+  };
+
+  /*
+   * EACH DAY'S HEAD STANDS OVER ITS OWN COLUMN, WHOLE. The heads were a row
+   * with no gap over columns four pixels apart, so they drifted off their
+   * columns, and on a narrow card "MONTUEWEDTHU" ran together with SUN cut
+   * off. Read on the week's own place at a phone's width and a desk's, and
+   * beside the map at a phone's: seven heads, each centered over its column
+   * and as wide, none cut.
+   */
+  const heads = {};
+  for (const [where, width, hash, scope] of [
+    ["the place at 390", 390, "#focus=aggregate%3Ashift&in.view=the-week", null],
+    ["the place at 1440", 1440, "#focus=aggregate%3Ashift&in.view=the-week", null],
+    ["beside the map at 390", 390, "#overview=1&focus=aggregate%3Ashift&in.view=the-week", '[data-testid="lens-panel"]'],
+  ]) {
+    const seen = await browser.newPage({ viewport: { width, height: 844 } });
+    seen.on("pageerror", (error) => errors.push(error.message));
+    await seen.goto(`${at("rota")}/?today=2026-09-14${hash}`, { waitUntil: "load" });
+    await seen.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
+    await seen.waitForTimeout(1400);
+    heads[where] = await seen.evaluate(readTheWeek, scope);
+    await seen.close();
+  }
+  report.checks.eachDaySHeadStandsOverItsColumnWhole = {
+    ...heads,
+    ok: Object.values(heads).every((one) => one.heads.length === 7 && one.offColumn.length === 0 && one.cutHeads.length === 0 && one.brokenWords.length === 0),
+  };
+
+  /*
+   * NO DISTRICT'S NAME STANDS ON ANOTHER'S SHOWINGS. A district a lens is
+   * open on hangs the names of its pictures under its nameplate; on a phone
+   * the volunteers' name was placed on the shifts' showings, over "The
+   * fortnight", because the city kept names clear of names and ground but
+   * not of the showings, and the sign for a district past the left edge
+   * stood on "The quarter". At 390 and 1440, no name and no edge sign on the
+   * screen overlaps the marquee of another district.
+   */
+  const marquees = {};
+  for (const [width, height] of [[390, 844], [1440, 900]]) {
+    const seen = await browser.newPage({ viewport: { width, height } });
+    seen.on("pageerror", (error) => errors.push(error.message));
+    await seen.goto(`${at("rota")}/?today=2026-09-14#overview=1&focus=aggregate%3Ashift&in.view=the-week`, { waitUntil: "load" });
+    await seen.waitForFunction(() => "__rotaReady" in window, null, { timeout: 60_000 });
+    await seen.waitForTimeout(1600);
+    marquees[width] = await seen.evaluate(() => {
+      const shown = [...document.querySelectorAll(".graview-drive-in[data-graview-showing]")].filter((el) => getComputedStyle(el).opacity !== "0");
+      // A district's name, and the sign at the edge for one past it: what is drawn over the ground with words on it.
+      const plates = [...document.querySelectorAll("[data-graview-nameplate], .graview-edge-sign")].filter((el) => el.getAttribute("data-graview-nameplate") !== "none" && el.getBoundingClientRect().width > 0);
+      // Only what is on the screen: a name standing past the window's edge covers nothing anybody sees.
+      const seen = (b) => ({ left: Math.max(0, b.left), right: Math.min(innerWidth, b.right), top: Math.max(0, b.top), bottom: Math.min(innerHeight, b.bottom) });
+      const on = [];
+      for (const marquee of shown) {
+        const m = seen(marquee.getBoundingClientRect());
+        const card = marquee.closest("[data-graview-view]");
+        for (const plate of plates) {
+          if (card?.contains(plate)) continue;
+          const p = seen(plate.getBoundingClientRect());
+          const what = plate.closest("[data-graview-view]")?.getAttribute("data-graview-view") ?? `the sign for ${plate.getAttribute("data-graview-past-edge")}`;
+          if (p.left < m.right && m.left < p.right && p.top < m.bottom && m.top < p.bottom) on.push(`${what} on ${card?.getAttribute("data-graview-view")}'s showings`);
+        }
+      }
+      return { marquees: shown.length, on };
+    });
+    await seen.close();
+  }
+  report.checks.noDistrictSNameStandsOnAnotherSShowings = {
+    ...marquees,
+    ok: Object.values(marquees).every((one) => one.marquees > 0 && one.on.length === 0),
   };
 
   /*
