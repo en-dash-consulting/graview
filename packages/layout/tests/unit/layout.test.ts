@@ -2,13 +2,10 @@ import { createSchema, defineNode, Graph, type NodeOfSchema } from "@graview/cor
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
-  withoutSearch,
-  withQuery,
   withWithin,
   cameraLimit,
   aggregateId,
   edgeOfSelection,
-  edgeSelectionId,
   kindCardId,
   withSelection,
   easeInOut,
@@ -22,13 +19,12 @@ import {
   toUrl,
   withFocus,
   withJackIn,
-  withPan,
-  withPin,
   withOverview,
   withRelation,
   withZoom,
   type ViewState,
 } from "../../src/index.js";
+import { edgeSelectionId, withoutSearch, withPan, withPin, withQuery } from "../../src/view-moves.js";
 
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),
@@ -590,12 +586,30 @@ describe("a rail reserved for chrome, at altitude", () => {
   });
 });
 
+describe("a focused record, from altitude", () => {
+  it("is not stamped over the city where a panel beside the map shows it, and is where there is none", () => {
+    const beside = layout(graph(), schema, view({ focusId: "week-1", overview: true }), { besideTheMap: true });
+    expect(beside.nodes.some((node) => node.plane === 0)).toBe(false);
+    const alone = layout(graph(), schema, view({ focusId: "week-1", overview: true }));
+    expect(alone.nodes.find((node) => node.plane === 0)?.id).toBe("week-1");
+  });
+});
+
 describe("a focused group, from altitude", () => {
   it("is its district, opened, when its picture is only the framework's list", () => {
     const result = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true }), { plainGroups: ["duty"] });
     expect(result.nodes.some((node) => node.plane === 0)).toBe(false);
     const district = result.nodes.find((node) => node.id === kindCardId("duty"))!;
     expect(district.opened).toBe(true);
+  });
+
+  it("stays shut, and draws nothing in the middle, when its stop stands beside the map", () => {
+    const result = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true }), { plainGroups: ["duty"], besideTheMap: true });
+    expect(result.nodes.some((node) => node.plane === 0)).toBe(false);
+    expect(result.nodes.find((node) => node.id === kindCardId("duty"))!.opened).toBeFalsy();
+    // A group with a view of its own, beside the map, draws nothing in the middle either: its picture is in the panel.
+    const pictured = layout(graph(), schema, view({ focusId: aggregateId("duty"), overview: true }), { besideTheMap: true });
+    expect(pictured.nodes.some((node) => node.plane === 0)).toBe(false);
   });
 
   it("keeps its scaled card when it has a view of its own, and its district stays shut", () => {

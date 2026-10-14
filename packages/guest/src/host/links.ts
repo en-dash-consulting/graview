@@ -53,7 +53,7 @@ export const nowhere = (to: Destination, slugs: readonly string[]) =>
 
 export function createLinks(options: LinksOptions): Links {
   const go = (to: Destination) => {
-    const slugs = options.places().map((place) => place.as);
+    const slugs = [...new Set(options.places().map((place) => place.as))];
     /* A record the viewer may see first, then a place by that slug. */
     const place = "place" in to ? to.place : options.sees(to.record) ? undefined : to.record;
     const ok = place === undefined || slugs.includes(place);

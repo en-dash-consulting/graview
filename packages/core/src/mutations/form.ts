@@ -2,7 +2,11 @@ import type { z } from "zod";
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
+import { isRepeatField, repeatedBy } from "../repeat.js";
+import { isMarkdownField } from "../schema/markdown.js";
+import { parseDuration } from "../schema/field-words.js";
 import { describeArg, unwrap } from "./arg-shape.js";
+import type { AmountMark } from "../schema/amount-mark.js";
 import { nodeRefKinds } from "./node-ref.js";
 
 /**
@@ -20,7 +24,9 @@ import { nodeRefKinds } from "./node-ref.js";
  * explaining itself) walks the tree; nothing downstream touches zod.
  */
 export type FormField =
-  | ScalarField
+    /** How a date repeats (`repeat.ts`), asked for with the picker beside the date it repeats (`of`). */
+  | { readonly control: "repeat"; readonly name: string; readonly optional: boolean; readonly of?: string }
+| ScalarField
   | { readonly control: "node"; readonly name: string; readonly optional: boolean; readonly kinds: readonly string[] }
   | { readonly control: "group"; readonly name: string; readonly optional: boolean; readonly fields: readonly FormField[] }
   | {
@@ -50,11 +56,21 @@ export interface ScalarField {
   readonly long?: true;
   /** Another app's address (FR-171): asked for as one — `@owner/app`, its id, or its https:// address. */
   readonly app?: true;
+  /** Prose written in Markdown (FR-180): asked for in a text area, and said to be Markdown. */
+  readonly markdown?: true;
+  /**
+   * A phone number or a place, asked for in a text box as one; or a length
+   * of time, asked for in a text box that takes "1h 30m", "90" or "1:30"
+   * and sent as whole minutes (`formArgs`).
+   */
+  readonly holds?: "phone" | "place" | "duration";
   readonly options?: readonly string[];
   readonly min?: number;
   readonly max?: number;
   /** What a number's values are whole multiples of (FR-114): an input's `step`. */
   readonly step?: number;
+  /** What a number is said as — money in its currency, a percent, a measure — so it is asked for as one: "$1,250.50". */
+  readonly amount?: AmountMark;
 }
 
 /** Classic or mini alike: the definition is read with `defOf`, never through `_def`, which mini has not got. */
@@ -85,6 +101,11 @@ export function formField(name: string, schema: unknown): FormField {
 
   const kinds = nodeRefKinds(schema);
   if (kinds) return { control: "node", name, optional, kinds };
+
+  if (isRepeatField(schema)) {
+    const of = repeatedBy(name);
+    return { control: "repeat", name, optional, ...(of ? { of } : {}) };
+  }
 
   if (type === "boolean") return { control: "boolean", name, optional };
 
@@ -146,7 +167,9 @@ export function formField(name: string, schema: unknown): FormField {
   }
 
   const scalar = describeArg(schema);
-  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}) };
+  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}), ...(isMarkdownField(field) ? { markdown: true as const } : {}), ...(scalar.holds ? { holds: scalar.holds } : {}) };
+  // A length of time is typed as words ("1h 30m") and sent as minutes.
+  if (scalar.type === "number" && scalar.duration) return { control: "text", name, optional, holds: "duration" };
   if (scalar.type === "date") return { control: "date", name, optional, ...(scalar.time ? { time: true as const } : {}) };
   if (scalar.type === "number") {
     return {
@@ -156,6 +179,7 @@ export function formField(name: string, schema: unknown): FormField {
       ...(scalar.min === undefined ? {} : { min: scalar.min }),
       ...(scalar.max === undefined ? {} : { max: scalar.max }),
       ...(scalar.step === undefined ? {} : { step: scalar.step }),
+      ...(scalar.amount ? { amount: scalar.amount } : {}),
     };
   }
   if (scalar.type === "choice") return { control: "choice", name, optional, options: scalar.options };
@@ -203,6 +227,9 @@ export function formArgs(fields: readonly FormField[], values: Readonly<Record<s
   for (const field of fields) {
     const held = values[field.name];
     if (held === undefined && !field.optional && (field.control === "list" || field.control === "boolean")) sent[field.name] = field.control === "list" ? [] : false;
+    // A length of time as it was typed, sent as the whole minutes the field keeps; words that are not one are sent as typed, and refused in the field's own words.
+    // A phone and a place are kept as they were entered, trimmed.
+    if (field.control === "text" && field.holds && typeof held === "string") sent[field.name] = held.trim() === "" ? undefined : field.holds === "duration" ? (parseDuration(held) ?? held) : held.trim();
     if (field.control === "group" && held !== undefined && typeof held === "object" && held !== null) {
       sent[field.name] = formArgs(field.fields, held as Record<string, unknown>);
     }

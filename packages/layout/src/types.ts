@@ -255,6 +255,12 @@ export interface CityFrame {
   readonly openedShare?: number;
   /** How the ground is seen: a cell's height over its width, a half at an angle and one from straight above. Absent is a half. */
   readonly tilt?: number;
+  /**
+   * The showings hanging under a district's name — the names of the
+   * pictures of the district a lens is open on — as boxes from the top left
+   * of that district's card: ground no name and no sign at the edge stands on.
+   */
+  readonly showings?: readonly { readonly id: string; readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
 }
 
 export interface Layout {
@@ -264,6 +270,12 @@ export interface Layout {
   readonly height: number;
   /** Present at altitude: the lattice the districts were placed on. */
   readonly city?: CityFrame;
+  /**
+   * THE PART OF THE CANVAS THE READER SEES, when a panel floats over the rest
+   * (`LayoutOptions.dock`): the camera's bounds and the edge signs are for
+   * this, not for the whole painted scene. Absent when nothing covers it.
+   */
+  readonly visible?: { readonly width: number; readonly height: number };
 }
 
 export interface LayoutOptions {
@@ -337,6 +349,13 @@ export interface LayoutOptions {
    * over the ground. From altitude no district, and no district's name, is
    * opened under them.
    */
+  /**
+   * ROOM A PANEL TAKES FROM THE MAP, in pixels: the panel floats over a scene
+   * that is painted the whole width and height of the window, and the city
+   * is fitted in what its edge leaves — from the right on a desk, from the
+   * foot on a phone. Not the scene's size: the ground still fills the box.
+   */
+  readonly dock?: { readonly right?: number; readonly bottom?: number };
   readonly chrome?: readonly { readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
   /**
    * Kinds whose group is shown by the framework's own list rather than a
@@ -347,6 +366,13 @@ export interface LayoutOptions {
    * the thing you were standing in.
    */
   readonly plainGroups?: readonly string[];
+  /**
+   * Whether a picture opened from altitude stands in a panel BESIDE the map
+   * (the desk's Shell and the embed's scene). Then a focused plain group's
+   * stop is in that panel, as a lens is: its district stays shut and nothing
+   * is drawn in the middle of the city for it.
+   */
+  readonly besideTheMap?: boolean;
   /**
    * THE ORDER A BLANK INSTALLATION FILLS ITS KINDS — `beginning(app).order`
    * — which is the order the city is walked in. Sorted ids otherwise, which
@@ -395,7 +421,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt" | "dock">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },

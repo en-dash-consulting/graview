@@ -28,3 +28,4 @@ export type { DescribedFact, DescribedItem, DescribedMasthead, DescribedPart, De
  */
 export { resolveFor } from "./document/resolve-for.js";
 export type { DeclaredBlocks, ResolveForOptions } from "./document/resolve-for.js";
+import "./index.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).

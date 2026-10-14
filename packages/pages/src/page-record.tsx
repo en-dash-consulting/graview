@@ -1,7 +1,7 @@
 import { humanizeField, isArchived, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
-import { AppLink, DefaultViewElsewhere, EditableValue, Files, LongValue, pageSays, useLined } from "@graview/primitives/pages";
+import { AppLink, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -228,7 +228,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               >
                 {section.fields.map((field) =>
                   field.files ? (
-                    <Files key={field.key} as="field" read={!inPlace} nodeId={id} field={field.key} label={field.label} files={field.files} labelStyle={{ ...eyebrow, fontSize: "0.75rem" }} style={{ gap: 4 }} />
+                    <Files key={field.key} as="field" read={!inPlace} nodeId={id} field={field.key} label={field.label} files={field.files} labelStyle={eyebrow} style={{ gap: 4 }} />
                   ) : field.long ? (
                     <LongValue<S>
                       key={field.key}
@@ -236,19 +236,27 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                       field={field.key}
                       label={field.label}
                       value={field.value}
+                      markdown={field.markdown}
                       style={{ gridColumn: "1 / -1", gap: 4 }}
-                      labelStyle={{ ...eyebrow, fontSize: "0.75rem" }}
-                      valueStyle={{ fontSize: "1.0625rem", lineHeight: 1.6 }}
+                      labelStyle={eyebrow}
+                      valueStyle={{ lineHeight: 1.6 }}
                     />
                   ) : (
                     <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
-                      <dt style={{ ...eyebrow, fontSize: "0.75rem" }}>{field.label}</dt>
-                      <dd style={{ margin: 0, fontSize: "1.125rem", overflowWrap: "anywhere", minWidth: 0 }}>
+                      <dt style={eyebrow}>{field.label}</dt>
+                      <dd style={{ margin: 0, overflowWrap: "anywhere", minWidth: 0 }}>
                         {field.app ? (
                           // Another app, as the host names it (FR-171), changed beside it where the face changes values in place.
                           <AppLink address={field.app} as="record" {...(inPlace ? { nodeId: id, field: field.key } : {})} />
+                        ) : field.href ? (
+                          // A phone to call, a place to map: the value is the link, or the link stands beside where it is changed.
+                          <FieldLink<S> href={field.href} field={field.key} value={field.value} stored={field.stored} {...(inPlace ? { nodeId: id } : {})} />
                         ) : inPlace ? (
-                          <EditableValue<S> nodeId={id} field={field.key} value={field.value} stored={field.stored} />
+                          <>
+                            <EditableValue<S> nodeId={id} field={field.key} value={field.value} stored={field.stored} />
+                            {/* How a date repeats, changed beside it. */}
+                            {field.repeats ? <RepeatEditor nodeId={id} field={field.key} start={node?.[field.key]} value={node?.[`${field.key}Repeat`]} label={`${field.label} repeats`} /> : null}
+                          </>
                         ) : (
                           field.value
                         )}
@@ -260,7 +268,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             );
             return section.title ? (
               <section key={index} style={{ display: "grid", gap: 10, minWidth: 0 }}>
-                <h3 data-graview-field-group={section.title} style={{ ...h2, fontSize: "1.0625rem" }}>
+                <h3 data-graview-field-group={section.title} style={{ ...h2, fontSize: "inherit" }}>
                   {section.title}
                 </h3>
                 {list}
@@ -269,7 +277,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               <div key={index}>{list}</div>
             );
           })}
-          {unfilled ? <Files as="unfilled" nodeId={id} skip={[...(said?.fields ?? [])]} labelStyle={{ ...eyebrow, fontSize: "0.75rem" }} style={{ gap: 4 }} /> : null}
+          {unfilled ? <Files as="unfilled" nodeId={id} skip={[...(said?.fields ?? [])]} labelStyle={eyebrow} style={{ gap: 4 }} /> : null}
         </section>
       ) : null}
 
@@ -307,7 +315,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               return (
                 <li key={target.id} style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                   <KindMark kind={target.kind} brand={brand} schema={store.schema} size={7} />
-                  <Link to={recordPath(store.schema, target.kind, target.id)} style={{ ...link, fontSize: "1.125rem" }}>
+                  <Link to={recordPath(store.schema, target.kind, target.id)} style={link}>
                     {target.label}
                     {target.apart ? <span style={quiet}> · {target.apart}</span> : null}
                   </Link>
@@ -398,7 +406,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   background: "var(--graview-panel)",
                 }}
               >
-                <h3 style={{ ...h2, fontSize: "1.1875rem" }}>{affordance.label}</h3>
+                <h3 style={h2}>{affordance.label}</h3>
                 {mutation.description ? <p style={{ ...quiet, margin: 0 }}>{mutation.description}</p> : null}
                 <DerivedForm
                   store={store}

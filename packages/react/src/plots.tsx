@@ -5,6 +5,7 @@ import { memo, useCallback, useMemo, useRef, type CSSProperties, type ReactEleme
 import { useGraph, useGraview } from "./context.js";
 import { useFlagged } from "./emphasis.js";
 import { ownRecords, useSinceLastVisit } from "./last-visit.js";
+import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * THE GROUND UNDER A DISTRICT. The layout gives every district a plot on
@@ -65,6 +66,8 @@ export interface PlotsProps {
   readonly today?: string;
   /** The scene's own flag for a click that a drag is about to produce: a pan that ends on a tile is not a press. */
   readonly swallowed?: { readonly current: boolean };
+  /** The records chosen from altitude (`mapChoice`): each stands as a building of its own, ahead of the rest of its row. */
+  readonly chosen?: readonly string[];
   onFocus?(id: string): void;
 }
 
@@ -81,7 +84,7 @@ export interface PlotsProps {
  * members are the same, so dragging one district redraws that district and
  * its tile, not every building in the city on every frame.
  */
-export function Plots({ frame, width, height, pan, pinned, close, today, swallowed, onFocus }: PlotsProps): ReactElement | null {
+export function Plots({ frame, width, height, pan, pinned, close, today, swallowed, chosen = [], onFocus }: PlotsProps): ReactElement | null {
   const { selection, store, scheme, principal } = useGraview();
   const nodes = useGraph();
   /* What somebody else wrote since this seat last left, and what is its own (last-visit.ts). */
@@ -115,7 +118,9 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     const members = node.aggregate?.memberIds ?? [];
     const state = districtState(store.schema, node.kind);
     const valueOf = (id: string) => (state ? (store.graph.getNode(id) as Record<string, unknown> | undefined)?.[state.field] : undefined);
-    const key = `${cell}|${tilt}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${members.map((id) => `${id}=${String(valueOf(id))}`).join(",")}`;
+    /* A chosen record is never one of the "+504": it stands first in its row, so its building is there to light and to draw its links from. */
+    const first = members.filter((id) => chosen.includes(id));
+    const key = `${cell}|${tilt}|${node.plot!.col},${node.plot!.row},${node.plot!.side}|${first.join(",")}|${members.map((id) => `${id}=${String(valueOf(id))}`).join(",")}`;
     const held = drawn.current.get(node.id);
     if (held && held.key === key) {
       kept.set(node.id, held);
@@ -130,7 +135,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
     };
     const lanes: string[][] = state ? state.values.map(() => []) : [[]];
     const tiers: StateTier[] = state ? [...state.tiers] : ["waiting"];
-    for (const id of members) {
+    for (const id of first.length > 0 ? [...first, ...members.filter((id) => !first.includes(id))] : members) {
       const at = state ? state.values.indexOf(valueOf(id) as string) : 0;
       if (at >= 0) lanes[at]!.push(id);
       else {
@@ -174,7 +179,7 @@ export function Plots({ frame, width, height, pan, pinned, close, today, swallow
   return (
     <>
     <style>{groundCss(scheme)}</style>
-    <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length}>
+    <svg className="graview-plots" aria-hidden="true" data-graview-world="" width={width} height={height} style={style} data-graview-plots={tiles.length} data-graview-named={close ? "" : undefined}>
       <g transform={`translate(${(city.originX + pan.x).toFixed(1)} ${(city.originY + pan.y).toFixed(1)})`}>
         {tiles.map((node) => (
           <PlotTile
@@ -219,6 +224,58 @@ interface PlotDrawing {
 
 /** A block's name is written over it once the block is this wide on the screen: coming down, the blocks are named. */
 const NAMED_FROM = 34;
+/** How wide a letter of a block's name is taken to be, and how far above and below its baseline it reaches (`.graview-building-name`: .625rem). */
+const NAME_LETTER = 6;
+const NAME_ABOVE = 9;
+const NAME_BELOW = 3;
+/** The clear space kept around a name, so two never touch. */
+const NAME_CLEAR = 2;
+
+/** A block's name as it is written over it: whole while the block is wide enough for it, else cut with an ellipsis. */
+function nameOver(block: { readonly name: string; readonly width: number }, whole: boolean): string {
+  if (whole || block.name.length * NAME_LETTER <= block.width * 1.6) return block.name;
+  return `${block.name.slice(0, Math.max(1, Math.floor((block.width * 1.6) / NAME_LETTER) - 1))}…`;
+}
+
+/** Where a name is written on a plot, in the plot's own coordinates, with its clear space. */
+interface NameBox {
+  readonly left: number;
+  readonly right: number;
+  readonly top: number;
+  readonly bottom: number;
+}
+
+/**
+ * WHICH BLOCKS SAY THEIR NAMES, so that no two names on a plot lie over each
+ * other. A district's blocks stand a step apart on the diagonal, and every
+ * name was written over its own block whatever stood beside it: coming down
+ * on the locations, "The workshop", "The kitchen" and "The yard" were one
+ * smudge across the block somebody had chosen. The district nameplates' own
+ * rule, a name only where it has room: the chosen block says its name first
+ * and whole, then each block wide enough to be named, back to front, as long
+ * as its name has room beside the names already written. The rest say
+ * theirs once the camera comes down far enough to part them.
+ */
+export function namesWithRoom(
+  buildings: readonly { readonly id: string; readonly name: string; readonly width: number; readonly top: Point }[],
+  chosen: ReadonlySet<string>,
+): ReadonlyMap<string, string> {
+  const said = new Map<string, string>();
+  const taken: NameBox[] = [];
+  const first = buildings.filter((block) => chosen.has(block.id));
+  for (const block of [...first, ...buildings.filter((block) => !chosen.has(block.id))]) {
+    const whole = chosen.has(block.id);
+    if (!whole && block.width < NAMED_FROM) continue;
+    const text = nameOver(block, whole);
+    const half = (text.length * NAME_LETTER) / 2 + NAME_CLEAR;
+    const baseline = block.top.y - 3;
+    const box = { left: block.top.x - half, right: block.top.x + half, top: baseline - NAME_ABOVE - NAME_CLEAR, bottom: baseline + NAME_BELOW + NAME_CLEAR };
+    if (taken.some((other) => other.left < box.right && box.left < other.right && other.top < box.bottom && box.top < other.bottom)) continue;
+    taken.push(box);
+    said.set(block.id, text);
+  }
+  return said;
+}
 
 const PlotTile = memo(function PlotTile({
   id,
@@ -247,6 +304,8 @@ const PlotTile = memo(function PlotTile({
   const broken = new Set(flaggedKey.split("\n"));
   const recent = new Set(recentKey.split("\n"));
   const own = new Set(ownKey.split("\n"));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const names = useMemo(() => (named ? namesWithRoom(drawing.buildings, chosen) : null), [named, drawing, chosenKey]);
   return (
     <g className="graview-plot" data-graview-plot={id} data-graview-pinned={pinned ? "" : undefined}>
       <polygon
@@ -274,16 +333,16 @@ const PlotTile = memo(function PlotTile({
               <polygon className="graview-iso-left" points={block.left} />
               <polygon className="graview-iso-right" points={block.right} />
               <polygon className="graview-iso-roof" points={block.roof} />
-              {named && block.width >= NAMED_FROM ? (
+              {names?.has(block.id) ? (
                 <text className="graview-building-name" x={block.top.x} y={block.top.y - 3} textAnchor="middle">
-                  {block.name.length * 6 > block.width * 1.6 ? `${block.name.slice(0, Math.max(1, Math.floor((block.width * 1.6) / 6) - 1))}…` : block.name}
+                  {names.get(block.id)}
                 </text>
               ) : null}
             </g>
           ))}
           {drawing.rests.map((rest, i) => (
             <text key={i} className="graview-village-rest" x={rest.at.x - 3} y={rest.at.y + 4} textAnchor="end">
-              +{numberAsRead(rest.count)}
+              <title>{`${numberAsRead(rest.count)} more in this row than the plot has room to show`}</title>+{numberAsRead(rest.count)}
             </text>
           ))}
         </g>
@@ -342,6 +401,11 @@ export function toLattice(point: Point, city: City, pan: Point): { readonly col:
 }
 
 /*
+ * Come down far enough that the blocks say their names, a district's
+ * landmark steps back for them: it stands in the square, over the names of
+ * the blocks around it, and its lines struck through every one of them.
+ * The nameplate still says whose district it is.
+ *
  * THE GROUND'S OWN RULES, fetched with the ground: the scene draws the city
  * only from altitude, so a page that never rises never carries them.
  *
@@ -375,6 +439,7 @@ function groundCss(scheme: Scheme): string {
 .graview-building[data-graview-selected] polygon{stroke:var(--graview-accent);stroke-width:1.4;stroke-opacity:1}
 .graview-building[data-graview-selected] .graview-iso-roof{fill:${mix("45%", "var(--graview-accent)")}}
 .graview-building-name{font-size:.625rem;fill:var(--graview-ink);paint-order:stroke;stroke:var(--graview-ground);stroke-width:3px}
+.graview-ground:has(> .graview-plots[data-graview-named]) [data-graview-plot] .graview-kind-landmark{opacity:.3;transition:opacity 240ms}
 .graview-village-rest{font-size:.6875rem;font-variant-numeric:tabular-nums;fill:var(--graview-ink-muted)}`;
 }
 

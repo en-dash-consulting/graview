@@ -3,7 +3,8 @@ import { beginning } from "@graview/core/seat";
 import { touchWeights } from "@graview/core/search";
 import type { AnySchema } from "@graview/core";
 import type { LayoutOptions } from "@graview/layout";
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
+import { BesideTheMap } from "./beside-the-map.js";
 import { foundIds, useFound, useGraview } from "./context.js";
 import { useViolations } from "./hooks.js";
 import { railInset, SEAT_FOOT } from "./rails.js";
@@ -28,11 +29,15 @@ export function useLayoutOptions<S extends AnySchema>(
   /** Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
   seated: boolean,
   cityZoom: number,
+  /** What a panel floating over the scene covers, in pixels (`useDock`): the city is fitted in what is left. */
+  dock: { readonly right: number; readonly bottom: number },
   /** The graph's tick: the log only grows when the graph changes. */
   nodes: unknown,
 ): LayoutOptions {
   const { store, views, hiddenKinds } = useGraview<S>();
   const found = useFound();
+  // A picture opened from altitude stands beside the map, where a panel is drawn.
+  const besideTheMap = useContext(BesideTheMap);
   // What each subject's violations name, so a rule's neighborhood is what it judges.
   const violations = useViolations<S>();
   const judged = useMemo(() => {
@@ -64,6 +69,7 @@ export function useLayoutOptions<S extends AnySchema>(
     () => ({
       ...options,
       cityZoom,
+      ...(besideTheMap ? { besideTheMap: true } : {}),
       // What is not drawn for this seat at this stop: a workspace's disabled
       // modules, and the administered ones this seat may not see or has not
       // asked to — one set, from the provider, so every surface agrees.
@@ -82,8 +88,10 @@ export function useLayoutOptions<S extends AnySchema>(
        * the city opened under them: the districts and their names open
        * clear of the chrome; the zoom at the foot when no ask field keeps it.
        */
-      inset: { ...railInset(size?.width ?? 1200), top: 8, bottom: seated ? 0 : 56 },
-      chrome: [{ x: (size?.width ?? 1200) - 176, y: 0, width: 176, height: 100 }],
+      inset: { ...railInset((size?.width ?? 1200) - dock.right), top: 8, bottom: seated ? 0 : 56 },
+      // Up and the Key stand clear of a panel too, at the corner of what the reader sees.
+      chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }],
+      ...(dock.right > 0 || dock.bottom > 0 ? { dock } : {}),
       // The reader's own text size, which the cards are sized in: the city
       // grows with the words rather than holding them at a fixed 230×97.
       unit,
@@ -131,6 +139,6 @@ export function useLayoutOptions<S extends AnySchema>(
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated, besideTheMap, dock.right, dock.bottom],
   );
 }

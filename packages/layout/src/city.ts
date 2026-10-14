@@ -39,6 +39,12 @@ export interface CityCard {
   readonly nameplate?: { readonly width: number; readonly height: number; readonly short: { readonly width: number; readonly height: number } };
   /** How pressing it is to say: problems first, then population. The most pressing names are placed first. */
   readonly weight?: number;
+  /**
+   * The showings hanging under its name, when they are shown (a district a
+   * lens is open on): how wide and tall, on the screen. No other district's
+   * name is placed on them.
+   */
+  readonly marquee?: { readonly width: number; readonly height: number };
 }
 
 /**
@@ -241,6 +247,17 @@ export function placeCity(
     ).length;
   };
 
+  /** The showings hanging under a district's name, as wide as they are drawn and as tall, from under its whole name. */
+  const marqueeBox = (one: Drawn): Box | null =>
+    one.card.marquee ? { x: one.x - one.card.marquee.width / 2, y: one.y + one.halfH + UNDER + plate(one.card).height, width: one.card.marquee.width, height: one.card.marquee.height } : null;
+  /** Whether a name would stand on another district's showings. */
+  const onShowings = (box: Box, one: Drawn, drawn: readonly Drawn[]) =>
+    drawn.some((other) => {
+      if (other === one) return false;
+      const hung = marqueeBox(other);
+      return hung !== null && collides(box, hung, 4);
+    });
+
   /** Where a name stands: under the plot's front corner, over its back corner and the blocks on it, or beside its right corner. */
   const plateBox = (one: Drawn, size: { width: number; height: number }, at: "under" | "above" | "aside" = "under"): Box =>
     at === "aside"
@@ -413,6 +430,8 @@ export function placeCity(
         inside &&
         !said.some((other) => collides(box, other, 4)) &&
         (over || !drawn.some((other) => other !== one && onDiamond(box, other, other.halfW, other.halfH))) &&
+        // Nor on another district's showings, where it would cover a picture's name somebody is reading.
+        !onShowings(box, one, drawn) &&
         !avoid.some((other) => collides(box, other, 0));
       if (clear) {
         chosen = name;
@@ -442,6 +461,14 @@ export function placeCity(
     extent: { x: where.originX + e.minX, y: where.originY + e.minY, width: e.maxX - e.minX, height: e.maxY - e.minY },
     openedShare: 1,
     ...(tilt !== 0.5 ? { tilt } : {}),
+    ...(drawn.some((one) => one.card.marquee)
+      ? {
+          showings: drawn.flatMap((one) => {
+            const hung = marqueeBox(one);
+            return hung ? [{ id: one.card.id, x: hung.x - (one.x - one.halfW), y: hung.y - (one.y - one.halfH), width: hung.width, height: hung.height }] : [];
+          }),
+        }
+      : {}),
   };
   return { placed, frame, map };
 }
@@ -454,14 +481,16 @@ export function placeCity(
  * center so the same limit serves both directions, and read by the scene
  * and by the tests alike, so "reachable" means one thing.
  */
-export function cameraLimit(result: { readonly width: number; readonly height: number; readonly city?: CityFrame }): { readonly x: number; readonly y: number } {
-  const slack = { x: result.width * 0.45, y: result.height * 0.45 };
+export function cameraLimit(result: { readonly width: number; readonly height: number; readonly city?: CityFrame; readonly visible?: { readonly width: number; readonly height: number } }): { readonly x: number; readonly y: number } {
+  // The reader's window is what a panel over the scene leaves, not the whole painted ground.
+  const { width, height } = result.visible ?? result;
+  const slack = { x: width * 0.45, y: height * 0.45 };
   if (!result.city) return slack;
   const { extent } = result.city;
   const margin = 24;
   return {
-    x: Math.max(slack.x, extent.x + extent.width - result.width + margin, -extent.x + margin),
-    y: Math.max(slack.y, extent.y + extent.height - result.height + margin, -extent.y + margin),
+    x: Math.max(slack.x, extent.x + extent.width - width + margin, -extent.x + margin),
+    y: Math.max(slack.y, extent.y + extent.height - height + margin, -extent.y + margin),
   };
 }
 
@@ -489,9 +518,9 @@ export interface PastTheEdge {
  * is named here with the side it lies past, so the scene can put a sign on
  * that edge, and with the pan that brings it into the window.
  */
-export function districtsPastTheEdge(result: Pick<Layout, "nodes" | "width" | "height" | "city">): readonly PastTheEdge[] {
+export function districtsPastTheEdge(result: Pick<Layout, "nodes" | "width" | "height" | "city" | "visible">): readonly PastTheEdge[] {
   if (!result.city) return [];
-  const { width, height } = result;
+  const { width, height } = result.visible ?? result;
   const out: PastTheEdge[] = [];
   for (const node of result.nodes) {
     if (!node.id.startsWith("kind:") || Math.round(node.plane) !== 2) continue;

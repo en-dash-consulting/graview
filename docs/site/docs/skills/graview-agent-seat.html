@@ -1245,7 +1245,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-agent-seat</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-agent-seat</code> is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-agent-seat</code> is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1268,7 +1268,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 <li><strong>Report what it READ.</strong> <code>useAttention(runtime)</code> pipes a settled read-only call's node ids into the picture, so a kind lights faintly where the agent looked. That is the half a diff cannot show, and the half that says whether to trust what it then did.</li>
 </ol>
 <ol>
-<li><strong>Find by name with <code>search_graph</code>, before <code>get_graph</code>.</strong> It is the Find box's matcher: hits with why they matched, <code>key:value</code> conditions (<code>done:false</code>, <code>is:any</code> for the past, <code>kind:task</code>), and the records it names counted as reads. Reading the whole graph to scan it is the move a person with a search box never makes.</li>
+<li><strong>Find by name with <code>search_graph</code>, before <code>get_graph</code>.</strong> It is the Find box's matcher: hits with why they matched, <code>key:value</code> conditions (<code>done:false</code>, <code>is:any</code> for the past, <code>kind:task</code>), and the records it names counted as reads; a <code>near: true</code> hit is a near word, not the name. Reading the whole graph to scan it is the move a person with a search box never makes.</li>
 </ol>
 <p><strong>Ask what a place shows with <code>describe_place</code>, before you say done.</strong>    <code>{ place: "home" | "&lt;slug&gt;" | "&lt;record id&gt;", width: 390 }</code> returns the    headings, figures, lists (each record's title and what its card or row    says), group headings, empty words and problems this seat would see, as    data and text. It reads what the faces draw from (<code>describePlace</code>, from    <code>@graview/core/describe</code>), so it is not a guess. Hand the runtime the    app (<code>createToolRuntime(store, { app })</code>, <code>createMcpHttpHandler({ app })</code>)    or it says only kinds and records. On a checkout:    <code>graview describe &lt;entry&gt; --place home --seed seed.json --as partner --width 390</code>.</p>
 <ol>
@@ -1280,7 +1280,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 <p>``<code>sh    graview mcp ./dist/domain/app.js --data ./data --as cursor --roles keeper    graview mcp ./dist/domain/app.js --remote-url http://localhost:5196 --roles keeper    graview apply ./dist/domain/app.js --data ./data --roles keeper \      --call add-task --args '{"listId":"today","label":"Book the van","id":"t-van"}'    </code>``</p>
 <p><code>mcp</code> is MCP over stdio around this same runtime; <code>apply</code> is one act, a    plan of many as one batch, or an undo, from a shell. Both open the store    <code>graview serve</code> opens — a folder, SQLite, or a running server — and act    under the seat you name, so the policy refuses there what it refuses here.    Put <code>serve</code> and <code>mcp</code> in the app's scripts so the door is always there,    and tell the agent the seed is a first-install snapshot: it changes the    live graph through these, never by editing <code>example.json</code> and wiping.    <code>graview mcp &lt;entry&gt; --list --roles …</code> prints the seat's tools as    <code>tools/list</code> JSON — the catalog a host registers without writing one.</p>
 <ol>
-<li><strong>Say what a guess was based on.</strong> A host applying an agent's inference passes <code>lineage: { basis, confidence, model }</code> with the author; a link made under 1 by anyone but a person is provisional until a person keeps it (<code>keep-link</code>; <code>@graview/core/provenance</code>).</li>
+<li><strong>Say what a guess was based on.</strong> A host applying an agent's inference passes <code>lineage: { basis, confidence, model }</code> with the author; a link made under 1 by anyone but a person is provisional until a person keeps it (<code>keep-link</code>, permitted per relation; <code>@graview/core/provenance</code>).</li>
 </ol>
 <h3>Worked examples</h3>
 <ul>

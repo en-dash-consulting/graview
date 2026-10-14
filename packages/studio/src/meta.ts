@@ -1,5 +1,5 @@
 import { createSchema, defineNode, nodeRef, type AnyMutationDefinition, type GraviewApp } from "@graview/core";
-import { renameIn, type DeclaredKinds, type NameChange } from "@graview/core/document";
+import { FIELD_TYPES as DOCUMENT_FIELD_TYPES, renameIn, type DeclaredKinds, type NameChange } from "@graview/core/document";
 import { z } from "zod";
 
 /*
@@ -27,12 +27,14 @@ const label = z.string().min(1);
 export const DECLARED_KIND = "declared:";
 
 /**
- * A field's types: the declaration document's eleven (FR-54), so a field a
+ * A field's types: the declaration document's own list (FR-54), so a field a
  * document declares is read as what it is — an integer, a date and time, a
- * link, an address, a long text — and handed back the same, never as the
- * nearest type the studio happened to know.
+ * link, an address, a long text, a picture, another app (FR-171) — and
+ * handed back the same, never as the nearest type the studio happened to
+ * know. It is the document's list, not a copy of it: a type the document
+ * learns is one the studio offers, with nothing here to remember.
  */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email"] as const;
+export const FIELD_TYPES = DOCUMENT_FIELD_TYPES;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const kindNode = defineNode("kind", {
@@ -63,9 +65,11 @@ export const kindNode = defineNode("kind", {
     figure: z.string().optional(),
     /** This kind stands for the people: a record of it whose id is a principal's is that person (Roadmap f-people-kind). */
     people: z.boolean().optional(),
+    /** Its records are kept or removed, never archived or merged: the declaration's `archives: false` (FR-173). */
+    neverArchived: z.boolean().optional(),
   }),
   label: (node) => node.label,
-  display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when", people: "stands for the people" } },
+  display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when", people: "stands for the people", neverArchived: "never archived" } },
 });
 
 export const fieldNode = defineNode("field", {
@@ -79,6 +83,10 @@ export const fieldNode = defineNode("field", {
     required: z.boolean(),
     options: z.array(z.string()).optional(),
     description: z.string().optional(),
+    /** A date that repeats: a record keeps how, beside it (`<field>Repeat`). */
+    repeats: z.boolean().optional(),
+    /** A text field written in Markdown (FR-180): `{"type": "text", "format": "markdown"}`, `markdownField()`. */
+    markdown: z.boolean().optional(),
   }),
   edges: {
     of: { to: ["kind"], cardinality: "one", description: "the kind it belongs to", inverse: "its fields" },
@@ -281,6 +289,10 @@ export const sightNode = defineNode("sight", {
     via: z.string().optional(),
     /** Every seat, whatever its roles. */
     everyone: z.boolean(),
+    /** Only these fields of what it shows (Roadmap f-field-sight). */
+    fields: z.array(z.string()).optional(),
+    /** Every field but these of what it shows: kept from the roles, and not theirs to write. */
+    hide: z.array(z.string()).optional(),
   }),
   edges: {
     "seen-by": { to: ["role"], description: "the roles it lets see", inverse: "what they see" },
@@ -442,6 +454,7 @@ export const addField = act("add-field", {
     required: z.boolean(),
     options: z.array(z.string()).optional(),
     description: z.string().optional(),
+    markdown: z.boolean().optional(),
   }),
   describe: (args, graph) => `Add the field ${args.label} to ${(graph.getNode(args.kind) as { label?: string } | undefined)?.label ?? args.kind}`,
   apply(ctx, args) {
@@ -456,6 +469,8 @@ export const addField = act("add-field", {
       required: args.required,
       ...(args.options ? { options: args.options } : {}),
       ...(args.description ? { description: args.description } : {}),
+      // Markdown is a text field's (FR-180).
+      ...(args.markdown && args.type === "text" ? { markdown: true } : {}),
     });
     ctx.addEdge({ kind: "of", from: id, to: args.kind });
   },
@@ -563,20 +578,25 @@ const fieldLabel = (graph: Reader, id: string): string => {
 
 export const retypeField = act("retype-field", {
   title: "Change the field's type",
-  description: "Make a field another type. An enum is given its options; a field made anything else lets them go.",
+  description: "Make a field another type. An enum is given its options; a field made anything else lets them go. A text field may be written in Markdown.",
   subject: { kinds: ["field"], arg: "id" },
-  writes: ["type", "options"],
-  input: z.object({ id: nodeRef(["field"]), type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1)).min(1).optional() }),
-  describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} a ${args.type}`,
+  writes: ["type", "options", "markdown", "repeats"],
+  input: z.object({ id: nodeRef(["field"]), type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1)).min(1).optional(), markdown: z.boolean().optional() }),
+  describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} a ${args.type}${args.type === "text" && args.markdown ? " written in Markdown" : ""}`,
   apply(ctx, args) {
-    const field = ctx.graph.getNode(args.id) as { options?: readonly string[] } | undefined;
+    const field = ctx.graph.getNode(args.id) as { options?: readonly string[]; markdown?: boolean; repeats?: boolean } | undefined;
+    // Markdown is a text field's (FR-180): said where the type is text, let go where it is not.
+    const markdown = args.type === "text" && (args.markdown ?? field?.markdown) === true;
+    if (markdown !== (field?.markdown === true)) ctx.patchNode(args.id, { markdown: markdown ? true : undefined });
+    // Only a date repeats: a field that is no longer one lets it go.
+    const repeats = field?.repeats && args.type !== "date" && args.type !== "datetime" ? { repeats: undefined } : {};
     if (args.type === "enum") {
       const options = args.options ?? field?.options;
       if (!options || options.length === 0) throw new Error(`${nameOf(ctx, args.id)} is made an enum, and an enum names its options: give them`);
-      ctx.patchNode(args.id, { type: args.type, options: [...options] });
+      ctx.patchNode(args.id, { type: args.type, options: [...options], ...repeats });
       return;
     }
-    ctx.patchNode(args.id, { type: args.type, ...(field?.options !== undefined ? { options: undefined } : {}) });
+    ctx.patchNode(args.id, { type: args.type, ...(field?.options !== undefined ? { options: undefined } : {}), ...repeats });
   },
 });
 
@@ -589,6 +609,20 @@ export const setRequired = act("set-required", {
   describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} ${args.required ? "required" : "optional"}`,
   apply(ctx, args) {
     ctx.patchNode(args.id, { required: args.required });
+  },
+});
+
+export const setRepeats = act("set-repeats", {
+  title: "Say whether it repeats",
+  description: "Let a date repeat — weekly, monthly, on chosen days, until a day — or stop it repeating.",
+  subject: { kinds: ["field"], arg: "id" },
+  writes: ["repeats"],
+  input: z.object({ id: nodeRef(["field"]), repeats: z.boolean() }),
+  describe: (args, graph) => `Let ${fieldLabel(graph, args.id)} ${args.repeats ? "repeat" : "no longer repeat"}`,
+  apply(ctx, args) {
+    const type = (ctx.graph.getNode(args.id) as { type?: string } | undefined)?.type;
+    if (args.repeats && type !== "date" && type !== "datetime") throw new Error(`${nameOf(ctx, args.id)} is not a date, and only a date can repeat`);
+    ctx.patchNode(args.id, { repeats: args.repeats || undefined });
   },
 });
 
@@ -865,15 +899,31 @@ export const addSight = act("add-sight", {
   creates: ["sight"],
   connects: ["seen-by", "shows"],
   fromTheOtherEnd: "shows",
-  input: z.object({ kind: nodeRef(["kind"]), role: nodeRef(["role"]).optional(), own: z.boolean().optional(), describe: z.string().optional() }),
+  input: z.object({
+    kind: nodeRef(["kind"]),
+    role: nodeRef(["role"]).optional(),
+    own: z.boolean().optional(),
+    hide: z.array(z.string()).optional(),
+    fields: z.array(z.string()).optional(),
+    describe: z.string().optional(),
+  }),
   describe: (args, graph) =>
-    `${args.role ? labelOf(graph, args.role) : "Everybody"} may see ${args.own ? "their own " : ""}${labelOf(graph, args.kind)}`,
+    `${args.role ? labelOf(graph, args.role) : "Everybody"} may see ${args.own ? "their own " : ""}${labelOf(graph, args.kind)}${args.hide?.length ? ` without ${args.hide.join(", ")}` : ""}`,
   apply(ctx, args) {
     const who = args.role ? nameOf(ctx, args.role) : "everybody";
     const what = nameOf(ctx, args.kind);
-    const said = `${who} may see ${args.own ? "their own " : ""}${what}`;
+    const said = `${who} may see ${args.own ? "their own " : ""}${what}${args.hide?.length ? ` without ${args.hide.join(", ")}` : ""}`;
     const id = ctx.freshId(said, "sight");
-    ctx.addNode({ id, kind: "sight", label: said, own: args.own ?? false, everyone: !args.role, ...(args.describe ? { describe: args.describe } : {}) });
+    ctx.addNode({
+      id,
+      kind: "sight",
+      label: said,
+      own: args.own ?? false,
+      everyone: !args.role,
+      ...(args.hide?.length ? { hide: args.hide } : {}),
+      ...(args.fields ? { fields: args.fields } : {}),
+      ...(args.describe ? { describe: args.describe } : {}),
+    });
     if (args.role) ctx.addEdge({ kind: "seen-by", from: id, to: args.role });
     ctx.addEdge({ kind: "shows", from: id, to: args.kind });
   },
@@ -881,13 +931,19 @@ export const addSight = act("add-sight", {
 
 export const changeSight = act("change-sight", {
   title: "Change the sight",
-  description: "Keep a sight to a seat's own records, or not, and say why in a sentence.",
+  description: "Keep a sight to a seat's own records, or not; say which fields it hides or shows; and say why in a sentence.",
   subject: { kinds: ["sight"], arg: "id" },
-  writes: ["own", "describe"],
-  input: z.object({ id: nodeRef(["sight"]), own: z.boolean().optional(), describe: z.string().optional() }),
+  writes: ["own", "hide", "fields", "describe"],
+  input: z.object({ id: nodeRef(["sight"]), own: z.boolean().optional(), hide: z.array(z.string()).optional(), fields: z.array(z.string()).optional(), describe: z.string().optional() }),
   describe: (args, graph) => `Change ${labelOf(graph, args.id)}`,
   apply(ctx, args) {
-    ctx.patchNode(args.id, { ...(args.own !== undefined ? { own: args.own } : {}), ...(args.describe !== undefined ? { describe: args.describe } : {}) });
+    ctx.patchNode(args.id, {
+      ...(args.own !== undefined ? { own: args.own } : {}),
+      // An empty list hides nothing: the field is let go rather than kept empty.
+      ...(args.hide !== undefined ? { hide: args.hide.length ? args.hide : undefined } : {}),
+      ...(args.fields !== undefined ? { fields: args.fields } : {}),
+      ...(args.describe !== undefined ? { describe: args.describe } : {}),
+    });
   },
 });
 
@@ -930,6 +986,7 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   removeField,
   retypeField,
   setRequired,
+  setRepeats,
   setOptions,
   describeField,
   addEdge,

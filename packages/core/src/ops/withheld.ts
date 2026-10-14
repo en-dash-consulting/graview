@@ -47,6 +47,13 @@ export interface SeatLens {
   /** The seat whose words these are — the person, for an agent acting for one. */
   readonly actor?: string;
   readonly optional: (kind: string, field: string) => boolean;
+  /**
+   * WHICH FIELDS OF A RECORD ITS SIGHT KEEPS FROM THE SEAT (Roadmap
+   * f-field-sight), and the log as a seat so kept is served it: set by
+   * `@graview/core/field-sight` on the lens it makes.
+   */
+  readonly kept?: (node: { readonly id: string; readonly kind: string }) => ((field: string) => boolean) | undefined;
+  readonly redact?: (ops: readonly Operation[]) => Operation[];
   /** The kind of a record, by id, when it is known: for a patch, whose primitive does not say. */
   readonly kindOf: (id: string) => string | undefined;
   /** The store's graph now and the log that led to it, so an op is judged where it stood (`serveAlong`). */
@@ -204,6 +211,7 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
   // A seat from whom nothing is kept is served the log as it is (FR-67).
   if (given.hides?.() === false) return [...ops];
   const lens = given.pin?.() ?? given;
+  if (lens.redact) return lens.redact(ops);
   /*
    * ALONG THE STORE'S HISTORY, when the lens knows it: each primitive judged
    * by whether its record was served just before it and just after, so the
@@ -233,7 +241,7 @@ export function redact(ops: readonly Operation[], seeing: SeatLens | ((id: strin
  * trimmed: an act's sentence is made from its call ("Compare with Freya
  * Davies"), so one that names a hidden record anywhere withholds the op.
  */
-function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Operation | undefined {
+export function whole(op: Operation, lens: SeatLens, served?: readonly Primitive[]): Operation | undefined {
   /*
    * A LINK IT IS NOT SERVED IS NO PART OF WHAT IT DID (FR-55): a removal
    * takes a record's links to what the seat may not see with it, and the

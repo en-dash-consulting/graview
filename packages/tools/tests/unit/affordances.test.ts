@@ -481,10 +481,10 @@ describe("what a principal may do", () => {
   it("gives an agent seat tools for what its own principal may run", () => {
     const seat = createToolRuntime(guarded(), { author: { kind: "agent", roles: ["player"] } });
     const mutating = seat.definitions.filter((tool) => tool.mutating).map((tool) => tool.name);
-    // `undo_batch` stays — taking back your own work is legitimate — but the
+    // `undo_batch` and `act_on_several` stay — taking back your own work is legitimate, and the second runs only acts the seat may — but the
     // store refuses undoing a batch whose mutation this principal may not run,
     // or undo would be the way around the policy.
-    expect(mutating.filter((name) => name !== "undo_batch").sort()).toEqual(["edit-duty", "reday"]);
+    expect(mutating.filter((name) => name !== "undo_batch" && name !== "act_on_several").sort()).toEqual(["edit-duty", "reday"]);
   });
 
   it("refuses a seat that calls a mutation it was not given a tool for", () => {

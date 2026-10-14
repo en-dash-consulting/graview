@@ -79,7 +79,9 @@ pnpm build:domain && npx graview describe ./dist/domain/app.js
    reads each cell by its field's type, links a cell to a record by its name,
    lands one undoable batch and says each refused row in words; offer
    `proposeMapping` and `previewImport` first. Import the far ends (events)
-   before the kind that names them (vendors). See `docs/import.md`.
+   before the kind that names them (vendors). Imported again, pass `match:
+   "label"` (or `{ column, field }`): a row changes the record it finds,
+   through its edit act, instead of making a second. See `docs/import.md`.
 
 6. **Write the prompt from the graph, not from your head.** The model needs
    the kinds, the acts and their arguments — which `generateLlmsTxt(app)` (`@graview/core/check`)

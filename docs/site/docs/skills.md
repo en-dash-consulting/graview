@@ -1,6 +1,6 @@
 # The skills
 
-Graview's 17 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 18 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -14,7 +14,7 @@ graview skills install .
 - [graview-embed](https://graview.dev/docs/skills/graview-embed.html): Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 - [graview-invariant](https://graview.dev/docs/skills/graview-invariant.html): Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 - [graview-lens](https://graview.dev/docs/skills/graview-lens.html): Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
-- [graview-lists](https://graview.dev/docs/skills/graview-lists.html): Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
+- [graview-lists](https://graview.dev/docs/skills/graview-lists.html): Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 - [graview-new-app](https://graview.dev/docs/skills/graview-new-app.html): Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 - [graview-node-kind](https://graview.dev/docs/skills/graview-node-kind.html): Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 - [graview-pages](https://graview.dev/docs/skills/graview-pages.html): Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
@@ -22,12 +22,13 @@ graview skills install .
 - [graview-port-app](https://graview.dev/docs/skills/graview-port-app.html): Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
 - [graview-seed](https://graview.dev/docs/skills/graview-seed.html): Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 - [graview-ship](https://graview.dev/docs/skills/graview-ship.html): Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+- [graview-sight](https://graview.dev/docs/skills/graview-sight.html): Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
 - [graview-studio](https://graview.dev/docs/skills/graview-studio.html): Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 - [graview-view-drawing](https://graview.dev/docs/skills/graview-view-drawing.html): Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
 - [graview-worker-view](https://graview.dev/docs/skills/graview-worker-view.html): Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 ---
 
-The 17 skills that teach an assistant the authoring moves, each ending in a real check.
+The 18 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

@@ -9,6 +9,7 @@ import type {
   Presence,
   PresenceChannel,
   Principal,
+  SearchRanker,
   SearchResult,
   SettingDeclaration,
   Store,
@@ -1025,8 +1026,26 @@ export function matchWith(given: Matcher): void {
   for (const arrived of [...matcherArrives]) arrived();
 }
 
+/** How long Find waits after a keystroke before it asks the host's ranker, which may be a model a call away. */
+export const RANKER_PAUSE = 300;
+
+/**
+ * A HOST'S RANKER ASKED ONLY WHEN THE TYPING PAUSES: each ask waits
+ * `RANKER_PAUSE`, and one a later ask overtook in the meantime answers
+ * nothing without reaching the host — its words are no longer the box's,
+ * and its answer would never be shown.
+ */
+export function whenTypingPauses(rank: SearchRanker): SearchRanker {
+  let asked = 0;
+  return async (words, candidates) => {
+    const mine = ++asked;
+    await new Promise((resolve) => setTimeout(resolve, RANKER_PAUSE));
+    return mine === asked ? rank(words, candidates) : [];
+  };
+}
+
 function FoundProvider({ children }: { children: ReactNode }) {
-  const { store, view, views, principal, hiddenKinds, selection } = useGraview();
+  const { store, view, views, principal, hiddenKinds, selection, ai } = useGraview();
   const nodes = useGraph();
   const q = view.q;
   const focusId = view.focusId;
@@ -1052,6 +1071,8 @@ function FoundProvider({ children }: { children: ReactNode }) {
       kindOfCard(focusId) ??
       (kindsOfAggregate(focusId).length === 1 ? kindsOfAggregate(focusId)[0] : undefined)
     : undefined;
+  // The host's ranker is asked only once the typing pauses: a word typed since is asked instead.
+  const paused = useMemo(() => ai.near && whenTypingPauses(ai.near), [ai.near]);
   const found = useMemo(() => {
     if (!q || !standing || !matching) return null;
     return matching.search(store, q, {
@@ -1064,10 +1085,15 @@ function FoundProvider({ children }: { children: ReactNode }) {
       touched: standing.touched,
       // The strip reads this many; the picture lights every match through `matched`.
       limit: 200,
+      rank: paused,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, q, principal, views, hiddenKinds, selection, focusId, inKind, standing]);
-  return <FoundContext.Provider value={found}>{children}</FoundContext.Provider>;
+  }, [store, q, principal, views, hiddenKinds, selection, focusId, inKind, standing, paused]);
+  // The exact hits at once; the host's ranker's near ones when they come, for the words they were asked of.
+  const [later, setLater] = useState<readonly [SearchResult, SearchResult]>();
+  // An answer for words since changed is kept beside the result it was for, and so never shown.
+  useEffect(() => void found?.later?.then((more) => setLater([found, more])), [found]);
+  return <FoundContext.Provider value={later?.[0] === found ? later[1] : found}>{children}</FoundContext.Provider>;
 }
 
 /*

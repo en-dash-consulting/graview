@@ -38,6 +38,27 @@
  *   a place's card that says `{draft}` in a text block keeps the
  *   paragraphs and lists too.
  *
+ * MARKDOWN IN A TEXT FIELD (FR-180). Graview Cloud's Roadmap keeps its
+ * briefs as Markdown in a text field, and the Briefs list drew each body
+ * whole with the syntax showing, and the record page too. A second
+ * document (`scripts/fixtures/long-text/roadmap.gdd.json`) declares
+ * `body: {"type": "text", "format": "markdown"}` and holds the real relay
+ * briefs, one that uses every mark, and one that is hostile. On the routed
+ * face at 1440 and 390 wide, in both schemes, it asks:
+ *
+ *   a Markdown body renders as prose with no syntax showing — headings,
+ *   lists, a table, code, emphasis and a link drawn as elements, and not
+ *   one "**", "##", "```" or "](" in what a person reads;
+ *
+ *   a list row says a text field as one excerpt line with no Markdown
+ *   syntax — the brief's first block or sentence, the rest left to its
+ *   page;
+ *
+ *   hostile Markdown runs nothing — a script, an image's handler, a
+ *   javascript: or data: link, a frame, an anchor's own handler: none
+ *   runs, none is drawn as markup, no link leaves the web, and a very long
+ *   word or line of code widens nothing.
+ *
  *   node scripts/verify-long-text.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>]
  */
 import { createServer } from "node:http";
@@ -60,6 +81,18 @@ const SHOTS = process.argv.find((arg) => arg.startsWith("--shots="))?.slice("--s
 const PROBE = process.argv.includes("--probe");
 const WORKSHOP = resolve(repoRoot, "scripts/fixtures/long-text/workshop.gdd.json");
 const WORKSHOP_SEED = resolve(repoRoot, "scripts/fixtures/long-text/workshop.seed.json");
+const ROADMAP = resolve(repoRoot, "scripts/fixtures/long-text/roadmap.gdd.json");
+const ROADMAP_SEED = resolve(repoRoot, "scripts/fixtures/long-text/roadmap.seed.json");
+/** The screens Markdown is read on (FR-180): a desk and a phone. */
+const MARKDOWN_SCREENS = [
+  { width: 1440, height: 900 },
+  { width: 390, height: 844 },
+];
+/** What a row says of each brief's body: its first block, or its words up to about 100 characters with an ellipsis (FR-180). */
+const EXCERPTS = {
+  "brief-0128": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped.",
+  "brief-markdown": "Markdown in a text field…",
+};
 const SEED = JSON.parse(readFileSync(WORKSHOP_SEED, "utf8"));
 const EMAIL = SEED.nodes.find((node) => node.id === "email");
 /** What the draft holds, counted from the text itself: blocks split on blank lines. */
@@ -102,9 +135,14 @@ async function buildHost() {
         import { mount } from "@graview/embed";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import workshop from ${JSON.stringify(WORKSHOP)};
-        import seed from ${JSON.stringify(WORKSHOP_SEED)};
+        import workshopSeed from ${JSON.stringify(WORKSHOP_SEED)};
+        import roadmap from ${JSON.stringify(ROADMAP)};
+        import roadmapSeed from ${JSON.stringify(ROADMAP_SEED)};
         const asked = new URLSearchParams(location.search);
-        let document_ = workshop;
+        /* "doc=roadmap": the briefs, Markdown in a text field (FR-180). */
+        const briefs = asked.get("doc") === "roadmap";
+        const seed = briefs ? roadmapSeed : workshopSeed;
+        let document_ = briefs ? roadmap : workshop;
         /* "page": the kind's page says its own order and a group (FR-148). */
         if (asked.get("page") === "1") document_ = { ...document_, kinds: { ...document_.kinds, deliverable: { ...document_.kinds.deliverable, page: ${JSON.stringify(PAGE)} } } };
         const compiled = compileDocumentWithoutCheck(document_, { today: () => "2026-10-08" });
@@ -247,9 +285,58 @@ function measureCards() {
   };
 }
 
+/** A brief's Markdown body as drawn on its page (FR-180). Runs in the page. */
+function measureMarkdown() {
+  const value = document.querySelector('[data-graview-long="body"]');
+  const drawn = value?.querySelector("[data-graview-markdown]") ?? null;
+  const read = drawn?.innerText ?? value?.innerText ?? "";
+  const count = (selector) => (drawn ? drawn.querySelectorAll(selector).length : 0);
+  return {
+    found: Boolean(value),
+    markdown: Boolean(drawn),
+    headings: count("h3, h4, h5, h6"),
+    items: count("li"),
+    tables: count("table"),
+    blocks: count("pre"),
+    code: count("code"),
+    strong: count("strong"),
+    emphasis: count("em"),
+    quotes: count("blockquote"),
+    links: drawn ? [...drawn.querySelectorAll("a")].map((link) => link.getAttribute("href")) : [],
+    syntax: (read.match(/\*\*|^#{1,6} |```|\]\(|^\s*\|?\s*:?-{2,}\s*\||`/gm) ?? []).slice(0, 6),
+  };
+}
+
+/** What hostile Markdown did (FR-180). Runs in the page. */
+function measureHostile() {
+  const value = document.querySelector('[data-graview-long="body"]');
+  const drawn = value?.querySelector("[data-graview-markdown]") ?? null;
+  const within = drawn ? [...drawn.querySelectorAll("*")] : [];
+  return {
+    found: Boolean(drawn),
+    pwned: window.__pwned ?? null,
+    markup: within.filter((element) => /^(SCRIPT|IMG|IFRAME|OBJECT|EMBED|STYLE|FORM|INPUT|SVG|VIDEO|AUDIO|LINK|META)$/i.test(element.tagName)).map((element) => element.tagName),
+    handlers: within.flatMap((element) => [...element.attributes].map((attribute) => attribute.name).filter((name) => name.startsWith("on"))),
+    links: [...(drawn?.querySelectorAll("a") ?? [])].map((link) => link.getAttribute("href")).filter((href) => !/^(?:https?:\/\/|mailto:)/i.test(href ?? "")),
+    words: (drawn?.innerText ?? "").includes("<b>entities stay words</b>"),
+    wider: document.documentElement.scrollWidth > window.innerWidth + 1,
+  };
+}
+
+/** Each brief's row on the Briefs list: what its glance says, and in how many lines (FR-180). Runs in the page. */
+function measureRows(ids) {
+  return ids.map((id) => {
+    const row = [...document.querySelectorAll('.graview-row, [data-testid="record-row"]')].find((one) => one.querySelector(`a[href$="/briefs/${id}"]`));
+    const glance = row?.querySelector('.graview-row-glance, [data-testid="record-glance"]') ?? null;
+    const said = glance?.textContent ?? "";
+    const lines = glance ? Math.round(glance.getBoundingClientRect().height / parseFloat(getComputedStyle(glance).lineHeight)) : 0;
+    return { id, found: Boolean(glance), said, lines, breaks: /\n/.test(said), syntax: (said.match(/\*\*|##|```|`|\]\(/g) ?? []).slice(0, 4) };
+  });
+}
+
 const host = await buildHost();
 const errors = [];
-const seen = { record: [], paged: [], edited: [], cards: [] };
+const seen = { record: [], paged: [], edited: [], cards: [], markdown: [], rows: [], hostile: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -327,6 +414,45 @@ try {
           await close();
         }
       }
+      /* MARKDOWN IN A TEXT FIELD (FR-180): the briefs, on a desk and a phone. */
+      for (const screen of MARKDOWN_SCREENS) {
+        const viewport = { width: screen.width, height: screen.height };
+        const shot = async (page, name) => {
+          if (!SHOTS || engine !== engines[0]) return;
+          mkdirSync(SHOTS, { recursive: true });
+          await page.screenshot({ path: join(SHOTS, `${engine}-${scheme}-markdown-${screen.width}-${name}.png`), fullPage: true });
+          // The record's facts whole, however far the page's own scroller runs.
+          const facts = page.locator('[data-testid="record-fields"]');
+          if ((await facts.count()) > 0) await facts.first().screenshot({ path: join(SHOTS, `${engine}-${scheme}-markdown-${screen.width}-${name}-facts.png`) }).catch(() => undefined);
+        };
+        const drawn = (page) => page.waitForSelector('[data-graview-long="body"] [data-graview-markdown]', { timeout: 10_000 }).catch(() => undefined);
+        for (const id of ["brief-markdown", "brief-0128"]) {
+          const { page, close } = await open(`/briefs/${id}`, "doc=roadmap&face=pages", viewport);
+          await drawn(page);
+          seen.markdown.push({ engine, scheme, width: screen.width, id, ...(await page.evaluate(measureMarkdown)) });
+          await shot(page, `record-${id}`);
+          await close();
+        }
+        {
+          const { page, close } = await open("/briefs", "doc=roadmap&face=pages", viewport);
+          for (const row of await page.evaluate(measureRows, Object.keys(EXCERPTS))) seen.rows.push({ engine, scheme, width: screen.width, ...row, expected: EXCERPTS[row.id] });
+          await shot(page, "list");
+          await close();
+        }
+        {
+          const { page, close } = await open("/briefs/brief-hostile", "doc=roadmap&face=pages", viewport);
+          const dialogs = [];
+          page.on("dialog", (dialog) => {
+            dialogs.push(dialog.message());
+            void dialog.dismiss();
+          });
+          await drawn(page);
+          await page.waitForTimeout(500);
+          seen.hostile.push({ engine, scheme, width: screen.width, dialogs, ...(await page.evaluate(measureHostile)) });
+          await shot(page, "record-hostile");
+          await close();
+        }
+      }
     }
     await browser.close();
     browser = undefined;
@@ -372,6 +498,23 @@ report.checks.aParagraphAddedInPlaceIsStoredWithTheOthers = {
 report.checks.aCardsTextBlockKeepsTheParagraphsAndLists = {
   seen: seen.cards,
   ok: all(seen.cards, 2 * SCHEMES.length * engines.length, (one) => one.found && one.paragraphs === PARAGRAPHS && one.numbered === NUMBERED && one.bulleted === BULLETED),
+};
+const markdownScreens = MARKDOWN_SCREENS.length * SCHEMES.length * engines.length;
+const marked = seen.markdown.filter((one) => one.id === "brief-markdown");
+const relayed = seen.markdown.filter((one) => one.id === "brief-0128");
+report.checks.aMarkdownBodyRendersAsProseWithNoSyntaxShowing = {
+  seen: seen.markdown.map(({ engine, scheme, width, id, found, markdown, headings, items, tables, blocks, code, strong, emphasis, quotes, links, syntax }) => ({ engine, scheme, width, id, found, markdown, headings, items, tables, blocks, code, strong, emphasis, quotes, links, syntax })),
+  ok:
+    all(marked, markdownScreens, (one) => one.found && one.markdown && one.headings === 2 && one.items === 8 && one.tables === 1 && one.blocks === 1 && one.strong >= 1 && one.emphasis >= 1 && one.quotes === 1 && one.links.includes("https://graview.dev/docs/stability") && one.syntax.length === 0) &&
+    all(relayed, markdownScreens, (one) => one.found && one.markdown && one.code > 10 && one.items > 10 && one.syntax.length === 0),
+};
+report.checks.aListRowSaysATextFieldAsOneExcerptLineWithNoMarkdownSyntax = {
+  seen: seen.rows,
+  ok: all(seen.rows, markdownScreens * Object.keys(EXCERPTS).length, (one) => one.found && one.lines <= 2 && one.said.includes(one.expected) && one.syntax.length === 0 && !one.breaks && !one.said.includes("FR-170: THE PEOPLE KIND") && !one.said.includes("What the framework gives")),
+};
+report.checks.hostileMarkdownRunsNothing = {
+  seen: seen.hostile,
+  ok: all(seen.hostile, markdownScreens, (one) => one.found && one.pwned === null && one.dialogs.length === 0 && one.markup.length === 0 && one.handlers.length === 0 && one.links.length === 0 && one.words && !one.wider),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

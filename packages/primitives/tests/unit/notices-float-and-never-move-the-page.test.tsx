@@ -2,8 +2,11 @@
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createNoticeBoard, Notices } from "../../src/frame.js";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createNoticeBoard, fetchNotices, Notices } from "../../src/frame.js";
+
+// What draws a notice is fetched with the first; here it is fetched before.
+beforeAll(() => fetchNotices());
 import { placeAtTheFoot } from "../../src/pages.js";
 
 /**

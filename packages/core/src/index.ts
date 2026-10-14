@@ -34,6 +34,14 @@ export { fileField, imageField } from "./schema/file-field.js";
 export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
 export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";
 export { appLinkField } from "./schema/app-link-field.js";
+// A date that repeats: the rule kept beside it, its occurrences worked out and never stored.
+export { dateOn, isRepeat, isRepeatField, nextOccurrence, occurrences, repeatedBy, repeatKey, validRepeat, WEEKDAYS } from "./repeat.js";
+export type { Repeat, Weekday } from "./repeat.js";
+export { repeatField } from "./schema/repeat-field.js";
+export { markdownField } from "./schema/markdown-field.js";
+// A phone, a place and a length of time: a tel: link, a link to the reader's maps app, minutes said "1 h 30 min".
+export type { TypedField } from "./schema/typed-fields.js";
+export { durationField, phoneField, placeField } from "./schema/typed-field-builders.js";
 export { nameOfAuthor } from "./who.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";
@@ -136,9 +144,13 @@ export type {
   Hit,
   HitAbout,
   MatchStrength,
+  NearBy,
+  NearCandidate,
+  NearScore,
   ParsedQuery,
   SearchCondition,
   SearchOptions,
+  SearchRanker,
   SearchResult,
   Why,
 } from "./search.js";
@@ -166,6 +178,7 @@ export { nodeRef, nodeRefArgs, nodeRefKinds } from "./mutations/node-ref.js";
 export type { NodeRefArg } from "./mutations/node-ref.js";
 // What an argument asks for (`argShape`, `describeArg`) is `@graview/core/words`', fetched with what asks (FR-179).
 export type { ArgShape } from "./mutations/arg-shape.js";
+export type { AmountMark } from "./schema/amount-mark.js";
 // Records named the way people name them: a node argument takes a label (FR-33).
 export { nameKey } from "./labels.js";
 export type { RefCandidate, RefResolution } from "./labels.js";
@@ -246,7 +259,7 @@ export {
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
 export { excerpt } from "./excerpt.js";
-export { actTitle, article, counted, pluralLabel, pluralOf, edgeWords, fieldWords, humanizeField, nounOf, summarize, valueWords, withArticle } from "./schema/define-node.js";
+export { actTitle, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, nounOf, summarize, withArticle } from "./schema/define-node.js";
 // Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178).
 export {
   DEFAULT_LOCALE,
@@ -274,9 +287,9 @@ export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, SCENE_LAYER
 export type { Layer } from "./theme/layers.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
-export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
+export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
-export type { RecordedLog, Records } from "./permissions/sight.js";
+export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
 export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchWhatIsUnseen } from "./watched.js";
@@ -318,7 +331,7 @@ export { dayOf, tickEachDay, untilTheDayTurns } from "./clock.js";
 export type { Tick } from "./clock.js";
 
 // Views — the cardinality x fidelity matrix.
-export { createViewRegistry, FIDELITIES, kindPath, placePath, placeSlug, recordPath, sharesItsName } from "./views/types.js";
+export { createViewRegistry, FIDELITIES, kindPath, onePerPicture, placeLabel, placePath, placeSlug, recordPath, samePicture, sharesItsName } from "./views/types.js";
 // Declared lenses that draw (FR-79), the arrangement (FR-80) and every place an app has.
 export {
   SHIPPED_LENSES,

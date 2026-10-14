@@ -17,18 +17,28 @@ description: "Every framework feature the Graview Roadmap holds at planned, afte
 
 | Title | Status |
 |-------|--------|
-| [An archived state on records (FR-173)](./an-archived-state-on-records-fr-173.md) | pending |
-| [Lineage on an op, and links drawn as provisional until a person touches them (FR-172)](./lineage-on-an-op-and-links-drawn-as.md) | pending |
-| [A page rendered to static HTML off the browser (FR-174)](./a-page-rendered-to-static-html-off-the.md) | pending |
-| [Filters that stay usable as an app grows](./filters-that-stay-usable-as-an-app-grows.md) | pending |
-| [Cards you can read at a glance](./cards-you-can-read-at-a-glance.md) | pending |
-| [Dates, times and numbers said in the app's locale, en-US first (FR-178)](./dates-times-and-numbers-said-in-the.md) | pending |
-| [Rules that read the clock are re-judged when the day turns (FR-176)](./rules-that-read-the-clock-are-re.md) | pending |
-| [The hosted page's up-front weight: 30 KB of headroom back (FR-179)](./the-hosted-page-s-up-front-weight-30.md) | pending |
-| [An app-link field and a resolveApp seam: the first step to cross-app links (FR-171)](./an-app-link-field-and-a-resolveapp.md) | pending |
-| [Bring a spreadsheet in: rows to records as one undoable batch (FR-177)](./bring-a-spreadsheet-in-rows-to-records.md) | pending |
-| [A map you can read: layout, labels and links](./a-map-you-can-read-layout-labels-and.md) | pending |
-| [The map shows state, not just how many](./the-map-shows-state-not-just-how-many.md) | pending |
-| [Selecting draws only the connections that explain it](./selecting-draws-only-the-connections.md) | pending |
-| [A lens opens at a size you can read](./a-lens-opens-at-a-size-you-can-read.md) | pending |
-| [A sharper statement on graview.dev](./a-sharper-statement-on-graview-dev.md) | pending |
+| [An archived state on records (FR-173)](./an-archived-state-on-records-fr-173.md) | completed |
+| [Lineage on an op, and links drawn as provisional until a person touches them (FR-172)](./lineage-on-an-op-and-links-drawn-as.md) | completed |
+| [A page rendered to static HTML off the browser (FR-174)](./a-page-rendered-to-static-html-off-the.md) | completed |
+| [Filters that stay usable as an app grows](./filters-that-stay-usable-as-an-app-grows.md) | completed |
+| [Cards you can read at a glance](./cards-you-can-read-at-a-glance.md) | completed |
+| [Dates, times and numbers said in the app's locale, en-US first (FR-178)](./dates-times-and-numbers-said-in-the.md) | completed |
+| [Rules that read the clock are re-judged when the day turns (FR-176)](./rules-that-read-the-clock-are-re.md) | completed |
+| [The hosted page's up-front weight: 30 KB of headroom back (FR-179)](./the-hosted-page-s-up-front-weight-30.md) | completed |
+| [An app-link field and a resolveApp seam: the first step to cross-app links (FR-171)](./an-app-link-field-and-a-resolveapp.md) | completed |
+| [Bring a spreadsheet in: rows to records as one undoable batch (FR-177)](./bring-a-spreadsheet-in-rows-to-records.md) | completed |
+| [A map you can read: layout, labels and links](./a-map-you-can-read-layout-labels-and.md) | completed |
+| [The map shows state, not just how many](./the-map-shows-state-not-just-how-many.md) | completed |
+| [Selecting draws only the connections that explain it](./selecting-draws-only-the-connections.md) | completed |
+| [A lens opens at a size you can read](./a-lens-opens-at-a-size-you-can-read.md) | completed |
+| [A sharper statement on graview.dev](./a-sharper-statement-on-graview-dev.md) | completed |
+| [Money fields are said as currency on every default face](./money-fields-are-said-as-currency-on.md) | completed |
+| [Phone, place and duration field types](./phone-place-and-duration-field-types.md) | completed |
+| [Select several records on a page and act on them at once](./select-several-records-on-a-page-and.md) | completed |
+| [Fuzzy and semantic search behind the intelligence seam](./fuzzy-and-semantic-search-behind-the.md) | completed |
+| [A sight that hides a field, not only a kind](./a-sight-that-hides-a-field-not-only-a.md) | completed |
+| [Repeating dates: a weekly practice, a monthly bill](./repeating-dates-a-weekly-practice-a.md) | completed |
+| [What the 0.1.29 wave left: archives in documents, keep-link per relation, import upserts](./what-the-0-1-29-wave-left-archives-in.md) | completed |
+| [What the 0.1.29 wave left on the faces: covered districts, the Shell's resolveApp, the studio](./what-the-0-1-29-wave-left-on-the-faces.md) | completed |
+| [The hosted page's up-front weight: room again](./the-hosted-page-s-up-front-weight-room.md) | completed |
+| [Markdown in a text field, and every list says a text field as an excerpt (FR-180)](./markdown-in-a-text-field-and-every.md) | completed |

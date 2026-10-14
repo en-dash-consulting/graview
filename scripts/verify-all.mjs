@@ -62,6 +62,8 @@ const CHAIN = [
   ["lines", "verify-lines.mjs"],
   ["shrunk", "verify-shrunk.mjs"],
   ["navigation", "verify-navigation.mjs"],
+  // A kind with no picture of its own opens to its stop: what it is, what is going on, its first act, a board or a table its data chooses — every example, a desk and a phone, light and dark.
+  ["kind-stop", "verify-kind-stop.mjs"],
   ["menu", "verify-menu.mjs"],
   // The seat as a guide: a quiet field that grows into a conversation, on both faces, in three engines.
   ["seat-guide", "verify-seat-guide.mjs"],
@@ -98,6 +100,10 @@ const CHAIN = [
   ["files", "verify-files.mjs"],
   // A record that links another app drawn as the app its host names, refused as no access, plainly without a resolver, on both faces at desk width, in three engines (FR-171).
   ["app-links", "verify-app-links.mjs"],
+  // A date that repeats: the calendar draws each occurrence of a weekly practice, marked, the kind's stop counts and says the next one, and the record changes how it repeats in words, in three engines.
+  ["repeats", "verify-repeats.mjs"],
+  // A phone drawn as a tel: link grouped for its reader, a place as a link to the reader's maps app, a duration said "1 h 30 min", typed as words and summed, on both faces at desk width, in three engines.
+  ["field-types", "verify-field-types.mjs"],
   // A host whose page is the app hands the routed face the address bar, in three engines; an article's embed never touches it (FR-106).
   ["address", "verify-address.mjs"],
   // An app fills the phone after it turns, at the screen's height on both faces and in the Shell, in Chromium and WebKit (FR-165).

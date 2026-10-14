@@ -199,6 +199,8 @@ export function measureVisible(
   stageEl: HTMLElement | null,
   id: string,
   preferBlock: boolean,
+  /** The slot a chip was allotted rather than the chip: what a caption over a run of the band is placed by, so a run of chips and a card of several in one row read as one row. */
+  slot = false,
 ): { x: number; y: number; width: number; height: number } | null {
   if (!stageEl || typeof document === "undefined") return null;
   const host = stageEl.querySelector(`[data-graview-view="${CSS.escape(id)}"]`);
@@ -206,6 +208,8 @@ export function measureVisible(
   const inner =
     (preferBlock ? host.querySelector(".graview-kind-block") : null) ??
     host.querySelector('[data-graview-primitive="panel"], .graview-kind-face, .graview-kind-card') ??
+    // A chip in its slot is the chip, not the slot it was allotted: a line to the slot's edge stopped short of it.
+    (slot ? null : host.querySelector(':scope > [data-graview-primitive="chip"]')) ??
     host;
   // Cut down to what shows: a host half under a scroller's fold anchors a
   // line where its visible half is, and one wholly under it anchors none.

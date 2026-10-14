@@ -1,7 +1,8 @@
-import { edgeWords, humanizeField, labelOf, nounOf, type AnySchema, type Store } from "@graview/core";
-import { argumentWords, tellApart } from "@graview/core/words";
+import { humanizeField, labelOf, nounOf, type AnySchema, type Store } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
+import { amountBox, argumentWords, parseDuration, readAmount, tellApart } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
-import { useGraview } from "@graview/react/provider";
+import { useGraviewIfAny } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
 import { Files } from "../files-door.js";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -21,13 +22,17 @@ export function AnswerArgs({
   affordance,
   onApply,
   onCancel,
+  store: given,
 }: {
   readonly affordance: Affordance;
+  /** The store it asks about, where it is drawn outside a provider (a routed face's list); the provider's otherwise. */
+  readonly store?: Store<AnySchema>;
   /** Applies the answers. Returns the arguments a refusal named, when it named any, so the ask goes back to them. */
   onApply: (args: Record<string, unknown>) => readonly string[] | void;
   onCancel: () => void;
 }) {
-  const { store } = useGraview<AnySchema>();
+  const provided = useGraviewIfAny<AnySchema>();
+  const store = (given ?? provided?.store)!;
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [draft, setDraft] = useState("");
   /** What has been chosen so far, for an argument that takes several. */
@@ -106,6 +111,7 @@ export function AnswerArgs({
   ) : null;
 
   const shape = parameter.shape ?? { type: "unknown" as const };
+  const amount = shape.type === "number" ? shape.amount : undefined;
   const choices = choicesFor(parameter, shape);
   /* The record's own words for an argument that fills one of its fields: "Body style", "SUV" (see `argumentWords`). */
   const words = argumentWords(store.schema, store.allMutations().find((mutation) => mutation.name === affordance.mutation), parameter.name);
@@ -327,7 +333,13 @@ export function AnswerArgs({
               return;
             }
             if (draft.trim().length === 0) return;
-            answer(shape.type === "number" ? Number(draft) : draft);
+            // An amount as it is said: "$1,250.50" is 1250.5; what is no number is not sent.
+            if (amount) {
+              const read = readAmount(draft, amount);
+              if (read !== undefined) answer(read);
+              return;
+            }
+            answer(shape.type === "number" ? (shape.duration ? (parseDuration(draft) ?? draft) : Number(draft)) : draft);
           }}
         >
           {shape.type === "text" && shape.long ? (
@@ -367,7 +379,8 @@ export function AnswerArgs({
           ) : (
           <input
             autoFocus
-            type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" ? "number" : "text"}
+            type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" && !shape.duration && !amount ? "number" : shape.type === "text" && shape.holds === "phone" ? "tel" : "text"}
+            {...(amount ? { inputMode: "decimal" as const, "data-graview-amount": amount.format ?? "unit" } : {})}
             /*
              * A FIELD IS ASKED FOR IN WORDS. `dependsOn` and `label` are the
              * declaration's identifiers; the pages face has always humanized
@@ -376,7 +389,7 @@ export function AnswerArgs({
              */
             name={parameter.name}
             aria-label={words.label}
-            placeholder={listed ? `${words.label}, separated by commas` : words.label}
+            placeholder={listed ? `${words.label}, separated by commas` : amount ? `${words.label}, ${amountBox(amount).hint} — ${amountBox(amount).prefix ?? ""}${amountBox(amount).placeholder}${amountBox(amount).suffix ? ` ${amountBox(amount).suffix}` : ""}` : words.label}
             value={draft}
             {...(shape.type === "number" && shape.min !== undefined ? { min: shape.min } : {})}
             {...(shape.type === "number" && shape.max !== undefined ? { max: shape.max } : {})}

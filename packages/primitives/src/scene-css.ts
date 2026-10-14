@@ -1018,10 +1018,37 @@ ${/* THE NAME UNDER A DISTRICT, from altitude: under the plot's front
 [data-graview-altitude] .graview-kind-face > div {
   gap: 6px !important;
 }
+${/* THE PROBLEM COUNT IS A CONTROL: a fingertip's height, quiet until it is reached for, and it says what it opens. */ ""}
 .graview-district-problems {
+  display: inline-flex;
+  align-items: center;
+  ${/* On the ground the card is drawn at its plane's 0.9: a fingertip there is 27, so it draws 24. */ ""}
+  min-height: max(1.67rem, 27px);
+  min-width: max(1.67rem, 27px);
+  margin: -5px -4px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  box-shadow: none;
   color: var(--graview-warn);
+  font: inherit;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+[data-graview-altitude] .graview-district-problems {
+  min-height: max(1.5rem, 24px);
+  min-width: max(1.5rem, 24px);
+  margin: -4px -4px;
+}
+.graview-district-problems:hover {
+  background: color-mix(in oklab, var(--graview-warn) 14%, transparent);
+  text-decoration: underline;
+}
+.graview-district-problems[aria-expanded="true"] {
+  border-color: color-mix(in oklab, var(--graview-warn) 55%, transparent);
 }
 [data-graview-altitude] .graview-kind-face > .graview-kind-members {
   grid-column: 1 / -1;
@@ -1122,8 +1149,9 @@ ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
    fingertip-sized buttons and the level between them, shown from altitude. */ ""}
 .graview-zoom {
   position: absolute;
-  right: 16px;
-  bottom: 16px;
+  ${/* Clear of a panel floating over the scene's right edge, or a sheet over its foot. */ ""}
+  right: calc(16px + var(--graview-dock, 0px));
+  bottom: calc(16px + var(--graview-sheet, 0px));
   ${/* Above the occupants: a robot walking past a control must not cover it. */ ""}
   z-index: ${SCENE_LAYERS.zoom};
   display: inline-flex;

@@ -1,4 +1,4 @@
-import { ROSTER_ROW, ROSTER_KEPT, ROSTER_CHROME, rosterRows, rosterHeight } from "./sizes.js";
+import { MARQUEE_WIDTH, marqueeHeightFor, ROSTER_ROW, ROSTER_KEPT, ROSTER_CHROME, rosterRows, rosterHeight } from "./sizes.js";
 export { MARQUEE_WIDTH, marqueeHeightFor, ROSTER_ROW, ROSTER_MOST, rosterRows, rosterHeight, type NameWidth } from "./sizes.js";
 import { isCurrent, type AnySchema, type GraphReader, type NodeOfSchema } from "@graview/core";
 import { districtState } from "@graview/core/city";
@@ -16,7 +16,7 @@ import { nameplateSize, placeCity } from "./city.js";
 import { rankKinds } from "./rank.js";
 import type { ViewState } from "./view-state.js";
 
-import { byStableKey, kindCardId, kindsOfAggregate, BEYOND_CARD } from "./ids.js";
+import { byStableKey, kindCardId, kindOfCard, kindsOfAggregate, BEYOND_CARD } from "./ids.js";
 import { connectorsFor, pluralOf, relatedNodes } from "./related.js";
 
 /**
@@ -116,7 +116,10 @@ export function layout<S extends AnySchema>(
    */
   const unit = Math.max(8, opts.unit ?? 16) / 16;
   const railLeft = opts.inset?.left ?? 0;
-  const spanW = opts.width - railLeft - (opts.inset?.right ?? 0);
+  // A panel floating over the map takes its room from the city's fit, not from the painted scene (`LayoutOptions.dock`).
+  const dockRight = state.overview ? Math.max(0, opts.dock?.right ?? 0) : 0;
+  const dockBottom = state.overview ? Math.max(0, opts.dock?.bottom ?? 0) : 0;
+  const spanW = opts.width - dockRight - railLeft - (opts.inset?.right ?? 0);
   const nodes: LayoutNode[] = [];
   const placed = new Map<string, LayoutNode>();
 
@@ -453,7 +456,8 @@ export function layout<S extends AnySchema>(
      * `@graview/primitives`, which now says where the members are instead.
      */
     for (const kind of focusKinds) {
-      if (groupIsPlain) expanded.add(kindCardId(kind));
+      // Beside the map, a plain group's stop is in the panel: its district stays shut, as a pictured one's does.
+      if (groupIsPlain && options.besideTheMap !== true) expanded.add(kindCardId(kind));
       else expanded.delete(kindCardId(kind));
     }
   }
@@ -466,7 +470,14 @@ export function layout<S extends AnySchema>(
   const driveIn = screenKind !== undefined && (options.screens?.[screenKind]?.length ?? 0) > 0;
   /** The picture standing in the middle from altitude, when there is one: ground the city must not take. */
   let stamp: { x: number; y: number; width: number; height: number } | undefined;
-  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain && !driveIn) {
+  /*
+   * A RECORD IN FOCUS, from altitude, beside a panel: the panel shows it at
+   * a size a person reads, and its building stands lit in its district.
+   * A card of it stamped over the city at a seventeenth of its size said
+   * the same thing unreadably, over the districts it covered.
+   */
+  const recordBeside = state.overview === true && focus !== undefined && options.besideTheMap === true;
+  if (state.overview && (focus || focusKinds.length > 0) && state.focusId && !groupIsPlain && !driveIn && !(groupFocus && options.besideTheMap === true) && !recordBeside) {
     stamp = {
       x: railLeft + (spanW - overviewW) / 2,
       y: opts.height * 0.53 - overviewH / 2,
@@ -930,10 +941,19 @@ export function layout<S extends AnySchema>(
             openedMin: expanded.has(item.id) ? rosterHeight(Math.min(ROSTER_KEPT, rosterRows(members.length))) * unit : 0,
             nameplate: nameplateSize(item.aggregate?.label ?? pluralOf(schema, item.kind), members.length, problems, districtState(schema, item.kind) !== undefined, unit),
             weight: problems * 1000 + members.length,
+            // The focused district's showings hang under its name: ground no other name is placed on.
+            ...(focusKinds.includes(item.kind) && (options.screens?.[item.kind]?.length ?? 0) > 0
+              ? {
+                  marquee: {
+                    width: MARQUEE_WIDTH + 12, // its padding, 6 a side, as the scene draws the showings from altitude
+                    height: marqueeHeightFor(options.screens![item.kind]!.map((place) => place.title), MARQUEE_WIDTH, options.nameWidth) + 8,
+                  },
+                }
+              : {}),
           };
         }),
         schema,
-        { width: opts.width, height: opts.height },
+        { width: opts.width - dockRight, height: opts.height - dockBottom },
         // The corner's chrome, where it is said, is kept clear box by box rather than as a rail down the whole right edge.
         opts.chrome ? { ...opts.inset, right: Math.min(opts.inset?.right ?? 0, 8) } : (opts.inset ?? {}),
         {
@@ -941,7 +961,8 @@ export function layout<S extends AnySchema>(
           ...(opts.plots ? { plots: opts.plots } : {}),
           ...(options.cityZoom && options.cityZoom !== 1 ? { zoom: options.cityZoom } : {}),
           // The chosen districts, and the one a lens is open on, stay in sight when the city runs past the window.
-          keep: [...(state.selection ?? []), ...(state.focusId ? [state.focusId] : [])].flatMap((id) => (id.startsWith("kind:") ? [id.slice(5)] : id.startsWith("aggregate:") && !id.includes("|") ? [id.slice(10)] : [])),
+          // And the district of a record in focus beside the panel: its building is lit, so it is in sight.
+          keep: [...(state.selection ?? []), ...(state.focusId ? [state.focusId] : [])].flatMap((id) => (id.startsWith("kind:") ? [id.slice(5)] : id.startsWith("aggregate:") && !id.includes("|") ? [id.slice(10)] : recordBeside && id === focus?.id ? [focus.kind as string] : [])),
           ...(options.tilt !== undefined ? { tilt: options.tilt } : {}),
           // Recorded, not applied: the cards already carry it, and the ground reads it to ride the same tween.
           pan: { x: state.pan?.x ?? 0, y: state.pan?.y ?? 0 },
@@ -1229,12 +1250,14 @@ export function layout<S extends AnySchema>(
     width: opts.width,
     height: opts.height,
     ...(city ? { city: city.frame } : {}),
+    ...(dockRight > 0 || dockBottom > 0 ? { visible: { width: opts.width - dockRight, height: opts.height - dockBottom } } : {}),
   };
 
   function push(node: Omit<LayoutNode, "pinned">): void {
     // A user pin overrides the computed position and survives graph changes
     // underneath: the layout keeps recomputing, the pin keeps winning.
-    const pin = state.pins[node.id];
+    // A district from altitude stands under its own plot, wherever an old pin in a bookmark says: its name is not moved by hand.
+    const pin = state.overview && kindOfCard(node.id) !== null ? undefined : state.pins[node.id];
     const placedNode: LayoutNode = pin
       ? { ...node, x: pin.x, y: pin.y, pinned: true }
       : { ...node, pinned: false };

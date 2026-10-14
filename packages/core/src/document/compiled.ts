@@ -29,15 +29,18 @@ import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
 import { fileSchema } from "../schema/files.js";
 import { appLinkSchema } from "../schema/app-link.js";
+import { repeatKey, repeatSchema } from "../repeat.js";
+import { markTyped, PHONE } from "../schema/typed-fields.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
-import { formatValue, renderTemplate, type TemplatePart } from "./template.js";
+import { formatValue, renderTemplate, type Money, type TemplatePart } from "./template.js";
 import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
-import { ISO_DAY, isoToday } from "../days.js";
+import { markAmount } from "../schema/amount-mark.js";
+import { ISO_DAY, isMoment, isoToday } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
 /*
@@ -101,6 +104,8 @@ export interface KindPlan {
   readonly describe?: readonly TemplatePart[];
   /** Its computed fields, parsed, in declaration order. */
   readonly computed?: readonly (readonly [string, Expr])[];
+  /** Those of them that work out a length of time, read from their parse as it was compiled (`durations.ts`): a face says them as durations. */
+  readonly durations?: readonly string[];
 }
 
 export interface ActPlan {
@@ -191,21 +196,30 @@ export function defaultLabelField(spec: KindSpec): string | undefined {
  * (FR-57). The checks, their messages and their definitions are the ones
  * classic's methods make.
  */
-export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
+export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): z.ZodMiniType {
   let schema: z.ZodMiniType;
   switch (spec.type) {
     case "string":
+    case "place":
+      // A place is a line of words, drawn as a link to the reader's maps app.
       schema = z.string().check(z.maxLength(500));
+      break;
+    case "phone":
+      schema = z.string().check(z.maxLength(40), z.regex(PHONE, "a phone number"));
       break;
     case "text":
       schema = z.string().check(z.maxLength(20_000));
+      // Prose written in Markdown (FR-180): the record's page draws it, every list says its start. The mark `schema/markdown.ts` reads, set here so a page's first chunk reaches no module a fetched one shares.
+      if (spec.format) (z.defOf(schema) as Record<symbol, 1>)[Symbol.for("@graview/core:markdown")] = 1;
       break;
     case "number":
-    case "integer": {
-      // Its range (FR-114) is the schema's: every form, tool and apply reads it from here.
+    case "integer":
+    case "duration": {
+      // Its range (FR-114) is the schema's: every form, tool and apply reads it from here. A duration is whole minutes, none less than none.
+      const min = spec.min ?? (spec.type === "duration" ? 0 : undefined);
       const range = [
-        ...(spec.type === "integer" ? [z.int()] : []),
-        ...(spec.min === undefined ? [] : [z.gte(spec.min)]),
+        ...(spec.type === "number" ? [] : [z.int()]),
+        ...(min === undefined ? [] : [z.gte(min)]),
         ...(spec.max === undefined ? [] : [z.lte(spec.max)]),
         ...(spec.step === undefined ? [] : [z.multipleOf(spec.step)]),
       ];
@@ -219,7 +233,7 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.string().check(z.regex(ISO_DAY, "a date like 2026-10-02"));
       break;
     case "datetime":
-      schema = z.string().check(z.refine((s: string) => !Number.isNaN(Date.parse(s)), "a date and time like 2026-10-02T14:30:00Z"));
+      schema = z.string().check(z.refine(isMoment, "a date and time like 2026-10-02T14:30:00Z"));
       break;
     case "enum":
       schema = z.enum(spec.options as [string, ...string[]]);
@@ -242,7 +256,12 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.email();
       break;
   }
+  // A phone, a place and a duration say so, for a face to say and link each. A number shown as a duration IS one: whole minutes, said, typed and told to a model as the duration type is.
+  const numeric = spec.type === "number" || spec.type === "integer";
+  markTyped(schema, numeric && spec.format === "duration" ? "duration" : spec.type);
   if (spec.description) schema = schema.check(z.describe(spec.description));
+  // What a number is said as — money in the app's currency, a percent, a measure — read by every face, every form and every tool.
+  if (numeric && (spec.format === "money" || spec.format === "percent" || (!spec.format && spec.unit))) markAmount(schema, { ...money, ...(spec.format ? { format: spec.format } : {}), ...(spec.unit ? { unit: spec.unit } : {}) });
   return optional ? z.optional(schema) : schema;
 }
 
@@ -251,7 +270,7 @@ const noRecord = (id: string): never => {
   throw new ActRefusal(`there is no record "${id}"`, "invalid");
 };
 
-const argSchema = (arg: ArgPlan): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
+const argSchema = (arg: ArgPlan, money: Money): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional, money) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
 
 /*
  * An act's own refusal is the framework's typed one (FR-110), which a host
@@ -340,8 +359,12 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   const madeAs = new Map<string, Record<string, unknown>>();
   const definitions = Object.entries(document.kinds).map(([kind, spec]) => {
     const shape: Record<string, z.ZodMiniType> = {};
-    for (const [field, f] of Object.entries(spec.fields)) shape[field] = fieldSchema(f, !f.required);
-    const { label: labelParts, describe: describeParts } = plan.kinds[kind] ?? {};
+    for (const [field, f] of Object.entries(spec.fields)) {
+      shape[field] = fieldSchema(f, !f.required, money);
+      // How a date repeats, kept beside it (`repeat.ts`); none (null) when it no longer does.
+      if (f.repeats) shape[repeatKey(field)] = z.optional(repeatSchema());
+    }
+    const { label: labelParts, describe: describeParts, durations } = plan.kinds[kind] ?? {};
     const computed = Object.entries(spec.computed ?? {}).map(([name, field]) => [name, typeof field === "string" ? { expr: field } : field] as const);
     // A computed field's words are said like a field's: its label, where it has one.
     const labels = Object.fromEntries([
@@ -368,7 +391,9 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       ...said("figure"),
       ...said("fieldRoles"),
       ...said("people"),
-      ...(spec.computed && Object.keys(spec.computed).length > 0 ? { computed: spec.computed } : {}),
+      archives: spec.archives,
+      // As the document says them, each the compile read as a length of time saying `as: "duration"` (`durations.ts`).
+      ...(computed.length > 0 ? { computed: Object.fromEntries(computed.map(([n, c]) => [n, durations?.includes(n) ? { ...c, as: "duration" } : spec.computed![n]])) } : {}),
       ...(named || spec.glance || spec.page
         ? { display: { ...(named ? { labels } : {}), ...(spec.glance ? { glance: [...spec.glance] } : {}), ...(spec.page ? { page: spec.page } : {}) } }
         : {}),
@@ -391,7 +416,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const { title, effects, guard, refusal, destructive, idempotent, creates, connects, severs, writes, writesOther, sets } = planned;
     const args = new Map(planned.args);
     const shape: Record<string, z.ZodMiniType> = {};
-    for (const [arg, a] of args) shape[arg] = argSchema(a);
+    for (const [arg, a] of args) shape[arg] = argSchema(a, money);
     const subjectKinds: readonly string[] = [act.on ?? []].flat();
     const exprs = new Map(planned.exprs);
     /*
@@ -594,7 +619,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       const repairList: Repair[] = repairs.flatMap((r) => {
         const act = document.acts?.[r.act];
         const args: Record<string, unknown> = {};
-        if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
+        if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge|skip|detach|split)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
         for (const [k, v] of Object.entries(r.args ?? {})) args[k] = refName(v) === "subject" ? subject?.id : v;
         const declared = act ? plan.acts[r.act]!.args : [];
         const missing = declared.filter(([k, a]) => a.required && args[k] === undefined).map(([k]) => k);

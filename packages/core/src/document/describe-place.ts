@@ -16,6 +16,7 @@ import { resolveFor, type ResolveForOptions } from "./resolve-for.js";
 import { computedValues, withComputed, type ComputedRecord, type PlainComputed } from "./computed-values.js";
 import { computedOf } from "./computed.js";
 import { isInlineSvg, markHref } from "../theme/marks.js";
+import { markdownWords } from "../excerpt-of.js";
 
 /*
  * WHAT A PLACE SHOWS, WITHOUT A BROWSER (FR-89).
@@ -62,7 +63,8 @@ export type DescribedPart =
   | { readonly t: "heading"; readonly level: number; readonly text: string }
   | { readonly t: "text"; readonly text: string; readonly tone?: string }
   | { readonly t: "badge"; readonly text: string }
-  | { readonly t: "field"; readonly label: string; readonly text: string }
+  /** `long`: prose, drawn the record's width with its lines kept (FR-147); `markdown`: written in Markdown, drawn as prose (FR-180). */
+  | { readonly t: "field"; readonly label: string; readonly text: string; readonly long?: true; readonly markdown?: true }
   | { readonly t: "figure"; readonly text: string; readonly label?: string }
   | { readonly t: "progress"; readonly label: string; readonly text: string }
   | {
@@ -193,7 +195,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
           out.push({ t: "heading", level: 3, text: block.text });
           return;
         case "text":
-          out.push({ t: "text", text: block.text, ...(block.tone ? { tone: block.tone } : {}) });
+          // A Markdown field drawn as prose is said as its words (FR-180).
+          out.push({ t: "text", text: block.markdown ? markdownWords(block.text) : block.text, ...(block.tone ? { tone: block.tone } : {}) });
           return;
         case "badge":
           out.push({ t: "badge", text: block.text });
@@ -259,7 +262,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
     for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale }))) {
       if (section.title) parts.push({ t: "heading", level: 2, text: section.title });
-      for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value });
+      for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value, ...(field.long ? { long: true as const } : {}), ...(field.markdown ? { markdown: true as const } : {}) });
     }
   } else {
     const at = found!;

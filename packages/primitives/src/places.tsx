@@ -1,4 +1,4 @@
-import type { AnySchema, Place } from "@graview/core";
+import { onePerPicture, placeLabel, samePicture, type AnySchema, type Place } from "@graview/core";
 import { aggregateId, withPicture } from "@graview/layout/view";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { useEffect, useRef, useState, type WheelEvent } from "react";
@@ -34,7 +34,7 @@ const PLACE_TAB_CSS = `.graview-places::-webkit-scrollbar{display:none}
 .graview-place-tab:focus-visible{outline:2px solid var(--graview-accent);outline-offset:-2px}`;
 
 export function Places<S extends AnySchema>({ compact = false }: { compact?: boolean } = {}) {
-  const { views, hiddenKinds } = useGraview<S>();
+  const { store, views, hiddenKinds } = useGraview<S>();
   const { view, go } = useNavigation();
   /*
    * A PLACE OVER A KIND THIS SEAT CANNOT SEE IS A DOOR TO AN EMPTY ROOM.
@@ -46,7 +46,9 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
    * that is not there. The kinds a seat is kept from are already worked out
    * once, for the scene and the shelf; the bar reads the same answer.
    */
-  const places = views.places().filter((place) => !hiddenKinds.has(place.kind));
+  const all = views.places().filter((place) => !hiddenKinds.has(place.kind));
+  // A picture over several kinds is one tab, pressed from either kind's district.
+  const places = onePerPicture(all);
   /*
    * Which picture a group draws when the address names none: the LAST
    * registration for the cell, because that is what the registry resolves
@@ -54,7 +56,8 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
    */
   const isDefault = (all: readonly Place[], place: Place): boolean => all.filter((other) => other.kind === place.kind).at(-1)?.as === place.as;
   const showing = view.within?.["view"];
-  const isHere = (place: Place) => !view.overview && view.focusId === aggregateId(place.kind) && (showing === undefined ? isDefault(places, place) : showing === place.as);
+  const isHereOn = (place: Place) => !view.overview && view.focusId === aggregateId(place.kind) && (showing === undefined ? isDefault(all, place) : showing === place.as);
+  const isHere = (place: Place) => all.some((one) => samePicture(one, place) && isHereOn(one));
   const here = places.find(isHere);
   const row = useRef<HTMLElement>(null);
   /* The place you are on, in view: a row that scrolls never hides the tab that says where you are. */
@@ -144,7 +147,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
             data-testid={`place-${place.as}`}
             data-place-kind={place.kind}
             className="graview-place-tab"
-            title={`${place.title} — a picture over the ${place.kind}s`}
+            title={`${place.title} — a picture over the ${(place.over ?? [place.kind]).map((kind) => `${kind}s`).join(" and ")}`}
             onClick={() => goTo(place)}
             style={{
               // A full fingertip whatever the brand's line height.
@@ -165,7 +168,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
               color: pressed ? "var(--graview-ink)" : "var(--graview-ink-muted)",
             }}
           >
-            {place.title}
+            {placeLabel(place, all, store.schema)}
           </button>
         );
       })}

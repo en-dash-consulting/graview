@@ -1,6 +1,5 @@
 import {
   brokenWords,
-  edgeWords,
   weekdayAsRead,
   kindPath,
   labelOf,
@@ -17,6 +16,7 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { placesFrom } from "@graview/core/seat";
 import { readableFields } from "@graview/core/words";
 import { search, squeeze } from "@graview/core/search";
@@ -302,7 +302,8 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
   /** A short, true sentence about one record: what it is, three facts, and its trouble. */
   const describeRecord = (node: AnyNode): string => {
     const definition = definitionOf(node.kind);
-    const facts = readableFields(node, definition, { limit: 3 })
+    // Prose by its start (FR-180): a sentence about a record is not its whole brief.
+    const facts = readableFields(node, definition, { limit: 3, excerpt: true })
       .map((field) => (field.alone.startsWith(field.label) ? field.alone : `${field.label.toLowerCase()} ${field.alone}`))
       .join(", ");
     const trouble = seen.violations().filter((violation) => violation.nodeIds.includes(node.id));
@@ -331,7 +332,8 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
 
   /** Records by name, under the seat's sight: the one meant, or the several the words find. */
   const recordsNamed = (words: string): { one?: AnyNode; picks: NodeHit[] } => {
-    const found = search(store, words, { principal, today, limit: 6, ...(context.selection ? { from: context.selection } : {}) });
+    // Going by name goes to what is called that: a near word is Find's to offer, not a destination.
+    const found = search(store, words, { principal, today, limit: 6, near: false, ...(context.selection ? { from: context.selection } : {}) });
     const picks = found.hits.filter((hit): hit is NodeHit => hit.about === "node" && visible.has(hit.kind) && graph.getNode(hit.id) !== undefined);
     const exact = picks.filter((hit) => hit.why.field === "label" && hit.why.strength === "exact");
     if (exact.length === 1) return { one: graph.getNode(exact[0]!.id)!, picks };

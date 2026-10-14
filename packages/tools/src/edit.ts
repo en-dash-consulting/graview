@@ -6,10 +6,12 @@
  * every page imports before anything is drawn.
  */
 import {
+  FIELD_SIGHT,
   fieldsWrittenBy,
   nodeRefArgs,
   type AnySchema,
   type ArgShape,
+  type Principal,
   type Store,
   defOf,
 } from "@graview/core";
@@ -90,6 +92,9 @@ export function editableFields<S extends AnySchema>(
   const definition = store.schema.tryDefinition(kind);
   if (!definition) return [];
 
+  // A field the seat's sight keeps from it is not offered: it may not write what it may not read (Roadmap f-field-sight).
+  const seat = (store as { readonly seenFor?: Principal }).seenFor;
+  const kept = seat ? FIELD_SIGHT.keptFrom?.(store, seat)?.(node as { id: string; kind: string }) : undefined;
   const candidates = new Map<string, EditableField[]>();
   for (const mutation of store.allMutations()) {
     const subject = mutation.subject;
@@ -100,6 +105,7 @@ export function editableFields<S extends AnySchema>(
 
     const shape = (mutation.input as { shape?: Record<string, unknown> }).shape ?? {};
     for (const name of fieldsWrittenBy(mutation, definition)) {
+      if (kept?.(name)) continue;
       const takesValue = name in shape;
       const open: OpenParameter[] = [];
       for (const other of Object.keys(shape)) {

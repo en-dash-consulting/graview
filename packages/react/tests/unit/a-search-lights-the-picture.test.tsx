@@ -1,5 +1,6 @@
 import { createSchema, defineNode, Store } from "@graview/core";
-import { EMPTY_VIEW, withQuery, withWithin } from "@graview/layout";
+import { EMPTY_VIEW, withWithin } from "@graview/layout";
+import { withQuery } from "@graview/layout/view-moves";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";

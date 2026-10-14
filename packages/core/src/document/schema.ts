@@ -56,8 +56,12 @@ const sentence = str(1, 500);
 const expression = str(1, 2000);
 const template = str(1, 300);
 
-/** `image` and `file` hold what the host stored (FR-162): a `FileValue`, its `href` a path on the host. */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file", "app-link"] as const;
+/**
+ * `image` and `file` hold what the host stored (FR-162): a `FileValue`, its
+ * `href` a path on the host. `phone` and `place` are words drawn as a link to
+ * call and to a map; `duration` is a whole number of minutes, said "1 h 30 min".
+ */
+export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file", "app-link", "phone", "place", "duration"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const FieldSpec = z
@@ -71,19 +75,27 @@ export const FieldSpec = z
     of: z.optional(z.enum(["string", "number", "date", "image", "file"])),
     default: z.optional(z.unknown()),
     unit: z.optional(str(undefined, 12)),
-    format: z.optional(z.enum(["money", "percent", "duration"])),
+    /** How a number is shown (`money`, `percent`, `duration`), or that a `text` field is written in Markdown (FR-180; the checker's `field-format` says which goes where). */
+    format: z.optional(z.enum(["money", "percent", "duration", "markdown"])),
     /** A number's range (FR-114): the least and the most it may be, and the step its values are whole multiples of (JSON Schema's `multipleOf`). */
     min: z.optional(z.number()),
     max: z.optional(z.number()),
     step: z.optional(z.number()),
     /** The name this field had in the previous version: its values move instead of being dropped. */
     renamedFrom: z.optional(z.string().check(z.regex(FIELD_NAME))),
+    /**
+     * A date that repeats (`repeat.ts`): a record may keep, beside the date
+     * (its first occurrence), how it repeats under the date's name and
+     * `Repeat` — `"startsAtRepeat": { "every": "week", "on": ["tue"] }`.
+     */
+    repeats: z.optional(z.boolean()),
   })
   .check(
     z.superRefine((f, ctx) => {
       if (f.type === "enum" && !f.options) ctx.addIssue({ code: "custom", message: 'an enum field lists its "options"', path: ["options"] });
       if (f.type !== "enum" && f.options) ctx.addIssue({ code: "custom", message: '"options" belongs only on an enum field', path: ["options"] });
       if (f.type !== "list" && f.of) ctx.addIssue({ code: "custom", message: '"of" belongs only on a list field', path: ["of"] });
+      if (f.repeats && f.type !== "date" && f.type !== "datetime") ctx.addIssue({ code: "custom", message: '"repeats" belongs only on a date or datetime field', path: ["repeats"] });
     }),
   );
 export type FieldSpec = z.infer<typeof FieldSpec>;
@@ -145,6 +157,8 @@ export const KindSpec = z.strictObject({
   renamedFrom: z.optional(z.string().check(z.regex(NAME))),
   /** This kind stands for the people: a record of it whose id is a member's principal id is that member (`$me`, `self`, `own`, `via`, `ownEnd`). */
   people: z.optional(z.boolean()),
+  /** `false`: its records are kept or removed, never archived — the kind is given no `archive-`, `unarchive-` or `merge-<kind>` (FR-173). */
+  archives: z.optional(z.literal(false)),
 });
 export type KindSpec = z.infer<typeof KindSpec>;
 
@@ -228,6 +242,7 @@ export const GrantSpec = z.strictObject({
  * by nobody but the system (a host that gives its owners everything serves
  * them as the system, or names them in a sight).
  */
+const fieldNames = z.optional(some(name("field"), 1));
 export const SightSpec = z.strictObject({
   roles: z.union([some(name("role"), 1), z.literal("*")]),
   kinds: some(name("kind"), 1),
@@ -235,6 +250,10 @@ export const SightSpec = z.strictObject({
   own: z.optional(z.boolean()),
   /** Only the records this relation joins to the principal's own record of the people kind. */
   via: z.optional(edgeName),
+  /** Only these fields of the records it shows (Roadmap f-field-sight); sights add up. */
+  fields: fieldNames,
+  /** Every field but these of the records it shows: kept from the roles, on every surface, and not theirs to write. */
+  hide: fieldNames,
 });
 export type SightSpec = z.infer<typeof SightSpec>;
 

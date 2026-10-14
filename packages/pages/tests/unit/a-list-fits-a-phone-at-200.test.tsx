@@ -16,8 +16,10 @@ const store = new Store({ schema, snapshot: { nodes: [{ id: "s", kind: "shopper"
 describe("a list page", () => {
   it("keeps each row to the page and lets a long value break", () => {
     const html = renderToStaticMarkup(<PagesApp context={{ store }} initialPath="/shoppers" />);
-    const row = html.match(/<li style="([^"]*)"><a[^>]*href="\/shoppers\/s"/)?.[1] ?? "";
-    expect(row).toContain("grid-template-columns:minmax(0, 1fr)");
-    expect(row).toContain("overflow-wrap:anywhere");
+    // The row is the shared anatomy (ROWS_CSS): a track no wider than the list, and a value that breaks inside it.
+    // Its box, which chooses it among several (FR: acting on several), stands before its name.
+    expect(html).toMatch(/<li class="graview-row"[^>]*><span class="graview-choose-at"><input[^>]*><\/span><a[^>]*href="\/shoppers\/s"/);
+    expect(html).toMatch(/\.graview-rows\{[^}]*grid-template-columns:minmax\(0,1fr\)/);
+    expect(html).toMatch(/\.graview-row\{[^}]*overflow-wrap:anywhere/);
   });
 });

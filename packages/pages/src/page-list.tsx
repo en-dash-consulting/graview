@@ -1,4 +1,4 @@
-import { AppLink, ArrangeBar, Files, pageSays } from "@graview/primitives/pages";
+import { AppLink, ArrangeBar, CHOOSING_CSS, Files, pageSays, prefetchSeveral, SeveralBarDoor, useChoosing } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement, throughEdges } from "@graview/core/arrange";
 import {
   archivedFrom,
@@ -8,6 +8,7 @@ import {
   isAppLinkField,
   isCurrent,
   labelOf,
+  LOCAL_LAYERS,
   type AnyNodeDefinition,
   type AnySchema,
   type Arrangeable,
@@ -18,7 +19,7 @@ import {
 import { describeSearched, matchNode, parseQuery } from "@graview/core/search";
 import { firstPicture, withComputed } from "@graview/core/blocks";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
-import { useId, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";
 import { DerivedForm } from "./form.js";
@@ -27,10 +28,9 @@ import { type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { beginningsFrom, WhyLine } from "./page-search.js";
 import {
-  DISPLAY,
   KindMark,
+  ROWS_CSS,
   glance,
-  h2,
   lede,
   link,
   plain,
@@ -221,13 +221,32 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    */
   const ownRow = context.views?.lookup(kind, { cardinality: "one", fidelity: "glyph" });
   const RowView = ownRow !== undefined && !isDefaultView(ownRow) ? (ownRow as ComponentType<ViewProps<S>>) : undefined;
+  /*
+   * A ROW DOES NOT REPEAT ITS HEADING. Grouped by day, every session said
+   * "Sep 25, 2017" under a heading that said it; narrowed to one status,
+   * every row said the status the line above had chosen. The field a group
+   * is by (a date to the day, unless the row's value has a time the heading
+   * does not), and a choice the list is narrowed to one value of, are left
+   * off each row's glance.
+   */
+  const groupedBy = (arrangement.group?.bucket ?? "day") === "day" ? arrangement.group?.by : undefined;
+  const filtered = (arrangement.filter ?? []).map((condition) => condition.key);
+  const pinned = filtered.filter(
+    (key) => filtered.indexOf(key) === filtered.lastIndexOf(key) && /choice|boolean/.test(offers.filters.find((offer) => offer.key === key)?.type ?? ""),
+  );
+  const unsaid = (node: object): Record<string, unknown> => {
+    const read = { ...((definition as { computed?: object } | undefined)?.computed ? withComputed(store.schema, store.graph as never, node as never) : node) } as Record<string, unknown>;
+    if (groupedBy && !String(read[groupedBy]).includes("T")) delete read[groupedBy];
+    for (const key of pinned) delete read[key];
+    return read;
+  };
   const row = (node: (typeof members)[number]) => {
     const label = labelOf(definition, node);
     if (ownRowOf) {
-      const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(store.schema, store.graph as never, node as never) : node;
       return (
-        <li key={node.id} data-testid="record-row" style={{ minWidth: 0 }}>
-          {ownRowOf(node as NodeOfSchema<S>, { label, href: recordPath(store.schema, kind, node.id), flagged: flagged.has(node.id), glance: glance(read as Record<string, unknown>, definition, label) })}
+        <li key={node.id} data-testid="record-row" style={{ minWidth: 0 }} {...chooseAt(node.id)}>
+          {box(node, label)}
+          {ownRowOf(node as NodeOfSchema<S>, { label, href: recordPath(store.schema, kind, node.id), flagged: flagged.has(node.id), glance: glance(unsaid(node), definition, label) })}
         </li>
       );
     }
@@ -238,11 +257,11 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
        * the row does not already say follow it, quiet, on its line.
        */
       const rowSays = pageSays(ownRow, node as never, store.graph as never);
-      const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(store.schema, store.graph as never, node as never) : node;
-      const rest = Object.fromEntries(Object.entries(read as Record<string, unknown>).filter(([key]) => !rowSays?.fields.has(key)));
+      const rest = Object.fromEntries(Object.entries(unsaid(node)).filter(([key]) => !rowSays?.fields.has(key)));
       const facts = rowSays ? glance(rest, definition, rowSays.title ?? label) : "";
       return (
-        <li key={node.id} data-testid="record-row" style={{ position: "relative", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 2, padding: "10px 0", borderTop: "1px solid var(--graview-edge)" }}>
+        <li key={node.id} data-testid="record-row" style={{ position: "relative", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 2, paddingBlock: 10, borderTop: "1px solid var(--graview-edge)" }} {...chooseAt(node.id)}>
+          {box(node, label)}
           <div style={{ flex: "1 1 14rem", minWidth: 0 }}>
             <RowView node={node as never} cardinality="one" fidelity="glyph" mode="fullscreen" selected={false} {...(flagged.has(node.id) ? { flagged: [node.id] } : {})} />
           </div>
@@ -257,43 +276,38 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
       );
     }
     // A glance may say a computed field (FR-83), worked out over what this seat sees.
-    const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(store.schema, store.graph as never, node as never) : node;
-    const said = glance(read as Record<string, unknown>, definition, label);
+    const said = glance(unsaid(node), definition, label);
     // Found by the words in a field rather than the name: say which, as the Find box does.
     const why = typed.words ? matchNode(definition, node, typed.words) : undefined;
     // Its first picture, small, beside its name (FR-162) — not down a large list's index.
     const picture = large ? undefined : firstPicture(node as Record<string, unknown>, definition);
     // Another app it links, by the name the host gives it (FR-171).
     const app = firstAppLink(node as Record<string, unknown>, definition);
-    // A large list is read down a column: each record one line, its glance at the line's end.
+    const title = (
+      <Link to={recordPath(store.schema, kind, node.id)} className="graview-row-title" {...(label.length > 60 ? { title: label } : {})}>
+        {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
+        {label}
+      </Link>
+    );
+    // The name, then its glance in a column of its own (`ROWS_CSS`).
     return (
-      <li
-        key={node.id}
-        style={
-          large
-            ? { display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 0, padding: "5px 0", borderTop: "1px solid var(--graview-edge)", overflowWrap: "anywhere" }
-            : {
-                display: "grid",
-                // One track no wider than the page, and a long unbroken value (an email) breaks inside it (W-175); its picture, when it has one, beside it.
-                gridTemplateColumns: picture ? "auto minmax(0, 1fr)" : "minmax(0, 1fr)",
-                columnGap: 14,
-                gap: 2,
-                padding: "14px 0",
-                borderTop: "1px solid var(--graview-edge)",
-                overflowWrap: "anywhere",
-              }
-        }
-      >
-        {picture ? <Files as="thumb" file={picture} style={{ gridRow: "span 3" }} /> : null}
-        <Link
-          to={recordPath(store.schema, kind, node.id)}
-          style={large ? { ...plain, flex: "1 1 14rem", minWidth: 0, fontSize: "1rem", fontWeight: 600, lineHeight: 1.35 } : { ...plain, fontFamily: DISPLAY, fontSize: "1.25rem", fontWeight: 600, lineHeight: 1.3 }}
-        >
-          {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
-          {label}
-        </Link>
-        {said ? <span style={large ? { ...quiet, flex: "0 1 auto", minWidth: 0, fontSize: "0.875rem" } : quiet}>{said}</span> : null}
-        {app ? <AppLink address={app} style={large ? { flex: "0 1 auto", fontSize: "0.875rem" } : { fontSize: "0.9375rem", justifySelf: "start" }} /> : null}
+      <li key={node.id} className="graview-row" {...chooseAt(node.id)}>
+        {box(node, label)}
+        {picture ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+            <Files as="thumb" file={picture} />
+            {title}
+          </div>
+        ) : (
+          title
+        )}
+        {said || app ? (
+          <span className="graview-row-glance">
+            {said}
+            {said && app ? " · " : null}
+            {app ? <AppLink address={app} /> : null}
+          </span>
+        ) : null}
         {why ? <WhyLine why={why} /> : null}
       </li>
     );
@@ -347,11 +361,48 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
         return out;
       }, [])
     : undefined;
-  const rowsStyle: React.CSSProperties =
+  /*
+   * SEVERAL AT ONCE: a box at each row's start chooses it, and the bar over
+   * the face acts on every one chosen as one change (`useChoosing`, the
+   * selection bar fetched with the first). Offered where this seat may run
+   * some act on one of these at all.
+   */
+  // The records in the order they are drawn — by group, by section, else as arranged — which a range and Cmd/Ctrl-A read.
+  const drawn = arranged.grouped && grouping ? arranged.groups.flatMap((group) => group.nodes) : sections && sections.length > 1 ? sections.flatMap((section) => section.nodes) : members;
+  const order = useMemo(() => drawn.map((node) => node.id), [drawn.map((node) => node.id).join("\n")]); // eslint-disable-line react-hooks/exhaustive-deps
+  const choosing = useChoosing(order);
+  const choosable = (principal ? store.permittedMutations(principal) : store.permittedMutations()).some((mutation) => {
+    const kinds = mutation.subject?.kinds as readonly string[] | "*" | undefined;
+    return kinds !== undefined && (kinds === "*" || kinds.includes(kind));
+  });
+  const box = (node: (typeof members)[number], label: string) =>
+    choosable ? (
+      <span className="graview-choose-at">
+        <input {...choosing.boxProps(node.id, label)} onPointerEnter={prefetchSeveral} onFocus={prefetchSeveral} />
+      </span>
+    ) : null;
+  const chooseAt = (id: string) => (choosable ? { "data-graview-choose": id } : {});
+  const acted = useCallback(
+    (still: readonly string[]) => {
+      choosing.choose(still);
+      // The keyboard goes back to the list: on what is still chosen, else the list itself.
+      requestAnimationFrame(() => {
+        const list = choosing.list.current;
+        const first = still[0] === undefined ? null : list?.querySelector<HTMLElement>(`[data-graview-choose-box="${CSS.escape(still[0])}"]`);
+        (first ?? list)?.focus({ preventScroll: true });
+      });
+    },
+    [choosing],
+  );
+  // The framework's own rows are `ROWS_CSS`'s; a design's rows and a declared row keep their list.
+  const rowsStyle: React.CSSProperties | undefined =
     layout === "grid"
       ? // Cards in one row keep their own height.
         { margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 15rem), 1fr))", alignItems: "start", gap: 12 }
-      : { margin: 0, padding: 0, listStyle: "none", display: "grid", gap: ownRowOf && layout === "list" ? 6 : 0 };
+      : ownRowOf || RowView
+        ? { margin: 0, padding: 0, listStyle: "none", display: "grid", gap: ownRowOf && layout === "list" ? 6 : 0 }
+        : undefined;
+  const rowsClass = rowsStyle ? undefined : "graview-rows";
   const anchor = (key: string) => `list-at-${key.replace(/[^\p{L}\p{N}]/gu, "_")}`;
   const roads = relations.map((relation) => {
     const far = relation.from === kind ? relation.to : relation.from;
@@ -374,7 +425,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             <KindMark kind={kind} brand={brand} schema={store.schema} size={8} />
             <PageTitle context={context}>{plural}</PageTitle>
           </div>
-          {description ?? definition?.description ? <p style={{ ...lede, fontSize: "1.0625rem", lineHeight: 1.4 }}>{description ?? definition?.description}</p> : null}
+          {description ?? definition?.description ? <p style={lede}>{description ?? definition?.description}</p> : null}
           {roads.length > 0 || pictures.length > 0 ? (
             /*
              * WHERE ELSE TO GO, IN ONE QUIET LINE: the kinds this one is tied
@@ -442,9 +493,25 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             query={context.framed === true && context.barAbove !== true}
           />
         ) : null}
+        <style>{ROWS_CSS}</style>
+        {choosable ? <style>{CHOOSING_CSS + LIST_CHOOSING_CSS}</style> : null}
+        {/* The rows measure the room they are given, not the window: a list in a narrow embed on a desk stacks as on a phone. */}
+        <div
+          className="graview-list"
+          {...(choosable
+            ? {
+                ...choosing.listProps,
+                ref: choosing.list as React.RefObject<HTMLDivElement>,
+                tabIndex: -1,
+                "data-graview-choosable": "",
+                "aria-label": choosing.chosen.length > 0 ? `${plural}, ${choosing.chosen.length} chosen` : plural,
+                role: "group",
+              }
+            : {})}
+        >
         {members.length === 0 && typed.words ? (
           /* Honest about nothing: what was searched, and the way forward below — the name already in it. */
-          <p style={{ ...lede, fontSize: "1.0625rem" }} data-testid="none-yet">
+          <p style={lede} data-testid="none-yet">
             Nothing here is called “{typed.words}”.{" "}
             <span style={quiet} data-testid="list-searched">
               {describeSearched(store.schema, { kinds: [kind], past: showingPast })}
@@ -454,7 +521,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             </Link>
           </p>
         ) : members.length === 0 ? (
-          <p style={{ ...lede, fontSize: "1.0625rem" }} data-testid="none-yet">
+          <p style={lede} data-testid="none-yet">
             {arrangement.filter?.length || arrangement.query ? "None of them." : "None yet"}
             {!arrangement.filter?.length && !arrangement.query && creators.length > 0
               ? ` — the first one starts below, with “${creators[0]?.mutation.title ?? creators[0]?.mutation.name}”.`
@@ -471,13 +538,13 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             ) : null}
           </p>
         ) : arranged.grouped && grouping ? (
-          <div style={{ display: "grid", gap: 18 }} data-testid="records" data-grouped={grouping}>
+          <div style={{ display: "grid", gap: "1rem" }} data-testid="records" data-grouped={grouping}>
             {arranged.groups.map((group) => (
               <section key={group.key || "-"} style={{ display: "grid", gap: 0 }} data-testid="list-group">
-                <h2 style={{ ...h2, fontSize: "1.0625rem", marginBottom: 4 }}>
-                  {group.label} <span style={quiet}>{group.nodes.length}</span>
+                <h2 className="graview-group-head">
+                  {group.label} <span>{group.nodes.length}</span>
                 </h2>
-                <ul style={rowsStyle} data-graview-rows="">{group.nodes.map(row)}</ul>
+                <ul style={rowsStyle} className={rowsClass} data-graview-rows="">{group.nodes.map(row)}</ul>
               </section>
             ))}
           </div>
@@ -487,7 +554,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
               aria-label="Jump to"
               data-testid="list-index"
                             // Wrapped to as many quiet lines as it needs: an entry is never cut at the edge.
-              style={{ ...quiet, display: "flex", flexWrap: "wrap", gap: sortOffer?.type === "date" ? "0 10px" : "0 4px", fontSize: "0.8125rem", lineHeight: 1.3 }}
+              style={{ ...quiet, display: "flex", flexWrap: "wrap", gap: sortOffer?.type === "date" ? "0 10px" : "0 4px", lineHeight: 1.3 }}
             >
               {sections.map((section) => (
                 <a
@@ -498,7 +565,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                     event.preventDefault();
                     document.getElementById(anchor(section.key))?.scrollIntoView({ block: "start" });
                   }}
-                  style={{ ...link, flex: "0 0 auto", minWidth: 24, justifyContent: "center", textDecoration: "none" }}
+                  style={{ ...plain, minWidth: 24, justifyContent: "center" }}
                 >
                   {section.key}
                 </a>
@@ -506,18 +573,32 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             </nav>
             {sections.map((section) => (
               <section key={section.key} data-testid="list-section" aria-labelledby={anchor(section.key)} style={{ display: "grid", gap: 0 }}>
-                <h2 id={anchor(section.key)} style={{ ...h2, fontSize: "0.9375rem", color: "var(--graview-ink-muted)", marginBottom: 2, scrollMarginTop: 64 }}>
+                <h2 id={anchor(section.key)} className="graview-group-head">
                   {section.key}
                 </h2>
-                <ul style={rowsStyle} data-graview-rows="">{section.nodes.map(row)}</ul>
+                <ul style={rowsStyle} className={rowsClass} data-graview-rows="">{section.nodes.map(row)}</ul>
               </section>
             ))}
           </div>
         ) : (
-          <ul style={rowsStyle} data-testid="records" data-graview-rows="">
+          <ul style={rowsStyle} className={rowsClass} data-testid="records" data-graview-rows="">
             {members.map(row)}
           </ul>
         )}
+        </div>
+        {choosable ? (
+          <SeveralBarDoor
+            store={store as never}
+            chosen={choosing.chosen}
+            {...(principal ? { principal } : {})}
+            {...(invariantContext ? { context: invariantContext } : {})}
+            anchor={anchorOf}
+            of={order.length}
+            onChooseAll={() => choosing.choose(order)}
+            onClear={choosing.clear}
+            onActed={acted}
+          />
+        ) : null}
         {retired > 0 ? (
           <Link to={withWord(search, "filter", "is:any")} style={{ ...link, ...quiet, justifySelf: "start" }} data-testid="past-link">
             +{retired} past
@@ -571,6 +652,24 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     </Frame>
   );
 }
+
+/** The bar stands at the foot of the embed the list is drawn in, or of the window. */
+const anchorOf = (): HTMLElement | null => document.querySelector<HTMLElement>("[data-graview-choosable]")?.closest<HTMLElement>("[data-embed-content]") ?? null;
+
+/*
+ * THE BOXES' COLUMN on the framework's list: at each row's start, over the
+ * row's own link; on a phone, only once a long press has chosen something,
+ * so a list read on a phone is the list it was.
+ */
+const LIST_CHOOSING_CSS = `
+.graview-list[data-graview-choosable]{outline:none}
+.graview-list [data-graview-choose]{position:relative;padding-left:34px}
+.graview-choose-at{position:absolute;left:2px;top:0;bottom:0;z-index:${LOCAL_LAYERS.raised};display:flex;align-items:center}
+@media (pointer: coarse){
+.graview-list:not([data-graview-choosing]) [data-graview-choose]{padding-left:0}
+.graview-list:not([data-graview-choosing]) .graview-choose-at{display:none}
+}
+`;
 
 /** A design's own main holds the list: no column of its own. */
 function BareFrame({ children }: { readonly context: unknown; readonly children?: ReactNode }) {
@@ -659,7 +758,7 @@ function Beginning({ name, title, description, open: opening, children }: { read
           setOpen(!open);
           if (!open) requestAnimationFrame(() => panel.current?.querySelector<HTMLElement>("input, select, textarea, button")?.focus());
         }}
-        style={{ ...plain, justifySelf: "start", minHeight: 32, padding: "0 2px", border: 0, background: "none", font: "inherit", fontSize: "0.9375rem", fontWeight: 600, color: "var(--graview-ink)", cursor: "pointer" }}
+        style={{ ...plain, justifySelf: "start", minHeight: 32, padding: "0 2px", border: 0, background: "none", font: "inherit", fontWeight: 600, color: "var(--graview-ink)", cursor: "pointer" }}
       >
         <span aria-hidden="true" style={{ marginRight: 6 }}>
           {open ? "−" : "+"}

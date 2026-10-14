@@ -31,7 +31,9 @@ export default defineConfig({
       "@graview/core/json-schema": fileURLToPath(new URL("../../packages/core/src/json-schema.ts", import.meta.url)),
       "@graview/core/search": fileURLToPath(new URL("../../packages/core/src/search.ts", import.meta.url)),
       "@graview/core/words": fileURLToPath(new URL("../../packages/core/src/words.ts", import.meta.url)),
+      "@graview/core/markdown": fileURLToPath(new URL("../../packages/core/src/markdown.ts", import.meta.url)),
       "@graview/core/seat": fileURLToPath(new URL("../../packages/core/src/seat.ts", import.meta.url)),
+      "@graview/core/field-sight": fileURLToPath(new URL("../../packages/core/src/field-sight.ts", import.meta.url)),
       "@graview/core/check": fileURLToPath(new URL("../../packages/core/src/check.ts", import.meta.url)),
       "@graview/core/scene": fileURLToPath(new URL("../../packages/core/src/scene.ts", import.meta.url)),
       "@graview/core/city": fileURLToPath(new URL("../../packages/core/src/city.ts", import.meta.url)),
@@ -42,6 +44,7 @@ export default defineConfig({
       "@graview/core": pkg("core"),
       "@graview/layout/view": fileURLToPath(new URL("../../packages/layout/src/view.ts", import.meta.url)),
       "@graview/layout/sizes": fileURLToPath(new URL("../../packages/layout/src/sizes.ts", import.meta.url)),
+      "@graview/layout/view-moves": fileURLToPath(new URL("../../packages/layout/src/view-moves.ts", import.meta.url)),
       "@graview/layout": pkg("layout"),
       "@graview/tools/frame": fileURLToPath(new URL("../../packages/tools/src/frame.ts", import.meta.url)),
       "@graview/tools/edit": fileURLToPath(new URL("../../packages/tools/src/edit.ts", import.meta.url)),
@@ -51,6 +54,7 @@ export default defineConfig({
       "@graview/tools/draft": fileURLToPath(new URL("../../packages/tools/src/draft.ts", import.meta.url)),
       "@graview/tools/keep": fileURLToPath(new URL("../../packages/tools/src/keep.ts", import.meta.url)),
       "@graview/tools/turn": fileURLToPath(new URL("../../packages/tools/src/turn.ts", import.meta.url)),
+      "@graview/tools/several": fileURLToPath(new URL("../../packages/tools/src/several.ts", import.meta.url)),
       "@graview/tools": pkg("tools"),
       // The subpath first: a bare-name alias would swallow it.
       "@graview/render/gpu": fileURLToPath(

@@ -6,11 +6,12 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
-import { argumentWords, failureWords, tellApart } from "@graview/core/words";
-import { formFields, formArgs, type FormField } from "@graview/core/forms";
+import { amountBox, amountInBox, argumentWords, failureWords, readAmount, tellApart } from "@graview/core/words";
+import type { AmountMark } from "@graview/core";
+import { formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
-import { Files } from "@graview/primitives/pages";
+import { Files, RepeatPicker } from "@graview/primitives/pages";
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 /**
@@ -140,6 +141,50 @@ p:where([data-graview-part="refused"]) {
 }
 `;
 
+/**
+ * AN AMOUNT'S BOX: its currency's symbol before it (or "%", a unit, after),
+ * a placeholder in the reader's locale, and the text read as a person
+ * writes it — "$1,250.50" is 1250.5, "15%" is 0.15. What is no number is
+ * said under the box, and nothing is sent for it.
+ */
+function AmountControl({ title, name, optional, amount, value, onChange }: { title: ReactNode; name: string; optional: boolean; amount: AmountMark; value: unknown; onChange: (value: unknown) => void }) {
+  const box = amountBox(amount);
+  const [text, setText] = useState(() => (typeof value === "number" ? amountInBox(value, amount) : ""));
+  const wrong = text.trim() !== "" && readAmount(text, amount) === undefined;
+  return (
+    <label data-graview-part="field" data-graview-field="number" data-graview-amount={amount.format ?? "unit"}>
+      <span data-graview-part="label">{title}</span>
+      <span data-graview-part="amount" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        {box.prefix ? <span data-graview-part="amount-symbol" aria-hidden="true">{box.prefix}</span> : null}
+        <input
+          type="text"
+          inputMode="decimal"
+          name={name}
+          required={!optional}
+          placeholder={box.placeholder}
+          title={box.hint}
+          aria-invalid={wrong || undefined}
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value);
+            onChange(readAmount(event.target.value, amount));
+          }}
+          data-graview-part="control"
+          style={{ flex: 1, minWidth: 0 }}
+        />
+        {box.suffix ? <span data-graview-part="amount-symbol" aria-hidden="true">{box.suffix}</span> : null}
+      </span>
+      {wrong ? (
+        <span data-graview-part="hint" role="status">
+          Not an amount {box.hint}: write it like {box.prefix ?? ""}
+          {box.placeholder}
+          {box.suffix ? ` ${box.suffix}` : ""}
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
 function Picker({ children }: { children: React.ReactNode }) {
   return (
     <span data-graview-part="picker">
@@ -154,6 +199,9 @@ function Picker({ children }: { children: React.ReactNode }) {
 type Words = (name: string) => { readonly label: string; readonly option: (value: string) => string };
 const plainWords: Words = (name) => ({ label: humanizeField(name), option: (value) => value });
 
+/** What a phone, a place and a length of time take, said where each is typed. */
+const HOLDS = { phone: "+1 555 123 4567", place: "An address or a place's name", duration: "1h 30m, 90 or 1:30" } as const;
+
 function Control<S extends AnySchema>({
   store,
   spec,
@@ -162,10 +210,13 @@ function Control<S extends AnySchema>({
   prefilled,
   open,
   words = plainWords,
+  values,
 }: {
   store: Store<S>;
   spec: FormField;
   value: unknown;
+  /** The whole form's answers, where a control reads a sibling's: a repeat, the date it repeats. */
+  values?: Readonly<Record<string, unknown>>;
   onChange: (next: unknown) => void;
   prefilled: Readonly<Record<string, unknown>>;
   open: readonly OpenParameter[];
@@ -196,7 +247,11 @@ function Control<S extends AnySchema>({
       if (spec.control === "text" && spec.long) {
         return (
           <label data-graview-part="field" data-graview-field="text">
-            <span data-graview-part="label">{title}</span>
+            <span data-graview-part="label">
+              {title}
+              {/* Written in Markdown (FR-180): said where it is typed, quietly. */}
+              {spec.markdown ? <span style={{ fontWeight: "normal", color: "var(--graview-ink-faint)" }}> · Markdown</span> : null}
+            </span>
             <textarea
               name={spec.name}
               required={!spec.optional}
@@ -210,21 +265,26 @@ function Control<S extends AnySchema>({
         );
       }
       return (
-        <label data-graview-part="field" data-graview-field={spec.control}>
+        <label data-graview-part="field" data-graview-field={spec.control === "text" && spec.holds ? spec.holds : spec.control}>
           <span data-graview-part="label">{title}</span>
           <input
-            type={spec.control === "date" ? (spec.time ? "datetime-local" : "date") : "text"}
+            type={spec.control === "date" ? (spec.time ? "datetime-local" : "date") : spec.control === "text" && spec.holds === "phone" ? "tel" : "text"}
             name={spec.name}
             required={!spec.optional}
             // Another app's address (FR-171): what it takes, said where it is typed.
             {...(spec.control === "text" && spec.app ? { placeholder: "@owner/app or https://…" } : {})}
-            value={typeof value === "string" ? value : ""}
+            // A phone, a place and a length of time: what each takes, said where it is typed.
+            {...(spec.control === "text" && spec.holds ? { placeholder: HOLDS[spec.holds] } : {})}
+            {...(spec.control === "text" && spec.holds === "phone" ? { autoComplete: "tel" } : {})}
+            value={typeof value === "string" ? value : typeof value === "number" ? String(value) : ""}
             onChange={(event) => onChange(event.target.value)}
             data-graview-part="control"
           />
         </label>
       );
     case "number":
+      // Money, a percent, a measure: asked for as it is said — "$" beside "1,250.50" — and read as typed.
+      if (spec.amount) return <AmountControl title={title} name={spec.name} optional={spec.optional} amount={spec.amount} value={value} onChange={onChange} />;
       return (
         <label data-graview-part="field" data-graview-field={spec.control}>
           <span data-graview-part="label">{title}</span>
@@ -428,6 +488,9 @@ function Control<S extends AnySchema>({
         </fieldset>
       );
     }
+    case "repeat":
+      // How a date repeats, asked for with the picker beside it: none, every day, week, month or year, on which days, until when.
+      return <RepeatPicker value={value} onChange={onChange} start={spec.of ? values?.[spec.of] : undefined} label={`${spec.of ? words(spec.of).label : named} repeats`} name={spec.name} />;
     case "opaque":
       // Named rather than silently dropped: an argument the form cannot
       // honestly render is a missing control to build, not a hidden field.
@@ -501,7 +564,11 @@ export function DerivedForm<S extends AnySchema>({
 }: DerivedFormProps<S>) {
   const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...initial }));
   const [failed, setFailed] = useState<string | null>(null);
-  const fields = formFields(mutation.input).filter((spec) => only === undefined || only.includes(spec.name));
+  // A field the seat's sight keeps from it is not asked for: the store would refuse it (Roadmap f-field-sight).
+  const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
+  const subject = mutation.subject && prefilled[mutation.subject.arg];
+  const kept = seat ? keptArguments(store, seat, mutation, typeof subject === "string" ? subject : undefined) : undefined;
+  const fields = formFields(mutation.input).filter((spec) => (only === undefined || only.includes(spec.name)) && !kept?.has(spec.name));
   const words: Words = (name) => argumentWords(store.schema, mutation, name);
 
   return (
@@ -528,6 +595,7 @@ export function DerivedForm<S extends AnySchema>({
           store={store}
           spec={spec}
           value={values[spec.name]}
+          values={values}
           onChange={(next) => setValues((current) => ({ ...current, [spec.name]: next }))}
           prefilled={prefilled}
           open={open}

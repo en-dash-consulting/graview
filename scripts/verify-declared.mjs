@@ -33,6 +33,13 @@
  * change of 98 tasks lists every one of them on both faces, where a card's
  * allowance said "—" for each list on its page.
  *
+ * And money is said as money (`money.gdd.json`, the app's currency USD): a
+ * deal's amount marked `"format": "money"` reads "$10,000" — never a bare
+ * 10000 — on its record page, its list's rows, its board's cards, the
+ * scene's record and the kind's table, with its percent, duration and
+ * measure said as declared; the form to add one shows "$" beside its
+ * amount and takes "$1,250.50" as written.
+ *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
@@ -74,6 +81,15 @@ const STRENGTHS = resolve(repoRoot, "packages/core/tests/document/fixtures/org-s
 const STRENGTHS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/org-strengths.seed.json");
 /** A change of 98 tasks, 60 still open (`resolveFor`'s page budget): the page lists them all. */
 const CHANGES = resolve(repoRoot, "packages/core/tests/document/fixtures/changes.gdd.json");
+/** Deals in dollars (the money bug found on a Cloud app, Oct 13): an amount, a margin, an effort, a weight and a fee in euros. */
+const MONEY = resolve(repoRoot, "packages/core/tests/document/fixtures/money.gdd.json");
+const MONEY_SEED = {
+  nodes: [
+    { id: "d1", kind: "deal", name: "Acme rebrand", amount: 10000, margin: 0.125, effort: 90, weight: 12.5, fee: 1250.5, stage: "won" },
+    { id: "d2", kind: "deal", name: "Harbor signage", amount: 4250.75, stage: "lead" },
+  ],
+  edges: [],
+};
 const CHANGES_SEED = {
   nodes: [
     { id: "c1", kind: "change", label: "Move the blocks" },
@@ -129,20 +145,22 @@ async function buildHost() {
         import strengths from ${JSON.stringify(STRENGTHS)};
         import strengthsSeed from ${JSON.stringify(STRENGTHS_SEED)};
         import changes from ${JSON.stringify(CHANGES)};
+        import money from ${JSON.stringify(MONEY)};
         const asked = new URLSearchParams(location.search);
         const proposal = asked.get("doc") === "lifelogics";
         const board = asked.get("doc") === "tasks";
         const org = asked.get("doc") === "strengths";
         const changed = asked.get("doc") === "changes";
-        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : hall, { today: () => "2026-09-01" });
+        const dollars = asked.get("doc") === "money";
+        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : ${JSON.stringify(SEED)},
+          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */
           ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal || org || changed
+          principal: proposal || org || changed || dollars
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
             : board
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
@@ -643,6 +661,65 @@ try {
     });
     await scene.close();
     report.checks.aRecordPageListsEveryRecordUnderAPagesBudget = { routed, scene: pictured, ok: routed.listed === 98 && routed.dashes === 0 && pictured.listed === 98 && pictured.dashes === 0 };
+  }
+
+  /*
+   * ---- Money is said as money on every default face (the Cloud bug, Oct 13). The
+   * deal's amount is a number marked "format": "money" in an app whose
+   * currency is USD: it read 10000 on the record page, the list, the
+   * table and the form.
+   */
+  {
+    const bare = /(^|[^\d,.$€])10000([^\d,.]|$)/;
+    const facts = { amount: "$10,000", margin: "13%", effort: "1 h 30 min", weight: "12.5 kg", fee: "€1,250.50" };
+    const read = (page, selector) => page.evaluate((within) => [...document.querySelectorAll(within)].map((element) => element.textContent ?? "").join(" | "), selector);
+    const record = await open(`doc=money&face=pages&path=${encodeURIComponent("/deals/d1")}`, { width: 1280, height: 900 });
+    const recordText = await read(record, "main");
+    await record.close();
+    report.checks.aMoneyFieldIsSaidAsMoneyOnItsRecordPage = { said: Object.fromEntries(Object.entries(facts).map(([key, words]) => [key, recordText.includes(words)])), bare: bare.test(recordText), ok: Object.values(facts).every((words) => recordText.includes(words)) && !bare.test(recordText) };
+
+    const list = await open(`doc=money&face=pages&path=${encodeURIComponent("/deals")}`, { width: 1280, height: 900 });
+    const listText = await read(list, "main");
+    await list.close();
+    report.checks.aMoneyFieldIsSaidAsMoneyInItsListsRows = { dollars: listText.includes("$10,000"), cents: listText.includes("$4,250.75"), bare: bare.test(listText), ok: listText.includes("$10,000") && listText.includes("$4,250.75") && !bare.test(listText) };
+
+    const board = await open(`doc=money&face=pages&path=${encodeURIComponent("/places/the-pipeline")}`, { width: 1280, height: 900 });
+    await board.waitForSelector('[data-testid="place-lens"]', { timeout: 15_000 }).catch(() => {});
+    const boardText = await read(board, '[data-testid="place-lens"]');
+    await board.close();
+    report.checks.aMoneyFieldIsSaidAsMoneyOnItsBoardsCards = { dollars: boardText.includes("$10,000"), bare: bare.test(boardText), ok: boardText.includes("$10,000") && !bare.test(boardText) };
+
+    const scene = await open("doc=money&face=scene", { width: 1440, height: 900 });
+    await scene.evaluate(() => window.__handle.setStop("#focus=d1"));
+    await scene.waitForTimeout(1200);
+    const sceneText = await scene.evaluate(() => document.querySelector("[data-graview-embed]")?.textContent ?? "");
+    await scene.close();
+    report.checks.aMoneyFieldIsSaidAsMoneyInTheScenesRecord = { dollars: sceneText.includes("$10,000"), bare: bare.test(sceneText), ok: sceneText.includes("$10,000") && !bare.test(sceneText) };
+
+    // The form: "$" beside the amount, a suggestion in the reader's figures, and "$1,250.50" taken as written.
+    const form = await open(`doc=money&face=pages&path=${encodeURIComponent("/deals")}`, { width: 1280, height: 900 });
+    if (!(await form.locator('[data-testid="form-add-deal"]').isVisible().catch(() => false))) await form.click('[data-testid="act-open-add-deal"]').catch(() => {});
+    await form.waitForSelector('[data-testid="form-add-deal"] input[name="amount"]', { timeout: 10_000 }).catch(() => {});
+    const box = await form.evaluate(() => {
+      const input = document.querySelector('[data-testid="form-add-deal"] input[name="amount"]');
+      const field = input?.closest('[data-graview-part="field"]');
+      return { type: input?.getAttribute("type") ?? null, mode: input?.getAttribute("inputmode") ?? null, placeholder: input?.getAttribute("placeholder") ?? null, symbol: field?.querySelector('[data-graview-part="amount-symbol"]')?.textContent ?? null };
+    });
+    let made = false;
+    // A number box cannot take "$1,250.50" at all: the claim fails without typing into it.
+    if (box.type === "text") {
+      await form.fill('[data-testid="form-add-deal"] input[name="name"]', "Pier lighting");
+      await form.fill('[data-testid="form-add-deal"] input[name="amount"]', "$1,250.50");
+      await form.click('[data-testid="form-add-deal"] button[type="submit"]');
+      await form.waitForTimeout(800);
+      // The deal made, said back as the amount it was written as: on its page, or its row in the list.
+      made = await form.evaluate(() => {
+        const text = document.querySelector("main")?.textContent ?? "";
+        return text.includes("Pier lighting") && text.includes("$1,250.50") ? "said" : null;
+      });
+    }
+    await form.close();
+    report.checks.aMoneyFormShowsItsCurrencyAndTakesAnAmountAsWritten = { box, made, ok: box.type === "text" && box.mode === "decimal" && box.symbol === "$" && box.placeholder === "1,250.00" && made === "said" };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

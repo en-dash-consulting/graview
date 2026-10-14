@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 import { kindOfSlug } from "./registry.js";
 import { type PageContext, StartFreshLink, useStoreTick } from "./page-context.js";
 import { usePlacedOnTheFace } from "./face-placed.js";
-import { WIDE, column, h1, quiet } from "./page-typography.js";
+import { BODY, WIDE, column, h1, quiet } from "./page-typography.js";
 
 
 /**
@@ -49,8 +49,8 @@ export function DefaultShell<S extends AnySchema>({
         background: "var(--graview-ground)",
         color: "var(--graview-ink)",
         fontFamily: "var(--graview-font-body, system-ui)",
-        fontSize: "1.0625rem",
-        lineHeight: 1.6,
+        fontSize: BODY,
+        lineHeight: 1.5,
       }}
     >
       {context.embedded ? null : <OwnBar context={context} />}
@@ -66,7 +66,6 @@ export function DefaultShell<S extends AnySchema>({
             borderTop: "1px solid var(--graview-edge)",
             padding: "14px 20px 20px",
             ...quiet,
-            fontSize: "0.875rem",
           }}
         >
           <div style={{ maxWidth: WIDE, margin: "0 auto", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end" }}>

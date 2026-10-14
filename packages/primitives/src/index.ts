@@ -48,12 +48,20 @@ export type { Arranging, ArrangingOptions } from "./lens/arranging.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
-export { EditableTitle, EditableValue, Fields, humanize, LongValue } from "./editable.js";
+export { EditableTitle, EditableValue, FieldLink, Fields, humanize, LongValue } from "./editable.js";
 // A record's pictures and documents (FR-162, FR-163): drawn, and put there through the host's files.
 export { Files } from "./files-door.js";
 export type { FilesProps } from "./files-door.js";
+// Choosing several records on a list, and the bar that acts on them all at once (fetched with the first one chosen).
+export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
+export type { Choosing } from "./choosing.js";
+export { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
+export type { SeveralBarProps } from "./several-door.js";
 export { AppLink } from "./app-link-door.js";
 export type { AppLinkProps } from "./app-link-door.js";
+// How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.
+export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
+export type { RepeatPickerProps } from "./repeat-picker-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 // The seat: an ask field at the picture's foot that grows into the conversation when asked.
 export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";
@@ -101,7 +109,7 @@ export { ShowInstallation } from "./installation.js";
 export { Seats } from "./seats.js";
 export { Profile } from "./profile.js";
 export type { HostAction } from "./profile.js";
-export { createNoticeBoard, Notices, TOAST_MS } from "./notices.js";
+export { createNoticeBoard, fetchNotices, Notices, TOAST_MS } from "./notices.js";
 export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheTop } from "./notice-place.js";
 export type { HeldNotice, Notice, NoticeAction, NoticeBoard, NoticeHandle, NoticeTone } from "./notices.js";
 export { buildReach, ReachView, reachLens } from "./lens/reach.js";

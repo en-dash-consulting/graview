@@ -180,6 +180,7 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
     acts,
     ...(given.theme ? { theme: given.theme } : {}),
-    ...(given.places ? { places: given.places.map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
+    // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
+    ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
   };
 }

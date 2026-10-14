@@ -33,7 +33,7 @@ export function MapPanel<S extends AnySchema>() {
   const { store, view, selection, hiddenKinds } = useGraview<S>();
   useGraph<S>();
   if (!view.overview) return null;
-  const showing = mapPanelShows(mapChoice(selection, view, (id) => store.graph.getNode(id)?.kind as string | undefined));
+  const showing = mapPanelShows(mapChoice(selection, { ...view, beside: true }, (id) => store.graph.getNode(id)?.kind as string | undefined));
   if (!showing) return null;
   // A district the declaration has not got — an address from another app, a kind since removed — has nothing to list.
   if (showing.what !== "record" && (hiddenKinds.has(showing.kind) || !(store.schema.kinds as readonly string[]).includes(showing.kind))) return null;

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 7885,
+  "gzipped": 3336,
+  "note": "Raised when a phone, a place and a duration became field types: the three marked as they are compiled; how each is said, linked and read from what is typed (field-words, on @graview/core/words: a duration parsed from \"1h 30m\" and said \"1 h 30 min\", a computed sum of durations read as one, a phone grouped for a US or Canadian reader and linked tel:, a place linked to the reader's maps app); a record's facts, a document card's field block and the scene's record panel drawing the links; the form, the workbench and the value changed in place asking for a phone in a tel box and a duration in words; the tools' x-graview-type; the studio's three helpers. 7_885 / 3_336 more than batch/0-1-29-fixes (1_892_639 / 615_561), while a hosted page's first load is 392 / 168 bytes larger (360 / 179 handed a compiled app) and stays under its budgets. Measured at 1_900_524 / 618_897."
+}

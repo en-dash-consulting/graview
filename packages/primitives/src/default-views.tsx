@@ -13,7 +13,8 @@ import {
 } from "@graview/core";
 import { describeNode, readableFields } from "@graview/core/words";
 import { firstPicture, withComputed } from "@graview/core/blocks";
-import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withPast, withPicture, withWithin } from "@graview/layout/view";
+import { aggregateId, kindCardId, withFocus, withJackIn, withOverview, withPicture, withWithin } from "@graview/layout/view";
+import { withPast } from "@graview/layout/view-moves";
 import { rosterRows } from "@graview/layout/sizes";
 import { useKit, useReached } from "@graview/react/drawing";
 import {
@@ -41,7 +42,13 @@ const ArrangeBar = lazyModule(retryingImport(() => import("./arrange-bar.js"))).
   (bar, props: Parameters<typeof import("./arrange-bar.js").ArrangeBar>[0]) => <bar.ArrangeBar {...props} />,
   { what: "Arranging this list" },
 );
+/* A district gone into: its stop, fetched the first time one is (`kind-stop.tsx`). */
+const KindStopPart = lazyModule(retryingImport(() => import("./kind-stop.js"))).part(
+  (stop, props: import("./kind-stop.js").KindStopProps) => <stop.KindStop {...props} />,
+  { what: "This list" },
+);
 import { Connections } from "./connections.js";
+import { ProblemCount, problemsIn } from "./problem-count.js";
 import { EditableTitle, Fields } from "./editable.js";
 import { Files } from "./files-door.js";
 import { Aggregate, Chip, Panel, Roster } from "./primitives/index.js";
@@ -513,7 +520,22 @@ export function registerDefaultViews<S extends AnySchema>(
       );
     };
 
-    const Group = (props: ViewProps<S>) => {
+    /*
+     * GONE INTO, A KIND OPENS TO SOMETHING USEFUL: its stop (`kind-stop.tsx`)
+     * — what the set is, what is going on in it, its first act, and a board,
+     * a calendar or a table its data chooses — fetched when a district is
+     * first gone into. Until it is here, the list it used to be.
+     */
+    const Group = (props: ViewProps<S>) =>
+      props.fidelity === "full" ? (
+        <Suspense fallback={<GroupList {...props} />}>
+          <KindStopPart kind={String(kind)} members={props.nodes ?? []} {...(props.flagged ? { flagged: props.flagged } : {})} {...(props.label ? { label: props.label } : {})} />
+        </Suspense>
+      ) : (
+        <GroupList {...props} />
+      );
+
+    const GroupList = (props: ViewProps<S>) => {
       const { brand, store, views } = useGraview<S>();
       const { view, go } = useNavigation();
       const members = props.nodes ?? [];
@@ -558,13 +580,37 @@ export function registerDefaultViews<S extends AnySchema>(
       // A receded group still has to report trouble inside it, or the only
       // way to find a problem is to open every group in turn.
       const flagged = (nodes: readonly { id: string }[]) => nodes.some((member) => props.flagged?.includes(member.id));
+      /*
+       * The header says the members as a plain count and, apart from it,
+       * how many problems there are — the bar's own count, pressable — never
+       * the member count painted as a warning.
+       */
+      const everyProblem = useViolations<S>();
+      const flag = useKit().marks.flag;
       const pile = (label: string, nodes: typeof members, key?: string) =>
         rows ? (
-          <Panel key={key} title={label} meta={flagged(nodes) ? `⚠ ${nodes.length}` : nodes.length} tone={flagged(nodes) ? "warning" : "muted"}>
+          <Panel
+            key={key}
+            title={label}
+            meta={
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <ProblemCount kind={String(kind)} plural={plural} problems={problemsIn(everyProblem, nodes)} flag={flag} />
+                <span title={`${numberAsRead(nodes.length)} ${nodes.length === 1 ? nounOf(definition, String(kind)) : plural.toLowerCase()}`}>{numberAsRead(nodes.length)}</span>
+              </span>
+            }
+            tone={flagged(nodes) ? "warning" : "muted"}
+          >
             <MemberRows<S> View={rows} members={nodes} mode={props.mode} {...(props.flagged ? { flagged: props.flagged } : {})} />
           </Panel>
         ) : (
-          <Aggregate key={key} label={label} count={nodes.length} flagged={flagged(nodes)} items={nodes.map(item)} />
+          <Aggregate
+            key={key}
+            label={label}
+            count={nodes.length}
+            flagged={flagged(nodes)}
+            items={nodes.map(item)}
+            problems={<ProblemCount kind={String(kind)} plural={plural} problems={problemsIn(everyProblem, nodes)} flag={flag} />}
+          />
         );
       if (!arranged.grouped) {
         return (
@@ -637,6 +683,15 @@ export function registerDefaultViews<S extends AnySchema>(
       const showingNow = props.focused ? (view.within?.["view"] ?? showings[0]?.as) : undefined;
       const broken = members.filter((member) => props.flagged?.includes(member.id)).length;
       const trouble = broken > 0;
+      /*
+       * THE PROBLEMS OF THIS DISTRICT, as the bar and the problems page have
+       * them: the broken rules (`useViolations`) that name one of its
+       * records. The "⚠ N" on its name is that many, and pressing it
+       * brings the same rows up beside the map — one source, so the card, the
+       * panel and the bar's count never say two things.
+       */
+      const everyProblem = useViolations<S>();
+      const problems = problemsIn(everyProblem, members);
       /* FROM ALTITUDE THE NAME SAYS THREE THINGS: what the district is, how many, and how many have a problem — and, for a kind with a status, the bar of where they stand. */
       const altitude = (view.overview ?? false) && props.nestedUnder === undefined;
       const accent = props.focused || props.raised;
@@ -932,9 +987,10 @@ export function registerDefaultViews<S extends AnySchema>(
 
           <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.875rem" }}>
             <span
+              title={members.length > 0 ? `${numberAsRead(members.length)} ${members.length === 1 ? nounOf(definition, String(kind)) : plural.toLowerCase()}` : undefined}
               style={{
                 fontVariantNumeric: "tabular-nums",
-                color: trouble && !altitude ? "var(--graview-warn)" : saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
+                color: saysTied ? "var(--graview-accent)" : "var(--graview-ink-faint)",
               }}
             >
               {/*
@@ -943,13 +999,9 @@ export function registerDefaultViews<S extends AnySchema>(
                 * it is — the same honesty the actions strip gives when a kind
                 * has no verbs.
                 */}
-              {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : `${trouble && !altitude ? `${flag} ` : ""}${numberAsRead(members.length)}`}
+              {members.length === 0 ? "none yet" : saysTied ? (tied === members.length ? `${tied} tied` : `${tied} of ${members.length} tied`) : numberAsRead(members.length)}
             </span>
-            {altitude && trouble ? (
-              <span className="graview-district-problems" data-graview-problems={broken} title={`${broken} of ${members.length} ${broken === 1 ? "has a problem" : "have problems"}`}>
-                {`${flag} ${numberAsRead(broken)}`}
-              </span>
-            ) : null}
+            <ProblemCount kind={String(kind)} plural={plural} problems={problems} flag={flag} listed={listed} />
             {/*
               * What sits BEHIND THE HORIZON, advertised where it dropped
               * from. Pressing it widens the view to the past — an ordinary

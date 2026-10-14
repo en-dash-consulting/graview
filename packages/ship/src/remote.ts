@@ -1,4 +1,5 @@
 import {
+  FIELD_SIGHT,
   FieldRevisions,
   foldPresence,
   ReceiveError,
@@ -655,6 +656,13 @@ async function opening<S extends AnySchema>(
     ids: localIds(),
     ...(options.storeOptions ?? {}),
   });
+  /*
+   * What the host served this seat is what it may see: a sight that hides a
+   * field was judged there (Roadmap f-field-sight). THIS store shows what it
+   * holds — never another the same page holds whole, which still fails
+   * closed unless field sight is loaded.
+   */
+  FIELD_SIGHT.served.add(store);
   // The day turning judges the rules that read the clock again, as the browser reads it (FR-176).
   const stopTicking = tickEachDay(store);
 

@@ -2,7 +2,7 @@ import type { GraviewApp } from "./app.js";
 import { declaredLenses, MOST_STANDING, openingOf, orderKinds, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, type PlaceFinding, type ShippedLensName } from "./places.js";
 import type { AnySchema } from "./schema/schema.js";
 import { pluralLabel } from "./schema/define-node.js";
-import { kindPath, placePath, sharesItsName, type PagesArrangement, type Place } from "./views/types.js";
+import { kindPath, onePerPicture, placePath, sharesItsName, type PagesArrangement, type Place } from "./views/types.js";
 
 /*
  * EVERY PLACE AN APP HAS, AND WHAT ITS ARRANGEMENT ASKS THAT IT CANNOT
@@ -86,7 +86,8 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
 function placesOfLenses<S extends AnySchema>(app: GraviewApp<S>): readonly Place[] {
   const out: Place[] = [];
   for (const lens of declaredLenses(app).drawn) {
-    for (const kind of lens.kinds) out.push({ kind, title: lens.title, as: lens.as, ...(lens.across ? { across: lens.across } : {}) });
+    // One picture over several kinds is a place on each, and says so (`over`): every list names it once.
+    for (const kind of lens.kinds) out.push({ kind, title: lens.title, as: lens.as, ...(lens.across ? { across: lens.across } : {}), ...(lens.kinds.length > 1 ? { over: lens.kinds } : {}) });
   }
   for (const place of app.views?.places?.() ?? []) {
     if (!out.some((held) => held.kind === place.kind && held.as === place.as)) out.push(place);
@@ -103,8 +104,10 @@ export interface AppPlace {
   /** The address word: a place's `as`, a kind's plural, or `home`. */
   readonly slug: string;
   readonly title: string;
-  /** The kind it is over; null for the home. */
+  /** The kind it is over; null for the home. A picture over several kinds is listed once, under the first. */
   readonly kind: string | null;
+  /** Every kind a picture over several is over — the timetable of talks and workshops — each one's district going in to it. */
+  readonly over?: readonly string[];
   readonly cardinality: "many";
   /** Its path on the routed face: `/`, `/<plural>`, `/places/<as>`. */
   readonly address: string;
@@ -152,7 +155,8 @@ export function placesFrom(
     // The scene, a place like the others (FR-132): its stop rides on its address.
     { slug: OVERVIEW_SLUG, title: sceneTitle(pages), kind: null, cardinality: "many", address: OVERVIEW_PATH, stop: "#" },
   ];
-  const byKind = [...places].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind));
+  // A picture over several kinds once, under the first of them in the arrangement's order.
+  const byKind = onePerPicture([...places].sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind)));
   for (const place of byKind) {
     const lens = options.lenses?.find((one) => one.as === place.as && one.kinds.includes(place.kind));
     const shared = sharesItsName(place, places);
@@ -160,11 +164,12 @@ export function placesFrom(
       slug: place.as,
       title: place.title,
       kind: place.kind,
+      ...(place.over ? { over: place.over.filter((kind) => kindsDeclared.includes(kind)) } : {}),
       cardinality: "many",
       address: placePath(place.as, shared ? kindPath(schema, place.kind).slice(1) : undefined),
       stop: shared ? `#focus=aggregate:${place.kind}&in.view=${encodeURIComponent(place.as)}` : `#view=${encodeURIComponent(place.as)}`,
       ...(lens ? { lens: lens.lens } : {}),
-      ...(opening?.to === "place" && opening.place.kind === place.kind && opening.place.as === place.as ? { first: true } : {}),
+      ...(opening?.to === "place" && opening.place.as === place.as && (opening.place.kind === place.kind || place.over?.includes(opening.place.kind)) ? { first: true } : {}),
     });
   }
   for (const kind of kinds) {

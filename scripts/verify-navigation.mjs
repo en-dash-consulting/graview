@@ -187,12 +187,12 @@ try {
   /*
    * WHAT YOU CAN PRESS IS WHAT YOU CAN SEE.
    *
-   * A record read from altitude is drawn scaled inside a host the size of
-   * the layout's slot, and its content fills only part of that. The rest is
-   * invisible — and it must not be a target, or a district it happens to
-   * sit over stops answering. Hit-tested directly: a point inside the host
-   * but below the drawn content must resolve to something else; a point on
-   * the content must resolve to the record.
+   * A record read from altitude was drawn scaled inside a host the size of
+   * the layout's slot, its content filling only part of it, and the
+   * invisible rest had to be kept from taking presses meant for the
+   * districts under it. It stands in the panel beside the map now, at the
+   * size a person reads: nothing of it is stamped over the city, and its
+   * name in the panel is where a press on it lands.
    */
   /*
    * Reached by its address: a district's records are listed beside the map
@@ -205,18 +205,12 @@ try {
   report.hitArea = {
     ...(report.hitArea ?? {}),
     ...(await page.evaluate(() => {
-      const host = document.querySelector('[data-graview-view="t-deposit"]');
-      if (!host) return { host: null };
-      const box = host.getBoundingClientRect();
-      const content = host.querySelector("[data-graview-natural] > *") ?? host.firstElementChild;
-      const drawn = content.getBoundingClientRect();
-      const viewAt = (x, y) => document.elementFromPoint(x, y)?.closest("[data-graview-view]")?.dataset.graviewView ?? null;
-      return {
-        host: [box.width, box.height].map(Math.round),
-        drawn: [drawn.width, drawn.height].map(Math.round),
-        onContent: viewAt(drawn.left + drawn.width / 2, drawn.top + drawn.height / 2),
-        belowContent: drawn.bottom + 24 < box.bottom ? viewAt(drawn.left + drawn.width / 2, drawn.bottom + 24) : "no remainder",
-      };
+      const stamped = [...document.querySelectorAll('[data-graview-view="t-deposit"]')].filter((el) => !el.closest("[data-graview-map-panel]")).length;
+      const title = document.querySelector('[data-testid="record-panel"] [data-testid="record-panel-title"]');
+      if (!title) return { stamped, title: null };
+      const box = title.getBoundingClientRect();
+      const at = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return { stamped, title: title.textContent.trim(), pressedLandsOnIt: at !== null && title.contains(at) };
     })),
   };
 
@@ -295,7 +289,8 @@ try {
     // The district's own ground, in the middle of its plot: never its name, never the open control.
     await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
     await page.waitForTimeout(900);
-    const at = await page.evaluate(() => location.hash);
+    // Where it went, and what stands beside the map for it: a lens, or the kind's own stop.
+    const at = await page.evaluate(() => `${location.hash}|stop=${document.querySelector('[data-graview-map-panel] [data-testid="kind-stop"]')?.getAttribute("data-graview-kind-stop") ?? ""}`);
     await page.goBack();
     await page.waitForTimeout(700);
     return at;
@@ -322,6 +317,330 @@ try {
     };
   });
   await listing.close();
+  /*
+   * THE PROBLEM COUNT ON A DISTRICT'S NAME IS A CONTROL. "⚠ 3" on Tasks was
+   * dead text: nothing on the map said what the warning was. It is a button
+   * now, a fingertip tall, named "3 problems in Tasks"; pressed (or Enter on
+   * the keyboard) it chooses the district and brings its problems up beside
+   * the map, the bar's own rows, as many as it said — and Escape gives the
+   * keyboard back to something, never to the page.
+   */
+  const problems = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  problems.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await problems.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+  await problems.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await problems.waitForSelector(".graview-district-problems", { timeout: 15_000 }).catch(() => {});
+  const asButton = await problems.evaluate(() =>
+    [...document.querySelectorAll(".graview-district-problems")].map((el) => {
+      const box = el.getBoundingClientRect();
+      return { tag: el.tagName, name: el.getAttribute("aria-label"), said: el.getAttribute("data-graview-problems"), title: el.getAttribute("title"), width: box.width, height: box.height };
+    }),
+  );
+  const first = asButton[0];
+  const kind = first ? await problems.evaluate(() => document.querySelector(".graview-district-problems")?.getAttribute("data-testid")?.replace("district-problems-", "") ?? "") : "";
+  if (first) {
+    await problems.focus(`[data-testid="district-problems-${kind}"]`);
+    await problems.keyboard.press("Enter");
+    await problems.waitForSelector('[data-testid="district-problem-rows"] li', { timeout: 10_000 }).catch(() => {});
+  }
+  const opened = await problems.evaluate(() => ({
+    panel: document.querySelector('[data-testid="district-panel"]') !== null,
+    rows: document.querySelectorAll('[data-testid="district-problem-rows"] li').length,
+    said: document.querySelector('[data-testid="district-problems"]')?.getAttribute("data-graview-problems") ?? null,
+    keyboard: document.activeElement?.getAttribute("data-testid") ?? null,
+  }));
+  await problems.keyboard.press("Escape");
+  await problems.waitForTimeout(500);
+  const closed = await problems.evaluate(() => ({ panel: document.querySelector('[data-testid="district-panel"]') !== null, onBody: document.activeElement === document.body || document.activeElement === null }));
+  report.districtProblems = { asButton, opened, closed };
+  await problems.close();
+  /*
+   * THE SAME TRUE THING ON THE GROUND. The flat district cards along the foot
+   * of the ground painted the MEMBER count in the warning color with a ⚠ —
+   * "⚠ 12" on a district with two problems. They say the members as a plain
+   * count, with its own title, and the problems as the same button: the same
+   * number, named, and pressing it rises to the map with the problems open.
+   */
+  const ground = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  ground.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await ground.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+  await ground.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await ground.waitForSelector('[data-graview-view^="kind:"] .graview-district-problems', { timeout: 15_000 }).catch(() => {});
+  const onTheGround = await ground.evaluate(() => {
+    const button = document.querySelector('[data-graview-view^="kind:"] .graview-district-problems');
+    const card = button?.closest('[data-graview-view^="kind:"]');
+    const members = [...(card?.querySelectorAll("span[title]") ?? [])].find((el) => /^\d[\d,]* /.test(el.getAttribute("title") ?? "") && !el.contains(button));
+    return {
+      up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+      name: button?.getAttribute("aria-label") ?? null,
+      said: button?.getAttribute("data-graview-problems") ?? null,
+      members: members?.textContent?.trim() ?? null,
+      membersTitle: members?.getAttribute("title") ?? null,
+      // The count itself never carries the mark.
+      markOnTheMembers: members ? members.textContent.includes("⚠") : null,
+      height: button?.getBoundingClientRect().height ?? 0,
+      kind: button?.getAttribute("data-testid")?.replace("district-problems-", "") ?? null,
+    };
+  });
+  if (onTheGround.kind) {
+    await ground.focus(`[data-testid="district-problems-${onTheGround.kind}"]`);
+    await ground.keyboard.press("Enter");
+    await ground.waitForSelector('[data-testid="district-problem-rows"] li', { timeout: 10_000 }).catch(() => {});
+  }
+  onTheGround.risen = await ground.evaluate(() => ({
+    up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+    rows: document.querySelectorAll('[data-testid="district-problem-rows"] li').length,
+  }));
+  report.districtProblems.onTheGround = onTheGround;
+  await ground.close();
+  /*
+   * A DISTRICT'S NAME IS NOT MOVED BY HAND, from altitude. The city is laid
+   * out by the data, and a name stands under its own plot; a name dragged
+   * off its plot and pinned in the address is geometry that compensates for
+   * the layout. A drag that starts on it is the ground's own gesture — it
+   * pans the city, plot and name together — and writes no pin; an old pin in
+   * a bookmark is ignored.
+   */
+  const unmoved = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  unmoved.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  const nameAgainstPlot = () =>
+    unmoved.evaluate(() => {
+      const face = document.querySelector('[data-graview-view="kind:task"] .graview-kind-face')?.getBoundingClientRect();
+      const tile = document.querySelector('[data-graview-plot="kind:task"] .graview-plot-tile')?.getBoundingClientRect();
+      return face && tile ? { dx: Math.round(face.x + face.width / 2 - (tile.x + tile.width / 2)), dy: Math.round(face.y - (tile.y + tile.height)), tileX: Math.round(tile.x), tileY: Math.round(tile.y), hash: location.hash, pinned: document.querySelectorAll("[data-graview-pinned]").length } : null;
+    });
+  await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+  await unmoved.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+  await unmoved.waitForTimeout(1500);
+  const resting = await nameAgainstPlot();
+  const grab = await unmoved.evaluate(() => {
+    const face = document.querySelector('[data-graview-view="kind:task"] .graview-kind-face');
+    const box = face?.getBoundingClientRect();
+    if (!face || !box) return null;
+    // On the name itself, not on a control drawn in it.
+    for (const fx of [0.5, 0.35, 0.65, 0.2]) {
+      for (const fy of [0.3, 0.5, 0.7]) {
+        const x = Math.round(box.x + box.width * fx);
+        const y = Math.round(box.y + box.height * fy);
+        const el = document.elementFromPoint(x, y);
+        if (el && face.contains(el) && !el.closest("button, a, [role='button']")) return { x, y };
+      }
+    }
+    return null;
+  });
+  let dragged = null;
+  if (grab) {
+    await unmoved.mouse.move(grab.x, grab.y);
+    await unmoved.mouse.down();
+    for (let i = 1; i <= 16; i++) {
+      await unmoved.mouse.move(grab.x + i * 8, grab.y + i * 4);
+      await unmoved.waitForTimeout(16);
+    }
+    await unmoved.mouse.up();
+    await unmoved.waitForTimeout(600);
+    dragged = await nameAgainstPlot();
+  }
+  // And a pin an old bookmark carries for a district is ignored.
+  await unmoved.goto(`${at("todo")}/?today=2026-09-01#overview=1&pin.kind%3Atask=40,40`, { waitUntil: "load" });
+  await unmoved.waitForTimeout(1800);
+  const bookmarked = await nameAgainstPlot();
+  report.districtName = { resting, dragged, bookmarked };
+  await unmoved.close();
+  /*
+   * THE PANEL FLOATS OVER THE MAP; it is not a column beside it. Docked on a
+   * desk (or a sheet on a phone) it is inset from the edges of the picture by
+   * the app's gap, below the bar, with the app's radius on its corners and a
+   * real elevation — and the city is laid out in the room left, so no
+   * district, name or control stands under it.
+   */
+  report.mapPanel = {};
+  for (const [width, height] of [[1560, 940], [390, 844]]) {
+    const floating = await browser.newPage({ viewport: { width, height } });
+    floating.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await floating.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Atask&in.view=the-week`, { waitUntil: "load" });
+    await floating.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await floating.waitForSelector('[data-graview-map-panel]', { timeout: 15_000 }).catch(() => {});
+    await floating.waitForTimeout(1500);
+    report.mapPanel[width] = await floating.evaluate(() => {
+      const panel = document.querySelector("[data-graview-map-panel]");
+      const box = panel?.getBoundingClientRect();
+      if (!panel || !box) return null;
+      const bar = document.querySelector('[data-testid="app-bar"]')?.getBoundingClientRect();
+      const style = getComputedStyle(panel);
+      /*
+       * THE SCENE IS PAINTED UNDER IT: the ground fills the picture's whole
+       * width (a phone's, its whole height) and the panel overlaps it, so in
+       * the gap around the panel what stands on top is the scene's own
+       * ground, not the page behind a narrowed box.
+       */
+      const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+      const sheet = panel.getAttribute("data-graview-map-panel") === "sheet";
+      const gapPoints = sheet
+        ? [0.15, 0.4, 0.65, 0.9].flatMap((f) => [[box.left - 3, box.top + box.height * f], [box.right + 3, box.top + box.height * f], [box.left + box.width * f, box.bottom + 3]])
+        : [0.1, 0.35, 0.65, 0.9].flatMap((f) => [[box.right + 3, box.top + box.height * f], [box.left + box.width * f, box.bottom + 3], [box.left + box.width * f, box.top - 3]]);
+      const gapIsGround = gapPoints.every(([x, y]) => {
+        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return true;
+        const top = document.elementsFromPoint(x, y).find((el) => !el.closest("[data-graview-offstage]"));
+        return top?.closest(".graview-ground") !== null && top?.closest(".graview-ground") !== undefined;
+      });
+      const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+      const under = [];
+      for (const el of document.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face, [data-graview-plot] .graview-plot-tile, [data-testid="overview"], [data-testid="lines-key"], .graview-zoom, [data-testid="seat-field"]')) {
+        // On a phone a sheet stands over the ask field on purpose: the field is behind the sheet while it is open.
+        if (panel.getAttribute("data-graview-map-panel") === "sheet" && el.getAttribute("data-testid") === "seat-field") continue;
+        const r = el.getBoundingClientRect();
+        // What is drawn outside the window is not under anything.
+        if (r.width > 0 && r.height > 0 && meets(r, box)) under.push(el.getAttribute("data-testid") ?? el.getAttribute("class")?.split(" ")[0] ?? el.tagName);
+      }
+      return {
+        kind: panel.getAttribute("data-graview-map-panel"),
+        right: Math.round(innerWidth - box.right),
+        bottom: Math.round(innerHeight - box.bottom),
+        left: Math.round(box.left),
+        belowTheBar: bar ? box.top >= bar.bottom : null,
+        top: Math.round(box.top),
+        radius: parseFloat(style.borderTopLeftRadius) || 0,
+        shadow: style.boxShadow !== "none",
+        edge: parseFloat(style.borderTopWidth) > 0,
+        under,
+        groundRightGap: ground ? Math.round(innerWidth - ground.right) : null,
+        groundBottomGap: ground ? Math.round(innerHeight - ground.bottom) : null,
+        groundWidth: ground ? Math.round(ground.width) : null,
+        overlapsGround: ground ? meets(ground, box) : false,
+        gapIsGround,
+      };
+    });
+    await floating.close();
+  }
+
+  /*
+   * TAB NEVER LANDS ON A DISTRICT THE PANEL COVERS. The panel floats over
+   * the scene, and the city's fit keeps every district in the part the
+   * reader sees — until the reader comes closer: zoomed in, the city runs
+   * under the panel, and Tab walked into districts nobody could see, the
+   * focus ring drawn under the panel. A district wholly under it is passed
+   * over; one partly under it is brought into the part that is seen.
+   */
+  report.coveredTab = {};
+  for (const [width, height] of [[1440, 900], [390, 844]]) {
+    const covering = await browser.newPage({ viewport: { width, height } });
+    covering.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await covering.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Atask&in.view=the-week`, { waitUntil: "load" });
+    await covering.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await covering.waitForSelector("[data-graview-map-panel]", { timeout: 15_000 }).catch(() => {});
+    await covering.waitForTimeout(1200);
+    // Closer, about the middle of the part that is seen, so the city runs under the panel.
+    const seen = await covering.evaluate(() => {
+      const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+      const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
+      if (!ground || !panel) return null;
+      const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
+      return sheet ? { x: ground.left + ground.width / 2, y: ground.top + (panel.top - ground.top) / 2 } : { x: ground.left + (panel.left - ground.left) / 2, y: ground.top + ground.height / 2 };
+    });
+    if (seen) {
+      await covering.mouse.move(seen.x, seen.y);
+      await covering.keyboard.down("Control");
+      for (let i = 0; i < 6; i++) {
+        await covering.mouse.wheel(0, -120);
+        await covering.waitForTimeout(60);
+      }
+      await covering.keyboard.up("Control");
+    }
+    await covering.waitForSelector(".graview-ground[data-graview-settled]", { timeout: 5_000 }).catch(() => {});
+    await covering.waitForTimeout(700);
+    // Then the ground dragged toward the panel, far enough that the district nearest it goes under.
+    const toward = await covering.evaluate(() => {
+      const element = document.querySelector("[data-graview-map-panel]");
+      const panel = element?.getBoundingClientRect();
+      const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+      if (!panel || !ground) return null;
+      const sheet = element.getAttribute("data-graview-map-panel") === "sheet";
+      const seen = [...document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')]
+        .map((card) => card.getBoundingClientRect())
+        .filter((r) => r.right > ground.left && r.bottom > ground.top && (sheet ? r.bottom <= panel.top && r.top >= ground.top : r.right <= panel.left && r.left >= ground.left));
+      if (seen.length === 0) return null;
+      // The one nearest the panel, carried just past its edge.
+      const nearest = sheet ? seen.reduce((a, b) => (b.bottom > a.bottom ? b : a)) : seen.reduce((a, b) => (b.right > a.right ? b : a));
+      const from = sheet ? { x: ground.left + ground.width / 2, y: ground.top + 40 } : { x: ground.left + 40, y: ground.top + ground.height / 2 };
+      return { from, dx: sheet ? 0 : panel.left - nearest.left + 24, dy: sheet ? panel.top - nearest.top + 24 : 0 };
+    });
+    if (toward) {
+      await covering.mouse.move(toward.from.x, toward.from.y);
+      await covering.mouse.down();
+      for (let i = 1; i <= 20; i++) {
+        await covering.mouse.move(toward.from.x + (toward.dx * i) / 20, toward.from.y + (toward.dy * i) / 20);
+        await covering.waitForTimeout(16);
+      }
+      await covering.mouse.up();
+      await covering.waitForTimeout(900);
+    }
+    /** Where each district's card stands against the panel: wholly under it, partly, or clear. */
+    const standing = () =>
+      covering.evaluate(() => {
+        const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
+        const out = {};
+        if (!panel) return out;
+        const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+        for (const card of document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')) {
+          // What of it is on the screen: a card past the picture's edge is not under the panel.
+          const box = card.getBoundingClientRect();
+          const r = { left: Math.max(box.left, ground.left), right: Math.min(box.right, ground.right), top: Math.max(box.top, ground.top), bottom: Math.min(box.bottom, ground.bottom) };
+          if (r.right - r.left < 1 || r.bottom - r.top < 1) {
+            out[card.getAttribute("data-graview-view")] = "off the screen";
+            continue;
+          }
+          // Under the panel: on its side of the picture (a desk) or below its top (a phone), the gap to the edge with it.
+          const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
+          const inside = sheet ? r.top >= panel.top - 1 : r.left >= panel.left - 1;
+          const meets = r.left < panel.right - 1 && panel.left < r.right - 1 && r.top < panel.bottom - 1 && panel.top < r.bottom - 1;
+          out[card.getAttribute("data-graview-view")] = inside ? "covered" : meets ? "partly" : "clear";
+        }
+        return out;
+      });
+    const before = await standing();
+    // From the bar's last control, forward through the scene until the keyboard reaches the panel.
+    await covering.evaluate(() => document.querySelector('[data-testid="profile-button"]')?.focus());
+    const landed = [];
+    for (let i = 0; i < 80; i++) {
+      await covering.keyboard.press("Tab");
+      await covering.waitForTimeout(120);
+      const at = await covering.evaluate(() => {
+        const active = document.activeElement;
+        if (!active) return { where: "nothing" };
+        if (active.closest("[data-graview-map-panel]")) return { where: "panel" };
+        const card = active.closest('.graview-ground [data-graview-view^="kind:"]');
+        if (!card) return { where: "elsewhere" };
+        const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
+        const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+        const box = card.getBoundingClientRect();
+        const r = { left: Math.max(box.left, ground.left), right: Math.min(box.right, ground.right), top: Math.max(box.top, ground.top), bottom: Math.min(box.bottom, ground.bottom) };
+        const onScreen = r.right - r.left >= 1 && r.bottom - r.top >= 1;
+        const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
+        const inside = onScreen && panel && (sheet ? r.top >= panel.top - 1 : r.left >= panel.left - 1);
+        return { where: "district", id: card.getAttribute("data-graview-view"), inside: Boolean(inside) };
+      });
+      if (at.where === "panel") break;
+      if (at.where !== "district") continue;
+      // A district partly under the panel is brought into the part that is seen once the camera has moved.
+      await covering.waitForTimeout(500);
+      const after = await covering.evaluate((id) => {
+        const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
+        const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+        const r = document.querySelector(`.graview-ground [data-graview-view="${CSS.escape(id)}"]`)?.getBoundingClientRect();
+        if (!panel || !ground || !r) return null;
+        const sheet = document.querySelector("[data-graview-map-panel]")?.getAttribute("data-graview-map-panel") === "sheet";
+        // The part that is seen: the picture less the panel's side (a desk) or its foot (a phone).
+        const seen = sheet ? { left: ground.left, right: ground.right, top: ground.top, bottom: panel.top } : { left: ground.left, right: panel.left, top: ground.top, bottom: ground.bottom };
+        // A card larger than the part that is seen shows its start there; any other stands wholly in it.
+        const across = r.width <= seen.right - seen.left ? r.left >= seen.left - 1 && r.right <= seen.right + 1 : r.left >= seen.left - 1 && r.left < seen.right;
+        const down = r.height <= seen.bottom - seen.top ? r.top >= seen.top - 1 && r.bottom <= seen.bottom + 1 : r.top >= seen.top - 1 && r.top < seen.bottom;
+        return across && down ? "clear" : "under";
+      }, at.id);
+      landed.push({ id: at.id, was: before[at.id] ?? null, coveredWhenLanded: at.inside, afterwards: after });
+    }
+    report.coveredTab[width] = { before, landed };
+    await covering.close();
+  }
 
   /*
    * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
@@ -676,7 +995,12 @@ try {
   await cam.waitForTimeout(400);
   const buttonIn = await ground();
   // Dragging the ground as far as it goes: the whole offset reaches the limit, not the pan alone.
-  const box = await cam.evaluate(() => { const b = document.querySelector(".graview-ground").getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; });
+  // The ground runs under a panel floating over it: the hand takes it where it is bare, left of the panel.
+  const box = await cam.evaluate(() => {
+    const b = document.querySelector(".graview-ground").getBoundingClientRect();
+    const panel = document.querySelector("[data-graview-map-panel=dock]")?.getBoundingClientRect();
+    return { x: b.x, y: b.y, w: (panel ? panel.left : b.right) - b.x, h: b.height };
+  });
   const dragFrom = { x: box.x + box.w - 60, y: box.y + box.h / 2 };
   await cam.mouse.move(dragFrom.x, dragFrom.y);
   await cam.mouse.down();
@@ -866,6 +1190,24 @@ try {
     url: location.hash,
     lit: document.querySelectorAll(".graview-kind-card[data-graview-emphasis]").length,
   }));
+  /*
+   * A TYPO FINDS THE RECORD, SAID AS NEAR. "depsoit" is "deposit" with two
+   * letters swapped: the strip names the deposit task and says it is near
+   * the word typed, the count says so, and its district lights.
+   */
+  await find.keyboard.press("/");
+  await find.keyboard.type("depsoit", { delay: 40 });
+  await find.waitForTimeout(700);
+  const typo = await find.evaluate(() => ({
+    rows: [...document.querySelectorAll('[data-testid="find-hit"]')].map((el) => ({
+      near: el.hasAttribute("data-near"),
+      text: el.textContent ?? "",
+    })),
+    said: document.querySelector('[data-testid="find-near"]')?.textContent ?? "",
+    count: document.querySelector('[data-testid="find-count"]')?.textContent ?? "",
+    lit: [...document.querySelectorAll('.graview-kind-card[data-graview-emphasis="lit"]')].map((el) => el.closest("[data-graview-view]")?.getAttribute("data-graview-view")),
+  }));
+  await find.keyboard.press("Escape");
   await find.close();
 
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
@@ -897,7 +1239,7 @@ try {
   await phone.close();
 
   report.search = {
-    reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone,
+    reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone, typo,
     ok:
       reached === "find-box" &&
       lit.url.includes("q=deposit") &&
@@ -988,7 +1330,8 @@ report.verdict = {
   // A pressed showing opens beside the map: docked at the side, wide enough to read, its text at its own size, nothing drawn over it, and no billboard on the plot.
   aPictureOpensBesideTheMapAtASizeYouRead:
     report.driveIn?.standing?.panel === "dock" &&
-    report.driveIn?.standing?.right === 0 &&
+    // Floating over the map, a gap in from the right edge, not flush to it (see theMapPanelFloatsOver...).
+    (report.driveIn?.standing?.right ?? 0) >= 4 &&
     (report.driveIn?.standing?.width ?? 0) >= 440 &&
     (report.driveIn?.standing?.font ?? 0) >= 12 &&
     report.driveIn?.standing?.scaled === false &&
@@ -1051,11 +1394,78 @@ report.verdict = {
     (report.districts?.withAPicture ?? "").includes("focus=aggregate%3Atask") &&
     (report.districts?.withAPicture ?? "").includes("zoom=1") &&
     !(report.districts?.withAPicture ?? "").includes("expand="),
-  // A kind without one is listed beside the map, every record in it, rather than opened in place over its neighbors.
+  // A district's "⚠ N" is a control: a button, a fingertip tall, named for what it opens; pressed, it brings up as many problems as it said.
+  aDistrictsProblemCountIsAControlThatRevealsItsProblems:
+    (report.districtProblems?.asButton?.length ?? 0) > 0 &&
+    report.districtProblems.asButton.every((one) => one.tag === "BUTTON" && one.height >= 24 && one.width >= 24 && /^\d+ problems? in /.test(one.name ?? "") && (one.title ?? "").includes(one.name ?? "~")) &&
+    report.districtProblems.opened.panel === true &&
+    report.districtProblems.opened.rows > 0 &&
+    String(report.districtProblems.opened.rows) === report.districtProblems.asButton[0].said &&
+    report.districtProblems.opened.said === report.districtProblems.asButton[0].said &&
+    report.districtProblems.closed.panel === false &&
+    report.districtProblems.closed.onBody === false &&
+    // On the ground the card says its members plainly and the problems as the same control, which rises to the map with them open.
+    report.districtProblems.onTheGround?.markOnTheMembers === false &&
+    /^\d+ problems? in /.test(report.districtProblems.onTheGround.name ?? "") &&
+    report.districtProblems.onTheGround.height >= 24 &&
+    /^\d/.test(report.districtProblems.onTheGround.membersTitle ?? "") &&
+    report.districtProblems.onTheGround.risen.up === true &&
+    String(report.districtProblems.onTheGround.risen.rows) === report.districtProblems.onTheGround.said,
+  // A district's name is not moved by hand from altitude: a drag that starts on it pans the city (plot and name together), writes no pin, and an old pin in a bookmark is ignored.
+  aDistrictsNameDoesNotMoveWhenDragged:
+    report.districtName?.resting !== null &&
+    report.districtName?.dragged !== null &&
+    // The name stands where it stood under its plot, and the city went with the hand.
+    report.districtName.dragged.dx === report.districtName.resting.dx &&
+    report.districtName.dragged.dy === report.districtName.resting.dy &&
+    Math.hypot(report.districtName.dragged.tileX - report.districtName.resting.tileX, report.districtName.dragged.tileY - report.districtName.resting.tileY) > 20 &&
+    !report.districtName.dragged.hash.includes("pin.") &&
+    report.districtName.dragged.pinned === 0 &&
+    report.districtName.bookmarked?.dx === report.districtName.resting.dx &&
+    report.districtName.bookmarked?.dy === report.districtName.resting.dy &&
+    report.districtName.bookmarked?.pinned === 0,
+  // The panel beside the map floats over it: inset from the right and the foot, below the bar, rounded, edged and lifted — and nothing of the city stands under it.
+  theMapPanelFloatsOverTheMapInsteadOfRunningFlushToItsEdges:
+    ["1560", "390"].every((width) => {
+      const one = report.mapPanel?.[width];
+      return (
+        one !== null &&
+        one !== undefined &&
+        one.right >= 4 &&
+        one.bottom >= 4 &&
+        one.belowTheBar === true &&
+        one.radius > 0 &&
+        one.shadow === true &&
+        one.edge === true &&
+        one.under.length === 0 &&
+        // The scene is not narrowed or shortened by it: the ground runs to the picture's edges beneath it, and the gap shows the ground.
+        one.groundRightGap <= 1 &&
+        one.groundBottomGap <= 1 &&
+        one.groundWidth >= Number(width) - 1 &&
+        one.overlapsGround === true &&
+        one.gapIsGround === true &&
+        (width === "390" ? one.left >= 4 && one.kind === "sheet" : one.kind === "dock" && one.top >= (report.mapPanel[width].top ?? 0))
+      );
+    }),
+  // Closer in, with the city running under the panel, Tab passes over a district wholly under it and brings one partly under it into
+  // the part that is seen — at 1440 and 390. Some district is covered, and Tab still reaches districts, or the claim says nothing.
+  tabNeverLandsOnADistrictThePanelCovers: ["1440", "390"].every((width) => {
+    const one = report.coveredTab?.[width];
+    if (!one) return false;
+    const covered = Object.values(one.before ?? {}).filter((standing) => standing === "covered").length;
+    return (
+      covered > 0 &&
+      one.landed.length > 0 &&
+      one.landed.every((landing) => landing.coveredWhenLanded === false && landing.afterwards === "clear")
+    );
+  }),
+  // A kind without one opens to its stop beside the map, in the panel a lens opens in, rather than in place over its neighbors;
+  // chosen, it is listed there, every record in it.
   aDistrictWithoutOneIsListedBesideTheMap:
-    (report.districts?.withoutOne ?? "").includes("sel=kind%3Areason") &&
+    (report.districts?.withoutOne ?? "").includes("focus=aggregate%3Areason") &&
+    (report.districts?.withoutOne ?? "").includes("overview=1") &&
+    (report.districts?.withoutOne ?? "").endsWith("|stop=reason") &&
     !(report.districts?.withoutOne ?? "").includes("expand=") &&
-    !(report.districts?.withoutOne ?? "").includes("focus=aggregate") &&
     report.districts?.listed?.panel === "dock" &&
     (report.districts?.listed?.rows ?? 0) > 0 &&
     (report.districts?.listed?.font ?? 0) >= 12 &&
@@ -1082,12 +1492,19 @@ report.verdict = {
     report.search?.onAPhone?.strip?.width >= report.search?.onAPhone?.width - 1 &&
     report.search?.onAPhone?.strip?.top >= report.search?.onAPhone?.boxBottom - 1 &&
     report.search?.onAPhone?.small === 0,
+  // "depsoit" finds "Pay the deposit": a row said as near the word typed, the count says how many are near, and its district lights.
+  aTypoFindsTheRecordSaidAsNear:
+    (report.search?.typo?.rows ?? []).some((row) => row.near && row.text.includes("Pay the deposit")) &&
+    /Near “depsoit”/.test(report.search?.typo?.said ?? "") &&
+    /near/.test(report.search?.typo?.count ?? "") &&
+    (report.search?.typo?.lit ?? []).includes("kind:task"),
   // The act that removes what you are standing in leaves you somewhere real.
   theStopSurvivesWhatItNames: report.removed?.ok === true,
   whatYouCanPressIsWhatYouCanSee:
-    report.hitArea?.onContent === "t-deposit" &&
-    report.hitArea?.belowContent !== "t-deposit" &&
-    report.hitArea?.belowContent !== "no remainder",
+    report.hitArea?.stamped === 0 &&
+    typeof report.hitArea?.title === "string" &&
+    report.hitArea.title.length > 0 &&
+    report.hitArea?.pressedLandsOnIt === true,
 };
 report.passed =
   Object.values(report.verdict).every(Boolean) &&

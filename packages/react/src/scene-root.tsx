@@ -11,8 +11,6 @@ import {
   layout,
   withFocus,
   withOverview,
-  withPan,
-  withPin,
   panLayout,
   withRelation,
   type InterpolatedLayout,
@@ -25,6 +23,7 @@ import {
   toggleExpanded,
   withWithin,
 } from "@graview/layout";
+import { withPan, withPin } from "@graview/layout/view-moves";
 import {
   Suspense,
   useCallback,
@@ -41,6 +40,7 @@ import { retryingImport } from "@graview/core/retry";
 import type { ActivityMark } from "./activity.js";
 import { lazyModule } from "./lazy-part.js";
 import { BesideTheMap } from "./beside-the-map.js";
+import { mapChoice } from "./map-choice.js";
 import { useActivity } from "./attention.js";
 import { useAnimatedLayout, useSeatWork, useTouched } from "./animation.js";
 import { SeatMarks } from "./seat-marks.js";
@@ -55,7 +55,8 @@ import type { PlotsProps } from "./plots.js";
 import { Occupants } from "./occupants.js";
 import { EdgeSigns } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
-import { useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
+import { useKeyboardKeepsToWhatIsSeen } from "./scene-covered.js";
+import { useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
 import { whereIsIn } from "./where-drawn.js";
 import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
@@ -607,12 +608,17 @@ function useCardActs<S extends AnySchema>() {
       const card = kindOfCard(node.id);
       const lit = card !== null && (found?.byKind[card] ?? 0) > 0;
       /*
-       * A DISTRICT WITH NO PICTURE OF ITS OWN, OPENED FROM ALTITUDE, IS
-       * LISTED BESIDE THE MAP where a panel is drawn — not opened in place
-       * as a card of chips floating over its neighbors.
+       * A DISTRICT WITH NO PICTURE OF ITS OWN, OPENED FROM ALTITUDE, OPENS
+       * TO ITS STOP BESIDE THE MAP, in the panel a lens opens in: its own
+       * focus, at altitude, so it takes the place of a lens or another
+       * kind's stop open there (one panel at a time), the address says so,
+       * and Back returns to what was open before. It used to be chosen,
+       * which listed it beside the map only when nothing was open — with a
+       * lens open, the lens stayed and the district opened behind it.
        */
       if (besideTheMap && card !== null && view.overview && !ownPictureOf(node) && !(lit && view.q)) {
-        setSelection([node.id]);
+        setView((current) => withWithin({ ...withFocus(current, `aggregate:${card}`), relation: null }, "view", null));
+        setSelection([]);
         return;
       }
       setView((current) =>
@@ -734,6 +740,8 @@ export function Scene<S extends AnySchema>({
 }: SceneProps) {
   const context = useGraview<S>();
   const { store, scheme, views, view, setView, selection, setSelection, setMenuAt, emphasis, brand, noteMoved, robots, seatTalk, motion } = context;
+  // A panel beside the map shows what is chosen from altitude, a record in focus among it (`mapChoice`).
+  const besideTheMap = useContext(BesideTheMap);
   /* Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
   const seated = useSeatDrawn(seatTalk);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -763,9 +771,11 @@ export function Scene<S extends AnySchema>({
   const [zoom, zoomLive, setZoom] = useHandZoom(view.overview);
   const [above, setAbove] = useFromAbove();
   const seenFrom = useMemo(() => (above ? { ...options, tilt: TOP_DOWN } : options), [options, above]);
-  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, nodes);
+  const { probe: dockProbe, dock } = useDock();
+  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, dock, nodes);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
-  const pinnedIds = useMemo(() => new Set(Object.keys(view.pins)), [view.pins]);
+  // A district cannot be placed by hand from altitude, so no plot wears the pinned curb for one (a pin in an old bookmark is ignored).
+  const pinnedIds = useMemo(() => new Set(Object.keys(view.pins).filter((id) => kindOfCard(id) === null)), [view.pins]);
   // A district under the hand is placed here while it is dragged, and written into the view on release.
   const district = useHeldDistrict();
   const [result, inPlace] = useLaidOut(store, view, district.held, sized, nodes, seen.pan);
@@ -828,7 +838,9 @@ export function Scene<S extends AnySchema>({
     steer();
     setZoom(next);
     const box = wrapperRef.current?.getBoundingClientRect();
-    const center = { x: result.width / 2, y: result.height / 2 };
+    // The middle of what the reader sees: a panel over the scene is not part of it.
+    const seenBox = result.visible ?? result;
+    const center = { x: seenBox.width / 2, y: seenBox.height / 2 };
     const pointer = box && clientX !== undefined && clientY !== undefined ? { x: clientX - box.left, y: clientY - box.top } : center;
     const ratio = next / current;
     setView((current) => withPan(current, panForZoom(current.pan ?? { x: 0, y: 0 }, cameraLive.current, pointer, center, ratio)));
@@ -837,6 +849,8 @@ export function Scene<S extends AnySchema>({
   /** The view's own pan moved by so much, held within the camera's reach. */
   const nudge = (dx: number, dy: number, limit = cameraLimit(result)) =>
     setView((current) => withPan(current, panWithin(limit, { x: (current.pan?.x ?? 0) + dx, y: (current.pan?.y ?? 0) + dy })));
+  // Tab passes over a card the panel covers, and the camera brings the one it lands on into the part that is seen.
+  useKeyboardKeepsToWhatIsSeen(wrapperRef, dock, (dx, dy) => nudge(dx, dy));
   panBy.current = (dx, dy) => {
     steer();
     const limit = cameraLimit(result);
@@ -954,13 +968,14 @@ export function Scene<S extends AnySchema>({
       style={{
         position: "relative",
         /*
-         * A PANEL DOCKED BESIDE THE MAP TAKES ITS ROOM (`--graview-dock`,
-         * set by the panel while it stands): the city is laid out in what
-         * is left, rather than half of it standing under the panel.
+         * THE SCENE FILLS THE WHOLE PICTURE; A PANEL FLOATS OVER IT. The
+         * ground, the grid, the depth and the tint run under the panel and
+         * show in the gap around it. What a panel takes from the map is the
+         * city's fit and the camera's bounds (`useDock`, `--graview-dock`,
+         * `--graview-sheet`), never the scene's own box.
          */
-        width: "calc(100% - var(--graview-dock, 0px))",
-        // And a sheet from the foot of a phone (`--graview-sheet`): the city stands above it.
-        height: "calc(100% - var(--graview-sheet, 0px))",
+        width: "100%",
+        height: "100%",
         cursor: dragging ? "grabbing" : "grab",
         touchAction: "none",
         ["--graview-altitude" as string]: view.overview ? 1 : 0,
@@ -1000,7 +1015,7 @@ export function Scene<S extends AnySchema>({
             store={store}
             graphVersion={nodes}
             selection={selection}
-            view={view}
+            view={{ overview: view.overview, focusId: view.focusId, beside: besideTheMap }}
             emphasis={emphasis}
             hiddenKinds={context.hiddenKinds}
             drawn={kitDraws}
@@ -1011,6 +1026,8 @@ export function Scene<S extends AnySchema>({
         * THE GROUND: every district's plot as a tile, under the cards and
         * over the fields, from the same origin and pan the lattice rides.
         */}
+      {/* Where the panel's room is read from: sized by what the panel says it takes, never seen. */}
+      <div ref={dockProbe} aria-hidden="true" style={{ position: "absolute", top: 0, right: 0, width: "var(--graview-dock, 0px)", height: "var(--graview-sheet, 0px)", visibility: "hidden", pointerEvents: "none" }} />
       {frame.city ? (
       <Suspense fallback={null}>
       <Plots
@@ -1022,6 +1039,7 @@ export function Scene<S extends AnySchema>({
         pinned={pinnedIds}
         close={closer * zoom > 1.2}
         swallowed={swallow}
+        {...(view.overview ? { chosen: mapChoice(selection, { overview: view.overview, focusId: view.focusId, beside: besideTheMap }, (id) => store.graph.getNode(id)?.kind as string | undefined).records } : {})}
         // A tile is its district: focusing it means the kind's aggregate, never the card's own id.
         onFocus={(id) => {
           const kind = kindOfCard(id);
@@ -1076,6 +1094,7 @@ export function Scene<S extends AnySchema>({
       <Lines
         frame={frame}
         focusId={view.focusId}
+        beside={besideTheMap}
         holding={inPlace}
         {...extent}
         scheme={scheme}

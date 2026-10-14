@@ -39,6 +39,7 @@ let browser;
 let vite;
 let garden;
 let catalog;
+let program;
 
 const hygiene = (page) =>
   page.evaluate(() => ({
@@ -834,6 +835,87 @@ async function aLargeListHasAWayThrough() {
   };
 }
 
+async function aListReadsOnOneScale() {
+  /*
+   * A LIST READS WELL BY DEFAULT (the gauntlet's Program, the derived face
+   * with nothing of its own). Nick, on its Sessions grouped by day: the
+   * title very large, every row's name bold and wrapping to a third and
+   * fourth line on a phone so every row shouted, "Sep 25, 2017" under a
+   * heading that said "Sep 25, 2017", the glance pushed to the right edge
+   * at whatever x its length left it, and the Ask box over the last rows.
+   * Read at a desk and a phone at the reader's 16px, and on a phone at 32.
+   */
+  const seen = [];
+  for (const { width, height, root } of [{ width: 1440, height: 900, root: 16 }, { width: 390, height: 844, root: 16 }, { width: 390, height: 844, root: 32 }]) {
+    const page = await browser.newPage({ viewport: { width, height } });
+    for (const path of ["/pages/sessions?group=day&sort=label", "/pages/talks"]) {
+      await page.goto(`${at("gauntlet")}${path}`, { waitUntil: "load", timeout: 120_000 });
+      await page.waitForSelector('[data-testid="records"] li', { timeout: 120_000 });
+      await page.evaluate((size) => { document.documentElement.style.fontSize = `${size}px`; }, root);
+      await page.waitForTimeout(500);
+      const read = await page.evaluate((root) => {
+        const px = (element) => (element ? Number.parseFloat(getComputedStyle(element).fontSize) : null);
+        // The four steps of the theme's scale, at this root.
+        const steps = [0.833, 1, 1.2, 1.728].map((step) => step * root);
+        const rows = [...document.querySelectorAll('[data-testid="records"] li')].slice(0, 60);
+        const names = rows.map((row) => row.querySelector("a"));
+        const glances = rows.map((row) => row.querySelector(".graview-row-glance")).filter(Boolean);
+        const heads = [...document.querySelectorAll('[data-testid="list-group"] > h2, [data-testid="list-section"] > h2')];
+        const sizes = {
+          title: px(document.querySelector("[data-graview-page-title]")),
+          description: px(document.querySelector("[data-graview-page-title]")?.closest("header")?.querySelector(":scope > p") ?? null),
+          name: px(names[0]),
+          glance: px(glances[0]),
+          heading: px(heads[0]),
+        };
+        const leading = Number.parseFloat(getComputedStyle(names[0]).lineHeight);
+        // Each group's own words — its heading less its count — said again on one of its rows.
+        const repeats = [...document.querySelectorAll('[data-testid="list-group"]')].flatMap((group) => {
+          const said = (group.querySelector("h2")?.firstChild?.textContent ?? "").trim();
+          return [...group.querySelectorAll("li")].filter((row) => said && (row.textContent ?? "").includes(said)).map((row) => `${said} in “${(row.textContent ?? "").trim().slice(0, 60)}”`);
+        });
+        return {
+          sizes,
+          offScale: Object.entries(sizes).filter(([, size]) => size !== null && !steps.some((step) => Math.abs(step - size) < 0.6)).map(([part, size]) => `${part} ${size}px`),
+          nameWeight: Number.parseInt(getComputedStyle(names[0]).fontWeight, 10),
+          groups: document.querySelectorAll('[data-testid="list-group"]').length,
+          repeats: repeats.slice(0, 3),
+          longerThanTwoLines: names.filter((name) => name.getBoundingClientRect().height > 2 * leading + 1).length,
+          heights: [...new Set(rows.map((row) => Math.round(row.getBoundingClientRect().height)))],
+          glances: glances.length,
+          glanceXs: [...new Set(glances.map((glance) => Math.round(glance.getBoundingClientRect().left)))],
+          scrolls: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        };
+      }, root);
+      seen.push({ path, width, root, ...read, ...(await hygiene(page)), end: await endClearsTheFoot(page) });
+    }
+    await page.close();
+  }
+  const sessions = seen.filter((one) => one.path.startsWith("/pages/sessions"));
+  report.checks.noListRowRepeatsTheFieldItsGroupHeadingSays = {
+    seen: sessions.map(({ width, root, groups, repeats }) => ({ width, root, groups, repeats })),
+    ok: sessions.length === 3 && sessions.every((one) => one.groups > 0 && one.repeats.length === 0),
+  };
+  report.checks.rowTitlesClampToTwoLinesAndRowsAreOneOfTwoHeights = {
+    seen: seen.map(({ path, width, root, longerThanTwoLines, heights }) => ({ path, width, root, longerThanTwoLines, heights })),
+    // At 32px a glance may wrap under its name on a phone; the name never runs past two lines.
+    ok: seen.every((one) => one.longerThanTwoLines === 0 && (one.root !== 16 || one.heights.length <= 2)),
+  };
+  const desk = seen.find((one) => one.width === 1440 && one.path === "/pages/talks");
+  report.checks.theDatesDownAListShareAnXOnADesk = {
+    seen: desk ? { glances: desk.glances, xs: desk.glanceXs } : null,
+    ok: Boolean(desk && desk.glances >= 20 && desk.glanceXs.length === 1),
+  };
+  report.checks.theLastRowScrollsClearOfTheAskBox = {
+    seen: seen.map(({ path, width, root, end }) => ({ path, width, root, ...end })),
+    ok: seen.filter((one) => one.root === 16).every((one) => one.end.ok),
+  };
+  report.checks.aListsTypeComesFromTheScale = {
+    seen: seen.map(({ path, width, root, sizes, offScale, nameWeight, scrolls, bigEnoughToHit }) => ({ path, width, root, sizes, offScale, nameWeight, scrolls, bigEnoughToHit })),
+    ok: seen.every((one) => one.offScale.length === 0 && one.nameWeight <= 500 && !one.scrolls),
+  };
+}
+
 async function aShortPageKeepsTheAskFieldAtTheWindowsFoot() {
   /* A design's short page (the almanac's two gardeners): its paper fills the window, and the ask field stands at the window's foot. */
   const seen = [];
@@ -1053,6 +1135,119 @@ async function aPageDrawsWithWhatThePictureNeeds() {
   }
 }
 
+/*
+ * SEVERAL TASKS ARE ONE CHANGE. Every act on a page was on one record, so
+ * marking six tasks done was six rounds. On todo's tasks: a box at a row's
+ * start chooses it, Shift chooses a range, the bar says how many and offers
+ * the acts they share; "Mark it done" does all three as one change, and one
+ * take-back puts all three back. From the keyboard, Space chooses and
+ * Cmd/Ctrl-A chooses the list, Escape puts it down and the keyboard stays
+ * in the list. On a phone, a long press on a row chooses it without opening
+ * it, a tap chooses the next, and the same act runs once.
+ */
+const rowsDrawn = (page) => page.evaluate(() => document.querySelectorAll("[data-graview-choose]").length);
+const barSays = (page) => page.locator('[data-testid="several-count"]').textContent({ timeout: 5_000 }).catch(() => null);
+async function severalTasksAreOneChange() {
+  const desk = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+  await desk.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
+  await desk.waitForSelector("[data-graview-choose-box]", { timeout: 20_000 });
+  const before = await rowsDrawn(desk);
+  const boxes = desk.locator("[data-graview-choose-box]");
+  const names = await desk.evaluate(() => [...document.querySelectorAll("[data-graview-choose-box]")].slice(0, 3).map((box) => box.getAttribute("aria-label")));
+  await boxes.nth(0).hover();
+  await boxes.nth(0).click();
+  await boxes.nth(2).hover();
+  await boxes.nth(2).click({ modifiers: ["Shift"] });
+  await desk.waitForSelector('[data-testid="several-bar"]', { timeout: 10_000 });
+  const chosen = {
+    said: await barSays(desk),
+    heard: await desk.evaluate(() => document.querySelector('[data-testid="several-count"]')?.getAttribute("role")),
+    acts: await desk.locator('[data-testid="several-act"]').allTextContents(),
+    names,
+  };
+  report.checks.severalTasksAreChosenAndSaidByCount = chosen;
+  await desk.click('[data-testid="several-act"][data-mutation="finish"]', { timeout: 5_000 });
+  await desk.waitForTimeout(800);
+  const done = {
+    rows: await rowsDrawn(desk),
+    bar: await desk.locator('[data-testid="several-bar"]').count(),
+    offer: (await desk.locator('[data-testid="page-undo"]').allTextContents()).join(" "),
+    focus: await desk.evaluate(() => (document.activeElement && document.activeElement !== document.body ? document.activeElement.className || document.activeElement.tagName : "body")),
+  };
+  await desk.click('[data-testid="page-undo"]');
+  await desk.waitForTimeout(600);
+  const back = await rowsDrawn(desk);
+  report.checks.severalTasksAreChosenAndSaidByCount = { ...chosen, ok: chosen.said === "3 tasks chosen" && chosen.heard === "status" && chosen.acts[0] === "Mark it done" && chosen.names.every((name) => /^Choose /.test(name ?? "")) };
+  report.checks.threeTasksAreMarkedDoneAsOneChangeWithOneUndo = { before, done, back, ok: done.rows === before - 3 && done.bar === 0 && /Mark it done — 3 tasks/.test(done.offer) && back === before && done.focus !== "body" };
+
+  // The keyboard alone: Space on a box, Cmd/Ctrl-A for the list, Escape to put it down.
+  await boxes.nth(1).focus();
+  await desk.keyboard.press("Space");
+  const one = await barSays(desk);
+  await desk.keyboard.press("ControlOrMeta+a");
+  await desk.waitForTimeout(300);
+  const all = await barSays(desk);
+  // The bar's acts are next in the keyboard's order after the list.
+  await boxes.last().focus();
+  let reaches = false;
+  for (let press = 0; press < 8 && !reaches; press += 1) {
+    await desk.keyboard.press("Tab");
+    reaches = await desk.evaluate(() => document.activeElement?.closest('[data-testid="several-bar"]') !== null);
+  }
+  await boxes.nth(1).focus();
+  await desk.keyboard.press("Escape");
+  await desk.waitForTimeout(300);
+  const put = { bar: await desk.locator('[data-testid="several-bar"]').count(), inList: await desk.evaluate(() => document.activeElement?.closest("[data-graview-choosable]") !== null) };
+  report.checks.theKeyboardChoosesAndPutsDown = { one, all, reaches, put, ok: one === "1 task chosen" && all === `${before} tasks chosen` && reaches && put.bar === 0 && put.inList };
+
+  // The boxes are one Tab stop and the arrows move between them: three tasks in Space, ↓, Space, ↓, Space; Shift with ↓ chooses as it goes.
+  await boxes.nth(0).focus();
+  for (const key of ["Space", "ArrowDown", "Space", "ArrowDown", "Space"]) await desk.keyboard.press(key);
+  const arrowed = await barSays(desk);
+  const stops = await desk.evaluate(() => [...document.querySelectorAll("[data-graview-choose-box]")].filter((box) => box.tabIndex >= 0).length);
+  await desk.keyboard.press("Escape");
+  await desk.waitForTimeout(300);
+  await boxes.nth(0).focus();
+  for (const key of ["Space", "Shift+ArrowDown", "Shift+ArrowDown", "Shift+ArrowDown"]) await desk.keyboard.press(key);
+  const extended = await barSays(desk);
+  await desk.keyboard.press("Escape");
+  await desk.waitForTimeout(300);
+  report.checks.theArrowsChooseRowsFromOneTabStop = { arrowed, extended, stops, ok: arrowed === "3 tasks chosen" && extended === "4 tasks chosen" && stops === 1 };
+  await desk.close();
+
+  const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
+  await phone.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
+  await phone.waitForSelector("[data-graview-choose]", { timeout: 20_000 });
+  const rows = phone.locator("[data-graview-choose]");
+  const atRest = await phone.evaluate(() => [...document.querySelectorAll("[data-graview-choose-box]")].filter((box) => box.getBoundingClientRect().width > 0).length);
+  const phoneBefore = await rowsDrawn(phone);
+  const touch = await phone.context().newCDPSession(phone);
+  const held = await rows.nth(0).boundingBox();
+  await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: held.x + held.width / 2, y: held.y + held.height / 2 }] });
+  await phone.waitForTimeout(700);
+  await touch.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await phone.waitForTimeout(500);
+  const pressed = { said: await barSays(phone), path: await phone.evaluate(() => location.pathname) };
+  for (const at of [1, 2]) {
+    const box = await rows.nth(at).boundingBox();
+    await phone.touchscreen.tap(box.x + box.width / 2, box.y + Math.min(box.height / 2, 20));
+    await phone.waitForTimeout(300);
+  }
+  const tapped = { said: await barSays(phone), path: await phone.evaluate(() => location.pathname) };
+  await phone.locator('[data-testid="several-act"][data-mutation="finish"]').tap();
+  await phone.waitForTimeout(800);
+  const after = { rows: await rowsDrawn(phone), offer: (await phone.locator('[data-testid="page-undo"]').allTextContents()).join(" ") };
+  report.checks.onAPhoneALongPressChoosesAndOneActDoesThree = {
+    atRest,
+    pressed,
+    tapped,
+    after,
+    ok: atRest === 0 && pressed.said === "1 task chosen" && pressed.path === "/pages/tasks" && tapped.said === "3 tasks chosen" && tapped.path === "/pages/tasks" && after.rows === phoneBefore - 3 && /Mark it done — 3 tasks/.test(after.offer),
+  };
+  report.checks.phoneChoosing = await hygiene(phone);
+  await phone.close();
+}
+
 try {
   vite = await startVite("todo", portFor("todo"));
   browser = await launchEngine(ENGINE, { headless: true });
@@ -1077,6 +1272,7 @@ try {
   await aRecordEditsWhereItIsShown(desk2);
   await theProblemsPageIsAnInbox(desk2);
   await desk2.close();
+  await severalTasksAreOneChange();
 
   await everyRouteOfTheOwnFaceIsReachable(axeSource);
   await theCalendarIsReachable(axeSource);
@@ -1106,6 +1302,9 @@ try {
   // Discography's 479 albums, for a large list's way through.
   catalog = await startVite("discography", portFor("discography"));
   await aLargeListHasAWayThrough();
+  // The gauntlet's Program, the derived face with nothing of its own, for a list that reads well by default.
+  program = await startVite("gauntlet", portFor("gauntlet"));
+  await aListReadsOnOneScale();
   await aShortPageKeepsTheAskFieldAtTheWindowsFoot();
   await theMapOnAPhone();
   const { deskGallery, phoneGallery } = await theLandingIsAGallery();
@@ -1125,6 +1324,9 @@ try {
   }
   if (catalog) {
     catalog.stop();
+  }
+  if (program) {
+    program.stop();
   }
 }
 

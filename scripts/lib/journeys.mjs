@@ -181,6 +181,23 @@ export function planJobs({ app, core }) {
     break;
   }
 
+  /*
+   * SEVERAL AT ONCE: one act done to three records of a kind from its list,
+   * as one change. The act is one that needs nothing but its record — "Mark
+   * it done", "Check them in" — on the first kind that has one, its creators
+   * first; done on the pages, where a list is.
+   */
+  const onItsOwn = (mutation) => mutation.subject && !(mutation.creates ?? []).length && !mutation.destructive && Object.keys(mutation.input?.shape ?? {}).length === 1;
+  const byKind = [...new Set([primary, ...creators.map((one) => one.kind), ...definitions.map((one) => one.kind)])].filter(Boolean);
+  for (const kind of byKind) {
+    const act = declared.find((mutation) => onItsOwn(mutation) && (mutation.subject.kinds === "*" || mutation.subject.kinds?.includes?.(kind)));
+    if (!act) continue;
+    const definition = app.schema.definitions.find((one) => one.kind === kind);
+    const plural = definition.plural ?? kind;
+    jobs.push({ id: "several", job: "several", kind, act: act.name, title: act.title ?? act.name, subjectArg: act.subject.arg, noun: nounOf(definition), plural, says: `Doing "${act.title ?? act.name}" to three ${plural.toLowerCase()} at once` });
+    break;
+  }
+
   /* Undo needs a change to take back: a rename, which every app with a named kind has. */
   if (renamer && primary) {
     jobs.push({ id: "undo", job: "undo", kind: primary, act: renamer.name, subjectArg: renamer.subject?.arg ?? "id", field: nameField, says: "Taking the last change back" });
@@ -1157,6 +1174,63 @@ export const JOBS = {
         const it = store.batches().find((one) => one.id === batch);
         return it?.undone ? { ok: true } : { ok: false, why: "the change is still there after pressing undo" };
       }, prep.batch, "the undo");
+    },
+  },
+
+  several: {
+    async prepare(ctx, job) {
+      const ids = await inStore(ctx.page, ctx.kinds, (store, { kind, act, arg }) => store.graph.allNodes().filter((node) => node.kind === kind && store.wouldChange({ name: act, args: { [arg]: node.id } })).map((node) => node.id), { kind: job.kind, act: job.act, arg: job.subjectArg });
+      if (!Array.isArray(ids) || ids.length < 3) return { skip: `fewer than three ${job.plural.toLowerCase()} that "${job.title}" would change` };
+      return { ids };
+    },
+    start: (ctx) => ctx.home,
+    // Chosen from a list: the pages' list of the kind. The scene's own lists (a kind's stop) are walked by verify-kind-stop.
+    async arrange(_page, ctx) {
+      return ctx.face === "scene" ? { skip: "several are chosen from a kind's list, on the pages" } : {};
+    },
+    async run(person, ctx, job, prep) {
+      const page = person.page;
+      await openKindPage(person, job.plural);
+      // Three of the list's own rows the act would change, in the order the list draws them.
+      const rows = await page.evaluate((ids) => [...document.querySelectorAll("[data-graview-choose]")].map((row) => row.getAttribute("data-graview-choose")).filter((id) => ids.includes(id)), prep.ids);
+      if (rows.length === 0 && (await page.locator("[data-graview-choose]").count()) === 0) throw new DeadEnd(`the ${job.plural} page offers no way to choose several`);
+      if (rows.length < 3) throw new DeadEnd(`the ${job.plural} page shows fewer than three that "${job.title}" would change`);
+      const chosen = rows.slice(0, 3);
+      const before = await inStore(page, ctx.kinds, (store) => store.batches().length);
+      for (const [at, id] of chosen.entries()) {
+        const box = page.locator(`[data-graview-choose-box="${escapeAttr(id)}"]`).first();
+        if (person.input === "pointer") {
+          await box.hover().catch(() => undefined);
+          await person.press(box, `the box of the ${at === 0 ? "first" : at === 1 ? "second" : "third"}`);
+        } else {
+          const pressed = person.presses;
+          const on = () => box.evaluate((el) => el === document.activeElement).catch(() => false);
+          if (at === 0) await person.reach(box, "a row's box");
+          else {
+            // The boxes are one Tab stop: the arrows go from the last one chosen to the next.
+            for (let step = 0; step < 200 && !(await on()); step++) await person.key("ArrowDown");
+            if (!(await on())) throw new DeadEnd(`the arrows do not reach the ${at === 1 ? "second" : "third"} row's box`);
+          }
+          await person.key("Space");
+          person.note(at === 0 ? "a row's box, and Space" : "the arrows to a row's box, and Space", pressed);
+          await person.settle();
+        }
+      }
+      const said = await page.locator('[data-testid="several-count"]').textContent({ timeout: 4_000 }).catch(() => null);
+      if (!said || !said.startsWith("3 ")) throw new DeadEnd(`choosing three ${job.plural.toLowerCase()} said ${said ? `"${said}"` : "nothing"}`);
+      const act = page.locator(`[data-testid="several-bar"] [data-mutation="${escapeAttr(job.act)}"]`);
+      if (!(await act.first().isVisible().catch(() => false))) {
+        const more = page.locator('[data-testid="several-more"]');
+        if (await more.isVisible().catch(() => false)) await person.press(more, '"More"');
+      }
+      if (!(await appears(act.first()))) throw new DeadEnd(`the bar over three ${job.plural.toLowerCase()} offers no "${job.title}"`);
+      await person.press(act, `"${job.title}"`);
+      await until(page, ctx.kinds, (store, { before, chosen, act, arg }) => {
+        const batches = store.batches();
+        if (batches.length !== before + 1) return { ok: false, why: `"${act}" over three was ${batches.length - before} changes, not one` };
+        const left = chosen.filter((id) => store.wouldChange({ name: act, args: { [arg]: id } }));
+        return left.length === 0 ? { ok: true } : { ok: false, why: `${left.length} of the three were not changed` };
+      }, { before, chosen, act: job.act, arg: job.subjectArg }, "the change to all three");
     },
   },
 

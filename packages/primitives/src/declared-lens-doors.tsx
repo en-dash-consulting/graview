@@ -119,7 +119,8 @@ function doors<S extends AnySchema>(registry: ReactViewRegistry<S>, app: Pick<Gr
   for (const lens of declaredLenses(app as GraviewApp<S>).drawn) {
     if (beside && registry.places().some((place) => place.title === lens.title)) continue;
     const Door = doorFor<S>(lens);
-    const meta = { title: lens.title, ...(lens.across ? { across: lens.across } : {}), ...(beside ? { beside } : {}) };
+    // Every kind it stands on, so a picture over several is named once in every list (`onePerPicture`); the registry keeps it only when it is several.
+    const meta = { title: lens.title, ...(lens.across ? { across: lens.across } : {}), ...(beside ? { beside } : {}), over: lens.kinds };
     for (const kind of lens.kinds) {
       registry.register(kind as never, { cardinality: "many", fidelity: "full" }, Door, meta);
       registry.register(kind as never, { cardinality: "many", fidelity: "summary" }, Door, meta);

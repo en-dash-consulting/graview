@@ -1,4 +1,5 @@
-import { createSchema, defineNode, edgeWords, Store } from "@graview/core";
+import { createSchema, defineNode, Store } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { insightProvider } from "../../src/index.js";

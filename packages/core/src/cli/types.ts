@@ -29,6 +29,7 @@ export function fieldType(spec: FieldSpec): string {
       return union(spec.options ?? []);
     case "number":
     case "integer":
+    case "duration":
       return "number";
     case "boolean":
       return "boolean";
@@ -51,11 +52,14 @@ const HOLDS: Partial<Record<FieldSpec["type"], string>> = {
   image: "A picture the host stored: its href a path on the host.",
   file: "A file the host stored: its href a path on the host.",
   "app-link": "Another app's address: @owner/app, its id, or its https:// address.",
+  phone: "A phone number, as it was written.",
+  place: "An address or a place's name, linked to the reader's maps app.",
+  duration: "A length of time, in whole minutes.",
 };
 
 /** A field's comment: its description, the words it is shown by, and what a string of its type holds. */
 function fieldNote(spec: FieldSpec): string | undefined {
-  const said = [spec.description, spec.label ? `Shown as "${spec.label}"` : undefined, HOLDS[spec.type], spec.unit ? `In ${spec.unit}` : undefined].filter((part): part is string => Boolean(part));
+  const said = [spec.description, spec.label ? `Shown as "${spec.label}"` : undefined, spec.format === "markdown" ? "Markdown, drawn as prose on the record's page" : HOLDS[spec.type], spec.unit ? `In ${spec.unit}` : undefined].filter((part): part is string => Boolean(part));
   return said.length > 0 ? said.map((part) => (/[.!?]$/.test(part) ? part : `${part}.`)).join(" ") : undefined;
 }
 
@@ -86,12 +90,15 @@ export function documentTypes(document: GraviewDocument, from = "the document"):
       ` * Do not edit: change the document and run it again. Read a store through\n` +
       ` * them with \`typedReader<Types>(store)\` from "@graview/core/typed".\n */\n` +
       (Object.values(document.kinds).some((spec) => Object.values(spec.fields).some((f) => /^(image|file)$/.test(f.of ?? f.type))) ? `import type { FileValue } from "@graview/core";\n` : "") +
+      (Object.values(document.kinds).some((spec) => Object.values(spec.fields).some((f) => f.repeats)) ? `import type { Repeat } from "@graview/core";\n` : "") +
       `import type { TypedReader } from "@graview/core/typed";\n`,
   );
   for (const [kind, spec] of Object.entries(document.kinds)) {
     let body = `${comment(spec.description, "")}export interface ${names.get(kind)} {\n  readonly id: string;\n  readonly kind: ${JSON.stringify(kind)};\n`;
     for (const [field, f] of Object.entries(spec.fields)) {
       body += `${comment(fieldNote(f), "  ")}  readonly ${key(field)}${f.required ? "" : "?"}: ${fieldType(f)};\n`;
+      // How a date repeats, kept beside it: its first occurrence is the date itself.
+      if (f.repeats) body += `  /** How ${key(field)} repeats; ${key(field)} is the first occurrence. */\n  readonly ${key(`${field}Repeat`)}?: Repeat | null;\n`;
     }
     out.push(`${body}}\n`);
   }

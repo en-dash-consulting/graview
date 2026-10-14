@@ -37,45 +37,50 @@ export interface Announcement {
 
 export const ANNOUNCED: readonly Announcement[] = [
   {
-    fixture: "document:vendors",
-    version: "0.1.14",
-    what: "FR-110: edit-category takes name — add-to-category makes a vendor named $name and no longer counts as writing the category's name — and edit-category and edit-vendor refuse an argument they do not take (additionalProperties: false).",
+    "fixture": "document:vendors",
+    "version": "0.1.14",
+    "what": "FR-110: edit-category takes name — add-to-category makes a vendor named $name and no longer counts as writing the category's name — and edit-category and edit-vendor refuse an argument they do not take (additionalProperties: false)."
   },
   {
-    fixture: "document:two-lines",
-    version: "0.1.14",
-    what: "FR-110: edit-chore refuses an argument it does not take (additionalProperties: false).",
+    "fixture": "document:two-lines",
+    "version": "0.1.14",
+    "what": "FR-110: edit-chore refuses an argument it does not take (additionalProperties: false)."
   },
   {
-    fixture: "document:vendors",
-    version: "0.1.15",
-    what: "FR-121: every act refuses an argument it does not take — add-category, add-vendor, add-to-category, set-quote, book, decline, file-under, unfile and remove-category and remove-vendor say additionalProperties: false.",
+    "fixture": "document:vendors",
+    "version": "0.1.15",
+    "what": "FR-121: every act refuses an argument it does not take — add-category, add-vendor, add-to-category, set-quote, book, decline, file-under, unfile and remove-category and remove-vendor say additionalProperties: false."
   },
   {
-    fixture: "document:two-lines",
-    version: "0.1.15",
-    what: "FR-121: add-chore and remove-chore refuse an argument they do not take (additionalProperties: false).",
+    "fixture": "document:two-lines",
+    "version": "0.1.15",
+    "what": "FR-121: add-chore and remove-chore refuse an argument they do not take (additionalProperties: false)."
   },
   {
-    fixture: "document:vendors",
-    version: "0.1.21",
-    what: "A role that only reads is not warned: the viewer role, which may run nothing and reads every kind where the policy keeps none, no longer draws warning:role-may-do-nothing. The warning stays for a role that can neither act nor see a kind.",
+    "fixture": "document:vendors",
+    "version": "0.1.21",
+    "what": "A role that only reads is not warned: the viewer role, which may run nothing and reads every kind where the policy keeps none, no longer draws warning:role-may-do-nothing. The warning stays for a role that can neither act nor see a kind."
   },
   {
-    fixture: "document:vendors",
-    version: "0.1.29",
-    what: "FR-173: every kind is given archive-<kind>, unarchive-<kind> ({ id }) and merge-<kind> ({ id, into }) — archive-category, unarchive-category, merge-category, archive-vendor, unarchive-vendor and merge-vendor are new tools.",
+    "fixture": "document:vendors",
+    "version": "0.1.29",
+    "what": "FR-173: every kind is given archive-<kind>, unarchive-<kind> ({ id }) and merge-<kind> ({ id, into }) — archive-category, unarchive-category, merge-category, archive-vendor, unarchive-vendor and merge-vendor are new tools."
   },
   {
-    fixture: "document:two-lines",
-    version: "0.1.29",
-    what: "FR-173: archive-chore, unarchive-chore and merge-chore are new tools.",
+    "fixture": "document:two-lines",
+    "version": "0.1.29",
+    "what": "FR-173: archive-chore, unarchive-chore and merge-chore are new tools."
   },
   {
-    fixture: "document:shortlist-0.1.10",
-    version: "0.1.29",
-    what: "FR-173: archive-category, unarchive-category, merge-category, archive-vendor, unarchive-vendor and merge-vendor are new tools.",
+    "fixture": "document:shortlist-0.1.10",
+    "version": "0.1.29",
+    "what": "FR-173: archive-category, unarchive-category, merge-category, archive-vendor, unarchive-vendor and merge-vendor are new tools."
   },
+  {
+    "fixture": "document:vendors",
+    "version": "0.1.29",
+    "what": "A number marked as money says so to a model: add-category budget, add-vendor and set-quote quote, and edit-category budget carry \"x-graview-format\": \"money\" and a description saying the amount is money in no named currency, kept as a plain number."
+  }
 ];
 
 export const FIXTURES: readonly ConformanceFixture[] = [
@@ -287,14 +292,15 @@ export const FIXTURES: readonly ConformanceFixture[] = [
         "add-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "name": {
               "type": "string",
               "maxLength": 500
             },
             "budget": {
-              "type": "number"
+              "type": "number",
+              "x-graview-format": "money",
+              "description": "An amount of money, in no named currency: a plain number."
             },
             "id": {
               "type": "string",
@@ -304,12 +310,12 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           },
           "required": [
             "name"
-          ]
+          ],
+          "additionalProperties": false
         },
         "add-vendor": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "name": {
               "type": "string",
@@ -325,7 +331,9 @@ export const FIXTURES: readonly ConformanceFixture[] = [
               ]
             },
             "quote": {
-              "type": "number"
+              "type": "number",
+              "x-graview-format": "money",
+              "description": "An amount of money, in no named currency: a plain number."
             },
             "due": {
               "type": "string",
@@ -344,12 +352,12 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           },
           "required": [
             "name"
-          ]
+          ],
+          "additionalProperties": false
         },
         "add-to-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -364,12 +372,12 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           "required": [
             "id",
             "name"
-          ]
+          ],
+          "additionalProperties": false
         },
         "set-quote": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -377,18 +385,20 @@ export const FIXTURES: readonly ConformanceFixture[] = [
               "description": "Id of a node (vendor)."
             },
             "quote": {
-              "type": "number"
+              "type": "number",
+              "x-graview-format": "money",
+              "description": "An amount of money, in no named currency: a plain number."
             }
           },
           "required": [
             "id",
             "quote"
-          ]
+          ],
+          "additionalProperties": false
         },
         "book": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -398,12 +408,12 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           },
           "required": [
             "id"
-          ]
+          ],
+          "additionalProperties": false
         },
         "decline": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -413,12 +423,12 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           },
           "required": [
             "id"
-          ]
+          ],
+          "additionalProperties": false
         },
         "file-under": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -434,12 +444,12 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           "required": [
             "id",
             "to"
-          ]
+          ],
+          "additionalProperties": false
         },
         "unfile": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -455,12 +465,12 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           "required": [
             "id",
             "to"
-          ]
+          ],
+          "additionalProperties": false
         },
         "edit-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -472,17 +482,19 @@ export const FIXTURES: readonly ConformanceFixture[] = [
               "maxLength": 500
             },
             "budget": {
-              "type": "number"
+              "type": "number",
+              "x-graview-format": "money",
+              "description": "An amount of money, in no named currency: a plain number."
             }
           },
           "required": [
             "id"
-          ]
+          ],
+          "additionalProperties": false
         },
         "edit-vendor": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -505,12 +517,12 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           },
           "required": [
             "id"
-          ]
+          ],
+          "additionalProperties": false
         },
         "remove-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string",
@@ -520,22 +532,8 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           },
           "required": [
             "id"
-          ]
-        },
-        "remove-vendor": {
-          "$schema": "https://json-schema.org/draft/2020-12/schema",
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "id": {
-              "type": "string",
-              "minLength": 1,
-              "description": "Id of a node (vendor)."
-            }
-          },
-          "required": [
-            "id"
-          ]
+          ],
+          "additionalProperties": false
         },
         "archive-category": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -585,6 +583,21 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           "required": [
             "id",
             "into"
+          ],
+          "additionalProperties": false
+        },
+        "remove-vendor": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            }
+          },
+          "required": [
+            "id"
           ],
           "additionalProperties": false
         },

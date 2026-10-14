@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElemen
 import { districtOf, mapChoice, ribbonsOf, ribbonSentence } from "./map-choice.js";
 import { ribbonWidth } from "./ribbon-width.js";
 import { loopPoints, midpointOf, onCanvas, pathOf, routeOnTheGround, type Box, type PlotLike, type Point } from "./ribbons.js";
+import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * THE RELATIONS FROM ALTITUDE: one ribbon per relation between two
@@ -34,7 +35,7 @@ export interface RibbonsProps {
   /** The graph's version: the relations are counted again when it changes. */
   readonly graphVersion: unknown;
   readonly selection: readonly string[];
-  readonly view: { readonly overview?: boolean | undefined; readonly focusId: string | null };
+  readonly view: { readonly overview?: boolean | undefined; readonly focusId: string | null; readonly beside?: boolean };
   /** A relation the Key or the panel is asking about. */
   readonly emphasis: string | null;
   readonly hiddenKinds: ReadonlySet<string>;

@@ -218,7 +218,7 @@ export function Grid({
               </span>
               {shown.map((entry) => (
                 <Entry
-                  key={`${entry.id}:${cell.from}`}
+                  key={`${entry.id}:${entry.from}:${cell.from}`}
                   entry={entry}
                   cell={cell}
                   /* A span keeps its name where it begins and again wherever a
@@ -325,7 +325,7 @@ export function Agenda({
           </span>
           {here.map((entry) => (
             <Entry
-              key={`${entry.id}:${day}`}
+              key={`${entry.id}:${entry.from}:${day}`}
               entry={entry}
               cell={{ from: day, to: day, label: day }}
               emphasis={emphasisOf(entry.id)}
@@ -381,7 +381,9 @@ function Entry({
     <span
       data-graview-pick={entry.id}
       data-calendar-entry={entry.id}
-      draggable
+      // One occurrence of a date that repeats is marked so, and not dragged: moving it would move the whole series (Change just this one does that).
+      data-calendar-repeat={entry.repeats ? entry.from : undefined}
+      draggable={!entry.repeats}
       onDragStart={(event) => {
         // A node, named in a type only this lens reads — so dragging an
         // entry onto somebody else's page drops nothing, and dropping a
@@ -395,7 +397,7 @@ function Entry({
       title={
         spanning
           ? `${entry.label} · ${entry.from} – ${entry.to}`
-          : `${entry.label}${entry.at === null ? " · all day" : ` · ${clock(entry.at)}`}`
+          : `${entry.label}${entry.at === null ? " · all day" : ` · ${clock(entry.at)}`}${entry.repeats ? " · repeats" : ""}`
       }
       style={{
         display: "block",
@@ -421,7 +423,7 @@ function Entry({
       {/* A cell in the middle of a span keeps the name once, at the start —
           repeating it on every cell of a fortnight is five lies about how
           many things are happening. */}
-      {opens || rowStart ? said : " "}
+      {opens || rowStart ? entry.repeats ? <><span aria-hidden="true">↻ </span>{said}</> : said : " "}
     </span>
   );
 }

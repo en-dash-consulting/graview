@@ -1,6 +1,6 @@
 # graview-node-kind
 
-`graview-node-kind` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
+`graview-node-kind` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -16,7 +16,7 @@ A kind is the unit of everything here. Declaring one gets you, without another l
 
 1. **Declare the kind.** Zod is the one place a field is described: validation, types and JSON Schema.
 
-```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), // Host-kept picture ("image"/"file"); `appLinkField()` ("app-link") // is another app's address, drawn as the app `resolveApp` names. crest: imageField().optional(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
+```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), // Host-kept picture ("image"/"file"); appLinkField() another app, // named by resolveApp; phoneField(), placeField(), durationField(). crest: imageField().optional(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
 
 1. **Add it to `createSchema([...])`.** An edge pointing at a kind that is not in that array is a *typecheck* failure, not a runtime one — `createSchema`'s `ValidateEdgeTargets` sees it.
 

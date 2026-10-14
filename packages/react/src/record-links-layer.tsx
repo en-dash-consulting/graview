@@ -3,6 +3,7 @@ import type { InterpolatedLayout } from "@graview/layout";
 import { useLayoutEffect, useMemo, useState, type ReactElement } from "react";
 import { linksOfRecords, placeLabels, type LinkOfRecord } from "./record-links.js";
 import { mapChoice } from "./map-choice.js";
+import "./provider.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /** The most records chosen at once whose links are drawn: past it the picture is a hairball, and the panel lists them. */
 const DRAWN_FOR_AT_MOST = 4;
@@ -47,7 +48,7 @@ export interface RecordLinksProps {
   readonly store: { readonly schema: AnySchema; readonly graph: { allEdges(): Iterable<{ readonly kind: string; readonly from: string; readonly to: string }>; getNode(id: string): ({ readonly id: string; readonly kind: string } & Record<string, unknown>) | undefined } };
   readonly graphVersion: unknown;
   readonly selection: readonly string[];
-  readonly view: { readonly overview?: boolean | undefined; readonly focusId: string | null };
+  readonly view: { readonly overview?: boolean | undefined; readonly focusId: string | null; readonly beside?: boolean };
   /** The scene's own rulers: what of an element shows in the stage, and the runs of a curve outside some boxes. */
   readonly rulers: {
     readonly visibleRect: (el: Element, stage: HTMLElement) => Box | null;
@@ -78,12 +79,15 @@ export function RecordLinks({ frame, width, height, stageRef, tick, store, graph
     const s = stage.getBoundingClientRect();
     const rel = (r: DOMRect): Box => ({ x: r.left - s.left, y: r.top - s.top, width: r.width, height: r.height });
     const own = new Map<string, Box | null>();
+    const chosenCards = records.map((id) => `[data-graview-view="${CSS.escape(id)}"]`).join(",");
     /* Where a record is drawn on its own: a chip or card in the scene, else its building on the plot. */
     const ownBox = (id: string): Box | null => {
       if (own.has(id)) return own.get(id)!;
       let box: Box | null = null;
       for (const el of stage.querySelectorAll(`[data-graview-pick="${CSS.escape(id)}"], [data-graview-view="${CSS.escape(id)}"]`)) {
         if (el.closest("[data-graview-offstage], [data-graview-screen]")) continue;
+        // A chip in a chosen record's own card is the card saying it, not the far record drawn.
+        if (!records.includes(id) && el.closest(chosenCards)) continue;
         box = visibleRect(el, stage);
         if (box) break;
       }
@@ -101,7 +105,8 @@ export function RecordLinks({ frame, width, height, stageRef, tick, store, graph
     const links = linksOfRecords(records, store.graph.allEdges(), kindOf, (id) => ownBox(id) !== null, store.schema);
     /* The districts' names are not crossed: a line passes under each one. */
     const names: Box[] = [];
-    for (const el of stage.querySelectorAll('[data-graview-view^="kind:"]')) {
+    // Their names, not the hosts they stand in: a district's host covers its whole plot, and a line clipped to it stopped at the first plot it reached.
+    for (const el of stage.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face')) {
       const box = visibleRect(el, stage);
       if (box) names.push(box);
     }

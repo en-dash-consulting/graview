@@ -1,4 +1,4 @@
-import { type AnySchema } from "@graview/core";
+import { onePerPicture, type AnySchema } from "@graview/core";
 import { failureWords } from "@graview/core/words";
 import { withFocus, withOverview, withSelection } from "@graview/layout/view";
 import { useAffordances, useApplyAffordance, useGraview, useSeatTalkState, useViolations, type SeatTalk } from "@graview/react";
@@ -11,6 +11,7 @@ import { ChatPanel, LINK, QUIET_BUTTON } from "./chat.js";
 import { useSubject } from "./subject.js";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
 import { AnswerArgs } from "./workbench/index.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * THE OPEN SEAT — fetched when the seat is first opened (`seat-field.tsx`).
@@ -184,7 +185,8 @@ function SeatHere({ here }: { readonly here?: string }) {
     subject: { id: subject.id, name: subject.name },
     violations,
     place: place ? { title: place.title, kind: place.kind as string } : null,
-    places: views.places().map((one) => ({ title: one.title, kind: one.kind as string, picture: true })),
+    // Each picture once, however many kinds it is over.
+    places: onePerPicture(views.places()).map((one) => ({ title: one.title, kind: one.kind as string, picture: true })),
     ...(today ? { today } : {}),
   };
   const line = whereLine(input);

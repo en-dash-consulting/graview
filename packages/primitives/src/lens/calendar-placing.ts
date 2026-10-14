@@ -1,5 +1,5 @@
-import { fieldWriters, labelOf, type AnySchema, type NodeOfSchema, type Store } from "@graview/core";
-import { dayOf, daysBetween, minutesOf } from "./calendar-dates.js";
+import { fieldWriters, isRepeat, labelOf, nextOccurrence, occurrences, repeatKey, type AnySchema, type NodeOfSchema, type Store } from "@graview/core";
+import { addDays, dayOf, daysBetween, minutesOf } from "./calendar-dates.js";
 import { withNaturalTime } from "./natural-time.js";
 import { CALENDAR_REQUIRED_ROLES, type CalendarBindings, type PlacedEntry, holds } from "./calendar-options.js";
 
@@ -61,6 +61,31 @@ export function placeOnCalendar<S extends AnySchema>(
     allDay: roles.allDay ? record[roles.allDay] === true || at === null : at === null,
     done: holds(record, roles.done),
   };
+}
+
+/**
+ * A NODE AS EVERY ENTRY IT MAKES between two days. A date that repeats
+ * (`repeat.ts` in core) is one record and many occurrences: each is drawn
+ * where it falls, marked as a repeat, and none is stored. A date that does
+ * not repeat is its one entry, wherever it is. With `next`, a repeating one
+ * is the one occurrence on or after that day — what a summary lists.
+ */
+export function placeEachOnCalendar<S extends AnySchema>(
+  node: NodeOfSchema<S>,
+  bindings: CalendarBindings,
+  schema: S | undefined,
+  window: { readonly from: string; readonly to: string } | { readonly next: string },
+): PlacedEntry[] {
+  const entry = placeOnCalendar(node, bindings, schema);
+  if (!entry) return [];
+  const start = withNaturalTime(bindings[node.kind], schema?.tryDefinition(node.kind))!.start;
+  const record = node as Record<string, unknown>;
+  const first = record[start];
+  const repeat = record[repeatKey(start)];
+  if (typeof first !== "string" || !isRepeat(repeat)) return [entry];
+  const length = daysBetween(entry.from, entry.to);
+  const days = "next" in window ? [nextOccurrence(first, repeat, window.next)] : occurrences(first, repeat, { from: addDays(window.from, -length), to: window.to, limit: 400 });
+  return days.map((at) => ({ ...entry, from: at.slice(0, 10), to: addDays(at.slice(0, 10), length), repeats: true }));
 }
 
 /** The entries touching a day, in the order a person reads them. */

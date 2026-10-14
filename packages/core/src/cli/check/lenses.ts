@@ -303,6 +303,25 @@ export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): 
     ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
   }
   /*
+   * TWO PICTURES, ONE NAME, ON DIFFERENT KINDS: each still draws, at an
+   * address that says whose (`?of=`), and every list says whose beside the
+   * name ("The timetable · talks") — but a person reads two entries alike
+   * first, so the checker says so. One picture over both kinds is one lens
+   * binding both, and listed once. (Here and not in `declaredLenses`, which
+   * a page carries up front.)
+   */
+  declared.drawn.forEach((lens, at) => {
+    const named = declared.drawn.slice(0, at).find((other) => other.as === lens.as);
+    if (!named) return;
+    ctx.add({
+      severity: "warning",
+      code: "lens-title-repeated",
+      where: `lenses.${lens.index}.title`,
+      message: `"${lens.title}" is the title of lenses.${named.index} too, over ${named.kinds.join(" and ")}, so two different pictures are listed under one name.`,
+      fix: "Give each its own title — or, for one picture over both kinds, declare one lens that binds them both.",
+    });
+  });
+  /*
    * A STATUS BOARD WITH A COLUMN NOTHING MOVES A CARD INTO (FR-108): a note,
    * not a warning — a column a record only starts in, or only an import
    * sets, is a design — but one the author should have chosen.

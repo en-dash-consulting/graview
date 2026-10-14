@@ -80,6 +80,27 @@ export interface Sight {
    * to one that reaches the people kind (`sight-via-misses-people`).
    */
   readonly via?: string;
+  /**
+   * ONLY THESE FIELDS of the records it shows (Roadmap f-field-sight): an
+   * allow list, so a field added tomorrow is kept from these roles until a
+   * sight shows it. Absent, every field.
+   */
+  readonly fields?: readonly string[];
+  /**
+   * EVERY FIELD BUT THESE of the records it shows: `{ roles: ["parent"],
+   * kinds: ["player"], hide: ["phone"] }` shows parents each player
+   * without a phone number. With `fields`, the fields it lists but these.
+   *
+   * SIGHTS ADD UP. A role is shown a field of a record when ANY sight that
+   * shows it that record shows that field: a second sight `{ roles:
+   * ["parent"], kinds: ["player"], own: true }` gives each parent their own
+   * child's phone back, and a person with two roles sees what either
+   * shows. A hidden field is not in anything the seat is served — the
+   * record, the log, a search, a form, a label — and the seat cannot set
+   * it: it reads as a field the record does not have. The id and the kind
+   * are never hidden.
+   */
+  readonly hide?: readonly string[];
   readonly describe?: string;
 }
 

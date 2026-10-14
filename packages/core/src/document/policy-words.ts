@@ -40,7 +40,7 @@ export function actWords(document: GraviewDocument, act: string): string {
   const derived = derivedActOf(act);
   if (derived && document.kinds[derived.kind]) {
     const noun = nounWords(document.kinds, derived.kind);
-    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another` }[derived.act];
+    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another`, skip: "Skip this one", detach: "Change just this one", split: "Change from here" }[derived.act];
     return quoted(words);
   }
   return quoted(act);
@@ -63,7 +63,8 @@ export const grantGone = (document: GraviewDocument, grant: GrantWords): string 
 /** What a sight shows, without who: "matches, only those "givenBy" joins to their own participant". */
 export function sightWords(document: GraviewDocument, sight: SightWords): string {
   const person = peopleKinds(document.kinds)[0];
-  return `${listed(sight.kinds.map((kind) => pluralWords(document.kinds, kind)))}${sight.own ? ", only their own" : ""}${sight.via ? `, only those ${quoted(sight.via)} joins to their own ${person ? nounWords(document.kinds, person) : "record"}` : ""}`;
+  const fields = (names: readonly string[]) => listed(names.map((field) => spoken(field)));
+  return `${listed(sight.kinds.map((kind) => pluralWords(document.kinds, kind)))}${sight.own ? ", only their own" : ""}${sight.via ? `, only those ${quoted(sight.via)} joins to their own ${person ? nounWords(document.kinds, person) : "record"}` : ""}${sight.fields ? `, only their ${fields(sight.fields)}` : ""}${sight.hide?.length ? `, without their ${fields(sight.hide)}` : ""}`;
 }
 
 /** A sight, said: "A participant sees matches, only those "givenBy" joins to their own participant." */
@@ -76,6 +77,16 @@ export function peopleSentence(kinds: Kinds, kind: string, people: boolean, alre
   const plural = capitalize(pluralWords(kinds, kind));
   if (people) return already ? `${plural} are already the people who sign in.` : `${plural} are now the people who sign in: ${withA(nounWords(kinds, kind))} whose id is someone's is that person.`;
   return already ? `${plural} were not the people who sign in.` : `${plural} are no longer the people who sign in.`;
+}
+
+/** Whether a kind's records are archived and merged, or only kept and removed (FR-173), as an edit and a preview say it. */
+export function archivesSentence(kinds: Kinds, kind: string, archives: boolean, already = false): string {
+  const plural = capitalize(pluralWords(kinds, kind));
+  const acts = (and: string) => `archive-${kind}, unarchive-${kind} ${and} merge-${kind}`;
+  if (archives) return already ? `${plural} can already be archived and merged.` : `${plural} can be archived and merged again: the app offers ${acts("and")}.`;
+  return already
+    ? `${plural} are already kept or removed, never archived.`
+    : `${plural} are kept or removed, never archived: the app no longer offers ${acts("or")}, and ${withA(nounWords(kinds, kind))} archived before is brought back when the change lands.`;
 }
 
 export const FIRST_GRANT = "The app gets a policy: from now on, only what a grant gives is allowed.";

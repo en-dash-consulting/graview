@@ -1,4 +1,5 @@
-import { counted, edgeWords, type AnySchema } from "@graview/core";
+import { counted, type AnySchema } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 
 /*
  * WHAT THE MAP IS ASKED, AND WHAT ITS RELATIONS ARE — without the map.
@@ -63,7 +64,8 @@ export interface MapChoice {
 
 export function mapChoice(
   selection: readonly string[],
-  view: { readonly overview?: boolean | undefined; readonly focusId: string | null },
+  /** `beside`: a panel is drawn beside the map (`BesideTheMap`), where a record in focus is shown rather than stamped over the city. */
+  view: { readonly overview?: boolean | undefined; readonly focusId: string | null; readonly beside?: boolean },
   kindOf: (id: string) => string | undefined,
 ): MapChoice {
   const districts: string[] = [];
@@ -77,6 +79,15 @@ export function mapChoice(
     if (kindOf(id) !== undefined) records.push(id);
   }
   const lens = view.overview && view.focusId !== null ? districtOf(view.focusId) : null;
+  /*
+   * A RECORD IN FOCUS, RISEN FROM: it is what the person was looking at,
+   * so from altitude it is the record chosen — its building lit, its links
+   * drawn, and the record itself in the panel beside the map at a size a
+   * person reads — until something else is chosen.
+   */
+  if (view.beside && view.overview && lens === null && view.focusId !== null && records.length === 0 && districts.length === 0 && kindOf(view.focusId) !== undefined) {
+    records.push(view.focusId);
+  }
   return { districts, records, lens };
 }
 

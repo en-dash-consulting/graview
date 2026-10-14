@@ -5,7 +5,8 @@ import type { AnySchema } from "../schema/schema.js";
 import { error, warning, type Finding } from "./findings.js";
 import { documentOf } from "./remembered.js";
 import { fieldOf } from "./field-spec.js";
-import { FORMAT, FORMAT_VERSION, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
+import { isRepeatField, repeatedBy, repeatKey } from "../repeat.js";
+import { FORMAT, FORMAT_VERSION, type ComputedSpec, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
 
 /**
  * A DECLARATION, WRITTEN AS A DOCUMENT (FR-01).
@@ -29,6 +30,17 @@ export interface ToDocumentResult {
 export { documentOf, rememberDocument } from "./remembered.js";
 
 /** Write an app as a declaration document, naming every surface the document cannot say. */
+/** A declaration's computed fields as a document says them: without `as`, an expression alone as its words. */
+function unsaid(computed: Readonly<Record<string, string | { readonly expr: string; readonly as?: string }>>): Record<string, ComputedSpec> {
+  return Object.fromEntries(
+    Object.entries(computed).map(([name, entry]) => {
+      if (typeof entry === "string") return [name, entry];
+      const { as: _, ...rest } = structuredClone(entry);
+      return [name, Object.keys(rest).length === 1 ? rest.expr : rest];
+    }),
+  ) as Record<string, ComputedSpec>;
+}
+
 export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentResult {
   const remembered = documentOf(app);
   if (remembered) return { document: remembered, findings: [] };
@@ -51,12 +63,17 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       computed?: KindSpec["computed"];
       fieldRoles?: Readonly<Record<string, string>>;
       people?: boolean;
+      archives?: false;
     };
     const at = `kinds.${kind}`;
     const fields: Record<string, FieldSpec> = {};
     for (const [name, field] of Object.entries(definition?.fields?.shape ?? {})) {
       if (name === "id" || name === "kind") continue;
+      // How a date repeats is the date's `repeats` in a document, not a field of its own.
+      const repeated = isRepeatField(field) ? repeatedBy(name) : undefined;
+      if (repeated && definition?.fields?.shape?.[repeated]) continue;
       const read = fieldOf(field);
+      if ("spec" in read && isRepeatField(definition?.fields?.shape?.[repeatKey(name)]) && (read.spec.type === "date" || read.spec.type === "datetime")) (read.spec as { repeats?: boolean }).repeats = true;
       const beside = definition?.defaults?.[name];
       if ("spec" in read) fields[name] = beside !== undefined && read.spec.default === undefined ? ({ ...read.spec, default: beside } as FieldSpec) : read.spec;
       else findings.push(error("field-is-code", `${at}.fields.${name}`, `the field "${name}" cannot be written in a document: ${read.why}`));
@@ -91,10 +108,11 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       ...(glance.length > 0 ? { glance } : {}),
       ...(page ? { page } : {}),
       ...(Object.keys(edges).length > 0 ? { edges: edges as KindSpec["edges"] } : {}),
-      // Computed fields are already data: an expression and its words (FR-83).
-      ...(definition?.computed && Object.keys(definition.computed).length > 0 ? { computed: structuredClone(definition.computed) } : {}),
+      // Computed fields are already data: an expression and its words (FR-83). `as` is the declaration's, or what a compile read; a document says neither.
+      ...(definition?.computed && Object.keys(definition.computed).length > 0 ? { computed: unsaid(definition.computed) } : {}),
       ...(definition?.fieldRoles ? { fieldRoles: { ...definition.fieldRoles } } : {}),
       ...(definition?.people ? { people: true } : {}),
+      ...(definition?.archives === false ? { archives: false as const } : {}),
     } as KindSpec;
   }
 

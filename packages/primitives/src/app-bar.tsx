@@ -1,4 +1,4 @@
-import { hueFor, kindPath, MOST_STANDING, orderKinds, OVERVIEW_SLUG, pluralLabel, primaryOf, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
+import { hueFor, kindPath, MOST_STANDING, onePerPicture, orderKinds, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
 import { createContext, Suspense, useCallback, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
@@ -101,13 +101,14 @@ export function barPlaces(input: {
   const stands = (kind: string, as?: string): boolean => (!store.graph.size.nodes || store.graph.count(kind) > 0) && (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
   const out: BarPlace[] = [{ key: HOME_KEY, label: "Home", path: HOME_PATH, group: "home", primary: true }];
   for (const kind of orderKinds(live, arrangement?.order)) out.push({ key: `kind:${kind}`, label: pluralLabel(store.schema, kind), path: kindPath(store.schema, kind), group: "lists", kind, primary: stands(kind) });
-  for (const place of all) {
-    // A place at the scene's address is not offered: the address is the scene's (FR-132).
-    if (!live.includes(place.kind) || place.as === OVERVIEW_SLUG) continue;
-    // Two kinds' pictures of one name say whose with `?of=` (as the routed face addresses them).
-    const shared = all.some((other) => other.as === place.as && other.kind !== place.kind);
-    const path = `/places/${encodeURIComponent(place.as)}${shared ? `?of=${kindPath(store.schema, place.kind).slice(1)}` : ""}`;
-    if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: place.title, path, group: "pictures", kind: place.kind, primary: stands(place.kind, place.as) });
+  // A place at the scene's address is not offered: the address is the scene's (FR-132).
+  const seen = all.filter((place) => live.includes(place.kind) && place.as !== OVERVIEW_SLUG);
+  // Each picture once: one over several kinds is one entry, under the first of them this seat sees.
+  for (const place of onePerPicture(seen)) {
+    // Two DIFFERENT pictures of one name say whose, at `?of=` and beside the name (as the routed face addresses and lists them).
+    const path = placePath(place.as, sharesItsName(place, all) ? kindPath(store.schema, place.kind).slice(1) : undefined);
+    const standing = [place.kind, ...(place.over ?? [])].some((kind) => live.includes(kind) && stands(kind, place.as));
+    if (!out.some((held) => held.path === path)) out.push({ key: `place:${place.kind}:${place.as}`, label: placeLabel(place, all, store.schema), path, group: "pictures", kind: place.kind, primary: standing });
   }
   const connects = live.some((kind) => Object.keys((store.schema.tryDefinition(kind)?.edges ?? {}) as object).length > 0);
   if (connects) out.push({ key: "connections", label: "Connections", path: "/map", group: "pictures", primary: false });

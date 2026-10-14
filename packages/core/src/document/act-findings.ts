@@ -1,3 +1,4 @@
+import { derivedActOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
 import { withArticle } from "../schema/define-node.js";
 import { farEnd } from "./far-end.js";
 import { error, type Finding } from "./findings.js";
@@ -20,8 +21,8 @@ function rangeFindings(document: GraviewDocument): Finding[] {
   for (const [kind, spec] of Object.entries(document.kinds)) {
     for (const [field, f] of Object.entries(spec.fields)) {
       const at = `kinds.${kind}.fields.${field}`;
-      const numeric = f.type === "number" || f.type === "integer";
-      for (const key of ["min", "max", "step"] as const) if (!numeric && f[key] !== undefined) out.push(error("field-range", `${at}.${key}`, `"${key}" belongs only on a number or integer field`));
+      const numeric = f.type === "number" || f.type === "integer" || f.type === "duration";
+      for (const key of ["min", "max", "step"] as const) if (!numeric && f[key] !== undefined) out.push(error("field-range", `${at}.${key}`, `"${key}" belongs only on a number, integer or duration field`));
       if (numeric && f.min !== undefined && f.max !== undefined && f.min > f.max) out.push(error("field-range", `${at}.max`, `"max" (${f.max}) is below "min" (${f.min})`));
       if (numeric && f.step !== undefined && !(f.step > 0)) out.push(error("field-range", `${at}.step`, '"step" is more than zero, like 1 or 0.5'));
       // A default is a value the field takes, so it is inside the field's range.
@@ -103,5 +104,16 @@ function meFindings(name: string, act: ActSpec, document: GraviewDocument): Find
 
 /** Every range, other-end and `$me` finding of a document, in its order: fields, then acts. */
 export function actFindings(document: GraviewDocument): Finding[] {
-  return [...rangeFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...meFindings(name, act, document)])];
+  return [...rangeFindings(document), ...neverArchivedFindings(document), ...Object.entries(document.acts ?? {}).flatMap(([name, act]) => [...otherEndFindings(name, act, document), ...meFindings(name, act, document)])];
+}
+
+/** A grant naming the archive, unarchive or merge of a kind that says `"archives": false` (FR-173): an act the app does not have. */
+function neverArchivedFindings(document: GraviewDocument): Finding[] {
+  return (document.policy?.grants ?? []).flatMap((grant, i) =>
+    asArray(grant.mutations === "*" ? [] : grant.mutations).flatMap((name) => {
+      const derived = derivedActOf(name);
+      if (!derived || document.acts?.[name] || document.kinds[derived.kind]?.archives !== false || givenWhenNeverArchived(derived.act)) return [];
+      return [error("grant-act", `policy.grants.${i}.mutations`, `"${name}" is not an act this document has: ${derived.kind} says "archives": false, so it is kept or removed, never archived`, `name edit-${derived.kind} or remove-${derived.kind} instead`)];
+    }),
+  );
 }

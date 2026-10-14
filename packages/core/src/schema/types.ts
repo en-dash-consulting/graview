@@ -218,6 +218,12 @@ export type ComputedField =
       /** What it is called on screen, where its name does not say it. */
       readonly label?: string;
       readonly description?: string;
+      /**
+       * What it works out, where that is not a plain number: `"duration"`, a
+       * whole number of minutes said "1 h 30 min". A document's sum of
+       * duration fields says it without being told.
+       */
+      readonly as?: "duration";
     };
 
 /**

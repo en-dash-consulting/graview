@@ -117,6 +117,25 @@ describe("the city at altitude", () => {
     }
   });
 
+  it("fits the city in what a floating panel leaves, while the scene stays the whole box", () => {
+    const whole = layout(graph(), schema, overview, { width: 1280, height: 800, cityOrder: ["week", "duty", "person", "note"] });
+    const docked = layout(graph(), schema, overview, { width: 1280, height: 800, cityOrder: ["week", "duty", "person", "note"], dock: { right: 500 } });
+    // The painted scene is the whole width; what the reader sees is what the panel leaves.
+    expect(docked.width).toBe(1280);
+    expect(docked.visible).toEqual({ width: 780, height: 800 });
+    expect(whole.visible).toBeUndefined();
+    for (const card of docked.nodes.filter((node) => node.plot)) expect(card.x + card.width, card.id).toBeLessThanOrEqual(780);
+    // The camera's bounds and the edge signs are for the visible part.
+    expect(cameraLimit(docked).x).toBeLessThan(cameraLimit(whole).x);
+    // A phone's sheet takes from the foot.
+    const sheet = layout(graph(), schema, overview, { width: 390, height: 844, cityOrder: ["week", "duty", "person", "note"], dock: { bottom: 380 } });
+    expect(sheet.height).toBe(844);
+    expect(sheet.visible).toEqual({ width: 390, height: 464 });
+    for (const card of sheet.nodes.filter((node) => node.plot)) expect(card.y + card.height, card.id).toBeLessThanOrEqual(464);
+    // And no dock means no dock, off altitude too.
+    expect(layout(graph(), schema, { ...overview, overview: false }, { width: 1280, height: 800, dock: { right: 500 } }).visible).toBeUndefined();
+  });
+
   it("caps a plot's side, so a kind of hundreds stands on three cells as a kind of five does", () => {
     const many = Graph.from(schema, {
       nodes: [

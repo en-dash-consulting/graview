@@ -1,6 +1,7 @@
 import { counted, type AnySchema, type Hit } from "@graview/core";
 import { actsOn, search, touchWeights } from "@graview/core/search";
-import { kindCardId, withFocus, withJackIn, withOverview, withoutSearch, withPicture, withQuery, withSelection } from "@graview/layout/view";
+import { kindCardId, withFocus, withJackIn, withOverview, withPicture, withSelection } from "@graview/layout/view";
+import { withoutSearch, withQuery } from "@graview/layout/view-moves";
 import { useKit } from "@graview/react/drawing";
 import { matchWith, POPOVER_STYLE, useFound, useGraview, usePopover, useSeatTalkState, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
@@ -305,6 +306,7 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
                   aria-selected={row === current}
                   data-testid="find-hit"
                   data-about={row.hit.about}
+                  {...(row.hit.about === "node" && row.hit.near ? { "data-near": "" } : {})}
                   onMouseEnter={() => highlight(row)}
                   onClick={() => travel(row)}
                   style={{
@@ -360,7 +362,12 @@ function HitLine({ hit, flag }: { hit: Hit; flag: string }) {
             {hit.apart ? <span style={MUTED}> · {hit.apart}</span> : null}
             {hit.current ? null : <span style={MUTED}> · past</span>}
           </span>
-          {hit.why.field !== "label" ? (
+          {hit.near ? (
+            // Found by a word near the one typed, and said so: "Near “florist” — tags: flowers".
+            <span style={MUTED} data-testid="find-near">
+              Near “{hit.why.asked}”{hit.why.field !== "label" ? ` — ${hit.why.reading.toLowerCase()}: ${hit.why.fragment}` : ""}
+            </span>
+          ) : hit.why.field !== "label" ? (
             <span style={MUTED}>
               {hit.why.reading.toLowerCase()}: {hit.why.fragment}
             </span>
@@ -407,7 +414,8 @@ function spoken(byKind: Readonly<Record<string, number>>, hits: readonly Hit[], 
   });
   const others = hits.filter((hit) => hit.about === "kind" || hit.about === "place" || hit.about === "rule").length;
   if (others > 0) parts.push(`${others} ${others === 1 ? "place or rule" : "places and rules"}`);
-  return parts.length === 0 ? "Nothing found" : `${parts.join(", ")} found`;
+  const near = hits.filter((hit) => hit.about === "node" && hit.near).length;
+  return parts.length === 0 ? "Nothing found" : `${parts.join(", ")} found${near > 0 ? `, ${near} of them near` : ""}`;
 }
 
 const STRIP: CSSProperties = {

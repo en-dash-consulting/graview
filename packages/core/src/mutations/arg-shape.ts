@@ -1,5 +1,8 @@
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
+import { typedFieldOf } from "../schema/typed-field-of.js";
+import { amountOf, type AmountMark } from "../schema/amount-mark.js";
+import { amountMark } from "../schema/amount-words.js";
 
 /*
  * A file of its own (FR-179): what an argument asks for is read by a form, a
@@ -19,8 +22,12 @@ import { fileKindOf } from "../schema/files.js";
  * asked it.
  */
 export type ArgShape =
-  /** Words; `long` where the field allows more than 500 characters — prose, asked for in a text area (FR-147). */
-  | { readonly type: "text"; readonly long?: true }
+  /**
+   * Words; `long` where the field allows more than 500 characters — prose,
+   * asked for in a text area (FR-147). `holds` where they are a phone number
+   * or a place: asked for as one, and drawn as a link.
+   */
+  | { readonly type: "text"; readonly long?: true; readonly holds?: "phone" | "place" }
   /**
    * A DATE, AND WITH `time` A TIME OF DAY IN IT. A workshop's start is
    * `YYYY-MM-DDTHH:MM`; read as a plain date it got a date picker, whose
@@ -28,8 +35,14 @@ export type ArgShape =
    * workshop could not be made and the talk could not be given its slot.
    */
   | { readonly type: "date"; readonly time?: true }
-  /** A number, and its range where it says one: `step` is what its values are whole multiples of (FR-114), 1 for a whole number. */
-  | { readonly type: "number"; readonly min?: number; readonly max?: number; readonly step?: number }
+  /**
+   * A number, and its range where it says one: `step` is what its values are
+   * whole multiples of (FR-114), 1 for a whole number. `duration` where it is
+   * a length of time in minutes, typed as "1h 30m", "90" or "1:30". `amount`
+   * where the field is said as more than a number: money in a currency, a
+   * fraction as a percent — asked for as "$1,250.50".
+   */
+  | { readonly type: "number"; readonly min?: number; readonly max?: number; readonly step?: number; readonly duration?: true; readonly amount?: AmountMark }
   | { readonly type: "choice"; readonly options: readonly string[] }
   /**
    * YES OR NO — an argument that takes a boolean.
@@ -123,6 +136,8 @@ export function describeArg(schema: unknown): ArgShape {
       ...(min === undefined ? {} : { min }),
       ...(max === undefined ? {} : { max }),
       ...(step === undefined ? {} : { step }),
+      ...(typedFieldOf(field) === "duration" ? { duration: true as const } : {}),
+      ...(amountOf(schema) ? { amount: amountMark(amountOf(schema)!) } : {}),
     };
   }
 
@@ -139,7 +154,8 @@ export function describeArg(schema: unknown): ArgShape {
     }
     // Prose: more than 500 characters allowed — a document's `text` (FR-147), asked for in a text area.
     const long = checks.some((check) => check.check === "max_length" && typeof (check as { maximum?: unknown }).maximum === "number" && (check as { maximum: number }).maximum > 500);
-    return long ? { type: "text", long: true } : { type: "text" };
+    const holds = typedFieldOf(field);
+    return long ? { type: "text", long: true } : holds === "phone" || holds === "place" ? { type: "text", holds } : { type: "text" };
   }
 
   return { type: "unknown" };

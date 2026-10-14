@@ -2,11 +2,12 @@ import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import { narrows, rangeWords } from "./range.js";
+import { formatWords } from "./format-words.js";
 import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 import { capitalize } from "../capital.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, archivesSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
  * WHAT A CHANGE TO THE APP MEANS, IN WORDS — and whether data would move.
@@ -85,7 +86,8 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
       const f = now.fields[field]!;
       const old = was.fields[renamed.get(field) ?? field];
       if (!old) {
-        sentences.push(`${kind} gains a field, ${field} (${f.type}${f.required ? ", required" : ""}).`);
+        const said = formatWords(f, after.brand);
+        sentences.push(`${kind} gains a field, ${field} (${f.type}${said ? `, ${said}` : ""}${f.required ? ", required" : ""}).`);
         if (f.required && f.default === undefined) newlyRequired.push({ kind, field });
         continue;
       }
@@ -98,6 +100,8 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
         droppedOptions.push({ kind, field, options: dropped });
         sentences.push(`${kind}'s ${field} no longer offers ${dropped.map((o) => `"${o}"`).join(", ")}; records holding ${dropped.length === 1 ? "it" : "them"} are cleared.`);
       }
+      // Written in Markdown or not (FR-180): the values are kept as written either way; only how the record's page draws them changes.
+      if (old.type === f.type && f.type === "text" && (old.format === "markdown") !== (f.format === "markdown")) sentences.push(`${kind}'s ${field} ${f.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is no longer Markdown; it is drawn as written"}.`);
       const added = (f.options ?? []).filter((o) => !(old.options ?? []).includes(o));
       if (added.length > 0) sentences.push(`${kind}'s ${field} now also offers ${added.map((o) => `"${o}"`).join(", ")}.`);
       if (f.required && !old.required && f.default === undefined) {
@@ -110,7 +114,18 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
         if (narrower) narrowedRanges.push({ kind, field });
         sentences.push(`${kind}'s ${field} now takes ${rangeWords(f)}, where it took ${rangeWords(old)}${narrower ? "; values outside it are cleared" : ""}.`);
       }
-      if (!same({ ...old, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0 }, { ...f, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0 })) sentences.push(`${kind}'s ${field} is described differently.`);
+      // What it is said as — money in USD, a percent — in words, with what a value reads as.
+      if (old.format !== f.format || old.unit !== f.unit) {
+        const now = formatWords(f, after.brand);
+        const then = formatWords(old, before.brand);
+        sentences.push(`${kind}'s ${field} is now said as ${now ?? "a plain number"}, where it was said as ${then?.replace(/ — .*/, "") ?? "a plain number"}; its values are kept.`);
+      }
+      // A date that repeats, or no longer does: how each record's repeated is dropped with it.
+      if (!old.repeats !== !f.repeats) {
+        if (old.repeats) removedFields.push({ kind, field: `${field}Repeat` });
+        sentences.push(f.repeats ? `${kind}'s ${field} may now repeat.` : `${kind}'s ${field} no longer repeats; how each ${kind} repeated is dropped.`);
+      }
+      if (!same({ ...old, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0, format: 0, unit: 0, repeats: 0 }, { ...f, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0, format: 0, unit: 0, repeats: 0 })) sentences.push(`${kind}'s ${field} is described differently.`);
     }
     for (const field of keys(was.fields)) {
       if (!now.fields[field] && ![...renamed.values()].includes(field)) {
@@ -145,6 +160,7 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     const wasRoles = Object.fromEntries(Object.entries(was.fieldRoles ?? {}).map(([role, field]) => [role, movedTo.get(field) ?? field]).filter(([, field]) => Object.hasOwn(now.fields, field!)));
     if (!same(wasRoles, now.fieldRoles ?? {})) sentences.push(`Which of ${withArticle(kind)}'s fields is its time, its author or a lens's role changes.`);
     if (!was.people !== !now.people) sentences.push(peopleSentence(after.kinds, continues.get(kind) ?? kind, now.people === true));
+    if ((was.archives === false) !== (now.archives === false)) sentences.push(archivesSentence(after.kinds, continues.get(kind) ?? kind, now.archives !== false));
   }
   sentences.push(...factSentences(before.computed, after.computed));
   for (const [section, noun] of [["acts", "act"], ["rules", "rule"]] as const) {

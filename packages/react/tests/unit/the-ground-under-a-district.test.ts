@@ -1,6 +1,6 @@
 import { toIso } from "@graview/core/scene";
 import { describe, expect, it } from "vitest";
-import { buildingFaces, heightOf, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
+import { buildingFaces, heightOf, namesWithRoom, tileCorners, toLattice, villageCap, villageOf } from "../../src/plots.js";
 
 /**
  * A TILE IS THE PLOT THE LAYOUT COMPUTED. Its corners are the plot's four
@@ -90,5 +90,36 @@ describe("the lattice, run backwards", () => {
     const back = toLattice({ x: city.originX + iso.x, y: city.originY + iso.y }, city, pan);
     expect(back.col).toBeCloseTo(7, 6);
     expect(back.row).toBeCloseTo(3, 6);
+  });
+});
+
+/**
+ * NO TWO NAMES ON A PLOT LIE OVER EACH OTHER. Coming down on a district, its
+ * blocks stand a step apart on the diagonal and each wrote its name over
+ * itself whatever stood beside it, so the names were one smudge. A name is
+ * written only where it has room: the chosen block's first and whole, then
+ * each in turn whose name clears the ones already written.
+ */
+describe("a district's blocks say their names only where there is room", () => {
+  const block = (id: string, x: number, y: number, name = `The ${id}`, width = 40) => ({ id, name, width, top: { x, y } });
+  const row = [block("hall", 0, 0), block("workshop", 20, 4), block("kitchen", 200, 0), block("store", 220, 40)];
+
+  it("writes a name that would lie over one already written nowhere", () => {
+    const said = namesWithRoom(row, new Set());
+    // The workshop's name would cross the hall's, a step to its right: it waits.
+    expect([...said.keys()]).toEqual(["hall", "kitchen", "store"]);
+  });
+
+  it("writes the chosen block's name first and whole, and the one it would cover waits instead", () => {
+    const said = namesWithRoom([...row, block("yard", 0, 300, "The yard where the vans unload", 20)], new Set(["workshop", "yard"]));
+    expect(said.has("workshop")).toBe(true);
+    expect(said.has("hall")).toBe(false);
+    // Too narrow to be named by itself, but chosen: whole.
+    expect(said.get("yard")).toBe("The yard where the vans unload");
+  });
+
+  it("names every block once they stand far enough apart", () => {
+    const apart = row.map((one, i) => ({ ...one, top: { x: i * 200, y: 0 } }));
+    expect(namesWithRoom(apart, new Set()).size).toBe(4);
   });
 });

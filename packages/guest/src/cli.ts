@@ -66,7 +66,8 @@ export async function view(argv: readonly string[]): Promise<number> {
     manifest: readJson(manifestAt) as WorkerViewManifest,
     source: readFileSync(resolve(process.cwd(), file), "utf8"),
     run: nodeIsolate(),
-    places: (app.views?.places?.() ?? []).map((place) => ({ as: place.as, title: place.title, kind: place.kind })),
+    // Each slug once: a picture over several kinds is one place to a view.
+    places: (app.views?.places?.() ?? []).filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map((place) => ({ as: place.as, title: place.title, kind: place.kind })),
     ...(width ? { width: Number(width) } : {}),
   });
   if (argv.includes("--json")) {

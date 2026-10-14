@@ -122,11 +122,11 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
     case "title":
       return <strong className="graview-spec-title">{block.text}</strong>;
     case "text":
-      // A value with lines in it keeps them — its paragraphs and lists (FR-146); one line of words stays a line.
-      if (hasShape(block.text)) {
+      // A value with lines in it keeps them — its paragraphs and lists (FR-146); one line of words stays a line. A Markdown field is drawn as prose (FR-180).
+      if (block.markdown || hasShape(block.text)) {
         return (
           <div className="graview-spec-text" {...(block.tone ? { "data-graview-tone": block.tone } : {})}>
-            <TextBody text={block.text} />
+            <TextBody text={block.text} markdown={block.markdown} />
           </div>
         );
       }
@@ -151,7 +151,8 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
               // Another app, as the host names it (FR-171), above the link the whole card is.
               <AppLink address={block.app} />
             ) : block.href ? (
-              <a className="graview-spec-link" href={block.href} rel="noopener noreferrer" target="_blank">
+              // A web address and a place open in a tab of their own; a phone's tel: link calls.
+              <a className="graview-spec-link" href={block.href} {...(block.href.startsWith("tel:") ? {} : { rel: "noopener noreferrer", target: "_blank" })}>
                 {block.text}
               </a>
             ) : (

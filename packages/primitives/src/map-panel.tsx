@@ -1,12 +1,22 @@
-import { counted, edgeWords, isCurrent, labelOf, layer, nounOf, numberAsRead, pluralLabel, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { counted, isCurrent, labelOf, layer, nounOf, numberAsRead, pluralLabel, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 import { aggregateId, kindCardId, withFocus, withOverview, withPicture, withWithin, type ViewState } from "@graview/layout/view";
 // Drawn only with the scene, whose face has fetched `@graview/react` already.
 import { pickedFrom, ribbonsOf, ribbonSentence } from "@graview/react";
-import { ViewBoundary } from "@graview/react/drawing";
+import { useFlagged, useKit, ViewBoundary } from "@graview/react/drawing";
 import type { MapPanelShowing } from "./map-panel-door.js";
 import { NamedAbove } from "./primitives/index.js";
-import { useGraph, useGraview, useNavigation, type ViewComponent } from "@graview/react/provider";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fields } from "./editable.js";
+import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, ViewModeProvider, type ViewComponent } from "@graview/react/provider";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { barPanes } from "./bar-panes-door.js";
+import { problemsNamed } from "./problem-count.js";
+import { problemsAsked, putDownProblemsAsked, subscribeToProblemsAsked } from "./map-asks.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
+
+// The problems' rows are the bar's own (`ProblemRows`), fetched with its panes: one set of words, one set of repairs.
+type RowsProps = Parameters<typeof import("./bar-panes.js").ProblemRows>[0];
+const ProblemRows = barPanes.part((panes, props: RowsProps) => <panes.ProblemRows {...props} />, { what: "The problems", as: "li" });
 
 /*
  * BESIDE THE MAP, AT A SIZE A PERSON READS.
@@ -30,6 +40,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode }
  * - a DISTRICT: its relations, with how many each joins, and every record
  *   in it, none of them "+10 more".
  */
+
+/** How far the panel floats in from the edges of the picture and from the map: the app's gap. */
+const PANEL_GAP = "var(--graview-gap, 8px)";
 
 /** Narrower than this, the panel is a sheet from the foot rather than a column beside the map. */
 const MAP_PANEL_SHEET_BELOW = 720;
@@ -123,9 +136,20 @@ function PanelFrame({
         flexDirection: "column",
         background: "var(--graview-panel)",
         color: "var(--graview-ink)",
+        /*
+         * A SURFACE OVER THE SCENE, NOT A COLUMN BESIDE IT: inset from the
+         * right, the top (under the bar) and the foot by the app's gap, with
+         * the app's own radius on every corner, its own edge and the real
+         * elevation, so it reads as lying on the map. What it holds is
+         * clipped to the radius, its scrollbar inside the box.
+         */
+        overflow: "hidden",
+        border: "1px solid var(--graview-edge)",
+        borderRadius: "var(--graview-radius, 12px)",
+        boxShadow: "var(--graview-lift-high)",
         ...(sheet
-          ? { left: 0, right: 0, bottom: 0, height: sheetHeight, borderTop: "1px solid var(--graview-edge)", borderRadius: "14px 14px 0 0", boxShadow: "var(--graview-lift-high)" }
-          : { top: 0, right: 0, bottom: 0, width: wide, borderLeft: "1px solid var(--graview-edge)" }),
+          ? { left: PANEL_GAP, right: PANEL_GAP, bottom: `calc(${PANEL_GAP} + env(safe-area-inset-bottom, 0px))`, height: sheetHeight }
+          : { top: PANEL_GAP, right: PANEL_GAP, bottom: PANEL_GAP, width: wide }),
       }}
     >
       {/*
@@ -137,10 +161,11 @@ function PanelFrame({
         * finger can still press it and open its acts, rather than under the
         * sheet it opened.
         */}
+      {/* The room it takes is its width and the gap on each side of it: the map side's, and the inset from the right edge. */}
       {sheet ? (
-        <style>{`:has(> [data-graview-map-panel="sheet"]) { --graview-sheet: ${sheetHeight}; }`}</style>
+        <style>{`:has(> [data-graview-map-panel="sheet"]) { --graview-sheet: calc(${sheetHeight} + 2 * ${PANEL_GAP} + env(safe-area-inset-bottom, 0px)); }`}</style>
       ) : (
-        <style>{`:has(> [data-graview-map-panel="dock"]) { --graview-dock: ${wide}; }`}</style>
+        <style>{`:has(> [data-graview-map-panel="dock"]) { --graview-dock: calc(${wide} + 2 * ${PANEL_GAP}); }`}</style>
       )}
       <header style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "14px 14px 10px 18px", borderBottom: "1px solid var(--graview-edge)" }}>
         <div style={{ flex: "1 1 auto", minWidth: 0 }}>{head}</div>
@@ -226,7 +251,11 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
     [store, kind, graph, view.past, definition],
   );
   const named = registration?.title ?? place?.title ?? pluralLabel(store.schema, kind);
+  // A kind with no picture of its own draws its stop here, which heads itself: the panel says nothing over it.
+  const derived = View !== undefined && isDefaultView(View);
   const chosen = selection.filter((id) => store.graph.getNode(id) !== undefined);
+  // What a rule names, marked in the lens where it stands, as its own place marks it.
+  const flagged = useFlagged();
   const close = () => go(withWithin(withFocus(view, null), "view", null));
   return (
     <PanelFrame
@@ -236,7 +265,7 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
       sheetHeight="60%"
       onClose={close}
       head={
-        <>
+        derived ? null : <>
           <div style={eyebrow}>{pluralLabel(store.schema, kind)}</div>
           <h2 style={title} data-testid="lens-panel-title">{named}</h2>
           <p style={quiet}>
@@ -258,7 +287,16 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
 .graview-ground[data-graview-altitude] [data-graview-view^="kind:"]:not([data-graview-view="${kindCardId(kind)}"]) { opacity: 0.4; }`}</style>
       <div
         data-graview-lens={place?.as ?? ""}
-        style={{ padding: "8px 12px 16px", minHeight: "100%", boxSizing: "border-box" }}
+        /*
+         * THE LENS TAKES THE PANEL'S REMAINING HEIGHT. A grid whose one row
+         * is the room left under the head, and grows past it with what it
+         * holds: a lens that fills its box (the week, a timetable) is given
+         * a box as tall as the panel, rather than a height of "auto" its
+         * percentages came to nothing against; a lens taller than that grows
+         * and the panel's own body scrolls — never a second scroll inside it.
+         * One column no wider than the panel, so nothing pushes it sideways.
+         */
+        style={{ padding: "8px 12px 16px", minHeight: "100%", boxSizing: "border-box", display: "grid", gridTemplateRows: "1fr", gridTemplateColumns: "minmax(0, 1fr)", alignItems: "start" }}
         onClick={(event) => {
           const id = pickedFrom(event.target);
           if (!id || store.graph.getNode(id) === undefined) return;
@@ -281,9 +319,17 @@ function LensPanel<S extends AnySchema>({ kind }: { readonly kind: string }) {
         {View ? (
           /* The head names it; the lens's own panel does not say it again under it. */
           <NamedAbove.Provider value={named}>
-            <ViewBoundary kind={kind} {...(registration?.title ? { view: registration.title } : {})}>
-              <View nodes={members} label={named} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(chosen.length > 0 ? { implicated: chosen } : {})} />
-            </ViewBoundary>
+            {/*
+              * DRAWN AS A PAGE, as its own place draws it: the panel is the
+              * page here, so the lens's panel is no card inside it with a
+              * scroll box of its own — the mode its props say, said to the
+              * primitives too.
+              */}
+            <ViewModeProvider mode="fullscreen">
+              <ViewBoundary kind={kind} {...(registration?.title ? { view: registration.title } : {})}>
+                <View nodes={members} label={named} fidelity="full" cardinality="many" mode="fullscreen" selected={false} {...(chosen.length > 0 ? { implicated: chosen } : {})} {...(flagged.length > 0 ? { flagged } : {})} />
+              </ViewBoundary>
+            </ViewModeProvider>
           </NamedAbove.Provider>
         ) : null}
       </div>
@@ -321,7 +367,7 @@ function linkGroups(
 
 function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
   const actsAt = useActsAt();
-  const { store, view, setSelection } = useGraview<S>();
+  const { store, views, view, setSelection } = useGraview<S>();
   const { go } = useNavigation();
   const graph = useGraph<S>();
   const node = store.graph.getNode(id);
@@ -334,13 +380,24 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
     return other ? labelOf(store.schema.tryDefinition(other.kind), other as never) : of;
   };
   const noun = nounOf(store.schema.tryDefinition(kind), kind);
+  /*
+   * ITS CARD, AT A SIZE A PERSON READS: the kind's own card where the app
+   * drew one, and otherwise what the framework's card says of it beyond
+   * its name and its links — its fields, editable where an act writes
+   * them. Its links are the list under it.
+   */
+  const registration = views.resolve(kind as never, { cardinality: "one", fidelity: "full" });
+  const Card = registration?.view as ViewComponent<S> | undefined;
+  const ownCard = Card !== undefined && !isDefaultView(Card);
+  /* A record risen from (in focus, not chosen) is put away by leaving it, as a lens is. */
+  const close = () => (view.focusId === id ? go({ ...withFocus(view, null), selection: [] }) : setSelection([]));
   return (
     <PanelFrame
       label={`${name(id)}: its links`}
       testId="record-panel"
-      wide="min(360px, 40%)"
+      wide={ownCard ? "min(max(440px, 46%), 760px)" : "min(360px, 40%)"}
       sheetHeight="52%"
-      onClose={() => setSelection([])}
+      onClose={close}
       head={
         <>
           <div style={eyebrow}>{noun}</div>
@@ -357,6 +414,15 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
         </>
       }
     >
+      <div data-graview-record-card={id} style={{ padding: "8px 18px 0" }}>
+        {ownCard ? (
+          <ViewBoundary kind={kind}>
+            <Card node={node as never} fidelity="full" cardinality="one" mode="fullscreen" selected={false} />
+          </ViewBoundary>
+        ) : (
+          <Fields<S> id={id} shown={[name(id)]} />
+        )}
+      </div>
       {groups.length === 0 ? <p style={{ ...quiet, margin: "14px 18px" }}>No links yet.</p> : null}
       {groups.map((group) => (
         <section key={group.key} aria-label={group.words} data-graview-links={group.edge}>
@@ -423,6 +489,40 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
   }, [store, kind, graph, view.past]);
   // A district that stops being asked about takes its question with it.
   useEffect(() => () => setEmphasis(null), [setEmphasis]);
+  /*
+   * ITS PROBLEMS, the same rows the bar's problems list draws: the broken
+   * rules that name one of this district's records. The "⚠ N" on its name
+   * counts these, and presses to here.
+   */
+  const everyProblem = useViolations<S>();
+  const flag = useKit().marks.flag;
+  const problems = useMemo(() => {
+    const ids = new Set(members.map((member) => member.id));
+    return everyProblem.filter((violation) => violation.nodeIds.some((id) => ids.has(id)));
+  }, [everyProblem, members]);
+  const lit = useMemo(() => [...new Set(problems.flatMap((violation) => violation.nodeIds))].filter((id) => store.graph.getNode(id)?.kind === kind).slice(0, 300), [problems, store, kind]);
+  const problemsHead = useRef<HTMLHeadingElement | null>(null);
+  const asked = useSyncExternalStore(subscribeToProblemsAsked, problemsAsked, problemsAsked);
+  // Asked for from the district's name: brought into view, and the keyboard moved to it.
+  useEffect(() => {
+    if (asked?.kind !== kind || problems.length === 0) return;
+    problemsHead.current?.scrollIntoView?.({ block: "start" });
+    problemsHead.current?.focus({ preventScroll: true });
+  }, [asked?.n, asked?.kind, kind, problems.length > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* Closed, the keyboard goes back to what opened it — the problem count if there is one, else the district — never to the page. */
+  useEffect(
+    () => () => {
+      putDownProblemsAsked();
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (active && active !== document.body) return;
+        const escaped = CSS.escape(kind);
+        document.querySelector<HTMLElement>(`[data-testid="district-problems-${escaped}"]`)?.focus({ preventScroll: true }) ??
+          document.querySelector<HTMLElement>(`[data-graview-view="${kindCardId(kind).replace(/["\\]/g, "\\$&")}"]`)?.focus({ preventScroll: true });
+      }, 0);
+    },
+    [kind],
+  );
   const plural = pluralLabel(store.schema, kind);
   const words = narrow.trim().toLowerCase();
   const shown = words ? members.filter((member) => member.name.toLowerCase().includes(words)) : members;
@@ -450,6 +550,32 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
         </>
       }
     >
+      {problems.length > 0 ? (
+        <section aria-label="Problems" data-testid="district-problems" data-graview-problems={problems.length}>
+          {/* The records that are broken stand out on the map while this is open. */}
+          <style>{`${lit.map((id) => `.graview-ground[data-graview-altitude] .graview-building[data-graview-building="${CSS.escape(id)}"] polygon`).join(",\n")} { stroke: var(--graview-accent); stroke-width: 2.2; stroke-opacity: 1; }`}</style>
+          <h3
+            ref={problemsHead}
+            tabIndex={-1}
+            data-testid="district-problems-heading"
+            style={{ display: "flex", alignItems: "baseline", gap: 8, margin: 0, padding: "14px 18px 8px", fontSize: "0.9375rem", fontWeight: 600, color: "var(--graview-warn)", borderTop: "1px solid var(--graview-edge)", scrollMarginTop: 0, outlineOffset: -2 }}
+          >
+            <span aria-hidden="true">{flag}</span>
+            <span style={{ color: "var(--graview-ink)" }}>{problemsNamed(problems.length, plural)}</span>
+          </h3>
+          <ol style={listStyle} data-testid="district-problem-rows">
+            <Suspense fallback={null}>
+              <ProblemRows
+                violations={problems}
+                pick={(violation) => {
+                  const id = violation.subjectId ?? violation.nodeIds[0];
+                  if (id !== undefined) setSelection([id]);
+                }}
+              />
+            </Suspense>
+          </ol>
+        </section>
+      ) : null}
       {relations.length > 0 ? (
         <section aria-label="Relations">
           <h3 style={heading}>Relations</h3>

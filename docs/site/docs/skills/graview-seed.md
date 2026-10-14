@@ -1,6 +1,6 @@
 # graview-seed
 
-`graview-seed` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
+`graview-seed` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -41,7 +41,7 @@ pnpm build:domain && npx graview describe ./dist/domain/app.js
 
 1. **Show it before you run it.** `<PlanReview plan={plan} declinable />` draws the plan in the order it will run, counts what it makes, and strikes refusals through with their reason. `declinable` lets a person drop one — and declining the area declines the tree standing in it, said beside the entry BEFORE the press (`dependentsOf`, `without`). A seeding nobody read is a seeding nobody can trust, and a review nobody can disagree with is not a review.
 
-1. **If the data is already a spreadsheet, import it, don't retype it.** `importRows(store, kind, rows, mapping, { by })` (`@graview/core/import`) reads each cell by its field's type, links a cell to a record by its name, lands one undoable batch and says each refused row in words; offer `proposeMapping` and `previewImport` first. Import the far ends (events) before the kind that names them (vendors). See `docs/import.md`.
+1. **If the data is already a spreadsheet, import it, don't retype it.** `importRows(store, kind, rows, mapping, { by })` (`@graview/core/import`) reads each cell by its field's type, links a cell to a record by its name, lands one undoable batch and says each refused row in words; offer `proposeMapping` and `previewImport` first. Import the far ends (events) before the kind that names them (vendors). Imported again, pass `match: "label"` (or `{ column, field }`): a row changes the record it finds, through its edit act, instead of making a second. See `docs/import.md`.
 
 1. **Write the prompt from the graph, not from your head.** The model needs the kinds, the acts and their arguments — which `generateLlmsTxt(app)` (`@graview/core/check`) already writes — plus what is already there, so it does not propose a second Back Lawn.
 

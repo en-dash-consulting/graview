@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T07:10:56.105Z",
+  "at": "2026-10-13T21:29:57.982Z",
   "engine": "chromium",
   "checks": {
     "theKeyboardLeftOnBodyIsCaught": true,
@@ -8,11 +8,13 @@
     "codeIsNotPeopleText": true,
     "aKeysOwnWordsAreCaught": true,
     "aWordInASentenceIsNotAKey": true,
+    "aWordAnotherStoreDeclaresIsNotAKey": true,
     "shownThoughNotSpokenIsCaught": true,
     "aRecordTheSeatMayNotSeeIsCaught": true,
     "whatOneSeatMaySeeIsNotCaughtBesideAnother": true,
     "aSeatToTakeIsNotARecordShown": true,
     "aPageThatScrollsSidewaysIsCaught": true,
+    "aTargetTooSmallIsCaught": true,
     "aRefusedPressIsCaught": true,
     "aCleanPageNamesNothing": true
   },

@@ -1,6 +1,6 @@
 # graview-agent-seat
 
-`graview-agent-seat` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
+`graview-agent-seat` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -24,7 +24,7 @@ The author is a `Principal` — an author with roles — so what the log blames 
 
 1. **Report what it READ.** `useAttention(runtime)` pipes a settled read-only call's node ids into the picture, so a kind lights faintly where the agent looked. That is the half a diff cannot show, and the half that says whether to trust what it then did.
 
-1. **Find by name with `search_graph`, before `get_graph`.** It is the Find box's matcher: hits with why they matched, `key:value` conditions (`done:false`, `is:any` for the past, `kind:task`), and the records it names counted as reads. Reading the whole graph to scan it is the move a person with a search box never makes.
+1. **Find by name with `search_graph`, before `get_graph`.** It is the Find box's matcher: hits with why they matched, `key:value` conditions (`done:false`, `is:any` for the past, `kind:task`), and the records it names counted as reads; a `near: true` hit is a near word, not the name. Reading the whole graph to scan it is the move a person with a search box never makes.
 
 **Ask what a place shows with `describe_place`, before you say done.** `{ place: "home" | "<slug>" | "<record id>", width: 390 }` returns the headings, figures, lists (each record's title and what its card or row says), group headings, empty words and problems this seat would see, as data and text. It reads what the faces draw from (`describePlace`, from `@graview/core/describe`), so it is not a guess. Hand the runtime the app (`createToolRuntime(store, { app })`, `createMcpHttpHandler({ app })`) or it says only kinds and records. On a checkout: `graview describe <entry> --place home --seed seed.json --as partner --width 390`.
 
@@ -36,7 +36,7 @@ The author is a `Principal` — an author with roles — so what the log blames 
 
 `mcp` is MCP over stdio around this same runtime; `apply` is one act, a plan of many as one batch, or an undo, from a shell. Both open the store `graview serve` opens — a folder, SQLite, or a running server — and act under the seat you name, so the policy refuses there what it refuses here. Put `serve` and `mcp` in the app's scripts so the door is always there, and tell the agent the seed is a first-install snapshot: it changes the live graph through these, never by editing `example.json` and wiping. `graview mcp <entry> --list --roles …` prints the seat's tools as `tools/list` JSON — the catalog a host registers without writing one.
 
-1. **Say what a guess was based on.** A host applying an agent's inference passes `lineage: { basis, confidence, model }` with the author; a link made under 1 by anyone but a person is provisional until a person keeps it (`keep-link`; `@graview/core/provenance`).
+1. **Say what a guess was based on.** A host applying an agent's inference passes `lineage: { basis, confidence, model }` with the author; a link made under 1 by anyone but a person is provisional until a person keeps it (`keep-link`, permitted per relation; `@graview/core/provenance`).
 
 ### Worked examples
 

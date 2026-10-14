@@ -1,6 +1,6 @@
 # graview-brand
 
-`graview-brand` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+`graview-brand` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -38,7 +38,7 @@ export const brand: Brand = { name: "Acme Bids", // Inline SVG using currentColo
 
 A route or a pattern is a named strategy, one case in one file (`@graview/react` `routes.ts`, `@graview/render` `connectors.ts`), so the next one is one more case. `graview check` holds an explicit line color to 3:1 against both grounds in both schemes (`kit-contrast-below-aa`); a kind kept quiet is still on the inspector. The kit dresses the lines on the ground. From altitude one manner means one thing and the Key says which: a relation is a ribbon between two districts, as wide as its links; a chosen record's links are drawn in the accent and labeled in the kind's words. `visible: false` keeps a relation's ribbon off the map too. An embed's `handle.setBrand({ ...brand, kit })` re-dresses it live.
 
-1. **Say its money and its days.** `currency: "EUR"` and `locale: "de-DE"` on the brand (a document's `brand` may carry them alone, without an accent) are what a sum is said in wherever a block names none: a figure or a field shown as money, and `{net | money}` in a template — "21.000 €". A block's own `currency` wins. The locale says every day, time and number too, on every face: en-US unless it says ("Sep 10, 2023", "3:30 PM", "1,250"); "en-GB" keeps the day first. The reader's, a host's `locale` on the embed or the provider, wins over it. `graview check` refuses a code or a locale it cannot write (`brand-currency`, `brand-locale`).
+1. **Say its money and its days.** `currency: "EUR"` and `locale: "de-DE"` on the brand (a document's `brand` may carry them alone, without an accent) are what a sum is said in wherever a block names none: a figure or a field shown as money, and `{net | money}` in a template — "21.000 €". A block's own `currency` wins. A document field marked `"format": "money"` is said in it on every face — record, list, card, table, form ("$" beside the box, "$1,250.50" taken as typed) — and its own `"unit": "EUR"` wins; `graview check` warns `money-currency` where neither names one. `set-format` changes only a field's format or unit. The locale says every day, time and number too, on every face: en-US unless it says ("Sep 10, 2023", "3:30 PM", "1,250"); "en-GB" keeps the day first. The reader's, a host's `locale` on the embed or the provider, wins over it. `graview check` refuses a code or a locale it cannot write (`brand-currency`, `brand-locale`).
 
 ### A document's brand
 
@@ -69,7 +69,7 @@ This skill is built to be DRIVEN IN NATURAL LANGUAGE — "warmer", "more editori
 - **palette** → change `accent` (or supply explicit scheme tokens) and let `brandFromAccent` move lightness the minimum distance that clears AA;
 - **lines** → `kit.connectors` ("right-angled lines", "hide the grows-in lines", "make tended-by dashed and navy") and the ground's `kit.grid`;
 - **feel** → `shape.radius` (square = formal) and `shape.density` (tight = dense) — one number each;
-- **voice** → `typography.body/display/mono` with real fallback stacks (unset, each is the framework's: `SHAPE` and `TYPOGRAPHY` in `@graview/core`; a page outside the app dressed to match reads `shapeOf(brand)`, `typographyOf(brand)` and `isoShade(scheme)`, never copied numbers);
+- **voice** → `typography.body/display/mono` with real fallback stacks (unset, each is the framework's: `SHAPE` and `TYPOGRAPHY` in `@graview/core`; a page outside the app dressed to match reads `shapeOf(brand)`, `typographyOf(brand)` and `isoShade(scheme)`, never copied numbers); a page's sizes are one scale the theme writes as `--graview-text-small`, `-body`, `-heading` and `-title` — "larger pages" sets those in the app's stylesheet, never a component's size;
 - **kind colors** → `accents` hues per kind;
 - **per-kind layout** → register a view over the registry cell, the same authoring move as everything else (see graview-node-kind).
 

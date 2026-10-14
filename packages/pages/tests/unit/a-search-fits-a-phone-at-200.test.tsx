@@ -31,7 +31,7 @@ const html = () => {
 describe("the search page", () => {
   it("keeps each group to its track and lets a hit break", () => {
     const page = html();
-    const group = page.match(/<section style="([^"]*)" data-testid="search-group"/)?.[1] ?? "";
+    const group = page.match(/<section class="graview-list" style="([^"]*)" data-testid="search-group"/)?.[1] ?? "";
     expect(group).toContain("grid-template-columns:minmax(0, 1fr)");
     expect(page).toContain("overflow-wrap:anywhere");
   });

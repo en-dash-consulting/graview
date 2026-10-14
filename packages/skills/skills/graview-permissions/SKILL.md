@@ -101,18 +101,10 @@ yesterday and now the button is gone.
    installation without people is a household of one, not a disabled module.
    Say it once and the checker stops asking.
 
-8. **Say who sees what, for every kind.** `sees` keeps records from seats
-   the way grants keep acts: once there is one sight, a kind no sight names
-   is seen by nobody but the system (`sight-unnamed-kind` says which).
-   `{ roles: "*", kinds: ["car"] }` is the shop window; `own: true` keeps a
-   kind to a seat's own records — theirs, joined to theirs, or made by
-   them. A served store sends a seat only what it sees, withholds the rest
-   of the log in place, and refuses an act that names a record it may not —
-   a document's act that sets the record at the other end of a link
-   (`setsOther`) too: that record is its `to`, refused as missing.
-   A record whose required reference names a kind its seat may not see is
-   withheld whole (`sight-hides-required-ref` says which role loses which
-   kind): let the role see the target, or make the field optional.
+8. **Say who sees what, for every kind — and which fields.** `sees` keeps
+   records (and, with `hide` or `fields`, some of their fields) from seats
+   the way grants keep acts. It is a job of its own: the `graview-sight`
+   skill.
 
 9. **Say which kind is the people.** `people: true` on one kind (a
    document's `"people": true`; the installation's `user` says it): a
@@ -159,18 +151,8 @@ button they cannot press. Report the output. The people have theirs:
 or a `$me` and no people kind), `sight-via-misses-people` (a relation that
 never reaches them) and `grant-own-end-without-link`.
 
-`act-reads-hidden-kind` (a warning, FR-105) names an act, a role that may run
-it and a kind that role may not see, which the act reads: its condition, its
-refusal, a value it sets in a document (on its subject or the other record)
-or the links it `replaces`; what it declares it `reads` in
-TypeScript (`reads: ["memo"]` — an `apply` is never read, so say it). The
-store hides the records; the act's answer can still tell that one exists.
-Let the role see the kind, keep the act from it, or read only what it sees.
-
-A seat's problems are judged over what it sees: a rule counting
-`fact('proposed')` says 3 to the owner and 1, or nothing, to a guest who
-sees one. `rule-says-hidden-fact` (a warning) names each rule whose message
-says a fact over a kind some role told of it may not see in full.
+What a sight keeps, and the checks that say so (`act-reads-hidden-kind`,
+`rule-says-hidden-fact`, the `sight-*` codes), are `graview-sight`'s.
 
 **And try it.** Two tests that matter more than the check:
 

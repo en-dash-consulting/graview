@@ -26,9 +26,9 @@ const apps: Record<string, GraviewApp<AnySchema>> = {
   launcher: launcherApp as never,
 };
 
-/** What a face's view registry names: each declared lens's places, then any the app's own views register. */
+/** What a face's view registry names: each declared lens's places — one picture over several kinds saying so, as `registerDeclaredLenses` registers it — then any the app's own views register. */
 function registered(app: GraviewApp<AnySchema>): Place[] {
-  const out: Place[] = declaredLenses(app).drawn.flatMap((lens) => lens.kinds.map((kind) => ({ kind, title: lens.title, as: lens.as, ...(lens.across ? { across: lens.across } : {}) })));
+  const out: Place[] = declaredLenses(app).drawn.flatMap((lens) => lens.kinds.map((kind) => ({ kind, title: lens.title, as: lens.as, ...(lens.across ? { across: lens.across } : {}), ...(lens.kinds.length > 1 ? { over: lens.kinds } : {}) })));
   for (const place of app.views?.places?.() ?? []) if (!out.some((held) => held.kind === place.kind && held.as === place.as)) out.push(place);
   return out;
 }

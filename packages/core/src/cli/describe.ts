@@ -1,3 +1,4 @@
+import { capitalize } from "../capital.js";
 import { arrangeable } from "../arrangement.js";
 import { searchableFields } from "../search.js";
 import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
@@ -17,6 +18,9 @@ import { computedOf } from "../document/computed.js";
 import { placePath } from "../views/types.js";
 import { dayAsRead, DEFAULT_LOCALE, numberAsRead, timeAsRead } from "../days.js";
 import { formatMoney } from "../document/template.js";
+import { amountOf } from "../schema/amount-mark.js";
+import { amountMark, amountSentence } from "../schema/amount-words.js";
+import { sayAmount } from "../document/amount.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -132,7 +136,7 @@ export function describeApp<S extends AnySchema>(
     lines.push(
       `${lensesDeclared.drawn.length} declared ${lensesDeclared.drawn.length === 1 ? "lens draws" : "lenses draw"} as places, with no view of the app's own: ${list(
         lensesDeclared.drawn.map((lens) => {
-          const at = everywhere.find((place) => place.slug === lens.as && place.kind === lens.kinds[0]);
+          const at = everywhere.find((place) => place.slug === lens.as && (place.kind === lens.kinds[0] || (lens.kinds[0] !== undefined && place.over?.includes(lens.kinds[0]))));
           return `"${lens.title}" (the ${lens.lens} over ${list(lens.kinds.map((kind) => pluralOf(app.schema, kind)))}${lens.across ? ` across ${pluralOf(app.schema, lens.across)}` : ""}, at ${at?.address ?? placePath(lens.as)})`;
         }),
       )}.`,
@@ -294,6 +298,12 @@ export function describeApp<S extends AnySchema>(
     lines.push("", "## The people", `The people are the ${pluralOf(app.schema, people.kind).toLowerCase()}: ${withArticle(noun)} whose id is a member's principal id is that member.`);
   }
 
+  // WHAT IS NEVER SET ASIDE (FR-173): a kind whose records are kept or removed has no archive, unarchive or merge.
+  const kept = app.schema.definitions.filter((definition) => definition.archives === false).map((definition) => pluralOf(app.schema, definition.kind).toLowerCase());
+  if (kept.length > 0) {
+    lines.push("", "## Never archived", `${capitalize(list(kept))} are kept or removed, never archived or merged: no archive-, unarchive- or merge- act is offered on them.`);
+  }
+
   if (app.policy) {
     lines.push("", "## Who may do what");
     const roles = app.policy.roles ?? [];
@@ -397,6 +407,29 @@ export function describeApp<S extends AnySchema>(
     for (const line of worked) lines.push(`  ${line}`);
     if (facts.length > 0) lines.push("Facts of the whole graph: read as fact('<name>') in any expression, written by nothing, worked out from what the reader may see.");
     for (const line of facts) lines.push(`  ${line}`);
+  }
+
+  /*
+   * WHAT A NUMBER IS. A field marked money is said "$10,000" on every face
+   * and is kept as 10000; an agent that knows so sets 10000, never the
+   * words, and says it back as money. A percent is kept as a fraction.
+   */
+  const amounts = kinds.flatMap((kind) => {
+    const definition = app.schema.tryDefinition(kind);
+    const shape = ((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {}) as Record<string, unknown>;
+    return Object.entries(shape).flatMap(([name, field]) => {
+      const marked = amountOf(field);
+      if (!marked) return [];
+      const mark = amountMark(marked);
+      const example = mark.format === "percent" ? 0.15 : 1250.5;
+      const said = sayAmount(example, mark);
+      return [`${kind} · ${name}: ${amountSentence(mark)} ${example} is said "${said}".`];
+    });
+  });
+  if (amounts.length > 0) {
+    lines.push("", "## Amounts");
+    lines.push("Kept as plain numbers and said as their fields declare on every face: set the number, never the words.");
+    for (const line of amounts) lines.push(`  ${line}`);
   }
 
   /*

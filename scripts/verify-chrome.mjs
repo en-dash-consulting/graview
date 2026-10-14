@@ -699,7 +699,8 @@ try {
     }
     report.checks.theShellAndAnEmbedWearOneBarOnTheScene = { ...bars, ok: Object.values(bars).every((one) => one.ok) };
   }
-  /* ---- A day said as the glance says it, and a choice as it is declared: in the problems, and on a record's page */
+  /* ---- A day said as the glance says it, and a choice as it is declared: in the problems, and on a record's page.
+     The day is in the page's locale (FR-178): "Aug 28, 2026" in en-US, "28 Aug 2026" in en-GB, never 2026-08-28. */
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     page.on("pageerror", (error) => errors.push(error.message));
@@ -724,7 +725,7 @@ try {
     report.checks.aSentenceSaysADayAndAChoiceAsAPersonReadsThem = {
       problems: problems.slice(0, 400),
       record,
-      ok: problems.length > 0 && !iso.test(problems) && /\b\d{1,2} [A-Z][a-z]{2} \d{4}\b/.test(problems) && !iso.test(record.text) && record.said.length > 0 && !record.said.some((one) => raw.test(one)) && record.said.includes("Tue"),
+      ok: problems.length > 0 && !iso.test(problems) && /\b(?:\d{1,2} [A-Z][a-z]{2} \d{4}|[A-Z][a-z]{2} \d{1,2}, \d{4})\b/.test(problems) && !iso.test(record.text) && record.said.length > 0 && !record.said.some((one) => raw.test(one)) && record.said.includes("Tue"),
     };
   }
   /* ---- FR-78, restated: the seat floats at the foot, snaps between the feet, and can be left out */

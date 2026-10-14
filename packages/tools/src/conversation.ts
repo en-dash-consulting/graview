@@ -587,7 +587,8 @@ export function graphResponder<S extends AnySchema>(
        * "due 2026-09-01"), and a one-word yes/no as the state it is
        * ("not finished", not "finished: no").
        */
-      const facts = readableFields(node, definition, { limit: 3 })
+      // Prose by its start (FR-180), Markdown's syntax taken out.
+      const facts = readableFields(node, definition, { limit: 3, excerpt: true })
         .map((field) => {
           const raw = (node as Record<string, unknown>)[field.key];
           if (typeof raw === "boolean" && !/\s/.test(field.label)) return raw ? quietly(field.label) : `not ${quietly(field.label)}`;
@@ -668,6 +669,8 @@ export function graphResponder<S extends AnySchema>(
           ...(context.selection ? { from: context.selection } : {}),
           ...((options.today ?? context.today) ? { today: options.today ?? context.today } : {}),
           limit: 6,
+          // The reply says what things are called “…”: a near word is not what anything is called.
+          near: false,
         });
         const picks = found.hits.filter((hit): hit is Extract<Hit, { about: "node" }> => hit.about === "node");
         if (picks.length > 0) {

@@ -1,4 +1,5 @@
-import { withFocus, withoutMoves, withOverview, withoutSearch, kindsOfAggregate } from "@graview/layout/view";
+import { withFocus, withoutMoves, withOverview, kindsOfAggregate } from "@graview/layout/view";
+import { withoutSearch } from "@graview/layout/view-moves";
 import { pluralLabel, layer } from "@graview/core";
 import { useGraview, useJackIn, useNavigation, useSelection } from "@graview/react/provider";
 import { useEffect } from "react";

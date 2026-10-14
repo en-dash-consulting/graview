@@ -172,6 +172,7 @@ export function RuleLineView({
  * own title where it says something the line does not.
  */
 export function problemTitle(violation: Pick<Violation, "label" | "message" | "line">): string | undefined {
-  if (!violation.line) return violation.label && violation.label !== violation.message ? violation.label : undefined;
+  // A label the sentence already begins with is said once, in the sentence.
+  if (!violation.line) return violation.label && violation.label !== violation.message && !violation.message.startsWith(violation.label) ? violation.label : undefined;
   return violation.label && violation.label.trim().length > 0 ? violation.label : undefined;
 }

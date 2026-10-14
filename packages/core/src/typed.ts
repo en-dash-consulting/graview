@@ -23,6 +23,7 @@
  */
 import type * as z from "./schema/zod.js";
 import type { FileValue } from "./schema/files.js";
+import type { Repeat } from "./repeat.js";
 import type { ActSpec, DocumentSpec, EdgeSpec, FieldSpec, KindSpec, RuleSpec } from "./document/schema.js";
 
 // ------------------------------------------------------------- the types
@@ -121,10 +122,10 @@ type Get<T, K extends string> = T extends { readonly [P in K]?: infer V } ? NonN
 type Keys<T> = [T] extends [never] ? never : T extends object ? keyof T & string : never;
 type Simplify<T> = { [K in keyof T]: T[K] } & {};
 
-/** What a field of one declared type holds: its options for an enum, a number for a number, words for the rest. */
+/** What a field of one declared type holds: its options for an enum, a number for a number (and a duration, in minutes), words for the rest. */
 export type ValueOf<F> = F extends { readonly type: "enum"; readonly options: readonly (infer O)[] }
   ? O
-  : F extends { readonly type: "number" | "integer" }
+  : F extends { readonly type: "number" | "integer" | "duration" }
     ? number
     : F extends { readonly type: "boolean" }
       ? boolean
@@ -139,11 +140,15 @@ export type ValueOf<F> = F extends { readonly type: "enum"; readonly options: re
               : string;
 
 type RequiredFields<Fs> = { [F in keyof Fs]: Fs[F] extends { readonly required: true } ? F : never }[keyof Fs];
+type RepeatingFields<Fs> = { [F in keyof Fs]: Fs[F] extends { readonly repeats: true } ? F : never }[keyof Fs];
 
 /** One kind's record, as the store holds it: `id`, `kind`, every required field, and the rest optional. */
 export type RecordOfKind<K extends string, Spec> = Simplify<
   { readonly id: string; readonly kind: K } & { readonly [F in RequiredFields<Get<Spec, "fields">>]: ValueOf<Get<Spec, "fields">[F]> } & {
     readonly [F in Exclude<keyof Get<Spec, "fields">, RequiredFields<Get<Spec, "fields">>>]?: ValueOf<Get<Spec, "fields">[F]>;
+  } & {
+    /** How a date that repeats does, kept beside it as `<date>Repeat`. */
+    readonly [F in RepeatingFields<Get<Spec, "fields">> as `${F & string}Repeat`]?: Repeat | null;
   }
 >;
 
@@ -169,7 +174,7 @@ type ComputedNames<D, K extends string> = Keys<Get<KindOf<D, K>, "computed">>;
 type AllFields<D> = { [K in KindNames<D>]: FieldNames<D, K> }[KindNames<D>];
 type EdgeNames<D> = { [K in KindNames<D>]: Keys<Get<KindOf<D, K>, "edges">> }[KindNames<D>];
 /** An act a rule's repair or a grant may name: one the document declares, or one every kind is given. */
-type ActNames<D> = Keys<Get<D, "acts">> | `${"edit" | "remove" | "archive" | "unarchive" | "merge"}-${KindNames<D>}`;
+type ActNames<D> = Keys<Get<D, "acts">> | `${"edit" | "remove" | "archive" | "unarchive" | "merge" | "skip" | "detach" | "split"}-${KindNames<D>}`;
 type RoleNames<D> = Get<D, "roles"> extends readonly (infer R)[] ? R & string : string;
 
 /*

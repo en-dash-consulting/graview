@@ -1,6 +1,7 @@
 import { pluralLabel } from "@graview/core";
 import type { AnySchema } from "@graview/core";
-import { withoutMoves, withPast, withZoom } from "@graview/layout/view";
+import { withoutMoves, withZoom } from "@graview/layout/view";
+import { withPast } from "@graview/layout/view-moves";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { Fragment, type ReactNode } from "react";
 import { nameOf } from "./answer-args.js";

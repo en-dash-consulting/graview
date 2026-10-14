@@ -4,6 +4,7 @@ import type { Expr } from "./expr/parse.js";
 import { dayAsRead, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, numberAsRead } from "../days.js";
 import { listed } from "../capital.js";
 import { excerpt } from "../excerpt.js";
+import { formatMoney, type Money } from "./money.js";
 
 /*
  * TEMPLATES: "{name}", "{status} · {quote|money}", "{fills.name}".
@@ -63,29 +64,12 @@ export function formatValue(value: Value, format: Formatter | undefined, today: 
   return show(value, format, today, args, money);
 }
 
-/**
- * HOW AN APP SAYS MONEY (FR-100): the currency a sum is in when a block
- * names none, and the locale its figures are written for — the app's
- * `brand.currency` and `brand.locale`. Without a currency a sum is a
- * number in figures, as it always was. The locale is the app's for its
- * days, times and numbers too (FR-178); a reader's a host passed wins.
+/*
+ * How an app says money (FR-100) is `money.ts`'s, which a record's face
+ * reads without the template machinery: re-exported here, where templates
+ * and blocks have always found it.
  */
-export interface Money {
-  readonly currency?: string;
-  readonly locale?: string;
-}
-
-/** A sum of money in words: "$21,000", "21.000 €" — whole sums without cents, others with two. */
-export function formatMoney(value: number, money: Money = {}): string {
-  const whole = Number.isInteger(value);
-  const digits = { maximumFractionDigits: whole ? 0 : 2, minimumFractionDigits: whole ? 0 : 2 };
-  try {
-    return numberAsRead(value, money.locale, money.currency ? { style: "currency", currency: money.currency, ...digits } : digits);
-  } catch {
-    // A currency the runtime does not know is said as a plain number, never a thrown page.
-    return numberAsRead(value, money.locale, digits);
-  }
-}
+export { formatMoney, type Money } from "./money.js";
 
 const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
 const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];

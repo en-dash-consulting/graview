@@ -1,0 +1,55 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Graview Roadmap",
+  "description": "What the framework is asked for and what each release answers: every brief a Markdown body, as Graview Cloud's Roadmap keeps them.",
+  "roles": [
+    "owner"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner"
+        ],
+        "mutations": "*"
+      }
+    ]
+  },
+  "kinds": {
+    "brief": {
+      "noun": "brief",
+      "plural": "briefs",
+      "description": "A brief between the framework and Cloud, written in Markdown.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "sent",
+            "answered"
+          ],
+          "default": "sent",
+          "required": true
+        },
+        "body": {
+          "type": "text",
+          "format": "markdown"
+        },
+        "notes": {
+          "type": "text"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-brief": {
+      "title": "Add a brief",
+      "creates": "brief",
+      "description": "Write a brief down."
+    }
+  }
+}

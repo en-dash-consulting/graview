@@ -1,4 +1,4 @@
-import { edgeWords } from "@graview/core";
+import { edgeWords } from "@graview/core/words";
 
 /*
  * A CHOSEN RECORD'S OWN LINKS, AND NOTHING ELSE.

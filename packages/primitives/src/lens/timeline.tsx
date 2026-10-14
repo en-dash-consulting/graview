@@ -3,7 +3,7 @@ import { labelOf, type AnySchema, type ArrangeOption, type Arrangement, type Nod
 import { useArranging } from "./arranging.js";
 import { withNaturalTime } from "./natural-time.js";
 import { useGraview, type ViewProps } from "@graview/react";
-import type { CSSProperties, ReactElement } from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster } from "../primitives/index.js";
 
@@ -296,6 +296,21 @@ function spanEmphasis(emphasis: Emphasis, hue: number): CSSProperties {
 /** Below this share of the window, a span is a moment rather than a duration. */
 const MOMENT_RATIO = 0.045;
 const GUTTER = 52;
+/** The space between two columns: the same under the heads as in the grid, so each head stands over its own column. */
+const COLUMN_GAP = 4;
+/*
+ * HOW TALL ONE STEP OF THE AXIS IS, AT THE LEAST.
+ *
+ * The grid is positioned in percentages of its own box, so it was exactly
+ * as tall as whatever held it said — and a holder that said nothing (the
+ * panel beside the map, whose body is as tall as what it holds) gave it
+ * none: the week drew its day names, half of one hour's label and not one
+ * shift. A step between two rules is never shorter than a label and room
+ * to read a block between them; a holder with more room still stretches it.
+ */
+const STEP_AT_LEAST = 44;
+/** And the whole grid, however few steps the window has. */
+const GRID_AT_LEAST = 240;
 
 /**
  * The lens's aggregate view.
@@ -375,25 +390,9 @@ export function TimelineView<S extends AnySchema>({
       style={{ gap: 12, ...(page ? { flex: "1 1 auto", minHeight: 0, height: "100%" } : {}) }}
     >
       <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-        <div style={{ display: "flex", paddingLeft: GUTTER, paddingBottom: 10 }}>
-          {options.columns.map((column) => (
-            <div
-              key={column.id}
-              style={{
-                flex: 1,
-                fontSize: "0.75rem",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                textAlign: "center",
-                color: "var(--graview-ink-muted)",
-              }}
-            >
-              {column.label}
-            </div>
-          ))}
-        </div>
+        <DayHeads columns={options.columns} />
 
-        <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+        <div data-graview-timeline-grid="" style={{ position: "relative", flex: 1, minHeight: Math.max(GRID_AT_LEAST, Math.ceil(range / tick) * STEP_AT_LEAST) }}>
           {ticks.map((at, index) => (
             <div
               key={at}
@@ -437,7 +436,7 @@ export function TimelineView<S extends AnySchema>({
             </div>
           ))}
 
-          <div style={{ position: "absolute", inset: 0, left: GUTTER, display: "flex", gap: 4 }}>
+          <div style={{ position: "absolute", inset: 0, left: GUTTER, display: "flex", gap: COLUMN_GAP }}>
             {options.columns.map((column) => (
               <Column
                 key={column.id}
@@ -453,6 +452,111 @@ export function TimelineView<S extends AnySchema>({
         </div>
       </div>
     </Panel>
+  );
+}
+
+/**
+ * WHICH BLOCKS SAY THEIR NAME ON ONE LINE. Overlapping shifts split a column
+ * into lanes, and a lane narrower than a word showed that word sliced at the
+ * block's edge — "Monc", "o…", "up" — which reads as a broken word, not a
+ * long one. A name that has a word wider than its block says itself on one
+ * line with an ellipsis instead, the whole name in the block's title.
+ * Measured after every drawing (a problem's spine narrows a block), adding
+ * only, so a measure never undoes the one before it; a column that changes
+ * width starts again from every name wrapped.
+ */
+function useNarrowNames() {
+  const column = useRef<HTMLDivElement | null>(null);
+  const [oneLine, setOneLine] = useState<ReadonlySet<string>>(new Set());
+  useLayoutEffect(() => {
+    const element = column.current;
+    if (!element) return;
+    const more = [...element.querySelectorAll<HTMLElement>("[data-graview-span-name]")]
+      .filter((name) => name.scrollWidth > name.clientWidth + 0.5)
+      .map((name) => name.getAttribute("data-graview-span-name")!)
+      .filter((id) => !oneLine.has(id));
+    if (more.length > 0) setOneLine(new Set([...oneLine, ...more]));
+  });
+  useLayoutEffect(() => {
+    const element = column.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    let width = Math.round(element.clientWidth);
+    const watch = new ResizeObserver(() => {
+      const now = Math.round(element.clientWidth);
+      if (now === width) return;
+      width = now;
+      setOneLine(new Set());
+    });
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, []);
+  return { column, oneLine };
+}
+
+/** A column's head said whole, in three letters, or in one: the longest that fits its column. */
+const headAt = (label: string, length: number): string => (length === 0 ? label : label.slice(0, length));
+const HEAD_LENGTHS = [0, 3, 1] as const;
+
+/**
+ * THE COLUMNS' HEADS, each over its own column and never cut.
+ *
+ * The heads were a row of their own with no gap between them while the
+ * columns under them had four pixels, so each drifted off its column, and on
+ * a narrow card "MON TUE WED" ran together into one word with SUN cut off.
+ * Same gap as the grid; and where a head does not fit its column it says
+ * three letters, then one — "Wednesday", "WED", "W" — measured, not guessed,
+ * with the whole name kept for a screen reader and on hover.
+ */
+function DayHeads({ columns }: { readonly columns: readonly TimelineColumn[] }) {
+  const row = useRef<HTMLDivElement | null>(null);
+  const [step, setStep] = useState(0);
+  useLayoutEffect(() => {
+    const element = row.current;
+    if (!element) return;
+    const cut = [...element.children].some((head) => head.scrollWidth > head.clientWidth + 0.5);
+    if (cut && step < HEAD_LENGTHS.length - 1) setStep(step + 1);
+  });
+  useLayoutEffect(() => {
+    const element = row.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    let width = element.clientWidth;
+    // Wider or narrower, the whole names are tried again first.
+    const watch = new ResizeObserver(() => {
+      if (element.clientWidth === width) return;
+      width = element.clientWidth;
+      setStep(0);
+    });
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, []);
+  const length = HEAD_LENGTHS[step]!;
+  return (
+    <div ref={row} style={{ display: "flex", gap: COLUMN_GAP, paddingLeft: GUTTER, paddingBottom: 10 }}>
+      {columns.map((column) => {
+        const said = headAt(column.label, length);
+        return (
+          <div
+            key={column.id}
+            data-graview-day-head={column.id}
+            title={said === column.label ? undefined : column.label}
+            {...(said === column.label ? {} : { "aria-label": column.label })}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              fontSize: "0.75rem",
+              letterSpacing: length === 1 ? 0 : "0.18em",
+              textTransform: "uppercase",
+              textAlign: "center",
+              color: "var(--graview-ink-muted)",
+            }}
+          >
+            {said}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -488,9 +592,10 @@ function Column({
   const durations = assignLanes(spans.filter((span) => !isMoment(span)));
   const moments = [...spans.filter(isMoment)].sort((a, b) => a.start - b.start);
   const laneCount = Math.max(1, ...durations.map((span) => span.lanes));
+  const narrow = useNarrowNames();
 
   return (
-    <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+    <div ref={narrow.column} data-graview-day-column="" style={{ position: "relative", flex: 1, minWidth: 0 }}>
       {durations.map((span) => {
         // Durations get the WHOLE column. Reserving a third of it for the
         // moment strip left each of three concurrent lanes about forty pixels
@@ -516,6 +621,7 @@ function Column({
              * fact.
              */
             data-graview-emphasis={emphasisOf(span.id)}
+            data-graview-flagged={brokenIds.has(span.id) ? "" : undefined}
             title={`${span.label} · ${format(span.start)}–${format(span.end)}`}
             style={{
               position: "absolute",
@@ -528,6 +634,7 @@ function Column({
             }}
           >
             <div
+              data-graview-span-name={span.id}
               style={{
                 height: "100%",
                 minHeight: 15,
@@ -536,10 +643,14 @@ function Column({
                 fontSize: "0.75rem",
                 lineHeight: 1.25,
                 overflow: "hidden",
-                // Two lines beats one truncated one at these widths.
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
+                // Lines break between words, never inside one.
+                overflowWrap: "normal",
+                wordBreak: "normal",
+                ...(narrow.oneLine.has(span.id)
+                  ? // A word wider than its block: the name on one line, cut with an ellipsis, whole in the title.
+                    { display: "block", whiteSpace: "nowrap", textOverflow: "ellipsis" }
+                  : // Two lines beats one truncated one at these widths.
+                    { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }),
                 ...spanEmphasis(emphasisOf(span.id), hue(span)),
                 ...(brokenIds.has(span.id)
                   ? {

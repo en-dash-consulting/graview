@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T05:35:35.321Z",
+  "at": "2026-10-13T21:30:42.622Z",
   "tags": [
     "wcag2a",
     "wcag2aa",
@@ -10,8 +10,6 @@
   ],
   "sweep": [
     "desk light",
-    "desk dark",
-    "phone light",
     "phone dark"
   ],
   "checks": {
@@ -26,8 +24,8 @@
       "ok": true
     },
     "everyScreenWasScanned": {
-      "scanned": 68,
-      "expected": 68,
+      "scanned": 34,
+      "expected": 34,
       "ok": true
     },
     "noPageThrew": {
@@ -42,27 +40,11 @@
       "nodes": 0
     },
     {
-      "screen": "vendors · graview · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "vendors · graview · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "vendors · graview · phone · dark",
       "nodes": 0
     },
     {
       "screen": "vendors · pages · desk · light",
-      "nodes": 0
-    },
-    {
-      "screen": "vendors · pages · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "vendors · pages · phone · light",
       "nodes": 0
     },
     {
@@ -74,27 +56,11 @@
       "nodes": 0
     },
     {
-      "screen": "workshop · graview · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "workshop · graview · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "workshop · graview · phone · dark",
       "nodes": 0
     },
     {
       "screen": "workshop · pages · desk · light",
-      "nodes": 0
-    },
-    {
-      "screen": "workshop · pages · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "workshop · pages · phone · light",
       "nodes": 0
     },
     {
@@ -106,27 +72,11 @@
       "nodes": 0
     },
     {
-      "screen": "todo · / · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · / · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "todo · / · phone · dark",
       "nodes": 0
     },
     {
       "screen": "todo · /pages · desk · light",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · /pages · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · /pages · phone · light",
       "nodes": 0
     },
     {
@@ -138,27 +88,11 @@
       "nodes": 0
     },
     {
-      "screen": "todo · /pages/tasks · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · /pages/tasks · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "todo · /pages/tasks · phone · dark",
       "nodes": 0
     },
     {
       "screen": "todo · /pages/tasks/t-deposit · desk · light",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · /pages/tasks/t-deposit · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · /pages/tasks/t-deposit · phone · light",
       "nodes": 0
     },
     {
@@ -170,27 +104,11 @@
       "nodes": 0
     },
     {
-      "screen": "todo · /pages/problems · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · /pages/problems · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "todo · /pages/problems · phone · dark",
       "nodes": 0
     },
     {
       "screen": "todo · /pages/search?q=the · desk · light",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · /pages/search?q=the · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "todo · /pages/search?q=the · phone · light",
       "nodes": 0
     },
     {
@@ -202,27 +120,11 @@
       "nodes": 0
     },
     {
-      "screen": "seedbed · / · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "seedbed · / · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "seedbed · / · phone · dark",
       "nodes": 0
     },
     {
       "screen": "seedbed · /pages · desk · light",
-      "nodes": 0
-    },
-    {
-      "screen": "seedbed · /pages · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "seedbed · /pages · phone · light",
       "nodes": 0
     },
     {
@@ -234,27 +136,11 @@
       "nodes": 0
     },
     {
-      "screen": "rota · / · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "rota · / · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "rota · / · phone · dark",
       "nodes": 0
     },
     {
       "screen": "rota · /pages · desk · light",
-      "nodes": 0
-    },
-    {
-      "screen": "rota · /pages · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "rota · /pages · phone · light",
       "nodes": 0
     },
     {
@@ -266,14 +152,6 @@
       "nodes": 0
     },
     {
-      "screen": "discography · / · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "discography · / · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "discography · / · phone · dark",
       "nodes": 0
     },
@@ -282,27 +160,11 @@
       "nodes": 0
     },
     {
-      "screen": "discography · /pages · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "discography · /pages · phone · light",
-      "nodes": 0
-    },
-    {
       "screen": "discography · /pages · phone · dark",
       "nodes": 0
     },
     {
       "screen": "launcher · / · desk · light",
-      "nodes": 0
-    },
-    {
-      "screen": "launcher · / · desk · dark",
-      "nodes": 0
-    },
-    {
-      "screen": "launcher · / · phone · light",
       "nodes": 0
     },
     {

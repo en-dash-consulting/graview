@@ -33,6 +33,8 @@ export interface ViewRegistration<V = unknown> {
   readonly across?: string;
   /** A place beside the kind's own pictures (`ViewMeta.beside`). */
   readonly beside?: boolean;
+  /** Every kind the one picture is over, when it is over several (`ViewMeta.over`). */
+  readonly over?: readonly string[];
 }
 
 /**
@@ -60,6 +62,13 @@ export interface ViewMeta {
    * app's own registration.
    */
   readonly beside?: boolean;
+  /**
+   * ONE PICTURE OVER SEVERAL KINDS: every kind it is registered on. A
+   * timetable of talks and workshops is registered on both kinds, so either
+   * district goes in to it; this says the registrations are one picture, so
+   * every list of places names it once.
+   */
+  readonly over?: readonly string[];
 }
 
 /** A named group view: somewhere to go, by name. */
@@ -77,7 +86,26 @@ export interface Place {
    * is addressable: `focus=aggregate:task&in.view=the-month`.
    */
   readonly as: string;
+  /**
+   * EVERY KIND THIS ONE PICTURE IS OVER, when it is over several: the
+   * timetable of talks and workshops is a place on each kind — either
+   * district goes in to it — and one place in every list (`onePerPicture`).
+   */
+  readonly over?: readonly string[];
 }
+
+/** A place as the lists compare it: its name, its kind, and every kind when it is one picture over several. */
+type Pictured = { readonly as: string; readonly kind: string; readonly over?: readonly string[] };
+
+/** Whether two places are one picture: one name, and one picture over both kinds. */
+export const samePicture = (a: Pictured, b: Pictured): boolean => a.as === b.as && (a.over ?? [a.kind]).includes(b.kind);
+
+/**
+ * EACH PICTURE ONCE: a picture over several kinds is a place on each, and
+ * listed under the first of them that is here. What every list of places
+ * reads — the bars, the pages, Find, the seat's places.
+ */
+export const onePerPicture = <P extends Pictured>(places: readonly P[]): P[] => places.filter((place, at) => !places.slice(0, at).some((held) => samePicture(held, place)));
 
 /** A place's own name in an address: its title, lower-cased and hyphenated. */
 export function placeSlug(title: string): string {
@@ -106,9 +134,18 @@ export function placePath(as: string, of?: string): string {
   return `/places/${encodeURIComponent(as)}${of ? `?of=${encodeURIComponent(of)}` : ""}`;
 }
 
-/** Whether another kind has a place of this one's name, so its address has to say which kind's. */
-export function sharesItsName(place: { readonly as: string; readonly kind: string }, places: readonly { readonly as: string; readonly kind: string }[]): boolean {
-  return places.some((other) => other.as === place.as && other.kind !== place.kind);
+/** Whether another kind has a DIFFERENT picture of this one's name, so its address has to say which kind's. */
+export function sharesItsName(place: Pictured, places: readonly Pictured[]): boolean {
+  return places.some((other) => other.as === place.as && !samePicture(place, other));
+}
+
+/**
+ * WHAT A PLACE IS CALLED IN A LIST: its title, and — when another kind has
+ * a different picture of the same name — whose, "The timetable · talks",
+ * so two entries never read alike.
+ */
+export function placeLabel(place: Pictured & { readonly title: string }, places: readonly Pictured[], schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }): string {
+  return sharesItsName(place, places) ? `${place.title} · ${(schema.tryDefinition(place.kind)?.plural ?? `${place.kind}s`).toLowerCase()}` : place.title;
 }
 
 export interface ViewRegistry<S extends AnySchema, V = unknown> {
@@ -211,6 +248,8 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
     },
     homeView: () => homeView,
     register(kind, cell, view, meta) {
+      // One picture over several kinds says so on each registration and each place it makes.
+      const over = meta?.over?.[1] ? { over: meta.over } : {};
       const registration: ViewRegistration<V> = {
         kind,
         cardinality: cell.cardinality,
@@ -219,6 +258,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
         ...(meta?.title ? { title: meta.title } : {}),
         ...(meta?.across ? { across: meta.across } : {}),
         ...(meta?.beside ? { beside: true } : {}),
+        ...over,
       };
       /*
        * A titled registration fills its cell AND stands on its own.
@@ -236,7 +276,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
         const as = placeSlug(meta.title);
         entries.set(key(kind, cell, as), registration);
         if (cell.cardinality === "many" && !named.some((place) => place.kind === kind && place.as === as)) {
-          named.push({ kind, title: meta.title, as, ...(meta.across ? { across: meta.across } : {}) });
+          named.push({ kind, title: meta.title, as, ...(meta.across ? { across: meta.across } : {}), ...over });
         }
       }
       return registry;
