@@ -102,5 +102,6 @@ export function blockContextFor(source: BlockSource, principal: Principal | null
     heading: options.heading ?? (once ? 2 : 3),
     firstHeading,
     budget: options.budget ?? (once ? PAGE_BUDGET : CARD_BUDGET),
+    ...(once ? {} : { glance: true }),
   };
 }

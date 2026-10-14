@@ -127,7 +127,7 @@ export const plain: React.CSSProperties = {
  * A row is its record's name and its glance. The name is the row: reading
  * size, medium weight, two lines at most (the rest on its page, and in its
  * title when it is long), the link stretched over the whole row. The glance
- * is secondary — small, muted — and on a desk stands in a column of its
+ * is secondary — small, muted, two lines at most — and on a desk stands in a column of its
  * own beside the names, one column for the whole list (a subgrid), so the
  * dates down a list start at one x; where the list is narrower than 36rem
  * it stands under the name. A row is one line or two, never more, so a
@@ -148,6 +148,7 @@ export const ROWS_CSS = `.graview-list{container-type:inline-size}
 .graview-row :is(a,button):not(.graview-row-title){position:relative}
 .graview-row-glance,.graview-row>[data-testid=search-why]{font-size:var(--graview-text-small);line-height:1.5;color:var(--graview-ink-muted)}
 .graview-row>[data-testid=search-why]{grid-column:1/-1}
+.graview-row-glance{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .graview-group-head{display:flex;gap:.5em;align-items:baseline;margin:0;padding:.375rem 0;font-family:var(--graview-font-body);font-size:var(--graview-text-small);font-weight:var(--graview-weight-label);line-height:1.3;letter-spacing:.02em;scroll-margin-top:4rem}
 .graview-group-head>span{color:var(--graview-ink-muted);font-weight:var(--graview-weight-body)}
 @container (min-width:36rem){.graview-rows{grid-template-columns:minmax(0,1fr) fit-content(40%)}.graview-group-head:has(+.graview-rows){position:sticky;top:0;z-index:${LOCAL_LAYERS.raised};background:var(--graview-ground)}}`;

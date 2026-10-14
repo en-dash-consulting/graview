@@ -144,6 +144,15 @@ describe("a text field said as an excerpt (FR-180)", () => {
     expect(excerptOf("snake_case stays, 2 * 3 * 4 stays", { markdown: true })).toBe("snake_case stays, 2 * 3 * 4 stays");
   });
 
+  it("ends the first sentence at a code-ish word's stop, and not at an abbreviation's", () => {
+    expect(excerpt("Read it in capabilities().shipped. Then offer the format.")).toBe("Read it in capabilities().shipped.");
+    expect(excerpt("The docs live at graview.dev. Read them first.")).toBe("The docs live at graview.dev.");
+    expect(excerpt("Bring a dish, e.g. a salad, and see Dr. Lee at noon. Then the rest.")).toBe("Bring a dish, e.g. a salad, and see Dr. Lee at noon.");
+    expect(excerpt("Ask the U.S. office (i.e. Sam) first. Then the rest.")).toBe("Ask the U.S. office (i.e. Sam) first.");
+    const long = `0.1.29 answers your brief: FR-180, in capabilities().shipped. ${"Offer the format only when it lists FR-180, and say so. ".repeat(4)}`;
+    expect(excerptOf(long, { markdown: true })).toBe("0.1.29 answers your brief: FR-180, in capabilities().shipped.");
+  });
+
   it("cuts at about 160 characters, at a word, with an ellipsis", () => {
     const long = `${"word ".repeat(60)}end`;
     const said = excerptOf(long);

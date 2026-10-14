@@ -90,7 +90,7 @@ const MARKDOWN_SCREENS = [
 ];
 /** What a row says of each brief's body: its first block, or its words up to about 100 characters with an ellipsis (FR-180). */
 const EXCERPTS = {
-  "brief-0128": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…",
+  "brief-0128": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped.",
   "brief-markdown": "Markdown in a text field…",
 };
 const SEED = JSON.parse(readFileSync(WORKSHOP_SEED, "utf8"));
@@ -329,7 +329,8 @@ function measureRows(ids) {
     const row = [...document.querySelectorAll('.graview-row, [data-testid="record-row"]')].find((one) => one.querySelector(`a[href$="/briefs/${id}"]`));
     const glance = row?.querySelector('.graview-row-glance, [data-testid="record-glance"]') ?? null;
     const said = glance?.textContent ?? "";
-    return { id, found: Boolean(glance), said, breaks: /\n/.test(said), syntax: (said.match(/\*\*|##|```|`|\]\(/g) ?? []).slice(0, 4) };
+    const lines = glance ? Math.round(glance.getBoundingClientRect().height / parseFloat(getComputedStyle(glance).lineHeight)) : 0;
+    return { id, found: Boolean(glance), said, lines, breaks: /\n/.test(said), syntax: (said.match(/\*\*|##|```|`|\]\(/g) ?? []).slice(0, 4) };
   });
 }
 
@@ -509,7 +510,7 @@ report.checks.aMarkdownBodyRendersAsProseWithNoSyntaxShowing = {
 };
 report.checks.aListRowSaysATextFieldAsOneExcerptLineWithNoMarkdownSyntax = {
   seen: seen.rows,
-  ok: all(seen.rows, markdownScreens * Object.keys(EXCERPTS).length, (one) => one.found && one.said.includes(one.expected) && one.syntax.length === 0 && !one.breaks && !one.said.includes("FR-170: THE PEOPLE KIND") && !one.said.includes("What the framework gives")),
+  ok: all(seen.rows, markdownScreens * Object.keys(EXCERPTS).length, (one) => one.found && one.lines <= 2 && one.said.includes(one.expected) && one.syntax.length === 0 && !one.breaks && !one.said.includes("FR-170: THE PEOPLE KIND") && !one.said.includes("What the framework gives")),
 };
 report.checks.hostileMarkdownRunsNothing = {
   seen: seen.hostile,

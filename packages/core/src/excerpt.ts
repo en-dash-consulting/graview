@@ -6,8 +6,13 @@
  * with what reads a record, which takes out the rest (FR-180).
  */
 
-/** A stop that ends an abbreviation, not a sentence: "e.g.", "U.S.", "Dr.". */
-const ABBREVIATION = /(?:\.\S|^(?:dr|mr|mrs|ms|mx|st|mt|vs|jr|sr|prof|no|fig|approx)\.$)/i;
+/**
+ * A stop that ends an abbreviation, not a sentence: "e.g.", "U.S.", "Ph.D.",
+ * "Dr." — short letters between stops, or a title. A word with a stop
+ * inside it that is not that ("capabilities().shipped.", "graview.dev.")
+ * ends its sentence.
+ */
+const ABBREVIATION = /^[("'“‘]*(?:(?:[a-z]{1,3}\.){2,}|(?:dr|mr|mrs|ms|mx|st|mt|vs|jr|sr|prof|no|fig|approx)\.)$/i;
 
 /** The first sentence: up to the first stop that ends one — not an abbreviation's, and not before three words. */
 export function firstSentence(flat: string): string | undefined {

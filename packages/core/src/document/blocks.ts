@@ -17,6 +17,7 @@ import { fieldSays, typedHref, typedWords } from "../schema/field-words.js";
 import type { TypedField } from "../schema/typed-fields.js";
 import { amountOf } from "../schema/amount-mark.js";
 import { sayAmount } from "./amount.js";
+import { excerptOf, markdownWords } from "../excerpt-of.js";
 
 /*
  * BLOCKS, RESOLVED — what a list of blocks says, worked out once, for every
@@ -215,13 +216,16 @@ export interface BlockContext {
   readonly today: string;
   /** The app's currency and locale (`brand.currency`, `brand.locale`): what money is said in where a block names no currency (FR-100). */
   readonly money?: Money | undefined;
+  /** A card or a row: a Markdown field is said by its start, the syntax taken out (FR-180). */
+  readonly glance?: boolean;
 }
 
 /** A block worked out: what a face draws and a describer says, under its block's key (`SpecBlock`). `problem` is what could not be worked out, in words. */
 export type ResolvedBlock = (Unkeyed | ResolvedList) & { readonly key: string };
 type Unkeyed =
   | { readonly t: "title"; readonly text: string; readonly problem?: string }
-  | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly problem?: string }
+  /** `markdown`: the text is a Markdown field as written (FR-180), drawn as prose; said by a describer as its words. */
+  | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly markdown?: true; readonly problem?: string }
   | { readonly t: "badge"; readonly text: string; readonly tone: ViewTone; readonly problem?: string }
   /** `app`: another app's address (FR-171), drawn as the app the host's `resolveApp` names. */
   | { readonly t: "field"; readonly field: string; readonly label: string; readonly text: string; readonly href?: string; readonly app?: string; readonly problem?: string }
@@ -274,9 +278,20 @@ function judge(expr: Parsed<Expr>, ctx: BlockContext): Judged {
 }
 
 /** A template's words, each part judged as `renderTemplate` judges it — and what could not be, said. */
-function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext): { readonly text: string; readonly problem?: string } {
+/**
+ * A MARKDOWN FIELD NAMED BARE IN A TEMPLATE (FR-180) is never said with its
+ * syntax showing: a text block that is the field and nothing else is drawn
+ * as Markdown on a page (`markdown: true`, the text as written) and said by
+ * its start in a card or a row; anywhere else — beside other words, in a
+ * title or a badge — it is said as its words, the syntax taken out.
+ */
+const markdownNamed = (part: TemplatePart, ctx: BlockContext, value: Value): value is string =>
+  !part.format && part.expr?.t === "ident" && typeof value === "string" && ctx.fields[part.expr.name]?.format === "markdown";
+
+function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext, prose?: boolean): { readonly text: string; readonly problem?: string; readonly markdown?: true } {
   if (!parts) return { text: NOTHING, problem: "a template that does not parse" };
   let problem: string | undefined;
+  let markdown: true | undefined;
   const text = parts
     .map((part) => {
       if (part.text !== undefined) return part.text;
@@ -285,12 +300,17 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext): { reado
         problem ??= `{${part.source ?? ""}}: ${judged.problem}`;
         return NOTHING;
       }
+      if (markdownNamed(part, ctx, judged.value)) {
+        if (ctx.glance) return excerptOf(judged.value, { markdown: true });
+        if (prose && parts.length === 1) return (markdown = true), judged.value;
+        return markdownWords(judged.value);
+      }
       // A field named bare (`{price}`) is said as it declares: money as money.
       const amount = !part.format && part.expr?.t === "ident" && typeof judged.value === "number" ? amountAt(ctx, part.expr.name) : undefined;
       return amount ? sayAmount(judged.value as number, amount) : formatValue(judged.value, part.format, ctx.today, part.formatArgs, ctx.money);
     })
     .join("");
-  return problem ? { text, problem } : { text };
+  return { text, ...(problem ? { problem } : {}), ...(markdown ? { markdown } : {}) };
 }
 
 function toneWord(tone: Tone | undefined, ctx: BlockContext): ViewTone | undefined {
@@ -359,9 +379,9 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       return withProblem({ t: "title", text: said.text }, said.problem);
     }
     case "text": {
-      const said = say(block.parts, ctx);
+      const said = say(block.parts, ctx, true);
       const tone = toneWord(block.tone, ctx);
-      return withProblem({ t: "text", text: said.text, ...(tone ? { tone } : {}) }, said.problem);
+      return withProblem({ t: "text", text: said.text, ...(tone ? { tone } : {}), ...(said.markdown ? { markdown: said.markdown } : {}) }, said.problem);
     }
     case "badge": {
       const said = say(block.parts, ctx);

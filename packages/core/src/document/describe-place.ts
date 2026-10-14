@@ -16,6 +16,7 @@ import { resolveFor, type ResolveForOptions } from "./resolve-for.js";
 import { computedValues, withComputed, type ComputedRecord, type PlainComputed } from "./computed-values.js";
 import { computedOf } from "./computed.js";
 import { isInlineSvg, markHref } from "../theme/marks.js";
+import { markdownWords } from "../excerpt-of.js";
 
 /*
  * WHAT A PLACE SHOWS, WITHOUT A BROWSER (FR-89).
@@ -194,7 +195,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
           out.push({ t: "heading", level: 3, text: block.text });
           return;
         case "text":
-          out.push({ t: "text", text: block.text, ...(block.tone ? { tone: block.tone } : {}) });
+          // A Markdown field drawn as prose is said as its words (FR-180).
+          out.push({ t: "text", text: block.markdown ? markdownWords(block.text) : block.text, ...(block.tone ? { tone: block.tone } : {}) });
           return;
         case "badge":
           out.push({ t: "badge", text: block.text });
