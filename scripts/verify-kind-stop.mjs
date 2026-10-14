@@ -95,6 +95,9 @@ const measure = () => {
   const actsContrast = acts ? Math.round(ratio(rgb(getComputedStyle(acts).color), ground(acts)) * 100) / 100 : null;
   const actsEdge = acts ? getComputedStyle(acts).borderTopStyle !== "none" && rgb(getComputedStyle(acts).borderTopColor)[3] !== 0 && getComputedStyle(acts).borderTopColor !== "rgba(0, 0, 0, 0)" : null;
   const picks = stop.querySelectorAll('[data-testid="kind-stop-table"] tbody tr[data-graview-pick]').length;
+  // Each row's box, where the seat may act on the kind at all; drawn on a desk, folded away under a finger until a long press.
+  const boxes = stop.querySelectorAll('[data-testid="kind-stop-table"] tbody tr [data-graview-choose-box]').length;
+  const boxesShown = [...stop.querySelectorAll('[data-testid="kind-stop-table"] tbody tr [data-graview-choose-box]')].filter((box) => box.getBoundingClientRect().width > 0).length;
   const holes = [...stop.querySelectorAll('[data-testid="kind-stop-table"] tbody td[data-label]')].filter((td) => (td.textContent ?? "").trim() === "").length;
   return {
     present: true,
@@ -113,6 +116,9 @@ const measure = () => {
     actsContrast,
     actsEdge,
     picks,
+    boxes,
+    boxesShown,
+    coarse,
     holes,
     chips,
     moreChip,
@@ -293,6 +299,51 @@ try {
   await page.waitForTimeout(1500);
   report.walks.wentTo = { name, hash: decodeURIComponent(await page.evaluate(() => location.hash)) };
 
+  /*
+   * SEVERAL AT ONCE. A box at a row's start chooses it, Shift a range; the
+   * bar says how many and offers what they share, and "Check them in" checks
+   * in all three speakers as one change, which one take-back puts back. The
+   * boxes' presses are not the scene's: nothing else is chosen or opened.
+   * Escape puts the choice down and leaves the stop where it was.
+   */
+  await open("#focus=aggregate%3Aspeaker");
+  const hashBefore = await page.evaluate(() => decodeURIComponent(location.hash));
+  const boxes = page.locator('[data-testid="kind-stop-table"] tbody [data-graview-choose-box]');
+  await boxes.nth(0).hover();
+  await boxes.nth(0).click();
+  await boxes.nth(2).hover();
+  await boxes.nth(2).click({ modifiers: ["Shift"] });
+  await page.waitForSelector('[data-testid="several-bar"]', { timeout: 10_000 }).catch(() => undefined);
+  report.walks.several = {
+    said: await page.locator('[data-testid="several-count"]').textContent({ timeout: 5_000 }).catch(() => null),
+    acts: await page.locator('[data-testid="several-act"]').allTextContents(),
+    hash: await page.evaluate(() => decodeURIComponent(location.hash)),
+    hashBefore,
+  };
+  const checkIn = page.locator('[data-testid="several-act"][data-mutation="check-in"]');
+  if ((await checkIn.count()) > 0) {
+    await checkIn.click();
+    await page.waitForTimeout(800);
+    const offer = page.getByRole("button", { name: /Take back/ }).first();
+    report.walks.several.acted = {
+      bar: await page.locator('[data-testid="several-bar"]').count(),
+      offer: (await offer.isVisible().catch(() => false)) ? await page.locator('[data-testid="notices-toasts"]').textContent().catch(() => null) : null,
+      focus: await page.evaluate(() => (document.activeElement && document.activeElement !== document.body ? document.activeElement.getAttribute("data-testid") ?? document.activeElement.className ?? document.activeElement.tagName : "body")),
+    };
+    if (report.walks.several.acted.offer) {
+      await offer.click();
+      await page.waitForTimeout(600);
+      report.walks.several.undone = await page.evaluate(() => document.body.textContent?.includes("Took back") ?? false);
+    }
+  }
+  await boxes.nth(1).focus();
+  await page.keyboard.press("Space");
+  await page.waitForTimeout(300);
+  report.walks.several.one = await page.locator('[data-testid="several-count"]').textContent({ timeout: 5_000 }).catch(() => null);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  report.walks.several.putDown = { bar: await page.locator('[data-testid="several-bar"]').count(), stop: await page.locator('[data-testid="kind-stop"]').count(), hash: await page.evaluate(() => decodeURIComponent(location.hash)) };
+
   // The derived picture is kept as a lens: a place of its own, on the bar.
   await open("#focus=aggregate%3Aroom");
   await page.click('[data-testid="kind-stop-keep"]');
@@ -352,6 +403,14 @@ report.checks = {
   noCellIsAHole: stops.every((one) => !one.present || one.holes === 0),
   // A row's name goes to its record.
   aRowGoesToItsRecord: /focus=staff:/.test(walks.wentTo?.hash ?? ""),
+  // Where the seat may act on the kind, every row has a box on a desk, and none shows under a finger until a long press.
+  everyRowHasItsBox: stops.every((one) => !one.present || one.rows === 0 || one.boxes === 0 || (one.boxes === one.rows && (one.coarse ? one.boxesShown === 0 : one.boxesShown === one.rows))) && stops.some((one) => one.boxes > 0),
+  // Three speakers chosen by a box and Shift, said by count, with the act they share; the scene's own choice and place untouched.
+  severalRowsAreChosenAndSaidByCount: walks.several?.said === "3 speakers chosen" && (walks.several?.acts ?? []).includes("Check them in") && walks.several?.hash === walks.several?.hashBefore,
+  // "Check them in" checks in all three as one change, offered back as one, and taken back in one press.
+  severalRowsAreOneChangeWithOneUndo: walks.several?.acted?.bar === 0 && /Check them in — 3 speakers/.test(walks.several?.acted?.offer ?? "") && walks.several?.undone === true && walks.several?.acted?.focus !== "body",
+  // Space on a box chooses it; Escape puts the choice down and leaves the stop where it was.
+  escapePutsTheChoiceDownAndKeepsTheStop: walks.several?.one === "1 speaker chosen" && walks.several?.putDown?.bar === 0 && walks.several?.putDown?.stop === 1 && walks.several?.putDown?.hash === walks.several?.hashBefore,
   // The act asks in place; put away, the keyboard is back on the act.
   theAskComesBackToItsAct: walks.askOpened === true && walks.askPutAway?.gone === true && walks.askPutAway?.focus === "kind-stop-primary",
   // Kept, the derived picture is a place of its own.

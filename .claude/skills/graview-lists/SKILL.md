@@ -68,6 +68,19 @@ already set a record aside.
    (`add-lens`). So give a kind a lifecycle or a `status`, a `glance`, and
    a creating act with a `title` before you write it a view.
 
+6. **Let several be done at once — it is already there.** A kind's list, a
+   kind's stop and a board choose records: a box at each row's start on a
+   desk, Shift for a range, Cmd/Ctrl-A, Escape; a long press on a phone.
+   The bar offers the acts every chosen record shares (`actsForSeveral` in
+   `@graview/tools/several`): acts on the subject alone ("Mark it done")
+   and those that ask once for all ("Move the date…"), "Move to <value>"
+   for the kind's state field, archive, merge and remove behind More. One
+   press is `actOnSeveral`: one batch, one undo. A record the act may not
+   run on (the policy, the seat's sight, the act's own refusal) is named
+   and stays chosen; the rest apply. A seat does the same with
+   `act_on_several` (`{ act, records, args }`). So declare acts on a
+   `subject` with as few other arguments as they need.
+
 ## Then find out whether it worked
 
 ```sh

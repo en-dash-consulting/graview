@@ -48,3 +48,8 @@ export { DraftDoor } from "./draft-door.js";
 export { appKeyOf } from "./reader-lenses.js";
 export { registerReaderLenses } from "./declared-lens-doors.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";
+// Choosing several records on a list, and the bar that acts on them all at once — fetched with the first one chosen.
+export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
+export type { Choosing } from "./choosing.js";
+export { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
+export type { SeveralBarProps } from "./several-door.js";

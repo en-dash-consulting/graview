@@ -1,7 +1,7 @@
 import { edgeWords, humanizeField, labelOf, nounOf, type AnySchema, type Store } from "@graview/core";
 import { argumentWords, parseDuration, tellApart } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
-import { useGraview } from "@graview/react/provider";
+import { useGraviewIfAny } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
 import { Files } from "../files-door.js";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -21,13 +21,17 @@ export function AnswerArgs({
   affordance,
   onApply,
   onCancel,
+  store: given,
 }: {
   readonly affordance: Affordance;
+  /** The store it asks about, where it is drawn outside a provider (a routed face's list); the provider's otherwise. */
+  readonly store?: Store<AnySchema>;
   /** Applies the answers. Returns the arguments a refusal named, when it named any, so the ask goes back to them. */
   onApply: (args: Record<string, unknown>) => readonly string[] | void;
   onCancel: () => void;
 }) {
-  const { store } = useGraview<AnySchema>();
+  const provided = useGraviewIfAny<AnySchema>();
+  const store = (given ?? provided?.store)!;
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [draft, setDraft] = useState("");
   /** What has been chosen so far, for an argument that takes several. */
