@@ -913,7 +913,8 @@ export function RelationCaptions({
        * from the host's top floated in open ground half a band above the
        * cards it captions.
        */
-      const measured = measureVisible(stageRef.current, node.id, false);
+      // By the slot, as the layout made the rows: a chip sits lower in its slot than a card of several in the same row.
+      const measured = measureVisible(stageRef.current, node.id, false, true);
       const { scale } = styleFor(1, scheme);
       entries.push({
         key: `${node.via.edgeKind}|${node.via.direction}`,
