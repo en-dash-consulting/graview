@@ -587,7 +587,8 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
               <span
                 style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
-                {edge ? "relation" : kinds.join(" · ")}
+                {/* What ONE of each is called (`noun`), never the kind's key: "piece of kit", not "kit" (the tenth walk). */}
+                {edge ? "relation" : kinds.map((kind) => nounOf(store.schema.tryDefinition(kind), kind)).join(" · ")}
               </span>
             ) : null}
             {/* The onward gesture, said at the moment it applies — picking a

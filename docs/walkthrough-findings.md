@@ -4822,3 +4822,13 @@ committed verdict, and walk10's first run finished 60 of its 84 runs.
 - where it belongs: `packages/primitives/src/workbench/back-out.tsx` (`OverviewButton`)
 - harness that should have caught it: none — no example has two titled pictures over one kind that the map descends to
 - status: fixed in "walkthrough: D · down says the picture it lands on" · the control names the last registered, as everything else does. Criterion: `packages/primitives/tests/unit/down-says-the-picture-it-lands-on.test.tsx` (verified failing without the fix)
+
+### W-209 · The menu over a rope says "kit" under its name
+- stage: C (from a problem to its repair, on the scene) · face: scene · width: 1440 and 390 · scheme: light
+- impact: cosmetic — a hole in a known class's check, which the watch caught: every repair the journeys took from the scene, at both widths and with either hand, was said to break `machine-words-shown` ("“kit” is shown in the key's words … where the declaration says it otherwise")
+- class: machine-words-shown (also: prose-wrong-for-the-domain)
+- expected: what one of the kind is called — "piece of kit", the kind's `noun` — as every act in the same menu says it ("Change the piece of kit …")
+- actual: the menu's head named the selection's kinds by their keys; a kind whose key is its noun (task, song) never showed the difference
+- where it belongs: `packages/primitives/src/workbench/inspector.tsx`
+- harness that should have caught it: the watch, which did, over walk10; the gauntlet's staff ("staff member") is never chosen from the map with the pointer's menu open — the state the walk reached through the problems — so the gauntlet holds no instance
+- status: fixed in "walkthrough: C · the menu over a record says what one is called" · the head says each kind's noun. Criterion: `packages/primitives/tests/unit/the-inspector-says-what-one-is-called.test.tsx` (verified failing without the fix: it said "kit")
