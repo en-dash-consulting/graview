@@ -210,8 +210,28 @@ export const FACE_DOORS = {
  * a raise in `scripts/budget-raises/` naming `"a hosted page"`, the bytes
  * it adds, and the changeset that says the kilobytes it adds up front
  * (`hostedRaises`).
+ *
+ * AND ROOM AGAIN (the headroom after 0.1.29). The wave before 0.1.29 left
+ * the page at 564 089 bytes (550.9 KB, 191.4 KB gzipped): 94 bytes gzipped
+ * of room. 20.6 KB of it was zod's JSON-Schema writer
+ * (`json-schema-processors`, `to-json-schema`), which only the seat calls to
+ * write an act's tool — fetched when first asked — but which rode up front
+ * because every zod barrel the page imports to build an app's fields reaches
+ * it. A tool's schema is written by graview from `_zod.def`
+ * (`core/src/schema/to-json-schema.ts`, held equal to zod's by
+ * `a-tool-schema-is-written-as-zod-writes-it`), so nothing on a page calls
+ * zod's writer and no chunk carries it: 542 940 bytes (530.2 KB, 185.0 KB
+ * gzipped), 21 149 fewer (6 561 gzipped). The base is that with about 8 KB
+ * of room (3 KB gzipped), lowered from 554.0 and 191.5.
  */
-export const HOSTED_PAGE_BASE = { minified: 554.0 * 1024, gzipped: 191.5 * 1024, zod: 150 * 1024 };
+export const HOSTED_PAGE_BASE = { minified: 538.0 * 1024, gzipped: 188.0 * 1024, zod: 150 * 1024 };
+
+/** What the page weighed before the last move that gave room back, said beside what it weighs now (docs/hosted-page.md, the release notes). */
+export const HOSTED_PAGE_BEFORE = {
+  move: "zod's JSON-Schema writer left the page (the headroom after 0.1.29)",
+  compiles: { minified: 564_089, gzipped: 196_002 },
+  handed: { minified: 522_312, gzipped: 181_285 },
+};
 
 /** The vendors document Cloud's tests are written against, kept here too. */
 export const VENDORS = "packages/core/tests/document/fixtures/vendors.gdd.json";
@@ -334,8 +354,14 @@ if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new 
  * features, raised only as that one is: by a file in
  * `scripts/budget-raises/` naming `"a hosted page handed a compiled app"`
  * and its changeset.
+ *
+ * The headroom after 0.1.29 took it from 522 312 bytes (510.1 KB, 177.0 KB
+ * gzipped) to 501 163 (489.4 KB, 170.6 KB gzipped), the same 21 149 fewer
+ * as the page that compiles (above): zod's JSON-Schema writer off the page.
+ * The base is that with about 8 KB of room (2.9 KB gzipped), lowered from
+ * 513.5 and 177.5.
  */
-export const HOSTED_PAGE_COMPILED_BASE = { minified: 513.5 * 1024, gzipped: 177.5 * 1024 };
+export const HOSTED_PAGE_COMPILED_BASE = { minified: 497.5 * 1024, gzipped: 173.5 * 1024 };
 
 /*
  * A RAISE OF A HOSTED PAGE'S BUDGET SAYS ITSELF (FR-179). Each hosted page's

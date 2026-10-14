@@ -11,7 +11,7 @@
  * (release-publish.mjs) measures again and puts it under the `graview` and
  * `@graview/embed` releases' notes.
  */
-import { HOSTED_PAGE_COMPILED_ENTRY, measureHostedPage } from "./hosted-page.mjs";
+import { HOSTED_PAGE_BEFORE, HOSTED_PAGE_COMPILED_ENTRY, measureHostedPage } from "./hosted-page.mjs";
 
 const kb = (bytes) => (bytes / 1024).toFixed(1);
 
@@ -33,6 +33,7 @@ export function hostedPageMarkdown(measured, { heading = "###", handed } = {}) {
     `Before a face draws, with what it fetches as it is first drawn: the scene ${kb(beforeDrawn.scene.minified)} KB (${kb(beforeDrawn.scene.fetched)} KB fetched), the pages ${kb(beforeDrawn.pages.minified)} KB (${kb(beforeDrawn.pages.fetched)} KB fetched).`,
     "",
     ...(handed ? [`Handed the compiled app its server made (\`appFromOrCompile\` from \`@graview/core/compiled\`, FR-123), the same page loads **${kb(handed.upFront.minified)} KB** up front (${kb(handed.upFront.gzipped)} KB gzipped) against a budget of ${kb(handed.budget.minified)} KB — ${kb(upFront.minified - handed.upFront.minified)} KB less, with no compiler in it.`, ""] : []),
+    ...(handed ? [`Before ${HOSTED_PAGE_BEFORE.move}, the page that compiles its document loaded ${kb(HOSTED_PAGE_BEFORE.compiles.minified)} KB up front (${kb(HOSTED_PAGE_BEFORE.compiles.gzipped)} KB gzipped) and the page handed a compiled app ${kb(HOSTED_PAGE_BEFORE.handed.minified)} KB (${kb(HOSTED_PAGE_BEFORE.handed.gzipped)} KB gzipped): ${kb(HOSTED_PAGE_BEFORE.compiles.minified - upFront.minified)} KB (${kb(HOSTED_PAGE_BEFORE.compiles.gzipped - upFront.gzipped)} KB gzipped) and ${kb(HOSTED_PAGE_BEFORE.handed.minified - handed.upFront.minified)} KB (${kb(HOSTED_PAGE_BEFORE.handed.gzipped - handed.upFront.gzipped)} KB gzipped) less now.`, ""] : []),
   ].join("\n");
 }
 
