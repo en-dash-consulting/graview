@@ -74,7 +74,8 @@ already set a record aside.
 
 6. **Let several be done at once — it is already there.** A kind's list, a
    kind's stop and a board choose records: a box at each row's start on a
-   desk, Shift for a range, Cmd/Ctrl-A, Escape; a long press on a phone.
+   desk, Shift for a range, Cmd/Ctrl-A, Escape; the boxes one Tab stop, the
+   arrows between them, Space to choose; a long press on a phone.
    The bar offers the acts every chosen record shares (`actsForSeveral` in
    `@graview/tools/several`): acts on the subject alone ("Mark it done")
    and those that ask once for all ("Move the date…"), "Move to <value>"

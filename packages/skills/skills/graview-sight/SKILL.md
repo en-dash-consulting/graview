@@ -65,7 +65,9 @@ to remember.
    Without it a sight with `hide` or
    `fields` shows nothing: the store keeps the record rather than serve a
    field it cannot judge. A page `openRemote` opened needs nothing: its
-   host judged what it was sent.
+   host judged what it was sent, and that store alone is trusted — a
+   whole store on the same page still needs the import. An agent's tool
+   for an act lists no argument writing a field the seat never sees.
 
 4. **Edit it as a document.** `add-sight` and `remove-sight` take `hide`
    and `fields` like any other key; a field none of the sight's kinds has
