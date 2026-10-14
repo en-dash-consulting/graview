@@ -1,5 +1,6 @@
 import { isCurrent } from "@graview/core";
-import { Begin } from "@graview/primitives";
+import { Begin, EditableValue } from "@graview/primitives";
+import { useGraviewIfAny } from "@graview/react";
 import {
   createPageRegistry,
   DefaultHomePage,
@@ -31,6 +32,8 @@ type S = DiscographySchema;
 function SongPage({ context }: { context: PageContext<S> }) {
   const { store, principal, invariantContext } = context;
   useStoreTick(store);
+  // Under the provider the face draws with its views, the name is changed where it is read.
+  const inPlace = useGraviewIfAny<S>() !== null;
   const id = decodeURIComponent(useParams()["id"] ?? "");
   const facts = recordFacts(store, id, {
     ...(principal ? { principal } : {}),
@@ -63,13 +66,15 @@ function SongPage({ context }: { context: PageContext<S> }) {
    * point at, so there is no form, rather than a heading over a picker with
    * one wrong answer in it.
    */
-  const connecting = facts.actions.affordances.filter((affordance) => affordance.ties === true);
+  // Every act the derivation offers, not only the ties; a repair is offered beside its rule, and what takes the song away comes last.
+  const away = (affordance: { destructive?: boolean; setsAside?: boolean }) => (affordance.destructive || affordance.setsAside ? 1 : 0);
+  const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant").sort((a, b) => away(a) - away(b));
 
   return (
     <PageMain context={context} data-testid="song-page">
       <header style={{ display: "grid", gap: 10 }}>
         <p style={pageStyles.eyebrow}>A song in Discography</p>
-        <h1 style={pageStyles.h1}>{facts.label}</h1>
+        <h1 style={pageStyles.h1}>{inPlace && node["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} /> : facts.label}</h1>
         <p style={pageStyles.lede}>
           {isCurrent(store.schema.tryDefinition(node.kind), node) ? "Current." : "In the past: out of the picture, never out of the record."}{" "}
           {ties.length === 0 ? "Connected to nothing yet." : null}
@@ -126,9 +131,9 @@ function SongPage({ context }: { context: PageContext<S> }) {
           ))}
         </section>
       ) : null}
-      {connecting.length > 0 ? (
+      {offered.length > 0 ? (
         <section style={{ ...pageStyles.rule, display: "grid", gap: 14 }} data-testid="record-actions">
-          {connecting.map((affordance) => {
+          {offered.map((affordance) => {
             const act = store.allMutations().find((mutation) => mutation.name === affordance.mutation);
             return act ? (
               <div key={affordance.id} style={{ display: "grid", gap: 10 }}>

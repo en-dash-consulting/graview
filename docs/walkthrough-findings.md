@@ -4792,3 +4792,13 @@ committed verdict, and walk10's first run finished 60 of its 84 runs.
 - where it belongs: `packages/core/src/store.ts`, `packages/core/src/graph/diff.ts` (`diffTouched`, the graph's narrowing moved where both use it)
 - harness that should have caught it: W-197's `a-change-costs-what-it-touches.test.ts`, which drove `Graph.applyPrimitives` and never `Store.apply`
 - status: fixed in "walkthrough: setup · an act costs what it touches in the store too" · the store's diff, for an act, an undo, an op it is handed and one it receives, is of the records and links the primitives name. The seed: 198 → 37 seconds. Criterion: `packages/core/tests/unit/an-act-costs-what-it-touches-in-the-store-too.test.ts` — an act and its undo read no link they do not touch (verified failing without the fix: the untouched link was read twelve times), and the diff says what the whole comparison says
+
+### W-206 · On the pages, a callout cannot be renamed, closed or stood down: its record page offers only the ties
+- stage: E (the record page the scaffold writes, in `src/ui/pages.tsx`) · face: pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Renaming a callout on its record" on the pages at both widths and with either hand: "“Change the callout” is not on the screen"; "Close it", "Stand the team down", "Log a check" and every other act of a record's own were on no page of the routed face, only on the scene
+- class: what-a-project-copies-is-wrong (also: faces-disagree)
+- expected: the page a project starts from offers what the derived record page offers — the name changed where it is read, and every act the derivation offers
+- actual: the scaffold's record page drew `facts.actions.affordances.filter((affordance) => affordance.ties === true)` and the name as plain text; a one-kind scaffold has one act on a record besides its ties, and nothing noticed it gone. The discography's song page, copied from it, said the same ("Renaming a song … works only the long way round")
+- where it belongs: `packages/core/src/scaffold/ui.ts` (`pagesTsx`); `apps/discography/src/ui/pages.tsx`, copied from it
+- harness that should have caught it: the journeys' "change" on the pages, which did; `scaffold.test.ts` pinned the ties' form and never asked what else a record offers
+- status: fixed in "walkthrough: E · the record page a project starts from offers every act" · the name is an `EditableValue` under the face's provider, and every affordance but a repair is offered, what takes the record away last. Criterion: `scaffold.test.ts` "offers every act the derivation offers on the record, and its name to change in place (W-206)" (verified failing without the fix), and the journeys' "change" on walk10's pages

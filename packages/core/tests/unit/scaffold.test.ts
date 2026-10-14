@@ -62,6 +62,18 @@ describe("what a project starts with passes its own checks", () => {
     expect(file("Field Notes", "src/ui/pages.tsx")).toMatch(/<DerivedForm<S>[^>]*label=\{affordance\.label\}/);
   });
 
+  it("offers every act the derivation offers on the record, and its name to change in place (W-206)", () => {
+    // The tenth walk's callouts: the scaffold's record page offered only the
+    // acts that tie two records, so "Change the callout", "Close it" and
+    // "Stand the team down" were on no page of the routed face, and the
+    // journeys could not rename a callout there at either width.
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).not.toContain("affordance.ties === true");
+    expect(pages).toContain('facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant")');
+    expect(pages).toContain("offered.map((affordance) =>");
+    expect(pages).toMatch(/<EditableValue<S> nodeId=\{id\} field="label" value=\{facts\.label\} \/>/);
+  });
+
   it("frames only Begin's own door, so the derived home comes back as the whole page it is", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).toContain("frame={(door) => (");
