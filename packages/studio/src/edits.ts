@@ -1,7 +1,7 @@
 import { canonicalize, editDocument, error, parseExpr, printExpr, renameIn, type DeclaredKinds, type DocumentEdit, type EditOutcome, type Finding, type GraviewDocument } from "@graview/core/document";
 import { label, Read, type Node } from "./source.js";
 import { keptBy } from "./uneditable.js";
-import { lensNodeId } from "./from-declaration.js";
+import { lensNodeId, type LensIdentity } from "./from-declaration.js";
 import type { Reading } from "./to-declaration.js";
 
 /*
@@ -389,7 +389,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       if (!changed) continue;
       // A titled lens taken away is a place taken away: `remove-lens`, the edit that takes back a lens the seat kept.
       if (sort === "lens" && old && !node) {
-        const declared = (document.lenses ?? []).find((lens) => typeof lens["title"] === "string" && lensNodeId(lens as { name: string; title: string }) === id);
+        const declared = (document.lenses ?? []).find((lens) => typeof lens["title"] === "string" && lensNodeId(lens as unknown as LensIdentity) === id);
         if (declared) {
           edits.push({ op: "remove-lens", title: declared["title"] as string, ...(typeof declared["on"] === "string" ? { on: declared["on"] } : {}) });
           continue;

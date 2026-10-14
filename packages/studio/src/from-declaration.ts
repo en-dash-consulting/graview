@@ -1,4 +1,4 @@
-import { nodeRefArgs, placeSlug, requiredRolesOf } from "@graview/core";
+import { bindsOf, nodeRefArgs, placeSlug, requiredRolesOf, type LensDeclaration } from "@graview/core";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
@@ -283,7 +283,36 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
 
 export type { z };
 
-/** A lens's node id in the studio: its name, and its title's address word when it has one. */
-export function lensNodeId(lens: { readonly name: string; readonly title?: string }): string {
-  return lens.title ? `lens:${lens.name}:${placeSlug(lens.title)}` : `lens:${lens.name}`;
+/** A lens as the studio reads its id from it: a declaration's, or a document's lens as JSON. */
+export interface LensIdentity {
+  readonly name: string;
+  readonly title?: string;
+  readonly on?: string;
+  readonly binds?: "fields" | "entities";
+  readonly bindings?: unknown;
+}
+
+/** The kinds a lens stands on: its `on`, or the kinds its bindings name — keyed by kind, or each slot's `kind`. */
+export function lensKinds(lens: LensIdentity): readonly string[] {
+  if (lens.on) return [lens.on];
+  const bindings = lens.bindings;
+  if (bindings === null || typeof bindings !== "object" || Array.isArray(bindings)) return [];
+  const entries = Object.entries(bindings as Record<string, unknown>);
+  const kinds =
+    bindsOf(lens as LensDeclaration) === "entities"
+      ? entries.map(([, slot]) => (slot !== null && typeof slot === "object" ? (slot as { kind?: unknown }).kind : undefined)).filter((kind): kind is string => typeof kind === "string")
+      : entries.map(([kind]) => kind);
+  return [...new Set(kinds)].sort();
+}
+
+/**
+ * A lens's node id in the studio: its name, its title's address word when
+ * it has one, and the kinds it stands on. Two lenses of one name and one
+ * title on different kinds are two places (the checker keeps a title per
+ * kind), so the kinds are part of the id — read from the lens alone, so the
+ * same declaration read twice gives the same ids however many lenses it has.
+ */
+export function lensNodeId(lens: LensIdentity): string {
+  const kinds = lensKinds(lens);
+  return `lens:${lens.name}${lens.title ? `:${placeSlug(lens.title)}` : ""}${kinds.length > 0 ? `@${kinds.join(",")}` : ""}`;
 }
