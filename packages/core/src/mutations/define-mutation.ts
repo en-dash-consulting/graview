@@ -183,7 +183,7 @@ export function compileMutation<S extends AnySchema>(
      * with the fields of records it reads (`<id>#<field>`), so a seat that
      * may not see one is served the op withheld. `@graview/core/field-sight` sets it.
      */
-    readonly check?: (primitives: readonly Primitive[], definition: AnyMutationDefinition<S>) => readonly string[];
+    readonly check?: (primitives: readonly Primitive[], definition: { readonly name: string; readonly creates?: readonly string[] | undefined; readonly input: unknown }) => readonly string[];
   } = {},
 ): CompiledMutation {
   /*
