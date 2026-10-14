@@ -16,3 +16,6 @@ export function derivedActOf(name: string): { readonly act: DerivedActName; read
   const found = /^(edit|remove|archive|unarchive|merge)-(.+)$/.exec(name);
   return found ? { act: found[1] as DerivedActName, kind: found[2]! } : undefined;
 }
+
+/** Whether a kind declared `archives: false` (FR-173) is still given this derived act: its edit and remove, never the three that set a record aside. */
+export const givenWhenNeverArchived = (act: DerivedActName): boolean => act === "edit" || act === "remove";

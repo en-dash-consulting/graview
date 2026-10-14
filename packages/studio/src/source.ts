@@ -243,6 +243,7 @@ export function kindLines(
   // The drawing is part of the declaration, so it is part of the file.
   if (str(kind, "figure")) lines.push(`  figure: ${q(str(kind, "figure")!)},`);
   if (bool(kind, "people")) lines.push(`  people: true,`);
+  if (bool(kind, "neverArchived")) lines.push(`  archives: false,`);
   // What the kind works out (FR-83), as an app writes it: the expression, or the expression with its words.
   const computed = computedFor(read, kind);
   if (computed) {

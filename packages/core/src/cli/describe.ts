@@ -1,3 +1,4 @@
+import { capitalize } from "../capital.js";
 import { arrangeable } from "../arrangement.js";
 import { searchableFields } from "../search.js";
 import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
@@ -292,6 +293,12 @@ export function describeApp<S extends AnySchema>(
   if (people) {
     const noun = (people as { noun?: string }).noun ?? people.kind;
     lines.push("", "## The people", `The people are the ${pluralOf(app.schema, people.kind).toLowerCase()}: ${withArticle(noun)} whose id is a member's principal id is that member.`);
+  }
+
+  // WHAT IS NEVER SET ASIDE (FR-173): a kind whose records are kept or removed has no archive, unarchive or merge.
+  const kept = app.schema.definitions.filter((definition) => definition.archives === false).map((definition) => pluralOf(app.schema, definition.kind).toLowerCase());
+  if (kept.length > 0) {
+    lines.push("", "## Never archived", `${capitalize(list(kept))} ${kept.length === 1 ? "is" : "are"} kept or removed, never archived or merged: no archive-, unarchive- or merge- act is offered on ${kept.length === 1 ? "it" : "them"}.`);
   }
 
   if (app.policy) {

@@ -1,4 +1,4 @@
-import { derivedActOf } from "../mutations/derived-names.js";
+import { derivedActOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
 import { brandOf } from "./brand.js";
 import { ActRefusal } from "../refused.js";
 import { analyzeExpr } from "./expr/analyze.js";
@@ -344,11 +344,16 @@ function validate(document: GraviewDocument): Finding[] {
     });
   }
 
+  // A derived act the document's kinds give: a kind that is never archived (FR-173) has no archive, unarchive or merge.
+  const given = (name: string) => {
+    const derived = derivedActOf(name);
+    return derived !== undefined && (document.kinds[derived.kind]?.archives !== false || givenWhenNeverArchived(derived.act));
+  };
   const policy = document.policy;
   if (policy) {
     policy.grants.forEach((grant, i) => {
       if (grant.roles !== "*" && roles.size > 0) for (const r of grant.roles) if (!roles.has(r)) findings.push(error("grant-role", `policy.grants.${i}.roles`, `"${r}" is not one of the document's roles`));
-      if (grant.mutations !== "*") for (const m of grant.mutations) if (!acts[m] && !derivedActOf(m)) findings.push(error("grant-act", `policy.grants.${i}.mutations`, `"${m}" is not an act this document declares`));
+      if (grant.mutations !== "*") for (const m of grant.mutations) if (!acts[m] && !given(m)) findings.push(error("grant-act", `policy.grants.${i}.mutations`, `"${m}" is not an act this document declares`, document.kinds[derivedActOf(m)?.kind ?? ""]?.archives === false ? `its kind says "archives": false, so it is never archived; name its edit or remove instead` : undefined));
     });
     (policy.sees ?? []).forEach((sight, i) => {
       for (const k of sight.kinds) if (!kinds.has(k)) findings.push(error("sight-kind", `policy.sees.${i}.kinds`, `"${k}" is not a kind this document declares`));
