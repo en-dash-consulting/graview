@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
+import { parseDuration } from "../schema/field-words.js";
 import { describeArg, unwrap } from "./arg-shape.js";
 import { nodeRefKinds } from "./node-ref.js";
 
@@ -50,6 +51,12 @@ export interface ScalarField {
   readonly long?: true;
   /** Another app's address (FR-171): asked for as one — `@owner/app`, its id, or its https:// address. */
   readonly app?: true;
+  /**
+   * A phone number or a place, asked for in a text box as one; or a length
+   * of time, asked for in a text box that takes "1h 30m", "90" or "1:30"
+   * and sent as whole minutes (`formArgs`).
+   */
+  readonly holds?: "phone" | "place" | "duration";
   readonly options?: readonly string[];
   readonly min?: number;
   readonly max?: number;
@@ -146,7 +153,9 @@ export function formField(name: string, schema: unknown): FormField {
   }
 
   const scalar = describeArg(schema);
-  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}) };
+  if (scalar.type === "text") return { control: "text", name, optional, ...(scalar.long ? { long: true as const } : {}), ...(isAppLinkField(field) ? { app: true as const } : {}), ...(scalar.holds ? { holds: scalar.holds } : {}) };
+  // A length of time is typed as words ("1h 30m") and sent as minutes.
+  if (scalar.type === "number" && scalar.duration) return { control: "text", name, optional, holds: "duration" };
   if (scalar.type === "date") return { control: "date", name, optional, ...(scalar.time ? { time: true as const } : {}) };
   if (scalar.type === "number") {
     return {
@@ -203,6 +212,9 @@ export function formArgs(fields: readonly FormField[], values: Readonly<Record<s
   for (const field of fields) {
     const held = values[field.name];
     if (held === undefined && !field.optional && (field.control === "list" || field.control === "boolean")) sent[field.name] = field.control === "list" ? [] : false;
+    // A length of time as it was typed, sent as the whole minutes the field keeps; words that are not one are sent as typed, and refused in the field's own words.
+    // A phone and a place are kept as they were entered, trimmed.
+    if (field.control === "text" && field.holds && typeof held === "string") sent[field.name] = held.trim() === "" ? undefined : field.holds === "duration" ? (parseDuration(held) ?? held) : held.trim();
     if (field.control === "group" && held !== undefined && typeof held === "object" && held !== null) {
       sent[field.name] = formArgs(field.fields, held as Record<string, unknown>);
     }

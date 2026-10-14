@@ -19,3 +19,6 @@ export { describeNode, isLongText, pageSections, readableFields, tellApart } fro
 export { argShape, describeArg } from "./mutations/arg-shape.js";
 export { argumentWords, failureWords } from "./mutations/words.js";
 export { viaSaid } from "./via.js";
+// A phone, a place and a duration, said, linked, and read from what was typed.
+export { fieldSays, mapsHref, parseDuration, sayDuration, sayPhone, telHref, typedHref, typedWords } from "./schema/field-words.js";
+export { typedFieldOf } from "./schema/typed-field-of.js";

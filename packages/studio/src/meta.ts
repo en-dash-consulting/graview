@@ -27,12 +27,12 @@ const label = z.string().min(1);
 export const DECLARED_KIND = "declared:";
 
 /**
- * A field's types: the declaration document's eleven (FR-54), so a field a
+ * A field's types: the declaration document's own (FR-54), so a field a
  * document declares is read as what it is — an integer, a date and time, a
- * link, an address, a long text — and handed back the same, never as the
+ * link, an address, a long text, a phone, a place, a duration — and handed back the same, never as the
  * nearest type the studio happened to know.
  */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email"] as const;
+export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "phone", "place", "duration"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const kindNode = defineNode("kind", {

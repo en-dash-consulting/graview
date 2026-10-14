@@ -1,0 +1,50 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Rehearsals",
+  "description": "A choir's rehearsals: who to call about each, where it is, and how long it runs — a phone, a place and a duration, each a field type of its own.",
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "kinds": {
+    "season": {
+      "noun": "season",
+      "plural": "seasons",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "planned": { "type": "duration", "label": "Time planned" }
+      },
+      "edges": { "rehearsals": { "to": ["rehearsal"], "description": "rehearses in", "inverse": "is part of" } },
+      "computed": {
+        "spent": { "expr": "sum(out('rehearsals'), length)", "label": "Time rehearsed" },
+        "spare": { "expr": "planned - spent", "label": "Time to spare" },
+        "count": { "expr": "count(out('rehearsals'))", "label": "Rehearsals" }
+      }
+    },
+    "rehearsal": {
+      "noun": "rehearsal",
+      "plural": "rehearsals",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "contact": { "type": "phone", "label": "Who to call" },
+        "venue": { "type": "place" },
+        "length": { "type": "duration" }
+      }
+    }
+  },
+  "acts": {
+    "add-rehearsal": { "title": "Add a rehearsal", "creates": "rehearsal", "description": "Put another rehearsal on the calendar." }
+  },
+  "views": {
+    "rehearsal": {
+      "card": [{ "title": "{name}" }, { "field": "contact" }, { "field": "venue" }, { "field": "length" }]
+    }
+  },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "The calendar",
+      "on": "rehearsal",
+      "options": { "blocks": [{ "list": "all('rehearsal')", "as": "card" }] }
+    }
+  ]
+}

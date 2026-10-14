@@ -2,6 +2,7 @@ import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead } from "../days.js";
 import { fieldWords, labelOf, nounOf, valueWords, type ReadableField } from "./define-node.js";
 import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
+import { fieldSays, typedHref, typedWords } from "./field-words.js";
 import type { AnyNodeDefinition, PageFields } from "./types.js";
 
 /*
@@ -170,9 +171,13 @@ export function readableFields(
       (!Array.isArray(value) || value.some((one) => typeof one === "object" && one !== null));
     if (nested && format === undefined) continue;
     const stored = files[0] ? files.map((file) => (file.caption ? `${file.name} — ${file.caption}` : file.name)).join(", ") : Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
+    // A phone, a place or a duration, said as one: "(555) 123-4567", "1 h 30 min".
+    const typed = format ? undefined : fieldSays(definition, key);
+    const href = typedHref(typed, value);
     const text = format
       ? format(value)
-      : Array.isArray(value) || typeof value === "boolean"
+      : typedWords(typed, value, options.locale) ??
+        (Array.isArray(value) || typeof value === "boolean"
         ? // Nobody says "false". A boolean is a state, and the words for a
           // state are words.
           stored
@@ -188,7 +193,7 @@ export function readableFields(
           ? momentAsRead(value, options.locale)
           : typeof value === "string" && isChoice(definition, key)
             ? valueWords(definition, key, value)
-            : stored;
+            : stored);
 
     if (said.includes(text) || stems.some((stem) => text.startsWith(stem))) continue;
     if (options.glance && (typeof value === "string" || typeof value === "number") && said.some((line) => saysAsWords(line, text))) continue;
@@ -196,7 +201,7 @@ export function readableFields(
     const alone =
       // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text), ...(files[0] ? { files } : {}), ...(app ? { app } : {}) });
+    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(href ? { href } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;

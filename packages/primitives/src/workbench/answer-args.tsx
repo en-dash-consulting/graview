@@ -1,5 +1,5 @@
 import { edgeWords, humanizeField, labelOf, nounOf, type AnySchema, type Store } from "@graview/core";
-import { argumentWords, tellApart } from "@graview/core/words";
+import { argumentWords, parseDuration, tellApart } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraview } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
@@ -327,7 +327,7 @@ export function AnswerArgs({
               return;
             }
             if (draft.trim().length === 0) return;
-            answer(shape.type === "number" ? Number(draft) : draft);
+            answer(shape.type === "number" ? (shape.duration ? (parseDuration(draft) ?? draft) : Number(draft)) : draft);
           }}
         >
           {shape.type === "text" && shape.long ? (
@@ -367,7 +367,7 @@ export function AnswerArgs({
           ) : (
           <input
             autoFocus
-            type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" ? "number" : "text"}
+            type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" && !shape.duration ? "number" : shape.type === "text" && shape.holds === "phone" ? "tel" : "text"}
             /*
              * A FIELD IS ASKED FOR IN WORDS. `dependsOn` and `label` are the
              * declaration's identifiers; the pages face has always humanized

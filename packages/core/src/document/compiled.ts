@@ -29,6 +29,7 @@ import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
 import { fileSchema } from "../schema/files.js";
 import { appLinkSchema } from "../schema/app-link.js";
+import { markTyped, PHONE } from "../schema/typed-fields.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
@@ -195,17 +196,24 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
   let schema: z.ZodMiniType;
   switch (spec.type) {
     case "string":
+    case "place":
+      // A place is a line of words, drawn as a link to the reader's maps app.
       schema = z.string().check(z.maxLength(500));
+      break;
+    case "phone":
+      schema = z.string().check(z.maxLength(40), z.regex(PHONE, "a phone number"));
       break;
     case "text":
       schema = z.string().check(z.maxLength(20_000));
       break;
     case "number":
-    case "integer": {
-      // Its range (FR-114) is the schema's: every form, tool and apply reads it from here.
+    case "integer":
+    case "duration": {
+      // Its range (FR-114) is the schema's: every form, tool and apply reads it from here. A duration is whole minutes, none less than none.
+      const min = spec.min ?? (spec.type === "duration" ? 0 : undefined);
       const range = [
-        ...(spec.type === "integer" ? [z.int()] : []),
-        ...(spec.min === undefined ? [] : [z.gte(spec.min)]),
+        ...(spec.type === "number" ? [] : [z.int()]),
+        ...(min === undefined ? [] : [z.gte(min)]),
         ...(spec.max === undefined ? [] : [z.lte(spec.max)]),
         ...(spec.step === undefined ? [] : [z.multipleOf(spec.step)]),
       ];
@@ -242,6 +250,8 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.email();
       break;
   }
+  // A phone, a place and a duration say so, for a face to say and link each.
+  markTyped(schema, spec.type);
   if (spec.description) schema = schema.check(z.describe(spec.description));
   return optional ? z.optional(schema) : schema;
 }

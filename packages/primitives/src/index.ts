@@ -48,7 +48,7 @@ export type { Arranging, ArrangingOptions } from "./lens/arranging.js";
 export type { ArrangeBarProps } from "./arrange-bar.js";
 export { Connections } from "./connections.js";
 export type { ConnectionsProps } from "./connections.js";
-export { EditableTitle, EditableValue, Fields, humanize, LongValue } from "./editable.js";
+export { EditableTitle, EditableValue, FieldLink, Fields, humanize, LongValue } from "./editable.js";
 // A record's pictures and documents (FR-162, FR-163): drawn, and put there through the host's files.
 export { Files } from "./files-door.js";
 export type { FilesProps } from "./files-door.js";

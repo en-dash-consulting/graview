@@ -2,6 +2,8 @@ import type { FieldSpec } from "../document/schema.js";
 import { nameKey } from "../labels.js";
 import { slug } from "../mutations/define-mutation.js";
 import { isAppAddress } from "../schema/app-link.js";
+import { PHONE } from "../schema/typed-fields.js";
+import { parseDuration } from "../schema/field-words.js";
 
 /**
  * A CELL, READ AS THE FIELD IT GOES IN (FR-177). A spreadsheet holds what a
@@ -227,6 +229,20 @@ export function coerceCell(spec: FieldSpec, input: unknown, said: string, option
       // Another app's address (FR-171), as it is written: @owner/app, an id, or an https:// address.
       const text = String(input).trim();
       return isAppAddress(text) ? { ok: true, value: text } : { ok: false, why: `${quoted} under ${said} is not another app's address` };
+    }
+    case "phone": {
+      // As it is written; a spreadsheet that kept it as a number gives its digits.
+      const text = String(input).trim();
+      return text.length <= 40 && PHONE.test(text) ? { ok: true, value: text } : { ok: false, why: `${quoted} under ${said} is not a phone number` };
+    }
+    case "place": {
+      const text = String(input).trim();
+      return text.length <= 300 ? { ok: true, value: text } : { ok: false, why: `${quoted} under ${said} is longer than a place's 300 characters` };
+    }
+    case "duration": {
+      // Minutes, or a length of time as it is typed: "1h 30m", "1:30", "1.5 h".
+      const value = parseDuration(typeof input === "number" || typeof input === "string" ? input : String(input));
+      return value === undefined ? { ok: false, why: `${quoted} under ${said} is not a length of time, like 1h 30m or 90 (minutes)` } : { ok: true, value };
     }
   }
 }

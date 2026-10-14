@@ -71,12 +71,17 @@ export class Read {
   }
 }
 
+/** The phone, place and duration fields the written lines call, for the file's import: "durationField, " and the rest, in order. */
+const typedHelpers = (lines: readonly string[], names: readonly string[] = ["durationField"]): string => names.filter((name) => lines.some((line) => line.includes(`${name}()`))).map((name) => `${name}, `).join("");
+
 export function zodSource(type: FieldType, required: boolean, options?: readonly string[]): string {
   const base =
     type === "number"
       ? "z.number()"
       : type === "integer"
         ? "z.number().int()"
+        : type === "phone" || type === "place" || type === "duration"
+          ? `${type}Field()`
         : type === "url"
           ? "z.url()"
           : type === "email"
@@ -96,7 +101,7 @@ export function zodSource(type: FieldType, required: boolean, options?: readonly
 }
 
 const defaultSource = (type: FieldType, options?: readonly string[]): string =>
-  type === "number" || type === "integer" ? "0" : type === "datetime" ? "new Date().toISOString()" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
+  type === "number" || type === "integer" || type === "duration" ? "0" : type === "datetime" ? "new Date().toISOString()" : type === "boolean" ? "false" : type === "enum" ? q(options?.[0] ?? "") : type === "list" ? "[]" : type === "date" ? "new Date().toISOString().slice(0, 10)" : '""';
 
 /**
  * The lines of a `defineNode` the studio carries from the checkout rather
@@ -455,7 +460,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const schemaUses: ZodUses = { nodeRef: false, isoDate: false };
   const kindText = kinds.flatMap((kind) => ["", ...kindLines(read, kind, options.base, keptFormats, schemaUses)]);
   const schemaTs = [
-    `import { ${schemaUses.appLinkField ? "appLinkField, " : ""}createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}z } from "@graview/core";`,
+    `import { ${schemaUses.appLinkField ? "appLinkField, " : ""}createSchema, defineNode, ${typedHelpers(kindText)}${schemaUses.isoDate ? "isoDate, " : ""}${typedHelpers(kindText, ["phoneField", "placeField"])}z } from "@graview/core";`,
     ``,
     `/*`,
     ` * ${name}'s kinds, written by the studio. The shape is the declaration's;`,
@@ -477,7 +482,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
     return ["", ...actLines(read, act, kept, checkout as AnyMutationDefinition | undefined, actUses)];
   });
   const mutationsTs = [
-    `import { ${actUses.appLinkField ? "appLinkField, " : ""}bindSchema, ${actUses.isoDate ? "isoDate, " : ""}nodeRef, z, type GraphReader } from "@graview/core";`,
+    `import { ${actUses.appLinkField ? "appLinkField, " : ""}bindSchema, ${typedHelpers(actText)}${actUses.isoDate ? "isoDate, " : ""}nodeRef, ${typedHelpers(actText, ["phoneField", "placeField"])}z, type GraphReader } from "@graview/core";`,
     `import { ${schemaVar} } from "./schema.js";`,
     ``,
     `const { defineMutation } = bindSchema(${schemaVar});`,

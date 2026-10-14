@@ -1,4 +1,5 @@
 import { ARCHIVED } from "../graph/archived.js";
+import { FELLOWS } from "./fellows.js";
 import * as z from "./zod.js";
 import type {
   AnyNodeDefinition,
@@ -90,6 +91,7 @@ export function createSchema<const Defs extends readonly AnyNodeDefinition[]>(
       );
     }
     byKind.set(def.kind, def);
+    FELLOWS.set(def, defs);
   }
 
   const edges = new Map<string, { from: string[]; decl: EdgeDeclaration }>();

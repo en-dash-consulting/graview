@@ -1,0 +1,12 @@
+{
+  "nodes": [
+    { "id": "autumn", "kind": "season", "name": "Autumn season", "planned": 600 },
+    { "id": "first", "kind": "rehearsal", "name": "First read-through", "contact": "5551234567", "venue": "St. Mark's Hall, 12 Elm Street, Springfield", "length": 90 },
+    { "id": "sectional", "kind": "rehearsal", "name": "Sopranos' sectional", "contact": "+44 20 7946 0958", "venue": "The Old Library", "length": 45 },
+    { "id": "dress", "kind": "rehearsal", "name": "Dress rehearsal", "venue": "Town Hall", "length": 150 }
+  ],
+  "edges": [
+    { "id": "autumn-first", "kind": "rehearsals", "from": "autumn", "to": "first" },
+    { "id": "autumn-sectional", "kind": "rehearsals", "from": "autumn", "to": "sectional" }
+  ]
+}

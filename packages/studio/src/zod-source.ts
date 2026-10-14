@@ -1,4 +1,5 @@
 import { isAppLinkField, isoDate, nodeRefKinds } from "@graview/core";
+import { typedFieldOf } from "@graview/core/words";
 
 /*
  * A CHECKOUT'S OWN ZOD, WRITTEN BACK AS IT WAS WRITTEN.
@@ -100,6 +101,9 @@ export function printZod(type: unknown, uses: ZodUses = { nodeRef: false, isoDat
     uses.appLinkField = true;
     return "appLinkField()";
   }
+  // A phone, a place and a duration are written as one, which the file imports by name.
+  const typed = typedFieldOf(type);
+  if (typed) return `${typed}Field()`;
   if (type === isoDate || (def.type === "string" && String(checkOf(def.checks?.[0]).pattern) === String(checkOf(defOf(isoDate).checks?.[0]).pattern) && def.checks?.length === 1)) {
     uses.isoDate = true;
     return "isoDate";

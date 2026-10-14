@@ -66,6 +66,8 @@ export const OWN = {
   "files-host": 5263,
   /** The host's page `verify-growing` mounts a roadmap grown large into: filters that stay usable, cards read at a glance. */
   "growing-host": 5258,
+  /** The host's page `verify-field-types` mounts a choir's rehearsals into: a phone to call, a place to map, a duration said and summed. */
+  "field-types-host": 5257,
   /** The host's page `verify-app-links` mounts purchase scenarios that link other apps into, with a resolver of its own (FR-171). */
   "app-links-host": 5268,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */

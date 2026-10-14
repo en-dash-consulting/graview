@@ -3,6 +3,7 @@ import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { isAppLinkField } from "./app-link.js";
+import { typedFieldOf } from "./typed-field-of.js";
 import type { AnySchema } from "./schema.js";
 import type { AnyNodeDefinition } from "./types.js";
 
@@ -20,6 +21,13 @@ export function toJsonSchema(schema: unknown): JsonSchema {
 /** zod's names for string formats that JSON Schema calls something else; the rest are the same word. */
 const JSON_SCHEMA_FORMATS: Readonly<Record<string, string>> = { guid: "uuid", url: "uri", datetime: "date-time", json_string: "json-string" };
 
+/** What a phone, a place and a duration hold, for an agent, where the field says nothing of itself. */
+const TYPED_WORDS = {
+  phone: "A phone number as it is written, like +1 555 123 4567 or 020 7946 0958 ext. 12.",
+  place: "An address or a place's name, as a person would search a map for it.",
+  duration: "A length of time in whole minutes: 90 is 1 h 30 min.",
+} as const;
+
 type ZodStringDef = { readonly type?: string; readonly format?: string; readonly checks?: readonly { readonly _zod?: { readonly def?: { readonly format?: string; readonly pattern?: RegExp } } }[] };
 
 /*
@@ -33,6 +41,19 @@ type ZodStringDef = { readonly type?: string; readonly format?: string; readonly
 function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
   // Another app's address (FR-171), beside its pattern: an agent sets an address, not a name.
   if (isAppLinkField(ctx.zodSchema)) ctx.jsonSchema["x-graview-app-link"] = true;
+  /*
+   * A PHONE, A PLACE OR A DURATION says which (`x-graview-type`), so an agent
+   * sends the shape the field keeps: a phone as it is written, a place as an
+   * address or a name, and a duration as WHOLE MINUTES — 90, never "1h 30m".
+   * Where the field says nothing of itself, its description says the same.
+   */
+  const typed = typedFieldOf(ctx.zodSchema);
+  if (typed) {
+    const js = ctx.jsonSchema;
+    js["x-graview-type"] = typed;
+    if (typed === "duration") js["x-graview-unit"] = "minutes";
+    js["description"] ??= TYPED_WORDS[typed];
+  }
   const def = (ctx.zodSchema as { _zod?: { def?: ZodStringDef } })._zod?.def;
   if (!def || def.type !== "string" || typeof def.format !== "string" || def.format === "regex") return;
   const js = ctx.jsonSchema;

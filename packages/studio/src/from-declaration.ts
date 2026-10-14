@@ -1,4 +1,5 @@
 import { nodeRefArgs, placeSlug, requiredRolesOf } from "@graview/core";
+import { typedFieldOf } from "@graview/core/words";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
@@ -44,7 +45,8 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
   switch (def.type) {
     case "number":
     case "int":
-      return { type: fieldSpecOf(type)?.type === "integer" ? "integer" : "number", required };
+      // A length of time is a number the declaration marks as minutes.
+      return { type: typedFieldOf(type) === "duration" ? "duration" : fieldSpecOf(type)?.type === "integer" ? "integer" : "number", required };
     case "boolean":
       return { type: "boolean", required };
     case "date":
@@ -58,7 +60,7 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
     case "string": {
       // A link, an address or a date and time is a string zod checks; the document's reading says which.
       const said = fieldSpecOf(type)?.type;
-      return { type: said === "url" || said === "email" || said === "datetime" ? said : "string", required };
+      return { type: said === "url" || said === "email" || said === "datetime" || said === "phone" || said === "place" ? said : "string", required };
     }
     default:
       return { type: "string", required };
