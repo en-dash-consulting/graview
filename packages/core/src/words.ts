@@ -5,9 +5,10 @@
  * `isLongText`, `describeNode`), two records of one name told apart
  * (`tellApart`), what an argument asks for (`argShape`, `describeArg`), an
  * argument and a refusal in the record's own words (`argumentWords`,
- * `failureWords`), the channel a change came through (`viaSaid`), and a
+ * `failureWords`), the channel a change came through (`viaSaid`), a
  * field's value and a relation in the declaration's words (`valueWords`,
- * `edgeWords`).
+ * `edgeWords`), and an amount asked for as it is said (`amountBox`,
+ * `amountInBox`, `readAmount`).
  *
  * Apart from `@graview/core` because a bundler places a whole file in a
  * page's first chunk when the first chunk can reach it and any chunk uses
@@ -31,3 +32,5 @@ export { isMarkdownField } from "./schema/markdown.js";
 // A phone, a place and a duration, said, linked, and read from what was typed.
 export { fieldSays, mapsHref, parseDuration, sayDuration, sayPhone, telHref, typedHref, typedWords } from "./schema/field-words.js";
 export { typedFieldOf } from "./schema/typed-field-of.js";
+export { amountBox, amountInBox, readAmount } from "./amount-input.js";
+export type { AmountBox } from "./amount-input.js";

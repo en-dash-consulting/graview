@@ -6,6 +6,8 @@ import { isAppLinkField } from "./app-link.js";
 import { EVERY, isRepeatField, WEEKDAYS } from "../repeat.js";
 import { isMarkdownField } from "./markdown.js";
 import { typedFieldOf } from "./typed-field-of.js";
+import { amountOf } from "./amount-mark.js";
+import { amountMark, amountSentence } from "./amount-words.js";
 import type { AnySchema } from "./schema.js";
 import { writeJsonSchema, type JsonSchema } from "./to-json-schema.js";
 import type { AnyNodeDefinition } from "./types.js";
@@ -68,6 +70,16 @@ export function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonS
     js["x-graview-type"] = typed;
     if (typed === "duration") js["x-graview-unit"] = "minutes";
     js["description"] ??= TYPED_WORDS[typed];
+  }
+  // An amount says what it is (money in USD, a percent as a fraction), so a model sets 10000, never "$10,000" or 15 for 15%.
+  const marked = amountOf(ctx.zodSchema, false);
+  if (marked) {
+    const amount = amountMark(marked);
+    ctx.jsonSchema["x-graview-format"] = amount.format ?? "unit";
+    if (amount.currency) ctx.jsonSchema["x-graview-currency"] = amount.currency;
+    if (amount.unit && amount.format !== "money") ctx.jsonSchema["x-graview-unit"] = amount.unit;
+    const said = ctx.jsonSchema["description"];
+    ctx.jsonSchema["description"] = typeof said === "string" && said.length > 0 ? `${said} ${amountSentence(amount)}` : amountSentence(amount);
   }
   const def = (ctx.zodSchema as { _zod?: { def?: ZodStringDef } })._zod?.def;
   if (!def || def.type !== "string" || typeof def.format !== "string" || def.format === "regex") return;

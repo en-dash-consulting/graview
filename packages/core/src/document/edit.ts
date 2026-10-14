@@ -6,6 +6,14 @@ import { printExpr } from "./expr/print.js";
 import { error, type Finding } from "./findings.js";
 import { coerce } from "./migrate.js";
 import { outsideRange, rangeWords } from "./range.js";
+import { formatWords } from "./format-words.js";
+import { formatFits, formatMisplaced } from "./format-rules.js";
+
+/** Why a format is refused where it does not fit, in the checker's words (`field-format`). */
+const refusedFormat = (format: string, type: string): string => {
+  const { sentence, fix } = formatMisplaced(format, type);
+  return `${sentence}; ${fix}`;
+};
 import { farEnd } from "./far-end.js";
 import {
   ActSpec,
@@ -89,6 +97,7 @@ export const EDIT_OPS = [
   "retype-field",
   "set-options",
   "set-range",
+  "set-format",
   "set-required",
   "set-default",
   "set-repeats",
@@ -145,6 +154,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "rename-field": z.object({ op: z.literal("rename-field"), kind: kindName, field: fieldName, to: fieldName }).strict(),
   "retype-field": z.object({ op: z.literal("retype-field"), kind: kindName, field: fieldName, type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1).max(80)).min(1).max(100).optional(), of: z.enum(["string", "number", "date", "image", "file"]).optional(), format: z.enum(["money", "percent", "duration", "markdown"]).optional() }).strict(),
   "set-options": z.object({ op: z.literal("set-options"), kind: kindName, field: fieldName, add: z.array(z.string().min(1).max(80)).optional(), remove: z.array(z.string().min(1).max(80)).optional() }).strict(),
+  "set-format": z.object({ op: z.literal("set-format"), kind: kindName, field: fieldName, format: z.union([z.enum(["money", "percent", "duration", "markdown"]), z.null()]).optional(), unit: z.union([z.string().min(1).max(12), z.null()]).optional() }).strict(),
   "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
   "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
   "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
@@ -702,6 +712,8 @@ class Editor {
         return this.setOptions(i, e);
       case "set-range":
         return this.setRange(i, e);
+      case "set-format":
+        return this.setFormat(i, e);
       case "set-required": {
         const f = this.field(i, e.kind, e.field);
         if (!f) return;
@@ -1505,6 +1517,7 @@ class Editor {
     const f = { ...parsed.data } as Doc;
     delete f.renamedFrom;
     if (f.type === "enum" && f.default !== undefined && !f.options.includes(f.default)) return this.fail(i, "default", `"${String(f.default)}" is not one of the options`);
+    if (f.format && !formatFits(f.format, f.type)) return this.fail(i, "format", refusedFormat(f.format, f.type));
     spec.fields[field] = f;
     this.fieldOrigin.set(`${kind}.${field}`, undefined);
     let filled = "";
@@ -1521,7 +1534,9 @@ class Editor {
         filled = `, set to ${JSON.stringify(fill)} on the records already there`;
       }
     }
-    this.said.push(`${kind} gains a field, ${field} (${f.type}${f.required ? ", required" : ""})${filled}.`);
+    // What it is said as, in words: "(number, money in USD — 10000 reads $10,000)".
+    const said = formatWords(f, this.doc.brand);
+    this.said.push(`${kind} gains a field, ${field} (${f.type}${said ? `, ${said}` : ""}${f.required ? ", required" : ""})${filled}.`);
   }
 
   private renameField(i: number, kind: string, field: string, to: string) {
@@ -1572,9 +1587,8 @@ class Editor {
     const f = this.field(i, e.kind, e.field);
     if (!f) return;
     if (e.type === "enum" && !e.options && !f.options) return this.fail(i, "options", `to make ${e.field} a choice, list its "options"`);
-    // Markdown is a text field's (FR-180); money, percent and duration a number's.
-    if (e.format === "markdown" && e.type !== "text") return this.fail(i, "format", `"markdown" is a text field's format; retype ${e.field} to {"type": "text", "format": "markdown"}`);
-    if (e.format && e.format !== "markdown" && e.type === "text") return this.fail(i, "format", `a text field is shown as written or as Markdown, not as ${e.format}`);
+    // A format goes where it says something (FR-180): money, a percent and a duration on a number, Markdown on a text field.
+    if (e.format && !formatFits(e.format, e.type)) return this.fail(i, "format", refusedFormat(e.format, e.type));
     const was = f.type;
     f.type = e.type;
     if (e.type === "enum") f.options = e.options ?? f.options;
@@ -1582,15 +1596,45 @@ class Editor {
     if (e.type === "list") f.of = e.of ?? f.of ?? "string";
     else delete f.of;
     if (e.format) f.format = e.format;
-    else if (e.type !== "number" && e.type !== "integer" && e.type !== "duration") delete f.format;
+    else if (e.type === "text" || !formatFits(f.format ?? "", e.type)) delete f.format;
     // A range is a number's (FR-114): a field that is no longer one lets it go.
     if (e.type !== "number" && e.type !== "integer" && e.type !== "duration") for (const key of ["min", "max", "step"]) delete f[key];
     // Only a date repeats: a field that is no longer one lets its repeat go.
     if (e.type !== "date" && e.type !== "datetime") delete f.repeats;
     if (f.default !== undefined && coerce(f.default, was, f) === undefined) delete f.default;
     else if (f.default !== undefined) f.default = coerce(f.default, was, f);
+    const said = f.format && f.format !== "markdown" ? formatWords(f, this.doc.brand) : undefined;
     if (was === e.type && e.type === "text") this.said.push(`${e.kind}'s ${e.field} ${e.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);
-    else this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}; values that convert are kept.`);
+    else this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}${said ? `, said as ${said}` : ""}; values that convert are kept.`);
+  }
+
+  /**
+   * HOW A FIELD IS SAID, and nothing else about it: a number's `format`
+   * (money, a percent, a duration) and `unit` (a currency like "EUR" for
+   * money, a measure like "kg"), or a text field's `format`, `markdown`
+   * (FR-180) — each set by a value, cleared by `null`, kept when left out.
+   * The values stay as they are; every face says them anew.
+   */
+  private setFormat(i: number, e: Doc) {
+    const f = this.field(i, e.kind, e.field);
+    if (!f) return;
+    if (e.format === undefined && e.unit === undefined) return this.fail(i, "format", 'say a "format" ("money", "percent" or "duration" for a number, "markdown" for a text field, or null for neither), a "unit" ("EUR", "kg", or null), or both');
+    if (f.type === "text") {
+      if (e.unit !== undefined && e.unit !== null) return this.fail(i, "unit", refusedFormat("a unit", f.type));
+      if (e.format && e.format !== "markdown") return this.fail(i, "format", refusedFormat(e.format, f.type));
+      if (e.format === "markdown") f.format = "markdown";
+      else if (e.format === null) delete f.format;
+      this.said.push(`${e.kind}'s ${e.field} ${f.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);
+      return;
+    }
+    if (!formatFits(typeof e.format === "string" ? e.format : "money", f.type)) return this.fail(i, "field", refusedFormat(typeof e.format === "string" ? e.format : "a unit", f.type));
+    const before = formatWords(f, this.doc.brand);
+    for (const key of ["format", "unit"]) {
+      if (e[key] === null) delete f[key];
+      else if (e[key] !== undefined) f[key] = e[key];
+    }
+    const now = formatWords(f, this.doc.brand);
+    this.said.push(`${e.kind}'s ${e.field} is said as ${now ?? "a plain number"}${before ? `, where it was ${before.replace(/ — .*/, "")}` : ""}; its values are kept.`);
   }
 
   /** A number's range (FR-114): a key given sets it, `null` clears it, one left out stays. */

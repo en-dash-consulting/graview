@@ -6,6 +6,7 @@ import { isRepeatField, repeatedBy } from "../repeat.js";
 import { isMarkdownField } from "../schema/markdown.js";
 import { parseDuration } from "../schema/field-words.js";
 import { describeArg, unwrap } from "./arg-shape.js";
+import type { AmountMark } from "../schema/amount-mark.js";
 import { nodeRefKinds } from "./node-ref.js";
 
 /**
@@ -68,6 +69,8 @@ export interface ScalarField {
   readonly max?: number;
   /** What a number's values are whole multiples of (FR-114): an input's `step`. */
   readonly step?: number;
+  /** What a number is said as — money in its currency, a percent, a measure — so it is asked for as one: "$1,250.50". */
+  readonly amount?: AmountMark;
 }
 
 /** Classic or mini alike: the definition is read with `defOf`, never through `_def`, which mini has not got. */
@@ -176,6 +179,7 @@ export function formField(name: string, schema: unknown): FormField {
       ...(scalar.min === undefined ? {} : { min: scalar.min }),
       ...(scalar.max === undefined ? {} : { max: scalar.max }),
       ...(scalar.step === undefined ? {} : { step: scalar.step }),
+      ...(scalar.amount ? { amount: scalar.amount } : {}),
     };
   }
   if (scalar.type === "choice") return { control: "choice", name, optional, options: scalar.options };

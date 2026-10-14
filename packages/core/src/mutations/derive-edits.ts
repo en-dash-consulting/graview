@@ -1,5 +1,8 @@
 import * as z from "../schema/zod.js";
 import { filesOf } from "../schema/files.js";
+import { amountOf } from "../schema/amount-mark.js";
+import { formatMoney } from "../document/money.js";
+import { numberAsRead } from "../days.js";
 import { labelOf } from "../schema/define-node.js";
 import { fieldWords, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
@@ -201,8 +204,10 @@ export function deriveEditMutations<S extends AnySchema>(
             let said: string;
             try {
               // Files by their names (FR-162), never the host's addresses.
+              // Money and a percent as the field declares them: "amount → $12,500", never 12500.
+              const amount = typeof value === "number" ? amountOf(shape[field]) : undefined;
               // Prose by its start (FR-180): a history line is not the whole brief again.
-              said = format ? String(format(value)) : filesOf(value).length > 0 ? filesOf(value).map((file) => file.name).join(", ") : JSON.stringify(typeof value == "string" && value.length > 60 ? excerpt(value, 60) : value);
+              said = format ? String(format(value)) : amount ? (amount.format === "money" ? formatMoney(value as number, /^[A-Z]{3}$/.test(amount.unit ?? "") ? { ...amount, currency: amount.unit! } : amount) : amount.format === "percent" ? numberAsRead(value as number, amount.locale, { style: "percent", maximumFractionDigits: 0 }) : JSON.stringify(value)) : filesOf(value).length > 0 ? filesOf(value).map((file) => file.name).join(", ") : JSON.stringify(typeof value == "string" && value.length > 60 ? excerpt(value, 60) : value);
             } catch {
               said = JSON.stringify(value);
             }

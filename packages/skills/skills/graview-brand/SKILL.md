@@ -89,7 +89,12 @@ somebody with a bright office files a bug — so the framework measures it.
    on the brand (a document's `brand` may carry them alone, without an
    accent) are what a sum is said in wherever a block names none: a figure
    or a field shown as money, and `{net | money}` in a template — "21.000
-   €". A block's own `currency` wins. The locale says every day, time and
+   €". A block's own `currency` wins. A document field marked
+   `"format": "money"` is said in it on every face — record, list, card,
+   table, form ("$" beside the box, "$1,250.50" taken as typed) — and its
+   own `"unit": "EUR"` wins; `graview check` warns `money-currency` where
+   neither names one. `set-format` changes only a field's format or unit.
+   The locale says every day, time and
    number too, on every face: en-US unless it says ("Sep 10, 2023", "3:30
    PM", "1,250"); "en-GB" keeps the day first. The reader's, a host's
    `locale` on the embed or the provider, wins over it. `graview check` refuses a code or a locale it

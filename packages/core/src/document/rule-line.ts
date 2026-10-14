@@ -20,7 +20,9 @@ import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead, numberAsRead } from "../d
 import { evaluateExpr, NodeSet, type EvalContext, type Value } from "./expr/evaluate.js";
 import type { BinaryOp, Expr } from "./expr/parse.js";
 import { computedOf } from "./computed.js";
-import { formatMoney, type Formatter, type Money, type TemplatePart } from "./template.js";
+import { sayAmount } from "./amount.js";
+import type { AmountMark } from "../schema/amount-mark.js";
+import { type Formatter, type Money, type TemplatePart } from "./template.js";
 
 /** The most of a text value a line says, its end cut to "…". */
 const LONGEST_VALUE = 60;
@@ -130,10 +132,8 @@ function reader(words: LineWords) {
     if (typeof v === "boolean") return value(v ? "yes" : "no");
     const format = at?.format ?? (at ? formatOf(at.kind, at.key) : undefined);
     if (typeof v === "number") {
-      if (format?.format === "money") return value(formatMoney(v, { ...words.money, ...(format.unit && /^[A-Z]{3}$/.test(format.unit) ? { currency: format.unit } : {}) }));
-      if (format?.format === "percent") return value(numberAsRead(v, locale, { style: "percent", maximumFractionDigits: 0 }));
-      const plain = numberAsRead(v, locale);
-      return value(format?.unit && !/^[A-Z]{3}$/.test(format.unit) ? `${plain} ${format.unit}` : plain);
+      // Said as every face says the field: money in its currency, a fraction as a percent, a measure with its unit.
+      return value(format && format.format !== "date" ? sayAmount(v, { ...words.money, ...(format as AmountMark) }) : numberAsRead(v, locale));
     }
     if (ISO_DAY.test(v) || format?.format === "date") return value(dayAsRead(v.slice(0, 10), locale));
     if (ISO_MOMENT.test(v)) return value(momentAsRead(v, locale));

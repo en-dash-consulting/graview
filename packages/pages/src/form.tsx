@@ -6,7 +6,8 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
-import { argumentWords, failureWords, tellApart } from "@graview/core/words";
+import { amountBox, amountInBox, argumentWords, failureWords, readAmount, tellApart } from "@graview/core/words";
+import type { AmountMark } from "@graview/core";
 import { formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
@@ -140,6 +141,50 @@ p:where([data-graview-part="refused"]) {
 }
 `;
 
+/**
+ * AN AMOUNT'S BOX: its currency's symbol before it (or "%", a unit, after),
+ * a placeholder in the reader's locale, and the text read as a person
+ * writes it — "$1,250.50" is 1250.5, "15%" is 0.15. What is no number is
+ * said under the box, and nothing is sent for it.
+ */
+function AmountControl({ title, name, optional, amount, value, onChange }: { title: ReactNode; name: string; optional: boolean; amount: AmountMark; value: unknown; onChange: (value: unknown) => void }) {
+  const box = amountBox(amount);
+  const [text, setText] = useState(() => (typeof value === "number" ? amountInBox(value, amount) : ""));
+  const wrong = text.trim() !== "" && readAmount(text, amount) === undefined;
+  return (
+    <label data-graview-part="field" data-graview-field="number" data-graview-amount={amount.format ?? "unit"}>
+      <span data-graview-part="label">{title}</span>
+      <span data-graview-part="amount" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        {box.prefix ? <span data-graview-part="amount-symbol" aria-hidden="true">{box.prefix}</span> : null}
+        <input
+          type="text"
+          inputMode="decimal"
+          name={name}
+          required={!optional}
+          placeholder={box.placeholder}
+          title={box.hint}
+          aria-invalid={wrong || undefined}
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value);
+            onChange(readAmount(event.target.value, amount));
+          }}
+          data-graview-part="control"
+          style={{ flex: 1, minWidth: 0 }}
+        />
+        {box.suffix ? <span data-graview-part="amount-symbol" aria-hidden="true">{box.suffix}</span> : null}
+      </span>
+      {wrong ? (
+        <span data-graview-part="hint" role="status">
+          Not an amount {box.hint}: write it like {box.prefix ?? ""}
+          {box.placeholder}
+          {box.suffix ? ` ${box.suffix}` : ""}
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
 function Picker({ children }: { children: React.ReactNode }) {
   return (
     <span data-graview-part="picker">
@@ -238,6 +283,8 @@ function Control<S extends AnySchema>({
         </label>
       );
     case "number":
+      // Money, a percent, a measure: asked for as it is said — "$" beside "1,250.50" — and read as typed.
+      if (spec.amount) return <AmountControl title={title} name={spec.name} optional={spec.optional} amount={spec.amount} value={value} onChange={onChange} />;
       return (
         <label data-graview-part="field" data-graview-field={spec.control}>
           <span data-graview-part="label">{title}</span>

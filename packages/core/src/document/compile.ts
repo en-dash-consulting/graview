@@ -382,8 +382,11 @@ function argsOf(act: ActSpec, effects: readonly ActEffect[], document: GraviewDo
    * own is asked for within the field's (FR-114): the form will not take
    * what the record would refuse.
    */
-  const withRangeOf = (d: FieldSpec, fed: FieldSpec | undefined): FieldSpec =>
+  const ranged = (d: FieldSpec, fed: FieldSpec | undefined): FieldSpec =>
     fed && d.type === fed.type && d.min === undefined && d.max === undefined && d.step === undefined ? { ...d, ...(fed.min === undefined ? {} : { min: fed.min }), ...(fed.max === undefined ? {} : { max: fed.max }), ...(fed.step === undefined ? {} : { step: fed.step }) } : d;
+  // And it is asked for as the field is said: an amount for a money field, in its currency.
+  const withRangeOf = (d: FieldSpec, fed: FieldSpec | undefined): FieldSpec =>
+    fed && d.type === fed.type && d.format === undefined && d.unit === undefined ? { ...ranged(d, fed), ...(fed.format ? { format: fed.format } : {}), ...(fed.unit ? { unit: fed.unit } : {}) } : ranged(d, fed);
   const note = (arg: string, schema: () => ArgPlan, fed?: FieldSpec) => {
     if (arg === SUBJECT_ARG || BUILTIN_REFS.has(arg) || created.has(arg) || args.has(arg)) return;
     const d = declared[arg] ? withRangeOf(declared[arg], fed) : undefined;
@@ -454,6 +457,19 @@ export function compileDocumentWithoutCheck(raw: unknown, options: CompileOption
  * each act's arguments and effects said, the brand derived. `findings` is
  * added to (a brand that cannot be read is a warning) and carried.
  */
+/**
+ * A FIELD NAMED BARE IN A SENTENCE IS SAID AS IT IS DECLARED: `{amount}` of
+ * a money field reads "$10,000" in a label, a description, a rule's
+ * sentence and a refusal, as `{amount | money}` does — worked out here, so
+ * a page handed the compiled app renders it with nothing more.
+ */
+function saidAsDeclared(parts: readonly TemplatePart[], fields: GraviewDocument["kinds"][string]["fields"] | undefined): readonly TemplatePart[] {
+  return parts.map((part) => {
+    const format = !part.format && part.expr?.t === "ident" ? fields?.[part.expr.name]?.format : undefined;
+    return format === "money" || format === "percent" ? { ...part, format } : part;
+  });
+}
+
 function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
   const edges = edgeIndex(document);
 
@@ -464,8 +480,8 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
     const labelSource = spec.label ?? (labelField ? `{${labelField}}` : undefined);
     const computed = parsedComputed(spec);
     kinds[kind] = {
-      ...(labelSource ? { label: parseTemplate(labelSource) } : {}),
-      ...(spec.describe ? { describe: parseTemplate(spec.describe) } : {}),
+      ...(labelSource ? { label: saidAsDeclared(parseTemplate(labelSource), spec.fields) } : {}),
+      ...(spec.describe ? { describe: saidAsDeclared(parseTemplate(spec.describe), spec.fields) } : {}),
       ...(computed ? { computed: [...computed] } : {}),
     };
   }
@@ -529,7 +545,7 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
       effects,
       args: [...args],
       ...(act.allowedWhen ? { guard: parseExpr(act.allowedWhen) } : {}),
-      ...(act.refusal ? { refusal: parseTemplate(act.refusal) } : {}),
+      ...(act.refusal ? { refusal: saidAsDeclared(parseTemplate(act.refusal), document.kinds[[act.on ?? []].flat()[0] ?? ""]?.fields) } : {}),
       exprs: [...exprs],
       destructive,
       idempotent,
@@ -549,7 +565,7 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
       title: rule.title ?? name.replace(/-/g, " "),
       require: parseExpr(rule.require),
       ...(rule.when ? { when: parseExpr(rule.when) } : {}),
-      ...(rule.says ? { says: parseTemplate(rule.says) } : {}),
+      ...(rule.says ? { says: saidAsDeclared(parseTemplate(rule.says), document.kinds[rule.over]?.fields) } : {}),
     };
   }
 

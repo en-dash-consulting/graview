@@ -1,6 +1,6 @@
 import { fieldWords, humanizeField as humanize, type AnySchema } from "@graview/core";
 import { valueWords } from "@graview/core/words";
-import { pageSections, parseDuration, readableFields } from "@graview/core/words";
+import { amountBox, amountInBox, pageSections, parseDuration, readableFields, readAmount } from "@graview/core/words";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
@@ -46,7 +46,10 @@ export function EditableValue<S extends AnySchema>({
   const definition = store.schema.definitions.find((one) => one.kind === kind);
   const words = fieldWords(definition, field).toLowerCase();
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(stored);
+  // An amount is edited as it is said, less its symbol: "10,000" beside "$", never a bare 10000 (money said as money).
+  const amount = editable?.shape.type === "number" ? editable.shape.amount : undefined;
+  const held = amount && stored !== "" && Number.isFinite(Number(stored)) ? amountInBox(Number(stored), amount) : stored;
+  const [draft, setDraft] = useState(held);
   const input = useRef<HTMLInputElement | HTMLSelectElement | HTMLButtonElement | null>(null);
   /*
    * THE VALUE IS THE CONTROL, AND THE KEYBOARD COMES BACK TO IT.
@@ -69,7 +72,7 @@ export function EditableValue<S extends AnySchema>({
 
   // The graph can change underneath an open editor — an agent turn, an undo —
   // and the draft must not silently overwrite it on blur.
-  useEffect(() => setDraft(stored), [stored, editing]);
+  useEffect(() => setDraft(held), [held, editing]);
   useEffect(() => {
     if (editing) input.current?.focus();
     else if (comeBack.current) {
@@ -210,12 +213,17 @@ export function EditableValue<S extends AnySchema>({
           ))}
         </select>
       ) : (
+        <>
+        {amount && amountBox(amount).prefix ? <span aria-hidden="true">{amountBox(amount).prefix}</span> : null}
         <input
           ref={input as { current: HTMLInputElement | null }}
-          aria-label={humanize(field)}
+          aria-label={amount ? `${humanize(field)}, ${amountBox(amount).hint}` : humanize(field)}
           data-graview-field={field}
+          {...(amount ? { inputMode: "decimal" as const, placeholder: amountBox(amount).placeholder, "data-graview-amount": amount.format ?? "unit" } : {})}
           type={
-            editable.shape.type === "number" && !editable.shape.duration
+            amount
+              ? "text"
+              : editable.shape.type === "number" && !editable.shape.duration
               ? "number"
               : editable.shape.type === "date"
                 ? editable.shape.time
@@ -227,9 +235,9 @@ export function EditableValue<S extends AnySchema>({
           // A length of time is typed as one: "1h 30m", "90" or "1:30".
           {...(editable.shape.type === "number" && editable.shape.duration ? { placeholder: "1h 30m" } : {})}
           {...(editable.shape.type === "text" && editable.shape.holds === "phone" ? { inputMode: "tel" as const, autoComplete: "tel" } : {})}
-          {...(editable.shape.type === "number" && editable.shape.min !== undefined ? { min: editable.shape.min } : {})}
-          {...(editable.shape.type === "number" && editable.shape.max !== undefined ? { max: editable.shape.max } : {})}
-          {...(editable.shape.type === "number" && editable.shape.step !== undefined ? { step: editable.shape.step } : {})}
+          {...(editable.shape.type === "number" && editable.shape.min !== undefined && !amount ? { min: editable.shape.min } : {})}
+          {...(editable.shape.type === "number" && editable.shape.max !== undefined && !amount ? { max: editable.shape.max } : {})}
+          {...(editable.shape.type === "number" && editable.shape.step !== undefined && !amount ? { step: editable.shape.step } : {})}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onBlur={() => done(coerce(editable, draft), { left: true })}
@@ -250,6 +258,8 @@ export function EditableValue<S extends AnySchema>({
             padding: "0 3px",
           }}
         />
+        {amount && amountBox(amount).suffix ? <span aria-hidden="true">{amountBox(amount).suffix}</span> : null}
+        </>
       )}
       {/*
         * An edit needing a second answer is still worth offering, but it
@@ -267,6 +277,8 @@ export function EditableValue<S extends AnySchema>({
 
 /** The typed value the mutation's input asked for, not the string it was typed as: a length of time as its minutes ("1h 30m" is 90). */
 function coerce(field: EditableField, draft: string): unknown {
+  // An amount is read as it was typed — "$1,250.50", "15%" — and nothing that is no number is sent.
+  if (field.shape.type === "number" && field.shape.amount) return readAmount(draft, field.shape.amount);
   return field.shape.type === "number" ? (field.shape.duration ? (parseDuration(draft) ?? draft) : Number(draft)) : field.shape.type === "text" && field.shape.holds ? draft.trim() : draft;
 }
 

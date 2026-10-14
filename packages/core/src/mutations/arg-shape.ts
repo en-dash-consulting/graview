@@ -1,6 +1,8 @@
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
+import { amountOf, type AmountMark } from "../schema/amount-mark.js";
+import { amountMark } from "../schema/amount-words.js";
 
 /*
  * A file of its own (FR-179): what an argument asks for is read by a form, a
@@ -36,9 +38,11 @@ export type ArgShape =
   /**
    * A number, and its range where it says one: `step` is what its values are
    * whole multiples of (FR-114), 1 for a whole number. `duration` where it is
-   * a length of time in minutes, typed as "1h 30m", "90" or "1:30".
+   * a length of time in minutes, typed as "1h 30m", "90" or "1:30". `amount`
+   * where the field is said as more than a number: money in a currency, a
+   * fraction as a percent — asked for as "$1,250.50".
    */
-  | { readonly type: "number"; readonly min?: number; readonly max?: number; readonly step?: number; readonly duration?: true }
+  | { readonly type: "number"; readonly min?: number; readonly max?: number; readonly step?: number; readonly duration?: true; readonly amount?: AmountMark }
   | { readonly type: "choice"; readonly options: readonly string[] }
   /**
    * YES OR NO — an argument that takes a boolean.
@@ -133,6 +137,7 @@ export function describeArg(schema: unknown): ArgShape {
       ...(max === undefined ? {} : { max }),
       ...(step === undefined ? {} : { step }),
       ...(typedFieldOf(field) === "duration" ? { duration: true as const } : {}),
+      ...(amountOf(schema) ? { amount: amountMark(amountOf(schema)!) } : {}),
     };
   }
 

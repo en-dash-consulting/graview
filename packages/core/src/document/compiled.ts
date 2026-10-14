@@ -35,10 +35,11 @@ import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindSha
 import type { Expr } from "./expr/parse.js";
 import { error, type Finding } from "./findings.js";
 import type { EffectSpec, FieldSpec, GraviewDocument, KindSpec, SightSpec, ValueSpec } from "./schema.js";
-import { formatValue, renderTemplate, type TemplatePart } from "./template.js";
+import { formatValue, renderTemplate, type Money, type TemplatePart } from "./template.js";
 import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
+import { markAmount } from "../schema/amount-mark.js";
 import { ISO_DAY, isMoment, isoToday } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
@@ -193,7 +194,7 @@ export function defaultLabelField(spec: KindSpec): string | undefined {
  * (FR-57). The checks, their messages and their definitions are the ones
  * classic's methods make.
  */
-export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
+export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): z.ZodMiniType {
   let schema: z.ZodMiniType;
   switch (spec.type) {
     case "string":
@@ -253,9 +254,12 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.email();
       break;
   }
-  // A phone, a place and a duration say so, for a face to say and link each.
-  markTyped(schema, spec.type);
+  // A phone, a place and a duration say so, for a face to say and link each. A number shown as a duration IS one: whole minutes, said, typed and told to a model as the duration type is.
+  const numeric = spec.type === "number" || spec.type === "integer";
+  markTyped(schema, numeric && spec.format === "duration" ? "duration" : spec.type);
   if (spec.description) schema = schema.check(z.describe(spec.description));
+  // What a number is said as — money in the app's currency, a percent, a measure — read by every face, every form and every tool.
+  if (numeric && (spec.format === "money" || spec.format === "percent" || (!spec.format && spec.unit))) markAmount(schema, { ...money, ...(spec.format ? { format: spec.format } : {}), ...(spec.unit ? { unit: spec.unit } : {}) });
   return optional ? z.optional(schema) : schema;
 }
 
@@ -264,7 +268,7 @@ const noRecord = (id: string): never => {
   throw new ActRefusal(`there is no record "${id}"`, "invalid");
 };
 
-const argSchema = (arg: ArgPlan): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
+const argSchema = (arg: ArgPlan, money: Money): z.ZodMiniType => ("field" in arg ? fieldSchema(arg.field, arg.optional, money) : "ref" in arg ? refTo(arg.ref) : z.optional(z.unknown()));
 
 /*
  * An act's own refusal is the framework's typed one (FR-110), which a host
@@ -354,7 +358,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   const definitions = Object.entries(document.kinds).map(([kind, spec]) => {
     const shape: Record<string, z.ZodMiniType> = {};
     for (const [field, f] of Object.entries(spec.fields)) {
-      shape[field] = fieldSchema(f, !f.required);
+      shape[field] = fieldSchema(f, !f.required, money);
       // How a date repeats, kept beside it (`repeat.ts`); none (null) when it no longer does.
       if (f.repeats) shape[repeatKey(field)] = z.optional(repeatSchema());
     }
@@ -409,7 +413,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const { title, effects, guard, refusal, destructive, idempotent, creates, connects, severs, writes, writesOther, sets } = planned;
     const args = new Map(planned.args);
     const shape: Record<string, z.ZodMiniType> = {};
-    for (const [arg, a] of args) shape[arg] = argSchema(a);
+    for (const [arg, a] of args) shape[arg] = argSchema(a, money);
     const subjectKinds: readonly string[] = [act.on ?? []].flat();
     const exprs = new Map(planned.exprs);
     /*
