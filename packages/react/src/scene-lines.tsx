@@ -9,7 +9,7 @@ import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";
 import { orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 import { channelRoute } from "./channels.js";
-import { clipQuadratic, Connectors, connectorStrands, tieRoute } from "./connectors.js";
+import { clipQuadratic, Connectors, connectorStrands, movedBy, tieRoute } from "./connectors.js";
 import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-node.js";
 import { captionRuns, type CaptionEntry, type CaptionRun } from "./captions.js";
@@ -116,10 +116,13 @@ export function Lines<S extends AnySchema>({
    * the lines are measured again.
    */
   const captionsAt = useRef("");
+  /* Where the layout had every card when the lines were measured: a held card's lines move by what it has moved since. */
+  const measuredAt = useRef<readonly SceneNode[]>([]);
   const captionsNow = () => [...(stageRef.current?.querySelectorAll("[data-graview-relation] > span") ?? [])].map((el) => { const r = el.getBoundingClientRect(); return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)}`; }).join(" ");
   useLayoutEffect(() => {
     if (moving || holding) return;
     captionsAt.current = captionsNow();
+    measuredAt.current = frame.nodes;
     setMeasured(connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frame, moving, holding, selection, overview, graphNodes, scheme, asked, stageRef]);
@@ -190,7 +193,7 @@ export function Lines<S extends AnySchema>({
    * nobody is listened to while no tie waits on it.
    */
   const [pointed, point] = useState<string | null>(null);
-  const waiting = (measured ?? []).some((strand) => strand.said !== undefined);
+  const waiting = (measured ?? []).some((strand) => strand.tie !== undefined);
   useEffect(() => {
     const stage = stageRef.current;
     if (!waiting || stage === null) return;
@@ -214,11 +217,15 @@ export function Lines<S extends AnySchema>({
   if (moving) return null;
   /*
    * Without a DOM — the first render, a server — the lines stand on the
-   * layout's own boxes; and so they do while a card is held, following the
-   * hand from the layout rather than measuring the page on every move.
+   * layout's own boxes. While a card is held they stand on what was
+   * measured, moved by as far as the hand has moved each card since: the
+   * page is not measured on every move, and a line still starts on the
+   * card's drawn edge rather than on the edge of the slot the layout gave
+   * it (a gap as tall as the slot is taller), and a tie the card has said
+   * stays waiting.
    */
   const strands =
-    (holding ? null : measured) ?? connectorStrands(frame.nodes, frame.connectors, null, overview, scheme);
+    (measured && holding ? movedBy(measured, measuredAt.current, frame.nodes) : measured) ?? connectorStrands(frame.nodes, frame.connectors, null, overview, scheme);
   const drawnSingles = new Set<string>();
   for (const strand of strands) {
     if (strand.edges.length !== 1) continue;

@@ -491,10 +491,16 @@ export function connectorStrands(
        * entries seemed to belong to no list until one was selected.
        */
       const focusEnd = [connector.from, connector.to].find((id) => Math.round(byId.get(id)?.plane ?? -1) === 0);
+      /*
+       * Where the focus is a record and the edge is its own, a card naming
+       * the far record has said it, and the tie waits to be asked for
+       * (`said`, below) rather than never being drawn: pointing at the band's
+       * card of several that holds it still draws it.
+       */
       if (
         !overview &&
         focusEnd !== undefined &&
-        (edge.from !== connector.from || edge.to !== connector.to) &&
+        (focusEnd === connector.from ? edge.from !== connector.from : edge.to !== connector.to) &&
         memberBoxes(stageEl, hostOf(focusEnd), focusEnd === connector.from ? edge.to : edge.from, pass).length > 0
       ) {
         continue;
@@ -568,6 +574,34 @@ export function connectorStrands(
 
 type Point = { x: number; y: number };
 type Quadratic = { p0: Point; c: Point; p1: Point };
+
+/**
+ * MEASURED STRANDS, MOVED WITH THE HAND: each end by as far as the layout
+ * has moved the card it belongs to since the measurement (`then` → `now`).
+ * The routes are worked out again from the moved boxes when drawn.
+ */
+export function movedBy(strands: readonly Strand[], then: readonly SceneNode[], now: readonly SceneNode[]): Strand[] {
+  const was = new Map(then.map((node) => [node.id, node]));
+  const delta = new Map<string, Point>();
+  for (const node of now) {
+    const before = was.get(node.id);
+    if (before && (before.x !== node.x || before.y !== node.y)) delta.set(node.id, { x: node.x - before.x, y: node.y - before.y });
+  }
+  if (delta.size === 0) return [...strands];
+  const by = (box: Box, id: string): Box => {
+    const d = delta.get(id);
+    return d ? { ...box, x: box.x + d.x, y: box.y + d.y } : box;
+  };
+  return strands.map((strand) => {
+    const { from, to } = strand.connector;
+    if (!delta.has(from) && !delta.has(to)) return strand;
+    const fromBox = by(strand.fromBox, from);
+    const toBox = by(strand.toBox, to);
+    const tie = strand.tie && { ...strand.tie, card: by(strand.tie.card, strand.tie.cardIsTo ? to : from), chip: by(strand.tie.chip, strand.tie.toward) };
+    const swap = (box: Box) => (box === strand.fromBox ? fromBox : box === strand.toBox ? toBox : strand.tie && box === strand.tie.chip ? tie!.chip : box);
+    return { ...strand, fromBox, toBox, ...(tie ? { tie } : {}), ...(strand.band ? { band: strand.band.map(swap) } : {}) };
+  });
+}
 
 function quadraticAt(q: Quadratic, t: number): Point {
   const a = (1 - t) * (1 - t);
@@ -927,7 +961,11 @@ export function Connectors({
         const mine = strand.edges.some((edge) => chosenReal.has(edge.from) || chosenReal.has(edge.to));
         // A tie drawn for the record a person points at is lit as a chosen one's is: it is what they asked for.
         const toward = strand.tie?.toward ?? "";
-        const asked = strand.said !== undefined && pointed !== null && (strand.said.includes(pointed) || toward === pointed || strand.tie!.holds.includes(pointed)) && !answered.has(toward);
+        // Whatever else is chosen: pointing at a record is asking about it, said by the card or not.
+        const asked =
+          strand.tie !== undefined &&
+          ((pointed !== null && (toward === pointed || strand.tie.holds.includes(pointed) || strand.said?.includes(pointed) === true)) || chosenReal.has(toward)) &&
+          !answered.has(toward);
         // One line to each drawing of the band, however many of the records it stands for are asked about.
         if (asked) answered.add(toward);
         const lit = (!overview && chosenReal.size > 0 && mine) || asked;
@@ -946,7 +984,7 @@ export function Connectors({
          * context. (A relation the scene was asked to show, with nothing
          * chosen, draws as asked.) Lines are a function of the choice.
          */
-        if (!overview && !live && chosenReal.size > 0 && !mine && !stressed) return null;
+        if (!overview && !live && chosenReal.size > 0 && !mine && !stressed && !asked) return null;
         /*
          * THE CARD HAS SAID IT. A record's card that lists the records it is
          * tied to, under the same words the band's captions say, has drawn

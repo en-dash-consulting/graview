@@ -324,7 +324,8 @@ const WHOLE = (focus) => {
       to: path.getAttribute("data-graview-to"),
       subpaths: (d.match(/M/g) ?? []).length,
       endsOnDrawings: ends.every((p) => drawings.some((r) => near(r, p, 2.5))),
-      oneEndOnTheCard: !fromCard || (cardBox !== null && ends.some((p) => near(cardBox, p, 2.5))),
+      // On the card's drawn edge to a pixel: not on the edge of the slot the layout gave it, nor short of it.
+      oneEndOnTheCard: !fromCard || (cardBox !== null && ends.some((p) => near(cardBox, p, 1))),
       covered: covered.slice(0, 3),
       coveredCount: covered.length,
     });
@@ -484,6 +485,73 @@ for (const { app, port, states, chosen = [], ground = [], record } of APPS.filte
         report.ground.asked += asked;
         if (asked === 0) report.faults.push(`${where}, ${which}: no tie from the record's card is drawn for it`);
       }
+      /*
+       * WITH THE REAL POINTER AND THE KEYBOARD, given more room and with
+       * another record chosen: the mouse moved onto a chip of the band draws
+       * that chip's tie and keeps it while it stays; Tab onto a chip does the
+       * same; and while the card is held and moved, every tie still starts on
+       * its drawn edge.
+       */
+      const tieFor = async (id) => (await page.evaluate(WHOLE, record.id)).lines.filter((line) => [line.from, line.to].includes(record.id) && [line.from, line.to].includes(id)).length;
+      await open(`#focus=${encodeURIComponent(record.id)}&zoom=1`);
+      const chips = page.locator('[data-graview-view][data-graview-plane="1"]');
+      const chosenBox = await chips.nth(0).boundingBox();
+      if (chosenBox) {
+        await page.mouse.click(chosenBox.x + 12, chosenBox.y + chosenBox.height / 2);
+        await page.waitForTimeout(900);
+      }
+      const other = (await chips.count()) > 1 ? chips.nth(1) : null;
+      const otherId = other ? await other.getAttribute("data-graview-view") : null;
+      const otherBox = other ? await (other.locator("> *").first()).boundingBox() : null;
+      if (otherId && otherBox) {
+        await page.mouse.move(otherBox.x + otherBox.width / 2, otherBox.y + otherBox.height / 2, { steps: 8 });
+        await page.waitForTimeout(500);
+        await judge("pointed at by the mouse with another chosen");
+        const drawn = await tieFor(otherId);
+        await page.waitForTimeout(1200);
+        const kept = await tieFor(otherId);
+        report.pointer = [...(report.pointer ?? []), { where, otherId, drawn, kept }];
+        if (drawn === 0) report.faults.push(`${where}: the mouse on ${otherId} does not draw its tie while another record is chosen`);
+        else if (kept === 0) report.faults.push(`${where}: the tie to ${otherId} is gone while the mouse is still on it`);
+      } else report.faults.push(`${where}: no second chip of the band to point at`);
+      /* The keyboard: Tab until a chip of the band or of the card has it. */
+      await page.mouse.move(4, height - 4);
+      await page.waitForTimeout(400);
+      const resting = (await page.evaluate(WHOLE, record.id)).lines.filter((line) => [line.from, line.to].includes(record.id)).length;
+      let tabbed = null;
+      for (let press = 0; press < 60 && tabbed === null; press++) {
+        await page.keyboard.press("Tab");
+        tabbed = await page.evaluate((focus) => {
+          const el = document.activeElement;
+          const band = el?.closest('[data-graview-view][data-graview-plane="1"]');
+          if (band) return band.getAttribute("data-graview-view");
+          const pick = el?.closest(`[data-graview-view="${CSS.escape(focus)}"] [data-graview-pick]`);
+          return pick ? pick.getAttribute("data-graview-pick") : null;
+        }, record.id);
+      }
+      await page.waitForTimeout(500);
+      const keyed = tabbed ? (await page.evaluate(WHOLE, record.id)).lines.filter((line) => [line.from, line.to].includes(record.id)).length : 0;
+      report.keyboard = [...(report.keyboard ?? []), { where, tabbed, resting, ties: keyed }];
+      if (!tabbed) report.faults.push(`${where}: Tab never reaches a chip of the band or the card`);
+      else if (keyed <= resting && (await tieFor(tabbed)) === 0) report.faults.push(`${where}: Tab onto ${tabbed} does not draw its tie`);
+      /* Held: the card pressed and moved, and every tie measured while it is. */
+      const cardBox = await page.locator(`[data-graview-view="${record.id}"]`).boundingBox();
+      if (cardBox) {
+        const x = cardBox.x + cardBox.width * 0.6;
+        const y = cardBox.y + 60;
+        await page.mouse.move(x, y);
+        await page.mouse.down();
+        for (let step = 1; step <= 10; step++) {
+          await page.mouse.move(x + step * 4, y + step * 3);
+          await page.waitForTimeout(30);
+        }
+        await page.waitForTimeout(300);
+        const held = await judge("while the card is held");
+        report.held = [...(report.held ?? []), { where, lines: held.lines.length }];
+        await page.mouse.up();
+        await page.waitForTimeout(800);
+      }
+
       /* Up from it, every way: Up, the zoom-out control, ctrl+wheel, an address, and Back. */
       const risen = async (how) => {
         const seen = await page.evaluate(RISEN, record.id);
@@ -547,6 +615,9 @@ report.checks.everyLineOnTheGroundIsOneWholeLineFromDrawingToDrawing =
   (report.ground?.lines ?? 0) > 0 &&
   (report.ground?.asked ?? 0) > 0 &&
   !report.faults.some((f) => /pieces, not one line|ends where nothing is drawn|does not end on the record's card|no tie from the record's card/.test(f));
+report.checks.theRealPointerAndTheKeyboardDrawATieWhateverElseIsChosen =
+  (report.pointer ?? []).length > 0 && (report.keyboard ?? []).length > 0 && !report.faults.some((f) => /does not draw its tie|is gone while the mouse|Tab never reaches|Tab onto|no second chip/.test(f));
+report.checks.whileTheCardIsHeldEveryTieStartsOnItsDrawnEdge = (report.held ?? []).length > 0 && !report.faults.some((f) => /while the card is held: .* (does not end on the record's card|is \d+ pieces|ends where nothing)/.test(f));
 report.checks.noLineOnTheGroundRunsBehindOrAcrossAnything = (report.ground?.lines ?? 0) > 0 && !report.faults.some((f) => /runs behind or across/.test(f));
 report.checks.aRecordRisenFromIsInThePanelBesideTheMapAndNotOverTheCity =
   (report.risen ?? []).length >= 10 && !report.faults.some((f) => /did not rise|not in the panel beside the map|drawn over the city|building is not drawn|closing the map does not return/.test(f));
