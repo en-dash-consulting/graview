@@ -11,7 +11,7 @@ import type { AmountMark } from "@graview/core";
 import { formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
-import { Files, RepeatPicker } from "@graview/primitives/pages";
+import { Files, LinkedPicker, RepeatPicker } from "@graview/primitives/pages";
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 /**
@@ -488,6 +488,13 @@ function Control<S extends AnySchema>({
         </fieldset>
       );
     }
+    case "linked":
+      // A record in another app (FR-171), picked from what the host lists for this viewer.
+      return (
+        <div data-graview-part="field" data-graview-field="linked">
+          <LinkedPicker relation={spec.relation} value={value} onChange={onChange} label={title} />
+        </div>
+      );
     case "repeat":
       // How a date repeats, asked for with the picker beside it: none, every day, week, month or year, on which days, until when.
       return <RepeatPicker value={value} onChange={onChange} start={spec.of ? values?.[spec.of] : undefined} label={`${spec.of ? words(spec.of).label : named} repeats`} name={spec.name} />;

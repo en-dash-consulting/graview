@@ -35,6 +35,7 @@ import { tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } 
 import { capitalize } from "./capital.js";
 import { dayOf, type Tick } from "./clock.js";
 import { pluralOf } from "./schema/define-node.js";
+import { linkedReaderOf } from "./schema/linked.js";
 
 export interface StoreOptions<S extends AnySchema> {
   readonly schema: S;
@@ -1046,7 +1047,11 @@ export class Store<S extends AnySchema> {
   /** What every judgment is handed: the store's options, a call's context, and the day it judges on. */
   private judging(context?: InvariantContext): EvaluateOptions<S> {
     const today = this.today();
-    return { ...this.invariantOptions, ...(context === undefined ? {} : { context }), ...(today === undefined ? {} : { today }) };
+    // A rule that walks a link to another app reads it as the viewer this graph is read for (FR-171), unless the call hands its own reader.
+    const linked = linkedReaderOf(this.graph);
+    const given = context ?? this.invariantOptions.context;
+    const judged = linked && !(given && "linked" in given) ? { ...given, linked } : context;
+    return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }) };
   }
 
   /**
@@ -1078,6 +1083,18 @@ export class Store<S extends AnySchema> {
     const moved = this.moved(before, this.violations());
     if (day !== was && !this.rehearsing && this.quiet === 0) for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
     return { day, ...(was === undefined ? {} : { was }), appeared: moved.introduces, cleared: moved.resolves };
+  }
+
+  /**
+   * SOMETHING READ BESIDE THE GRAPH ANSWERED (FR-171): a record in another
+   * app that a computed field, a rule or a label walks to has been read, or
+   * read again. Nothing here changed, and nothing is written or logged;
+   * every subscriber hears it, as they hear the day turn, with an empty
+   * diff and no ops, so what reads through the link reads again.
+   */
+  reread(): void {
+    if (this.rehearsing || this.quiet > 0) return;
+    for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
   }
 
   /**

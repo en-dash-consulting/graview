@@ -14,6 +14,7 @@ import {
   type GraviewDocument,
   type ValueSpec,
 } from "./schema.js";
+import { linkedEdges, localEdges, reachesAnotherApp } from "../schema/linked.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, TemplateError } from "./template-parse.js";
 import { upgradeDocument } from "./upgrade.js";
@@ -128,7 +129,8 @@ interface EdgeInfo {
 function edgeIndex(document: GraviewDocument): Map<string, EdgeInfo> {
   const edges = new Map<string, EdgeInfo>();
   for (const [kind, spec] of Object.entries(document.kinds)) {
-    for (const [name, edge] of Object.entries(spec.edges ?? {})) {
+    // A relation to another app's kinds is kept on the record that links (FR-171): no link of this graph is one.
+    for (const [name, edge] of Object.entries(localEdges(spec.edges))) {
       const prior = edges.get(name);
       edges.set(name, {
         name,
@@ -145,10 +147,12 @@ export function kindShapes(document: GraviewDocument): Map<string, KindShape> {
   const shapes = new Map<string, KindShape>();
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const computed = parsedComputed(spec);
+    const linked = linkedEdges(spec.edges);
     shapes.set(kind, {
-      fields: new Set(Object.keys(spec.fields)),
-      edges: new Map(Object.entries(spec.edges ?? {}).map(([name, e]) => [name, e.cardinality ?? "many"])),
+      fields: new Set([...Object.keys(spec.fields), ...linked.keys()]),
+      edges: new Map(Object.entries(localEdges(spec.edges)).map(([name, e]) => [name, e.cardinality ?? "many"])),
       ...(computed ? { computed } : {}),
+      ...(linked.size > 0 ? { linked } : {}),
     });
   }
   const facts = parsedComputed(document);
@@ -224,11 +228,15 @@ function validate(document: GraviewDocument): Finding[] {
   const edges = edgeIndex(document);
   const acts = document.acts ?? {};
   const roles = new Set(document.roles ?? []);
+  // Relations to other apps' kinds (FR-171): kept on the record that links, set by its edit, walked by name.
+  const linkedHere = (kind: string, name: string) => linkedEdges(document.kinds[kind]?.edges).has(name);
+  const linkedAnywhere = (name: string) => Object.keys(document.kinds).some((kind) => linkedHere(kind, name));
 
   for (const [kind, spec] of Object.entries(document.kinds)) {
     const at = `kinds.${kind}`;
     for (const [name, edge] of Object.entries(spec.edges ?? {})) {
-      if (edge.to !== "*") for (const target of edge.to) if (!kinds.has(target)) findings.push(error("edge-target", `${at}.edges.${name}.to`, `"${target}" is not a kind this document declares`));
+      // One that reaches another app is judged with the checker (`linked-findings.ts`).
+      if (!reachesAnotherApp(edge) && edge.to !== "*") for (const target of edge.to) if (!kinds.has(target)) findings.push(error("edge-target", `${at}.edges.${name}.to`, `"${target}" is not a kind this document declares`));
       if (spec.fields[name]) findings.push(error("edge-field-clash", `${at}.edges.${name}`, `"${name}" is both a field and a relation of ${kind}`, "rename one of them"));
     }
     if (spec.lifecycle && !spec.fields[spec.lifecycle.field]) findings.push(error("lifecycle-field", `${at}.lifecycle.field`, `${kind} has no field "${spec.lifecycle.field}"`));
@@ -274,6 +282,7 @@ function validate(document: GraviewDocument): Finding[] {
       for (const field of act.writes) {
         if (document.kinds[act.creates]!.fields[field]) continue;
         if (document.kinds[act.creates]!.computed?.[field] !== undefined) findings.push(error("computed-written", `${at}.writes`, `${act.creates}'s ${field} is worked out, not written: no act can set it`, "write the stored fields it is worked out from"));
+        else if (linkedHere(act.creates, field)) continue; // Said by the checker: `act-linked`.
         else findings.push(error("act-field", `${at}.writes`, `${act.creates} has no field "${field}"`));
       }
     }
@@ -294,7 +303,8 @@ function validate(document: GraviewDocument): Finding[] {
         if (effect.as) created.set(effect.as, effect.create);
       } else if ("connect" in effect || "sever" in effect) {
         const edgeName = "connect" in effect ? effect.connect : effect.sever;
-        if (!edges.has(edgeName)) findings.push(error("act-edge", `${where}.${"connect" in effect ? "connect" : "sever"}`, `"${edgeName}" is not a relation any kind declares`));
+        // A relation to another app is said by the checker: `act-linked`.
+        if (!edges.has(edgeName) && !linkedAnywhere(edgeName)) findings.push(error("act-edge", `${where}.${"connect" in effect ? "connect" : "sever"}`, `"${edgeName}" is not a relation any kind declares`));
         if (refName(effect.from) === "subject" && subjectKinds.length === 0) findings.push(error("act-subject", `${at}.on`, `"${name}" acts on "$subject" but does not say which kinds it is "on"`));
       } else if ("set" in effect) {
         const target = refName(effect.target ?? "$subject");
@@ -304,6 +314,7 @@ function validate(document: GraviewDocument): Finding[] {
           for (const kind of targetKinds) {
             if (!kinds.has(kind) || document.kinds[kind]!.fields[field]) continue;
             if (document.kinds[kind]!.computed?.[field] !== undefined) findings.push(error("computed-written", `${where}.set.${field}`, `${kind}'s ${field} is worked out, not written: no act can set it`, "set the stored fields it is worked out from"));
+            else if (linkedHere(kind, field)) continue; // Said by the checker: `act-linked`.
             else findings.push(error("act-field", `${where}.set.${field}`, `${kind} has no field "${field}"`));
           }
         }
@@ -336,7 +347,7 @@ function validate(document: GraviewDocument): Finding[] {
           findings.push(error("rule-name", `${at}.${key}`, `${rule.over} has no field or relation called "${n}"`, hyphenated ? `"${hyphenated}" reads as a subtraction in a rule; rename the relation to one camelCase word, like "${hyphenated.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase())}"` : undefined));
         }
       }
-      for (const e of shape.edges) if (!edges.has(e)) findings.push(error("rule-edge", `${at}.${key}`, `"${e}" is not a relation any kind declares`));
+      for (const e of shape.edges) if (!edges.has(e) && !linkedAnywhere(e)) findings.push(error("rule-edge", `${at}.${key}`, `"${e}" is not a relation any kind declares`));
       for (const k of shape.sweeps) {
         if (!kinds.has(k)) findings.push(error("rule-kind", `${at}.${key}`, `"${k}" is not a kind this document declares`));
         else if (rule.over !== "graph") findings.push(warning("rule-cost", `${at}.${key}`, `this rule looks at every ${k} for every ${rule.over}, which grows slowly as the app grows`, "walk a relation with out()/in() instead of all() where you can"));

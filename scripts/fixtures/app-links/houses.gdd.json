@@ -1,0 +1,22 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "House",
+  "description": "The houses Nick might buy, an app of its own that the purchase scenarios link into (FR-171).",
+  "kinds": {
+    "house": {
+      "noun": "house",
+      "plural": "houses",
+      "fields": {
+        "street": { "type": "string", "required": true },
+        "bedrooms": { "type": "integer" },
+        "listPrice": { "type": "number", "label": "List price" }
+      },
+      "label": "{street}",
+      "describe": "{bedrooms} bedrooms"
+    }
+  },
+  "acts": {
+    "add-house": { "title": "Add a house", "creates": "house" }
+  }
+}

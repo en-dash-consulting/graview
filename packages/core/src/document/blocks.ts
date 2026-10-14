@@ -8,6 +8,7 @@ import type { FieldSpec } from "./schema.js";
 import { EMPTY_GRAPH, formatMoney, formatValue, type Money, type TemplatePart } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./field-spec.js";
+import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
 import { FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
 import { capitalize } from "../capital.js";
 import { filesOf, isImage, type FileValue } from "../schema/files.js";
@@ -228,7 +229,7 @@ type Unkeyed =
   | { readonly t: "text"; readonly text: string; readonly tone?: ViewTone; readonly markdown?: true; readonly problem?: string }
   | { readonly t: "badge"; readonly text: string; readonly tone: ViewTone; readonly problem?: string }
   /** `app`: another app's address (FR-171), drawn as the app the host's `resolveApp` names. */
-  | { readonly t: "field"; readonly field: string; readonly label: string; readonly text: string; readonly href?: string; readonly app?: string; readonly problem?: string }
+  | { readonly t: "field"; readonly field: string; readonly label: string; readonly text: string; readonly href?: string; readonly app?: string; readonly linked?: { readonly relation: LinkedRelation; readonly refs: readonly LinkedRecordRef[] }; readonly problem?: string }
   /** A record's files, as the block shows them: `text` names them, for whoever cannot see them. */
   | { readonly t: "image"; readonly field: string; readonly label: string; readonly as: "thumb" | "gallery"; readonly files: readonly FileValue[]; readonly text: string; readonly problem?: string }
   | { readonly t: "progress"; readonly label: string; readonly value?: number; readonly max?: number; readonly text: string; readonly problem?: string }
@@ -392,6 +393,12 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       // About no one record, there is no field to show (the check says so).
       if (!ctx.node) return { t: "field", field: block.field, label, text: NOTHING, problem: `"${block.field}" names a field, and these blocks are about no one record` };
       // A computed field is worked out like any expression, under the same budget (FR-83); else an OWN field only: a name on the prototype is not a field of the record.
+      // A record in another app (FR-171): drawn with its own card, read as the viewer — never what the link keeps.
+      const relation = block.as === undefined ? ctx.kinds.get(ctx.node.kind)?.linked?.get(block.field) : undefined;
+      if (relation) {
+        const refs = linkedRefsOf(Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : undefined, relation);
+        return { t: "field", field: block.field, label, text: refs.length > 0 ? "linked record" : NOTHING, ...(refs.length > 0 ? { linked: { relation, refs } } : {}) };
+      }
       const worked = ctx.kinds.get(ctx.node.kind)?.computed?.has(block.field);
       let raw: unknown;
       let problem: string | undefined;

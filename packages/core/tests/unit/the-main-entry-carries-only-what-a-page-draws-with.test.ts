@@ -12,6 +12,7 @@ import * as importing from "../../src/import/index.js";
 import * as jsonSchema from "../../src/json-schema.js";
 import * as main from "../../src/index.js";
 import * as provenance from "../../src/provenance.js";
+import * as linked from "../../src/linked.js";
 import * as scene from "../../src/scene.js";
 import * as search from "../../src/search.js";
 import * as seat from "../../src/seat.js";
@@ -31,6 +32,8 @@ import * as markdown from "../../src/markdown.js";
 const OFF_THE_PAGE = {
   "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement", "throughEdges"] },
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },
+  // FR-171: another app's records, read as the viewer — the in-memory host, a page's reads, a far change kept in the history.
+  "@graview/core/linked": { from: linked, names: ["linkedChange", "linkedRecordsOver", "linkedRelationWords", "readLinkedRecord", "recordLinkedChange", "recordsLinking"] },
   "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "whatBlocksSay", "computedNames", "computedValues", "withComputed", "factNames", "factValues", "blockContextFor", "CARD_BUDGET", "PAGE_BUDGET", "fieldSpecOf", "fileFieldsOf", "fileWords", "firstPicture"] },
   "@graview/core/field-sight": { from: fieldSight, names: ["fieldsKept", "keptFrom", "partialKinds", "withoutKeptFields"] },
   "@graview/core/forms": { from: forms, names: ["formArgs", "formComplete", "formField", "formFields", "keptArguments", "undecidableArguments"] },

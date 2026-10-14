@@ -1,0 +1,7 @@
+{
+  "nodes": [
+    { "id": "elm", "kind": "house", "street": "12 Elm Street", "bedrooms": 3, "listPrice": 450000 },
+    { "id": "oak", "kind": "house", "street": "4 Oak Lane", "bedrooms": 2, "listPrice": 320000 }
+  ],
+  "edges": []
+}

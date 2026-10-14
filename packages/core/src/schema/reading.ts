@@ -3,6 +3,7 @@ import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.j
 import { valueWords } from "./value-words.js";
 import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
+import { linkedRefsOf, linkedRelationOf } from "./linked.js";
 import { repeatingDateAsRead } from "../repeat-words.js";
 import { isRepeatField } from "../repeat.js";
 import { isMarkdownField } from "./markdown.js";
@@ -167,6 +168,14 @@ export function readableFields(
     const markdown = !format && typeof value === "string" && isMarkdownField(schema);
     if (app && options.glance) continue;
     /*
+     * A RECORD IN ANOTHER APP (FR-171) is drawn as that record — its card and
+     * describe line, read there as the viewer — never as what the link keeps
+     * (`house:h1`); a glance leaves it out of its words, as it does an app.
+     */
+    const relation = format ? undefined : linkedRelationOf(schema);
+    const linked = relation ? { relation, refs: linkedRefsOf(value, relation) } : undefined;
+    if (linked && (options.glance || linked.refs.length === 0)) continue;
+    /*
      * A NESTED OBJECT HAS NO ONE-LINE RENDERING, and inventing one is worse
      * than leaving it to a view that knows what it is.
      *
@@ -195,7 +204,9 @@ export function readableFields(
     const href = typedHref(typed, value);
     // A number said as its field declares it: money in the app's currency, a fraction as a percent ("$10,000", never 10000).
     const amount = !format && !typed && typeof value === "number" ? amountOf((definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key]) : undefined;
-    const whole = format
+    const whole = linked
+      ? linked.refs.length > 1 ? `${linked.refs.length} linked records` : "linked record"
+      : format
       ? format(value)
       : amount
         ? sayAmount(value as number, amount)
@@ -233,7 +244,7 @@ export function readableFields(
     const alone =
       // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, stored, alone, long, ...(markdown ? { markdown: true as const } : {}), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(href ? { href } : {}), ...(isRepeatField(shapeOf?.[`${key}Repeat`]) ? { repeats: true as const } : {}) });
+    fields.push({ key, label, value: text, stored, alone, long, ...(markdown ? { markdown: true as const } : {}), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(linked ? { linked } : {}), ...(href ? { href } : {}), ...(isRepeatField(shapeOf?.[`${key}Repeat`]) ? { repeats: true as const } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;

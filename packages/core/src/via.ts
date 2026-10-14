@@ -12,7 +12,8 @@
  * author up front.
  */
 export function viaSaid(via: string | undefined): string | undefined {
-  if (via === undefined || via === "web" || via.startsWith("ai:")) return undefined;
+  // A change another app's record made (`app:<address>`, FR-171) is said by its author, the app's own name: its address is an identifier.
+  if (via === undefined || via === "web" || via.startsWith("ai:") || via.startsWith("app:")) return undefined;
   if (via === "api") return "via the API";
   if (via === "cli") return "via the command line";
   const [channel, ...rest] = via.split(":");

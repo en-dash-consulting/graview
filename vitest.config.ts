@@ -28,6 +28,7 @@ export default defineConfig({
       "@graview/core/seat": fileURLToPath(new URL("./packages/core/src/seat.ts", import.meta.url)),
       "@graview/core/field-sight": fileURLToPath(new URL("./packages/core/src/field-sight.ts", import.meta.url)),
       "@graview/core/provenance": fileURLToPath(new URL("./packages/core/src/provenance.ts", import.meta.url)),
+      "@graview/core/linked": fileURLToPath(new URL("./packages/core/src/linked.ts", import.meta.url)),
       "@graview/core/forms": fileURLToPath(new URL("./packages/core/src/forms.ts", import.meta.url)),
       "@graview/core/lines": fileURLToPath(new URL("./packages/core/src/lines.ts", import.meta.url)),
       "@graview/core/json-schema": fileURLToPath(new URL("./packages/core/src/json-schema.ts", import.meta.url)),

@@ -5,6 +5,7 @@ import type { AnySchema } from "../schema/schema.js";
 import { error, warning, type Finding } from "./findings.js";
 import { documentOf } from "./remembered.js";
 import { fieldOf } from "./field-spec.js";
+import { linkedRelationOf } from "../schema/linked.js";
 import { isRepeatField, repeatedBy, repeatKey } from "../repeat.js";
 import { FORMAT, FORMAT_VERSION, type ComputedSpec, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
 
@@ -67,8 +68,15 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     };
     const at = `kinds.${kind}`;
     const fields: Record<string, FieldSpec> = {};
+    // A link to another app's record (FR-171) is a relation in a document: `"to": ["@nick/house/house"]`.
+    const linked: Record<string, NonNullable<KindSpec["edges"]>[string]> = {};
     for (const [name, field] of Object.entries(definition?.fields?.shape ?? {})) {
       if (name === "id" || name === "kind") continue;
+      const relation = linkedRelationOf(field);
+      if (relation) {
+        linked[name] = { to: relation.kinds.map((kind) => `@${relation.address.startsWith("@") ? relation.address.slice(1) : relation.address}/${kind}`), cardinality: relation.cardinality, ...(relation.description ? { description: relation.description } : {}) };
+        continue;
+      }
       // How a date repeats is the date's `repeats` in a document, not a field of its own.
       const repeated = isRepeatField(field) ? repeatedBy(name) : undefined;
       if (repeated && definition?.fields?.shape?.[repeated]) continue;
@@ -92,6 +100,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
         },
       ]),
     );
+    Object.assign(edges, linked);
     // What a glance says, of the fields the document could carry (FR-39); one it could not is named above.
     const glance = (definition?.display?.glance ?? []).filter((name) => fields[name]);
     // How its page orders its facts (FR-148), of the fields the document could carry.

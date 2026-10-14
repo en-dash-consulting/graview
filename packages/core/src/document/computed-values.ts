@@ -2,7 +2,8 @@ import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { AnySchema } from "../schema/schema.js";
 import { labelOf } from "../schema/define-node.js";
 import { computedOf } from "./computed.js";
-import { evaluateExpr, ExprEvalError, GRAPH_FACTS, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
+import { evaluateExpr, ExprEvalError, GRAPH_FACTS, NodeSet, unreadSaid, type KindShape, type UnreadLink, type Value } from "./expr/evaluate.js";
+import type { LinkedReader } from "../schema/linked.js";
 import { shapesOfSchema } from "./rules.js";
 
 /*
@@ -52,7 +53,12 @@ export function computedValues(
   graph: GraphReader,
   /** The record; `null`, the whole graph, whose computed values are its facts (`factValues`). */
   node: AnyGraphNode | null,
-  options: { readonly budget?: number; readonly today?: string } = {},
+  options: {
+    readonly budget?: number;
+    readonly today?: string;
+    /** How far records are read, as the viewer (FR-171); else the reader registered for the graph. */
+    readonly linked?: LinkedReader;
+  } = {},
 ): ComputedValues {
   const kinds = shapesFor(schema);
   const values: Record<string, PlainComputed> = {};
@@ -68,7 +74,15 @@ export function computedValues(
   };
   for (const [name, expr] of kinds.get(node ? node.kind : GRAPH_FACTS)?.computed ?? []) {
     try {
-      values[name] = plain(evaluateExpr(expr, { graph, subject: node, kinds, ...(options.today ? { today: options.today } : {}), ...(options.budget ? { budget: options.budget } : {}) }));
+      const unread: UnreadLink[] = [];
+      const value = evaluateExpr(expr, { graph, subject: node, kinds, ...(options.today ? { today: options.today } : {}), ...(options.budget ? { budget: options.budget } : {}), ...(options.linked ? { linked: options.linked } : {}), onUnread: (u) => unread.push(u) });
+      /*
+       * A VALUE READ THROUGH A LINK THAT COULD NOT BE READ (FR-171) is said,
+       * not guessed: nothing it could have been is shown, and why — the
+       * viewer may not open the far app, or it is not read yet.
+       */
+      if (unread.length > 0 && (value === null || (value instanceof NodeSet && value.nodes.length === 0))) refused[name] = unreadSaid(unread[0]!);
+      else values[name] = plain(value);
     } catch (e) {
       if (!(e instanceof ExprEvalError)) throw e;
       refused[name] = e.sentence;

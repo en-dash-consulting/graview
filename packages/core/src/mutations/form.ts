@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { defOf } from "../schema/zod.js";
 import { fileKindOf } from "../schema/files.js";
 import { isAppLinkField } from "../schema/app-link.js";
+import { linkedRelationOf, type LinkedRelation } from "../schema/linked.js";
 import { isRepeatField, repeatedBy } from "../repeat.js";
 import { isMarkdownField } from "../schema/markdown.js";
 import { parseDuration } from "../schema/field-words.js";
@@ -44,6 +45,12 @@ export type FormField =
   | { readonly control: "list"; readonly name: string; readonly optional: boolean; readonly item: FormField }
   /** A picture or a document, put on the record by the host's upload (FR-162, FR-163); a list of them is a `list` of these. */
   | { readonly control: "file"; readonly name: string; readonly optional: boolean; readonly image?: true }
+  /**
+   * A RECORD IN ANOTHER APP (FR-171): picked from what the host's
+   * `linkedRecords.find` lists for this viewer, and sent as `<kind>:<id>` —
+   * or a list of them, where the relation holds many.
+   */
+  | { readonly control: "linked"; readonly name: string; readonly optional: boolean; readonly relation: LinkedRelation }
   | { readonly control: "opaque"; readonly name: string; readonly optional: boolean };
 
 export interface ScalarField {
@@ -101,6 +108,9 @@ export function formField(name: string, schema: unknown): FormField {
 
   const kinds = nodeRefKinds(schema);
   if (kinds) return { control: "node", name, optional, kinds };
+
+  const relation = linkedRelationOf(schema);
+  if (relation) return { control: "linked", name, optional, relation };
 
   if (isRepeatField(schema)) {
     const of = repeatedBy(name);

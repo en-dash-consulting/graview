@@ -1,4 +1,4 @@
-import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
+import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
@@ -270,6 +270,17 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly resolveApp?: ResolveApp;
   /**
+   * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171), beside
+   * `resolveApp`: a relation to another app's kind (`"to":
+   * ["@nick/house/house"]`) draws the linked record as
+   * `linkedRecords.resolve(ref, viewer)` answers it — its card, describe
+   * line and the fields this viewer may see there — or "linked record (no
+   * access)"; linking picks from `find(search, viewer)`; pressing it calls
+   * `open(ref, viewer)` where given, else follows its `href`. A computed
+   * value or a rule that walks the link reads it as the viewer.
+   */
+  readonly linkedRecords?: LinkedRecords;
+  /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
    * the host is told the error's class and the framework module that
@@ -530,6 +541,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     ai: props.ai,
     files: props.files,
     resolveApp: props.resolveApp,
+    linkedRecords: props.linkedRecords,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,

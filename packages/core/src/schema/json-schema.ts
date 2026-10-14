@@ -3,6 +3,7 @@ import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { isAppLinkField } from "./app-link.js";
+import { linkedRelationOf } from "./linked.js";
 import { EVERY, isRepeatField, WEEKDAYS } from "../repeat.js";
 import { isMarkdownField } from "./markdown.js";
 import { typedFieldOf } from "./typed-field-of.js";
@@ -46,6 +47,19 @@ type ZodStringDef = { readonly type?: string; readonly format?: string; readonly
 export function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
   // Another app's address (FR-171), beside its pattern: an agent sets an address, not a name.
   if (isAppLinkField(ctx.zodSchema)) ctx.jsonSchema["x-graview-app-link"] = true;
+  /*
+   * A RECORD IN ANOTHER APP (FR-171): which app and kinds, and how one is
+   * written — `house:<id>`, an id the host's search finds there (the seat's
+   * `find_linked`). The far app is read as the viewer, and never changed.
+   */
+  const linked = linkedRelationOf(ctx.zodSchema);
+  if (linked && (ctx.jsonSchema["type"] === "string" || ctx.jsonSchema["type"] === "array")) {
+    ctx.jsonSchema["x-graview-linked"] = { address: linked.address, kinds: [...linked.kinds], cardinality: linked.cardinality };
+    const kinds = linked.kinds.join(" or ");
+    const how = `${linked.cardinality === "many" ? "Records" : "A record"}: a ${kinds} in the app ${linked.address}, as "${linked.kinds[0]}:<id>" — an id found there with find_linked. Linking never changes that app.`;
+    const said = ctx.jsonSchema["description"];
+    if (!(typeof said === "string" && said.includes(how))) ctx.jsonSchema["description"] = `${typeof said === "string" && said ? `${said.replace(/\.?$/, ".")} ` : ""}${how}`;
+  }
   // How a date repeats, kept beside it as `<date>Repeat`: written out where a declaration checks it by a function of its own.
   if (isRepeatField(ctx.zodSchema)) {
     ctx.jsonSchema["x-graview-repeat"] = true;

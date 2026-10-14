@@ -8,7 +8,12 @@ import {
   refusalOf,
   resolveModules,
   archivedFrom,
+  linkedRefsOf,
+  linkedRelations,
+  linkedValue,
   sha256Hex,
+  type LinkedRecord,
+  type LinkedRecords,
   type AnyMutationDefinition,
   type AnySchema,
   type GraphDiff,
@@ -216,6 +221,57 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    * keeps which provider proposed it while the reader is shown none.
    */
   readonly via?: string | (() => string | undefined);
+  /**
+   * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171): what `find_linked`
+   * answers through, as this seat. Unsaid, it says this host reads no other app.
+   */
+  readonly linked?: LinkedRecords;
+}
+
+/** Whether an app has a relation to another app's kind. */
+const linksAnotherApp = (schema: AnySchema): boolean => schema.definitions.some((definition) => linkedRelations(definition).size > 0);
+
+/** A far record as a tool answers it: the value to link it by, then what it is there. */
+const linkedAnswer = (record: LinkedRecord) => ({
+  value: linkedValue(record),
+  label: record.label,
+  ...(record.describe ? { describe: record.describe } : {}),
+  ...(record.card ? { card: record.card } : {}),
+  fields: record.fields,
+  ...(record.app ? { app: record.app } : {}),
+});
+
+/** `find_linked`: another app's records, found or read through the host, as this seat (FR-171). */
+async function findLinked(seen: Store<AnySchema>, principal: Principal, args: Record<string, unknown>, host: LinkedRecords | undefined): Promise<ToolResult<AnySchema>> {
+  const asked = String(args["relation"] ?? "");
+  const [kindAsked, nameAsked] = asked.includes(".") ? (asked.split(".", 2) as [string, string]) : [undefined, asked];
+  const every = seen.schema.definitions.flatMap((definition) => [...linkedRelations(definition)].map(([name, relation]) => ({ kind: definition.kind, name, relation })));
+  const found = every.filter((one) => one.name === nameAsked && (kindAsked === undefined || one.kind === kindAsked));
+  if (found.length !== 1) {
+    const known = every.map((one) => `${one.kind}.${one.name}`).join(", ") || "none";
+    return { ok: false, error: `${found.length === 0 ? `No relation to another app is called "${asked}"` : `"${asked}" names a relation of several kinds`}. The relations to other apps are: ${known}.` };
+  }
+  const { kind, name, relation } = found[0]!;
+  if (!host) return { ok: false, error: `This seat cannot read ${relation.address}: its host reads no other app's records. Nothing was changed.` };
+  const viewer = { kind: principal.kind, ...(principal.id === undefined ? {} : { id: principal.id }), ...(principal.roles ? { roles: principal.roles } : {}) };
+  const of = typeof args["of"] === "string" ? args["of"] : undefined;
+  if (of !== undefined) {
+    const node = seen.graph.getNode(of) as (Record<string, unknown> & { kind: string }) | undefined;
+    if (!node || node.kind !== kind) return { ok: false, error: `No ${kind} "${of}".` };
+    const refs = linkedRefsOf(node[name], relation);
+    const answers = await Promise.all(refs.map((ref) => Promise.resolve().then(() => host.resolve(ref, viewer)).catch(() => null)));
+    return {
+      ok: true,
+      data: { relation: `${kind}.${name}`, app: relation.address, records: answers.map((answer, at) => (answer === null ? { value: linkedValue(refs[at]!), missing: true } : "denied" in answer ? { denied: true, said: "linked record (no access)" } : linkedAnswer(answer))) },
+      reads: [of],
+    };
+  }
+  const limit = typeof args["limit"] === "number" && args["limit"] > 0 ? Math.min(args["limit"], READ_HITS) : READ_HITS;
+  const answer = await Promise.resolve()
+    .then(() => host.find({ address: relation.address, kinds: relation.kinds, query: String(args["query"] ?? ""), limit }, viewer))
+    .catch(() => [] as const);
+  if (!Array.isArray(answer)) return { ok: true, data: { relation: `${kind}.${name}`, app: relation.address, denied: true, said: "linked record (no access)" } };
+  return { ok: true, data: { relation: `${kind}.${name}`, app: relation.address, records: answer.map(linkedAnswer), link: `edit-${kind} with ${name} set to a record's value` } };
 }
 
 /** The `add-lens` edit `keep_lens` hands the host. */
@@ -456,6 +512,31 @@ const KEEP_LENS: ToolDefinition = {
   annotations: { title: "Keep a view as a lens", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 };
 
+/**
+ * `find_linked`: a read of ANOTHER APP'S records (FR-171), through the host,
+ * as this seat. Listed only for an app with a relation to another app's
+ * kind; linking one is the record's own edit, which takes `<kind>:<id>`.
+ */
+const FIND_LINKED: ToolDefinition = {
+  name: "find_linked",
+  title: "Find a record in another app",
+  description:
+    'A relation may go to a kind in another app (describe_app lists them under "Linked from other apps"). With relation and words, list the records there this seat may link — each with the value to link it by ("house:h1"), its name and its describe line. With of (a record id here), read the records that record links, as this seat may see them there. Linking one is the record\'s edit (edit-<kind>) with the relation set to the value. Another app this seat may not open answers denied, and nothing of it. Writes nothing; never changes the other app.',
+  inputSchema: {
+    type: "object",
+    properties: {
+      relation: { type: "string", description: "The relation, by name (forHouse) or as <kind>.<relation> (scenario.forHouse)." },
+      query: { type: "string", description: "Words to find by, in the other app's names; empty for the first few." },
+      of: { type: "string", description: "A record here whose linked records to read, instead of finding." },
+      limit: { type: "number", description: "Most records to return; at most 20." },
+    },
+    required: ["relation"],
+    additionalProperties: false,
+  },
+  mutating: false,
+  annotations: read("Find a record in another app"),
+};
+
 /** The drafting tools a seat lists: none, draft_view, or draft_view and keep_lens. */
 function draftTools(drafts: "draw" | "keep" | undefined, readOnly: boolean): readonly ToolDefinition[] {
   if (drafts === undefined) return [];
@@ -514,7 +595,7 @@ export interface ToolRuntime<S extends AnySchema> {
 /** Said on every act whose arguments name records: a name is resolved as well as an id (FR-33). */
 export const BY_NAME = "An argument that names a record takes its id or its name.";
 
-const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, DRAFT_VIEW.name, KEEP_LENS.name];
+const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name];
 const MAX_NAME = 64;
 
 /**
@@ -634,9 +715,11 @@ function surfaceOf(
   drafts: "draw" | "keep" | undefined,
   /** The arguments of an act this seat is not offered (`argumentsNeverShown`). */
   kept: (act: AnyMutationDefinition) => ReadonlySet<string>,
+  /** Whether the app links another app's records (FR-171): `find_linked` is listed. */
+  links = false,
 ): { readonly definitions: readonly ToolDefinition[]; readonly names: ReadonlyMap<string, string> } {
   const names = toolNames(acts.map((act) => act.name));
-  const drawing = draftTools(drafts, readOnly);
+  const drawing = [...draftTools(drafts, readOnly), ...(links ? [FIND_LINKED] : [])];
   const definitions = readOnly
     ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
     : [...READ_TOOLS, ACT_ON_SEVERAL, ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act)))];
@@ -680,7 +763,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never));
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema));
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -708,8 +791,13 @@ export function createToolRuntime<S extends AnySchema>(
    */
   const acts = store.allMutations() as unknown as AnyMutationDefinition[];
   const permitted = new Set(store.permittedMutations(principal).map((mutation) => mutation.name));
-  const { definitions, names } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts ? (options.drafts.keep ? "keep" : "draw") : undefined, (act) =>
-    argumentsNeverShown(store.schema as AnySchema, store.policy, principal, act as never),
+  const { definitions, names } = surfaceOf(
+    acts,
+    permitted,
+    options.readOnly === true,
+    options.drafts ? (options.drafts.keep ? "keep" : "draw") : undefined,
+    (act) => argumentsNeverShown(store.schema as AnySchema, store.policy, principal, act as never),
+    linksAnotherApp(store.schema as AnySchema),
   );
   const hash = surfaceHash(definitions);
   /** A tool's name, or an act's declared one, as the act it runs. */
@@ -883,6 +971,9 @@ export function createToolRuntime<S extends AnySchema>(
           walk(said.description.parts);
           return { ok: true, data: said.description, reads: [...reads] };
         }
+
+        case "find_linked":
+          return findLinked(seen as unknown as Store<AnySchema>, principal, args, options.linked) as Promise<ToolResult<S>>;
 
         case "draft_view":
         case "keep_lens": {

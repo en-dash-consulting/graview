@@ -5,12 +5,13 @@
  */
 import { defineInvariant, RuleBudgetError, type AnyGraphNode, type AnySchema, type GraphReader, type InvariantDefinition, type Violation } from "../index.js";
 
-import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape } from "./expr/evaluate.js";
+import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, unreadSaid, type KindShape, type UnreadLink } from "./expr/evaluate.js";
 import { parseExpr } from "./expr/parse.js";
 import { renderTemplate } from "./template.js";
 import { isoToday } from "../days.js";
 import { parseTemplate } from "./template-parse.js";
 import { parsedComputed } from "./computed.js";
+import { linkedRelations, type LinkedReader } from "../schema/linked.js";
 
 /**
  * What every kind of a COMPILED schema holds, for the rule language to read
@@ -25,10 +26,13 @@ export function shapesOfSchema(schema: AnySchema): Map<string, KindShape> {
   for (const kind of schema.kinds as readonly string[]) {
     const definition = schema.tryDefinition(kind) as ({ fields?: { shape?: Record<string, unknown> }; edges?: Record<string, { cardinality?: "one" | "many" }> } & Parameters<typeof parsedComputed>[0]) | undefined;
     const computed = parsedComputed(definition);
+    // A relation to another app's kinds is a field the link is kept in, marked with the relation (FR-171).
+    const linked = linkedRelations(definition);
     shapes.set(kind, {
       fields: new Set(Object.keys(definition?.fields?.shape ?? {})),
       edges: new Map(Object.entries(definition?.edges ?? {}).map(([name, edge]) => [name, edge.cardinality ?? "many"])),
       ...(computed ? { computed } : {}),
+      ...(linked.size > 0 ? { linked } : {}),
     });
   }
   // And the whole graph's facts, which `fact('<name>')` reads: no record is of this shape.
@@ -85,12 +89,15 @@ export function expressionRule(
   const title = spec.title ?? name.replace(/-/g, " ");
   const today = options.today ?? isoToday;
   // The store's day when it hands one (pinned, or ticked: FR-176), else the clock.
-  const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today()): Violation[] => {
+  const judge = (graph: GraphReader, subject: AnyGraphNode | null, day = today(), linked?: LinkedReader): Violation[] => {
     const shapes = (kinds ?? shapesOf(graph)) as Map<string, KindShape>;
-    const ctx = { graph, subject, kinds: shapes, today: day };
+    // A link to another app that could not be read (FR-171): a rule that does not hold without it cannot be judged, and says why.
+    const unread: UnreadLink[] = [];
+    const ctx = { graph, subject, kinds: shapes, today: day, ...(linked ? { linked } : {}), onUnread: (u: UnreadLink) => unread.push(u) };
     try {
       if (when && evaluateExpr(when, ctx) !== true) return [];
       if (evaluateExpr(require, ctx) === true) return [];
+      if (unread.length > 0) throw new ExprEvalError(`it reads ${unreadSaid(unread[0]!)}`, 0);
     } catch (error) {
       if (error instanceof ExprBudgetError) throw new RuleBudgetError(error.sentence);
       if (error instanceof ExprEvalError) throw new Error(error.sentence);
@@ -118,7 +125,7 @@ export function expressionRule(
   };
   return (
     spec.over === "graph"
-      ? defineInvariant(name, { scope: "graph", ...common, evaluate: ({ graph, today: day }: { graph: unknown; today?: string }) => judge(graph as GraphReader, null, day) } as never)
-      : defineInvariant(name, { scope: { kind: spec.over }, ...common, evaluate: ({ graph, subject, today: day }: { graph: unknown; subject: unknown; today?: string }) => judge(graph as GraphReader, subject as AnyGraphNode, day) } as never)
+      ? defineInvariant(name, { scope: "graph", ...common, evaluate: ({ graph, today: day, context }: { graph: unknown; today?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, null, day, context?.linked) } as never)
+      : defineInvariant(name, { scope: { kind: spec.over }, ...common, evaluate: ({ graph, subject, today: day, context }: { graph: unknown; subject: unknown; today?: string; context?: { linked?: LinkedReader } }) => judge(graph as GraphReader, subject as AnyGraphNode, day, context?.linked) } as never)
   ) as InvariantDefinition;
 }

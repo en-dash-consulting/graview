@@ -21,6 +21,8 @@ export type { FilesProps } from "./files-door.js";
 // Another app on a record, as the host names it (FR-171), fetched with the first one drawn.
 export { AppLink } from "./app-link-door.js";
 export type { AppLinkProps } from "./app-link-door.js";
+export { LinkedPicker, LinkedRecordView } from "./linked-record-door.js";
+export type { LinkedPickerProps, LinkedRecordViewProps } from "./linked-record-door.js";
 // How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.
 export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
 export type { RepeatPickerProps } from "./repeat-picker-door.js";

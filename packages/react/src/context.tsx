@@ -4,6 +4,8 @@ import type {
   GraviewApp,
   HostFiles,
   ResolveApp,
+  LinkedRecords,
+  LinkedReads,
   NodeOfSchema,
   Person,
   Presence,
@@ -37,6 +39,8 @@ import {
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostFilesContext } from "./files.js";
+import { useLinkedReads } from "./linked-reads.js";
+
 import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent, ViewMode } from "./view-registry.js";
@@ -199,6 +203,10 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly ai: HostAi;
   /** THE HOST'S WAY TO NAME ANOTHER APP (`resolveApp` on the provider, FR-171), where an app-link field asks it. */
   readonly resolveApp?: ResolveApp | undefined;
+  /** THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (`linkedRecords` on the provider, FR-171), where a linked record is drawn or picked. */
+  readonly linkedRecords?: LinkedRecords | undefined;
+  /** The far records this viewer has been told, read at once: what a linked record draws from, as the rule language reads them (`@graview/core/linked`). */
+  readonly linkedReads?: LinkedReads | undefined;
   /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
   readonly movedByHand: boolean;
   noteMoved(): void;
@@ -448,6 +456,16 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * not open it, or null. Unsaid, the field draws its address plainly.
    */
   readonly resolveApp?: ResolveApp | undefined;
+  /**
+   * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171): a relation to
+   * another app's kind (`"to": ["@nick/house/house"]`) draws the linked
+   * record as `linkedRecords.resolve(ref, viewer)` answers it — its card,
+   * describe line and the fields this viewer may see there — picks one
+   * from `find`, and opens it with `open` or its `href`. A computed value
+   * or a rule that walks the link reads it as this viewer. Unsaid, a linked
+   * record reads as not read.
+   */
+  readonly linkedRecords?: LinkedRecords | undefined;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -510,6 +528,7 @@ export function GraviewProvider<S extends AnySchema>({
   ai = NO_AI,
   files,
   resolveApp,
+  linkedRecords,
   view,
   onViewChange,
   children,
@@ -642,6 +661,8 @@ export function GraviewProvider<S extends AnySchema>({
    */
   // With this tab's session on it, so every op this seat authors names the tab that made it.
   const who = useMemo<Principal>(() => ({ ...seatNow, session }), [seatNow, session]);
+  // Another app's records, read as this seat (FR-171): only where the host reads them and the app links one.
+  const linkedReads = useLinkedReads(store, linkedRecords, who);
   const takeSeat = useCallback(
     (next: Principal) => {
       setSeated(next);
@@ -911,6 +932,8 @@ export function GraviewProvider<S extends AnySchema>({
       session,
       ai,
       resolveApp,
+      linkedRecords,
+      linkedReads,
       movedByHand,
       noteMoved,
       emphasis,
@@ -959,6 +982,8 @@ export function GraviewProvider<S extends AnySchema>({
       session,
       ai,
       resolveApp,
+      linkedRecords,
+      linkedReads,
       movedByHand,
       noteMoved,
       emphasis,

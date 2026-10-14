@@ -9,6 +9,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from 
 import { TextBody } from "./text-body.js";
 import { Files } from "./files-door.js";
 import { AppLink } from "./app-link-door.js";
+import { LinkedRecordView } from "./linked-record-door.js";
 import { RepeatEditor } from "./repeat-picker-door.js";
 
 /**
@@ -395,7 +396,10 @@ export function Fields<S extends AnySchema>({
                   <dt style={{ ...LABEL, whiteSpace: "nowrap" }}>{labels[field.key] ?? field.label}</dt>
                   <dd style={{ margin: 0, minWidth: 0 }}>
                     {/* Another app, as the host names it (FR-171), changed beside it. */}
-                    {field.app ? (
+                    {field.linked ? (
+                      // A record in another app (FR-171), with its own card, picked again beside it.
+                      <LinkedRecordView relation={field.linked.relation} refs={field.linked.refs} nodeId={node.id} field={field.key} />
+                    ) : field.app ? (
                       <AppLink address={field.app} as="record" nodeId={node.id} field={field.key} />
                     ) : field.href ? (
                       // A phone to call, a place to map, changed beside the link.

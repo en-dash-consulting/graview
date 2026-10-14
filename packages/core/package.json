@@ -53,6 +53,10 @@
       "types": "./dist/provenance.d.ts",
       "default": "./dist/provenance.js"
     },
+    "./linked": {
+      "types": "./dist/linked.d.ts",
+      "default": "./dist/linked.js"
+    },
     "./markdown": {
       "types": "./dist/markdown.d.ts",
       "default": "./dist/markdown.js"

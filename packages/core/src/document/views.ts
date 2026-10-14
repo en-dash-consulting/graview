@@ -2,6 +2,7 @@ import { analyzeExpr } from "./expr/analyze.js";
 import { ExprSyntaxError, parseExpr, type Expr } from "./expr/parse.js";
 import { error, warning, type Finding } from "./findings.js";
 import type { GraviewDocument } from "./schema.js";
+import { linkedEdges, localEdges } from "../schema/linked.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, TemplateError } from "./template-parse.js";
 
@@ -643,18 +644,19 @@ export function validateAll(
 /** Findings about a document's `views` — every kind's, and the home's — and its blocks lenses, each at its JSON path. */
 export function validateViews(document: GraviewDocument): Finding[] {
   const kinds = new Set(Object.keys(document.kinds));
-  const edges = new Set(Object.values(document.kinds).flatMap((k) => Object.keys(k.edges ?? {})));
+  // A relation to another app's kind (FR-171) is no relation of this graph: a view shows it as a field, `{ "field": "forHouse" }`, drawn with its own card.
+  const edges = new Set(Object.values(document.kinds).flatMap((k) => Object.keys(localEdges(k.edges))));
   const namesOf = (kind: string): KindNames | undefined => {
     const spec = own(document.kinds, kind) ? document.kinds[kind] : undefined;
     // A computed field is shown like a stored one (FR-83).
     return spec
       ? {
-          field: (n) => own(spec.fields, n) || own(spec.computed, n),
-          relation: (n) => own(spec.edges, n),
+          field: (n) => own(spec.fields, n) || own(spec.computed, n) || linkedEdges(spec.edges).has(n),
+          relation: (n) => own(localEdges(spec.edges), n),
           figure: spec.figure !== undefined,
           files: (n) => own(spec.fields, n) && holdsFiles(spec.fields[n]),
           choices: (n) => (own(spec.fields, n) && spec.fields[n]!.type === "enum" ? spec.fields[n]!.options : undefined),
-          targets: (n) => (own(spec.edges, n) ? spec.edges![n]!.to : undefined),
+          targets: (n) => (own(localEdges(spec.edges), n) ? spec.edges![n]!.to : undefined),
           prose: (n) => own(spec.fields, n) && spec.fields[n]!.type === "text",
         }
       : undefined;

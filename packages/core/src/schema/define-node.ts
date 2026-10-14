@@ -2,6 +2,7 @@ import type { z } from "zod";
 import { isoToday, numberAsRead } from "../days.js";
 import { capitalize } from "../capital.js";
 import type { FileValue } from "./files.js";
+import type { LinkedRecordRef, LinkedRelation } from "./linked.js";
 import type {
   AnyNodeDefinition,
   EdgeMap,
@@ -100,6 +101,12 @@ export interface ReadableField {
    * address. A glance leaves it out of its words, as it does a file.
    */
   readonly app?: string;
+  /**
+   * RECORDS IN ANOTHER APP (FR-171), where the field keeps a relation to
+   * one: a record draws each with its own card and describe line, read
+   * there as the viewer — never what the link keeps. A glance leaves it out.
+   */
+  readonly linked?: { readonly relation: LinkedRelation; readonly refs: readonly LinkedRecordRef[] };
   /**
    * A DATE THAT MAY REPEAT (`repeat.ts`): its value says how and the next
    * one ("Every Tuesday, next Oct 27"), and a record draws, beside it, the
