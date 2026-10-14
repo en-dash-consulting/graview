@@ -4782,3 +4782,13 @@ committed verdict, and walk10's first run finished 60 of its 84 runs.
 - where it belongs: `packages/core/src/cli/create.ts`
 - harness that should have caught it: `create-command.test.ts` runs in a temporary directory no workspace encloses; `pnpm smoke:create` the same
 - status: fixed in "walkthrough: setup · an app made inside another workspace installs itself" · where the install left no `node_modules` under an enclosing pnpm workspace, the app is made a workspace of its own (`pnpm-workspace.yaml`) and installed again, and create says why. Criterion: `packages/core/tests/unit/an-app-made-inside-another-workspace-installs-itself.test.ts` (verified failing without the fix)
+
+### W-205 · Seeding the team through its own acts takes three minutes and a quarter, eleven milliseconds an act
+- stage: setup (seeding at real size through the app's own acts) · face: every face, and a host's import · width: — · scheme: —
+- impact: costs a job — 18,000 acts made 1,700 records and 15,444 links in 3 minutes 18 seconds, and every act a person takes on the team pays the same toll, growing with the graph. The ninth walk's W-197 said this was fixed
+- class: data-shape-not-in-fixtures (also: harness-or-setup-itself)
+- expected: an act costs what it touches (W-197)
+- actual: W-197 made the graph diff only what a change touches; the store, around it, diffed the whole graph again after every act, every undo, every host-made op and every op received — a map of every record and every link, a key string made for each link. A profile of the seed: 145 of 198 seconds in the store's `diffSnapshots`. W-197's criterion held the graph, not the store that calls it
+- where it belongs: `packages/core/src/store.ts`, `packages/core/src/graph/diff.ts` (`diffTouched`, the graph's narrowing moved where both use it)
+- harness that should have caught it: W-197's `a-change-costs-what-it-touches.test.ts`, which drove `Graph.applyPrimitives` and never `Store.apply`
+- status: fixed in "walkthrough: setup · an act costs what it touches in the store too" · the store's diff, for an act, an undo, an op it is handed and one it receives, is of the records and links the primitives name. The seed: 198 → 37 seconds. Criterion: `packages/core/tests/unit/an-act-costs-what-it-touches-in-the-store-too.test.ts` — an act and its undo read no link they do not touch (verified failing without the fix: the untouched link was read twelve times), and the diff says what the whole comparison says

@@ -2,7 +2,7 @@ import { humanizeField, labelOf } from "../schema/define-node.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
 import { ARCHIVED, isArchived, type ArchivedOption } from "./archived.js";
-import { diffSnapshots, type GraphDiff } from "./diff.js";
+import { diffSnapshots, diffTouched, type GraphDiff } from "./diff.js";
 import { isUnset, type Primitive } from "./primitives.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
 
@@ -262,9 +262,6 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
    */
   applyPrimitives(primitives: readonly Primitive[], options: ApplyPrimitivesOptions = {}): GraphDiff<NodeOfSchema<S>> {
     const before = this.snapshot();
-    // The records a batch names, and those at either end of a link it names (W-197).
-    const ids = new Set(primitives.flatMap((primitive) => (primitive.op === "patch-node" ? [primitive.id] : "node" in primitive ? [primitive.node.id] : [primitive.edge.from, primitive.edge.to])));
-    const within = (snapshot: GraphSnapshot<NodeOfSchema<S>>) => ({ nodes: snapshot.nodes.filter((node) => ids.has(node.id)), edges: snapshot.edges.filter((edge) => ids.has(edge.from) || ids.has(edge.to)) });
     /*
      * ALL OR NOTHING. A primitive that fails used to leave the ones before
      * it applied, so a host rehearsed every repair and migration on a copy
@@ -290,7 +287,7 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
      * is of the records it names and the links at them, in the graph's own
      * order; one held unchanged is not compared.
      */
-    const diff = diffSnapshots(within(before), within(this.snapshot()));
+    const diff = diffTouched(before, this.snapshot(), primitives);
     this.emit(diff);
     return diff;
   }
