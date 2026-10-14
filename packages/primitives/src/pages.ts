@@ -32,6 +32,8 @@ export { ownSentence, problemLine, problemTitle, RuleLineView, RuleParts, useLin
 export { useMarkup } from "./markup.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export { BarActivity } from "./bar-activity.js";
+// What tidying suggests, beside Activity on the routed face's bar, fetched only while something waits.
+export { BarSuggested } from "./bar-suggested.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export { RelationMark } from "./relation-key.js";

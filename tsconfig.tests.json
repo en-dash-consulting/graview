@@ -23,6 +23,7 @@
       "@graview/core/provenance": ["./packages/core/src/provenance.ts"],
       "@graview/core/history": ["./packages/core/src/history.ts"],
       "@graview/core/linked": ["./packages/core/src/linked.ts"],
+      "@graview/core/tidying": ["./packages/core/src/tidying.ts"],
       "@graview/core/forms": ["./packages/core/src/forms.ts"],
       "@graview/core/lines": ["./packages/core/src/lines.ts"],
       "@graview/core/json-schema": ["./packages/core/src/json-schema.ts"],

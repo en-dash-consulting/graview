@@ -1,6 +1,7 @@
 import { layer, type AnySchema } from "@graview/core";
 import type { ToolCall } from "@graview/tools";
-import { useCallback, useState, type ReactNode } from "react";
+import { Suspense, useCallback, useState, type ReactNode } from "react";
+import { BarSuggested } from "./bar-suggested.js";
 import { createPortal } from "react-dom";
 import type { BarFind } from "./app-bar.js";
 import { FindBox } from "./find.js";
@@ -64,7 +65,18 @@ export function SceneBarTools<S extends AnySchema>({
   return (
     <>
       {createPortal(<FindBox<S> compact={find.compact} />, find.slot)}
-      {find.own ? createPortal(<ActivityRail calls={calls} remembers={remembers} {...(seat !== undefined ? { seat } : {})} />, find.own) : null}
+      {/* What tidying suggests waits beside Activity, quietly, only while something does. */}
+      {find.own
+        ? createPortal(
+            <>
+              <Suspense fallback={null}>
+                <BarSuggested />
+              </Suspense>
+              <ActivityRail calls={calls} remembers={remembers} {...(seat !== undefined ? { seat } : {})} />
+            </>,
+            find.own,
+          )
+        : null}
     </>
   );
 }

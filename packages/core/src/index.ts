@@ -210,6 +210,10 @@ export { LINEAGE_BASIS_LIMIT, LINEAGE_MODEL_LIMIT, lineageOf, type Lineage } fro
 // What a link was based on, and whether a person has kept it, are `@graview/core/provenance`'s, fetched with what draws them (FR-172).
 export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
+// Whether a record is left alone and an author is the app's own actor, which a page draws with; the rest is `@graview/core/tidying`'s.
+export { isAutomated, isLeftAlone } from "./ops/tidying.js";
+export type { Suggestion } from "./ops/tidying.js";
+export type { ActivityRow } from "./ops/digest.js";
 export {
   actingAs,
   isSystem,
@@ -329,6 +333,7 @@ export type {
   PlannedChange,
   Preview,
   PreviewOptions,
+  SuggestOptions,
   Rebase,
   RebaseResult,
   StoreOptions,

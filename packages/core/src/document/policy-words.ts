@@ -40,7 +40,7 @@ export function actWords(document: GraviewDocument, act: string): string {
   const derived = derivedActOf(act);
   if (derived && document.kinds[derived.kind]) {
     const noun = nounWords(document.kinds, derived.kind);
-    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another`, skip: "Skip this one", detach: "Change just this one", split: "Change from here" }[derived.act];
+    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another`, "leave-alone": "Leave this one alone", "allow-tidying": "Allow tidying again", skip: "Skip this one", detach: "Change just this one", split: "Change from here" }[derived.act];
     return quoted(words);
   }
   return quoted(act);
@@ -87,6 +87,19 @@ export function archivesSentence(kinds: Kinds, kind: string, archives: boolean, 
   return already
     ? `${plural} are already kept or removed, never archived.`
     : `${plural} are kept or removed, never archived: the app no longer offers ${acts("or")}, and ${withA(nounWords(kinds, kind))} archived before is brought back when the change lands.`;
+}
+
+/** What the app's own actor may do to a kind, or to one relation of it, on its own, as an edit and a preview say it. */
+export function tidyingSentence(kinds: Kinds, kind: string, relation: string | undefined, tidying: "never" | "no-links" | "allowed", already = false): string {
+  const plural = capitalize(pluralWords(kinds, kind));
+  if (relation !== undefined) {
+    const link = `${withA(nounWords(kinds, kind))}'s “${relation}” links`;
+    if (tidying === "never") return already ? `${capitalize(link)} were already never made or broken automatically.` : `${capitalize(link)} are never made or broken automatically: tidying may suggest one, and a person decides.`;
+    return already ? `${capitalize(link)} could already be tidied.` : `${capitalize(link)} can be tidied again.`;
+  }
+  if (tidying === "never") return already ? `${plural} were already never tidied.` : `${plural} are never tidied: nothing automated changes them or their links on its own, and tidying may only suggest.`;
+  if (tidying === "no-links") return already ? `${plural} were already never linked automatically.` : `${plural} are never linked or unlinked automatically: tidying may change them, and only suggest a link.`;
+  return already ? `${plural} could already be tidied.` : `${plural} can be tidied again.`;
 }
 
 export const FIRST_GRANT = "The app gets a policy: from now on, only what a grant gives is allowed.";

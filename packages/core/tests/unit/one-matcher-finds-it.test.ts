@@ -172,7 +172,7 @@ describe("the worked example", () => {
     const acts = search(store, "van finish", { today, subject: "t-van" }).hits.filter((hit) => hit.about === "act");
     // Named first; then the rest the seat may run, the derived edit among them; the destructive last.
     // "Bring it back" is not offered on a live record (FR-173).
-    expect(acts.map((hit) => hit.about === "act" && hit.name)).toEqual(["finish", "archive-task", "edit-task", "merge-task", "drop", "remove-task"]);
+    expect(acts.map((hit) => hit.about === "act" && hit.name)).toEqual(["finish", "archive-task", "edit-task", "leave-alone-task", "merge-task", "drop", "remove-task"]);
     expect(acts[0]?.why).toMatchObject({ field: "title", fragment: "Finish it" });
     expect(acts.every((hit) => hit.about === "act" && hit.subject === "t-van")).toBe(true);
   });
@@ -244,7 +244,7 @@ describe("what the review found", () => {
   });
 
   it("lists a record's acts on their own, without a search of the graph", () => {
-    expect(actsOn(store, "t-van", "finish").map((hit) => hit.name)).toEqual(["finish", "archive-task", "edit-task", "merge-task", "drop", "remove-task"]);
+    expect(actsOn(store, "t-van", "finish").map((hit) => hit.name)).toEqual(["finish", "archive-task", "edit-task", "leave-alone-task", "merge-task", "drop", "remove-task"]);
     expect(actsOn(store, "t-van", "", { limit: 2 })).toHaveLength(2);
     expect(actsOn(store, "nobody", "finish")).toEqual([]);
   });

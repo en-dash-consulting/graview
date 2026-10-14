@@ -80,6 +80,21 @@ export const ANNOUNCED: readonly Announcement[] = [
     "fixture": "document:vendors",
     "version": "0.1.29",
     "what": "A number marked as money says so to a model: add-category budget, add-vendor and set-quote quote, and edit-category budget carry \"x-graview-format\": \"money\" and a description saying the amount is money in no named currency, kept as a plain number."
+  },
+  {
+    "fixture": "document:vendors",
+    "version": "0.1.30",
+    "what": "Every kind is given leave-alone-<kind> and allow-tidying-<kind> ({ id }), the mark a person sets so the app's own actor leaves a record alone — leave-alone-category, allow-tidying-category, leave-alone-vendor and allow-tidying-vendor are new tools."
+  },
+  {
+    "fixture": "document:two-lines",
+    "version": "0.1.30",
+    "what": "leave-alone-chore and allow-tidying-chore are new tools."
+  },
+  {
+    "fixture": "document:shortlist-0.1.10",
+    "version": "0.1.30",
+    "what": "leave-alone-category, allow-tidying-category, leave-alone-vendor and allow-tidying-vendor are new tools."
   }
 ];
 
@@ -586,6 +601,36 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           ],
           "additionalProperties": false
         },
+        "leave-alone-category": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (category)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "allow-tidying-category": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (category)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
         "remove-vendor": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
@@ -649,6 +694,36 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           "required": [
             "id",
             "into"
+          ],
+          "additionalProperties": false
+        },
+        "leave-alone-vendor": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "allow-tidying-vendor": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            }
+          },
+          "required": [
+            "id"
           ],
           "additionalProperties": false
         }
@@ -796,6 +871,36 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           "required": [
             "id",
             "into"
+          ],
+          "additionalProperties": false
+        },
+        "leave-alone-chore": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (chore)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "allow-tidying-chore": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (chore)."
+            }
+          },
+          "required": [
+            "id"
           ],
           "additionalProperties": false
         }
@@ -1450,6 +1555,36 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           ],
           "additionalProperties": false
         },
+        "leave-alone-category": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (category)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "allow-tidying-category": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (category)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
         "archive-vendor": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "object",
@@ -1498,6 +1633,36 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           "required": [
             "id",
             "into"
+          ],
+          "additionalProperties": false
+        },
+        "leave-alone-vendor": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false
+        },
+        "allow-tidying-vendor": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            }
+          },
+          "required": [
+            "id"
           ],
           "additionalProperties": false
         }

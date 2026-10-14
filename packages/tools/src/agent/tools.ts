@@ -11,6 +11,7 @@ import {
   linkedRefsOf,
   linkedRelations,
   linkedValue,
+  nameOfAuthor,
   sha256Hex,
   type LinkedRecord,
   type LinkedRecords,
@@ -442,6 +443,36 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     },
     mutating: true,
     annotations: { title: "Undo a batch", readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+  },
+  /*
+   * WHAT WAITS FOR A PERSON (`store.suggest`): a change the app's own actor
+   * was not sure enough of to make. Listed as this seat may see them, and
+   * accepted or declined as the person would from the Suggested tray.
+   */
+  {
+    name: "list_suggestions",
+    title: "List what is suggested",
+    description:
+      "List the suggestions waiting for a person: changes the app's own actor proposed and did not make, each with its id, what it would do, who suggested it, what it was based on and how sure (0 to 1). Nothing changes until one is accepted (accept_suggestion) or declined (decline_suggestion); a declined one is never suggested again.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    mutating: false,
+    annotations: read("List what is suggested"),
+  },
+  {
+    name: "accept_suggestion",
+    title: "Accept a suggestion",
+    description: "Make a waiting suggestion's change, as this seat, carrying what it was based on. Returns the batch (undo_batch takes it back).",
+    inputSchema: { type: "object", properties: { suggestion: { type: "string", description: "The suggestion's id, from list_suggestions." } }, required: ["suggestion"], additionalProperties: false },
+    mutating: true,
+    annotations: { title: "Accept a suggestion", readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  },
+  {
+    name: "decline_suggestion",
+    title: "Decline a suggestion",
+    description: "Decline a waiting suggestion: nothing changes, the decline is kept in the log, and the same change is never suggested or made by the app's own actor again.",
+    inputSchema: { type: "object", properties: { suggestion: { type: "string", description: "The suggestion's id, from list_suggestions." } }, required: ["suggestion"], additionalProperties: false },
+    mutating: true,
+    annotations: { title: "Decline a suggestion", readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
 ];
 
@@ -1061,6 +1092,31 @@ export function createToolRuntime<S extends AnySchema>(
             },
             ...(seenResult ? { diff: seenResult.diff } : {}),
           };
+        }
+
+        case "list_suggestions": {
+          // As this seat may see them; what the actor based each on is its words, handed over as data (FR-10).
+          const waiting = store.suggestions(principal).map((one) => {
+            const by = nameOfAuthor(one.author, { graph: seen.graph as never, schema: store.schema });
+            return {
+              id: one.id,
+              intent: one.intent,
+              by,
+              at: one.at,
+              about: one.about,
+              ...(one.lineage ? { basis: { untrusted: true as const, authoredBy: by, text: one.lineage.basis }, ...(one.lineage.confidence !== undefined ? { confidence: one.lineage.confidence } : {}) } : {}),
+            };
+          });
+          return { ok: true, data: { suggestions: waiting }, reads: [...new Set(waiting.flatMap((one) => one.about))] };
+        }
+
+        case "accept_suggestion":
+        case "decline_suggestion": {
+          const id = String(args["suggestion"] ?? "");
+          const as = { author: principal, ...viaNow(options.via) };
+          const done = definition.name === "accept_suggestion" ? store.acceptSuggestion(id, as) : store.declineSuggestion(id, as);
+          const result = answerSeenBy(store, principal, done);
+          return { ok: true, data: { batch: result.batch, intent: result.intent, introduces: result.introduces.map(withoutLine), resolves: result.resolves.map(withoutLine) }, diff: result.diff };
         }
 
         case "undo_batch": {

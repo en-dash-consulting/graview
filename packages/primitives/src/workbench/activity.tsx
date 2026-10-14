@@ -1,6 +1,7 @@
-import { humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author } from "@graview/core";
+import { humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
+import { digestWords, foldDigests } from "@graview/core/tidying";
 import { POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayback, usePopover } from "@graview/react/provider";
 import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
@@ -31,7 +32,30 @@ export interface Change {
    * seat. Shown as having happened, with nothing it touched and no undo.
    */
   readonly withheld?: true;
+  /**
+   * A DIGEST: consecutive batches by the app's own actor, folded into one
+   * row ("Tidied 6 things today"), which expands to each change with its
+   * own undo and lineage, newest first. A person's change and a chat
+   * seat's never fold.
+   */
+  readonly digest?: readonly Change[];
 }
+
+/** One batch as a row of Activity. */
+const changeOf = (store: { readonly schema: AnySchema }, batch: Batch): Change => ({
+  intent: batch.intent,
+  author: batch.author.kind,
+  ...(batch.author.id ? { authorId: batch.author.id } : {}),
+  by: batch.author,
+  ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
+  ...(batch.lineage ? { basis: lineageWords(batch.lineage) } : {}),
+  // What a withheld op touched is not said, even the part this seat may see.
+  touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
+  ...removedNames(store, batch.ops.filter((op) => !isWithheld(op))),
+  batch: batch.id,
+  seq: batch.ops.at(-1)!.seq + 1,
+  ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
+});
 
 /**
  * The last few changes, with who made them — READ FROM THE LOG, not
@@ -52,25 +76,30 @@ export function useRecentChanges(limit = 4): readonly Change[] {
   /* What has happened is now's, whichever moment the face draws (Roadmap f-playback). */
   const store = useLiveStore(shown, principal);
   const length = store.log.length;
+  /*
+   * A suggestion and its declining are the Suggested tray's to say, not
+   * rows here; a run of the app's own actor's batches is one row, a digest
+   * (`foldDigests`).
+   */
   return useMemo(
     () =>
-      [...store.batches()]
+      foldDigests(store.batches(), (id) => store.log.get(id))
         .reverse()
         .slice(0, limit)
-        .map((batch) => ({
-          intent: batch.intent,
-          author: batch.author.kind,
-          ...(batch.author.id ? { authorId: batch.author.id } : {}),
-          by: batch.author,
-          ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
-          ...(batch.lineage ? { basis: lineageWords(batch.lineage) } : {}),
-          // What a withheld op touched is not said, even the part this seat may see.
-          touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
-          ...removedNames(store, batch.ops.filter((op) => !isWithheld(op))),
-          batch: batch.id,
-          seq: batch.ops.at(-1)!.seq + 1,
-          ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
-        })),
+        .map((row): Change => {
+          if ("batch" in row) return changeOf(store, row.batch);
+          const changes = [...row.digest.batches].reverse().map((batch) => changeOf(store, batch));
+          return {
+            intent: digestWords(row.digest, new Date().toISOString().slice(0, 10)),
+            author: row.digest.author.kind,
+            ...(row.digest.author.id ? { authorId: row.digest.author.id } : {}),
+            by: row.digest.author,
+            touched: [...new Set(changes.flatMap((change) => change.touched))],
+            batch: "",
+            seq: changes[0]?.seq ?? 0,
+            digest: changes,
+          };
+        }),
     // The log only grows at its end, an undo too: its length says when to read it again.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, length, limit],
@@ -82,6 +111,71 @@ function removedNames(store: { readonly schema: AnySchema }, ops: readonly { rea
   const removed: Record<string, string> = {};
   for (const op of ops) for (const primitive of op.primitives) if (primitive.op === "remove-node" && primitive.node) removed[primitive.node.id] = labelOf(store.schema.tryDefinition(primitive.node.kind), primitive.node as never);
   return Object.keys(removed).length > 0 ? { removed } : {};
+}
+
+/** Who made a change, as Activity says it: "you" for the person at the keyboard, else their name and the channel. */
+function Who({ change }: { readonly change: Change }) {
+  const { store, principal, seats, people } = useGraview<AnySchema>();
+  return (
+    <strong style={{ fontWeight: 600 }}>
+      {change.author === "human" && change.by?.onBehalfOf === undefined && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
+        ? "you"
+        : nameOfAuthor(change.by ?? { kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats, people })}
+      {viaSaid(change.via) ? <span style={{ fontWeight: 400, color: "var(--graview-ink-muted)" }}>, {viaSaid(change.via)}</span> : null}
+    </strong>
+  );
+}
+
+/**
+ * A DIGEST: the app's own actor's run of changes as one row — "Graview,
+ * tidying · Tidied 6 things today" — which opens to each change with its
+ * own lineage and its own undo, so one of them is taken back without the
+ * rest, and the row says how many in the meantime.
+ */
+function DigestRow({ change, goes }: { readonly change: Change; readonly goes: (id: string) => ((id: string) => void) | null }) {
+  const { store } = useGraview<AnySchema>();
+  const [open, setOpen] = useState(false);
+  const each = change.digest ?? [];
+  return (
+    <li data-testid="activity-digest" style={{ display: "grid", gap: 5, lineHeight: 1.45 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+        <span style={{ minWidth: 0 }}>
+          <Who change={change} /> <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
+        </span>
+        <button
+          type="button"
+          data-testid="digest-toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((was) => !was)}
+          style={{ marginLeft: "auto", flex: "0 0 auto", display: "inline-flex", alignItems: "center", minHeight: 24, minWidth: 24, padding: "1px 8px", fontSize: "0.75rem" }}
+        >
+          {open ? "Hide" : "Show each"}
+        </button>
+      </div>
+      {open ? (
+        <ol data-testid="digest-changes" style={{ margin: 0, padding: "0 0 0 10px", listStyle: "none", display: "grid", gap: 6, borderLeft: "1px solid var(--graview-edge)" }}>
+          {each.map((one) => (
+            <li key={one.batch} data-testid="digest-change" style={{ display: "grid", gap: 3 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ minWidth: 0 }}>
+                  <span style={{ color: "var(--graview-ink-muted)" }}>{one.intent}</span>
+                  {one.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {one.basis}</span> : null}
+                </span>
+                {one.withheld ? null : <UndoTurn batch={one.batch} />}
+              </div>
+              {one.touched.length > 0 ? (
+                <div data-touched={one.touched.join(" ")} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {one.touched.slice(0, 4).map((id) => (
+                    <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (one.removed?.[id] ?? nameOf(store, id))} go={goes(id)} />
+                  ))}
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </li>
+  );
 }
 
 /**
@@ -520,7 +614,9 @@ export function ActivityRail({
               }}
             >
               {changes.map((change, index) =>
-                change.withheld ? (
+                change.digest ? (
+                  <DigestRow key={`digest:${change.digest[0]?.batch ?? index}`} change={change} goes={goes} />
+                ) : change.withheld ? (
                   /* SOMETHING YOU CANNOT SEE HAPPENED: said, and nothing more — not who, not what, no undo (FR-16). */
                   <li key={`change:${index}`} data-testid="withheld-change" style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
                     <span data-touched="" style={{ color: "var(--graview-ink-muted)", fontStyle: "italic" }}>

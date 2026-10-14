@@ -20,7 +20,7 @@
  * never sent. Apart from `@graview/core` so a hosted page carries none of
  * it up front.
  */
-import { ARCHIVED } from "./graph/archived.js";
+import { MARKS } from "./graph/archived.js";
 import { isUnset, type Primitive } from "./graph/primitives.js";
 import type { AnyGraphNode, GraphNodeBase, GraphReader } from "./graph/types.js";
 import { nameKey, refusalFor, type RefResolution } from "./labels.js";
@@ -85,7 +85,7 @@ export function fieldsKept(policy: Policy | undefined, principal: Principal, nod
   if (!policy?.sees?.length || isSystem(principal) || !partialKinds(policy).has(node.kind)) return undefined;
   const shown = policy.sees.filter(showing(principal, node, graph, records));
   if (shown.some((sight) => !partial(sight))) return undefined;
-  return (field) => field !== ARCHIVED && !shown.some((sight) => (sight.fields === undefined || sight.fields.includes(field)) && !sight.hide?.includes(field));
+  return (field) => !MARKS.has(field) && !shown.some((sight) => (sight.fields === undefined || sight.fields.includes(field)) && !sight.hide?.includes(field));
 }
 
 /**

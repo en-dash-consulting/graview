@@ -52,7 +52,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
   for (const kind of schema.kinds as readonly string[]) {
     const definition = schema.tryDefinition(kind) as {
       fields?: { shape?: Record<string, unknown> };
-      edges?: Record<string, { to: readonly string[] | "*"; cardinality?: "one" | "many"; description?: string; inverse?: string; appendOnly?: boolean }>;
+      edges?: Record<string, { to: readonly string[] | "*"; cardinality?: "one" | "many"; description?: string; inverse?: string; appendOnly?: boolean; tidying?: "never" }>;
       plural?: string;
       noun?: string;
       description?: string;
@@ -65,6 +65,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       fieldRoles?: Readonly<Record<string, string>>;
       people?: boolean;
       archives?: false;
+      tidying?: "never" | "no-links";
     };
     const at = `kinds.${kind}`;
     const fields: Record<string, FieldSpec> = {};
@@ -97,6 +98,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
           ...(edge.description ? { description: edge.description } : {}),
           ...(edge.inverse ? { inverse: edge.inverse } : {}),
           ...(edge.appendOnly ? { appendOnly: true } : {}),
+          ...(edge.tidying ? { tidying: edge.tidying } : {}),
         },
       ]),
     );
@@ -122,6 +124,7 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
       ...(definition?.fieldRoles ? { fieldRoles: { ...definition.fieldRoles } } : {}),
       ...(definition?.people ? { people: true } : {}),
       ...(definition?.archives === false ? { archives: false as const } : {}),
+      ...(definition?.tidying ? { tidying: definition.tidying } : {}),
     } as KindSpec;
   }
 

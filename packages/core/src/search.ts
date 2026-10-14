@@ -1,5 +1,6 @@
 import { addressOf } from "./address.js";
 import { isArchived, type Archived } from "./graph/archived.js";
+import { leftAlone } from "./ops/tidying.js";
 import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrangement.js";
 import { describeArg } from "./mutations/arg-shape.js";
 import type { Operation } from "./ops/types.js";
@@ -948,6 +949,8 @@ export function actsOn<S extends AnySchema>(
     const act = mutation.derived?.act;
     if ((act === "archive" || act === "merge") && isArchived(subject)) continue;
     if (act === "unarchive" && !isArchived(subject)) continue;
+    // "Leave this one alone" on a record nobody has said it of, "Allow tidying again" on one somebody has.
+    if ((act === "leave-alone" && leftAlone(subject)) || (act === "allow-tidying" && !leftAlone(subject))) continue;
     if (!store.permits({ name: mutation.name, args: { [binding.arg]: subject.id } }, principal).ok) continue;
     const title = actTitle(mutation);
     const titled = tokensOf(title);

@@ -28,6 +28,14 @@ export interface Author {
    * (FR-06).
    */
   readonly onBehalfOf?: Author;
+  /**
+   * THE APP'S OWN ACTOR (`@graview/core/tidying`): set by a `system` or
+   * `agent` author that changes the graph on its own — "Graview, tidying".
+   * It is held to what a person said to leave alone and to the
+   * declaration's `tidying`, refused what was declined, and its consecutive
+   * batches fold into one row of Activity. Ignored on a human author.
+   */
+  readonly automated?: true;
 }
 
 /**
@@ -121,6 +129,15 @@ export interface Operation {
    * target, which a compacted log may no longer hold.
    */
   readonly undoneLineage?: Lineage;
+  /**
+   * A SUGGESTION THAT WAITS (`store.suggest`): the calls it proposes, which
+   * it does not apply. The op has no primitives and changes nothing; its
+   * `lineage` says why and how sure. Accepting it applies the calls as the
+   * person, their lineage naming it (`lineage.suggestion`); declining it is
+   * an undo of it, which carries its lineage as `undoneLineage`. Withheld
+   * whole from a seat that may not see a record it names.
+   */
+  readonly suggests?: readonly MutationCall[];
 }
 
 export interface Batch {

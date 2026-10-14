@@ -1,7 +1,7 @@
 import { humanizeField, labelOf } from "../schema/define-node.js";
 import type { AnySchema, NodeOfSchema } from "../schema/schema.js";
 import { SchemaError } from "../schema/schema.js";
-import { ARCHIVED, isArchived, type ArchivedOption } from "./archived.js";
+import { isArchived, MARKS, type ArchivedOption } from "./archived.js";
 import { diffSnapshots, type GraphDiff } from "./diff.js";
 import { isUnset, type Primitive } from "./primitives.js";
 import { edgeId, type GraphEdge, type GraphReader, type GraphSnapshot } from "./types.js";
@@ -445,8 +445,8 @@ export class Graph<S extends AnySchema> implements GraphReader<NodeOfSchema<S>> 
     const shape = (this.schema.tryDefinition(String(next["kind"]))?.fields as { shape?: Record<string, { safeParse(value: unknown): { success: boolean; data?: unknown } }> } | undefined)?.shape;
     if (!shape) return this.check(next);
     for (const field of written) {
-      // The archived mark is the framework's, not a field: written as it is (FR-173).
-      if (field === "id" || field === "kind" || field === ARCHIVED) continue;
+      // The framework's marks — archived (FR-173), left alone — are not fields: written as they are.
+      if (field === "id" || field === "kind" || MARKS.has(field)) continue;
       const declared = shape[field];
       // A field the kind does not declare is not written, as a parse would strip it.
       if (!declared) {

@@ -27,3 +27,14 @@ export const reaches = (node: unknown, archived: Archived = false): boolean => a
 
 /** `archived` read off a caller's words: `true` or `"true"`, `"all"`; anything else is the live records. */
 export const archivedFrom = (value: unknown): Archived => (value === true || value === "true" ? true : value === "all" ? "all" : false);
+
+/**
+ * LEAVE THIS ONE ALONE: a person's word that no automated author — the
+ * app's own actor, tidying — may change this record (`isLeftAlone`,
+ * `@graview/core/tidying`). A mark like the archived one, on the record
+ * under a key no field can take, set and cleared by ordinary acts.
+ */
+export const LEFT_ALONE = "$leftAlone";
+
+/** The framework's own marks on a record: kept wherever it goes, never judged as fields. */
+export const MARKS: ReadonlySet<string> = new Set([ARCHIVED, LEFT_ALONE]);

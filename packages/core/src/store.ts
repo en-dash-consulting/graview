@@ -23,6 +23,8 @@ import { foldOp, OperationLog, type Epoch, type LogArchive } from "./ops/log.js"
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
+import { declinedIn, isAutomated, suggestionKey, suggestionsIn, tidyingRefusal, type Suggestion } from "./ops/tidying.js";
+import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
@@ -308,6 +310,18 @@ export interface AppendOp {
   readonly lineage?: Lineage;
 }
 
+/**
+ * WHAT `store.suggest` TAKES: who suggests, and — required — what it is
+ * based on and how sure (`lineage`). Its channel and the gesture's words
+ * as `applyAll` takes them.
+ */
+export interface SuggestOptions {
+  readonly author?: Author | Principal;
+  readonly lineage: Lineage;
+  readonly via?: Via;
+  readonly intent?: string;
+}
+
 /** `{ [key]: value }` where the value is said, and nothing where it is not: an optional key left off rather than undefined. */
 const given = <K extends string, V>(key: K, value: V | undefined) => (value === undefined ? {} : { [key]: value }) as { readonly [P in K]?: V };
 
@@ -535,6 +549,8 @@ export class Store<S extends AnySchema> {
   private quiet = 0;
   /** True of a rehearsal (`previewAll`): what it does is told to nobody. */
   private rehearsing = false;
+  /** True of a rehearsal for a suggestion: the actor is held to what a person said, not to the declaration's `tidying`, since a person decides it. */
+  private suggesting = false;
   /**
    * The day a host last ticked this store to (FR-176), and the day the clock
    * read when it did: what its rules are judged on, where nothing pins one,
@@ -1464,6 +1480,15 @@ export class Store<S extends AnySchema> {
       const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call, author as Principal);
       if (refusal) this.refuse(refusal, author.id);
     }
+    /*
+     * THE APP'S OWN ACTOR IS HELD TO WHAT PEOPLE SAID: a change a person
+     * declined is not made again, a record a person said to leave alone is
+     * not changed, and what the declaration says is never tidied is not
+     * tidied on its own (`@graview/core/tidying`). Each refused in a
+     * sentence, and the whole gesture with it.
+     */
+    const automated = isAutomated(author);
+    if (automated) this.refuseDeclined(calls, author);
     if (!this.rehearsing) tellTheWatchOfAnAuthor(author.id);
 
     try {
@@ -1472,6 +1497,10 @@ export class Store<S extends AnySchema> {
         const missing = this.missingFor(call, author as Principal);
         if (missing) throw missing;
         const compiled = compileMutation(this.graph, definition, call.args, this.sighted(author as Principal));
+        if (automated) {
+          const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(author), { declaration: !this.suggesting });
+          if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, author.id);
+        }
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *
@@ -1896,6 +1925,112 @@ export class Store<S extends AnySchema> {
       ...this.moved(before, after),
       violationsAfter: after,
     };
+  }
+
+  /** An author named as Activity names one, for a sentence that refuses them. */
+  private authorName(author: Author | Principal): string {
+    return nameOfAuthor(author, { graph: this.graph as never, schema: this.schema });
+  }
+
+  /** A change a person declined is not made or suggested again: refused, in a sentence. */
+  private refuseDeclined(calls: readonly MutationCall[], author: Author | Principal): void {
+    const declined = declinedIn(this.log.all(), calls);
+    if (declined) this.refuse({ mutation: calls[0]!.name, message: `${this.authorName(author)} may not make this again: a person declined it on ${declined.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);
+  }
+
+  /**
+   * A SUGGESTION THAT WAITS (`@graview/core/tidying`). The calls are judged
+   * as `applyAll` would judge them for this author — permission, sight, the
+   * act's own guard, a record a person said to leave alone — on a
+   * rehearsal, and none of it is applied: the log keeps one op that
+   * suggests them (`suggests`), with no primitives, its lineage required,
+   * and every subscriber hears it. A change already declined is refused,
+   * in a sentence; one already waiting is answered with the suggestion
+   * that waits; one that would change nothing is not suggested (undefined).
+   * A person accepts it (`acceptSuggestion`) or declines it
+   * (`declineSuggestion`). Call it on the store that keeps the log — a
+   * server's, for a hosted app — whose ops reach every client as they are.
+   */
+  suggest(calls: readonly MutationCall[], options: SuggestOptions): Operation | undefined {
+    const lineage = lineageOf(options.lineage);
+    if (lineage === undefined) throw new GraphError("A suggestion says what it is based on: { basis, confidence? }");
+    const author = options.author ?? this.by;
+    const key = suggestionKey(calls);
+    const waiting = this.suggestions().find((one) => suggestionKey(one.calls) === key);
+    if (waiting) return this.log.get(waiting.id);
+    this.refuseDeclined(calls, author);
+    const rehearsal = this.rehearsal();
+    rehearsal.suggesting = true;
+    const planned = rehearsal.applying(calls, { author, lineage, ...given("via", options.via) });
+    if (planned.ops.length === 0) return undefined;
+    const described = [...new Set(planned.ops.flatMap((op) => op.described ?? []))];
+    const op: Operation = {
+      id: this.nextId(),
+      seq: this.log.length,
+      batch: this.mintBatch("batch"),
+      author,
+      intent: planned.ops.map((one) => one.intent).join("; "),
+      ...given("batchIntent", options.intent),
+      mutation: null,
+      primitives: [],
+      inverse: [],
+      reads: [],
+      writes: [],
+      ...(described.length > 0 ? { described } : {}),
+      at: this.now(),
+      ...given("via", options.via),
+      lineage,
+      suggests: calls,
+    };
+    this.log.append(op);
+    this.notify(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, [op]);
+    return op;
+  }
+
+  /**
+   * THE SUGGESTIONS WAITING, oldest first — as `principal` may see them,
+   * when one is named: a suggestion that names a record the seat may not
+   * see is not among them (it is withheld, as any op that names one is).
+   */
+  suggestions(principal?: Principal): readonly Suggestion[] {
+    const ops = principal !== undefined && hidesFrom(this, principal) ? this.seenBy(principal).log.all() : this.log.all();
+    return suggestionsIn(ops, (id) => this.graph.has(id));
+  }
+
+  /**
+   * ACCEPT A SUGGESTION: its calls applied as one gesture, as the person
+   * (`options.author`, or the store's principal) — judged as any change of
+   * theirs is — carrying the suggestion's lineage, which names it
+   * (`lineage.suggestion`), so it waits no longer.
+   */
+  acceptSuggestion(id: string, options: ApplyOptions = {}): ApplyResult<S> {
+    const author = options.author ?? this.by;
+    const suggestion = this.waitingFor(id, author);
+    return this.applyAll(suggestion.calls, { ...options, author, lineage: { ...suggestion.lineage!, suggestion: id } });
+  }
+
+  /**
+   * DECLINE A SUGGESTION: an undo of it, which changes nothing and carries
+   * its lineage (`undoneLineage`), so `declined(calls)` says so and the
+   * same suggestion — or the same change, made on its own — is refused
+   * to the app's own actor from now on. Undone, it waits again.
+   */
+  declineSuggestion(id: string, options: ApplyOptions = {}): ApplyResult<S> {
+    const author = options.author ?? this.by;
+    const suggestion = this.waitingFor(id, author);
+    return this.undo(suggestion.batch, { ...options, author });
+  }
+
+  /** The op that declined these calls — the whole suggestion, or any one of them on its own — or undefined: what an actor asks before it suggests. */
+  declined(calls: readonly MutationCall[]): Operation | undefined {
+    return declinedIn(this.log.all(), calls);
+  }
+
+  /** A suggestion still waiting that this author may see, or a sentence saying it is not. */
+  private waitingFor(id: string, author: Author | Principal): Suggestion {
+    const found = this.suggestions(author as Principal).find((one) => one.id === id);
+    if (!found) throw new GraphError("That suggestion is no longer waiting: it was accepted or declined, or it is not one you can see.");
+    return found;
   }
 
   /** A change not kept: the graph as it was, and the log cut back to where it stood. */

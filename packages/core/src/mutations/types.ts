@@ -189,7 +189,7 @@ export interface MutationDefinition<
 }
 
 /** The acts the framework gives every kind: edit and remove, and archive, unarchive and merge (FR-173). */
-export type DerivedAct = "edit" | "remove" | "archive" | "unarchive" | "merge" | "skip" | "detach" | "split";
+export type DerivedAct = "edit" | "remove" | "archive" | "unarchive" | "merge" | "leave-alone" | "allow-tidying" | "skip" | "detach" | "split";
 
 export type AnyMutationDefinition<S extends AnySchema = AnySchema> =
   MutationDefinition<S, string, z.ZodType>;

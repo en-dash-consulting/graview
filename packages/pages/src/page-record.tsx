@@ -1,4 +1,4 @@
-import { humanizeField, isArchived, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
+import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
 import { AppLink, LinkedRecordView, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
@@ -167,6 +167,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
       </header>
 
       {node && isArchived(node) ? <ArchivedSaid context={context} id={id} kind={facts.kind} /> : null}
+      {node && isLeftAlone(store, id) ? <LeftAloneSaid context={context} id={id} kind={facts.kind} /> : null}
 
       {PageView && node ? (
         <section data-testid="record-view" style={{ display: "grid", minWidth: 0 }}>
@@ -465,6 +466,33 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
     </PageMain>
+  );
+}
+
+/**
+ * A RECORD A PERSON SAID TO LEAVE ALONE SAYS SO, AT THE HEAD OF ITS PAGE:
+ * nothing automated changes it — the app's own actor passes it by — and
+ * the way to let it be tidied again, where the seat may take it. Set from
+ * "What can be done", as any act is.
+ */
+function LeftAloneSaid<S extends AnySchema>({ context, id, kind }: { context: PageContext<S>; id: string; kind: string }) {
+  const { store, principal } = context;
+  const call = { name: `allow-tidying-${kind}`, args: { id } };
+  const may = store.allMutations().some((mutation) => mutation.name === call.name) && store.permits(call, principal).ok;
+  return (
+    <section
+      data-testid="record-left-alone"
+      style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "12px 16px", border: "1px solid var(--graview-edge)", borderRadius: "var(--graview-radius, 12px)", background: "var(--graview-panel)" }}
+    >
+      <p style={{ margin: 0, flex: "1 1 16rem" }}>
+        <strong>Left alone.</strong> Nothing automated changes it; tidying passes it by.
+      </p>
+      {may ? (
+        <button type="button" style={button} data-testid="allow-tidying" onClick={() => store.apply(call, principal ? { author: principal } : {})}>
+          Allow tidying again
+        </button>
+      ) : null}
+    </section>
   );
 }
 

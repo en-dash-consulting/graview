@@ -21,6 +21,13 @@
  * either face says to a person says a day as the glance does and a choice
  * as it is declared, never "2026-08-28" or "tue".
  *
+ * And what the app's own actor did and suggests is said on the todo
+ * example's bar: with `tidy=1` a test actor ("Graview, tidying",
+ * `automated`) makes two links it is sure of and suggests one it is not, so
+ * Activity folds its run into one digest row that opens to each change with
+ * its lineage, and the Suggested tray beside it holds the third until a
+ * person declines it — which the actor is refused next time.
+ *
  *   node scripts/verify-chrome.mjs [--engine=chromium|webkit|firefox] [--quick]
  */
 import { createServer } from "node:http";
@@ -87,6 +94,17 @@ async function buildHost() {
           ],
         };
         window.__handle = mount(document.getElementById("app"), options);
+        /*
+         * The app's own actor tidied, when the page asks: two links it is sure of, made with their lineage, and one it is not, suggested.
+         * Its run is one row of Activity, and the suggestion waits in the Suggested tray beside it.
+         */
+        if (asked.get("tidy")) {
+          const store = window.__handle.store;
+          const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
+          store.apply({ name: "wait-for", args: { taskId: "t-paint", blockerId: "t-shelves" } }, { author: actor, lineage: { basis: "The shelves cover the wall that needs paint", confidence: 0.93 } });
+          store.apply({ name: "wait-for", args: { taskId: "t-broadband", blockerId: "t-notice" } }, { author: actor, lineage: { basis: "The broadband moves with the notice date", confidence: 0.9 } });
+          store.suggest([{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage: { basis: "The post is redirected from the day notice is given", confidence: 0.45 } });
+        }
         window.__handle.drawn().then(() => { window.__ready = true; });`,
       resolveDir: resolve(repoRoot, "packages/embed"),
       loader: "js",
@@ -586,8 +604,8 @@ try {
     const page = await browser.newPage({ viewport: size });
     page.on("pageerror", (error) => errors.push(error.message));
     const places = [
-      { where: "the embed's Graview", url: `${at("chrome-host")}/?face=graview&company=1`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
-      { where: "the embed's pages", url: `${at("chrome-host")}/?face=pages&company=1`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
+      { where: "the embed's Graview", url: `${at("chrome-host")}/?face=graview&company=1&tidy=1`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
+      { where: "the embed's pages", url: `${at("chrome-host")}/?face=pages&company=1&tidy=1`, ready: () => page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 }) },
       { where: "the Shell", url: `${at("todo")}/?today=2026-09-01&fresh=1`, ready: () => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }) },
     ];
     for (const place of places) {
@@ -628,6 +646,64 @@ try {
     .filter(([name, entry]) => entry.drawn.some((face) => face === "shell" || face === "embed") && !seen[name])
     .map(([name]) => name);
   report.checks.everyPopoverAFaceDrawsWasOpened = { seen, unseen, quick: QUICK, ok: unseen.length === 0 || QUICK };
+  /* ---- What tidying did and suggests, on both faces of the todo example: one digest row, and a tray that waits */
+  {
+    const tidying = {};
+    for (const face of ["graview", "pages"]) {
+      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${at("chrome-host")}/?face=${face}&tidy=1`, { waitUntil: "load" });
+      await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+      await page.waitForSelector('[data-testid="app-bar"] [data-testid="suggested-button"]', { timeout: 30_000 }).catch(() => {});
+      // The tray: one suggestion, what it would do and what it was based on, waiting.
+      const tray = await page.evaluate(async () => {
+        const button = document.querySelector('[data-testid="app-bar"] [data-testid="suggested-button"]');
+        if (!button) return null;
+        button.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const rows = [...document.querySelectorAll('[data-testid="suggestion"]')].map((row) => row.textContent ?? "");
+        return { count: button.textContent?.trim().charAt(0), rows, edges: window.__handle.store.graph.allEdges().length };
+      });
+      await page.keyboard.press("Escape");
+      // Activity: the actor's two links, one digest row that opens to each with its lineage and its own undo.
+      const digest = await page.evaluate(async () => {
+        document.querySelector('[data-testid="activity-button"]')?.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="activity-digest"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const row = document.querySelector('[data-testid="activity-digest"]');
+        if (!row) return null;
+        row.querySelector('[data-testid="digest-toggle"]')?.click();
+        await new Promise((done) => setTimeout(done, 100));
+        const each = [...document.querySelectorAll('[data-testid="digest-change"]')];
+        return {
+          said: row.querySelector("div")?.textContent ?? "",
+          rows: document.querySelectorAll('[data-testid="diff-log"] > li').length,
+          each: each.map((one) => one.querySelector("[data-graview-lineage]")?.textContent ?? ""),
+          undoes: each.filter((one) => one.querySelector('[data-testid="undo-turn"]')).length,
+        };
+      });
+      await page.keyboard.press("Escape");
+      /*
+       * Declined from the tray: it goes, nothing is made, and the log says it was declined — what the store reads to refuse the actor the
+       * same suggestion next time (asked, not tried: a refusal here would be an act the watch saw refused).
+       */
+      const declined = await page.evaluate(async () => {
+        document.querySelector('[data-testid="suggested-button"]')?.click();
+        for (let turn = 0; turn < 50 && !document.querySelector('[data-testid="suggestion-decline"]'); turn++) await new Promise((done) => setTimeout(done, 50));
+        const before = window.__handle.store.graph.allEdges().length;
+        document.querySelector('[data-testid="suggestion-decline"]')?.click();
+        await new Promise((done) => setTimeout(done, 200));
+        const declinedBy = window.__handle.store.declined([{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }])?.author.id ?? null;
+        return { trayGone: document.querySelector('[data-testid="suggested-button"]') === null, unchanged: window.__handle.store.graph.allEdges().length === before, declinedBy, keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName };
+      });
+      await page.close();
+      const ok =
+        tray !== null && tray.count === "1" && tray.rows.length === 1 && /suggests/.test(tray.rows[0]) && /The post is redirected from the day notice is given/.test(tray.rows[0]) && /45% sure/.test(tray.rows[0]) &&
+        digest !== null && /Graview, tidying/.test(digest.said) && /Tidied 2 things today/.test(digest.said) && digest.each.length === 2 && digest.each.every((one) => /based on/.test(one)) && digest.undoes === 2 &&
+        declined.trayGone && declined.unchanged && declined.declinedBy === "user-nora" && declined.keyboard !== "BODY";
+      tidying[face] = { tray, digest, declined, ok };
+    }
+    report.checks.whatTidyingDidAndSuggestsIsSaidOnTheTodoExample = { ...tidying, ok: Object.values(tidying).every((one) => one.ok) };
+  }
   /* ---- FR-75: a host speaks in the app's own notices */
   {
     const notices = {};

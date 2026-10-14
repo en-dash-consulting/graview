@@ -43,12 +43,13 @@ describe("a record's acts", () => {
     const offered = () => [...host.querySelectorAll<HTMLButtonElement>("[data-testid='record-actions'] [data-affordance]")].map((button) => button.getAttribute("data-affordance"));
     expect(offered()).toEqual(["schema:transpose", "schema:edit-song"]);
     const more = host.querySelector<HTMLButtonElement>("[data-testid='record-actions-more']")!;
-    expect(more.textContent).toBe("Show 3 more");
+    // And leaving it alone, which is about the record rather than its own work, waits with them.
+    expect(more.textContent).toBe("Show 4 more");
     await act(async () => {
       more.click();
       await new Promise((done) => requestAnimationFrame(() => done(undefined)));
     });
-    expect(offered()).toEqual(["schema:transpose", "schema:edit-song", "schema:archive-song", "schema:merge-song", "schema:remove-song"]);
+    expect(offered()).toEqual(["schema:transpose", "schema:edit-song", "schema:archive-song", "schema:leave-alone-song", "schema:merge-song", "schema:remove-song"]);
     expect(document.activeElement?.getAttribute("data-affordance")).toBe("schema:archive-song");
     await act(async () => root.unmount());
     host.remove();
