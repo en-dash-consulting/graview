@@ -1,5 +1,81 @@
 # @graview/guest
 
+## 0.1.29
+
+### Patch Changes
+
+- 42dbfb7: A guest view is handed the pictures on the records it reads, as addresses the host made from the bytes (FR-175). A record keeps a file as a path on the host (FR-162's `FileValue`), which the host serves to the app's members with their credentials; a worker view and a frame run at an opaque origin, so a view of a job's photographs was handed paths it could not load, and learned the host's paths besides. A worker view whose manifest says `pictures: true`, or `pictures: { width: 400 }` (the widest it draws a picture, in CSS pixels; 1 200 by default), and a frame whose host passes `pictures` to `mountGuestView` or `guestView`, is now handed each file on a record as a `GuestFile` in the record's own field, never the path: `{ name, type, bytes, width?, height?, caption?, src?, left? }`. A picture (`image/*`, not SVG) carries `src`, which the host made from the bytes it fetched on its own origin as the reader (`credentials: "same-origin"`): a `blob:` URL of the page for a worker view (a `data:` image where the page's policy refuses `blob:` images), a `data:` image for a frame, as the brand's logo is (FR-127). It comes without `src` on the first push and the view is pushed again once the host has made it. A document, and an SVG, is its name, type and size alone, and is never fetched. Only files on records the guest is handed are fetched, so a file on a record the seat may not see is never asked for. A picture wider than the view draws one (`width` × the screen's pixel ratio, at most 2) is made smaller on a canvas, kept in its own type where the canvas writes it; one picture is at most `limits.pictureBytes` as handed (1 500 000 by default) and a view's pictures together at most `limits.picturesBytes` (12 000 000); a picture left out says why in `left`, naming the view — "The picture "porch.png" on "Porch repair" is left out: the view "Job photos" is handed at most 12,000,000 bytes of pictures, and the pictures before it took them." — and a worker view's console and `onProblem` hear it once. Pictures past the view's budget are not fetched. A frame that asks is answered once the pictures' host has arrived, and a worker view starts once it has; the pictures' host is a chunk of its own, fetched only for a guest that asks. `checkManifest` says what is wrong with a manifest's `pictures`. Headless (`graview view check`, `runWorkerViewHeadless`), a view that asks is handed each file without its path and without `src`. The graview-worker-view skill says in one line how a view shows a record's picture. `guest-sandbox --transport=pictures` draws a worker view of a crew's jobs as a member on one of them, in Chromium, WebKit and Firefox: the pictures are `blob:` URLs of the page made from bytes fetched once each with the reader's session, the step's byte for byte and the porch's, 1 600 pixels across, made 400; the PDF and the SVG are said by name, type and size; nothing the view drew names a path on the host; and the roof's photograph, on a job the member is not on, is never requested. A hosted page's first load is 391 bytes larger (587 597 bytes over the vendors document, 587 206 on main; 546 594 handed a compiled app, 546 203 on main), the frame's wait for the pictures' host; the guest host before a worker is drawn is 400 bytes more, registering a worker view 547 more, and a worker view on the open kit 5 353 more, the pictures' host itself, each raised by a file of its own in `scripts/budget-raises/`. `capabilities().shipped` gains FR-175.
+  
+  Compatibility: ops, stored formats, the document format, the compiled format, check finding codes and tool names are unchanged. The guest protocol is additive and `GUEST_PROTOCOL` stays 1: no message is new, and a guest that does not ask for pictures is handed each file as the record keeps it, as before; one that asks is handed a `GuestFile` in that field instead. New: `GuestFile` from `@graview/guest` and `@graview/guest/host`; `WorkerViewManifest.pictures`, `MountGuestViewOptions.pictures`, `GuestViewOptions.pictures`; `GuestLimits.pictureBytes` and `GuestLimits.picturesBytes` (`GuestPictureLimits`), and `GuestPictures`, from `@graview/guest/host` and `/host/views`; `GuestHostOptions.hand`. `capabilities().shipped` gains FR-175. What Graview Cloud does: nothing to serve, since its files route already serves each file to the reader with their credentials on the page's own origin; a view it stores may say `pictures` in its manifest once `capabilities().shipped` includes FR-175, and a view's author draws `<img src="${photo.src}">` once `src` comes.
+- 3cd624d: A lens is listed once, however many kinds it draws. The program's scene bar read "The whole thing · What the talks are about · The timetable · The timetable · A dozen workshops": its one calendar over talks and workshops was registered on each kind, so that either district goes in to it, and every list of places took each registration for a picture of its own. A place now says when it is one picture over several kinds (`Place.over`, given by `ViewMeta.over`, which `registerDeclaredLenses` sets from the lens's bindings), and every list reads it through `onePerPicture`: the scene's bar and its tabs, the Pages bar and its More, the gallery and the pictures' page, Find and `search_graph`, the seat's places, `placesOf` and `placesFrom`, `graview describe`, and the slugs a guest view may link to. A district of either kind still goes in to it, the tab is pressed from either, and choosing it keeps the district in focus when it is one of its kinds. Its page is at `/places/<as>` alone and draws every kind it is over, with each kind's list beside it. Two different lenses that share a title on different kinds are another matter: `graview check` warns `lens-title-repeated`, and the bars and the gallery say whose — "The timetable · talks" (`placeLabel`).
+  
+  Compatibility: `placesOf` and `placesFrom` list a picture over several kinds once, under the first of its kinds in the arrangement's order, with a new optional `over` naming every kind it is over; its `address` is `/places/<as>` and its `stop` `#view=<as>`, where before each kind had an entry at `/places/<as>?of=<plural>` (those addresses still open the picture). `describe_place` takes the one slug as before. A search's place hit for such a picture comes once. `Place`, `ViewMeta` and `ViewRegistration` gain an optional `over`; `onePerPicture`, `samePicture` and `placeLabel` are new exports of `@graview/core`, and `sharesItsName` no longer counts a picture's own other kinds. Check gains the warning `lens-title-repeated`. Stored formats, the document format and derived tool names and input schemas are unchanged.
+  
+  The embed's budgets are raised by what this adds (`scripts/budget-raises/a-lens-is-listed-once-*.json`): the pages face alone 617 / 260 bytes, every face 1,325 / 529, the embed with the studio handed in 1,312 / 529, and the guest host on the open kit 77 / 43, minified / gzipped. A hosted page's first load holds to its budget unraised.
+- 8da8189: A hosted page's first load is 31 KB lighter, and a change that spends more of it has to say so (FR-179). Graview Cloud's shell measured 562 KB of its 570, the framework's hosted page 573.8 KB of 579.7, and every release had spent a little of it. A bundler places a whole file in a page's first chunk when the first chunk can reach it and any fetched chunk uses it, so a name a barrel the page imports re-exports rode up front as soon as a face, a form or the seat used it. Those names left the barrels for entries of their own: the matcher (`search`, `actsOn`, `touchWeights`, `parseQuery`, `matchNode`, `fold`, `squeeze`, `strengthOf`, `fragmentOf`, `searchableFields`, `describeSearched`) is `@graview/core/search`, handed to the provider by the scene and the Find box that search (`matchWith`, from `@graview/react/provider`); a record read in words and an argument's shape (`readableFields`, `pageSections`, `isLongText`, `describeNode`, `tellApart`, `argShape`, `describeArg`, `argumentWords`, `failureWords`, `viaSaid`) are `@graview/core/words`; an act's answer to its seat, every place an app has and the order things are made in (`answerSeenBy`, `placesOf`, `placesFrom`, `beginning`) are `@graview/core/seat`; judging the arrangement (`arrangementFindings`) is `@graview/core/check`'s; a card's sizes and a line's estimated width (`rosterRows`, `MARQUEE_WIDTH`, `estimateWidth` and the rest) are `@graview/layout/sizes`; and an address's arrangement is read apart from what a kind can be arranged by. A frame guest's host — `mountGuestView`, `createGuestHost`, `createGuestLimiter`, `readAcross`, `readTheme` and the protocol's constants — is `@graview/guest/host/frame`, and `guestView` fetches it as the view is first drawn, the frame's height held meanwhile, asked for again when it did not arrive. The studio's door, the seat's panel and the lenses were already fetched with the face that draws them; a test now holds each of them, the frame guest's host and the matcher off the first load.
+  
+  `pnpm verify hosted` measures a hosted page at 556 818 bytes up front (543.8 KB, 187.4 KB gzipped), where main measured 589 206 (575.4 KB, 199.9 KB gzipped): 31.6 KB less, 12.5 KB gzipped. Handed a compiled app (FR-123) it is 515 126 bytes (503.1 KB, 173.1 KB gzipped), where main measured 547 516 (534.7 KB, 185.6 KB gzipped): 31.6 KB less. Before a face draws, with what it fetches as it is drawn, the scene is 876.3 KB and the pages 806.2 KB, each smaller than before. The budgets fall to 554.0 KB (191.5 KB gzipped) and 513.5 KB handed a compiled app (177.5 KB gzipped), which keeps 10 KB of room for the five features landing beside this one (FR-171, FR-172, FR-173, FR-176, FR-178, about 8 KB together), and a base is never edited upward again: a change that spends more files a raise in `scripts/budget-raises/` naming `"a hosted page"` or `"a hosted page handed a compiled app"`, the bytes it adds and the changeset that ships it, and that changeset says the kilobytes it adds up front ("1.2 KB"), or the test and the pull request's changeset check fail. `pnpm verify hosted` says the gzipped weight beside the minified, and docs/hosted-page.md carries both. Fetched all together, every face's chunks are 4 063 / 3 665 bytes more for the chunks the moved files split into, the studio handed in 1 816 / 2 926, the pages face alone 411 more gzipped (2 637 fewer minified), the guest host before a worker 282 / 288 and registering a worker view 223 / 639, each raised by a file of its own. `capabilities().shipped` gains FR-179.
+  
+  Compatibility: ops, stored formats, the wire, the document and compiled formats, check codes and tool names and schemas are unchanged. Breaking for an import: the names above are no longer exported from `@graview/core`, `@graview/layout/view` or `@graview/guest/host`, and are imported from the entries named (their types — `ReadableField`, `FieldSection`, `ArgShape`, `AppPlace`, `Beginning`, `Hit`, `SearchResult` and the rest — stay where they were). What Graview Cloud does: import `placesOf` from `@graview/core/seat`, and `mountGuestView`, `createGuestHost` or `readTheme` from `@graview/guest/host/frame`, if it uses them; its shell's `guestView` import is unchanged and now carries the frame's host only when a guest view is drawn.
+- Updated dependencies [362ed4e]
+- Updated dependencies [523149b]
+- Updated dependencies [7966f5d]
+- Updated dependencies [fcf84de]
+- Updated dependencies [a43f829]
+- Updated dependencies [55ec52b]
+- Updated dependencies [6764d85]
+- Updated dependencies [dbe0a28]
+- Updated dependencies [3f607a8]
+- Updated dependencies [42dbfb7]
+- Updated dependencies [a5c260f]
+- Updated dependencies [3accacb]
+- Updated dependencies [3cd624d]
+- Updated dependencies [774d39c]
+- Updated dependencies [933761a]
+- Updated dependencies [2d3f806]
+- Updated dependencies [dedefed]
+- Updated dependencies
+- Updated dependencies [8e09c51]
+- Updated dependencies [307f2d4]
+- Updated dependencies [11deba2]
+- Updated dependencies [15c033b]
+- Updated dependencies [a4cfcdc]
+- Updated dependencies [3b06199]
+- Updated dependencies [861b0b4]
+- Updated dependencies [ed76a10]
+- Updated dependencies [df64e2b]
+- Updated dependencies [1076b0c]
+- Updated dependencies [c893321]
+- Updated dependencies [054b011]
+- Updated dependencies [332fbeb]
+- Updated dependencies [ee15ae3]
+- Updated dependencies [488aba6]
+- Updated dependencies [4dbb23e]
+- Updated dependencies [d8dc4c6]
+- Updated dependencies [a047696]
+- Updated dependencies [b61f093]
+- Updated dependencies [0b722e4]
+- Updated dependencies [b61f093]
+- Updated dependencies [3c16f27]
+- Updated dependencies [4dbb23e]
+- Updated dependencies [93a7636]
+- Updated dependencies [73a9750]
+- Updated dependencies [4c545b7]
+- Updated dependencies [2016c5f]
+- Updated dependencies [0d585ba]
+- Updated dependencies [5197748]
+- Updated dependencies [952e526]
+- Updated dependencies [1b41c2d]
+- Updated dependencies [4b12e16]
+- Updated dependencies [8da8189]
+- Updated dependencies [2ca4722]
+- Updated dependencies [dabb97f]
+- Updated dependencies [7da616c]
+- Updated dependencies [c1fb0a3]
+- Updated dependencies [fc3b1f2]
+  - @graview/react@0.1.29
+  - @graview/core@0.1.29
+
 ## 0.1.28
 
 ### Patch Changes

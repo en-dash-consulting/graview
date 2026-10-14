@@ -1,5 +1,103 @@
 # @graview/embed
 
+## 0.1.29
+
+### Patch Changes
+
+- a5c260f: A hosted page loads thirteen chunks before it draws where it loaded twenty-three, and 7.6 KB less (5.0 KB gzipped), so the round's money formats have room after its repeating dates and field-level sight. A bundler splits what a page loads first by which of its doors (each part fetched with `import()`) reach each file, so the frame's files were spread over twenty-three chunks, each with its own list of names in and out and each compressed alone. Every door in `@graview/core`, `@graview/react` and `@graview/primitives` now imports the barrel the page drew first (`@graview/core`, `@graview/react/provider`, `@graview/primitives/frame`) for nothing but that, which makes the files every door reaches one set and costs a door nothing at run time. What draws a notice is fetched with the first notice and prefetched once the page is idle (`notice-stacks.tsx`); the board and the two live regions that say each notice aloud stay up front, so a notice is said at once, and `fetchNotices()` fetches it at will (the embed's `preload` does). What only fetched faces say or do left the barrels a page imports: `edgeWords` and `valueWords` for `@graview/core/words`, and a face's moves (`withShown`, `withQuery`, `withoutSearch`, `withPast`, `withPan`, `withPin`, `edgeSelectionId`) for a new `@graview/layout/view-moves`. Built as Cloud builds it over the vendors document, the page that compiles its document goes from 549 727 bytes (192 368 gzipped) to 541 994 (187 254), and the page handed a compiled app from 507 528 (177 639) to 499 794 (172 530). Their budgets fall to keep about 8 KB of room (3.5 KB gzipped): 537.5 KB (186.4 gzipped) from 538.0 (188.0), and 496.0 KB (172.0 gzipped) from 497.5 (173.5). No face loses anything: the pages face alone is 3.4 KB less, and every face fetched together 4.4 KB less.
+  
+  Compatibility: BREAKING imports. `edgeWords` and `valueWords` move from `@graview/core` to `@graview/core/words`; `withShown`, `withQuery`, `withoutSearch`, `withPast`, `withPan`, `withPin` and `edgeSelectionId` move from `@graview/layout` and `@graview/layout/view` to `@graview/layout/view-moves`; `FOOT_MOVED`, `FOOT_OBSTACLES`, `NARROW_PICTURE`, `placeAtTheFoot` and `placeAtTheTop` leave `@graview/primitives/frame` (still on `@graview/primitives` and `@graview/primitives/pages`). `withoutMoves` stays on `@graview/layout/view`. New: `@graview/layout/view-moves`, and `fetchNotices` from `@graview/primitives`, `/frame` and `/pages`. Ops, stored formats, the document format, the compiled format, check finding codes and derived tool names and input schemas are unchanged. What Graview Cloud does: import those names from their new entries; its shell built from these sources loads about 7.5 KB less before the app draws.
+- 3b06199: A record can link another app, and the host says what that app is called (FR-171). A relation's `to` names kinds inside one document, so a scenario in one app could not point at a house in another. The first step is a field: `{ "type": "app-link" }` in a document, `appLinkField()` in a declaration, holding another app's address — `@owner/app`, an id its host knows it by, or an absolute http(s) address, at most 500 characters (`isAppAddress`). The store refuses anything else as `invalid`, `editDocument`'s `add-field` and `retype-field` take the type, a migration keeps a value that is an address and clears one that is not, a spreadsheet's cell is read as one or refused in words (FR-177), `graview types` writes it as a string said to be another app's address, a form asks for it with "@owner/app or https://…" as its placeholder, and an act's tool schema gives it the address's `pattern` and `"x-graview-app-link": true` so an agent sets an address rather than a name. A host hands `resolveApp(address, viewer)` to `mount`, `<Embed>`, `GraviewProvider` or the routed face's context, answering `{ name, icon?, headline?, href }`, `{ denied: true }` or `null`: the field draws as that app's icon, name and home headline, linked to `href`, on a record's page and in the scene's record panel, and as its icon and name on a list's row and a document card's field block. A viewer the host refuses sees "linked app (no access)" and nothing of the app. Without a resolver, or where the host knows no such app, the address is drawn as it is kept, a link only when it is an absolute http(s) address. The host is asked once per address and viewer, however many records link it, and a throw is taken as `null`. Where an act may write the field, a "Change" control beside the link edits the address. What draws it is a chunk fetched with the first app-link drawn: a hosted page's first load is 509 bytes larger (557 327 bytes over the vendors document, 556 818 on main), 501 handed a compiled app, and the scene before it draws 1 647, all under their budgets; the embed's pages face carries 1 884 / 1 607 bytes more minified / gzipped, every face 7 001 / 3 726, each raised by a file of its own. A relation whose `to` is another app's kind, an expression that walks it and the history of the far value are left for 0.2. `capabilities().shipped` gains FR-171.
+  
+  Compatibility: additive. The document format gains the field type `app-link`, and `graview-compiled@1` carries it; a build that predates it refuses the type by path, and a page that predates it refuses such a compiled app as `compiled-shape` and compiles the document. `mount`, `<Embed>`, `GraviewProvider` and the routed face's context gain an optional `resolveApp`; `ReadableField` gains `app`, `ScalarField` gains `app`, and a document card's resolved field block gains `app`. A derived tool's input schema for a declaration with no app-link field is unchanged. What a host does: read `capabilities().shipped` for FR-171 before writing an `app-link` field, and pass `resolveApp` to have one drawn as the app rather than as its address.
+- 0b722e4: Days, times and numbers are said in the app's locale, en-US first (FR-178). The eighth walk read "10 Sep 2023" in an app written for the United States: every day was said day first, in an order fixed in code, and no face knew a locale. Now every day, time and figure a person reads is said through `Intl` — a record's facts and its glance, a template's `{due}`, `{due | date}` and a moment's `{at}`, a block's field and figure, a rule's line and a rule's message, a creating act's line, an arrangement's headings ("Week of Aug 24, 2026"), the calendar's titles and labels, a declared timeline's hours, and the seat's lines ("On Thursday, Sep 17: …") — in en-US unless the app says otherwise: "Sep 10, 2023", "3:30 PM", "1,250". A moment (`2023-09-10T15:30`) is said with its time where it was said as it is kept. The app says its locale where it says its currency, `brand.locale` ("en-GB" keeps the day first, "de-DE" writes "1.250"), and a host that knows its reader passes theirs as `locale` on the embed (both faces), `GraviewProvider` and a pages `PageContext`, which wins over the app's. `describeApp` says what the locale makes of a day, a time and a figure; `editDocument`'s `set-brand` and `diffDocuments` say "Days, times, numbers and money are written for de-DE." The framework's own words stay English. `@graview/core` exports `dayAsRead`, `momentAsRead`, `timeAsRead`, `numberAsRead`, `weekdayAsRead`, `dayOfMonthAsRead`, `monthAsRead`, `weekdayName`, `minutesAsRead`, `whenAsRead`, `localeFor`, `sayIn` and `DEFAULT_LOCALE`; each takes an optional locale. `capabilities().shipped` gains FR-178.
+  
+  Compatibility: ops, stored formats, wire messages, the document format, the compiled format, check finding codes and derived tool schemas are unchanged; `brand.locale` is the key it was, and now says days, times and numbers as well as money. The words a person reads change: a day is said "Aug 28, 2026" where it was said "28 Aug 2026", a moment with its time where it was said as stored, a number in a block or a rule's line with the locale's separators, a week's heading with its day in words, and the seat's day "Thursday, Sep 17" where it was "Thursday 17 Sep". `editDocument`'s sentence for `set-brand`'s `locale` and `diffDocuments`' for a changed locale say "Days, times, numbers and money are written for …"; a changed currency is its own sentence. What a host does: pass the reader's locale as `locale` on `mount`, and match words a test reads in en-US.
+- 2ca4722: From altitude the map draws only the lines that explain what is chosen, and a picture pressed on a district opens beside the map at a size a person reads.
+  
+  At rest every relation between two districts is one ribbon (`Ribbons`), run along the gutters between the blocks so it crosses no third district, as wide as the links along it, and said in words when pointed at: "146 features → 14 areas, the part it lives in", from the declaring kind's own description. No record has a line of its own. A chosen district keeps only its own relations' ribbons. A chosen record keeps none and draws its own links instead (`RecordLinks`): solid to a record the map draws on its own (its building, or its chip), ending in a dot, and dashed into a district for the records in it the map does not draw one by one, or for a relation that reaches more than six of them; each is labeled at its far end in its kind's words ("the part it lives in: tools", "what this part does: 46 features"), passes under the districts' names, and everything the record does not reach recedes. A link made less than sure (FR-172) stays so in the line the chosen record draws: dotted at the strength the scene draws a provisional link in, its label ending "· unsure" with what it was based on on hover. The connectors and the ties no longer draw at altitude, except for a change that just happened. The Key says the three manners first, and the unsure one at every height, and each relation's swatch is its ribbon at its own width. The roads are gone; `roadBetween` with them, and `streetPoints` moved to the ribbons.
+  
+  What is chosen from altitude stands in a panel beside the map (`MapPanel`, from `@graview/primitives` and `@graview/primitives/scene`, drawn by the Shell and an embed's scene face): docked at the side on a desk — the city is laid out in the room left, and Up, the Key and the ask field keep clear of it — and a sheet from the foot on a phone. A showing pressed on a district's marquee opens there at full size, in the mode a lens draws a page in, with its name, its count, the kind's description and Open to its own place; the map recedes but for its district, and no line is drawn over it. The billboard that drew the lens at the city's scale on its plot is gone, and the camera no longer flies closer to it. A chosen record lists its links there, a heading per relation in its kind's words, each record a press that chooses it; a chosen district lists its relations with how many each joins, and every record in it; a right-click on a record there, or on one in the lens, opens its acts as it does on the map — the card of chips that floated over the districts ("1 of 14 tied", "close", "+10 more — double-click to go in") is no longer drawn where the panel is. A district's "open", and a double-click on a district with no picture of its own, choose the district where a face says the panel is drawn (`BesideTheMap`, from `@graview/react`); a scene drawn without it, such as the studio's, still opens a district in place. The panel, the ribbons and a record's links are each fetched when first drawn, so a hosted page's first load and its scene before it draws hold to their budgets unraised; the embed's budgets are raised for them (scripts/budget-raises/the-map-draws-only-what-explains-the-choice-*.json): every face by 22_727 / 10_165 bytes, the pages face by 372 / 166 for the district's card asking whether the panel lists it, and the embed with the studio by 609 / 947.
+  
+  Compatibility: the scene changes what it draws, not any surface a host holds it to. `@graview/react` gains `Ribbons`' and `RecordLinks`' helpers (`mapChoice`, `districtOf`, `ribbonsOf`, `ribbonSentence`, `ribbonWidth`, `RIBBON_WIDTH`, `pickedFrom`) and `BesideTheMap`; `@graview/primitives` gains `MapPanel` and `mapPanelShows`. A selector on `.graview-road`, `[data-graview-screen]` or `.graview-screen-grip` finds nothing now: a relation from altitude is `[data-graview-ribbon]`, a record's link `[data-graview-link]`, and the panel `[data-graview-map-panel]`. `whereIs("screen:<kind>")` answers the district's box, where those looking at the picture now gather.
+- Updated dependencies [362ed4e]
+- Updated dependencies [523149b]
+- Updated dependencies [7966f5d]
+- Updated dependencies [fcf84de]
+- Updated dependencies [a43f829]
+- Updated dependencies [55ec52b]
+- Updated dependencies [6764d85]
+- Updated dependencies [dbe0a28]
+- Updated dependencies [3f607a8]
+- Updated dependencies [42dbfb7]
+- Updated dependencies [a5c260f]
+- Updated dependencies [3accacb]
+- Updated dependencies [cd5a9d5]
+- Updated dependencies [3cd624d]
+- Updated dependencies [897c7bb]
+- Updated dependencies [774d39c]
+- Updated dependencies [933761a]
+- Updated dependencies [2d3f806]
+- Updated dependencies [dedefed]
+- Updated dependencies
+- Updated dependencies [8e09c51]
+- Updated dependencies [307f2d4]
+- Updated dependencies [76a5829]
+- Updated dependencies [11deba2]
+- Updated dependencies [15c033b]
+- Updated dependencies [a4cfcdc]
+- Updated dependencies [3b06199]
+- Updated dependencies [861b0b4]
+- Updated dependencies [ed76a10]
+- Updated dependencies [df64e2b]
+- Updated dependencies [1076b0c]
+- Updated dependencies [02bdf28]
+- Updated dependencies [c893321]
+- Updated dependencies [054b011]
+- Updated dependencies [332fbeb]
+- Updated dependencies [ee15ae3]
+- Updated dependencies [ebabbd1]
+- Updated dependencies [488aba6]
+- Updated dependencies [4dbb23e]
+- Updated dependencies [d8dc4c6]
+- Updated dependencies [a047696]
+- Updated dependencies [b61f093]
+- Updated dependencies [0b722e4]
+- Updated dependencies [b61f093]
+- Updated dependencies [3c16f27]
+- Updated dependencies [4dbb23e]
+- Updated dependencies [93a7636]
+- Updated dependencies [73a9750]
+- Updated dependencies [48b777a]
+- Updated dependencies [4c545b7]
+- Updated dependencies [2016c5f]
+- Updated dependencies [0d585ba]
+- Updated dependencies [5197748]
+- Updated dependencies [952e526]
+- Updated dependencies [1b41c2d]
+- Updated dependencies [86b27f9]
+- Updated dependencies [a7ee9a6]
+- Updated dependencies [3cb21ac]
+- Updated dependencies [4b12e16]
+- Updated dependencies [8da8189]
+- Updated dependencies [2ca4722]
+- Updated dependencies [44e86bc]
+- Updated dependencies [dabb97f]
+- Updated dependencies [5b9c800]
+- Updated dependencies [7da616c]
+- Updated dependencies [d4db733]
+- Updated dependencies [9309ad5]
+- Updated dependencies [c1fb0a3]
+- Updated dependencies [fc3b1f2]
+- Updated dependencies [293e42b]
+  - @graview/react@0.1.29
+  - @graview/core@0.1.29
+  - @graview/tools@0.1.29
+  - @graview/primitives@0.1.29
+  - @graview/pages@0.1.29
+  - @graview/studio@0.1.29
+  - @graview/layout@0.1.29
+
 ## 0.1.28
 
 ### Patch Changes
