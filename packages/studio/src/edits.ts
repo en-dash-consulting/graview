@@ -443,7 +443,15 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     ...(g["ownEnd"] === true ? { ownEnd: true } : {}),
   });
   // A sight's own words are the framework's alone: a document's sight has none to keep.
-  const sightOf = (read: Read, sight: Node) => ({ roles: sight["everyone"] === true ? "*" : named(read, sight.id, "seen-by"), kinds: named(read, sight.id, "shows"), ...(sight["own"] === true ? { own: true } : {}), ...(str(sight, "via") ? { via: str(sight, "via") } : {}) });
+  const fieldsOf = (sight: Node, key: string) => (Array.isArray(sight[key]) && (sight[key] as unknown[]).length > 0 ? { [key]: (sight[key] as unknown[]).map(String) } : {});
+  const sightOf = (read: Read, sight: Node) => ({
+    roles: sight["everyone"] === true ? "*" : named(read, sight.id, "seen-by"),
+    kinds: named(read, sight.id, "shows"),
+    ...(sight["own"] === true ? { own: true } : {}),
+    ...(str(sight, "via") ? { via: str(sight, "via") } : {}),
+    ...fieldsOf(sight, "fields"),
+    ...fieldsOf(sight, "hide"),
+  });
   const policyOf = (read: Read) => ({
     grants: read.ofKind("grant").map((g) => grantOf(read, g)).filter((grant) => grant.mutations === "*" || grant.mutations.length > 0),
     sees: read.ofKind("sight").map((sight) => sightOf(read, sight)).filter((sight) => sight.kinds.length > 0),

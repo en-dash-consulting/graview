@@ -286,9 +286,9 @@ export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, SCENE_LAYER
 export type { Layer } from "./theme/layers.js";
 export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
-export { recordsOf, sees, sightedKinds } from "./permissions/sight.js";
+export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
-export type { RecordedLog, Records } from "./permissions/sight.js";
+export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
 export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchWhatIsUnseen } from "./watched.js";

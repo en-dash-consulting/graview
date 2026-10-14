@@ -7,7 +7,7 @@ import {
   type Store,
 } from "@graview/core";
 import { argumentWords, failureWords, tellApart } from "@graview/core/words";
-import { formFields, formArgs, type FormField } from "@graview/core/forms";
+import { formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
 import { Files, RepeatPicker } from "@graview/primitives/pages";
@@ -517,7 +517,11 @@ export function DerivedForm<S extends AnySchema>({
 }: DerivedFormProps<S>) {
   const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...initial }));
   const [failed, setFailed] = useState<string | null>(null);
-  const fields = formFields(mutation.input).filter((spec) => only === undefined || only.includes(spec.name));
+  // A field the seat's sight keeps from it is not asked for: the store would refuse it (Roadmap f-field-sight).
+  const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
+  const subject = mutation.subject && prefilled[mutation.subject.arg];
+  const kept = seat ? keptArguments(store, seat, mutation, typeof subject === "string" ? subject : undefined) : undefined;
+  const fields = formFields(mutation.input).filter((spec) => (only === undefined || only.includes(spec.name)) && !kept?.has(spec.name));
   const words: Words = (name) => argumentWords(store.schema, mutation, name);
 
   return (

@@ -254,6 +254,8 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       label: sight.describe ?? `${who} may see ${sight.own || sight.via ? "their own " : ""}${sight.kinds.join(", ")}`,
       own: sight.own ?? false,
       ...(sight.via ? { via: sight.via } : {}),
+      ...(sight.hide?.length ? { hide: [...sight.hide] } : {}),
+      ...(sight.fields ? { fields: [...sight.fields] } : {}),
       everyone: sight.roles === "*",
       ...(sight.describe ? { describe: sight.describe } : {}),
     });

@@ -11,6 +11,7 @@ import { article, counted, edgeWords, fieldWords, labelOf, nounOf, pluralOf, val
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { actingAs } from "../permissions/policy.js";
+import { FIELD_SIGHT } from "../permissions/sight.js";
 import { seesEveryRecord } from "../seen.js";
 import { problemsMoved, type PlannedChange, type Store } from "../store.js";
 import { andList, coerceCell, orList, splitCell } from "./coerce.js";
@@ -141,10 +142,11 @@ export function previewImport<S extends AnySchema>(store: Store<S>, kind: string
 
 export function importRows<S extends AnySchema>(store: Store<S>, kind: string, rows: readonly ImportRow[], mapping: ImportMapping, options: ImportOptions): ImportResult {
   const schema = store.schema as AnySchema;
-  const columns = readMapping(schema, kind, mapping);
+  const by = options.by as Principal;
+  // A field the importer may not see is one it may not fill: its column is refused as one naming no field (Roadmap f-field-sight).
+  const columns = readMapping(schema, kind, mapping, FIELD_SIGHT.keptFrom?.(store, by)?.({ id: "\u0000new", kind }));
   const definition = schema.definition(kind) as AnyNodeDefinition;
   const noun = nounOf(definition, kind);
-  const by = options.by as Principal;
   const preview = options.preview === true;
 
   const { header, records } = tabulate(rows);

@@ -606,6 +606,8 @@ function sightLines(read: Read): string[] {
         `kinds: [${kinds.map(q).join(", ")}]`,
         ...(bool(sight, "own") ? ["own: true"] : []),
         ...(str(sight, "via") ? [`via: ${q(str(sight, "via")!)}`] : []),
+        ...(list(sight, "fields") ? [`fields: [${list(sight, "fields")!.map(q).join(", ")}]`] : []),
+        ...(list(sight, "hide")?.length ? [`hide: [${list(sight, "hide")!.map(q).join(", ")}]`] : []),
         ...(str(sight, "describe") ? [`describe: ${q(str(sight, "describe")!)}`] : []),
       ];
       return `    { ${parts.join(", ")} },`;

@@ -14,6 +14,8 @@ import type { Policy } from "@graview/core";
  *   behind it: who is on staff is the program's own people's to see
  *   (`sees`), so the watch's "shown-what-is-not-theirs" has a seat to hold
  *   in every harness that sits the visitor down (the seventh walk).
+ *   And of a speaker, the visitor reads who they are and not where they
+ *   come from: a sight that hides a field (Roadmap f-field-sight).
  *
  * The acts are named rather than starred below the chair, so an act added
  * tomorrow is refused until somebody decides who may run it.
@@ -21,7 +23,9 @@ import type { Policy } from "@graview/core";
 export const policy: Policy = {
   roles: ["chair", "reviewer", "volunteer", "scheduler"],
   sees: [
-    { roles: "*", kinds: ["talk", "speaker", "session", "workshop", "room", "topic"], describe: "The program is everybody's to see." },
+    { roles: "*", kinds: ["talk", "session", "workshop", "room", "topic"], describe: "The program is everybody's to see." },
+    { roles: "*", kinds: ["speaker"], hide: ["country"], describe: "The speakers are everybody's to see, but not where they come from." },
+    { roles: ["chair", "reviewer", "volunteer", "scheduler"], kinds: ["speaker"], describe: "The program's own people see where a speaker comes from." },
     { roles: ["chair", "reviewer", "volunteer", "scheduler"], kinds: ["staff"], describe: "The program's own people see who is on staff." },
   ],
   grants: [

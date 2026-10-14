@@ -1241,6 +1241,14 @@ class Editor {
     for (const [n, kind] of (Array.isArray(part.kinds) ? part.kinds : []).entries()) {
       if (!this.doc.kinds[kind]) return this.failAs(sight ? "sight-kind" : "edit", i, `kinds.${n}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
     }
+    // A field a sight shows or hides is one of the kinds it shows (Roadmap f-field-sight).
+    for (const key of sight ? (["fields", "hide"] as const) : []) {
+      for (const [n, field] of ((part[key] as string[] | undefined) ?? []).entries()) {
+        const kinds = part.kinds as string[];
+        if (kinds.some((kind) => this.doc.kinds[kind]?.fields[field])) continue;
+        return this.failAs("sight-field", i, `${key}.${n}`, `"${field}" is not a field of ${kinds.join(" or ")}`, `one of ${[...new Set(kinds.flatMap((kind) => Object.keys(this.doc.kinds[kind]?.fields ?? {})))].join(", ")}`);
+      }
+    }
     if (!sight && part.mutations !== "*") {
       for (const [n, act] of part.mutations.entries()) {
         const derived = derivedActOf(act);
