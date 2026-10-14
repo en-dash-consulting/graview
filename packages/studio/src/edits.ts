@@ -204,6 +204,11 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
   // The people (FR-170): the kind that stops being them first, so a move is two edits that never say two kinds.
   const people = [...kindsAfter].flatMap(([id, kind]) => (kindsBefore.has(id) && (kindsBefore.get(id)!["people"] === true) !== (kind["people"] === true) ? [{ op: "set-people" as const, kind: label(kind), people: kind["people"] === true }] : []));
   edits.push(...people.sort((a, b) => Number(a.people) - Number(b.people)));
+  // Never archived (FR-173), on a kind that stays or one just added: a kind starts out archived when set aside.
+  for (const [id, kind] of kindsAfter) {
+    const was = kindsBefore.get(id)?.["neverArchived"] === true;
+    if (was !== (kind["neverArchived"] === true)) edits.push({ op: "set-archives", kind: label(kind), archives: was });
+  }
   const stillThere = (read: Read, from: string, edge: string) =>
     read
       .out(from, edge)

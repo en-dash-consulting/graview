@@ -83,6 +83,21 @@ describe("the studio's grants, sights and people", () => {
     if (outcome && !outcome.ok) expect(outcome.findings.map((finding) => finding.code)).toEqual(["sight-via-misses-people"]);
   });
 
+  it("a kind said never archived comes back as set-archives, and the document says archives: false (FR-173)", () => {
+    const studio = studioOn([{ name: "edit-kind", args: { id: "declared:match", neverArchived: true } }]);
+    expect(studio.edits()).toEqual([{ op: "set-archives", kind: "match", archives: false }]);
+    const outcome = studio.document();
+    if (!outcome?.ok) throw new Error(JSON.stringify(outcome));
+    expect(outcome.document.kinds.match!.archives).toBe(false);
+    // Read back, the studio holds it as it was written, and taking it off says archives: true.
+    const compiledBack = compileDocument(outcome.document);
+    if (!compiledBack.ok) throw new Error("the edited document must compile");
+    const reopened = createStudio(compiledBack.app as never, { document: outcome.document });
+    expect(reopened.store.graph.getNode("declared:match")).toMatchObject({ neverArchived: true });
+    reopened.store.apply({ name: "edit-kind", args: { id: "declared:match", neverArchived: false } } as never);
+    expect(reopened.edits()).toEqual([{ op: "set-archives", kind: "match", archives: true }]);
+  });
+
   it("a change that touches no grant, sight or people kind says none of them", () => {
     expect(studioOn([{ name: "add-field", args: { kind: "declared:match", label: "budget", type: "number", required: false } }]).edits()).toEqual([{ op: "add-field", kind: "match", field: "budget", type: "number" }]);
   });

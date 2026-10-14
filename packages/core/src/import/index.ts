@@ -7,9 +7,9 @@
  * ever importing, so it carries none of this.
  */
 export { importRows, previewImport } from "./rows.js";
-export type { ImportLink, ImportOptions, ImportResult, ImportRow, ImportRowOutcome } from "./rows.js";
+export type { ImportChange, ImportLink, ImportOptions, ImportResult, ImportRow, ImportRowOutcome } from "./rows.js";
 export { ImportMappingError, proposeMapping } from "./mapping.js";
-export type { ColumnTarget, ImportMapping, ProposedColumn, ProposedMapping } from "./mapping.js";
+export type { ColumnTarget, ImportMapping, ImportMatch, ProposedColumn, ProposedMapping } from "./mapping.js";
 export { coerceCell, readBoolean, readDateTime, readDay, readNumber, readOption } from "./coerce.js";
 export type { CoerceOptions, Coerced } from "./coerce.js";
 export { parseCsv } from "./csv.js";

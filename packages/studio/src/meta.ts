@@ -63,9 +63,11 @@ export const kindNode = defineNode("kind", {
     figure: z.string().optional(),
     /** This kind stands for the people: a record of it whose id is a principal's is that person (Roadmap f-people-kind). */
     people: z.boolean().optional(),
+    /** Its records are kept or removed, never archived or merged: the declaration's `archives: false` (FR-173). */
+    neverArchived: z.boolean().optional(),
   }),
   label: (node) => node.label,
-  display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when", people: "stands for the people" } },
+  display: { labels: { label: "name", lifecycleField: "lifecycle field", retired: "retired when", people: "stands for the people", neverArchived: "never archived" } },
 });
 
 export const fieldNode = defineNode("field", {

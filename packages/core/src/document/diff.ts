@@ -6,7 +6,7 @@ import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 import { capitalize } from "../capital.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, archivesSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
  * WHAT A CHANGE TO THE APP MEANS, IN WORDS — and whether data would move.
@@ -145,6 +145,7 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     const wasRoles = Object.fromEntries(Object.entries(was.fieldRoles ?? {}).map(([role, field]) => [role, movedTo.get(field) ?? field]).filter(([, field]) => Object.hasOwn(now.fields, field!)));
     if (!same(wasRoles, now.fieldRoles ?? {})) sentences.push(`Which of ${withArticle(kind)}'s fields is its time, its author or a lens's role changes.`);
     if (!was.people !== !now.people) sentences.push(peopleSentence(after.kinds, continues.get(kind) ?? kind, now.people === true));
+    if ((was.archives === false) !== (now.archives === false)) sentences.push(archivesSentence(after.kinds, continues.get(kind) ?? kind, now.archives !== false));
   }
   sentences.push(...factSentences(before.computed, after.computed));
   for (const [section, noun] of [["acts", "act"], ["rules", "rule"]] as const) {

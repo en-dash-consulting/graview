@@ -298,6 +298,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       ...(lifecycleField && retired ? { lifecycle: { field: lifecycleField, retired: retired[0] === "date" ? ("date" as const) : retired } } : {}),
       ...(str(kind, "figure") ? { figure: str(kind, "figure")! } : {}),
       ...(bool(kind, "people") ? { people: true } : {}),
+      ...(bool(kind, "neverArchived") ? { archives: false } : {}),
       ...(computed ? { computed } : {}),
       // What the studio has no act for is CARRIED, not dropped — a glance may say a computed field too.
       ...kept(base, name(kind), shape, new Set(Object.keys(computed ?? {}))),
