@@ -28,6 +28,8 @@ export function useLayoutOptions<S extends AnySchema>(
   /** Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
   seated: boolean,
   cityZoom: number,
+  /** What a panel floating over the scene covers, in pixels (`useDock`): the city is fitted in what is left. */
+  dock: { readonly right: number; readonly bottom: number },
   /** The graph's tick: the log only grows when the graph changes. */
   nodes: unknown,
 ): LayoutOptions {
@@ -82,8 +84,10 @@ export function useLayoutOptions<S extends AnySchema>(
        * the city opened under them: the districts and their names open
        * clear of the chrome; the zoom at the foot when no ask field keeps it.
        */
-      inset: { ...railInset(size?.width ?? 1200), top: 8, bottom: seated ? 0 : 56 },
-      chrome: [{ x: (size?.width ?? 1200) - 176, y: 0, width: 176, height: 100 }],
+      inset: { ...railInset((size?.width ?? 1200) - dock.right), top: 8, bottom: seated ? 0 : 56 },
+      // Up and the Key stand clear of a panel too, at the corner of what the reader sees.
+      chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }],
+      ...(dock.right > 0 || dock.bottom > 0 ? { dock } : {}),
       // The reader's own text size, which the cards are sized in: the city
       // grows with the words rather than holding them at a fixed 230×97.
       unit,
@@ -131,6 +135,6 @@ export function useLayoutOptions<S extends AnySchema>(
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated, dock.right, dock.bottom],
   );
 }

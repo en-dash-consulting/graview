@@ -55,7 +55,7 @@ import type { PlotsProps } from "./plots.js";
 import { Occupants } from "./occupants.js";
 import { EdgeSigns } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
-import { useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
+import { useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
 import { whereIsIn } from "./where-drawn.js";
 import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
@@ -763,7 +763,8 @@ export function Scene<S extends AnySchema>({
   const [zoom, zoomLive, setZoom] = useHandZoom(view.overview);
   const [above, setAbove] = useFromAbove();
   const seenFrom = useMemo(() => (above ? { ...options, tilt: TOP_DOWN } : options), [options, above]);
-  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, nodes);
+  const { probe: dockProbe, dock } = useDock();
+  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, dock, nodes);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
   // A district cannot be placed by hand from altitude, so no plot wears the pinned curb for one (a pin in an old bookmark is ignored).
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins).filter((id) => kindOfCard(id) === null)), [view.pins]);
@@ -829,7 +830,9 @@ export function Scene<S extends AnySchema>({
     steer();
     setZoom(next);
     const box = wrapperRef.current?.getBoundingClientRect();
-    const center = { x: result.width / 2, y: result.height / 2 };
+    // The middle of what the reader sees: a panel over the scene is not part of it.
+    const seenBox = result.visible ?? result;
+    const center = { x: seenBox.width / 2, y: seenBox.height / 2 };
     const pointer = box && clientX !== undefined && clientY !== undefined ? { x: clientX - box.left, y: clientY - box.top } : center;
     const ratio = next / current;
     setView((current) => withPan(current, panForZoom(current.pan ?? { x: 0, y: 0 }, cameraLive.current, pointer, center, ratio)));
@@ -955,13 +958,14 @@ export function Scene<S extends AnySchema>({
       style={{
         position: "relative",
         /*
-         * A PANEL DOCKED BESIDE THE MAP TAKES ITS ROOM (`--graview-dock`,
-         * set by the panel while it stands): the city is laid out in what
-         * is left, rather than half of it standing under the panel.
+         * THE SCENE FILLS THE WHOLE PICTURE; A PANEL FLOATS OVER IT. The
+         * ground, the grid, the depth and the tint run under the panel and
+         * show in the gap around it. What a panel takes from the map is the
+         * city's fit and the camera's bounds (`useDock`, `--graview-dock`,
+         * `--graview-sheet`), never the scene's own box.
          */
-        width: "calc(100% - var(--graview-dock, 0px))",
-        // And a sheet from the foot of a phone (`--graview-sheet`): the city stands above it.
-        height: "calc(100% - var(--graview-sheet, 0px))",
+        width: "100%",
+        height: "100%",
         cursor: dragging ? "grabbing" : "grab",
         touchAction: "none",
         ["--graview-altitude" as string]: view.overview ? 1 : 0,
@@ -1012,6 +1016,8 @@ export function Scene<S extends AnySchema>({
         * THE GROUND: every district's plot as a tile, under the cards and
         * over the fields, from the same origin and pan the lattice rides.
         */}
+      {/* Where the panel's room is read from: sized by what the panel says it takes, never seen. */}
+      <div ref={dockProbe} aria-hidden="true" style={{ position: "absolute", top: 0, right: 0, width: "var(--graview-dock, 0px)", height: "var(--graview-sheet, 0px)", visibility: "hidden", pointerEvents: "none" }} />
       {frame.city ? (
       <Suspense fallback={null}>
       <Plots

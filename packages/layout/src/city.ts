@@ -454,14 +454,16 @@ export function placeCity(
  * center so the same limit serves both directions, and read by the scene
  * and by the tests alike, so "reachable" means one thing.
  */
-export function cameraLimit(result: { readonly width: number; readonly height: number; readonly city?: CityFrame }): { readonly x: number; readonly y: number } {
-  const slack = { x: result.width * 0.45, y: result.height * 0.45 };
+export function cameraLimit(result: { readonly width: number; readonly height: number; readonly city?: CityFrame; readonly visible?: { readonly width: number; readonly height: number } }): { readonly x: number; readonly y: number } {
+  // The reader's window is what a panel over the scene leaves, not the whole painted ground.
+  const { width, height } = result.visible ?? result;
+  const slack = { x: width * 0.45, y: height * 0.45 };
   if (!result.city) return slack;
   const { extent } = result.city;
   const margin = 24;
   return {
-    x: Math.max(slack.x, extent.x + extent.width - result.width + margin, -extent.x + margin),
-    y: Math.max(slack.y, extent.y + extent.height - result.height + margin, -extent.y + margin),
+    x: Math.max(slack.x, extent.x + extent.width - width + margin, -extent.x + margin),
+    y: Math.max(slack.y, extent.y + extent.height - height + margin, -extent.y + margin),
   };
 }
 
@@ -489,9 +491,9 @@ export interface PastTheEdge {
  * is named here with the side it lies past, so the scene can put a sign on
  * that edge, and with the pan that brings it into the window.
  */
-export function districtsPastTheEdge(result: Pick<Layout, "nodes" | "width" | "height" | "city">): readonly PastTheEdge[] {
+export function districtsPastTheEdge(result: Pick<Layout, "nodes" | "width" | "height" | "city" | "visible">): readonly PastTheEdge[] {
   if (!result.city) return [];
-  const { width, height } = result;
+  const { width, height } = result.visible ?? result;
   const out: PastTheEdge[] = [];
   for (const node of result.nodes) {
     if (!node.id.startsWith("kind:") || Math.round(node.plane) !== 2) continue;

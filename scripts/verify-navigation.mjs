@@ -472,6 +472,22 @@ try {
       if (!panel || !box) return null;
       const bar = document.querySelector('[data-testid="app-bar"]')?.getBoundingClientRect();
       const style = getComputedStyle(panel);
+      /*
+       * THE SCENE IS PAINTED UNDER IT: the ground fills the picture's whole
+       * width (a phone's, its whole height) and the panel overlaps it, so in
+       * the gap around the panel what stands on top is the scene's own
+       * ground, not the page behind a narrowed box.
+       */
+      const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
+      const sheet = panel.getAttribute("data-graview-map-panel") === "sheet";
+      const gapPoints = sheet
+        ? [0.15, 0.4, 0.65, 0.9].flatMap((f) => [[box.left - 3, box.top + box.height * f], [box.right + 3, box.top + box.height * f], [box.left + box.width * f, box.bottom + 3]])
+        : [0.1, 0.35, 0.65, 0.9].flatMap((f) => [[box.right + 3, box.top + box.height * f], [box.left + box.width * f, box.bottom + 3], [box.left + box.width * f, box.top - 3]]);
+      const gapIsGround = gapPoints.every(([x, y]) => {
+        if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return true;
+        const top = document.elementsFromPoint(x, y).find((el) => !el.closest("[data-graview-offstage]"));
+        return top?.closest(".graview-ground") !== null && top?.closest(".graview-ground") !== undefined;
+      });
       const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
       const under = [];
       for (const el of document.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face, [data-graview-plot] .graview-plot-tile, [data-testid="overview"], [data-testid="lines-key"], .graview-zoom, [data-testid="seat-field"]')) {
@@ -492,6 +508,11 @@ try {
         shadow: style.boxShadow !== "none",
         edge: parseFloat(style.borderTopWidth) > 0,
         under,
+        groundRightGap: ground ? Math.round(innerWidth - ground.right) : null,
+        groundBottomGap: ground ? Math.round(innerHeight - ground.bottom) : null,
+        groundWidth: ground ? Math.round(ground.width) : null,
+        overlapsGround: ground ? meets(ground, box) : false,
+        gapIsGround,
       };
     });
     await floating.close();
@@ -850,7 +871,12 @@ try {
   await cam.waitForTimeout(400);
   const buttonIn = await ground();
   // Dragging the ground as far as it goes: the whole offset reaches the limit, not the pan alone.
-  const box = await cam.evaluate(() => { const b = document.querySelector(".graview-ground").getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; });
+  // The ground runs under a panel floating over it: the hand takes it where it is bare, left of the panel.
+  const box = await cam.evaluate(() => {
+    const b = document.querySelector(".graview-ground").getBoundingClientRect();
+    const panel = document.querySelector("[data-graview-map-panel=dock]")?.getBoundingClientRect();
+    return { x: b.x, y: b.y, w: (panel ? panel.left : b.right) - b.x, h: b.height };
+  });
   const dragFrom = { x: box.x + box.w - 60, y: box.y + box.h / 2 };
   await cam.mouse.move(dragFrom.x, dragFrom.y);
   await cam.mouse.down();
@@ -1271,6 +1297,12 @@ report.verdict = {
         one.shadow === true &&
         one.edge === true &&
         one.under.length === 0 &&
+        // The scene is not narrowed or shortened by it: the ground runs to the picture's edges beneath it, and the gap shows the ground.
+        one.groundRightGap <= 1 &&
+        one.groundBottomGap <= 1 &&
+        one.groundWidth >= Number(width) - 1 &&
+        one.overlapsGround === true &&
+        one.gapIsGround === true &&
         (width === "390" ? one.left >= 4 && one.kind === "sheet" : one.kind === "dock" && one.top >= (report.mapPanel[width].top ?? 0))
       );
     }),

@@ -30,6 +30,34 @@ export interface Held {
  * at most once a frame, since pointer events arrive faster than frames are
  * drawn — and handed back on release to be written into the view once.
  */
+/**
+ * WHAT A PANEL FLOATING OVER THE SCENE COVERS, in pixels. The panel says how
+ * wide it docks, or how tall its sheet stands, in `--graview-dock` and
+ * `--graview-sheet` on the box it floats in; a probe in the scene, sized by
+ * those, is how the scene reads them as numbers. The scene itself is not
+ * narrowed by it: the ground is painted under the panel, and only the city's
+ * fit and the camera's bounds are for what is left.
+ */
+export function useDock(): { readonly probe: RefObject<HTMLDivElement | null>; readonly dock: { readonly right: number; readonly bottom: number } } {
+  const probe = useRef<HTMLDivElement | null>(null);
+  const [dock, setDock] = useState({ right: 0, bottom: 0 });
+  useLayoutEffect(() => {
+    const element = probe.current;
+    if (!element) return;
+    const read = () => {
+      const box = element.getBoundingClientRect();
+      const next = { right: Math.round(box.width), bottom: Math.round(box.height) };
+      setDock((now) => (now.right === next.right && now.bottom === next.bottom ? now : next));
+    };
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const watch = new ResizeObserver(read);
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, []);
+  return { probe, dock };
+}
+
 export function useHeldDistrict() {
   const [held, setHeld] = useState<Held | null>(null);
   const placing = useRef<Held | null>(null);
