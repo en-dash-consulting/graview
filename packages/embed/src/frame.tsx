@@ -278,6 +278,7 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * exist then). Unsaid, the past is drawn under today's declaration and views.
    */
   readonly history?: HistoryHost;
+  /**
    * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171), beside
    * `resolveApp`: a relation to another app's kind (`"to":
    * ["@nick/house/house"]`) draws the linked record as

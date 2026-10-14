@@ -465,6 +465,7 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * the past is drawn under this declaration and with today's views.
    */
   readonly history?: HistoryHost | undefined;
+  /**
    * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171): a relation to
    * another app's kind (`"to": ["@nick/house/house"]`) draws the linked
    * record as `linkedRecords.resolve(ref, viewer)` answers it — its card,
