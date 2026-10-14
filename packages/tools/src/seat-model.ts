@@ -67,9 +67,11 @@ export async function answerWithModel<S extends AnySchema>(
             ? field.time
               ? "YYYY-MM-DDTHH:MM"
               : "YYYY-MM-DD"
-            : field.control === "text" || field.control === "number" || field.control === "boolean"
-              ? field.control
-              : "value";
+            : field.control === "repeat"
+              ? `{ every: "day" | "week" | "month" | "year", interval?, on?: weekdays or days of the month, until?: YYYY-MM-DD, except?: days } | null, how ${field.of ?? "the date"} repeats`
+              : field.control === "text" || field.control === "number" || field.control === "boolean"
+                ? field.control
+                : "value";
     return `${field.name}${field.optional ? "?" : ""}: ${type}`;
   };
   const mutations = store

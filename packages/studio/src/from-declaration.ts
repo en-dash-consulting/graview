@@ -1,4 +1,4 @@
-import { bindsOf, nodeRefArgs, placeSlug, requiredRolesOf, type LensDeclaration } from "@graview/core";
+import { bindsOf, isRepeatField, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf, type LensDeclaration } from "@graview/core";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
 import { isMarkdownField } from "@graview/core/words";
@@ -70,7 +70,7 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
     case "string": {
       // A link, an address or a date and time is a string zod checks; the document's reading says which.
       const said = fieldSpecOf(type)?.type;
-      return { type: said === "url" || said === "email" || said === "datetime" || said === "text" ? said : "string", required };
+      return { type: said === "url" || said === "email" || said === "date" || said === "datetime" || said === "text" ? said : "string", required };
     }
     default:
       return { type: "string", required };
@@ -103,7 +103,11 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(def.people ? { people: true } : {}),
       ...(def.archives === false ? { neverArchived: true } : {}),
     });
-    for (const [name, type] of Object.entries(shapeOf(def.fields))) {
+    const fields = shapeOf(def.fields);
+    for (const [name, type] of Object.entries(fields)) {
+      // How a date repeats is the date's `repeats`, not a field of its own.
+      const repeated = isRepeatField(type) ? repeatedBy(name) : undefined;
+      if (repeated && fields[repeated]) continue;
       const id = `field:${def.kind}.${name}`;
       const read = fieldTypeOf(type);
       const said = document?.kinds[def.kind]?.fields[name]?.type;
@@ -115,6 +119,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
         type: typed.type,
         required: typed.required,
         ...(typed.options ? { options: [...typed.options] } : {}),
+        ...(isRepeatField(fields[repeatKey(name)]) ? { repeats: true } : {}),
         ...(def.display?.labels?.[name] ? { description: def.display.labels[name] } : {}),
         // Written in Markdown (FR-180): the declaration's mark, or the document's format.
         ...(typed.type === "text" && (isMarkdownField(type) || document?.kinds[def.kind]?.fields[name]?.format === "markdown") ? { markdown: true } : {}),
@@ -249,6 +254,8 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       label: sight.describe ?? `${who} may see ${sight.own || sight.via ? "their own " : ""}${sight.kinds.join(", ")}`,
       own: sight.own ?? false,
       ...(sight.via ? { via: sight.via } : {}),
+      ...(sight.hide?.length ? { hide: [...sight.hide] } : {}),
+      ...(sight.fields ? { fields: [...sight.fields] } : {}),
       everyone: sight.roles === "*",
       ...(sight.describe ? { describe: sight.describe } : {}),
     });

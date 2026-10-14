@@ -1,6 +1,7 @@
 import { isArchived, type Archived } from "../../graph/archived.js";
 import { withArticle } from "../../schema/define-node.js";
 import { isoToday } from "../../days.js";
+import { dateOn } from "../../repeat.js";
 import type { AnyGraphNode, GraphReader } from "../../graph/types.js";
 import type { Expr } from "./parse.js";
 
@@ -119,7 +120,8 @@ export function evaluateExpr(expr: Expr, ctx: EvalContext): Value {
     // A record's OWN values only: `constructor` or `__proto__` is not a field of anything, and reading one would hand a template a function.
     const own = Object.hasOwn(node, name);
     if (shape?.fields.has(name) || own) {
-      const v = own ? node[name] : undefined;
+      // A date that repeats reads as its next occurrence on the day judged (`repeat.ts`).
+      const v = own ? dateOn(node, name, today) : undefined;
       return v === undefined ? null : (v as Value);
     }
     const card = shape?.edges.get(name);

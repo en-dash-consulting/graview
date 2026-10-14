@@ -101,6 +101,12 @@ export interface ReadableField {
    */
   readonly app?: string;
   /**
+   * A DATE THAT MAY REPEAT (`repeat.ts`): its value says how and the next
+   * one ("Every Tuesday, next Oct 27"), and a record draws, beside it, the
+   * control that changes how it repeats (`<field>Repeat`).
+   */
+  readonly repeats?: true;
+  /**
    * WHERE A PHONE OR A PLACE TAKES ITS READER: a `tel:` link, or the
    * reader's maps app. A face draws the value as a link to it.
    */

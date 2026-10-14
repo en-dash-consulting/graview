@@ -83,12 +83,19 @@ export const FieldSpec = z
     step: z.optional(z.number()),
     /** The name this field had in the previous version: its values move instead of being dropped. */
     renamedFrom: z.optional(z.string().check(z.regex(FIELD_NAME))),
+    /**
+     * A date that repeats (`repeat.ts`): a record may keep, beside the date
+     * (its first occurrence), how it repeats under the date's name and
+     * `Repeat` — `"startsAtRepeat": { "every": "week", "on": ["tue"] }`.
+     */
+    repeats: z.optional(z.boolean()),
   })
   .check(
     z.superRefine((f, ctx) => {
       if (f.type === "enum" && !f.options) ctx.addIssue({ code: "custom", message: 'an enum field lists its "options"', path: ["options"] });
       if (f.type !== "enum" && f.options) ctx.addIssue({ code: "custom", message: '"options" belongs only on an enum field', path: ["options"] });
       if (f.type !== "list" && f.of) ctx.addIssue({ code: "custom", message: '"of" belongs only on a list field', path: ["of"] });
+      if (f.repeats && f.type !== "date" && f.type !== "datetime") ctx.addIssue({ code: "custom", message: '"repeats" belongs only on a date or datetime field', path: ["repeats"] });
     }),
   );
 export type FieldSpec = z.infer<typeof FieldSpec>;
@@ -235,6 +242,7 @@ export const GrantSpec = z.strictObject({
  * by nobody but the system (a host that gives its owners everything serves
  * them as the system, or names them in a sight).
  */
+const fieldNames = z.optional(some(name("field"), 1));
 export const SightSpec = z.strictObject({
   roles: z.union([some(name("role"), 1), z.literal("*")]),
   kinds: some(name("kind"), 1),
@@ -242,6 +250,10 @@ export const SightSpec = z.strictObject({
   own: z.optional(z.boolean()),
   /** Only the records this relation joins to the principal's own record of the people kind. */
   via: z.optional(edgeName),
+  /** Only these fields of the records it shows (Roadmap f-field-sight); sights add up. */
+  fields: fieldNames,
+  /** Every field but these of the records it shows: kept from the roles, on every surface, and not theirs to write. */
+  hide: fieldNames,
 });
 export type SightSpec = z.infer<typeof SightSpec>;
 

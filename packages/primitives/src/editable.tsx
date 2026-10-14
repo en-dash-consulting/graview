@@ -9,6 +9,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from 
 import { TextBody } from "./text-body.js";
 import { Files } from "./files-door.js";
 import { AppLink } from "./app-link-door.js";
+import { RepeatEditor } from "./repeat-picker-door.js";
 
 /**
  * One field's value, changeable where it is shown when something can change
@@ -390,6 +391,8 @@ export function Fields<S extends AnySchema>({
                     ) : (
                       <EditableValue<S> nodeId={node.id} field={field.key} value={field.value} stored={field.stored} />
                     )}
+                    {/* How a date repeats, changed beside it. */}
+                    {field.repeats ? <RepeatEditor nodeId={node.id} field={field.key} start={node[field.key]} value={node[`${field.key}Repeat`]} label={`${labels[field.key] ?? field.label} repeats`} /> : null}
                   </dd>
                 </div>
               ),

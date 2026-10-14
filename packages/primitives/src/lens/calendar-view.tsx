@@ -22,7 +22,7 @@ import {
 } from "./calendar-options.js";
 import { actThatMoves } from "./calendar-placing.js";
 import { withNaturalTime } from "./natural-time.js";
-import { entriesOn, placeOnCalendar } from "./calendar-placing.js";
+import { entriesOn, placeEachOnCalendar, placeOnCalendar } from "./calendar-placing.js";
 import { type CalendarCell, finerThan, spanOf } from "./calendar-spans.js";
 
 
@@ -165,9 +165,14 @@ function CalendarView<S extends AnySchema>({
   const emphasisOf = (id: string): Emphasis =>
     highlit.size === 0 ? "plain" : highlit.has(id) ? "lit" : "dimmed";
   const broken = new Set(flagged);
-  const entries = (nodes ?? [])
-    .map((node) => placeOnCalendar<S>(node, options.bindings, schema))
-    .filter((entry): entry is PlacedEntry => entry !== null);
+  const span = spanOf(range, at, { weekStartsOn, ...(options.horizon ? { horizon: options.horizon } : {}) });
+  /*
+   * A DATE THAT REPEATS is drawn at every occurrence the grid shows, each
+   * marked as a repeat; a glance at the calendar counts it once, at its next.
+   */
+  const brief = fidelity === "glyph" || fidelity === "summary";
+  const window = brief ? { next: options.today } : { from: span.cells[0]?.from ?? at, to: span.cells[span.cells.length - 1]?.to ?? at };
+  const entries = (nodes ?? []).flatMap((node) => placeEachOnCalendar<S>(node, options.bindings, schema, window));
   const hue = options.hueOf ?? ((entry: PlacedEntry) => hueFor(entry.kind));
 
   if (fidelity === "glyph") {
@@ -195,7 +200,6 @@ function CalendarView<S extends AnySchema>({
   }
 
   const page = mode === "fullscreen";
-  const span = spanOf(range, at, { weekStartsOn, ...(options.horizon ? { horizon: options.horizon } : {}) });
 
   /*
    * DRAGGING AN ENTRY TO A DAY IS AN ACT, not a special case.

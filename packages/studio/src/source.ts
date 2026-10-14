@@ -177,12 +177,13 @@ function carried(
 }
 
 /** A kind's fields, as the graph holds them. */
-export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined; markdown: boolean }[] {
+export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined; markdown: boolean; repeats: boolean }[] {
   return read.in(kind.id, "of").map((field) => ({
     name: label(field),
     type: (str(field, "type") ?? "string") as FieldType,
     required: bool(field, "required"),
     options: list(field, "options"),
+    repeats: bool(field, "repeats"),
     // Written in Markdown (FR-180).
     markdown: str(field, "type") === "text" && bool(field, "markdown"),
   }));
@@ -231,6 +232,12 @@ export function kindLines(
   if (str(kind, "description")) lines.push(`  description: ${q(str(kind, "description")!)},`);
   lines.push(`  fields: z.object({`);
   for (const field of fields) lines.push(`    ${/^[a-z_$][\w$]*$/i.test(field.name) ? field.name : q(field.name)}: ${fieldSource(field)},`);
+  // A date that repeats keeps how beside it: the framework's own field, `<date>Repeat`.
+  for (const field of fields) {
+    if (!field.repeats || (field.type !== "date" && field.type !== "datetime")) continue;
+    uses.repeatField = true;
+    lines.push(`    ${field.name}Repeat: repeatField(),`);
+  }
   lines.push(`  }),`);
   if (edges.length > 0) {
     lines.push(`  edges: {`);
@@ -599,6 +606,8 @@ function sightLines(read: Read): string[] {
         `kinds: [${kinds.map(q).join(", ")}]`,
         ...(bool(sight, "own") ? ["own: true"] : []),
         ...(str(sight, "via") ? [`via: ${q(str(sight, "via")!)}`] : []),
+        ...(list(sight, "fields") ? [`fields: [${list(sight, "fields")!.map(q).join(", ")}]`] : []),
+        ...(list(sight, "hide")?.length ? [`hide: [${list(sight, "hide")!.map(q).join(", ")}]`] : []),
         ...(str(sight, "describe") ? [`describe: ${q(str(sight, "describe")!)}`] : []),
       ];
       return `    { ${parts.join(", ")} },`;

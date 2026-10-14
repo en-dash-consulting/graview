@@ -3,6 +3,8 @@ import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.j
 import { valueWords } from "./value-words.js";
 import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
+import { repeatingDateAsRead } from "../repeat-words.js";
+import { isRepeatField } from "../repeat.js";
 import { isMarkdownField } from "./markdown.js";
 import { excerptOf } from "../excerpt-of.js";
 import { fieldSays, typedHref, typedWords } from "./field-words.js";
@@ -136,6 +138,7 @@ export function readableFields(
     .filter((stem) => stem.length > 12);
 
   const fields: ReadableField[] = [];
+  const shapeOf = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape;
   /*
    * IN THE ORDER THE DECLARATION SAYS, NOT THE ORDER THE RECORD WAS WRITTEN
    * IN (FR-148). This read `Object.entries(node)`, so a record created with
@@ -182,6 +185,8 @@ export function readableFields(
       typeof value === "object" &&
       (!Array.isArray(value) || value.some((one) => typeof one === "object" && one !== null));
     if (nested && format === undefined) continue;
+    // A date that repeats says how, and the next one: "Every Tuesday, next Oct 27".
+    const repeated = typeof value === "string" && !format ? repeatingDateAsRead(value, node[`${key}Repeat`], { locale: options.locale }) : undefined;
     const stored = files[0] ? files.map((file) => (file.caption ? `${file.name} — ${file.caption}` : file.name)).join(", ") : Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
     // A phone, a place or a duration, said as one: "(555) 123-4567", "1 h 30 min".
     const typed = format ? undefined : fieldSays(definition, key);
@@ -193,6 +198,8 @@ export function readableFields(
         ? // Nobody says "false". A boolean is a state, and the words for a
           // state are words.
           stored
+        : typeof value === "string" && repeated !== undefined
+          ? repeated
         : /*
            * A DAY AS A PERSON READS IT ("Aug 28, 2026"), on a glance and in a
            * record's facts alike; the edit control holds it as it is written
@@ -220,7 +227,7 @@ export function readableFields(
     const alone =
       // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, stored, alone, long, ...(markdown ? { markdown: true as const } : {}), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(href ? { href } : {}) });
+    fields.push({ key, label, value: text, stored, alone, long, ...(markdown ? { markdown: true as const } : {}), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(href ? { href } : {}), ...(isRepeatField(shapeOf?.[`${key}Repeat`]) ? { repeats: true as const } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;

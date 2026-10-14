@@ -61,6 +61,13 @@ const SCHEMES = QUICK ? ["light"] : ["light", "dark"];
  */
 const MAY_SEE_STAFF = ["chair", "reviewer", "volunteer", "agent"];
 const seesStaff = (seat) => MAY_SEE_STAFF.includes(ALL_SEATS.find((one) => one.id === seat)?.who);
+/*
+ * Where a speaker comes from is the program's own people's to see too, by a
+ * sight that hides a field (Roadmap f-field-sight): the visitor reads Wei
+ * Zhang and not "Canada" — on the page, in a search, in the city — and the
+ * program's own people read both. The same seats as the staff.
+ */
+const seesCountry = seesStaff;
 
 /*
  * Records chosen for their shape, by the ids the seed generator mints
@@ -506,6 +513,16 @@ async function pagesWalk(browser, { width, scheme, seat, who }) {
   await visit("a talk with a long, shared-prefix title", pagePath("talks", RECORDS.longTalk), '[data-testid="record-fields"]');
   await visit("one of ten Opening Remarks", pagePath("talks", RECORDS.openingRemarks), '[data-testid="record-fields"]');
   await visit("one of three Wei Zhangs", pagePath("speakers", RECORDS.weiZhang), '[data-testid="record-fields"]');
+  await reach(page, where, seesCountry(seat) ? "where a speaker comes from shown to a seat that may see it" : "where a speaker comes from kept from a seat that may not see it", async () => {
+    await open(page, pagePath("speakers", RECORDS.weiZhang), { scheme, seat });
+    await page.waitForSelector('[data-testid="record-fields"]', { timeout: 30_000 });
+    const page_ = await page.evaluate(() => document.body.innerText);
+    await open(page, "/pages/search?q=Canada", { scheme, seat });
+    await page.waitForTimeout(500);
+    const found = await page.locator('[data-testid="search-hit"]').count();
+    const shown = page_.includes("Canada");
+    return { reached: seesCountry(seat) ? shown && found > 0 : !shown && found === 0, detail: { shown, found } };
+  });
   await visit("a speaker whose id is in Han script", pagePath("speakers", RECORDS.nonLatin), '[data-testid="record-fields"]');
   await visit("a room with no label field", pagePath("rooms", RECORDS.room), '[data-testid="record-fields"]');
   await visit("a session, held in a room and chaired by one", pagePath("sessions", RECORDS.session), '[data-testid="record-fields"]');
@@ -630,6 +647,10 @@ report.checks = {
   whatASeatMayNotSeeIsKeptFromIt:
     !SEATS.some((seat) => !seesStaff(seat.id)) ||
     (reached("a staff member kept from a seat that may not see them") && reached("the staff kept from a seat that may not see them")),
+  // A field a seat may not see is kept from it, on the page and in a search; a seat that may see it reads it (Roadmap f-field-sight).
+  aFieldASeatMayNotSeeIsKeptFromIt:
+    reached("where a speaker comes from shown to a seat that may see it") &&
+    (!SEATS.some((seat) => !seesCountry(seat.id)) || reached("where a speaker comes from kept from a seat that may not see it")),
   // Find and search answer a name ten records share, and one in another script.
   findingReachesAwkwardNames:
     reached("the Find box asked for a name ten records share") &&

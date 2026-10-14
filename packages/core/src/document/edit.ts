@@ -91,6 +91,7 @@ export const EDIT_OPS = [
   "set-range",
   "set-required",
   "set-default",
+  "set-repeats",
   "remove-field",
   "add-relation",
   "rename-relation",
@@ -147,6 +148,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
   "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
   "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
+  "set-repeats": z.object({ op: z.literal("set-repeats"), kind: kindName, field: fieldName, repeats: z.boolean() }).strict(),
   "remove-field": z.object({ op: z.literal("remove-field"), kind: kindName, field: fieldName }).strict(),
   "add-relation": z.object({ op: z.literal("add-relation"), kind: kindName, relation: edgeName }).passthrough(),
   "rename-relation": z.object({ op: z.literal("rename-relation"), kind: kindName, relation: edgeName, to: edgeName }).strict(),
@@ -723,6 +725,16 @@ class Editor {
         }
         return;
       }
+      case "set-repeats": {
+        // A date that repeats keeps how it does beside it, as `<field>Repeat` (`repeat.ts`).
+        const f = this.field(i, e.kind, e.field);
+        if (!f) return;
+        if (e.repeats && f.type !== "date" && f.type !== "datetime") return this.fail(i, "repeats", `${e.kind}'s ${e.field} is ${f.type === "enum" ? "a choice" : `a ${f.type}`}, and only a date or a date and time can repeat`);
+        if (e.repeats) f.repeats = true;
+        else delete f.repeats;
+        this.said.push(e.repeats ? `${e.kind}'s ${e.field} may repeat: weekly, monthly, on chosen days, until a day.` : `${e.kind}'s ${e.field} no longer repeats.`);
+        return;
+      }
       case "remove-field":
         return this.removeField(i, e.kind, e.field);
       case "add-relation":
@@ -1229,6 +1241,14 @@ class Editor {
     for (const [n, kind] of (Array.isArray(part.kinds) ? part.kinds : []).entries()) {
       if (!this.doc.kinds[kind]) return this.failAs(sight ? "sight-kind" : "edit", i, `kinds.${n}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
     }
+    // A field a sight shows or hides is one of the kinds it shows (Roadmap f-field-sight).
+    for (const key of sight ? (["fields", "hide"] as const) : []) {
+      for (const [n, field] of ((part[key] as string[] | undefined) ?? []).entries()) {
+        const kinds = part.kinds as string[];
+        if (kinds.some((kind) => this.doc.kinds[kind]?.fields[field])) continue;
+        return this.failAs("sight-field", i, `${key}.${n}`, `"${field}" is not a field of ${kinds.join(" or ")}`, `one of ${[...new Set(kinds.flatMap((kind) => Object.keys(this.doc.kinds[kind]?.fields ?? {})))].join(", ")}`);
+      }
+    }
     if (!sight && part.mutations !== "*") {
       for (const [n, act] of part.mutations.entries()) {
         const derived = derivedActOf(act);
@@ -1565,6 +1585,8 @@ class Editor {
     else if (e.type !== "number" && e.type !== "integer" && e.type !== "duration") delete f.format;
     // A range is a number's (FR-114): a field that is no longer one lets it go.
     if (e.type !== "number" && e.type !== "integer" && e.type !== "duration") for (const key of ["min", "max", "step"]) delete f[key];
+    // Only a date repeats: a field that is no longer one lets its repeat go.
+    if (e.type !== "date" && e.type !== "datetime") delete f.repeats;
     if (f.default !== undefined && coerce(f.default, was, f) === undefined) delete f.default;
     else if (f.default !== undefined) f.default = coerce(f.default, was, f);
     if (was === e.type && e.type === "text") this.said.push(`${e.kind}'s ${e.field} ${e.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);

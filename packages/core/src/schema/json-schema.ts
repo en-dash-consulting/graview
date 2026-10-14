@@ -3,6 +3,7 @@ import * as z from "./zod.js";
 import { argumentsTaken, takesAnId } from "../mutations/define-mutation.js";
 import { nodeRefArgs } from "../mutations/node-ref.js";
 import { isAppLinkField } from "./app-link.js";
+import { EVERY, isRepeatField, WEEKDAYS } from "../repeat.js";
 import { isMarkdownField } from "./markdown.js";
 import { typedFieldOf } from "./typed-field-of.js";
 import type { AnySchema } from "./schema.js";
@@ -43,6 +44,11 @@ type ZodStringDef = { readonly type?: string; readonly format?: string; readonly
 export function formatsByName(ctx: { readonly zodSchema: unknown; readonly jsonSchema: JsonSchema }): void {
   // Another app's address (FR-171), beside its pattern: an agent sets an address, not a name.
   if (isAppLinkField(ctx.zodSchema)) ctx.jsonSchema["x-graview-app-link"] = true;
+  // How a date repeats, kept beside it as `<date>Repeat`: written out where a declaration checks it by a function of its own.
+  if (isRepeatField(ctx.zodSchema)) {
+    ctx.jsonSchema["x-graview-repeat"] = true;
+    if (!ctx.jsonSchema["type"] && !ctx.jsonSchema["anyOf"] && !ctx.jsonSchema["oneOf"]) Object.assign(ctx.jsonSchema, repeatJson());
+  }
   // Prose in Markdown (FR-180): a caller writes Markdown, and it is kept as written.
   if (isMarkdownField(ctx.zodSchema)) {
     ctx.jsonSchema["contentMediaType"] = "text/markdown";
@@ -146,6 +152,27 @@ export function mutationToolSchema(mutation: {
     description: mutation.description ?? mutation.title ?? mutation.name,
     inputSchema: base,
     nodeRefs: refs,
+  };
+}
+
+/** How a date repeats, as JSON Schema: what `repeatSchema` checks, said for an agent. */
+function repeatJson(): JsonSchema {
+  const day = { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" };
+  const int = (minimum: number, maximum: number) => ({ type: "integer", minimum, maximum });
+  return {
+    type: "object",
+    description: 'How the date beside it repeats; the date is the first occurrence. "on" is weekdays for "week", days of the month (-1 the last) for "month".',
+    properties: {
+      every: { type: "string", enum: [...EVERY] },
+      interval: int(1, 99),
+      on: { type: "array", minItems: 1, maxItems: 31, items: { anyOf: [{ type: "string", enum: [...WEEKDAYS] }, int(-1, 31)] } },
+      until: day,
+      count: int(1, 1000),
+      except: { type: "array", maxItems: 500, items: day },
+      continues: { type: "string", maxLength: 200 },
+    },
+    required: ["every"],
+    additionalProperties: false,
   };
 }
 

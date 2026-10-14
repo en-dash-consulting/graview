@@ -7,10 +7,10 @@ import {
   type Store,
 } from "@graview/core";
 import { argumentWords, failureWords, tellApart } from "@graview/core/words";
-import { formFields, formArgs, type FormField } from "@graview/core/forms";
+import { formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
-import { Files } from "@graview/primitives/pages";
+import { Files, RepeatPicker } from "@graview/primitives/pages";
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 /**
@@ -165,10 +165,13 @@ function Control<S extends AnySchema>({
   prefilled,
   open,
   words = plainWords,
+  values,
 }: {
   store: Store<S>;
   spec: FormField;
   value: unknown;
+  /** The whole form's answers, where a control reads a sibling's: a repeat, the date it repeats. */
+  values?: Readonly<Record<string, unknown>>;
   onChange: (next: unknown) => void;
   prefilled: Readonly<Record<string, unknown>>;
   open: readonly OpenParameter[];
@@ -438,6 +441,9 @@ function Control<S extends AnySchema>({
         </fieldset>
       );
     }
+    case "repeat":
+      // How a date repeats, asked for with the picker beside it: none, every day, week, month or year, on which days, until when.
+      return <RepeatPicker value={value} onChange={onChange} start={spec.of ? values?.[spec.of] : undefined} label={`${spec.of ? words(spec.of).label : named} repeats`} name={spec.name} />;
     case "opaque":
       // Named rather than silently dropped: an argument the form cannot
       // honestly render is a missing control to build, not a hidden field.
@@ -511,7 +517,11 @@ export function DerivedForm<S extends AnySchema>({
 }: DerivedFormProps<S>) {
   const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...initial }));
   const [failed, setFailed] = useState<string | null>(null);
-  const fields = formFields(mutation.input).filter((spec) => only === undefined || only.includes(spec.name));
+  // A field the seat's sight keeps from it is not asked for: the store would refuse it (Roadmap f-field-sight).
+  const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
+  const subject = mutation.subject && prefilled[mutation.subject.arg];
+  const kept = seat ? keptArguments(store, seat, mutation, typeof subject === "string" ? subject : undefined) : undefined;
+  const fields = formFields(mutation.input).filter((spec) => (only === undefined || only.includes(spec.name)) && !kept?.has(spec.name));
   const words: Words = (name) => argumentWords(store.schema, mutation, name);
 
   return (
@@ -538,6 +548,7 @@ export function DerivedForm<S extends AnySchema>({
           store={store}
           spec={spec}
           value={values[spec.name]}
+          values={values}
           onChange={(next) => setValues((current) => ({ ...current, [spec.name]: next }))}
           prefilled={prefilled}
           open={open}

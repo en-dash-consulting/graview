@@ -1,3 +1,5 @@
+// A host that serves seats judges a sight that hides a field (Roadmap f-field-sight): loaded here, so every store this server opens can.
+import "@graview/core/field-sight";
 export { createFileAdapter } from "./file-adapter.js";
 export type { FileAdapter } from "./file-adapter.js";
 export {

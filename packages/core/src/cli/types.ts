@@ -90,12 +90,15 @@ export function documentTypes(document: GraviewDocument, from = "the document"):
       ` * Do not edit: change the document and run it again. Read a store through\n` +
       ` * them with \`typedReader<Types>(store)\` from "@graview/core/typed".\n */\n` +
       (Object.values(document.kinds).some((spec) => Object.values(spec.fields).some((f) => /^(image|file)$/.test(f.of ?? f.type))) ? `import type { FileValue } from "@graview/core";\n` : "") +
+      (Object.values(document.kinds).some((spec) => Object.values(spec.fields).some((f) => f.repeats)) ? `import type { Repeat } from "@graview/core";\n` : "") +
       `import type { TypedReader } from "@graview/core/typed";\n`,
   );
   for (const [kind, spec] of Object.entries(document.kinds)) {
     let body = `${comment(spec.description, "")}export interface ${names.get(kind)} {\n  readonly id: string;\n  readonly kind: ${JSON.stringify(kind)};\n`;
     for (const [field, f] of Object.entries(spec.fields)) {
       body += `${comment(fieldNote(f), "  ")}  readonly ${key(field)}${f.required ? "" : "?"}: ${fieldType(f)};\n`;
+      // How a date repeats, kept beside it: its first occurrence is the date itself.
+      if (f.repeats) body += `  /** How ${key(field)} repeats; ${key(field)} is the first occurrence. */\n  readonly ${key(`${field}Repeat`)}?: Repeat | null;\n`;
     }
     out.push(`${body}}\n`);
   }

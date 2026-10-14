@@ -12,6 +12,8 @@ import {
   nodeRefArgs,
   phoneField,
   placeField,
+  repeatField,
+  repeatKey,
   type AnyMutationDefinition,
   type AnySchema,
   type EdgeDeclaration,
@@ -275,6 +277,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       type: (str(field, "type") ?? "string") as FieldType,
       required: bool(field, "required"),
       options: list(field, "options"),
+      repeats: bool(field, "repeats"),
       markdown: bool(field, "markdown"),
     }));
 
@@ -298,6 +301,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
         (was.options ?? []).join("|") === (field.options ?? []).join("|") &&
         isMarkdownField(own) === field.markdown;
       shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options, field.markdown);
+      // A date that repeats keeps how beside it, as the framework's own field.
+      if (field.repeats && (field.type === "date" || field.type === "datetime")) shape[repeatKey(field.name)] = repeatField();
     }
     const edges: Record<string, EdgeDeclaration> = {};
     for (const edge of read.in(kind.id, "from-kind")) {
@@ -432,6 +437,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       kinds: read.out(sight.id, "shows").map((kind) => kindName.get(kind.id) ?? name(kind)),
       ...(bool(sight, "own") ? { own: true } : {}),
       ...(str(sight, "via") ? { via: str(sight, "via")! } : {}),
+      ...(list(sight, "fields") ? { fields: list(sight, "fields")! } : {}),
+      ...(list(sight, "hide")?.length ? { hide: list(sight, "hide")! } : {}),
       ...(str(sight, "describe") ? { describe: str(sight, "describe")! } : {}),
     }))
     .filter((sight) => sight.kinds.length > 0);

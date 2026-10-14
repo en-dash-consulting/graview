@@ -147,6 +147,8 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       } else edits.push({ op: "set-options", ...at, ...(add.length > 0 ? { add } : {}), ...(remove.length > 0 ? { remove } : {}) });
     }
     if ((field["required"] === true) !== (old["required"] === true)) edits.push({ op: "set-required", ...at, required: field["required"] === true });
+    // A date that repeats, or no longer does; a retype away from a date already let it go.
+    if ((field["repeats"] === true) !== (old["repeats"] === true) && (field["repeats"] === true || type === str(old, "type"))) edits.push({ op: "set-repeats", ...at, repeats: field["repeats"] === true });
     if (str(field, "description") !== str(old, "description")) edits.push({ op: "set-label", ...at, label: str(field, "description") ?? null });
   }
 
@@ -158,6 +160,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       type,
       ...(field["required"] === true ? { required: true } : {}),
       ...(type === "enum" && options ? { options } : {}),
+      ...(field["repeats"] === true ? { repeats: true } : {}),
       ...(str(field, "description") ? { label: str(field, "description") } : {}),
       ...(type === "text" && field["markdown"] === true ? { format: "markdown" } : {}),
     };
@@ -440,7 +443,15 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     ...(g["ownEnd"] === true ? { ownEnd: true } : {}),
   });
   // A sight's own words are the framework's alone: a document's sight has none to keep.
-  const sightOf = (read: Read, sight: Node) => ({ roles: sight["everyone"] === true ? "*" : named(read, sight.id, "seen-by"), kinds: named(read, sight.id, "shows"), ...(sight["own"] === true ? { own: true } : {}), ...(str(sight, "via") ? { via: str(sight, "via") } : {}) });
+  const fieldsOf = (sight: Node, key: string) => (Array.isArray(sight[key]) && (sight[key] as unknown[]).length > 0 ? { [key]: (sight[key] as unknown[]).map(String) } : {});
+  const sightOf = (read: Read, sight: Node) => ({
+    roles: sight["everyone"] === true ? "*" : named(read, sight.id, "seen-by"),
+    kinds: named(read, sight.id, "shows"),
+    ...(sight["own"] === true ? { own: true } : {}),
+    ...(str(sight, "via") ? { via: str(sight, "via") } : {}),
+    ...fieldsOf(sight, "fields"),
+    ...fieldsOf(sight, "hide"),
+  });
   const policyOf = (read: Read) => ({
     grants: read.ofKind("grant").map((g) => grantOf(read, g)).filter((grant) => grant.mutations === "*" || grant.mutations.length > 0),
     sees: read.ofKind("sight").map((sight) => sightOf(read, sight)).filter((sight) => sight.kinds.length > 0),

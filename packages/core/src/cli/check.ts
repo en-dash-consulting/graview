@@ -1,5 +1,6 @@
 import type { GraviewApp } from "../app.js";
 import { deriveArchiveMutations, deriveEditMutations, deriveRemoveMutations } from "../mutations/derive-edits.js";
+import { deriveRepeatMutations } from "../mutations/derive-repeats.js";
 import type { AnySchema } from "../schema/schema.js";
 
 /**
@@ -42,6 +43,7 @@ import {
   checkHiddenReads,
   checkFactRules,
   checkClockRules,
+  checkFieldSight,
 } from "./check/index.js";
 import type { CheckContext, Finding } from "./check/context.js";
 
@@ -77,7 +79,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   const derivedEdits = deriveEditMutations(app.schema, declaredMutations);
   const derivedRemoves = deriveRemoveMutations(app.schema, declaredMutations);
   // Declared and derived: a grant may name `edit-<kind>`, `remove-<kind>`, `archive-<kind>`, `unarchive-<kind>` or `merge-<kind>`, and a repair may too.
-  const mutations = new Map([...declaredMutations, ...derivedEdits, ...derivedRemoves, ...deriveArchiveMutations(app.schema, declaredMutations)].map((m) => [m.name, m]));
+  const mutations = new Map([...declaredMutations, ...derivedEdits, ...derivedRemoves, ...deriveArchiveMutations(app.schema, declaredMutations), ...deriveRepeatMutations(app.schema, declaredMutations)].map((m) => [m.name, m]));
   const invariants = new Map((app.invariants ?? []).map((i) => [i.name, i]));
 
   const add = (f: Finding) => findings.push(f);
@@ -100,6 +102,7 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkEditableFields(ctx);
   checkPolicy(ctx);
   checkPeople(ctx);
+  checkFieldSight(ctx);
   checkPalette(ctx);
   checkLensBindings(ctx);
   checkDeclaredLenses(ctx);

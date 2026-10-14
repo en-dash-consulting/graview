@@ -13,3 +13,4 @@ export { formArgs, formComplete, formField, formFields } from "./mutations/form.
 export type { FormField, ScalarField } from "./mutations/form.js";
 export { undecidableArguments } from "./mutations/decidable.js";
 export type { UndecidableArgument } from "./mutations/decidable.js";
+export { keptArguments } from "./mutations/kept-arguments.js";

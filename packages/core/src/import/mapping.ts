@@ -80,7 +80,13 @@ export function fieldSpecFor(definition: AnyNodeDefinition, field: string): { re
 }
 
 /** Reads a mapping against the kind's declaration; a target it has not got is an `ImportMappingError`. */
-export function readMapping(schema: AnySchema, kind: string, mapping: ImportMapping): readonly ImportColumn[] {
+export function readMapping(
+  schema: AnySchema,
+  kind: string,
+  mapping: ImportMapping,
+  /** The fields the importer's sight keeps from it (Roadmap f-field-sight): to the importer, fields the kind does not have. */
+  kept?: (field: string) => boolean,
+): readonly ImportColumn[] {
   const definition = schema.tryDefinition(kind);
   if (!definition) throw new ImportMappingError([`This app has no kind called “${kind}”.`]);
   const noun = nounOf(definition, kind);
@@ -94,7 +100,7 @@ export function readMapping(schema: AnySchema, kind: string, mapping: ImportMapp
     const wantsField = typeof target === "string" || "field" in target;
     const direction = typeof target === "object" && target !== null && "relation" in target ? target.direction : undefined;
     if (wantsField) {
-      const field = fieldSpecFor(definition, name);
+      const field = kept?.(name) ? undefined : fieldSpecFor(definition, name);
       if (field) {
         columns.push({ column, as: "field", field: name, ...field });
         continue;

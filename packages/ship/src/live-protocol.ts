@@ -27,7 +27,10 @@ import {
   type Store,
   type WireRefusal,
   type Lineage,
+  type SeatLens,
 } from "@graview/core";
+// What a seat is served keeps the fields its sight keeps (Roadmap f-field-sight): the protocol judges them.
+import "@graview/core/field-sight";
 import { argumentWords } from "@graview/core/words";
 import { bytesOf, conflictSentence, LIVE_WIRE, type Limit, type LimitAnswer, type LimitAsked, type LiveClientMessage, type LiveServerMessage } from "./live.js";
 
@@ -784,7 +787,7 @@ export function wireOf<S extends AnySchema>(store: Store<S>, withheldKey?: strin
       const lens = sighted(author) ? seatLens(store, author) : undefined;
       // A record the seat is not served is not there to have moved: the call itself is refused for naming it.
       const claimed = (base as FieldRevision[]).filter(
-        (entry) => entry && typeof entry.node === "string" && typeof entry.field === "string" && typeof entry.rev === "number" && (!lens || lens.shows(entry.node)),
+        (entry) => entry && typeof entry.node === "string" && typeof entry.field === "string" && typeof entry.rev === "number" && (!lens || (lens.shows(entry.node) && !keptField(lens, entry.node, entry.field))),
       );
       const revs = current();
       const stale = revs.stale(claimed);
@@ -1412,4 +1415,10 @@ export function liveProtocol<S extends AnySchema>(options: LiveProtocolOptions<S
       for (const peer of peers) if (peer.cursor !== undefined) sayText(peer, text);
     },
   };
+}
+
+/** Whether a field of a record is one the seat's sight keeps from it (Roadmap f-field-sight): when it was last written is not the seat's to learn either. */
+function keptField(lens: SeatLens, id: string, field: string): boolean {
+  const kind = lens.kindOf(id);
+  return kind !== undefined && lens.kept?.({ id, kind })?.(field) === true;
 }

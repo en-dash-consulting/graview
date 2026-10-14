@@ -29,6 +29,13 @@ export const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** A moment as the record holds it: a day, a `T` or a space, and a time of day, with or without seconds and a zone. */
 export const ISO_MOMENT = /^\d{4}(-\d\d){2}[T ]\d\d:\d\d(:[\d.]+)?(Z|[+-][\d:]+)?$/;
 
+/**
+ * A document's date and time: any moment `Date` reads. A compiled field
+ * checks with this one function, so it reads back as a `datetime` where a
+ * face asks which fields are dates (`fieldOf`): a kind's stop, its calendar.
+ */
+export const isMoment = (s: string): boolean => !Number.isNaN(Date.parse(s));
+
 /** Today as a record keeps a day, by the clock's UTC date: what a rule, a template and a label read as today(). */
 export const isoToday = (): string => new Date().toISOString().slice(0, 10);
 

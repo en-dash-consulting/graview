@@ -29,6 +29,7 @@ import { ActRefusal } from "../refused.js";
 import * as z from "../schema/zod.js";
 import { fileSchema } from "../schema/files.js";
 import { appLinkSchema } from "../schema/app-link.js";
+import { repeatKey, repeatSchema } from "../repeat.js";
 import { markTyped, PHONE } from "../schema/typed-fields.js";
 import { evaluateExpr, ExprBudgetError, ExprEvalError, GRAPH_FACTS, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
@@ -38,7 +39,7 @@ import { formatValue, renderTemplate, type TemplatePart } from "./template.js";
 import { rememberDocument } from "./remembered.js";
 import { isRecord, respellDocument } from "./respell.js";
 import { moneyOf } from "./brand.js";
-import { ISO_DAY, isoToday } from "../days.js";
+import { ISO_DAY, isMoment, isoToday } from "../days.js";
 import type { HomeView, ViewSpecsByKind } from "./views.js";
 
 /*
@@ -229,7 +230,7 @@ export function fieldSchema(spec: FieldSpec, optional: boolean): z.ZodMiniType {
       schema = z.string().check(z.regex(ISO_DAY, "a date like 2026-10-02"));
       break;
     case "datetime":
-      schema = z.string().check(z.refine((s: string) => !Number.isNaN(Date.parse(s)), "a date and time like 2026-10-02T14:30:00Z"));
+      schema = z.string().check(z.refine(isMoment, "a date and time like 2026-10-02T14:30:00Z"));
       break;
     case "enum":
       schema = z.enum(spec.options as [string, ...string[]]);
@@ -352,7 +353,11 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
   const madeAs = new Map<string, Record<string, unknown>>();
   const definitions = Object.entries(document.kinds).map(([kind, spec]) => {
     const shape: Record<string, z.ZodMiniType> = {};
-    for (const [field, f] of Object.entries(spec.fields)) shape[field] = fieldSchema(f, !f.required);
+    for (const [field, f] of Object.entries(spec.fields)) {
+      shape[field] = fieldSchema(f, !f.required);
+      // How a date repeats, kept beside it (`repeat.ts`); none (null) when it no longer does.
+      if (f.repeats) shape[repeatKey(field)] = z.optional(repeatSchema());
+    }
     const { label: labelParts, describe: describeParts } = plan.kinds[kind] ?? {};
     const computed = Object.entries(spec.computed ?? {}).map(([name, field]) => [name, typeof field === "string" ? { expr: field } : field] as const);
     // A computed field's words are said like a field's: its label, where it has one.
@@ -607,7 +612,7 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       const repairList: Repair[] = repairs.flatMap((r) => {
         const act = document.acts?.[r.act];
         const args: Record<string, unknown> = {};
-        if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
+        if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge|skip|detach|split)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
         for (const [k, v] of Object.entries(r.args ?? {})) args[k] = refName(v) === "subject" ? subject?.id : v;
         const declared = act ? plan.acts[r.act]!.args : [];
         const missing = declared.filter(([k, a]) => a.required && args[k] === undefined).map(([k]) => k);

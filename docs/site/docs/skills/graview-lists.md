@@ -1,6 +1,6 @@
 # graview-lists
 
-`graview-lists` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -28,6 +28,8 @@ In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key i
 
 1. **Let several be done at once — it is already there.** A kind's list, a kind's stop and a board choose records: a box at each row's start on a desk, Shift for a range, Cmd/Ctrl-A, Escape; a long press on a phone. The bar offers the acts every chosen record shares (`actsForSeveral` in `@graview/tools/several`): acts on the subject alone ("Mark it done") and those that ask once for all ("Move the date…"), "Move to <value>" for the kind's state field, archive, merge and remove behind More. One press is `actOnSeveral`: one batch, one undo. A record the act may not run on (the policy, the seat's sight, the act's own refusal) is named and stays chosen; the rest apply. A seat does the same with `act_on_several` (`{ act, records, args }`). So declare acts on a `subject` with as few other arguments as they need.
 
+1. **Let a weekly practice be one record, not fifty.** A date that repeats is `{ "type": "date", "repeats": true }` (or `"datetime"`) in a document, `startsAtRepeat: repeatField()` beside `startsAt` in TypeScript. The record keeps its first occurrence in the date and the rule beside it: `"startsAtRepeat": { "every": "week", "on": ["tue"], "until": "2026-12-15" }` (`every` day, week, month or year; `interval`; `on` weekdays or days of the month, `-1` the last; `until`; `count`; `except`). Nothing is stored per occurrence: a rule, a sort, `today()` and "due in the next 7 days" read the next one, a calendar draws each, marked, and a row says "Every Tuesday, next Oct 27". `skip-<kind>`, `detach-<kind>` ("Change just this one") and `split-<kind>` ("Change from here") take `{ id, on }`; the record's page changes the rule with a picker beside the date.
+
 ### Then find out whether it worked
 
 ```sh
@@ -48,6 +50,6 @@ Whether the filters you named are the ones a person reaches for — that is a qu
 
 ---
 
-Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
+Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 
 The page: https://graview.dev/docs/skills/graview-lists.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

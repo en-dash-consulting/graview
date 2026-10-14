@@ -1,4 +1,5 @@
 import {
+  FIELD_SIGHT,
   FieldRevisions,
   foldPresence,
   ReceiveError,
@@ -621,6 +622,8 @@ async function opening<S extends AnySchema>(
 
   // The app as the host judges it (`localApp`), so the browser refuses only what the server would.
   const app = (options.localApp ? options.localApp(options.app as unknown as GraviewApp<AnySchema>) : options.app) as unknown as GraviewApp<S>;
+  // What the host served this seat is what it may see: a sight that hides a field was judged there (Roadmap f-field-sight).
+  FIELD_SIGHT.on = true;
   const store = new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],

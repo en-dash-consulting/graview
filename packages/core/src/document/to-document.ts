@@ -5,6 +5,7 @@ import type { AnySchema } from "../schema/schema.js";
 import { error, warning, type Finding } from "./findings.js";
 import { documentOf } from "./remembered.js";
 import { fieldOf } from "./field-spec.js";
+import { isRepeatField, repeatedBy, repeatKey } from "../repeat.js";
 import { FORMAT, FORMAT_VERSION, type FieldSpec, type GraviewDocument, type KindSpec, type RuleSpec } from "./schema.js";
 
 /**
@@ -57,7 +58,11 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     const fields: Record<string, FieldSpec> = {};
     for (const [name, field] of Object.entries(definition?.fields?.shape ?? {})) {
       if (name === "id" || name === "kind") continue;
+      // How a date repeats is the date's `repeats` in a document, not a field of its own.
+      const repeated = isRepeatField(field) ? repeatedBy(name) : undefined;
+      if (repeated && definition?.fields?.shape?.[repeated]) continue;
       const read = fieldOf(field);
+      if ("spec" in read && isRepeatField(definition?.fields?.shape?.[repeatKey(name)]) && (read.spec.type === "date" || read.spec.type === "datetime")) (read.spec as { repeats?: boolean }).repeats = true;
       const beside = definition?.defaults?.[name];
       if ("spec" in read) fields[name] = beside !== undefined && read.spec.default === undefined ? ({ ...read.spec, default: beside } as FieldSpec) : read.spec;
       else findings.push(error("field-is-code", `${at}.fields.${name}`, `the field "${name}" cannot be written in a document: ${read.why}`));

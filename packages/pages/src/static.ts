@@ -122,7 +122,7 @@ export function renderPlace<S extends AnySchema>(
   const appName = brand.name || declaration.name;
   const base = (options.base ?? "").replace(/\/$/, "");
   const seen = store.seenBy(viewer);
-  const asked = typeof place === "string" ? recordOfAddress(seen, place) ?? place : place;
+  const asked = typeof place === "string" ? recordOfAddress(seen as never, place) ?? place : place;
   // Said in the reader's locale, else the brand's the page wears: the describer reads it off the app's brand, as every face does.
   const locale = localeFor(options.locale ?? brand.locale ?? declaration.brand?.locale);
   const described = describePlace(store, viewer, asked, { app: { ...declaration, brand: { ...brand, locale } }, ...(options.today ? { today: options.today } : {}) });
