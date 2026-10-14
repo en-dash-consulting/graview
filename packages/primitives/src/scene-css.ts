@@ -1149,8 +1149,9 @@ ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
    fingertip-sized buttons and the level between them, shown from altitude. */ ""}
 .graview-zoom {
   position: absolute;
-  right: 16px;
-  bottom: 16px;
+  ${/* Clear of a panel floating over the scene's right edge, or a sheet over its foot. */ ""}
+  right: calc(16px + var(--graview-dock, 0px));
+  bottom: calc(16px + var(--graview-sheet, 0px));
   ${/* Above the occupants: a robot walking past a control must not cover it. */ ""}
   z-index: ${SCENE_LAYERS.zoom};
   display: inline-flex;

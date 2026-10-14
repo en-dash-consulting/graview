@@ -26,7 +26,7 @@ export function EdgeSigns({
   schema,
   onGo,
 }: {
-  readonly result: Pick<Layout, "nodes" | "width" | "height" | "city">;
+  readonly result: Pick<Layout, "nodes" | "width" | "height" | "city" | "visible">;
   readonly schema: AnySchema;
   /** Pan the ground by this much. */
   readonly onGo: (by: { readonly x: number; readonly y: number }) => void;
@@ -35,7 +35,9 @@ export function EdgeSigns({
   if (past.length === 0) return null;
   const signs: ReactElement[] = [];
   for (const side of ["left", "right", "top", "bottom"] as const) {
-    const span = side === "left" || side === "right" ? result.height : result.width;
+    // The reader's window: a panel over the scene is not part of it (`Layout.visible`).
+    const seen = result.visible ?? result;
+    const span = side === "left" || side === "right" ? seen.height : seen.width;
     let last = -Infinity;
     const onSide = past.filter((one) => one.side === side).sort((a, b) => a.along - b.along);
     for (const one of onSide) {
@@ -46,10 +48,10 @@ export function EdgeSigns({
         side === "left"
           ? { left: 6, top: at, transform: "translateY(-50%)" }
           : side === "right"
-            ? { right: 6, top: at, transform: "translateY(-50%)" }
+            ? { right: "calc(6px + var(--graview-dock, 0px))", top: at, transform: "translateY(-50%)" }
             : side === "top"
               ? { top: 6, left: at, transform: "translateX(-50%)" }
-              : { bottom: 6, left: at, transform: "translateX(-50%)" };
+              : { bottom: "calc(6px + var(--graview-sheet, 0px))", left: at, transform: "translateX(-50%)" };
       signs.push(
         <button
           key={one.id}

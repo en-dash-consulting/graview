@@ -264,6 +264,12 @@ export interface Layout {
   readonly height: number;
   /** Present at altitude: the lattice the districts were placed on. */
   readonly city?: CityFrame;
+  /**
+   * THE PART OF THE CANVAS THE READER SEES, when a panel floats over the rest
+   * (`LayoutOptions.dock`): the camera's bounds and the edge signs are for
+   * this, not for the whole painted scene. Absent when nothing covers it.
+   */
+  readonly visible?: { readonly width: number; readonly height: number };
 }
 
 export interface LayoutOptions {
@@ -337,6 +343,13 @@ export interface LayoutOptions {
    * over the ground. From altitude no district, and no district's name, is
    * opened under them.
    */
+  /**
+   * ROOM A PANEL TAKES FROM THE MAP, in pixels: the panel floats over a scene
+   * that is painted the whole width and height of the window, and the city
+   * is fitted in what its edge leaves — from the right on a desk, from the
+   * foot on a phone. Not the scene's size: the ground still fills the box.
+   */
+  readonly dock?: { readonly right?: number; readonly bottom?: number };
   readonly chrome?: readonly { readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
   /**
    * Kinds whose group is shown by the framework's own list rather than a
@@ -402,7 +415,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt" | "dock">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },

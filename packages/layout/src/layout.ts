@@ -116,7 +116,10 @@ export function layout<S extends AnySchema>(
    */
   const unit = Math.max(8, opts.unit ?? 16) / 16;
   const railLeft = opts.inset?.left ?? 0;
-  const spanW = opts.width - railLeft - (opts.inset?.right ?? 0);
+  // A panel floating over the map takes its room from the city's fit, not from the painted scene (`LayoutOptions.dock`).
+  const dockRight = state.overview ? Math.max(0, opts.dock?.right ?? 0) : 0;
+  const dockBottom = state.overview ? Math.max(0, opts.dock?.bottom ?? 0) : 0;
+  const spanW = opts.width - dockRight - railLeft - (opts.inset?.right ?? 0);
   const nodes: LayoutNode[] = [];
   const placed = new Map<string, LayoutNode>();
 
@@ -934,7 +937,7 @@ export function layout<S extends AnySchema>(
           };
         }),
         schema,
-        { width: opts.width, height: opts.height },
+        { width: opts.width - dockRight, height: opts.height - dockBottom },
         // The corner's chrome, where it is said, is kept clear box by box rather than as a rail down the whole right edge.
         opts.chrome ? { ...opts.inset, right: Math.min(opts.inset?.right ?? 0, 8) } : (opts.inset ?? {}),
         {
@@ -1230,6 +1233,7 @@ export function layout<S extends AnySchema>(
     width: opts.width,
     height: opts.height,
     ...(city ? { city: city.frame } : {}),
+    ...(dockRight > 0 || dockBottom > 0 ? { visible: { width: opts.width - dockRight, height: opts.height - dockBottom } } : {}),
   };
 
   function push(node: Omit<LayoutNode, "pinned">): void {
