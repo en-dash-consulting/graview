@@ -127,6 +127,8 @@ export interface PlacedEntry {
   readonly at: number | null;
   readonly allDay: boolean;
   readonly done: boolean;
+  /** One occurrence of a date that repeats: worked out, not a record of its own. */
+  readonly repeats?: boolean;
 }
 
 /** The day it is where the reader is, as a calendar reads days: for a store that names no day of its own. */

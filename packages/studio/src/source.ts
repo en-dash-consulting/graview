@@ -164,12 +164,13 @@ function carried(
 }
 
 /** A kind's fields, as the graph holds them. */
-export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined }[] {
+export function fieldsOf(read: Read, kind: Node): { name: string; type: FieldType; required: boolean; options: string[] | undefined; repeats: boolean }[] {
   return read.in(kind.id, "of").map((field) => ({
     name: label(field),
     type: (str(field, "type") ?? "string") as FieldType,
     required: bool(field, "required"),
     options: list(field, "options"),
+    repeats: bool(field, "repeats"),
   }));
 }
 
@@ -215,6 +216,12 @@ export function kindLines(
   if (str(kind, "description")) lines.push(`  description: ${q(str(kind, "description")!)},`);
   lines.push(`  fields: z.object({`);
   for (const field of fields) lines.push(`    ${/^[a-z_$][\w$]*$/i.test(field.name) ? field.name : q(field.name)}: ${fieldSource(field)},`);
+  // A date that repeats keeps how beside it: the framework's own field, `<date>Repeat`.
+  for (const field of fields) {
+    if (!field.repeats || (field.type !== "date" && field.type !== "datetime")) continue;
+    uses.repeatField = true;
+    lines.push(`    ${field.name}Repeat: repeatField(),`);
+  }
   lines.push(`  }),`);
   if (edges.length > 0) {
     lines.push(`  edges: {`);
@@ -455,7 +462,7 @@ export function declarationFiles(snapshot: GraphSnapshot | Reading, options: Sou
   const schemaUses: ZodUses = { nodeRef: false, isoDate: false };
   const kindText = kinds.flatMap((kind) => ["", ...kindLines(read, kind, options.base, keptFormats, schemaUses)]);
   const schemaTs = [
-    `import { ${schemaUses.appLinkField ? "appLinkField, " : ""}createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}z } from "@graview/core";`,
+    `import { ${schemaUses.appLinkField ? "appLinkField, " : ""}createSchema, defineNode, ${schemaUses.isoDate ? "isoDate, " : ""}${schemaUses.repeatField ? "repeatField, " : ""}z } from "@graview/core";`,
     ``,
     `/*`,
     ` * ${name}'s kinds, written by the studio. The shape is the declaration's;`,

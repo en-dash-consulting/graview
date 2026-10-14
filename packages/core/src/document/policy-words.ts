@@ -40,7 +40,7 @@ export function actWords(document: GraviewDocument, act: string): string {
   const derived = derivedActOf(act);
   if (derived && document.kinds[derived.kind]) {
     const noun = nounWords(document.kinds, derived.kind);
-    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another` }[derived.act];
+    const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another`, skip: "Skip this one", detach: "Change just this one", split: "Change from here" }[derived.act];
     return quoted(words);
   }
   return quoted(act);

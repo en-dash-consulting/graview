@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>graview-lists — Graview docs</title>
-<meta name="description" content="Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.">
+<meta name="description" content="Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="graview-lists — Graview docs">
-<meta property="og:description" content="Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.">
+<meta property="og:description" content="Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/skills/graview-lists.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/skills/graview-lists.html#article",
    "headline": "graview-lists — Graview docs",
-   "description": "Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.",
+   "description": "Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.",
    "url": "https://graview.dev/docs/skills/graview-lists.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1245,7 +1245,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-lists</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-lists</code> is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-lists</code> is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1269,6 +1269,9 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 </ol>
 <ol>
 <li><strong>Know what a kind opens to before you draw it a picture.</strong> Gone into with no lens of its own (<code>#focus=aggregate:room</code>), a kind opens to its stop: its plural, count and description; its creating act first ("Add a room"), asked in place; how many are overdue or due this week on its due date; its problems counted by rule, each opening its repairs; what changed since this reader last looked; and a picture its data chooses — a board by its main choice (<code>status</code>, <code>stage</code>, <code>state</code>, <code>phase</code> or the lifecycle's field) up to 300 records, a calendar where today's month has short records on its main date, else a table of its glance and its relations, 50 rows at a time. "Keep as a lens" declares that picture (<code>add-lens</code>). So give a kind a lifecycle or a <code>status</code>, a <code>glance</code>, and a creating act with a <code>title</code> before you write it a view.</li>
+</ol>
+<ol>
+<li><strong>Let a weekly practice be one record, not fifty.</strong> A date that repeats is <code>{ "type": "date", "repeats": true }</code> (or <code>"datetime"</code>) in a document, <code>startsAtRepeat: repeatField()</code> beside <code>startsAt</code> in TypeScript. The record keeps its first occurrence in the date and the rule beside it: <code>"startsAtRepeat": { "every": "week", "on": ["tue"], "until": "2026-12-15" }</code> (<code>every</code> day, week, month or year; <code>interval</code>; <code>on</code> weekdays or days of the month, <code>-1</code> the last; <code>until</code>; <code>count</code>; <code>except</code>). Nothing is stored per occurrence: a rule, a sort, <code>today()</code> and "due in the next 7 days" read the next one, a calendar draws each, marked, and a row says "Every Tuesday, next Oct 27". <code>skip-&lt;kind&gt;</code>, <code>detach-&lt;kind&gt;</code> ("Change just this one") and <code>split-&lt;kind&gt;</code> ("Change from here") take <code>{ id, on }</code>; the record's page changes the rule with a picker beside the date.</li>
 </ol>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">graview check src/domain/app.ts</code></pre></div>

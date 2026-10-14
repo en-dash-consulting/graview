@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T05:36:08.009Z",
+  "at": "2026-10-14T02:45:31.342Z",
   "engine": "chromium",
   "checks": {
     "aSecondPictureOfOneGroupIsASecondPlace": {
@@ -35,12 +35,12 @@
       "entry": "t-book",
       "strip": [
         "Mark it done",
-        "Archive the task",
-        "Merge into another task …",
         "Rename …",
         "Move the date …",
         "Change the task …",
         "Block time for it …",
+        "Archive the task",
+        "Merge into another task …",
         "Note why this is here …",
         "Move it to another list …",
         "It no longer has to wait …",

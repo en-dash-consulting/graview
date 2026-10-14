@@ -69,6 +69,8 @@ export interface ZodUses {
   isoDate: boolean;
   /** A field that holds another app's address (FR-171), written as the checkout wrote it. */
   appLinkField?: boolean;
+  /** A date that repeats keeps how beside it (`repeatField()`). */
+  repeatField?: boolean;
 }
 
 export function printZod(type: unknown, uses: ZodUses = { nodeRef: false, isoDate: false }): string | null {

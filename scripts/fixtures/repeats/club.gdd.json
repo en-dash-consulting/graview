@@ -1,0 +1,24 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The running club",
+  "description": "A club's practices, one of which happens every Tuesday: a date that repeats, its occurrences worked out and never stored.",
+  "roles": ["coach", "runner"],
+  "policy": { "grants": [{ "roles": ["coach"], "mutations": "*" }] },
+  "kinds": {
+    "practice": {
+      "noun": "practice",
+      "plural": "practices",
+      "description": "A run the club goes on together.",
+      "label": "{title}",
+      "fields": {
+        "title": { "type": "string", "required": true },
+        "startsAt": { "type": "date", "required": true, "repeats": true, "label": "Starts" },
+        "place": { "type": "string" }
+      }
+    }
+  },
+  "acts": {
+    "add-practice": { "title": "Add a practice", "creates": "practice", "description": "Put another run on the calendar." }
+  }
+}

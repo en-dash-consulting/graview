@@ -144,6 +144,8 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       } else edits.push({ op: "set-options", ...at, ...(add.length > 0 ? { add } : {}), ...(remove.length > 0 ? { remove } : {}) });
     }
     if ((field["required"] === true) !== (old["required"] === true)) edits.push({ op: "set-required", ...at, required: field["required"] === true });
+    // A date that repeats, or no longer does; a retype away from a date already let it go.
+    if ((field["repeats"] === true) !== (old["repeats"] === true) && (field["repeats"] === true || type === str(old, "type"))) edits.push({ op: "set-repeats", ...at, repeats: field["repeats"] === true });
     if (str(field, "description") !== str(old, "description")) edits.push({ op: "set-label", ...at, label: str(field, "description") ?? null });
   }
 
@@ -155,6 +157,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       type,
       ...(field["required"] === true ? { required: true } : {}),
       ...(type === "enum" && options ? { options } : {}),
+      ...(field["repeats"] === true ? { repeats: true } : {}),
       ...(str(field, "description") ? { label: str(field, "description") } : {}),
     };
   };

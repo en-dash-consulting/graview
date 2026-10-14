@@ -1,6 +1,6 @@
 # graview-lists
 
-`graview-lists` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 17 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -26,6 +26,8 @@ In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key i
 
 1. **Know what a kind opens to before you draw it a picture.** Gone into with no lens of its own (`#focus=aggregate:room`), a kind opens to its stop: its plural, count and description; its creating act first ("Add a room"), asked in place; how many are overdue or due this week on its due date; its problems counted by rule, each opening its repairs; what changed since this reader last looked; and a picture its data chooses — a board by its main choice (`status`, `stage`, `state`, `phase` or the lifecycle's field) up to 300 records, a calendar where today's month has short records on its main date, else a table of its glance and its relations, 50 rows at a time. "Keep as a lens" declares that picture (`add-lens`). So give a kind a lifecycle or a `status`, a `glance`, and a creating act with a `title` before you write it a view.
 
+1. **Let a weekly practice be one record, not fifty.** A date that repeats is `{ "type": "date", "repeats": true }` (or `"datetime"`) in a document, `startsAtRepeat: repeatField()` beside `startsAt` in TypeScript. The record keeps its first occurrence in the date and the rule beside it: `"startsAtRepeat": { "every": "week", "on": ["tue"], "until": "2026-12-15" }` (`every` day, week, month or year; `interval`; `on` weekdays or days of the month, `-1` the last; `until`; `count`; `except`). Nothing is stored per occurrence: a rule, a sort, `today()` and "due in the next 7 days" read the next one, a calendar draws each, marked, and a row says "Every Tuesday, next Oct 27". `skip-<kind>`, `detach-<kind>` ("Change just this one") and `split-<kind>` ("Change from here") take `{ id, on }`; the record's page changes the rule with a picker beside the date.
+
 ### Then find out whether it worked
 
 ```sh
@@ -46,6 +48,6 @@ Whether the filters you named are the ones a person reaches for — that is a qu
 
 ---
 
-Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, and a list printed as a static page — and verify each with graview check and the page itself rather than assuming it.
+Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 
 The page: https://graview.dev/docs/skills/graview-lists.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

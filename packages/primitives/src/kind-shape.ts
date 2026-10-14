@@ -1,4 +1,4 @@
-import { edgeWords, labelOf, type AnySchema, type Arrangement, type Violation } from "@graview/core";
+import { dateOn, edgeWords, labelOf, type AnySchema, type Arrangement, type Violation } from "@graview/core";
 import { fieldSpecOf } from "@graview/core/blocks";
 import { districtState } from "@graview/core/city";
 import { readableFields } from "@graview/core/words";
@@ -94,8 +94,14 @@ export function kindShape(schema: AnySchema, kind: string, nodes: readonly Node[
      * this week. A conference ten years long, or albums of thirty, is a
      * table in date order instead of an empty month.
      */
+    // A date that repeats stands where its next occurrence falls, as long as its first lasted.
+    const moved = (node: Node) => {
+      const from = dayOf(node[date.field]);
+      const next = dayOf(dateOn(node, date.field, today));
+      return from && next ? daysBetween(from, next) : 0;
+    };
     const spans = nodes
-      .map((node) => ({ from: dayOf(node[date.field]), to: date.end ? dayOf(node[date.end]) : undefined }))
+      .map((node) => ({ from: dayOf(dateOn(node, date.field, today)), to: date.end && dayOf(node[date.end]) ? dayAfter(dayOf(node[date.end])!, moved(node)) : undefined }))
       .filter((span): span is { from: string; to: string | undefined } => span.from !== undefined)
       .map((span) => ({ from: span.from, to: span.to && span.to > span.from ? span.to : span.from }));
     const first = `${today.slice(0, 7)}-01`;
@@ -285,7 +291,8 @@ export function dateFacts(schema: AnySchema, kind: string, nodes: readonly Node[
   let overdue = 0;
   let soon = 0;
   for (const node of nodes) {
-    const day = dayOf(node[date.field]);
+    // A date that repeats counts by its next occurrence.
+    const day = dayOf(dateOn(node, date.field, today));
     if (!day || finished(node)) continue;
     const away = daysBetween(today, day);
     if (date.due && away < 0) overdue++;

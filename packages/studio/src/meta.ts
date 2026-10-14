@@ -79,6 +79,8 @@ export const fieldNode = defineNode("field", {
     required: z.boolean(),
     options: z.array(z.string()).optional(),
     description: z.string().optional(),
+    /** A date that repeats: a record keeps how, beside it (`<field>Repeat`). */
+    repeats: z.boolean().optional(),
   }),
   edges: {
     of: { to: ["kind"], cardinality: "one", description: "the kind it belongs to", inverse: "its fields" },
@@ -565,18 +567,20 @@ export const retypeField = act("retype-field", {
   title: "Change the field's type",
   description: "Make a field another type. An enum is given its options; a field made anything else lets them go.",
   subject: { kinds: ["field"], arg: "id" },
-  writes: ["type", "options"],
+  writes: ["type", "options", "repeats"],
   input: z.object({ id: nodeRef(["field"]), type: z.enum(FIELD_TYPES), options: z.array(z.string().min(1)).min(1).optional() }),
   describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} a ${args.type}`,
   apply(ctx, args) {
-    const field = ctx.graph.getNode(args.id) as { options?: readonly string[] } | undefined;
+    const field = ctx.graph.getNode(args.id) as { options?: readonly string[]; repeats?: boolean } | undefined;
+    // Only a date repeats: a field that is no longer one lets it go.
+    const repeats = field?.repeats && args.type !== "date" && args.type !== "datetime" ? { repeats: undefined } : {};
     if (args.type === "enum") {
       const options = args.options ?? field?.options;
       if (!options || options.length === 0) throw new Error(`${nameOf(ctx, args.id)} is made an enum, and an enum names its options: give them`);
-      ctx.patchNode(args.id, { type: args.type, options: [...options] });
+      ctx.patchNode(args.id, { type: args.type, options: [...options], ...repeats });
       return;
     }
-    ctx.patchNode(args.id, { type: args.type, ...(field?.options !== undefined ? { options: undefined } : {}) });
+    ctx.patchNode(args.id, { type: args.type, ...(field?.options !== undefined ? { options: undefined } : {}), ...repeats });
   },
 });
 
@@ -589,6 +593,20 @@ export const setRequired = act("set-required", {
   describe: (args, graph) => `Make ${fieldLabel(graph, args.id)} ${args.required ? "required" : "optional"}`,
   apply(ctx, args) {
     ctx.patchNode(args.id, { required: args.required });
+  },
+});
+
+export const setRepeats = act("set-repeats", {
+  title: "Say whether it repeats",
+  description: "Let a date repeat — weekly, monthly, on chosen days, until a day — or stop it repeating.",
+  subject: { kinds: ["field"], arg: "id" },
+  writes: ["repeats"],
+  input: z.object({ id: nodeRef(["field"]), repeats: z.boolean() }),
+  describe: (args, graph) => `Let ${fieldLabel(graph, args.id)} ${args.repeats ? "repeat" : "no longer repeat"}`,
+  apply(ctx, args) {
+    const type = (ctx.graph.getNode(args.id) as { type?: string } | undefined)?.type;
+    if (args.repeats && type !== "date" && type !== "datetime") throw new Error(`${nameOf(ctx, args.id)} is not a date, and only a date can repeat`);
+    ctx.patchNode(args.id, { repeats: args.repeats || undefined });
   },
 });
 
@@ -930,6 +948,7 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   removeField,
   retypeField,
   setRequired,
+  setRepeats,
   setOptions,
   describeField,
   addEdge,

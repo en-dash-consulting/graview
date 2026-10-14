@@ -2,6 +2,8 @@ import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead } from "../days.js";
 import { fieldWords, labelOf, nounOf, valueWords, type ReadableField } from "./define-node.js";
 import { filesOf } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
+import { repeatingDateAsRead } from "../repeat-words.js";
+import { isRepeatField } from "../repeat.js";
 import type { AnyNodeDefinition, PageFields } from "./types.js";
 
 /*
@@ -125,6 +127,7 @@ export function readableFields(
     .filter((stem) => stem.length > 12);
 
   const fields: ReadableField[] = [];
+  const shapeOf = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape;
   /*
    * IN THE ORDER THE DECLARATION SAYS, NOT THE ORDER THE RECORD WAS WRITTEN
    * IN (FR-148). This read `Object.entries(node)`, so a record created with
@@ -169,6 +172,8 @@ export function readableFields(
       typeof value === "object" &&
       (!Array.isArray(value) || value.some((one) => typeof one === "object" && one !== null));
     if (nested && format === undefined) continue;
+    // A date that repeats says how, and the next one: "Every Tuesday, next Oct 27".
+    const repeated = typeof value === "string" && !format ? repeatingDateAsRead(value, node[`${key}Repeat`], { locale: options.locale }) : undefined;
     const stored = files[0] ? files.map((file) => (file.caption ? `${file.name} — ${file.caption}` : file.name)).join(", ") : Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
     const text = format
       ? format(value)
@@ -176,6 +181,8 @@ export function readableFields(
         ? // Nobody says "false". A boolean is a state, and the words for a
           // state are words.
           stored
+        : typeof value === "string" && repeated !== undefined
+          ? repeated
         : /*
            * A DAY AS A PERSON READS IT ("Aug 28, 2026"), on a glance and in a
            * record's facts alike; the edit control holds it as it is written
@@ -196,7 +203,7 @@ export function readableFields(
     const alone =
       // A yes or no the kind words itself ("Not yet inducted") is said whole; "Inducted: not yet inducted" said it twice (W-187).
       typeof value === "number" ? `${label} ${text}` : typeof value === "boolean" && !format ? `${label}: ${text.toLowerCase()}` : text;
-    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text), ...(files[0] ? { files } : {}), ...(app ? { app } : {}) });
+    fields.push({ key, label, value: text, stored, alone, long: typeof value === "string" && isLongText(definition, key, text), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(isRepeatField(shapeOf?.[`${key}Repeat`]) ? { repeats: true as const } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
   return fields;

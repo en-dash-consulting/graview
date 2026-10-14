@@ -1,4 +1,4 @@
-import { nodeRefArgs, placeSlug, requiredRolesOf } from "@graview/core";
+import { isRepeatField, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf } from "@graview/core";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
 import type { AnyMutationDefinition, AnySchema, GraphEdge, GraphSnapshot, GraviewApp, InvariantDefinition } from "@graview/core";
@@ -58,7 +58,7 @@ export function fieldTypeOf(type: unknown): { readonly type: FieldType; readonly
     case "string": {
       // A link, an address or a date and time is a string zod checks; the document's reading says which.
       const said = fieldSpecOf(type)?.type;
-      return { type: said === "url" || said === "email" || said === "datetime" ? said : "string", required };
+      return { type: said === "url" || said === "email" || said === "date" || said === "datetime" ? said : "string", required };
     }
     default:
       return { type: "string", required };
@@ -90,7 +90,11 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       ...(def.figure ? { figure: def.figure } : {}),
       ...(def.people ? { people: true } : {}),
     });
-    for (const [name, type] of Object.entries(shapeOf(def.fields))) {
+    const fields = shapeOf(def.fields);
+    for (const [name, type] of Object.entries(fields)) {
+      // How a date repeats is the date's `repeats`, not a field of its own.
+      const repeated = isRepeatField(type) ? repeatedBy(name) : undefined;
+      if (repeated && fields[repeated]) continue;
       const id = `field:${def.kind}.${name}`;
       const read = fieldTypeOf(type);
       const said = document?.kinds[def.kind]?.fields[name]?.type;
@@ -102,6 +106,7 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
         type: typed.type,
         required: typed.required,
         ...(typed.options ? { options: [...typed.options] } : {}),
+        ...(isRepeatField(fields[repeatKey(name)]) ? { repeats: true } : {}),
         ...(def.display?.labels?.[name] ? { description: def.display.labels[name] } : {}),
       });
       edges.push({ kind: "of", from: id, to: kindId(def.kind) });

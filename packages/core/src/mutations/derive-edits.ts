@@ -7,6 +7,7 @@ import type { AnyNodeDefinition } from "../schema/types.js";
 import { nodeRefArgs, refTo } from "./node-ref.js";
 import { ActRefusal } from "../refused.js";
 import type { AnyMutationDefinition } from "./types.js";
+import { deriveRepeatMutations } from "./derive-repeats.js";
 
 /**
  * A FIELD YOU COULD SET AT CREATION, YOU CAN CHANGE.
@@ -264,7 +265,8 @@ export function derivedVia<S extends AnySchema>(
   mutation: AnyMutationDefinition<S>,
 ): readonly string[] | undefined {
   if (!mutation.derived) return undefined;
-  return mutation.derived.act === "edit"
+  // Acting on one occurrence of a repeating date changes the record, as its edit does.
+  return mutation.derived.act === "edit" || mutation.derived.act === "skip" || mutation.derived.act === "detach" || mutation.derived.act === "split"
     ? editVia(schema, mutations, mutation.derived.kind)
     : removeVia(mutations, mutation.derived.kind);
 }
@@ -357,5 +359,5 @@ export function deriveMutations<S extends AnySchema>(
   schema: S,
   mutations: readonly AnyMutationDefinition<S>[],
 ): AnyMutationDefinition<S>[] {
-  return [...deriveEditMutations(schema, mutations), ...perKind(schema, mutations)];
+  return [...deriveEditMutations(schema, mutations), ...perKind(schema, mutations), ...deriveRepeatMutations(schema, mutations)];
 }

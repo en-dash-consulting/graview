@@ -19,3 +19,5 @@ export { describeNode, isLongText, pageSections, readableFields, tellApart } fro
 export { argShape, describeArg } from "./mutations/arg-shape.js";
 export { argumentWords, failureWords } from "./mutations/words.js";
 export { viaSaid } from "./via.js";
+// A date that repeats, in words: "Every Tuesday, next Oct 27".
+export { repeatAsRead, repeatingDateAsRead } from "./repeat-words.js";

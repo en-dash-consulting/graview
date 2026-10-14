@@ -91,6 +91,7 @@ export const EDIT_OPS = [
   "set-range",
   "set-required",
   "set-default",
+  "set-repeats",
   "remove-field",
   "add-relation",
   "rename-relation",
@@ -146,6 +147,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "set-range": z.object({ op: z.literal("set-range"), kind: kindName, field: fieldName, min: z.union([z.number(), z.null()]).optional(), max: z.union([z.number(), z.null()]).optional(), step: z.union([z.number().positive(), z.null()]).optional() }).strict(),
   "set-required": z.object({ op: z.literal("set-required"), kind: kindName, field: fieldName, required: z.boolean() }).strict(),
   "set-default": z.object({ op: z.literal("set-default"), kind: kindName, field: fieldName, default: z.unknown() }).strict(),
+  "set-repeats": z.object({ op: z.literal("set-repeats"), kind: kindName, field: fieldName, repeats: z.boolean() }).strict(),
   "remove-field": z.object({ op: z.literal("remove-field"), kind: kindName, field: fieldName }).strict(),
   "add-relation": z.object({ op: z.literal("add-relation"), kind: kindName, relation: edgeName }).passthrough(),
   "rename-relation": z.object({ op: z.literal("rename-relation"), kind: kindName, relation: edgeName, to: edgeName }).strict(),
@@ -718,6 +720,16 @@ class Editor {
           f.default = e.default;
           this.said.push(`${e.kind}'s ${e.field} starts as ${JSON.stringify(e.default)} on new records.`);
         }
+        return;
+      }
+      case "set-repeats": {
+        // A date that repeats keeps how it does beside it, as `<field>Repeat` (`repeat.ts`).
+        const f = this.field(i, e.kind, e.field);
+        if (!f) return;
+        if (e.repeats && f.type !== "date" && f.type !== "datetime") return this.fail(i, "repeats", `${e.kind}'s ${e.field} is ${f.type === "enum" ? "a choice" : `a ${f.type}`}, and only a date or a date and time can repeat`);
+        if (e.repeats) f.repeats = true;
+        else delete f.repeats;
+        this.said.push(e.repeats ? `${e.kind}'s ${e.field} may repeat: weekly, monthly, on chosen days, until a day.` : `${e.kind}'s ${e.field} no longer repeats.`);
         return;
       }
       case "remove-field":
@@ -1538,6 +1550,8 @@ class Editor {
     else if (e.type !== "number" && e.type !== "integer") delete f.format;
     // A range is a number's (FR-114): a field that is no longer one lets it go.
     if (e.type !== "number" && e.type !== "integer") for (const key of ["min", "max", "step"]) delete f[key];
+    // Only a date repeats: a field that is no longer one lets its repeat go.
+    if (e.type !== "date" && e.type !== "datetime") delete f.repeats;
     if (f.default !== undefined && coerce(f.default, was, f) === undefined) delete f.default;
     else if (f.default !== undefined) f.default = coerce(f.default, was, f);
     this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}; values that convert are kept.`);

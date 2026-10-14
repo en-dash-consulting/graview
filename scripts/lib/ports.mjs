@@ -68,6 +68,8 @@ export const OWN = {
   "growing-host": 5258,
   /** The host's page `verify-app-links` mounts purchase scenarios that link other apps into, with a resolver of its own (FR-171). */
   "app-links-host": 5268,
+  /** The host's page `verify-repeats` mounts a running club whose practice repeats every Tuesday into: occurrences drawn, the next one said. */
+  "repeats-host": 5262,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */
   "long-text-host": 5271,
   /** The host's page `verify-seat-guide` mounts the todo app into, to switch faces in place under one conversation. */

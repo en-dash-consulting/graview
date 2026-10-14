@@ -110,7 +110,12 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
         if (narrower) narrowedRanges.push({ kind, field });
         sentences.push(`${kind}'s ${field} now takes ${rangeWords(f)}, where it took ${rangeWords(old)}${narrower ? "; values outside it are cleared" : ""}.`);
       }
-      if (!same({ ...old, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0 }, { ...f, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0 })) sentences.push(`${kind}'s ${field} is described differently.`);
+      // A date that repeats, or no longer does: how each record's repeated is dropped with it.
+      if (!old.repeats !== !f.repeats) {
+        if (old.repeats) removedFields.push({ kind, field: `${field}Repeat` });
+        sentences.push(f.repeats ? `${kind}'s ${field} may now repeat.` : `${kind}'s ${field} no longer repeats; how each ${kind} repeated is dropped.`);
+      }
+      if (!same({ ...old, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0, repeats: 0 }, { ...f, type: 0, options: 0, required: 0, renamedFrom: 0, min: 0, max: 0, step: 0, repeats: 0 })) sentences.push(`${kind}'s ${field} is described differently.`);
     }
     for (const field of keys(was.fields)) {
       if (!now.fields[field] && ![...renamed.values()].includes(field)) {

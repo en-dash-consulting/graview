@@ -5,6 +5,8 @@ import {
   defineNode,
   nodeRef,
   nodeRefArgs,
+  repeatField,
+  repeatKey,
   type AnyMutationDefinition,
   type AnySchema,
   type EdgeDeclaration,
@@ -251,6 +253,7 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
       type: (str(field, "type") ?? "string") as FieldType,
       required: bool(field, "required"),
       options: list(field, "options"),
+      repeats: bool(field, "repeats"),
     }));
 
   const definitions = read.ofKind("kind").map((kind) => {
@@ -272,6 +275,8 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
         was.required === field.required &&
         (was.options ?? []).join("|") === (field.options ?? []).join("|");
       shape[field.name] = same ? own! : zodFor(field.type, field.required, field.options);
+      // A date that repeats keeps how beside it, as the framework's own field.
+      if (field.repeats && (field.type === "date" || field.type === "datetime")) shape[repeatKey(field.name)] = repeatField();
     }
     const edges: Record<string, EdgeDeclaration> = {};
     for (const edge of read.in(kind.id, "from-kind")) {

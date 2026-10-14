@@ -54,6 +54,9 @@ export { Files } from "./files-door.js";
 export type { FilesProps } from "./files-door.js";
 export { AppLink } from "./app-link-door.js";
 export type { AppLinkProps } from "./app-link-door.js";
+// How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.
+export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
+export type { RepeatPickerProps } from "./repeat-picker-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 // The seat: an ask field at the picture's foot that grows into the conversation when asked.
 export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";

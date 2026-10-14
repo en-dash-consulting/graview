@@ -1,0 +1,394 @@
+{
+  "at": "2026-10-14T02:46:02.996Z",
+  "engines": [
+    "chromium",
+    "webkit",
+    "firefox"
+  ],
+  "schemes": [
+    "light",
+    "dark"
+  ],
+  "width": 1280,
+  "checks": {
+    "theCalendarDrawsEachOccurrenceOfAWeeklyPracticeMarkedAndLeavesOutTheSkippedOne": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "range": "month",
+          "repeats": [
+            {
+              "on": "2026-09-29",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-06",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-20",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-27",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-11-03",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            }
+          ],
+          "dinner": [
+            "2026-10-24"
+          ],
+          "soon": "2  in the next 7 days by starts at"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "range": "month",
+          "repeats": [
+            {
+              "on": "2026-09-29",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-06",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-20",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-27",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-11-03",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            }
+          ],
+          "dinner": [
+            "2026-10-24"
+          ],
+          "soon": "2  in the next 7 days by starts at"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "range": "month",
+          "repeats": [
+            {
+              "on": "2026-09-29",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-06",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-20",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-27",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-11-03",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            }
+          ],
+          "dinner": [
+            "2026-10-24"
+          ],
+          "soon": "2  in the next 7 days by starts at"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "range": "month",
+          "repeats": [
+            {
+              "on": "2026-09-29",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-06",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-20",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-27",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-11-03",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            }
+          ],
+          "dinner": [
+            "2026-10-24"
+          ],
+          "soon": "2  in the next 7 days by starts at"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "range": "month",
+          "repeats": [
+            {
+              "on": "2026-09-29",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-06",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-20",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-27",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-11-03",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            }
+          ],
+          "dinner": [
+            "2026-10-24"
+          ],
+          "soon": "2  in the next 7 days by starts at"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "range": "month",
+          "repeats": [
+            {
+              "on": "2026-09-29",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-06",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-20",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-10-27",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            },
+            {
+              "on": "2026-11-03",
+              "title": "Tuesday run · all day · repeats",
+              "draggable": "false"
+            }
+          ],
+          "dinner": [
+            "2026-10-24"
+          ],
+          "soon": "2  in the next 7 days by starts at"
+        }
+      ],
+      "ok": true
+    },
+    "theKindsStopCountsAPracticeByItsNextOccurrenceAndSaysIt": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "soon": "2  in the next 7 days by starts at",
+          "row": "Tuesday runEvery Tuesday, next Oct 27The track⋯"
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "soon": "2  in the next 7 days by starts at",
+          "row": "Tuesday runEvery Tuesday, next Oct 27The track⋯"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "soon": "2  in the next 7 days by starts at",
+          "row": "Tuesday runEvery Tuesday, next Oct 27The track⋯"
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "soon": "2  in the next 7 days by starts at",
+          "row": "Tuesday runEvery Tuesday, next Oct 27The track⋯"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "soon": "2  in the next 7 days by starts at",
+          "row": "Tuesday runEvery Tuesday, next Oct 27The track⋯"
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "soon": "2  in the next 7 days by starts at",
+          "row": "Tuesday runEvery Tuesday, next Oct 27The track⋯"
+        }
+      ],
+      "ok": true
+    },
+    "theRecordSaysHowItRepeatsAndTheNextOne": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "said": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "said": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "said": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "said": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "said": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "said": true
+        }
+      ],
+      "ok": true
+    },
+    "theControlBesideTheDateChangesHowItRepeatsSaidInWords": {
+      "seen": [
+        {
+          "engine": "chromium",
+          "scheme": "light",
+          "width": 1280,
+          "before": "Every Tuesday",
+          "chosen": "Every Tuesday and Thursday",
+          "labeled": true,
+          "kept": true
+        },
+        {
+          "engine": "chromium",
+          "scheme": "dark",
+          "width": 1280,
+          "before": "Every Tuesday",
+          "chosen": "Every Tuesday and Thursday",
+          "labeled": true,
+          "kept": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "light",
+          "width": 1280,
+          "before": "Every Tuesday",
+          "chosen": "Every Tuesday and Thursday",
+          "labeled": true,
+          "kept": true
+        },
+        {
+          "engine": "webkit",
+          "scheme": "dark",
+          "width": 1280,
+          "before": "Every Tuesday",
+          "chosen": "Every Tuesday and Thursday",
+          "labeled": true,
+          "kept": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "light",
+          "width": 1280,
+          "before": "Every Tuesday",
+          "chosen": "Every Tuesday and Thursday",
+          "labeled": true,
+          "kept": true
+        },
+        {
+          "engine": "firefox",
+          "scheme": "dark",
+          "width": 1280,
+          "before": "Every Tuesday",
+          "chosen": "Every Tuesday and Thursday",
+          "labeled": true,
+          "kept": true
+        }
+      ],
+      "ok": true
+    },
+    "noPageErrors": {
+      "errors": [],
+      "ok": true
+    }
+  },
+  "ok": true
+}

@@ -34,6 +34,10 @@ export { fileField, imageField } from "./schema/file-field.js";
 export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
 export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";
 export { appLinkField } from "./schema/app-link-field.js";
+// A date that repeats: the rule kept beside it, its occurrences worked out and never stored.
+export { dateOn, isRepeat, isRepeatField, nextOccurrence, occurrences, repeatedBy, repeatKey, validRepeat, WEEKDAYS } from "./repeat.js";
+export type { Repeat, Weekday } from "./repeat.js";
+export { repeatField } from "./schema/repeat-field.js";
 export { nameOfAuthor } from "./who.js";
 export type { Person } from "./who.js";
 export { createSchema, SchemaError } from "./schema/schema.js";

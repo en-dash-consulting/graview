@@ -100,6 +100,12 @@ export interface ReadableField {
    * address. A glance leaves it out of its words, as it does a file.
    */
   readonly app?: string;
+  /**
+   * A DATE THAT MAY REPEAT (`repeat.ts`): its value says how and the next
+   * one ("Every Tuesday, next Oct 27"), and a record draws, beside it, the
+   * control that changes how it repeats (`<field>Repeat`).
+   */
+  readonly repeats?: true;
   /** The field name in words, after `display.labels` and humanizing. */
   readonly label: string;
   /** The value in words, after `display.format` and the built-in defaults: a day as a person reads it, a choice as it is declared. */

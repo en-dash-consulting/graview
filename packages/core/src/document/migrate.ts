@@ -221,6 +221,13 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
       }
       if (value !== undefined) next[field] = value;
       for (const file of filesOf(value)) held.add(file.href);
+      // How a date repeats goes with it, renamed with it; a date that no longer repeats loses it.
+      const repeat = src && was[src]!.repeats ? node[`${src}Repeat`] : undefined;
+      if (repeat !== undefined && value !== undefined && spec.repeats) next[`${field}Repeat`] = repeat;
+      else if (repeat !== undefined) {
+        counts.cleared++;
+        note(`${newKind}'s ${field} no longer repeats: how it repeated is removed`);
+      }
     }
     for (const fill of fills) {
       const spec = now[fill.field];
