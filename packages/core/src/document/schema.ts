@@ -311,12 +311,30 @@ export type BrandSpec = z.infer<typeof BrandSpec>;
 
 const loose = z.record(z.string(), z.unknown());
 
+/** A grid lens's order (`grid-sort.ts`): a field, or { by, direction }. */
+const GridSortSpec = z.union([str(1, 120), z.strictObject({ by: str(1, 120), direction: z.optional(z.enum(["asc", "desc"])) })]);
+const Year = z.number().check(z.int(), z.minimum(1), z.maximum(9999));
+
 /**
  * A lens: checked by `graview check` against the lenses the framework ships
  * (`declaredLenses`), so loose here but for what its page is: `create`,
- * false where the place's page leaves off the forms that begin its kind.
+ * false where the place's page leaves off the forms that begin its kind —
+ * and the options whose shape is the same on every lens that takes them:
+ * a coverage's `sort` and `columnSort` and a status board's `sort` (the
+ * order of its rows, columns or cards), and a calendar's `horizon` (its
+ * span of years, reaching its records' first and last unless `from` and
+ * `to` pin it).
  */
-const LensSpec = z.looseObject({ create: z.optional(z.boolean()) });
+const LensSpec = z.looseObject({
+  create: z.optional(z.boolean()),
+  options: z.optional(
+    z.looseObject({
+      sort: z.optional(GridSortSpec),
+      columnSort: z.optional(GridSortSpec),
+      horizon: z.optional(z.union([z.number().check(z.int(), z.minimum(1), z.maximum(200)), z.looseObject({ years: z.number().check(z.int(), z.minimum(1), z.maximum(200)), title: str(1, 80), from: z.optional(Year), to: z.optional(Year) })])),
+    }),
+  ),
+});
 
 /** A kind's view specs: which slots it fills. The blocks are checked in views.ts, sentence by sentence. */
 const ViewSpecsSpec = z.strictObject({

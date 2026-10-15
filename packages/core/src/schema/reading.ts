@@ -134,6 +134,12 @@ export function readableFields(
 ): readonly ReadableField[] {
   const display = definition?.display;
   const skip = new Set([...NOT_A_FIELD, ...(display?.hide ?? [])]);
+  /*
+   * A FIELD CALLED `label` IS THE NAME ONLY WHERE IT IS WHAT THE RECORD IS
+   * CALLED. A release named by its `name` whose `label` is "Parlophone"
+   * keeps its record label as a fact like any other field.
+   */
+  if (typeof node["label"] === "string" && definition?.label && !labelOf(definition, node as { id: string; kind: string }).includes(node["label"])) skip.delete("label");
   const said = (options.said ?? []).filter((text): text is string => Boolean(text));
   const stems = said
     .filter((text) => text.endsWith("…"))

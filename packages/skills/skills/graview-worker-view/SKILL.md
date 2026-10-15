@@ -80,8 +80,9 @@ logo, the app's own images, the pictures on records) are
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links
 the host follows, on both faces. `<a href="https://…">` is drawn as text.
-A destination is a record's id, else a lens's slug, else a kind's list
-(`features` or `feature`); any other says why in the console.
+A destination is a record's id, else a place by its slug or its title
+(`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's
+list (`features` or `feature`); any other says why, naming the places.
 
 A list or a lens may be gone to **narrowed**: `where: { stage: "building" }`
 in navigate, `data-filter="stage:building"` on a link — the words the

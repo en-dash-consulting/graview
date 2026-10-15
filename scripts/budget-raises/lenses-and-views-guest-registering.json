@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 100,
+  "gzipped": 50,
+  "note": "Raised when a worker view's definition came to carry the origins its images may come from (`images: { origins }`), handed on to the view it mounts. 21_008 / 9_731 before it, 21_041 / 9_743 with it: 33 / 12 more."
+}

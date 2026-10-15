@@ -18,7 +18,7 @@
  *             `@namespace`, and every function not on `CSS_FUNCTIONS`
  *             (`image-set()`, `cross-fade()`, `element()`, `paint()`,
  *             `attr()`, `expression()`, …).
- *   escape    `position: fixed` and `sticky`, `:host` and `::slotted`, the
+ *   escape    `position: fixed`, `:host` and `::slotted`, the
  *             top layer (`popover`, `<dialog>`), `autofocus`, `accesskey`,
  *             and `<form>`, whose submission is a navigation.
  *   speak     `role="alert"`, the landmark roles the app's own chrome uses
@@ -240,8 +240,8 @@ export function isDataAttribute(name: string): boolean {
  * it here, rather than drawn until somebody notices.
  */
 export const CSS_PROPERTIES: readonly string[] = [
-  // box and layout
-  "display", "position", "top", "right", "bottom", "left", "inset", "inset-block", "inset-inline", "inset-block-start", "inset-block-end", "inset-inline-start", "inset-inline-end",
+  // box and layout; `all` takes only the keywords every property does (`all: unset` resets a button's chrome)
+  "all", "display", "position", "top", "right", "bottom", "left", "inset", "inset-block", "inset-inline", "inset-block-start", "inset-block-end", "inset-inline-start", "inset-inline-end",
   "width", "height", "min-width", "min-height", "max-width", "max-height", "inline-size", "block-size", "min-inline-size", "min-block-size", "max-inline-size", "max-block-size",
   "margin", "margin-top", "margin-right", "margin-bottom", "margin-left", "margin-block", "margin-inline", "margin-block-start", "margin-block-end", "margin-inline-start", "margin-inline-end",
   "padding", "padding-top", "padding-right", "padding-bottom", "padding-left", "padding-block", "padding-inline", "padding-block-start", "padding-block-end", "padding-inline-start", "padding-inline-end",
@@ -317,12 +317,17 @@ export const CSS_AT_RULES: readonly string[] = ["media", "supports", "container"
 
 /**
  * The values a property may take when it may take only some: `position`
- * stays in the region (no `fixed`, no `sticky`), and so does `var()` — a
- * property held to a list is held to a keyword, so a custom property
- * cannot carry `fixed` into it.
+ * stays in the region (no `fixed`), and so does `var()` — a property held
+ * to a list is held to a keyword, so a custom property cannot carry `fixed`
+ * into it. `sticky` stays too (2026-10-15): it sticks within its own
+ * parent's box, and the region is painted contained (`contain: paint`,
+ * `overflow: clip`, its own stacking context), so a view's header held in
+ * place never paints past the view or over the app. `all` takes the four
+ * keywords alone, which reset and never load.
  */
 export const CSS_KEYWORD_PROPERTIES: Readonly<Record<string, readonly string[]>> = {
-  position: ["static", "relative", "absolute"],
+  position: ["static", "relative", "absolute", "sticky"],
+  all: [],
   /* Never `base-select`: a customizable select's picker is drawn in the top layer, over the whole page, styled by the view (Chrome 135+). */
   appearance: ["auto", "none", "menulist-button", "textfield"],
   "-webkit-appearance": ["auto", "none", "menulist-button", "textfield"],

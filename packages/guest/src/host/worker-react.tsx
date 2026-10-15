@@ -26,6 +26,8 @@ export interface WorkerViewDefinition {
   readonly onProblem?: (said: string) => void;
   /** Where an image the app holds (`/graview/assets/<sha256>.<ext>`) is loaded from, so the view may draw it by that path (WorkerViewOptions.asset). */
   readonly asset?: (path: string) => string | undefined;
+  /** The `https:` origins its images may come from by address (WorkerViewOptions.images): none by default. */
+  readonly images?: { readonly origins: readonly string[] };
 }
 
 const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
@@ -101,6 +103,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(definition.author ? { author: definition.author } : {}),
         ...(definition.onProblem ? { onProblem: definition.onProblem } : {}),
         ...(definition.asset ? { asset: definition.asset } : {}),
+        ...(definition.images ? { images: definition.images } : {}),
       });
     });
     return () => {

@@ -36,6 +36,8 @@ export interface OpenRendererOptions extends JudgeContext {
   readonly onAttribute?: (element: Element, name: string) => void;
   /** The view set what a field holds (its `value`, `checked`, `selected`, or a textarea's text): it is no longer what the person typed. */
   readonly onFieldSet?: (field: Element) => void;
+  /** Something the view drew was refused, as it was: the host's chance to say it. */
+  readonly onRefused?: (refusal: OpenRefusal) => void;
 }
 
 export interface OpenRenderer {
@@ -86,6 +88,7 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
   const refuse = (refusal: OpenRefusal) => {
     refused.push(refusal);
     if (refused.length > 200) refused.shift();
+    options.onRefused?.(refusal);
   };
   const placeholder = (): Drawn => ({ dom: document.createComment(""), children: [], refused: true });
   /** The field a node is, or is inside (an option's select, a textarea's text). */
@@ -178,6 +181,8 @@ export function createOpenRenderer(into: Node, options: OpenRendererOptions): Op
     const element = document.createElementNS(judged.namespace === "svg" ? SVG_NAMESPACE : HTML_NAMESPACE, judged.name);
     /* A `<nav>` drawn as a `<div>` says so, and the view's `nav` selectors are read as `[data-graview-as="nav"]` (host/css.ts). */
     if (judged.as) element.setAttribute("data-graview-as", judged.as);
+    /* An image asks with no referrer, set before its source is: an origin the host lists for images learns nothing of the page it is drawn on. */
+    if (judged.namespace === "html" && judged.name === "img") element.setAttribute("referrerpolicy", "no-referrer");
     const drawn: Drawn = { dom: element, name: judged.name, namespace: judged.namespace, children: [], id, parent };
     byId.set(id, drawn);
     ids.set(element, id);

@@ -29,7 +29,7 @@ import {
  * `@supports`, `@container` and `@keyframes`; the properties on
  * `CSS_PROPERTIES` (and custom properties); the functions on
  * `CSS_FUNCTIONS`; `url(#id)` only on a paint; `position` only static,
- * relative or absolute. A selector that reaches out of the view's shadow
+ * relative, absolute or sticky; `all` only its keywords. A selector that reaches out of the view's shadow
  * tree (`:host`, `::slotted`, `::part`) takes its rule with it. Everything
  * refused is written down, with why.
  *

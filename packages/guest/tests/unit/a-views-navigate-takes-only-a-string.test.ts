@@ -97,8 +97,8 @@ describe("a view's navigate", () => {
     say({ type: "navigate", place: "y".repeat(10_000) });
     await wait(50);
     expect(problems).toEqual([
-      `"${"x".repeat(79)}…" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages". Its lists: "parties", "offers", "packages", "what-we-heard".`,
-      `The place "${"y".repeat(79)}…" is no place of this app: it goes nowhere. Its places: "the-packages". Its lists: "parties", "offers", "packages", "what-we-heard".`,
+      `"${"x".repeat(79)}…" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages" (The packages). Its lists: "parties", "offers", "packages", "what-we-heard".`,
+      `The place "${"y".repeat(79)}…" is no place of this app: it goes nowhere. Its places: "the-packages" (The packages). Its lists: "parties", "offers", "packages", "what-we-heard".`,
     ]);
     // Bounded whatever was asked: the quote, the places and at most eight lists.
     for (const said of problems) expect(said.length).toBeLessThan(320);
@@ -108,7 +108,7 @@ describe("a view's navigate", () => {
     const { problems, say } = started();
     say({ type: "navigate", to: "z".repeat(80) });
     await wait(50);
-    expect(problems).toEqual([`"${"z".repeat(80)}" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages". Its lists: "parties", "offers", "packages", "what-we-heard".`]);
+    expect(problems).toEqual([`"${"z".repeat(80)}" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages" (The packages). Its lists: "parties", "offers", "packages", "what-we-heard".`]);
   });
 
   it("counts every navigate, lost or refused, against the flood allowance, and says no more once the view is stopped", async () => {
@@ -126,7 +126,7 @@ describe("a view's navigate", () => {
   it("is quoted the same bounded way in a headless run's problems", () => {
     const judged = judgeTranscript(
       { renders: [], asked: [], went: [{ record: "x".repeat(10_000) }, { place: "y".repeat(10_000) }], ms: 1, logs: [], messages: 2 },
-      { props: {} as never, acts: [], places: ["the-packages"], limits: { maxNodes: 100, messages: 100, pushMs: 1_000 } },
+      { props: {} as never, acts: [], places: [{ as: "the-packages" }], limits: { maxNodes: 100, messages: 100, pushMs: 1_000 } },
     );
     expect(judged.ok).toBe(true);
     const says = judged.ok ? judged.problems.filter((problem) => problem.at === "navigate").map((problem) => problem.says) : [];

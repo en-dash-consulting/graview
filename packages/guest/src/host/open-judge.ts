@@ -45,6 +45,8 @@ export interface OpenRefusal {
   readonly element?: string;
   readonly name?: string;
   readonly css?: CssRefusal;
+  /** The address an image asked for and was refused, as far as 200 characters: said, so its author knows which. */
+  readonly address?: string;
 }
 
 /** An element as the host draws it, or a refusal. */
@@ -82,6 +84,53 @@ export interface JudgeContext {
    * draws only `data:` images and the page's own `blob:`.
    */
   readonly asset?: (path: string) => string | undefined;
+  /**
+   * The origins an image may be loaded from by its `https:` address, as the
+   * host lists them (`https://upload.wikimedia.org`): none by default.
+   * Drawn with no referrer, so the page's own address goes nowhere.
+   */
+  readonly imageOrigins?: readonly string[];
+}
+
+/**
+ * WHY AN IMAGE'S ADDRESS WAS NOT DRAWN, in a sentence for its author: the
+ * address, and the ways a view may show an image — where an `https:` one
+ * is on an origin the host does not list, which origins it does.
+ */
+export function imageRefusedWords(address: string, origins: readonly string[] = []): string {
+  const shown = address.length > 120 ? `${address.slice(0, 119)}…` : address;
+  const web = /^https:\/\//i.test(address);
+  const listed = imageOriginsOf(origins);
+  const why = web
+    ? listed.length > 0
+      ? ` Its origin is not one the host lists for images (${listed.join(", ")}).`
+      : " The host lists no origin a view's images may come from."
+    : "";
+  return `The image "${shown}" was not drawn.${why} A view shows a data: image, the app's own image (/graview/assets/…), a picture on a record (pictures in its manifest), or an https: image on an origin the host lists (images.origins).`;
+}
+
+/** The origins of a host's list that are `https:` origins, as the URL parser says them; anything else in it is no origin. */
+export function imageOriginsOf(listed: readonly string[] | undefined): readonly string[] {
+  return (listed ?? []).flatMap((origin) => {
+    try {
+      const parsed = new URL(origin);
+      return parsed.protocol === "https:" && parsed.hostname !== "" && parsed.username === "" && parsed.password === "" ? [parsed.origin] : [];
+    } catch {
+      return [];
+    }
+  });
+}
+
+/** An image's `https:` address on an origin the host lists, as the URL parser says it; nothing where it is not one. */
+function listedImage(value: string, origins: readonly string[] | undefined): string | undefined {
+  if (!origins || origins.length === 0 || !/^https:\/\//i.test(value)) return undefined;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "https:" || parsed.username !== "" || parsed.password !== "") return undefined;
+    return imageOriginsOf(origins).includes(parsed.origin) ? parsed.href : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -102,7 +151,7 @@ export function judgeAttribute(
   if (namespace === "html" && UNNAMED_ELEMENTS[element]?.includes(found.name)) return { refused: { reason: "attribute", element, name } };
   if (value === null) return { name: found.name, value: null };
   const judged = judgeValue(found.name, found.kind, value, context);
-  if ("refused" in judged) return { refused: { ...judged.refused, element } };
+  if ("refused" in judged) return { refused: { ...judged.refused, element, ...(found.kind === "image" && judged.refused.reason === "url" ? { address: value.slice(0, 200) } : {}) } };
   /* What the app's chrome and notices speak with stays the app's (ADR 0007: a view never uses the app's bar or notices). */
   if (found.name === "role" && judged.value.split(/\s+/).some((role) => (REFUSED_ROLES as readonly string[]).includes(role.toLowerCase()))) return { refused: { reason: "value", element, name } };
   if (found.name === "aria-live" && !["polite", "off"].includes(judged.value.toLowerCase())) return { refused: { reason: "value", element, name } };
@@ -125,6 +174,9 @@ function judgeValue(name: string, kind: OpenAttribute, value: string, context: J
       const address = context.asset(value);
       if (address) return { value: address };
     }
+    /* An https: address on an origin the host lists for images (2026-10-15): the host chose to let the page ask it, and asks with no referrer. */
+    const listed = listedImage(value, context.imageOrigins);
+    if (listed) return { value: listed };
     return refused("url");
   }
   if (value.length > OPEN_MAX_ATTRIBUTE) return refused("value");

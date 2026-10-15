@@ -52,8 +52,8 @@ already set a record aside.
    purpose with the `excerpt` formatter — `{summary|excerpt}` is its first
    sentence or about 140 characters cut at a word, `{summary|excerpt: 80}`
    at most 80 (20 to 1000) — and leave the whole text to the record's page.
-   A list cut by its `limit` says "See all 120 features" and goes to the
-   kind's list. Prose written in Markdown says so —
+   A list block draws 100, then "Show 58 more" (`limit` up to 1000);
+   `group: "inGenre"` heads it by linked record. Markdown prose says so —
    `{"type": "text", "format": "markdown"}`, or `markdownField()` — and the
    record's page draws it as prose (headings, lists, links, code; no HTML),
    while a row, a card, a describe line and a search hit say its first

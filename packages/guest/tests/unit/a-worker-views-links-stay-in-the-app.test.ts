@@ -96,8 +96,8 @@ describe("a worker view's links", () => {
     expect(went).toEqual([]);
     // And says why, naming the places there are: a link that goes nowhere is not silent.
     expect(lost).toEqual([
-      '"offer:margin" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages".',
-      'The place "the-secrets" is no place of this app: it goes nowhere. Its places: "the-packages".',
+      '"offer:margin" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages" (The packages).',
+      'The place "the-secrets" is no place of this app: it goes nowhere. Its places: "the-packages" (The packages).',
     ]);
   });
 
@@ -123,7 +123,7 @@ describe("a worker view's links", () => {
     const judged = createLinks({ sees: (id) => shelf.seenBy(lin).graph.has(id), places: () => places, onLost: (said) => lost.push(said) });
     for (const to of [{ record: "offer:margin" }, { place: "https://attacker.example" }, { record: "https://attacker.example" }]) expect(judged.go(to)).toBe(false);
     expect(lost).toHaveLength(3);
-    for (const said of lost) expect(said).toMatch(/: it goes nowhere\. Its places: "the-packages"\.$/);
+    for (const said of lost) expect(said).toMatch(/: it goes nowhere\. Its places: "the-packages" \(The packages\)\.$/);
   });
 
   it("takes a bare string that is no record but is a place's slug to that place, and a record before a place of the same name", () => {

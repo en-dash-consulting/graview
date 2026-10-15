@@ -23,6 +23,18 @@ import {
 import { actThatMoves } from "./calendar-placing.js";
 import { withNaturalTime } from "./natural-time.js";
 import { entriesOn, placeEachOnCalendar, placeOnCalendar } from "./calendar-placing.js";
+
+/** The first and last years these entries are dated in; nothing where none is. */
+function yearsOf(entries: readonly (PlacedEntry | null)[]): { readonly first: number; readonly last: number } | undefined {
+  let first = Infinity;
+  let last = -Infinity;
+  for (const entry of entries) {
+    if (!entry) continue;
+    first = Math.min(first, Number(entry.from.slice(0, 4)));
+    last = Math.max(last, Number(entry.to.slice(0, 4)));
+  }
+  return Number.isFinite(first) && Number.isFinite(last) ? { first, last } : undefined;
+}
 import { type CalendarCell, finerThan, spanOf } from "./calendar-spans.js";
 
 
@@ -165,7 +177,9 @@ function CalendarView<S extends AnySchema>({
   const emphasisOf = (id: string): Emphasis =>
     highlit.size === 0 ? "plain" : highlit.has(id) ? "lit" : "dimmed";
   const broken = new Set(flagged);
-  const span = spanOf(range, at, { weekStartsOn, ...(options.horizon ? { horizon: options.horizon } : {}) });
+  /* The years the records are dated in, which a span of years reaches until the reader steps away from where it opened. */
+  const fit = range === "years" && view.within?.["at"] === undefined ? yearsOf((nodes ?? []).map((node) => placeOnCalendar<S>(node, options.bindings, schema))) : undefined;
+  const span = spanOf(range, at, { weekStartsOn, ...(options.horizon ? { horizon: options.horizon } : {}), ...(fit ? { fit } : {}) });
   /*
    * A DATE THAT REPEATS is drawn at every occurrence the grid shows, each
    * marked as a repeat; a glance at the calendar counts it once, at its next.
@@ -260,7 +274,7 @@ function CalendarView<S extends AnySchema>({
   const move = (step: number) => {
     const next =
       range === "years"
-        ? addMonths(at, step * 12 * Math.max(1, options.horizon?.years ?? 1))
+        ? addMonths(`${span.years?.[0] ?? at.slice(0, 4)}${at.slice(4)}`, step * 12 * Math.max(1, span.years?.length ?? options.horizon?.years ?? 1))
         : range === "year"
           ? addMonths(at, step * 12)
           : range === "quarter"

@@ -53,6 +53,13 @@
  * text and its columns side by side, wrapping on a phone; a list drawn as
  * rows gives each record the list's width and its whole name; badges that
  * follow one another sit on one line, on a card and on a record's page.
+ * And the Beatles' discography as it was built in a chat (Oct 15,
+ * `beatles.gdd.json`): a career calendar spans its releases, 1962 to 2023,
+ * though it opens on 1970 with thirty years; "Songs by genre" with no genre
+ * says so rather than listing songs; "Releases by era" lists its releases
+ * oldest first, as its `sort` says; and the home's 158 songs, grouped by
+ * writer, draw 100 and "Show 58 more", which draws the rest under their
+ * writers.
  *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
@@ -103,6 +110,9 @@ const REVIEW_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/rev
 /** A review app's home and places, as the blocks were found to lay out wrong (Oct 15): nested headlines, row groups, rows, badges. */
 const LAYOUT = resolve(repoRoot, "packages/core/tests/document/fixtures/blocks-layout.gdd.json");
 const LAYOUT_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/blocks-layout.seed.json");
+/** The Beatles' discography (Oct 15): its lenses told a horizon and an order, and a home listing every song by writer. */
+const BEATLES = resolve(repoRoot, "packages/core/tests/document/fixtures/beatles.gdd.json");
+const BEATLES_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/beatles.seed.json");
 const MONEY_SEED = {
   nodes: [
     { id: "d1", kind: "deal", name: "Acme rebrand", amount: 10000, margin: 0.125, effort: 90, weight: 12.5, fee: 1250.5, stage: "won" },
@@ -173,20 +183,31 @@ async function buildHost() {
         import layout from ${JSON.stringify(LAYOUT)};
         import layoutSeed from ${JSON.stringify(LAYOUT_SEED)};
         const laidOut = asked.get("doc") === "layout";
+        import beatles from ${JSON.stringify(BEATLES)};
+        import beatlesSeed from ${JSON.stringify(BEATLES_SEED)};
+        const fab = asked.get("doc") === "beatles";
+        const discography = {
+          ...beatles,
+          views: { home: [{ headline: "The songs" }, { list: "all('song')", sort: "name", as: "row", group: "writtenBy" }] },
+          lenses: beatles.lenses.map((lens) =>
+            lens.title === "Releases by year" ? { ...lens, options: { range: "years", horizon: { years: 30, title: "The career" }, today: "1970-04-10" } }
+            : lens.title === "Releases by era" ? { ...lens, options: { sort: { by: "released" } } }
+            : lens),
+        };
         const proposal = asked.get("doc") === "lifelogics";
         const board = asked.get("doc") === "tasks";
         const org = asked.get("doc") === "strengths";
         const changed = asked.get("doc") === "changes";
         const dollars = asked.get("doc") === "money";
-        const compiled = compileDocumentWithoutCheck(laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : reviewed ? review : hall, { today: () => "2026-09-01" });
+        const compiled = compileDocumentWithoutCheck(fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : reviewed ? review : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
+          seed: fab ? beatlesSeed : laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */
           ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal || org || changed || dollars || reviewed || laidOut
+          principal: proposal || org || changed || dollars || reviewed || laidOut || fab
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
             : board
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
@@ -890,6 +911,47 @@ try {
     report.checks.badgesThatFollowOneAnotherSitOnOneLineOnACardAndAPage = {
       badges,
       ok: Object.values(badges).every((seen) => seen.card?.length === 3 && oneLine(seen.card) && seen.page?.length === 3 && oneLine(seen.page)),
+    };
+  }
+
+  /* ---- The Beatles (Oct 15): a career's years, a coverage with nothing to cross, an order told, a list past a page */
+  {
+    const text = async (path, selector) => {
+      const page = await open(`doc=beatles&face=pages&path=${encodeURIComponent(path)}`);
+      await page.waitForSelector(selector, { timeout: 20_000 }).catch(() => {});
+      return page;
+    };
+    const years = await text("/places/releases-by-year", "[data-graview-embed] main");
+    await years.waitForFunction(() => /The career · \d{4}/.test(document.body.textContent ?? ""), null, { timeout: 15_000 }).catch(() => {});
+    const career = await years.evaluate(() => document.body.textContent ?? "");
+    await years.close();
+    report.checks.aCareerCalendarSpansItsRecordsFirstToLast = { span: /The career · \d{4}–\d{4}/.exec(career)?.[0] ?? career.slice(0, 400), ok: career.includes("The career · 1962–2023") };
+
+    const genres = await text("/places/songs-by-genre", "[data-coverage-unlinked]");
+    const unlinked = await genres.evaluate(() => ({ said: document.querySelector("[data-coverage-unlinked]")?.textContent ?? null, songs: [...document.querySelectorAll('[data-graview-pick^="song-"]')].length }));
+    await genres.close();
+    report.checks.aCoverageWithNothingLinkedSaysSoAndListsNoRows = { ...unlinked, ok: unlinked.said === "No genres yet: link songs to genres." && unlinked.songs === 0 };
+
+    const eras = await text("/places/releases-by-era", '[data-graview-pick^="release-"]');
+    const order = await eras.evaluate(() => [...new Set([...document.querySelectorAll('[data-graview-pick^="release-"]')].map((one) => one.getAttribute("data-graview-pick")))]);
+    await eras.close();
+    report.checks.aCoverageListsItsRowsInTheOrderItIsTold = { first: order.slice(0, 4), last: order.at(-1), ok: order.slice(0, 3).join() === "release-love-me-do,release-please-please-me,release-with-the-beatles" && order.at(-1) === "release-now-and-then" };
+
+    const home = await text("/", "[data-graview-show-more]");
+    const before = await home.evaluate(() => ({ listed: document.querySelectorAll("[data-graview-listed]").length, button: document.querySelector("[data-graview-show-more]")?.textContent ?? null }));
+    await home.click("[data-graview-show-more]").catch(() => {});
+    await home.waitForTimeout(600);
+    const after = await home.evaluate(() => ({
+      listed: document.querySelectorAll("[data-graview-listed]").length,
+      button: document.querySelector("[data-graview-show-more]") !== null,
+      headings: [...document.querySelectorAll(".graview-spec-list-heading")].map((heading) => heading.textContent),
+      focus: document.activeElement?.tagName ?? null,
+    }));
+    await home.close();
+    report.checks.aListPastAPageShowsTheRestWhenAskedUnderTheRecordsTheyAreLinkedTo = {
+      before,
+      after,
+      ok: before.listed === 100 && before.button === "Show 58 more" && after.listed === 158 && !after.button && after.headings.join() === "Harrison,Lennon,McCartney,Starkey",
     };
   }
 

@@ -2,7 +2,7 @@ import { kindPath, type AnySchema } from "@graview/core";
 import { sectionSlug } from "@graview/core/navigate";
 import { filterOfWhere } from "./where.js";
 import type { GuestPlace } from "../protocol.js";
-import { nowhere, quoted, whereOfWords } from "./links-words.js";
+import { nowhere, placeNamed, quoted, whereOfWords } from "./links-words.js";
 
 export { nowhere, placesSaid, quoted, whereOfWords } from "./links-words.js";
 
@@ -107,9 +107,9 @@ export function judgeDestination(to: Destination, input: JudgeDestinationInput):
     return { ok: true, arrival: { record: to.record, ...also } };
   }
   const asked = "place" in to ? to.place : to.record;
-  const place = input.places.find((one) => one.as === asked);
+  const place = placeNamed(input.places, asked);
   const list = place ? undefined : input.lists.find((one) => one.slug === asked || one.kind === asked);
-  if (!place && !list) return { ok: false, says: `${nowhere(to, placeSlugs)}${listsSaid(listSlugs)}` };
+  if (!place && !list) return { ok: false, says: `${nowhere(to, input.places.filter((one, at, all) => all.findIndex((other) => other.as === one.as) === at))}${listsSaid(listSlugs)}` };
   const kinds = place ? [place.kind] : [list!.kind];
   let filter: string | undefined;
   if (to.where !== undefined && to.where !== null) {

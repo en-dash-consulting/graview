@@ -22,12 +22,13 @@ export interface DrawnTranscript {
   readonly css: string;
 }
 
-export function drawTranscript(renders: readonly unknown[], css: string | undefined, options: { readonly maxNodes: number; readonly origin?: string }): DrawnTranscript {
+export function drawTranscript(renders: readonly unknown[], css: string | undefined, options: { readonly maxNodes: number; readonly origin?: string; readonly imageOrigins?: readonly string[] }): DrawnTranscript {
   const { root } = createTree();
   let over = false;
   const renderer = createOpenRenderer(root as unknown as Node, {
     /* No page, so no `blob:` of its own: an image is a `data:` image or nothing. */
     origin: options.origin ?? "null",
+    ...(options.imageOrigins ? { imageOrigins: options.imageOrigins } : {}),
     maxNodes: options.maxNodes,
     onOverBudget: () => (over = true),
   });

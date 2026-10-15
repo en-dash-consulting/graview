@@ -1,0 +1,11 @@
+---
+"@graview/core": patch
+"@graview/primitives": patch
+"@graview/skills": patch
+---
+
+A list shows more past a page, and groups by a linked record. A list block held at most 100 records and a `limit` past 100 was refused, so 158 songs had to be split by their names into two lists; and a list grouped only by a choice field, so songs by genre, where a genre is a record, could not be said. A list now holds up to its `limit` (1,000 at most, the most it holds unsaid), draws a page of 100 and a "Show 58 more" button that draws the next page — under their headings, where it is grouped — and a list cut past what it holds still says "See all" or "and N more". `group` takes a relation as a kind's list writes a field: `"inGenre"`, or `"out('inGenre')"` and `"in('writtenBy')"` to say which way, a heading per linked record in the order of their names, a record linked to two under both, and one linked to none last, under "No genre". A group by what is neither a choice nor a relation of the kind listed is refused by its path, as before. The graview-lists skill says so, and `verify-declared` holds both in a browser.
+
+A hosted page's first load carries 4.0 KB more up front for these and the other fixes from the Beatles' discography (a coverage that says it has nothing to cross and orders its rows and columns, a career calendar's span, a field called label kept a field, a place known by its title), and 3.3 KB more where it is handed a compiled app, raised in `scripts/budget-raises/lenses-and-views-a-hosted-page.json` and `…-a-hosted-page-handed-a-compiled-app.json`; the embed's pages face, every face, the embed with the studio handed in and two of the guest host's budgets are raised in their own files beside them.
+
+Compatibility: ops and stored records are unchanged. A list block's `limit` is a whole number from 1 to 1,000 where it was 1 to 100, and its `group` may name a relation; a document that compiled compiles. `MAX_LIST_LIMIT` is 1,000, and `LIST_PAGE` (100) is new. A resolved list (`ResolvedList`) keeps its first page in `members` and the records after it in `rest`, with `everyGroup` over them all where it is grouped; `more` counts the rest; `ListGroupOf` names a group's shape, and `groupRelationOf` reads a group by a relation.
