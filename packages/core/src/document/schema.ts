@@ -311,6 +311,13 @@ export type BrandSpec = z.infer<typeof BrandSpec>;
 
 const loose = z.record(z.string(), z.unknown());
 
+/**
+ * A lens: checked by `graview check` against the lenses the framework ships
+ * (`declaredLenses`), so loose here but for what its page is: `create`,
+ * false where the place's page leaves off the forms that begin its kind.
+ */
+const LensSpec = z.looseObject({ create: z.optional(z.boolean()) });
+
 /** A kind's view specs: which slots it fills. The blocks are checked in views.ts, sentence by sentence. */
 const ViewSpecsSpec = z.strictObject({
   card: z.optional(z.array(z.unknown())),
@@ -393,7 +400,7 @@ export const DocumentSpec = z.strictObject({
   roles: z.optional(z.array(name("role"))),
   policy: z.optional(PolicySpec),
   modules: z.optional(loose),
-  lenses: z.optional(z.array(loose)),
+  lenses: z.optional(z.array(LensSpec)),
   pages: z.optional(PagesSpec),
   /** Each kind's views by kind, and `home`: the home view, a list of blocks about no one record (FR-81). */
   views: z.optional(z.record(z.string(), z.union([ViewSpecsSpec, z.array(z.unknown())]))),

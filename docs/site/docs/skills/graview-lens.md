@@ -10,7 +10,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 A lens is a picture that knows nothing about your domain. The timeline does not know what a duty is; it knows there is a `start`, an `end` and a column. The coverage matrix does not know what a requirement is; it knows there are rows, columns and an edge that fills a cell. That indirection is the entire point: a lens written for one app is used unchanged by another.
 
-The framework ships five, each built from the public primitives — which makes them the worked example of the authoring API rather than privileged insiders. Read one before writing your own:
+The framework ships five, each built from the public primitives — which makes them the worked example of the authoring API. Read one before writing your own:
 
 - `packages/primitives/src/lens/timeline.tsx` — intervals in columns
 - `packages/primitives/src/lens/calendar.tsx` — the same intervals, by date
@@ -18,9 +18,9 @@ The framework ships five, each built from the public primitives — which makes 
 - `packages/primitives/src/lens/board.tsx` — position given by the domain (discs for codes of three characters, tokens for words; `arrange: "shelf"` when the x and y are categories rather than coordinates)
 - `packages/primitives/src/lens/plan.tsx` — an outline, with points inside it
 
-(`reach.tsx` sits beside them and is not one: no factory, no roles to rebind. A view that ships is still a view.)
+(`reach.tsx` beside them is not one: no factory, no roles to rebind. A view that ships is still a view.)
 
-The plan is the one to read if yours draws anything, because it is the one that learned what drawing costs. A name is fitted to the shape it names — `fitLabel` and `spanAt` from `@graview/layout`, which give the width of a shape AT A HEIGHT rather than its bounding box, because the shapes that overflow are the long thin ones. Names are painted after everything else, because a marker dot took the first letter off two of them. Whatever will not fit goes in a key underneath. And `useDrawnSize` answers the question a scalable drawing hides: at THIS size, can a person read it, or press it? A one-pixel target with a keyboard stop and an ARIA label is not an accessible control; it is an inaccessible one that has been described.
+The plan is the one to read if yours draws anything, because it is the one that learned what drawing costs. A name is fitted to the shape it names — `fitLabel` and `spanAt` from `@graview/layout`, which give the width of a shape AT A HEIGHT rather than its bounding box, because the shapes that overflow are the long thin ones. Names are painted after everything else, because a marker dot cut two of them. What will not fit goes in a key. And `useDrawnSize` answers the question a scalable drawing hides: at THIS size, can a person read it, or press it? A one-pixel target with a keyboard stop and an ARIA label is not an accessible control; it is an inaccessible one that has been described.
 
 Start it with the scaffolder — `graview lens grounds-map --roles regions,markers
 
@@ -54,7 +54,7 @@ Start it with the scaffolder — `graview lens grounds-map --roles regions,marke
 
 1. **Declare a shipped lens; register only your own.** A `lenses` entry with a `title` is a PLACE the framework draws with no registration — a tab, a name on its district, a page at `/places/<as>`: `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`. A status board: `{ name: "columns", title: "The board", bindings: { task: { column: "status" } } }`; a card moves only by an act setting `status` (`book` where its `allowedWhen` holds). `on` names the kind when the bindings do not (reach; a coverage over its columns), and `options` are data (`SHIPPED_LENSES[name].options`). A lens you wrote is registered with a title as the fourth argument: `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`. Untitled, it is reachable only by focusing the group.
 
-1. **Before writing a picture, try blocks.** `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }` is a place drawn from the closed block set (headline, figure, list — `graview-node-kind`), each record by its own row or card. Nothing in it runs; a chat can write it. Write code only for what blocks cannot say: a meter, a grid of cells, positions.
+1. **Before writing a picture, try blocks.** `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }` is a place drawn from the closed block set (headline, figure, list — `graview-node-kind`), each record by its own row or card. Nothing in it runs; a chat can write it. A place read, not written, says `create: false`: its page drops the forms that add one. Write code only for what blocks cannot say: a grid of cells, positions.
 
 ### Roles live in two places, and they do different jobs
 

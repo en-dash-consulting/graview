@@ -107,6 +107,14 @@ export interface LensDeclaration {
    */
   readonly arrangedBy?: ArrangementWords;
   /**
+   * WHETHER ITS PAGE ENDS WITH THE FORMS THAT BEGIN ITS KIND. A place's page
+   * closes with the acts that add a record of the kind it stands on; on a
+   * page that is read, not written — a summary, a report — that is a form
+   * nobody came for. `false` leaves them off this place's page; the kind's
+   * list and the bar still offer them. Unsaid, they are there.
+   */
+  readonly create?: boolean;
+  /**
    * Per kind, each role bound to a field — `"at"` — or to a field and the
    * values that make it true — `{ field: "status", is: ["done"] }`, the
    * shape `lifecycle` reads a state in — or an entity binding.

@@ -9,7 +9,7 @@ import { EMPTY_GRAPH, formatMoney, formatValue, type Money, type TemplatePart } 
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
-import { FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
+import { FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureEmphasis, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
 import { capitalize } from "../capital.js";
 import { filesOf, isImage, type FileValue } from "../schema/files.js";
 import { fileWords } from "../schema/file-fields.js";
@@ -62,7 +62,7 @@ type UnkeyedSpec =
   | { readonly t: "divider" }
   | { readonly t: "figure" }
   | { readonly t: "headline"; readonly parts: Parsed<readonly TemplatePart[]> }
-  | { readonly t: "number"; readonly value: Parsed<Expr>; readonly as?: FigureFormat; readonly currency?: string; readonly label?: Parsed<readonly TemplatePart[]> }
+  | { readonly t: "number"; readonly value: Parsed<Expr>; readonly as?: FigureFormat; readonly currency?: string; readonly label?: Parsed<readonly TemplatePart[]>; readonly emphasis?: FigureEmphasis }
   | {
       readonly t: "list";
       /** The records, in their order: a `sort` by a key is part of the expression, `sort(<list>, <key>, <direction>)`. */
@@ -161,7 +161,8 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
           return listOf(block);
         case "number": {
           const as = (FIGURE_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as FigureFormat) : undefined;
-          return { t, value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label: template(label) } : {}) };
+          const emphasis = (FIGURE_EMPHASES as readonly unknown[]).includes(block["emphasis"]) ? (block["emphasis"] as FigureEmphasis) : undefined;
+          return { t, value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label: template(label) } : {}), ...(emphasis ? { emphasis } : {}) };
         }
         case "headline":
         case "title":
@@ -240,7 +241,7 @@ type Unkeyed =
   /** The kind's picture: drawn by a face, said by nothing. */
   | { readonly t: "figure" }
   | { readonly t: "headline"; readonly level: number; readonly text: string; readonly problem?: string }
-  | { readonly t: "number"; readonly text: string; readonly label?: string; readonly problem?: string };
+  | { readonly t: "number"; readonly text: string; readonly label?: string; readonly emphasis?: FigureEmphasis; readonly problem?: string };
 
 /** A list worked out: its records in order, a few, under a heading per choice — read from the graph the context was handed. */
 export interface ResolvedList {
@@ -373,6 +374,22 @@ export function sayNumber(value: string | number | boolean, as: FigureFormat | u
 
 const withProblem = <T extends object>(block: T, problem: string | undefined): T => (problem ? { ...block, problem } : block);
 
+/**
+ * WHAT A GROUP HOLDS IS A SECTION OF THE VIEW, NOT ITS TOP. The first
+ * headline of the home is the page's own heading; a headline inside a group
+ * was the first of ITS blocks, so it was said at that level too — two
+ * columns, each with "Where the problems are" at the top, were two more page
+ * titles, each with the app's line under it. A headline in a group or a
+ * condition is said at the level of the view's sections — the level its
+ * other headlines take, under the page's heading — and never as the page's
+ * heading. Not a level more per group: a row of columns is layout, and a
+ * heading two groups in would skip the levels between it and the page's,
+ * which a screen reader's outline of the page says.
+ */
+function nested(ctx: BlockContext): BlockContext {
+  return ctx.firstHeading === undefined ? ctx : { ...ctx, firstHeading: undefined };
+}
+
 function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeyed | ResolvedList {
   switch (block.t) {
     case "title": {
@@ -431,12 +448,12 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       return withProblem({ t: "progress", label, value: value.value, max: max.value, text: `${formatValue(value.value, undefined, ctx.today)} of ${formatValue(max.value, undefined, ctx.today)}` }, problem);
     }
     case "group":
-      return { t: "group", direction: block.direction, blocks: resolveBlocks(block.blocks, ctx) };
+      return { t: "group", direction: block.direction, blocks: resolveBlocks(block.blocks, nested(ctx)) };
     case "when": {
       // A condition that cannot be judged hides what it guards, like a rule's `when`.
       const judged = judge(block.when, ctx);
       const shown = judged.ok && judged.value === true;
-      return withProblem({ t: "when", shown, blocks: shown ? resolveBlocks(block.show, ctx) : [] }, judged.ok ? undefined : judged.problem);
+      return withProblem({ t: "when", shown, blocks: shown ? resolveBlocks(block.show, nested(ctx)) : [] }, judged.ok ? undefined : judged.problem);
     }
     case "divider":
       return { t: "divider" };
@@ -451,7 +468,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       const judged = judge(block.value, ctx);
       const text = !judged.ok || judged.value === null || typeof judged.value === "object" ? NOTHING : sayNumber(judged.value, block.as, block.currency, ctx.today, ctx.money);
       const said = block.label ? say(block.label, ctx) : undefined;
-      return withProblem({ t: "number", text, ...(said ? { label: said.text } : {}) }, judged.ok ? said?.problem : judged.problem);
+      return withProblem({ t: "number", text, ...(said ? { label: said.text } : {}), ...(block.emphasis ? { emphasis: block.emphasis } : {}) }, judged.ok ? said?.problem : judged.problem);
     }
     case "list":
       return resolveList(block, ctx);

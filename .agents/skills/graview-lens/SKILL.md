@@ -12,7 +12,7 @@ columns and an edge that fills a cell. That indirection is the entire point: a
 lens written for one app is used unchanged by another.
 
 The framework ships five, each built from the public primitives — which makes
-them the worked example of the authoring API rather than privileged insiders.
+them the worked example of the authoring API.
 Read one before writing your own:
 
 - `packages/primitives/src/lens/timeline.tsx` — intervals in columns
@@ -23,16 +23,15 @@ Read one before writing your own:
   when the x and y are categories rather than coordinates)
 - `packages/primitives/src/lens/plan.tsx` — an outline, with points inside it
 
-(`reach.tsx` sits beside them and is not one: no factory, no roles to
-rebind. A view that ships is still a view.)
+(`reach.tsx` beside them is not one: no factory, no roles to rebind. A
+view that ships is still a view.)
 
 The plan is the one to read if yours draws anything, because it is the one
 that learned what drawing costs. A name is fitted to the shape it names —
 `fitLabel` and `spanAt` from `@graview/layout`, which give the width of a
 shape AT A HEIGHT rather than its bounding box, because the shapes that
 overflow are the long thin ones. Names are painted after everything else,
-because a marker dot took the first letter off two of them. Whatever will
-not fit goes in a key underneath. And `useDrawnSize` answers the question a
+because a marker dot cut two of them. What will not fit goes in a key. And `useDrawnSize` answers the question a
 scalable drawing hides: at THIS size, can a person read it, or press it? A
 one-pixel target with a keyboard stop and an ARIA label is not an accessible
 control; it is an inaccessible one that has been described.
@@ -146,8 +145,9 @@ the reuse test beside it, red on purpose.
    "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')",
    group: "type", as: "row" }] } }` is a place drawn from the closed block set
    (headline, figure, list — `graview-node-kind`), each record by its own row
-   or card. Nothing in it runs; a chat can write it. Write code only for what
-   blocks cannot say: a meter, a grid of cells, positions.
+   or card. Nothing in it runs; a chat can write it. A place read, not
+   written, says `create: false`: its page drops the forms that add one.
+   Write code only for what blocks cannot say: a grid of cells, positions.
 
 ## Roles live in two places, and they do different jobs
 

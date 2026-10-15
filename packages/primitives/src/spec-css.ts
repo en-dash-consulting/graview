@@ -41,8 +41,22 @@ ${/* A STATE BADGE, the one pill a record wears (FR-117), and never cut
 .graview-spec-track{display:block;height:6px;border-radius:999px;background:var(--graview-edge);overflow:hidden}
 .graview-spec-fill{display:block;height:100%;background:var(--graview-accent)}
 .graview-spec-group{display:flex;flex-direction:column;gap:6px;min-width:0}
-.graview-spec-group[data-direction="row"]{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 10px}
+${/* A ROW GROUP LAYS ANY BLOCK SIDE BY SIDE. Four figures sat in a row,
+   but four lines of text, or two columns of meters, each took the whole
+   width and stacked: a paragraph's natural width is the line it is in.
+   Each block in a row takes a share of it — a figure a narrower one, a
+   badge and a picture only their own — and wraps onto the next line on a
+   phone, before anything is squeezed past reading. */ ""}
+.graview-spec-group[data-direction="row"]{flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:10px 16px}
+.graview-spec-group[data-direction="row"]>*{flex:1 1 12rem;min-width:0}
+.graview-spec-group[data-direction="row"]>.graview-spec-number{flex-basis:7rem}
+.graview-spec-group[data-direction="row"]>:is(.graview-spec-badge,.graview-spec-badges,.graview-spec-figure,.graview-spec-link){flex:0 1 auto}
+.graview-spec-group[data-direction="row"]>:is(.graview-spec-headline,.graview-spec-divider){flex-basis:100%}
 .graview-spec-row .graview-spec-group{flex:1 1 9rem}
+${/* BADGES THAT FOLLOW ONE ANOTHER FLOW AS CHIPS DO, wrapping when the line is full. */ ""}
+.graview-spec-badges{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-width:0}
+.graview-spec-badges:empty{display:none}
+.graview-spec-badges>.graview-spec-badge{align-self:center}
 .graview-spec-divider{width:100%;margin:2px 0;border:0;border-top:1px solid var(--graview-edge)}
 .graview-spec-figure{display:inline-flex;width:22px;height:22px}
 .graview-spec-row[data-graview-tall]{flex-direction:column;flex-wrap:nowrap;align-items:stretch;border-radius:10px;padding:8px 12px}
@@ -55,6 +69,10 @@ ${/* A STATE BADGE, the one pill a record wears (FR-117), and never cut
 .graview-spec-number-value{font-family:var(--graview-font-display,inherit);font-weight:600;font-size:1.75rem;line-height:1.05;letter-spacing:-0.015em;font-variant-numeric:tabular-nums}
 .graview-spec-card .graview-spec-number-value,.graview-spec-row .graview-spec-number-value{font-size:1.25rem}
 .graview-spec-number .graview-spec-label{font-size:.8125rem}
+${/* A FIGURE SAID LARGE ("emphasis": "large"): a stat tile's number at the
+   size of the home's own heading, in its display face. */ ""}
+.graview-spec-number[data-emphasis="large"] .graview-spec-number-value{font-size:clamp(2.25rem,6vw,3.25rem);line-height:1}
+.graview-spec-card .graview-spec-number[data-emphasis="large"] .graview-spec-number-value,.graview-spec-row .graview-spec-number[data-emphasis="large"] .graview-spec-number-value{font-size:1.75rem}
 .graview-spec-listing { display: grid; gap: 10px; min-width: 0; position: relative; z-index: ${LOCAL_LAYERS.raised}; }
 .graview-spec-list-group{display:grid;gap:8px;min-width:0}
 .graview-spec-list-heading{margin:6px 0 0;font-family:var(--graview-font-display,inherit);font-size:1rem;font-weight:600;padding-bottom:4px;border-bottom:1px solid var(--graview-edge-bright,var(--graview-edge))}

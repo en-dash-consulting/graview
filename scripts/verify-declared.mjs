@@ -40,6 +40,13 @@
  * measure said as declared; the form to add one shows "$" beside its
  * amount and takes "$1,250.50" as written.
  *
+ * And blocks lay out as written (`blocks-layout.gdd.json`, a review app's
+ * home), at a desk and a phone: a headline inside a column of a row group is
+ * a section heading, and the app's line is said once; a row group lays its
+ * text and its columns side by side, wrapping on a phone; a list drawn as
+ * rows gives each record the list's width and its whole name; badges that
+ * follow one another sit on one line, on a card and on a record's page.
+ *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
@@ -83,6 +90,9 @@ const STRENGTHS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/
 const CHANGES = resolve(repoRoot, "packages/core/tests/document/fixtures/changes.gdd.json");
 /** Deals in dollars (the money bug found on a Cloud app, Oct 13): an amount, a margin, an effort, a weight and a fee in euros. */
 const MONEY = resolve(repoRoot, "packages/core/tests/document/fixtures/money.gdd.json");
+/** A review app's home and places, as the blocks were found to lay out wrong (Oct 15): nested headlines, row groups, rows, badges. */
+const LAYOUT = resolve(repoRoot, "packages/core/tests/document/fixtures/blocks-layout.gdd.json");
+const LAYOUT_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/blocks-layout.seed.json");
 const MONEY_SEED = {
   nodes: [
     { id: "d1", kind: "deal", name: "Acme rebrand", amount: 10000, margin: 0.125, effort: 90, weight: 12.5, fee: 1250.5, stage: "won" },
@@ -146,21 +156,24 @@ async function buildHost() {
         import strengthsSeed from ${JSON.stringify(STRENGTHS_SEED)};
         import changes from ${JSON.stringify(CHANGES)};
         import money from ${JSON.stringify(MONEY)};
+        import layout from ${JSON.stringify(LAYOUT)};
+        import layoutSeed from ${JSON.stringify(LAYOUT_SEED)};
         const asked = new URLSearchParams(location.search);
+        const laidOut = asked.get("doc") === "layout";
         const proposal = asked.get("doc") === "lifelogics";
         const board = asked.get("doc") === "tasks";
         const org = asked.get("doc") === "strengths";
         const changed = asked.get("doc") === "changes";
         const dollars = asked.get("doc") === "money";
-        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : hall, { today: () => "2026-09-01" });
+        const compiled = compileDocumentWithoutCheck(laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : ${JSON.stringify(SEED)},
+          seed: laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */
           ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal || org || changed || dollars
+          principal: proposal || org || changed || dollars || laidOut
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
             : board
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
@@ -720,6 +733,102 @@ try {
     }
     await form.close();
     report.checks.aMoneyFormShowsItsCurrencyAndTakesAnAmountAsWritten = { box, made, ok: box.type === "text" && box.mode === "decimal" && box.symbol === "$" && box.placeholder === "1,250.00" && made === "said" };
+  }
+
+  /*
+   * ---- Blocks lay out as written (a review app built with `graview preview`, Oct 15).
+   * The review's home: a headline, a row of four stat tiles, a row of four
+   * toned lines, a row of two columns each headed by a headline over two
+   * meters, and every finding as a row; its findings' cards and pages wear
+   * three badges. Measured at a desk and a phone.
+   */
+  {
+    const home = {};
+    const rows = {};
+    const listed = {};
+    const badges = {};
+    for (const size of SIZES) {
+      const at = `${size.width}×${size.height}`;
+      const page = await open(`doc=layout&face=pages&path=${encodeURIComponent("/")}`, size);
+      await page.waitForSelector('[data-testid="home-view"] .graview-spec-headline', { timeout: 15_000 }).catch(() => {});
+      await shoot(page, `layout-home-${size.width}`);
+      const seen = await page.evaluate(() => {
+        const view = document.querySelector('[data-testid="home-view"]');
+        const box = (element) => element.getBoundingClientRect();
+        const groups = view ? [...view.querySelectorAll('.graview-spec-home > .graview-spec-group[data-direction="row"]')] : [];
+        /** How a row group's blocks stand: their tops and lefts, and whether any spills past the group. */
+        const laid = (group) => {
+          if (!group) return null;
+          const outer = box(group);
+          const parts = [...group.children].map(box);
+          return { tops: parts.map((r) => Math.round(r.top)), lefts: parts.map((r) => Math.round(r.left)), widths: parts.map((r) => Math.round(r.width)), spills: parts.some((r) => r.right > outer.right + 1 || r.left < outer.left - 1) };
+        };
+        const list = view?.querySelector('.graview-spec-list[data-as="row"]');
+        return {
+          headlines: view ? [...view.querySelectorAll(".graview-spec-headline")].map((h) => `${h.tagName.toLowerCase()} ${h.getAttribute("data-level")} ${h.textContent?.trim()}`) : [],
+          lines: [...document.querySelectorAll('[data-testid="app-subtitle"]')].length,
+          texts: laid(groups[1]),
+          columns: laid(groups[2]),
+          list: list
+            ? {
+                width: Math.round(box(list).width),
+                rows: [...list.children].map((li) => {
+                  const title = li.querySelector(".graview-spec-title");
+                  return {
+                    width: Math.round(box(li).width),
+                    chip: li.querySelector('[data-graview-primitive="chip"]') !== null,
+                    whole: title ? title.textContent === li.querySelector("a")?.getAttribute("aria-label") && title.scrollWidth <= title.clientWidth + 1 : false,
+                  };
+                }),
+              }
+            : null,
+          spills: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        };
+      });
+      await page.close();
+      home[at] = { headlines: seen.headlines, lines: seen.lines };
+      rows[at] = { texts: seen.texts, columns: seen.columns, spills: seen.spills };
+      listed[at] = seen.list;
+      // Badges on a card (the every-finding place) and on a record's page.
+      const one = {};
+      for (const [where, path, within] of [
+        ["card", "/places/every-finding", '[data-graview-listed="f1"] [data-graview-spec="card"]'],
+        ["page", "/findings/f3", '[data-graview-spec="page"][data-graview-kind="finding"]'],
+      ]) {
+        const shown = await open(`doc=layout&face=pages&path=${encodeURIComponent(path)}`, size);
+        await shown.waitForSelector(`${within} .graview-spec-badge`, { timeout: 15_000 }).catch(() => {});
+        one[where] = await shown.evaluate((selector) => [...document.querySelectorAll(`${selector} .graview-spec-badge`)].map((badge) => Math.round(badge.getBoundingClientRect().top)), within);
+        await shoot(shown, `layout-badges-${where}-${size.width}`);
+        await shown.close();
+      }
+      badges[at] = one;
+    }
+    const desk = `${SIZES[0].width}×${SIZES[0].height}`;
+    const oneLine = (tops) => tops.length > 1 && Math.max(...tops) - Math.min(...tops) <= 4;
+    report.checks.aNestedHeadlineIsASectionHeadingAndTheAppsLineIsSaidOnce = {
+      home,
+      ok: Object.values(home).every(
+        (seen) => seen.lines === 1 && seen.headlines.filter((h) => / 1 /.test(h)).length === 1 && seen.headlines.some((h) => h.startsWith("h3 2 Where the problems are")) && seen.headlines.some((h) => h.startsWith("h3 2 When they are planned")),
+      ),
+    };
+    report.checks.aRowGroupLaysTextAndColumnsSideBySideAndWrapsOnAPhone = {
+      rows,
+      ok:
+        // At a desk, the four lines on one line and the two columns side by side…
+        oneLine(rows[desk]?.texts?.tops ?? []) &&
+        oneLine(rows[desk]?.columns?.tops ?? []) &&
+        new Set(rows[desk]?.columns?.lefts ?? []).size === 2 &&
+        // …and nowhere does anything spill past its row or the page.
+        Object.values(rows).every((seen) => seen.texts && seen.columns && !seen.texts.spills && !seen.columns.spills && !seen.spills),
+    };
+    report.checks.aListOfRowsGivesEachRecordTheListsWidthAndItsWholeName = {
+      listed,
+      ok: Object.values(listed).every((list) => list && list.rows.length === 4 && list.rows.every((row) => !row.chip && row.whole && row.width >= list.width - 2)),
+    };
+    report.checks.badgesThatFollowOneAnotherSitOnOneLineOnACardAndAPage = {
+      badges,
+      ok: Object.values(badges).every((seen) => seen.card?.length === 3 && oneLine(seen.card) && seen.page?.length === 3 && oneLine(seen.page)),
+    };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

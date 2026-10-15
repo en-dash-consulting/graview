@@ -79,6 +79,8 @@ export interface DrawnLens {
   readonly across?: string;
   /** What the factory is handed, as data. */
   readonly options: Readonly<Record<string, unknown>>;
+  /** `false`: its page leaves off the forms that begin its kind (`LensDeclaration.create`). */
+  readonly create?: false;
 }
 
 /** A declared lens that does not draw, and why — what `describe` says and `check` explains. */
@@ -280,7 +282,11 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
       }
     }
     for (const kind of stands) taken.set(`${kind}|${as}`, index);
-    drawn.push({ index, lens: lens.name, title, as, kinds: stands, ...(across ? { across } : {}), options });
+    const create = (lens as { create?: unknown }).create;
+    if (create !== undefined && typeof create !== "boolean") {
+      findings.push({ severity: "warning", code: "lens-create", path: `${at}.create`, message: `"${title}" says create ${JSON.stringify(create)}, which is neither true nor false, so its page keeps the forms that begin its kind.`, fix: `Say "create": false to leave them off, or drop it.` });
+    }
+    drawn.push({ index, lens: lens.name, title, as, kinds: stands, ...(across ? { across } : {}), options, ...(create === false ? { create: false as const } : {}) });
   });
   return { drawn, undrawn, findings };
 }
