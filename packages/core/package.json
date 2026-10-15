@@ -57,6 +57,10 @@
       "types": "./dist/history.d.ts",
       "default": "./dist/history.js"
     },
+    "./past": {
+      "types": "./dist/past.d.ts",
+      "default": "./dist/past.js"
+    },
     "./linked": {
       "types": "./dist/linked.d.ts",
       "default": "./dist/linked.js"

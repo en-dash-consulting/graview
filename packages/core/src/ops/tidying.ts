@@ -3,7 +3,6 @@ import type { Primitive } from "../graph/primitives.js";
 import type { MutationCall } from "../mutations/types.js";
 import { labelOf, pluralOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
-import type { Lineage } from "./lineage.js";
 import { undoneIn } from "./log.js";
 import type { Author, Operation } from "./types.js";
 
@@ -12,13 +11,16 @@ import type { Author, Operation } from "./types.js";
  *
  * A background actor — "Graview, tidying" — links and prunes records on its
  * own: what it is sure of it applies, with lineage; what it is not sure of
- * it suggests, and the suggestion waits for a person (`store.suggest`). A
+ * it suggests, and the suggestion waits for a person (`suggest`, on
+ * `@graview/core/tidying`). A
  * person can say "leave this one alone" of a record, a declaration can say
  * a kind or a relation is never tidied, and a person can decline a
  * suggestion. The store holds the actor to all three, here, whatever path
  * its change takes. The framework records, draws and explains; what to
  * link or prune is the actor's to judge. Everything here is on the page
- * the store is, so it is kept short; Activity's digest is `digest.ts`.
+ * the store is, so it is kept to what the store holds the actor to; the
+ * suggestions waiting are `suggestions.ts`'s and Activity's digest is
+ * `digest.ts`'s, both fetched with `@graview/core/tidying`.
  */
 
 type NodeLike = { readonly id: string; readonly kind: string } & Record<string, unknown>;
@@ -54,41 +56,6 @@ export const suggestionKey = (calls: readonly MutationCall[]): string =>
     calls.map((call) => [call.name, call.args]),
     (_, value) => (value && typeof value === "object" && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).sort()) : value),
   );
-
-/** A suggestion that waits: what it proposes, who proposed it, on what basis, and how sure. */
-export interface Suggestion {
-  /** The id of the op that holds it: what `acceptSuggestion` and `declineSuggestion` take. */
-  readonly id: string;
-  readonly batch: string;
-  readonly calls: readonly MutationCall[];
-  /** What it would do, in the acts' own sentences. */
-  readonly intent: string;
-  readonly author: Author;
-  readonly lineage?: Lineage;
-  readonly at: string;
-  /** The records its calls name, so a tray can point at them. */
-  readonly about: readonly string[];
-}
-
-/**
- * THE SUGGESTIONS STILL WAITING in a log, oldest first: each op that
- * suggests, unless an op accepted it (its lineage names it, whether or not
- * that was taken back later) or a live undo declined it. A withheld op is
- * no suggestion for the seat it was withheld from. `has` keeps, of the ids
- * its calls name, the records (`about`).
- */
-export function suggestionsIn(ops: readonly Operation[], has: (id: string) => boolean = () => true): Suggestion[] {
-  const undone = undoneIn(ops);
-  const accepted = new Set(ops.map((op) => op.lineage?.suggestion));
-  return ops
-    .filter((op) => op.suggests && !op.withheld && !undone.has(op.id) && !accepted.has(op.id))
-    .map(({ id, batch, suggests, intent, author, lineage, at }) => {
-      const about = new Set<string>();
-      // Every string its calls hold, kept where it is a record.
-      JSON.stringify(suggests!.map((call) => call.args), (_, value) => (typeof value === "string" && has(value) && about.add(value), value));
-      return { id, batch, calls: suggests!, intent, author, ...(lineage ? { lineage } : {}), at, about: [...about] };
-    });
-}
 
 /**
  * THE OP THAT DECLINED THESE CALLS — the whole suggestion, or any one of

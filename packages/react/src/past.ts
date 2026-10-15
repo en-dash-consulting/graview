@@ -1,10 +1,11 @@
-import type { AnySchema, PastDeclaration, Principal, Store } from "@graview/core";
+import type { AnySchema, Principal, Store } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
-import { createContext, useCallback, useContext, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { retryingImport } from "@graview/core/retry";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 /**
  * THE APP AS IT WAS, SHOWN (Roadmap f-playback): which moment a face is
- * drawing instead of now, and the store of it (`store.at`) every surface
+ * drawing instead of now, and the store of it (`pastOf`) every surface
  * under it reads — the scene, the pages, the problems, the lenses — so the
  * past is drawn by the one renderer the present is.
  */
@@ -71,34 +72,47 @@ export function useLiveStore<S extends AnySchema>(shown: Store<S>, principal: Pr
   return live;
 }
 
-/** The declaration the host says a moment was made under: the last change at or before it that says one. */
-function declarationIn(host: HistoryHost | undefined, seq: number): PastDeclaration | undefined {
-  let found: PastDeclaration | undefined;
-  for (const mark of [...(host?.declarations ?? [])].sort((a, b) => a.seq - b.seq)) {
-    if (mark.seq > seq) break;
-    if (mark.declaration) found = mark.declaration;
-  }
-  return found;
-}
+type History = typeof import("@graview/core/past");
+/** `@graview/core/past`, fetched when somebody first asks to see the past: the fold is none of a page's weight until then. */
+const history = /* @__PURE__ */ retryingImport(() => import("@graview/core/past"));
+/** The module once it is here, so a face drawn after it arrived shows the past at once. */
+let arrived: History | undefined;
 
 /**
  * A FACE'S OWN PLAYBACK over `live`, or the one it is drawn inside when
- * that one holds this store. Nothing past is folded until somebody asks to
- * see it; a moment the log no longer reaches (cut back under it) is now.
+ * that one holds this store. Nothing past is folded — or fetched — until
+ * somebody asks to see it; a moment the log no longer reaches (cut back
+ * under it) is now.
  */
 export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: Principal, host: HistoryHost | undefined): Playback<S> {
   const outer = useContext(PlaybackContext) as Playback<S> | null;
   const inherited = outer !== null && outer.owns(live as unknown as Store<AnySchema>, principal);
   const [seq, setSeq] = useState<number | null>(null);
+  const [folds, setFolds] = useState<History | undefined>(arrived);
+  // The past is fetched the first time it is asked for; until it is here, now is drawn.
+  useEffect(() => {
+    if (folds || inherited || seq === null) return;
+    let live = true;
+    void history().then(
+      (module) => {
+        arrived = module;
+        if (live) setFolds(module);
+      },
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [folds, inherited, seq]);
   const past = useMemo<PastShown<S> | null>(() => {
-    if (inherited || seq === null || seq >= live.log.length) return null;
+    if (inherited || seq === null || seq >= live.log.length || !folds) return null;
     try {
-      const store = live.at(seq, { declaration: declarationIn(host, seq) });
+      const store = folds.pastAt(live, seq, host);
       return { seq, at: store.past?.at, store };
     } catch {
       return null;
     }
-  }, [inherited, live, seq, host]);
+  }, [inherited, live, seq, host, folds]);
   const show = useCallback((next: number | null) => setSeq(next === null ? null : next >= live.log.length ? Number.POSITIVE_INFINITY : next), [live]);
   const owns = useCallback(
     (store: Store<AnySchema>, seat: Principal) => [live as unknown as Store<AnySchema>, past?.store as unknown as Store<AnySchema> | undefined].some((one) => one !== undefined && (one === store || one.seenBy(seat) === store)),

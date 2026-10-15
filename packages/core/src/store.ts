@@ -19,11 +19,11 @@ import type {
 import { compileMutation } from "./mutations/define-mutation.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
-import { foldOp, OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
+import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
-import { declinedIn, isAutomated, suggestionKey, suggestionsIn, tidyingRefusal, type Suggestion } from "./ops/tidying.js";
+import { declinedIn, isAutomated, tidyingRefusal } from "./ops/tidying.js";
 import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
@@ -141,11 +141,11 @@ export interface StoreOptions<S extends AnySchema> {
    */
   readonly principal?: Author | Principal;
   /**
-   * HOW OFTEN `at` KEEPS A POINT TO FOLD FROM (Roadmap f-playback): every
+   * HOW OFTEN `pastOf` KEEPS A POINT TO FOLD FROM (Roadmap f-playback): every
    * this-many ops, in memory, as a seek passes it. Default 64.
    */
   readonly pastEvery?: number;
-  /** A store of the past (`at`): read, never changed. Set by `at` itself. */
+  /** A store of the past (`pastOf`, `@graview/core/past`): read, never changed. Set by `pastOf` itself. */
   readonly past?: PastPoint;
 }
 
@@ -168,7 +168,7 @@ export interface PastPoint {
 
 /**
  * THE DECLARATION A MOMENT WAS MADE UNDER, when a host knows it was another
- * one (Roadmap f-playback): what `at` folds and judges the past with in
+ * one (Roadmap f-playback): what `pastOf` folds and judges the past with in
  * place of the store's own. Read only: a store of the past offers no act.
  */
 export interface PastDeclaration {
@@ -308,18 +308,6 @@ export interface AppendOp {
   readonly via?: Via;
   /** What it was based on (FR-172), checked as `ApplyOptions.lineage` is. */
   readonly lineage?: Lineage;
-}
-
-/**
- * WHAT `store.suggest` TAKES: who suggests, and — required — what it is
- * based on and how sure (`lineage`). Its channel and the gesture's words
- * as `applyAll` takes them.
- */
-export interface SuggestOptions {
-  readonly author?: Author | Principal;
-  readonly lineage: Lineage;
-  readonly via?: Via;
-  readonly intent?: string;
 }
 
 /** `{ [key]: value }` where the value is said, and nothing where it is not: an optional key left off rather than undefined. */
@@ -558,17 +546,14 @@ export class Store<S extends AnySchema> {
    * that slept through midnight never leaves the store on yesterday.
    */
   private ticked: { readonly day: string; readonly on: string } | undefined;
-  /** Where this store stands in the past, when it is one (`at`): read, never changed. */
+  /** Where this store stands in the past, when it is one (`pastOf`): read, never changed. */
   readonly past: PastPoint | undefined;
-  private readonly opened: StoreOptions<S>;
-  /** The points `at` folds from, oldest first, each with the id of the op before it, so a log cut back and grown again is not trusted. */
-  private pastMarks: { readonly seq: number; readonly id: string | undefined; readonly base: GraphSnapshot }[] = [];
-  /** The graph where the log begins, worked back from the end when no epoch says it (`rewound`). */
-  private rewind: { readonly firstId: string | undefined; readonly base: GraphSnapshot } | undefined;
+  /** How often `pastOf` keeps a point to fold from, in ops (`StoreOptions.pastEvery`). */
+  readonly pastEvery: number;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
-    this.opened = options;
+    this.pastEvery = Math.max(1, options.pastEvery ?? 64);
     this.past = options.past;
     this.schema = options.schema;
     this.invariants = options.invariants ?? [];
@@ -653,129 +638,6 @@ export class Store<S extends AnySchema> {
   /** Refuses any change to a store of the past (Roadmap f-playback). */
   private stillNow(): void {
     if (this.past) throw new PastError(this.past);
-  }
-
-  /**
-   * THE APP AS IT STOOD (Roadmap f-playback): a store read, never changed,
-   * holding the graph and the log as they were before `when` — a seq (the
-   * ops before it are in, none after), or a time (every op made at or
-   * before it). Its graph, its log, its problems and its sight are the
-   * past's own: `seenBy` on it serves a seat what that seat could see then,
-   * and a seat's view of this store answers `at` under the same sight. It
-   * offers no act — not one declared or derived — and refuses every change
-   * (`PastError`).
-   *
-   * A seek folds from the nearest point it can: an epoch at or before
-   * `when`, or a point this store kept in memory every `pastEvery` ops as
-   * an earlier seek passed it — never the whole log twice. `declaration` is
-   * the one the moment was made under, when a host knows it was another
-   * (`@graview/core/history` keeps them, with the sentence each said);
-   * absent, the store's own. A seq behind the undo horizon (FR-23) is in
-   * the archive, not here, and is refused.
-   */
-  at(when: number | string | Date, options: { readonly declaration?: PastDeclaration | undefined } = {}): Store<S> {
-    const log = this.log;
-    const first = log.horizon;
-    const seq = typeof when === "number" ? when : this.seqAt(when);
-    if (!Number.isInteger(seq) || seq < first || seq > log.length) {
-      throw new RangeError(`No moment at seq ${seq}: this store holds seqs ${first} to ${log.length}${first > 0 ? "; what is before its horizon is in the archive" : ""}`);
-    }
-    const ops = log.all();
-    const declared = options.declaration;
-    const schema = (declared?.schema ?? this.schema) as S;
-    const epochs = log.epochs().filter((epoch) => epoch.seq <= seq);
-    const epoch = epochs.at(-1);
-    const start = epoch?.seq ?? first;
-    // A kept point is trusted while the op before it is the one it was taken after.
-    const idBefore = (at: number) => (at > first ? ops[at - 1 - first]?.id : undefined);
-    this.pastMarks = this.pastMarks.filter((mark) => mark.seq <= log.length && idBefore(mark.seq) === mark.id);
-    const mark = [...this.pastMarks].reverse().find((one) => one.seq >= start && one.seq <= seq);
-    const from = mark?.seq ?? start;
-    const base = (mark?.base ?? epoch?.base ?? this.rewound()) as GraphSnapshot<NodeOfSchema<S>>;
-    // Judged as the store judges, so a default filled in on the way in is filled in again; a base the declaration no longer fits is held as written.
-    let graph: Graph<S>;
-    try {
-      graph = Graph.from(schema, base, { validate: this.validate });
-    } catch {
-      graph = Graph.from(schema, base, { validate: false });
-    }
-    const every = Math.max(1, this.opened.pastEvery ?? 64);
-    const keep = (after: number, id: string | undefined) => {
-      if (this.pastMarks.some((one) => one.seq === after)) return;
-      this.pastMarks.push({ seq: after, id, base: graph.snapshot() });
-      this.pastMarks.sort((a, b) => a.seq - b.seq);
-    };
-    for (let next = from; next < seq; next++) {
-      const op = ops[next - first]!;
-      try {
-        foldOp(graph, op);
-      } catch {
-        // An op that lands on nothing under this declaration is passed over: the past is shown, never refused.
-      }
-      if ((next + 1) % every === 0 && next + 1 < seq) keep(next + 1, op.id);
-    }
-    // A long fold keeps where it ended too, so scrubbing about here folds little.
-    if (seq - from >= every) keep(seq, idBefore(seq));
-    const at = ops[seq - 1 - first]?.at ?? epoch?.at;
-    const o = this.opened;
-    return new Store<S>({
-      schema,
-      invariants: (declared?.invariants ?? this.invariants) as readonly InvariantDefinition<S>[],
-      invariantOptions: this.invariantOptions,
-      ...given("policy", declared ? declared.policy : this.policy),
-      ...given("modules", declared?.modules ?? this.declaredModules),
-      ...given("enabledModules", this.startingModules),
-      ...given("intelligence", o.intelligence),
-      ...given("principal", o.principal),
-      log: ops.slice(0, seq - first),
-      epochs,
-      ...(first > 0 && !epochs.some((one) => one.horizon) ? { horizon: first } : {}),
-      snapshot: graph.snapshot(),
-      validate: false,
-      now: this.now,
-      past: { seq, ...given("at", at), foldedFrom: from, folded: seq - from },
-    });
-  }
-
-  /**
-   * THE GRAPH WHERE THE LOG BEGINS, when no epoch says it (Roadmap
-   * f-playback): a store reopened with its log and its graph but not the
-   * epoch its seed began (a page's browser adapter keeps none) did not
-   * begin empty, so the past is not folded from empty. It is the graph
-   * after the log — the first epoch past it, else the graph held — with
-   * each op's inverse put back, newest first. Kept while the log begins
-   * with the same op.
-   */
-  private rewound(): GraphSnapshot {
-    const ops = this.log.all();
-    const first = this.log.horizon;
-    const firstId = ops[0]?.id;
-    if (this.rewind && this.rewind.firstId === firstId) return this.rewind.base;
-    const later = this.log.epochs().find((epoch) => epoch.seq > first);
-    const graph = Graph.from(this.schema, (later?.base ?? this.graph.snapshot()) as GraphSnapshot<NodeOfSchema<S>>, { validate: false });
-    for (let at = (later?.seq ?? this.log.length) - 1; at >= first; at--) {
-      try {
-        graph.applyPrimitives(ops[at - first]!.inverse, { restoring: true });
-      } catch {
-        // An inverse that lands on nothing is passed over, as a fold passes over an op that does.
-      }
-    }
-    const base = graph.snapshot();
-    this.rewind = { firstId, base };
-    return base;
-  }
-
-  /**
-   * THE SEQ A TIME FALLS AT (Roadmap f-playback): every op made at or
-   * before `when` is before it. Before the first op the log holds, its
-   * horizon; after the last, its length.
-   */
-  seqAt(when: string | Date): number {
-    const time = typeof when === "string" ? Date.parse(when) : when.getTime();
-    if (Number.isNaN(time)) throw new RangeError(`“${String(when)}” is not a time`);
-    const ops = this.log.all();
-    const after = ops.findIndex((op) => Date.parse(op.at) > time);
-    return after === -1 ? this.log.length : this.log.horizon + after;
   }
 
   /** Winds the default op and batch counters past every id the log holds, and past the horizon (FR-23). */
@@ -1936,101 +1798,6 @@ export class Store<S extends AnySchema> {
   private refuseDeclined(calls: readonly MutationCall[], author: Author | Principal): void {
     const declined = declinedIn(this.log.all(), calls);
     if (declined) this.refuse({ mutation: calls[0]!.name, message: `${this.authorName(author)} may not make this again: a person declined it on ${declined.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);
-  }
-
-  /**
-   * A SUGGESTION THAT WAITS (`@graview/core/tidying`). The calls are judged
-   * as `applyAll` would judge them for this author — permission, sight, the
-   * act's own guard, a record a person said to leave alone — on a
-   * rehearsal, and none of it is applied: the log keeps one op that
-   * suggests them (`suggests`), with no primitives, its lineage required,
-   * and every subscriber hears it. A change already declined is refused,
-   * in a sentence; one already waiting is answered with the suggestion
-   * that waits; one that would change nothing is not suggested (undefined).
-   * A person accepts it (`acceptSuggestion`) or declines it
-   * (`declineSuggestion`). Call it on the store that keeps the log — a
-   * server's, for a hosted app — whose ops reach every client as they are.
-   */
-  suggest(calls: readonly MutationCall[], options: SuggestOptions): Operation | undefined {
-    const lineage = lineageOf(options.lineage);
-    if (lineage === undefined) throw new GraphError("A suggestion says what it is based on: { basis, confidence? }");
-    const author = options.author ?? this.by;
-    const key = suggestionKey(calls);
-    const waiting = this.suggestions().find((one) => suggestionKey(one.calls) === key);
-    if (waiting) return this.log.get(waiting.id);
-    this.refuseDeclined(calls, author);
-    const rehearsal = this.rehearsal();
-    rehearsal.suggesting = true;
-    const planned = rehearsal.applying(calls, { author, lineage, ...given("via", options.via) });
-    if (planned.ops.length === 0) return undefined;
-    const described = [...new Set(planned.ops.flatMap((op) => op.described ?? []))];
-    const op: Operation = {
-      id: this.nextId(),
-      seq: this.log.length,
-      batch: this.mintBatch("batch"),
-      author,
-      intent: planned.ops.map((one) => one.intent).join("; "),
-      ...given("batchIntent", options.intent),
-      mutation: null,
-      primitives: [],
-      inverse: [],
-      reads: [],
-      writes: [],
-      ...(described.length > 0 ? { described } : {}),
-      at: this.now(),
-      ...given("via", options.via),
-      lineage,
-      suggests: calls,
-    };
-    this.log.append(op);
-    this.notify(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, [op]);
-    return op;
-  }
-
-  /**
-   * THE SUGGESTIONS WAITING, oldest first — as `principal` may see them,
-   * when one is named: a suggestion that names a record the seat may not
-   * see is not among them (it is withheld, as any op that names one is).
-   */
-  suggestions(principal?: Principal): readonly Suggestion[] {
-    const ops = principal !== undefined && hidesFrom(this, principal) ? this.seenBy(principal).log.all() : this.log.all();
-    return suggestionsIn(ops, (id) => this.graph.has(id));
-  }
-
-  /**
-   * ACCEPT A SUGGESTION: its calls applied as one gesture, as the person
-   * (`options.author`, or the store's principal) — judged as any change of
-   * theirs is — carrying the suggestion's lineage, which names it
-   * (`lineage.suggestion`), so it waits no longer.
-   */
-  acceptSuggestion(id: string, options: ApplyOptions = {}): ApplyResult<S> {
-    const author = options.author ?? this.by;
-    const suggestion = this.waitingFor(id, author);
-    return this.applyAll(suggestion.calls, { ...options, author, lineage: { ...suggestion.lineage!, suggestion: id } });
-  }
-
-  /**
-   * DECLINE A SUGGESTION: an undo of it, which changes nothing and carries
-   * its lineage (`undoneLineage`), so `declined(calls)` says so and the
-   * same suggestion — or the same change, made on its own — is refused
-   * to the app's own actor from now on. Undone, it waits again.
-   */
-  declineSuggestion(id: string, options: ApplyOptions = {}): ApplyResult<S> {
-    const author = options.author ?? this.by;
-    const suggestion = this.waitingFor(id, author);
-    return this.undo(suggestion.batch, { ...options, author });
-  }
-
-  /** The op that declined these calls — the whole suggestion, or any one of them on its own — or undefined: what an actor asks before it suggests. */
-  declined(calls: readonly MutationCall[]): Operation | undefined {
-    return declinedIn(this.log.all(), calls);
-  }
-
-  /** A suggestion still waiting that this author may see, or a sentence saying it is not. */
-  private waitingFor(id: string, author: Author | Principal): Suggestion {
-    const found = this.suggestions(author as Principal).find((one) => one.id === id);
-    if (!found) throw new GraphError("That suggestion is no longer waiting: it was accepted or declined, or it is not one you can see.");
-    return found;
   }
 
   /** A change not kept: the graph as it was, and the log cut back to where it stood. */

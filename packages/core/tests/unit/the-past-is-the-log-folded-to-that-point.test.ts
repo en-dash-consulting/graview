@@ -3,12 +3,13 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { compileDocument } from "../../src/check.js";
 import { bindSchema, createSchema, defineNode, nodeRef, PastError, Store, type AnySchema, type Principal } from "../../src/index.js";
-import { declarationAt, declarationSentence, makerOf, pastAt, restoreBatches, ticksOf } from "../../src/history.js";
+import { declarationSentence, makerOf, restoreBatches, ticksOf } from "../../src/history.js";
+import { declarationAt, pastAt, pastOf, seqAt } from "../../src/past.js";
 
 /**
  * THE PAST IS THE LOG FOLDED TO THAT POINT (Roadmap f-playback). A person
  * scrubs back through an app's history and watches it being built: each
- * moment is `store.at(seq)` — the records, the links and the declaration
+ * moment is `pastOf(store, seq)` — the records, the links and the declaration
  * as they stood — read, never changed, folded from the nearest kept point
  * rather than from the start, and served to a seat as that seat could see
  * it then.
@@ -70,55 +71,55 @@ const sorted = (snapshot: { nodes: readonly { id: string }[]; edges: readonly { 
   edges: [...snapshot.edges].map((edge) => `${edge.kind}:${edge.from}->${edge.to}`).sort(),
 });
 
-describe("store.at", () => {
+describe("pastOf", () => {
   it("is the store folded to that point: its records, its links and its log, at every seq", () => {
     const store = built(30) as unknown as Store<AnySchema>;
     for (let seq = 0; seq <= store.log.length; seq++) {
-      const past = store.at(seq);
+      const past = pastOf(store, seq);
       expect(sorted(past.graph.snapshot()), `seq ${seq}`).toEqual(sorted(foldedTo(store, seq)));
       expect(past.log.length).toBe(seq);
       expect(past.past?.seq).toBe(seq);
     }
-    expect(store.at(3).graph.getNode("t0")).toMatchObject({ label: "First" });
-    expect(store.at(1).graph.getNode("t0")).toMatchObject({ label: "Task 0" });
-    expect(store.at(5).graph.allEdges()).toEqual([]);
-    expect(store.at(6).graph.allEdges().map((edge) => `${edge.from}->${edge.to}`)).toEqual(["t1->t0"]);
+    expect(pastOf(store, 3).graph.getNode("t0")).toMatchObject({ label: "First" });
+    expect(pastOf(store, 1).graph.getNode("t0")).toMatchObject({ label: "Task 0" });
+    expect(pastOf(store, 5).graph.allEdges()).toEqual([]);
+    expect(pastOf(store, 6).graph.allEdges().map((edge) => `${edge.from}->${edge.to}`)).toEqual(["t1->t0"]);
   });
 
   it("is the moment a time names: every op made at or before it, none after", () => {
     const store = built(10);
-    expect(store.seqAt("2026-10-13T09:04:00.000Z")).toBe(5);
-    expect(store.at("2026-10-13T09:04:30.000Z").log.length).toBe(5);
-    expect(store.at(new Date(Date.UTC(2026, 9, 13, 8))).graph.allNodes()).toEqual([]);
-    expect(store.at("2027-01-01T00:00:00.000Z").log.length).toBe(10);
-    expect(store.at(5).past?.at).toBe("2026-10-13T09:04:00.000Z");
+    expect(seqAt(store, "2026-10-13T09:04:00.000Z")).toBe(5);
+    expect(pastOf(store, "2026-10-13T09:04:30.000Z").log.length).toBe(5);
+    expect(pastOf(store, new Date(Date.UTC(2026, 9, 13, 8))).graph.allNodes()).toEqual([]);
+    expect(pastOf(store, "2027-01-01T00:00:00.000Z").log.length).toBe(10);
+    expect(pastOf(store, 5).past?.at).toBe("2026-10-13T09:04:00.000Z");
   });
 
   it("folds from a point it kept, never from the start again", () => {
     const store = built(300, { pastEvery: 64 });
-    const first = store.at(200);
+    const first = pastOf(store, 200);
     expect(first.past).toMatchObject({ seq: 200, foldedFrom: 0, folded: 200 });
     // The seek kept points every 64 ops on its way, and where it stopped.
-    expect(store.at(190).past).toMatchObject({ foldedFrom: 128, folded: 62 });
-    expect(store.at(201).past).toMatchObject({ foldedFrom: 200, folded: 1 });
-    expect(store.at(64).past).toMatchObject({ foldedFrom: 64, folded: 0 });
-    expect(sorted(store.at(190).graph.snapshot())).toEqual(sorted(foldedTo(store as unknown as Store<AnySchema>, 190)));
+    expect(pastOf(store, 190).past).toMatchObject({ foldedFrom: 128, folded: 62 });
+    expect(pastOf(store, 201).past).toMatchObject({ foldedFrom: 200, folded: 1 });
+    expect(pastOf(store, 64).past).toMatchObject({ foldedFrom: 64, folded: 0 });
+    expect(sorted(pastOf(store, 190).graph.snapshot())).toEqual(sorted(foldedTo(store as unknown as Store<AnySchema>, 190)));
   });
 
   it("does not trust a kept point once the log under it was cut back and grew again", () => {
     const store = built(80, { pastEvery: 32 });
-    store.at(70);
+    pastOf(store, 70);
     store.log.truncate(40);
     store.apply({ name: "add", args: { id: "fresh", label: "Fresh" } });
     for (let n = 0; n < 30; n++) store.apply({ name: "rename", args: { id: "fresh", label: `Fresh ${n}` } });
-    const past = store.at(70);
+    const past = pastOf(store, 70);
     expect(past.past?.foldedFrom).toBeLessThanOrEqual(40);
     expect(past.graph.getNode("fresh")).toBeDefined();
   });
 
   it("offers no act and refuses every change: the past is read, never changed", () => {
     const store = built(9);
-    const past = store.at(4);
+    const past = pastOf(store, 4);
     expect(past.allMutations()).toEqual([]);
     expect(past.permittedMutations(me)).toEqual([]);
     expect(past.permits({ name: "add", args: { id: "x", label: "X" } }, me)).toMatchObject({ ok: false, refusal: { message: "Nothing changes while you look back." } });
@@ -150,15 +151,15 @@ describe("store.at", () => {
     // As a page's browser adapter reopens it: the graph and the log, and no epoch.
     const reopened = new Store({ schema, mutations: [add, rename], snapshot: seeded.graph.snapshot(), log: seeded.log.all() });
     expect(reopened.log.epochs()).toEqual([]);
-    for (let seq = 0; seq <= 3; seq++) expect(sorted(reopened.at(seq).graph.snapshot()), `seq ${seq}`).toEqual(sorted(seeded.at(seq).graph.snapshot()));
-    expect(reopened.at(0).graph.getNode("seed")).toMatchObject({ label: "From the seed" });
+    for (let seq = 0; seq <= 3; seq++) expect(sorted(pastOf(reopened, seq).graph.snapshot()), `seq ${seq}`).toEqual(sorted(pastOf(seeded, seq).graph.snapshot()));
+    expect(pastOf(reopened, 0).graph.getNode("seed")).toMatchObject({ label: "From the seed" });
   });
 
   it("is refused behind the undo horizon: that is the archive's", () => {
     const store = built(40);
     store.compact(store.checkpoint({ seq: 20 })!);
-    expect(() => store.at(10)).toThrow(/archive/);
-    expect(sorted(store.at(30).graph.snapshot())).toEqual(sorted(built(30).graph.snapshot()));
+    expect(() => pastOf(store, 10)).toThrow(/archive/);
+    expect(sorted(pastOf(store, 30).graph.snapshot())).toEqual(sorted(built(30).graph.snapshot()));
   });
 });
 
@@ -190,7 +191,7 @@ describe("restore to here", () => {
     const check = store.canUndo(batches);
     expect(check.ok, check.ok ? "" : check.message).toBe(true);
     const result = store.undo(batches, { author: me });
-    expect(sorted(store.graph.snapshot())).toEqual(sorted(store.at(seq).graph.snapshot()));
+    expect(sorted(store.graph.snapshot())).toEqual(sorted(pastOf(store, seq).graph.snapshot()));
     // One change, and undone as one.
     expect(new Set(result.ops.map((op) => op.batch)).size).toBe(1);
     store.undo(result.batch, { author: me });
@@ -218,12 +219,12 @@ describe("a seat's past", () => {
     store.apply({ name: "draw", args: { note: "Cy for Ann", giver: "p_cy", receiver: "p_ann" } }, { author: organizer });
     const notes = (seen: Store<AnySchema>) => seen.graph.nodesOfKind("match" as never).map((node) => (node as { note?: string }).note);
     const seq = store.batches()[1]!.ops.at(-1)!.seq + 1;
-    expect(notes(store.at(seq))).toHaveLength(2);
-    expect(notes(store.at(seq).seenBy(ann))).toEqual(["Ann for Bo"]);
-    expect(notes(store.seenBy(ann).at(seq))).toEqual(["Ann for Bo"]);
-    expect(notes(store.seenBy(organizer).at(seq))).toHaveLength(2);
+    expect(notes(pastOf(store, seq))).toHaveLength(2);
+    expect(notes(pastOf(store, seq).seenBy(ann))).toEqual(["Ann for Bo"]);
+    expect(notes(pastOf(store.seenBy(ann), seq))).toEqual(["Ann for Bo"]);
+    expect(notes(pastOf(store.seenBy(organizer), seq))).toHaveLength(2);
     // Its timeline says the change it may not see happened, and nothing of it.
-    const ticks = ticksOf(store.seenBy(ann).at(store.log.length), { me: ann });
+    const ticks = ticksOf(pastOf(store.seenBy(ann), store.log.length), { me: ann });
     expect(ticks.filter((tick) => tick.withheld).length).toBeGreaterThan(0);
     expect(ticks.filter((tick) => tick.withheld).every((tick) => tick.author === undefined)).toBe(true);
   });

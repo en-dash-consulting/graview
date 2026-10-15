@@ -25,7 +25,7 @@ export interface Change {
   /** What a record this change removed was called, read from the removal: it is no longer in the graph to ask. */
   readonly removed?: Readonly<Record<string, string>>;
   readonly batch: string;
-  /** The moment just after it: `store.at(seq)` shows the app as it was once it was made (Roadmap f-playback). */
+  /** The moment just after it: `pastOf(store, seq)` shows the app as it was once it was made (Roadmap f-playback). */
   readonly seq: number;
   /**
    * A CHANGE YOU CANNOT SEE (FR-16): every op of it was withheld from this

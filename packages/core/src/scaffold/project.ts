@@ -467,6 +467,7 @@ export default defineConfig({
       "@graview/core/field-sight": framework("core/src/field-sight.ts"),
       "@graview/core/provenance": framework("core/src/provenance.ts"),
       "@graview/core/history": framework("core/src/history.ts"),
+      "@graview/core/past": framework("core/src/past.ts"),
       "@graview/core/linked": framework("core/src/linked.ts"),
       "@graview/core/tidying": framework("core/src/tidying.ts"),
       "@graview/core/forms": framework("core/src/forms.ts"),

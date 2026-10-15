@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { bindSchema, createSchema, defineNode, nodeRef, Store, type Author } from "@graview/core";
+import { declined, suggest } from "@graview/core/tidying";
 import { EMPTY_VIEW } from "@graview/layout";
 import { createViews, GraviewProvider } from "@graview/react";
 import { act } from "react";
@@ -59,7 +60,7 @@ function tidied() {
   });
   store.apply({ name: "wait-for", args: { taskId: "book", blockerId: "quote" } }, { author: actor, lineage: { basis: "Booking needs the quote", confidence: 0.94 } });
   store.apply({ name: "wait-for", args: { taskId: "paint", blockerId: "shelves" } }, { author: actor, lineage: { basis: "The shelves cover the wall", confidence: 0.91 } });
-  store.suggest([{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "The piano goes out before the keys go back", confidence: 0.42 } });
+  suggest(store, [{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "The piano goes out before the keys go back", confidence: 0.42 } });
   return store;
 }
 
@@ -131,8 +132,8 @@ describe("the scene's bar, after the app's own actor tidied", () => {
     await act(async () => row.querySelector<HTMLButtonElement>('[data-testid="suggestion-decline"]')!.click());
     await settled(() => expect($('[data-testid="suggested-button"]')).toBeNull());
     expect(store.graph.allEdges()).toHaveLength(2);
-    expect(store.declined([{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }])?.author).toMatchObject(nora);
-    expect(() => store.suggest([{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
+    expect(declined(store, [{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }])?.author).toMatchObject(nora);
+    expect(() => suggest(store, [{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
     // The keyboard went to Activity with the tray, never to <body>.
     expect(document.activeElement?.getAttribute("data-testid")).toBe("activity-button");
   });

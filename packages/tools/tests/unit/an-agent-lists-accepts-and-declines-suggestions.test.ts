@@ -1,4 +1,5 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store, type AnySchema, type Author, type Policy } from "@graview/core";
+import { suggest, suggestions } from "@graview/core/tidying";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createToolRuntime } from "../../src/index.js";
@@ -42,8 +43,8 @@ const storeOf = (policy?: Policy) =>
     },
   });
 const suggestTwo = (store: Store<AnySchema>) => [
-  store.suggest([{ name: "supply", args: { id: "vendor:quill", event: "event:gala" } }], { author: actor, lineage: { basis: "Quill printed something in April", confidence: 0.4 } })!,
-  store.suggest([{ name: "supply", args: { id: "vendor:bloom", event: "event:gala" } }], { author: actor, lineage: { basis: "Bloom's invoice", confidence: 0.55 } })!,
+  suggest(store, [{ name: "supply", args: { id: "vendor:quill", event: "event:gala" } }], { author: actor, lineage: { basis: "Quill printed something in April", confidence: 0.4 } })!,
+  suggest(store, [{ name: "supply", args: { id: "vendor:bloom", event: "event:gala" } }], { author: actor, lineage: { basis: "Bloom's invoice", confidence: 0.55 } })!,
 ];
 
 describe("the suggestions on the tool surface", () => {
@@ -70,8 +71,8 @@ describe("the suggestions on the tool surface", () => {
     expect(made.lineage).toEqual({ basis: "Bloom's invoice", confidence: 0.55, suggestion: bloom!.id });
     const declined = await runtime.call("decline_suggestion", { suggestion: quill!.id });
     expect(declined.ok).toBe(true);
-    expect(store.suggestions()).toEqual([]);
-    expect(() => store.suggest([{ name: "supply", args: { id: "vendor:quill", event: "event:gala" } }], { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
+    expect(suggestions(store)).toEqual([]);
+    expect(() => suggest(store, [{ name: "supply", args: { id: "vendor:quill", event: "event:gala" } }], { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
     const again = await runtime.call("decline_suggestion", { suggestion: quill!.id });
     expect(again).toMatchObject({ ok: false, error: expect.stringMatching(/no longer waiting/) });
   });

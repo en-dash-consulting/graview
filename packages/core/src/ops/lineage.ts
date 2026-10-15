@@ -26,7 +26,7 @@ export interface Lineage {
   readonly model?: string;
   /**
    * THE SUGGESTION THIS CHANGE ACCEPTED: the id of the op that proposed it
-   * (`store.acceptSuggestion`), so the log says which suggestion became
+   * (`acceptSuggestion`, `@graview/core/tidying`), so the log says which suggestion became
    * which change and the suggestion is no longer waiting.
    */
   readonly suggestion?: string;

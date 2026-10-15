@@ -10,7 +10,7 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * scrubs, one tick per change — marked by who made it, the bigger ticks
  * where the declaration changed, with the sentence it said — and a player
  * that walks it at a speed. While a moment is shown, the face draws the
- * store of that moment (`store.at`), offering no act; "Back to now" leaves.
+ * store of that moment (`pastOf`), offering no act; "Back to now" leaves.
  */
 
 const ANYONE: Principal = { kind: "human" };

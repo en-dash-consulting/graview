@@ -28,6 +28,7 @@ import {
   type Violation,
 } from "@graview/core";
 import { answerSeenBy } from "@graview/core/seat";
+import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
 import { search, type SearchRanker } from "@graview/core/search";
 import { argumentsNeverShown, mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import { authorship, markHits } from "./untrusted.js";
@@ -445,7 +446,7 @@ const READ_TOOLS: readonly ToolDefinition[] = [
     annotations: { title: "Undo a batch", readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
   },
   /*
-   * WHAT WAITS FOR A PERSON (`store.suggest`): a change the app's own actor
+   * WHAT WAITS FOR A PERSON (`suggest`, `@graview/core/tidying`): a change the app's own actor
    * was not sure enough of to make. Listed as this seat may see them, and
    * accepted or declined as the person would from the Suggested tray.
    */
@@ -1096,7 +1097,7 @@ export function createToolRuntime<S extends AnySchema>(
 
         case "list_suggestions": {
           // As this seat may see them; what the actor based each on is its words, handed over as data (FR-10).
-          const waiting = store.suggestions(principal).map((one) => {
+          const waiting = suggestions(store, principal).map((one) => {
             const by = nameOfAuthor(one.author, { graph: seen.graph as never, schema: store.schema });
             return {
               id: one.id,
@@ -1114,7 +1115,7 @@ export function createToolRuntime<S extends AnySchema>(
         case "decline_suggestion": {
           const id = String(args["suggestion"] ?? "");
           const as = { author: principal, ...viaNow(options.via) };
-          const done = definition.name === "accept_suggestion" ? store.acceptSuggestion(id, as) : store.declineSuggestion(id, as);
+          const done = definition.name === "accept_suggestion" ? acceptSuggestion(store, id, as) : declineSuggestion(store, id, as);
           const result = answerSeenBy(store, principal, done);
           return { ok: true, data: { batch: result.batch, intent: result.intent, introduces: result.introduces.map(withoutLine), resolves: result.resolves.map(withoutLine) }, diff: result.diff };
         }

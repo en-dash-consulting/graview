@@ -1,5 +1,6 @@
 import { Store, type AnySchema } from "@graview/core";
 import type { HistoryHost } from "@graview/core/history";
+import { pastOf } from "@graview/core/past";
 import { EMPTY_VIEW } from "@graview/layout";
 import { registerDefaultViews } from "@graview/primitives";
 import { createViews, GraviewProvider, PlaybackContext, type Playback, type ViewComponent } from "@graview/react";
@@ -21,7 +22,7 @@ const manifest: WorkerViewManifest = { name: "deliverable", attach: "deliverable
 function drawnAt(viewAt: HistoryHost["viewAt"]) {
   const views = registerWorkerView(registerDefaultViews(workshopApp.schema as AnySchema, createViews(workshopApp.schema as AnySchema)), { manifest, worker: { source: "graview.onProps(() => graview.render('now'));" } });
   const store = new Store({ schema: workshopApp.schema, mutations: workshopApp.mutations ?? [], policy: workshopApp.policy!, snapshot: structuredClone(workshopSeed) as never }) as unknown as Store<AnySchema>;
-  const past = store.at(0);
+  const past = pastOf(store, 0);
   const asked: [string, number][] = [];
   const playback: Playback = {
     past: { seq: 0, at: undefined, store: past },

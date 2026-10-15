@@ -1,12 +1,12 @@
 /**
  * THE APP'S HISTORY, PLAYED BACK (Roadmap f-playback): `@graview/core/history`.
  *
- * `store.at(when)` is the app as it stood; this is what a timeline reads
- * around it — one tick per gesture, marked by who made it, the bigger
- * ticks where the declaration changed with the sentence it said, the
- * declaration in force at a moment, and the gestures a "Restore to here"
- * takes back as one change. Its own entry, because nothing here is needed
- * before somebody opens the past: a face fetches it when they do.
+ * `pastOf(store, when)` (`@graview/core/past`) is the app as it stood;
+ * this is what a timeline reads around it — one tick per gesture, marked by
+ * who made it, the bigger ticks where the declaration changed with the
+ * sentence it said, and the gestures a "Restore to here" takes back as one
+ * change. Its own entry, because nothing here is needed before somebody
+ * opens the past: the timeline fetches it when they do.
  *
  * What the log does not hold — a script view's code, an asset's bytes —
  * is the host's, and it hands it through `HistoryHost`.
@@ -54,7 +54,7 @@ export interface HistoryHost {
 
 /** One gesture on the timeline, or one declaration change made outside the log. */
 export interface PlaybackTick {
-  /** The moment just after it: `store.at(seq)` shows it made. */
+  /** The moment just after it: `pastOf(store, seq)` shows it made. */
   readonly seq: number;
   /** The seq of its first op; equal to `seq` for a declaration change the log holds no op of. */
   readonly from: number;
@@ -132,22 +132,6 @@ export function ticksOf<S extends AnySchema>(store: Store<S>, options: { readonl
     });
   }
   return ticks.sort((a, b) => a.seq - b.seq || Number(a.batch !== undefined) - Number(b.batch !== undefined));
-}
-
-/** The declaration a moment was made under: the last mark at or before `seq` that carries one. Absent, the store's own. */
-export function declarationAt(marks: readonly DeclarationMark[] | undefined, seq: number): PastDeclaration | undefined {
-  let found: PastDeclaration | undefined;
-  for (const mark of [...(marks ?? [])].sort((a, b) => a.seq - b.seq)) {
-    if (mark.seq > seq) break;
-    if (mark.declaration) found = mark.declaration;
-  }
-  return found;
-}
-
-/** The app as it stood at `when`, under the declaration the host says it was made under: `store.at` with the host's marks read. */
-export function pastAt<S extends AnySchema>(store: Store<S>, when: number | string | Date, host: HistoryHost = {}): Store<S> {
-  const seq = typeof when === "number" ? when : store.seqAt(when);
-  return store.at(seq, { declaration: declarationAt(host.declarations, seq) });
 }
 
 type Declared = Pick<AnySchema, "kinds" | "tryDefinition">;

@@ -66,6 +66,7 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
+        import { declined, suggest } from "@graview/core/tidying";
         import { todoApp } from ${JSON.stringify(todo)};
         import seed from ${JSON.stringify(seed)};
         const asked = new URLSearchParams(location.search);
@@ -94,6 +95,8 @@ async function buildHost() {
           ],
         };
         window.__handle = mount(document.getElementById("app"), options);
+        // What reads the suggestions back, for the claims that ask the store what a person declined.
+        window.__tidying = { declined };
         /*
          * The app's own actor tidied, when the page asks: two links it is sure of, made with their lineage, and one it is not, suggested.
          * Its run is one row of Activity, and the suggestion waits in the Suggested tray beside it.
@@ -103,7 +106,7 @@ async function buildHost() {
           const actor = { kind: "system", id: "tidying", name: "Graview, tidying", automated: true };
           store.apply({ name: "wait-for", args: { taskId: "t-paint", blockerId: "t-shelves" } }, { author: actor, lineage: { basis: "The shelves cover the wall that needs paint", confidence: 0.93 } });
           store.apply({ name: "wait-for", args: { taskId: "t-broadband", blockerId: "t-notice" } }, { author: actor, lineage: { basis: "The broadband moves with the notice date", confidence: 0.9 } });
-          store.suggest([{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage: { basis: "The post is redirected from the day notice is given", confidence: 0.45 } });
+          suggest(store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }], { author: actor, lineage: { basis: "The post is redirected from the day notice is given", confidence: 0.45 } });
         }
         window.__handle.drawn().then(() => { window.__ready = true; });`,
       resolveDir: resolve(repoRoot, "packages/embed"),
@@ -692,7 +695,7 @@ try {
         const before = window.__handle.store.graph.allEdges().length;
         document.querySelector('[data-testid="suggestion-decline"]')?.click();
         await new Promise((done) => setTimeout(done, 200));
-        const declinedBy = window.__handle.store.declined([{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }])?.author.id ?? null;
+        const declinedBy = window.__tidying.declined(window.__handle.store, [{ name: "wait-for", args: { taskId: "t-post", blockerId: "t-notice" } }])?.author.id ?? null;
         return { trayGone: document.querySelector('[data-testid="suggested-button"]') === null, unchanged: window.__handle.store.graph.allEdges().length === before, declinedBy, keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName };
       });
       await page.close();

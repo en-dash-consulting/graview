@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 import { bindSchema, createSchema, defineNode, isLeftAlone, nodeRef, Store, type Author, type Policy, type Principal } from "@graview/core";
+import { suggest, suggestions } from "@graview/core/tidying";
 import { createViews } from "@graview/react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -68,7 +69,7 @@ function tidied(policy?: Policy) {
   });
   store.apply({ name: "wait-for", args: { taskId: "book", blockerId: "quote" } }, { author: actor, lineage: { basis: "Booking needs the quote", confidence: 0.94 } });
   store.apply({ name: "wait-for", args: { taskId: "paint", blockerId: "shelves" } }, { author: actor, lineage: { basis: "The shelves cover the wall", confidence: 0.91 } });
-  store.suggest([{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "The piano goes out before the keys go back", confidence: 0.42 } });
+  suggest(store, [{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "The piano goes out before the keys go back", confidence: 0.42 } });
   return store;
 }
 
@@ -122,8 +123,8 @@ describe("the routed face's bar, after the app's own actor tidied", () => {
     expect($('[data-testid="suggestion"]')!.textContent).toContain("“Hand back the keys” waits for “Move the piano”");
     await act(async () => $('[data-testid="suggestion-decline"]')!.click());
     await settled(() => expect($('[data-testid="suggested-button"]')).toBeNull());
-    expect(store.suggestions()).toEqual([]);
-    expect(() => store.suggest([{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
+    expect(suggestions(store)).toEqual([]);
+    expect(() => suggest(store, [{ name: "wait-for", args: { taskId: "keys", blockerId: "piano" } }], { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
   });
 
   it("shows a seat only the suggestions about what it may see", async () => {
@@ -136,7 +137,7 @@ describe("the routed face's bar, after the app's own actor tidied", () => {
       ],
     };
     const store = tidied(policy);
-    store.suggest([{ name: "pin-note", args: { id: "memo", task: "book" } }], { author: actor, lineage: { basis: "The note names the van" } });
+    suggest(store, [{ name: "pin-note", args: { id: "memo", task: "book" } }], { author: actor, lineage: { basis: "The note names the van" } });
     await open(store, "/tasks", { kind: "human", id: "gus", roles: ["guest"] });
     await settled(() => expect($('[data-testid="suggested-button"]')).not.toBeNull());
     expect($('[data-testid="suggested-button"]')!.textContent).toContain("1");

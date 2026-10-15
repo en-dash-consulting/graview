@@ -130,7 +130,7 @@ export interface Operation {
    */
   readonly undoneLineage?: Lineage;
   /**
-   * A SUGGESTION THAT WAITS (`store.suggest`): the calls it proposes, which
+   * A SUGGESTION THAT WAITS (`suggest`, `@graview/core/tidying`): the calls it proposes, which
    * it does not apply. The op has no primitives and changes nothing; its
    * `lineage` says why and how sure. Accepting it applies the calls as the
    * person, their lineage naming it (`lineage.suggestion`); declining it is

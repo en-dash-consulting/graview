@@ -6,7 +6,7 @@
  * row of Activity, "Show the app as it was here" opens the timeline. The
  * claims: the timeline has a tick per change marked by who made it;
  * scrubbing from the start to now shows the app grow on the scene; every
- * stop shows the app exactly as `store.at` says it stood, on the scene and
+ * stop shows the app exactly as `pastOf` says it stood, on the scene and
  * on the routed face's list; nothing is offered to change while the past is
  * shown; the player walks to now at its speed; and "Back to now" is now.
  *
@@ -35,10 +35,12 @@ const shot = async (page, name) => {
   await page.screenshot({ path: resolve(SHOTS, `${name}.png`) });
 };
 const ADDED = ["Measure the hallway", "Label the boxes", "Defrost the freezer"];
+/** `@graview/core/past` as the todo example's dev server serves it (its alias is the source), so the page's own store classes fold it. */
+const PAST = `/@fs${resolve(repoRoot, "packages/core/src/past.ts")}`;
 
 /*
  * THE STORE ITSELF, for the claims that compare a screen with what
- * `store.at` says: the watch is handed every store as it opens (as the
+ * `pastOf` (`@graview/core/past`) says: the watch is handed every store as it opens (as the
  * journeys keep it), and the first that holds tasks is the app's.
  */
 const KEEP_THE_STORE = () => {
@@ -73,12 +75,13 @@ const grow = (page) =>
     return { ids, length: store.log.length, batches: store.batches().length };
   }, ADDED);
 
-/** What `store.at(seq)` says stood then: the added tasks, the deposit's label, which are done, and the links. */
+/** What `pastOf(store, seq)` says stood then: the added tasks, the deposit's label, which are done, and the links. */
 const asItWas = (page, seq) =>
   page.evaluate(
-    ([seq, added]) => {
+    async ([seq, added, module]) => {
+      const { pastOf } = await import(module);
       const store = window.__playbackStores.find((one) => one.schema.kinds.includes("task"));
-      const past = store.at(seq);
+      const past = pastOf(store, seq);
       const tasks = past.graph.nodesOfKind("task");
       return {
         added: added.filter((label) => tasks.some((task) => task.label === label)),
@@ -90,7 +93,7 @@ const asItWas = (page, seq) =>
         edges: past.graph.allEdges().length,
       };
     },
-    [seq, ADDED],
+    [seq, ADDED, PAST],
   );
 
 /** What a face draws now: which added tasks, the deposit's label, and the timeline's state. */
@@ -224,12 +227,13 @@ try {
       await page.click('[data-testid="restore-here"]');
       await page.waitForTimeout(500);
       run.restored = await drawn(page);
-      run.restoredStore = await page.evaluate((seq) => {
+      run.restoredStore = await page.evaluate(async ([seq, module]) => {
+        const { pastOf } = await import(module);
         const store = window.__playbackStores.find((one) => one.schema.kinds.includes("task"));
         const key = (snapshot) => JSON.stringify([[...snapshot.nodes].map((node) => JSON.stringify(node)).sort(), [...snapshot.edges].map((edge) => `${edge.kind}:${edge.from}->${edge.to}`).sort()]);
         const last = store.batches().at(-1);
-        return { same: key(store.graph.snapshot()) === key(store.at(seq).graph.snapshot()), oneUndo: last.ops.every((op) => op.undoes !== undefined), intent: last.intent };
-      }, restoredTo);
+        return { same: key(store.graph.snapshot()) === key(pastOf(store, seq).graph.snapshot()), oneUndo: last.ops.every((op) => op.undoes !== undefined), intent: last.intent };
+      }, [restoredTo, PAST]);
       await context.close();
     } catch (error) {
       run.error = String(error).slice(0, 1200);
@@ -244,7 +248,7 @@ try {
 }
 
 const every = (holds) => report.runs.length > 0 && report.runs.every((run) => !run.error && holds(run));
-/** A face shows a moment exactly as it was: the added tasks `store.at` holds and no other, and the deposit as it was called. */
+/** A face shows a moment exactly as it was: the added tasks `pastOf` holds and no other, and the deposit as it was called. */
 const exactly = (shown, was, which = "added") => shown && was && JSON.stringify([...shown.added].sort()) === JSON.stringify([...was[which]].sort()) && shown.early === (was.deposit === "Pay the deposit early") && shown.deposit === (was.deposit !== null);
 report.checks = {
   // Activity lists the latest changes, newest first: its oldest row opens the app as it stood just after that change.

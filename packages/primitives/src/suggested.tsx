@@ -1,23 +1,28 @@
 import { nameOfAuthor, type AnySchema, type Suggestion } from "@graview/core";
 import { lineageWords } from "@graview/core/provenance";
-import { POPOVER_STYLE, useGraview, usePopover } from "@graview/react/provider";
-import { useState } from "react";
+import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
+import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
+import { useMemo, useState } from "react";
 import { Chip, VISUALLY_HIDDEN } from "./primitives/index.js";
 import { nameOf } from "./workbench/answer-args.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
  * THE SUGGESTED TRAY: what the app's own actor proposed and did not make
- * (`store.suggest`), waiting for a person — quietly, on the bar beside
+ * (`suggest`, `@graview/core/tidying`), waiting for a person — quietly, on the bar beside
  * Activity, never in the way of anything. Each says what it would do, who
  * suggested it, what it was based on and how sure, and the records it
  * names; Accept makes it as the person, carrying its lineage, and Decline
  * keeps the decline in the log, so it is never suggested again. Fetched
- * when there is something to suggest (`BarSuggested`), so a page with none
- * carries none of it.
+ * when the log holds a suggestion (`BarSuggested`), so a page with none
+ * carries none of it; drawn while one still waits for this seat.
  */
-export function SuggestedTray({ waiting }: { readonly waiting: readonly Suggestion[] }) {
+export function SuggestedTray() {
+  const { store, principal } = useGraview<AnySchema>();
+  const nodes = useGraph();
+  const waiting = useMemo(() => suggestions(store, principal), [store, principal, nodes]);
   const popover = usePopover("suggested");
+  if (waiting.length === 0) return null;
   return (
     <div style={{ position: "relative" }}>
       <button
@@ -106,8 +111,8 @@ function SuggestionRow({ suggestion, settled }: { readonly suggestion: Suggestio
   const settle = (how: "accept" | "decline") => {
     setRefused(null);
     try {
-      if (how === "accept") store.acceptSuggestion(suggestion.id, { author: principal });
-      else store.declineSuggestion(suggestion.id, { author: principal });
+      if (how === "accept") acceptSuggestion(store, suggestion.id, { author: principal });
+      else declineSuggestion(store, suggestion.id, { author: principal });
       settled?.();
     } catch (error) {
       setRefused(error instanceof Error ? error.message : String(error));

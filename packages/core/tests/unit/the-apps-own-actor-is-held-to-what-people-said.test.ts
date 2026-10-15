@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { foldDigests, digestWords, tidyingRefusal } from "../../src/tidying.js";
+import { acceptSuggestion, declined, declineSuggestion, digestWords, foldDigests, suggest, suggestions, tidyingRefusal } from "../../src/tidying.js";
 import { bindSchema, createSchema, defineNode, isAutomated, isLeftAlone, nodeRef, PermissionDeniedError, Store, type AnySchema, type Author, type Policy } from "../../src/index.js";
 
 /**
@@ -73,7 +73,7 @@ const storeOf = (policy?: Policy) =>
 function tidy(store: Store<AnySchema>) {
   const first = store.apply(link("vendor:bloom", "event:gala"), { author: actor, lineage: { basis: "The gala's invoice names Bloom", confidence: 0.95 } });
   const second = store.apply(link("vendor:harbor", "event:gala"), { author: actor, lineage: { basis: "Harbor's quote is for the gala", confidence: 0.92 } });
-  const waiting = store.suggest([link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Quill printed something in April", confidence: 0.4 } });
+  const waiting = suggest(store, [link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Quill printed something in April", confidence: 0.4 } });
   return { first, second, waiting: waiting! };
 }
 
@@ -86,45 +86,45 @@ describe("a suggestion that waits", () => {
     expect(store.graph.allEdges().map((edge) => edge.from).sort()).toEqual(["vendor:bloom", "vendor:harbor"]);
     expect(waiting.suggests).toEqual([link("vendor:quill", "event:gala")]);
     expect(waiting.primitives).toEqual([]);
-    expect(store.suggestions().map((one) => [one.id, one.intent, one.lineage?.confidence, one.about])).toEqual([[waiting.id, "Link Quill Stationers to Spring gala", 0.4, ["vendor:quill", "event:gala"]]]);
+    expect(suggestions(store).map((one) => [one.id, one.intent, one.lineage?.confidence, one.about])).toEqual([[waiting.id, "Link Quill Stationers to Spring gala", 0.4, ["vendor:quill", "event:gala"]]]);
     // Asked again, the same suggestion is the one that waits: none is added.
-    expect(store.suggest([link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Again" } })!.id).toBe(waiting.id);
-    expect(store.suggestions()).toHaveLength(1);
+    expect(suggest(store, [link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Again" } })!.id).toBe(waiting.id);
+    expect(suggestions(store)).toHaveLength(1);
   });
 
   it("is accepted as the person, carrying its lineage, which names it, and then waits no longer", () => {
     const store = storeOf();
     const { waiting } = tidy(store);
-    const accepted = store.acceptSuggestion(waiting.id, { author: nick });
+    const accepted = acceptSuggestion(store, waiting.id, { author: nick });
     expect(accepted.ops[0]!.author).toEqual(nick);
     expect(accepted.ops[0]!.lineage).toEqual({ basis: "Quill printed something in April", confidence: 0.4, suggestion: waiting.id });
     expect(store.graph.allEdges().some((edge) => edge.from === "vendor:quill")).toBe(true);
-    expect(store.suggestions()).toEqual([]);
-    expect(() => store.acceptSuggestion(waiting.id, { author: nick })).toThrow(/no longer waiting/);
+    expect(suggestions(store)).toEqual([]);
+    expect(() => acceptSuggestion(store, waiting.id, { author: nick })).toThrow(/no longer waiting/);
   });
 
   it("is declined into the log, and the same proposal is refused next time, in a sentence", () => {
     const store = storeOf();
     const { waiting } = tidy(store);
-    const declined = store.declineSuggestion(waiting.id, { author: nick });
-    expect(declined.ops[0]).toMatchObject({ undoes: waiting.id, undoneLineage: { basis: "Quill printed something in April", confidence: 0.4 }, author: nick });
-    expect(store.suggestions()).toEqual([]);
-    expect(store.declined([link("vendor:quill", "event:gala")])?.id).toBe(declined.ops[0]!.id);
-    expect(() => store.suggest([link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Still think so" } })).toThrow(PermissionDeniedError);
-    expect(() => store.suggest([link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Still think so" } })).toThrow("Graview, tidying may not make this again: a person declined it on 2026-10-14.");
+    const decline = declineSuggestion(store, waiting.id, { author: nick });
+    expect(decline.ops[0]).toMatchObject({ undoes: waiting.id, undoneLineage: { basis: "Quill printed something in April", confidence: 0.4 }, author: nick });
+    expect(suggestions(store)).toEqual([]);
+    expect(declined(store, [link("vendor:quill", "event:gala")])?.id).toBe(decline.ops[0]!.id);
+    expect(() => suggest(store, [link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Still think so" } })).toThrow(PermissionDeniedError);
+    expect(() => suggest(store, [link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Still think so" } })).toThrow("Graview, tidying may not make this again: a person declined it on 2026-10-14.");
     // Nor made on its own.
     expect(() => store.apply(link("vendor:quill", "event:gala"), { author: actor, lineage: { basis: "Sure now", confidence: 1 } })).toThrow(/declined/);
     // A person still may, and a decline taken back lets the suggestion wait again.
-    store.undo(declined.batch, { author: nick });
-    expect(store.suggestions().map((one) => one.id)).toEqual([waiting.id]);
+    store.undo(decline.batch, { author: nick });
+    expect(suggestions(store).map((one) => one.id)).toEqual([waiting.id]);
   });
 
   it("an actor's confident change a person takes back is declined too", () => {
     const store = storeOf();
     const { second } = tidy(store);
     store.undo(second.batch, { author: nick });
-    expect(store.declined([link("vendor:harbor", "event:gala")])).toBeDefined();
-    expect(store.declined([link("vendor:bloom", "event:gala")])).toBeUndefined();
+    expect(declined(store, [link("vendor:harbor", "event:gala")])).toBeDefined();
+    expect(declined(store, [link("vendor:bloom", "event:gala")])).toBeUndefined();
     expect(() => store.apply(link("vendor:harbor", "event:gala"), { author: actor, lineage: { basis: "Again" } })).toThrow(/declined/);
   });
 
@@ -138,10 +138,10 @@ describe("a suggestion that waits", () => {
     };
     const store = storeOf(policy);
     const { waiting } = tidy(store);
-    expect(store.suggestions({ kind: "human", id: "pat", roles: ["planner"] }).map((one) => one.id)).toEqual([waiting.id]);
-    expect(store.suggestions({ kind: "human", id: "gus", roles: ["guest"] })).toEqual([]);
-    expect(store.seenBy({ kind: "human", id: "gus", roles: ["guest"] }).suggestions()).toEqual([]);
-    expect(() => store.declineSuggestion(waiting.id, { author: { kind: "human", id: "gus", roles: ["guest"] } })).toThrow(/no longer waiting/);
+    expect(suggestions(store, { kind: "human", id: "pat", roles: ["planner"] }).map((one) => one.id)).toEqual([waiting.id]);
+    expect(suggestions(store, { kind: "human", id: "gus", roles: ["guest"] })).toEqual([]);
+    expect(suggestions(store.seenBy({ kind: "human", id: "gus", roles: ["guest"] }))).toEqual([]);
+    expect(() => declineSuggestion(store, waiting.id, { author: { kind: "human", id: "gus", roles: ["guest"] } })).toThrow(/no longer waiting/);
   });
 });
 
@@ -163,7 +163,7 @@ describe("leave this one alone", () => {
     const before = store.log.length;
     expect(() => store.apply(link("vendor:quill", "event:gala"), { author: actor, lineage: { basis: "Sure", confidence: 0.99 } })).toThrow("Graview, tidying may not change “Quill Stationers”: a person said to leave it alone.");
     expect(() => store.apply({ name: "rename-vendor", args: { id: "vendor:quill", label: "Quill" } }, { author: actor })).toThrow(PermissionDeniedError);
-    expect(() => store.suggest([link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Maybe" } })).toThrow(/leave it alone/);
+    expect(() => suggest(store, [link("vendor:quill", "event:gala")], { author: actor, lineage: { basis: "Maybe" } })).toThrow(/leave it alone/);
     expect(store.log.length).toBe(before);
     expect(store.graph.allEdges()).toEqual([]);
     store.apply(link("vendor:quill", "event:gala"), { author: chat });
@@ -185,9 +185,9 @@ describe("what the declaration says is never tidied", () => {
   it("is refused to the actor on its own, while it may still suggest it for a person to decide", () => {
     const store = storeOf();
     expect(() => store.apply({ name: "book", args: { id: "vendor:bloom", event: "event:gala" } }, { author: actor })).toThrow("Graview, tidying may not make a “books” link on its own: the app says that relation is never tidied.");
-    const waiting = store.suggest([{ name: "book", args: { id: "vendor:bloom", event: "event:gala" } }], { author: actor, lineage: { basis: "Bloom's contract" } });
+    const waiting = suggest(store, [{ name: "book", args: { id: "vendor:bloom", event: "event:gala" } }], { author: actor, lineage: { basis: "Bloom's contract" } });
     expect(waiting?.suggests).toHaveLength(1);
-    expect(store.acceptSuggestion(waiting!.id, { author: nick }).ops).toHaveLength(1);
+    expect(acceptSuggestion(store, waiting!.id, { author: nick }).ops).toHaveLength(1);
   });
 
   it("says a kind never linked automatically, or never tidied at all, in a sentence", () => {
