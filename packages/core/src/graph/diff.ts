@@ -1,3 +1,4 @@
+import type { Primitive } from "./primitives.js";
 import type { AnyGraphNode, GraphEdge, GraphNodeBase } from "./types.js";
 import { edgeId } from "./types.js";
 
@@ -93,4 +94,28 @@ export function diffSnapshots<N extends GraphNodeBase>(
     removedEdges,
     touched: [...touched].sort(),
   };
+}
+
+/**
+ * THE DIFF OF WHAT PRIMITIVES TOUCHED: only the records they name, and the
+ * links at them, are compared — in the snapshots' own order, so it says
+ * exactly what comparing the whole graph says (W-197, W-205). Comparing the
+ * whole graph built a map of every record and every link, keyed by a string
+ * made for each link, on every act: eleven milliseconds an act on a rescue
+ * team of 1,700 records and 15,000 links.
+ */
+export function diffTouched<N extends GraphNodeBase>(
+  before: { nodes: readonly N[]; edges: readonly GraphEdge[] },
+  after: { nodes: readonly N[]; edges: readonly GraphEdge[] },
+  primitives: readonly Primitive[],
+): GraphDiff<N> {
+  const ids = new Set(
+    primitives.flatMap((primitive) => (primitive.op === "patch-node" ? [primitive.id] : "node" in primitive ? [primitive.node.id] : [primitive.edge.from, primitive.edge.to])),
+  );
+  if (ids.size === 0) return EMPTY_DIFF as GraphDiff<N>;
+  const within = (snapshot: { nodes: readonly N[]; edges: readonly GraphEdge[] }) => ({
+    nodes: snapshot.nodes.filter((node) => ids.has(node.id)),
+    edges: snapshot.edges.filter((edge) => ids.has(edge.from) || ids.has(edge.to)),
+  });
+  return diffSnapshots(within(before), within(after));
 }

@@ -1,7 +1,7 @@
 {
   "nodes": [
-    { "id": "outright", "kind": "scenario", "name": "Buy it outright", "house": "@nick/house", "deposit": 0 },
-    { "id": "mortgage", "kind": "scenario", "name": "Take a mortgage", "house": "@nick/house", "deposit": 40000 },
+    { "id": "outright", "kind": "scenario", "name": "Buy it outright", "house": "@nick/house", "deposit": 0, "forHouse": "house:elm" },
+    { "id": "mortgage", "kind": "scenario", "name": "Take a mortgage", "house": "@nick/house", "deposit": 40000, "forHouse": "house:elm" },
     { "id": "flat", "kind": "scenario", "name": "Buy the flat instead", "house": "@ana/flat", "deposit": 20000 },
     { "id": "listing", "kind": "scenario", "name": "The one on the web", "house": "https://example.com/listing/12" }
   ],

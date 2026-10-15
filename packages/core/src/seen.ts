@@ -436,6 +436,9 @@ const bound = (target: object, prop: PropertyKey): unknown => {
  * and every act still goes to the store itself, judged there as always.
  * With no `sees`, it is the store, unchanged.
  */
+/** The key a seat's view answers with the store it is of and the seat (`seatOf`, `@graview/core/seat-of`'s reading of it). */
+const SEAT = Symbol.for("@graview/core:seat");
+
 export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principal): Store<S> {
   // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
   if (!hidesFrom(store, principal)) return store;
@@ -582,6 +585,9 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
   const view = new Proxy(store, {
     get(target, prop) {
       switch (prop) {
+        // Whose view this is (`seatOf`): read by what reads a store from outside it — the past, the suggestions — without importing this module.
+        case SEAT:
+          return { store: target, principal };
         case "graph":
           return graph;
         case "log":
@@ -630,3 +636,4 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
   views.set(key, view);
   return view;
 }
+

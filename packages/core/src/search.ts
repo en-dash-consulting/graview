@@ -1,5 +1,6 @@
 import { addressOf } from "./address.js";
 import { isArchived, type Archived } from "./graph/archived.js";
+import { leftAlone } from "./ops/tidying.js";
 import { arrangeable, asksForThePast, conditionHolds, type ArrangeContext, type ArrangeGraph, type Condition } from "./arrangement.js";
 import { describeArg } from "./mutations/arg-shape.js";
 import type { Operation } from "./ops/types.js";
@@ -735,6 +736,8 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
   type Node = { id: string; kind: string } & Record<string, unknown>;
   // What passed the seat's sight, the kinds and the conditions but not the words: where near hits are looked for.
   const misses: { readonly node: Node; readonly kind: string; readonly definition: AnyNodeDefinition | undefined; readonly current: boolean }[] = [];
+  // Records behind the horizon the words found, while the search kept to the current: offered when the current are few.
+  const behind: { readonly node: Node; readonly kind: string; readonly definition: AnyNodeDefinition | undefined; readonly why: Why }[] = [];
   const add = (node: Node, kind: string, definition: AnyNodeDefinition | undefined, current: boolean, why: Why, score?: number): void => {
     const label = labelOf(definition, node);
     byKind[kind] = (byKind[kind] ?? 0) + 1;
@@ -781,7 +784,13 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       const node = served ? (served.getNode(whole.id) as Node | undefined) : whole;
       if (!node) continue;
       const current = isCurrent(definition, node, today);
-      if (!past && !namesThePast && !current) continue;
+      if (!past && !namesThePast && !current) {
+        if (words.length > 0 && isWords.length === 0 && own.every((condition) => conditionHolds(ctx, node, condition))) {
+          const why = matchNode(definition, node, parsed.words);
+          if (why) behind.push({ node, kind, definition, why });
+        }
+        continue;
+      }
       if (onlyPast && current) continue;
       if (!own.every((condition) => conditionHolds(ctx, node, condition))) continue;
       if (isWords.includes("flagged") && !flagged.has(node.id)) continue;
@@ -795,6 +804,22 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
       if (why) add(node, kind, definition, current, why);
       else if (words.length > 0) misses.push({ node, kind, definition, current });
     }
+  }
+
+  /*
+   * THE PAST, WHEN THE CURRENT IS FEW (the tenth walk). A rescue team has
+   * one callout under way and 1,458 behind it; "Find anything" for last
+   * March's callout by its place found the one under way, or nothing, and
+   * said "add is:any for the past" — the query language, to somebody who
+   * typed a name. Where the words find no current record at all, the past
+   * ones they find are the answer, each said as past, and the search says it
+   * looked there; where any current record answers, the past waits for
+   * is:any, as it did.
+   */
+  let widened = false;
+  if (behind.length > 0 && ranked.length === 0) {
+    widened = true;
+    for (const one of behind) add(one.node, one.kind, one.definition, false, one.why);
   }
 
   /*
@@ -885,7 +910,7 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
     const total = Object.values(byKind).reduce((sum, count) => sum + count, 0);
     const matched = ranked.flatMap((entry) => (entry.hit.about === "node" ? [entry.hit.id] : []));
     const acts = options.subject && kinds.includes(String(store.graph.getNode(options.subject)?.kind)) ? actsOn(store, options.subject, parsed.words, { principal }) : [];
-    return { hits: [...hits, ...acts], words: parsed.words, conditions, searched, byKind: { ...byKind }, total, matched };
+    return { hits: [...hits, ...acts], words: parsed.words, conditions, searched: widened ? { ...searched, past: true } : searched, byKind: { ...byKind }, total, matched };
   };
   const first = answer();
   const rank = options.rank;
@@ -948,6 +973,8 @@ export function actsOn<S extends AnySchema>(
     const act = mutation.derived?.act;
     if ((act === "archive" || act === "merge") && isArchived(subject)) continue;
     if (act === "unarchive" && !isArchived(subject)) continue;
+    // "Leave this one alone" on a record nobody has said it of, "Allow tidying again" on one somebody has.
+    if ((act === "leave-alone" && leftAlone(subject)) || (act === "allow-tidying" && !leftAlone(subject))) continue;
     if (!store.permits({ name: mutation.name, args: { [binding.arg]: subject.id } }, principal).ok) continue;
     const title = actTitle(mutation);
     const titled = tokensOf(title);

@@ -20,6 +20,8 @@
  * the rules Graview Cloud's `add_image` holds an image to.
  */
 
+import type { FaviconSpec } from "./types.js";
+
 /** The most an inline SVG mark may be, in characters. */
 export const MAX_INLINE_SVG = 64 * 1024;
 
@@ -206,7 +208,73 @@ export function markHref(mark: string | undefined): string | undefined {
   return svgProblem(mark) === null ? `data:image/svg+xml,${encodeURIComponent(mark.trim())}` : undefined;
 }
 
-/** The page icon a brand asks for, as an address (FR-124), or undefined. */
-export function faviconHref(brand: { readonly favicon?: string } | undefined): string | undefined {
-  return markHref(brand?.favicon);
+/*
+ * AN EMOJI AS THE APP'S MARK: one standard emoji — with a skin tone,
+ * joined by zero-width joiners, a flag, a keycap — standing for the app
+ * where it has no logo, and as its page icon. Exactly one grapheme as the
+ * reader sees it (Intl.Segmenter), and one the Unicode standard recommends
+ * for general interchange (RGI_Emoji), so every emoji set a host renders it
+ * from has a picture for it.
+ */
+
+let rgi: RegExp | null | undefined;
+/** `^\p{RGI_Emoji}$`, where the runtime reads the `v` flag; null where it does not. */
+function rgiEmoji(): RegExp | null {
+  if (rgi === undefined) {
+    try {
+      rgi = new RegExp("^\\p{RGI_Emoji}$", "v");
+    } catch {
+      rgi = null;
+    }
+  }
+  return rgi;
+}
+
+/** Whether one grapheme is drawn as an emoji at all: a pictograph, a flag's letters, or a keycap. */
+function pictured(grapheme: string): boolean {
+  return /\p{Extended_Pictographic}|\p{Regional_Indicator}|⃣/u.test(grapheme);
+}
+
+/** Why a text is not one standard emoji, or null when it is. */
+export function emojiProblem(text: unknown): string | null {
+  if (typeof text !== "string" || text.trim() === "") return "it is empty; give one emoji, like 🏡";
+  const seen = [...new Intl.Segmenter("en", { granularity: "grapheme" }).segment(text)].map((part) => part.segment);
+  const emoji = seen.filter(pictured).length;
+  if (emoji === 0) return "it is not an emoji; give one emoji, like 🏡";
+  if (seen.length > 1) return emoji === seen.length ? `it is ${seen.length} emoji, and a mark is one` : "it has other characters beside the emoji; give the emoji alone";
+  const exact = rgiEmoji();
+  if (exact && !exact.test(text)) return "it is not one of the standard emoji every emoji set draws";
+  return null;
+}
+
+/** The emoji a page icon names, or undefined when it names a mark. */
+export function emojiOf(favicon: FaviconSpec | undefined): string | undefined {
+  return typeof favicon === "object" && favicon !== null && typeof favicon.emoji === "string" ? favicon.emoji : undefined;
+}
+
+/** One emoji as a standalone SVG: the emoji as text, drawn by the reader's own emoji font. */
+export function emojiSvg(emoji: string): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="50" dy=".35em" font-size="88" text-anchor="middle">${emoji}</text></svg>`;
+}
+
+/**
+ * The page icon a brand asks for, as an address (FR-124), or undefined.
+ * An emoji is an SVG with the emoji as text, drawn by the reader's own
+ * emoji font; a host that wants it alike everywhere renders it from an
+ * emoji set instead.
+ */
+export function faviconHref(brand: { readonly favicon?: FaviconSpec } | undefined): string | undefined {
+  const favicon = brand?.favicon;
+  if (typeof favicon === "object" && favicon !== null) {
+    const emoji = emojiOf(favicon);
+    return emoji !== undefined && emojiProblem(emoji) === null ? `data:image/svg+xml,${encodeURIComponent(emojiSvg(emoji))}` : undefined;
+  }
+  return markHref(favicon);
+}
+
+/** The emoji that stands in as the app's mark: the page icon's, when the brand has no logo and it is one standard emoji. */
+export function emojiMark(brand: { readonly logo?: string; readonly favicon?: FaviconSpec } | undefined): string | undefined {
+  if (brand?.logo) return undefined;
+  const emoji = emojiOf(brand?.favicon);
+  return emoji !== undefined && emojiProblem(emoji) === null ? emoji : undefined;
 }

@@ -7,7 +7,7 @@ import { cityMap } from "../city.js";
 import { roadsOf } from "../village.js";
 import { deriveMutations } from "../mutations/derive-edits.js";
 import type { AnySchema } from "../schema/schema.js";
-import { hueFor } from "../theme/derive.js";
+import { crowdedHues, HUE_CROWDING } from "../theme/derive.js";
 import { pluralOf, withArticle } from "../schema/define-node.js";
 import { ruleLineWords } from "../invariants/line.js";
 import { ruleLine } from "../lines.js";
@@ -21,6 +21,8 @@ import { formatMoney } from "../document/template.js";
 import { amountOf } from "../schema/amount-mark.js";
 import { amountMark, amountSentence } from "../schema/amount-words.js";
 import { sayAmount } from "../document/amount.js";
+import { linkedRelations } from "../schema/linked.js";
+import { linkedRelationWords } from "../linked.js";
 
 /**
  * WHAT THIS APP IS, READ OUT — the rung between `check` and a browser.
@@ -270,13 +272,11 @@ export function describeApp<S extends AnySchema>(
    * other is a city drawn in one color, which reads as a rendering fault
    * and is a declaration the author can change.
    */
-  const hues = kinds.map((kind) => ({ kind, hue: Math.round(hueFor(kind, app.brand?.accents)) }));
-  const crowded = hues.filter((a, index) =>
-    hues.some((b, other) => other !== index && Math.abs(a.hue - b.hue) < 12),
-  );
+  // The same answer `graview check` warns from (`brand-hues-crowded`): one source, so the two agree.
+  const { hues, crowded } = crowdedHues(kinds, app.brand?.accents);
   lines.push(
     `Hues: ${hues.map((entry) => `${entry.kind} ${entry.hue}°`).join(", ")}.` +
-      (crowded.length > 1 ? ` ${list(crowded.map((entry) => entry.kind))} are within 12° of each other and will read as one color.` : ""),
+      (crowded.length > 1 ? ` ${list(crowded)} are within ${HUE_CROWDING}° of each other and will read as one color.` : ""),
   );
   // THE APP'S LOCALE (FR-178), with what it makes of a day, a time and a figure, and the currency a sum is said in (FR-100).
   const locale = app.brand?.locale;
@@ -296,6 +296,18 @@ export function describeApp<S extends AnySchema>(
   if (people) {
     const noun = (people as { noun?: string }).noun ?? people.kind;
     lines.push("", "## The people", `The people are the ${pluralOf(app.schema, people.kind).toLowerCase()}: ${withArticle(noun)} whose id is a member's principal id is that member.`);
+  }
+
+  /*
+   * WHAT IT LINKS IN OTHER APPS (FR-171): a relation to another app's kind is
+   * read there as the viewer, and linked by picking a record there — say
+   * where it goes and how, since nothing of it is in this graph to see.
+   */
+  const linkedLines = app.schema.definitions.flatMap((definition) =>
+    [...linkedRelations(definition)].map(([name, relation]) => `  ${pluralOf(app.schema, definition.kind)}: ${linkedRelationWords(name, relation, acts.some((act) => act.name === `edit-${definition.kind}`) ? `edit-${definition.kind}` : undefined)}.`),
+  );
+  if (linkedLines.length > 0) {
+    lines.push("", "## Linked from other apps", "Each is a record in another app, read there as whoever is looking; one they may not open reads \"linked record (no access)\" and nothing of it. The other app is never changed by linking.", ...linkedLines);
   }
 
   // WHAT IS NEVER SET ASIDE (FR-173): a kind whose records are kept or removed has no archive, unarchive or merge.

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T07:17:12.053Z",
+  "at": "2026-10-15T01:08:02.613Z",
   "engine": "chromium",
   "shots": [
     {
@@ -66,9 +66,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1001,
+      "contentBottom": 974,
       "contentRight": 1560,
-      "verticalFill": 106,
+      "verticalFill": 104,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -103,18 +103,18 @@
       ],
       "covered": [],
       "contentBottom": 940,
-      "contentRight": 3254,
+      "contentRight": 3062,
       "verticalFill": 100,
-      "horizontalFill": 209,
+      "horizontalFill": 196,
       "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
     {
       "app": "todo",
-      "state": "travelled",
+      "state": "traveled",
       "scheme": "light",
-      "file": "todo-travelled-light.png",
+      "file": "todo-traveled-light.png",
       "viewport": [
         1560,
         940
@@ -174,9 +174,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 991,
+      "contentBottom": 1003,
       "contentRight": 1560,
-      "verticalFill": 105,
+      "verticalFill": 107,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -192,9 +192,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 991,
+      "contentBottom": 995,
       "contentRight": 1560,
-      "verticalFill": 105,
+      "verticalFill": 106,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -282,9 +282,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1001,
+      "contentBottom": 974,
       "contentRight": 1560,
-      "verticalFill": 106,
+      "verticalFill": 104,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -319,18 +319,18 @@
       ],
       "covered": [],
       "contentBottom": 940,
-      "contentRight": 3254,
+      "contentRight": 3062,
       "verticalFill": 100,
-      "horizontalFill": 209,
+      "horizontalFill": 196,
       "overflowing": [],
       "unnamed": [],
       "repeatedText": []
     },
     {
       "app": "todo",
-      "state": "travelled",
+      "state": "traveled",
       "scheme": "dark",
-      "file": "todo-travelled-dark.png",
+      "file": "todo-traveled-dark.png",
       "viewport": [
         1560,
         940
@@ -390,9 +390,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 991,
+      "contentBottom": 1003,
       "contentRight": 1560,
-      "verticalFill": 105,
+      "verticalFill": 107,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -408,9 +408,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 991,
+      "contentBottom": 995,
       "contentRight": 1560,
-      "verticalFill": 105,
+      "verticalFill": 106,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -444,7 +444,7 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1814,
+      "contentBottom": 1813,
       "contentRight": 1560,
       "verticalFill": 193,
       "horizontalFill": 100,
@@ -462,7 +462,7 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1814,
+      "contentBottom": 1813,
       "contentRight": 1560,
       "verticalFill": 193,
       "horizontalFill": 100,
@@ -498,9 +498,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1005,
+      "contentBottom": 992,
       "contentRight": 1560,
-      "verticalFill": 107,
+      "verticalFill": 106,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],
@@ -570,9 +570,9 @@
         940
       ],
       "covered": [],
-      "contentBottom": 1005,
+      "contentBottom": 992,
       "contentRight": 1560,
-      "verticalFill": 107,
+      "verticalFill": 106,
       "horizontalFill": 100,
       "overflowing": [],
       "unnamed": [],

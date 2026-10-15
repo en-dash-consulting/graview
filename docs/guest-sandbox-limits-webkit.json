@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:11:51.334Z",
+  "at": "2026-10-15T01:59:24.594Z",
   "transport": "limits",
   "engine": "webkit",
   "claims": {
@@ -9,7 +9,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1049
+          "at": 1285
         },
         "running": false,
         "face": [
@@ -29,7 +29,7 @@
         "failure": {
           "reason": "silent",
           "detail": "It stopped answering for 1,500 ms.",
-          "at": 1550
+          "at": 1538
         },
         "running": false,
         "face": [
@@ -49,7 +49,7 @@
         "failure": {
           "reason": "flood",
           "detail": "It sent more than 120 messages in 1,000 ms.",
-          "at": 51
+          "at": 47
         },
         "running": false,
         "face": [
@@ -69,7 +69,7 @@
         "failure": {
           "reason": "nodes",
           "detail": "It drew more than the 5,000 things a view may draw.",
-          "at": 802
+          "at": 769.0000000000001
         },
         "running": false,
         "face": [
@@ -89,7 +89,7 @@
         "failure": {
           "reason": "source",
           "detail": "Its code is longer than the 256,000 bytes a view may be.",
-          "at": 16
+          "at": 15
         },
         "running": false,
         "face": [
@@ -109,7 +109,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 195
+          "at": 187.00000000000003
         },
         "running": false,
         "face": [
@@ -122,9 +122,9 @@
         ],
         "note": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
         "pulse": {
-          "last": 2093,
-          "longest": 146,
-          "ticks": 38
+          "last": 2338,
+          "longest": 138.00000000000003,
+          "ticks": 43
         }
       }
     },
@@ -138,9 +138,9 @@
     "the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 2093,
-        "longest": 146,
-        "ticks": 38
+        "last": 2338,
+        "longest": 138.00000000000003,
+        "ticks": 43
       }
     },
     "the page throws nothing": {
@@ -272,32 +272,32 @@
       "long": {
         "reason": "source",
         "detail": "Its code is longer than the 256,000 bytes a view may be.",
-        "at": 16
+        "at": 15
       },
       "flood": {
         "reason": "flood",
         "detail": "It sent more than 120 messages in 1,000 ms.",
-        "at": 51
+        "at": 47
       },
       "churn": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 195
+        "at": 187.00000000000003
       },
       "nodes": {
         "reason": "nodes",
         "detail": "It drew more than the 5,000 things a view may draw.",
-        "at": 802
+        "at": 769.0000000000001
       },
       "spin": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 1049
+        "at": 1285
       },
       "later": {
         "reason": "silent",
         "detail": "It stopped answering for 1,500 ms.",
-        "at": 1550
+        "at": 1538
       }
     },
     "running": {
@@ -379,9 +379,9 @@
       "good": "6 records"
     },
     "pulse": {
-      "last": 2093,
-      "longest": 146,
-      "ticks": 38
+      "last": 2338,
+      "longest": 138.00000000000003,
+      "ticks": 43
     }
   },
   "policy": {

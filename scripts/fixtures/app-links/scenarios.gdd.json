@@ -2,7 +2,7 @@
   "format": "graview-document",
   "formatVersion": 1,
   "name": "Purchase scenarios",
-  "description": "Ways to buy a house, each linking the house it buys, which lives in an app of its own: a link to another app (FR-171), named by the host.",
+  "description": "Ways to buy a house, each linking the house it buys, which lives in an app of its own: a link to another app (FR-171), named by the host, and a relation to the house record there, read as the viewer.",
   "roles": ["owner", "guest"],
   "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
   "kinds": {
@@ -14,6 +14,12 @@
         "name": { "type": "string", "required": true },
         "house": { "type": "app-link", "description": "the house this scenario buys" },
         "deposit": { "type": "number", "format": "money" }
+      },
+      "edges": {
+        "forHouse": { "to": ["@nick/house/house"], "cardinality": "one", "description": "the house record this scenario buys, in the house app" }
+      },
+      "computed": {
+        "price": { "expr": "forHouse.listPrice", "label": "Asking price" }
       }
     }
   },

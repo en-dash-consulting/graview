@@ -1,4 +1,4 @@
-import { actTitle, isArchived, KEEP_LINK, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
+import { actTitle, isArchived, isLeftAlone, KEEP_LINK, nodeRefArgs, nounOf, pluralOf, withArticle, type AnySchema, type Store } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { argShape } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
@@ -285,6 +285,9 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
         const derivedAct = mutation.derived?.act;
         if ((derivedAct === "archive" || derivedAct === "merge") && nodes.some((node) => isArchived(node))) continue;
         if (derivedAct === "unarchive" && !nodes.some((node) => isArchived(node))) continue;
+        // "Leave this one alone" where nobody has said it, "Allow tidying again" where somebody has.
+        if (derivedAct === "leave-alone" && nodes.every((node) => isLeftAlone(store, node.id))) continue;
+        if (derivedAct === "allow-tidying" && !nodes.some((node) => isLeftAlone(store, node.id))) continue;
 
         const subjectId = nodes.length === 1 ? nodes[0]!.id : null;
         const severs = mutation.severs ?? [];
@@ -415,7 +418,7 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
           open,
           ...(mutation.destructive ? { destructive: true } : {}),
           // Archive and merge set the record aside (FR-173): ranked and kept with the destructive tail.
-          ...(mutation.derived?.act === "archive" || mutation.derived?.act === "merge" ? { setsAside: true as const } : {}),
+          ...(mutation.derived?.act === "archive" || mutation.derived?.act === "merge" || mutation.derived?.act === "leave-alone" || mutation.derived?.act === "allow-tidying" ? { setsAside: true as const } : {}),
           ...(severs.length > 0 || connects.length > 0 ? { ties: true } : {}),
           ...(nodes.length > 1 ? { batch } : {}),
           // A mutation needing nothing more is readier than one needing three

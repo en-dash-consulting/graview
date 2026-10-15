@@ -1,6 +1,6 @@
-import type { AnySchema } from "@graview/core";
-import { BarActivity } from "@graview/primitives/pages";
-import { useGraviewIfAny } from "@graview/react/provider";
+import type { AnySchema, Store } from "@graview/core";
+import { BarActivity, BarSuggested } from "@graview/primitives/pages";
+import { useGraviewIfAny, usePlayback } from "@graview/react/provider";
 import { Suspense } from "react";
 import { createPortal } from "react-dom";
 import type { PageContext } from "./page-context.js";
@@ -19,11 +19,20 @@ import { useStoreTick } from "./page-context.js";
 export function PagesActivity<S extends AnySchema>({ context, own }: { readonly context: PageContext<S>; readonly own?: HTMLElement }) {
   useStoreTick(context.store);
   const here = useGraviewIfAny();
-  if (!here || context.store.batches().length === 0) return null;
+  // What has happened is now's, whichever moment the face draws (Roadmap f-playback).
+  const live = (usePlayback()?.live ?? context.store) as unknown as Store<AnySchema>;
+  useStoreTick(live as Store<AnySchema>);
+  if (!here || live.batches().length === 0) return null;
+  // What tidying suggests waits beside it, quietly, only while something does.
   const drawn = (
-    <Suspense fallback={null}>
-      <BarActivity />
-    </Suspense>
+    <>
+      <Suspense fallback={null}>
+        <BarSuggested />
+      </Suspense>
+      <Suspense fallback={null}>
+        <BarActivity />
+      </Suspense>
+    </>
   );
   // Drawn in the derived shell's own row, in the bar's class for the face's own tool, so a phone's bar draws it as a mark.
   return own ? createPortal(drawn, own) : <div className="graview-bar-own">{drawn}</div>;

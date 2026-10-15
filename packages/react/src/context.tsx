@@ -4,6 +4,8 @@ import type {
   GraviewApp,
   HostFiles,
   ResolveApp,
+  LinkedRecords,
+  LinkedReads,
   NodeOfSchema,
   Person,
   Presence,
@@ -37,9 +39,13 @@ import {
 } from "react";
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostFilesContext } from "./files.js";
+import { useLinkedReads } from "./linked-reads.js";
+
 import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
 import type { ViewComponent, ViewMode } from "./view-registry.js";
+import type { HistoryHost } from "@graview/core/history";
+import { PlaybackContext, useOwnPlayback, type Playback } from "./past.js";
 
 export type { ViewMode } from "./view-registry.js";
 
@@ -199,6 +205,10 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly ai: HostAi;
   /** THE HOST'S WAY TO NAME ANOTHER APP (`resolveApp` on the provider, FR-171), where an app-link field asks it. */
   readonly resolveApp?: ResolveApp | undefined;
+  /** THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (`linkedRecords` on the provider, FR-171), where a linked record is drawn or picked. */
+  readonly linkedRecords?: LinkedRecords | undefined;
+  /** The far records this viewer has been told, read at once: what a linked record draws from, as the rule language reads them (`@graview/core/linked`). */
+  readonly linkedReads?: LinkedReads | undefined;
   /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
   readonly movedByHand: boolean;
   noteMoved(): void;
@@ -448,6 +458,23 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * not open it, or null. Unsaid, the field draws its address plainly.
    */
   readonly resolveApp?: ResolveApp | undefined;
+  /**
+   * WHAT THE HOST KEEPS OUTSIDE THE LOG, for playback (Roadmap f-playback):
+   * the declaration changes it knows, each with the declaration it began,
+   * and `viewAt(name, seq)`, a script view's code as it stood then. Unsaid,
+   * the past is drawn under this declaration and with today's views.
+   */
+  readonly history?: HistoryHost | undefined;
+  /**
+   * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171): a relation to
+   * another app's kind (`"to": ["@nick/house/house"]`) draws the linked
+   * record as `linkedRecords.resolve(ref, viewer)` answers it — its card,
+   * describe line and the fields this viewer may see there — picks one
+   * from `find`, and opens it with `open` or its `href`. A computed value
+   * or a rule that walks the link reads it as this viewer. Unsaid, a linked
+   * record reads as not read.
+   */
+  readonly linkedRecords?: LinkedRecords | undefined;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -510,6 +537,8 @@ export function GraviewProvider<S extends AnySchema>({
   ai = NO_AI,
   files,
   resolveApp,
+  history,
+  linkedRecords,
   view,
   onViewChange,
   children,
@@ -518,12 +547,19 @@ export function GraviewProvider<S extends AnySchema>({
   const [seated, setSeated] = useState<Principal | null>(null);
   const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
   /*
+   * THE MOMENT DRAWN (Roadmap f-playback): now, or the app as it stood at
+   * a moment somebody asked to see — the one store every surface reads, so
+   * the past is drawn by the renderer the present is, and offers no act.
+   */
+  const playback = useOwnPlayback(given, seatNow, history);
+  const shown = playback.past && playback.live === given ? playback.past.store : given;
+  /*
    * WHAT THEY MAY SEE. Every surface under this provider reads the store it
    * hands out, and that store holds only what the policy's `sees` lets the
    * seat see — a stranger at a storefront is not shown the customers. Acts
    * still go to the store itself. With no `sees` it is the store, unchanged.
    */
-  const store = useMemo(() => given.seenBy(seatNow), [given, seatNow]);
+  const store = useMemo(() => shown.seenBy(seatNow), [shown, seatNow]);
   useTheWatchKnowsWhatIsUnseen(given, seatNow);
   /* This tab, for the life of the tab: see `tabSession`. */
   const [session] = useState(() => tabSession(memory));
@@ -642,6 +678,8 @@ export function GraviewProvider<S extends AnySchema>({
    */
   // With this tab's session on it, so every op this seat authors names the tab that made it.
   const who = useMemo<Principal>(() => ({ ...seatNow, session }), [seatNow, session]);
+  // Another app's records, read as this seat (FR-171): only where the host reads them and the app links one.
+  const linkedReads = useLinkedReads(store, linkedRecords, who);
   const takeSeat = useCallback(
     (next: Principal) => {
       setSeated(next);
@@ -911,6 +949,8 @@ export function GraviewProvider<S extends AnySchema>({
       session,
       ai,
       resolveApp,
+      linkedRecords,
+      linkedReads,
       movedByHand,
       noteMoved,
       emphasis,
@@ -959,6 +999,8 @@ export function GraviewProvider<S extends AnySchema>({
       session,
       ai,
       resolveApp,
+      linkedRecords,
+      linkedReads,
       movedByHand,
       noteMoved,
       emphasis,
@@ -983,7 +1025,9 @@ export function GraviewProvider<S extends AnySchema>({
 
   return (
     <GraviewContext.Provider value={value as unknown as GraviewContextValue<AnySchema>}>
-      <FoundProvider>{files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children}</FoundProvider>
+      <PlaybackContext.Provider value={playback as unknown as Playback}>
+        <FoundProvider>{files ? <HostFilesContext.Provider value={files}>{children}</HostFilesContext.Provider> : children}</FoundProvider>
+      </PlaybackContext.Provider>
     </GraviewContext.Provider>
   );
 }

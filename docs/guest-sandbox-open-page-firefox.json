@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:10:39.508Z",
+  "at": "2026-10-15T01:58:13.660Z",
   "transport": "open",
   "engine": "firefox",
   "policy": "the app's own page, with no content security policy",
@@ -45,8 +45,8 @@
     "the progress ring turns: its keyframes are drawn and running": {
       "ok": true,
       "detail": {
-        "before": "matrix(-0.422618, 0.906308, -0.906308, -0.422618, 0, 0)",
-        "after": "matrix(-0.984808, -0.173648, 0.173648, -0.984808, 0, 0)"
+        "before": "matrix(-0.461376, 0.887205, -0.887205, -0.461376, 0, 0)",
+        "after": "matrix(-0.976301, -0.216419, 0.216419, -0.976301, 0, 0)"
       }
     },
     "after the app's toggle to dark, the same view takes the dark panel, edge and accent": {
@@ -277,7 +277,7 @@
           "href": null,
           "text": "a link out"
         },
-        "url": "http://127.0.0.1:6192/"
+        "url": "http://127.0.0.1:5892/"
       }
     },
     "srcset is not drawn": {
@@ -508,7 +508,7 @@
     "connections": 0
   },
   "requests": [
-    "http://127.0.0.1:6192/"
+    "http://127.0.0.1:5892/"
   ],
   "passed": true
 }

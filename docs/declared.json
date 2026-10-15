@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-14T01:50:12.835Z",
+  "at": "2026-10-15T01:45:25.429Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/every-lens.gdd.json",
   "checks": {
@@ -2325,6 +2325,43 @@
         "listed": 98,
         "dashes": 0
       },
+      "ok": true
+    },
+    "aMoneyFieldIsSaidAsMoneyOnItsRecordPage": {
+      "said": {
+        "amount": true,
+        "margin": true,
+        "effort": true,
+        "weight": true,
+        "fee": true
+      },
+      "bare": false,
+      "ok": true
+    },
+    "aMoneyFieldIsSaidAsMoneyInItsListsRows": {
+      "dollars": true,
+      "cents": true,
+      "bare": false,
+      "ok": true
+    },
+    "aMoneyFieldIsSaidAsMoneyOnItsBoardsCards": {
+      "dollars": true,
+      "bare": false,
+      "ok": true
+    },
+    "aMoneyFieldIsSaidAsMoneyInTheScenesRecord": {
+      "dollars": true,
+      "bare": false,
+      "ok": true
+    },
+    "aMoneyFormShowsItsCurrencyAndTakesAnAmountAsWritten": {
+      "box": {
+        "type": "text",
+        "mode": "decimal",
+        "placeholder": "1,250.00",
+        "symbol": "$"
+      },
+      "made": "said",
       "ok": true
     },
     "noPageThrew": {

@@ -1,4 +1,4 @@
-import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived } from "../mutations/derived-names.js";
+import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied } from "../mutations/derived-names.js";
 import { z } from "zod";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
@@ -36,7 +36,8 @@ import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
 import { validateViews, VIEW_SLOTS } from "./views.js";
-import { brandFindings } from "./brand-check.js";
+import { brandFindings, emojiIconSentence } from "./brand-check.js";
+import { emojiOf } from "../theme/marks.js";
 import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
 import { isRecord as isObject, respellDocument } from "./respell.js";
@@ -46,7 +47,7 @@ import { accentProblem } from "../theme/accent.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize, listed as listOf } from "../capital.js";
 import { quoted } from "./quote.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, archivesSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantBody, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, peopleKinds, peopleSentence, archivesSentence, tidyingSentence, nounWords, pluralWords as pluralOf, sightGone, sightSentence, sightWords, whoWords, type GrantWords, type SightWords } from "./policy-words.js";
 
 /*
  * STRUCTURAL EDITS — a closed vocabulary for changing what an app declares.
@@ -124,6 +125,7 @@ export const EDIT_OPS = [
   "set-computed",
   "set-people",
   "set-archives",
+  "set-tidying",
   "add-grant",
   "remove-grant",
   "add-sight",
@@ -176,7 +178,7 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       locale: z.union([z.string(), z.null()]).optional(),
       // The rest of the brand (FR-124, FR-125): each as the document holds it, null to clear it.
       logo: z.union([z.string().min(1), z.object({ src: z.string().min(1), alt: z.string().min(1).max(120).optional() }).strict(), z.null()]).optional(),
-      favicon: z.union([z.string().min(1), z.null()]).optional(),
+      favicon: z.union([z.string().min(1), z.object({ emoji: z.string() }).strict(), z.null()]).optional(),
       typography: z.union([z.object({ display: z.union([z.string().min(1).max(200), z.null()]).optional(), body: z.union([z.string().min(1).max(200), z.null()]).optional(), mono: z.union([z.string().min(1).max(200), z.null()]).optional() }).strict(), z.null()]).optional(),
       shape: z.union([z.object({ radius: z.union([z.number().min(0).max(32), z.null()]).optional(), density: z.union([z.number().min(0.75).max(1.5), z.null()]).optional() }).strict(), z.null()]).optional(),
       accents: z.union([z.record(z.string(), z.union([z.number().min(0).max(360), z.null()])), z.null()]).optional(),
@@ -242,6 +244,8 @@ const SHAPES: Record<EditOp, z.ZodType> = {
   "set-people": z.object({ op: z.literal("set-people"), kind: kindName, people: z.boolean() }).strict(),
   // Whether a kind's records are archived and merged, or only kept and removed (FR-173).
   "set-archives": z.object({ op: z.literal("set-archives"), kind: kindName, archives: z.boolean() }).strict(),
+  // What the app's own actor may do on its own to a kind, or to one relation of it (`@graview/core/tidying`).
+  "set-tidying": z.object({ op: z.literal("set-tidying"), kind: kindName, relation: z.optional(z.string()), tidying: z.enum(["never", "no-links", "allowed"]) }).strict(),
   "add-grant": z.object({ op: z.literal("add-grant") }).passthrough(),
   "remove-grant": z.object({ op: z.literal("remove-grant") }).passthrough(),
   "add-sight": z.object({ op: z.literal("add-sight") }).passthrough(),
@@ -563,7 +567,7 @@ class Editor {
     const emptyPart = (["typography", "shape", "accents"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
     if (emptyPart) return this.fail(i, emptyPart, `${emptyPart} names no part to set; name one, or give null to clear all of it`);
     const judged = brandFindings(
-      { ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
+      { ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
       { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
@@ -609,6 +613,7 @@ class Editor {
       const src = (mark: unknown) => (typeof mark === "string" ? mark : isObject(mark) ? mark["src"] : undefined);
       const alt = (mark: unknown) => (isObject(mark) && typeof mark["alt"] === "string" ? mark["alt"] : undefined);
       if (e[key] === null) this.said.push(`The app has no ${what}.`);
+      else if (key === "favicon" && emojiOf(e[key]) !== undefined) this.said.push(emojiIconSentence(emojiOf(e[key])!, brand["logo"] !== undefined));
       else if (was === undefined) this.said.push(`The app gets a ${what}.`);
       else if (canonicalize(was) === canonicalize(e[key])) this.said.push(`The ${what} stays as it was.`);
       else if (src(was) === src(e[key])) this.said.push(`The ${what} is said as ${quotedAtTheEnd(alt(e[key]) ?? brand["name"] ?? this.doc.name)}`);
@@ -852,6 +857,8 @@ class Editor {
         return this.setPeople(i, e);
       case "set-archives":
         return this.setArchives(i, e);
+      case "set-tidying":
+        return this.setTidying(i, e);
       case "add-grant":
       case "remove-grant":
       case "add-sight":
@@ -1234,6 +1241,44 @@ class Editor {
     this.said.push(archivesSentence(this.doc.kinds, e.kind, e.archives, already));
   }
 
+  /**
+   * WHAT THE APP'S OWN ACTOR MAY DO ON ITS OWN (`@graview/core/tidying`):
+   * a kind never tidied, or never linked automatically, or tidied again; a
+   * relation never made or broken automatically, or tidied again. A kind
+   * never tidied is given no leave-alone-<kind> or allow-tidying-<kind>,
+   * which a grant may not then name.
+   */
+  private setTidying(i: number, e: Doc) {
+    const spec = this.kind(i, e.kind);
+    if (!spec) return;
+    const tidying = e.tidying as "never" | "no-links" | "allowed";
+    if (e.relation !== undefined) {
+      const relation = spec.edges?.[e.relation];
+      if (!relation) return this.failAs("edit", i, "relation", `${e.kind} has no relation "${e.relation}"; it has ${Object.keys(spec.edges ?? {}).join(", ") || "none"}`);
+      if (tidying === "no-links") return this.failAs("edit", i, "tidying", `a relation is tidied or never ("never"); "no-links" is said of a kind`, `{"op": "set-tidying", "kind": "${e.kind}", "relation": "${e.relation}", "tidying": "never"}`);
+      const already = (relation.tidying === "never") === (tidying === "never");
+      if (tidying === "never") relation.tidying = "never";
+      else delete relation.tidying;
+      this.said.push(tidyingSentence(this.doc.kinds, e.kind, e.relation, tidying, already));
+      return;
+    }
+    const was = spec.tidying ?? "allowed";
+    const already = was === tidying;
+    if (tidying === "never" && !already) {
+      // A grant that names leave-alone-<kind> or allow-tidying-<kind> would name an act the app no longer has.
+      const gone = new Set(["leave-alone", "allow-tidying"].map((verb) => `${verb}-${e.kind}`).filter((act) => !this.doc.acts?.[act]));
+      const grant = (this.doc.policy?.grants ?? []).find((g: Doc) => Array.isArray(g.mutations) && g.mutations.some((m: string) => gone.has(m)));
+      if (grant) {
+        const named: string[] = grant.mutations.filter((m: string) => gone.has(m));
+        return this.failAs("grant-unknown-mutation", i, "tidying", `a grant names ${listOf(named.map((m) => `"${m}"`))}, which ${pluralOf(this.doc.kinds, e.kind)} would no longer have`, `{"op": "remove-grant", "roles": ${JSON.stringify(grant.roles)}, "mutations": ${JSON.stringify(grant.mutations)}} first, in the same change`);
+      }
+    }
+    if (tidying === "allowed") delete spec.tidying;
+    else spec.tidying = tidying;
+    if (!already && (was === "never" || tidying === "never")) this.toolsMoved.add(`leave-alone-${e.kind} and allow-tidying-${e.kind} ${tidying === "never" ? "are gone" : "are offered"}`);
+    this.said.push(tidyingSentence(this.doc.kinds, e.kind, undefined, tidying, already));
+  }
+
   /** A grant or a sight as the document holds one, or undefined having said why not. */
   private policyPart(i: number, e: Doc, sight: boolean): Doc | undefined {
     const { op: _op, ...rest } = e;
@@ -1264,7 +1309,7 @@ class Editor {
     if (!sight && part.mutations !== "*") {
       for (const [n, act] of part.mutations.entries()) {
         const derived = derivedActOf(act);
-        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)))) continue;
+        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)) && (this.doc.kinds[derived.kind].tidying !== "never" || givenWhenNeverTidied(derived.act)))) continue;
         return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf)].join(", ")}`);
       }
     }

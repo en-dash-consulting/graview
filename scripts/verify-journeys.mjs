@@ -157,6 +157,9 @@ async function runVariant({ setupFile, variant, out }) {
             result = { done: true, presses: person.presses, ms: Date.now() - began, steps: person.log, ...(said ?? {}) };
           } catch (error) {
             const said = String(error?.message ?? error).split("\n")[0];
+            // Where it dead-ended, as a picture, for whoever reads the verdict: GRAVIEW_JOURNEYS_SHOTS=<dir>.
+            const shots = process.env["GRAVIEW_JOURNEYS_SHOTS"];
+            if (shots) await page.screenshot({ path: join(shots, `${setup.base.split(":").pop()}-${job.id}-${variantKey(variant).replace(/\//g, "-")}.png`) }).catch(() => {});
             result = {
               done: false,
               presses: person.presses,

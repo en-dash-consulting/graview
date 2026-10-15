@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:10:20.269Z",
+  "at": "2026-10-15T00:54:54.525Z",
   "engine": "chromium",
   "checks": {
     "everyPopoverStandsOverEverythingWithTheSeatOpen": {
@@ -223,8 +223,147 @@
                 "ok": true
               }
             },
+            "suggested": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[suggestion-decline]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                890,
+                83,
+                320,
+                194
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[suggestion-accept]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[suggested-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[suggested-button]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "here",
+                "here": false,
+                "suggested": true,
+                "ok": true
+              }
+            },
             "activity": {
-              "drawn": false
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[digest-toggle]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                995,
+                83,
+                300,
+                66
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[digest-toggle]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "suggested",
+                "suggested": false,
+                "activity": true,
+                "ok": true
+              }
             },
             "find": {
               "drawn": true,
@@ -239,7 +378,7 @@
               },
               "inTheViewport": true,
               "box": [
-                879,
+                681,
                 83,
                 416,
                 448
@@ -291,8 +430,8 @@
               },
               "familyOk": true,
               "closesTheOneBefore": {
-                "before": "here",
-                "here": false,
+                "before": "activity",
+                "activity": false,
                 "find": true,
                 "ok": true
               }
@@ -313,8 +452,8 @@
               },
               "inTheViewport": true,
               "box": [
-                941,
-                270,
+                613,
+                273,
                 300,
                 84
               ],
@@ -443,8 +582,8 @@
               },
               "familyOk": true,
               "closesTheOneBefore": {
-                "before": "here",
-                "here": false,
+                "before": "activity",
+                "activity": false,
                 "profile": true,
                 "ok": true
               }
@@ -662,8 +801,147 @@
                 "ok": true
               }
             },
+            "suggested": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[suggestion-decline]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                890,
+                83,
+                320,
+                194
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[suggestion-accept]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[suggested-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[suggested-button]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "here",
+                "here": false,
+                "suggested": true,
+                "ok": true
+              }
+            },
             "activity": {
-              "drawn": false
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[digest-toggle]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                995,
+                83,
+                300,
+                66
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[digest-toggle]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                },
+                "at": {
+                  "x": 720,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "suggested",
+                "suggested": false,
+                "activity": true,
+                "ok": true
+              }
             },
             "find": {
               "drawn": false
@@ -831,6 +1109,9 @@
               "drawn": false
             },
             "here": {
+              "drawn": false
+            },
+            "suggested": {
               "drawn": false
             },
             "activity": {
@@ -1328,8 +1609,147 @@
               },
               "familyOk": true
             },
+            "suggested": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[suggestion-decline]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                83,
+                320,
+                194
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[suggestion-accept]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[suggested-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[suggested-button]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "here",
+                "here": false,
+                "suggested": true,
+                "ok": true
+              }
+            },
             "activity": {
-              "drawn": false
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[digest-toggle]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                83,
+                300,
+                66
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[digest-toggle]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "suggested",
+                "suggested": false,
+                "activity": true,
+                "ok": true
+              }
             },
             "find": {
               "drawn": false
@@ -1351,7 +1771,7 @@
               "inTheViewport": true,
               "box": [
                 82,
-                377,
+                369,
                 300,
                 84
               ],
@@ -1398,8 +1818,8 @@
               },
               "familyOk": true,
               "closesTheOneBefore": {
-                "before": "here",
-                "here": false,
+                "before": "activity",
+                "activity": false,
                 "acts": true,
                 "ok": true
               }
@@ -1480,8 +1900,8 @@
               },
               "familyOk": true,
               "closesTheOneBefore": {
-                "before": "here",
-                "here": false,
+                "before": "activity",
+                "activity": false,
                 "profile": true,
                 "ok": true
               }
@@ -1699,8 +2119,147 @@
                 "ok": true
               }
             },
+            "suggested": {
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[suggestion-decline]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                83,
+                320,
+                194
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[suggestion-accept]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[suggested-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[suggested-button]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "here",
+                "here": false,
+                "suggested": true,
+                "ok": true
+              }
+            },
             "activity": {
-              "drawn": false
+              "drawn": true,
+              "topLayer": true,
+              "center": {
+                "at": "span",
+                "inside": true
+              },
+              "lastRow": {
+                "at": "button[digest-toggle]",
+                "inside": true
+              },
+              "inTheViewport": true,
+              "box": [
+                8,
+                83,
+                300,
+                66
+              ],
+              "ok": true,
+              "opened": {
+                "inPane": true,
+                "onTrigger": false,
+                "onCard": false,
+                "onBody": false,
+                "at": "button[digest-toggle]"
+              },
+              "hangs": {
+                "gap": 6,
+                "overlapsAcross": true,
+                "below": true
+              },
+              "escaped": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                }
+              },
+              "away": {
+                "open": false,
+                "keyboard": {
+                  "inPane": false,
+                  "onTrigger": true,
+                  "onCard": false,
+                  "onBody": false,
+                  "at": "button[activity-button]"
+                },
+                "at": {
+                  "x": 195,
+                  "y": 6
+                }
+              },
+              "family": {
+                "tookTheKeyboard": true,
+                "anchored": true,
+                "escapeCloses": true,
+                "escapeGivesTheKeyboardBack": true,
+                "aPressAwayCloses": true,
+                "aPressAwayGivesTheKeyboardBack": true
+              },
+              "familyOk": true,
+              "closesTheOneBefore": {
+                "before": "suggested",
+                "suggested": false,
+                "activity": true,
+                "ok": true
+              }
             },
             "find": {
               "drawn": false
@@ -1930,6 +2489,9 @@
               "familyOk": true
             },
             "here": {
+              "drawn": false
+            },
+            "suggested": {
               "drawn": false
             },
             "activity": {
@@ -2178,6 +2740,20 @@
           "the embed's Graview 390×844",
           "the embed's pages 390×844"
         ],
+        "suggested": [
+          "the embed's Graview 1440×900",
+          "the embed's pages 1440×900",
+          "the embed's Graview 390×844",
+          "the embed's pages 390×844"
+        ],
+        "activity": [
+          "the embed's Graview 1440×900",
+          "the embed's pages 1440×900",
+          "the Shell 1440×900",
+          "the embed's Graview 390×844",
+          "the embed's pages 390×844",
+          "the Shell 390×844"
+        ],
         "find": [
           "the embed's Graview 1440×900",
           "the Shell 1440×900"
@@ -2194,16 +2770,65 @@
           "the embed's pages 390×844",
           "the Shell 390×844"
         ],
-        "activity": [
-          "the Shell 1440×900",
-          "the Shell 390×844"
-        ],
         "districts": [
           "the Shell 390×844"
         ]
       },
       "unseen": [],
       "quick": false,
+      "ok": true
+    },
+    "whatTidyingDidAndSuggestsIsSaidOnTheTodoExample": {
+      "graview": {
+        "tray": {
+          "count": "1",
+          "rows": [
+            "Graview, tidying suggests \"Redirect the post\" waits for \"Give notice on the flat\"based on “The post is redirected from the day notice is given” · 45% sureRedirect the postGive notice on the flatAcceptDecline"
+          ],
+          "edges": 18
+        },
+        "digest": {
+          "said": "Graview, tidying Tidied 2 things todayHide",
+          "rows": 1,
+          "each": [
+            " · based on “The broadband moves with the notice date” · 90% sure",
+            " · based on “The shelves cover the wall that needs paint” · 93% sure"
+          ],
+          "undoes": 2
+        },
+        "declined": {
+          "trayGone": true,
+          "unchanged": true,
+          "declinedBy": "user-nora",
+          "keyboard": "activity-button"
+        },
+        "ok": true
+      },
+      "pages": {
+        "tray": {
+          "count": "1",
+          "rows": [
+            "Graview, tidying suggests \"Redirect the post\" waits for \"Give notice on the flat\"based on “The post is redirected from the day notice is given” · 45% sureRedirect the postGive notice on the flatAcceptDecline"
+          ],
+          "edges": 18
+        },
+        "digest": {
+          "said": "Graview, tidying Tidied 2 things todayHide",
+          "rows": 1,
+          "each": [
+            " · based on “The broadband moves with the notice date” · 90% sure",
+            " · based on “The shelves cover the wall that needs paint” · 93% sure"
+          ],
+          "undoes": 2
+        },
+        "declined": {
+          "trayGone": true,
+          "unchanged": true,
+          "declinedBy": "user-nora",
+          "keyboard": "activity-button"
+        },
+        "ok": true
+      },
       "ok": true
     },
     "aHostSpeaksInTheAppsOwnNotices": {
@@ -2589,16 +3214,16 @@
       "ok": true
     },
     "aSentenceSaysADayAndAChoiceAsAPersonReadsThem": {
-      "problems": "\"Order boxes\" is done, but it waits for \"Find someone who moves pianos\"\nNothing done before what it waits for · 2 ways to fix\n\"Pay the deposit\" was due 28 Aug 2026\nNothing overdue · 2 ways to fix",
+      "problems": "\"Order boxes\" is done, but it waits for \"Find someone who moves pianos\"\nNothing done before what it waits for · 2 ways to fix\n\"Pay the deposit\" was due Aug 28, 2026\nNothing overdue · 2 ways to fix",
       "record": {
         "said": [
           "No",
-          "28 Aug 2026",
+          "Aug 28, 2026",
           "Tue",
           "09:00",
           "09:15"
         ],
-        "text": "TASKS\n\nPay the deposit\n\nIn the scene ↗\n\n\"Pay the deposit\" was due 28 Aug 2026\nGive it a new date …\nFinish it\nThe facts\nChange one where you can.\nFINISHED\nNo\nDUE\n28 Aug 2026\nDAY\nTue\nBLOCKED\n09:00\nUNTIL\n09:15\nThe list it is on\nToday\nWhy this is here\nThe landlord holds the date for 48 hours once the deposit…\nWhat can be done\nGive it a new date …\nFinish it\nNote why this is here …\nMove it to another list …\nRename …\nThis has to happen first …\nChange the task …\nBlock time for it …\nDrop it\nRemove the task"
+        "text": "TASKS\n\nPay the deposit\n\nIn the scene ↗\n\n\"Pay the deposit\" was due Aug 28, 2026\nGive it a new date …\nFinish it\nThe facts\nChange one where you can.\nFINISHED\nNo\nDUE\nAug 28, 2026\nDAY\nTue\nBLOCKED\n09:00\nUNTIL\n09:15\nThe list it is on\nToday\nWhy this is here\nThe landlord holds the date for 48 hours once the deposit…\nWhat can be done\nGive it a new date …\nFinish it\nNote why this is here …\nMove it to another list …\nRename …\nThis has to happen first …\nChange the task …\nBlock time for it …\nShow 5 more"
       },
       "ok": true
     },
@@ -2612,7 +3237,7 @@
           "fromLeft": 16,
           "fromRight": 1088,
           "keyboard": null,
-          "firstCard": 322
+          "firstCard": 314
         },
         "opened": {
           "frameWidth": 1440,
@@ -2622,7 +3247,7 @@
           "fromLeft": 7,
           "fromRight": 1079,
           "keyboard": "seat-field",
-          "firstCard": 322
+          "firstCard": 314
         },
         "snapped": {
           "frameWidth": 1440,
@@ -2632,7 +3257,7 @@
           "fromLeft": 1079,
           "fromRight": 7,
           "keyboard": "seat-side",
-          "firstCard": 322
+          "firstCard": 314
         },
         "afterAReload": {
           "frameWidth": 1440,
@@ -2642,7 +3267,7 @@
           "fromLeft": 1079,
           "fromRight": 7,
           "keyboard": null,
-          "firstCard": 322
+          "firstCard": 314
         },
         "ok": true
       },
@@ -2698,7 +3323,7 @@
           "fromLeft": 16,
           "fromRight": 468,
           "keyboard": null,
-          "firstCard": 159
+          "firstCard": 16
         },
         "ok": true
       },
@@ -2711,7 +3336,7 @@
           "fromLeft": null,
           "fromRight": null,
           "keyboard": null,
-          "firstCard": 333
+          "firstCard": 309
         },
         "ok": true
       },

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T07:16:04.039Z",
+  "at": "2026-10-15T01:05:23.996Z",
   "engine": "chromium",
   "steps": {
     "seed": {
@@ -22,7 +22,7 @@
       "startFresh": true
     },
     "undone": {
-      "deposit": "Pay the deposit"
+      "deposit": "Pay the deposit08-28"
     },
     "fresh": {
       "deposit": "Pay the deposit",
@@ -61,6 +61,37 @@
     "stranger": {
       "deposit": "Pay the deposit08-28"
     },
+    "garden": {
+      "planted": {
+        "nodes": 16,
+        "gardeners": "Gardeners2open ▾Who tends what",
+        "address": "?theme=light&remember=1"
+      },
+      "offered": [
+        "Start empty",
+        "Load the example garden"
+      ],
+      "emptied": {
+        "nodes": 0,
+        "gardeners": "Gardenersnone yetWho tends what",
+        "address": "?theme=light&remember=1"
+      },
+      "reloaded": {
+        "nodes": 0,
+        "gardeners": "Gardenersnone yetWho tends what",
+        "address": "?theme=light&remember=1"
+      },
+      "restored": {
+        "nodes": 16,
+        "gardeners": "Gardeners2open ▾Who tends what",
+        "address": "?theme=light&remember=1"
+      },
+      "byFlag": {
+        "nodes": 0,
+        "address": "?theme=light"
+      },
+      "errors": []
+    },
     "onTheDesk": {
       "beforeEdit": true,
       "afterEdit": false,
@@ -87,6 +118,13 @@
     "aFreshContextStartsFromTheSeed": true,
     "theLauncherMountsTheDemoTheWayItOpensItself": true,
     "eachDemoKeepsItsOwnStore": true,
+    "theGardenOpensPlanted": true,
+    "thePersonMenuOffersStartEmptyAndTheExample": true,
+    "startEmptyEmptiesTheGarden": true,
+    "anEmptyGardenStaysEmptyAfterAReload": true,
+    "loadTheExampleGardenPlantsItAgain": true,
+    "theEmptyFlagOpensItEmpty": true,
+    "nothingThrewInTheGarden": true,
     "nothingThrewOnTheDesk": true
   },
   "passed": true

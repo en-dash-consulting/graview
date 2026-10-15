@@ -1,4 +1,4 @@
-import { isInlineSvg, markHref, svgProblem, type Brand } from "@graview/core";
+import { emojiMark, isInlineSvg, markHref, svgProblem, type Brand } from "@graview/core";
 import { useEffect, type CSSProperties } from "react";
 import { useMarkup } from "./markup.js";
 
@@ -16,15 +16,18 @@ import { useMarkup } from "./markup.js";
  * says more than the name does.
  */
 
-/** The brand's mark alone, `size` pixels tall; nothing when there is none, or none that may be drawn. */
+/** The brand's mark alone, `size` pixels tall — its logo, or with none its page icon's emoji; nothing when there is none, or none that may be drawn. */
 export function AppMark({ brand, size = 22 }: { readonly brand: Brand | undefined; readonly size?: number }) {
   const logo = brand?.logo;
   const inline = logo !== undefined && isInlineSvg(logo) && svgProblem(logo) === null ? logo : undefined;
   const markup = useMarkup(inline);
+  const box: CSSProperties = { display: "inline-flex", flex: "0 0 auto", height: size, color: "var(--graview-accent)" };
+  // No logo: the page icon's emoji stands in, drawn as text and said by the name beside it.
+  const emoji = emojiMark(brand);
+  if (emoji) return <span className="graview-logo graview-emoji-mark" data-testid="app-mark" aria-hidden style={{ ...box, alignItems: "center", fontSize: `${(size * 0.86) / 16}rem`, lineHeight: 1 }}>{emoji}</span>;
   if (!logo || !markHref(logo)) return null;
   const alt = brand?.logoAlt ?? brand?.name ?? "";
   const said = alt !== "" && alt !== brand?.name;
-  const box: CSSProperties = { display: "inline-flex", flex: "0 0 auto", height: size, color: "var(--graview-accent)" };
   if (inline) return <span className="graview-logo" data-testid="app-mark" style={box} {...(said ? { role: "img", "aria-label": alt } : { "aria-hidden": true })} dangerouslySetInnerHTML={markup} />;
   return <img className="graview-logo" data-testid="app-mark" src={logo} alt={said ? alt : ""} style={{ ...box, width: "auto" }} />;
 }

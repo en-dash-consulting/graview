@@ -127,8 +127,13 @@ function OwnBar<S extends AnySchema>({ context }: { readonly context: PageContex
               <StandingDot tone={problems === 0 ? "var(--graview-good)" : "var(--graview-warn)"} />
               {problems > 0 ? <span aria-hidden="true">{problems}</span> : null}
             </Link>
-            {/* What has happened, each with its way back, as the scene's bar has it (FR-152). */}
-            <PagesActivity context={context} />
+            {/*
+              * What has happened, each with its way back, as the scene's bar has it (FR-152) —
+              * drawn here only when no design is under the bar: one that is is handed the bar's
+              * own slot, and its face controls draw Activity there, so drawing it here too put
+              * two "Activity" buttons side by side on todo's routed face.
+              */}
+            {toldFind ? null : <PagesActivity context={context} />}
             {context.views ? <Profile {...(context.signature ? { signature: true } : {})} /> : null}
           </>
         }

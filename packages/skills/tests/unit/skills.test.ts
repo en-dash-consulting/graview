@@ -16,6 +16,8 @@ const checkSource = [
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/facts-and-roles.ts"), "utf8"),
   // What a view's blocks are found wanting by: one validator, for the check and a document's compile alike (`warning("view-whole-text", …)`).
   readFileSync(resolve(SKILLS_DIR, "../../core/src/document/views.ts"), "utf8"),
+  // What a relation to another app's kind is found wanting by (FR-171): said with the checker, never by a page that compiles without it.
+  readFileSync(resolve(SKILLS_DIR, "../../core/src/document/linked-findings.ts"), "utf8"),
 ].join("\n");
 
 /**
@@ -42,6 +44,7 @@ describe("the skills package", () => {
       "graview-embed",
       "graview-invariant",
       "graview-lens",
+      "graview-linked-records",
       "graview-lists",
       "graview-new-app",
       "graview-node-kind",

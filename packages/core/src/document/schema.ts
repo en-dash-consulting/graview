@@ -1,4 +1,5 @@
 import * as z from "../schema/zod.js";
+import { LINKED_TARGET } from "../schema/linked.js";
 
 /*
  * THE GRAVIEW DECLARATION DOCUMENT, v1 — as data a stranger can hand us.
@@ -100,14 +101,24 @@ export const FieldSpec = z
   );
 export type FieldSpec = z.infer<typeof FieldSpec>;
 
+/**
+ * WHERE A RELATION GOES: a kind of this document (`"house"`), or a kind in
+ * ANOTHER APP the viewer can open (FR-171) — `@` + the app's address + `/`
+ * + its kind: `"@nick/house/house"`, `"@app_kf5eydr9z58jzf/house"`. A link
+ * to another app's record picks one there and leaves that app untouched.
+ */
+const edgeTarget = z.string().check(z.regex(new RegExp(`${NAME.source}|${LINKED_TARGET.source}`), 'a relation goes to a kind of this document, like "house", or of another app, like "@nick/house/house"'));
+
 export const EdgeSpec = z.strictObject({
-  to: z.union([some(name("kind"), 1), z.literal("*")]),
+  to: z.union([some(edgeTarget, 1), z.literal("*")]),
   cardinality: z.optional(z.enum(["one", "many"])),
   description: z.optional(sentence),
   inverse: z.optional(str(1, 80)),
   appendOnly: z.optional(z.boolean()),
   /** The name this relation had in the previous version: its links move. */
   renamedFrom: z.optional(z.string()),
+  /** `"never"`: no automated author makes or breaks this relation on its own (`@graview/core/tidying`). */
+  tidying: z.optional(z.literal("never")),
 });
 export type EdgeSpec = z.infer<typeof EdgeSpec>;
 
@@ -159,6 +170,8 @@ export const KindSpec = z.strictObject({
   people: z.optional(z.boolean()),
   /** `false`: its records are kept or removed, never archived — the kind is given no `archive-`, `unarchive-` or `merge-<kind>` (FR-173). */
   archives: z.optional(z.literal(false)),
+  /** What the app's own actor may do to its records on its own: `"never"` nothing, `"no-links"` all but link and unlink them (`@graview/core/tidying`). */
+  tidying: z.optional(z.enum(["never", "no-links"])),
 });
 export type KindSpec = z.infer<typeof KindSpec>;
 
@@ -282,7 +295,8 @@ export const BrandSpec = z.strictObject({
    * in, how round and how roomy, a hue per kind, and the scheme it prefers.
    */
   logo: z.optional(z.union([str(1, MARK_MAX), z.strictObject({ src: str(1, MARK_MAX), alt: z.optional(str(1, 120)) })])),
-  favicon: z.optional(str(1, MARK_MAX)),
+  // A page icon: a mark as the logo is one, or `{ "emoji": "🏡" }` — one standard emoji, the app's mark where it has no logo (`brand-emoji`).
+  favicon: z.optional(z.union([str(1, MARK_MAX), z.strictObject({ emoji: z.string() })])),
   typography: z.optional(z.strictObject({ display: z.optional(str(1, 200)), body: z.optional(str(1, 200)), mono: z.optional(str(1, 200)) })),
   shape: z.optional(
     z.strictObject({

@@ -536,9 +536,13 @@ const draw = () => {
     link.textContent = "the recipe";
     card.append(link);
   }
-  const said = document.createElement("gv-text");
-  said.textContent = JSON.stringify({ seen, answers });
-  card.append(said);
+  // In pieces under the host's cap on a text (10,000 characters): every act a kind offers is in what it was shown, and the harness joins them back.
+  const report = JSON.stringify({ seen, answers });
+  for (let at = 0; at < report.length; at += 9000) {
+    const said = document.createElement("gv-text");
+    said.textContent = report.slice(at, at + 9000);
+    card.append(said);
+  }
   guest.root.replaceChildren(card);
 };
 guest.subscribe((props) => { seen.push(props); draw(); });
@@ -863,7 +867,8 @@ window.__host = {
   if (!widget) throw new Error("the widget never mounted its guests");
   const drawn = async (selector, test, what) => {
     for (let i = 0; i < 100; i += 1) {
-      const text = await widget.evaluate((at) => document.querySelector(at)?.textContent ?? null, selector).catch(() => null);
+      // A report written in pieces under the host's cap on a text is read whole.
+      const text = await widget.evaluate((at) => { const all = [...document.querySelectorAll(at)]; return all.length ? all.map((one) => one.textContent).join("") : null; }, selector).catch(() => null);
       if (text !== null && test(text)) return text;
       await tab.waitForTimeout(100);
     }

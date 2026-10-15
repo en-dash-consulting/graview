@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-14T01:53:39.462Z",
+  "at": "2026-10-15T00:43:23.991Z",
   "engine": "chromium",
   "steps": [
     {
@@ -117,16 +117,9 @@
     }
   },
   "hitArea": {
-    "host": [
-      576,
-      397
-    ],
-    "drawn": [
-      576,
-      208
-    ],
-    "onContent": "t-deposit",
-    "belowContent": null
+    "stamped": 0,
+    "title": "Pay the deposit",
+    "pressedLandsOnIt": true
   },
   "moves": {
     "arranged": {
@@ -492,12 +485,12 @@
       "up": true
     },
     "midway": {
-      "t": 285,
-      "x": 226.91781616210938,
-      "y": 549.7952423095703,
+      "t": 286,
+      "x": 225.82476806640625,
+      "y": 550.0591278076172,
       "width": 1200
     },
-    "frames": 81,
+    "frames": 80,
     "plot": {
       "x": 186.70000457763672,
       "y": 560.5500030517578
@@ -644,6 +637,24 @@
       "boxWidth": 247,
       "small": 0
     },
+    "typo": {
+      "rows": [
+        {
+          "near": true,
+          "text": "⚠ Pay the depositNear “depsoit”"
+        },
+        {
+          "near": true,
+          "text": "The landlord holds the date for 48 hours once the deposit…Near “depsoit”"
+        }
+      ],
+      "said": "Near “depsoit”",
+      "count": "1 task, 1 reason found, 2 of them near",
+      "lit": [
+        "kind:reason",
+        "kind:task"
+      ]
+    },
     "ok": true
   },
   "verdict": {
@@ -688,6 +699,7 @@
     "theFindBoxIsACombobox": true,
     "theDistrictOpensNarrowed": true,
     "theStripIsASheetOnAPhone": true,
+    "aTypoFindsTheRecordSaidAsNear": true,
     "theStopSurvivesWhatItNames": true,
     "whatYouCanPressIsWhatYouCanSee": true
   },

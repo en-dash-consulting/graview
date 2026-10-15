@@ -29,6 +29,21 @@
  *   does; where an act may write it, a control beside it changes it and the
  *   new address is asked about.
  *
+ * AND A RECORD IN ANOTHER APP (FR-171, the full relation): the scenarios'
+ * `forHouse` goes to `@nick/house/house`, a kind in a second compiled
+ * document (`houses.gdd.json`) the same host holds, and the host's
+ * `linkedRecords` reads it as the viewer (`linkedRecordsOver`). It asks:
+ *
+ *   the linked house draws with its own card — its label, describe line,
+ *   a glance at its fields and its app's name — never what the link keeps;
+ *   the asking price the scenario works out through the link reads the far
+ *   value; pressing it opens it through the host's `open`; a guest the
+ *   host refuses the house app sees "linked record (no access)" and nothing
+ *   of the house, nor the price worked out from it; the scene's record
+ *   panel draws it as the page does; linking picks another house from what
+ *   the host lists there; and a far value's change, told by the host, is
+ *   said in the record's history as the house app's.
+ *
  *   node scripts/verify-app-links.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>]
  */
 import { createServer } from "node:http";
@@ -50,6 +65,8 @@ const SCHEMES = QUICK ? ["light"] : ["light", "dark"];
 const SHOTS = process.argv.find((arg) => arg.startsWith("--shots="))?.slice("--shots=".length);
 const SCENARIOS = resolve(repoRoot, "scripts/fixtures/app-links/scenarios.gdd.json");
 const SCENARIOS_SEED = resolve(repoRoot, "scripts/fixtures/app-links/scenarios.seed.json");
+const HOUSES = resolve(repoRoot, "scripts/fixtures/app-links/houses.gdd.json");
+const HOUSES_SEED = resolve(repoRoot, "scripts/fixtures/app-links/houses.seed.json");
 const DESK = { width: 1280, height: 800 };
 
 const report = { at: new Date().toISOString(), engines, schemes: SCHEMES, width: DESK.width, checks: {} };
@@ -68,8 +85,12 @@ async function buildHost() {
       contents: `
         import { mount } from "@graview/embed";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
+        import { Store } from "@graview/core";
+        import { linkedRecordsOver, recordLinkedChange } from "@graview/core/linked";
         import scenarios from ${JSON.stringify(SCENARIOS)};
         import seed from ${JSON.stringify(SCENARIOS_SEED)};
+        import houses from ${JSON.stringify(HOUSES)};
+        import houseSeed from ${JSON.stringify(HOUSES_SEED)};
         const query = new URLSearchParams(location.search);
         /* The host's apps, as it would say them to each viewer: the house is its owner's, the flat nobody's here. */
         window.__asked = [];
@@ -79,6 +100,22 @@ async function buildHost() {
           if (address === "@nick/house") return viewer.id === "u:owner" ? { name: "12 Elm Street", icon: "🏠", headline: "3 bedrooms · offer accepted", href: "/apps/nick/house" } : { denied: true };
           if (address === "@ana/flat") return { denied: true };
           return null;
+        };
+        /* The house app, a second document the host holds: its records read as each viewer, the house app the owner's alone. */
+        const houseApp = compileDocumentWithoutCheck(houses, { today: () => "2026-10-12" });
+        const houseStore = houseApp.ok ? new Store({ schema: houseApp.app.schema, mutations: houseApp.app.mutations ?? [], snapshot: houseSeed }) : undefined;
+        window.__linkedAsked = [];
+        const held = houseStore ? linkedRecordsOver(
+          { "@nick/house": { store: houseStore, name: "House", opens: (viewer) => viewer.id === "u:owner", href: (ref) => "/apps/nick/house/" + ref.kind + "/" + ref.id } },
+          { open: (ref) => location.assign("/apps/nick/house/" + ref.kind + "/" + ref.id + "?opened=host") },
+        ) : undefined;
+        const linkedRecords = held && {
+          ...held,
+          resolve: async (ref, viewer) => {
+            window.__linkedAsked.push(ref.kind + ":" + ref.id + " for " + (viewer.id ?? viewer.kind));
+            await new Promise((done) => setTimeout(done, 60));
+            return held.resolve(ref, viewer);
+          },
         };
         const compiled = compileDocumentWithoutCheck(scenarios, { today: () => "2026-10-12" });
         if (!compiled.ok) {
@@ -102,8 +139,10 @@ async function buildHost() {
             fonts: false,
             studio: false,
             /* "resolver=0": a host that names no other app. */
-            ...(query.get("resolver") === "0" ? {} : { resolveApp }),
+            ...(query.get("resolver") === "0" ? {} : { resolveApp, linkedRecords }),
           });
+          /* The host tells the scenarios app that the house's list price changed there. */
+          window.__farChange = () => recordLinkedChange(window.__handle.store, { ref: { address: "@nick/house", kind: "house", id: "elm" }, fields: ["listPrice"], app: "House" }).length;
           window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
       resolveDir: resolve(repoRoot, "packages/embed"),
@@ -164,7 +203,7 @@ const settled = (page, scope) => page.evaluate((scope) => document.querySelector
 
 const host = await buildHost();
 const errors = [];
-const seen = { found: [], opened: [], denied: [], guest: [], plain: [], rows: [], cards: [], scene: [], change: [] };
+const seen = { found: [], opened: [], denied: [], guest: [], plain: [], rows: [], cards: [], scene: [], change: [], linked: [], linkedOpened: [], linkedGuest: [], linkedScene: [], linking: [], farChange: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -266,6 +305,68 @@ try {
         return { links };
       });
 
+      /* A RECORD IN ANOTHER APP (FR-171): its own card, a value worked out through it, and opened through the host. */
+      const linkedIn = (scope) =>
+        [...document.querySelectorAll(`${scope} [data-graview-linked]`)].map((one) => ({
+          state: one.getAttribute("data-graview-linked-state"),
+          text: one.textContent,
+          title: one.querySelector("[data-graview-linked-title]")?.textContent ?? null,
+          describe: one.querySelector("[data-graview-linked-describe]")?.textContent ?? null,
+          app: one.querySelector("[data-graview-linked-app]")?.textContent ?? null,
+          card: one.querySelector("[data-graview-linked-card]")?.textContent ?? null,
+        }));
+      const linkedSettled = (page, scope) => page.evaluate((scope) => document.querySelectorAll(`${scope} [data-graview-linked]`).length > 0 && !document.querySelector(`${scope} [data-graview-linked-state="asking"]`), scope);
+      await attempt(seen.linked, "/scenarios/outright", "face=pages", async (page) => {
+        await until(page, () => linkedSettled(page, facts));
+        // The price is worked out once the house is read: the page reads again as the answer arrives.
+        await until(page, () => page.evaluate((facts) => /Asking price\s*450,?000/.test(document.querySelector(facts)?.textContent ?? ""), facts));
+        const [linked] = await page.evaluate(linkedIn, facts);
+        const said = await page.evaluate((facts) => document.querySelector(facts)?.textContent ?? "", facts);
+        await shot(page, "linked");
+        await page.locator(`${facts} [data-graview-linked-title]`).first().click();
+        const opened = await until(page, () => page.evaluate(() => location.pathname === "/apps/nick/house/house/elm" && location.search === "?opened=host"));
+        seen.linkedOpened.push({ ...where, opened });
+        return { linked, price: /Asking price\s*450,?000/.test(said), keeps: said.includes("house:elm") };
+      });
+
+      /* REFUSED TO THIS VIEWER: the house app is the owner's; a guest is told so, and nothing of the house. */
+      await attempt(seen.linkedGuest, "/scenarios/outright", "face=pages&as=guest", async (page) => {
+        await until(page, () => linkedSettled(page, facts));
+        const [linked] = await page.evaluate(linkedIn, facts);
+        const body = await page.evaluate(() => document.body.textContent);
+        await shot(page, "linked-guest");
+        return { linked, saysAnyOfIt: /450,?000|3 bedrooms|house:elm/.test(body) };
+      });
+
+      /* THE SCENE: the record's panel draws the linked house as the page does. */
+      await attempt(seen.linkedScene, "/places/overview", "face=graview#focus=outright", async (page) => {
+        await until(page, () => linkedSettled(page, "[data-graview-fields]"), 20_000);
+        const [linked] = await page.evaluate(linkedIn, "[data-graview-fields]");
+        await shot(page, "linked-scene");
+        return { linked };
+      });
+
+      /* LINKING: "Change" beside it lists the houses the host holds for this viewer, and picking one keeps it. */
+      await attempt(seen.linking, "/scenarios/mortgage", "face=pages", async (page) => {
+        await until(page, () => linkedSettled(page, facts));
+        await page.locator(`${facts} [data-graview-linked-change]`).first().click();
+        await until(page, () => page.evaluate(() => document.querySelectorAll("[data-graview-linked-candidate]").length >= 2));
+        const candidates = await page.evaluate(() => [...document.querySelectorAll("[data-graview-linked-candidate]")].map((one) => one.getAttribute("data-graview-linked-candidate")));
+        await page.locator('[data-graview-linked-candidate="house:oak"]').click();
+        const kept = await until(page, () => page.evaluate(() => window.__handle.store.graph.getNode("mortgage")?.forHouse === "house:oak"));
+        await until(page, () => page.evaluate((facts) => document.querySelector(`${facts} [data-graview-linked-title]`)?.textContent === "4 Oak Lane", facts));
+        const [linked] = await page.evaluate(linkedIn, facts);
+        return { candidates, kept, linked };
+      });
+
+      /* A FAR VALUE'S CHANGE: the host tells the scenarios app, and the record's history says it as the house app's. */
+      await attempt(seen.farChange, "/scenarios/outright", "face=pages", async (page) => {
+        await until(page, () => linkedSettled(page, facts));
+        const kept = await page.evaluate(() => window.__farChange());
+        const said = await until(page, () => page.evaluate(() => document.body.textContent.includes("Buy it outright: the linked record changed in House — list price")));
+        return { kept, said };
+      });
+
       /* CHANGED IN PLACE: the control beside the link takes another address, and the host is asked about it. */
       await attempt(seen.change, "/scenarios/mortgage", "face=pages", async (page) => {
         await until(page, () => settled(page, facts));
@@ -330,6 +431,29 @@ report.checks.theScenesRecordPanelDrawsItAsThePageDoes = {
 report.checks.aControlBesideItChangesTheAddressAndTheHostIsAsked = {
   seen: seen.change,
   ok: all(seen.change, (one) => one.kept && one.link?.state === "plain" && one.link.text === "@nick/barn" && one.asked.length === 1),
+};
+report.checks.aLinkedRecordDrawsWithItsOwnCardFromItsHomeApp = {
+  seen: seen.linked,
+  ok: all(seen.linked, (one) => one.linked?.state === "found" && one.linked.title === "12 Elm Street" && one.linked.describe === "3 bedrooms" && one.linked.app === "in House" && /List price\s*450,?000/.test(one.linked.card ?? "") && !one.keeps),
+};
+report.checks.aValueWorkedOutThroughTheLinkReadsTheFarValue = { seen: seen.linked, ok: all(seen.linked, (one) => one.price) };
+report.checks.pressingALinkedRecordOpensItThroughTheHost = { seen: seen.linkedOpened, ok: all(seen.linkedOpened, (one) => one.opened) };
+report.checks.aLinkedRecordRefusedToThisViewerIsSaidAsNoAccessAndNothingOfIt = {
+  seen: seen.linkedGuest,
+  ok: all(seen.linkedGuest, (one) => one.linked?.state === "denied" && one.linked.text === "linked record (no access)" && !one.saysAnyOfIt),
+};
+report.checks.theScenesRecordPanelDrawsTheLinkedRecordAsThePageDoes = {
+  seen: seen.linkedScene,
+  ok: all(seen.linkedScene, (one) => one.linked?.state === "found" && one.linked.title === "12 Elm Street" && one.linked.describe === "3 bedrooms"),
+};
+report.checks.linkingPicksARecordTheHostListsInTheOtherApp = {
+  seen: seen.linking,
+  ok: all(seen.linking, (one) => JSON.stringify(one.candidates) === JSON.stringify(["house:elm", "house:oak"]) && one.kept && one.linked?.title === "4 Oak Lane"),
+};
+report.checks.aFarValuesChangeIsSaidInTheRecordsHistoryAsTheOtherAppsChange = {
+  seen: seen.farChange,
+  // One op on each scenario that links the house: both of them.
+  ok: all(seen.farChange, (one) => one.kept === 2 && one.said),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

@@ -1,6 +1,7 @@
-import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type Person, type PresenceChannel, type Principal } from "@graview/core";
+import type { HistoryHost } from "@graview/core/history";
+import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -270,6 +271,25 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly resolveApp?: ResolveApp;
   /**
+   * WHAT THE HOST KEEPS OUTSIDE THE LOG, FOR PLAYBACK (Roadmap f-playback):
+   * `declarations`, each change to the declaration with the seq it took
+   * effect at, its sentence and the declaration it began; and `viewAt(name,
+   * seq)`, a script view's code as it stood at a moment (`null`: it did not
+   * exist then). Unsaid, the past is drawn under today's declaration and views.
+   */
+  readonly history?: HistoryHost;
+  /**
+   * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171), beside
+   * `resolveApp`: a relation to another app's kind (`"to":
+   * ["@nick/house/house"]`) draws the linked record as
+   * `linkedRecords.resolve(ref, viewer)` answers it — its card, describe
+   * line and the fields this viewer may see there — or "linked record (no
+   * access)"; linking picks from `find(search, viewer)`; pressing it calls
+   * `open(ref, viewer)` where given, else follows its `href`. A computed
+   * value or a rule that walks the link reads it as the viewer.
+   */
+  readonly linkedRecords?: LinkedRecords;
+  /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
    * the host is told the error's class and the framework module that
@@ -285,6 +305,28 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * role and name; every landmark inside is named after the embed.
    */
   readonly label?: string;
+  /**
+   * A FIRST LOOK, ONCE: a short run of hints beside the app's own controls
+   * — the switch between the scene and the pages, the problems count,
+   * Activity and the Ask box, each skipped where it is not drawn — on
+   * either face, then out of the way. `true` remembers it in this browser;
+   * `{ seen, onDone, steps }` hands that to the host — `seen` says whether
+   * this viewer has seen it, `onDone(how)` is told when it is over — and
+   * adds the host's own hints after the framework's, each naming one of
+   * `FIRST_LOOK_ANCHORS`. Off unless given; nothing of it is fetched until
+   * it is shown.
+   */
+  readonly firstLook?: FirstLook;
+}
+
+/**
+ * THE FIRST LOOK OVER EVERY FACE: found in the embed's own element, so two
+ * embeds on a page each point at their own controls, and kept across a
+ * change of face.
+ */
+export function FrameFirstLook({ rootRef, firstLook, app }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly firstLook: FirstLook | undefined; readonly app: string }) {
+  const root = useCallback(() => rootRef.current, [rootRef]);
+  return firstLook ? <FirstLookDoor firstLook={firstLook} root={root} app={app} /> : null;
 }
 
 /*
@@ -530,6 +572,8 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     ai: props.ai,
     files: props.files,
     resolveApp: props.resolveApp,
+    history: props.history,
+    linkedRecords: props.linkedRecords,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,

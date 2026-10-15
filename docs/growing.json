@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:25:12.277Z",
+  "at": "2026-10-15T01:00:46.634Z",
   "engines": [
     "chromium",
     "webkit",
@@ -470,9 +470,9 @@
           "opaque": true,
           "box": {
             "left": 618,
-            "top": 235,
+            "top": 223,
             "right": 918,
-            "bottom": 755,
+            "bottom": 743,
             "height": 520
           },
           "view": {
@@ -506,9 +506,9 @@
           "opaque": true,
           "box": {
             "left": 619,
-            "top": 233,
+            "top": 223,
             "right": 919,
-            "bottom": 753,
+            "bottom": 743,
             "height": 520
           },
           "view": {
@@ -542,9 +542,9 @@
           "opaque": true,
           "box": {
             "left": 621,
-            "top": 235,
+            "top": 223,
             "right": 921,
-            "bottom": 755,
+            "bottom": 743,
             "height": 520
           },
           "view": {

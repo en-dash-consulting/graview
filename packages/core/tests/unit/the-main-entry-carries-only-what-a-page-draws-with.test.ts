@@ -8,15 +8,19 @@ import * as document from "../../src/document/index.js";
 import * as figures from "../../src/figures.js";
 import * as fieldSight from "../../src/field-sight.js";
 import * as forms from "../../src/forms.js";
+import * as history from "../../src/history.js";
+import * as past from "../../src/past.js";
 import * as importing from "../../src/import/index.js";
 import * as jsonSchema from "../../src/json-schema.js";
 import * as main from "../../src/index.js";
 import * as provenance from "../../src/provenance.js";
+import * as linked from "../../src/linked.js";
 import * as scene from "../../src/scene.js";
 import * as search from "../../src/search.js";
 import * as seat from "../../src/seat.js";
 import * as words from "../../src/words.js";
 import * as markdown from "../../src/markdown.js";
+import * as tidying from "../../src/tidying.js";
 
 /*
  * THE MAIN ENTRY CARRIES ONLY WHAT A PAGE DRAWS WITH. A hosted page imports
@@ -30,7 +34,13 @@ import * as markdown from "../../src/markdown.js";
  */
 const OFF_THE_PAGE = {
   "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement", "throughEdges"] },
+  // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
+  "@graview/core/history": { from: history, names: ["declarationSentence", "makerOf", "makerWords", "restoreBatches", "ticksOf"] },
+  // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
+  "@graview/core/past": { from: past, names: ["declarationAt", "pastAt", "pastOf", "seqAt"] },
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },
+  // FR-171: another app's records, read as the viewer — the in-memory host, a page's reads, a far change kept in the history.
+  "@graview/core/linked": { from: linked, names: ["linkedChange", "linkedRecordsOver", "linkedRelationWords", "readLinkedRecord", "recordLinkedChange", "recordsLinking"] },
   "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "whatBlocksSay", "computedNames", "computedValues", "withComputed", "factNames", "factValues", "blockContextFor", "CARD_BUDGET", "PAGE_BUDGET", "fieldSpecOf", "fileFieldsOf", "fileWords", "firstPicture"] },
   "@graview/core/field-sight": { from: fieldSight, names: ["fieldsKept", "keptFrom", "partialKinds", "withoutKeptFields"] },
   "@graview/core/forms": { from: forms, names: ["formArgs", "formComplete", "formField", "formFields", "keptArguments", "undecidableArguments"] },
@@ -48,6 +58,11 @@ const OFF_THE_PAGE = {
   // FR-180: Markdown read into blocks, fetched with the first a page draws.
   "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "beginning", "placesFrom", "placesOf"] },
+  // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
+  "@graview/core/tidying": {
+    from: tidying,
+    names: ["acceptSuggestion", "declined", "declinedIn", "declineSuggestion", "declinesIn", "digestWords", "foldDigests", "isSuggestionBatch", "LEFT_ALONE", "suggest", "suggestionKey", "suggestions", "suggestionsIn", "tidyingOf", "tidyingRefusal"],
+  },
 } as const;
 
 describe("the entries a hosted page imports up front", () => {
@@ -58,6 +73,11 @@ describe("the entries a hosted page imports up front", () => {
       expect(names.filter((name) => name in document)).toEqual([]);
     });
   }
+
+  it("leave the past's fold and the suggestions' bookkeeping off the store: a class is carried whole, so they are functions of their own entries", () => {
+    const methods = Object.getOwnPropertyNames(main.Store.prototype);
+    expect(["at", "seqAt", "suggest", "suggestions", "acceptSuggestion", "declineSuggestion", "declined"].filter((name) => methods.includes(name))).toEqual([]);
+  });
 
   it("still compile a document without the checker: compileDocumentWithoutCheck is the document entry's", () => {
     expect(typeof document.compileDocumentWithoutCheck).toBe("function");

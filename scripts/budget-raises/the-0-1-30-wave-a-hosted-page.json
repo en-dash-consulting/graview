@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 7600,
+  "gzipped": 2520,
+  "changeset": "the-0-1-30-wave-leaves-the-past-and-the-suggestions-off-the-first-load.md",
+  "note": "Raised when the 0.1.30 wave landed together: playback, the cross-app relation, the app's own actor, an emoji as the app's mark, Activity's records going to the record and the first look each fit the base alone, and together they did not. What was not needed before anything is turned on left first: the past's fold, its kept points and the store it makes (`@graview/core/past`, fetched by the provider when somebody first looks back), and the suggestions' bookkeeping, reading and settling (`@graview/core/tidying`, fetched with the Suggested tray once the log holds one) — 3_806 bytes (1_190 gzipped) fewer than the five merged as they were (560_600 / 194_125). What stays up front is what the page draws or judges with before anything is asked: the store's holding of the app's own actor to what people said and its refusal of a change to the past, the seam every face reads the moment from, the far-record walk in the rule language and a relation to another app compiled as its field, an emoji mark drawn on the bar, and the first look's door. Measured at 557_934 / 193_342 against a base of 550_400 / 190_874."
+}

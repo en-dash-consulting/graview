@@ -1,6 +1,6 @@
 # graview-seed
 
-`graview-seed` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
+`graview-seed` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -51,6 +51,8 @@ pnpm build:domain && npx graview describe ./dist/domain/app.js
 pnpm build:domain && npx graview check ./dist/domain/app.js
 npx graview describe ./dist/domain/app.js
 ```
+
+A document (`app.json`, a graview-document) needs no build: `npx graview describe --document app.json` reads the same chain out, and `npx graview preview app.json --seed seed.json` serves the scene and Pages over a snapshot (`{ "nodes": [{ "id", "kind", …fields }], "edges": [{ "kind", "from", "to" }] }`) so you can walk in as a person would.
 
 Then open it with an empty store (`?fresh=1` with a ship browser adapter) and go through your own front door. A test holds it: derive the affordances of each root kind on an empty graph and assert the way in is offered, and that a kind deeper in the chain offers nothing and says what it waits for.
 

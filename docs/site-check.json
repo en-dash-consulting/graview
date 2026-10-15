@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T15:07:58.483Z",
+  "at": "2026-10-15T00:39:15.311Z",
   "engine": "chromium",
   "viewports": [
     {
@@ -1193,8 +1193,8 @@
     "aChapterSwitchesFaceOnThePage": true,
     "theKitRedressesTheLiveGarden": true,
     "theKitsVerdictIsTheCheckers": true,
-    "reducedMotionIsHonoured": true,
-    "forcedColoursKeepTheMeaningfulMarks": true,
+    "reducedMotionIsHonored": true,
+    "forcedColorsKeepTheMeaningfulMarks": true,
     "everyViewportIsClean": true,
     "everyGraviewIsLiveAtEveryWidth": true
   },

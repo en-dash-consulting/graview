@@ -10,6 +10,7 @@ import { Panel } from "./primitives/index.js";
 import { hasShape, TextBody } from "./text-body.js";
 import { Files } from "./files-door.js";
 import { AppLink } from "./app-link-door.js";
+import { LinkedRecordView } from "./linked-record-door.js";
 
 /*
  * VIEWS AS DATA, DRAWN (FR-03).
@@ -147,7 +148,10 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
           <span className="graview-spec-label">{block.label}</span>
           {/* A value with lines in it keeps them (FR-146): a field block stays one span, its breaks drawn where they stand. */}
           <span className="graview-spec-value" {...(hasShape(block.text) ? { style: { whiteSpace: "pre-line" } } : {})}>
-            {block.app ? (
+            {block.linked ? (
+              // A record in another app (FR-171), named as its home app names it, above the link the whole card is.
+              <LinkedRecordView relation={block.linked.relation} refs={block.linked.refs} as="chip" />
+            ) : block.app ? (
               // Another app, as the host names it (FR-171), above the link the whole card is.
               <AppLink address={block.app} />
             ) : block.href ? (

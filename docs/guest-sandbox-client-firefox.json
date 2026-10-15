@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:12:13.380Z",
+  "at": "2026-10-15T01:59:46.626Z",
   "transport": "client",
   "engine": "firefox",
   "claims": {
@@ -89,8 +89,8 @@
     "it resizes: the frame takes the height the guest asked for": {
       "ok": true,
       "detail": {
-        "asked": 276,
-        "height": "276px"
+        "asked": 275,
+        "height": "275px"
       }
     },
     "a press in it asks for an act, applied as Lin through the view (via view:prices)": {

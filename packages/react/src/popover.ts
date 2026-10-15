@@ -20,6 +20,8 @@ export const POPOVERS = {
   places: { trigger: "app-places-open", pane: "app-places", opens: "press", focus: "into", drawn: ["embed"] },
   /** Who else is here, and where each one is, from the bar (FR-155). */
   here: { trigger: "here-open", pane: "here-list", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
+  /** What tidying suggests and has not made, from the bar beside Activity, when anything waits. */
+  suggested: { trigger: "suggested-button", pane: "suggested", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
   /** What has happened, from the bar. */
   activity: { trigger: "activity-button", pane: "activity", opens: "press", focus: "into", drawn: ["shell", "embed", "pages"] },
   /** What the words find, under the Find box. */

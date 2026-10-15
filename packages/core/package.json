@@ -53,6 +53,22 @@
       "types": "./dist/provenance.d.ts",
       "default": "./dist/provenance.js"
     },
+    "./history": {
+      "types": "./dist/history.d.ts",
+      "default": "./dist/history.js"
+    },
+    "./past": {
+      "types": "./dist/past.d.ts",
+      "default": "./dist/past.js"
+    },
+    "./linked": {
+      "types": "./dist/linked.d.ts",
+      "default": "./dist/linked.js"
+    },
+    "./tidying": {
+      "types": "./dist/tidying.d.ts",
+      "default": "./dist/tidying.js"
+    },
     "./markdown": {
       "types": "./dist/markdown.d.ts",
       "default": "./dist/markdown.js"

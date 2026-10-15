@@ -1,6 +1,7 @@
 import { pluralOf, counted, labelOf, LOCAL_LAYERS, nounOf, walkKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
 import { onTheHorizon } from "./horizon.js";
+import { useArranging } from "./arranging.js";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import { hueFor } from "../default-views.js";
 import { Chip, Panel, Roster, useWidth } from "../primitives/index.js";
@@ -422,6 +423,8 @@ export function buildCoverage<S extends AnySchema>(
 export interface CoverageViewProps<S extends AnySchema> extends ViewProps<S> {
   readonly options: CoverageOptions;
   readonly schema?: S;
+  /** The rows an arrangement kept, when one is drawn above the grid; every row on the horizon when unsaid. */
+  readonly rowsKept?: ReadonlySet<string>;
 }
 
 /*
@@ -518,6 +521,7 @@ export function CoverageView<S extends AnySchema>({
   implicated = [],
   flagged = [],
   budget,
+  rowsKept,
 }: CoverageViewProps<S>) {
   const { store } = useGraview<AnySchema>();
   const under = useColumnsUnderTheNames();
@@ -537,7 +541,9 @@ export function CoverageView<S extends AnySchema>({
    */
   const whole = buildCoverage<S>(
     onTheHorizon(store.graph, store.schema, nodes)
-      .filter((node) => node.kind === options.rows || node.kind === options.columns),
+      .filter((node) => node.kind === options.rows || node.kind === options.columns)
+      // The rows the arrangement above kept; a grid over one kind keeps its columns whole.
+      .filter((node) => rowsKept === undefined || options.rows === options.columns || node.kind !== options.rows || rowsKept.has(node.id)),
     store.graph.allEdges(),
     options,
     schema,
@@ -1195,7 +1201,24 @@ export function createCoverageLens<S extends AnySchema>(
     // rendered through the registry ran without it and every schema-aware
     // decision inside quietly took its fallback path.
     const { store } = useGraview<S>();
-    return <CoverageView<S> schema={store.schema} {...props} options={options} />;
+    /*
+     * IT ARRANGES ITS ROWS BEFORE IT DRAWS, as the board, the timeline and
+     * the calendar do. A kind whose stop is this grid — the discography's
+     * songs, the rescue team's callouts — had no Filter on the scene at all
+     * (the tenth walk). Its rows are filtered; the columns stay whole, and
+     * there is no order or grouping a grid has a place for.
+     */
+    const subject = onTheHorizon(store.graph, store.schema, props.nodes).filter((node) => node.kind === options.rows);
+    const { arranged, bar } = useArranging<S>(props, { lensAllows: { sort: false, group: false }, subject, kind: options.rows });
+    const view = <CoverageView<S> schema={store.schema} {...props} options={options} {...(bar ? { rowsKept: new Set(arranged.nodes.map((node) => node.id)) } : {})} />;
+    return bar ? (
+      <div style={{ display: "grid", gap: 6, height: "100%", minHeight: 0, gridTemplateRows: "auto 1fr" }}>
+        {bar}
+        {view}
+      </div>
+    ) : (
+      view
+    );
   }
 
   return {

@@ -89,15 +89,15 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     `handle.drawn()` waits for it.
 11. **Put the host's own furniture inside the embed, never over it.**
     `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the
-    host's links — "Your apps", "Report this app" — in the person's menu,
-    under who is signed in, reached by the keyboard. Every popover
-    the embed draws stands in the browser's top layer, so a host needs no
-    `z-index` override and nothing fixed over the scene. `seat:
-    "hidden"` draws no ask field on either face (`"field"`, the default,
-    draws it, its conversation kept across a face switch). Say the
+    host's links in the person's menu, under who is signed in, reached by
+    the keyboard. Every popover the embed draws stands in the browser's
+    top layer, so a host needs no `z-index` override. `seat: "hidden"`
+    draws no ask field on either face. Say the
     host's own news through `handle.notify({ kind: "toast" | "banner",
     sentence, tone, action })`, not a toast of your own fixed over the app:
-    it floats at the app's foot, read aloud, moving nothing.
+    it floats at the app's foot, moving nothing. No tour of your own:
+    `firstLook: { seen, onDone, steps }` points at the app's controls
+    once, your `steps` naming a `FIRST_LOOK_ANCHORS` control.
 12. **When the page IS the app, hand it the address bar.** The default,
     `routing: "memory"`, never touches the host's `location` or `history`
     — right in an article. A host whose whole page is the app passes

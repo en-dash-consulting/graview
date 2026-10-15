@@ -1245,7 +1245,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-brand</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-brand</code> is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-brand</code> is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1295,7 +1295,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 <li><strong>A mark</strong> is inline SVG or a path on the app's own host — never another origin. It is drawn as given (<code>currentColor</code> takes the accent), so it is read element by element as the browser reads it: shapes, groups, gradients, filters, text and links to its own <code>#id</code>s, every attribute quoted, and nothing after <code>&lt;/svg&gt;</code>. A script, a handler, <code>&lt;a&gt;</code>, <code>&lt;style&gt;</code>, an animation, <code>foreignObject</code> or anything it loads is refused (<code>brand-mark</code>, with the reason), never rewritten. On Cloud, <code>add_image</code> answers the path.</li>
 <li><strong>A face</strong> is <code>system-serif</code>, <code>system-sans</code>, <code>system-mono</code>, a face every system has (Georgia, Menlo), or a web font on <code>DOCUMENT_FONTS</code>; one named by its address is refused (<code>brand-font</code>). The host decides where web fonts load from.</li>
 <li><strong>An accent</strong> must read as given in light: <code>set-brand</code> refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names.</li>
-<li><strong>The icon</strong> is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes <code>favicon: true</code>.</li>
+<li><strong>The icon</strong> is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes <code>favicon: true</code>. <code>"favicon": { "emoji": "🏡" }</code> — exactly one standard emoji (👩🏽‍🌾 and 🇺🇸 count as one) — is the icon and, with no logo, the mark; anything else is refused (<code>brand-emoji</code>).</li>
 </ul>
 <p><code>describe_place("home")</code> says the app as the home draws it (its <code>masthead</code>): the name, the line under it, and the logo by its alt text.</p>
 <h3>Styling by conversation</h3>

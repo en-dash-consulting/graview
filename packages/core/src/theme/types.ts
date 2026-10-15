@@ -59,6 +59,9 @@ export interface ThemeTokens {
  * a brand handing over a hex code has not given you a theme, and a brand
  * handing over a logo without a color has not either.
  */
+/** A brand's page icon: a mark (inline SVG or a path), or one standard emoji. */
+export type FaviconSpec = string | { readonly emoji: string };
+
 export interface Brand {
   /** The product name, shown where the framework shows a wordmark. */
   readonly name: string;
@@ -80,9 +83,10 @@ export interface Brand {
    * a same-origin path. Set only by a face that owns the whole page — the
    * Shell, the routed face on its own, an embed told `favicon: true` —
    * never by an embed on somebody else's page. `faviconHref` says it as an
-   * address.
+   * address. `{ emoji: "🏡" }` — one standard emoji — is the page icon
+   * and, where there is no logo, the app's mark (`emojiMark`).
    */
-  readonly favicon?: string;
+  readonly favicon?: FaviconSpec;
   /** A line under the name (FR-125): a document's `description`. */
   readonly subtitle?: string;
   /**

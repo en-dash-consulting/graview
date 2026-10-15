@@ -734,7 +734,7 @@ function RuleRecord({ context }: { context: Ctx }) {
               <p>{violation.message}</p>
               <div className="sb-acts">
                 {violation.repairs.map((repair, at) => (
-                  <button key={at} type="button" className="sb-act" onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } })}>
+                  <button key={at} type="button" className="sb-act" onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } }, context.principal ? { author: context.principal } : {})}>
                     {repair.label}
                   </button>
                 ))}
@@ -765,7 +765,7 @@ function Problems({ context }: { context: Ctx }) {
             <p>{violation.message}</p>
             <div className="sb-acts">
               {violation.repairs.map((repair, at) => (
-                <button key={at} type="button" className="sb-act" onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } })}>
+                <button key={at} type="button" className="sb-act" onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } }, context.principal ? { author: context.principal } : {})}>
                   {repair.label}
                 </button>
               ))}

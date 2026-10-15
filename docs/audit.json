@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T07:17:59.274Z",
+  "at": "2026-10-15T01:08:14.729Z",
   "engine": "chromium",
   "screens": [
     {
@@ -13,19 +13,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": {
-        "shown": 0,
-        "hidden": 0,
-        "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -40,21 +37,20 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [
-        "What has to happ at 12..251"
+        "activity-button at 1466..1585",
+        "standing at 1593..1643",
+        "profile-button at 1651..1681"
       ],
       "asking": [],
       "board": [],
-      "fill": 66,
-      "inspector": {
-        "shown": 0,
-        "hidden": 0,
-        "size": "239x233",
-        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
-      },
+      "fill": 74,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -69,13 +65,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The week x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 69,
       "inspector": null,
       "led": null,
       "figures": []
@@ -91,19 +89,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": {
-        "shown": 14,
-        "hidden": 0,
-        "size": "239x474",
-        "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -118,19 +113,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 61,
-      "inspector": {
-        "shown": 0,
-        "hidden": 0,
-        "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -145,19 +137,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": {
-        "shown": 0,
-        "hidden": 0,
-        "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -178,7 +167,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 61,
+      "fill": 69,
       "inspector": null,
       "led": null,
       "figures": []
@@ -194,13 +183,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The month x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 69,
       "inspector": null,
       "led": null,
       "figures": []
@@ -216,19 +207,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The month x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": {
-        "shown": 1,
-        "hidden": 0,
-        "size": "239x41",
-        "text": "Add a task …☆"
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -243,19 +231,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 55,
-      "inspector": {
-        "shown": 0,
-        "hidden": 0,
-        "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
-      },
+      "fill": 61,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -277,12 +262,7 @@
       "asking": [],
       "board": [],
       "fill": 44,
-      "inspector": {
-        "shown": 6,
-        "hidden": 0,
-        "size": "239x360",
-        "text": "Nothing done before what it waits for is connected to nothing yet⚠ \"Order boxes\" is done, "
-      },
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -303,13 +283,8 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 44,
-      "inspector": {
-        "shown": 0,
-        "hidden": 0,
-        "size": "239x140",
-        "text": "Nothing you may do with this mix of kinds — 1 action withheld.Remove the reasonNot permitt"
-      },
+      "fill": 48,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -324,14 +299,21 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": null,
+      "fill": 69,
+      "inspector": {
+        "shown": 21,
+        "hidden": 0,
+        "size": "300x420",
+        "text": "InspectorRedirect the posttask· double-click opens5 tasks are past their date, the oldest "
+      },
       "led": {
         "first": "A new date for \"Redirect the post\" …",
         "on": "Redirect the post",
@@ -341,7 +323,7 @@
     },
     {
       "app": "todo",
-      "state": "travelled",
+      "state": "traveled",
       "collisions": [],
       "small": [],
       "cut": [],
@@ -356,13 +338,8 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 34,
-      "inspector": {
-        "shown": 14,
-        "hidden": 0,
-        "size": "239x474",
-        "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
-      },
+      "fill": 35,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -427,13 +404,8 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 10,
-      "inspector": {
-        "shown": 0,
-        "hidden": 0,
-        "size": "239x64",
-        "text": "Nothing can be done with this mix of kinds yet — nothing this app declares acts on them."
-      },
+      "fill": 8,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -448,13 +420,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 68,
+      "fill": 67,
       "inspector": null,
       "led": null,
       "figures": []
@@ -470,19 +444,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": {
-        "shown": 12,
-        "hidden": 0,
-        "size": "239x440",
-        "text": "Put it back☆Rename …☆Move the date …☆Change the task …☆Block time for it …☆its tiesNote wh"
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -497,20 +468,26 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The lists x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 69,
       "inspector": {
-        "shown": 14,
+        "shown": 13,
         "hidden": 0,
-        "size": "239x547",
-        "text": "⚠ Was due 2026-08-28Give it a new date …☆Finish it★Rename …☆Change the task …☆Block time f"
+        "size": "300x420",
+        "text": "InspectorPay the deposittask· double-click opensWas due Aug 28, 2026Give it a new date …☆F"
       },
-      "led": null,
+      "led": {
+        "first": "Give it a new date …",
+        "on": null,
+        "names": null
+      },
       "figures": []
     },
     {
@@ -524,19 +501,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The week x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": {
-        "shown": 1,
-        "hidden": 0,
-        "size": "239x41",
-        "text": "Add a shift …☆"
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -551,13 +525,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The fortnight x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 69,
       "inspector": null,
       "led": null,
       "figures": []
@@ -573,13 +549,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The quarter x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 69,
       "inspector": null,
       "led": null,
       "figures": []
@@ -595,13 +573,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "Who is covering what x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 61,
+      "fill": 68,
       "inspector": null,
       "led": null,
       "figures": []
@@ -617,19 +597,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The week x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": {
-        "shown": 11,
-        "hidden": 0,
-        "size": "239x389",
-        "text": "⚠ Nobody is covering \"Friday repair cafe\" on 2026-09-18Find somebody for \"Friday repair ca"
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -644,19 +621,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The week x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
-      "inspector": {
-        "shown": 0,
-        "hidden": 0,
-        "size": "239x551",
-        "text": "Nobody is covering \"Friday repair cafe\" on 2026-09-18Nothing you may do with a shift — 7 a"
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -671,19 +645,16 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The week x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 61,
-      "inspector": {
-        "shown": 1,
-        "hidden": 0,
-        "size": "239x41",
-        "text": "Add a shift …☆"
-      },
+      "fill": 69,
+      "inspector": null,
       "led": null,
       "figures": []
     },
@@ -701,10 +672,12 @@
       "repeats": [],
       "articles": [],
       "covered": [],
-      "offscreen": [],
+      "offscreen": [
+        "profile-button at 1563..1593"
+      ],
       "asking": [],
       "board": [],
-      "fill": 14,
+      "fill": 7,
       "inspector": null,
       "led": null,
       "figures": []
@@ -726,7 +699,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 39,
+      "fill": 66,
       "inspector": null,
       "led": null,
       "figures": []
@@ -748,7 +721,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 9,
+      "fill": 8,
       "inspector": null,
       "led": null,
       "figures": []
@@ -764,13 +737,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The season x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 61,
+      "fill": 68,
       "inspector": null,
       "led": null,
       "figures": []
@@ -786,13 +761,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The year x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 61,
+      "fill": 68,
       "inspector": null,
       "led": null,
       "figures": []
@@ -808,13 +785,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "The rotation x3"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 61,
+      "fill": 69,
       "inspector": null,
       "led": null,
       "figures": []
@@ -836,7 +815,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 11,
+      "fill": 8,
       "inspector": null,
       "led": null,
       "figures": []
@@ -858,7 +837,7 @@
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 9,
+      "fill": 8,
       "inspector": null,
       "led": null,
       "figures": []
@@ -866,29 +845,7 @@
     {
       "app": "seedbed",
       "state": "asked",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 10,
-      "inspector": {
-        "shown": 5,
-        "hidden": 0,
-        "size": "239x228",
-        "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆Remove the garde"
-      },
-      "led": null,
-      "figures": []
+      "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"context-menu\"] [data-testid=\"affordances\"] button')."
     },
     {
       "app": "seedbed",
@@ -901,13 +858,15 @@
       "headings": [],
       "halfSaid": [],
       "painted": [],
-      "repeats": [],
+      "repeats": [
+        "What grows where x2"
+      ],
       "articles": [],
       "covered": [],
       "offscreen": [],
       "asking": [],
       "board": [],
-      "fill": 62,
+      "fill": 70,
       "inspector": null,
       "led": null,
       "figures": []
@@ -915,29 +874,7 @@
     {
       "app": "seedbed",
       "state": "askedNarrow",
-      "collisions": [],
-      "small": [],
-      "cut": [],
-      "unnamed": [],
-      "keyed": [],
-      "headings": [],
-      "halfSaid": [],
-      "painted": [],
-      "repeats": [],
-      "articles": [],
-      "covered": [],
-      "offscreen": [],
-      "asking": [],
-      "board": [],
-      "fill": 44,
-      "inspector": {
-        "shown": 5,
-        "hidden": 0,
-        "size": "344x228",
-        "text": "Is connected to nothing yetChange the gardener …☆its tiesTake on a plot …☆Remove the garde"
-      },
-      "led": null,
-      "figures": []
+      "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"context-menu\"] [data-testid=\"affordances\"] button')."
     }
   ]
 }

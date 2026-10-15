@@ -4,6 +4,7 @@ import { amountOf } from "../schema/amount-mark.js";
 import { formatMoney } from "../document/money.js";
 import { numberAsRead } from "../days.js";
 import { labelOf } from "../schema/define-node.js";
+import { LEFT_ALONE } from "../graph/archived.js";
 import { fieldWords, nounOf } from "../schema/define-node.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
@@ -315,7 +316,7 @@ export function deriveArchiveMutations<S extends AnySchema>(
   schema: S,
   mutations: readonly AnyMutationDefinition<S>[],
 ): AnyMutationDefinition<S>[] {
-  return perKind(schema, mutations).filter((mutation) => mutation.derived?.act !== "remove");
+  return perKind(schema, mutations).filter((mutation) => mutation.derived?.act === "archive" || mutation.derived?.act === "unarchive" || mutation.derived?.act === "merge");
 }
 
 /** The acts every kind is given whatever it declares: remove, archive, unarchive and merge, each on the record as `id`. */
@@ -335,9 +336,12 @@ function perKind<S extends AnySchema>(schema: S, mutations: readonly AnyMutation
       ["archive", "Archive", `Archive the ${noun}`, `Set this ${noun} aside, with its ties and history kept.`],
       ["unarchive", "Bring back", "Bring it back", `Bring this archived ${noun} back.`],
       ["merge", "Merge", `Merge into another ${noun}`, `The other takes this ${noun}'s ties, and this one is archived.`],
+      ["leave-alone", "Leave alone", "Leave this one alone", `Nothing automated changes this ${noun}: tidying passes it by until you allow it again.`],
+      ["allow-tidying", "Allow tidying of", "Allow tidying again", `Let tidying change this ${noun} again.`],
     ] as const) {
       const name = `${act}-${kind}`;
-      if (taken.has(name) || (act !== "remove" && definition.archives === false)) continue;
+      const marks = act === "leave-alone" || act === "allow-tidying";
+      if (taken.has(name) || (!marks && act !== "remove" && definition.archives === false) || (marks && definition.tidying === "never")) continue;
       derived.push({
         name,
         derived: { kind, act },
@@ -353,8 +357,11 @@ function perKind<S extends AnySchema>(schema: S, mutations: readonly AnyMutation
           const files = node ? new Set(Object.values(node).flatMap((value) => filesOf(value).map((file) => file.href))).size : 0;
           return `${verb} ${named(graph, args["id"])}${act === "merge" ? ` into ${named(graph, args["into"])}` : ""}${files ? ` and its ${files} file${files > 1 ? "s" : ""}` : ""}`;
         },
-        // `removeNode`, `archiveNode`, `unarchiveNode` or `mergeNode`, on the record (and the one it is merged into).
-        apply: (ctx, args: Record<string, unknown>) => (ctx[`${act}Node`] as (id: unknown, into: unknown) => void)(args["id"], args["into"]),
+        // Leave alone is a mark like archived, set and cleared by a patch: nothing when it is already so.
+        apply: marks
+          ? (ctx, args: Record<string, unknown>) => ctx.patchNode(String(args["id"]), { [LEFT_ALONE]: act === "leave-alone" ? true : undefined })
+          : // `removeNode`, `archiveNode`, `unarchiveNode` or `mergeNode`, on the record (and the one it is merged into).
+            (ctx, args: Record<string, unknown>) => (ctx[`${act}Node` as "removeNode"] as (id: unknown, into: unknown) => void)(args["id"], args["into"]),
       } as AnyMutationDefinition<S>);
     }
   }

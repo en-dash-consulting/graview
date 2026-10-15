@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T05:36:08.009Z",
+  "at": "2026-10-15T00:52:56.639Z",
   "engine": "chromium",
   "checks": {
     "aSecondPictureOfOneGroupIsASecondPlace": {
@@ -35,12 +35,13 @@
       "entry": "t-book",
       "strip": [
         "Mark it done",
-        "Archive the task",
-        "Merge into another task …",
         "Rename …",
         "Move the date …",
         "Change the task …",
         "Block time for it …",
+        "Archive the task",
+        "Leave this one alone",
+        "Merge into another task …",
         "Note why this is here …",
         "Move it to another list …",
         "It no longer has to wait …",
@@ -138,6 +139,116 @@
       "spilling": [],
       "transition": 0,
       "scroll": "auto",
+      "ok": true
+    },
+    "theWeekBesideTheMapDrawsEveryShift": {
+      "390": {
+        "panel": "sheet",
+        "gridHeight": 308,
+        "shifts": 10,
+        "blocks": 10,
+        "thinnest": 25,
+        "outside": 0,
+        "scrollsInside": 0,
+        "pageSideways": false,
+        "flagged": 6,
+        "flaggedOnThePlot": 6,
+        "brokenWords": []
+      },
+      "1440": {
+        "panel": "dock",
+        "gridHeight": 615,
+        "shifts": 10,
+        "blocks": 10,
+        "thinnest": 49,
+        "outside": 0,
+        "scrollsInside": 0,
+        "pageSideways": false,
+        "flagged": 6,
+        "flaggedOnThePlot": 6,
+        "brokenWords": []
+      },
+      "ok": true
+    },
+    "eachDaySHeadStandsOverItsColumnWhole": {
+      "the place at 390": {
+        "brokenWords": [],
+        "heads": [
+          "M",
+          "T",
+          "W",
+          "T",
+          "F",
+          "S",
+          "S"
+        ],
+        "offColumn": [],
+        "cutHeads": []
+      },
+      "the place at 1440": {
+        "brokenWords": [],
+        "heads": [
+          "MON",
+          "TUE",
+          "WED",
+          "THU",
+          "FRI",
+          "SAT",
+          "SUN"
+        ],
+        "offColumn": [],
+        "cutHeads": []
+      },
+      "beside the map at 390": {
+        "brokenWords": [],
+        "heads": [
+          "MON",
+          "TUE",
+          "WED",
+          "THU",
+          "FRI",
+          "SAT",
+          "SUN"
+        ],
+        "offColumn": [],
+        "cutHeads": []
+      },
+      "ok": true
+    },
+    "noDistrictSNameStandsOnAnotherSShowings": {
+      "390": {
+        "marquees": 1,
+        "on": []
+      },
+      "1440": {
+        "marquees": 1,
+        "on": []
+      },
+      "ok": true
+    },
+    "noTwoRecordNamesOnADistrictOverlap": {
+      "steps": [
+        {
+          "zoom": "125%",
+          "names": 11,
+          "overlapping": []
+        },
+        {
+          "zoom": "156%",
+          "names": 16,
+          "overlapping": []
+        },
+        {
+          "zoom": "195%",
+          "names": 18,
+          "overlapping": []
+        },
+        {
+          "zoom": "244%",
+          "names": 20,
+          "overlapping": []
+        }
+      ],
       "ok": true
     }
   },

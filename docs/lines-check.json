@@ -1,10 +1,18 @@
 {
-  "at": "2026-10-13T12:30:18.829Z",
+  "at": "2026-10-15T01:30:19.334Z",
   "engine": "chromium",
   "checks": {
     "everyLineIsDrawable": true,
     "everyLineStaysInThePicture": true,
     "everyLineLandsOnSomething": true,
+    "everyRecordLinkEndsWhereItPoints": true,
+    "withNothingChosenNoRecordLevelConnectorIsDrawn": true,
+    "aChosenRecordDrawsExactlyItsOwnLinks": true,
+    "everyLineOnTheGroundIsOneWholeLineFromDrawingToDrawing": true,
+    "theRealPointerAndTheKeyboardDrawATieWhateverElseIsChosen": true,
+    "whileTheCardIsHeldEveryTieStartsOnItsDrawnEdge": true,
+    "noLineOnTheGroundRunsBehindOrAcrossAnything": true,
+    "aRecordRisenFromIsInThePanelBesideTheMapAndNotOverTheCity": true,
     "nothingThrew": true,
     "thereWereLinesToCheck": true
   },
@@ -39,6 +47,10 @@
       "lines": 0
     },
     {
+      "where": "gauntlet at rest",
+      "lines": 0
+    },
+    {
       "where": "rota at rest",
       "lines": 0
     },
@@ -49,6 +61,166 @@
     {
       "where": "rota a shift chosen",
       "lines": 0
+    }
+  ],
+  "recordLinks": 2,
+  "groundAtRest": 0,
+  "groundChosen": 8,
+  "ground": {
+    "lines": 32,
+    "ties": 10,
+    "asked": 4
+  },
+  "pointer": [
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "otherId": "album:word-on-tha-streets",
+      "drawn": 1,
+      "kept": 1
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "otherId": "aggregate:song|by|in|more:by:artist:skatterman-snug-brim",
+      "drawn": 1,
+      "kept": 1
+    }
+  ],
+  "keyboard": [
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "tabbed": "album:word-on-tha-streets",
+      "resting": 1,
+      "ties": 2
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "tabbed": "aggregate:song|by|in|more:by:artist:skatterman-snug-brim",
+      "resting": 1,
+      "ties": 2
+    }
+  ],
+  "held": [
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "lines": 3
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "lines": 1
+    }
+  ],
+  "risen": [
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "how": "Up",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "dock",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "how": "the zoom-out control",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "dock",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "how": "ctrl+wheel",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1&pan=74.8%2C111.2",
+      "overview": true,
+      "panel": "dock",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "how": "an address",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "dock",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "how": "Back",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "dock",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "how": "Up",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "sheet",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "how": "the zoom-out control",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "sheet",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "how": "ctrl+wheel",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "sheet",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "how": "an address",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "sheet",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "how": "Back",
+      "hash": "#focus=artist%3Askatterman-snug-brim&overview=1",
+      "overview": true,
+      "panel": "sheet",
+      "title": "Skatterman & Snug Brim",
+      "stamped": 0,
+      "building": true
+    }
+  ],
+  "descended": [
+    {
+      "where": "discography artist:skatterman-snug-brim at 1440",
+      "hash": "#focus=artist%3Askatterman-snug-brim",
+      "card": true
+    },
+    {
+      "where": "discography artist:skatterman-snug-brim at 390",
+      "hash": "#focus=artist%3Askatterman-snug-brim",
+      "card": true
     }
   ],
   "lines": 1,

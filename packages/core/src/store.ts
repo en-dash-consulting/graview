@@ -3,7 +3,7 @@ import { isoToday } from "./days.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
-import { diffSnapshots, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
+import { diffSnapshots, diffTouched, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { invert, normalize, writesOf, type Primitive } from "./graph/primitives.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
 import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
@@ -23,6 +23,8 @@ import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
 import type { Author, Batch, Operation, Via } from "./ops/types.js";
 import { lineageOf, type Lineage } from "./ops/lineage.js";
 import { KEEP_LINK, keepLinkMutation, keepLinkVia } from "./mutations/keep-link.js";
+import { declinedIn, isAutomated, tidyingRefusal } from "./ops/tidying.js";
+import { nameOfAuthor } from "./who.js";
 import { actingAs, grantsTo, isSystem, permits, permittedMutations, subjectKinds, type PolicyWords } from "./permissions/policy.js";
 import { namesUnseen, redact } from "./ops/withheld.js";
 import { nounOf } from "./schema/define-node.js";
@@ -35,6 +37,7 @@ import { tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } 
 import { capitalize } from "./capital.js";
 import { dayOf, type Tick } from "./clock.js";
 import { pluralOf } from "./schema/define-node.js";
+import { linkedReaderOf } from "./schema/linked.js";
 
 export interface StoreOptions<S extends AnySchema> {
   readonly schema: S;
@@ -137,6 +140,50 @@ export interface StoreOptions<S extends AnySchema> {
    * a person with no name.
    */
   readonly principal?: Author | Principal;
+  /**
+   * HOW OFTEN `pastOf` KEEPS A POINT TO FOLD FROM (Roadmap f-playback): every
+   * this-many ops, in memory, as a seek passes it. Default 64.
+   */
+  readonly pastEvery?: number;
+  /** A store of the past (`pastOf`, `@graview/core/past`): read, never changed. Set by `pastOf` itself. */
+  readonly past?: PastPoint;
+}
+
+/**
+ * WHERE A STORE OF THE PAST STANDS (Roadmap f-playback): the seq it was
+ * folded to, when the last op before it was made, and the point it was
+ * folded from — a kept checkpoint, an epoch or the horizon — with how many
+ * ops that took.
+ */
+export interface PastPoint {
+  /** The ops before this seq are in it; none after. */
+  readonly seq: number;
+  /** When the last op in it was made; absent at the very start. */
+  readonly at?: string;
+  /** The seq the fold began at. */
+  readonly foldedFrom: number;
+  /** How many ops it folded to get here. */
+  readonly folded: number;
+}
+
+/**
+ * THE DECLARATION A MOMENT WAS MADE UNDER, when a host knows it was another
+ * one (Roadmap f-playback): what `pastOf` folds and judges the past with in
+ * place of the store's own. Read only: a store of the past offers no act.
+ */
+export interface PastDeclaration {
+  readonly schema: AnySchema;
+  readonly invariants?: readonly InvariantDefinition<AnySchema>[];
+  readonly policy?: Policy;
+  readonly modules?: ModuleMap;
+}
+
+/** A change asked of a store of the past (Roadmap f-playback): the past is read, never changed. */
+export class PastError extends GraphError {
+  constructor(at: PastPoint) {
+    super(`This is the app as it stood${at.at ? ` at ${at.at}` : " at the start"}: the past is read, never changed`);
+    this.name = "PastError";
+  }
 }
 
 export interface ApplyOptions {
@@ -300,6 +347,8 @@ export function violationKey(v: Violation, shaped?: ReadonlySet<string>): string
 }
 
 /** Every rule, as `violationKey` reads its `shaped`: a problem known by its rule, its record and its name. */
+/** The derived acts that take a record out or fold it away: riding the making of a kind, they reach only what the principal made (W-201). */
+const UNMAKING: ReadonlySet<string> = new Set(["remove", "archive", "unarchive", "merge"]);
 const EVERY_RULE = { has: () => true } as unknown as ReadonlySet<string>;
 
 /** The rules that have a shape, by name: what `violationKey` keys by the rule and the record. */
@@ -490,6 +539,8 @@ export class Store<S extends AnySchema> {
   private quiet = 0;
   /** True of a rehearsal (`previewAll`): what it does is told to nobody. */
   private rehearsing = false;
+  /** True of a rehearsal for a suggestion: the actor is held to what a person said, not to the declaration's `tidying`, since a person decides it. */
+  private suggesting = false;
   /**
    * The day a host last ticked this store to (FR-176), and the day the clock
    * read when it did: what its rules are judged on, where nothing pins one,
@@ -497,9 +548,15 @@ export class Store<S extends AnySchema> {
    * that slept through midnight never leaves the store on yesterday.
    */
   private ticked: { readonly day: string; readonly on: string } | undefined;
+  /** Where this store stands in the past, when it is one (`pastOf`): read, never changed. */
+  readonly past: PastPoint | undefined;
+  /** How often `pastOf` keeps a point to fold from, in ops (`StoreOptions.pastEvery`). */
+  readonly pastEvery: number;
   private readonly listeners = new Set<(diff: GraphDiff<NodeOfSchema<S>>, ops: readonly Operation[]) => void>();
 
   constructor(options: StoreOptions<S>) {
+    this.pastEvery = Math.max(1, options.pastEvery ?? 64);
+    this.past = options.past;
     this.schema = options.schema;
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
@@ -518,7 +575,8 @@ export class Store<S extends AnySchema> {
     this.batchTag = options.batchIds ? undefined : tag;
     this.mintBatch = options.batchIds ?? ((kind) => `${kind}:${tag}:${++this.counter}`);
 
-    for (const mutation of options.mutations ?? []) {
+    // A store of the past offers no act: not one declared, derived or kept (Roadmap f-playback).
+    for (const mutation of options.past ? [] : (options.mutations ?? [])) {
       if (this.mutations.has(mutation.name)) {
         throw new GraphError(`Duplicate mutation "${mutation.name}"`);
       }
@@ -532,11 +590,11 @@ export class Store<S extends AnySchema> {
      * invariants — and by the policy, through the acts that already write or
      * create the kind (see `permits`). Nothing an app declares is replaced.
      */
-    for (const mutation of deriveMutations(options.schema, options.mutations ?? [])) {
+    for (const mutation of options.past ? [] : deriveMutations(options.schema, options.mutations ?? [])) {
       this.mutations.set(mutation.name, mutation);
     }
     // "Keep this link" (FR-172): answered by every store, offered by no list. An app's own `keep-link` keeps its name.
-    if (!this.mutations.has(KEEP_LINK)) {
+    if (!options.past && !this.mutations.has(KEEP_LINK)) {
       this.keeper = keepLinkMutation(options.schema);
       this.mutations.set(KEEP_LINK, this.keeper);
     }
@@ -574,8 +632,14 @@ export class Store<S extends AnySchema> {
      * Only the DEFAULT generators are wound forward; an app that supplies
      * its own `ids` owns their uniqueness.
      */
+    if (options.past) return;
     this.countPastTheLog();
     tellTheWatchOfAStore(this);
+  }
+
+  /** Refuses any change to a store of the past (Roadmap f-playback). */
+  private stillNow(): void {
+    if (this.past) throw new PastError(this.past);
   }
 
   /** Winds the default op and batch counters past every id the log holds, and past the horizon (FR-23). */
@@ -637,6 +701,7 @@ export class Store<S extends AnySchema> {
    * when the set is the one the store already has.
    */
   setEnabledModules(enabled: readonly string[] | undefined, options: { readonly via?: Via; readonly batch?: string } = {}): Operation | undefined {
+    this.stillNow();
     const before = this.modules.enabled;
     const after = resolveModules(this.declaredModules, enabled).enabled;
     const off = [...before].filter((name) => !after.has(name));
@@ -744,6 +809,8 @@ export class Store<S extends AnySchema> {
      * repair as the starter seat, which may only add, and the press met
      * "starter may not take-off here" (W-110).
      */
+    // The app as it was is read, never changed (Roadmap f-playback): a control asking says so rather than offering a press.
+    if (this.past) return { ok: false, refusal: { mutation: call.name, wouldNeed: [], message: "Nothing changes while you look back." } } as ReturnType<typeof permits>;
     const narrowed = this.refusesAgent(call, principal) ?? this.namesTurnedOff(call, principal);
     if (narrowed) return { ok: false, refusal: narrowed } as ReturnType<typeof permits>;
     const mutation = this.mutations.get(call.name);
@@ -775,6 +842,8 @@ export class Store<S extends AnySchema> {
       },
       // Who made the record a derived act is about: riding only everybody's grant, it reaches what this principal made (W-201).
       mutation?.derived && (() => recordsOf(this.log).creatorOf(id as string)),
+      // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
+      mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
   }
 
@@ -1046,7 +1115,11 @@ export class Store<S extends AnySchema> {
   /** What every judgment is handed: the store's options, a call's context, and the day it judges on. */
   private judging(context?: InvariantContext): EvaluateOptions<S> {
     const today = this.today();
-    return { ...this.invariantOptions, ...(context === undefined ? {} : { context }), ...(today === undefined ? {} : { today }) };
+    // A rule that walks a link to another app reads it as the viewer this graph is read for (FR-171), unless the call hands its own reader.
+    const linked = linkedReaderOf(this.graph);
+    const given = context ?? this.invariantOptions.context;
+    const judged = linked && !(given && "linked" in given) ? { ...given, linked } : context;
+    return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }) };
   }
 
   /**
@@ -1078,6 +1151,18 @@ export class Store<S extends AnySchema> {
     const moved = this.moved(before, this.violations());
     if (day !== was && !this.rehearsing && this.quiet === 0) for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
     return { day, ...(was === undefined ? {} : { was }), appeared: moved.introduces, cleared: moved.resolves };
+  }
+
+  /**
+   * SOMETHING READ BESIDE THE GRAPH ANSWERED (FR-171): a record in another
+   * app that a computed field, a rule or a label walks to has been read, or
+   * read again. Nothing here changed, and nothing is written or logged;
+   * every subscriber hears it, as they hear the day turn, with an empty
+   * diff and no ops, so what reads through the link reads again.
+   */
+  reread(): void {
+    if (this.rehearsing || this.quiet > 0) return;
+    for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
   }
 
   /**
@@ -1218,6 +1303,7 @@ export class Store<S extends AnySchema> {
    * (`openRemote` sends each one down the wire).
    */
   private applying(calls: readonly MutationCall[], options: ApplyOptions, context?: InvariantContext): ApplyResult<S> {
+    this.stillNow();
     const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? this.by;
     const lineage = lineageOf(options.lineage);
@@ -1260,6 +1346,15 @@ export class Store<S extends AnySchema> {
       const refusal = this.refusesAgent(call, author) ?? this.namesTurnedOff(call, author as Principal);
       if (refusal) this.refuse(refusal, author.id);
     }
+    /*
+     * THE APP'S OWN ACTOR IS HELD TO WHAT PEOPLE SAID: a change a person
+     * declined is not made again, a record a person said to leave alone is
+     * not changed, and what the declaration says is never tidied is not
+     * tidied on its own (`@graview/core/tidying`). Each refused in a
+     * sentence, and the whole gesture with it.
+     */
+    const automated = isAutomated(author);
+    if (automated) this.refuseDeclined(calls, author);
     if (!this.rehearsing) tellTheWatchOfAnAuthor(author.id);
 
     try {
@@ -1268,6 +1363,10 @@ export class Store<S extends AnySchema> {
         const missing = this.missingFor(call, author as Principal);
         if (missing) throw missing;
         const compiled = compileMutation(this.graph, definition, call.args, this.sighted(author as Principal));
+        if (automated) {
+          const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(author), { declaration: !this.suggesting });
+          if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, author.id);
+        }
         /*
          * AN ACT THAT DID NOTHING DOES NOT GO IN THE HISTORY.
          *
@@ -1325,7 +1424,8 @@ export class Store<S extends AnySchema> {
       throw error;
     }
 
-    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    // What the act touched, never the whole graph again (W-205).
+    const diff = diffTouched(rollback, this.graph.snapshot(), allPrimitives);
     this.admitted(options, ops, allPrimitives, diff, rollback, kept);
     const after = this.violations(context);
     this.notify(diff, ops);
@@ -1372,6 +1472,7 @@ export class Store<S extends AnySchema> {
    * sequence must keep it themselves; `openRemote` does.
    */
   receive(ops: readonly Operation[], options: { readonly applied?: boolean } = {}): readonly Operation[] {
+    this.stillNow();
     const known = new Set(this.log.all().map((op) => op.id));
     const fresh = ops.filter((op) => !known.has(op.id));
     if (fresh.length === 0) return [];
@@ -1407,7 +1508,7 @@ export class Store<S extends AnySchema> {
       this.log.append(here);
       landed.push(here);
     }
-    this.notify(diffSnapshots(before, this.graph.snapshot()), landed);
+    this.notify(diffTouched(before, this.graph.snapshot(), fresh.flatMap((op) => op.primitives)), landed);
     return landed;
   }
 
@@ -1430,6 +1531,7 @@ export class Store<S extends AnySchema> {
    * lands. Subscribers hear one change, and every op undoes like any other.
    */
   append(ops: readonly AppendOp[], options: { readonly batch?: string } = {}): readonly Operation[] {
+    this.stillNow();
     if (ops.length === 0) return [];
     const taken = new Set(this.log.all().map((op) => op.id));
     let batch: string | undefined;
@@ -1467,7 +1569,7 @@ export class Store<S extends AnySchema> {
     }
     for (const op of built) this.log.append(op);
     for (const op of built) tellTheWatchOfAnAuthor(op.author.id);
-    this.notify(diffSnapshots(before, this.graph.snapshot()), built);
+    this.notify(diffTouched(before, this.graph.snapshot(), built.flatMap((op) => op.primitives)), built);
     return built;
   }
 
@@ -1482,6 +1584,7 @@ export class Store<S extends AnySchema> {
    * primitive that does not fit leaves the store as it was and throws.
    */
   applyPrimitives(primitives: readonly Primitive[], options: ApplyOptions = {}): ApplyResult<S> {
+    this.stillNow();
     const batch = options.batch ?? this.mintBatch("batch");
     const author = options.author ?? this.by;
     const before = this.violations();
@@ -1512,7 +1615,7 @@ export class Store<S extends AnySchema> {
       tellTheWatchOfAnAuthor(author.id);
     }
     const after = this.violations();
-    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    const diff = diffTouched(rollback, this.graph.snapshot(), recorded);
     this.notify(diff, ops);
     return {
       batch,
@@ -1588,6 +1691,7 @@ export class Store<S extends AnySchema> {
 
   /** `undo` itself, kept apart for the same reason as `applying`. */
   private undoing(batchIds: string | readonly string[], options: ApplyOptions): ApplyResult<S> {
+    this.stillNow();
     const ids = typeof batchIds === "string" ? [batchIds] : batchIds;
     const author = options.author ?? this.by;
     /*
@@ -1672,7 +1776,7 @@ export class Store<S extends AnySchema> {
       ops.push(op);
     }
 
-    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    const diff = diffTouched(rollback, this.graph.snapshot(), ops.flatMap((op) => [...op.primitives]));
     this.admitted(options, ops, ops.flatMap((op) => [...op.primitives]), diff, rollback, kept);
     const after = this.violations();
     this.notify(diff, ops);
@@ -1688,6 +1792,17 @@ export class Store<S extends AnySchema> {
       ...this.moved(before, after),
       violationsAfter: after,
     };
+  }
+
+  /** An author named as Activity names one, for a sentence that refuses them. */
+  private authorName(author: Author | Principal): string {
+    return nameOfAuthor(author, { graph: this.graph as never, schema: this.schema });
+  }
+
+  /** A change a person declined is not made or suggested again: refused, in a sentence. */
+  private refuseDeclined(calls: readonly MutationCall[], author: Author | Principal): void {
+    const declined = declinedIn(this.log.all(), calls);
+    if (declined) this.refuse({ mutation: calls[0]!.name, message: `${this.authorName(author)} may not make this again: a person declined it on ${declined.at.slice(0, 10)}.`, wouldNeed: [] }, author.id);
   }
 
   /** A change not kept: the graph as it was, and the log cut back to where it stood. */
@@ -1774,6 +1889,7 @@ export class Store<S extends AnySchema> {
    * never flickers through the states in between.
    */
   rebase(change: Rebase): RebaseResult<S> {
+    this.stillNow();
     const settling = new Set([...change.pending, ...(change.drop ?? [])]);
     const all = this.log.all();
     const first = all.findIndex((op) => settling.has(op.batch));
@@ -1866,6 +1982,7 @@ export class Store<S extends AnySchema> {
    * store did not hold before and the re-applied ones.
    */
   adopt(state: Adopt<S>): AdoptResult<S> {
+    this.stillNow();
     const dropped = new Set(state.drop ?? []);
     const pending = (state.pending ?? []).filter((batch) => !dropped.has(batch));
     const held = this.log.all();
@@ -2003,6 +2120,7 @@ export class Store<S extends AnySchema> {
    * Ship's `opened.compact()` archives first and calls this after.
    */
   compact(checkpoint: Epoch): LogArchive {
+    this.stillNow();
     return this.log.compact(checkpoint);
   }
 }

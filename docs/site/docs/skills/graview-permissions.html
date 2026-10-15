@@ -1245,7 +1245,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-permissions</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-permissions</code> is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-permissions</code> is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1263,7 +1263,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 <ol>
 <li><strong>Hand it to both <code>defineApp</code> and the <code>Store</code>.</strong> <code>defineApp</code> is what <code>graview check</code> reads; the <code>Store</code> is what enforces.</li>
 </ol>
-<p>The derived acts ride your grants rather than needing their own line:    <code>edit-&lt;kind&gt;</code> is permitted to whoever may change or make the kind,    <code>remove-&lt;kind&gt;</code>, <code>archive-&lt;kind&gt;</code>, <code>unarchive-&lt;kind&gt;</code> and <code>merge-&lt;kind&gt;</code>    to whoever may make it — or to any grant that names the act or says <code>*</code>.    A grant to every role (<code>roles: "*"</code>) is a door, not a key: riding    only it, a derived act reaches the records that seat made, so "anybody    may join" lets each person change or remove their own record, never    everybody's. A refusal names who could, so a seat told no learns what    it lacks rather than concluding the capability is missing.</p>
+<p>The derived acts ride your grants rather than needing their own line:    <code>edit-&lt;kind&gt;</code> is permitted to whoever may change or make the kind, and    <code>remove-&lt;kind&gt;</code>, <code>archive-&lt;kind&gt;</code>, <code>unarchive-&lt;kind&gt;</code> and <code>merge-&lt;kind&gt;</code>    to whoever may make it — but only over the records that seat made. To    take out anybody's, name the act in the grant or say <code>*</code>. A grant to    every role (<code>roles: "*"</code>) is a door, not a key: riding only it, even    the edit reaches just the seat's own records, so "anybody may join"    lets each person change or remove their own record, never everybody's. A refusal names who could, so a seat told no learns what    it lacks rather than concluding the capability is missing.</p>
 <ol>
 <li><strong>Give the provider a principal.</strong> `&lt;GraviewProvider principal={{ kind: "human", id: me.id, roles: me.roles }}&gt;`. The interface reads it to decide what to OFFER; the store decides what to allow; the log attributes to it. Three readings of one object, which is why they cannot drift.</li>
 </ol>

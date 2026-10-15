@@ -1,7 +1,7 @@
-import { humanizeField, isArchived, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
+import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
-import { AppLink, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
+import { AppLink, LinkedRecordView, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -167,6 +167,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
       </header>
 
       {node && isArchived(node) ? <ArchivedSaid context={context} id={id} kind={facts.kind} /> : null}
+      {node && isLeftAlone(store, id) ? <LeftAloneSaid context={context} id={id} kind={facts.kind} /> : null}
 
       {PageView && node ? (
         <section data-testid="record-view" style={{ display: "grid", minWidth: 0 }}>
@@ -245,7 +246,10 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                     <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
                       <dt style={eyebrow}>{field.label}</dt>
                       <dd style={{ margin: 0, overflowWrap: "anywhere", minWidth: 0 }}>
-                        {field.app ? (
+                        {field.linked ? (
+                          // A record in another app (FR-171), with its own card from its home app, picked again beside it where the face changes values in place.
+                          <LinkedRecordView relation={field.linked.relation} refs={field.linked.refs} {...(inPlace ? { nodeId: id, field: field.key } : {})} />
+                        ) : field.app ? (
                           // Another app, as the host names it (FR-171), changed beside it where the face changes values in place.
                           <AppLink address={field.app} as="record" {...(inPlace ? { nodeId: id, field: field.key } : {})} />
                         ) : field.href ? (
@@ -462,6 +466,33 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
     </PageMain>
+  );
+}
+
+/**
+ * A RECORD A PERSON SAID TO LEAVE ALONE SAYS SO, AT THE HEAD OF ITS PAGE:
+ * nothing automated changes it — the app's own actor passes it by — and
+ * the way to let it be tidied again, where the seat may take it. Set from
+ * "What can be done", as any act is.
+ */
+function LeftAloneSaid<S extends AnySchema>({ context, id, kind }: { context: PageContext<S>; id: string; kind: string }) {
+  const { store, principal } = context;
+  const call = { name: `allow-tidying-${kind}`, args: { id } };
+  const may = store.allMutations().some((mutation) => mutation.name === call.name) && store.permits(call, principal).ok;
+  return (
+    <section
+      data-testid="record-left-alone"
+      style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12, padding: "12px 16px", border: "1px solid var(--graview-edge)", borderRadius: "var(--graview-radius, 12px)", background: "var(--graview-panel)" }}
+    >
+      <p style={{ margin: 0, flex: "1 1 16rem" }}>
+        <strong>Left alone.</strong> Nothing automated changes it; tidying passes it by.
+      </p>
+      {may ? (
+        <button type="button" style={button} data-testid="allow-tidying" onClick={() => store.apply(call, principal ? { author: principal } : {})}>
+          Allow tidying again
+        </button>
+      ) : null}
+    </section>
   );
 }
 

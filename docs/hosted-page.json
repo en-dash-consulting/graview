@@ -1,15 +1,15 @@
 {
-  "at": "2026-10-14T03:28:49.904Z",
+  "at": "2026-10-15T00:39:15.169Z",
   "page": "openRemote + mount(…, { studio: false }) over the vendors document, built as Graview Cloud's packages/client/bundles.mjs builds its shell",
   "checks": {
     "atMostTheBudgetMinifiedUpFront": {
-      "kb": 529,
-      "budgetKb": 538,
+      "kb": 545,
+      "budgetKb": 545,
       "ok": true
     },
     "atMostTheBudgetGzippedUpFront": {
-      "kb": 183,
-      "budgetKb": 186,
+      "kb": 189,
+      "budgetKb": 189,
       "ok": true
     },
     "atMost150KbOfZodUpFront": {
@@ -21,13 +21,13 @@
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetUpFront": {
-      "kb": 488,
-      "budgetKb": 496,
+      "kb": 501,
+      "budgetKb": 501,
       "ok": true
     },
     "handedACompiledAppAtMostItsBudgetGzippedUpFront": {
-      "kb": 168,
-      "budgetKb": 172,
+      "kb": 173,
+      "budgetKb": 173,
       "ok": true
     },
     "handedACompiledAppCarriesNoCompilerUpFront": {
@@ -36,17 +36,17 @@
     }
   },
   "upFront": {
-    "kb": 529,
-    "gzippedKb": 183,
-    "bytes": 541994,
-    "gzippedBytes": 187254,
+    "kb": 545,
+    "gzippedKb": 189,
+    "bytes": 557934,
+    "gzippedBytes": 193342,
     "chunks": 13,
     "packagesKb": {
-      "@graview/core": 184,
+      "@graview/core": 196,
       "react-dom": 176,
-      "@graview/primitives": 42,
+      "@graview/primitives": 43,
       "zod": 34,
-      "@graview/react": 29,
+      "@graview/react": 31,
       "@graview/embed": 20,
       "@graview/ship": 17,
       "react": 8,
@@ -56,25 +56,27 @@
       "(the page)": 1,
       "@graview/tools": 0
     },
-    "ownNeedKb": 521
+    "ownNeedKb": 536
   },
   "budget": {
-    "minified": 550400,
-    "gzipped": 190873,
-    "raises": []
+    "minified": 558000,
+    "gzipped": 193393,
+    "raises": [
+      "the-0-1-30-wave-a-hosted-page.json"
+    ]
   },
   "whenAsked": {
-    "kb": 1051,
-    "chunks": 101,
+    "kb": 1114,
+    "chunks": 110,
     "packagesKb": {
-      "@graview/primitives": 367,
+      "@graview/primitives": 399,
       "@graview/guest": 140,
-      "@graview/tools": 115,
-      "@graview/core": 106,
-      "@graview/react": 103,
-      "@graview/pages": 93,
+      "@graview/tools": 120,
+      "@graview/core": 117,
+      "@graview/react": 110,
+      "@graview/pages": 96,
       "react-router": 44,
-      "@graview/layout": 31,
+      "@graview/layout": 32,
       "@graview/embed": 4,
       "@graview/render": 1,
       "(the page)": 0
@@ -82,74 +84,74 @@
     "doors": [
       {
         "module": "primitives/src/draft-frame.tsx",
-        "kb": 436,
+        "kb": 461,
         "packagesKb": {
-          "@graview/primitives": 173,
-          "@graview/core": 85,
-          "@graview/react": 80,
-          "@graview/tools": 53,
-          "@graview/layout": 31,
+          "@graview/primitives": 177,
+          "@graview/core": 92,
+          "@graview/react": 86,
+          "@graview/tools": 58,
+          "@graview/layout": 32,
           "@graview/render": 1
         }
       },
       {
         "module": "primitives/src/kind-stop.tsx",
-        "kb": 427,
+        "kb": 443,
         "packagesKb": {
-          "@graview/primitives": 182,
-          "@graview/react": 80,
-          "@graview/core": 72,
+          "@graview/primitives": 186,
+          "@graview/react": 86,
+          "@graview/core": 76,
           "@graview/tools": 49,
-          "@graview/layout": 31,
+          "@graview/layout": 32,
           "@graview/render": 1
         }
       },
       {
         "module": "primitives/src/declared-lenses.tsx",
-        "kb": 355,
+        "kb": 370,
         "packagesKb": {
-          "@graview/primitives": 146,
-          "@graview/react": 80,
-          "@graview/core": 69,
-          "@graview/layout": 31,
+          "@graview/primitives": 149,
+          "@graview/react": 86,
+          "@graview/core": 73,
+          "@graview/layout": 32,
           "@graview/tools": 17,
           "@graview/render": 1
         }
       },
       {
         "module": "primitives/src/seat-panel.tsx",
-        "kb": 302,
+        "kb": 324,
         "packagesKb": {
-          "@graview/core": 85,
-          "@graview/react": 80,
-          "@graview/tools": 57,
-          "@graview/primitives": 39,
-          "@graview/layout": 31,
+          "@graview/core": 92,
+          "@graview/react": 86,
+          "@graview/tools": 62,
+          "@graview/primitives": 40,
+          "@graview/layout": 32,
           "@graview/render": 1
         }
       },
       {
         "module": "embed/src/pages-content.tsx",
-        "kb": 298,
+        "kb": 308,
         "packagesKb": {
-          "@graview/pages": 88,
-          "@graview/primitives": 78,
-          "@graview/core": 51,
+          "@graview/pages": 90,
+          "@graview/primitives": 81,
+          "@graview/core": 55,
           "react-router": 44,
           "@graview/tools": 17,
           "@graview/react": 5,
           "@graview/render": 1,
-          "@graview/embed": 1,
-          "@graview/layout": 1
+          "@graview/layout": 1,
+          "@graview/embed": 1
         }
       },
       {
         "module": "embed/src/picture-face.tsx",
-        "kb": 297,
+        "kb": 308,
         "packagesKb": {
-          "@graview/pages": 88,
-          "@graview/primitives": 78,
-          "@graview/core": 51,
+          "@graview/pages": 90,
+          "@graview/primitives": 81,
+          "@graview/core": 55,
           "react-router": 44,
           "@graview/tools": 17,
           "@graview/react": 5,
@@ -160,131 +162,148 @@
       },
       {
         "module": "primitives/src/workbench/inspector.tsx",
-        "kb": 279,
+        "kb": 301,
         "packagesKb": {
-          "@graview/core": 82,
-          "@graview/react": 80,
-          "@graview/tools": 53,
-          "@graview/layout": 31,
-          "@graview/primitives": 24,
+          "@graview/core": 89,
+          "@graview/react": 86,
+          "@graview/tools": 58,
+          "@graview/layout": 32,
+          "@graview/primitives": 25,
           "@graview/render": 1
         }
       },
       {
         "module": "embed/src/scene-face.tsx",
-        "kb": 260,
+        "kb": 279,
         "packagesKb": {
-          "@graview/primitives": 83,
-          "@graview/react": 80,
-          "@graview/core": 41,
-          "@graview/layout": 31,
+          "@graview/primitives": 88,
+          "@graview/react": 86,
+          "@graview/core": 45,
+          "@graview/layout": 32,
           "@graview/tools": 17,
           "@graview/render": 1,
           "@graview/embed": 1
         }
       },
       {
-        "module": "pages/src/page-draft.tsx",
-        "kb": 198,
-        "packagesKb": {
-          "@graview/primitives": 78,
-          "@graview/core": 47,
-          "react-router": 44,
-          "@graview/pages": 12,
-          "@graview/react": 5,
-          "@graview/render": 1,
-          "@graview/tools": 1,
-          "@graview/layout": 1
-        }
-      },
-      {
         "module": "primitives/src/map-panel.tsx",
-        "kb": 194,
+        "kb": 231,
         "packagesKb": {
-          "@graview/react": 80,
-          "@graview/core": 41,
-          "@graview/layout": 31,
-          "@graview/primitives": 19,
+          "@graview/react": 86,
+          "@graview/core": 57,
+          "@graview/layout": 32,
+          "@graview/primitives": 30,
           "@graview/tools": 17,
           "@graview/render": 1
         }
       },
       {
-        "module": "pages/src/take-back.tsx",
-        "kb": 147,
+        "module": "pages/src/page-draft.tsx",
+        "kb": 205,
         "packagesKb": {
-          "@graview/primitives": 78,
-          "@graview/core": 47,
+          "@graview/primitives": 81,
+          "@graview/core": 50,
+          "react-router": 44,
+          "@graview/pages": 12,
+          "@graview/react": 5,
+          "@graview/render": 1,
+          "@graview/layout": 1,
+          "@graview/tools": 1
+        }
+      },
+      {
+        "module": "pages/src/take-back.tsx",
+        "kb": 154,
+        "packagesKb": {
+          "@graview/primitives": 81,
+          "@graview/core": 50,
           "@graview/pages": 6,
           "@graview/react": 5,
           "@graview/render": 1,
-          "@graview/tools": 1,
-          "@graview/layout": 1
+          "@graview/layout": 1,
+          "@graview/tools": 1
         }
       },
       {
         "module": "primitives/src/home-view.tsx",
-        "kb": 111,
+        "kb": 116,
         "packagesKb": {
-          "@graview/primitives": 50,
-          "@graview/core": 47,
+          "@graview/primitives": 51,
+          "@graview/core": 50,
           "@graview/react": 5,
           "@graview/render": 1,
-          "@graview/tools": 1,
-          "@graview/layout": 1
+          "@graview/layout": 1,
+          "@graview/tools": 1
         }
       },
       {
         "module": "primitives/src/framework-views.ts",
-        "kb": 111,
+        "kb": 116,
         "packagesKb": {
           "@graview/primitives": 50,
-          "@graview/core": 47,
+          "@graview/core": 50,
           "@graview/react": 5,
           "@graview/render": 1,
-          "@graview/tools": 1,
-          "@graview/layout": 1
+          "@graview/layout": 1,
+          "@graview/tools": 1
         }
       },
       {
         "module": "tools/src/seat-model.ts",
-        "kb": 93,
+        "kb": 106,
         "packagesKb": {
-          "@graview/core": 49,
-          "@graview/tools": 41
+          "@graview/core": 55,
+          "@graview/tools": 47
         }
       },
       {
         "module": "primitives/src/several-bar.tsx",
-        "kb": 78,
+        "kb": 83,
         "packagesKb": {
-          "@graview/core": 41,
+          "@graview/core": 44,
           "@graview/tools": 20,
-          "@graview/primitives": 14
+          "@graview/primitives": 15
         }
       },
       {
         "module": "tools/src/go.ts",
-        "kb": 73,
+        "kb": 76,
         "packagesKb": {
-          "@graview/core": 39,
+          "@graview/core": 42,
           "@graview/tools": 31
         }
       },
       {
         "module": "tools/src/draft.ts",
-        "kb": 68,
+        "kb": 72,
         "packagesKb": {
-          "@graview/core": 34,
+          "@graview/core": 38,
           "@graview/tools": 31
         }
       },
       {
         "module": "tools/src/several.ts",
+        "kb": 67,
+        "packagesKb": {
+          "@graview/core": 44,
+          "@graview/tools": 20
+        }
+      },
+      {
+        "module": "primitives/src/bar-panes.tsx",
         "kb": 63,
         "packagesKb": {
-          "@graview/core": 41,
-          "@graview/tools": 20
+          "@graview/primitives": 37,
+          "@graview/core": 21,
+          "@graview/render": 1
+        }
+      },
+      {
+        "module": "primitives/src/arrange-lists.tsx",
+        "kb": 63,
+        "packagesKb": {
+          "@graview/core": 34,
+          "@graview/primitives": 26
         }
       },
       {
@@ -295,27 +314,10 @@
         }
       },
       {
-        "module": "primitives/src/arrange-lists.tsx",
-        "kb": 60,
+        "module": "primitives/src/app-link.tsx",
+        "kb": 54,
         "packagesKb": {
-          "@graview/core": 31,
-          "@graview/primitives": 26
-        }
-      },
-      {
-        "module": "primitives/src/bar-panes.tsx",
-        "kb": 53,
-        "packagesKb": {
-          "@graview/primitives": 32,
-          "@graview/core": 16,
-          "@graview/render": 1
-        }
-      },
-      {
-        "module": "primitives/src/files.tsx",
-        "kb": 50,
-        "packagesKb": {
-          "@graview/core": 26,
+          "@graview/core": 29,
           "@graview/primitives": 14,
           "@graview/react": 5,
           "@graview/render": 1,
@@ -324,11 +326,11 @@
         }
       },
       {
-        "module": "primitives/src/app-link.tsx",
-        "kb": 50,
+        "module": "primitives/src/files.tsx",
+        "kb": 54,
         "packagesKb": {
-          "@graview/core": 26,
-          "@graview/primitives": 13,
+          "@graview/core": 29,
+          "@graview/primitives": 15,
           "@graview/react": 5,
           "@graview/render": 1,
           "@graview/tools": 1,
@@ -337,17 +339,17 @@
       },
       {
         "module": "primitives/src/arrange-bar.tsx",
-        "kb": 45,
+        "kb": 47,
         "packagesKb": {
-          "@graview/core": 31,
+          "@graview/core": 34,
           "@graview/primitives": 11
         }
       },
       {
         "module": "core/src/describe.ts",
-        "kb": 39,
+        "kb": 40,
         "packagesKb": {
-          "@graview/core": 37
+          "@graview/core": 38
         }
       },
       {
@@ -355,6 +357,14 @@
         "kb": 36,
         "packagesKb": {
           "@graview/guest": 35
+        }
+      },
+      {
+        "module": "primitives/src/suggested.tsx",
+        "kb": 35,
+        "packagesKb": {
+          "@graview/core": 18,
+          "@graview/primitives": 15
         }
       },
       {
@@ -366,17 +376,29 @@
       },
       {
         "module": "react/src/ribbons-layer.tsx",
-        "kb": 29,
+        "kb": 32,
         "packagesKb": {
-          "@graview/core": 17,
+          "@graview/core": 19,
           "@graview/react": 11
         }
       },
       {
-        "module": "primitives/src/repeat-picker.tsx",
-        "kb": 26,
+        "module": "primitives/src/linked-record.tsx",
+        "kb": 31,
         "packagesKb": {
-          "@graview/core": 13,
+          "@graview/core": 15,
+          "@graview/primitives": 6,
+          "@graview/react": 5,
+          "@graview/render": 1,
+          "@graview/tools": 1,
+          "@graview/layout": 0
+        }
+      },
+      {
+        "module": "primitives/src/repeat-picker.tsx",
+        "kb": 29,
+        "packagesKb": {
+          "@graview/core": 15,
           "@graview/react": 5,
           "@graview/primitives": 4,
           "@graview/render": 1,
@@ -386,18 +408,18 @@
       },
       {
         "module": "tools/src/agent/reads.ts",
-        "kb": 21,
+        "kb": 23,
         "packagesKb": {
-          "@graview/core": 16,
+          "@graview/core": 18,
           "@graview/tools": 4
         }
       },
       {
         "module": "react/src/record-links-layer.tsx",
-        "kb": 20,
+        "kb": 23,
         "packagesKb": {
-          "@graview/core": 13,
-          "@graview/react": 6
+          "@graview/core": 15,
+          "@graview/react": 7
         }
       },
       {
@@ -408,6 +430,14 @@
         }
       },
       {
+        "module": "primitives/src/states-bar.tsx",
+        "kb": 17,
+        "packagesKb": {
+          "@graview/core": 15,
+          "@graview/primitives": 1
+        }
+      },
+      {
         "module": "guest/src/host/press.ts",
         "kb": 14,
         "packagesKb": {
@@ -415,18 +445,10 @@
         }
       },
       {
-        "module": "primitives/src/states-bar.tsx",
+        "module": "react/src/plots.tsx",
         "kb": 14,
         "packagesKb": {
-          "@graview/core": 13,
-          "@graview/primitives": 1
-        }
-      },
-      {
-        "module": "react/src/plots.tsx",
-        "kb": 13,
-        "packagesKb": {
-          "@graview/react": 8,
+          "@graview/react": 9,
           "@graview/core": 4
         }
       },
@@ -443,6 +465,21 @@
         "kb": 10,
         "packagesKb": {
           "@graview/guest": 9
+        }
+      },
+      {
+        "module": "primitives/src/timeline.tsx",
+        "kb": 7,
+        "packagesKb": {
+          "@graview/primitives": 5,
+          "@graview/core": 1
+        }
+      },
+      {
+        "module": "primitives/src/first-look.tsx",
+        "kb": 7,
+        "packagesKb": {
+          "@graview/primitives": 6
         }
       },
       {
@@ -464,6 +501,13 @@
         "kb": 4,
         "packagesKb": {
           "@graview/primitives": 4
+        }
+      },
+      {
+        "module": "core/src/past.ts",
+        "kb": 3,
+        "packagesKb": {
+          "@graview/core": 3
         }
       },
       {
@@ -490,22 +534,24 @@
     ]
   },
   "handedACompiledApp": {
-    "kb": 488,
-    "gzippedKb": 168,
-    "bytes": 499794,
-    "gzippedBytes": 172530,
+    "kb": 501,
+    "gzippedKb": 173,
+    "bytes": 513286,
+    "gzippedBytes": 177525,
     "budget": {
-      "minified": 507904,
-      "gzipped": 176128,
-      "raises": []
+      "minified": 513354,
+      "gzipped": 177578,
+      "raises": [
+        "the-0-1-30-wave-a-hosted-page-handed-a-compiled-app.json"
+      ]
     },
-    "savedKb": 41,
+    "savedKb": 44,
     "packagesKb": {
       "react-dom": 176,
-      "@graview/core": 144,
-      "@graview/primitives": 42,
+      "@graview/core": 153,
+      "@graview/primitives": 43,
       "zod": 34,
-      "@graview/react": 29,
+      "@graview/react": 31,
       "@graview/embed": 20,
       "@graview/ship": 17,
       "react": 8,
@@ -518,12 +564,12 @@
   },
   "beforeEachFaceDraws": {
     "scene": {
-      "kb": 847,
-      "fetchedKb": 317
+      "kb": 882,
+      "fetchedKb": 338
     },
     "pages": {
-      "kb": 828,
-      "fetchedKb": 299
+      "kb": 854,
+      "fetchedKb": 309
     }
   },
   "passed": true

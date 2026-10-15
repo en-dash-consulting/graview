@@ -484,7 +484,8 @@ describe("what a principal may do", () => {
     // `undo_batch` and `act_on_several` stay — taking back your own work is legitimate, and the second runs only acts the seat may — but the
     // store refuses undoing a batch whose mutation this principal may not run,
     // or undo would be the way around the policy.
-    expect(mutating.filter((name) => name !== "undo_batch" && name !== "act_on_several").sort()).toEqual(["edit-duty", "reday"]);
+    // So do accepting and declining a suggestion: the change is judged as the seat's own when it is made.
+    expect(mutating.filter((name) => !["undo_batch", "act_on_several", "accept_suggestion", "decline_suggestion"].includes(name)).sort()).toEqual(["edit-duty", "reday"]);
   });
 
   it("refuses a seat that calls a mutation it was not given a tool for", () => {

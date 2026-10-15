@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 482,
+  "gzipped": 154,
+  "note": "Raised when the app came to be played back (the Roadmap's f-playback): a worker view drawn while a face shows the past asks the host for its code at that moment (`history.viewAt`), and is the kind's own face where the host says it did not exist then. 482 / 154 more than main at ec80d7fc (19_680 / 9_124). Measured at 20_162 / 9_278."
+}

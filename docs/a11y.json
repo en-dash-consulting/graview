@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T21:30:42.622Z",
+  "at": "2026-10-15T00:43:13.041Z",
   "tags": [
     "wcag2a",
     "wcag2aa",
@@ -10,6 +10,8 @@
   ],
   "sweep": [
     "desk light",
+    "desk dark",
+    "phone light",
     "phone dark"
   ],
   "checks": {
@@ -23,9 +25,67 @@
       "rules": [],
       "ok": true
     },
+    "aFirstLookPassesAxeWithEachHintOpen": {
+      "hints": 24,
+      "nodes": 0,
+      "ok": true
+    },
+    "aFirstLookPointsAtTheSwitchAndTheProblemsOnBothFaces": {
+      "faces": [
+        {
+          "screen": "vendors · first look · scene",
+          "anchors": [
+            "faces",
+            "problems",
+            "ask"
+          ]
+        },
+        {
+          "screen": "vendors · first look · pages",
+          "anchors": [
+            "faces",
+            "problems",
+            "ask"
+          ]
+        }
+      ],
+      "ok": true
+    },
+    "aHintNeverCoversItsControl": {
+      "covering": [],
+      "ok": true
+    },
+    "aHintFitsTheScreenAtDeskAndPhoneWidths": {
+      "over": [],
+      "ok": true
+    },
+    "aHintFitsAPhoneAtTheLargestText": {
+      "hints": 6,
+      "over": [],
+      "ok": true
+    },
+    "theKeyboardIsOnEachHintAsItOpens": {
+      "off": [],
+      "ok": true
+    },
+    "escapeEndsTheFirstLookAndGivesTheKeyboardBack": {
+      "escapes": [
+        {
+          "screen": "vendors · first look · scene · phone · largest text",
+          "gone": true,
+          "keyboardInApp": true
+        },
+        {
+          "screen": "vendors · first look · pages · phone · largest text",
+          "gone": true,
+          "keyboardInApp": true
+        }
+      ],
+      "ok": true
+    },
     "everyScreenWasScanned": {
-      "scanned": 34,
-      "expected": 34,
+      "scanned": 76,
+      "expected": 76,
       "ok": true
     },
     "noPageThrew": {
@@ -40,6 +100,14 @@
       "nodes": 0
     },
     {
+      "screen": "vendors · graview · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · graview · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "vendors · graview · phone · dark",
       "nodes": 0
     },
@@ -48,11 +116,59 @@
       "nodes": 0
     },
     {
+      "screen": "vendors · pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · pages · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "vendors · pages · phone · dark",
       "nodes": 0
     },
     {
+      "screen": "vendors · first look · scene · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · first look · scene · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · first look · scene · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · first look · scene · phone · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · first look · pages · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · first look · pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · first look · pages · phone · light",
+      "nodes": 0
+    },
+    {
+      "screen": "vendors · first look · pages · phone · dark",
+      "nodes": 0
+    },
+    {
       "screen": "workshop · graview · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · graview · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · graview · phone · light",
       "nodes": 0
     },
     {
@@ -64,11 +180,27 @@
       "nodes": 0
     },
     {
+      "screen": "workshop · pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "workshop · pages · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "workshop · pages · phone · dark",
       "nodes": 0
     },
     {
       "screen": "todo · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · / · phone · light",
       "nodes": 0
     },
     {
@@ -80,11 +212,27 @@
       "nodes": 0
     },
     {
+      "screen": "todo · /pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "todo · /pages · phone · dark",
       "nodes": 0
     },
     {
       "screen": "todo · /pages/tasks · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks · phone · light",
       "nodes": 0
     },
     {
@@ -96,11 +244,27 @@
       "nodes": 0
     },
     {
+      "screen": "todo · /pages/tasks/t-deposit · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/tasks/t-deposit · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "todo · /pages/tasks/t-deposit · phone · dark",
       "nodes": 0
     },
     {
       "screen": "todo · /pages/problems · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/problems · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/problems · phone · light",
       "nodes": 0
     },
     {
@@ -112,11 +276,27 @@
       "nodes": 0
     },
     {
+      "screen": "todo · /pages/search?q=the · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "todo · /pages/search?q=the · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "todo · /pages/search?q=the · phone · dark",
       "nodes": 0
     },
     {
       "screen": "seedbed · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · / · phone · light",
       "nodes": 0
     },
     {
@@ -128,11 +308,27 @@
       "nodes": 0
     },
     {
+      "screen": "seedbed · /pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "seedbed · /pages · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "seedbed · /pages · phone · dark",
       "nodes": 0
     },
     {
       "screen": "rota · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · / · phone · light",
       "nodes": 0
     },
     {
@@ -144,11 +340,27 @@
       "nodes": 0
     },
     {
+      "screen": "rota · /pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "rota · /pages · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "rota · /pages · phone · dark",
       "nodes": 0
     },
     {
       "screen": "discography · / · desk · light",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · / · phone · light",
       "nodes": 0
     },
     {
@@ -160,6 +372,14 @@
       "nodes": 0
     },
     {
+      "screen": "discography · /pages · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "discography · /pages · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "discography · /pages · phone · dark",
       "nodes": 0
     },
@@ -168,9 +388,263 @@
       "nodes": 0
     },
     {
+      "screen": "launcher · / · desk · dark",
+      "nodes": 0
+    },
+    {
+      "screen": "launcher · / · phone · light",
+      "nodes": 0
+    },
+    {
       "screen": "launcher · / · phone · dark",
       "nodes": 0
     }
   ],
+  "firstLook": {
+    "hints": [
+      {
+        "screen": "vendors · first look · scene · desk · light",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · scene · desk · light",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · scene · desk · light",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      },
+      {
+        "screen": "vendors · first look · scene · desk · dark",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · scene · desk · dark",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · scene · desk · dark",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      },
+      {
+        "screen": "vendors · first look · scene · phone · light",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · scene · phone · light",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · scene · phone · light",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      },
+      {
+        "screen": "vendors · first look · scene · phone · dark",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · scene · phone · dark",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · scene · phone · dark",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      },
+      {
+        "screen": "vendors · first look · pages · desk · light",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · pages · desk · light",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · pages · desk · light",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      },
+      {
+        "screen": "vendors · first look · pages · desk · dark",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · pages · desk · dark",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · pages · desk · dark",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · light",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · light",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · light",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · dark",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · dark",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · dark",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      }
+    ],
+    "largeText": [
+      {
+        "screen": "vendors · first look · scene · phone · largest text",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · scene · phone · largest text",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · scene · phone · largest text",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · largest text",
+        "anchor": "faces",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Scene or Pages"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · largest text",
+        "anchor": "problems",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Whether all is in order"
+      },
+      {
+        "screen": "vendors · first look · pages · phone · largest text",
+        "anchor": "ask",
+        "covers": false,
+        "fits": true,
+        "keyboardOn": true,
+        "title": "Ask Vendor shortlist"
+      }
+    ]
+  },
   "passed": true
 }

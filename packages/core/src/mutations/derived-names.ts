@@ -4,7 +4,7 @@
  * No imports, so the document's words and its compiler can read it without
  * bringing anything with them.
  */
-export const DERIVED_ACTS = ["edit", "remove", "archive", "unarchive", "merge"] as const;
+export const DERIVED_ACTS = ["edit", "remove", "archive", "unarchive", "merge", "leave-alone", "allow-tidying"] as const;
 
 /** The acts a kind with a date that repeats is given besides (`derive-repeats.ts`): skip one, change just one, change from one on. */
 export const REPEAT_ACTS = ["skip", "detach", "split"] as const;
@@ -16,9 +16,12 @@ export const derivedActsOf = (kind: string): string[] => DERIVED_ACTS.map((act) 
 
 /** The derived act a name says and its kind: `archive-task` → archive, task. */
 export function derivedActOf(name: string): { readonly act: DerivedActName; readonly kind: string } | undefined {
-  const found = /^(edit|remove|archive|unarchive|merge|skip|detach|split)-(.+)$/.exec(name);
+  const found = /^(edit|remove|archive|unarchive|merge|leave-alone|allow-tidying|skip|detach|split)-(.+)$/.exec(name);
   return found ? { act: found[1] as DerivedActName, kind: found[2]! } : undefined;
 }
 
 /** Whether a kind declared `archives: false` (FR-173) is still given this derived act: its edit and remove, never the three that set a record aside. */
-export const givenWhenNeverArchived = (act: DerivedActName): boolean => act === "edit" || act === "remove";
+export const givenWhenNeverArchived = (act: DerivedActName): boolean => act === "edit" || act === "remove" || act === "leave-alone" || act === "allow-tidying";
+
+/** Whether a kind the declaration says is never tidied is still given this derived act: all but the two that leave one record alone, which it already is. */
+export const givenWhenNeverTidied = (act: DerivedActName): boolean => act !== "leave-alone" && act !== "allow-tidying";

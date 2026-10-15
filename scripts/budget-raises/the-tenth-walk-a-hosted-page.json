@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 200,
+  "gzipped": 100,
+  "changeset": "an-act-costs-what-it-touches-in-the-store.md",
+  "note": "Raised when the tenth walk landed in the 0.1.30 wave: the store's diff of what an act touched (W-205) and the walk's other fixes on what a page draws with add about 0.1 KB up front, which fit the base alone and not beside the wave. Measured at 558_197 / 513_549 minified against 558_100 / 513_454."
+}

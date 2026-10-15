@@ -533,7 +533,30 @@ async function openActs(person) {
       person.note("its acts", before);
       return;
     }
-    if (!(await chosen.isVisible().catch(() => false))) return;
+    // On the ground, a record chosen in a narrow scene says "Acts…" (the tenth walk), as the map's sheet does.
+    const says = page.locator('[data-testid="chosen-acts"]').locator("visible=true").first();
+    if (await says.isVisible().catch(() => false)) {
+      await says.click({ timeout: 4_000 }).catch(() => {});
+      person.presses += 1;
+      await person.settle(250);
+      person.note("its acts", before);
+      return;
+    }
+    if (!(await chosen.isVisible().catch(() => false))) {
+      /*
+       * A record chosen inside a picture — "Today" among the lists — is no
+       * card of its own: a person right-clicks it where it is drawn.
+       */
+      const id = await page.evaluate(() => new URLSearchParams(location.hash.slice(1)).get("sel")?.split(",").pop() ?? null);
+      const pick = id ? page.locator(`[data-graview-pick="${escapeAttr(id)}"]:not([inert] *):not([aria-hidden="true"] *)`).locator("visible=true").first() : null;
+      if (!pick || !(await pick.isVisible().catch(() => false))) return;
+      // At its head, where its name is: its middle may be one of the records it holds.
+      await pick.click({ button: "right", position: { x: 14, y: 10 }, timeout: 4_000 }).catch(() => {});
+      person.presses += 1;
+      await person.settle(250);
+      person.note("its acts", before);
+      return;
+    }
     /*
      * On its name, as a person aims at the card itself. The host is the
      * layout's box, larger than the card drawn in it, so its middle was
@@ -854,7 +877,20 @@ async function findAndOpen(person, face, target, query) {
 function partOf(label, others) {
   const words = label.split(/[^\p{L}\p{N}']+/u).filter((word) => word.length >= 4);
   const own = words.filter((word) => others.filter((other) => other.toLowerCase().includes(word.toLowerCase())).length === 1);
-  return (own.sort((a, b) => b.length - a.length)[0] ?? words.sort((a, b) => b.length - a.length)[0] ?? label).toLowerCase();
+  if (own.length > 0) return own.sort((a, b) => b.length - a.length)[0].toLowerCase();
+  /*
+   * NO WORD OF ITS OWN: two that are its own together. Every word of
+   * "2021/063 · Mountain biker, head injury, Crib Ddu" is in a hundred other
+   * callouts' names; a person types the two that are this one's — its year
+   * and number — not the longest word, which finds a hundred (the tenth walk).
+   */
+  const all = label.split(/[^\p{L}\p{N}']+/u).filter((word) => word.length >= 2);
+  const holds = (other, pair) => pair.every((word) => other.toLowerCase().includes(word.toLowerCase()));
+  for (let at = 0; at + 1 < all.length; at++) {
+    const pair = [all[at], all[at + 1]];
+    if (others.filter((other) => holds(other, pair)).length === 1) return pair.join(" ").toLowerCase();
+  }
+  return (words.sort((a, b) => b.length - a.length)[0] ?? label).toLowerCase();
 }
 
 /** Wait for the store to say the job happened. */
@@ -884,7 +920,15 @@ const lastBatch = (store) => {
  */
 export const JOBS = {
   narrow: {
-    async prepare() {
+    /*
+     * A LIST THIS SHORT IS READ, NOT NARROWED. The pages draw no arranging
+     * line under eight records (`ARRANGE_FROM`), on purpose; seedbed's four
+     * plots were a dead end "in every face" for a job nobody does with four.
+     * Counted with the past, which a person widens to.
+     */
+    async prepare(ctx, job) {
+      const count = await inStore(ctx.page, ctx.kinds, (store, kind) => store.graph.count(kind), job.kind);
+      if (typeof count === "number" && count < 8) return { skip: `${count} ${job.plural.toLowerCase()} are read, not narrowed` };
       return {};
     },
     start: (ctx) => ctx.home,
@@ -903,6 +947,17 @@ export const JOBS = {
       }
       // "Filter" on the arranging line, or — where the line is narrow — the one "Arrange" that holds it.
       const filter = page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').locator("visible=true").first();
+      /*
+       * PAST THE HORIZON FIRST, where that is where the records are. A rescue
+       * team has one callout under way and 1,458 behind it: the list of one
+       * offers nothing to arrange, and a person who wants the long ones
+       * presses "+1458 past" and then narrows (the tenth walk).
+       */
+      const past = page.locator('[data-testid="past-link"], button.graview-kind-past').locator("visible=true").first();
+      if (!(await appears(filter, 2_500)) && (await past.isVisible().catch(() => false))) {
+        await person.press(past, `"${((await past.textContent()) ?? "past").trim()}"`);
+        await person.settle(600);
+      }
       if (!(await appears(filter))) throw new DeadEnd(`there is no "Filter" to narrow the ${job.plural.toLowerCase()} with`);
       await person.press(filter, '"Filter"');
       /*
@@ -1301,6 +1356,21 @@ export const JOBS = {
       }
       if (ctx.face === "pages" && !prep.subject) await openKindPage(person, prep.plural).catch(() => {});
       if (ctx.face === "scene") await openActs(person);
+      /*
+       * Pressed from inside another place, a district is raised as a relation
+       * of it rather than chosen, and nothing is open: a person goes Up, to
+       * every kind at once, and presses the district there — as making one
+       * does (the rota's viewer, carried from the eighth walk to the tenth).
+       */
+      if (ctx.face === "scene" && !prep.subject && !(await page.locator('[data-testid="context-menu"]').first().isVisible().catch(() => false))) {
+        const up = page.locator('[data-testid="overview"][aria-pressed="false"]').locator("visible=true").first();
+        if (await up.isVisible().catch(() => false)) {
+          await person.press(up, "Up");
+          await person.settle(400);
+          await pressDistrict(person, prep.kind, prep.plural).catch(() => {});
+          await openActs(person);
+        }
+      }
       const said = async () =>
         page.evaluate((title) => {
           const visible = (el) => el.getClientRects().length > 0;

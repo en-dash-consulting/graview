@@ -1,3 +1,4 @@
+import { linkedEdges, localEdges } from "../schema/linked.js";
 import type { FieldSpec, GraviewDocument } from "../document/schema.js";
 
 /*
@@ -100,11 +101,15 @@ export function documentTypes(document: GraviewDocument, from = "the document"):
       // How a date repeats, kept beside it: its first occurrence is the date itself.
       if (f.repeats) body += `  /** How ${key(field)} repeats; ${key(field)} is the first occurrence. */\n  readonly ${key(`${field}Repeat`)}?: Repeat | null;\n`;
     }
+    // A link to another app's record (FR-171) is kept on this record: "<kind>:<id>", or a list of them.
+    for (const [edge, relation] of linkedEdges(spec.edges)) {
+      body += `  /** ${relation.cardinality === "one" ? "A record" : "Records"} of ${relation.kinds.join(" or ")} in the app ${relation.address}, as "<kind>:<id>". */\n  readonly ${key(edge)}?: ${relation.cardinality === "one" ? "string" : "readonly string[]"};\n`;
+    }
     out.push(`${body}}\n`);
   }
   out.push(`/** Every kind's record, by kind. */\nexport type Kinds = {\n${kinds.map((kind) => `  readonly ${key(kind)}: ${names.get(kind)};\n`).join("")}};\n`);
   const edges = Object.entries(document.kinds).map(([kind, spec]) => {
-    const relations = Object.entries(spec.edges ?? {});
+    const relations = Object.entries(localEdges(spec.edges));
     if (relations.length === 0) return `  readonly ${key(kind)}: {};\n`;
     const lines = relations.map(([edge, e]) => `${comment(e.description, "    ")}    readonly ${key(edge)}: ${e.to === "*" ? "keyof Kinds" : union(e.to)};\n`);
     return `  readonly ${key(kind)}: {\n${lines.join("")}  };\n`;

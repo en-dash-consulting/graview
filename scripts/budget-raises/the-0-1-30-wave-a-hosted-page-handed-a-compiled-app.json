@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 5450,
+  "gzipped": 1450,
+  "changeset": "the-0-1-30-wave-leaves-the-past-and-the-suggestions-off-the-first-load.md",
+  "note": "Raised with the hosted page's when the 0.1.30 wave landed together, for the same reasons and the same trim: the past's fold and the suggestions' bookkeeping are fetched when first asked for (3_806 bytes fewer than the five merged as they were, 515_952), and what stays is what a page handed a compiled app draws and judges with before anything is asked. Measured at 513_286 / 177_529 against a base of 507_904 / 176_128."
+}

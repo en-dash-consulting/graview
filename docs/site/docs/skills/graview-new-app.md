@@ -1,6 +1,6 @@
 # graview-new-app
 
-`graview-new-app` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
+`graview-new-app` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -43,6 +43,8 @@ src/
 
 The domain/ui split keeps the declaration inspectable by a build, a CLI and an agent: `graview check` reads `defineApp`, and a React import there would drag a UI package into the checker.
 
+**Or as one JSON document:** `app.json` (`"format": "graview-document"`, schema `node_modules/@graview/core/dist/document.schema.json`), then `graview check --document app.json`, `graview describe --document app.json`, `graview preview app.json --seed seed.json`.
+
 ### Do this
 
 1. **Install.** The scaffold already did. Reach for `@graview/render/gpu` only if you want the experimental capture path; the DOM path is what ships.
@@ -53,7 +55,7 @@ The domain/ui split keeps the declaration inspectable by a build, a CLI and an a
 
 1. **Declare the seams that make the interface smart.** These are one-line declarations on mutations and kinds, and every derived surface reads them: - `creates: ["<kind>"]` on every mutation that adds a kind — the chain `Begin` and `graview describe` read, and the empty card's own way in. - `connects: [...]` / `severs: [...]` naming the edge kinds a mutation makes or breaks — what makes drawn LINES selectable, offers the act from either end, and hides a severing act with nothing to sever. - `lifecycle: { field, retired }` on kinds whose members expire — counts say "+N past". - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
-1. **Take the shell.** `Shell` from `@graview/primitives` is everything not about your domain: the one app bar an embed wears too (the name, the Scene and Pages switch, the scene's pictures, Find, Activity, the standing, the person), the scene, its key, the ask field — a seat that answers from the graph with no API key — and the acts at the pointer. Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`, `OverviewButton`) are exported for a shell of your own; one is about eighty lines, and a longer one is probably rebuilding something derived.
+1. **Take the shell.** `Shell` from `@graview/primitives` is everything not about your domain: the one app bar an embed wears too (the name, the Scene and Pages switch, the scene's pictures, Find, Activity, the standing, the person), the scene, its key, the ask field — a seat that answers from the graph with no API key — and the acts at the pointer. Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`, `OverviewButton`) are exported for a shell of your own; one is about eighty lines, and a longer one is probably rebuilding something derived. `firstLook` on `Shell` and `PagesApp` (`true` or `{ seen, onDone, steps }`) points a newcomer at the app's own controls once; write no tour.
 
 Search comes with `Shell`: Find answers `/` or ⌘K from anywhere, lights what the words find in whatever picture is open and dims the rest, and `#q=` makes a search a stop Back returns to. Nothing is declared per kind.
 

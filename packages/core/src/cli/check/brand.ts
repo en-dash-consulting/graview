@@ -1,4 +1,7 @@
-import { checkBrandContrast } from "../../theme/derive.js";
+import { checkBrandContrast, crowdedHues, HUE_CROWDING } from "../../theme/derive.js";
+import { emojiProblem } from "../../theme/marks.js";
+import { EMOJI_FIX, emojiSentence } from "../../document/brand-check.js";
+import { capitalize } from "../../capital.js";
 import { passingShade, ratioWords } from "../../theme/accent.js";
 import { TEXT_PAIRS } from "../../theme/types.js";
 import { checkKitContrast, resolveKit } from "../../theme/kit.js";
@@ -47,10 +50,34 @@ export function checkAccents<S extends AnySchema>(ctx: CheckContext<S>): void {
     }
   }
   /*
+   * KINDS THAT READ AS ONE COLOR. The same answer `graview describe` says
+   * (`crowdedHues`), so describe never flags a clash the check passed.
+   * A note, not a warning: a kind with no accent takes a hue from its
+   * name, and six names land two within 12° more often than not — a
+   * question worth one look, which an accent answers.
+   */
+  const { hues, crowded } = crowdedHues([...kinds], app.brand?.accents);
+  if (crowded.length > 1) {
+    const at = (kind: string) => hues.find((entry) => entry.kind === kind)!.hue;
+    add({
+      severity: "note",
+      code: "brand-hues-crowded",
+      where: "brand.accents",
+      message: `${crowded.map((kind) => `${kind} (${at(kind)}°)`).join(", ")} are within ${HUE_CROWDING}° of each other on the color wheel and will read as one color.`,
+      fix: `Give ${crowded.slice(1).map((kind) => `"${kind}"`).join(", ")} an accent in brand.accents at least ${HUE_CROWDING}° from the others, e.g. "${crowded[1]}": ${(at(crowded[0]!) + 180) % 360}.`,
+    });
+  }
+  /*
    * THE APP'S MONEY (FR-100). A currency or a locale the runtime cannot
    * format with is said as a plain number everywhere — a brand decision
    * that looks applied and is not — so it is refused here by name.
    */
+  /* AN EMOJI AS THE APP'S ICON: exactly one standard emoji, or every face would draw something other than what was meant. */
+  const favicon = app.brand?.favicon;
+  if (typeof favicon === "object" && favicon !== null) {
+    const problem = emojiProblem(favicon.emoji);
+    if (problem) add({ severity: "error", code: "brand-emoji", where: "brand.favicon.emoji", message: `${capitalize(emojiSentence(favicon.emoji, problem))}.`, fix: `${capitalize(EMOJI_FIX)}.` });
+  }
   const { currency, locale } = app.brand ?? {};
   const formats = (options: Intl.NumberFormatOptions, at?: string) => {
     try {

@@ -1,5 +1,7 @@
 import { withArticle } from "../schema/define-node.js";
 import { canonicalize } from "./canonical.js";
+import { emojiIconSentence } from "./brand-check.js";
+import { emojiOf } from "../theme/marks.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import { narrows, rangeWords } from "./range.js";
 import { formatWords } from "./format-words.js";
@@ -7,7 +9,7 @@ import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 import { capitalize } from "../capital.js";
-import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, archivesSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
+import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
  * WHAT A CHANGE TO THE APP MEANS, IN WORDS — and whether data would move.
@@ -114,8 +116,8 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
         if (narrower) narrowedRanges.push({ kind, field });
         sentences.push(`${kind}'s ${field} now takes ${rangeWords(f)}, where it took ${rangeWords(old)}${narrower ? "; values outside it are cleared" : ""}.`);
       }
-      // What it is said as — money in USD, a percent — in words, with what a value reads as.
-      if (old.format !== f.format || old.unit !== f.unit) {
+      // What it is said as — money in USD, a percent — in words, with what a value reads as. A text field's Markdown is said above.
+      if (f.type !== "text" && (old.format !== f.format || old.unit !== f.unit)) {
         const now = formatWords(f, after.brand);
         const then = formatWords(old, before.brand);
         sentences.push(`${kind}'s ${field} is now said as ${now ?? "a plain number"}, where it was said as ${then?.replace(/ — .*/, "") ?? "a plain number"}; its values are kept.`);
@@ -161,6 +163,12 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     if (!same(wasRoles, now.fieldRoles ?? {})) sentences.push(`Which of ${withArticle(kind)}'s fields is its time, its author or a lens's role changes.`);
     if (!was.people !== !now.people) sentences.push(peopleSentence(after.kinds, continues.get(kind) ?? kind, now.people === true));
     if ((was.archives === false) !== (now.archives === false)) sentences.push(archivesSentence(after.kinds, continues.get(kind) ?? kind, now.archives !== false));
+    // What the app's own actor may do on its own, to the kind and to each relation it keeps (`@graview/core/tidying`).
+    if ((was.tidying ?? "allowed") !== (now.tidying ?? "allowed")) sentences.push(tidyingSentence(after.kinds, continues.get(kind) ?? kind, undefined, now.tidying ?? "allowed"));
+    for (const [relation, edge] of Object.entries(now.edges ?? {})) {
+      const before = was.edges?.[edge.renamedFrom ?? relation];
+      if (before && (before.tidying === "never") !== (edge.tidying === "never")) sentences.push(tidyingSentence(after.kinds, continues.get(kind) ?? kind, relation, edge.tidying ?? "allowed"));
+    }
   }
   sentences.push(...factSentences(before.computed, after.computed));
   for (const [section, noun] of [["acts", "act"], ["rules", "rule"]] as const) {
@@ -198,6 +206,10 @@ function brandSentences(was: Brand, now: Brand, appName: string): string[] {
   const src = (logo: Brand["logo"]) => (typeof logo === "string" ? logo : logo?.src);
   for (const [what, a, b] of [["logo", src(was.logo), src(now.logo)], ["page icon", was.favicon, now.favicon]] as const) {
     if (same(a, b)) continue;
+    if (what === "page icon" && emojiOf(b) !== undefined) {
+      out.push(emojiIconSentence(emojiOf(b)!, now.logo !== undefined));
+      continue;
+    }
     out.push(b === undefined ? `The app has no ${what}.` : a === undefined ? `The app gets a ${what}.` : `The ${what} changes.`);
   }
   const alt = (logo: Brand["logo"]) => (typeof logo === "object" ? logo.alt : undefined);

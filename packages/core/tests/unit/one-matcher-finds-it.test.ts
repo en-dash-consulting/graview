@@ -121,14 +121,19 @@ describe("the worked example", () => {
     expect(search(store, "vna", { today }).hits).toEqual([]);
   });
 
-  it("leaves the past out unless is:any says otherwise, and says it did", () => {
-    expect(nodes(search(store, "milk", { today }).hits)).toEqual([]);
+  it("leaves the past out where the current answer or is:current says so, and says when it looked there", () => {
+    // Nothing current is milk, so the past one follows, said as past (the tenth walk).
+    const reached = search(store, "milk", { today });
+    expect(nodes(reached.hits)).toEqual(["t-milk"]);
+    expect(reached.hits[0]).toMatchObject({ current: false });
+    expect(reached.searched.past).toBe(true);
+    expect(nodes(search(store, "milk is:current", { today }).hits)).toEqual([]);
     const widened = search(store, "milk is:any", { today });
     expect(nodes(widened.hits)).toEqual(["t-milk"]);
     expect(widened.searched.past).toBe(true);
     expect(widened.hits[0]).toMatchObject({ current: false });
     expect(nodes(search(store, "buy is:past", { today }).hits)).toEqual(["t-milk"]);
-    expect(describeSearched(schema, search(store, "milk", { today }).searched)).toBe(
+    expect(describeSearched(schema, search(store, "milk is:current", { today }).searched)).toBe(
       "Lists and tasks, current ones; add is:any for past ones.",
     );
   });
@@ -172,7 +177,7 @@ describe("the worked example", () => {
     const acts = search(store, "van finish", { today, subject: "t-van" }).hits.filter((hit) => hit.about === "act");
     // Named first; then the rest the seat may run, the derived edit among them; the destructive last.
     // "Bring it back" is not offered on a live record (FR-173).
-    expect(acts.map((hit) => hit.about === "act" && hit.name)).toEqual(["finish", "archive-task", "edit-task", "merge-task", "drop", "remove-task"]);
+    expect(acts.map((hit) => hit.about === "act" && hit.name)).toEqual(["finish", "archive-task", "edit-task", "leave-alone-task", "merge-task", "drop", "remove-task"]);
     expect(acts[0]?.why).toMatchObject({ field: "title", fragment: "Finish it" });
     expect(acts.every((hit) => hit.about === "act" && hit.subject === "t-van")).toBe(true);
   });
@@ -244,7 +249,7 @@ describe("what the review found", () => {
   });
 
   it("lists a record's acts on their own, without a search of the graph", () => {
-    expect(actsOn(store, "t-van", "finish").map((hit) => hit.name)).toEqual(["finish", "archive-task", "edit-task", "merge-task", "drop", "remove-task"]);
+    expect(actsOn(store, "t-van", "finish").map((hit) => hit.name)).toEqual(["finish", "archive-task", "edit-task", "leave-alone-task", "merge-task", "drop", "remove-task"]);
     expect(actsOn(store, "t-van", "", { limit: 2 })).toHaveLength(2);
     expect(actsOn(store, "nobody", "finish")).toEqual([]);
   });

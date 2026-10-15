@@ -1,4 +1,4 @@
-import { ARCHIVED, isArchived } from "../graph/archived.js";
+import { ARCHIVED, isArchived, LEFT_ALONE } from "../graph/archived.js";
 import { UNSET, type Primitive } from "../graph/primitives.js";
 import type { GraphEdge } from "../graph/types.js";
 import { canonicalize } from "./canonical.js";
@@ -262,6 +262,8 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
      * never archived, when nothing could bring it back: it is brought back
      * in the same op, and said.
      */
+    // A record a person said to leave alone stays so, whatever its kind is called now.
+    if ((node as Record<string, unknown>)[LEFT_ALONE] === true) next[LEFT_ALONE] = true;
     if (isArchived(node)) {
       if (after.kinds[newKind]!.archives !== false) next[ARCHIVED] = true;
       else {

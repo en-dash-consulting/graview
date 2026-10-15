@@ -32,6 +32,15 @@ function landOnTheApp(app: Element | null | undefined) {
  * gone, takes its offer off the board.
  */
 export function sceneWay<S extends AnySchema>(store: Store<S>, principal: Principal | undefined, board: NoticeBoard | null, seen: number, mark: Element | null): (gone?: boolean) => void {
+  /*
+   * THE APP AS IT WAS OFFERS NOTHING BACK (Roadmap f-playback): an offer
+   * standing from an act made just before is taken off the board while the
+   * past is shown, and ⌘Z is not heard there.
+   */
+  if (store.past) {
+    board?.dismiss(OFFER);
+    return () => {};
+  }
   // The app the scene is drawn in: an embed's frame, or none — the whole-page Shell owns the page.
   const app = mark?.closest("[data-graview-embed]");
   let offered: string | undefined;

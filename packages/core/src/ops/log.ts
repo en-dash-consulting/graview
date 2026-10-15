@@ -299,17 +299,7 @@ export class OperationLog {
     const base = (options.from?.base ?? { nodes: [], edges: [] }) as GraphSnapshot<NodeOfSchema<S>>;
     const graph = Graph.from(schema, base, options.validate !== undefined ? { validate: options.validate } : {});
     const to = options.to ?? this.length;
-    for (const op of this.ops.slice(from - this.start, Math.max(0, to - this.start))) {
-      if (op.undoes !== undefined) {
-        graph.applyPrimitives(op.primitives, { restoring: true });
-        continue;
-      }
-      try {
-        graph.applyPrimitives(op.primitives);
-      } catch {
-        graph.applyPrimitives(op.primitives, { restoring: true });
-      }
-    }
+    for (const op of this.ops.slice(from - this.start, Math.max(0, to - this.start))) foldOp(graph, op);
     return graph;
   }
 
@@ -319,6 +309,23 @@ export class OperationLog {
   }
 }
 
+
+/**
+ * ONE OP FOLDED ONTO A GRAPH, as `fold` lands each: an undo puts back what
+ * was there, a write is judged as a write, and one an older declaration
+ * accepted and this one does not is held as written (FR-28).
+ */
+export function foldOp<S extends AnySchema>(graph: Graph<S>, op: Operation): void {
+  if (op.undoes !== undefined) {
+    graph.applyPrimitives(op.primitives, { restoring: true });
+    return;
+  }
+  try {
+    graph.applyPrimitives(op.primitives);
+  } catch {
+    graph.applyPrimitives(op.primitives, { restoring: true });
+  }
+}
 
 /**
  * What `checkUndo` reads of a log: its ops, which of them are undone, and

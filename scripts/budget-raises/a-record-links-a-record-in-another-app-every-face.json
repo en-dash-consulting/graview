@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 20162,
+  "gzipped": 7423,
+  "note": "Raised when a relation came to go to a kind in another app (FR-171, the full relation): the document's `@<app address>/<kind>` target parsed and compiled as a field the link is kept in, the rule language walking it through the reader of whoever is looking and saying what it could not read, the store reading again as answers arrive, the checker's sentences for it (`linked-findings.ts`, with the checked compile only), the provider's per-viewer reads of the host's `linkedRecords`, the agent's `find_linked`, and a door to the part that draws a linked record with its own card and picks one from what the host lists — the part itself (6_171 B) a chunk fetched with the first one drawn. 20_162 / 7_423 more than main (1_987_172 / 651_220), while a hosted page's first load is 5_107 bytes larger than main (4_648 handed a compiled app) and stays under its budgets. Measured at 2_007_334 / 658_643."
+}

@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:10:35.886Z",
+  "at": "2026-10-15T01:58:10.050Z",
   "transport": "open",
   "engine": "webkit",
   "policy": "the app's own page, with no content security policy",
@@ -45,8 +45,8 @@
     "the progress ring turns: its keyframes are drawn and running": {
       "ok": true,
       "detail": {
-        "before": "matrix(-0.472551, 0.881303, -0.881303, -0.472551, 0, 0)",
-        "after": "matrix(-0.969872, -0.243615, 0.243615, -0.969872, 0, 0)"
+        "before": "matrix(-0.416281, 0.909236, -0.909236, -0.416281, 0, 0)",
+        "after": "matrix(-0.983255, -0.182236, 0.182236, -0.983255, 0, 0)"
       }
     },
     "after the app's toggle to dark, the same view takes the dark panel, edge and accent": {
@@ -277,7 +277,7 @@
           "href": null,
           "text": "a link out"
         },
-        "url": "http://127.0.0.1:6192/"
+        "url": "http://127.0.0.1:5892/"
       }
     },
     "srcset is not drawn": {
@@ -509,12 +509,12 @@
     "connections": 0
   },
   "requests": [
-    "http://127.0.0.1:6192/",
-    "blob:http://127.0.0.1:6192/58f7ad5c-c91c-4dc7-ac77-6bf04194bef4",
-    "blob:http://127.0.0.1:6192/945fd0a9-e5a9-4bf0-a55f-6a9f502f646e",
-    "blob:http://127.0.0.1:6192/709c6812-be96-40cb-aa2a-64bf0a5c411d",
-    "blob:http://127.0.0.1:6192/31ce26a8-c04b-4c4d-bf9d-c88a7a3a9072",
-    "blob:http://127.0.0.1:6192/71b98e09-8274-4dba-b7f4-915067e05bd0"
+    "http://127.0.0.1:5892/",
+    "blob:http://127.0.0.1:5892/34f3f1ab-b2b3-42a5-bfb1-4262e192702e",
+    "blob:http://127.0.0.1:5892/cbdbdec5-d855-475e-b9a5-fa6b0768f638",
+    "blob:http://127.0.0.1:5892/4e3151a4-777b-4176-a4cd-e7d9428834ce",
+    "blob:http://127.0.0.1:5892/777c4ec9-c27b-4d76-a0de-e4f549deaa28",
+    "blob:http://127.0.0.1:5892/2d461971-a8e1-4ea8-ad1b-2129f0b55660"
   ],
   "passed": true
 }

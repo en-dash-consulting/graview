@@ -1,6 +1,6 @@
 import { layer, type AnySchema } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
-import { lazyModule, useGraview, useSeatTalkState } from "@graview/react/provider";
+import { lazyModule, useGraview, usePlayback, useSeatTalkState } from "@graview/react/provider";
 import type { Responder, ToolCall } from "@graview/tools";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ComponentType, type CSSProperties } from "react";
 import { FOOT_MOVED } from "./notice-place.js";
@@ -84,7 +84,9 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
   const [phone, setPhone] = useState(false);
   /* Where the keyboard was before it came into the seat: where Escape puts it back. */
   const cameFrom = useRef<HTMLElement | null>(null);
-  const hidden = start === "hidden";
+  /* While somebody looks back through the timeline, nothing is asked of the app: the past offers no act (Roadmap f-playback). */
+  const lookingBack = usePlayback()?.open ?? false;
+  const hidden = start === "hidden" || lookingBack;
   const open = talk.open && !hidden;
 
   /* Drawn: Find offers "Ask:" where a seat is. */

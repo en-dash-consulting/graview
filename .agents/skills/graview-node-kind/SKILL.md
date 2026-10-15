@@ -7,7 +7,7 @@ description: Add a node kind to a Graview app — fields, edges, label, plural a
 
 A kind is the unit of everything here. Declaring one gets you, without another
 line: a place in the layout, a card at three fidelities, an aggregate view, an
-accessibility label, a hue, a slot in the kinds plane, and inclusion in every
+accessibility label, a hue, and inclusion in every
 agent tool that walks the graph.
 
 ## Do this
@@ -26,8 +26,8 @@ agent tool that walks the graph.
        label: z.string().min(1).max(60),
        kickOff: z.string(),
        opponent: z.string(),
-       // Host-kept picture ("image"/"file"); appLinkField() another app,
-       // named by resolveApp; phoneField(), placeField(), durationField().
+       // Host-kept picture ("image"/"file"); appLinkField() another app
+       // (its records: graview-linked-records); phoneField(), placeField().
        crest: imageField().optional(),
      }),
      plural: "Fixtures",
@@ -47,9 +47,14 @@ agent tool that walks the graph.
    });
    ```
 
-3. **Add it to `createSchema([...])`.** An edge pointing at a kind that is not
-   in that array is a *typecheck* failure, not a runtime one — `createSchema`'s
-   `ValidateEdgeTargets` sees it.
+   **In a document** (`app.json`, `"format": "graview-document"`) it is
+   `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type":
+   "string", "required": true } }, "edges": { "picked-for": { "to":
+   ["player"] } } }`. Every key is in
+   `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
+
+3. **Add it to `createSchema([...])`.** An edge to a kind not in that array
+   fails *typecheck* (`ValidateEdgeTargets`).
 
 4. **Say what a node of it is called.** `label` defaults to a `label` field and
    then to the id. An id in the interface is a bug you shipped, not a
@@ -68,12 +73,12 @@ agent tool that walks the graph.
 
 5. **Give it verbs.** A kind no mutation names as a subject can have nothing
    done to it, and the strip says so. Unless you meant that, add a mutation
-   whose `subject.kinds` includes it (the rule shape: `graview-invariant`).
+   whose `subject.kinds` includes it.
 
 6. **Let the fields be changed, or say why not.** A field you could set at
    creation, you can change: every settable field no mutation writes is
    covered by a derived act per kind (`edit-<kind>`, "Change the drill"),
-   editable where it is shown and logged like any other. Two declarations
+   editable where it is shown. Two declarations
    shape it. `writes: ["done"]` on a mutation says which fields it sets when
    its arguments do not (`finish()` writing `done`) — and a mutation whose
    argument merely shares a field's name should say `writes: []` (a
@@ -88,19 +93,16 @@ agent tool that walks the graph.
 
 ## Worked examples
 
-- `apps/todo/src/domain/schema.ts` — four kinds, including a `rule` kind whose
-  `spec` makes the rules a domain enforces into data, and `fieldRoles` binding
-  the timeline lens to a task's own field names
-- `apps/seedbed/src/domain/schema.ts` — a kind with a declared `lifecycle`, so
-  the past is a horizon rather than a delete
+`apps/todo/src/domain/schema.ts` (a `rule` kind whose `spec` makes rules
+data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a
+`lifecycle`: the past is a horizon, not a delete).
 
 ## The declarations that keep paying
 
 - **`creates`** on the mutation that adds this kind (`creates: ["fixture"]`):
   the empty kind card then offers "Add a fixture" by derivation — the blank
   graph onboards itself, FROM THE ROOT OF THE CHAIN. An act that also takes
-  a `nodeRef` has no candidates on an empty graph, so it is withheld (a
-  picker with nothing in it is worse than no button) and the district says
+  a `nodeRef` has no candidates on an empty graph, so it is withheld and the district says
   what it is waiting for instead: *"Place a feature" cannot begin until there
   is a zone.*
 - **`fromTheOtherEnd`** on the act that makes or breaks the edge. An act
@@ -189,6 +191,7 @@ The check refuses a cycle (`computed-cycle`), a name that is already a field
 
 ```sh
 pnpm build && npx graview check ./dist/domain/app.js
+npx graview check --document app.json   # a document
 ```
 
 Report **the actual output**, including warnings. What it catches here:
@@ -205,11 +208,8 @@ Report **the actual output**, including warnings. What it catches here:
 
 ## What the check cannot see
 
-Say so rather than implying otherwise:
-
 - Whether the kind is a *kind* at all, or should have been a field on an
   existing one. The test: does anything point AT it, and does it have a life of
   its own? A color is a field. A fixture is a kind.
-- Whether the default views read well. Run the app and look.
-- Whether the plural reads naturally in a sentence — "3 Fixtures" is fine,
-  "3 Person" is not.
+- Whether the default views read well, and the plural in a sentence ("3
+  Fixtures", never "3 Person"). Run the app and look.

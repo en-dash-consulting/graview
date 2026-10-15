@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-04T07:14:18.775Z",
+  "at": "2026-10-15T00:54:08.726Z",
   "engine": "chromium",
   "checks": {
     "theListIsThePlatforms": {
@@ -43,6 +43,124 @@
         "Rota :5195 (pnpm dev:rota)",
         "Seedbed :5194 (pnpm dev:seedbed)"
       ],
+      "ok": true
+    },
+    "everyExampleWearsGraviewsIconInItsTab": {
+      "tabs": {
+        "launcher": {
+          "title": "The desk — Graview’s examples",
+          "svg": true,
+          "ico": true,
+          "touch": true,
+          "fetched": [
+            {
+              "href": "/favicon.svg",
+              "status": 200,
+              "image": true
+            },
+            {
+              "href": "/favicon.ico",
+              "status": 200,
+              "image": true
+            },
+            {
+              "href": "/apple-touch-icon.png",
+              "status": 200,
+              "image": true
+            }
+          ]
+        },
+        "todo": {
+          "title": "Things — a Graview example",
+          "svg": true,
+          "ico": true,
+          "touch": true,
+          "fetched": [
+            {
+              "href": "/favicon.svg",
+              "status": 200,
+              "image": true
+            },
+            {
+              "href": "/favicon.ico",
+              "status": 200,
+              "image": true
+            },
+            {
+              "href": "/apple-touch-icon.png",
+              "status": 200,
+              "image": true
+            }
+          ]
+        },
+        "rota": {
+          "title": "Rota — a Graview example",
+          "svg": true,
+          "ico": true,
+          "touch": true,
+          "fetched": [
+            {
+              "href": "/favicon.svg",
+              "status": 200,
+              "image": true
+            },
+            {
+              "href": "/favicon.ico",
+              "status": 200,
+              "image": true
+            },
+            {
+              "href": "/apple-touch-icon.png",
+              "status": 200,
+              "image": true
+            }
+          ]
+        },
+        "seedbed": {
+          "title": "Seedbed — a Graview example",
+          "svg": true,
+          "ico": true,
+          "touch": true,
+          "fetched": [
+            {
+              "href": "/favicon.svg",
+              "status": 200,
+              "image": true
+            },
+            {
+              "href": "/favicon.ico",
+              "status": 200,
+              "image": true
+            },
+            {
+              "href": "/apple-touch-icon.png",
+              "status": 200,
+              "image": true
+            }
+          ]
+        }
+      },
+      "ok": true
+    },
+    "theExamplesSignThemselvesQuietlyInThePersonsMenu": {
+      "signed": {
+        "scene": {
+          "barName": "Rota",
+          "barSaysGraview": false,
+          "shown": false,
+          "line": "Built with Graview",
+          "named": true,
+          "href": "https://graview.dev"
+        },
+        "pages": {
+          "barName": "Rota",
+          "barSaysGraview": false,
+          "shown": false,
+          "line": "Built with Graview",
+          "named": true,
+          "href": "https://graview.dev"
+        }
+      },
       "ok": true
     }
   },

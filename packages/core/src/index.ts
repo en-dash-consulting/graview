@@ -34,6 +34,12 @@ export { fileField, imageField } from "./schema/file-field.js";
 export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
 export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";
 export { appLinkField } from "./schema/app-link-field.js";
+// A relation to a kind in another app (FR-171): the link kept on the record, and the host that reads the far record as the viewer.
+export { isLinkedTarget, linkedRefOf, linkedRefsOf, linkedRelationOf, linkedRelations, linkedValue, parseLinkedTarget, readLinkedThrough } from "./schema/linked.js";
+export type { LinkedRead, LinkedReader, LinkedRecord, LinkedRecordAnswer, LinkedRecordRef, LinkedRecords, LinkedRelation, LinkedSearch, LinkedViewer } from "./schema/linked.js";
+export { linkedRecordField } from "./schema/linked-field.js";
+export { linkedReads } from "./schema/linked-reads.js";
+export type { LinkedReads } from "./schema/linked-reads.js";
 // A date that repeats: the rule kept beside it, its occurrences worked out and never stored.
 export { dateOn, isRepeat, isRepeatField, nextOccurrence, occurrences, repeatedBy, repeatKey, validRepeat, WEEKDAYS } from "./repeat.js";
 export type { Repeat, Weekday } from "./repeat.js";
@@ -204,6 +210,10 @@ export { LINEAGE_BASIS_LIMIT, LINEAGE_MODEL_LIMIT, lineageOf, type Lineage } fro
 // What a link was based on, and whether a person has kept it, are `@graview/core/provenance`'s, fetched with what draws them (FR-172).
 export type { HasLog, LinkProvenance, LinkRef } from "./ops/provenance.js";
 export { KEEP_LINK } from "./mutations/keep-link.js";
+// Whether a record is left alone and an author is the app's own actor, which a page draws with; the rest is `@graview/core/tidying`'s.
+export { isAutomated, isLeftAlone } from "./ops/tidying.js";
+export type { Suggestion } from "./ops/suggestions.js";
+export type { ActivityRow } from "./ops/digest.js";
 export {
   actingAs,
   isSystem,
@@ -241,7 +251,7 @@ export {
 } from "./theme/identity.js";
 export type { SymbolOptions } from "./theme/identity.js";
 export { isoShade, SHAPE, shapeOf, TYPOGRAPHY, typographyOf } from "./theme/look.js";
-export { faviconHref, isInlineSvg, markHref, markProblem, MAX_INLINE_SVG, svgProblem } from "./theme/marks.js";
+export { emojiMark, emojiOf, emojiProblem, emojiSvg, faviconHref, isInlineSvg, markHref, markProblem, MAX_INLINE_SVG, svgProblem } from "./theme/marks.js";
 export { DOCUMENT_FONTS, familiesIn, fontProblem, isSystemFamily, stackOf, SYSTEM_FONTS, SYSTEM_STACKS } from "./theme/fonts.js";
 export type { SystemStack } from "./theme/fonts.js";
 export { accentProblem, documentSchemes, passingShade } from "./theme/accent.js";
@@ -285,7 +295,7 @@ export type { KitContrastFinding } from "./theme/kit.js";
 export type { ConnectorKit, ConnectorRoute, Kit, KitEndCap, KitOverrides, KitStrokePattern } from "./theme/types.js";
 export { layer, layerProperty, layerVariables, LAYERS, LOCAL_LAYERS, SCENE_LAYERS } from "./theme/layers.js";
 export type { Layer } from "./theme/layers.js";
-export type { Brand, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
+export type { Brand, FaviconSpec, Scheme, TextPair, ThemeTokens } from "./theme/types.js";
 export type { Grant, Policy, Principal, Refusal, Sight } from "./permissions/types.js";
 export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.js";
 export { writersOf, type Writers } from "./ops/writers.js";
@@ -309,7 +319,7 @@ export type {
 } from "./validate-graph.js";
 
 // Store — graph + log + mutations + invariants, one object.
-export { MODULES_AUTHOR, PREVIEW_BATCH, problemsMoved, ReceiveError, shapedRules, Store, UnknownMutationError, violationKey } from "./store.js";
+export { MODULES_AUTHOR, PastError, PREVIEW_BATCH, problemsMoved, ReceiveError, shapedRules, Store, UnknownMutationError, violationKey } from "./store.js";
 export type {
   Adopt,
   AdoptResult,
@@ -318,6 +328,8 @@ export type {
   ApplyResult,
   BatchPreview,
   CompactOptions,
+  PastDeclaration,
+  PastPoint,
   PlannedChange,
   Preview,
   PreviewOptions,

@@ -1,7 +1,9 @@
-import { humanizeField, isWithheld, nameOfAuthor, type AnySchema, type Author } from "@graview/core";
+import { humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type Author, type Batch } from "@graview/core";
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
-import { POPOVER_STYLE, useGraph, useGraview, usePopover } from "@graview/react/provider";
+import { digestWords, foldDigests } from "@graview/core/tidying";
+import { POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayback, usePopover } from "@graview/react/provider";
+import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
 import { useMemo, useState, type ReactNode } from "react";
 import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
@@ -20,13 +22,40 @@ export interface Change {
   /** What it was based on and how sure, in words, when its maker said (FR-172). */
   readonly basis?: string;
   readonly touched: readonly string[];
+  /** What a record this change removed was called, read from the removal: it is no longer in the graph to ask. */
+  readonly removed?: Readonly<Record<string, string>>;
   readonly batch: string;
+  /** The moment just after it: `pastOf(store, seq)` shows the app as it was once it was made (Roadmap f-playback). */
+  readonly seq: number;
   /**
    * A CHANGE YOU CANNOT SEE (FR-16): every op of it was withheld from this
    * seat. Shown as having happened, with nothing it touched and no undo.
    */
   readonly withheld?: true;
+  /**
+   * A DIGEST: consecutive batches by the app's own actor, folded into one
+   * row ("Tidied 6 things today"), which expands to each change with its
+   * own undo and lineage, newest first. A person's change and a chat
+   * seat's never fold.
+   */
+  readonly digest?: readonly Change[];
 }
+
+/** One batch as a row of Activity. */
+const changeOf = (store: { readonly schema: AnySchema }, batch: Batch): Change => ({
+  intent: batch.intent,
+  author: batch.author.kind,
+  ...(batch.author.id ? { authorId: batch.author.id } : {}),
+  by: batch.author,
+  ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
+  ...(batch.lineage ? { basis: lineageWords(batch.lineage) } : {}),
+  // What a withheld op touched is not said, even the part this seat may see.
+  touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
+  ...removedNames(store, batch.ops.filter((op) => !isWithheld(op))),
+  batch: batch.id,
+  seq: batch.ops.at(-1)!.seq + 1,
+  ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
+});
 
 /**
  * The last few changes, with who made them — READ FROM THE LOG, not
@@ -43,26 +72,109 @@ export interface Change {
  * tell them apart.
  */
 export function useRecentChanges(limit = 4): readonly Change[] {
-  const { store } = useGraview<AnySchema>();
-  const nodes = useGraph();
+  const { store: shown, principal } = useGraview<AnySchema>();
+  /* What has happened is now's, whichever moment the face draws (Roadmap f-playback). */
+  const store = useLiveStore(shown, principal);
+  const length = store.log.length;
+  /*
+   * A suggestion and its declining are the Suggested tray's to say, not
+   * rows here; a run of the app's own actor's batches is one row, a digest
+   * (`foldDigests`).
+   */
   return useMemo(
     () =>
-      [...store.batches()]
+      foldDigests(store.batches(), (id) => store.log.get(id))
         .reverse()
         .slice(0, limit)
-        .map((batch) => ({
-          intent: batch.intent,
-          author: batch.author.kind,
-          ...(batch.author.id ? { authorId: batch.author.id } : {}),
-          by: batch.author,
-          ...(batch.ops[0]?.via ? { via: batch.ops[0].via } : {}),
-          ...(batch.lineage ? { basis: lineageWords(batch.lineage) } : {}),
-          // What a withheld op touched is not said, even the part this seat may see.
-          touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
-          batch: batch.id,
-          ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
-        })),
-    [store, nodes, limit],
+        .map((row): Change => {
+          if ("batch" in row) return changeOf(store, row.batch);
+          const changes = [...row.digest.batches].reverse().map((batch) => changeOf(store, batch));
+          return {
+            intent: digestWords(row.digest, new Date().toISOString().slice(0, 10)),
+            author: row.digest.author.kind,
+            ...(row.digest.author.id ? { authorId: row.digest.author.id } : {}),
+            by: row.digest.author,
+            touched: [...new Set(changes.flatMap((change) => change.touched))],
+            batch: "",
+            seq: changes[0]?.seq ?? 0,
+            digest: changes,
+          };
+        }),
+    // The log only grows at its end, an undo too: its length says when to read it again.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, length, limit],
+  );
+}
+
+/** The names of the records a change removed, from the records its removals carry. */
+function removedNames(store: { readonly schema: AnySchema }, ops: readonly { readonly primitives: readonly { readonly op: string; readonly node?: { readonly id: string; readonly kind: string } }[] }[]): { readonly removed?: Record<string, string> } {
+  const removed: Record<string, string> = {};
+  for (const op of ops) for (const primitive of op.primitives) if (primitive.op === "remove-node" && primitive.node) removed[primitive.node.id] = labelOf(store.schema.tryDefinition(primitive.node.kind), primitive.node as never);
+  return Object.keys(removed).length > 0 ? { removed } : {};
+}
+
+/** Who made a change, as Activity says it: "you" for the person at the keyboard, else their name and the channel. */
+function Who({ change }: { readonly change: Change }) {
+  const { store, principal, seats, people } = useGraview<AnySchema>();
+  return (
+    <strong style={{ fontWeight: 600 }}>
+      {change.author === "human" && change.by?.onBehalfOf === undefined && (change.authorId === undefined || principal.id === undefined || change.authorId === principal.id)
+        ? "you"
+        : nameOfAuthor(change.by ?? { kind: change.author as never, id: change.authorId }, { graph: store.graph as never, schema: store.schema, seats, people })}
+      {viaSaid(change.via) ? <span style={{ fontWeight: 400, color: "var(--graview-ink-muted)" }}>, {viaSaid(change.via)}</span> : null}
+    </strong>
+  );
+}
+
+/**
+ * A DIGEST: the app's own actor's run of changes as one row — "Graview,
+ * tidying · Tidied 6 things today" — which opens to each change with its
+ * own lineage and its own undo, so one of them is taken back without the
+ * rest, and the row says how many in the meantime.
+ */
+function DigestRow({ change, goes }: { readonly change: Change; readonly goes: (id: string) => ((id: string) => void) | null }) {
+  const { store } = useGraview<AnySchema>();
+  const [open, setOpen] = useState(false);
+  const each = change.digest ?? [];
+  return (
+    <li data-testid="activity-digest" style={{ display: "grid", gap: 5, lineHeight: 1.45 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+        <span style={{ minWidth: 0 }}>
+          <Who change={change} /> <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
+        </span>
+        <button
+          type="button"
+          data-testid="digest-toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((was) => !was)}
+          style={{ marginLeft: "auto", flex: "0 0 auto", display: "inline-flex", alignItems: "center", minHeight: 24, minWidth: 24, padding: "1px 8px", fontSize: "0.75rem" }}
+        >
+          {open ? "Hide" : "Show each"}
+        </button>
+      </div>
+      {open ? (
+        <ol data-testid="digest-changes" style={{ margin: 0, padding: "0 0 0 10px", listStyle: "none", display: "grid", gap: 6, borderLeft: "1px solid var(--graview-edge)" }}>
+          {each.map((one) => (
+            <li key={one.batch} data-testid="digest-change" style={{ display: "grid", gap: 3 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                <span style={{ minWidth: 0 }}>
+                  <span style={{ color: "var(--graview-ink-muted)" }}>{one.intent}</span>
+                  {one.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {one.basis}</span> : null}
+                </span>
+                {one.withheld ? null : <UndoTurn batch={one.batch} />}
+              </div>
+              {one.touched.length > 0 ? (
+                <div data-touched={one.touched.join(" ")} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {one.touched.slice(0, 4).map((id) => (
+                    <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (one.removed?.[id] ?? nameOf(store, id))} go={goes(id)} />
+                  ))}
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+    </li>
   );
 }
 
@@ -84,15 +196,19 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
    * In any app with one, a person could not take back the edit they had
    * just made, and the row they made it on said "you".
    */
-  const { store, principal, noteSeat } = useGraview<AnySchema>();
-  const nodes = useGraph();
+  const { store: shown, principal, noteSeat } = useGraview<AnySchema>();
+  /* Taken back from now's log; not offered at all while somebody looks back (Roadmap f-playback). */
+  const store = useLiveStore(shown, principal);
+  const lookingBack = usePlayback()?.open ?? false;
+  const length = store.log.length;
   const [refused, setRefused] = useState<string | null>(null);
   const check = useMemo(
     () => store.canUndo(batch),
-    [store, batch, nodes],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store, batch, length],
   );
 
-  if (!check.ok && check.ops.length === 0) return null;
+  if (lookingBack || (!check.ok && check.ops.length === 0)) return null;
   const blocked = !check.ok;
   const alsoNeeded = blocked ? check.includeBatches : [];
 
@@ -157,6 +273,36 @@ export function UndoTurn({ batch }: { readonly batch: string }) {
 }
 
 /**
+ * "SHOW THE APP AS IT WAS HERE" (Roadmap f-playback): the face draws the
+ * app as it stood just after this change, with the timeline to scrub on
+ * from there. The timeline is fetched as a pointer comes near.
+ */
+export function ShowAsItWas({ seq, intent }: { readonly seq: number; readonly intent: string }) {
+  const playback = usePlayback();
+  if (!playback) return null;
+  const here = playback.past?.seq === seq;
+  return (
+    <button
+      type="button"
+      data-testid="show-past"
+      aria-label={`Show the app as it was after “${intent}”`}
+      title="Show the app as it was here"
+      aria-pressed={here}
+      onPointerEnter={prefetchTimeline}
+      onFocus={prefetchTimeline}
+      onClick={() => playback.show(seq)}
+      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 24, minWidth: 24, padding: "1px 6px", fontSize: "0.75rem", flex: "0 0 auto" }}
+    >
+      <svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M2.5 8 a5.5 5.5 0 1 0 1.6-3.9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M2 2.5 V5.5 H5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M8 5 V8 L10 9.25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
+}
+
+/**
  * What has happened, and what is happening: the agent's tool calls and every
  * applied change, in one list.
  *
@@ -212,6 +358,33 @@ export function StartFresh() {
   );
 }
 
+/**
+ * A RECORD NAMED IN THE ACTIVITY, AS SOMETHING THAT GOES THERE — or as a
+ * label where there is nowhere to go. A chip with a pick target was a pill
+ * that only the scene's own pointer handler answered: on Pages, in the
+ * popover, and from the keyboard on either face it looked pressable and did
+ * nothing. One that names a record still here is a button that goes to it
+ * (the face says how, through `useGoTo`) and closes the popover; a record
+ * since removed, or an argument that is a word rather than a record, is a
+ * plain label with no pointer and no focus.
+ */
+function Named({ id, label, go }: { readonly id: string; readonly label: string; readonly go: ((id: string) => void) | null }) {
+  if (!go) return <Chip label={label} />;
+  return (
+    <button
+      type="button"
+      data-testid="activity-record"
+      data-record={id}
+      title={`Go to ${label}`}
+      onClick={() => go(id)}
+      style={{ all: "unset", display: "inline-flex", cursor: "pointer", borderRadius: 7 }}
+      className="graview-activity-record"
+    >
+      <Chip label={label} />
+    </button>
+  );
+}
+
 export function ActivityRail({
   calls,
   seat,
@@ -235,7 +408,9 @@ export function ActivityRail({
   readonly seat?: ReactNode;
 }) {
   const changes = useRecentChanges();
-  const { store, principal, seats, people } = useGraview<AnySchema>();
+  const { store: shown, principal, seats, people } = useGraview<AnySchema>();
+  /* Named from now's records, whichever moment the face draws (Roadmap f-playback). */
+  const store = useLiveStore(shown, principal);
   const running = calls.some((call) => call.phase === "running");
 
   /*
@@ -250,6 +425,10 @@ export function ActivityRail({
    */
   const popover = usePopover("activity");
   const open = popover.open;
+  const goTo = useGoTo();
+  const playback = usePlayback();
+  /* Only a record still in the graph goes anywhere; the popover closes behind the reader as they go, and going there is going to it now, not as it was. */
+  const goes = (id: string) => (store.graph.has(id) ? (to: string) => { popover.setOpen(false); if (playback?.past) playback.show(null); goTo.record(to); } : null);
 
   if (seat === undefined && calls.length === 0 && changes.length === 0 && !remembers) return null;
 
@@ -395,7 +574,7 @@ export function ActivityRail({
                     <div data-testid="activity-reads" style={{ display: "flex", flexWrap: "wrap", gap: 4, paddingLeft: 12 }}>
                       {/* Once each: a neighborhood read lists a node joined to it twice twice. */}
                       {[...new Set(call.reads)].slice(0, 3).map((id) => (
-                        <Chip key={id} label={nameOf(store, id)} pickId={id} />
+                        <Named key={id} id={id} label={nameOf(store, id)} go={goes(id)} />
                       ))}
                       {new Set(call.reads).size > 3 ? <span style={{ color: "var(--graview-ink-muted)" }}>+{new Set(call.reads).size - 3}</span> : null}
                     </div>
@@ -410,7 +589,7 @@ export function ActivityRail({
                         .filter((entry): entry is [string, string] => typeof entry[1] === "string")
                         .slice(0, 3)
                         .map(([name, value]) => (
-                          <Chip key={name} label={nameOf(store, value)} pickId={value} />
+                          <Named key={name} id={value} label={nameOf(store, value)} go={goes(value)} />
                         ))}
                     </div>
                   ) : null}
@@ -435,7 +614,9 @@ export function ActivityRail({
               }}
             >
               {changes.map((change, index) =>
-                change.withheld ? (
+                change.digest ? (
+                  <DigestRow key={`digest:${change.digest[0]?.batch ?? index}`} change={change} goes={goes} />
+                ) : change.withheld ? (
                   /* SOMETHING YOU CANNOT SEE HAPPENED: said, and nothing more — not who, not what, no undo (FR-16). */
                   <li key={`change:${index}`} data-testid="withheld-change" style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
                     <span data-touched="" style={{ color: "var(--graview-ink-muted)", fontStyle: "italic" }}>
@@ -464,6 +645,7 @@ export function ActivityRail({
                       <span style={{ color: "var(--graview-ink-muted)" }}>{change.intent}</span>
                       {change.basis ? <span data-graview-lineage="" style={{ color: "var(--graview-ink-faint)" }}> · {change.basis}</span> : null}
                     </span>
+                    {change.batch ? <ShowAsItWas seq={change.seq} intent={change.intent} /> : null}
                     {change.batch ? <UndoTurn batch={change.batch} /> : null}
                   </div>
                   <div
@@ -471,7 +653,7 @@ export function ActivityRail({
                     style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
                   >
                     {change.touched.slice(0, 4).map((id) => (
-                      <Chip key={id} label={nameOf(store, id)} pickId={id} />
+                      <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.removed?.[id] ?? nameOf(store, id))} go={goes(id)} />
                     ))}
                   </div>
                 </li>

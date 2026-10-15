@@ -59,6 +59,19 @@ Declare something in \`${domain}/\`, run \`${run} check\` until it reports no
 errors, then \`${run} verify\` before you say it works — and report what they
 actually said. \`${run} dev\` serves the app on http://localhost:${ids.port}.
 
+## Or as a document
+
+The same declaration can be one JSON file: \`app.json\`, a graview-document
+(\`"format": "graview-document"\`), whose schema is
+\`node_modules/@graview/core/dist/document.schema.json\` — point its
+\`"$schema"\` there. It is compiled, never run, and needs no build:
+
+\`\`\`sh
+npx graview check --document app.json      # each finding at its JSON path, e.g. rules.<rule>.repairs.0
+npx graview describe --document app.json   # what a blank installation meets
+npx graview preview app.json --seed seed.json   # the scene and Pages over a snapshot
+\`\`\`
+
 ## The rules
 
 ${agentRules(`the ones \`${docs}/agents.md\` lists, generated from the declaration by \`${run} verify\``).join("\n")}

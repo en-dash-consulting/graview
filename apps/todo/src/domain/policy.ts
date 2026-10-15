@@ -24,6 +24,8 @@ import { todoMutations } from "./mutations.js";
  * a task somebody else added is the keeper's and the member's too.
  */
 const LIST_ACTS = todoMutations.map((mutation) => mutation.name);
+/** Taking a task or a list out, setting it aside, bringing it back and merging it, over every one. */
+const KEEPING = ["task", "list"].flatMap((kind) => ["remove", "archive", "unarchive", "merge"].map((act) => `${act}-${kind}`));
 const theList: Policy = {
   roles: ["keeper", "member"],
   grants: [
@@ -34,7 +36,11 @@ const theList: Policy = {
     },
     {
       roles: ["keeper", "member"],
-      mutations: LIST_ACTS,
+      /*
+       * Whoever wrote it down: making a task is not a grant to take out
+       * somebody else's (W-201), so keeping every one is said here.
+       */
+      mutations: [...LIST_ACTS, ...KEEPING],
       describe: "The keeper and the members keep every task and list, whoever wrote it down.",
     },
   ],

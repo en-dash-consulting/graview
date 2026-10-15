@@ -1,12 +1,12 @@
 {
-  "at": "2026-10-13T04:10:26.568Z",
+  "at": "2026-10-15T01:58:00.800Z",
   "transport": "worker",
   "engine": "webkit",
   "policy": {
     "name": "chatgpt",
     "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; worker-src blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; style-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; style-src-attr 'unsafe-inline'; img-src 'self' data: https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; font-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; connect-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; media-src 'self' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://esm.sh https://unpkg.com https://pypi.org https://files.pythonhosted.org https://*.oaiusercontent.com https://oaisdmntpreastus.blob.core.windows.net https://threejs.org; object-src 'none'; frame-src 'none'; base-uri 'self'",
     "sandbox": "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms",
-    "widgetOrigin": "http://localhost:6193"
+    "widgetOrigin": "http://localhost:5893"
   },
   "claims": {
     "the card and the hostile guest, built by buildGuestBundle, are classic scripts with nothing to load at run time": {
@@ -452,24 +452,24 @@
     "a guest that spins after ready is stopped as silent within limits.silentMs (1500 ms) and one interval of it": {
       "ok": true,
       "detail": {
-        "spun": 1502,
+        "spun": 1496,
         "failedAt": {
-          "builder": 419,
-          "spinner": 1549
+          "builder": 407,
+          "spinner": 1545
         },
         "drewAt": {
-          "spinner": 47
+          "spinner": 49
         },
         "pulse": {
-          "last": 5040,
-          "longest": 135.99999999999994,
-          "ticks": 37
+          "last": 5083,
+          "longest": 129.00000000000006,
+          "ticks": 38
         },
         "spinnerStopped": true,
         "busyRunning": true,
         "building": {
-          "last": 5040,
-          "longest": 52,
+          "last": 5083,
+          "longest": 51,
           "ticks": 5
         },
         "builderStopped": true
@@ -478,9 +478,9 @@
     "the widget's page kept its own timer while a guest spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 5040,
-        "longest": 135.99999999999994,
-        "ticks": 37
+        "last": 5083,
+        "longest": 129.00000000000006,
+        "ticks": 38
       }
     },
     "a guest that is busy but yields, for three times silentMs, is kept": {
@@ -509,8 +509,8 @@
           ]
         ],
         "building": {
-          "last": 5040,
-          "longest": 52,
+          "last": 5083,
+          "longest": 51,
           "ticks": 5
         },
         "stopped": true

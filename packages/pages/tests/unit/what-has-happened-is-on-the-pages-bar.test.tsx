@@ -6,7 +6,8 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { PagesApp } from "../../src/index.js";
+import { createPageRegistry, PagesApp } from "../../src/index.js";
+import type { ReactNode } from "react";
 
 /**
  * WHAT HAS HAPPENED IS ON THE PAGES BAR (FR-152). The scene keeps every
@@ -68,5 +69,55 @@ describe("what has happened, on the routed face's bar", () => {
     await settled(() => expect(host.querySelector('[data-graview-app-bar] [data-testid="activity-button"]')).not.toBeNull());
     await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
     await settled(() => expect(document.querySelector('[data-testid="activity"]')?.textContent ?? "").toContain("Pay the venue"));
+  });
+
+  it("names a record that is still here as a button that goes to it, and one since removed as a label that does not look pressable", async () => {
+    const remove = defineMutation("remove-item", {
+      title: "Remove",
+      subject: { kinds: ["item"], arg: "id" },
+      input: z.object({ id: nodeRef(["item"]) }),
+      describe: () => "Remove it",
+      apply(ctx, args) {
+        ctx.removeNode(args.id);
+      },
+    });
+    const store = new Store({ schema, mutations: [rename, remove], invariants: [], snapshot: { nodes: [{ id: "i1", kind: "item", label: "Pay the deposit" }, { id: "i2", kind: "item", label: "Book the band" }] as never, edges: [] } });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<PagesApp context={{ store, principal: nina, views: createViews(schema) }} initialPath="/items" />));
+    unmount = () => act(async () => root.unmount());
+    await act(async () => void store.apply({ name: "rename-item", args: { id: "i1", label: "Pay the venue" } }, { author: nina }));
+    await act(async () => void store.apply({ name: "remove-item", args: { id: "i2" } }, { author: nina }));
+    await settled(() => expect(host.querySelector('[data-testid="activity-button"]')).not.toBeNull());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
+    await settled(() => expect(document.querySelectorAll('[data-testid="activity-record"]').length).toBe(1));
+
+    const activity = document.querySelector('[data-testid="activity"]')!;
+    // Nothing in it is a pick target only the scene answers: a record is a button, or a plain label.
+    expect(activity.querySelector("[data-graview-pick]")).toBeNull();
+    const records = [...activity.querySelectorAll<HTMLButtonElement>('[data-testid="activity-record"]')];
+    expect(records.map((button) => button.textContent)).toEqual(["Pay the venue"]);
+    expect(activity.textContent).toContain("Book the band");
+
+    await act(async () => records[0]!.click());
+    await settled(() => expect(document.querySelector('[data-testid="activity"]')).toBeNull());
+    // On the record's own page, whose heading is its name.
+    await settled(() => expect([...document.querySelectorAll("main h1, main h2")].map((heading) => heading.textContent).join(" | ")).toMatch(/Pay the venue/));
+  });
+
+  it("is drawn once on the bar when a design under the bar replaces the shell", async () => {
+    /* The derived bar drew Activity in its tools and handed its own slot to the design's face controls, which drew it there too: two "Activity" buttons on todo's routed face. */
+    const store = new Store({ schema, mutations: [rename], invariants: [], snapshot: { nodes: [{ id: "i1", kind: "item", label: "Pay the deposit" }] as never, edges: [] } });
+    const Shell = ({ context, children }: { context: { barAbove?: boolean }; children: ReactNode }) => (context.barAbove ? <main>{children}</main> : <div>{children}</div>);
+    const registry = createPageRegistry(schema).surface("shell", Shell as never);
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<PagesApp context={{ store, principal: nina, views: createViews(schema) }} registry={registry as never} initialPath="/items" />));
+    unmount = () => act(async () => root.unmount());
+    await act(async () => void store.apply({ name: "rename-item", args: { id: "i1", label: "Pay the venue" } }, { author: nina }));
+    await settled(() => expect(host.querySelectorAll('[data-graview-app-bar] [data-testid="activity-button"]').length).toBeGreaterThan(0));
+    await settled(() => expect(host.querySelectorAll('[data-testid="activity-button"]')).toHaveLength(1));
   });
 });

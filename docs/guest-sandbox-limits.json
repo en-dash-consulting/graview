@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:11:45.902Z",
+  "at": "2026-10-15T01:59:19.140Z",
   "transport": "limits",
   "engine": "chromium",
   "claims": {
@@ -9,7 +9,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 1033.1999999284744
+          "at": 1032.9000000953674
         },
         "running": false,
         "face": [
@@ -29,7 +29,7 @@
         "failure": {
           "reason": "silent",
           "detail": "It stopped answering for 1,500 ms.",
-          "at": 1532.2999999523163
+          "at": 1534.2000000476837
         },
         "running": false,
         "face": [
@@ -49,7 +49,7 @@
         "failure": {
           "reason": "flood",
           "detail": "It sent more than 120 messages in 1,000 ms.",
-          "at": 40.299999952316284
+          "at": 39.90000009536743
         },
         "running": false,
         "face": [
@@ -69,7 +69,7 @@
         "failure": {
           "reason": "nodes",
           "detail": "It drew more than the 5,000 things a view may draw.",
-          "at": 691.5
+          "at": 658.7999999523163
         },
         "running": false,
         "face": [
@@ -89,7 +89,7 @@
         "failure": {
           "reason": "source",
           "detail": "Its code is longer than the 256,000 bytes a view may be.",
-          "at": 14.099999904632568
+          "at": 15.100000143051147
         },
         "running": false,
         "face": [
@@ -109,7 +109,7 @@
         "failure": {
           "reason": "slow",
           "detail": "It took longer than 1,000 ms to draw what it was shown.",
-          "at": 182.59999990463257
+          "at": 173.10000014305115
         },
         "running": false,
         "face": [
@@ -122,8 +122,8 @@
         ],
         "note": "This view was stopped. It took longer than 1,000 ms to draw what it was shown.",
         "pulse": {
-          "last": 2055.399999976158,
-          "longest": 131.30000007152557,
+          "last": 2054.2999999523163,
+          "longest": 123.29999995231628,
           "ticks": 39
         }
       }
@@ -138,8 +138,8 @@
     "the page's own timer kept time while views spun, never more than 250 ms between 50 ms ticks": {
       "ok": true,
       "detail": {
-        "last": 2055.399999976158,
-        "longest": 131.30000007152557,
+        "last": 2054.2999999523163,
+        "longest": 123.29999995231628,
         "ticks": 39
       }
     },
@@ -272,32 +272,32 @@
       "long": {
         "reason": "source",
         "detail": "Its code is longer than the 256,000 bytes a view may be.",
-        "at": 14.099999904632568
+        "at": 15.100000143051147
       },
       "flood": {
         "reason": "flood",
         "detail": "It sent more than 120 messages in 1,000 ms.",
-        "at": 40.299999952316284
+        "at": 39.90000009536743
       },
       "churn": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 182.59999990463257
+        "at": 173.10000014305115
       },
       "nodes": {
         "reason": "nodes",
         "detail": "It drew more than the 5,000 things a view may draw.",
-        "at": 691.5
+        "at": 658.7999999523163
       },
       "spin": {
         "reason": "slow",
         "detail": "It took longer than 1,000 ms to draw what it was shown.",
-        "at": 1033.1999999284744
+        "at": 1032.9000000953674
       },
       "later": {
         "reason": "silent",
         "detail": "It stopped answering for 1,500 ms.",
-        "at": 1532.2999999523163
+        "at": 1534.2000000476837
       }
     },
     "running": {
@@ -379,8 +379,8 @@
       "good": "6 records"
     },
     "pulse": {
-      "last": 2055.399999976158,
-      "longest": 131.30000007152557,
+      "last": 2054.2999999523163,
+      "longest": 123.29999995231628,
       "ticks": 39
     }
   },

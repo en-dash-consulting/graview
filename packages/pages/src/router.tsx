@@ -4,7 +4,7 @@ import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, HostFilesContext, useGraviewIfAny, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, HostFilesContext, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -13,7 +13,10 @@ import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, Def
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
-import { appKeyOf, BarFindContext, HeadingsUnder, registerReaderLenses, SpecLinks, type BarFind } from "@graview/primitives/pages";
+import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
+
+/** Who reads the face when the host names nobody. */
+const ANYONE = { kind: "human" } as const;
 import { OwnBarFind } from "./page-shell.js";
 import { recordPath } from "./registry.js";
 
@@ -104,6 +107,13 @@ export interface PagesAppProps<S extends AnySchema> {
    * somewhere, for its tabs.
    */
   readonly steering?: PagesSteering;
+  /**
+   * A FIRST LOOK, ONCE, when this face owns the page: hints beside the
+   * app's own controls on its bar — as the whole-page Shell's `firstLook`,
+   * remembered for the same app, so a person who saw it on the scene is not
+   * shown it again here. Off unless given.
+   */
+  readonly firstLook?: FirstLook;
 }
 
 /** What a bar drawn outside the router holds of it: where the face is, and the way to move it. */
@@ -427,6 +437,8 @@ export function PagesRoutes<S extends AnySchema>({
     <FaceRoot context={context} registry={registry}>
     <GoesByAddress context={context}>
     {frame(<>
+    {/* The app as it was, and the way through it (Roadmap f-playback): at the head of the page, under the bar. */}
+    <PastBar face="pages" />
     <RecordLinks context={inside}>
       <ScrollReset />
       <Routes>
@@ -485,15 +497,29 @@ export function PagesRoutes<S extends AnySchema>({
   );
 }
 
+/** Where a first look finds the controls of a face that owns the page. */
+const thePage = (): Element | null => (typeof document === "undefined" ? null : document.body);
+
 export function PagesApp<S extends AnySchema>({
-  context: given,
+  context: handed,
   registry,
   basename,
   initialPath,
   onNavigate,
   path,
   steering,
+  firstLook,
 }: PagesAppProps<S>) {
+  /*
+   * THE SEAT THE READER TOOK, where the app offers seats and no provider
+   * above holds them. The face names the person by their seat (the tenth
+   * walk found "user-lena" on the person's button: the seats never reached
+   * the provider), and once they reach it the person's menu offers "Sit as
+   * somebody else" — so the face sits there too, until the app hands it
+   * another principal.
+   */
+  const [taken, setTaken] = useState<{ readonly from: PageContext<S>["principal"]; readonly seat: NonNullable<PageContext<S>["principal"]> } | undefined>(undefined);
+  const given = taken !== undefined && taken.from === handed.principal ? { ...handed, principal: taken.seat } : handed;
   /*
    * WHAT THE SEAT MAY SEE. Every page reads `context.store`; under a policy
    * that says who sees what (`sees`), that store holds only what this seat
@@ -510,7 +536,16 @@ export function PagesApp<S extends AnySchema>({
   const outer = useGraviewIfAny();
   // Days, times and numbers in the reader's locale, else the app's (FR-178), whether or not a provider is drawn under the pages.
   sayIn({ reader: given.locale ?? outer?.locale, app: given.brand?.locale ?? given.app?.brand?.locale });
-  const viewed = given.store.seenBy(given.principal ?? { kind: "human" });
+  /*
+   * THE MOMENT DRAWN (Roadmap f-playback): now, or the app as it stood at
+   * a moment somebody asked to see — the provider's this face is drawn
+   * inside when that one holds this store, else the face's own. Every page
+   * reads the one store, so the place a person is on is drawn as it was.
+   */
+  const seat = given.principal ?? ANYONE;
+  const playback = useOwnPlayback(given.store, seat, given.history);
+  const shown = playback.past && playback.live === given.store ? playback.past.store : given.store;
+  const viewed = shown.seenBy(seat);
   const context = viewed === given.store ? given : { ...given, store: viewed };
   useTheWatchKnowsWhatIsUnseen(given.store, given.principal);
   const routed = (
@@ -519,6 +554,8 @@ export function PagesApp<S extends AnySchema>({
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       <PagesRoutes context={context} {...(registry ? { registry } : {})} />
+      {/* The face owns the page: its controls are found in the page. */}
+      {firstLook ? <FirstLookDoor firstLook={firstLook} root={thePage} app={appKeyOf(given.brand, given.store.schema)} /> : null}
     </>
   );
   /*
@@ -543,9 +580,12 @@ export function PagesApp<S extends AnySchema>({
       {...(context.settings ? { settings: context.settings } : {})}
       {...(context.presence && !outer ? { presence: context.presence } : {})}
       {...(context.people ? { people: context.people } : {})}
+      {...(context.seats ? { seats: context.seats } : {}) /* So the person's button names the seat, not its principal id. */}
+      onSeat={(seat) => (outer ? outer.takeSeat(seat) : setTaken({ from: handed.principal, seat }))}
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
       resolveApp={context.resolveApp ?? outer?.resolveApp /* The host's way to name another app (FR-171): the face's own, else the provider's it is drawn inside. */}
+      linkedRecords={context.linkedRecords ?? outer?.linkedRecords /* And to read its records, as this viewer (FR-171). */}
       {...(context.app ? { app: context.app } : {})}
     >
       {routed}
@@ -554,7 +594,8 @@ export function PagesApp<S extends AnySchema>({
   ) : (
     routed
   );
-  const filed = context.files ? <HostFilesContext.Provider value={context.files}>{inner}</HostFilesContext.Provider> : inner;
+  const timed = <PlaybackContext.Provider value={playback as unknown as Playback}>{inner}</PlaybackContext.Provider>;
+  const filed = context.files ? <HostFilesContext.Provider value={context.files}>{timed}</HostFilesContext.Provider> : timed;
   if (initialPath !== undefined) {
     /*
      * THE TEST ROUTER CARRIES THE BASENAME TOO, OR THE TESTS ARE A LIE.

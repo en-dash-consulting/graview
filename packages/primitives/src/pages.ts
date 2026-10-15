@@ -21,6 +21,8 @@ export type { FilesProps } from "./files-door.js";
 // Another app on a record, as the host names it (FR-171), fetched with the first one drawn.
 export { AppLink } from "./app-link-door.js";
 export type { AppLinkProps } from "./app-link-door.js";
+export { LinkedPicker, LinkedRecordView } from "./linked-record-door.js";
+export type { LinkedPickerProps, LinkedRecordViewProps } from "./linked-record-door.js";
 // How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.
 export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
 export type { RepeatPickerProps } from "./repeat-picker-door.js";
@@ -30,6 +32,8 @@ export { ownSentence, problemLine, problemTitle, RuleLineView, RuleParts, useLin
 export { useMarkup } from "./markup.js";
 export { AppMark, AppTitle, useFavicon } from "./app-title.js";
 export { BarActivity } from "./bar-activity.js";
+// What tidying suggests, beside Activity on the routed face's bar, fetched only while something waits.
+export { BarSuggested } from "./bar-suggested.js";
 export { AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind } from "./app-bar.js";
 export type { BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch } from "./app-bar.js";
 export { RelationMark } from "./relation-key.js";
@@ -56,3 +60,9 @@ export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
 export type { Choosing } from "./choosing.js";
 export { prefetchSeveral, SeveralBarDoor } from "./several-door.js";
 export type { SeveralBarProps } from "./several-door.js";
+// The app as it was (Roadmap f-playback): the timeline, fetched when somebody first looks back.
+export { PastBar, prefetchTimeline } from "./past-bar.js";
+export type { TimelineFace } from "./past-bar.js";
+// A first look that points at the app's own controls, once (its hints fetched as they are first shown).
+export { FIRST_LOOK_ANCHORS, FirstLookDoor, firstLookKey } from "./first-look-door.js";
+export type { FirstLook, FirstLookAnchor, FirstLookDoorProps, FirstLookEnd, FirstLookOptions, FirstLookStep } from "./first-look-door.js";

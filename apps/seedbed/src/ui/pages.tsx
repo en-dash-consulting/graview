@@ -5,6 +5,7 @@ import {
   PageMain,
   pageStyles,
   recordFacts,
+  Repairs,
   spatialHref,
   useStoreTick,
   type PageComponent,
@@ -45,8 +46,16 @@ function PlotPage({ context }: { context: PageContext<S> }) {
     .in(id, "grows-in")
     .filter((planting) => (planting as { status: string }).status === "growing")
     .map((planting) => (planting as { label: string }).label);
-  const sow = store.allMutations().find((mutation) => mutation.name === "sow");
   const untended = facts.violations.length > 0;
+  /*
+   * EVERY ACT THE DERIVATION OFFERS ON THE PLOT, not only sowing: naming a
+   * caretaker was on no page of the routed face (the eighth walk carried it,
+   * the tenth fixed it). Sowing first, as the act a plot invites; a repair
+   * stays beside its problem; what takes the plot away comes last.
+   */
+  const rank = (affordance: { mutation: string; destructive?: boolean; setsAside?: boolean }) =>
+    affordance.mutation === "sow" ? 0 : affordance.destructive || affordance.setsAside ? 2 : 1;
+  const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant").sort((a, b) => rank(a) - rank(b));
 
   return (
     <PageMain context={context} data-testid="plot-page">
@@ -67,21 +76,23 @@ function PlotPage({ context }: { context: PageContext<S> }) {
           {facts.violations.map((violation, index) => (
             <div key={index} style={{ display: "grid", gap: 8 }}>
               <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {violation.repairs.map((repair, at) => (
-                  <button key={at} type="button" style={pageStyles.button} onClick={() => store.apply({ name: repair.mutation, args: { ...repair.args } })}>
-                    {repair.label}
-                  </button>
-                ))}
-              </div>
+              {/* Applied as the seat at the keyboard, an ask where it still needs something: the derived pages' own. */}
+              <Repairs<S> store={store} repairs={violation.repairs} {...(principal ? { principal } : {})} />
             </div>
           ))}
         </section>
       ) : null}
-      {sow ? (
-        <section style={{ ...pageStyles.rule, display: "grid", gap: 12 }} data-testid="record-actions">
-          <h2 style={pageStyles.h2}>Sow something here</h2>
-          <DerivedForm<S> store={store} mutation={sow} prefilled={{ plotId: id }} />
+      {offered.length > 0 ? (
+        <section style={{ ...pageStyles.rule, display: "grid", gap: 14 }} data-testid="record-actions">
+          {offered.map((affordance) => {
+            const act = store.allMutations().find((mutation) => mutation.name === affordance.mutation);
+            return act ? (
+              <div key={affordance.id} style={{ display: "grid", gap: 10 }}>
+                <h2 style={pageStyles.h2}>{affordance.mutation === "sow" ? "Sow something here" : affordance.label}</h2>
+                <DerivedForm<S> store={store} mutation={act} prefilled={affordance.args} open={affordance.open} label={affordance.label} {...(principal ? { principal } : {})} />
+              </div>
+            ) : null;
+          })}
         </section>
       ) : null}
     </PageMain>

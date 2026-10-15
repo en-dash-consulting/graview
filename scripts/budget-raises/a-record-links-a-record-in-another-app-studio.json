@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 13618,
+  "gzipped": 4936,
+  "note": "Raised when a relation came to go to a kind in another app (FR-171, the full relation): the document's `@<app address>/<kind>` target parsed and compiled as a field the link is kept in, the rule language walking it as the viewer, the checker's sentences for it, the provider's per-viewer reads of the host's `linkedRecords`, and a door to the part that draws a linked record with its own card and picks one from what the host lists, a chunk fetched with the first one drawn. 13_618 / 4_936 more than main (1_703_440 / 538_348), while a hosted page's first load is 5_107 bytes larger than main (4_648 handed a compiled app) and stays under its budgets. Measured at 1_717_058 / 543_284."
+}
