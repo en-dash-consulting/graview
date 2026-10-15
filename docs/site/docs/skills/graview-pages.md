@@ -28,7 +28,7 @@ if (location.pathname.startsWith("/pages")) {
 
 The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages; `pages: { scene, pages }` renames them), the place you are on — whose list holds the home, the Lists, the Pictures (on a wide bar they stand, the rest under More; an empty kind folds into More) — Find, standing, person. A shell with a rail of its own says `surface("shell", Shell, { without: ["places"] })`: the bar keeps all that and names no place.
 
-**Arrange it, declared**: `pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }`. `order` sorts gallery, nav, city; `hide` drops kinds from the home only; `first` (place, kind or `"home"`) opens both faces; `primary` stands on the bar. `placesOf(app)` (`/seat`) lists them.
+**Arrange it, declared**: `pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }`. `order` sorts gallery, nav, city; `hide` drops kinds from the home only; `first` (place, kind or `"home"`) is where a new visit lands; a drawn home stays Home, on the bar and at `/`. `primary` stands on the bar. `placesOf(app)` (`/seat`) lists them.
 
 **Home as data** (FR-81): `home`, blocks as in `graview-node-kind` (`views.home`), replaces this body, and the app opens on it (FR-136).
 
@@ -77,7 +77,7 @@ Rules for a page at this rung:
 
 1. **`PageMain`, not `<main>`** — inside an embed the host owns the one `main`, and a hand-written one is a duplicate landmark.
 2. **`useStoreTick(store)`** at the top of every page that reads the graph, or it goes stale after the first act.
-3. **`pageStyles`** for the parts you did not design, so one custom page still reads as the same face as the derived ones.
+3. **`pageStyles`** for the parts you did not design: one face, derived or not.
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args }, principal)`, struck through with `verdict.refusal.message`. A form that refuses on submit is the bug this prevents.
 6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named place, group in focus.
@@ -97,7 +97,7 @@ createPageRegistry<S, PageComponent<S>>(schema)
   // ... every kind
 ```
 
-The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and what makes it finished is not the type — it is that everything a person tries there works: sort, filter and group come from `ArrangeBar` and live in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is shown, heading included, through `editableFields(store, id)`; an act's form opens where the act is, prefilled, with the store's own refusal said at the press; the problems page is an inbox, its repairs ordered by `rankedRepairs`; and every empty state offers the way out of itself. `apps/seedbed/src/ui/design.tsx` is the other end — an almanac whose own drawing has two homes, the page and the scene's lens reading one model.
+The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and what makes it finished is not the type — it is that everything a person tries there works: sort, filter and group come from `ArrangeBar` and live in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is shown, heading included, through `editableFields(store, id)`; an act's form opens where the act is, prefilled, with the store's own refusal said at the press; the problems page is an inbox, its repairs ordered by `rankedRepairs`; and every empty state offers the way out of itself. `apps/seedbed/src/ui/design.tsx` is the other end: an almanac drawn on the page and in the scene's lens from one model.
 
 What every design must keep doing:
 

@@ -1,0 +1,102 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The review",
+  "description": "A code review's findings, the modules they affect, the insights drawn from them and their root causes.",
+  "kinds": {
+    "finding": {
+      "noun": "finding",
+      "plural": "findings",
+      "label": "{title}",
+      "fields": {
+        "title": { "type": "string", "required": true },
+        "severity": { "type": "enum", "options": ["critical", "high", "medium", "low"], "required": true },
+        "category": { "type": "enum", "options": ["security", "performance", "style"], "required": true },
+        "confidence": { "type": "enum", "options": ["high", "medium", "low"], "required": true },
+        "notes": { "type": "text" }
+      },
+      "glance": ["severity", "category"],
+      "edges": {
+        "affects": { "to": ["module"], "cardinality": "many", "description": "the modules it is found in", "inverse": "its findings" },
+        "dependsOn": { "to": ["task"], "cardinality": "many", "description": "the tasks it waits on", "inverse": "the findings that wait on it" }
+      }
+    },
+    "module": {
+      "noun": "module",
+      "plural": "modules",
+      "label": "{path}",
+      "fields": { "path": { "type": "string", "required": true } }
+    },
+    "task": {
+      "noun": "task",
+      "plural": "tasks",
+      "label": "{title}",
+      "fields": { "title": { "type": "string", "required": true } }
+    },
+    "insight": {
+      "noun": "insight",
+      "plural": "insights",
+      "fields": {
+        "label": { "type": "string", "required": true },
+        "thesis": { "type": "text", "format": "markdown" },
+        "strength": { "type": "enum", "options": ["strong", "weak"] }
+      }
+    },
+    "risk": {
+      "noun": "risk",
+      "plural": "risks",
+      "fields": {
+        "label": { "type": "string", "required": true },
+        "likelihood": { "type": "enum", "options": ["high", "medium", "low"], "required": true },
+        "impact": { "type": "enum", "options": ["high", "medium", "low"], "required": true },
+        "area": { "type": "enum", "options": ["billing", "search"] }
+      },
+      "glance": ["likelihood", "impact", "area"]
+    },
+    "root-cause": {
+      "noun": "root cause",
+      "plural": "root causes",
+      "fields": { "label": { "type": "string", "required": true } }
+    },
+    "week": {
+      "noun": "week",
+      "plural": "weeks",
+      "fields": { "label": { "type": "string", "required": true } }
+    }
+  },
+  "acts": {
+    "add-finding": { "title": "Add a finding", "creates": "finding", "description": "Something the review found." }
+  },
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "views": {
+    "finding": {
+      "page": [
+        { "headline": "{title}" },
+        { "text": "{out('affects') | and}", "key": "affects" },
+        { "text": "{out('dependsOn') | and}", "key": "depends" }
+      ]
+    },
+    "home": [
+      { "headline": "{count(all('finding')) | words | capital} {count(all('finding')) | plural: 'finding'}, worst first", "key": "headline" },
+      { "list": "all('finding')", "as": "card", "key": "findings" },
+      { "list": "all('risk')", "as": "card", "key": "risks" },
+      { "list": "all('insight')", "as": "card", "key": "insights" }
+    ]
+  },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "Root causes",
+      "on": "root-cause",
+      "options": { "blocks": [{ "list": "all('root-cause')", "as": "row" }] }
+    },
+    {
+      "name": "blocks",
+      "title": "This week",
+      "on": "week",
+      "options": { "blocks": [{ "list": "all('week')", "as": "row" }] }
+    }
+  ],
+  "pages": { "first": "This week" }
+}

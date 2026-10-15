@@ -120,7 +120,9 @@ describe("FR-84: every new edit previews, applies and rolls back", () => {
       const applied = edit(start, [trip.edit]);
       expect(applied.said.join(" ")).toMatch(trip.said);
       expect(diffDocuments(start, applied.document).sentences.join(" ")).toMatch(trip.says);
-      expect(findings(applied.document)).toEqual(before);
+      // A place retitled from its kind's list's name ("Open questions") has a name of its own: the one finding it may take away.
+      const named = before.findIndex((f) => f.includes("pages-place-named-as-a-list"));
+      expect(findings(applied.document)).toEqual(trip.name === "add-lens replacing one, retitled" ? before.filter((_, at) => at !== named) : before);
       const rolled = edit(applied.document, [trip.inverse]);
       expect(await documentHash(rolled.document)).toBe(await documentHash(start));
       expect(diffDocuments(start, rolled.document).unchanged).toBe(true);

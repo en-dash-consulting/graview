@@ -68,9 +68,9 @@ describe("a record's facts, in order", () => {
     expect(sections[0]!.fields.map((field) => field.key)).toEqual(["subject", "draft", "due", "name", "status", "summary"]);
   });
 
-  it("a glance is not a page: what a glance says is still the glance's choice", () => {
+  it("a glance is not a page: what a glance says is the glance's choice, and only that", () => {
     const glanced = { ...workshop, kinds: { deliverable: { ...workshop.kinds["deliverable"]!, glance: ["subject"], page: { fields: ["draft"] } } } } as GraviewDocument;
-    expect(readableFields(email, definitionOf(glanced), { glance: true, limit: 2 }).map((field) => field.key)).toEqual(["subject", "due"]);
+    expect(readableFields(email, definitionOf(glanced), { glance: true, limit: 2 }).map((field) => field.key)).toEqual(["subject"]);
   });
 
   it("a page naming a field the kind does not have, or one twice, does not compile", () => {

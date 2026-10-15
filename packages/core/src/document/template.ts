@@ -2,7 +2,7 @@ import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
 import { dayAsRead, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, numberAsRead } from "../days.js";
-import { listed } from "../capital.js";
+import { capitalize, listed } from "../capital.js";
 import { excerpt } from "../excerpt.js";
 import { formatMoney, type Money } from "./money.js";
 
@@ -24,6 +24,14 @@ import { formatMoney, type Money } from "./money.js";
  * `excerpt` says the start of a long text on a card or a row: its first
  * sentence, or about 140 characters cut at a word (`excerpt: 80` for
  * fewer); the record's page says it whole.
+ *
+ * `capital` may follow any of them, or stand alone: it upper-cases the first
+ * letter of what was said, for a count in words that starts a headline —
+ * "{count(all('finding')) | words | capital} findings" says "Fifty-seven findings".
+ *
+ * A record is said by its kind's label wherever one is declared — `{out('affects') | and}`
+ * says "src/files.ts and tsconfig.json" of modules labeled "{path}" — else by its
+ * name, title or label field, else its id.
  */
 
 export const FORMATTERS = ["money", "percent", "date", "relative", "upper", "lower", "count", "words", "and", "plural", "excerpt"] as const;
@@ -36,6 +44,8 @@ export interface TemplatePart {
   readonly format?: Formatter;
   /** What the formatter is told: `plural`'s noun, and its plural where English does not make it. */
   readonly formatArgs?: readonly string[];
+  /** `| capital`, alone or after another formatter: the words said with their first letter upper-cased, as a sentence starts. */
+  readonly capital?: true;
 }
 
 /*
@@ -60,8 +70,23 @@ export const EMPTY_GRAPH: GraphReader = {
 };
 
 /** A value as words, through a formatter: the one place templates and view specs say a value. */
-export function formatValue(value: Value, format: Formatter | undefined, today: string, args: readonly string[] = [], money?: Money): string {
-  return show(value, format, today, args, money);
+export function formatValue(value: Value, format: Formatter | undefined, today: string, args: readonly string[] = [], money?: Money, name: Namer = called): string {
+  return show(value, format, today, args, money, name);
+}
+
+/** What a part says once its formatter has said it: `| capital` upper-cases its first letter. */
+export const capitalized = (part: TemplatePart, said: string): string => (part.capital ? capitalize(said) : said);
+
+/** How a template says a record: the words its kind's label makes. */
+export type Namer = (node: AnyGraphNode) => string;
+
+/** What a record is called by the kinds of a schema: its kind's declared label, else as `called` says it. */
+export function namerOf(schema: { tryDefinition(kind: string): unknown } | undefined): Namer {
+  if (!schema) return called;
+  return (node) => {
+    const label = (schema.tryDefinition(node.kind) as { label?: (node: AnyGraphNode) => string } | undefined)?.label;
+    return label ? label(node) : called(node);
+  };
 }
 
 /*
@@ -88,23 +113,23 @@ function pluralOf(noun: string): string {
   return `${noun}s`;
 }
 
-/** What a record is called in a sentence: its name, title or label, else its id. */
-const called = (n: AnyGraphNode): string => String(n["name"] ?? n["title"] ?? n["label"] ?? n.id);
+/** What a record is called in a sentence where no label is declared: its name, title or label, else its id. */
+const called: Namer = (n: AnyGraphNode): string => String(n["name"] ?? n["title"] ?? n["label"] ?? n.id);
 
-function show(value: Value, format: Formatter | undefined, today: string, args: readonly string[] = [], money?: Money): string {
+function show(value: Value, format: Formatter | undefined, today: string, args: readonly string[] = [], money?: Money, name: Namer = called): string {
   if (format === "plural") {
     const count = value instanceof NodeSet ? value.nodes.length : Array.isArray(value) ? value.length : typeof value === "number" ? value : null;
     if (count === null || args[0] === undefined) return "—";
     return count === 1 ? args[0] : (args[1] ?? pluralOf(args[0]));
   }
   if (value === null) return "—";
-  if (value instanceof NodeSet) return format === "count" ? String(value.nodes.length) : format === "and" ? listed(value.nodes.map(called)) : value.nodes.map(called).join(", ");
+  if (value instanceof NodeSet) return format === "count" ? String(value.nodes.length) : format === "and" ? listed(value.nodes.map(name)) : value.nodes.map(name).join(", ");
   if (Array.isArray(value)) {
     if (format === "count") return String(value.length);
-    const each = value.map((v) => show(v as Value, undefined, today, [], money));
+    const each = value.map((v) => show(v as Value, undefined, today, [], money, name));
     return format === "and" ? listed(each) : each.join(", ");
   }
-  if (typeof value === "object") return called(value as AnyGraphNode);
+  if (typeof value === "object") return name(value as AnyGraphNode);
   switch (format) {
     case "words":
       return typeof value === "number" ? inWords(value, money?.locale) : String(value);
@@ -143,11 +168,14 @@ export interface RenderContext {
   readonly budget?: number;
   /** The app's currency and locale, for `{x | money}` (FR-100). */
   readonly money?: Money;
+  /** How a record is said; unsaid, by the labels of the schema the graph carries (`namerOf`). */
+  readonly name?: Namer;
 }
 
 /** Render a parsed template. A part that cannot be judged renders as "—" rather than failing the whole sentence. */
 export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContext): string {
   const today = ctx.today ?? isoToday();
+  const name = ctx.name ?? namerOf((ctx.graph as { readonly schema?: { tryDefinition(kind: string): unknown } } | undefined)?.schema);
   return parts
     .map((part) => {
       if (part.text !== undefined) return part.text;
@@ -160,7 +188,7 @@ export function renderTemplate(parts: readonly TemplatePart[], ctx: RenderContex
           budget: ctx.budget ?? 500,
           ...(ctx.bindings ? { bindings: ctx.bindings } : {}),
         });
-        return show(value, part.format, today, part.formatArgs, ctx.money);
+        return capitalized(part, show(value, part.format, today, part.formatArgs, ctx.money, name));
       } catch (error) {
         if (error instanceof ExprEvalError) return "—";
         throw error;

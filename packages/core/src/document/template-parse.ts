@@ -28,17 +28,42 @@ export function filterBar(inner: string): number {
       else bar = i;
     }
   }
+  // `capital` may follow another formatter (`{n | words | capital}`): the formatters begin at the bar before it.
+  if (bar > 0 && inner.slice(bar + 1).trim() === CAPITAL) {
+    const before = filterBar(inner.slice(0, bar));
+    if (before >= 0) return before;
+  }
   return bar;
 }
 
+/** The one formatter that may follow another: the words said, their first letter upper-cased, as a sentence starts. */
+const CAPITAL = "capital";
+
 /** One quoted word, then a comma or the end. */
 const QUOTED = /\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")\s*(,|$)/y;
+
+/**
+ * The formatters after a brace's bar: one from the closed set, and `capital`
+ * after it or alone — "{count(all('finding')) | words | capital} findings"
+ * starts a headline "Fifty-seven findings".
+ */
+function readFormatters(text: string): { readonly format?: Formatter; readonly args: readonly string[]; readonly capital?: true } {
+  const bar = filterBar(text);
+  if (bar >= 0) {
+    if (text.slice(bar + 1).trim() !== CAPITAL) throw new TemplateError(`only "capital" may follow another formatter, like {n | words | capital}`);
+    const first = text.slice(0, bar);
+    if (first.trim() === CAPITAL) throw new TemplateError(`"capital" is said once`);
+    return { ...readFormatter(first), capital: true };
+  }
+  if (text.trim() === CAPITAL) return { args: [], capital: true };
+  return readFormatter(text);
+}
 
 /** A formatter and what it is told: `money`, `plural: 'person', 'people'`. */
 function readFormatter(text: string): { readonly format: Formatter; readonly args: readonly string[] } {
   const colon = text.indexOf(":");
   const name = (colon >= 0 ? text.slice(0, colon) : text).trim();
-  if (!(FORMATTERS as readonly string[]).includes(name)) throw new TemplateError(`"${name}" is not a formatter; use one of ${FORMATTERS.join(", ")}`);
+  if (!(FORMATTERS as readonly string[]).includes(name)) throw new TemplateError(`"${name}" is not a formatter; use one of ${[...FORMATTERS, CAPITAL].join(", ")}`);
   const args: string[] = [];
   if (colon >= 0 && name === "excerpt") {
     // How many characters at most: a whole number, `excerpt: 80`.
@@ -105,12 +130,18 @@ export function parseTemplate(template: string): readonly TemplatePart[] {
     const inner = template.slice(open + 1, close);
     const bar = filterBar(inner);
     const source = (bar >= 0 ? inner.slice(0, bar) : inner).trim();
-    const formatter = bar >= 0 ? readFormatter(inner.slice(bar + 1)) : undefined;
+    const formatter = bar >= 0 ? readFormatters(inner.slice(bar + 1)) : undefined;
+    // Two formatters where the second is not `capital` (`{n | words | money}`) left the first in the expression, read as a join of sets.
+    const before = filterBar(source);
+    if (before >= 0 && (FORMATTERS as readonly string[]).includes(source.slice(before + 1).split(":")[0]!.trim())) {
+      throw new TemplateError(`only "capital" may follow another formatter, like {n | words | capital}`);
+    }
     parts.push({
       expr: parseExpr(source),
       source,
-      ...(formatter ? { format: formatter.format } : {}),
+      ...(formatter?.format ? { format: formatter.format } : {}),
       ...(formatter && formatter.args.length > 0 ? { formatArgs: formatter.args } : {}),
+      ...(formatter?.capital ? { capital: true as const } : {}),
     });
     i = close + 1;
   }

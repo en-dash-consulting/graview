@@ -1,7 +1,7 @@
 import type { GraviewApp } from "./app.js";
 import { declaredLenses, MOST_STANDING, openingOf, orderKinds, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, type PlaceFinding, type ShippedLensName } from "./places.js";
 import type { AnySchema } from "./schema/schema.js";
-import { pluralLabel } from "./schema/define-node.js";
+import { allLabel, nounOf, pluralLabel, pluralOf } from "./schema/define-node.js";
 import { kindPath, onePerPicture, placePath, sharesItsName, type PagesArrangement, type Place } from "./views/types.js";
 
 /*
@@ -26,6 +26,19 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       path: "pages",
       message: `The place "${taken.title}" has the address the scene keeps (${OVERVIEW_PATH}), so the bar's "${sceneTitle(pages)}" and it cannot both be reached there.`,
       fix: `Give "${taken.title}" another title (or another "as"): the scene keeps ${OVERVIEW_PATH} whatever the declaration calls it.`,
+    });
+  }
+  // A place titled as a kind's list is: the bar shows the place, and folds the list into More as "All <plural>" (`barPlaces`).
+  const declaredKinds = app.schema.kinds as readonly string[];
+  for (const place of onePerPicture(places.filter((one) => declaredKinds.includes(one.kind)))) {
+    const kind = declaredKinds.find((one) => pluralLabel(app.schema, one).toLowerCase() === place.title.trim().toLowerCase());
+    if (kind === undefined) continue;
+    findings.push({
+      severity: "warning",
+      code: "pages-place-named-as-a-list",
+      path: "pages",
+      message: `The place "${place.title}" has the name of the list of every ${nounOf(app.schema.tryDefinition(kind), kind)}, so the bar names the place "${place.title}" and folds the list into More as "${allLabel(app.schema, kind)}" (still at ${kindPath(app.schema, kind)}).`,
+      fix: `Give "${place.title}" a title that says what it shows of them, or leave it: the place is the one the bar calls "${place.title}".`,
     });
   }
   if (!pages) return findings;
@@ -77,6 +90,18 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       path: "pages.first",
       message: `pages.first is "${pages.first}", which is not a place, a kind or "home", so the app opens at its home.`,
       fix: `Name a place (${places.map((place) => `"${place.title}"`).join(", ") || "none is declared"}), a kind, or "home".`,
+    });
+  }
+  // A drawn home and another first place: each does one thing, and a reader of the declaration is told which.
+  const opening = openingOf(pages.first, app.schema, places);
+  if (opening !== undefined && opening.to !== "home" && ((app.home?.length ?? 0) > 0 || app.views?.homeView?.() !== undefined)) {
+    const where = opening.to === "place" ? `"${opening.place.title}"` : `the ${pluralOf(app.schema, opening.kind)} list`;
+    findings.push({
+      severity: "note",
+      code: "pages-first-beside-home",
+      path: "pages.first",
+      message: `pages.first lands a new visit on ${where}; the home the declaration draws stays Home — on the bar, and at "/" for every press and link after the visit lands.`,
+      fix: `Nothing to change if that is the intent. To open on the drawn home, take pages.first away (or set it to "home").`,
     });
   }
   return findings;
