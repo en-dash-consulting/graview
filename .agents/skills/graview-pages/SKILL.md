@@ -36,26 +36,28 @@ if (location.pathname.startsWith("/pages")) {
 
 The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages;
 `pages: { scene, pages }` renames them), the place you are on — whose list
-holds the home, the Lists, the Pictures (on a wide bar they stand, the
-rest under More; an empty kind folds into More) — Find, standing, person.
+holds the home, the Lists, the Pictures (standing on a wide bar, else
+under More, as an empty kind is) — Find, standing, person.
 A shell with a rail of its own says `surface("shell", Shell, { without:
 ["places"] })`: the bar keeps all that and names no place.
 
 **Arrange it, declared**: `pages: { order: ["offer",
 "package"], hide: ["party"], first: "The offers" }`. `order` sorts
 gallery, nav, city; `hide` drops kinds from the home only; `first` (place,
-kind or `"home"`) is where a new visit lands; a drawn home stays Home, on
-the bar and at `/`. `primary` stands on the bar.
+kind or `"home"`) opens both faces; `primary` stands on the bar.
 `placesOf(app)` (`/seat`) lists them.
 **Home as data** (FR-81): `home`, blocks as in `graview-node-kind`
-(`views.home`), replaces this body, and the app opens on it (FR-136).
+(`views.home`), replaces this body, and the app opens on it (FR-136):
+40 blocks at its top (a group is one; 120 in all), and a `figure` may say
+`emphasis: "large"`.
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) —
 `graview create` does — and the face puts the scene's provider
 under its routes, which buys three things at once:
 
 - `/places`, `/places/<as>` — every named lens as a page (fullscreen, over
-  the kind's members, the beginning acts beneath). A kind's page lists its pictures; a pick in a lens
+  the kind's members, the beginning acts beneath unless the lens says
+  `create: false`). A kind's page lists its pictures; a pick in a lens
   travels to the record. A kind's own row (one × glyph) is each line of its
   list, and its own page view (one × full) heads its record.
 - `/map` — `kindMap(store)`: every declared relation in its words with
@@ -124,8 +126,9 @@ Rules for a page at this rung:
 1. **`PageMain`, not `<main>`** — inside an embed the host owns the one
    `main`, and a hand-written one is a duplicate landmark.
 2. **`useStoreTick(store)`** at the top of every page that reads the graph,
-   or it goes stale after the first act.
-3. **`pageStyles`** for the parts you did not design: one face, derived or not.
+   or it goes stale.
+3. **`pageStyles`** for the parts you did not design, so a custom page
+   reads as the same face as the derived ones.
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record
    offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args },
@@ -138,7 +141,7 @@ Rules for a page at this rung:
    `recordFacts(store, id, { principal }).actions` is the `AffordanceSet`
    the scene's strip reads: `affordances` can act here, `args` decided and
    `open` questions left; `withheld` are this seat's refusals, with the
-   reason. Filtering `store.allMutations()` offers acts with nothing to act on. A **list** page asks it of a kind instead —
+   reason. `store.allMutations()` offers acts with nothing to act on. A **list** page asks it of a kind instead —
    `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN it.
 
 ## Rung two: a product design
@@ -156,7 +159,7 @@ createPageRegistry<S, PageComponent<S>>(schema)
   // ... every kind
 ```
 
-The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and
+The shell surface receives `{ context, children }`. `apps/todo/src/ui/design.tsx` is the FINISHED one, and
 what makes it finished is not the type — it is that everything a person
 tries there works: sort, filter and group come from `ArrangeBar` and live
 in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is
@@ -164,8 +167,8 @@ shown, heading included, through `editableFields(store, id)`; an act's form
 opens where the act is, prefilled, with the store's own refusal said at the
 press; the problems page is an inbox, its repairs ordered by
 `rankedRepairs`; and every empty state offers the way out of itself.
-`apps/seedbed/src/ui/design.tsx` is the other end: an almanac drawn on the
-page and in the scene's lens from one model.
+`apps/seedbed/src/ui/design.tsx` is the other end — an almanac whose own
+drawing has two homes, the page and the scene's lens reading one model.
 
 What every design must keep doing:
 
@@ -183,16 +186,15 @@ What every design must keep doing:
   is its CONTENT's, so one un-wrappable row pushes the whole column off the
   screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on
   the row. Measure rather than trust: `-ink-faint` fails AA on an 11px
-  label, and the accent fails on the warning ground. `node
-  scripts/verify-pages.mjs` runs axe over every route, both widths, both
-  schemes.
+  label, and the accent on the warning ground; run axe over every route,
+  both widths, both schemes.
 - **Withhold, do not hide.** Rule 7 again, at every surface: struck through
   with the policy's own sentence rather than dropped.
 
 ## On somebody else's page
 
-The embed mounts the app — this face included (`face: "pages"`, `path`,
-`routing`) — into one element of any page. Its own skill: `graview-embed`.
+`graview-embed` mounts the app, this face included (`face: "pages"`,
+`path`, `routing`), into one element of any page.
 
 ## Then find out whether it worked
 
