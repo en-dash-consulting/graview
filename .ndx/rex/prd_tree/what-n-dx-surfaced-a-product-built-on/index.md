@@ -2,7 +2,7 @@
 id: "bc49734a-98bc-4530-a7cd-1b659079eca3"
 level: "epic"
 title: "What n-dx surfaced: a product built on the framework from outside, with a document, a snapshot and a sync"
-status: "pending"
+status: "completed"
 priority: "high"
 tags:
   - "n-dx"

@@ -2,7 +2,7 @@
 id: "1612641e-295e-4f0b-ab74-3c011d2e0dee"
 level: "epic"
 title: "Hosted for strangers: the declaration as a document, a live wire, and the seams a host of many apps needs"
-status: "in_progress"
+status: "completed"
 priority: "high"
 tags:
   - "graview-cloud"
