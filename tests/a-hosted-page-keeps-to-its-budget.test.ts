@@ -86,7 +86,8 @@ describe("a hosted page", () => {
     // Still 884 KB when the inspector's pane and the seat's tools came to be fetched when an act is first wanted: the scene face measured 856_430 B, 46_530 under main's 902_960.
     // 887 KB since the second half of the 0.1.30 wave landed together: graview.dev's fixes to the scene (an edge sign clear of the corner, a tie taking the kit's route), a screen reader told each stop (named controls, focus after a move, another seat's change said) and a kind's list in its declared order: the scene face measured 906_948 B, 1_732 over 884.
     // 888 KB since a change came to be said in words, said with nobody shown here, and asked from what the record holds in the scene's ask too: the scene face measured 909_040 B, 2_092 more than before them (906_948).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(888 * 1024);
+    // 893 KB since the scene's cards and ties were fixed together (2026-10-15): a card says there is more at its edge, its "+N more" opens the rest, and a chosen record's ties keep their words until reached, placed clear of the cards' titles: the scene face measured 913_594 B, 4_554 more than before them (909_040).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(893 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

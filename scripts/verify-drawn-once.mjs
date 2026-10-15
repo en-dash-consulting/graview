@@ -35,6 +35,17 @@
  * card is drawn once by the framework's record, and a view of the host's
  * own taller than its box (as a worker view can be) keeps to the box.
  *
+ * And on a second document mounted the same way (Nick, 2026-10-15: a
+ * hospital's systems review and The Beatles' records,
+ * `scripts/fixtures/scene-cards/`): a module's card that scrolls says so at
+ * the edge there is more past — its bottom edge, not a strip over its last
+ * row, and no band across its middle once scrolled; its "+2 more" is a
+ * button that opens every finding and closes again, by the keyboard and the
+ * pointer; a chosen module's tie keeps its words until the tie or a card at
+ * its end is reached, and then says them once, on no card's title; and an
+ * album's own view, with the record's card under it, leaves that card whole
+ * ("Who made it" and The Beatles' chip in it) in a frame that scrolls once.
+ *
  *   node scripts/verify-drawn-once.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>]
  */
 import { createServer } from "node:http";
@@ -58,6 +69,11 @@ const WORKSHOP = resolve(repoRoot, "scripts/fixtures/drawn-once/workshop.gdd.jso
 const WORKSHOP_SEED = resolve(repoRoot, "scripts/fixtures/drawn-once/workshop.seed.json");
 const SEED = JSON.parse(readFileSync(WORKSHOP_SEED, "utf8"));
 const PART = SEED.nodes.find((node) => node.id === "segment:ongoing-support");
+/* The review (`scripts/fixtures/scene-cards/make.mjs`): a module with ten findings, an album by The Beatles. */
+const REVIEW = resolve(repoRoot, "scripts/fixtures/scene-cards/review.gdd.json");
+const REVIEW_SEED = resolve(repoRoot, "scripts/fixtures/scene-cards/review.seed.json");
+const MODULE = "module:hospital-services";
+const FINDINGS_IN_IT = JSON.parse(readFileSync(REVIEW_SEED, "utf8")).edges.filter((edge) => edge.kind === "in" && edge.to === MODULE).length;
 const TOPICS = SEED.nodes.filter((node) => node.kind === "topic").map((node) => node.title);
 /** Where Nick stood: Down in the part's district, the part selected. */
 const STOP = "#focus=segment:ongoing-support&zoom=1&sel=segment:ongoing-support";
@@ -87,9 +103,14 @@ async function buildHost() {
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import { createElement } from "react";
         import workshop from ${JSON.stringify(WORKSHOP)};
-        import seed from ${JSON.stringify(WORKSHOP_SEED)};
+        import workshopSeed from ${JSON.stringify(WORKSHOP_SEED)};
+        import review from ${JSON.stringify(REVIEW)};
+        import reviewSeed from ${JSON.stringify(REVIEW_SEED)};
         const asked = new URLSearchParams(location.search);
-        let document_ = workshop;
+        /* "review": a hospital's systems review and a shelf of records, where the scene's cards and ties were reported (2026-10-15). */
+        const reviewed = asked.get("doc") === "review";
+        const seed = reviewed ? reviewSeed : workshopSeed;
+        let document_ = reviewed ? review : workshop;
         /* "card": the part declares only its card — the framework's record draws it in focus. */
         if (asked.get("slots") === "card") document_ = { ...document_, views: { ...document_.views, segment: { card: document_.views.segment.card } } };
         /* "long": a plural no district's box holds at its own size. */
@@ -112,6 +133,23 @@ async function buildHost() {
           fonts: false,
           studio: false,
           ...(asked.get("tall") === "1" ? { views: (_schema, registry) => registry.register("segment", { cardinality: "one", fidelity: "full" }, tall) } : {}),
+          /*
+           * "sleeve": an album's own view, drawn as a worker view of one
+           * record is (FR-149) — the view, then the record's own card under
+           * it, stacked in a grid.
+           */
+          ...(asked.get("sleeve") === "1"
+            ? {
+                views: (_schema, registry) => {
+                  const before = registry.lookup("album", { cardinality: "one", fidelity: "full" });
+                  const sleeve = (props) => createElement("div", { "data-sleeve": "", style: { background: "var(--graview-panel)", border: "1px solid var(--graview-edge)", padding: 12 } },
+                    createElement("strong", null, props.node ? props.node.title : ""),
+                    ...Array.from({ length: 6 }, (_, i) => createElement("p", { key: i, style: { margin: "6px 0" } }, "Side one, track " + (i + 1))));
+                  return registry.register("album", { cardinality: "one", fidelity: "full" }, (props) =>
+                    createElement("div", { "data-worker-view-beside": "sleeve", style: { display: "grid", gap: 12, minWidth: 0 } }, createElement(sleeve, props), createElement(before, props)));
+                },
+              }
+            : {}),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });`,
       resolveDir: resolve(repoRoot, "packages/embed"),
@@ -243,9 +281,115 @@ function measure({ partId, goal, summary, topics }) {
   };
 }
 
+/**
+ * A RECORD'S CARD AT ITS EDGE, where the card scrolls: what is painted over
+ * its rows, where its edge says there is more, and whether its heading and
+ * its first fact stand clear of each other. Runs in the page.
+ */
+function cardEdge(id) {
+  const panel = document.querySelector(`[data-graview-view="${CSS.escape(id)}"] [data-graview-primitive="panel"]`);
+  const scroller = panel?.querySelector(":scope > .graview-scroll");
+  if (!panel || !scroller) return null;
+  const box = (el) => el.getBoundingClientRect();
+  const panelBox = box(panel);
+  const scrollerBox = box(scroller);
+  const after = getComputedStyle(scroller, "::after").content;
+  // What stands above the scroller in the card — its title and its description — must end where the scroller begins.
+  const head = [...panel.children].filter((child) => child !== scroller && box(child).height > 0);
+  const headBottom = Math.max(0, ...head.map((child) => box(child).bottom));
+  const chips = [...scroller.querySelectorAll("[data-graview-pick]")];
+  const last = chips[chips.length - 1];
+  const lastBox = last ? box(last) : null;
+  return {
+    overflows: scroller.scrollHeight > scroller.clientHeight + 1,
+    above: scroller.hasAttribute("data-graview-more-above"),
+    below: scroller.hasAttribute("data-graview-more-below"),
+    // A strip painted over the rows: the old fade, stuck to the bottom.
+    paintedOverRows: after !== "none" && after !== "normal" && after !== "",
+    // Shadows painted in the scroller's own ground, which a scrolled card showed as a band across its middle.
+    paintedInGround: getComputedStyle(scroller).backgroundImage !== "none",
+    // How far the scroller stops short of the card's own bottom edge.
+    edgeGap: Math.round(panelBox.bottom - scrollerBox.bottom),
+    headOverScroller: headBottom > scrollerBox.top + 1,
+    lastChipWhole: lastBox ? lastBox.bottom <= scrollerBox.bottom + 1 && lastBox.top >= scrollerBox.top - 1 : null,
+  };
+}
+
+/** "+N more" on a record's card: what it is, what it says, and how many chips its group shows. Runs in the page. */
+function moreState(id) {
+  const more = document.querySelector(`[data-graview-view="${CSS.escape(id)}"] [data-graview-more]`);
+  if (!more) return { found: false };
+  const group = more.parentElement;
+  return {
+    found: true,
+    tag: more.tagName.toLowerCase(),
+    expanded: more.getAttribute("aria-expanded"),
+    controls: more.getAttribute("aria-controls") === group?.id,
+    text: (more.textContent ?? "").trim(),
+    chips: group ? group.querySelectorAll("[data-graview-pick]").length : 0,
+  };
+}
+
+/**
+ * A CHOSEN RECORD'S TIES AND THEIR WORDS: each set of words shown or not,
+ * whether a shown one stands on a card's title (the strip at the top of
+ * every card), and the ends of the ties, to reach for. Runs in the page.
+ */
+function tieWords() {
+  const shown = (el) => getComputedStyle(el).visibility !== "hidden" && el.getBoundingClientRect().width > 1;
+  const overlaps = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+  const titles = [...document.querySelectorAll("[data-graview-view]")].flatMap((host) => {
+    const frame = [...host.children].find((child) => !child.classList.contains("graview-kind-tag"));
+    if (!frame) return [];
+    const box = frame.getBoundingClientRect();
+    if (box.width < 2 || box.height < 2) return [];
+    // The words that say the card's title: its first line of text.
+    const leaf = [...frame.querySelectorAll("*")].find((el) => el.childElementCount === 0 && (el.textContent ?? "").trim().length > 0 && el.getBoundingClientRect().height > 0);
+    const words = leaf ? leaf.getBoundingClientRect() : null;
+    return words ? [{ id: host.getAttribute("data-graview-view"), box: { left: words.left, right: words.right, top: words.top, bottom: words.bottom } }] : [];
+  });
+  const labels = [...document.querySelectorAll("[data-graview-link-said]")].map((el) => {
+    const box = el.getBoundingClientRect();
+    return { text: (el.textContent ?? "").trim(), shown: shown(el), on: titles.filter((title) => overlaps(box, title.box)).map((title) => title.id) };
+  });
+  const ends = [...document.querySelectorAll("[data-graview-ties] circle")].map((circle) => {
+    const box = circle.getBoundingClientRect();
+    return [Math.round(box.left + box.width / 2), Math.round(box.top + box.height / 2)];
+  });
+  return { labels, ends, lines: document.querySelectorAll("[data-graview-tie]").length };
+}
+
+/**
+ * A RECORD'S OWN VIEW IN ITS FRAME, with the record's card under it: is
+ * the card drawn whole (no scroll of its own, nothing cut), does the frame
+ * keep above the relation band, and is the far record's chip in it seen
+ * once the frame is scrolled. Runs in the page.
+ */
+function ownView(id) {
+  const host = document.querySelector(`[data-graview-view="${CSS.escape(id)}"]`);
+  const body = [...(host?.children ?? [])].find((child) => !child.classList.contains("graview-kind-tag"));
+  const panel = body?.querySelector('[data-graview-primitive="panel"]');
+  const scroller = panel?.querySelector(":scope > .graview-scroll");
+  if (!body || !panel || !scroller) return null;
+  const box = (el) => el.getBoundingClientRect();
+  const bodyBox = box(body);
+  const captions = [...document.querySelectorAll("[data-graview-relation]")].map((el) => box(el)).filter((one) => one.width > 1);
+  const chip = panel.querySelector('[data-graview-pick="artist:the-beatles"]');
+  const chipBox = chip ? box(chip) : null;
+  return {
+    panelCut: panel.scrollHeight > panel.clientHeight + 1,
+    scrollerCut: scroller.scrollHeight > scroller.clientHeight + 1,
+    panelHeight: Math.round(box(panel).height),
+    bodyScrolls: body.scrollHeight > body.clientHeight + 1,
+    bodyBottom: Math.round(bodyBox.bottom),
+    captionTop: captions.length > 0 ? Math.round(Math.min(...captions.map((one) => one.top))) : null,
+    chipSeen: Boolean(chipBox && chipBox.top >= bodyBox.top - 1 && chipBox.bottom <= bodyBox.bottom + 1),
+  };
+}
+
 const host = await buildHost();
 const errors = [];
-const seen = { drawnOnce: [], declaredCardOnly: [], tallView: [], longName: [] };
+const seen = { drawnOnce: [], declaredCardOnly: [], tallView: [], longName: [], cardEdge: [], more: [], tieWords: [], ownView: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -258,6 +402,16 @@ try {
         await page.goto(`${at("drawn-once-host")}/places/overview${query ? `?${query}` : ""}${STOP}`, { waitUntil: "load" });
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
         await page.waitForFunction((part) => document.querySelector(`[data-graview-view="${CSS.escape(part)}"]`) !== null, PART.id, { timeout: 30_000 });
+        await page.waitForTimeout(1800);
+        return { page, close: () => context.close() };
+      };
+      /* The review, at a stop of its own. */
+      const openAt = async (query, stop, viewport) => {
+        const context = await browser.newContext({ viewport, colorScheme: scheme });
+        const page = await context.newPage();
+        page.on("pageerror", (error) => errors.push(`${engine} ${scheme} ${query}${stop}: ${error.message}`));
+        await page.goto(`${at("drawn-once-host")}/places/overview?${query}${stop}`, { waitUntil: "load" });
+        await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
         await page.waitForTimeout(1800);
         return { page, close: () => context.close() };
       };
@@ -309,6 +463,86 @@ try {
           const measured = await page.evaluate(measure, asks);
           seen.longName.push({ engine, scheme, desk: desk.width, district: measured.district });
           if (SHOTS && engine === engines[0] && scheme === SCHEMES[0]) await page.screenshot({ path: join(SHOTS, `${engine}-${scheme}-${desk.width}-long-name.png`) });
+          await close();
+        }
+        /* ── the review: a card's edge, "+N more", a tie's words, a record's own view ── */
+        const shot = async (page, name) => {
+          if (SHOTS && engine === engines[0]) await page.screenshot({ path: join(SHOTS, `${engine}-${scheme}-${desk.width}-${name}.png`) });
+        };
+        {
+          const { page, close } = await openAt("doc=review", `#focus=${MODULE}`, desk);
+          const at = { engine, scheme, desk: desk.width };
+          const top = await page.evaluate(cardEdge, MODULE);
+          await shot(page, "card-edge");
+          await page.evaluate((id) => {
+            const scroller = document.querySelector(`[data-graview-view="${CSS.escape(id)}"] [data-graview-primitive="panel"] > .graview-scroll`);
+            if (scroller) scroller.scrollTop = Math.round((scroller.scrollHeight - scroller.clientHeight) / 2);
+          }, MODULE);
+          await page.waitForTimeout(300);
+          const middle = await page.evaluate(cardEdge, MODULE);
+          await page.evaluate((id) => {
+            const scroller = document.querySelector(`[data-graview-view="${CSS.escape(id)}"] [data-graview-primitive="panel"] > .graview-scroll`);
+            if (scroller) scroller.scrollTop = scroller.scrollHeight;
+          }, MODULE);
+          await page.waitForTimeout(300);
+          const end = await page.evaluate(cardEdge, MODULE);
+          await shot(page, "card-edge-scrolled");
+          seen.cardEdge.push({ ...at, top, middle, end });
+          /* "+N more": a button, opened by the keyboard, closed again, and opened by the pointer. */
+          const more = page.locator(`[data-graview-view="${MODULE}"] [data-graview-more]`).first();
+          const moreAt = () => page.evaluate(moreState, MODULE);
+          const closed = await moreAt();
+          let opened = null;
+          let closedAgain = null;
+          let pressed = null;
+          if (closed.found) {
+            await more.focus();
+            await page.keyboard.press("Enter");
+            await page.waitForTimeout(300);
+            opened = await moreAt();
+            await shot(page, "more-open");
+            await page.keyboard.press("Enter");
+            await page.waitForTimeout(300);
+            closedAgain = await moreAt();
+            await more.click({ timeout: 4000 }).catch(() => {});
+            await page.waitForTimeout(300);
+            pressed = await moreAt();
+          }
+          seen.more.push({ ...at, closed, opened, closedAgain, pressed });
+          await close();
+        }
+        {
+          /* A module chosen in its district gone into: its tie to the findings, whose words wait. */
+          const { page, close } = await openAt("doc=review", `#focus=aggregate:module&zoom=1&sel=${MODULE}`, desk);
+          const rest = await page.evaluate(tieWords);
+          await shot(page, "tie-at-rest");
+          let reached = null;
+          if (rest.ends.length > 0) {
+            const [x, y] = rest.ends[0];
+            await page.mouse.move(x, y);
+            await page.waitForTimeout(400);
+            reached = await page.evaluate(tieWords);
+            await shot(page, "tie-reached");
+          }
+          await page.mouse.move(2, Math.round(desk.height / 2));
+          await page.waitForTimeout(400);
+          const left = await page.evaluate(tieWords);
+          seen.tieWords.push({ engine, scheme, desk: desk.width, rest, reached, left });
+          await close();
+        }
+        {
+          const { page, close } = await openAt("doc=review&sleeve=1", "#focus=album:beatles-for-sale", desk);
+          const before = await page.evaluate(ownView, "album:beatles-for-sale");
+          await shot(page, "own-view");
+          await page.evaluate((id) => {
+            const host = document.querySelector(`[data-graview-view="${CSS.escape(id)}"]`);
+            const body = [...(host?.children ?? [])].find((child) => !child.classList.contains("graview-kind-tag"));
+            if (body) body.scrollTop = body.scrollHeight;
+          }, "album:beatles-for-sale");
+          await page.waitForTimeout(300);
+          const scrolled = await page.evaluate(ownView, "album:beatles-for-sale");
+          await shot(page, "own-view-scrolled");
+          seen.ownView.push({ engine, scheme, desk: desk.width, before, scrolled });
           await close();
         }
       }
@@ -371,6 +605,78 @@ report.checks.aPartWithOnlyItsCardIsDrawnOnceByTheRecord = {
 report.checks.aViewTallerThanItsBoxKeepsToIt = {
   seen: brief(seen.tallView, ["frame", "overlapped", "captionsUnder", "overTheBar", "title", "titleSeen"]),
   ok: all(seen.tallView, (one) => one.frame !== null && one.overlapped.length === 0 && one.captionsUnder.length === 0 && !one.overTheBar && one.title === PART.title && one.titleSeen),
+};
+/*
+ * THE REVIEW (Nick, 2026-10-15, on Graview Cloud). A module's card cut its
+ * last row of findings under a fade and drew a dark band across its middle
+ * once scrolled; "+2 more" did nothing; every tie said its words over the
+ * cards; and an album's own view left the record's card under it cut to a
+ * sliver after "Made by".
+ */
+report.checks.aCardsEdgeSaysThereIsMoreWithoutCoveringARow = {
+  seen: seen.cardEdge,
+  ok: all(seen.cardEdge, (one) => {
+    const states = [one.top, one.middle, one.end];
+    if (states.some((state) => state === null)) return false;
+    return (
+      one.top.overflows &&
+      one.top.below &&
+      !one.top.above &&
+      one.middle.above &&
+      one.end.above &&
+      !one.end.below &&
+      one.end.lastChipWhole === true &&
+      states.every((state) => !state.paintedOverRows && !state.paintedInGround && !state.headOverScroller && Math.abs(state.edgeGap) <= 1)
+    );
+  }),
+};
+report.checks.moreOnACardIsAButtonThatOpensEveryChipAndClosesAgain = {
+  seen: seen.more,
+  ok: all(
+    seen.more,
+    (one) =>
+      one.closed.found &&
+      one.closed.tag === "button" &&
+      one.closed.expanded === "false" &&
+      one.closed.controls &&
+      one.closed.text === `+${FINDINGS_IN_IT - 8} more` &&
+      one.closed.chips === 8 &&
+      one.opened?.expanded === "true" &&
+      one.opened.chips === FINDINGS_IN_IT &&
+      one.closedAgain?.expanded === "false" &&
+      one.closedAgain.chips === 8 &&
+      one.pressed?.expanded === "true" &&
+      one.pressed.chips === FINDINGS_IN_IT,
+  ),
+};
+report.checks.aTiesWordsWaitUntilItIsReachedAndStandOnNoTitle = {
+  seen: seen.tieWords,
+  ok: all(seen.tieWords, (one) => {
+    const said = (state) => state.labels.map((label) => label.text);
+    return (
+      one.rest.lines > 0 &&
+      one.rest.labels.length > 0 &&
+      one.rest.labels.every((label) => !label.shown) &&
+      one.reached !== null &&
+      one.reached.labels.some((label) => label.shown) &&
+      one.reached.labels.every((label) => !label.shown || label.on.length === 0) &&
+      new Set(said(one.reached)).size === said(one.reached).length &&
+      one.left.labels.every((label) => !label.shown)
+    );
+  }),
+};
+report.checks.aRecordsOwnViewLeavesTheRecordUnderItWhole = {
+  seen: seen.ownView,
+  ok: all(
+    seen.ownView,
+    (one) =>
+      one.before !== null &&
+      one.scrolled !== null &&
+      !one.before.panelCut &&
+      !one.before.scrollerCut &&
+      one.scrolled.chipSeen &&
+      (one.before.captionTop === null || one.before.bodyBottom <= one.before.captionTop),
+  ),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

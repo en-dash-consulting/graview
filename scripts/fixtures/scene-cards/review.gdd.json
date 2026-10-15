@@ -1,0 +1,94 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Systems review",
+  "description": "The modules of a hospital's systems, what the review found in each, and a shelf of records.",
+  "kinds": {
+    "module": {
+      "noun": "module",
+      "plural": "modules",
+      "description": "One part of the hospital's systems, with what it does and who relies on it.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "summary": {
+          "type": "text",
+          "label": "Summary"
+        }
+      },
+      "label": "{title}"
+    },
+    "finding": {
+      "noun": "finding",
+      "plural": "findings",
+      "description": "Something the review found.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "severity": {
+          "type": "enum",
+          "options": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "low"
+        }
+      },
+      "label": "{title}",
+      "edges": {
+        "in": {
+          "to": [
+            "module"
+          ],
+          "cardinality": "one",
+          "description": "the module it was found in",
+          "inverse": "the findings in it"
+        }
+      }
+    },
+    "album": {
+      "noun": "album",
+      "plural": "albums",
+      "description": "A record.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "year": {
+          "type": "integer",
+          "label": "Year"
+        }
+      },
+      "label": "{title}",
+      "edges": {
+        "madeBy": {
+          "to": [
+            "artist"
+          ],
+          "cardinality": "one",
+          "description": "who made it",
+          "inverse": "the albums they made"
+        }
+      }
+    },
+    "artist": {
+      "noun": "artist",
+      "plural": "artists",
+      "description": "Who made a record.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "label": "{name}"
+    }
+  },
+  "acts": {}
+}
