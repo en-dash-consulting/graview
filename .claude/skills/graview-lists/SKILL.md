@@ -93,7 +93,10 @@ already set a record aside.
    "/requests", { viewer, locale })` from `@graview/pages/static` answers
    `{ html, css, title, found }`: one self-contained page, no script, in the
    app's look, under the viewer's sight, the same words the routed face
-   says. It imports no React, so a Worker renders it on each change.
+   says. It imports no React, so a Worker renders it on each change. A
+   `design` puts it in the product's own markup — `records[kind](record,
+   site)` writes a record's page, `document(page)` what goes around it —
+   which is how graview.dev renders its pages (`apps/site/design.mjs`).
 
 6. **Know what a kind opens to before you draw it a picture.** Gone into
    with no lens of its own (`#focus=aggregate:room`), a kind opens to its
