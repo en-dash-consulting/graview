@@ -240,13 +240,32 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         onKeyDown={(event) => {
           // Nothing highlighted yet: the first ↓ lands on the first row, not the second.
           const at = active !== null && current ? rows.indexOf(current) : -1;
+          /*
+           * RECORD TO RECORD, ONE KEY EACH (the tenth walk). A record lit
+           * unfolds its acts under it, and ↓ walked into them: five keys a
+           * record, and the gauntlet's longest title past the keyboard's
+           * reach. ↓ goes past the acts of the record lit; → goes into them,
+           * ← back to their record.
+           */
+          const anAct = (row: Row | AskRow | undefined) => row !== undefined && !("ask" in row) && row.hit.about === "act";
+          const onRecord = at >= 0 && current !== undefined && !("ask" in current) && current.hit.about === "node";
           if (event.key === "ArrowDown") {
             event.preventDefault();
             setOpen(true);
-            highlight(rows[Math.min(rows.length - 1, at + 1)]);
+            let next = at + 1;
+            if (onRecord) while (next < rows.length - 1 && anAct(rows[next])) next += 1;
+            highlight(rows[Math.min(rows.length - 1, next)]);
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
             highlight(rows[Math.max(0, at - 1)]);
+          } else if (event.key === "ArrowRight" && onRecord && anAct(rows[at + 1])) {
+            event.preventDefault();
+            highlight(rows[at + 1]);
+          } else if (event.key === "ArrowLeft" && anAct(current)) {
+            event.preventDefault();
+            let back = at - 1;
+            while (back > 0 && anAct(rows[back])) back -= 1;
+            highlight(rows[back]);
           } else if (event.key === "Enter") {
             event.preventDefault();
             travel(current);
