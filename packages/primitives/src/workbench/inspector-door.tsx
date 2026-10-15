@@ -48,7 +48,7 @@ export function fetchInspector(): Promise<void> {
   return pane.load().then(() => undefined);
 }
 
-const Pane = pane.part((module, props: { readonly placement: InspectorPlacement }) => <module.InspectorPane {...props} />, { what: "This card's acts" });
+const Pane = pane.part((module, props: { readonly placement: InspectorPlacement; readonly chosen: boolean }) => <module.InspectorPane {...props} />, { what: "This card's acts" });
 
 /** When the page is idle and online — or, where the browser cannot say when it is idle, a little after it has drawn. */
 function whenIdle(then: () => void): () => void {
@@ -64,7 +64,14 @@ function whenIdle(then: () => void): () => void {
   return () => clearTimeout(later);
 }
 
-export function Inspector({ placement = "float" }: { readonly placement?: InspectorPlacement } = {}) {
+export function Inspector({
+  placement = "float",
+  openActs,
+}: {
+  readonly placement?: InspectorPlacement;
+  /** How the acts key on a card opens the menu, where the face says what a card is about (the routed face); at the card, about its pick, when unsaid. */
+  readonly openActs?: (from: HTMLElement) => void;
+} = {}) {
   const { menuAt, setMenuAt, registerActsDoor } = useGraview<AnySchema>();
   const { selection } = useSelection();
   /*
@@ -96,17 +103,17 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
     if (placement !== "menu") return;
     registerActsDoor({
       key: ACTS_KEY,
-      open: (from) => {
+      open: openActs ?? ((from) => {
         const box = from.getBoundingClientRect();
         const on =
           from.closest("[data-graview-pick]")?.getAttribute("data-graview-pick") ??
           from.closest("[data-graview-view]")?.getAttribute("data-graview-view") ??
           undefined;
         setMenuAt({ x: Math.round(box.left + Math.min(16, box.width / 2)), y: Math.round(Math.min(box.bottom, box.top + 36)), ...(on ? { on } : {}) });
-      },
+      }),
     });
     return () => registerActsDoor(null);
-  }, [placement, registerActsDoor, setMenuAt]);
+  }, [placement, registerActsDoor, setMenuAt, openActs]);
   // A menu's pane is drawn for a selection too: in a narrow scene it says the chosen record's acts (the tenth walk).
   const wanted = menuAt !== null || selection.length > 0;
   const [drawn, setDrawn] = useState(wanted);
@@ -116,7 +123,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
   if (!drawn && !wanted) return null;
   return (
     <Suspense fallback={null}>
-      <Pane placement={placement} />
+      {/* A face that opens the menu its own way (the routed face) has no chosen record to say "Acts…" for. */}
+      <Pane placement={placement} chosen={openActs === undefined} />
     </Suspense>
   );
 }

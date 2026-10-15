@@ -11,6 +11,7 @@ import { PageAsk } from "./ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
 import { FaceControlsRoot } from "./face-controls.js";
+import { PagesContextMenu } from "./context-menu.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
@@ -300,7 +301,10 @@ function FaceRoot<S extends AnySchema>({
   return (
     <div ref={root} data-graview-face="pages" style={{ display: "contents" }}>
       <FaceControlsRoot context={context} registry={registry as PageRegistry<S, unknown> | undefined} root={root}>
-        {children}
+        {/* The scene's context menu, on what a right-click, the keyboard or a resting finger lands on here. */}
+        <PagesContextMenu context={context} root={root}>
+          {children}
+        </PagesContextMenu>
       </FaceControlsRoot>
     </div>
   );
@@ -634,6 +638,7 @@ export function PagesApp<S extends AnySchema>({
       resolveApp={context.resolveApp ?? outer?.resolveApp /* The host's way to name another app (FR-171): the face's own, else the provider's it is drawn inside. */}
       linkedRecords={context.linkedRecords ?? outer?.linkedRecords /* And to read its records, as this viewer (FR-171). */}
       {...(context.app ? { app: context.app } : {})}
+      {...(context.menuSections ? { menuSections: context.menuSections } : {})}
     >
       {routed}
       <PageAsk context={context} />

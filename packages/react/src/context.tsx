@@ -40,6 +40,7 @@ import {
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostFilesContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
+import type { MenuSectionSource } from "./menu-sections.js";
 
 import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
@@ -90,6 +91,24 @@ export interface PointerMenu {
   readonly y: number;
   /** The node or edge the gesture landed on, when it landed on one. */
   readonly on?: string | undefined;
+  /**
+   * WHAT THE ACTS ARE DERIVED FOR, when not the selection. The routed face
+   * selects nothing: a right-click on a row there names the row's record
+   * here, on a list's empty ground the list's kind, on the home nothing.
+   */
+  readonly about?: readonly string[] | undefined;
+  /** The face that opened it; the scene when unsaid. */
+  readonly face?: "scene" | "pages" | undefined;
+  /** The field of `on` it was opened on, on a record's page. */
+  readonly field?: string | undefined;
+  /** The place (a lens) it was opened in. */
+  readonly place?: string | undefined;
+  /** The address it was opened on, when that was a link. */
+  readonly href?: string | undefined;
+  /** What the menu is headed with, when not the name of what it is about: a place's title. */
+  readonly title?: string | undefined;
+  /** Where the keyboard goes back to when it closes; the card it was opened on when unsaid. */
+  readonly returnTo?: HTMLElement | null | undefined;
 }
 
 /** A box in scene coordinates: where something is drawn. */
@@ -207,6 +226,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly resolveApp?: ResolveApp | undefined;
   /** THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (`linkedRecords` on the provider, FR-171), where a linked record is drawn or picked. */
   readonly linkedRecords?: LinkedRecords | undefined;
+  /** THE HOST'S SECTIONS OF THE CONTEXT MENU (`menuSections` on the provider, else the provider's around it). */
+  readonly menuSections?: readonly MenuSectionSource[] | undefined;
   /** The far records this viewer has been told, read at once: what a linked record draws from, as the rule language reads them (`@graview/core/linked`). */
   readonly linkedReads?: LinkedReads | undefined;
   /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
@@ -475,6 +496,12 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * record reads as not read.
    */
   readonly linkedRecords?: LinkedRecords | undefined;
+  /**
+   * SECTIONS OF THE CONTEXT MENU, beside the acts it derives — on the scene
+   * and on the pages alike. Each is told what the menu was opened on and
+   * answers a section (rows, or what it draws) or nothing.
+   */
+  readonly menuSections?: readonly MenuSectionSource[] | undefined;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -539,10 +566,14 @@ export function GraviewProvider<S extends AnySchema>({
   resolveApp,
   history,
   linkedRecords,
+  menuSections,
   view,
   onViewChange,
   children,
 }: GraviewProviderProps<S>) {
+  // A provider inside another (the pages under an embed) keeps the host's menu sections when it was given none.
+  const around = useContext(GraviewContext);
+  const hostSections = menuSections ?? around?.menuSections;
   /* Who is at the keyboard: see "WHO IS AT THE KEYBOARD" below. */
   const [seated, setSeated] = useState<Principal | null>(null);
   const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
@@ -950,6 +981,7 @@ export function GraviewProvider<S extends AnySchema>({
       ai,
       resolveApp,
       linkedRecords,
+      menuSections: hostSections,
       linkedReads,
       movedByHand,
       noteMoved,
@@ -1000,6 +1032,7 @@ export function GraviewProvider<S extends AnySchema>({
       ai,
       resolveApp,
       linkedRecords,
+      hostSections,
       linkedReads,
       movedByHand,
       noteMoved,

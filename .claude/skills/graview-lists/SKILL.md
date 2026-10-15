@@ -173,6 +173,9 @@ you tried; both records come back with their links. Have a test actor suggest a 
 decline it from the tray: `suggest(store, …)` of the same calls then refuses,
 and a record left alone refuses the actor's change by name.
 
+Right-click opens the scene's menu on the pages. A design's own row joins
+with `data-graview-record`, its value with `data-graview-field`.
+
 ## What the check cannot see
 
 Whether the filters you named are the ones a person reaches for — that is a

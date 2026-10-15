@@ -19,6 +19,8 @@
  */
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
+// Sections of the context menu beside its acts: a host's are the provider's `menuSections`; a face adds its own with `MenuSections` (`./drawing`).
+export type { MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-sections.js";
 // Whether a panel beside the map lists a district opened from altitude.
 export { BesideTheMap } from "./beside-the-map.js";
 // The host's files (FR-163), where a file field's editor finds them.

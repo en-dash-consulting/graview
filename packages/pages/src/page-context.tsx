@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
-import type { KeepLensHost, ReactViewRegistry } from "@graview/react/provider";
+import type { KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 
 
@@ -143,6 +143,12 @@ export interface PageContext<S extends AnySchema> {
    * picks from what it lists. Unsaid, the provider around them says.
    */
   readonly linkedRecords?: LinkedRecords;
+  /**
+   * SECTIONS OF THE CONTEXT MENU the host adds beside its acts, on these
+   * pages and, through the provider around them, the scene: each told what
+   * the menu was opened on, answering rows or what it draws (`MenuSection`).
+   */
+  readonly menuSections?: readonly MenuSectionSource[];
   /**
    * The app these pages are of, for the provider under them when `views`
    * is given: the seat's tools and a host's turn describe its places with
