@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1032,
+  "gzipped": 425,
+  "changeset": "a-change-is-said-in-words.md",
+  "note": "Raised when the derived edit came to say a change in words (Roadmap f-change-sentences-in-words): the sentence is written as the change is applied, so what writes it — each field by its label, a choice by its option's words, money through `sayAmount`, a day and a moment as read, a length of time, a date's repeat, a record in another app — is in `derive-edits.ts`, which the store derives its acts with up front. 1_032 / 425 more than main (558_461 / 193_511): measured at 559_493 / 193_936."
+}

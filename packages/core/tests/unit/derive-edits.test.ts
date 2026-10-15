@@ -124,7 +124,7 @@ describe("the derived edit act", () => {
     expect(store.allMutations().map((m) => m.name)).toContain("edit-drill");
     const result = store.apply({ name: "edit-drill", args: { id: "d1", minPlayers: 8 } });
     expect((store.graph.getNode("d1") as { minPlayers: number }).minPlayers).toBe(8);
-    expect(result.intent).toBe("Change Rondo: min players → 8");
+    expect(result.intent).toBe("Changed the min players of Rondo to 8");
     expect(store.canUndo(result.batch).ok).toBe(true);
     store.undo(result.batch);
     expect((store.graph.getNode("d1") as { minPlayers: number }).minPlayers).toBe(6);

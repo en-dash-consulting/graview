@@ -101,8 +101,8 @@ export function whereSaid(stop: string, input: { readonly store: Store<AnySchema
 }
 
 /**
- * WHAT SOMEBODY ELSE JUST CHANGED, IN A SENTENCE: "Ben Okafor: Set the
- * stage of “Billing across apps” to Shipped". Their ops, never this
+ * WHAT SOMEBODY ELSE JUST CHANGED, IN A SENTENCE: "Ben Okafor: Changed the
+ * stage of Billing across apps to Shipped". Their ops, never this
  * reader's own or an agent's acting for them (the seat says its own), and
  * never one withheld from this seat; one sentence for the ops that landed
  * together. Null when nothing in them is somebody else's.
@@ -126,30 +126,16 @@ export function changeSaid(
 }
 
 /**
- * SAID ALOUD AS IT LANDS. A change somebody else made — in another tab, on
- * a served store — redrew the page under a reader and told them nothing:
- * the stage of the record they were reading changed in silence. Said
- * politely, once each, emptied a beat before so the same words said twice
- * are heard twice; where the keyboard is, it stays.
+ * SAID ALOUD AS IT LANDS, into the bar's polite region (`TheirChanges` in
+ * app-bar.tsx), which is there whether or not anybody is shown here (Roadmap
+ * f-changes-heard-without-presence): once for the ops that landed together,
+ * emptied a beat before so the same words said twice are heard twice.
  */
-function useTheirChangesSaid(): string {
-  const { store, principal, seats, people } = useGraview<AnySchema>();
-  const [said, setSaid] = useState("");
-  useEffect(() => {
-    let soon: ReturnType<typeof setTimeout> | undefined;
-    const stop = store.subscribe((_diff, ops) => {
-      const sentence = changeSaid(ops, { store, principal, seats, people });
-      if (!sentence) return;
-      clearTimeout(soon);
-      setSaid("");
-      soon = setTimeout(() => setSaid(sentence), 50);
-    });
-    return () => {
-      clearTimeout(soon);
-      stop();
-    };
-  }, [store, principal, seats, people]);
-  return said;
+export function sayTheirChange(ops: readonly Operation[], input: Parameters<typeof changeSaid>[1], say: (words: string) => void): void {
+  const sentence = changeSaid(ops, input);
+  if (!sentence) return;
+  say("");
+  setTimeout(() => say(sentence), 50);
 }
 
 /**
@@ -170,7 +156,6 @@ export function Here({ scene, compact }: { readonly scene: boolean; readonly com
    */
   const [told, setTold] = useState("");
   useEffect(() => setTold(said), [said]);
-  const changed = useTheirChangesSaid();
   if (others.length === 0) return null;
   const named = others.filter((one) => one.name);
   const marked = named.slice(0, compact ? 2 : 3);
@@ -183,10 +168,6 @@ export function Here({ scene, compact }: { readonly scene: boolean; readonly com
       {/* Told when somebody comes or goes; where they are moves too often to be said aloud. */}
       <span role="status" aria-live="polite" style={UNSEEN}>
         {told}
-      </span>
-      {/* What they change, said as it lands (`changeSaid`). */}
-      <span role="status" aria-live="polite" data-testid="here-changed" style={UNSEEN}>
-        {changed}
       </span>
       <button type="button" data-testid="here-open" {...popover.trigger} onClick={popover.toggle} aria-label={`${said} — who and where`} title={said}>
         {marked.length > 0 ? (

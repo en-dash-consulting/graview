@@ -1,11 +1,37 @@
 import { hueFor, kindPath, MOST_STANDING, onePerPicture, orderKinds, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
-import { createContext, Suspense, useCallback, useContext, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
 import { barPanes } from "./bar-panes-door.js";
 
 /* Who else is here (FR-155): drawn once somebody is, so a reader alone never fetches it. */
 const Here = barPanes.part((panes, props: { readonly scene: boolean; readonly compact: boolean }) => <panes.Here {...props} />, { quiet: true });
+/**
+ * A CHANGE MADE AWAY FROM THIS KEYBOARD IS SAID ALOUD, whether or not anybody
+ * is shown here (Roadmap f-changes-heard-without-presence). It was said
+ * from the bar's "who is here", which is drawn only once somebody is: a
+ * change arriving from a served store with nobody shown present redrew the
+ * page in silence. The polite region is always on the bar, empty; an op that
+ * is not this reader's own fetches what says it (`changeSaid`, with the
+ * bar's panes), politely, once, emptied a beat before so the same words
+ * said twice are heard twice. Where the keyboard is, it stays.
+ */
+function TheirChanges() {
+  const graview = useGraviewIfAny();
+  const [said, setSaid] = useState("");
+  useEffect(
+    () =>
+      graview?.store.subscribe((_diff, ops) => {
+        if (ops.some((op) => op.author.id !== graview.principal.id)) void barPanes.load().then((panes) => panes.sayTheirChange(ops, graview, setSaid), String);
+      }),
+    [graview],
+  );
+  return (
+    <span role="status" className="graview-bar-said">
+      {said}
+    </span>
+  );
+}
 
 /*
  * ONE APP BAR ON EVERY FACE (FR-131), THE SCENE AND THE PAGES AS TWO THINGS
@@ -267,7 +293,7 @@ const BAR_CSS = `
 .graview-bar-face span{min-width:0;max-width:11em;overflow:hidden;text-overflow:ellipsis}
 .graview-bar-face[aria-pressed=true]{color:var(--graview-ink);font-weight:600;background:color-mix(in srgb,var(--graview-accent) 16%,transparent)}
 [data-switch-drawn=icons] .graview-bar-face{padding:0 8px}
-[data-switch-drawn=icons] .graview-bar-face span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.graview-bar-said,[data-switch-drawn=icons] .graview-bar-face span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .graview-bar-mid{display:flex;flex:1 100 0;min-width:0}
 .graview-bar-mid[data-place]{min-width:9em;flex-basis:auto}
 .graview-bar-place-at{position:relative;display:inline-flex;min-width:0;max-width:100%}
@@ -584,6 +610,7 @@ export function AppBar({
                 <Here scene={!onPages} compact={compact} />
               </Suspense>
             ) : null}
+            <TheirChanges />
             {tools}
           </div>
         </div>

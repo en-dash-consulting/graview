@@ -8,7 +8,7 @@ import {
 } from "@graview/core";
 import { amountBox, amountInBox, argumentWords, failureWords, readAmount, tellApart } from "@graview/core/words";
 import type { AmountMark } from "@graview/core";
-import { formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
+import { changedArgs, editStart, formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
 import { Files, LinkedPicker, RepeatPicker } from "@graview/primitives/pages";
@@ -288,7 +288,8 @@ function Control<S extends AnySchema>({
             // A phone, a place and a length of time: what each takes, said where it is typed.
             {...(spec.control === "text" && spec.holds ? { placeholder: HOLDS[spec.holds] } : {})}
             {...(spec.control === "text" && spec.holds === "phone" ? { autoComplete: "tel" } : {})}
-            value={typeof value === "string" ? value : typeof value === "number" ? String(value) : ""}
+            // A day or a moment as a date box holds one: a moment kept with its seconds or zone shows its minute.
+            value={typeof value === "string" ? (spec.control === "date" ? (spec.time ? value.slice(0, 16).replace(" ", "T") : value.slice(0, 10)) : value) : typeof value === "number" ? String(value) : ""}
             onChange={(event) => onChange(event.target.value)}
             data-graview-part="control"
           />
@@ -581,7 +582,10 @@ export function DerivedForm<S extends AnySchema>({
   label,
   only,
 }: DerivedFormProps<S>) {
-  const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...initial }));
+  // A record's change starts from what the record holds, and sends only what was changed from there (Roadmap f-edit-form-prefilled).
+  const startOf = () => editStart(mutation, store.graph as never, prefilled);
+  const [start, setStart] = useState(startOf);
+  const [values, setValues] = useState<Record<string, unknown>>(() => ({ ...start, ...initial }));
   const [failed, setFailed] = useState<string | null>(null);
   // A field the seat's sight keeps from it is not asked for: the store would refuse it (Roadmap f-field-sight).
   const seat = principal ?? (store as { readonly seenFor?: Principal }).seenFor;
@@ -596,9 +600,11 @@ export function DerivedForm<S extends AnySchema>({
       onSubmit={(event) => {
         event.preventDefault();
         try {
-          store.apply({ name: mutation.name, args: { ...formArgs(fields, values), ...prefilled } }, principal ? { author: principal } : {});
+          store.apply({ name: mutation.name, args: { ...changedArgs(formArgs(fields, values), start), ...prefilled } }, principal ? { author: principal } : {});
           setFailed(null);
-          setValues({});
+          const next = startOf();
+          setStart(next);
+          setValues({ ...next });
           onDone?.();
         } catch (error) {
           // A refusal is a result, on a page exactly as in the strip.
