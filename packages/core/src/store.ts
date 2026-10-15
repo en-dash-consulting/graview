@@ -3,7 +3,7 @@ import { isoToday } from "./days.js";
 import type { IntelligenceProviderDeclaration } from "./app.js";
 import { Graph, GraphError, MissingRecordError } from "./graph/graph.js";
 import { resolveModules, type ModuleMap, type ModuleProjection } from "./modules.js";
-import { diffSnapshots, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
+import { diffSnapshots, diffTouched, EMPTY_DIFF, isEmptyDiff, type GraphDiff } from "./graph/diff.js";
 import { invert, normalize, writesOf, type Primitive } from "./graph/primitives.js";
 import { LabelIndex, refusalFor, type RefCandidate, type RefResolution } from "./labels.js";
 import { nodeRefArgs, type NodeRefArg } from "./mutations/node-ref.js";
@@ -1424,7 +1424,8 @@ export class Store<S extends AnySchema> {
       throw error;
     }
 
-    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    // What the act touched, never the whole graph again (W-205).
+    const diff = diffTouched(rollback, this.graph.snapshot(), allPrimitives);
     this.admitted(options, ops, allPrimitives, diff, rollback, kept);
     const after = this.violations(context);
     this.notify(diff, ops);
@@ -1507,7 +1508,7 @@ export class Store<S extends AnySchema> {
       this.log.append(here);
       landed.push(here);
     }
-    this.notify(diffSnapshots(before, this.graph.snapshot()), landed);
+    this.notify(diffTouched(before, this.graph.snapshot(), fresh.flatMap((op) => op.primitives)), landed);
     return landed;
   }
 
@@ -1568,7 +1569,7 @@ export class Store<S extends AnySchema> {
     }
     for (const op of built) this.log.append(op);
     for (const op of built) tellTheWatchOfAnAuthor(op.author.id);
-    this.notify(diffSnapshots(before, this.graph.snapshot()), built);
+    this.notify(diffTouched(before, this.graph.snapshot(), built.flatMap((op) => op.primitives)), built);
     return built;
   }
 
@@ -1614,7 +1615,7 @@ export class Store<S extends AnySchema> {
       tellTheWatchOfAnAuthor(author.id);
     }
     const after = this.violations();
-    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    const diff = diffTouched(rollback, this.graph.snapshot(), recorded);
     this.notify(diff, ops);
     return {
       batch,
@@ -1775,7 +1776,7 @@ export class Store<S extends AnySchema> {
       ops.push(op);
     }
 
-    const diff = diffSnapshots(rollback, this.graph.snapshot());
+    const diff = diffTouched(rollback, this.graph.snapshot(), ops.flatMap((op) => [...op.primitives]));
     this.admitted(options, ops, ops.flatMap((op) => [...op.primitives]), diff, rollback, kept);
     const after = this.violations();
     this.notify(diff, ops);

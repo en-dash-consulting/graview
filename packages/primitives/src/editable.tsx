@@ -190,7 +190,7 @@ export function EditableValue<S extends AnySchema>({
 
   return (
     <form
-      style={{ display: "inline-flex", gap: 4 }}
+      style={{ display: "inline-flex", gap: 4, maxWidth: "100%" }}
       onSubmit={(event) => {
         event.preventDefault();
         done(coerce(editable, draft));
@@ -250,7 +250,11 @@ export function EditableValue<S extends AnySchema>({
           style={{
             font: "inherit",
             fontSize: "inherit",
-            width: `${Math.max(6, draft.length + 1)}ch`,
+            // As wide as the value, as far as its box: a sixty-character name on a phone scrolled the page sideways (the tenth walk).
+            width: `min(${Math.max(6, draft.length + 1)}ch, 100%)`,
+            maxWidth: "100%",
+            minWidth: 0,
+            boxSizing: "border-box",
             // Editing in place means the value IS the control, so it has to
             // be one: a 21-pixel target is not.
             minHeight: 24,

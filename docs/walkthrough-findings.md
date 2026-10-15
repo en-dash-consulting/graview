@@ -35,23 +35,23 @@ Counts are primary / also.
 
 | Class | What it is | The shared check that owns it | Count |
 |-------|------------|-------------------------------|-------|
-| `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 13 / 2 |
-| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 18 / 5 |
-| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 11 / 4 |
+| `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 14 / 2 |
+| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 20 / 5 |
+| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 11 / 5 |
 | `wrong-end-of-a-relation` | A relation, an act or a direction is read from the end it was declared at rather than the end it is seen from, or assumed to run one way | the gauntlet (every edge cross-kind with an `inverse`, declared from both sides, one name on two kinds, two relations on one pair) driven through both faces and the chat; `graview check`'s `edge-without-inverse` and `act-without-far-end-reading` hold the declaration only | 7 / 4 |
-| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 26 / 4 |
-| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 6 / 16 |
-| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's no-sideways-scroll rule (`breaks-at-width`, since the seventh walk — until then the watch had no rule for this class at all), on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`); and its `target-too-small` rule (since the eighth walk), each control at its laid-out size with the standard's exceptions | 16 / 4 |
+| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 26 / 5 |
+| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 6 / 20 |
+| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's no-sideways-scroll rule (`breaks-at-width`, since the seventh walk — until then the watch had no rule for this class at all), on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`); and its `target-too-small` rule (since the eighth walk), each control at its laid-out size with the standard's exceptions | 17 / 5 |
 | `layout-collision-or-overflow` | Something is drawn over something else or out of its box at an ordinary size: chrome over content, two cards or captions on one spot, a line through a chip, a value out of its cell, a member hidden with no name | `audit-ui` (`covered`, collisions, `asking`) and `survey`, on their fixed states only; the watch should measure it on every state — none yet there | 14 / 3 |
-| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 11 / 42 |
+| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 13 / 43 |
 | `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 13 / 1 |
-| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 15 / 12 |
+| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 18 / 12 |
 | `accessibility-tree-wrong` | What assistive technology reads is wrong: a heading skipped or missing, a landmark missing, doubled or named twice, invalid nesting, a group with no name — or emphasis or a problem that is only a color | the watch's axe pass, with audit-ui's `halfSaid` and "a problem painted but not said" | 14 / 1 |
-| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 19 / 7 |
-| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 2 / 1 |
+| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 20 / 7 |
+| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 4 / 2 |
 | `shown-what-is-not-theirs` | A seat is shown a record the declaration does not let it see — another customer's name, email or question — on any surface: a page, a card, a count, a picker, Find, the history, a problem | the watch: no screen shows the name or address of a record the seat at the keyboard may not see (`shown-what-is-not-theirs`); the gauntlet keeps its staff from its visitor | 2 / 2 |
 | `permitted-what-was-never-granted` | The store lets a seat run an act no grant gives it — a derived act riding a guess about what another act writes, a grant read wider than it says — so a seat changes what the policy keeps from it | `tests/an-edit-in-place-makes-nothing.test.ts` over every example (the eighth walk), and `tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts` (the ninth): a seat with no role runs a derived act on a record it did not make only where everybody is granted the act; nothing yet asks it of every role | 2 / 0 |
-| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 12 / 4 |
+| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 13 / 6 |
 
 Every class but two first appeared in the first walk (`faces-disagree` and
 `layout-collision-or-overflow` as an `also` there, W-004 and W-029). The
@@ -4749,3 +4749,200 @@ measured them today over every example and walk9:
 - repairs whose names repeat — not met: the co-op names each by its hive;
 - days said day first in an en-US app — fixed by FR-178: every day the walk
   read was "Oct 13, 2026".
+
+## The tenth walk — a mountain rescue team (2026-10-14)
+
+The tenth walk took a volunteer mountain rescue team: the callouts it is
+paged to, the members who go out (trainee, member, team leader), and the
+kit they carry, which must be checked every ninety days to be trusted on a
+rope — with a team leader, a member, a trainee and somebody browsing as
+seats, a policy that keeps a member's phone to the team leaders, a rule that
+reads the clock (kit past its check) and one that does not (a callout under
+way with nobody on it), and two titled lenses over the callouts (a calendar,
+"The logbook", and a coverage grid, "Who went where"). Scaffolded with
+`graview create ../walk10 --link . --name "Ridgeline Mountain Rescue" --kind
+callout --plural callouts --port 5650` from a fresh worktree of main that
+installed, built and passed its tests (746 files, 5,933 tests), then seeded
+through its own acts at real size: 64 members (eight retired), 178 pieces of
+kit, 1,459 callouts over eleven years and 15,444 links, 15 problems on the
+day.
+
+The committed verdicts it started from were both written before the last
+change to what they measure: `docs/journeys.json` at 02:22 UTC on the 14th,
+`docs/gauntlet.json` at 01:49, and the ties and the records beside the map
+(#271) merged after both. The journeys walked: every app was walked in the
+committed verdict, and walk10's first run finished 60 of its 84 runs.
+
+### W-204 · `graview create` beside a checkout installs the checkout, and the new app gets nothing
+- stage: setup (`graview create ../walk10 --link .` from a worktree that lives inside another checkout) · face: — · width: — · scheme: —
+- impact: blocks a job — starting the app: `pnpm install` ran in the new directory, found the pnpm workspace of the directory above it (which does not list the app), installed that workspace, said "Done", and left the app with no `node_modules`; create then said "graview did not install, so the authoring skills were not written" and printed forty type errors about modules it could not find
+- class: what-a-project-copies-is-wrong (also: harness-or-setup-itself)
+- expected: an app made anywhere installs itself; a workspace that lists it installs it as one of its own
+- actual: pnpm installs the nearest workspace going up, and nothing in create asked whether that was the app
+- where it belongs: `packages/core/src/cli/create.ts`
+- harness that should have caught it: `create-command.test.ts` runs in a temporary directory no workspace encloses; `pnpm smoke:create` the same
+- status: fixed in "walkthrough: setup · an app made inside another workspace installs itself" · where the install left no `node_modules` under an enclosing pnpm workspace, the app is made a workspace of its own (`pnpm-workspace.yaml`) and installed again, and create says why. Criterion: `packages/core/tests/unit/an-app-made-inside-another-workspace-installs-itself.test.ts` (verified failing without the fix)
+
+### W-205 · Seeding the team through its own acts takes three minutes and a quarter, eleven milliseconds an act
+- stage: setup (seeding at real size through the app's own acts) · face: every face, and a host's import · width: — · scheme: —
+- impact: costs a job — 18,000 acts made 1,700 records and 15,444 links in 3 minutes 18 seconds, and every act a person takes on the team pays the same toll, growing with the graph. The ninth walk's W-197 said this was fixed
+- class: data-shape-not-in-fixtures (also: harness-or-setup-itself)
+- expected: an act costs what it touches (W-197)
+- actual: W-197 made the graph diff only what a change touches; the store, around it, diffed the whole graph again after every act, every undo, every host-made op and every op received — a map of every record and every link, a key string made for each link. A profile of the seed: 145 of 198 seconds in the store's `diffSnapshots`. W-197's criterion held the graph, not the store that calls it
+- where it belongs: `packages/core/src/store.ts`, `packages/core/src/graph/diff.ts` (`diffTouched`, the graph's narrowing moved where both use it)
+- harness that should have caught it: W-197's `a-change-costs-what-it-touches.test.ts`, which drove `Graph.applyPrimitives` and never `Store.apply`
+- status: fixed in "walkthrough: setup · an act costs what it touches in the store too" · the store's diff, for an act, an undo, an op it is handed and one it receives, is of the records and links the primitives name. The seed: 198 → 37 seconds. Criterion: `packages/core/tests/unit/an-act-costs-what-it-touches-in-the-store-too.test.ts` — an act and its undo read no link they do not touch (verified failing without the fix: the untouched link was read twelve times), and the diff says what the whole comparison says
+
+### W-206 · On the pages, a callout cannot be renamed, closed or stood down: its record page offers only the ties
+- stage: E (the record page the scaffold writes, in `src/ui/pages.tsx`) · face: pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Renaming a callout on its record" on the pages at both widths and with either hand: "“Change the callout” is not on the screen"; "Close it", "Stand the team down", "Log a check" and every other act of a record's own were on no page of the routed face, only on the scene
+- class: what-a-project-copies-is-wrong (also: faces-disagree)
+- expected: the page a project starts from offers what the derived record page offers — the name changed where it is read, and every act the derivation offers
+- actual: the scaffold's record page drew `facts.actions.affordances.filter((affordance) => affordance.ties === true)` and the name as plain text; a one-kind scaffold has one act on a record besides its ties, and nothing noticed it gone. The discography's song page, copied from it, said the same ("Renaming a song … works only the long way round")
+- where it belongs: `packages/core/src/scaffold/ui.ts` (`pagesTsx`); `apps/discography/src/ui/pages.tsx`, copied from it
+- harness that should have caught it: the journeys' "change" on the pages, which did; `scaffold.test.ts` pinned the ties' form and never asked what else a record offers
+- status: fixed in "walkthrough: E · the record page a project starts from offers every act" · the name is an `EditableValue` under the face's provider, and every affordance but a repair is offered, what takes the record away last. Criterion: `scaffold.test.ts` "offers every act the derivation offers on the record, and its name to change in place (W-206)" (verified failing without the fix), and the journeys' "change" on walk10's pages
+
+### W-207 · On the pages the person's button says "u-4f1c9a — you, your seat and your settings"
+- stage: setup (the committed verdict on main) and F (seats on the routed face) · face: pages · width: 1440 and 390 · scheme: light
+- impact: cosmetic — a hole in a known class's check, which the watch did catch: main's `docs/journeys.json` carries 36 lines of it, every job on the pages of the gauntlet ("u-4f1c9a") and the discography ("user-lena") at both widths and with either hand, in the button's name and its tooltip, at the head of the friction list. Nobody had read them
+- class: machine-words-shown (also: faces-disagree)
+- expected: the person is named by the seat the app offered them under, on the pages as on the scene
+- actual: the apps hand the routed face their `seats`; the face read them for its history ("Made by …"), and the provider it draws the bar under, with the person's button, was never handed them — so `nameOfAuthor` fell through to the principal's id
+- where it belongs: `packages/pages/src/router.tsx` (`PagesApp`), which now holds the seat a reader takes there too, so the face and its menu sit in one seat
+- harness that should have caught it: the watch over the journeys, which did; the verdict was committed with it in
+- status: fixed in "walkthrough: F · the person on the pages is named by their seat" · the face hands its provider the seats, and a seat taken from the menu is the face's principal until the app hands it another. Criterion: `packages/pages/tests/unit/the-person-on-the-pages-is-named-by-their-seat.test.tsx` (verified failing without the fix)
+
+### W-208 · "Close the map, down to The logbook" lands on "Who went where"
+- stage: D (two titled lenses over the callouts) · face: scene · width: 1440 · scheme: light
+- impact: costs a job — going down into the callouts from the map: the control promised the calendar, the coverage grid was drawn, and the bar marked "Who went where" as where you were, so a person looking for the logbook pressed again from the bar
+- class: says-something-untrue (also: faces-disagree)
+- expected: the control says the picture the district draws when the view names none
+- actual: the district draws the last picture registered for its kind, as the registry resolves it and the bar marks it; the control alone named the first
+- where it belongs: `packages/primitives/src/workbench/back-out.tsx` (`OverviewButton`)
+- harness that should have caught it: none — no example has two titled pictures over one kind that the map descends to
+- status: fixed in "walkthrough: D · down says the picture it lands on" · the control names the last registered, as everything else does. Criterion: `packages/primitives/tests/unit/down-says-the-picture-it-lands-on.test.tsx` (verified failing without the fix)
+
+### W-209 · The menu over a rope says "kit" under its name
+- stage: C (from a problem to its repair, on the scene) · face: scene · width: 1440 and 390 · scheme: light
+- impact: cosmetic — a hole in a known class's check, which the watch caught: every repair the journeys took from the scene, at both widths and with either hand, was said to break `machine-words-shown` ("“kit” is shown in the key's words … where the declaration says it otherwise")
+- class: machine-words-shown (also: prose-wrong-for-the-domain)
+- expected: what one of the kind is called — "piece of kit", the kind's `noun` — as every act in the same menu says it ("Change the piece of kit …")
+- actual: the menu's head named the selection's kinds by their keys; a kind whose key is its noun (task, song) never showed the difference
+- where it belongs: `packages/primitives/src/workbench/inspector.tsx`
+- harness that should have caught it: the watch, which did, over walk10; the gauntlet's staff ("staff member") is never chosen from the map with the pointer's menu open — the state the walk reached through the problems — so the gauntlet holds no instance
+- status: fixed in "walkthrough: C · the menu over a record says what one is called" · the head says each kind's noun. Criterion: `packages/primitives/tests/unit/the-inspector-says-what-one-is-called.test.tsx` (verified failing without the fix: it said "kit")
+
+### W-210 · Narrowing the callouts, or the discography's songs, has no Filter on the scene: their stop is a coverage grid
+- stage: D (two titled lenses over the callouts) · face: scene · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Narrowing the callouts by hours" and the discography's "Narrowing the songs by track" on the scene, at both widths and with either hand: "there is no “Filter” to narrow … with" (carried from the eighth walk as "narrowing on the scene where a kind's stop is a lens")
+- class: no-way-to-do-a-job (also: faces-disagree)
+- expected: a lens arranges before it draws, as the board, the timeline and the calendar do since "a lens arranges before it draws"
+- actual: the coverage grid read its rows from the graph and took no arrangement, so a kind whose last-registered picture is a coverage grid stopped at a picture with nothing to narrow it by
+- where it belongs: `packages/primitives/src/lens/coverage.tsx`
+- harness that should have caught it: the journeys' "narrow", which did; `a-lens-arranges-before-it-draws.test.tsx` held three lenses of four
+- status: fixed in "walkthrough: D · a coverage grid arranges its rows" · the grid draws the arranging line over its rows at full size and filters the rows, its columns whole, with no sort or grouping. Criterion: "the coverage grid" in `packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx` (both verified failing without the fix); the journeys' discography "narrow" on the scene, done at both widths and with either hand. Todo's tasks are not this: their stop arranges, and the journeys, starting from "The lists", raise Tasks as a relation of it and never go in — carried below
+
+### W-211 · "Find anything" for last March's callout finds nothing and says "add is:any for the past"
+- stage: A (finding a record by part of its name, at real size) · face: scene and pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Finding a callout by part of its name", every way: of 1,459 callouts one is under way; Find and `/search` kept to it, so a callout from 2021 by its number was "nothing here is called that", with the query language as the way on
+- class: data-shape-not-in-fixtures (also: no-way-to-do-a-job)
+- expected: a name typed finds the record of that name; where nothing current answers, the past that does is the answer, said as past
+- actual: the matcher left every record behind the horizon out unless the words said `is:any` or named a retired state (W-104); no example keeps more past than present
+- where it belongs: `packages/core/src/search.ts`
+- harness that should have caught it: none — every example's records are mostly current
+- status: fixed in "walkthrough: A · Find reaches the past when nothing current answers" · where the words find no current record, the past ones they find are the answer, marked past, and `searched.past` says so; a current answer, or `is:`, keeps the horizon. Criterion: `packages/core/tests/unit/find-reaches-the-past-when-nothing-current-answers.test.ts` (verified failing without the fix), and `one-matcher-finds-it.test.ts` says the claim it now holds. The journeys also chose "mountain" — a word in a hundred callouts' names — where a person types the record's own two ("2021 063"): fixed in the journeys with W-216
+
+### W-212 · On a phone, a list chosen in the todo's lists has no way to its acts
+- stage: A (making a task on a list, on the scene) · face: scene · width: 390 (and 1440 for the journeys) · scheme: light
+- impact: blocks a job — "Making a task" on the scene with the pointer, at both widths (carried from the eighth walk as "todo's “Add a task” after “Today”"): choosing "Today" lit it and dimmed the rest, and nothing else — its acts open by a right-click or the acts key, and a finger has neither
+- class: no-way-to-do-a-job (also: breaks-at-width-zoom-or-engine)
+- expected: what can be done with what is chosen is a press away, on the ground as the map's panel makes it from above (W-195)
+- actual: the scene's acts menu stands down unless a pointer opened it; on a desk a right-click on "Today" opens it (the journeys never tried one on a record drawn inside a picture), on a phone nothing does
+- where it belongs: `packages/primitives/src/workbench/inspector.tsx`, `inspector-door.tsx`
+- harness that should have caught it: the journeys' "make" with a subject, which did; they now right-click a record chosen inside a picture, as a person at a desk does
+- status: fixed in "walkthrough: A · a record chosen on a phone says its acts" · in a scene too narrow for a rail, on the ground, the one record chosen gets "Acts…" in the picture's column of controls under Up and the key, opening the same menu; it floats and takes no room. Placed first at the picture's foot, a notice stood over it and the journeys' press timed out: it moved under the key. Criterion: `packages/primitives/tests/unit/a-record-chosen-on-a-phone-says-its-acts.test.tsx` (verified failing without the fix); the journeys' todo "make" on the scene, done at both widths and with either hand
+
+### W-213 · Renaming a callout on a phone scrolls the page sideways by 383 pixels
+- stage: E (the record page, renamed in place, W-206) · face: pages · width: 390 · scheme: light
+- impact: costs a job — renaming on a phone: the field took the name's sixty characters as its width (1,008 pixels) inside a heading that grows to its content, and the page slid sideways under the person typing; the watch caught it on every run
+- class: breaks-at-width-zoom-or-engine
+- expected: a field edited in place grows with its value as far as its box
+- actual: `EditableValue`'s input was `width: <n>ch` with no ceiling, in an inline form inside a grid item that takes its content's width
+- where it belongs: `packages/primitives/src/editable.tsx`
+- harness that should have caught it: the watch's `breaks-at-width`, which did, once a record page put a long name in place on a phone
+- status: fixed in "walkthrough: E · a long name edited in place keeps to its box" · the field is `min(<n>ch, 100%)` and may shrink, and its form keeps to its box. Criterion: `packages/primitives/tests/unit/a-long-name-edited-in-place-keeps-to-its-box.test.tsx` (verified failing without the fix); measured on walk10 at 390: 1,028 pixels of page before, 390 after
+
+### W-214 · From the keyboard, Find's arrow takes five keys a record
+- stage: I (the keyboard pass) · face: scene · width: 1440 and 390 · scheme: light
+- impact: blocks a job — the gauntlet's "Finding a talk by part of its name" on the scene from the keyboard, at both widths: "the keys do not reach “A Practical Guide to Incremental Type Checking …” in the Find strip" (carried from the eighth walk), 131 presses and given up
+- class: keyboard-lands-nowhere (also: data-shape-not-in-fixtures)
+- expected: ↓ goes to the next record
+- actual: a record lit unfolds four acts under it, and ↓ walked into them: five keys a record, so twenty records down was a hundred keys
+- where it belongs: `packages/primitives/src/find.tsx`
+- harness that should have caught it: the journeys' "find" from the keyboard, which did
+- status: fixed in "walkthrough: I · the arrows walk Find's records one key each" · ↓ and ↑ go record to record, → into the acts under the one lit, ← back to it. Criterion: `packages/primitives/tests/unit/the-arrows-walk-finds-records-one-key-each.test.tsx` (both verified failing without the fix); the gauntlet's "find" on the scene from the keyboard, done (89 presses — the strip lists every talk before the one wanted; the keyboard's cost is carried below)
+
+### W-215 · Seedbed's plot page offers only sowing, and its repairs and its design's apply as nobody
+- stage: E (the examples a project copies) · face: pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Tying a plot to another with “Name a caretaker”" on the pages, at both widths and with either hand (carried from the eighth walk)
+- class: what-a-project-copies-is-wrong (also: offered-then-refused)
+- expected: an example's own page offers what the derivation offers, and applies as the seat at the keyboard
+- actual: the plot's page drew one form, "Sow something here"; its repairs, and the design's on the rule page and the problems page, called `store.apply` with no author — under a policy, refused on press
+- where it belongs: `apps/seedbed/src/ui/pages.tsx`, `apps/seedbed/src/ui/design.tsx` (an example; the class's fix is W-206's, in the scaffold)
+- harness that should have caught it: the journeys' "relate" on the pages, which did
+- status: fixed in "walkthrough: E · seedbed's plot page offers every act" · every affordance is offered, sowing first; repairs go through `Repairs` as the seat; the design's repairs pass the seat. Criterion: the journeys' seedbed "relate" on the pages, done at both widths and with either hand (an example has no unit tests of its own pages)
+
+### W-216 · The journeys dead-end where a person would not: past the horizon, a short list, a shared word, a raised district, a record inside a picture
+- stage: setup (the journeys on walk10 and every example) · face: both · width: both · scheme: light
+- impact: blocks a job's measure — five lines at the head of the friction list said "cannot be done" of jobs a person does: narrowing 1,459 callouts with one current ("no Filter"), narrowing seedbed's four plots, finding a callout by "mountain" (in a hundred names), the rota's viewer told nothing of "Add a shift" (the district pressed at a lens stop is raised as a relation, so nothing was chosen), and the acts of a record chosen inside a picture
+- class: harness-or-setup-itself
+- expected: the harness does what a person does — presses "+1458 past", leaves a list of four to be read, types the words that are the record's own, goes Up when a press raised the district, right-clicks a record where it is drawn — and says why it gave up, as a picture
+- actual: none of those were tried
+- where it belongs: `scripts/lib/journeys.mjs`, `scripts/verify-journeys.mjs` (`GRAVIEW_JOURNEYS_SHOTS=<dir>` keeps a picture of every dead end)
+- harness that should have caught it: the journeys themselves
+- status: fixed in "walkthrough: setup · the journeys do what a person does" · criterion: the journeys on walk10, todo, seedbed, rota, discography and the gauntlet: the rota's viewer is told "Add a shift" is not theirs on the scene with the pointer, seedbed's plots are "read, not narrowed", walk10's callouts are found and narrowed at a desk
+
+Thirteen findings, W-204 to W-216, every one fixed with a criterion; no new
+class. Two were holes in fixes the ninth walk made (W-205: W-197 held the
+graph and not the store around it; W-206: the record page a project starts
+from, which W-099 and W-167 had touched, still offered only ties), and one
+was in the committed verdict all along, read by nobody (W-207: 36 lines of
+"u-4f1c9a" at the head of main's friction list). On walk10, todo, seedbed,
+rota, discography and the gauntlet the journeys now finish 66 of 68, 80 of
+80, 84 of 84, 88 of 88, 108 of 108 and 78 of 84 runs. Of the eighth walk's
+carried items: narrowing on the scene where the stop is a coverage grid —
+fixed (W-210); seedbed's plots too few to narrow — the journeys' (W-216); "Name a
+caretaker" on seedbed's pages — fixed (W-215); the rota's viewer told "Add a
+shift" is not theirs on the scene — the journeys' (W-216: the viewer is told,
+from the map); todo's "Add a task" after "Today" — fixed (W-212); the
+gauntlet's longest title in Find from the keyboard — fixed (W-214). W-203 does
+not reproduce: `verify-gauntlet`'s `everyDistrictIsListedBesideTheMap` holds on
+main's verdict and on this branch's. Open, and carried to the eleventh walk:
+
+- W-201, Nick's to decide: a role's own grant to make a kind still carries
+  its derived remove, archive and merge over every record of it — a member
+  who may log a callout may remove anybody's — with no way in the policy to
+  say "theirs only". Not changed by this walk;
+- narrowing todo's tasks on the scene at a desk: from "The lists", pressing
+  the Tasks district raises it as a relation of the lists rather than going
+  in; "The month" and "The week" in the bar arrange and offer Filter, and the
+  journeys do not press them;
+- narrowing walk10's callouts on the scene on a phone: one is current and
+  1,458 past; the district's "+1458 past" is folded away with the districts on
+  a phone, and the coverage grid over one row draws no arranging line;
+- the keyboard's cost: Find on the scene reaches the gauntlet's longest title
+  in 89 presses (every talk before it is a row), narrowing walk10's callouts
+  by a number takes 62 presses where the pointer takes 6, most of them Tab
+  walks to the district, to Down and to Filter;
+- a repair from the in-app seat needs a model: asked "Take Rope 9 out of
+  service" with none, the seat said "Open questions need AI, which isn't on
+  here"; Find does not reach the act by those words either;
+- "Doing “Stand the team down” to three callouts at once" has no three
+  current callouts to do it to — the data's shape, not the framework's;
+- seen and not logged, as cosmetic instances of known classes the watch does
+  not yet measure (`layout-collision-or-overflow`): the rota's raised
+  "Shifts ×" chip stands over the arranging line's "Sort"; seedbed's plot
+  card on a phone is wider than the screen, its relation captions past the
+  edge; the coverage grid over the callouts marks every member "on no
+  callout", counting only the callout on the horizon.

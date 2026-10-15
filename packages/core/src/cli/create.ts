@@ -249,6 +249,26 @@ export async function create(argv: readonly string[], io: CreateIo = defaultIo):
       io.stderr(`graview create: ${pm} install failed. The files are in place; install by hand and run \`${run} verify\`.\n`);
       return 1;
     }
+    /*
+     * INSIDE SOMEBODY ELSE'S WORKSPACE. pnpm installs the nearest workspace
+     * it finds going up, so in a directory under a pnpm workspace that does
+     * not list it, `pnpm install` installed THAT workspace, said "Done", and
+     * left this app with nothing — then the skills were "not written" and
+     * every import was a type error (the tenth walk). Where the install left
+     * no node_modules here, the app is made a workspace of its own and
+     * installed again; a workspace that does list it installed it already.
+     */
+    const outer = pm === "pnpm" && !options.workspace ? enclosingPnpmWorkspace(target) : undefined;
+    if (outer !== undefined && !existsSync(resolve(target, "node_modules"))) {
+      io.stdout(
+        `graview create: ${dir} is inside the pnpm workspace at ${outer}, which does not list it, so it is a workspace of its own (pnpm-workspace.yaml) — installing again\n`,
+      );
+      writeFileSync(resolve(target, "pnpm-workspace.yaml"), "packages:\n  - .\n", "utf8");
+      if (!io.run(pm, ["install"], target)) {
+        io.stderr(`graview create: ${pm} install failed. The files are in place; install by hand and run \`${run} verify\`.\n`);
+        return 1;
+      }
+    }
     if (skills) {
       const bin = resolve(target, "node_modules/.bin/graview");
       if (existsSync(bin)) {
@@ -363,6 +383,18 @@ function insideGitRepo(dir: string): boolean {
     if (existsSync(resolve(current, ".git"))) return true;
     const parent = dirname(current);
     if (parent === current) return false;
+    current = parent;
+  }
+}
+
+/** The directory of the nearest pnpm workspace ABOVE a directory, if there is one. */
+function enclosingPnpmWorkspace(dir: string): string | undefined {
+  if (existsSync(resolve(dir, "pnpm-workspace.yaml"))) return undefined;
+  let current = dirname(dir);
+  for (;;) {
+    if (existsSync(resolve(current, "pnpm-workspace.yaml"))) return current;
+    const parent = dirname(current);
+    if (parent === current) return undefined;
     current = parent;
   }
 }

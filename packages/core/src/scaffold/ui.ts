@@ -241,7 +241,8 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
 
 export function pagesTsx(ids: Ids): string {
   return `import { isCurrent, nounOf, withArticle } from "@graview/core";
-import { Begin, TextBody } from "@graview/primitives";
+import { Begin, EditableValue, TextBody } from "@graview/primitives";
+import { useGraviewIfAny } from "@graview/react";
 import {
   createPageRegistry,
   DefaultHomePage,
@@ -274,6 +275,8 @@ type S = ${ids.SchemaType};
 function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
   const { store, principal, invariantContext } = context;
   useStoreTick(store);
+  // Under the provider the face draws with its views, the name is changed where it is read.
+  const inPlace = useGraviewIfAny<S>() !== null;
   const id = decodeURIComponent(useParams()["id"] ?? "");
   const facts = recordFacts(store, id, {
     ...(principal ? { principal } : {}),
@@ -305,8 +308,14 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
    * record itself. With one ${ids.spoken} in the graph there is nothing to
    * point at, so there is no form, rather than a heading over a picker with
    * one wrong answer in it.
+   *
+   * EVERY ONE OF THEM, not only the ties: a page that kept the ties alone
+   * left "Change the ${ids.spoken}" and every act of the kind's own on no
+   * page at all (the tenth walk). A repair is offered beside its rule, and
+   * what takes the record away comes last.
    */
-  const connecting = facts.actions.affordances.filter((affordance) => affordance.ties === true);
+  const away = (affordance: { destructive?: boolean; setsAside?: boolean }) => (affordance.destructive || affordance.setsAside ? 1 : 0);
+  const offered = facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant").sort((a, b) => away(a) - away(b));
 
   return (
     <PageMain context={context} data-testid="${ids.kind}-page">
@@ -317,7 +326,8 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           * this says it, where a word typed at scaffold time would not.
           */}
         <p style={pageStyles.eyebrow}>{withArticle(nounOf(store.schema.tryDefinition(node.kind), node.kind)).replace(/^./, (first) => first.toUpperCase())} in ${escapeTemplate(ids.name)}</p>
-        <h1 style={pageStyles.h1}>{facts.label}</h1>
+        {/* The name, pressed, is the field that changes it — as on the derived page. */}
+        <h1 style={pageStyles.h1}>{inPlace && node["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} /> : facts.label}</h1>
         {/*
           * WHERE IT IS ON THE HORIZON, asked of the declaration's own
           * lifecycle rather than of a status word written here: rename the
@@ -415,9 +425,9 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           ))}
         </section>
       ) : null}
-      {connecting.length > 0 ? (
+      {offered.length > 0 ? (
         <section style={{ ...pageStyles.rule, display: "grid", gap: 14 }} data-testid="record-actions">
-          {connecting.map((affordance) => {
+          {offered.map((affordance) => {
             const act = store.allMutations().find((mutation) => mutation.name === affordance.mutation);
             return act ? (
               <div key={affordance.id} style={{ display: "grid", gap: 10 }}>

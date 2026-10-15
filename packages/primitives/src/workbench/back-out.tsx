@@ -162,11 +162,16 @@ export function OverviewButton() {
   const landing = (() => {
     if (!target) return null;
     const kind = kindsOfAggregate(target)[0];
-    // The showing that is showing, else the kind's first place.
+    /*
+     * The showing that is showing, else the picture the district draws when
+     * the view names none — the LAST registered for its kind, as the
+     * registry resolves it and the bar marks it. The first was said here,
+     * so "down to The logbook" landed on "Who went where" (the tenth walk).
+     */
     const showing = view.within?.["view"];
     const place =
       (showing ? views.places().find((one) => one.as === showing) : undefined) ??
-      (kind ? views.places().find((one) => one.kind === kind) : undefined);
+      (kind ? views.places().filter((one) => one.kind === kind).at(-1) : undefined);
     if (place) return place.title;
     if (kind) return pluralLabel(store.schema, kind);
     return store.graph.getNode(target)?.label ?? null;

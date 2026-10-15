@@ -121,14 +121,19 @@ describe("the worked example", () => {
     expect(search(store, "vna", { today }).hits).toEqual([]);
   });
 
-  it("leaves the past out unless is:any says otherwise, and says it did", () => {
-    expect(nodes(search(store, "milk", { today }).hits)).toEqual([]);
+  it("leaves the past out where the current answer or is:current says so, and says when it looked there", () => {
+    // Nothing current is milk, so the past one follows, said as past (the tenth walk).
+    const reached = search(store, "milk", { today });
+    expect(nodes(reached.hits)).toEqual(["t-milk"]);
+    expect(reached.hits[0]).toMatchObject({ current: false });
+    expect(reached.searched.past).toBe(true);
+    expect(nodes(search(store, "milk is:current", { today }).hits)).toEqual([]);
     const widened = search(store, "milk is:any", { today });
     expect(nodes(widened.hits)).toEqual(["t-milk"]);
     expect(widened.searched.past).toBe(true);
     expect(widened.hits[0]).toMatchObject({ current: false });
     expect(nodes(search(store, "buy is:past", { today }).hits)).toEqual(["t-milk"]);
-    expect(describeSearched(schema, search(store, "milk", { today }).searched)).toBe(
+    expect(describeSearched(schema, search(store, "milk is:current", { today }).searched)).toBe(
       "Lists and tasks, current ones; add is:any for past ones.",
     );
   });
