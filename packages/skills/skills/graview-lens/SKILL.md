@@ -12,7 +12,7 @@ columns and an edge that fills a cell. That indirection is the entire point: a
 lens written for one app is used unchanged by another.
 
 The framework ships five, each built from the public primitives — which makes
-them the worked example of the authoring API rather than privileged insiders.
+them the worked example of the authoring API.
 Read one before writing your own:
 
 - `packages/primitives/src/lens/timeline.tsx` — intervals in columns
@@ -23,19 +23,13 @@ Read one before writing your own:
   when the x and y are categories rather than coordinates)
 - `packages/primitives/src/lens/plan.tsx` — an outline, with points inside it
 
-(`reach.tsx` sits beside them and is not one: no factory, no roles to
-rebind. A view that ships is still a view.)
+(`reach.tsx` beside them is not one: no factory, no roles to rebind. A
+view that ships is still a view.)
 
-The plan is the one to read if yours draws anything, because it is the one
-that learned what drawing costs. A name is fitted to the shape it names —
-`fitLabel` and `spanAt` from `@graview/layout`, which give the width of a
-shape AT A HEIGHT rather than its bounding box, because the shapes that
-overflow are the long thin ones. Names are painted after everything else,
-because a marker dot took the first letter off two of them. Whatever will
-not fit goes in a key underneath. And `useDrawnSize` answers the question a
-scalable drawing hides: at THIS size, can a person read it, or press it? A
-one-pixel target with a keyboard stop and an ARIA label is not an accessible
-control; it is an inaccessible one that has been described.
+Read the plan if yours draws anything: a name is fitted to its shape at a
+height (`fitLabel`, `spanAt` from `@graview/layout`), names are painted
+last, what will not fit goes in a key, and `useDrawnSize` asks whether, at
+THIS size, a person can read it or press it.
 
 Start it with the scaffolder — `graview lens grounds-map --roles regions,markers
 --binds entities` — which writes all eight rules below already in place, and
@@ -95,10 +89,8 @@ the reuse test beside it, red on purpose.
    has slots and occupants, a matrix has rows and columns, a map has regions
    and markers), and every other kind comes from `store.graph`, narrowed back
    to `nodes` for the group's own kind so the scene's horizon still applies.
-   Built from `nodes` alone, a map drew every piece of ground with nothing
-   standing in it: no error, no empty state, a complete, tidy, wrong picture,
-   which is the worst failure a lens has. The framework's own board lens had
-   this exact bug.
+   Built from `nodes` alone, a map drew its ground with nothing standing in
+   it: no error, a tidy, wrong picture — the worst failure a lens has.
 
    **`budget` is the most to draw.** A host may hand a lens a few
    members with `budget` and `total`: hold what you read from
@@ -137,7 +129,15 @@ the reuse test beside it, red on purpose.
    { column: "status" } } }`; a card moves only by an act setting `status`
    (`book` where its `allowedWhen` holds).
    `on` names the kind when the bindings do not (reach; a coverage over its
-   columns), and `options` are data (`SHIPPED_LENSES[name].options`). A lens
+   columns), and `options` are data (`SHIPPED_LENSES[name].options`):
+   - a calendar's `range: "years"` with `horizon: { years: 30, title: "The
+     career" }` spans its records, first to last, as well as `years` from
+     `today`; `from` and `to` (years: 1962, 2023) pin its ends;
+   - a coverage's `sort` (rows) and `columnSort`, and a status board's
+     `sort` (cards): a field or `{ by, direction }`, `label` the name, held
+     to the kind (`lens-sort`);
+   - a coverage with no columns, or no link over its relation, says so
+     ("No genres yet: link songs to genres.") and lists no rows. A lens
    you wrote is registered with a title as the fourth argument:
    `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`.
    Untitled, it is reachable only by focusing the group.
@@ -146,8 +146,9 @@ the reuse test beside it, red on purpose.
    "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')",
    group: "type", as: "row" }] } }` is a place drawn from the closed block set
    (headline, figure, list — `graview-node-kind`), each record by its own row
-   or card. Nothing in it runs; a chat can write it. Write code only for what
-   blocks cannot say: a meter, a grid of cells, positions.
+   or card. Nothing in it runs; a chat can write it. A place read, not
+   written, says `create: false`: its page drops the forms that add one.
+   Write code only for what blocks cannot say: a grid of cells, positions.
 
 ## Roles live in two places, and they do different jobs
 

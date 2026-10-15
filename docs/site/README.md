@@ -1,25 +1,34 @@
 # The Graview site
 
-Three things, one stylesheet, and a rule: **nothing on any of these pages is
-written twice.**
+**graview.dev is a Graview app**, and this directory is what it renders to.
+Its declaration is [`apps/site/app.json`](../../apps/site/app.json): pages,
+packages and their entry points, skills, check findings, commands, concepts,
+recipes, chapters, questions, releases and what `graview create` writes, with
+the relations between them. `scripts/site-docs.mjs` writes the records out of
+the repository, a page record for every address the site serves, and renders
+each one with `renderPlace` (`@graview/pages/static`) in the site's own
+design, [`apps/site/design.mjs`](../../apps/site/design.mjs). The rule that
+follows: **nothing on any of these pages is written twice, and nothing here
+is edited by hand** — edit the source and run `pnpm site:build:all`.
 
 | | | |
 |---|---|---|
-| `index.html` | the landing page | one prompt to hand an agent, the recipes under it with the app each made running beside it, the three moves, Cloud, the questions |
-| `tour.html` | the tour | the feature-by-feature argument that used to follow the hero: one live frame per claim, the stepper, the use cases |
-| `start.md` | for the agent | the procedure the prompt points at: scaffold, read, declare, check, preview, report back; `tests/recipes.test.ts` holds its commands to the CLI's |
+| `index.html` | the landing page | one prompt to hand an agent, the recipes under it with the app each made running beside it, the three moves, Cloud, the questions — hand designed in `apps/site/pages/index.html`, its recipe tabs and rows and its structured data filled from records |
+| `tour.html` | the tour | the feature-by-feature argument that used to follow the hero: one live frame per claim, the stepper, the use cases — hand designed in `apps/site/pages/tour.html` |
+| `start.md` | for the agent | the procedure the prompt points at: scaffold, read, declare, check, preview, report back, written in `apps/site/pages/start.md`; `tests/recipes.test.ts` holds its commands to the CLI's |
 | `recipes/` | the recipes | each one's `app.json` and `seed.json` as an agent wrote them in Larkspur (`scripts/fixtures/recipes/larkspur.mjs`), checked by `pnpm check` and `tests/recipes.test.ts`, opened in a browser by `scripts/progression.mjs` |
-| `progression.html` | the long version | sixteen live chapters, the packages, the lenses, the kit |
-| `docs/` | the reference | every page written out of the repository — getting started, concepts, packages, the CLI, working with a model, skills, the findings, live demos, stability — each with a Markdown twin beside it |
+| `progression.html` | the long version | sixteen live chapters, the packages, the lenses, the kit — hand designed in `apps/site/pages/progression.html` |
+| `docs/` | the reference | every page a record — getting started, concepts, packages, the CLI, working with a model, skills, the findings, live demos, stability, and `site.html`, the site itself opened live as the app it is — each with a Markdown twin beside it |
 
 Published at [graview.dev](https://graview.dev) by `.github/workflows/pages.yml`
-on every push to `main` that touches this directory. `CNAME`, `.nojekyll`,
-`robots.txt`, `sitemap.xml`, `llms.txt` and `llms-full.txt` (all four written by `site-docs.mjs`), `404.html` and
-`og.png` are the deployment's own files.
+on every push to `main`. `CNAME`, `.nojekyll`, `og.png` and the stylesheet are
+the deployment's own files; `robots.txt`, `sitemap.xml`, `llms.txt`,
+`llms-full.txt` and `404.html` are records like every page.
 
 ```sh
 open docs/site/index.html
-pnpm site:build:all   # stylesheet, numbers, docs — after changing any of them
+pnpm site:build:all   # stylesheet, numbers, poster, records and pages — after changing any of them
+npx graview check --document apps/site/app.json
 pnpm site             # every page: ten widths, both schemes, axe, keyboard, motion, zoom
 ```
 
@@ -47,14 +56,15 @@ second showed the product but argued like documentation.
 
 | Written by | What |
 |---|---|
-| `scripts/site-css.mjs` | the stylesheet, inlined into every page — the artifact host blocks a `<link>`, so it cannot live in one |
+| `scripts/site-css.mjs` | the stylesheet, inlined into every hand-designed page (and so every docs page, whose head is the landing page's) — the artifact host blocks a `<link>`, so it cannot live in one |
 | `scripts/site-numbers.mjs` | every number on the landing page, counted out of the tree |
-| `scripts/site-docs.mjs` | every docs page: a page per package, per skill, plus getting started (from what the scaffolder writes), the CLI (from its help), working with a model, the findings, live demos, the concepts and stability (`docs/stability.md`) — and, from those same pages, a Markdown twin of each, `llms.txt`, `llms-full.txt`, `robots.txt`, the sitemap with each page's last change, and the structured data in the heads of the landing page (read off its FAQ section) and the long version |
+| `scripts/site-docs.mjs` | the site's records — a package per package (its `package.json`, `README.md` and barrel), its entry points, a skill per `SKILL.md`, a finding per code in the checker, a command per `graview --help` section, the recipes, the chapters, the FAQ, the releases, what the scaffolder writes, and a page per address — and every address rendered from its page record by `renderPlace`: a page per package, per skill, per recipe, getting started, the CLI, working with a model, the findings, live demos, the concepts, stability (`docs/stability.md`) and this site; a Markdown twin of each; `llms.txt`, `llms-full.txt`, `robots.txt`, `start.md`, the sitemap with each page's last change; and the hand-designed pages with their recipe tabs and rows and their structured data filled in |
 | `scripts/site-poster.mjs` | the hero's first frame: the chapter it mounts, drawn by `sceneThumbnail` in both lightings, so the frame is a picture before the bundle arrives |
-| `scripts/site-progression.mjs` | the chapter records in `progression.html` |
+| `scripts/site-progression.mjs` | the chapter articles in `apps/site/pages/progression.html`, which the chapter records are read off |
 
 `tests/site.test.ts` runs each of them with `--check` and fails when a page
-has gone stale; `tests/site-for-machines.test.ts` holds what a crawler, an
+has gone stale, checks the declaration with `graview check`, and holds every
+address the site serves to the page record it is rendered from; `tests/site-for-machines.test.ts` holds what a crawler, an
 answer engine and a model read: every page's title, description, canonical
 and card, unique; the structured data parsing and matching the page; every
 docs page in the sitemap and in `llms.txt`; no broken link; no script,

@@ -1410,14 +1410,15 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
       <a href="../../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
-      written out of the repository<br>
-      by scripts/site-docs.mjs<br>
+      records of a Graview app,<br>
+      written out of the repository,<br>
       never by hand
     </div>
   </nav>
@@ -1453,8 +1454,8 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
     views.tsx        # registerDefaultViews, then your own where you care
     app.tsx          # the provider, the scene, the workbench
   main.tsx</code></pre></div>
-<p>The domain/ui split keeps the declaration inspectable by a build, a CLI and an agent: <code>graview check</code> reads <code>defineApp</code>, and a React import there would drag a UI package into the checker.</p>
-<p><strong>Or as one JSON document:</strong> <code>app.json</code> (<code>"format": "graview-document"</code>, schema <code>node_modules/@graview/core/dist/document.schema.json</code>), then <code>graview check --document app.json</code>, <code>graview describe --document app.json</code>, <code>graview preview app.json --seed seed.json</code>.</p>
+<p><code>graview check</code> reads <code>defineApp</code>; a React import in <code>domain/</code> would drag a UI package into the checker.</p>
+<p><strong>Or as one JSON document:</strong> <code>app.json</code> (<code>"format": "graview-document"</code>, <code>$schema</code> <code>node_modules/@graview/core/dist/document.schema.json</code>, which types lenses and view blocks), then <code>graview check --document app.json</code>, <code>graview describe --document app.json</code>, <code>graview preview app.json --seed seed.json</code>. Kinds, acts and rules are kebab-case (<code>tool-note</code>), fields and relations camelCase (<code>supersededBy</code>). <code>preview --data</code> holds its folder: stop it to <code>sync-seed --apply</code>. In a framework checkout, <code>pnpm graview:link</code> puts <code>graview</code> on PATH.</p>
 <h3>Do this</h3>
 <ol>
 <li><strong>Install.</strong> The scaffold already did. Reach for <code>@graview/render/gpu</code> only if you want the experimental capture path; the DOM path is what ships.</li>
@@ -1497,12 +1498,12 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <li><strong>Headless tests</strong> — the domain tier has no DOM in it. Test that your rules fire on graphs that break them and that their repairs resolve them; that is the test that catches a real regression.</li>
 <li><strong>An accessibility run, in BOTH schemes.</strong> Copy <code>apps/todo/scripts/run-a11y.mjs</code>: the real accessibility tree through CDP, plus axe-core. A light palette that clears AA in the dark is what it catches.</li>
 </ul>
-<p>Worth stealing later: a browser harness that walks your own acceptance criteria and writes a JSON verdict (the framework has several; each names the claim that stopped being true), and a persistence adapter test.</p>
+<p>Later: a browser harness, a JSON verdict per claim.</p>
 <h3>Supported browsers</h3>
-<p>Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and degrades to a clean cut where that is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (<code>attachRenderer</code> from <code>@graview/render/gpu</code>; there is no URL switch) — never a requirement.</p>
+<p>Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and degrades to a clean cut where that is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (<code>attachRenderer</code> set to <code>attachGpu()</code> from <code>@graview/render/gpu</code>) — never a requirement.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm verify        # typecheck, tests, build, graview check
-graview doctor     # one Graview release in pins, lockfile, node_modules, documents; React's pair</code></pre></div>
+graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout</code></pre></div>
 <p>Run the project's own <code>graview</code>, not <code>npx -y graview@&lt;pin&gt;</code>: inside a pnpm workspace that already holds the release, npx finds no bin (<code>sh: graview: command not found</code>).</p>
 <p>Report the real output. On a new app the useful early findings are <code>mutation-untitled</code>, <code>mutation-undescribed</code>, <code>edge-without-inverse</code> and <code>required-invariant-unregistered</code> — things that look fine until somebody reads the interface or an agent reads a tool schema.</p>
 <h3>What the check cannot see</h3>
@@ -1519,9 +1520,11 @@ graview doctor     # one Graview release in pins, lockfile, node_modules, docume
 <footer>
   <p class="sm dim">
     Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. These pages are
-    generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
-    on them can disagree with the code they describe.
+    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+    <a href="../site.html">Open it as an app</a>.
   </p>
 </footer>
 <script>

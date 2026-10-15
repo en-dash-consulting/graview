@@ -94,6 +94,11 @@ export type ArgPlan =
   | { readonly ref: readonly string[] | "*"; readonly required: boolean }
   | { readonly any: true; readonly required: false };
 
+/** The argument of an act's that takes the record at the far end of what it ties, when it takes a `kind`: never its subject. */
+export function farEndArg(args: readonly (readonly [string, ArgPlan])[], kind: string): string | undefined {
+  return args.find(([name, arg]) => name !== SUBJECT_ARG && "ref" in arg && (arg.ref === "*" || arg.ref.includes(kind)))?.[0];
+}
+
 /** A relation, as every kind that declares it says it. */
 export interface EdgePlan {
   readonly from: readonly string[];
@@ -186,10 +191,9 @@ export const refName = (v: unknown): string | undefined => (typeof v === "string
 /** What one of these is called, when the kind says nothing: the first required word-ish field. */
 export function defaultLabelField(spec: KindSpec): string | undefined {
   const entries = Object.entries(spec.fields);
-  return (
-    entries.find(([, f]) => f.required && (f.type === "string" || f.type === "text"))?.[0] ??
-    entries.find(([, f]) => f.type === "string")?.[0]
-  );
+  /* Among the fields that could name it, one called `name` or `title` before a `label` (a release's record label) or anything else. */
+  const first = (fits: readonly (readonly [string, KindSpec["fields"][string]])[]) => (["name", "title", "label"] as const).find((word) => fits.some(([n]) => n === word)) ?? fits[0]?.[0];
+  return first(entries.filter(([, f]) => f.required && (f.type === "string" || f.type === "text"))) ?? first(entries.filter(([, f]) => f.type === "string"));
 }
 
 /*
@@ -378,7 +382,10 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const { label: labelParts, describe: describeParts, durations } = plan.kinds[kind] ?? {};
     const computed = Object.entries(spec.computed ?? {}).map(([name, field]) => [name, typeof field === "string" ? { expr: field } : field] as const);
     // A computed field's words are said like a field's: its label, where it has one.
+    /* A field called `label` the kind is not named by is an ordinary field, said as "Label" rather than as the record's name. */
+    const ordinaryLabel = Object.hasOwn(spec.fields, "label") && !spec.fields["label"]!.label && !/\{\s*label\b/.test(spec.label ?? `{${defaultLabelField(spec) ?? ""}}`);
     const labels = Object.fromEntries([
+      ...(ordinaryLabel ? [["label", "Label"] as const] : []),
       ...Object.entries(spec.fields).filter(([, f]) => f.label).map(([n, f]) => [n, f.label!]),
       ...computed.filter(([, c]) => c.label).map(([n, c]) => [n, c.label!]),
     ]);
@@ -634,11 +641,22 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       const repairList: Repair[] = repairs.flatMap((r) => {
         const act = document.acts?.[r.act];
         const args: Record<string, unknown> = {};
-        if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge|skip|detach|split)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
+        /*
+         * AN ACT ON THE OTHER END OF A RELATION. A rule over findings that
+         * wants each serious one to have an initiative is repaired by
+         * `resolve-finding`, an act on the initiative read from the finding
+         * as "Name the work that fixes it" — so it is handed the finding as
+         * its far end, and the initiative is the question left open, as a
+         * record page standing on the finding offers it.
+         */
+        const far = subject && act?.on && act.fromTheOtherEnd && ![act.on].flat().includes(subject.kind) ? farEndArg(plan.acts[r.act]!.args, subject.kind) : undefined;
+        if (far) args[far] = subject!.id;
+        else if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge|skip|detach|split)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
         for (const [k, v] of Object.entries(r.args ?? {})) args[k] = refName(v) === "subject" ? subject?.id : v;
         const declared = act ? plan.acts[r.act]!.args : [];
         const missing = declared.filter(([k, a]) => a.required && args[k] === undefined).map(([k]) => k);
-        return [{ mutation: r.act, label: r.label ?? act?.title ?? r.act.replace(/-/g, " "), args, ...(missing.length > 0 ? { missing } : {}) }];
+        // Said as the act reads from where the rule stands: from the finding, "Name the work that fixes it".
+        return [{ mutation: r.act, label: r.label ?? (far ? act!.fromTheOtherEnd : act?.title) ?? r.act.replace(/-/g, " "), args, ...(missing.length > 0 ? { missing } : {}) }];
       });
       return [
         {

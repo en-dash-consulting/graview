@@ -6,7 +6,7 @@ import { Seats } from "./seats.js";
 import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.js";
 
 /* Who else is here (FR-155), fetched with the panes once somebody is. */
-export { Here } from "./here.js";
+export { Here, sayTheirChange } from "./here.js";
 /* What has happened, on the routed face's bar (FR-152): `BarActivity`. */
 export { ActivityRail } from "./workbench/activity.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).

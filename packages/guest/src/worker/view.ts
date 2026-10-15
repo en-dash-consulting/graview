@@ -17,7 +17,8 @@
  *   graview.style(css)       the view's one stylesheet
  *   graview.on(type, selector, fn)   hear the viewer: click, input, change, keydown, toggle
  *   graview.act(name, args)  ask for an act; resolves with the host's answer
- *   graview.navigate(to)     go to a record (its id), else a place by that slug, or a place ({ place: slug })
+ *   graview.navigate(to)     go to a record (its id), else a place by that slug, or a place or a kind's list
+ *                            ({ place: slug, where: { stage: "building" }, section: "shipping-soon" })
  *   graview.html``           markup, with every value put in it escaped
  *
  * The same global, over a transcript rather than a port, is what a

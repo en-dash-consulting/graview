@@ -1,0 +1,8 @@
+---
+"@graview/core": patch
+"@graview/skills": patch
+---
+
+The document's JSON Schema types its lenses and its views' blocks. `lenses` items were any object and a view's blocks any value, so an editor reading `document.schema.json` offered nothing for a lens's name, its bindings, `options.blocks` or a block's keys, and a misspelling surfaced only at `graview check`. Each lens is now held to a name `SHIPPED_LENSES` lists (`timeline`, `calendar`, `coverage`, `board`, `plan`, `reach`, `blocks`, `columns`), the options that lens takes, its bindings as roles bound to fields where it binds fields, and the keys a lens declaration has; every block — in a kind's card, row and page, the home view and a blocks lens's `options.blocks` — is held to the closed set `BLOCK_KEYS` names, each block with what it may say besides and the values each takes (tones, formats, a list's sort and grouping, a group's direction). Both are generated where the build writes the schema, from the tables the checker judges by, and a block or a block key added there without a shape stops the build. Every example document and fixture in the tree validates.
+
+Compatibility: the declaration and check finding codes: the compiler reads documents as before. `document.schema.json` is stricter than it was on lenses and blocks, so an editor now underlines a lens Graview does not ship, an option or key a lens does not take, and a block or block key the checker refuses, where the compiler warns (`lens-not-shipped`, `lens-option-unknown`) or refuses (`view-block`, `unknown-key`). Ops, stored formats, the wire and derived tool schemas are unchanged.

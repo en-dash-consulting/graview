@@ -1,0 +1,242 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The Beatles",
+  "description": "The Beatles' songs and releases: who wrote each, what it is, and when it came out.",
+  "kinds": {
+    "song": {
+      "noun": "song",
+      "plural": "songs",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "recorded": {
+          "type": "date"
+        }
+      },
+      "edges": {
+        "inGenre": {
+          "to": [
+            "genre"
+          ],
+          "cardinality": "many",
+          "description": "the genres it is in",
+          "inverse": "songs in it"
+        },
+        "writtenBy": {
+          "to": [
+            "writer"
+          ],
+          "cardinality": "many",
+          "description": "who wrote it",
+          "inverse": "songs they wrote"
+        },
+        "onRelease": {
+          "to": [
+            "release"
+          ],
+          "cardinality": "many",
+          "description": "the releases it is on",
+          "inverse": "its songs"
+        }
+      }
+    },
+    "release": {
+      "noun": "release",
+      "plural": "releases",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "description": "the record label that put it out"
+        },
+        "released": {
+          "type": "date"
+        }
+      },
+      "edges": {
+        "inEra": {
+          "to": [
+            "era"
+          ],
+          "cardinality": "one",
+          "description": "the era it came out in",
+          "inverse": "its releases"
+        }
+      }
+    },
+    "genre": {
+      "noun": "genre",
+      "plural": "genres",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "writer": {
+      "noun": "writer",
+      "plural": "writers",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "era": {
+      "noun": "era",
+      "plural": "eras",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "began": {
+          "type": "integer"
+        }
+      }
+    },
+    "artwork": {
+      "noun": "artwork",
+      "plural": "artworks",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "image": {
+          "type": "image"
+        },
+        "source": {
+          "type": "url"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-song": {
+      "title": "Add a song",
+      "creates": "song",
+      "description": "A song the band recorded."
+    },
+    "add-release": {
+      "title": "Add a release",
+      "creates": "release",
+      "description": "A record that came out."
+    },
+    "add-genre": {
+      "title": "Add a genre",
+      "creates": "genre",
+      "description": "A kind of music."
+    },
+    "add-writer": {
+      "title": "Add a writer",
+      "creates": "writer",
+      "description": "Somebody who wrote songs."
+    },
+    "add-era": {
+      "title": "Add an era",
+      "creates": "era",
+      "description": "A stretch of the career."
+    },
+    "add-artwork": {
+      "title": "Add artwork",
+      "creates": "artwork",
+      "description": "A cover."
+    },
+    "file-under": {
+      "title": "File under a genre",
+      "on": "song",
+      "connects": "inGenre",
+      "description": "Say a song's genre."
+    },
+    "credit": {
+      "title": "Credit a writer",
+      "on": "song",
+      "connects": "writtenBy",
+      "description": "Say who wrote a song."
+    }
+  },
+  "roles": [
+    "owner",
+    "viewer"
+  ],
+  "policy": {
+    "grants": [
+      {
+        "roles": [
+          "owner"
+        ],
+        "mutations": "*"
+      }
+    ]
+  },
+  "lenses": [
+    {
+      "name": "calendar",
+      "title": "Releases by year",
+      "bindings": {
+        "release": {
+          "start": "released"
+        }
+      },
+      "options": {
+        "range": "years",
+        "horizon": 30,
+        "today": "1970-04-10"
+      }
+    },
+    {
+      "name": "coverage",
+      "title": "Songs by genre",
+      "bindings": {
+        "rows": {
+          "kind": "song"
+        },
+        "columns": {
+          "kind": "genre"
+        },
+        "link": {
+          "edge": "inGenre"
+        }
+      }
+    },
+    {
+      "name": "coverage",
+      "title": "Songs by writer",
+      "bindings": {
+        "rows": {
+          "kind": "song"
+        },
+        "columns": {
+          "kind": "writer"
+        },
+        "link": {
+          "edge": "writtenBy"
+        }
+      }
+    },
+    {
+      "name": "coverage",
+      "title": "Releases by era",
+      "bindings": {
+        "rows": {
+          "kind": "release"
+        },
+        "columns": {
+          "kind": "era"
+        },
+        "link": {
+          "edge": "inEra"
+        }
+      }
+    }
+  ]
+}

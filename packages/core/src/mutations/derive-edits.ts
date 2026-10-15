@@ -1,11 +1,14 @@
 import * as z from "../schema/zod.js";
 import { filesOf } from "../schema/files.js";
 import { amountOf } from "../schema/amount-mark.js";
-import { formatMoney } from "../document/money.js";
-import { numberAsRead } from "../days.js";
+import { sayAmount } from "../document/amount.js";
+import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead } from "../days.js";
+import { typedFieldOf } from "../schema/typed-field-of.js";
 import { labelOf } from "../schema/define-node.js";
 import { LEFT_ALONE } from "../graph/archived.js";
-import { fieldWords, nounOf } from "../schema/define-node.js";
+import { fieldWords, humanizeField, nounOf } from "../schema/define-node.js";
+import { linkedRelationOf } from "../schema/linked.js";
+import { repeatedBy } from "../repeat.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { nodeRefArgs, refTo } from "./node-ref.js";
@@ -186,36 +189,7 @@ export function deriveEditMutations<S extends AnySchema>(
         id: refTo([kind]),
         ...Object.fromEntries(fields.map((field) => [field, z.optional(withoutDefault(shape[field]!))])),
       }) as never,
-      describe: (args, graph) => {
-        const node = graph.getNode((args as { id: string }).id);
-        const label = node ? labelOf(definition, node) : (args as { id: string }).id;
-        /*
-         * THE CHANGE AS THE RECORD READS IT. The log said "price → 49900"
-         * and "condition → \"cpo\"" beside a card that says "Price $49,900"
-         * and "Certified pre-owned": the declaration's own labels and
-         * formats are the words, and the raw value only where there is none.
-         */
-        const display = definition.display;
-        const quietly = (label: string) => (label === label.toUpperCase() ? label : label.charAt(0).toLowerCase() + label.slice(1));
-        const changes = fields
-          .filter((field) => (args as Record<string, unknown>)[field] !== undefined)
-          .map((field) => {
-            const value = (args as Record<string, unknown>)[field];
-            const format = display?.format?.[field];
-            let said: string;
-            try {
-              // Files by their names (FR-162), never the host's addresses.
-              // Money and a percent as the field declares them: "amount → $12,500", never 12500.
-              const amount = typeof value === "number" ? amountOf(shape[field]) : undefined;
-              // Prose by its start (FR-180): a history line is not the whole brief again.
-              said = format ? String(format(value)) : amount ? (amount.format === "money" ? formatMoney(value as number, /^[A-Z]{3}$/.test(amount.unit ?? "") ? { ...amount, currency: amount.unit! } : amount) : amount.format === "percent" ? numberAsRead(value as number, amount.locale, { style: "percent", maximumFractionDigits: 0 }) : JSON.stringify(value)) : filesOf(value).length > 0 ? filesOf(value).map((file) => file.name).join(", ") : JSON.stringify(typeof value == "string" && value.length > 60 ? excerpt(value, 60) : value);
-            } catch {
-              said = JSON.stringify(value);
-            }
-            return `${quietly(fieldWords(definition, field))} → ${said}`;
-          });
-        return `Change ${label}: ${changes.join(", ") || "nothing"}`;
-      },
+      describe: (args, graph) => editSaid(definition, shape, fields, args as Record<string, unknown>, graph),
       apply(ctx, args) {
         const patch: Record<string, unknown> = {};
         for (const field of fields) {
@@ -230,6 +204,69 @@ export function deriveEditMutations<S extends AnySchema>(
     } as AnyMutationDefinition<S>);
   }
   return derived;
+}
+
+/**
+ * A CHANGE SAID AS THE RECORD PAGE SAYS IT: "Changed the stage of Billing
+ * across apps to Considering", "Changed the price of Model Y to $49,900
+ * and the condition to Certified pre-owned".
+ *
+ * It read `Change Billing across apps: stage → "considering"` — the field's
+ * key, an arrow and the value as it is kept — and that line was heard in
+ * Take back, in Activity and when another seat's change was said aloud.
+ * Each field is named by its label, each value as the record page says it
+ * (a choice by its option's words, money and days in the app's locale, a
+ * file by its name, prose by its start, a record in another app as one),
+ * and several are one sentence, as a document's acts and the preview say
+ * theirs.
+ */
+function editSaid(definition: AnyNodeDefinition, shape: Record<string, unknown>, fields: readonly string[], args: Record<string, unknown>, graph: { getNode(id: string): unknown }): string {
+  const node = graph.getNode(args["id"] as string);
+  const label = node ? labelOf(definition, node as never) : "a record";
+  const said = fields
+    .filter((field) => args[field] !== undefined)
+    .map((field, at) => {
+      const value = args[field];
+      // A date's repeat is said by the date it repeats: "the due date to repeat every week".
+      const date = repeatedBy(field);
+      const repeat = date !== undefined && date in shape;
+      const word = fieldWords(definition, repeat ? date : field);
+      const named = word === word.toUpperCase() ? word : word.charAt(0).toLowerCase() + word.slice(1);
+      return `the ${named}${at === 0 ? ` of ${label}` : ""} to ${repeat ? (value ? `repeat ${everySaid(value as never)}` : "stop repeating") : valueSaid(definition, shape[field], field, value)}`;
+    });
+  return said.length === 0 ? `Changed nothing on ${label}` : `Changed ${said.length > 1 ? `${said.slice(0, -1).join(", ")} and ${said.at(-1)}` : said[0]}`;
+}
+
+/** How often a date repeats, said short: "every week", "every 2 months". */
+const everySaid = (repeat: { readonly every?: string; readonly interval?: number }): string => `every ${(repeat.interval ?? 1) > 1 ? `${repeat.interval} ${repeat.every}s` : repeat.every}`;
+
+/** One value as the record page says it, never as it is kept. */
+function valueSaid(definition: AnyNodeDefinition, schema: unknown, field: string, value: unknown): string {
+  if (value === null || value === "" || (Array.isArray(value) && value.length === 0)) return "nothing";
+  const format = definition.display?.format?.[field];
+  try {
+    if (format) return String(format(value));
+  } catch {
+    // A format that cannot say this value: said the framework's way below.
+  }
+  // Files by their names (FR-162), never the host's addresses; a record in another app as one (FR-171).
+  if (filesOf(value).length > 0) return filesOf(value).map((file) => file.name).join(", ");
+  if (linkedRelationOf(schema)) return Array.isArray(value) && value.length > 1 ? `${value.length} linked records` : "a linked record";
+  if (Array.isArray(value)) return value.map((one) => valueSaid(definition, schema, field, one)).join(", ");
+  if (typeof value === "boolean") return value ? "yes" : "no";
+  if (typeof value === "number") {
+    // Money, a percent and a measure as the field declares them, "$12,500" and never 12500; a length of time as one, "1 h 30 min".
+    const amount = amountOf(schema);
+    return amount ? sayAmount(value, amount) : typedFieldOf(schema) === "duration" ? `${value >= 60 ? `${Math.floor(value / 60)} h ` : ""}${value % 60 || value < 60 ? `${value % 60} min` : ""}`.trim() : String(value);
+  }
+  if (typeof value !== "string") return "a new value";
+  if (ISO_DAY.test(value)) return dayAsRead(value);
+  if (ISO_MOMENT.test(value)) return momentAsRead(value);
+  // A choice by its option's words; anything else written, by its start (FR-180) and in quotes.
+  for (let def = z.defOf(schema) as { readonly type?: string; readonly innerType?: unknown } | undefined; def; def = z.defOf(def.innerType) as typeof def) {
+    if (def.type === "enum") return humanizeField(value);
+  }
+  return `“${excerpt(value, 60)}”`;
 }
 
 /**

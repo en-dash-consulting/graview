@@ -1,4 +1,4 @@
-import { pluralOf, counted, labelOf, LOCAL_LAYERS, nounOf, walkKinds, type AnySchema, type NodeOfSchema } from "@graview/core";
+import { pluralOf, counted, coverageUnlinkedWords, labelOf, LOCAL_LAYERS, nounOf, sortForGrid, walkKinds, type AnySchema, type GridSort, type NodeOfSchema } from "@graview/core";
 import { useGraview, type ViewProps } from "@graview/react";
 import { onTheHorizon } from "./horizon.js";
 import { useArranging } from "./arranging.js";
@@ -89,6 +89,10 @@ export interface CoverageOptions extends CoverageRoles {
   };
   /** Column ordering field. Falls back to the node id, which is stable. */
   readonly columnGroup?: string;
+  /** The rows' order within their groups: a field, or `{ by, direction }` (`label` is the name). As they were written, unsaid. */
+  readonly sort?: GridSort;
+  /** The columns' order within their groups, the same way. By id, unsaid. */
+  readonly columnSort?: GridSort;
 }
 
 export interface CoverageCell {
@@ -381,14 +385,15 @@ export function buildCoverage<S extends AnySchema>(
   const coveredRows = new Set(cells.map((cell) => cell.rowId));
   const usedColumns = new Set(cells.map((cell) => cell.columnId));
   const badged = new Set(badgeEdges.map((edge) => edge.to));
-  const rows = rowNodes
+  const read = (node: NodeOfSchema<S>, field: string) => (field === "label" ? label(node) : asRecord(node)[field]);
+  const rows = sortForGrid(rowNodes, options.sort, read)
     .map((node) => {
       const record = asRecord(node);
       const group = text(record, options.rowGroup);
       return {
         id: node.id,
         ref: text(record, options.rowRef),
-        label: String(record["label"] ?? label(node)),
+        label: label(node),
         group,
         required: demanded
           ? demanded.has(node.id)
@@ -398,17 +403,17 @@ export function buildCoverage<S extends AnySchema>(
       };
     })
     .sort(
-      (a, b) => groupRank(a.group) - groupRank(b.group) || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0),
+      (a, b) => groupRank(a.group) - groupRank(b.group) || (options.sort !== undefined ? 0 : a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0),
     );
 
-  const columns = columnNodes
+  const columns = sortForGrid(columnNodes, options.columnSort, read)
     .map((node) => ({
       id: node.id,
       label: label(node),
       used: usedColumns.has(node.id),
       group: text(asRecord(node), options.columnGroup),
     }))
-    .sort((a, b) => (a.group < b.group ? -1 : a.group > b.group ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    .sort((a, b) => (a.group < b.group ? -1 : a.group > b.group ? 1 : options.columnSort !== undefined ? 0 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     .map(({ group: _group, ...column }) => column);
 
   return {
@@ -552,12 +557,33 @@ export function CoverageView<S extends AnySchema>({
   // A budget (a thumbnail's) holds rows and columns to it; otherwise the page's own limits.
   const grid: CappedCoverage = fidelity === "full" ? capCoverage(whole, budget !== undefined ? { rows: budget, columns: budget } : {}) : whole;
 
+  /*
+   * NOTHING TO CROSS YET is said, not drawn as a list of rows with no
+   * columns — which reads as the answer. Judged over the whole graph's
+   * links, so a filter that keeps only uncovered rows still draws its grid.
+   */
+  const linkKind = typeof options.link === "string" ? options.link : undefined;
+  const unlinked =
+    rowsKept !== undefined && whole.cells.length === 0 && whole.columns.length > 0 && (linkKind === undefined || store.graph.allEdges().some((edge) => edge.kind === linkKind))
+      ? undefined
+      : coverageUnlinkedWords(store.schema, options, { rows: whole.rows.length, columns: whole.columns.length, cells: whole.cells.length });
+
   if (fidelity === "glyph") {
     return (
       <Chip
-        label={`${label ?? "Coverage"} · ${grid.gaps.length === 0 ? "complete" : `${grid.gaps.length} missing`}`}
+        label={`${label ?? "Coverage"} · ${unlinked ? "nothing linked" : grid.gaps.length === 0 ? "complete" : `${grid.gaps.length} missing`}`}
         hue={hueFor("coverage")}
       />
+    );
+  }
+
+  if (unlinked) {
+    return (
+      <Panel title={label ?? "Coverage"} tone="muted" fit {...(mode === "fullscreen" ? { style: { flex: "1 1 auto", minHeight: 0, height: "100%" } } : {})}>
+        <p data-coverage-unlinked="" style={{ margin: 0, color: "var(--graview-ink-muted)" }}>
+          {unlinked}
+        </p>
+      </Panel>
     );
   }
 

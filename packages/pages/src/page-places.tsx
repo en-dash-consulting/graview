@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
+import { arrange, parseArrangement } from "@graview/core/arrange";
 import { useLayoutEffect, useRef, useState, type ComponentType } from "react";
 import { DerivedForm } from "./form.js";
 import { placePath, pluralSlug, recordPath } from "./registry.js";
@@ -77,14 +78,15 @@ function overOf<S extends AnySchema>(store: Store<S>, kinds: string | readonly s
  * promise every lens makes. Nothing here is a copy of a lens: it is the
  * lens.
  */
-function LensOnPage<S extends AnySchema>({ context, place, chosen }: { context: PageContext<S>; place: Place; chosen?: readonly string[] }) {
+function LensOnPage<S extends AnySchema>({ context, place, chosen, filter }: { context: PageContext<S>; place: Place; chosen?: readonly string[]; filter?: string | null }) {
   const { store, views, invariantContext } = context;
   const registration = views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as);
   const View = registration?.view as ComponentType<ViewProps<S>> | undefined;
-  if (!View) return null;
-  // A picture over several kinds is handed every one of them: the page is the whole picture, not one district's share.
-  const members = kindsOfPlace(context, place).flatMap((kind) => membersOf(store, kind));
   const flagged = [...new Set(store.violations(invariantContext).flatMap((violation) => violation.nodeIds))];
+  // A picture over several kinds is handed every one of them: the page is the whole picture, not one district's share.
+  const all = kindsOfPlace(context, place).flatMap((kind) => membersOf(store, kind));
+  if (!View) return null;
+  const members = narrowed(store, all, filter, flagged);
   /*
    * A LENS THAT THROWS SAYS SO IN ITS OWN PLACE, here as in the scene: the
    * host's views reach the pages (FR-35), so a view that cannot draw would
@@ -104,6 +106,18 @@ function LensOnPage<S extends AnySchema>({ context, place, chosen }: { context: 
       />
     </ViewBoundary>
   );
+}
+
+/**
+ * A PICTURE NARROWED BY ITS ADDRESS (`?filter=stage:building`): the members
+ * the filter keeps, in the words a list's arranging line writes, judged by
+ * the same arranging the list page does (this face's chunk carries it
+ * already). Every member when no filter is asked.
+ */
+function narrowed<S extends AnySchema, N extends { readonly id: string; readonly kind: string }>(store: Store<S>, members: readonly N[], filter: string | null | undefined, flagged: readonly string[]): readonly N[] {
+  const conditions = filter ? (parseArrangement({ filter }).filter ?? []) : [];
+  if (conditions.length === 0) return members;
+  return arrange(members as never, { filter: conditions }, { schema: store.schema, graph: store.graph as never, flagged: new Set(flagged) }).nodes as unknown as readonly N[];
 }
 
 /**
@@ -228,8 +242,8 @@ export function galleryOf<S extends AnySchema>(context: PageContext<S>): readonl
    */
   const order = arrangedKinds(context);
   const all = placesOf(context);
-  // Each picture once: one over several kinds is one card, under the first of them in the declaration's order.
-  const places = onePerPicture([...all].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind)));
+  // Each picture once: one over several kinds is one card, under the first of them in the declaration's order. A lens kept off the lists is a link's to reach, not the gallery's.
+  const places = onePerPicture([...all].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind))).filter((place) => !place.hidden);
   const pictured = new Set(places.flatMap((place) => place.over ?? [place.kind]));
   return [
     ...places.map((place) => ({ key: placeKey(place), kind: place.kind, title: placeLabel(place, all, store.schema), to: pathOfPlace(context, place), place })),
@@ -431,7 +445,7 @@ export function Gallery<S extends AnySchema>({ context }: { context: PageContext
 export function DefaultPlacesPage<S extends AnySchema>({ context }: { context: PageContext<S> }) {
   const { store } = context;
   useStoreTick(store);
-  const places = onePerPicture(placesOf(context));
+  const places = onePerPicture(placesOf(context)).filter((place) => !place.hidden);
   const entries = galleryOf(context);
   return (
     <PageMain context={context} style={wide}>
@@ -471,6 +485,8 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
   /* A crossing chosen on the picture, by what it joins (FR-111): the picture lights it and draws to its ends. */
   const [chosen, choose] = useState<{ readonly at: string; readonly ids: readonly string[] } | null>(null);
   const of = search.get("of");
+  // Narrowed by its address (`?filter=stage:building`), as a list is: what a link or a view's navigate asked for.
+  const narrowedTo = search.get("filter");
   const places = placesOf(context);
   const place = places.find((candidate) => candidate.as === asked && (!of || pluralSlug(store.schema, candidate.kind) === of));
   if (!place) {
@@ -493,12 +509,20 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
    * frame a list of cards became a box of its own to scroll, under the
    * page's own scroll. It is drawn in the page's column, as long as it is.
    */
-  const flows = (context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean } | undefined)?.flows === true;
+  const drawnBy = context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean; creates?: boolean } | undefined;
+  const flows = drawnBy?.flows === true;
+  /*
+   * A PLACE THAT IS READ, NOT WRITTEN. Every place ended with the forms
+   * that begin its kind; on a summary or a report that is a form nobody
+   * came for. A lens declared `"create": false` leaves them off — the
+   * kind's list and the bar still offer them.
+   */
+  const creates = drawnBy?.creates !== false;
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
   });
-  const creators = facts.actions.affordances
+  const creators = !creates ? [] : facts.actions.affordances
     .map((affordance) => ({ affordance, mutation: store.allMutations().find((m) => m.name === affordance.mutation) }))
     .filter((entry): entry is { affordance: typeof entry.affordance; mutation: NonNullable<typeof entry.mutation> } => entry.mutation !== undefined);
   return (
@@ -519,6 +543,22 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         <p style={lede} data-testid="place-lede">
           {overOf(store, kindsOfPlace(context, place), place.across)}.
         </p>
+        {/* A picture drawn from blocks lists what its blocks say (their own `where`), so it is not said to be narrowed. */}
+        {narrowedTo && !flows ? (
+          <p style={{ ...quiet, margin: 0 }} data-testid="place-narrowed">
+            {`Only those where ${narrowedTo
+              .split(",")
+              .map((condition) => condition.replace(":", " is "))
+              .join(" and ")}. `}
+            <Link to={`?${(() => {
+              const rest = new URLSearchParams(search);
+              rest.delete("filter");
+              return rest.toString();
+            })()}`} style={{ ...link, ...quiet }}>
+              Show all
+            </Link>
+          </p>
+        ) : null}
         {/* What belongs to the picture alone: its kind as a list. The other places are the bar's (FR-138). */}
         <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
           {kindsOfPlace(context, place).map((kind, index) => (
@@ -580,18 +620,20 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
           navigate(recordPath(store.schema, node.kind, id));
         }}
       >
-        <LensOnPage context={context} place={place} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
+        <LensOnPage context={context} place={place} filter={narrowedTo} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
       </div>
       {/* The acts, at a reading width: a form as wide as a gallery is a form nobody can scan. */}
-      <div style={{ maxWidth: 760, display: "grid", gap: 40 }}>
-        {creators.map(({ affordance, mutation }) => (
-          <section key={affordance.id} style={{ ...rule, display: "grid", gap: 14 }}>
-            <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
-            {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
-            <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} label={affordance.label} {...(principal ? { principal } : {})} />
-          </section>
-        ))}
-      </div>
+      {creators.length > 0 ? (
+        <div style={{ maxWidth: 760, display: "grid", gap: 40 }} data-testid="place-creators">
+          {creators.map(({ affordance, mutation }) => (
+            <section key={affordance.id} style={{ ...rule, display: "grid", gap: 14 }}>
+              <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
+              {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
+              <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} label={affordance.label} {...(principal ? { principal } : {})} />
+            </section>
+          ))}
+        </div>
+      ) : null}
     </PageMain>
   );
 }

@@ -1,0 +1,95 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "The review",
+  "description": "What a review found, where it is and how bad it is.",
+  "kinds": {
+    "finding": {
+      "noun": "finding",
+      "plural": "findings",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "severity": { "type": "enum", "options": ["high", "medium", "low"], "default": "medium", "required": true },
+        "area": { "type": "enum", "options": ["layout", "words", "speed"], "default": "layout", "required": true },
+        "phase": { "type": "enum", "options": ["now", "later"], "default": "later", "required": true }
+      }
+    }
+  },
+  "acts": {
+    "add-finding": { "title": "Add a finding", "creates": "finding", "description": "Write down something the review found." }
+  },
+  "rules": {
+    "nothing-for-now": {
+      "title": "Nothing is left for now",
+      "over": "finding",
+      "require": "phase != 'now'",
+      "says": "{name} is still planned for now: move it to later or fix it."
+    }
+  },
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "lenses": [
+    {
+      "name": "blocks",
+      "title": "The summary",
+      "on": "finding",
+      "create": false,
+      "options": { "blocks": [{ "text": "{count(all('finding')) | words} findings, read here." }, { "list": "all('finding')", "as": "row" }] }
+    },
+    {
+      "name": "blocks",
+      "title": "Every finding",
+      "on": "finding",
+      "options": { "blocks": [{ "list": "all('finding')", "as": "card" }] }
+    }
+  ],
+  "views": {
+    "home": [
+      { "headline": "The review, at a glance" },
+      {
+        "group": [
+          { "group": [{ "figure": "count(all('finding'))", "label": "findings", "emphasis": "large" }, { "text": "in all" }], "direction": "column" },
+          { "group": [{ "figure": "count(all('finding') where severity == 'high')", "label": "high" }, { "text": "to fix first" }], "direction": "column" },
+          { "group": [{ "figure": "count(all('finding') where phase == 'now')", "label": "now" }, { "text": "planned for now" }], "direction": "column" },
+          { "group": [{ "figure": "count(all('finding') where phase == 'later')", "label": "later" }, { "text": "planned for later" }], "direction": "column" }
+        ],
+        "direction": "row"
+      },
+      {
+        "group": [
+          { "text": "Layout findings come first: four of them change how a page reads at a glance.", "tone": "warn" },
+          { "text": "The words read well, though a rule still leads with its expression.", "tone": "good" },
+          { "text": "Speed is fine on a desk, and nobody has measured it on a phone yet.", "tone": "good" },
+          { "text": "Phones need another look before any of this is called finished.", "tone": "bad" }
+        ],
+        "direction": "row"
+      },
+      {
+        "group": [
+          {
+            "group": [
+              { "headline": "Where the problems are, by the part of the app" },
+              { "progress": { "value": "count(all('finding') where area == 'layout')", "max": "count(all('finding'))" }, "label": "layout" },
+              { "progress": { "value": "count(all('finding') where area == 'words')", "max": "count(all('finding'))" }, "label": "words" }
+            ],
+            "direction": "column"
+          },
+          {
+            "group": [
+              { "headline": "When they are planned, now or later" },
+              { "progress": { "value": "count(all('finding') where phase == 'now')", "max": "count(all('finding'))" }, "label": "now" },
+              { "progress": { "value": "count(all('finding') where phase == 'later')", "max": "count(all('finding'))" }, "label": "later" }
+            ],
+            "direction": "column"
+          }
+        ],
+        "direction": "row"
+      },
+      { "list": "all('finding')", "as": "row" }
+    ],
+    "finding": {
+      "card": [{ "title": "{name}" }, { "badge": "{severity}", "tone": "warn" }, { "badge": "{area}" }, { "badge": "{phase}" }],
+      "page": [{ "badge": "{severity}", "tone": "warn" }, { "badge": "{area}" }, { "badge": "{phase}" }]
+    }
+  }
+}

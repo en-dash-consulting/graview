@@ -36,7 +36,18 @@
  *   row keep their own heights, the cards are no box to scroll of their
  *   own, and a list cut by its limit says "See all 120 features", which
  *   goes to the features; a feature's row says its summary in one line,
- *   and its page says it whole.
+ *   and its page says it whole;
+ *
+ *   and (`?lists=3`) a custom home that links to its lists instead of a
+ *   lens per link (Roadmap f-navigate-filters, f-hidden-lenses): a worker
+ *   view's `<a data-place="features" data-filter="stage:building">` lands
+ *   on the features narrowed, at an address that says so; its
+ *   `graview.navigate({ place: "up-next", section: "Every feature" })`
+ *   lands on that heading, which has the keyboard; a filter on a field the
+ *   kind does not have goes nowhere and says why; a shared address opens
+ *   the list narrowed at its section; and "Up next", kept off the lists
+ *   (`hidden`), is on neither the bar nor the page list, and is still
+ *   drawn at its address.
  *
  *   node scripts/verify-growing.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>] [--probe]
  */
@@ -138,6 +149,21 @@ const ranked = [...features]
   .sort((a, b) => answering(b.id) - answering(a.id) || a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }))
   .map((feature) => feature.id);
 
+/*
+ * `?lists=3`: the roadmap's custom home, a worker view that links to its
+ * lists narrowed rather than to a lens per link, and "Up next" kept off
+ * the lists — the link target such a home would have needed.
+ */
+const HOME_MANIFEST = { name: "roadmap-home", title: "The roadmap", attach: "home", cardinality: "many", reads: { kinds: ["feature"] } };
+const HOME_SOURCE = `graview.render(graview.html\`<h2>What we are making</h2>
+<p><a id="building" data-place="features" data-filter="stage:building">Being built</a></p>
+<p><button id="section" type="button">Every feature</button> <button id="wrong" type="button">By a field it lacks</button></p>\`);
+graview.on("click", "#section", () => graview.navigate({ place: "up-next", section: "Every feature" }));
+graview.on("click", "#wrong", () => graview.navigate({ place: "features", where: { stag: "building" } }));`;
+const HIDDEN = `(roadmap) => ({ ...roadmap, lenses: roadmap.lenses.map((lens) => (lens.title === "Up next" ? { ...lens, hidden: true } : lens)) })`;
+const building = features.filter((feature) => feature.stage === "building").length;
+const shipped = features.filter((feature) => feature.stage === "shipped").length;
+
 const HOST_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>The roadmap</title>
 <style>body{margin:0;font:16px/1.4 system-ui,sans-serif;background:#f6f6f2;color:#222}</style></head>
 <body><div id="app"></div><script type="module" src="/entry.js"></script></body></html>`;
@@ -151,6 +177,7 @@ async function buildHost() {
     stdin: {
       contents: `
         import { mount } from "@graview/embed";
+        import { registerWorkerView } from "@graview/guest/host/views";
         import { compileDocumentWithoutCheck } from "@graview/core/document";
         import roadmap from ${JSON.stringify(ROADMAP)};
         const seed = ${JSON.stringify(SEED)};
@@ -160,7 +187,11 @@ async function buildHost() {
             ? { ...roadmap, pages: { lists: { request: { filters: ["status", "became", "became.stage"] } } } }
             : asked.get("lists") === "2"
               ? (${ORDERED})(roadmap)
-              : roadmap;
+              : asked.get("lists") === "3"
+                ? (${HIDDEN})(roadmap)
+                : roadmap;
+        window.__problems = [];
+        const home = { manifest: ${JSON.stringify(HOME_MANIFEST)}, worker: { source: ${JSON.stringify(HOME_SOURCE)} }, onProblem: (said) => window.__problems.push(said) };
         const compiled = compileDocumentWithoutCheck(document_, { today: () => "2026-10-12" });
         if (!compiled.ok) {
           window.__failed = compiled.findings.map((finding) => finding.message).join("; ");
@@ -177,6 +208,7 @@ async function buildHost() {
             height: "100dvh",
             fonts: false,
             studio: false,
+            ...(asked.get("lists") === "3" ? { views: (schema, registry) => registerWorkerView(registry, home) } : {}),
           });
           window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -356,7 +388,7 @@ function drawnOrder(kindPath) {
 
 const host = await buildHost();
 const errors = [];
-const seen = { chips: [], pane: [], typed: [], via: [], named: [], badges: [], cards: [], seeAll: [], rows: [], page: [], grouped: [], opened: [], resorted: [], ranked: [] };
+const seen = { chips: [], pane: [], typed: [], via: [], named: [], badges: [], cards: [], seeAll: [], rows: [], page: [], grouped: [], opened: [], resorted: [], ranked: [], narrowed: [], section: [], refused: [], shared: [], hidden: [] };
 const featureNames = features.map((feature) => feature.name);
 let browser;
 try {
@@ -548,6 +580,55 @@ try {
         seen.rows.push({ engine, screen: screen.name, ...rows, chips: [...new Set(state.chips.map((one) => one.value.split(":")[0]))], whole });
         seen.page.push({ engine, screen: screen.name, where: "features", sideways: state.pageScrollsSideways });
       }
+      /* A custom home's links: to a list narrowed, to a section, refused for a field the kind lacks; and a lens kept off the lists. */
+      {
+        const homeDrawn = (page) => page.waitForFunction(() => Boolean(document.querySelector("[data-worker-view]")?.shadowRoot?.querySelector("#building")), null, { timeout: 30_000 }).then(() => true, () => false);
+        const where = (page) => page.evaluate(() => ({ path: `${location.pathname}${location.search}${location.hash}`, focused: (document.activeElement?.textContent ?? "").trim(), top: Math.round(document.activeElement?.getBoundingClientRect().top ?? -1), height: innerHeight }));
+        {
+          const { page, close } = await open("/", "lists=3");
+          const drawn = await homeDrawn(page);
+          const bar = await page.evaluate(() => [...document.querySelectorAll('[data-testid^="app-place-"]')].map((one) => one.getAttribute("data-testid")));
+          await page.locator("#building").click();
+          await page.waitForTimeout(800);
+          seen.narrowed.push({ engine, screen: screen.name, drawn, ...(await where(page)), count: (await page.evaluate(listState)).count });
+          seen.hidden.push({ engine, screen: screen.name, bar });
+          await close();
+        }
+        {
+          const { page, close } = await open("/", "lists=3");
+          await homeDrawn(page);
+          await page.locator("#section").click();
+          await page.waitForTimeout(1_200);
+          seen.section.push({ engine, screen: screen.name, ...(await where(page)), title: await page.evaluate(() => document.querySelector("[data-graview-page-title]")?.textContent?.trim() ?? null) });
+          await shot(page, "navigate-section");
+          await close();
+        }
+        {
+          const { page, close } = await open("/", "lists=3");
+          await homeDrawn(page);
+          await page.locator("#wrong").click();
+          await page.waitForTimeout(600);
+          seen.refused.push({ engine, screen: screen.name, ...(await where(page)), problems: await page.evaluate(() => window.__problems) });
+          await close();
+        }
+        {
+          const { page, close } = await open("/places", "lists=3");
+          const listed = await page.evaluate(() => (document.querySelector('[data-testid="places"]')?.textContent ?? "").includes("Up next"));
+          await close();
+          seen.hidden.at(-1).pageList = listed;
+        }
+        {
+          // A shared address: the list narrowed, at its section, with nothing pressed.
+          const context = await browser.newContext({ viewport });
+          const page = await context.newPage();
+          page.on("pageerror", (error) => errors.push(`${label} shared: ${error.message}`));
+          await page.goto(`${at("growing-host")}/features?filter=stage%3Ashipped&lists=3#features`, { waitUntil: "load" });
+          await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
+          await page.waitForTimeout(1_200);
+          seen.shared.push({ engine, screen: screen.name, ...(await where(page)), count: (await page.evaluate(listState)).count });
+          await context.close();
+        }
+      }
       if (PROBE) process.stdout.write(`${label}: ${JSON.stringify(Object.fromEntries(Object.entries(seen).map(([key, list]) => [key, list.at(-1)])))}\n`);
     }
     await browser.close();
@@ -641,6 +722,26 @@ report.checks.aPersonsOwnOrderKeepsTheDeclaredGroupsAndTheClosedLast = {
 report.checks.featuresOpenByTheRankTheyWorkOutThenByName = {
   seen: seen.ranked,
   ok: every(seen.ranked, (one) => one.rows === features.length && one.first.join() === one.expected.join()),
+};
+report.checks.aViewsLinkToAListNarrowedLandsOnItNarrowedAtAnAddressThatSaysSo = {
+  seen: seen.narrowed,
+  ok: every(seen.narrowed, (one) => one.drawn && one.path === "/features?filter=stage%3Abuilding" && one.count === `${building} of ${features.length} features`),
+};
+report.checks.aViewsNavigateToASectionLandsOnItsHeadingWithTheKeyboard = {
+  seen: seen.section,
+  ok: every(seen.section, (one) => one.path === "/places/up-next#every-feature" && one.title === "Up next" && one.focused === "Every feature" && one.top >= 0 && one.top < one.height),
+};
+report.checks.aFilterOnAFieldTheKindLacksGoesNowhereAndSaysWhy = {
+  seen: seen.refused,
+  ok: every(seen.refused, (one) => one.path === "/?lists=3" && one.problems.some((said) => /^The filter on "features" goes nowhere: Features have no field "stag" to filter by; they filter by name, stage, area/.test(said))),
+};
+report.checks.aSharedAddressOpensTheListNarrowedAtItsSection = {
+  seen: seen.shared,
+  ok: every(seen.shared, (one) => one.count === `${shipped} of ${features.length} features` && one.focused === "Features"),
+};
+report.checks.aLensKeptOffTheListsIsOnNeitherTheBarNorThePageListAndIsReachedAtItsAddress = {
+  seen: seen.hidden.map((one, index) => ({ ...one, reached: seen.section[index]?.title ?? null })),
+  ok: every(seen.hidden, (one, index) => one.bar.some((key) => key === "app-place-kind:feature") && !one.bar.some((key) => /up-next/.test(key)) && one.pageList === false && seen.section[index]?.title === "Up next"),
 };
 report.checks.noPageScrollsSideways ={ seen: seen.page, ok: seen.page.length > 0 && seen.page.every((one) => !one.sideways) };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };

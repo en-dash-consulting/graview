@@ -111,8 +111,30 @@ export function DefaultProblemsPage<S extends AnySchema>({ context }: { context:
 export function ProblemSaid({ violation, schema, brand }: { readonly violation: Violation; readonly schema: AnySchema; readonly brand?: Brand }): ReactNode {
   if (!violation.line) return <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }}>{violation.message}</p>;
   const title = problemTitle(violation);
+  /*
+   * A RULE THAT WROTE ITS SENTENCE LEADS WITH IT. "Nothing is left for
+   * now" over "number of blocks with phase = now 2 ≠ 0" was the box a
+   * broken rule drew, its `says` — what the author wrote for a person to
+   * read — only in a tooltip. The sentence first, the rule's title under
+   * it, and the shape it was judged by one press away, for whoever asks how.
+   */
+  const says = ownSentence(violation);
+  if (says) {
+    return (
+      <div style={{ display: "grid", gap: 4 }} data-testid="problem-line">
+        <p style={{ margin: 0, color: "var(--graview-warn)", fontWeight: 550 }} data-testid="problem-says">
+          {says}
+        </p>
+        {title ? <span style={quiet}>{title}</span> : null}
+        <details data-testid="problem-judged" style={quiet}>
+          <summary style={{ cursor: "pointer", width: "fit-content", minHeight: 24 }}>How it is judged</summary>
+          <RuleLineView line={violation.line} schema={schema} {...(brand ? { brand } : {})} lead="none" />
+        </details>
+      </div>
+    );
+  }
   return (
-    <div style={{ display: "grid", gap: 2 }} data-testid="problem-line" title={ownSentence(violation)}>
+    <div style={{ display: "grid", gap: 2 }} data-testid="problem-line">
       <RuleLineView line={violation.line} schema={schema} {...(brand ? { brand } : {})} lead="none" style={{ color: "var(--graview-warn)" }} />
       {title ? <span style={quiet}>{title}</span> : null}
     </div>

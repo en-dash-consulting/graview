@@ -3,6 +3,8 @@ import type { AnySchema } from "../schema/schema.js";
 import { counted, isCurrent, labelOf } from "../schema/define-node.js";
 import { readableFields } from "../schema/reading.js";
 import { walkKinds } from "../schema/path.js";
+import { coverageUnlinkedWords } from "../coverage-words.js";
+import { sortForGrid } from "../grid-sort.js";
 import type { DescribedItem, DescribedPart } from "./describe-place.js";
 
 /*
@@ -30,6 +32,9 @@ interface CoverageBinding {
   readonly rowGroup?: string;
   readonly groupOrder?: readonly string[];
   readonly columnGroup?: string;
+  /** The rows' order, and the columns' (`grid-sort.ts`). */
+  readonly sort?: unknown;
+  readonly columnSort?: unknown;
 }
 
 const text = (node: Record<string, unknown>, field: string | undefined): string => (field && node[field] !== undefined ? String(node[field]) : "");
@@ -95,15 +100,16 @@ export function coverageGrid(schema: AnySchema, graph: GraphReader, options: Cov
   }
   const order = options.groupOrder ?? [];
   const rank = (value: string) => (order.indexOf(value) === -1 ? order.length : order.indexOf(value));
-  const rows = rowNodes
+  const read = (node: AnyGraphNode, field: string) => (field === "label" ? labelOf(schema.tryDefinition(node.kind), node) : (node as Record<string, unknown>)[field]);
+  const rows = sortForGrid(rowNodes, options.sort, read)
     .map((node) => {
       const record = node as Record<string, unknown>;
-      return { node, label: String(record["label"] ?? labelOf(schema.tryDefinition(node.kind), node)), group: text(record, options.rowGroup), ref: text(record, options.rowRef) };
+      return { node, label: labelOf(schema.tryDefinition(node.kind), node), group: text(record, options.rowGroup), ref: text(record, options.rowRef) };
     })
-    .sort((a, b) => rank(a.group) - rank(b.group) || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0));
-  const columns = columnNodes
+    .sort((a, b) => rank(a.group) - rank(b.group) || (options.sort !== undefined ? 0 : a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0));
+  const columns = sortForGrid(columnNodes, options.columnSort, read)
     .map((node) => ({ node, label: labelOf(schema.tryDefinition(node.kind), node), group: text(node as Record<string, unknown>, options.columnGroup) }))
-    .sort((a, b) => (a.group < b.group ? -1 : a.group > b.group ? 1 : a.node.id < b.node.id ? -1 : a.node.id > b.node.id ? 1 : 0));
+    .sort((a, b) => (a.group < b.group ? -1 : a.group > b.group ? 1 : options.columnSort !== undefined ? 0 : a.node.id < b.node.id ? -1 : a.node.id > b.node.id ? 1 : 0));
   return { rows, columns, cells };
 }
 
@@ -132,6 +138,9 @@ export function coverageParts(schema: AnySchema, graph: GraphReader, options: Co
           const walked = walkKinds(schema, options.columns, steps.slice(0, at + 1));
           return walked.ok ? [...walked.reached] : [];
         });
+  /* Nothing to cross yet: said, and no row listed as though it were the answer. */
+  const unlinked = coverageUnlinkedWords(schema, options, { rows: rows.length, columns: columns.length, cells: cells.length });
+  if (unlinked) return [{ t: "text", text: `${plural(options.rows, rows.length)} against ${plural(options.columns, columns.length)}.` }, { t: "text", text: unlinked }];
   const parts: DescribedPart[] = [
     {
       t: "text",

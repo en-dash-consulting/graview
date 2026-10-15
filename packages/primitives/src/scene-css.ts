@@ -629,6 +629,13 @@ ${/* A CHOSEN RECORD'S LINKS: solid to a record the map draws on its own,
 .graview-record-link-end {
   fill: var(--graview-accent);
 }
+${/* A TIE'S WORDS ON THE GROUND WAIT TO BE ASKED FOR: drawn while the tie
+   or a card at its end is under the pointer or holds the keyboard
+   (\`tie-labels.ts\`), and not otherwise — a label on every line stood over
+   the cards' titles saying what the lines already showed. */ ""}
+.graview-record-link-said[data-graview-tie-said="waiting"] {
+  visibility: hidden;
+}
 .graview-record-link-said {
   max-width: 260px;
   overflow: hidden;
@@ -1259,6 +1266,22 @@ ${/* THE RECORD IN FOCUS KEEPS TO ITS BOX (FR-141). Whatever draws it — the
   max-height: 100%;
   overflow-y: auto;
   flex-shrink: 1;
+}
+${/* ONE SCROLL, AND THE RECORD UNDER A VIEW IN FULL. A view of one record
+   draws the record's own card under it (a worker view's fields, FR-149),
+   and that card is a Panel held to its box — so inside a frame already
+   held to the box it was held twice, and the grid that stacks the two gave
+   the card whatever the view left: "Made by" and the chip under it cut to
+   a sliver. A panel inside the frame's
+   body is drawn whole; the body is the one thing that scrolls. */ ""}
+[data-graview-record-focus] > :not(.graview-kind-tag) [data-graview-primitive="panel"] {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  flex-shrink: 0;
+}
+[data-graview-record-focus] > :not(.graview-kind-tag) [data-graview-primitive="panel"] > .graview-scroll {
+  overflow: visible;
 }
 [data-graview-view][data-graview-selected] {
   filter: drop-shadow(0 0 14px var(--graview-accent-dim));

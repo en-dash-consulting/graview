@@ -40,7 +40,8 @@ graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
 graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
-graview.navigate("offer:7")     // a record, else a place by slug; or { place: "…" }
+graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
+graview.navigate({ place: "features", where: { stage: "building" }, section: "Shipping soon" })
 ```
 
 `props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
@@ -55,7 +56,9 @@ HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so light
 
 ### Links
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text. A destination is a record's id, else a place's slug; any other says why in the console.
+`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text. A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places.
+
+A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard (`#every-feature`). On the scene a list is the kind's stop narrowed (`in.filter`); a section is looked for there too. A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why (`Features have no field "stag" to filter by; they filter by …`), so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
 ### Writes
 

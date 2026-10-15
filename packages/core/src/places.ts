@@ -1,6 +1,7 @@
 import type { GraviewApp, LensDeclaration } from "./app.js";
 import { parseArrangement } from "./arrangement-words.js";
 import { defOf } from "./schema/zod.js";
+import { gridSortProblem } from "./grid-sort.js";
 import type { AnySchema } from "./schema/schema.js";
 import { kindPath, placeSlug, type PagesArrangement, type Place } from "./views/types.js";
 
@@ -21,7 +22,7 @@ import { kindPath, placeSlug, type PagesArrangement, type Place } from "./views/
 export const SHIPPED_LENSES = {
   timeline: { binds: "fields", requiredRoles: ["start", "end"], options: ["columns", "extent", "tick", "minWindow", "arranging"] },
   calendar: { binds: "fields", requiredRoles: ["start"], options: ["today", "range", "weekStartsOn", "perCell", "horizon", "arranging"] },
-  coverage: { binds: "entities", requiredRoles: ["rows", "columns", "link"], options: ["rowRef", "rowGroup", "groupOrder", "requiredGroups", "requiredVia", "badge", "columnGroup"] },
+  coverage: { binds: "entities", requiredRoles: ["rows", "columns", "link"], options: ["rowRef", "rowGroup", "groupOrder", "requiredGroups", "requiredVia", "badge", "columnGroup", "sort", "columnSort"] },
   board: { binds: "entities", requiredRoles: ["slots", "x", "y", "fill"], options: ["fillFrom", "slotCode", "zones", "aspect", "emptyLabel", "pickTarget", "arranging", "arrange"] },
   plan: { binds: "entities", requiredRoles: ["regions", "outline"], options: ["hues", "aspect", "undrawnLabel", "strayLabel", "draw", "place", "help"] },
   reach: { binds: "nothing", requiredRoles: [], options: [] },
@@ -39,7 +40,7 @@ export const SHIPPED_LENSES = {
    * order, each drawn by its card, and moved between columns only by an act
    * the seat may run that sets the field (`columnMoves`).
    */
-  columns: { binds: "fields", requiredRoles: ["column"], options: [] },
+  columns: { binds: "fields", requiredRoles: ["column"], options: ["sort"] },
 } as const satisfies Record<string, { binds: "fields" | "entities" | "nothing"; requiredRoles: readonly string[]; options: readonly string[] }>;
 
 export type ShippedLensName = keyof typeof SHIPPED_LENSES;
@@ -79,6 +80,10 @@ export interface DrawnLens {
   readonly across?: string;
   /** What the factory is handed, as data. */
   readonly options: Readonly<Record<string, unknown>>;
+  /** Kept off the lists (`LensDeclaration.hidden`): reached by its address, a link or `navigate`. */
+  readonly hidden?: boolean;
+  /** `false`: its page leaves off the forms that begin its kind (`LensDeclaration.create`). */
+  readonly create?: false;
 }
 
 /** A declared lens that does not draw, and why — what `describe` says and `check` explains. */
@@ -201,6 +206,14 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
         if (options["extent"] === undefined) options["extent"] = 1440;
       }
       if (lens.name === "columns") {
+        // The cards' order in each column, held to each bound kind's fields.
+        if (options["sort"] !== undefined) {
+          const problem = bound.map((kind) => gridSortProblem(options["sort"], fieldsOf(kind), kind)).find(Boolean);
+          if (problem) {
+            findings.push({ severity: "warning", code: "lens-sort", path: `${at}.options.sort`, message: `"${title}" cannot order its cards: ${problem}.`, fix: `Write { "by": "<a field>", "direction": "asc" }, or drop it.` });
+            delete options["sort"];
+          }
+        }
         // A board's columns are a field's choices: a field of free text or numbers has no columns to stand in.
         for (const kind of bound) {
           const field = (bindings[kind] as Record<string, unknown>)["column"];
@@ -212,6 +225,28 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
       }
       if (lens.name === "calendar" && options["today"] !== undefined && !(typeof options["today"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(options["today"]))) {
         return bad(`${at}.options.today`, "its today is not a date", `Write it as "YYYY-MM-DD", or leave it out and the calendar opens on the day it is drawn.`);
+      }
+      if (lens.name === "calendar" && options["horizon"] !== undefined) {
+        /* A horizon of years: how many at the least, what the app calls them, and the first and last outright where it says them. A number is the years, called "Years". */
+        const horizon = options["horizon"];
+        const year = (value: unknown) => value === undefined || (Number.isInteger(value) && (value as number) >= 1 && (value as number) <= 9999);
+        const whole = typeof horizon === "number" ? { years: horizon, title: "Years" } : horizon;
+        const fits =
+          isRecord(whole) &&
+          Number.isInteger(whole["years"]) &&
+          (whole["years"] as number) >= 1 &&
+          (whole["years"] as number) <= 200 &&
+          typeof whole["title"] === "string" &&
+          whole["title"].trim().length > 0 &&
+          year(whole["from"]) &&
+          year(whole["to"]) &&
+          Object.keys(whole).every((key) => ["years", "title", "from", "to"].includes(key)) &&
+          !(typeof whole["from"] === "number" && typeof whole["to"] === "number" && whole["to"] < whole["from"]);
+        if (fits) options["horizon"] = whole;
+        else {
+          delete options["horizon"];
+          findings.push({ severity: "warning", code: "lens-horizon", path: `${at}.options.horizon`, message: `"${title}" has a horizon that is not a span of years, so it offers no span of years.`, fix: `Write { "years": 30, "title": "The career" } — "from" and "to" (years, like 1962 and 2023) only to pin its ends, which otherwise reach the first and last of its records.` });
+        }
       }
       if (lens.name === "calendar" && options["range"] !== undefined && !["day", "week", "month", "quarter", "year", "years", "agenda"].includes(options["range"] as string)) {
         return bad(`${at}.options.range`, `its range "${String(options["range"])}" is not one a calendar opens at`, `Use one of: day, week, month, quarter, year, agenda.`);
@@ -238,6 +273,15 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
         if (typeof link === "string" && !edges.has(link)) return;
         Object.assign(options, { rows: main, columns, link });
         if (columns !== main) across = columns;
+        /* The rows' order and the columns', each held to its own kind's fields: an order by what is not there is said, and drawn as it came. */
+        for (const [key, kind] of [["sort", main], ["columnSort", columns]] as const) {
+          if (options[key] === undefined) continue;
+          const problem = gridSortProblem(options[key], fieldsOf(kind), kind);
+          if (problem) {
+            findings.push({ severity: "warning", code: "lens-sort", path: `${at}.options.${key}`, message: `"${title}" cannot order its ${key === "sort" ? "rows" : "columns"}: ${problem}.`, fix: `Write { "by": "<a field of ${kind}>", "direction": "asc" }, or drop it.` });
+            delete options[key];
+          }
+        }
       } else if (lens.name === "board") {
         Object.assign(options, { slots: main, x: role("x"), y: role("y"), fill: role("fill") });
         for (const field of ["x", "y"]) if (!fieldsOf(main).includes(options[field] as string)) return;
@@ -280,7 +324,11 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
       }
     }
     for (const kind of stands) taken.set(`${kind}|${as}`, index);
-    drawn.push({ index, lens: lens.name, title, as, kinds: stands, ...(across ? { across } : {}), options });
+    const create = (lens as { create?: unknown }).create;
+    if (create !== undefined && typeof create !== "boolean") {
+      findings.push({ severity: "warning", code: "lens-create", path: `${at}.create`, message: `"${title}" says create ${JSON.stringify(create)}, which is neither true nor false, so its page keeps the forms that begin its kind.`, fix: `Say "create": false to leave them off, or drop it.` });
+    }
+    drawn.push({ index, lens: lens.name, title, as, kinds: stands, ...(across ? { across } : {}), options, ...(lens.hidden === true ? { hidden: true } : {}), ...(create === false ? { create: false as const } : {}) });
   });
   return { drawn, undrawn, findings };
 }

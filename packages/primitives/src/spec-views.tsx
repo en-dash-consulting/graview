@@ -1,8 +1,8 @@
 import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { blockContextFor, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
-import { useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { createContext, Suspense, useContext, type ComponentType, type MouseEvent, type ReactNode } from "react";
+import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { createContext, Suspense, useContext, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
 import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
 import { KindFigure } from "./figure.js";
@@ -222,7 +222,7 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
     }
     case "number":
       return (
-        <span className="graview-spec-number">
+        <span className="graview-spec-number" {...(block.emphasis ? { "data-emphasis": block.emphasis } : {})}>
           <span className="graview-spec-number-value">{block.text}</span>
           {block.label ? <span className="graview-spec-label">{block.label}</span> : null}
         </span>
@@ -242,8 +242,31 @@ function SpecFigure() {
   ) : null;
 }
 
+/**
+ * BADGES SIDE BY SIDE. A card's "high", "layout" and "now" each stood on a
+ * line of its own, the view being a column: three states read as a list.
+ * Badges that follow one another are one run, flowing and wrapping as chips
+ * do; a badge alone stands where it is.
+ */
 function ResolvedBlocks({ blocks }: { readonly blocks: readonly ResolvedBlock[] }): ReactNode {
-  return blocks.map((block, i) => <Resolved key={i} block={block} />);
+  const drawn: ReactNode[] = [];
+  for (let i = 0; i < blocks.length; i++) {
+    let end = i;
+    while (blocks[end]?.t === "badge" && blocks[end + 1]?.t === "badge") end++;
+    if (end === i) {
+      drawn.push(<Resolved key={i} block={blocks[i]!} />);
+      continue;
+    }
+    drawn.push(
+      <span key={i} className="graview-spec-badges">
+        {blocks.slice(i, end + 1).map((block, at) => (
+          <Resolved key={at} block={block} />
+        ))}
+      </span>,
+    );
+    i = end;
+  }
+  return drawn;
 }
 
 /** Resolved blocks, drawn as `view` — `"home"`, `"<kind>.page"` — whose blocks a face claims by key (`BlockSlots`). */
@@ -310,6 +333,23 @@ function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode;
   const { store, views } = useGraview();
   const label = labelOf(store.schema.tryDefinition(node.kind), node);
   const View = views.lookup(node.kind as never, { cardinality: "one", fidelity: as === "card" ? "summary" : "glyph" }) as ViewComponent<AnySchema> | undefined;
+  /*
+   * A ROW IS A LINE OF THE LIST, AS WIDE AS THE LIST. A kind with no row of
+   * its own drew the framework's glyph — the scene's chip, capped at 28
+   * characters for a band slot — so a list of findings on a page 1440 wide
+   * was a column of pills, every name cut at about thirty characters. Here
+   * the record's name is the row's, whole, wrapping where it must.
+   */
+  if (as === "row" && depth <= MAX_LIST_DEPTH && (!View || isDefaultView(View))) {
+    return (
+      <li className="graview-spec-item" data-graview-listed={node.id} data-as={as}>
+        <ListedLink node={node} label={label} />
+        <div className="graview-spec graview-spec-row" data-graview-spec="row" data-graview-kind={node.kind} aria-hidden="true">
+          <strong className="graview-spec-title">{label}</strong>
+        </div>
+      </li>
+    );
+  }
   return (
     <li className="graview-spec-item" data-graview-listed={node.id} data-as={as}>
       {/* The link first: a reader hears the record's name, then what its card says of it. */}
@@ -370,6 +410,8 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
   const depth = useContext(ListDepth) + 1;
   const { store } = useGraview();
   const links = useContext(SpecLinks);
+  /* How many it draws: the first page, and a page more each time "Show N more" is pressed (2026-10-15). */
+  const [shown, show] = useState(list.members.length);
   if (list.failed) return <p className="graview-spec-text">—</p>;
   if (list.members.length === 0) return list.empty ? <p className="graview-spec-text graview-spec-empty">{list.empty}</p> : null;
   const listOf = (members: readonly AnyGraphNode[], said: AlreadySaid | null = null) =>
@@ -392,26 +434,57 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
         ))}
       </ul>
     );
+  /*
+   * PAST A PAGE, A PAGE MORE AT A TIME. A list held more than it drew, and
+   * said "and 58 more" with no way to them; the records past the first page
+   * (`rest`) are drawn a page at a time when "Show N more" is pressed.
+   */
+  const rest = list.rest ?? [];
+  const drawnNow = Math.min(shown, list.members.length + rest.length);
+  const members = drawnNow > list.members.length ? [...list.members, ...rest].slice(0, drawnNow) : list.members;
+  const waiting = list.members.length + rest.length - drawnNow;
+  const page = Math.max(1, list.members.length);
+  const showMore =
+    waiting > 0 ? (
+      <p className="graview-spec-text graview-spec-more">
+        <button type="button" className="graview-spec-show-more" data-graview-show-more={waiting} onClick={() => show(drawnNow + page)}>
+          {`Show ${Math.min(page, waiting)} more`}
+        </button>
+      </p>
+    ) : null;
   // A list cut short says where the rest is, where the face has somewhere to go (`SpecLinkTo.more`); else how many more.
   const total = list.total ?? list.members.length + list.more;
+  const beyond = list.more - rest.length;
   const tail =
-    links?.more && total > list.members.length ? (
-      links.more({ members: list.members, total })
-    ) : list.more > 0 ? (
-      <p className="graview-spec-text graview-spec-more">{`and ${list.more} more`}</p>
-    ) : null;
+    showMore ??
+    (links?.more && total > members.length ? (
+      links.more({ members, total })
+    ) : beyond > 0 ? (
+      <p className="graview-spec-text graview-spec-more">{`and ${beyond} more`}</p>
+    ) : null);
   if (!list.groups) {
     return (
       <div className="graview-spec-listing">
-        {listOf(list.members)}
+        {listOf(members)}
         {tail}
       </div>
     );
   }
   const Heading = `h${list.headingLevel}` as "h2";
+  // Past the first page, the groups over every record listed, cut to as many as are drawn, in their order.
+  let left = drawnNow;
+  const groups =
+    drawnNow > list.members.length && list.everyGroup
+      ? list.everyGroup.flatMap((group) => {
+          if (left <= 0) return [];
+          const some = group.members.slice(0, left);
+          left -= some.length;
+          return [{ ...group, members: some }];
+        })
+      : list.groups;
   return (
     <div className="graview-spec-listing">
-      {list.groups.map((group) => (
+      {groups.map((group) => (
         <section key={group.value ?? ""} className="graview-spec-list-group" data-graview-group={group.value ?? ""}>
           {group.heading ? <Heading className="graview-spec-list-heading">{group.heading}</Heading> : null}
           {listOf(group.members, group.value !== null ? { values: [group.value, ...(group.heading ? [group.heading] : [])] } : null)}

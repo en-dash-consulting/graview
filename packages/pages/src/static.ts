@@ -83,6 +83,62 @@ export interface RenderPlaceOptions {
    * face writes them, from its root.
    */
   readonly base?: string;
+  /**
+   * A PRODUCT'S OWN DESIGN, for the page as the routed face's registry
+   * gives one (`.register(kind, "record", …)`, `.surface("shell", …)`) —
+   * without React. `records[kind]` writes a record's page in the design's
+   * own markup; `document` writes the whole document around what a page
+   * says. Each reads only what this seat may see, and a writer that answers
+   * `undefined` leaves the derived page in place.
+   */
+  readonly design?: StaticDesign;
+}
+
+/** A record as a design reads it: what this seat may see of it, and the way to what it relates to. */
+export interface StaticRecord {
+  readonly id: string;
+  readonly kind: string;
+  /** Its name, as its label says it. */
+  readonly title: string;
+  /** Its fields, as this seat may read them. */
+  readonly fields: Readonly<Record<string, unknown>>;
+  /** The records it relates to by one relation — outward unless said, in the order they were related — that this seat may see. */
+  related(edge: string, direction?: "out" | "in"): readonly StaticRecord[];
+}
+
+/** The app as a design reads it while it writes one page: every record of a kind, one by id, an address under the base. */
+export interface StaticSite {
+  records(kind: string): readonly StaticRecord[];
+  record(id: string): StaticRecord | undefined;
+  href(path: string): string;
+}
+
+/** What `StaticDesign.document` is handed: the page as written, and what goes around it. */
+export interface StaticDocument {
+  /** The `<title>`: the place's, then the app's name. */
+  readonly title: string;
+  readonly lang: string;
+  readonly scheme: Scheme;
+  /** The app's look as one stylesheet, which the derived document carries in its `<style>`. */
+  readonly css: string;
+  /** The app's name and mark, as the derived document heads every page with. */
+  readonly masthead: string;
+  /** What the page says: the design's own record page, or the derived one. */
+  readonly main: string;
+  readonly found: boolean;
+  /** The record the page is about, when it is one. */
+  readonly record?: StaticRecord;
+  readonly site: StaticSite;
+}
+
+/**
+ * A DESIGN FOR THE STATIC PAGE: a kind's record page in the design's own
+ * markup, and the document around every page. Either may be left out; a
+ * record writer that answers `undefined` leaves that record's derived page.
+ */
+export interface StaticDesign {
+  readonly records?: { readonly [kind: string]: ((record: StaticRecord, site: StaticSite) => string | undefined) | undefined };
+  readonly document?: (page: StaticDocument) => string;
 }
 
 export interface RenderedPlace {
@@ -138,25 +194,66 @@ export function renderPlace<S extends AnySchema>(
   const there = described.ok && !(described.description.place.kind !== null && kept.has(described.description.place.kind));
 
   const write = new Writer(base, seen.schema as AnySchema);
+  const site = staticSite(seen as unknown as Store<AnySchema>, kept, base);
   let title: string;
+  let record: StaticRecord | undefined;
   if (!described.ok || !there) {
     title = "Nothing lives at this address.";
     write.raw(`<h1>${esc(title)}</h1>`);
   } else {
     const d = described.description;
     title = d.place.title;
-    if (d.drawnBy === "record") writeRecord(write, seen as unknown as Store<AnySchema>, d, kept);
+    record = d.drawnBy === "record" ? site.record(d.place.slug) : undefined;
+    const designed = record ? options.design?.records?.[record.kind]?.(record, site) : undefined;
+    if (designed !== undefined) write.raw(designed);
+    else if (d.drawnBy === "record") writeRecord(write, seen as unknown as Store<AnySchema>, d, kept);
     else if (d.place.kind !== null && d.drawnBy === "derived") writeList(write, seen as unknown as Store<AnySchema>, d, locale);
     else writePlace(write, d);
   }
   const found = there;
   const head = title === appName ? title : `${title} — ${appName}`;
   const masthead = writeMasthead(brand, appName, base);
-  const html =
-    `<!doctype html>\n<html lang="${esc(locale)}" data-graview-static="" data-scheme="${scheme}">\n<head>\n<meta charset="utf-8">\n` +
-    `<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(head)}</title>\n<style>\n${css}\n</style>\n</head>\n` +
-    `<body>\n<div class="gv-page">\n${masthead}\n<main>\n${write.out()}\n</main>\n</div>\n</body>\n</html>\n`;
+  const main = write.out();
+  const html = options.design?.document
+    ? options.design.document({ title: head, lang: locale, scheme, css, masthead, main, found, ...(record ? { record } : {}), site })
+    : `<!doctype html>\n<html lang="${esc(locale)}" data-graview-static="" data-scheme="${scheme}">\n<head>\n<meta charset="utf-8">\n` +
+      `<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>${esc(head)}</title>\n<style>\n${css}\n</style>\n</head>\n` +
+      `<body>\n<div class="gv-page">\n${masthead}\n<main>\n${main}\n</main>\n</div>\n</body>\n</html>\n`;
   return { html, css, title: head, found };
+}
+
+/**
+ * THE APP AS A DESIGN READS IT: over the graph this seat may see, with the
+ * kinds kept from it gone — a record of one is answered as no record, and a
+ * relation to one is not there.
+ */
+function staticSite(seen: Store<AnySchema>, kept: ReadonlySet<string>, base: string): StaticSite {
+  const made = new Map<string, StaticRecord>();
+  const recordOf = (id: string): StaticRecord | undefined => {
+    const known = made.get(id);
+    if (known) return known;
+    const node = seen.graph.getNode(id) as ({ id: string; kind: string } & Record<string, unknown>) | undefined;
+    if (!node || kept.has(node.kind)) return undefined;
+    const { id: _id, kind, ...fields } = node;
+    const one: StaticRecord = {
+      id,
+      kind,
+      title: labelOf(seen.schema.tryDefinition(kind), node as never),
+      fields,
+      related(edge, direction = "out") {
+        return (direction === "out" ? seen.graph.out(id, edge) : seen.graph.in(id, edge))
+          .map((other) => recordOf(other.id))
+          .filter((other): other is StaticRecord => other !== undefined);
+      },
+    };
+    made.set(id, one);
+    return one;
+  };
+  return {
+    records: (kind) => (kept.has(kind) ? [] : seen.graph.nodesOfKind(kind).map((node) => recordOf(node.id)).filter((one): one is StaticRecord => one !== undefined)),
+    record: recordOf,
+    href: (path) => `${base}${path}`,
+  };
 }
 
 /* ------------------------------------------------------------ the places */

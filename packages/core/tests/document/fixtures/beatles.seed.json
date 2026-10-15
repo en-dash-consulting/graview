@@ -1,0 +1,2022 @@
+{
+ "nodes": [
+  {
+   "id": "writer-lennon",
+   "kind": "writer",
+   "name": "Lennon"
+  },
+  {
+   "id": "writer-mccartney",
+   "kind": "writer",
+   "name": "McCartney"
+  },
+  {
+   "id": "writer-harrison",
+   "kind": "writer",
+   "name": "Harrison"
+  },
+  {
+   "id": "writer-starkey",
+   "kind": "writer",
+   "name": "Starkey"
+  },
+  {
+   "id": "era-1962",
+   "kind": "era",
+   "name": "Beatlemania",
+   "began": 1962
+  },
+  {
+   "id": "era-1966",
+   "kind": "era",
+   "name": "The studio years",
+   "began": 1966
+  },
+  {
+   "id": "era-1970",
+   "kind": "era",
+   "name": "After the band",
+   "began": 1970
+  },
+  {
+   "id": "release-rubber-soul",
+   "kind": "release",
+   "name": "Rubber Soul",
+   "label": "Parlophone",
+   "released": "1965-12-03"
+  },
+  {
+   "id": "release-please-please-me",
+   "kind": "release",
+   "name": "Please Please Me",
+   "label": "Parlophone",
+   "released": "1963-03-22"
+  },
+  {
+   "id": "release-now-and-then",
+   "kind": "release",
+   "name": "Now and Then",
+   "label": "Parlophone",
+   "released": "2023-11-02"
+  },
+  {
+   "id": "release-yellow-submarine",
+   "kind": "release",
+   "name": "Yellow Submarine",
+   "label": "Parlophone",
+   "released": "1969-01-17"
+  },
+  {
+   "id": "release-a-hard-day-s-night",
+   "kind": "release",
+   "name": "A Hard Day's Night",
+   "label": "Parlophone",
+   "released": "1964-07-10"
+  },
+  {
+   "id": "release-anthology-1",
+   "kind": "release",
+   "name": "Anthology 1",
+   "label": "Parlophone",
+   "released": "1995-11-20"
+  },
+  {
+   "id": "release-let-it-be",
+   "kind": "release",
+   "name": "Let It Be",
+   "label": "Parlophone",
+   "released": "1970-05-08"
+  },
+  {
+   "id": "release-sgt-pepper-s-lonely-hearts-club-band",
+   "kind": "release",
+   "name": "Sgt. Pepper's Lonely Hearts Club Band",
+   "label": "Parlophone",
+   "released": "1967-05-26"
+  },
+  {
+   "id": "release-with-the-beatles",
+   "kind": "release",
+   "name": "With the Beatles",
+   "label": "Parlophone",
+   "released": "1963-11-22"
+  },
+  {
+   "id": "release-love",
+   "kind": "release",
+   "name": "Love",
+   "label": "Parlophone",
+   "released": "2006-11-20"
+  },
+  {
+   "id": "release-beatles-for-sale",
+   "kind": "release",
+   "name": "Beatles for Sale",
+   "label": "Parlophone",
+   "released": "1964-12-04"
+  },
+  {
+   "id": "release-love-me-do",
+   "kind": "release",
+   "name": "Love Me Do",
+   "label": "Parlophone",
+   "released": "1962-10-05"
+  },
+  {
+   "id": "release-the-beatles",
+   "kind": "release",
+   "name": "The Beatles",
+   "label": "Parlophone",
+   "released": "1968-11-22"
+  },
+  {
+   "id": "release-1",
+   "kind": "release",
+   "name": "1",
+   "label": "Parlophone",
+   "released": "2000-11-13"
+  },
+  {
+   "id": "release-help",
+   "kind": "release",
+   "name": "Help!",
+   "label": "Parlophone",
+   "released": "1965-08-06"
+  },
+  {
+   "id": "release-abbey-road",
+   "kind": "release",
+   "name": "Abbey Road",
+   "label": "Parlophone",
+   "released": "1969-09-26"
+  },
+  {
+   "id": "release-revolver",
+   "kind": "release",
+   "name": "Revolver",
+   "label": "Parlophone",
+   "released": "1966-08-05"
+  },
+  {
+   "id": "release-live-at-the-bbc",
+   "kind": "release",
+   "name": "Live at the BBC",
+   "label": "Parlophone",
+   "released": "1994-11-30"
+  },
+  {
+   "id": "song-001",
+   "kind": "song",
+   "name": "Song 001"
+  },
+  {
+   "id": "song-002",
+   "kind": "song",
+   "name": "Song 002"
+  },
+  {
+   "id": "song-003",
+   "kind": "song",
+   "name": "Song 003"
+  },
+  {
+   "id": "song-004",
+   "kind": "song",
+   "name": "Song 004"
+  },
+  {
+   "id": "song-005",
+   "kind": "song",
+   "name": "Song 005"
+  },
+  {
+   "id": "song-006",
+   "kind": "song",
+   "name": "Song 006"
+  },
+  {
+   "id": "song-007",
+   "kind": "song",
+   "name": "Song 007"
+  },
+  {
+   "id": "song-008",
+   "kind": "song",
+   "name": "Song 008"
+  },
+  {
+   "id": "song-009",
+   "kind": "song",
+   "name": "Song 009"
+  },
+  {
+   "id": "song-010",
+   "kind": "song",
+   "name": "Song 010"
+  },
+  {
+   "id": "song-011",
+   "kind": "song",
+   "name": "Song 011"
+  },
+  {
+   "id": "song-012",
+   "kind": "song",
+   "name": "Song 012"
+  },
+  {
+   "id": "song-013",
+   "kind": "song",
+   "name": "Song 013"
+  },
+  {
+   "id": "song-014",
+   "kind": "song",
+   "name": "Song 014"
+  },
+  {
+   "id": "song-015",
+   "kind": "song",
+   "name": "Song 015"
+  },
+  {
+   "id": "song-016",
+   "kind": "song",
+   "name": "Song 016"
+  },
+  {
+   "id": "song-017",
+   "kind": "song",
+   "name": "Song 017"
+  },
+  {
+   "id": "song-018",
+   "kind": "song",
+   "name": "Song 018"
+  },
+  {
+   "id": "song-019",
+   "kind": "song",
+   "name": "Song 019"
+  },
+  {
+   "id": "song-020",
+   "kind": "song",
+   "name": "Song 020"
+  },
+  {
+   "id": "song-021",
+   "kind": "song",
+   "name": "Song 021"
+  },
+  {
+   "id": "song-022",
+   "kind": "song",
+   "name": "Song 022"
+  },
+  {
+   "id": "song-023",
+   "kind": "song",
+   "name": "Song 023"
+  },
+  {
+   "id": "song-024",
+   "kind": "song",
+   "name": "Song 024"
+  },
+  {
+   "id": "song-025",
+   "kind": "song",
+   "name": "Song 025"
+  },
+  {
+   "id": "song-026",
+   "kind": "song",
+   "name": "Song 026"
+  },
+  {
+   "id": "song-027",
+   "kind": "song",
+   "name": "Song 027"
+  },
+  {
+   "id": "song-028",
+   "kind": "song",
+   "name": "Song 028"
+  },
+  {
+   "id": "song-029",
+   "kind": "song",
+   "name": "Song 029"
+  },
+  {
+   "id": "song-030",
+   "kind": "song",
+   "name": "Song 030"
+  },
+  {
+   "id": "song-031",
+   "kind": "song",
+   "name": "Song 031"
+  },
+  {
+   "id": "song-032",
+   "kind": "song",
+   "name": "Song 032"
+  },
+  {
+   "id": "song-033",
+   "kind": "song",
+   "name": "Song 033"
+  },
+  {
+   "id": "song-034",
+   "kind": "song",
+   "name": "Song 034"
+  },
+  {
+   "id": "song-035",
+   "kind": "song",
+   "name": "Song 035"
+  },
+  {
+   "id": "song-036",
+   "kind": "song",
+   "name": "Song 036"
+  },
+  {
+   "id": "song-037",
+   "kind": "song",
+   "name": "Song 037"
+  },
+  {
+   "id": "song-038",
+   "kind": "song",
+   "name": "Song 038"
+  },
+  {
+   "id": "song-039",
+   "kind": "song",
+   "name": "Song 039"
+  },
+  {
+   "id": "song-040",
+   "kind": "song",
+   "name": "Song 040"
+  },
+  {
+   "id": "song-041",
+   "kind": "song",
+   "name": "Song 041"
+  },
+  {
+   "id": "song-042",
+   "kind": "song",
+   "name": "Song 042"
+  },
+  {
+   "id": "song-043",
+   "kind": "song",
+   "name": "Song 043"
+  },
+  {
+   "id": "song-044",
+   "kind": "song",
+   "name": "Song 044"
+  },
+  {
+   "id": "song-045",
+   "kind": "song",
+   "name": "Song 045"
+  },
+  {
+   "id": "song-046",
+   "kind": "song",
+   "name": "Song 046"
+  },
+  {
+   "id": "song-047",
+   "kind": "song",
+   "name": "Song 047"
+  },
+  {
+   "id": "song-048",
+   "kind": "song",
+   "name": "Song 048"
+  },
+  {
+   "id": "song-049",
+   "kind": "song",
+   "name": "Song 049"
+  },
+  {
+   "id": "song-050",
+   "kind": "song",
+   "name": "Song 050"
+  },
+  {
+   "id": "song-051",
+   "kind": "song",
+   "name": "Song 051"
+  },
+  {
+   "id": "song-052",
+   "kind": "song",
+   "name": "Song 052"
+  },
+  {
+   "id": "song-053",
+   "kind": "song",
+   "name": "Song 053"
+  },
+  {
+   "id": "song-054",
+   "kind": "song",
+   "name": "Song 054"
+  },
+  {
+   "id": "song-055",
+   "kind": "song",
+   "name": "Song 055"
+  },
+  {
+   "id": "song-056",
+   "kind": "song",
+   "name": "Song 056"
+  },
+  {
+   "id": "song-057",
+   "kind": "song",
+   "name": "Song 057"
+  },
+  {
+   "id": "song-058",
+   "kind": "song",
+   "name": "Song 058"
+  },
+  {
+   "id": "song-059",
+   "kind": "song",
+   "name": "Song 059"
+  },
+  {
+   "id": "song-060",
+   "kind": "song",
+   "name": "Song 060"
+  },
+  {
+   "id": "song-061",
+   "kind": "song",
+   "name": "Song 061"
+  },
+  {
+   "id": "song-062",
+   "kind": "song",
+   "name": "Song 062"
+  },
+  {
+   "id": "song-063",
+   "kind": "song",
+   "name": "Song 063"
+  },
+  {
+   "id": "song-064",
+   "kind": "song",
+   "name": "Song 064"
+  },
+  {
+   "id": "song-065",
+   "kind": "song",
+   "name": "Song 065"
+  },
+  {
+   "id": "song-066",
+   "kind": "song",
+   "name": "Song 066"
+  },
+  {
+   "id": "song-067",
+   "kind": "song",
+   "name": "Song 067"
+  },
+  {
+   "id": "song-068",
+   "kind": "song",
+   "name": "Song 068"
+  },
+  {
+   "id": "song-069",
+   "kind": "song",
+   "name": "Song 069"
+  },
+  {
+   "id": "song-070",
+   "kind": "song",
+   "name": "Song 070"
+  },
+  {
+   "id": "song-071",
+   "kind": "song",
+   "name": "Song 071"
+  },
+  {
+   "id": "song-072",
+   "kind": "song",
+   "name": "Song 072"
+  },
+  {
+   "id": "song-073",
+   "kind": "song",
+   "name": "Song 073"
+  },
+  {
+   "id": "song-074",
+   "kind": "song",
+   "name": "Song 074"
+  },
+  {
+   "id": "song-075",
+   "kind": "song",
+   "name": "Song 075"
+  },
+  {
+   "id": "song-076",
+   "kind": "song",
+   "name": "Song 076"
+  },
+  {
+   "id": "song-077",
+   "kind": "song",
+   "name": "Song 077"
+  },
+  {
+   "id": "song-078",
+   "kind": "song",
+   "name": "Song 078"
+  },
+  {
+   "id": "song-079",
+   "kind": "song",
+   "name": "Song 079"
+  },
+  {
+   "id": "song-080",
+   "kind": "song",
+   "name": "Song 080"
+  },
+  {
+   "id": "song-081",
+   "kind": "song",
+   "name": "Song 081"
+  },
+  {
+   "id": "song-082",
+   "kind": "song",
+   "name": "Song 082"
+  },
+  {
+   "id": "song-083",
+   "kind": "song",
+   "name": "Song 083"
+  },
+  {
+   "id": "song-084",
+   "kind": "song",
+   "name": "Song 084"
+  },
+  {
+   "id": "song-085",
+   "kind": "song",
+   "name": "Song 085"
+  },
+  {
+   "id": "song-086",
+   "kind": "song",
+   "name": "Song 086"
+  },
+  {
+   "id": "song-087",
+   "kind": "song",
+   "name": "Song 087"
+  },
+  {
+   "id": "song-088",
+   "kind": "song",
+   "name": "Song 088"
+  },
+  {
+   "id": "song-089",
+   "kind": "song",
+   "name": "Song 089"
+  },
+  {
+   "id": "song-090",
+   "kind": "song",
+   "name": "Song 090"
+  },
+  {
+   "id": "song-091",
+   "kind": "song",
+   "name": "Song 091"
+  },
+  {
+   "id": "song-092",
+   "kind": "song",
+   "name": "Song 092"
+  },
+  {
+   "id": "song-093",
+   "kind": "song",
+   "name": "Song 093"
+  },
+  {
+   "id": "song-094",
+   "kind": "song",
+   "name": "Song 094"
+  },
+  {
+   "id": "song-095",
+   "kind": "song",
+   "name": "Song 095"
+  },
+  {
+   "id": "song-096",
+   "kind": "song",
+   "name": "Song 096"
+  },
+  {
+   "id": "song-097",
+   "kind": "song",
+   "name": "Song 097"
+  },
+  {
+   "id": "song-098",
+   "kind": "song",
+   "name": "Song 098"
+  },
+  {
+   "id": "song-099",
+   "kind": "song",
+   "name": "Song 099"
+  },
+  {
+   "id": "song-100",
+   "kind": "song",
+   "name": "Song 100"
+  },
+  {
+   "id": "song-101",
+   "kind": "song",
+   "name": "Song 101"
+  },
+  {
+   "id": "song-102",
+   "kind": "song",
+   "name": "Song 102"
+  },
+  {
+   "id": "song-103",
+   "kind": "song",
+   "name": "Song 103"
+  },
+  {
+   "id": "song-104",
+   "kind": "song",
+   "name": "Song 104"
+  },
+  {
+   "id": "song-105",
+   "kind": "song",
+   "name": "Song 105"
+  },
+  {
+   "id": "song-106",
+   "kind": "song",
+   "name": "Song 106"
+  },
+  {
+   "id": "song-107",
+   "kind": "song",
+   "name": "Song 107"
+  },
+  {
+   "id": "song-108",
+   "kind": "song",
+   "name": "Song 108"
+  },
+  {
+   "id": "song-109",
+   "kind": "song",
+   "name": "Song 109"
+  },
+  {
+   "id": "song-110",
+   "kind": "song",
+   "name": "Song 110"
+  },
+  {
+   "id": "song-111",
+   "kind": "song",
+   "name": "Song 111"
+  },
+  {
+   "id": "song-112",
+   "kind": "song",
+   "name": "Song 112"
+  },
+  {
+   "id": "song-113",
+   "kind": "song",
+   "name": "Song 113"
+  },
+  {
+   "id": "song-114",
+   "kind": "song",
+   "name": "Song 114"
+  },
+  {
+   "id": "song-115",
+   "kind": "song",
+   "name": "Song 115"
+  },
+  {
+   "id": "song-116",
+   "kind": "song",
+   "name": "Song 116"
+  },
+  {
+   "id": "song-117",
+   "kind": "song",
+   "name": "Song 117"
+  },
+  {
+   "id": "song-118",
+   "kind": "song",
+   "name": "Song 118"
+  },
+  {
+   "id": "song-119",
+   "kind": "song",
+   "name": "Song 119"
+  },
+  {
+   "id": "song-120",
+   "kind": "song",
+   "name": "Song 120"
+  },
+  {
+   "id": "song-121",
+   "kind": "song",
+   "name": "Song 121"
+  },
+  {
+   "id": "song-122",
+   "kind": "song",
+   "name": "Song 122"
+  },
+  {
+   "id": "song-123",
+   "kind": "song",
+   "name": "Song 123"
+  },
+  {
+   "id": "song-124",
+   "kind": "song",
+   "name": "Song 124"
+  },
+  {
+   "id": "song-125",
+   "kind": "song",
+   "name": "Song 125"
+  },
+  {
+   "id": "song-126",
+   "kind": "song",
+   "name": "Song 126"
+  },
+  {
+   "id": "song-127",
+   "kind": "song",
+   "name": "Song 127"
+  },
+  {
+   "id": "song-128",
+   "kind": "song",
+   "name": "Song 128"
+  },
+  {
+   "id": "song-129",
+   "kind": "song",
+   "name": "Song 129"
+  },
+  {
+   "id": "song-130",
+   "kind": "song",
+   "name": "Song 130"
+  },
+  {
+   "id": "song-131",
+   "kind": "song",
+   "name": "Song 131"
+  },
+  {
+   "id": "song-132",
+   "kind": "song",
+   "name": "Song 132"
+  },
+  {
+   "id": "song-133",
+   "kind": "song",
+   "name": "Song 133"
+  },
+  {
+   "id": "song-134",
+   "kind": "song",
+   "name": "Song 134"
+  },
+  {
+   "id": "song-135",
+   "kind": "song",
+   "name": "Song 135"
+  },
+  {
+   "id": "song-136",
+   "kind": "song",
+   "name": "Song 136"
+  },
+  {
+   "id": "song-137",
+   "kind": "song",
+   "name": "Song 137"
+  },
+  {
+   "id": "song-138",
+   "kind": "song",
+   "name": "Song 138"
+  },
+  {
+   "id": "song-139",
+   "kind": "song",
+   "name": "Song 139"
+  },
+  {
+   "id": "song-140",
+   "kind": "song",
+   "name": "Song 140"
+  },
+  {
+   "id": "song-141",
+   "kind": "song",
+   "name": "Song 141"
+  },
+  {
+   "id": "song-142",
+   "kind": "song",
+   "name": "Song 142"
+  },
+  {
+   "id": "song-143",
+   "kind": "song",
+   "name": "Song 143"
+  },
+  {
+   "id": "song-144",
+   "kind": "song",
+   "name": "Song 144"
+  },
+  {
+   "id": "song-145",
+   "kind": "song",
+   "name": "Song 145"
+  },
+  {
+   "id": "song-146",
+   "kind": "song",
+   "name": "Song 146"
+  },
+  {
+   "id": "song-147",
+   "kind": "song",
+   "name": "Song 147"
+  },
+  {
+   "id": "song-148",
+   "kind": "song",
+   "name": "Song 148"
+  },
+  {
+   "id": "song-149",
+   "kind": "song",
+   "name": "Song 149"
+  },
+  {
+   "id": "song-150",
+   "kind": "song",
+   "name": "Song 150"
+  },
+  {
+   "id": "song-151",
+   "kind": "song",
+   "name": "Song 151"
+  },
+  {
+   "id": "song-152",
+   "kind": "song",
+   "name": "Song 152"
+  },
+  {
+   "id": "song-153",
+   "kind": "song",
+   "name": "Song 153"
+  },
+  {
+   "id": "song-154",
+   "kind": "song",
+   "name": "Song 154"
+  },
+  {
+   "id": "song-155",
+   "kind": "song",
+   "name": "Song 155"
+  },
+  {
+   "id": "song-156",
+   "kind": "song",
+   "name": "Song 156"
+  },
+  {
+   "id": "song-157",
+   "kind": "song",
+   "name": "Song 157"
+  },
+  {
+   "id": "song-158",
+   "kind": "song",
+   "name": "Song 158"
+  },
+  {
+   "id": "artwork-abbey-road",
+   "kind": "artwork",
+   "name": "Abbey Road",
+   "source": "https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg"
+  }
+ ],
+ "edges": [
+  {
+   "id": "e-release-rubber-soul-era",
+   "kind": "inEra",
+   "from": "release-rubber-soul",
+   "to": "era-1962"
+  },
+  {
+   "id": "e-release-please-please-me-era",
+   "kind": "inEra",
+   "from": "release-please-please-me",
+   "to": "era-1962"
+  },
+  {
+   "id": "e-release-now-and-then-era",
+   "kind": "inEra",
+   "from": "release-now-and-then",
+   "to": "era-1970"
+  },
+  {
+   "id": "e-release-yellow-submarine-era",
+   "kind": "inEra",
+   "from": "release-yellow-submarine",
+   "to": "era-1966"
+  },
+  {
+   "id": "e-release-a-hard-day-s-night-era",
+   "kind": "inEra",
+   "from": "release-a-hard-day-s-night",
+   "to": "era-1962"
+  },
+  {
+   "id": "e-release-anthology-1-era",
+   "kind": "inEra",
+   "from": "release-anthology-1",
+   "to": "era-1970"
+  },
+  {
+   "id": "e-release-let-it-be-era",
+   "kind": "inEra",
+   "from": "release-let-it-be",
+   "to": "era-1970"
+  },
+  {
+   "id": "e-release-sgt-pepper-s-lonely-hearts-club-band-era",
+   "kind": "inEra",
+   "from": "release-sgt-pepper-s-lonely-hearts-club-band",
+   "to": "era-1966"
+  },
+  {
+   "id": "e-release-with-the-beatles-era",
+   "kind": "inEra",
+   "from": "release-with-the-beatles",
+   "to": "era-1962"
+  },
+  {
+   "id": "e-release-love-era",
+   "kind": "inEra",
+   "from": "release-love",
+   "to": "era-1970"
+  },
+  {
+   "id": "e-release-beatles-for-sale-era",
+   "kind": "inEra",
+   "from": "release-beatles-for-sale",
+   "to": "era-1962"
+  },
+  {
+   "id": "e-release-love-me-do-era",
+   "kind": "inEra",
+   "from": "release-love-me-do",
+   "to": "era-1962"
+  },
+  {
+   "id": "e-release-the-beatles-era",
+   "kind": "inEra",
+   "from": "release-the-beatles",
+   "to": "era-1966"
+  },
+  {
+   "id": "e-release-1-era",
+   "kind": "inEra",
+   "from": "release-1",
+   "to": "era-1970"
+  },
+  {
+   "id": "e-release-help-era",
+   "kind": "inEra",
+   "from": "release-help",
+   "to": "era-1962"
+  },
+  {
+   "id": "e-release-abbey-road-era",
+   "kind": "inEra",
+   "from": "release-abbey-road",
+   "to": "era-1966"
+  },
+  {
+   "id": "e-release-revolver-era",
+   "kind": "inEra",
+   "from": "release-revolver",
+   "to": "era-1966"
+  },
+  {
+   "id": "e-release-live-at-the-bbc-era",
+   "kind": "inEra",
+   "from": "release-live-at-the-bbc",
+   "to": "era-1970"
+  },
+  {
+   "id": "e-song-001-w",
+   "kind": "writtenBy",
+   "from": "song-001",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-002-w",
+   "kind": "writtenBy",
+   "from": "song-002",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-003-w",
+   "kind": "writtenBy",
+   "from": "song-003",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-004-w",
+   "kind": "writtenBy",
+   "from": "song-004",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-005-w",
+   "kind": "writtenBy",
+   "from": "song-005",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-006-w",
+   "kind": "writtenBy",
+   "from": "song-006",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-007-w",
+   "kind": "writtenBy",
+   "from": "song-007",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-008-w",
+   "kind": "writtenBy",
+   "from": "song-008",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-009-w",
+   "kind": "writtenBy",
+   "from": "song-009",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-010-w",
+   "kind": "writtenBy",
+   "from": "song-010",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-011-w",
+   "kind": "writtenBy",
+   "from": "song-011",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-012-w",
+   "kind": "writtenBy",
+   "from": "song-012",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-013-w",
+   "kind": "writtenBy",
+   "from": "song-013",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-014-w",
+   "kind": "writtenBy",
+   "from": "song-014",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-015-w",
+   "kind": "writtenBy",
+   "from": "song-015",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-016-w",
+   "kind": "writtenBy",
+   "from": "song-016",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-017-w",
+   "kind": "writtenBy",
+   "from": "song-017",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-018-w",
+   "kind": "writtenBy",
+   "from": "song-018",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-019-w",
+   "kind": "writtenBy",
+   "from": "song-019",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-020-w",
+   "kind": "writtenBy",
+   "from": "song-020",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-021-w",
+   "kind": "writtenBy",
+   "from": "song-021",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-022-w",
+   "kind": "writtenBy",
+   "from": "song-022",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-023-w",
+   "kind": "writtenBy",
+   "from": "song-023",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-024-w",
+   "kind": "writtenBy",
+   "from": "song-024",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-025-w",
+   "kind": "writtenBy",
+   "from": "song-025",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-026-w",
+   "kind": "writtenBy",
+   "from": "song-026",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-027-w",
+   "kind": "writtenBy",
+   "from": "song-027",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-028-w",
+   "kind": "writtenBy",
+   "from": "song-028",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-029-w",
+   "kind": "writtenBy",
+   "from": "song-029",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-030-w",
+   "kind": "writtenBy",
+   "from": "song-030",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-031-w",
+   "kind": "writtenBy",
+   "from": "song-031",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-032-w",
+   "kind": "writtenBy",
+   "from": "song-032",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-033-w",
+   "kind": "writtenBy",
+   "from": "song-033",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-034-w",
+   "kind": "writtenBy",
+   "from": "song-034",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-035-w",
+   "kind": "writtenBy",
+   "from": "song-035",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-036-w",
+   "kind": "writtenBy",
+   "from": "song-036",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-037-w",
+   "kind": "writtenBy",
+   "from": "song-037",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-038-w",
+   "kind": "writtenBy",
+   "from": "song-038",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-039-w",
+   "kind": "writtenBy",
+   "from": "song-039",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-040-w",
+   "kind": "writtenBy",
+   "from": "song-040",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-041-w",
+   "kind": "writtenBy",
+   "from": "song-041",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-042-w",
+   "kind": "writtenBy",
+   "from": "song-042",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-043-w",
+   "kind": "writtenBy",
+   "from": "song-043",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-044-w",
+   "kind": "writtenBy",
+   "from": "song-044",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-045-w",
+   "kind": "writtenBy",
+   "from": "song-045",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-046-w",
+   "kind": "writtenBy",
+   "from": "song-046",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-047-w",
+   "kind": "writtenBy",
+   "from": "song-047",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-048-w",
+   "kind": "writtenBy",
+   "from": "song-048",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-049-w",
+   "kind": "writtenBy",
+   "from": "song-049",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-050-w",
+   "kind": "writtenBy",
+   "from": "song-050",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-051-w",
+   "kind": "writtenBy",
+   "from": "song-051",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-052-w",
+   "kind": "writtenBy",
+   "from": "song-052",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-053-w",
+   "kind": "writtenBy",
+   "from": "song-053",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-054-w",
+   "kind": "writtenBy",
+   "from": "song-054",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-055-w",
+   "kind": "writtenBy",
+   "from": "song-055",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-056-w",
+   "kind": "writtenBy",
+   "from": "song-056",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-057-w",
+   "kind": "writtenBy",
+   "from": "song-057",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-058-w",
+   "kind": "writtenBy",
+   "from": "song-058",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-059-w",
+   "kind": "writtenBy",
+   "from": "song-059",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-060-w",
+   "kind": "writtenBy",
+   "from": "song-060",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-061-w",
+   "kind": "writtenBy",
+   "from": "song-061",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-062-w",
+   "kind": "writtenBy",
+   "from": "song-062",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-063-w",
+   "kind": "writtenBy",
+   "from": "song-063",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-064-w",
+   "kind": "writtenBy",
+   "from": "song-064",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-065-w",
+   "kind": "writtenBy",
+   "from": "song-065",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-066-w",
+   "kind": "writtenBy",
+   "from": "song-066",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-067-w",
+   "kind": "writtenBy",
+   "from": "song-067",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-068-w",
+   "kind": "writtenBy",
+   "from": "song-068",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-069-w",
+   "kind": "writtenBy",
+   "from": "song-069",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-070-w",
+   "kind": "writtenBy",
+   "from": "song-070",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-071-w",
+   "kind": "writtenBy",
+   "from": "song-071",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-072-w",
+   "kind": "writtenBy",
+   "from": "song-072",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-073-w",
+   "kind": "writtenBy",
+   "from": "song-073",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-074-w",
+   "kind": "writtenBy",
+   "from": "song-074",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-075-w",
+   "kind": "writtenBy",
+   "from": "song-075",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-076-w",
+   "kind": "writtenBy",
+   "from": "song-076",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-077-w",
+   "kind": "writtenBy",
+   "from": "song-077",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-078-w",
+   "kind": "writtenBy",
+   "from": "song-078",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-079-w",
+   "kind": "writtenBy",
+   "from": "song-079",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-080-w",
+   "kind": "writtenBy",
+   "from": "song-080",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-081-w",
+   "kind": "writtenBy",
+   "from": "song-081",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-082-w",
+   "kind": "writtenBy",
+   "from": "song-082",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-083-w",
+   "kind": "writtenBy",
+   "from": "song-083",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-084-w",
+   "kind": "writtenBy",
+   "from": "song-084",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-085-w",
+   "kind": "writtenBy",
+   "from": "song-085",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-086-w",
+   "kind": "writtenBy",
+   "from": "song-086",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-087-w",
+   "kind": "writtenBy",
+   "from": "song-087",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-088-w",
+   "kind": "writtenBy",
+   "from": "song-088",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-089-w",
+   "kind": "writtenBy",
+   "from": "song-089",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-090-w",
+   "kind": "writtenBy",
+   "from": "song-090",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-091-w",
+   "kind": "writtenBy",
+   "from": "song-091",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-092-w",
+   "kind": "writtenBy",
+   "from": "song-092",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-093-w",
+   "kind": "writtenBy",
+   "from": "song-093",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-094-w",
+   "kind": "writtenBy",
+   "from": "song-094",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-095-w",
+   "kind": "writtenBy",
+   "from": "song-095",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-096-w",
+   "kind": "writtenBy",
+   "from": "song-096",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-097-w",
+   "kind": "writtenBy",
+   "from": "song-097",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-098-w",
+   "kind": "writtenBy",
+   "from": "song-098",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-099-w",
+   "kind": "writtenBy",
+   "from": "song-099",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-100-w",
+   "kind": "writtenBy",
+   "from": "song-100",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-101-w",
+   "kind": "writtenBy",
+   "from": "song-101",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-102-w",
+   "kind": "writtenBy",
+   "from": "song-102",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-103-w",
+   "kind": "writtenBy",
+   "from": "song-103",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-104-w",
+   "kind": "writtenBy",
+   "from": "song-104",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-105-w",
+   "kind": "writtenBy",
+   "from": "song-105",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-106-w",
+   "kind": "writtenBy",
+   "from": "song-106",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-107-w",
+   "kind": "writtenBy",
+   "from": "song-107",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-108-w",
+   "kind": "writtenBy",
+   "from": "song-108",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-109-w",
+   "kind": "writtenBy",
+   "from": "song-109",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-110-w",
+   "kind": "writtenBy",
+   "from": "song-110",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-111-w",
+   "kind": "writtenBy",
+   "from": "song-111",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-112-w",
+   "kind": "writtenBy",
+   "from": "song-112",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-113-w",
+   "kind": "writtenBy",
+   "from": "song-113",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-114-w",
+   "kind": "writtenBy",
+   "from": "song-114",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-115-w",
+   "kind": "writtenBy",
+   "from": "song-115",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-116-w",
+   "kind": "writtenBy",
+   "from": "song-116",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-117-w",
+   "kind": "writtenBy",
+   "from": "song-117",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-118-w",
+   "kind": "writtenBy",
+   "from": "song-118",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-119-w",
+   "kind": "writtenBy",
+   "from": "song-119",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-120-w",
+   "kind": "writtenBy",
+   "from": "song-120",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-121-w",
+   "kind": "writtenBy",
+   "from": "song-121",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-122-w",
+   "kind": "writtenBy",
+   "from": "song-122",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-123-w",
+   "kind": "writtenBy",
+   "from": "song-123",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-124-w",
+   "kind": "writtenBy",
+   "from": "song-124",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-125-w",
+   "kind": "writtenBy",
+   "from": "song-125",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-126-w",
+   "kind": "writtenBy",
+   "from": "song-126",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-127-w",
+   "kind": "writtenBy",
+   "from": "song-127",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-128-w",
+   "kind": "writtenBy",
+   "from": "song-128",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-129-w",
+   "kind": "writtenBy",
+   "from": "song-129",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-130-w",
+   "kind": "writtenBy",
+   "from": "song-130",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-131-w",
+   "kind": "writtenBy",
+   "from": "song-131",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-132-w",
+   "kind": "writtenBy",
+   "from": "song-132",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-133-w",
+   "kind": "writtenBy",
+   "from": "song-133",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-134-w",
+   "kind": "writtenBy",
+   "from": "song-134",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-135-w",
+   "kind": "writtenBy",
+   "from": "song-135",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-136-w",
+   "kind": "writtenBy",
+   "from": "song-136",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-137-w",
+   "kind": "writtenBy",
+   "from": "song-137",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-138-w",
+   "kind": "writtenBy",
+   "from": "song-138",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-139-w",
+   "kind": "writtenBy",
+   "from": "song-139",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-140-w",
+   "kind": "writtenBy",
+   "from": "song-140",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-141-w",
+   "kind": "writtenBy",
+   "from": "song-141",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-142-w",
+   "kind": "writtenBy",
+   "from": "song-142",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-143-w",
+   "kind": "writtenBy",
+   "from": "song-143",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-144-w",
+   "kind": "writtenBy",
+   "from": "song-144",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-145-w",
+   "kind": "writtenBy",
+   "from": "song-145",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-146-w",
+   "kind": "writtenBy",
+   "from": "song-146",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-147-w",
+   "kind": "writtenBy",
+   "from": "song-147",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-148-w",
+   "kind": "writtenBy",
+   "from": "song-148",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-149-w",
+   "kind": "writtenBy",
+   "from": "song-149",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-150-w",
+   "kind": "writtenBy",
+   "from": "song-150",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-151-w",
+   "kind": "writtenBy",
+   "from": "song-151",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-152-w",
+   "kind": "writtenBy",
+   "from": "song-152",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-153-w",
+   "kind": "writtenBy",
+   "from": "song-153",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-154-w",
+   "kind": "writtenBy",
+   "from": "song-154",
+   "to": "writer-harrison"
+  },
+  {
+   "id": "e-song-155-w",
+   "kind": "writtenBy",
+   "from": "song-155",
+   "to": "writer-starkey"
+  },
+  {
+   "id": "e-song-156-w",
+   "kind": "writtenBy",
+   "from": "song-156",
+   "to": "writer-lennon"
+  },
+  {
+   "id": "e-song-157-w",
+   "kind": "writtenBy",
+   "from": "song-157",
+   "to": "writer-mccartney"
+  },
+  {
+   "id": "e-song-158-w",
+   "kind": "writtenBy",
+   "from": "song-158",
+   "to": "writer-harrison"
+  }
+ ]
+}

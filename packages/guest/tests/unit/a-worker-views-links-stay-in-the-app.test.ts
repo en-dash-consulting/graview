@@ -2,7 +2,7 @@
 import { Store } from "@graview/core";
 import { describe, expect, it } from "vitest";
 import { lin, offersApp, offersSeed } from "../../../../scripts/fixtures/offers-app.js";
-import { createLinks, type Destination } from "../../src/host/links.js";
+import { createLinks, type Arrival } from "../../src/host/links.js";
 import { createOpenDrawing } from "../../src/host/open-draw.js";
 import { createGuestHost } from "../../src/host/session.js";
 
@@ -24,7 +24,7 @@ const text = (data: string) => ({ id: `l${(ids += 1)}`, type: 3, data });
 
 function region() {
   const shelf = store();
-  const went: Destination[] = [];
+  const went: Arrival[] = [];
   const host = document.createElement("div");
   document.body.appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
@@ -96,14 +96,14 @@ describe("a worker view's links", () => {
     expect(went).toEqual([]);
     // And says why, naming the places there are: a link that goes nowhere is not silent.
     expect(lost).toEqual([
-      '"offer:margin" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages".',
-      'The place "the-secrets" is no place of this app: it goes nowhere. Its places: "the-packages".',
+      '"offer:margin" is no record this viewer may see and is no place of this app: it goes nowhere. Its places: "the-packages" (The packages).',
+      'The place "the-secrets" is no place of this app: it goes nowhere. Its places: "the-packages" (The packages).',
     ]);
   });
 
   it("holds the view's code to the same: a place by its slug, a record by its id, nothing else", () => {
     const shelf = store();
-    const went: Destination[] = [];
+    const went: Arrival[] = [];
     const links = createLinks({ sees: (id) => shelf.seenBy(lin).graph.has(id), places: () => places, onNavigate: (to) => went.push(to) });
     const host = createGuestHost({
       store: shelf,
@@ -123,12 +123,12 @@ describe("a worker view's links", () => {
     const judged = createLinks({ sees: (id) => shelf.seenBy(lin).graph.has(id), places: () => places, onLost: (said) => lost.push(said) });
     for (const to of [{ record: "offer:margin" }, { place: "https://attacker.example" }, { record: "https://attacker.example" }]) expect(judged.go(to)).toBe(false);
     expect(lost).toHaveLength(3);
-    for (const said of lost) expect(said).toMatch(/: it goes nowhere\. Its places: "the-packages"\.$/);
+    for (const said of lost) expect(said).toMatch(/: it goes nowhere\. Its places: "the-packages" \(The packages\)\.$/);
   });
 
   it("takes a bare string that is no record but is a place's slug to that place, and a record before a place of the same name", () => {
     const shelf = store();
-    const went: Destination[] = [];
+    const went: Arrival[] = [];
     const lost: string[] = [];
     const links = createLinks({
       sees: (id) => shelf.seenBy(lin).graph.has(id),

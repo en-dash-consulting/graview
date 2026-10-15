@@ -25,7 +25,8 @@ const HOST_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><m
  * Builds the Roadmap's host page and serves it on `screen-reader-host`:
  * the stops `verify-screen-reader` reads from the tree and
  * `voiceover-walk` listens to. `?as=ada|ben` sits the tab down as one of
- * two people; `?face=graview` opens the scene.
+ * two people; `?face=graview` opens the scene; `?presence=off` shows
+ * nobody here, while ops still pass between the tabs.
  */
 export async function buildRoadmapHost(repoRoot) {
   const ROADMAP = resolve(repoRoot, "scripts/fixtures/roadmap/roadmap.gdd.json");
@@ -58,7 +59,8 @@ export async function buildRoadmapHost(repoRoot) {
           routing: "address",
           principal: { kind: "human", id: me.id, name: me.name, roles: ["owner"] },
           people: PEOPLE,
-          presence: createBroadcastPresence("screen-reader"),
+          // ?presence=off: nobody is shown here, as a served store with presence off is (Roadmap f-changes-heard-without-presence).
+          ...(asked.get("presence") === "off" ? {} : { presence: createBroadcastPresence("screen-reader") }),
           label: compiled.app.name,
           heading: 1,
           height: "100dvh",

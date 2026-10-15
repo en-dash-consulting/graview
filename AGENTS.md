@@ -33,6 +33,7 @@ apps/
   rota/            a volunteer rota: the served store, the calendar, three seats
   launcher/        the desk — a Graview app whose subject is the other apps
   promo/           the promotional site
+  site/            graview.dev and its docs, as a Graview app: app.json, the design renderPlace writes every page with, the hand-designed pages
   spike/           platform capability validation against a real browser
 scripts/           verify-*.mjs browser harnesses, smoke-*.mjs packaging rehearsals, site-*.mjs docs build
 docs/              harness verdicts (*.json), the docs site (site/), walkthrough findings
@@ -70,7 +71,7 @@ These are pinned by tests, not by convention:
   (`checkApp`, `compileDocument`, `describeApp`) lives on
   `@graview/core/check`, the city and `sceneThumbnail` on `/scene` (the map alone, which the scene lays out with, on `/city`), the
   shipped drawings on `/figures`, a view's block resolver on `/blocks`,
-  a status board's reach and `resolveFor` on `/describe`, arranging a list on `/arrange`, a link's provenance on `/provenance`, the app as it stood (`pastOf`, `pastAt`, `seqAt`) on `/past`, the timeline around it (ticks, what "Restore to here" takes back) on `/history`, another app's records read as the viewer (`linkedRecordsOver`, `recordLinkedChange`) on `/linked`, an act's form on `/forms`,
+  a status board's reach and `resolveFor` on `/describe`, arranging a list on `/arrange`, where a view's navigate goes as an address (`narrowedPath`) on `/navigate`, a link's provenance on `/provenance`, the app as it stood (`pastOf`, `pastAt`, `seqAt`) on `/past`, the timeline around it (ticks, what "Restore to here" takes back) on `/history`, another app's records read as the viewer (`linkedRecordsOver`, `recordLinkedChange`) on `/linked`, an act's form on `/forms`,
   the matcher on `/search`, a record and an argument said in words on `/words`, what the seat and
   the seeding read (`answerSeenBy`, `placesOf`, `beginning`) on `/seat`, the app's
   own actor's suggestions (`suggest`, `suggestions`, `acceptSuggestion`, `declineSuggestion`, `declined`, `tidyingOf`, Activity's digest) on `/tidying`,
@@ -101,6 +102,7 @@ pnpm dev                       # apps/todo → http://localhost:5193
 ANTHROPIC_API_KEY=… pnpm dev   # the same, its seat lent a model by the dev server (aiDevProxy; GRAVIEW_AI_MODEL to choose; never in a build, never in a harness)
 pnpm apps                      # the desk → http://localhost:5199 (opens the others in place)
 pnpm graview -- <args>         # the CLI from this checkout
+pnpm graview:link              # `graview` on PATH from this checkout (pnpm link --global for packages/graview; `pnpm setup` once if pnpm has no global bin)
 
 pnpm pack:inspect              # what goes in each tarball (docs/pack.json)
 pnpm smoke                     # install the tarballs into a scratch app and build it
@@ -149,7 +151,7 @@ pinned at 1.49.1 on purpose.
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`,
-  `./figures`, `./blocks`, `./describe`, `./arrange`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
+  `./figures`, `./blocks`, `./describe`, `./arrange`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
   `./lines`, `./testing` and the `./document.schema.json` the build writes; layout's `./view`, `./sizes` and `./view-moves`; guest's `./host/frame`; react's `./provider` and `./drawing`;
   tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn` and `./several`; embed's `./pages`; pages' `./static` (a place as static HTML, no React);
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and
@@ -197,7 +199,7 @@ License: Elastic License 2.0, at the root and in every tarball.
 | `packages/skills/skills/*/SKILL.md` | The authoring skills a product installs |
 | `scripts/verify-all.mjs` | The harness chain, cheapest first |
 | `scripts/lib/tarballs.mjs` | Pack and pin the workspace as a stranger would receive it |
-| `docs/site/` | The docs site; `docs/site/chapters.js` is built from `apps/seedbed` |
+| `docs/site/` | The docs site, rendered from the records of `apps/site/app.json` by `scripts/site-docs.mjs` (never edited by hand); `docs/site/chapters.js` is built from `apps/seedbed` |
 | `docs/walkthrough.md` | The stage-by-stage walk from `graview create` to a seamless app, with findings |
 | `.changeset/README.md` | The versioning convention |
 | `docs/stability.md` | What a version may change on the five surfaces a host holds it to |

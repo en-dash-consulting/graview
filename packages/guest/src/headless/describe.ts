@@ -1,6 +1,6 @@
 import type { DescribedItem, DescribedPart, DescribedProblem } from "@graview/core/describe";
 import type { GuestNode, GuestProps } from "../protocol.js";
-import { placesSaid } from "../host/links.js";
+import { placeNamed, placesSaid, type NamedPlace } from "../host/links-words.js";
 import { TreeElement, type TreeNode, TreeText } from "./tree.js";
 
 /*
@@ -24,8 +24,8 @@ import { TreeElement, type TreeNode, TreeText } from "./tree.js";
 export interface DescribeDrawingContext {
   /** What the view was shown: a record a link or a row names is looked up here, and only here. */
   readonly props: GuestProps;
-  /** The app's places, by slug: where a `data-place` may point. */
-  readonly places: readonly string[];
+  /** The app's places, by slug and title: where a `data-place` may point. */
+  readonly places: readonly NamedPlace[];
 }
 
 export interface DescribedDrawing {
@@ -71,7 +71,7 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
   const records = new Set<string>();
   const shown = new Map<string, GuestNode>();
   for (const node of [...(context.props.node ? [context.props.node] : []), ...(context.props.nodes ?? [])]) shown.set(node.id, node);
-  const places = new Set(context.places);
+  const known = (name: string) => placeNamed(context.places, name) !== undefined;
 
   /* What the drawing binds, wherever it is: acts, records and places, and anything it names that is not there. */
   for (const element of elementsUnder(root)) {
@@ -81,10 +81,10 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
     if (record !== null) {
       records.add(record);
       /* A record first, then a place by that slug, as the host follows it. */
-      if (!shown.has(record) && !places.has(record)) problems.push({ at: `drawing <${element.localName} data-record="${record}">`, says: `It names "${record}", which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(context.places)}` });
+      if (!shown.has(record) && !known(record)) problems.push({ at: `drawing <${element.localName} data-record="${record}">`, says: `It names "${record}", which this seat was not shown and is no place of this app: the host will not follow it. A view goes to a record by its id, or to a place by its slug.${placesSaid(context.places)}` });
     }
     const place = element.getAttribute("data-place");
-    if (place !== null && !places.has(place)) problems.push({ at: `drawing <${element.localName} data-place="${place}">`, says: `It names the place "${place}", which this app does not have.${placesSaid(context.places)}` });
+    if (place !== null && !known(place)) problems.push({ at: `drawing <${element.localName} data-place="${place}">`, says: `It names the place "${place}", which this app does not have.${placesSaid(context.places)}` });
   }
 
   /** The record an element stands for: its own `data-record`, a `data-key` that is a shown record's id, or the one record linked inside it. */

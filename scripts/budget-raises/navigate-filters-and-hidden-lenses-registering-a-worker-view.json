@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 830,
+  "gzipped": 443,
+  "note": "Raised when a view's navigate came to go to a kind's list narrowed and to a section of a page (Roadmap f-navigate-filters): the face's way of going handed to the view's host (`goTo`), the session's navigate carrying a filter and a section to the links, and those links fetched with the first navigate. 20_178 / 9_287 before it, 21_008 / 9_730 with it: 830 / 443 more."
+}

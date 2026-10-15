@@ -25,6 +25,7 @@ export default defineConfig({
     alias: {
       "@graview/core/blocks": fileURLToPath(new URL("../../packages/core/src/blocks.ts", import.meta.url)),
       "@graview/core/arrange": fileURLToPath(new URL("../../packages/core/src/arrange.ts", import.meta.url)),
+      "@graview/core/navigate": fileURLToPath(new URL("../../packages/core/src/navigate.ts", import.meta.url)),
       "@graview/core/provenance": fileURLToPath(new URL("../../packages/core/src/provenance.ts", import.meta.url)),
       "@graview/core/history": fileURLToPath(new URL("../../packages/core/src/history.ts", import.meta.url)),
       "@graview/core/past": fileURLToPath(new URL("../../packages/core/src/past.ts", import.meta.url)),

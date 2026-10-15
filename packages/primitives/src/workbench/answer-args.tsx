@@ -1,11 +1,12 @@
-import { humanizeField, labelOf, linkedRelationOf, nounOf, type AnySchema, type Store } from "@graview/core";
+import { humanizeField, isRepeatField, labelOf, linkedRelationOf, nounOf, repeatedBy, type AnySchema, type Store } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
-import { amountBox, argumentWords, parseDuration, readAmount, tellApart } from "@graview/core/words";
+import { amountBox, amountInBox, argumentWords, parseDuration, readAmount, tellApart } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraviewIfAny } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
 import { Files } from "../files-door.js";
 import { LinkedPicker } from "../linked-record-door.js";
+import { RepeatPicker } from "../repeat-picker-door.js";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 
@@ -38,6 +39,8 @@ export function AnswerArgs({
   const [draft, setDraft] = useState("");
   /** What has been chosen so far, for an argument that takes several. */
   const [picked, setPicked] = useState<readonly string[]>(NOTHING_PICKED);
+  /** How a date repeats, for an argument that says so: what the picker holds. */
+  const [repeat, setRepeat] = useState<unknown>(undefined);
 
   // Stable across the walk's steps, so the group's label never dangles.
   const promptId = useId();
@@ -45,8 +48,22 @@ export function AnswerArgs({
 
   const remaining = affordance.open.filter((parameter) => !(parameter.name in answers));
   const parameter = remaining[0];
+  const act = store.allMutations().find((mutation) => mutation.name === affordance.mutation);
+  /*
+   * A RECORD'S CHANGE ASKS FROM WHAT THE RECORD HOLDS (Roadmap
+   * f-edit-form-prefilled): each question of "Change the feature" opens on
+   * the record's value — typed in its box, or its choice marked — and an
+   * answer left as it was is not sent, so the change says only what changed.
+   */
+  const start = useMemo(() => editStartOf(act, store, affordance.args ?? {}), [act, store, affordance.args]);
+  const now = parameter ? start[parameter.name] : undefined;
 
-  useEffect(() => setDraft(""), [parameter?.name]);
+  useEffect(() => {
+    setDraft(typedOf(now, parameter?.shape));
+    setPicked(Array.isArray(now) ? (now as string[]) : NOTHING_PICKED);
+    setRepeat(now);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parameter?.name]);
 
   /*
    * AND IT IS ON THE SCREEN.
@@ -89,7 +106,9 @@ export function AnswerArgs({
    * of them is allowed: the mutation's own refusal then says what it
    * needed, on the button, which is the honest answer to an empty change.
    */
-  const answer = (value: unknown) => {
+  const answer = (given: unknown) => {
+    // An answer the record already holds changes nothing, and is not sent.
+    const value = now !== undefined && JSON.stringify(given) === JSON.stringify(now) ? undefined : given;
     const next = { ...answers, [parameter.name]: value };
     const outstanding = affordance.open.filter((other) => !(other.name in next));
     if (outstanding.length === 0) {
@@ -115,9 +134,14 @@ export function AnswerArgs({
   const amount = shape.type === "number" ? shape.amount : undefined;
   const choices = choicesFor(parameter, shape);
   /* The record's own words for an argument that fills one of its fields: "Body style", "SUV" (see `argumentWords`). */
-  const words = argumentWords(store.schema, store.allMutations().find((mutation) => mutation.name === affordance.mutation), parameter.name);
+  const words = argumentWords(store.schema, act, parameter.name);
   // A record in another app (FR-171), read off the act's own input.
-  const linked = linkedRelationOf(((store.allMutations().find((mutation) => mutation.name === affordance.mutation)?.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {})[parameter.name]);
+  const linked = linkedRelationOf(((act?.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {})[parameter.name]);
+  // How a date repeats, asked with the picker the pages ask with, beside the date it repeats — never as a box to type in.
+  const repeats = isRepeatField(((act?.input as { shape?: Record<string, unknown> } | undefined)?.shape ?? {})[parameter.name]);
+  const repeated = repeatedBy(parameter.name);
+  // The choice the record holds, marked among the others: a yes or no as one of the two.
+  const was = typeof now === "boolean" ? (now ? "yes" : "no") : now;
   /*
    * A PICKER THAT DROPS CHOICES MAKES THE ACT IMPOSSIBLE, AND SAYS NOTHING.
    *
@@ -242,16 +266,33 @@ export function AnswerArgs({
         />
       ) : null}
 
-      {linked ? (
+      {repeats ? (
+        <form
+          style={{ display: "grid", gap: 4 }}
+          onSubmit={(event) => {
+            event.preventDefault();
+            // Repeating no more is said as null, which the field keeps; what it held before is not sent again.
+            answer(repeat ?? (now === undefined ? undefined : null));
+          }}
+        >
+          <RepeatPicker value={repeat} onChange={setRepeat} start={repeated ? (answers[repeated] ?? start[repeated]) : undefined} label={`${repeated ? argumentWords(store.schema, act, repeated).label : words.label} repeats`} name={parameter.name} />
+          <span style={{ display: "flex", gap: 4 }}>
+            <button type="submit" style={{ fontSize: "0.8125rem" }}>
+              {remaining.length > 1 ? "Next" : "Apply"}
+            </button>
+            {skip}
+          </span>
+        </form>
+      ) : linked ? (
         /* A record in another app (FR-171) is answered by picking one there, from what the host lists for this seat. */
         <div style={{ display: "grid", gap: 4 }}>
-          <LinkedPicker relation={linked} value={undefined} onChange={answer} label={words.label} />
+          <LinkedPicker relation={linked} value={now} onChange={answer} label={words.label} />
           {skip}
         </div>
       ) : fileShape ? (
         /* A picture or a document is answered by putting it there: the host's upload, then the act (FR-163). */
         <div style={{ display: "grid", gap: 4 }}>
-          <Files as="control" value={undefined} onChange={answer} several={several} image={fileShape.image === true} label={words.label} />
+          <Files as="control" value={now} onChange={answer} several={several} image={fileShape.image === true} label={words.label} />
           {skip}
         </div>
       ) : choices.length > 0 ? (
@@ -261,7 +302,7 @@ export function AnswerArgs({
           style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
         >
           {matching.slice(0, SHOWN).map((choice) => {
-            const held = picked.includes(choice);
+            const held = several ? picked.includes(choice) : choice === was;
             return (
               <button
                 key={choice}
@@ -269,7 +310,7 @@ export function AnswerArgs({
                 // The question travels with the answer: a control read on its
                 // own says what choosing it would mean.
                 aria-label={`${asking}: ${say(choice)}`}
-                {...(several ? { "aria-pressed": held } : {})}
+                {...(several ? { "aria-pressed": held } : held ? { "aria-current": true } : {})}
                 style={{
                   padding: "3px 9px",
                   fontSize: "0.8125rem",
@@ -331,6 +372,11 @@ export function AnswerArgs({
           style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
           onSubmit={(event) => {
             event.preventDefault();
+            // The record's own value, left as it was typed in: nothing to change.
+            if (now !== undefined && draft === typedOf(now, shape)) {
+              answer(undefined);
+              return;
+            }
             /*
              * SEVERAL WORDS, typed as one line: "Heated seats, Apple CarPlay"
              * is two features, and nothing is none. A list of text asked as
@@ -431,6 +477,26 @@ export function AnswerArgs({
 }
 
 const NOTHING_PICKED: readonly string[] = [];
+
+/**
+ * The record's own values for each field its derived edit asks — what
+ * `editStart` (`@graview/core/forms`) gives a page's form, read here
+ * without that barrel, which the scene would otherwise fetch whole before
+ * it draws. Nothing for any other act.
+ */
+function editStartOf(act: { readonly derived?: { readonly act: string }; readonly subject?: { readonly arg: string }; readonly writes?: readonly string[] } | undefined, store: Store<AnySchema>, args: Readonly<Record<string, unknown>>): Readonly<Record<string, unknown>> {
+  const id = act?.derived?.act === "edit" && act.subject ? args[act.subject.arg] : undefined;
+  const node = typeof id === "string" ? (store.graph.getNode(id) as Readonly<Record<string, unknown>> | undefined) : undefined;
+  return node ? Object.fromEntries((act!.writes ?? []).filter((field) => node[field] !== undefined && node[field] !== null).map((field) => [field, node[field]])) : {};
+}
+
+/** A record's value as its ask's box holds it: "1,250.50" beside its "$", "2026-10-20", "Heated seats, CarPlay". */
+function typedOf(value: unknown, shape: OpenParameter["shape"]): string {
+  if (typeof value === "number") return shape?.type === "number" && shape.amount ? amountInBox(value, shape.amount) : String(value);
+  if (Array.isArray(value)) return value.every((one) => typeof one === "string") ? value.join(", ") : "";
+  if (typeof value !== "string") return "";
+  return shape?.type === "date" ? (shape.time ? value.slice(0, 16).replace(" ", "T") : value.slice(0, 10)) : value;
+}
 
 /** How many choices an ask shows at once. Past this it offers a filter. */
 export const SHOWN = 10;

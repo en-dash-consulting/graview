@@ -1410,14 +1410,15 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
       <a href="../../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
-      written out of the repository<br>
-      by scripts/site-docs.mjs<br>
+      records of a Graview app,<br>
+      written out of the repository,<br>
       never by hand
     </div>
   </nav>
@@ -1459,6 +1460,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 });</code></pre></div>
 <p>Each repair is handed the record the rule judged, so it must be an act ON that kind: a rule over <code>task</code> repaired by an act on <code>module</code> could only refuse, and <code>graview check</code> says <code>repair-wrong-kind</code> (a function rule names its repairs' arguments itself, so it may act elsewhere).</p>
 <p>In a document (<code>app.json</code>, a graview-document) the same rule is <code>rules.priced-packages</code>: <code>{ "over": "package", "require": "net &gt; 0", "says": "…", "repairs": [{ "act": "edit-package" }] }</code>; <code>graview check --document app.json</code> says each finding at its JSON path (<code>rules.priced-packages.repairs.0</code>).</p>
+<p>A document's repair may also be an act from the OTHER end of the rule's relation. A rule over <code>finding</code> requiring <code>exists(in('resolves'))</code> is repaired by <code>resolve-finding</code>, declared <code>on: "initiative"</code>, <code>connects: "resolves"</code>, <code>fromTheOtherEnd: "Name the work that fixes it"</code>: the rule hands it the finding as the far end (<code>to</code>), labels the repair with those words, and leaves the initiative for the person to choose (<code>missing: ["id"]</code>), as the finding's own page offers it. Without <code>fromTheOtherEnd</code>, or without a relation between the two kinds, it is still <code>repair-wrong-kind</code>.</p>
 <p>A rule in the rule language is drawn as its shape, in the declaration's labels: "◆ Scenario margin ≥ target margin, when plan's price &gt; $0", and broken, with the record's values: "A club on Team — margin 44% &lt; target margin 50%". Its title is a second line under that, so keep it short ("Margin above target") or leave it out; "A scenario keeps the target margin" only says the shape again, less clearly. Label a field that reads badly when spoken (<code>display.labels</code>) rather than writing round it.</p>
 <p>Fields and one-edge hops by name, <code>out('edge')</code>, <code>in('edge')</code>, <code>all('kind')</code> and <code>S where cond</code>; <code>count</code>, <code>exists</code>, <code>every</code>/<code>some(S, cond)</code>; <code>sum</code>/<code>min</code>/<code>max(S, expr)</code> with an expression per member (<code>sum(out('includes'), list * units)</code>); <code>sort(S, key, 'asc'|'desc')</code> (a list key sorts by its first value, then its next), <code>first(S)</code> for one record, <code>either(a, b)</code> for the first that is something; <code>if(cond, a, b)</code>, which works out only the branch it takes; <code>present</code>, <code>len</code>, dates. <code>out(S, 'edge')</code> and <code>in(S, 'edge')</code> walk from every member of a set and give each record reached once; sets meet with <code>&amp;</code>, join with <code>|</code> and part with <code>-</code> — LifeLogics' coverage is one figure, <code>count(out(out('includes'), 'answers') &amp; out(client, 'needs'))</code>, each step read from what the seat may see. (Inside a template's braces, a <code>|</code> within brackets joins; the last bar outside them is the formatter's.) A kind's <code>computed</code> fields read like stored ones, and <code>fact('name')</code> reads a fact of the whole graph — a document's top-level <code>computed</code>, like <code>"mapProposed": "every(all('area'), proposed)"</code> — so a rule over the graph, a block and a face's own screen say it once (<code>factValues</code> from <code>@graview/core/blocks</code>; <code>describe_place</code> on the home lists them). Every evaluation has a step budget: a rule that reads too much is <code>over-budget</code>, never a hang.</p>
 <p>The same language works out what a document's act sets, so a repair can be one declared act that does all of it: org's <code>assign-ownership</code> is <code>on: "component"</code>, <code>connects: "owns"</code> (from the person given, as the relation is declared), <code>replaces: ["owns", "proposedOwner"]</code> (the links it supersedes), and <code>sets: { ownership: { expr: "if(to == 'person-nick', 'nick_owns', 'owned_elsewhere')" } }</code>; <code>setsOther</code> sets the record at the link's other end. Each previews and undoes as one act.</p>
@@ -1493,9 +1495,11 @@ main.page > section.tour-intro { padding-top: 64px; }
 <footer>
   <p class="sm dim">
     Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. These pages are
-    generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
-    on them can disagree with the code they describe.
+    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+    <a href="../site.html">Open it as an app</a>.
   </p>
 </footer>
 <script>

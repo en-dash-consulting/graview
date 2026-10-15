@@ -28,6 +28,8 @@ import type { AnySchema, Principal, Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { guestFileOf, handFiles } from "../host/pictures.js";
+import { judgeDestination, listsOf } from "../host/links.js";
+import { guestPlacesOf, placeNamed } from "../host/links-words.js";
 import type { GuestViewInput } from "../host/session.js";
 import { checkViewSource } from "../host/view-source.js";
 import type { WorkerViewLimits } from "../host/view.js";
@@ -96,8 +98,10 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   /** The app's look. A light one in the framework's own colors by default. */
   readonly theme?: GuestTheme;
   /** The app's named places, which the view may link to (FR-93). */
-  readonly places?: readonly GuestPlace[];
+  readonly places?: readonly (GuestPlace | { readonly slug: string; readonly title: string; readonly kind: string | null })[];
   readonly limits?: HeadlessLimits;
+  /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
+  readonly images?: { readonly origins: readonly string[] };
   /**
    * The width it is said at, in CSS pixels, as `describePlace` takes it:
    * 1440 by default. Nothing is laid out headless, so it changes the words
@@ -157,7 +161,13 @@ function transcriptOf(value: unknown): HeadlessTranscript | undefined {
     renders: renders as unknown[][],
     ...(typeof css === "string" ? { css } : {}),
     asked: asked.filter(isRecord).map((one) => ({ name: String(one["name"]), args: one["args"] })),
-    went: went.filter(isRecord).flatMap((one): HeadlessTranscript["went"][number][] => (typeof one["record"] === "string" ? [{ record: one["record"] }] : typeof one["place"] === "string" ? [{ place: one["place"] }] : [])),
+    went: went.filter(isRecord).flatMap((one): HeadlessTranscript["went"][number][] => {
+      const section = typeof one["section"] === "string" ? { section: one["section"] } : {};
+      const where = one["where"] !== undefined ? { where: one["where"] } : {};
+      if (typeof one["record"] === "string") return [{ record: one["record"], ...where, ...section }];
+      if (typeof one["place"] === "string") return [{ place: one["place"], ...where, ...section }];
+      return [];
+    }),
     ms,
     logs: logs.map(String).slice(0, 50),
     messages,
@@ -194,14 +204,17 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const unloadable = checkViewSource(source);
   if (unloadable.length > 0) return failed("source", unloadable.join(" "));
 
-  const places = options.places ?? [];
+  /* A guest's places or an app's as `placesOf` lists them: each by its slug and title, never "undefined" (2026-10-15). */
+  const places = guestPlacesOf(options.places ?? []);
   const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places });
   /* A view that asks for pictures (FR-175) is handed each file without the host's path; headless, no bytes are fetched, so a picture comes without its address, as it does before the host has made it. */
   const props = manifest.pictures ? handFiles(shown, (file) => guestFileOf(file)) : shown;
   const input: HeadlessInput = {
     props,
     acts: manifestActs(manifest).map((one) => one.as ?? one.act),
-    places: places.map((place) => place.as),
+    places: places.map((place) => ({ as: place.as, title: place.title })),
+    ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
+    lists: listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds])).flatMap((list) => [list.slug, list.kind]),
     limits: { maxNodes: limits.maxNodes, messages: limits.messages, pushMs: limits.pushMs },
   };
 
@@ -238,6 +251,22 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   /* Judged again here, from the transcript alone. */
   const judged = judgeTranscript(transcript, input);
   if (!judged.ok) return failed(judged.reason, judged.detail, transcript);
+  /*
+   * A FILTER OR A SECTION IT ASKED FOR, held to the kind here, where the
+   * schema is: a filter on a field the kind does not have goes nowhere, and
+   * says so, as the live host says it (FR-93). Where it goes is the
+   * transcript's judging above.
+   */
+  const shownIds = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
+  const lists = listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds]));
+  const narrowing: { at: string; says: string }[] = [];
+  for (const went of transcript.went) {
+    if (!("where" in went) && !("section" in went)) continue;
+    const outcome = judgeDestination(went, { sees: (id) => shownIds.has(id), places, lists, schema: store.schema });
+    const known = "place" in went ? placeNamed(input.places, went.place) !== undefined || (input.lists ?? []).includes(went.place) : true;
+    if (!outcome.ok && known) narrowing.push({ at: "navigate", says: outcome.says });
+  }
+  const problems = [...judged.problems, ...narrowing];
   const title = manifest.title ?? manifest.name;
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
@@ -248,7 +277,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     variant: (options.width ?? 1440) < 640 ? "phone" : "wide",
     drawnBy: `view:${manifest.name}`,
     parts: judged.parts,
-    problems: judged.problems,
+    problems,
   };
   const { placeText } = await import("@graview/core/describe");
   return { ok: true, description: { ...description, text: placeText(description) }, props, transcript };

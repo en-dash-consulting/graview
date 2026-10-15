@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 7000,
+  "gzipped": 2200,
+  "note": "Raised when the right-click menu on the pages landed after the rest of the 0.1.30 wave: alone it added 537 / 305 bytes to every face, and beside the blocks' layout, the templates' fixes, the checker's typed schema and the scenes' cards together it measured 2_102_739 / 693_368 against 2_096_077 / 691_331. The room for ordinary growth (every-face-room-for-ordinary-growth.json) had been spent by the wave's own raises."
+}

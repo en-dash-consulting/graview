@@ -20,6 +20,7 @@ import * as search from "../../src/search.js";
 import * as seat from "../../src/seat.js";
 import * as words from "../../src/words.js";
 import * as markdown from "../../src/markdown.js";
+import * as navigate from "../../src/navigate.js";
 import * as tidying from "../../src/tidying.js";
 
 /*
@@ -34,6 +35,8 @@ import * as tidying from "../../src/tidying.js";
  */
 const OFF_THE_PAGE = {
   "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement", "throughEdges", "kindListFindings", "listFieldsOf", "listGroup", "listOpening", "listSort", "orderListGroups", "withWorkedOut"] },
+  // Roadmap f-navigate-filters: where a view's navigate goes, as an address — the worker view's host and the routed face's alone.
+  "@graview/core/navigate": { from: navigate, names: ["narrowedPath", "sectionSlug"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "makerOf", "makerWords", "restoreBatches", "ticksOf"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
@@ -43,7 +46,7 @@ const OFF_THE_PAGE = {
   "@graview/core/linked": { from: linked, names: ["linkedChange", "linkedRecordsOver", "linkedRelationWords", "readLinkedRecord", "recordLinkedChange", "recordsLinking"] },
   "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "whatBlocksSay", "computedNames", "computedValues", "withComputed", "factNames", "factValues", "blockContextFor", "CARD_BUDGET", "PAGE_BUDGET", "fieldSpecOf", "fileFieldsOf", "fileWords", "firstPicture"] },
   "@graview/core/field-sight": { from: fieldSight, names: ["fieldsKept", "keptFrom", "partialKinds", "withoutKeptFields"] },
-  "@graview/core/forms": { from: forms, names: ["formArgs", "formComplete", "formField", "formFields", "keptArguments", "undecidableArguments"] },
+  "@graview/core/forms": { from: forms, names: ["changedArgs", "editStart", "formArgs", "formComplete", "formField", "formFields", "keptArguments", "undecidableArguments"] },
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },
   "@graview/core/describe": { from: describePlaces, names: ["columnActs", "columnMoves", "columnOf", "columnReach", "columnSteps", "describePlace", "placeText", "resolveFor", "statusColumns"] },
   "@graview/core/check": { from: check, names: ["arrangementFindings", "checkApp", "formatFindings", "compileDocument", "instantiateTemplate", "describeApp", "generateAgentsMd", "generateLlmsTxt", "clockReaders"] },

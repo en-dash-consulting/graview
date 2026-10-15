@@ -1410,14 +1410,15 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
       <a href="../../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
-      written out of the repository<br>
-      by scripts/site-docs.mjs<br>
+      records of a Graview app,<br>
+      written out of the repository,<br>
       never by hand
     </div>
   </nav>
@@ -1432,7 +1433,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skill">The skill</h2></div>
 <h2>Build a lens</h2>
 <p>A lens is a picture that knows nothing about your domain. The timeline does not know what a duty is; it knows there is a <code>start</code>, an <code>end</code> and a column. The coverage matrix does not know what a requirement is; it knows there are rows, columns and an edge that fills a cell. That indirection is the entire point: a lens written for one app is used unchanged by another.</p>
-<p>The framework ships five, each built from the public primitives — which makes them the worked example of the authoring API rather than privileged insiders. Read one before writing your own:</p>
+<p>The framework ships five, each built from the public primitives — which makes them the worked example of the authoring API. Read one before writing your own:</p>
 <ul>
 <li><code>packages/primitives/src/lens/timeline.tsx</code> — intervals in columns</li>
 <li><code>packages/primitives/src/lens/calendar.tsx</code> — the same intervals, by date</li>
@@ -1440,8 +1441,8 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><code>packages/primitives/src/lens/board.tsx</code> — position given by the domain (discs for codes of three characters, tokens for words; <code>arrange: "shelf"</code> when the x and y are categories rather than coordinates)</li>
 <li><code>packages/primitives/src/lens/plan.tsx</code> — an outline, with points inside it</li>
 </ul>
-<p>(<code>reach.tsx</code> sits beside them and is not one: no factory, no roles to rebind. A view that ships is still a view.)</p>
-<p>The plan is the one to read if yours draws anything, because it is the one that learned what drawing costs. A name is fitted to the shape it names — <code>fitLabel</code> and <code>spanAt</code> from <code>@graview/layout</code>, which give the width of a shape AT A HEIGHT rather than its bounding box, because the shapes that overflow are the long thin ones. Names are painted after everything else, because a marker dot took the first letter off two of them. Whatever will not fit goes in a key underneath. And <code>useDrawnSize</code> answers the question a scalable drawing hides: at THIS size, can a person read it, or press it? A one-pixel target with a keyboard stop and an ARIA label is not an accessible control; it is an inaccessible one that has been described.</p>
+<p>(<code>reach.tsx</code> beside them is not one: no factory, no roles to rebind. A view that ships is still a view.)</p>
+<p>Read the plan if yours draws anything: a name is fitted to its shape at a height (<code>fitLabel</code>, <code>spanAt</code> from <code>@graview/layout</code>), names are painted last, what will not fit goes in a key, and <code>useDrawnSize</code> asks whether, at THIS size, a person can read it or press it.</p>
 <p>Start it with the scaffolder — `graview lens grounds-map --roles regions,markers</p>
 <p>--binds entities` — which writes all eight rules below already in place, and the reuse test beside it, red on purpose.</p>
 <h3>Do this</h3>
@@ -1465,7 +1466,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><strong>Render at three fidelities.</strong> <code>glyph</code> is a chip; <code>summary</code> is denser content, not the same content scaled down; <code>full</code> is the picture.</li>
 </ol>
 <ol>
-<li><strong><code>nodes</code> is THE GROUP'S MEMBERS, and nothing else.</strong> A lens mounted over a kind's <code>many</code> cell receives that kind's members in <code>ViewProps.nodes</code> — not the graph. Every interesting lens draws more than one kind (a board has slots and occupants, a matrix has rows and columns, a map has regions and markers), and every other kind comes from <code>store.graph</code>, narrowed back to <code>nodes</code> for the group's own kind so the scene's horizon still applies. Built from <code>nodes</code> alone, a map drew every piece of ground with nothing standing in it: no error, no empty state, a complete, tidy, wrong picture, which is the worst failure a lens has. The framework's own board lens had this exact bug.</li>
+<li><strong><code>nodes</code> is THE GROUP'S MEMBERS, and nothing else.</strong> A lens mounted over a kind's <code>many</code> cell receives that kind's members in <code>ViewProps.nodes</code> — not the graph. Every interesting lens draws more than one kind (a board has slots and occupants, a matrix has rows and columns, a map has regions and markers), and every other kind comes from <code>store.graph</code>, narrowed back to <code>nodes</code> for the group's own kind so the scene's horizon still applies. Built from <code>nodes</code> alone, a map drew its ground with nothing standing in it: no error, a tidy, wrong picture — the worst failure a lens has.</li>
 </ol>
 <p><strong><code>budget</code> is the most to draw.</strong> A host may hand a lens a few    members with <code>budget</code> and <code>total</code>: hold what you read from    the store to it too, and say "+N more" (<code>withMore</code> does). A real catalog    is thousands; a lens that draws them all at 6% stalls the city.</p>
 <ol>
@@ -1474,10 +1475,10 @@ main.page > section.tour-intro { padding-top: 64px; }
 <p>``<code>tsx    const { nodes, arranged, bar } = useArranging(props, {      lensAllows: { group: false },        // a board has nowhere to group      allow: options.arranging,            // the app's say: false, or per part      arrangedBy: options.arrangedBy,      // how the picture opens    });    return &lt;&gt;{bar}&lt;Picture nodes={nodes} /&gt;&lt;/&gt;;    </code>``</p>
 <p><code>bar</code> is the framework's own row (<code>ArrangeBar</code>), drawn at full fidelity    unless declined; <code>nodes</code> are the members as arranged; <code>arranged.groups</code>    are there when the picture has a place for headings, as the calendar's    agenda does. Declare <code>arrangedBy</code> on the app's <code>lenses</code> entry too, in the    grammar (<code>{ group: "held-at" }</code>), so <code>graview check</code> holds it to the    bound kind and <code>graview describe</code> can say it. A person who arranged the    list can ask your picture the same thing in the same words.</p>
 <ol>
-<li><strong>Declare a shipped lens; register only your own.</strong> A <code>lenses</code> entry with a <code>title</code> is a PLACE the framework draws with no registration — a tab, a name on its district, a page at <code>/places/&lt;as&gt;</code>: <code>{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }</code>. A status board: `{ name: "columns", title: "The board", bindings: { task: { column: "status" } } }<code>; a card moves only by an act setting </code>status` (<code>book</code> where its <code>allowedWhen</code> holds). <code>on</code> names the kind when the bindings do not (reach; a coverage over its columns), and <code>options</code> are data (<code>SHIPPED_LENSES[name].options</code>). A lens you wrote is registered with a title as the fourth argument: <code>.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })</code>. Untitled, it is reachable only by focusing the group.</li>
+<li><strong>Declare a shipped lens; register only your own.</strong> A <code>lenses</code> entry with a <code>title</code> is a PLACE the framework draws with no registration — a tab, a name on its district, a page at <code>/places/&lt;as&gt;</code>: <code>{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }</code>. A status board: `{ name: "columns", title: "The board", bindings: { task: { column: "status" } } }<code>; a card moves only by an act setting </code>status` (<code>book</code> where its <code>allowedWhen</code> holds). <code>on</code> names the kind when the bindings do not (reach; a coverage over its columns), and <code>options</code> are data (<code>SHIPPED_LENSES[name].options</code>): - a calendar's <code>range: "years"</code> with `horizon: { years: 30, title: "The career" }<code> spans its records, first to last, as well as </code>years` from <code>today</code>; <code>from</code> and <code>to</code> (years: 1962, 2023) pin its ends; - a coverage's <code>sort</code> (rows) and <code>columnSort</code>, and a status board's <code>sort</code> (cards): a field or <code>{ by, direction }</code>, <code>label</code> the name, held to the kind (<code>lens-sort</code>); - a coverage with no columns, or no link over its relation, says so ("No genres yet: link songs to genres.") and lists no rows. A lens you wrote is registered with a title as the fourth argument: <code>.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })</code>. Untitled, it is reachable only by focusing the group.</li>
 </ol>
 <ol>
-<li><strong>Before writing a picture, try blocks.</strong> `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }` is a place drawn from the closed block set (headline, figure, list — <code>graview-node-kind</code>), each record by its own row or card. Nothing in it runs; a chat can write it. Write code only for what blocks cannot say: a meter, a grid of cells, positions.</li>
+<li><strong>Before writing a picture, try blocks.</strong> `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }` is a place drawn from the closed block set (headline, figure, list — <code>graview-node-kind</code>), each record by its own row or card. Nothing in it runs; a chat can write it. A place read, not written, says <code>create: false</code>: its page drops the forms that add one. Write code only for what blocks cannot say: a grid of cells, positions.</li>
 </ol>
 <h3>Roles live in two places, and they do different jobs</h3>
 <p><code>defineNode("shift", { fieldRoles: { start: "from" } })</code> is what everything that is NOT a lens reads: the graph's own responder answering "when is it", the generated docs. A lens reads <code>bindings</code>, but a timeline or calendar binding no <code>start</code> draws at the kind's natural time, <code>fieldRoles.when</code> (also in a document). Bind the lens; declare <code>fieldRoles</code> for the rest.</p>
@@ -1506,9 +1507,11 @@ main.page > section.tour-intro { padding-top: 64px; }
 <footer>
   <p class="sm dim">
     Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. These pages are
-    generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
-    on them can disagree with the code they describe.
+    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+    <a href="../site.html">Open it as an app</a>.
   </p>
 </footer>
 <script>

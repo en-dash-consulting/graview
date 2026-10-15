@@ -39,7 +39,7 @@ const asked = new URLSearchParams(location.search);
 window.__failures = [];
 const definition = { manifest: ${JSON.stringify(PACKAGES_MANIFEST)}, worker: { source: window.PACKAGES }, author: "Made by Claude for Nick" };
 window.__problems = [];
-const notes = { manifest: ${JSON.stringify(NOTES_MANIFEST)}, worker: { source: window.NOTES }, onProblem: (said) => window.__problems.push(said) };
+const notes = { manifest: ${JSON.stringify(NOTES_MANIFEST)}, worker: { source: window.NOTES }, onProblem: (said) => window.__problems.push(said), images: { origins: ["https://images.example"] } };
 window.__handle = mount(document.getElementById("app"), {
   app: offersApp,
   seed: offersSeed,
@@ -193,11 +193,37 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     await inRegion("notes", "#go-nowhere").click();
     await tab.waitForFunction(() => window.__problems.length > 0, null, { timeout: 10_000 }).catch(() => {});
     await tab.waitForTimeout(300);
-    const problems = await tab.evaluate(() => window.__problems);
+    const problems = (await tab.evaluate(() => window.__problems)).filter((said) => /goes nowhere/.test(said));
     const nowhere = '"projections" is no record this viewer may see and is no place of this app: it goes nowhere. Its places:';
     claim("graview.navigate to no record and no place stays, and tells the host's problems why, naming the places", problems.length === 1 && problems[0].startsWith(nowhere) && problems[0].includes('"the-packages"') && Boolean(await inRegion("notes", "#go-nowhere").count()), problems);
     claim("and says the same in the view's console", consoled.some((text) => text.startsWith(nowhere)), consoled.filter((text) => /goes nowhere/.test(text)));
     tab.off("console", hearConsole);
+    /*
+     * IMAGES BY ADDRESS, A HEADER HELD IN PLACE, A BUTTON OF ITS OWN
+     * (2026-10-15): an https: image on an origin the host lists is drawn,
+     * asked for with no referrer; one anywhere else is not, and the host's
+     * problems say which and why; sticky and all: unset are kept.
+     */
+    const drawnHere = await tab.evaluate(() => {
+      const root = document.querySelector('[data-worker-view="notes"]').shadowRoot;
+      const style = (selector) => getComputedStyle(root.querySelector(selector));
+      return {
+        cover: { src: root.querySelector("#cover")?.getAttribute("src") ?? null, referrer: root.querySelector("#cover")?.getAttribute("referrerpolicy") ?? null },
+        elsewhere: root.querySelector("#elsewhere")?.getAttribute("src") ?? null,
+        heading: style("h2").position,
+        toggle: { background: style("#toggle").backgroundColor, border: style("#toggle").borderTopStyle, padding: style("#toggle").paddingTop },
+      };
+    });
+    const said = await tab.evaluate(() => window.__problems);
+    claim("an https: image on an origin the host lists for the view's images is drawn, asked for with no referrer", drawnHere.cover.src === "https://images.example/abbey-road.jpg" && drawnHere.cover.referrer === "no-referrer", drawnHere.cover);
+    claim("an https: image on any other origin is not drawn, and the host's problems say which address and why", drawnHere.elsewhere === null && said.some((one) => one.includes("https://collector.example/abbey-road.jpg") && one.includes("https://images.example")), { src: drawnHere.elsewhere, said: said.filter((one) => /image/.test(one)) });
+    claim("a view's stylesheet keeps position: sticky on its own heading", drawnHere.heading === "sticky", drawnHere.heading);
+    claim("a view's stylesheet keeps all: unset, which takes the browser's chrome off a button of its own", drawnHere.toggle.background === "rgba(0, 0, 0, 0)" && drawnHere.toggle.border === "none" && drawnHere.toggle.padding === "0px", drawnHere.toggle);
+    await inRegion("notes", "#to-packages-by-title").click();
+    const titlePage = await lens().then((drawn) => drawn.packages.length === 3).catch(() => false);
+    claim('a view\'s link to a place by its title, data-place="The packages", goes to that place', titlePage);
+    await open("face=pages&path=/places/what-we-heard");
+    await inRegion("notes", "#go-packages").waitFor({ timeout: 15_000 });
     await inRegion("notes", "#go-packages").click();
     const slugPage = await lens().then((drawn) => drawn.packages.length === 3).catch(() => false);
     claim('graview.navigate("the-packages"), a bare string that is no record but a place\'s slug, goes to that place', slugPage);

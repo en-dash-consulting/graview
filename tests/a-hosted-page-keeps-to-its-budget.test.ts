@@ -85,8 +85,18 @@ describe("a hosted page", () => {
     // 884 KB since a broken rule says its values to a host (FR-159, the engine's hook), a showing's name a fingertip as drawn and the overview's address alone (FR-154), together: the scene face measured 904_192 B.
     // Still 884 KB when the inspector's pane and the seat's tools came to be fetched when an act is first wanted: the scene face measured 856_430 B, 46_530 under main's 902_960.
     // 887 KB since the second half of the 0.1.30 wave landed together: graview.dev's fixes to the scene (an edge sign clear of the corner, a tie taking the kit's route), a screen reader told each stop (named controls, focus after a move, another seat's change said) and a kind's list in its declared order: the scene face measured 906_948 B, 1_732 over 884.
+    // 888 KB since a change came to be said in words, said with nobody shown here, and asked from what the record holds in the scene's ask too: the scene face measured 909_040 B, 2_092 more than before them (906_948).
+    // 889 KB since the GPU path holds past 128 live views (the scene hands a view the GPU cannot follow to the DOM in place): the scene face measured 909_597 B, 285 over 888.
+    // 893 KB since the scene's cards and ties were fixed together (2026-10-15): a card says there is more at its edge, its "+N more" opens the rest, and a chosen record's ties keep their words until reached, placed clear of the cards' titles: the scene face measured 913_594 B, 4_554 more than before them (909_040).
+    // 894 KB with both landed: the scene's cards and ties over the GPU path's hand-off to the DOM.
+    // 891 KB since 2026-10-15, when a template came to say records by their labels and take `capital`, a card to say its glance exactly and its prose on a line, and the bar to name a place once and read `pages.first` once a visit: the scene face measured 911_198 B, 2_158 more than before them (909_040).
+    // 897 KB with the templates' fixes over the scene's cards and the GPU hand-off.
+    // 891 KB since blocks came to lay out as written (2026-10-15, fix/blocks-layout: a nested headline a section's, row groups, rows, badges, a large figure, a rule's sentence first, a place without its form): the scene face measured 911_746 B, 2_706 more than before them (909_040).
+    // 900 KB with the blocks' layout over the templates' fixes, the scene's cards and the GPU hand-off.
+    // 906 KB since the Beatles' discography's fixes (2026-10-15, fix/lenses-and-views): a list that shows its next page and groups by a linked record, a coverage that says it has nothing to cross and orders its rows, a career calendar spanning its records, a place known by its title and an image from an origin the host lists: the scene face measured 926_488 B, 6_044 more than main (920_444).
     // 889 KB since the tenth walk's carried dead ends (W-217 to W-225): Find going into a kind whole and landing the keys on its line, a raised kind's way in, the past on the arranging line, the trail's headroom and the scene's foot clear of the ask field: the scene face measured 909_930 B, 1_642 over 887.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(889 * 1024);
+    // 908 KB with the tenth walk's carried dead ends over the Beatles' fixes and the rest of the 0.1.30 wave.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(908 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

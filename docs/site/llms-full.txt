@@ -367,7 +367,7 @@ Writes llms.txt and agents.md next to the entry, or into <dir>.
 graview doctor [<dir>] [--document <file>] [--json]
 ```
 
-Says whether the product in <dir> (default .) is on one Graview release: every graview and @graview/* pin in its package.json the same version, its lockfile and its node_modules holding that version, each declaration document's formatVersion one the installed core reads, and react beside react-dom at one version (React refuses a mismatched pair at startup, and the page is blank). Each problem is said with its fix; exits 1 on any.
+Says whether the product in <dir> (default .) is on one Graview release: every graview and @graview/* pin in its package.json the same version, its lockfile and its node_modules holding that version, each declaration document's formatVersion one the installed core reads, and react beside react-dom at one version (React refuses a mismatched pair at startup, and the page is blank). Run from a framework checkout with no graview on PATH, it says how to put it there. Each problem is said with its fix; exits 1 on any.
 
 ## graview figure
 
@@ -705,6 +705,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [What check says (105)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.
+- [This site, as an app](https://graview.dev/docs/site.html): graview.dev is a Graview app: its pages are records, and its city is one click away.
 
 ---
 
@@ -755,7 +756,7 @@ Source: https://graview.dev/docs/packages/core.html
 pnpm add @graview/core
 ```
 
-Entry points: `@graview/core`, `@graview/core/document`, `@graview/core/compiled`, `@graview/core/retry`, `@graview/core/describe`, `@graview/core/figures`, `@graview/core/scene`, `@graview/core/city`, `@graview/core/check`, `@graview/core/blocks`, `@graview/core/arrange`, `@graview/core/provenance`, `@graview/core/history`, `@graview/core/past`, `@graview/core/linked`, `@graview/core/tidying`, `@graview/core/markdown`, `@graview/core/words`, `@graview/core/seat`, `@graview/core/field-sight`, `@graview/core/search`, `@graview/core/forms`, `@graview/core/lines`, `@graview/core/json-schema`, `@graview/core/sync`, `@graview/core/import`, `@graview/core/snapshot`, `@graview/core/conformance`, `@graview/core/sqlite`, `@graview/core/scaffold`, `@graview/core/cli`, `@graview/core/testing`, `@graview/core/typed`, `@graview/core/document.schema.json`
+Entry points: `@graview/core`, `@graview/core/document`, `@graview/core/compiled`, `@graview/core/retry`, `@graview/core/describe`, `@graview/core/figures`, `@graview/core/scene`, `@graview/core/city`, `@graview/core/check`, `@graview/core/blocks`, `@graview/core/arrange`, `@graview/core/navigate`, `@graview/core/provenance`, `@graview/core/history`, `@graview/core/past`, `@graview/core/linked`, `@graview/core/tidying`, `@graview/core/markdown`, `@graview/core/words`, `@graview/core/seat`, `@graview/core/field-sight`, `@graview/core/search`, `@graview/core/forms`, `@graview/core/lines`, `@graview/core/json-schema`, `@graview/core/sync`, `@graview/core/import`, `@graview/core/snapshot`, `@graview/core/conformance`, `@graview/core/sqlite`, `@graview/core/scaffold`, `@graview/core/cli`, `@graview/core/testing`, `@graview/core/typed`, `@graview/core/document.schema.json`
 
 ## What it is
 
@@ -790,11 +791,11 @@ npx graview docs ./dist/domain/app.js
 
 `create` writes the declaration split into domain and UI, a shell, a headless test and a CI workflow, initializes a repository, installs, and says what to do next. `--link <path>` consumes the framework from a sibling checkout by path instead of a registry — the only way that works until the packages are published — and refuses a framework that is not built. The generator behind it is `@graview/core/scaffold`, a pure function from a name and a first kind to a list of files, for a host that provisions apps.
 
-## What it exports (312)
+## What it exports (318)
 
 Read off the package's own barrel, so this is what is there today.
 
-`accentProblem`, `actingAs`, `ActRefusal`, `actTitle`, `addressOf`, `AI_BRIDGE_PATH`, `appLinkField`, `ARCHIVED`, `archivedFrom`, `argumentsTaken`, `article`, `assertReadable`, `basePathOf`, `bindSchema`, `bindsOf`, `brandFromAccent`, `brokenWords`, `capabilities`, `capabilitiesOf`, `checkBrandContrast`, `checkContrast`, `checkKitContrast`, `checkpoint`, `checkpointOn`, `checkpointsBetween`, `checkUndo`, `colorsIn`, `compileMutation`, `composite`, `connectorHueColor`, `connectorKitFor`, `contrast`, `counted`, `createMemoryAdapter`, `createSchema`, `createSqlAdapter`, `createSqliteAdapter`, `createViewRegistry`, `DARK`, `dateOn`, `dayAsRead`, `dayOf`, `dayOfMonthAsRead`, `daysAsRead`, `DECISION_BRIDGE_PATH`, `declaredLenses`, `declareInstallation`, `DEFAULT_KIT`, `DEFAULT_LOCALE`, `defineApp`, `defineInvariant`, `defineMutation`, `defineNode`, `defOf`, `deriveArchiveMutations`, `derivedVia`, `deriveEditMutations`, `deriveMutations`, `deriveRemoveMutations`, `describeCapability`, `descriptionOf`, `diffSnapshots`, `DISPLAY_TRACKING`, `DOCUMENT_FONTS`, `documentSchemes`, `durationField`, `edgeId`, `editMutationName`, `editVia`, `effectivity`, `emojiMark`, `emojiOf`, `emojiProblem`, `emojiSvg`, `EMPTY_DIFF`, `evaluate`, `excerpt`, `extendInvariants`, `extendMutations`, `familiesIn`, `faviconHref`, `FIDELITIES`, `FIELD_SIGHT`, `FieldRevisions`, `fieldsWritten`, `fieldsWrittenBy`, `fieldWords`, `fieldWriters`, `fileField`, `fileKindOf`, `filesOf`, `foldPresence`, `fontProblem`, `FORMATS`, `formatStamp`, `FRAMEWORK_VERSION`, `Graph`, `GRAPH_FINDING_CODES`, `GraphError`, `GRAVIEW_COLORS`, `GRAVIEW_FACE`, `graviewSymbol`, `hidesFrom`, `hueFor`, `humanizeField`, `imageField`, `INSTALLATION_MODULE`, `InvalidArguments`, `invert`, `isAppAddress`, `isAppLinkField`, `isArchived`, `isAutomated`, `isCurrent`, `isEffectiveBetween`, `isEffectiveOn`, `isEmptyDiff`, `isFileValue`, `isImage`, `isInlineSvg`, `isLeftAlone`, `isLinkedTarget`, `isoDate`, `isoShade`, `isRepeat`, `isRepeatField`, `isShippedLens`, `isSystem`, `isSystemFamily`, `isUnset`, `isWithheld`, `KEEP_LINK`, `kindPath`, `kitVariables`, `labelOf`, `layer`, `layerProperty`, `LAYERS`, `layerVariables`, `LIGHT`, `Lineage`, `LINEAGE_BASIS_LIMIT`, `LINEAGE_MODEL_LIMIT`, `lineageOf`, `linkedReads`, `linkedRecordField`, `linkedRefOf`, `linkedRefsOf`, `linkedRelationOf`, `linkedRelations`, `linkedValue`, `LOCAL_BRIDGE_PATH`, `LOCAL_LAYERS`, `localeFor`, `LOGO_RULES`, `logSeenBy`, `luminance`, `markdownField`, `markHref`, `markProblem`, `MAX_INLINE_SVG`, `minutesAsRead`, `MissingRecordError`, `MODULES_AUTHOR`, `momentAsRead`, `monthAsRead`, `MOST_STANDING`, `motion`, `nameKey`, `nameOfAuthor`, `namesUnseen`, `NEVER_WRITTEN`, `NewerFormatError`, `nextExpiry`, `nextOccurrence`, `nodeRef`, `nodeRefArgs`, `nodeRefKinds`, `normalize`, `nounOf`, `numberAsRead`, `occurrences`, `onePerPicture`, `openingOf`, `OperationLog`, `orderKinds`, `OVERVIEW_PATH`, `OVERVIEW_SLUG`, `pagesTitle`, `parseLinkedTarget`, `parseParticipant`, `participantKey`, `passingShade`, `PastError`, `pathWithin`, `PermissionDeniedError`, `permits`, `permittedMutations`, `phoneField`, `placeField`, `placeLabel`, `placePath`, `placeSlug`, `PLAIN_WEIGHTS`, `pluralLabel`, `pluralOf`, `PRESENCE_TTL_MS`, `presenceName`, `presenceStands`, `PREVIEW_BATCH`, `primaryOf`, `problemsMoved`, `providerCan`, `readerSettings`, `readLinkedThrough`, `ReceiveError`, `recordPath`, `recordsOf`, `redact`, `REFUSAL_REASONS`, `refusalOf`, `REMOTE_PRESENCE_TTL_MS`, `removeMutationName`, `removeVia`, `repairPlan`, `repeatedBy`, `repeatField`, `repeatKey`, `requiredRolesOf`, `resolveKit`, `resolveModules`, `rolesOf`, `rolesWhoCould`, `RuleBudgetError`, `safeFileHref`, `samePicture`, `samePresence`, `sayIn`, `SCENE_LAYERS`, `sceneTitle`, `SchemaError`, `SCHEMES`, `seatLens`, `SeatLens`, `seatMark`, `seenBy`, `sees`, `seesId`, `settableFields`, `sha256Hex`, `SHAPE`, `shapedRules`, `shapeOf`, `sharesItsName`, `SHIPPED_LENS_NAMES`, `SHIPPED_LENSES`, `sightedKinds`, `snapshotHash`, `sqlFromDatabase`, `SQLITE_TABLE_SHAPE`, `stackOf`, `Store`, `STUDIO_DOOR_PATH`, `subjectKindsOf`, `summarize`, `supportingKinds`, `svgProblem`, `symbolCut`, `SYSTEM_FONTS`, `SYSTEM_STACKS`, `takesAnId`, `tellTheWatchWhatIsUnseen`, `TEXT_PAIRS`, `textSize`, `tickEachDay`, `timeAsRead`, `touchedBy`, `touchesUnseen`, `TrackedReader`, `TYPOGRAPHY`, `typographyOf`, `UndoBlockedError`, `undoPrimitives`, `UnknownMutationError`, `UnregisteredInvariantError`, `UNSET`, `untilTheDayTurns`, `unwrittenFields`, `upgradeOp`, `upgradeSnapshot`, `validateGraph`, `validRepeat`, `violationKey`, `violationsTouching`, `VISITOR_PRESENCE_TTL_MS`, `walkKinds`, `weekdayAsRead`, `weekdayName`, `WEEKDAYS`, `WEIGHTS`, `whenAsRead`, `whyNot`, `WIRE_PROTOCOL`, `withArticle`, `WITHHELD_AUTHOR`, `WITHHELD_INTENT`, `withhold`, `Writers`, `writersOf`, `writesOf`, `writtenBy`, `z`
+`accentProblem`, `actingAs`, `ActRefusal`, `actTitle`, `addressOf`, `AI_BRIDGE_PATH`, `allLabel`, `appLinkField`, `ARCHIVED`, `archivedFrom`, `argumentsTaken`, `article`, `assertReadable`, `basePathOf`, `bindSchema`, `bindsOf`, `brandFromAccent`, `brokenWords`, `capabilities`, `capabilitiesOf`, `checkBrandContrast`, `checkContrast`, `checkKitContrast`, `checkpoint`, `checkpointOn`, `checkpointsBetween`, `checkUndo`, `colorsIn`, `compileMutation`, `composite`, `connectorHueColor`, `connectorKitFor`, `contrast`, `counted`, `coverageUnlinkedWords`, `createMemoryAdapter`, `createSchema`, `createSqlAdapter`, `createSqliteAdapter`, `createViewRegistry`, `DARK`, `dateOn`, `dayAsRead`, `dayOf`, `dayOfMonthAsRead`, `daysAsRead`, `DECISION_BRIDGE_PATH`, `declaredLenses`, `declareInstallation`, `DEFAULT_KIT`, `DEFAULT_LOCALE`, `defineApp`, `defineInvariant`, `defineMutation`, `defineNode`, `defOf`, `deriveArchiveMutations`, `derivedVia`, `deriveEditMutations`, `deriveMutations`, `deriveRemoveMutations`, `describeCapability`, `descriptionOf`, `diffSnapshots`, `DISPLAY_TRACKING`, `DOCUMENT_FONTS`, `documentSchemes`, `durationField`, `edgeId`, `editMutationName`, `editVia`, `effectivity`, `emojiMark`, `emojiOf`, `emojiProblem`, `emojiSvg`, `EMPTY_DIFF`, `evaluate`, `excerpt`, `extendInvariants`, `extendMutations`, `familiesIn`, `faviconHref`, `FIDELITIES`, `FIELD_SIGHT`, `FieldRevisions`, `fieldsWritten`, `fieldsWrittenBy`, `fieldWords`, `fieldWriters`, `fileField`, `fileKindOf`, `filesOf`, `foldPresence`, `fontProblem`, `FORMATS`, `formatStamp`, `FRAMEWORK_VERSION`, `Graph`, `GRAPH_FINDING_CODES`, `GraphError`, `GRAVIEW_COLORS`, `GRAVIEW_FACE`, `graviewSymbol`, `GridSort`, `gridSortOf`, `gridSortProblem`, `hidesFrom`, `hueFor`, `humanizeField`, `imageField`, `INSTALLATION_MODULE`, `InvalidArguments`, `invert`, `isAppAddress`, `isAppLinkField`, `isArchived`, `isAutomated`, `isCurrent`, `isEffectiveBetween`, `isEffectiveOn`, `isEmptyDiff`, `isFileValue`, `isImage`, `isInlineSvg`, `isLeftAlone`, `isLinkedTarget`, `isoDate`, `isoShade`, `isRepeat`, `isRepeatField`, `isShippedLens`, `isSystem`, `isSystemFamily`, `isUnset`, `isWithheld`, `KEEP_LINK`, `kindPath`, `kitVariables`, `labelOf`, `layer`, `layerProperty`, `LAYERS`, `layerVariables`, `LIGHT`, `Lineage`, `LINEAGE_BASIS_LIMIT`, `LINEAGE_MODEL_LIMIT`, `lineageOf`, `linkedReads`, `linkedRecordField`, `linkedRefOf`, `linkedRefsOf`, `linkedRelationOf`, `linkedRelations`, `linkedValue`, `LOCAL_BRIDGE_PATH`, `LOCAL_LAYERS`, `localeFor`, `LOGO_RULES`, `logSeenBy`, `luminance`, `markdownField`, `markHref`, `markProblem`, `MAX_INLINE_SVG`, `minutesAsRead`, `MissingRecordError`, `MODULES_AUTHOR`, `momentAsRead`, `monthAsRead`, `MOST_STANDING`, `motion`, `nameKey`, `nameOfAuthor`, `namesUnseen`, `NEVER_WRITTEN`, `NewerFormatError`, `nextExpiry`, `nextOccurrence`, `nodeRef`, `nodeRefArgs`, `nodeRefKinds`, `normalize`, `nounOf`, `numberAsRead`, `occurrences`, `onePerPicture`, `openingOf`, `OperationLog`, `orderKinds`, `OVERVIEW_PATH`, `OVERVIEW_SLUG`, `pagesTitle`, `parseLinkedTarget`, `parseParticipant`, `participantKey`, `passingShade`, `PastError`, `pathWithin`, `PermissionDeniedError`, `permits`, `permittedMutations`, `phoneField`, `placeField`, `placeLabel`, `placePath`, `placeSlug`, `PLAIN_WEIGHTS`, `pluralLabel`, `pluralOf`, `PRESENCE_TTL_MS`, `presenceName`, `presenceStands`, `PREVIEW_BATCH`, `primaryOf`, `problemsMoved`, `providerCan`, `readerSettings`, `readLinkedThrough`, `ReceiveError`, `recordPath`, `recordsOf`, `redact`, `REFUSAL_REASONS`, `refusalOf`, `REMOTE_PRESENCE_TTL_MS`, `removeMutationName`, `removeVia`, `repairPlan`, `repeatedBy`, `repeatField`, `repeatKey`, `requiredRolesOf`, `resolveKit`, `resolveModules`, `rolesOf`, `rolesWhoCould`, `RuleBudgetError`, `safeFileHref`, `samePicture`, `samePresence`, `sayIn`, `SCENE_LAYERS`, `sceneTitle`, `SchemaError`, `SCHEMES`, `seatLens`, `SeatLens`, `seatMark`, `seenBy`, `sees`, `seesId`, `settableFields`, `sha256Hex`, `SHAPE`, `shapedRules`, `shapeOf`, `sharesItsName`, `SHIPPED_LENS_NAMES`, `SHIPPED_LENSES`, `sightedKinds`, `snapshotHash`, `sortForGrid`, `sqlFromDatabase`, `SQLITE_TABLE_SHAPE`, `stackOf`, `Store`, `STUDIO_DOOR_PATH`, `subjectKindsOf`, `summarize`, `supportingKinds`, `svgProblem`, `symbolCut`, `SYSTEM_FONTS`, `SYSTEM_STACKS`, `takesAnId`, `tellTheWatchWhatIsUnseen`, `TEXT_PAIRS`, `textSize`, `tickEachDay`, `timeAsRead`, `touchedBy`, `touchesUnseen`, `TrackedReader`, `TYPOGRAPHY`, `typographyOf`, `UndoBlockedError`, `undoPrimitives`, `UnknownMutationError`, `UnregisteredInvariantError`, `UNSET`, `untilTheDayTurns`, `unwrittenFields`, `upgradeOp`, `upgradeSnapshot`, `validateGraph`, `validRepeat`, `violationKey`, `violationsTouching`, `VISITOR_PRESENCE_TTL_MS`, `walkKinds`, `weekdayAsRead`, `weekdayName`, `WEEKDAYS`, `WEIGHTS`, `whenAsRead`, `whyNot`, `WIRE_PROTOCOL`, `withArticle`, `WITHHELD_AUTHOR`, `WITHHELD_INTENT`, `withhold`, `Writers`, `writersOf`, `writesOf`, `writtenBy`, `z`
 
 ---
 
@@ -1427,11 +1428,11 @@ export default { async fetch(request) { return answer(await run(await request.te
 
 `graview view check view.js --app app.js --manifest manifest.json --seed seed.json --roles partner` does the same from a terminal, with `nodeIsolate`.
 
-## What it exports (6)
+## What it exports (7)
 
 Read off the package's own barrel, so this is what is there today.
 
-`connectGuest`, `GUEST_PROTOCOL`, `GUEST_SANDBOX`, `isGuestReady`, `isHostHello`, `OPAQUE_ORIGIN`
+`connectGuest`, `GUEST_PROTOCOL`, `GUEST_SANDBOX`, `isGuestReady`, `isHostHello`, `navigateRequest`, `OPAQUE_ORIGIN`
 
 ---
 
@@ -1614,11 +1615,11 @@ The provider holds the store, the view registry, the current view, the selection
 
 A part fetched only when it is first drawn is a `lazyModule` over `retryingImport(() => import("./part.js"))` (from `@graview/core/retry`), drawn with its `part(draw, { what })`. Until it arrives, its place says so in one line with a "Try again" button (`lazy-part-missing`, `lazy-part-retry`) rather than throwing; it is asked for again when the browser is back online, when it is drawn again, on `prefetch()`, and when the button is pressed (`retryLazyParts`). Every part the framework fetches as it is drawn — the person's menu, the problems' rows, the faces, the views and lenses, the studio, the assistant — is one.
 
-## What it exports (128)
+## What it exports (132)
 
 Read off the package's own barrel, so this is what is there today.
 
-`ACTIVITY_HOLD_MS`, `adjustment`, `altitudeOpacity`, `anchorOf`, `applySettings`, `AUDIENCE_ROW`, `bandRows`, `BesideTheMap`, `channelRoute`, `clipPolyline`, `clipQuadratic`, `connectorStrands`, `createMotionStore`, `createPointerStore`, `createSeatTalk`, `createViews`, `DEFAULT_VIEW`, `DefaultDrawnElsewhere`, `districtOf`, `ErrorReportContext`, `Figure`, `foldRobots`, `GoToContext`, `GraviewProvider`, `HEARTBEAT_MS`, `honorSetting`, `HostFilesContext`, `inTopLayer`, `isDefaultView`, `kitConnector`, `landingIn`, `latticePoints`, `layerViews`, `lazyModule`, `loadSetting`, `mapChoice`, `markActivity`, `markDefaultView`, `markReplacesPage`, `matchWith`, `NOTHING_FOUND`, `Occupants`, `onScreen`, `openingView`, `orthogonalPoints`, `participantOf`, `PersonFigure`, `pickedFrom`, `placeOthers`, `placePane`, `PlaybackContext`, `polylineD`, `POPOVER_STYLE`, `POPOVERS`, `PRESENCE_SETTINGS`, `raiseOverPopovers`, `rememberSetting`, `REPLACES_PAGE`, `replacesPage`, `ResolvedView`, `retryLazyParts`, `RIBBON_WIDTH`, `ribbonSentence`, `ribbonsOf`, `ribbonWidth`, `ROBOT_REST_MS`, `roundedPolylineD`, `routedQuadratic`, `routePoint`, `Scene`, `SeatMarks`, `seatTalkKey`, `selectionFor`, `SHARE_OVER`, `SHARE_WHERE`, `stackOpacity`, `standingFor`, `tabSession`, `tieRoute`, `UrlSync`, `useActivity`, `useAffordances`, `useAnimatedLayout`, `useApplyAffordance`, `useAttention`, `useBacktrack`, `useDrawnSize`, `useEditableFields`, `useFlagged`, `useFound`, `useGoTo`, `useGraph`, `useGraview`, `useGraviewIfAny`, `useHostFiles`, `useImplicated`, `useJackIn`, `useKit`, `useLiveStore`, `useLocalIntelligence`, `useMarqueeRoom`, `useNavigation`, `useNode`, `useOwnPlayback`, `usePlayback`, `usePopover`, `usePresenceState`, `useReached`, `useRobots`, `useScenePointer`, `useSceneStill`, `useSeatDrawn`, `useSeatTalkState`, `useSeatWork`, `useSelection`, `useTextMeasure`, `useTheKeyboardLandsSomewhere`, `useTheWatchKnowsWhatIsUnseen`, `useTopLayer`, `useTouched`, `useUrlSync`, `useViewMode`, `useViolations`, `useWhereIs`, `ViewBoundary`, `ViewModeProvider`, `VISIT_EACH_UP_TO`, `whereIsIn`
+`ACTIVITY_HOLD_MS`, `adjustment`, `altitudeOpacity`, `anchorOf`, `applySettings`, `AUDIENCE_ROW`, `bandRows`, `BesideTheMap`, `channelRoute`, `clipPolyline`, `clipQuadratic`, `connectorStrands`, `createMotionStore`, `createPointerStore`, `createSeatTalk`, `createViews`, `DEFAULT_VIEW`, `DefaultDrawnElsewhere`, `districtOf`, `ErrorReportContext`, `Figure`, `foldRobots`, `GoToContext`, `GraviewProvider`, `hasLanded`, `HEARTBEAT_MS`, `honorSetting`, `HostFilesContext`, `inTopLayer`, `isDefaultView`, `kitConnector`, `landingIn`, `latticePoints`, `layerViews`, `lazyModule`, `loadSetting`, `mapChoice`, `markActivity`, `markDefaultView`, `markLanded`, `markReplacesPage`, `matchWith`, `MenuSections`, `NOTHING_FOUND`, `Occupants`, `onScreen`, `openingView`, `orthogonalPoints`, `participantOf`, `PersonFigure`, `pickedFrom`, `placeOthers`, `placePane`, `PlaybackContext`, `polylineD`, `POPOVER_STYLE`, `POPOVERS`, `PRESENCE_SETTINGS`, `raiseOverPopovers`, `rememberSetting`, `REPLACES_PAGE`, `replacesPage`, `ResolvedView`, `retryLazyParts`, `RIBBON_WIDTH`, `ribbonSentence`, `ribbonsOf`, `ribbonWidth`, `ROBOT_REST_MS`, `roundedPolylineD`, `routedQuadratic`, `routePoint`, `Scene`, `SeatMarks`, `seatTalkKey`, `selectionFor`, `SHARE_OVER`, `SHARE_WHERE`, `stackOpacity`, `standingFor`, `tabSession`, `tieRoute`, `UrlSync`, `useActivity`, `useAffordances`, `useAnimatedLayout`, `useApplyAffordance`, `useAttention`, `useBacktrack`, `useDrawnSize`, `useEditableFields`, `useFlagged`, `useFound`, `useGoTo`, `useGraph`, `useGraview`, `useGraviewIfAny`, `useHostFiles`, `useImplicated`, `useJackIn`, `useKit`, `useLiveStore`, `useLocalIntelligence`, `useMarqueeRoom`, `useMenuSections`, `useNavigation`, `useNode`, `useOwnPlayback`, `usePlayback`, `usePopover`, `usePresenceState`, `useReached`, `useRobots`, `useScenePointer`, `useSceneStill`, `useSeatDrawn`, `useSeatTalkState`, `useSeatWork`, `useSelection`, `useTextMeasure`, `useTheKeyboardLandsSomewhere`, `useTheWatchKnowsWhatIsUnseen`, `useTopLayer`, `useTouched`, `useUrlSync`, `useViewMode`, `useViolations`, `useWhereIs`, `ViewBoundary`, `ViewModeProvider`, `VISIT_EACH_UP_TO`, `whereIsIn`
 
 ---
 
@@ -1648,11 +1649,13 @@ The spatial renderer: three planes, an affine transform per plane, and connector
 
 **The DOM path is what ships.** Each view is an ordinary element with a CSS `matrix3d` — the same affine transform the GPU path uses, applied by the browser. It is fully interactive, fully accessible, and every claim this project makes about the interface is verified against it.
 
-**The GPU capture path is EXPERIMENTAL.** It rasterizes each view's DOM subtree with `CanvasDrawElement` and composites the textures with per-plane blur, which is the part a shader is genuinely better at. It needs Chrome Canary with `--enable-blink-features=CanvasDrawElement`.
+**The GPU capture path is EXPERIMENTAL.** It rasterizes each view's DOM subtree with `CanvasDrawElement` and composites the textures with per-plane blur, which is the part a shader is genuinely better at. It needs Chrome Canary with `--enable-blink-features=CanvasDrawElement`. Canary 158 respelled the API (`content="drawable"` on the canvas, `drawable` on each view, a plain `{ texture }` destination); both spellings are written.
 
 It used to bring the renderer process down on a click. That is fixed. The cause was not the click: a plain hover over a captured view killed it just as reliably, and a keyboard selection of the same node did not. What is fatal is the browser's own hit-test descending into a `layoutsubtree` canvas child, so on this path the hosts carry `pointer-events: none` and `PointerRouter` answers instead — which it had to anyway, because `updateElementGeometry` does not redirect hit-testing in this build. `scripts/verify-capture.mjs` holds the claim: the pointer survives, a click still reaches the node that was drawn, and the keyboard still reaches the views.
 
-It stays experimental for a different reason: capture falls off a cliff past ~128 live captures a frame, and every other claim this project makes is verified against the DOM path.
+Capture costs about 0.22 ms a view on Chromium 158, so retaking every live view every frame holds sixty frames a second only below about 64 views (6 fps at 512). `attachGpu()` — the capture path as a Scene's `attachRenderer` — keeps a page under that: it retakes a view only when the browser's `paint` event says it changed, skips what is off the canvas, spends at most `CAPTURE_BUDGET` retakes a frame, and hands a view that keeps changing faster than that to the DOM path, drawn at the same transform under the canvas. The discography holds about 400 fps with 512 live views that way (`scripts/verify-scale.mjs`).
+
+It stays experimental because it needs Canary and a flag, and every other claim this project makes is verified against the DOM path.
 
 It is published rather than withheld because `@graview/react` depends on this package for the plane model, the transforms and the frame planner, all of which both paths share. Opting into the capture path is an explicit `attachRenderer` — nothing reaches it by accident.
 
@@ -1664,11 +1667,11 @@ It is published rather than withheld because `@graview/react` depends on this pa
 
 The compositor, the WGSL and the `html-in-canvas` platform bindings move with the browser feature they are built on.
 
-## What it exports (25)
+## What it exports (26)
 
 Read off the package's own barrel, so this is what is there today.
 
-`CONNECTOR_DASH`, `connectorStroke`, `connectorStyle`, `connectorWidth`, `distinguishable`, `fromLayout`, `hitTest`, `hueFor`, `IDENTITY`, `invertPlaneTransform`, `isAffine`, `LIGHT_PLANE_STYLES`, `mixStyles`, `perspectiveProbeMatrix`, `PLANE_STYLES`, `PLANES`, `planeTransform`, `planFrame`, `PointerRouter`, `PROVISIONAL_DASH`, `PROVISIONAL_OPACITY`, `styleFor`, `toDOMMatrix`, `toLocal`, `transformFor`
+`CAPTURE_BUDGET`, `CONNECTOR_DASH`, `connectorStroke`, `connectorStyle`, `connectorWidth`, `distinguishable`, `fromLayout`, `hitTest`, `hueFor`, `IDENTITY`, `invertPlaneTransform`, `isAffine`, `LIGHT_PLANE_STYLES`, `mixStyles`, `perspectiveProbeMatrix`, `PLANE_STYLES`, `PLANES`, `planeTransform`, `planFrame`, `PointerRouter`, `PROVISIONAL_DASH`, `PROVISIONAL_OPACITY`, `styleFor`, `toDOMMatrix`, `toLocal`, `transformFor`
 
 ---
 
@@ -1876,11 +1879,11 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 
 Anything **one** deployment needs lives here. Anything only the **operator of many** deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the `graview-cloud` repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.
 
-## What it exports (64)
+## What it exports (69)
 
 Read off the package's own barrel, so this is what is there today.
 
-`announcePresence`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `filesAt`, `forgetFreshParam`, `freshHref`, `health`, `isClientBatch`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `syncSeed`, `visitorPresence`, `WIRE`, `wireRefusalOf`
+`announcePresence`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `filesAt`, `forgetFreshParam`, `freshHref`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `sayHeld`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `syncSeed`, `visitorPresence`, `WIRE`, `wireRefusalOf`
 
 ---
 
@@ -2382,6 +2385,10 @@ Installed into a project by `graview skills install .`, and read by whichever as
 3. **A plan** — what came back, as an object rather than a list: ordered by the chain, judged against the policy and the provider's `may`, reviewable. `planFrom(store, proposals, { app, principal })`.
 4. **A review** — `<PlanReview plan={plan} onApplied={...} />`. Applied as one turn, so `store.undo(batch)` takes the whole thing back.
 
+### Or in the context menu
+
+A desk can be a section of the menu a right-click opens on either face (on the pages Shift+F10 and a long press too): `menuSections` on the provider, `embed()` or the pages' context. Each source is told what the menu was opened on — `{ face, on, about, field, place, href }` — and answers `{ id, heading?, items?: [{ id, label, run }], render?: (close) => node }` or nothing. It is drawn beside the acts the store would accept, never instead of them, and what it proposes goes through the same four seams.
+
 ### Do this
 
 1. **Write the prompt from the graph.** What kinds exist, what acts exist and what they take — `generateLlmsTxt(app)` from `@graview/core/check` writes that — plus what is already there. A model that cannot see the graph invents a second Back Lawn.
@@ -2558,6 +2565,8 @@ Each repair is handed the record the rule judged, so it must be an act ON that k
 
 In a document (`app.json`, a graview-document) the same rule is `rules.priced-packages`: `{ "over": "package", "require": "net > 0", "says": "…", "repairs": [{ "act": "edit-package" }] }`; `graview check --document app.json` says each finding at its JSON path (`rules.priced-packages.repairs.0`).
 
+A document's repair may also be an act from the OTHER end of the rule's relation. A rule over `finding` requiring `exists(in('resolves'))` is repaired by `resolve-finding`, declared `on: "initiative"`, `connects: "resolves"`, `fromTheOtherEnd: "Name the work that fixes it"`: the rule hands it the finding as the far end (`to`), labels the repair with those words, and leaves the initiative for the person to choose (`missing: ["id"]`), as the finding's own page offers it. Without `fromTheOtherEnd`, or without a relation between the two kinds, it is still `repair-wrong-kind`.
+
 A rule in the rule language is drawn as its shape, in the declaration's labels: "◆ Scenario margin ≥ target margin, when plan's price > $0", and broken, with the record's values: "A club on Team — margin 44% < target margin 50%". Its title is a second line under that, so keep it short ("Margin above target") or leave it out; "A scenario keeps the target margin" only says the shape again, less clearly. Label a field that reads badly when spoken (`display.labels`) rather than writing round it.
 
 Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')` and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`; `sum`/`min`/`max(S, expr)` with an expression per member (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list key sorts by its first value, then its next), `first(S)` for one record, `either(a, b)` for the first that is something; `if(cond, a, b)`, which works out only the branch it takes; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set and give each record reached once; sets meet with `&`, join with `|` and part with `-` — LifeLogics' coverage is one figure, `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step read from what the seat may see. (Inside a template's braces, a `|` within brackets joins; the last bar outside them is the formatter's.) A kind's `computed` fields read like stored ones, and `fact('name')` reads a fact of the whole graph — a document's top-level `computed`, like `"mapProposed": "every(all('area'), proposed)"` — so a rule over the graph, a block and a face's own screen say it once (`factValues` from `@graview/core/blocks`; `describe_place` on the home lists them). Every evaluation has a step budget: a rule that reads too much is `over-budget`, never a hang.
@@ -2622,7 +2631,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 A lens is a picture that knows nothing about your domain. The timeline does not know what a duty is; it knows there is a `start`, an `end` and a column. The coverage matrix does not know what a requirement is; it knows there are rows, columns and an edge that fills a cell. That indirection is the entire point: a lens written for one app is used unchanged by another.
 
-The framework ships five, each built from the public primitives — which makes them the worked example of the authoring API rather than privileged insiders. Read one before writing your own:
+The framework ships five, each built from the public primitives — which makes them the worked example of the authoring API. Read one before writing your own:
 
 - `packages/primitives/src/lens/timeline.tsx` — intervals in columns
 - `packages/primitives/src/lens/calendar.tsx` — the same intervals, by date
@@ -2630,9 +2639,9 @@ The framework ships five, each built from the public primitives — which makes 
 - `packages/primitives/src/lens/board.tsx` — position given by the domain (discs for codes of three characters, tokens for words; `arrange: "shelf"` when the x and y are categories rather than coordinates)
 - `packages/primitives/src/lens/plan.tsx` — an outline, with points inside it
 
-(`reach.tsx` sits beside them and is not one: no factory, no roles to rebind. A view that ships is still a view.)
+(`reach.tsx` beside them is not one: no factory, no roles to rebind. A view that ships is still a view.)
 
-The plan is the one to read if yours draws anything, because it is the one that learned what drawing costs. A name is fitted to the shape it names — `fitLabel` and `spanAt` from `@graview/layout`, which give the width of a shape AT A HEIGHT rather than its bounding box, because the shapes that overflow are the long thin ones. Names are painted after everything else, because a marker dot took the first letter off two of them. Whatever will not fit goes in a key underneath. And `useDrawnSize` answers the question a scalable drawing hides: at THIS size, can a person read it, or press it? A one-pixel target with a keyboard stop and an ARIA label is not an accessible control; it is an inaccessible one that has been described.
+Read the plan if yours draws anything: a name is fitted to its shape at a height (`fitLabel`, `spanAt` from `@graview/layout`), names are painted last, what will not fit goes in a key, and `useDrawnSize` asks whether, at THIS size, a person can read it or press it.
 
 Start it with the scaffolder — `graview lens grounds-map --roles regions,markers
 
@@ -2654,7 +2663,7 @@ Start it with the scaffolder — `graview lens grounds-map --roles regions,marke
 
 1. **Render at three fidelities.** `glyph` is a chip; `summary` is denser content, not the same content scaled down; `full` is the picture.
 
-1. **`nodes` is THE GROUP'S MEMBERS, and nothing else.** A lens mounted over a kind's `many` cell receives that kind's members in `ViewProps.nodes` — not the graph. Every interesting lens draws more than one kind (a board has slots and occupants, a matrix has rows and columns, a map has regions and markers), and every other kind comes from `store.graph`, narrowed back to `nodes` for the group's own kind so the scene's horizon still applies. Built from `nodes` alone, a map drew every piece of ground with nothing standing in it: no error, no empty state, a complete, tidy, wrong picture, which is the worst failure a lens has. The framework's own board lens had this exact bug.
+1. **`nodes` is THE GROUP'S MEMBERS, and nothing else.** A lens mounted over a kind's `many` cell receives that kind's members in `ViewProps.nodes` — not the graph. Every interesting lens draws more than one kind (a board has slots and occupants, a matrix has rows and columns, a map has regions and markers), and every other kind comes from `store.graph`, narrowed back to `nodes` for the group's own kind so the scene's horizon still applies. Built from `nodes` alone, a map drew its ground with nothing standing in it: no error, a tidy, wrong picture — the worst failure a lens has.
 
 **`budget` is the most to draw.** A host may hand a lens a few members with `budget` and `total`: hold what you read from the store to it too, and say "+N more" (`withMore` does). A real catalog is thousands; a lens that draws them all at 6% stalls the city.
 
@@ -2664,9 +2673,9 @@ Start it with the scaffolder — `graview lens grounds-map --roles regions,marke
 
 `bar` is the framework's own row (`ArrangeBar`), drawn at full fidelity unless declined; `nodes` are the members as arranged; `arranged.groups` are there when the picture has a place for headings, as the calendar's agenda does. Declare `arrangedBy` on the app's `lenses` entry too, in the grammar (`{ group: "held-at" }`), so `graview check` holds it to the bound kind and `graview describe` can say it. A person who arranged the list can ask your picture the same thing in the same words.
 
-1. **Declare a shipped lens; register only your own.** A `lenses` entry with a `title` is a PLACE the framework draws with no registration — a tab, a name on its district, a page at `/places/<as>`: `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`. A status board: `{ name: "columns", title: "The board", bindings: { task: { column: "status" } } }`; a card moves only by an act setting `status` (`book` where its `allowedWhen` holds). `on` names the kind when the bindings do not (reach; a coverage over its columns), and `options` are data (`SHIPPED_LENSES[name].options`). A lens you wrote is registered with a title as the fourth argument: `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`. Untitled, it is reachable only by focusing the group.
+1. **Declare a shipped lens; register only your own.** A `lenses` entry with a `title` is a PLACE the framework draws with no registration — a tab, a name on its district, a page at `/places/<as>`: `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`. A status board: `{ name: "columns", title: "The board", bindings: { task: { column: "status" } } }`; a card moves only by an act setting `status` (`book` where its `allowedWhen` holds). `on` names the kind when the bindings do not (reach; a coverage over its columns), and `options` are data (`SHIPPED_LENSES[name].options`): - a calendar's `range: "years"` with `horizon: { years: 30, title: "The career" }` spans its records, first to last, as well as `years` from `today`; `from` and `to` (years: 1962, 2023) pin its ends; - a coverage's `sort` (rows) and `columnSort`, and a status board's `sort` (cards): a field or `{ by, direction }`, `label` the name, held to the kind (`lens-sort`); - a coverage with no columns, or no link over its relation, says so ("No genres yet: link songs to genres.") and lists no rows. A lens you wrote is registered with a title as the fourth argument: `.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })`. Untitled, it is reachable only by focusing the group.
 
-1. **Before writing a picture, try blocks.** `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }` is a place drawn from the closed block set (headline, figure, list — `graview-node-kind`), each record by its own row or card. Nothing in it runs; a chat can write it. Write code only for what blocks cannot say: a meter, a grid of cells, positions.
+1. **Before writing a picture, try blocks.** `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }` is a place drawn from the closed block set (headline, figure, list — `graview-node-kind`), each record by its own row or card. Nothing in it runs; a chat can write it. A place read, not written, says `create: false`: its page drops the forms that add one. Write code only for what blocks cannot say: a grid of cells, positions.
 
 ### Roles live in two places, and they do different jobs
 
@@ -2793,13 +2802,13 @@ In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key i
 
 `sort` is a field, a computed field (a rank the kind works out) or `label`, lowest first unless `"desc"`, with a `then` for ties; `group` is a choice or yes-or-no field (`"true"`, `"false"`). `order` puts its groups first; `closed` ones are drawn last and shut, each a button saying "done · 12 requests" that opens it (`?open=done` keeps it open; words in the Find box open them all). A person still sorts or groups the list another way from its arranging line. The edit is `arrange-pages` with `sort: { "<kind>": … | null }` and `group: { "<kind>": … | null }`.
 
-1. **Let a card say a long text's start.** A card shows a `text` field in three lines at most and a row in one, cut with an ellipsis. Say it on purpose with the `excerpt` formatter — `{summary|excerpt}` is its first sentence or about 140 characters cut at a word, `{summary|excerpt: 80}` at most 80 (20 to 1000) — and leave the whole text to the record's page. A list cut by its `limit` says "See all 120 features" and goes to the kind's list. Prose written in Markdown says so — `{"type": "text", "format": "markdown"}`, or `markdownField()` — and the record's page draws it as prose (headings, lists, links, code; no HTML), while a row, a card, a describe line and a search hit say its first paragraph or about 160 characters with the syntax taken out.
+1. **Let a card say a long text's start.** A card shows a `text` field in three lines at most and a row in one, cut with an ellipsis. Say it on purpose with the `excerpt` formatter — `{summary|excerpt}` is its first sentence or about 140 characters cut at a word, `{summary|excerpt: 80}` at most 80 (20 to 1000) — and leave the whole text to the record's page. A list block draws 100, then "Show 58 more" (`limit` up to 1000); `group: "inGenre"` heads it by linked record. Markdown prose says so — `{"type": "text", "format": "markdown"}`, or `markdownField()` — and the record's page draws it as prose (headings, lists, links, code; no HTML), while a row, a card, a describe line and a search hit say its first paragraph or about 160 characters with the syntax taken out. A card with no blocks of its own says its kind's `glance` — exactly those fields, nothing after them; prose there is a line under the chips, never a cut chip. A choice another chip beside it shares (a severity and a confidence, both "high") says its field: "Confidence: high". A related record in a template is said by its kind's `label`: `{out('affects') | and}` is "src/files.ts and tsconfig.json"; a count starting a headline, `{n | words | capital}`, is "Two findings". A place titled as a kind's list is keeps the name on the bar, and the list folds into More as "All root causes" (`pages-place-named-as-a-list`).
 
 1. **Set records aside instead of deleting them.** Every kind has `archive-<kind>` and `unarchive-<kind>` (`{ id }`, "Bring it back") and `merge-<kind>` (`{ id, into }`: `into` takes the duplicate's links and the duplicate is archived), permitted through the acts that create the kind. An archived record is out of lists, the scene, counts, computed fields and rules; its own page and search still find it, marked. A list says "+3 archived" and opens them at `?archived=true`; a rule reads them with `all('feature', true)` (`'all'` for both) and `archived()`. A kind that should never be archived says `archives: false` in `defineNode` (a document's `"archives": false`; the edit `set-archives`).
 
 1. **Let the app's own actor tidy, and say what it may not.** An actor that links and prunes on its own is an author that says `automated: true` (`kind: "system"` or `"agent"`). What it is sure of it applies with `lineage: { basis, confidence }`; what it is not it suggests: `suggest(store, calls, { author, lineage })` (from `@graview/core/tidying`) keeps the calls in the log, changes nothing, and they wait in the Suggested tray beside Activity until a person accepts (made as them) or declines them; `declined(store, calls)` says so, and the actor is refused the same change again. Its run of changes is one Activity row, "Tidied 6 things today". A person says "Leave this one alone" on a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`; `isLeftAlone(store, id)`), and the declaration says a kind is never tidied or never linked — `tidying: "never" | "no-links"` on `defineNode`, `tidying: "never"` on a relation; in a document the edit `{"op": "set-tidying", "kind": "vendor", "tidying": "no-links"}` (with `"relation"` for one relation, `"allowed"` to undo it). The store refuses the actor each in a sentence.
 
-1. **Print a place when a fixed link wants one.** `renderPlace(store, app, "/requests", { viewer, locale })` from `@graview/pages/static` answers `{ html, css, title, found }`: one self-contained page, no script, in the app's look, under the viewer's sight, the same words the routed face says. It imports no React, so a Worker renders it on each change.
+1. **Print a place when a fixed link wants one.** `renderPlace(store, app, "/requests", { viewer, locale })` from `@graview/pages/static` answers `{ html, css, title, found }`: one self-contained page, no script, in the app's look, under the viewer's sight, the same words the routed face says. It imports no React, so a Worker renders it on each change. A `design` puts it in the product's own markup — `records[kind](record, site)` writes a record's page, `document(page)` what goes around it — which is how graview.dev renders its pages (`apps/site/design.mjs`).
 
 1. **Know what a kind opens to before you draw it a picture.** Gone into with no lens of its own (`#focus=aggregate:room`), a kind opens to its stop: its plural, count and description; its creating act first ("Add a room"), asked in place; how many are overdue or due this week on its due date; its problems counted by rule, each opening its repairs; what changed since this reader last looked; and a picture its data chooses — a board by its main choice (`status`, `stage`, `state`, `phase` or the lifecycle's field) up to 300 records, a calendar where today's month has short records on its main date, else a table of its glance and its relations, 50 rows at a time. "Keep as a lens" declares that picture (`add-lens`). So give a kind a lifecycle or a `status`, a `glance`, and a creating act with a `title` before you write it a view.
 
@@ -2820,6 +2829,8 @@ graview describe src/domain/app.ts --place requests --seed seed.json --width 390
 ```
 
 It says the list's headings, each record's card and what is filtered, as the page draws them. Archive one record by its act and ask again: it is gone from the list and the count, and `?archived=true` finds it. Undo the merge you tried; both records come back with their links. Have a test actor suggest a link and decline it from the tray: `suggest(store, …)` of the same calls then refuses, and a record left alone refuses the actor's change by name.
+
+Right-click opens the scene's menu on the pages. A design's own row joins with `data-graview-record`, its value with `data-graview-field`.
 
 ### What the check cannot see
 
@@ -2878,9 +2889,9 @@ src/
   main.tsx
 ```
 
-The domain/ui split keeps the declaration inspectable by a build, a CLI and an agent: `graview check` reads `defineApp`, and a React import there would drag a UI package into the checker.
+`graview check` reads `defineApp`; a React import in `domain/` would drag a UI package into the checker.
 
-**Or as one JSON document:** `app.json` (`"format": "graview-document"`, schema `node_modules/@graview/core/dist/document.schema.json`), then `graview check --document app.json`, `graview describe --document app.json`, `graview preview app.json --seed seed.json`.
+**Or as one JSON document:** `app.json` (`"format": "graview-document"`, `$schema` `node_modules/@graview/core/dist/document.schema.json`, which types lenses and view blocks), then `graview check --document app.json`, `graview describe --document app.json`, `graview preview app.json --seed seed.json`. Kinds, acts and rules are kebab-case (`tool-note`), fields and relations camelCase (`supersededBy`). `preview --data` holds its folder: stop it to `sync-seed --apply`. In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
 
 ### Do this
 
@@ -2923,17 +2934,17 @@ Copy the shape from the framework's own `.github/workflows/ci.yml`, minus the pa
 - **Headless tests** — the domain tier has no DOM in it. Test that your rules fire on graphs that break them and that their repairs resolve them; that is the test that catches a real regression.
 - **An accessibility run, in BOTH schemes.** Copy `apps/todo/scripts/run-a11y.mjs`: the real accessibility tree through CDP, plus axe-core. A light palette that clears AA in the dark is what it catches.
 
-Worth stealing later: a browser harness that walks your own acceptance criteria and writes a JSON verdict (the framework has several; each names the claim that stopped being true), and a persistence adapter test.
+Later: a browser harness, a JSON verdict per claim.
 
 ### Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` from `@graview/render/gpu`; there is no URL switch) — never a requirement.
+Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` set to `attachGpu()` from `@graview/render/gpu`) — never a requirement.
 
 ### Then find out whether it worked
 
 ```sh
 pnpm verify        # typecheck, tests, build, graview check
-graview doctor     # one Graview release in pins, lockfile, node_modules, documents; React's pair
+graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout
 ```
 
 Run the project's own `graview`, not `npx -y graview@<pin>`: inside a pnpm workspace that already holds the release, npx finds no bin (`sh: graview: command not found`).
@@ -2976,7 +2987,7 @@ A kind is the unit of everything here. Declaring one gets you, without another l
 
 ```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), // Host-kept picture ("image"/"file"); appLinkField() another app // (its records: graview-linked-records); phoneField(), placeField(). crest: imageField().optional(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
 
-**In a document** (`app.json`, `"format": "graview-document"`) it is `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type": "string", "required": true } }, "edges": { "picked-for": { "to": ["player"] } } }`. Every key is in `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
+**In a document** (`app.json`, `"format": "graview-document"`) it is `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type": "string", "required": true } }, "edges": { "pickedFor": { "to": ["player"] } } }`. Kinds are kebab-case (`tool-note`), fields and relations camelCase (`pickedFor`). Every key, lens and block is in `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
 
 1. **Add it to `createSchema([...])`.** An edge to a kind not in that array fails *typecheck* (`ValidateEdgeTargets`).
 
@@ -2990,7 +3001,7 @@ An id is still a name a caller may choose: every act that declares `creates: ["f
 
 ### Worked examples
 
-`apps/todo/src/domain/schema.ts` (a `rule` kind whose `spec` makes rules data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a `lifecycle`: the past is a horizon, not a delete).
+`apps/todo/src/domain/schema.ts` (`fieldRoles`); `apps/seedbed/src/domain/schema.ts` (a `lifecycle`).
 
 ### The declarations that keep paying
 
@@ -2998,7 +3009,7 @@ An id is still a name a caller may choose: every act that declares `creates: ["f
 - **`fromTheOtherEnd`** on the act that makes or breaks the edge. An act declaring `connects` or `severs` is offered from BOTH ends of the tie, and `title` is written from the subject's side: "Name a caretaker", offered on the gardener, reads as naming hers. Say how it reads standing there (`fromTheOtherEnd: "Take on a plot"`) — `graview check` warns `act-without-far-end-reading` and names the end it has no words for.
 - **`display.page`** when a record should not read in declared order: `page: { fields: ["subject", "draft"], groups: [{ title: "Schedule", fields: ["due"] }] }` puts those first, the rest under "Details" (a document's `kinds.<kind>.page`; `{ op: "set-page-fields" }`). A string allowed past 500 characters (`.max(5000)`, a `text`) is prose: full width, paragraphs and lists kept, edited in a text area.
 - **`lifecycle`** when members expire — `{ field: "status", retired: ["played"] }` or `{ field: "until", retired: "date" }`. Every count then aggregates over the horizon ("4, +12 past") instead of drowning, and `graview check` refuses a lifecycle reading a missing field.
-- **A figure**, line art of the THING at the city's three-quarter angle — a person, a plot, a gutter — drawn wherever the kind is. Nine ship; draw the rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a roof edge"` prints the brief, and `--judge <file>` holds the answer to the rules `graview check` holds a figure to and prints the line to paste. Then look at it at twenty pixels, a chip's size.
+- **A figure**, line art of the THING at the city's three-quarter angle — a person, a plot, a gutter — drawn wherever the kind is. Nine ship; draw the rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a roof edge"` prints the brief, and `--judge <file>` holds the answer to the rules `graview check` holds a figure to and prints the line to paste. Then look at it at twenty pixels.
 - **A declared hue** in the brand (`accents: { fixture: 210 }`) for a chosen color, not a stable hash: every chip dot, roof and focus tag follows.
 
 ### How it looks, as data
@@ -3027,7 +3038,7 @@ computed: {
 }
 ```
 
-Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused. It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"). The check refuses a cycle (`computed-cycle`), a name that is already a field (`computed-clash`) and work that grows with the cube of the graph (`computed-cost`, a warning at the square). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`.
+Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused. It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"). The check refuses a cycle (`computed-cycle`), a name that is already a field (`computed-clash`) and work that grows with the cube of the graph (`computed-cost`, a warning at the square). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`.
 
 ### Then find out whether it worked
 
@@ -3084,20 +3095,20 @@ if (location.pathname.startsWith("/pages")) {
 
 `PagesApp` renders with no registry at all:
 
-- `/` — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and 1 planting." or "Nothing here yet." and the act that begins it), then every picture as a large live card, then the kinds as a row of counts, a line to the map, and Recently. A kind with no titled lens gets a contact sheet of its members, so a new app lands on a gallery. An empty picture names the act that fills it.
-- `/<plural>` — a list per kind, marking trouble, with the creating acts beneath it.
+- `/` — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and 1 planting." or "Nothing here yet."), then every picture as a large live card, the kinds as a row of counts, a line to the map, and Recently. A kind with no titled lens gets a contact sheet of its members, so a new app lands on a gallery. An empty picture names the act that fills it.
+- `/<plural>` — a list per kind, marking trouble, its creating acts beneath.
 - `/<plural>/<id>` — a record: its facts, changed where they stand, its relations in the declaration's words, what can be done, what happened.
-- `/problems` — every broken rule with its repairs.
+- `/problems` — every broken rule, with repairs.
 
-The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages; `pages: { scene, pages }` renames them), the place you are on — whose list holds the home, the Lists, the Pictures (on a wide bar they stand, the rest under More; an empty kind folds into More) — Find, standing, person. A shell with a rail of its own says `surface("shell", Shell, { without: ["places"] })`: the bar keeps all that and names no place.
+The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages; `pages: { scene, pages }` renames them), the place you are on — whose list holds the home, the Lists, the Pictures (standing on a wide bar, else under More, as an empty kind is) — Find, standing, person. A shell with a rail of its own says `surface("shell", Shell, { without: ["places"] })`: the bar keeps all that and names no place.
 
-**Arrange it, declared**: `pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }`. `order` sorts gallery, nav, city; `hide` drops kinds from the home only; `first` (place, kind or `"home"`) opens both faces; `primary` stands on the bar. `placesOf(app)` (`/seat`) lists them.
+**Arrange it, declared**: `pages: { order: ["offer", "package"], hide: ["party"], first: "The offers" }`. `order` sorts gallery, nav, city; `hide` drops kinds from the home only; `first` (place, kind or `"home"`) is where a new visit lands; a drawn home stays Home, on the bar and at `/`. `primary` stands on the bar. `placesOf(app)` (`/seat`) lists them. A lens only a home links to may be `hidden: true` (set-lens-hidden): off the bar and the page list, still at its address.
 
-**Home as data** (FR-81): `home`, blocks as in `graview-node-kind` (`views.home`), replaces this body, and the app opens on it (FR-136).
+**Home as data** (FR-81): `home`, blocks as in `graview-node-kind` (`views.home`), replaces this body, and the app opens on it (FR-136): 40 blocks at its top (a group is one; 120 in all), and a `figure` may say `emphasis: "large"`.
 
-**Hand it `views`** (the scene's registry, plus `settings`/`presence`) — `graview create` does — and the face puts the scene's provider under its routes, which buys three things at once:
+**Hand it `views`** (the scene's registry, plus `settings`/`presence`) — `graview create` does — and the face puts the scene's provider under its routes:
 
-- `/places`, `/places/<as>` — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.
+- `/places`, `/places/<as>` — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says `create: false`). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.
 - `/map` — `kindMap(store)`: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to, arranged in the shared words (`?sort=due:desc`, `?filter=done:false`, `?group=due:month`, `?q=tape`) a lens carries in its fragment, so an arrangement is a link; `?by=`, `?<edge>=<id>`, `?with=` and `?past=1` still land. A record links back.
 - `/search?q=` — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or `<PageUndo>` where it wants them, else they are drawn around it (`without: ["find"]` goes without).
 - **The assistant**, on every route: the scene's ask field, the ROUTE what "this" means. Proposals apply through the same runtime, attributed and undoable, withheld ones struck through; open questions are on `/problems`; the model is the host's `ai`.
@@ -3140,11 +3151,11 @@ Rules for a page at this rung:
 
 1. **`PageMain`, not `<main>`** — inside an embed the host owns the one `main`, and a hand-written one is a duplicate landmark.
 2. **`useStoreTick(store)`** at the top of every page that reads the graph, or it goes stale after the first act.
-3. **`pageStyles`** for the parts you did not design, so one custom page still reads as the same face as the derived ones.
+3. **`pageStyles`** for the parts you did not design: one face, derived or not.
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args }, principal)`, struck through with `verdict.refusal.message`. A form that refuses on submit is the bug this prevents.
-6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named place, group in focus.
-7. **Take the act LIST from the derivation, not from the mutations.** `recordFacts(store, id, { principal }).actions` is the `AffordanceSet` the scene's strip reads: `affordances` can act here, `args` decided and `open` questions left; `withheld` are this seat's refusals, with the reason. Filtering `store.allMutations()` offers acts with nothing to act on. A **list** page asks it of a kind instead — `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN it.
+6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named place.
+7. **Take the act LIST from the derivation, not from the mutations.** `recordFacts(store, id, { principal }).actions` is the `AffordanceSet` the scene's strip reads: `affordances` can act here, `args` decided and `open` questions left; `withheld` are this seat's refusals, with the reason. `store.allMutations()` offers acts with nothing to act on. A **list** page asks it of a kind instead — `kindFacts(store, kind, { principal }).actions`, the acts that can BEGIN it.
 
 ### Rung two: a product design
 
@@ -3160,18 +3171,18 @@ createPageRegistry<S, PageComponent<S>>(schema)
   // ... every kind
 ```
 
-The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and what makes it finished is not the type — it is that everything a person tries there works: sort, filter and group come from `ArrangeBar` and live in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is shown, heading included, through `editableFields(store, id)`; an act's form opens where the act is, prefilled, with the store's own refusal said at the press; the problems page is an inbox, its repairs ordered by `rankedRepairs`; and every empty state offers the way out of itself. `apps/seedbed/src/ui/design.tsx` is the other end — an almanac whose own drawing has two homes, the page and the scene's lens reading one model.
+The shell surface receives `{ context, children }`. `apps/todo/src/ui/design.tsx` is the finished example: all a person tries there works: sort, filter and group come from `ArrangeBar` and live in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is shown, heading included, through `editableFields(store, id)`; an act's form opens where the act is, prefilled, with the store's own refusal said at the press; the problems page is an inbox, its repairs ordered by `rankedRepairs`; and every empty state offers the way out of itself. `apps/seedbed/src/ui/design.tsx` is the other end: an almanac drawn on the page and in the scene's lens from one model.
 
 What every design must keep doing:
 
 - **Read the graph through one model.** `readGarden(store)` turns nodes, edges and violations into the design's words; every page reads it and none reaches for `store.graph`. The scene's lens reads the same model.
 - **Style through the theme's tokens** (`--graview-ground`, `-panel`, `-ink`, `-edge`, `-warn`, `-accent`, `-font-display`, `-font-body`), tinted with `color-mix` for the design's own paper. Never a color that works in one scheme only.
 - **Keep landmarks and targets honest.** One `main` — a `section` when `context.embedded`, and UNNAMED, or a page holding two embeds has two regions with one name. Controls at least 24px, AA contrast. Every size in `rem`: at 200% text a flex or grid item's automatic minimum is its CONTENT's, so one un-wrappable row pushes the whole column off the screen — `minmax(0, 1fr)` and `min-width: 0` on the column, `flex-wrap` on the row. Measure rather than trust: `-ink-faint` fails AA on an 11px label, and the accent fails on the warning ground. `node scripts/verify-pages.mjs` runs axe over every route, both widths, both schemes.
-- **Withhold, do not hide.** Rule 7 again, at every surface: struck through with the policy's own sentence rather than dropped.
+- **Withhold, do not hide.** Rule 7, on every surface: struck through with the policy's sentence, not dropped.
 
 ### On somebody else's page
 
-The embed mounts the app — this face included (`face: "pages"`, `path`, `routing`) — into one element of any page. Its own skill: `graview-embed`.
+`graview-embed` mounts the app, this face included (`face: "pages"`, `path`, `routing`), into one element of any page.
 
 ### Then find out whether it worked
 
@@ -3523,7 +3534,7 @@ Write, close, reopen, and read: the graph must survive the round trip and the pe
 
 `version` links every projected record at the version it was made from, so the first run sends nothing. `report` holds a field both sides changed and sends neither until `resolve`; `theirs` lands theirs through `applyInbound`; `ours` sends ours — `report.resolved` says which it took. A refused delete is said once; one made there goes through `removeInbound`, or, without it, stays here unsynced (`report.gone`). A remote that speaks MCP is `mcpRemote({ call, pull, push })`: `call` is `mcpClient({ url, allow })` in Node, or `doorClient()` in a page behind `mcpDoor({ call, allow })` on the dev server — the door holds the token, takes only JSON from its own origin on this machine (`hosts` names others), and only the allowed tools. It knows no seat: never put it where sight is a boundary.
 
-1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where — and `graview shots … --places home,overview --out shots` photographs named places headless (Playwright is yours to install). Prove a change to an emitted document with these, not hand-written screenshots. In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
+1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where, which it then holds: `sync-seed --apply` and `apply` refuse until it stops — and `graview shots … --places home,overview --out shots` photographs named places headless (you install Playwright). In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
 
 ### The boundary
 
@@ -3645,7 +3656,7 @@ The acts: `add-kind`, `rename-kind`, `remove-kind`, `add-field`, `rename-field`,
 
 **Opened on a document** (`createStudio(compileDocument(d).app)`, with `compileDocument` from `@graview/core/check`), the studio hands back a document, not TypeScript. `studio.edits()` is the change as `editDocument`'s own ops (`add-field`, `rename-field`, `set-required`, `set-options`, `add-relation`, `remove-act`, `add-rule`, and a grant, a sight or the people kind as `add-grant`, `remove-grant`, `add-sight`, `remove-sight` and `set-people` …); `studio.document()` is the opened document with them applied, every act, label, brand and money field untouched. `check()`, `would()` and `apply()` judge by compiling that document, and `apply()` hands back `document` with `app` compiled from it. A copied app, or one with its policy swapped, says it: `createStudio(app, { document })`; without one, `whyNoDocument()` says why. A change no op says yet — a relation's cardinality, a lifecycle, a role, retyping a money field — comes back as `documentFindings`, one sentence each, and no document. Ask ahead what it keeps but will not change: `uneditable(document)` is one note per format, unit or list item type (`kinds.vendor.fields.quote`).
 
-Without the studio, `editDocument` covers the rest of a document too: `add-lens` (`replace` retitles; `at` puts one back), `remove-lens`, `set-home`, `arrange-pages` (`order`, `hide`, `first`, `scene` and `pages` — the switch's words; `null` clears), `set-computed` (`expr: null` removes it and what reads it), `set-format` (a number's `format` — `money`, `percent`, `duration` — and `unit`, or a text field's `markdown`; `null` clears; said in words, "money in USD — 10000 reads $10,000"), and `set-view` for a kind's slot, `slot: "home"`, or `lens: "<title>"`. Blocks are checked as they are set. A rename reaches lenses, the home, pages and computed expressions through the parser; removing a field or relation a lens draws by is refused, naming the lens. Computed fields are studio nodes, kept on hand-back and written-back TypeScript.
+Without the studio, `editDocument` covers the rest of a document too: `add-lens` (`replace` retitles; `at` puts one back), `remove-lens`, `{ op: "set-lens-hidden" }` (`hidden: true` keeps a lens off the bar and the page list, still reached by its address, a link or `navigate`), `set-home`, `arrange-pages` (`order`, `hide`, `first`, `scene` and `pages` — the switch's words; `null` clears), `set-computed` (`expr: null` removes it and what reads it), `set-format` (a number's `format` — `money`, `percent`, `duration` — and `unit`, or a text field's `markdown`; `null` clears; said in words, "money in USD — 10000 reads $10,000"), and `set-view` for a kind's slot, `slot: "home"`, or `lens: "<title>"`. Blocks are checked as they are set. A rename reaches lenses, the home, pages and computed expressions through the parser; removing a field or relation a lens draws by is refused, naming the lens. Computed fields are studio nodes, kept on hand-back and written-back TypeScript.
 
 1. **Write it back.** `studio.files({ schemaVar: "gardenSchema" })` is `src/domain/schema.ts`, `mutations.ts`, `invariants.ts` and, with roles, `policy.ts` — the files `graview create` writes. Shape is what a graph carries: an act the studio declared gets a body from what it says (create, connect, sever, write); an act the checkout wrote keeps the checkout's body under the studio's declaration; a rule the studio declared judges nothing until the checkout gives it an `evaluate`. Read the files before you commit them, and keep a hand-written body where the comment says so.
 
@@ -3684,13 +3695,13 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Drawing in a worker view
 
-A worker view (`graview-worker-view`: its manifest, its global, its writes and its limits) draws by saying markup; the host draws what the open kit keeps of it into a shadow root it owns, and lists the rest. **What it may draw is broad; what it may load is nothing.** Every image it shows is one the host already holds or made for it.
+A worker view (`graview-worker-view`: its manifest, its global, its writes and its limits) draws by saying markup; the host draws what the open kit keeps of it into a shadow root it owns, and lists the rest. **What it may draw is broad; what it may load is only what the host chose.** Every image it shows is one the host holds, made for it, or lists the origin of.
 
 ### What it may draw
 
 HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, transitions, `@keyframes`, `@media`, `@supports` and `@container`.
 
-Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video`, `canvas`, SVG `image` and `foreignObject`; any `href`, `srcset` or `on*` attribute; `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`; `image-set()`, `attr()` and other unlisted functions; `position: fixed` or `sticky`; `:host`. What the host leaves out it lists in `refused`; `graview.refused` is the runtime's own early word on the last render.
+Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video`, `canvas`, SVG `image` and `foreignObject`; any `href`, `srcset` or `on*` attribute; `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`button.toggle { all: unset }` takes the browser's chrome off a toggle). What the host leaves out it lists in `refused`; `graview.refused` is the runtime's own early word on the last render.
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A `section` is never named (no `aria-label` or `title`), so it stays out of the landmarks. `role` takes no landmark or notice's role (`navigation`, `region`, `status`, `alert`, …).
 
@@ -3700,11 +3711,12 @@ A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and 
 
 ### The images a view may show
 
-An `img`'s `src` is drawn only when it is one of these; any other address — another site, a path of the app's of your own making — is refused:
+An `img`'s `src` is drawn only when it is one of these; any other address — another site, a path of the app's of your own making — is refused, and said once in the view's console and the host's problems, with the address:
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or SVG. Keep it small; it is part of the view's source.
 - **The app's logo**: `<img src="${props.theme.logo}">`. The host made it from the brand's mark (a `blob:` URL of the page, or a `data:` image where the page's policy refuses `blob:`). Absent when the brand has none.
 - **An image the app holds**, by the content address it was stored at: `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image` answers). It is drawn only where the host says where those live — the `asset` resolver on the view's definition — and refused elsewhere.
+- **An `https:` image on an origin the host lists** — `images: { origins: ["https://upload.wikimedia.org"] }` on the view's definition (and on a headless run). The view never chooses an origin: an address is data it can write, so an open list would let it send what it reads anywhere. It is asked for with no referrer. Unlisted, a URL on a record is refused.
 - **A picture on a record.** Say `pictures: true` in the manifest, or `{ width: 400 }`, the widest the view draws one in CSS pixels. Each file on a record the view is handed is then `{ name, type, bytes, width, height, caption, src, left }` in its field, never the host's path to it. `src` is the address the host made from the bytes, fetched as the reader and made smaller to `width`; it is absent on the first push, and a push follows when it is ready. `left` says why a picture will never come: past one picture's byte budget or the view's, or not loaded. A document, and an SVG, has no `src`: show its name, type and size.
 
 ```js
@@ -3713,7 +3725,9 @@ const photos = (job.photos || []).map((photo) => photo.src
   : graview.html`<p data-key="${photo.name}">${photo.left || photo.name}</p>`);
 ```
 
-Without `pictures`, a record's file comes as the record keeps it, a path on the host that the view cannot load: drawing its `href` is refused.
+Without `pictures`, a record's file comes as the record keeps it: its `href` draws only where it is the app's own image (`/graview/assets/…`).
+
+**Keep a picture in an `image` field**, which holds the uploaded file (what `add_image` stores), never its bytes as words: a `data:` URI in a text field is cut at 20,000 characters, and in the view's source it counts against its size.
 
 ### Then find out whether it worked
 
@@ -3779,7 +3793,8 @@ graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
 graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
-graview.navigate("offer:7")     // a record, else a place by slug; or { place: "…" }
+graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
+graview.navigate({ place: "features", where: { stage: "building" }, section: "Shipping soon" })
 ```
 
 `props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made). `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
@@ -3794,7 +3809,9 @@ HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so light
 
 ### Links
 
-`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text. A destination is a record's id, else a place's slug; any other says why in the console.
+`<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text. A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places.
+
+A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard (`#every-feature`). On the scene a list is the kind's stop narrowed (`in.filter`); a section is looked for there too. A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why (`Features have no field "stag" to filter by; they filter by …`), so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
 ### Writes
 
@@ -4808,3 +4825,52 @@ Each was built to prove a claim the others could not, and each is opened in a re
 The example garden's surfaces, running on this page, and the example apps in the repository.
 
 The page: https://graview.dev/docs/demos.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
+
+---
+
+Source: https://graview.dev/docs/site.html
+
+# This site is a Graview app
+
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 366 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+
+## The site, running
+
+This is that declaration, compiled in your browser by the same compiler `graview check` uses, over the same records the pages are rendered from: the city of its packages, skills, check findings and pages. Press a district; come down to a record; switch to its pages.
+
+*graview.dev as a Graview app, live: a live demo, on the HTML page.*
+
+## What it declares
+
+**graview.dev**: Graview's own site and docs as a Graview app: every page graview.dev serves is a record, written out of the repository by scripts/site-docs.mjs and rendered by renderPlace, beside the packages, skills, checks and recipes it is about. 13 kinds, each read out of the tree:
+
+| Kind | What it is | Records |
+| --- | --- | --- |
+| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 57 |
+| `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
+| `entry` | One subpath a package exports, as a product imports it. | 89 |
+| `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 19 |
+| `check` | A thing graview check can say, read out of the checker's source. | 105 |
+| `command` | A graview subcommand, read off the help the CLI prints. | 13 |
+| `concept` | One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is. | 7 |
+| `recipe` | The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/. | 3 |
+| `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
+| `example` | An example app in the repository, described by its own package.json. | 5 |
+| `question` | A question the front page answers plainly, read off its FAQ. | 6 |
+| `release` | A version every package shares, read off @graview/core's changelog and the CLI's package.json. | 31 |
+| `scaffold` | What graview create writes, read from the generator itself. | 1 |
+
+## How a page is made
+
+`scripts/site-docs.mjs` reads the repository — each package's `package.json`, `README.md` and barrel, each skill's `SKILL.md`, the checker's source, the CLI's help, the recipes, the chapters — and writes a record for each, then a page record for every address graview.dev serves, related to what it is about. Each page record is rendered by `renderPlace` with the site's design, `apps/site/design.mjs`: a docs page in the docs shell, the front page, the tour and the long version filled into their hand-designed pages (`apps/site/pages/`), and `llms.txt`, `llms-full.txt`, the sitemap and `start.md` as records too. `tests/site.test.ts` holds every served address to a record, and the declaration to `graview check`.
+
+```sh
+npx graview check --document apps/site/app.json
+node scripts/site-docs.mjs --check
+```
+
+---
+
+graview.dev is itself a Graview app: one declaration and the records written out of the repository, every page rendered from a record by renderPlace, and the whole of it live on this page.
+
+The page: https://graview.dev/docs/site.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

@@ -41,9 +41,9 @@ src/
   main.tsx
 ```
 
-The domain/ui split keeps the declaration inspectable by a build, a CLI and an agent: `graview check` reads `defineApp`, and a React import there would drag a UI package into the checker.
+`graview check` reads `defineApp`; a React import in `domain/` would drag a UI package into the checker.
 
-**Or as one JSON document:** `app.json` (`"format": "graview-document"`, schema `node_modules/@graview/core/dist/document.schema.json`), then `graview check --document app.json`, `graview describe --document app.json`, `graview preview app.json --seed seed.json`.
+**Or as one JSON document:** `app.json` (`"format": "graview-document"`, `$schema` `node_modules/@graview/core/dist/document.schema.json`, which types lenses and view blocks), then `graview check --document app.json`, `graview describe --document app.json`, `graview preview app.json --seed seed.json`. Kinds, acts and rules are kebab-case (`tool-note`), fields and relations camelCase (`supersededBy`). `preview --data` holds its folder: stop it to `sync-seed --apply`. In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
 
 ### Do this
 
@@ -86,17 +86,17 @@ Copy the shape from the framework's own `.github/workflows/ci.yml`, minus the pa
 - **Headless tests** — the domain tier has no DOM in it. Test that your rules fire on graphs that break them and that their repairs resolve them; that is the test that catches a real regression.
 - **An accessibility run, in BOTH schemes.** Copy `apps/todo/scripts/run-a11y.mjs`: the real accessibility tree through CDP, plus axe-core. A light palette that clears AA in the dark is what it catches.
 
-Worth stealing later: a browser harness that walks your own acceptance criteria and writes a JSON verdict (the framework has several; each names the claim that stopped being true), and a persistence adapter test.
+Later: a browser harness, a JSON verdict per claim.
 
 ### Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` from `@graview/render/gpu`; there is no URL switch) — never a requirement.
+Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` set to `attachGpu()` from `@graview/render/gpu`) — never a requirement.
 
 ### Then find out whether it worked
 
 ```sh
 pnpm verify        # typecheck, tests, build, graview check
-graview doctor     # one Graview release in pins, lockfile, node_modules, documents; React's pair
+graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout
 ```
 
 Run the project's own `graview`, not `npx -y graview@<pin>`: inside a pnpm workspace that already holds the release, npx finds no bin (`sh: graview: command not found`).

@@ -8,8 +8,8 @@ description: Draw in a Graview worker view — the HTML, SVG and CSS the host ke
 A worker view (`graview-worker-view`: its manifest, its global, its writes
 and its limits) draws by saying markup; the host draws what the open kit
 keeps of it into a shadow root it owns, and lists the rest. **What it may
-draw is broad; what it may load is nothing.** Every image it shows is one
-the host already holds or made for it.
+draw is broad; what it may load is only what the host chose.** Every image
+it shows is one the host holds, made for it, or lists the origin of.
 
 ## What it may draw
 
@@ -26,8 +26,10 @@ Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
 `href`, `srcset` or `on*` attribute; `src` on anything but `img`, and on
 `img` any address but the ones below. In CSS: `url()` except `url(#id)` on
 `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`;
-`image-set()`, `attr()` and other unlisted functions; `position: fixed` or
-`sticky`; `:host`. What the host leaves out it lists in `refused`;
+`image-set()`, `attr()` and other unlisted functions; `position: fixed`;
+`:host`. `position: sticky` is kept — a header held in place sticks within
+the view, whose region is painted contained — and `all` takes its keywords
+(`button.toggle { all: unset }` takes the browser's chrome off a toggle). What the host leaves out it lists in `refused`;
 `graview.refused` is the runtime's own early word on the last render.
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside`
@@ -53,7 +55,8 @@ again.
 ## The images a view may show
 
 An `img`'s `src` is drawn only when it is one of these; any other address
-— another site, a path of the app's of your own making — is refused:
+— another site, a path of the app's of your own making — is refused, and
+said once in the view's console and the host's problems, with the address:
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or
   SVG. Keep it small; it is part of the view's source.
@@ -64,6 +67,11 @@ An `img`'s `src` is drawn only when it is one of these; any other address
   `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image`
   answers). It is drawn only where the host says where those live — the
   `asset` resolver on the view's definition — and refused elsewhere.
+- **An `https:` image on an origin the host lists** — `images: { origins:
+  ["https://upload.wikimedia.org"] }` on the view's definition (and on a
+  headless run). The view never chooses an origin: an address is data it
+  can write, so an open list would let it send what it reads anywhere. It
+  is asked for with no referrer. Unlisted, a URL on a record is refused.
 - **A picture on a record.** Say `pictures: true` in the manifest, or
   `{ width: 400 }`, the widest the view draws one in CSS pixels. Each file
   on a record the view is handed is then `{ name, type, bytes, width,
@@ -80,8 +88,13 @@ const photos = (job.photos || []).map((photo) => photo.src
   : graview.html`<p data-key="${photo.name}">${photo.left || photo.name}</p>`);
 ```
 
-Without `pictures`, a record's file comes as the record keeps it, a path
-on the host that the view cannot load: drawing its `href` is refused.
+Without `pictures`, a record's file comes as the record keeps it: its
+`href` draws only where it is the app's own image (`/graview/assets/…`).
+
+**Keep a picture in an `image` field**, which holds the uploaded file
+(what `add_image` stores), never its bytes as words: a `data:` URI in a
+text field is cut at 20,000 characters, and in the view's source it counts
+against its size.
 
 ## Then find out whether it worked
 

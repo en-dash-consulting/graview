@@ -134,6 +134,12 @@ export function readableFields(
 ): readonly ReadableField[] {
   const display = definition?.display;
   const skip = new Set([...NOT_A_FIELD, ...(display?.hide ?? [])]);
+  /*
+   * A FIELD CALLED `label` IS THE NAME ONLY WHERE IT IS WHAT THE RECORD IS
+   * CALLED. A release named by its `name` whose `label` is "Parlophone"
+   * keeps its record label as a fact like any other field.
+   */
+  if (typeof node["label"] === "string" && definition?.label && !labelOf(definition, node as { id: string; kind: string }).includes(node["label"])) skip.delete("label");
   const said = (options.said ?? []).filter((text): text is string => Boolean(text));
   const stems = said
     .filter((text) => text.endsWith("…"))
@@ -154,7 +160,14 @@ export function readableFields(
   // Unchosen, a glance leads with who made the record and when, where the kind's roles say (`fieldRoles.who`, `.when`).
   const roles = definition?.fieldRoles;
   const chosen = options.glance ? (display?.glance ?? [roles?.["who"], roles?.["when"]].filter((key): key is string => !!key)) : pageOrder(display?.page);
-  const keys = [...new Set([...chosen, ...declaredOrder(definition), ...Object.keys(node)])].filter((key) => Object.hasOwn(node, key));
+  /*
+   * A GLANCE THE DECLARATION CHOSE IS SAID EXACTLY: its fields and no
+   * others. It was the order only, so a card went on to say whatever came
+   * next in the kind — a finding's confidence, after its author took it
+   * out of the glance, still read "Critical · Security · High".
+   */
+  const exact = options.glance && display?.glance !== undefined;
+  const keys = [...new Set(exact ? chosen : [...chosen, ...declaredOrder(definition), ...Object.keys(node)])].filter((key) => Object.hasOwn(node, key));
   const entries = keys.map((key) => [key, node[key]] as const);
   for (const [key, value] of entries) {
     if (skip.has(key) || value === undefined || value === null) continue;
@@ -247,7 +260,35 @@ export function readableFields(
     fields.push({ key, label, value: text, stored, alone, long, ...(markdown ? { markdown: true as const } : {}), ...(files[0] ? { files } : {}), ...(app ? { app } : {}), ...(linked ? { linked } : {}), ...(href ? { href } : {}), ...(isRepeatField(shapeOf?.[`${key}Repeat`]) ? { repeats: true as const } : {}) });
     if (options.limit !== undefined && fields.length >= options.limit) break;
   }
-  return fields;
+  return namedWhereAlike(fields, definition);
+}
+
+/**
+ * A CHOICE SAID WITH ITS FIELD'S NAME WHERE ANOTHER FIELD SHOWN BESIDE IT
+ * SHARES A CHOICE: a finding's severity and its confidence can both be
+ * "high", and a card reading "Critical · Security · High" did not say
+ * which was high. Alone on a chip, each of those reads "Confidence: high";
+ * a choice no field beside it shares is said bare.
+ */
+function namedWhereAlike(fields: readonly ReadableField[], definition: AnyNodeDefinition | undefined): readonly ReadableField[] {
+  const choices = new Map<string, ReadonlySet<string>>();
+  for (const field of fields) {
+    const options = choicesOf(definition, field.key);
+    if (options) choices.set(field.key, new Set(options.map((option) => valueWords(definition, field.key, option).toLowerCase())));
+  }
+  if (choices.size < 2) return fields;
+  return fields.map((field) => {
+    const own = choices.get(field.key);
+    const alike = own !== undefined && [...choices].some(([key, others]) => key !== field.key && [...own].some((word) => others.has(word)));
+    return alike ? { ...field, alone: `${field.label}: ${field.value.toLowerCase()}` } : field;
+  });
+}
+
+/** A choice field's choices (`z.enum`), under optional, default and nullable; undefined when it is not one. */
+function choicesOf(definition: AnyNodeDefinition | undefined, key: string): readonly string[] | undefined {
+  let at = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape?.[key] as { _zod?: { def?: { type?: string; innerType?: unknown; entries?: Record<string, unknown> } } } | undefined;
+  for (let depth = 0; depth < 6 && at?._zod?.def?.innerType !== undefined; depth++) at = at._zod.def.innerType as typeof at;
+  return at?._zod?.def?.type === "enum" && at._zod.def.entries ? Object.values(at._zod.def.entries).map(String) : undefined;
 }
 
 /** Whether a field is one of a declared set of values (`z.enum`), under optional, default and nullable. */

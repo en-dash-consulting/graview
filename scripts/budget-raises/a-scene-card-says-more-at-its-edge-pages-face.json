@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 1000,
+  "gzipped": 400,
+  "note": "Raised when a card says there is more at the edge there is more past (a panel measures which edge, as it is scrolled) and a card's \"+N more\" became a button that opens the rest and closes again, both in primitives the pages face draws with. 554_627 / 203_245 before them, 555_525 / 203_601 with them: 898 / 356 more."
+}

@@ -1,14 +1,17 @@
 import { numberAsRead, pluralLabel, type AnySchema, type Store } from "@graview/core";
 import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
+import { narrowedPath } from "@graview/core/navigate";
+import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, HostFilesContext, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
 import { FaceControlsRoot } from "./face-controls.js";
+import { PagesContextMenu } from "./context-menu.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
@@ -91,7 +94,8 @@ export interface PagesAppProps<S extends AnySchema> {
   readonly initialPath?: string;
   /**
    * TOLD WHERE THE FACE WENT (FR-106): the path, basename-relative with its
-   * search, each time it changes after arrival — and how, `"push"`,
+   * search and the section it went to (`#shipping-soon`), each time it
+   * changes after arrival — and how, `"push"`,
    * `"replace"` or `"pop"` — so a host that keeps its own history can.
    */
   readonly onNavigate?: (path: string, how: NavigationHow) => void;
@@ -218,7 +222,9 @@ function Reported({ onNavigate, path }: { readonly onNavigate: PagesAppProps<Any
   const location = useLocation();
   const type = useNavigationType();
   const navigate = useNavigate();
-  const here = `${location.pathname}${location.search}`;
+  // A section the face went to (`#shipping-soon`) is part of where it is, so a host that keeps the address can share it.
+  const section = location.hash && !location.hash.includes("=") ? location.hash : "";
+  const here = `${location.pathname}${location.search}${section}`;
   const told = useRef(onNavigate);
   told.current = onNavigate;
   // The address the face arrived at is no navigation, so it is not reported.
@@ -295,7 +301,10 @@ function FaceRoot<S extends AnySchema>({
   return (
     <div ref={root} data-graview-face="pages" style={{ display: "contents" }}>
       <FaceControlsRoot context={context} registry={registry as PageRegistry<S, unknown> | undefined} root={root}>
-        {children}
+        {/* The scene's context menu, on what a right-click, the keyboard or a resting finger lands on here. */}
+        <PagesContextMenu context={context} root={root}>
+          {children}
+        </PagesContextMenu>
       </FaceControlsRoot>
     </div>
   );
@@ -361,20 +370,25 @@ function ScrollReset() {
 
 /**
  * GOING SOMEWHERE, ON THIS FACE: a record is its page, a place is its
- * address under `/places/`. What a view that is not React — a worker view
- * (FR-93) — reaches through `useGoTo`.
+ * address under `/places/`, a kind's list is `/<plural>`. What a view that
+ * is not React — a worker view (FR-93) — reaches through `useGoTo`. A list
+ * or a place narrowed carries `?filter=` — the word its arranging line
+ * writes — and a section `#<section>`, so the address can be shared.
  */
 function GoesByAddress<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
   const navigate = useNavigate();
   const goTo = useMemo<GoTo>(
     () => ({
-      record: (id) => {
+      record: (id, also) => {
         const node = context.store.graph.getNode(id);
-        if (node) navigate(recordPath(context.store.schema, node.kind, id));
+        if (node) navigate(narrowedPath(recordPath(context.store.schema, node.kind, id), { section: also?.section }));
       },
-      place: (as) => {
+      place: (as, also) => {
         const place = context.views?.places().find((candidate) => candidate.as === as);
-        if (place) navigate(pathOfPlace(context, place));
+        if (place) navigate(narrowedPath(pathOfPlace(context, place), also));
+      },
+      list: (kind, also) => {
+        if (context.store.schema.tryDefinition(kind)) navigate(narrowedPath(`/${pluralSlug(context.store.schema, kind)}`, also));
       },
     }),
     [context, navigate],
@@ -383,16 +397,39 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
 }
 
 /**
+ * A SECTION OF THE PAGE, FROM THE ADDRESS: `#shipping-soon` scrolls to the
+ * heading that says it (or the element with that id) once it is drawn, and
+ * gives it the keyboard — on arrival from a shared link as after a view's
+ * `navigate`. A scene's fragment (`#view=…`) is no section.
+ */
+function SectionOnArrival() {
+  const { pathname, search, hash } = useLocation();
+  useEffect(() => {
+    const section = decodeURIComponent(hash.replace(/^#/, ""));
+    if (!section || section.includes("=")) return;
+    return revealSection(section);
+  }, [pathname, search, hash]);
+  return null;
+}
+
+/**
  * WHERE THE APP OPENS (FR-80). A reader who arrives at the home of an app
  * whose declaration names `pages.first` is taken there instead — a place
  * to its page, a kind to its list — once: the arrival is replaced, so Back
  * leaves the app rather than bouncing, and the masthead and every link to
- * the home still go home.
+ * the home still go home. Once a visit has landed — on this face, or on the
+ * scene it opened on (`hasLanded`) — the home is the home: a press on Home
+ * from the scene draws the pages at their first entry, and that is no
+ * arrival.
  */
 function Opening<S extends AnySchema>({ context, Home }: { readonly context: PageContext<S>; readonly Home: PageComponent<S> }) {
   const location = useLocation();
+  const views = context.views;
   // The address the reader arrived at is the router's first entry, which no navigation made.
-  const arriving = location.key === "default";
+  const arriving = location.key === "default" && !(views && hasLanded(views));
+  useEffect(() => {
+    if (views) markLanded(views);
+  }, [views]);
   const opening = arriving ? openingOf(context.views?.arrangement?.()?.first, context.store.schema, context.views?.places() ?? []) : undefined;
   const to =
     opening?.to === "place" ? pathOfPlace(context, opening.place) : opening?.to === "kind" ? `/${pluralSlug(context.store.schema, opening.kind)}` : undefined;
@@ -454,6 +491,7 @@ export function PagesRoutes<S extends AnySchema>({
     <PastBar face="pages" />
     <RecordLinks context={inside}>
       <ScrollReset />
+      <SectionOnArrival />
       <Routes>
         {/*
           * THE APP'S OWN ROUTES FIRST — a survey desk, an onboarding, a
@@ -600,6 +638,7 @@ export function PagesApp<S extends AnySchema>({
       resolveApp={context.resolveApp ?? outer?.resolveApp /* The host's way to name another app (FR-171): the face's own, else the provider's it is drawn inside. */}
       linkedRecords={context.linkedRecords ?? outer?.linkedRecords /* And to read its records, as this viewer (FR-171). */}
       {...(context.app ? { app: context.app } : {})}
+      {...(context.menuSections ? { menuSections: context.menuSections } : {})}
     >
       {routed}
       <PageAsk context={context} />

@@ -1,7 +1,7 @@
 import type { GraviewApp } from "./app.js";
 import { declaredLenses, MOST_STANDING, openingOf, orderKinds, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle, type PlaceFinding, type ShippedLensName } from "./places.js";
 import type { AnySchema } from "./schema/schema.js";
-import { pluralLabel } from "./schema/define-node.js";
+import { allLabel, nounOf, pluralLabel, pluralOf } from "./schema/define-node.js";
 import { kindPath, onePerPicture, placePath, sharesItsName, type PagesArrangement, type Place } from "./views/types.js";
 
 /*
@@ -14,10 +14,20 @@ import { kindPath, onePerPicture, placePath, sharesItsName, type PagesArrangemen
  */
 
 
-/** What the arrangement asks that the declaration cannot honor: kinds and places that do not exist. */
+/** What the arrangement asks that the declaration cannot honor: kinds and places that do not exist, and lenses kept off the lists that cannot be. */
 export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, places: readonly Place[] = placesOfLenses(app)): readonly PlaceFinding[] {
   const pages = app.pages;
   const findings: PlaceFinding[] = [];
+  /* A LENS KEPT OFF THE LISTS says so with true, and is a place to keep off them: it has a title. */
+  (app.lenses ?? []).forEach((lens, index) => {
+    const hidden: unknown = lens.hidden;
+    const titled = typeof lens.title === "string" && lens.title.trim().length > 0;
+    if (hidden !== undefined && typeof hidden !== "boolean") {
+      findings.push({ severity: "warning", code: "lens-hidden-not-a-boolean", path: `lenses.${index}.hidden`, message: `${titled ? `"${lens.title}"` : `lenses.${index}`} says hidden is ${JSON.stringify(hidden)}, which is not true or false, so it is listed.`, fix: `Write "hidden": true to keep it off the lists, or drop it.` });
+    } else if (hidden === true && !titled) {
+      findings.push({ severity: "note", code: "lens-hidden-untitled", path: `lenses.${index}.hidden`, message: `lenses.${index} is hidden, but it has no title, so it is no place to hide.`, fix: `Give it a title to make it a place, or drop "hidden".` });
+    }
+  });
   const taken = places.find((place) => place.as === OVERVIEW_SLUG);
   if (taken) {
     findings.push({
@@ -26,6 +36,19 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       path: "pages",
       message: `The place "${taken.title}" has the address the scene keeps (${OVERVIEW_PATH}), so the bar's "${sceneTitle(pages)}" and it cannot both be reached there.`,
       fix: `Give "${taken.title}" another title (or another "as"): the scene keeps ${OVERVIEW_PATH} whatever the declaration calls it.`,
+    });
+  }
+  // A place titled as a kind's list is: the bar shows the place, and folds the list into More as "All <plural>" (`barPlaces`).
+  const declaredKinds = app.schema.kinds as readonly string[];
+  for (const place of onePerPicture(places.filter((one) => declaredKinds.includes(one.kind)))) {
+    const kind = declaredKinds.find((one) => pluralLabel(app.schema, one).toLowerCase() === place.title.trim().toLowerCase());
+    if (kind === undefined) continue;
+    findings.push({
+      severity: "warning",
+      code: "pages-place-named-as-a-list",
+      path: "pages",
+      message: `The place "${place.title}" has the name of the list of every ${nounOf(app.schema.tryDefinition(kind), kind)}, so the bar names the place "${place.title}" and folds the list into More as "${allLabel(app.schema, kind)}" (still at ${kindPath(app.schema, kind)}).`,
+      fix: `Give "${place.title}" a title that says what it shows of them, or leave it: the place is the one the bar calls "${place.title}".`,
     });
   }
   if (!pages) return findings;
@@ -61,6 +84,18 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       });
     }
   });
+  (pages.primary ?? []).forEach((word, index) => {
+    const opening = openingOf(word, app.schema, places);
+    if (opening?.to === "place" && opening.place.hidden) {
+      findings.push({
+        severity: "warning",
+        code: "pages-primary-hidden",
+        path: `pages.primary.${index}`,
+        message: `pages.primary names "${word}", a lens kept off the lists (hidden), so the bar cannot stand it up.`,
+        fix: `Show the lens (set-lens-hidden with "hidden": false), or leave it out of pages.primary.`,
+      });
+    }
+  });
   if ((pages.primary?.length ?? 0) > MOST_STANDING - 1) {
     findings.push({
       severity: "warning",
@@ -79,6 +114,18 @@ export function arrangementFindings<S extends AnySchema>(app: GraviewApp<S>, pla
       fix: `Name a place (${places.map((place) => `"${place.title}"`).join(", ") || "none is declared"}), a kind, or "home".`,
     });
   }
+  // A drawn home and another first place: each does one thing, and a reader of the declaration is told which.
+  const opening = openingOf(pages.first, app.schema, places);
+  if (opening !== undefined && opening.to !== "home" && ((app.home?.length ?? 0) > 0 || app.views?.homeView?.() !== undefined)) {
+    const where = opening.to === "place" ? `"${opening.place.title}"` : `the ${pluralOf(app.schema, opening.kind)} list`;
+    findings.push({
+      severity: "note",
+      code: "pages-first-beside-home",
+      path: "pages.first",
+      message: `pages.first lands a new visit on ${where}; the home the declaration draws stays Home — on the bar, and at "/" for every press and link after the visit lands.`,
+      fix: `Nothing to change if that is the intent. To open on the drawn home, take pages.first away (or set it to "home").`,
+    });
+  }
   return findings;
 }
 
@@ -87,7 +134,7 @@ function placesOfLenses<S extends AnySchema>(app: GraviewApp<S>): readonly Place
   const out: Place[] = [];
   for (const lens of declaredLenses(app).drawn) {
     // One picture over several kinds is a place on each, and says so (`over`): every list names it once.
-    for (const kind of lens.kinds) out.push({ kind, title: lens.title, as: lens.as, ...(lens.across ? { across: lens.across } : {}), ...(lens.kinds.length > 1 ? { over: lens.kinds } : {}) });
+    for (const kind of lens.kinds) out.push({ kind, title: lens.title, as: lens.as, ...(lens.across ? { across: lens.across } : {}), ...(lens.kinds.length > 1 ? { over: lens.kinds } : {}), ...(lens.hidden ? { hidden: true } : {}) });
   }
   for (const place of app.views?.places?.() ?? []) {
     if (!out.some((held) => held.kind === place.kind && held.as === place.as)) out.push(place);
@@ -115,7 +162,7 @@ export interface AppPlace {
   readonly stop: string;
   /** Which shipped lens draws it, when a declared lens does. */
   readonly lens?: ShippedLensName;
-  /** Left off the home by `pages.hide`; still reachable at its address. */
+  /** A kind left off the home by `pages.hide`, or a lens kept off the lists (`hidden`); still reachable at its address. */
   readonly hidden?: boolean;
   /** Where the app opens (`pages.first`). */
   readonly first?: boolean;
@@ -169,6 +216,7 @@ export function placesFrom(
       address: placePath(place.as, shared ? kindPath(schema, place.kind).slice(1) : undefined),
       stop: shared ? `#focus=aggregate:${place.kind}&in.view=${encodeURIComponent(place.as)}` : `#view=${encodeURIComponent(place.as)}`,
       ...(lens ? { lens: lens.lens } : {}),
+      ...(place.hidden ? { hidden: true } : {}),
       ...(opening?.to === "place" && opening.place.as === place.as && (opening.place.kind === place.kind || place.over?.includes(opening.place.kind)) ? { first: true } : {}),
     });
   }

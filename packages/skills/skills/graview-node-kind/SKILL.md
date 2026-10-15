@@ -49,8 +49,10 @@ agent tool that walks the graph.
 
    **In a document** (`app.json`, `"format": "graview-document"`) it is
    `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type":
-   "string", "required": true } }, "edges": { "picked-for": { "to":
-   ["player"] } } }`. Every key is in
+   "string", "required": true } }, "edges": { "pickedFor": { "to":
+   ["player"] } } }`. Kinds are kebab-case (`tool-note`), fields and
+   relations camelCase (`pickedFor`).
+   Every key, lens and block is in
    `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
 
 3. **Add it to `createSchema([...])`.** An edge to a kind not in that array
@@ -93,9 +95,8 @@ agent tool that walks the graph.
 
 ## Worked examples
 
-`apps/todo/src/domain/schema.ts` (a `rule` kind whose `spec` makes rules
-data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a
-`lifecycle`: the past is a horizon, not a delete).
+`apps/todo/src/domain/schema.ts` (`fieldRoles`);
+`apps/seedbed/src/domain/schema.ts` (a `lifecycle`).
 
 ## The declarations that keep paying
 
@@ -126,7 +127,7 @@ data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a
   rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter
   along a roof edge"` prints the brief, and `--judge <file>` holds the answer
   to the rules `graview check` holds a figure to and prints the line to
-  paste. Then look at it at twenty pixels, a chip's size.
+  paste. Then look at it at twenty pixels.
 - **A declared hue** in the brand (`accents: { fixture: 210 }`) for a chosen
   color, not a stable hash: every chip dot, roof and focus tag follows.
 
@@ -181,7 +182,7 @@ no act or edit form offers it, and an act that sets one is refused. It is
 worked out over the graph the reader holds, so a seat is served one from what
 it may see. A glance may name one; a `label` or `describe` only one worked out
 from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"),
-`{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C").
+`{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three").
 The check refuses a cycle (`computed-cycle`), a name that is already a field
 (`computed-clash`) and work that grows with the cube of the graph
 (`computed-cost`, a warning at the square). A document's top-level

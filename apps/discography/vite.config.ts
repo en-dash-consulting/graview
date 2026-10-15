@@ -19,6 +19,7 @@ export default defineConfig({
     alias: {
       "@graview/core/blocks": fileURLToPath(new URL("../../packages/core/src/blocks.ts", import.meta.url)),
       "@graview/core/arrange": fileURLToPath(new URL("../../packages/core/src/arrange.ts", import.meta.url)),
+      "@graview/core/navigate": fileURLToPath(new URL("../../packages/core/src/navigate.ts", import.meta.url)),
       "@graview/core/provenance": fileURLToPath(new URL("../../packages/core/src/provenance.ts", import.meta.url)),
       "@graview/core/history": fileURLToPath(new URL("../../packages/core/src/history.ts", import.meta.url)),
       "@graview/core/past": fileURLToPath(new URL("../../packages/core/src/past.ts", import.meta.url)),
@@ -75,7 +76,12 @@ export default defineConfig({
   },
   // Top-level await in main.tsx (the store opens before the first render);
   // the page goes to build/ so tsc's dist/ (the declaration, for graview check) stays.
-  build: { target: "es2022", outDir: "build" },
+  // live.html: the catalog's songs as N live views on the GPU path, for verify-scale (src/live.ts).
+  build: {
+    target: "es2022",
+    outDir: "build",
+    rollupOptions: { input: { main: fileURLToPath(new URL("index.html", import.meta.url)), live: fileURLToPath(new URL("live.html", import.meta.url)) } },
+  },
   preview: { port: moved(5198), strictPort: true },
   server: { port: moved(5197), strictPort: true },
 });

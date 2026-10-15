@@ -60,9 +60,18 @@ export type CalendarGrain = "day" | "week" | "month" | "year";
  * question it was never asked.
  */
 export interface CalendarHorizon {
+  /**
+   * How many years it looks out from the day it opens on, at the least. The
+   * years it draws also reach back to the first of its records and on to
+   * the last, so a career opened on 1970 still shows 1962 and 2023.
+   */
   readonly years: number;
   /** What the app calls it: "Five years", "The rotation", "The decade". */
   readonly title: string;
+  /** The first year it draws, said outright: the records' first is not read. */
+  readonly from?: number;
+  /** The last year it draws, said outright: the records' last is not read. */
+  readonly to?: number;
 }
 
 export const CALENDAR_RANGES: readonly CalendarRange[] = ["day", "week", "month", "quarter", "year", "agenda"];

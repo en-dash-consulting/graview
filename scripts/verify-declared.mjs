@@ -40,6 +40,27 @@
  * measure said as declared; the form to add one shows "$" beside its
  * amount and takes "$1,250.50" as written.
  *
+ * And a review app as a Cloud author built it (`review.gdd.json`): a home
+ * the declaration draws beside `pages.first: "This week"` — the visit lands
+ * on This week, and a press on Home draws the home at "/"; a finding's card
+ * says its kind's glance and nothing after it, and a risk's says whose
+ * "high" is ("Impact: high"); and a place titled "Root causes" beside the
+ * root causes' list is one "Root causes" on the bar, the list "All root
+ * causes" and still at /root-causes.
+ * And blocks lay out as written (`blocks-layout.gdd.json`, a review app's
+ * home), at a desk and a phone: a headline inside a column of a row group is
+ * a section heading, and the app's line is said once; a row group lays its
+ * text and its columns side by side, wrapping on a phone; a list drawn as
+ * rows gives each record the list's width and its whole name; badges that
+ * follow one another sit on one line, on a card and on a record's page.
+ * And the Beatles' discography as it was built in a chat (Oct 15,
+ * `beatles.gdd.json`): a career calendar spans its releases, 1962 to 2023,
+ * though it opens on 1970 with thirty years; "Songs by genre" with no genre
+ * says so rather than listing songs; "Releases by era" lists its releases
+ * oldest first, as its `sort` says; and the home's 158 songs, grouped by
+ * writer, draw 100 and "Show 58 more", which draws the rest under their
+ * writers.
+ *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
@@ -83,6 +104,15 @@ const STRENGTHS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/
 const CHANGES = resolve(repoRoot, "packages/core/tests/document/fixtures/changes.gdd.json");
 /** Deals in dollars (the money bug found on a Cloud app, Oct 13): an amount, a margin, an effort, a weight and a fee in euros. */
 const MONEY = resolve(repoRoot, "packages/core/tests/document/fixtures/money.gdd.json");
+/** A code review's findings (the review app built as a document on CLI 0.1.29): a drawn home and `pages.first` beside it, a place named as a list, glances. */
+const REVIEW = resolve(repoRoot, "packages/core/tests/document/fixtures/review.gdd.json");
+const REVIEW_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/review.seed.json");
+/** A review app's home and places, as the blocks were found to lay out wrong (Oct 15): nested headlines, row groups, rows, badges. */
+const LAYOUT = resolve(repoRoot, "packages/core/tests/document/fixtures/blocks-layout.gdd.json");
+const LAYOUT_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/blocks-layout.seed.json");
+/** The Beatles' discography (Oct 15): its lenses told a horizon and an order, and a home listing every song by writer. */
+const BEATLES = resolve(repoRoot, "packages/core/tests/document/fixtures/beatles.gdd.json");
+const BEATLES_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/beatles.seed.json");
 const MONEY_SEED = {
   nodes: [
     { id: "d1", kind: "deal", name: "Acme rebrand", amount: 10000, margin: 0.125, effort: 90, weight: 12.5, fee: 1250.5, stage: "won" },
@@ -146,21 +176,38 @@ async function buildHost() {
         import strengthsSeed from ${JSON.stringify(STRENGTHS_SEED)};
         import changes from ${JSON.stringify(CHANGES)};
         import money from ${JSON.stringify(MONEY)};
+        import review from ${JSON.stringify(REVIEW)};
+        import reviewSeed from ${JSON.stringify(REVIEW_SEED)};
         const asked = new URLSearchParams(location.search);
+        const reviewed = asked.get("doc") === "review";
+        import layout from ${JSON.stringify(LAYOUT)};
+        import layoutSeed from ${JSON.stringify(LAYOUT_SEED)};
+        const laidOut = asked.get("doc") === "layout";
+        import beatles from ${JSON.stringify(BEATLES)};
+        import beatlesSeed from ${JSON.stringify(BEATLES_SEED)};
+        const fab = asked.get("doc") === "beatles";
+        const discography = {
+          ...beatles,
+          views: { home: [{ headline: "The songs" }, { list: "all('song')", sort: "name", as: "row", group: "writtenBy" }] },
+          lenses: beatles.lenses.map((lens) =>
+            lens.title === "Releases by year" ? { ...lens, options: { range: "years", horizon: { years: 30, title: "The career" }, today: "1970-04-10" } }
+            : lens.title === "Releases by era" ? { ...lens, options: { sort: { by: "released" } } }
+            : lens),
+        };
         const proposal = asked.get("doc") === "lifelogics";
         const board = asked.get("doc") === "tasks";
         const org = asked.get("doc") === "strengths";
         const changed = asked.get("doc") === "changes";
         const dollars = asked.get("doc") === "money";
-        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : hall, { today: () => "2026-09-01" });
+        const compiled = compileDocumentWithoutCheck(fab ? discography : laidOut ? layout : proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : reviewed ? review : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : ${JSON.stringify(SEED)},
+          seed: fab ? beatlesSeed : laidOut ? layoutSeed : proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */
           ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal || org || changed || dollars
+          principal: proposal || org || changed || dollars || reviewed || laidOut || fab
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
             : board
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
@@ -720,6 +767,192 @@ try {
     }
     await form.close();
     report.checks.aMoneyFormShowsItsCurrencyAndTakesAnAmountAsWritten = { box, made, ok: box.type === "text" && box.mode === "decimal" && box.symbol === "$" && box.placeholder === "1,250.00" && made === "said" };
+  }
+
+  /*
+   * ---- A review app, as a Cloud author built it (CLI 0.1.29): a home the
+   * declaration draws and `pages.first` naming another place; a place
+   * titled as a kind's list is; cards that say their glance and no more.
+   */
+  {
+    /* `pages.first` picks where a visit lands; the drawn home stays Home, one press away. */
+    const page = await open("doc=review&face=none", { width: 1280, height: 900 });
+    const landed = await page.evaluate(() => window.__handle.where());
+    await page.click('[data-testid="app-home"]');
+    await page.waitForTimeout(1200);
+    const home = await page.evaluate(() => ({
+      where: window.__handle.where(),
+      headline: document.querySelector("[data-graview-embed] .graview-spec-headline")?.textContent?.trim() ?? null,
+    }));
+    report.checks.theDrawnHomeIsHomeWhenPagesFirstNamesAnotherPlace = {
+      landed,
+      home,
+      ok: (landed.path.includes("this-week") || landed.stop.includes("this-week")) && home.where.face === "pages" && home.where.path === "/" && home.headline === "Two findings, worst first",
+    };
+
+    /* A card says its kind's glance exactly, and a choice another chip shares says whose it is. */
+    const findingText = await page.evaluate(() => document.querySelector('[data-graview-embed] [data-graview-listed="f1"]')?.textContent ?? "");
+    report.checks.aCardSaysItsGlanceAndNothingMore = {
+      findingText,
+      ok: findingText.includes("Critical") && findingText.includes("Security") && !/\bHigh\b/.test(findingText) && !/confidence/i.test(findingText),
+    };
+    const riskText = await page.evaluate(() => document.querySelector('[data-graview-embed] [data-graview-listed="r1"]')?.textContent ?? "");
+    report.checks.aChoiceAnotherChipSharesSaysItsField = {
+      riskText,
+      ok: riskText.includes("Likelihood: low") && riskText.includes("Impact: high") && riskText.includes("Billing") && !riskText.includes("Area:"),
+    };
+
+    /* One "Root causes" on the bar: the place stands, and the kind's list is still reached, as "All root causes" and at its address. */
+    const bar = await page.evaluate(() =>
+      [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].map((entry) => ({ path: entry.getAttribute("data-place-path"), text: entry.textContent?.trim() ?? "" })),
+    );
+    await page.close();
+    const listPage = await open(`doc=review&face=pages&path=${encodeURIComponent("/root-causes")}`, { width: 1280, height: 900 });
+    const byLink = await listPage.evaluate(() => document.querySelector("main")?.textContent?.includes("No owner for logging") ?? false);
+    await listPage.close();
+    const named = bar.filter((entry) => entry.text === "Root causes");
+    report.checks.aPlaceNamedAsAListIsOnTheBarOnce = {
+      bar,
+      byLink,
+      ok: named.length === 1 && named[0].path === "/places/root-causes" && bar.some((entry) => entry.path === "/root-causes" && entry.text === "All root causes") && byLink,
+    };
+  }
+
+  /*
+   * ---- Blocks lay out as written (a review app built with `graview preview`, Oct 15).
+   * The review's home: a headline, a row of four stat tiles, a row of four
+   * toned lines, a row of two columns each headed by a headline over two
+   * meters, and every finding as a row; its findings' cards and pages wear
+   * three badges. Measured at a desk and a phone.
+   */
+  {
+    const home = {};
+    const rows = {};
+    const listed = {};
+    const badges = {};
+    for (const size of SIZES) {
+      const at = `${size.width}×${size.height}`;
+      const page = await open(`doc=layout&face=pages&path=${encodeURIComponent("/")}`, size);
+      await page.waitForSelector('[data-testid="home-view"] .graview-spec-headline', { timeout: 15_000 }).catch(() => {});
+      await shoot(page, `layout-home-${size.width}`);
+      const seen = await page.evaluate(() => {
+        const view = document.querySelector('[data-testid="home-view"]');
+        const box = (element) => element.getBoundingClientRect();
+        const groups = view ? [...view.querySelectorAll('.graview-spec-home > .graview-spec-group[data-direction="row"]')] : [];
+        /** How a row group's blocks stand: their tops and lefts, and whether any spills past the group. */
+        const laid = (group) => {
+          if (!group) return null;
+          const outer = box(group);
+          const parts = [...group.children].map(box);
+          return { tops: parts.map((r) => Math.round(r.top)), lefts: parts.map((r) => Math.round(r.left)), widths: parts.map((r) => Math.round(r.width)), spills: parts.some((r) => r.right > outer.right + 1 || r.left < outer.left - 1) };
+        };
+        const list = view?.querySelector('.graview-spec-list[data-as="row"]');
+        return {
+          headlines: view ? [...view.querySelectorAll(".graview-spec-headline")].map((h) => `${h.tagName.toLowerCase()} ${h.getAttribute("data-level")} ${h.textContent?.trim()}`) : [],
+          lines: [...document.querySelectorAll('[data-testid="app-subtitle"]')].length,
+          texts: laid(groups[1]),
+          columns: laid(groups[2]),
+          list: list
+            ? {
+                width: Math.round(box(list).width),
+                rows: [...list.children].map((li) => {
+                  const title = li.querySelector(".graview-spec-title");
+                  return {
+                    width: Math.round(box(li).width),
+                    chip: li.querySelector('[data-graview-primitive="chip"]') !== null,
+                    whole: title ? title.textContent === li.querySelector("a")?.getAttribute("aria-label") && title.scrollWidth <= title.clientWidth + 1 : false,
+                  };
+                }),
+              }
+            : null,
+          spills: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+        };
+      });
+      await page.close();
+      home[at] = { headlines: seen.headlines, lines: seen.lines };
+      rows[at] = { texts: seen.texts, columns: seen.columns, spills: seen.spills };
+      listed[at] = seen.list;
+      // Badges on a card (the every-finding place) and on a record's page.
+      const one = {};
+      for (const [where, path, within] of [
+        ["card", "/places/every-finding", '[data-graview-listed="f1"] [data-graview-spec="card"]'],
+        ["page", "/findings/f3", '[data-graview-spec="page"][data-graview-kind="finding"]'],
+      ]) {
+        const shown = await open(`doc=layout&face=pages&path=${encodeURIComponent(path)}`, size);
+        await shown.waitForSelector(`${within} .graview-spec-badge`, { timeout: 15_000 }).catch(() => {});
+        one[where] = await shown.evaluate((selector) => [...document.querySelectorAll(`${selector} .graview-spec-badge`)].map((badge) => Math.round(badge.getBoundingClientRect().top)), within);
+        await shoot(shown, `layout-badges-${where}-${size.width}`);
+        await shown.close();
+      }
+      badges[at] = one;
+    }
+    const desk = `${SIZES[0].width}×${SIZES[0].height}`;
+    const oneLine = (tops) => tops.length > 1 && Math.max(...tops) - Math.min(...tops) <= 4;
+    report.checks.aNestedHeadlineIsASectionHeadingAndTheAppsLineIsSaidOnce = {
+      home,
+      ok: Object.values(home).every(
+        (seen) => seen.lines === 1 && seen.headlines.filter((h) => / 1 /.test(h)).length === 1 && seen.headlines.some((h) => h.startsWith("h3 2 Where the problems are")) && seen.headlines.some((h) => h.startsWith("h3 2 When they are planned")),
+      ),
+    };
+    report.checks.aRowGroupLaysTextAndColumnsSideBySideAndWrapsOnAPhone = {
+      rows,
+      ok:
+        // At a desk, the four lines on one line and the two columns side by side…
+        oneLine(rows[desk]?.texts?.tops ?? []) &&
+        oneLine(rows[desk]?.columns?.tops ?? []) &&
+        new Set(rows[desk]?.columns?.lefts ?? []).size === 2 &&
+        // …and nowhere does anything spill past its row or the page.
+        Object.values(rows).every((seen) => seen.texts && seen.columns && !seen.texts.spills && !seen.columns.spills && !seen.spills),
+    };
+    report.checks.aListOfRowsGivesEachRecordTheListsWidthAndItsWholeName = {
+      listed,
+      ok: Object.values(listed).every((list) => list && list.rows.length === 4 && list.rows.every((row) => !row.chip && row.whole && row.width >= list.width - 2)),
+    };
+    report.checks.badgesThatFollowOneAnotherSitOnOneLineOnACardAndAPage = {
+      badges,
+      ok: Object.values(badges).every((seen) => seen.card?.length === 3 && oneLine(seen.card) && seen.page?.length === 3 && oneLine(seen.page)),
+    };
+  }
+
+  /* ---- The Beatles (Oct 15): a career's years, a coverage with nothing to cross, an order told, a list past a page */
+  {
+    const text = async (path, selector) => {
+      const page = await open(`doc=beatles&face=pages&path=${encodeURIComponent(path)}`);
+      await page.waitForSelector(selector, { timeout: 20_000 }).catch(() => {});
+      return page;
+    };
+    const years = await text("/places/releases-by-year", "[data-graview-embed] main");
+    await years.waitForFunction(() => /The career · \d{4}/.test(document.body.textContent ?? ""), null, { timeout: 15_000 }).catch(() => {});
+    const career = await years.evaluate(() => document.body.textContent ?? "");
+    await years.close();
+    report.checks.aCareerCalendarSpansItsRecordsFirstToLast = { span: /The career · \d{4}–\d{4}/.exec(career)?.[0] ?? career.slice(0, 400), ok: career.includes("The career · 1962–2023") };
+
+    const genres = await text("/places/songs-by-genre", "[data-coverage-unlinked]");
+    const unlinked = await genres.evaluate(() => ({ said: document.querySelector("[data-coverage-unlinked]")?.textContent ?? null, songs: [...document.querySelectorAll('[data-graview-pick^="song-"]')].length }));
+    await genres.close();
+    report.checks.aCoverageWithNothingLinkedSaysSoAndListsNoRows = { ...unlinked, ok: unlinked.said === "No genres yet: link songs to genres." && unlinked.songs === 0 };
+
+    const eras = await text("/places/releases-by-era", '[data-graview-pick^="release-"]');
+    const order = await eras.evaluate(() => [...new Set([...document.querySelectorAll('[data-graview-pick^="release-"]')].map((one) => one.getAttribute("data-graview-pick")))]);
+    await eras.close();
+    report.checks.aCoverageListsItsRowsInTheOrderItIsTold = { first: order.slice(0, 4), last: order.at(-1), ok: order.slice(0, 3).join() === "release-love-me-do,release-please-please-me,release-with-the-beatles" && order.at(-1) === "release-now-and-then" };
+
+    const home = await text("/", "[data-graview-show-more]");
+    const before = await home.evaluate(() => ({ listed: document.querySelectorAll("[data-graview-listed]").length, button: document.querySelector("[data-graview-show-more]")?.textContent ?? null }));
+    await home.click("[data-graview-show-more]").catch(() => {});
+    await home.waitForTimeout(600);
+    const after = await home.evaluate(() => ({
+      listed: document.querySelectorAll("[data-graview-listed]").length,
+      button: document.querySelector("[data-graview-show-more]") !== null,
+      headings: [...document.querySelectorAll(".graview-spec-list-heading")].map((heading) => heading.textContent),
+      focus: document.activeElement?.tagName ?? null,
+    }));
+    await home.close();
+    report.checks.aListPastAPageShowsTheRestWhenAskedUnderTheRecordsTheyAreLinkedTo = {
+      before,
+      after,
+      ok: before.listed === 100 && before.button === "Show 58 more" && after.listed === 158 && !after.button && after.headings.join() === "Harrison,Lennon,McCartney,Starkey",
+    };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

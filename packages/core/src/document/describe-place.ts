@@ -11,6 +11,7 @@ import { recordPath } from "../views/types.js";
 import { isoToday } from "../days.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { coverageParts } from "./describe-coverage.js";
+import { sortForGrid } from "../grid-sort.js";
 import type { ResolvedBlock } from "./blocks.js";
 import { resolveFor, type ResolveForOptions } from "./resolve-for.js";
 import { computedValues, withComputed, type ComputedRecord, type PlainComputed } from "./computed-values.js";
@@ -309,7 +310,8 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
         const field = bindings[kind]?.column;
         if (!field) continue;
         const columns = statusColumns(schema, kind, field);
-        const members = graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node));
+        // In the order the lens draws its cards (`options.sort`), as they were written where it says none.
+        const members = sortForGrid(graph.nodesOfKind(kind).filter((node) => isCurrent(schema.tryDefinition(kind), node)), lens.options["sort"], (node, key) => (key === "label" ? labelOf(schema.tryDefinition(node.kind), node) : (node as Record<string, unknown>)[key]));
         if (Object.keys(bindings).length > 1) parts.push({ t: "heading", level: 2, text: kindWord(schema, kind, 2).replace(/^./, (c) => c.toUpperCase()) });
         parts.push({ t: "text", text: `${members.length} ${kindWord(schema, kind, members.length)} in columns by ${fieldWords(schema.tryDefinition(kind), field).toLowerCase()}.` });
         const groups = columns

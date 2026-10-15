@@ -32,30 +32,61 @@ export const VIEW_FIELD_FORMATS = ["money", "percent", "date", "relative", "coun
 export type ViewFieldFormat = (typeof VIEW_FIELD_FORMATS)[number];
 /** Groups and conditions nest; four deep is more than any card needs. */
 export const MAX_VIEW_DEPTH = 4;
-/** Blocks in one view, counting nested ones. */
+/**
+ * HOW MANY BLOCKS A VIEW HOLDS: forty at its top, where a group or a
+ * condition counts as one however much it holds — a home of four stat tiles
+ * (a figure and a line each), four lines, five meters and three lists is
+ * sixteen blocks, not the fifty-six its parts add up to, and was refused.
+ * What a reader sees is the top's blocks; a group is one thing on the page.
+ */
 export const MAX_VIEW_BLOCKS = 40;
+/**
+ * And every block in it, counting the ones inside groups and conditions:
+ * a ceiling against a view nobody could read or draw in time — each block
+ * is worked out on every draw, a list's records each drawn by its own view.
+ */
+export const MAX_VIEW_BLOCKS_IN_ALL = 120;
 
 export type ToneSpec = ViewTone | { readonly expr: string };
 
 /** How a `figure` block says its number (FR-81). */
 export const FIGURE_FORMATS = ["number", "money", "percent"] as const;
 export type FigureFormat = (typeof FIGURE_FORMATS)[number];
+/** How loudly a figure says its number: `large`, a stat tile's figure at the home's display size. */
+export const FIGURE_EMPHASES = ["large"] as const;
+export type FigureEmphasis = (typeof FIGURE_EMPHASES)[number];
 /** How a `list` block draws each record it lists: with the kind's own card, or its own row (FR-81, FR-82). */
 export const LIST_AS = ["card", "row"] as const;
-/** The most records one list draws; a `limit` says fewer. */
-export const MAX_LIST_LIMIT = 100;
+/**
+ * The most records one list holds; a `limit` says fewer. It draws
+ * `LIST_PAGE` of them at first, and "Show N more" draws the next page.
+ */
+export const MAX_LIST_LIMIT = 1000;
+/** How many records a list draws before it offers to show more (2026-10-15: 158 songs were split by name to fit 100). */
+export const LIST_PAGE = 100;
 
 /** A list's order: a key read from each record, ascending — or `{ by, direction }`, where "choices" is the order a choice field's choices are declared in. */
 export type ListSort = string | { readonly by: string; readonly direction?: "asc" | "desc" | "choices" };
-/** A list's grouping: a choice field, with a heading per choice where its value does not say it. */
+/**
+ * A list's grouping: a choice field, with a heading per choice where its
+ * value does not say it — or a relation (`"inGenre"`, or `"out('inGenre')"`
+ * and `"in('writtenBy')"` to say which way), a heading per linked record.
+ */
 export type ListGroup = string | { readonly by: string; readonly headings?: Readonly<Record<string, string>> };
+
+/** A list's group by a relation, read from how it is written: `inGenre`, `out('inGenre')` or `in('writtenBy')`. */
+export function groupRelationOf(by: string): { readonly edge: string; readonly way?: "out" | "in" } | undefined {
+  const walked = /^\s*(out|in)\(\s*['"]([A-Za-z][A-Za-z0-9_-]*)['"]\s*\)\s*$/.exec(by);
+  if (walked) return { edge: walked[2]!, way: walked[1] as "out" | "in" };
+  return /^[A-Za-z][A-Za-z0-9_-]*$/.test(by) ? { edge: by } : undefined;
+}
 
 /** A block of a view. Any block may say its `key`: what a face claims it by (`BlockSlots`), its own in its view. */
 export type ViewBlock = OneBlock & { readonly key?: string };
 type OneBlock =
   | { readonly title: string }
   | { readonly headline: string }
-  | { readonly figure: string; readonly as?: FigureFormat; readonly currency?: string; readonly label?: string }
+  | { readonly figure: string; readonly as?: FigureFormat; readonly currency?: string; readonly label?: string; readonly emphasis?: FigureEmphasis }
   | {
       readonly list: string;
       readonly sort?: ListSort;
@@ -89,7 +120,7 @@ export type HomeView = readonly ViewBlock[];
 export type ViewSpecsByKind = Readonly<Record<string, ViewSpecs>>;
 
 /** What each block may say besides the key that names it. */
-const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
+export const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
   title: [],
   headline: [],
   list: ["sort", "limit", "group", "empty", "as"],
@@ -102,11 +133,11 @@ const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
   when: ["show"],
   divider: [],
   // `{"figure": true}` is the kind's picture; `{"figure": expr, …}` a number worked out (FR-81).
-  figure: ["as", "currency", "label"],
+  figure: ["as", "currency", "label", "emphasis"],
 };
 const BLOCK_TYPES = Object.keys(BLOCK_KEYS);
 const SHAPES =
-  '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "currency"?, "label"?}, {"image": "photos", "as"?: "thumb"|"gallery"}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
+  '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?, "emphasis"?: "large"}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "currency"?, "label"?}, {"image": "photos", "as"?: "thumb"|"gallery"}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
 
 /** Whether a field holds pictures or documents: an `image` or `file`, or a list of them (FR-162). */
 export const holdsFiles = (spec: { readonly type: string; readonly of?: string } | undefined): boolean => /^(image|file)$/.test(spec?.of ?? spec?.type ?? "");
@@ -156,7 +187,10 @@ interface Scope {
   readonly edges: ReadonlySet<string>;
   readonly vocabulary: Vocabulary;
   readonly findings: Finding[];
+  /** The blocks at the view's top, a group or a condition one each. */
   count: number;
+  /** Every block, the ones inside groups and conditions too. */
+  all: number;
   /** The slot the blocks are drawn in, for a kind's views. */
   readonly slot?: ViewSlot;
 }
@@ -250,7 +284,8 @@ function blocks(list: unknown, path: string, depth: number, scope: Scope): void 
 }
 
 function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void {
-  scope.count++;
+  if (depth === 1) scope.count++;
+  scope.all++;
   if (!isObject(raw)) {
     scope.findings.push(error("view-block", path, "a block is an object naming what it shows", `one of ${SHAPES}`));
     return;
@@ -314,7 +349,7 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
       return;
     case "figure":
       if (typeof value === "string") return figureBlock(raw, path, scope);
-      for (const k of ["as", "currency", "label"]) if (k in raw) scope.findings.push(error("unknown-key", `${path}.${k}`, `"${k}" belongs to a figure that works a number out; {"figure": true} is the kind's picture`, `write {"figure": "count(all('offer'))", "as": "number"}`));
+      for (const k of ["as", "currency", "label", "emphasis"]) if (k in raw) scope.findings.push(error("unknown-key", `${path}.${k}`, `"${k}" belongs to a figure that works a number out; {"figure": true} is the kind's picture`, `write {"figure": "count(all('offer'))", "as": "number"}`));
       if (value !== true) scope.findings.push(error("view-block", `${path}.figure`, `a figure is a number worked out, {"figure": "sum(all('offer'), net)", "as": "money"}, or the kind's picture, {"figure": true}`));
       else if (!scope.spec.figure) scope.findings.push(error("view-figure", `${path}.figure`, `${about(scope)} has no figure to show`, scope.kind === null ? `work a number out: {"figure": "count(all('offer'))"}` : 'give the kind a "figure", or leave this block out'));
       return;
@@ -333,6 +368,9 @@ function figureBlock(raw: Record<string, unknown>, path: string, scope: Scope): 
   currency(raw, path, scope, "figure");
   // A figure's label is a template, like a headline (FR-99): "{name}, net".
   if ("label" in raw) template(raw["label"], `${path}.label`, scope);
+  if ("emphasis" in raw && !(FIGURE_EMPHASES as readonly unknown[]).includes(raw["emphasis"])) {
+    scope.findings.push(error("view-emphasis", `${path}.emphasis`, `"${String(raw["emphasis"])}" is not how loudly a figure is said`, `use ${FIGURE_EMPHASES.map((e) => `"${e}"`).join(", ")}, or leave it out for the figure's own size`));
+  }
 }
 
 /** A currency on money (FR-100): its three-letter code, on a figure or a field shown as money. Without one, the app's `brand.currency`. */
@@ -470,10 +508,13 @@ function listBlock(raw: Record<string, unknown>, path: string, scope: Scope): vo
     const by = typeof group === "string" ? group : isObject(group) && typeof group["by"] === "string" ? group["by"] : undefined;
     const shaped = typeof group === "string" || (isObject(group) && Object.keys(group).every((k) => k === "by" || k === "headings"));
     if (!shaped || by === undefined) {
-      scope.findings.push(error("list-group", `${path}.group`, 'a group is a choice field, like "type", or {"by": "type", "headings": {"pain": "What hurts"}}'));
+      scope.findings.push(error("list-group", `${path}.group`, 'a group is a choice field, like "type", or {"by": "type", "headings": {"pain": "What hurts"}} — or a relation, like "inGenre", a heading per linked record'));
     } else {
       const choices = choicesOf(by);
-      if (choices === undefined) scope.findings.push(error("list-group", `${path}.group`, `"${by}" is not a choice field of ${named}, so it has no choices to group by`, "group by a field whose type is enum"));
+      /* A relation of the kinds listed (or, written out('…') or in('…'), any relation) groups by the records at its far end. */
+      const relation = choices === undefined ? groupRelationOf(by) : undefined;
+      const linked = relation !== undefined && (relation.way !== undefined ? scope.edges.has(relation.edge) : kinds ? kinds.every((kind) => scope.vocabulary.namesOf(kind)?.relation(relation.edge)) : scope.edges.has(relation.edge));
+      if (choices === undefined && !linked) scope.findings.push(error("list-group", `${path}.group`, `"${by}" is not a choice field or a relation of ${named}, so it has nothing to group by`, "group by a field whose type is enum, or by a relation of the kind listed, like \"inGenre\""));
       if (isObject(group) && "headings" in group) {
         const headings = group["headings"];
         if (!isObject(headings) || Object.values(headings).some((words) => typeof words !== "string" || words.length === 0 || words.length > 80)) {
@@ -573,10 +614,19 @@ export function viewKeys(views: unknown, at: string, home?: unknown, lenses?: un
 
 /** Blocks about no one record — the home, a blocks lens — checked at `at`. */
 export function subjectless(list: unknown, at: string, vocabulary: Vocabulary, kinds: ReadonlySet<string>, edges: ReadonlySet<string>, findings: Finding[], what: string): void {
-  const scope: Scope = { kind: null, spec: NO_RECORD, kinds, edges, vocabulary, findings, count: 0 };
+  const scope: Scope = { kind: null, spec: NO_RECORD, kinds, edges, vocabulary, findings, count: 0, all: 0 };
   if (Array.isArray(list) && list.length === 0) findings.push(error("view-shape", at, `${what} has no blocks`, 'give it one: {"headline": "…"}'));
   blocks(list, at, 1, scope);
-  if (scope.count > MAX_VIEW_BLOCKS) findings.push(error("view-size", at, `${what} has ${scope.count} blocks; a view has at most ${MAX_VIEW_BLOCKS}`, "show less"));
+  sized(scope, at, what, "show less");
+}
+
+/** A view held to its size: forty blocks at its top, a group or a condition one of them, and 120 in all. */
+function sized(scope: Scope, at: string, what: string, fix: string): void {
+  if (scope.count > MAX_VIEW_BLOCKS) {
+    scope.findings.push(error("view-size", at, `${what} has ${scope.count} blocks at its top; a view has at most ${MAX_VIEW_BLOCKS} there, a group or a condition counting as one`, `${fix}, or gather some into a group`));
+  } else if (scope.all > MAX_VIEW_BLOCKS_IN_ALL) {
+    scope.findings.push(error("view-size", at, `${what} has ${scope.all} blocks counting the ones inside its groups and conditions; a view has at most ${MAX_VIEW_BLOCKS_IN_ALL} in all`, fix));
+  }
 }
 
 /** The lenses drawn from blocks, by their index in `lenses`: their blocks, checked where they are written. */
@@ -633,9 +683,9 @@ export function validateAll(
     for (const slot of VIEW_SLOTS) {
       const list = specs[slot];
       if (list === undefined) continue;
-      const scope: Scope = { kind, spec, kinds, edges, vocabulary, findings, count: 0, slot };
+      const scope: Scope = { kind, spec, kinds, edges, vocabulary, findings, count: 0, all: 0, slot };
       blocks(list, `${at}.${kind}.${slot}`, 1, scope);
-      if (scope.count > MAX_VIEW_BLOCKS) findings.push(error("view-size", `${at}.${kind}.${slot}`, `this ${slot} has ${scope.count} blocks; a view has at most ${MAX_VIEW_BLOCKS}`, "show less, or move detail to the page"));
+      sized(scope, `${at}.${kind}.${slot}`, `this ${slot}`, "show less, or move detail to the page");
     }
   }
   return findings;

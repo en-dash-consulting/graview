@@ -1,15 +1,15 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import type { AnySchema } from "../schema/schema.js";
-import { fieldWords } from "../schema/define-node.js";
+import { fieldWords, nounOf } from "../schema/define-node.js";
 import { valueWords } from "../schema/value-words.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
-import { EMPTY_GRAPH, formatMoney, formatValue, type Money, type TemplatePart } from "./template.js";
+import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, namerOf, type Money, type TemplatePart } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
-import { FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
+import { FIGURE_EMPHASES, FIGURE_FORMATS, groupRelationOf, LIST_AS, LIST_PAGE, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureEmphasis, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
 import { capitalize } from "../capital.js";
 import { filesOf, isImage, type FileValue } from "../schema/files.js";
 import { fileWords } from "../schema/file-fields.js";
@@ -62,7 +62,7 @@ type UnkeyedSpec =
   | { readonly t: "divider" }
   | { readonly t: "figure" }
   | { readonly t: "headline"; readonly parts: Parsed<readonly TemplatePart[]> }
-  | { readonly t: "number"; readonly value: Parsed<Expr>; readonly as?: FigureFormat; readonly currency?: string; readonly label?: Parsed<readonly TemplatePart[]> }
+  | { readonly t: "number"; readonly value: Parsed<Expr>; readonly as?: FigureFormat; readonly currency?: string; readonly label?: Parsed<readonly TemplatePart[]>; readonly emphasis?: FigureEmphasis }
   | {
       readonly t: "list";
       /** The records, in their order: a `sort` by a key is part of the expression, `sort(<list>, <key>, <direction>)`. */
@@ -161,7 +161,8 @@ export function compileBlocks(blocks: readonly ViewBlock[] | readonly unknown[],
           return listOf(block);
         case "number": {
           const as = (FIGURE_FORMATS as readonly unknown[]).includes(block["as"]) ? (block["as"] as FigureFormat) : undefined;
-          return { t, value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label: template(label) } : {}) };
+          const emphasis = (FIGURE_EMPHASES as readonly unknown[]).includes(block["emphasis"]) ? (block["emphasis"] as FigureEmphasis) : undefined;
+          return { t, value: expr(block["figure"]), ...(as ? { as } : {}), ...(currency ? { currency } : {}), ...(label ? { label: template(label) } : {}), ...(emphasis ? { emphasis } : {}) };
         }
         case "headline":
         case "title":
@@ -240,7 +241,14 @@ type Unkeyed =
   /** The kind's picture: drawn by a face, said by nothing. */
   | { readonly t: "figure" }
   | { readonly t: "headline"; readonly level: number; readonly text: string; readonly problem?: string }
-  | { readonly t: "number"; readonly text: string; readonly label?: string; readonly problem?: string };
+  | { readonly t: "number"; readonly text: string; readonly label?: string; readonly emphasis?: FigureEmphasis; readonly problem?: string };
+
+/** A group of a list: a choice and its records, or a linked record (its id the value) and the records linked to it. */
+export interface ListGroupOf {
+  readonly value: string | null;
+  readonly heading?: string;
+  readonly members: readonly AnyGraphNode[];
+}
 
 /** A list worked out: its records in order, a few, under a heading per choice — read from the graph the context was handed. */
 export interface ResolvedList {
@@ -248,10 +256,14 @@ export interface ResolvedList {
   readonly as: "card" | "row";
   /** True when its source could not be judged: drawn as "—". */
   readonly failed: boolean;
-  /** Every record listed, in order, after the limit. */
+  /** The records drawn first, in order: a page of them (`LIST_PAGE`), or fewer where the limit says. */
   readonly members: readonly AnyGraphNode[];
+  /** The records after the first page, up to the limit: what "Show N more" draws. */
+  readonly rest?: readonly AnyGraphNode[];
   /** The groups, in their declared order, when the list is grouped. A choice no record here takes has no heading at all. */
-  readonly groups?: readonly { readonly value: string | null; readonly heading?: string; readonly members: readonly AnyGraphNode[] }[];
+  readonly groups?: readonly ListGroupOf[];
+  /** The groups over every record listed, the first page and the rest, for a face that shows them all. */
+  readonly everyGroup?: readonly ListGroupOf[];
   /** The level a group's heading is drawn at. */
   readonly headingLevel: number;
   /** What it says when it lists nothing, when it says anything. */
@@ -308,7 +320,8 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext, prose?: 
       }
       // A field named bare (`{price}`) is said as it declares: money as money.
       const amount = !part.format && part.expr?.t === "ident" && typeof judged.value === "number" ? amountAt(ctx, part.expr.name) : undefined;
-      return amount ? sayAmount(judged.value as number, amount) : formatValue(judged.value, part.format, ctx.today, part.formatArgs, ctx.money);
+      // A record is said by its kind's label, `{out('affects') | and}` as "src/files.ts and tsconfig.json", never its id.
+      return capitalized(part, amount ? sayAmount(judged.value as number, amount) : formatValue(judged.value, part.format, ctx.today, part.formatArgs, ctx.money, namerOf(ctx.schema)));
     })
     .join("");
   return { text, ...(problem ? { problem } : {}), ...(markdown ? { markdown } : {}) };
@@ -373,6 +386,22 @@ export function sayNumber(value: string | number | boolean, as: FigureFormat | u
 
 const withProblem = <T extends object>(block: T, problem: string | undefined): T => (problem ? { ...block, problem } : block);
 
+/**
+ * WHAT A GROUP HOLDS IS A SECTION OF THE VIEW, NOT ITS TOP. The first
+ * headline of the home is the page's own heading; a headline inside a group
+ * was the first of ITS blocks, so it was said at that level too — two
+ * columns, each with "Where the problems are" at the top, were two more page
+ * titles, each with the app's line under it. A headline in a group or a
+ * condition is said at the level of the view's sections — the level its
+ * other headlines take, under the page's heading — and never as the page's
+ * heading. Not a level more per group: a row of columns is layout, and a
+ * heading two groups in would skip the levels between it and the page's,
+ * which a screen reader's outline of the page says.
+ */
+function nested(ctx: BlockContext): BlockContext {
+  return ctx.firstHeading === undefined ? ctx : { ...ctx, firstHeading: undefined };
+}
+
 function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeyed | ResolvedList {
   switch (block.t) {
     case "title": {
@@ -405,7 +434,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       if (worked) {
         const judged = judge({ t: "ident", name: block.field, at: 0 }, ctx);
         if (!judged.ok) problem = judged.problem;
-        else raw = judged.value !== null && typeof judged.value === "object" ? formatValue(judged.value, undefined, ctx.today) : judged.value;
+        else raw = judged.value !== null && typeof judged.value === "object" ? formatValue(judged.value, undefined, ctx.today, [], ctx.money, namerOf(ctx.schema)) : judged.value;
       } else raw = Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : undefined;
       // A web address, a phone (`tel:`) and a place (the reader's maps app) are links.
       const href = block.as !== undefined ? undefined : ctx.fields[block.field]?.type === "url" ? safeHref(raw) : typedHref(typedOf(ctx, block.field), raw);
@@ -431,12 +460,12 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       return withProblem({ t: "progress", label, value: value.value, max: max.value, text: `${formatValue(value.value, undefined, ctx.today)} of ${formatValue(max.value, undefined, ctx.today)}` }, problem);
     }
     case "group":
-      return { t: "group", direction: block.direction, blocks: resolveBlocks(block.blocks, ctx) };
+      return { t: "group", direction: block.direction, blocks: resolveBlocks(block.blocks, nested(ctx)) };
     case "when": {
       // A condition that cannot be judged hides what it guards, like a rule's `when`.
       const judged = judge(block.when, ctx);
       const shown = judged.ok && judged.value === true;
-      return withProblem({ t: "when", shown, blocks: shown ? resolveBlocks(block.show, ctx) : [] }, judged.ok ? undefined : judged.problem);
+      return withProblem({ t: "when", shown, blocks: shown ? resolveBlocks(block.show, nested(ctx)) : [] }, judged.ok ? undefined : judged.problem);
     }
     case "divider":
       return { t: "divider" };
@@ -451,7 +480,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       const judged = judge(block.value, ctx);
       const text = !judged.ok || judged.value === null || typeof judged.value === "object" ? NOTHING : sayNumber(judged.value, block.as, block.currency, ctx.today, ctx.money);
       const said = block.label ? say(block.label, ctx) : undefined;
-      return withProblem({ t: "number", text, ...(said ? { label: said.text } : {}) }, judged.ok ? said?.problem : judged.problem);
+      return withProblem({ t: "number", text, ...(said ? { label: said.text } : {}), ...(block.emphasis ? { emphasis: block.emphasis } : {}) }, judged.ok ? said?.problem : judged.problem);
     }
     case "list":
       return resolveList(block, ctx);
@@ -577,16 +606,24 @@ function resolveList(block: Extract<SpecBlock, { t: "list" }>, ctx: BlockContext
   let nodes: readonly AnyGraphNode[] = value instanceof NodeSet ? value.nodes : value !== null && typeof value === "object" && !Array.isArray(value) ? [value as AnyGraphNode] : [];
   if (block.choiceOrder && ctx.schema) nodes = inChoiceOrder(nodes, block.choiceOrder, ctx.schema);
   const all = nodes.length;
-  nodes = nodes.slice(0, block.limit ?? MAX_LIST_LIMIT);
-  const more = block.limit === undefined ? all - nodes.length : 0;
+  /* Up to the limit, a page drawn first and the rest held for "Show N more"; past the limit, said as how many more there were. */
+  const listed = nodes.slice(0, block.limit ?? MAX_LIST_LIMIT);
+  const first = listed.slice(0, LIST_PAGE);
+  const rest = listed.slice(LIST_PAGE);
+  const more = (block.limit === undefined ? all : listed.length) - first.length;
+  const grouped = (some: readonly AnyGraphNode[]) => (block.group && ctx.schema && some.length > 0 ? groupsOf(some, block.group, ctx.schema, ctx.graph) : undefined);
+  const groups = grouped(first);
+  const everyGroup = rest.length > 0 ? grouped(listed) : undefined;
   return {
     t: "list",
     as: block.as,
     failed: false,
-    members: nodes,
-    ...(block.group && ctx.schema && nodes.length > 0 ? { groups: groupsOf(nodes, block.group, ctx.schema) } : {}),
+    members: first,
+    ...(rest.length > 0 ? { rest } : {}),
+    ...(groups ? { groups } : {}),
+    ...(everyGroup ? { everyGroup } : {}),
     headingLevel,
-    ...(nodes.length === 0 && block.empty ? { empty: block.empty } : {}),
+    ...(first.length === 0 && block.empty ? { empty: block.empty } : {}),
     more,
     total: all,
   };
@@ -616,7 +653,9 @@ function inChoiceOrder(nodes: readonly AnyGraphNode[], field: string, schema: An
  * something the reader cannot see exists. A value among no choice goes
  * last, unheaded.
  */
-function groupsOf(nodes: readonly AnyGraphNode[], group: { readonly by: string; readonly headings: Readonly<Record<string, string>> }, schema: AnySchema): readonly { readonly value: string | null; readonly heading?: string; readonly members: readonly AnyGraphNode[] }[] {
+function groupsOf(nodes: readonly AnyGraphNode[], group: { readonly by: string; readonly headings: Readonly<Record<string, string>> }, schema: AnySchema, graph?: GraphReader): readonly ListGroupOf[] {
+  const relation = nodes.some((node) => choicesOf(schema, node.kind, group.by).length > 0) ? undefined : groupRelationOf(group.by);
+  if (relation && graph) return linkedGroupsOf(nodes, relation, group.headings, schema, graph);
   const order: string[] = [];
   for (const node of nodes) for (const choice of choicesOf(schema, node.kind, group.by)) if (!order.includes(choice)) order.push(choice);
   const out: { value: string | null; heading?: string; members: AnyGraphNode[] }[] = [];
@@ -628,6 +667,39 @@ function groupsOf(nodes: readonly AnyGraphNode[], group: { readonly by: string; 
   }
   const rest = nodes.filter((node) => !order.includes(String(valueOf(node, group.by))));
   if (rest.length > 0) out.push({ value: null, members: rest });
+  return out;
+}
+
+/**
+ * THE RECORDS UNDER A HEADING PER LINKED RECORD (2026-10-15): songs by the
+ * genre each is in, the genre's name the heading, in the order of those
+ * names. A record linked to two is under both; one linked to none goes
+ * last, under "No genre". Unsaid which way, a relation the listed kind
+ * declares is walked out from it, and any other in to it.
+ */
+function linkedGroupsOf(nodes: readonly AnyGraphNode[], relation: { readonly edge: string; readonly way?: "out" | "in" }, headings: Readonly<Record<string, string>>, schema: AnySchema, graph: GraphReader): readonly ListGroupOf[] {
+  const way = (node: AnyGraphNode) => relation.way ?? (Object.hasOwn((schema.tryDefinition(node.kind)?.edges ?? {}) as object, relation.edge) ? "out" : "in");
+  const far = new Map<string, { node: AnyGraphNode; members: AnyGraphNode[] }>();
+  const none: AnyGraphNode[] = [];
+  const namer = namerOf(schema);
+  let farKind: string | undefined;
+  for (const node of nodes) {
+    const linked = (way(node) === "out" ? graph.out(node.id, relation.edge) : graph.in(node.id, relation.edge)) as readonly AnyGraphNode[];
+    if (linked.length === 0) none.push(node);
+    for (const end of linked) {
+      farKind ??= end.kind;
+      const held = far.get(end.id) ?? { node: end, members: [] };
+      held.members.push(node);
+      far.set(end.id, held);
+    }
+  }
+  const out: ListGroupOf[] = [...far.values()]
+    .map(({ node, members }) => ({ value: node.id, heading: headings[node.id] ?? namer(node), members }))
+    .sort((a, b) => a.heading.localeCompare(b.heading, undefined, { numeric: true }));
+  // What is at the far end, from the declaration where nothing listed is linked yet.
+  if (!farKind && nodes[0] && way(nodes[0]) === "out") farKind = ((schema.tryDefinition(nodes[0].kind)?.edges ?? {}) as Record<string, { readonly to?: readonly string[] }>)[relation.edge]?.to?.[0];
+  const nounOfFar = farKind && farKind !== "*" ? nounOf(schema.tryDefinition(farKind), farKind) : undefined;
+  if (none.length > 0) out.push({ value: null, ...(nounOfFar ? { heading: `No ${nounOfFar}` } : {}), members: none });
   return out;
 }
 

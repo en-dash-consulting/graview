@@ -55,6 +55,8 @@ export { DraftDoor } from "./draft-door.js";
 export { appKeyOf } from "./reader-lenses.js";
 export { registerReaderLenses } from "./declared-lens-doors.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";
+// The context menu (FR-77's `acts`): the acts at the pointer, its pane and the tools fetched when it is first opened.
+export { Inspector } from "./workbench/inspector-door.js";
 // Choosing several records on a list, and the bar that acts on them all at once — fetched with the first one chosen.
 export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
 export type { Choosing } from "./choosing.js";

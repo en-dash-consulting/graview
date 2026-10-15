@@ -1410,14 +1410,15 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
       <a href="../../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
-      written out of the repository<br>
-      by scripts/site-docs.mjs<br>
+      records of a Graview app,<br>
+      written out of the repository,<br>
       never by hand
     </div>
   </nav>
@@ -1530,9 +1531,9 @@ live.since(seq, { seat, via: "api" });</code></pre></div>
 <p>Anything <strong>one</strong> deployment needs lives here. Anything only the <strong>operator of many</strong> deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the <code>graview-cloud</code> repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.</p>
     </section>
     <section id="api" aria-labelledby="h-api">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (64)</h2></div>
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (69)</h2></div>
       <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
-      <ul class="names"><li><code>announcePresence</code></li><li><code>applySteps</code></li><li><code>applyToSnapshot</code></li><li><code>assertBundle</code></li><li><code>assertPhotoFits</code></li><li><code>authoredBy</code></li><li><code>backendFrom</code></li><li><code>browserStartsFresh</code></li><li><code>conflictSentence</code></li><li><code>contentOperation</code></li><li><code>countSteps</code></li><li><code>createBroadcastPresence</code></li><li><code>createBrowserAdapter</code></li><li><code>createFileAdapter</code></li><li><code>createStoreHandler</code></li><li><code>exportBundle</code></li><li><code>filesAt</code></li><li><code>forgetFreshParam</code></li><li><code>freshHref</code></li><li><code>health</code></li><li><code>isClientBatch</code></li><li><code>LIVE_PATH</code></li><li><code>LIVE_SUBPROTOCOL</code></li><li><code>LIVE_WIRE</code></li><li><code>liveProtocol</code></li><li><code>liveSubprotocol</code></li><li><code>migrateSnapshot</code></li><li><code>openRemote</code></li><li><code>openStore</code></li><li><code>pendingMigrations</code></li><li><code>PHOTO_BUDGET_BYTES</code></li><li><code>PHOTO_MAX_BYTES</code></li><li><code>photosUsed</code></li><li><code>PhotoTooLarge</code></li><li><code>presenceChannelName</code></li><li><code>presenceFrom</code></li><li><code>presenceSeenBy</code></li><li><code>preview</code></li><li><code>previewPrincipal</code></li><li><code>primitivesFor</code></li><li><code>primitivesForSteps</code></li><li><code>PRINCIPAL_KEY</code></li><li><code>REFUSAL_REASONS</code></li><li><code>rememberedPrincipal</code></li><li><code>RemoteRefusedError</code></li><li><code>sayStep</code></li><li><code>SEAT_HEADERS</code></li><li><code>seatFromHeaders</code></li><li><code>seatHeaders</code></li><li><code>seatOfTab</code></li><li><code>SEED_SYNC_AUTHOR</code></li><li><code>seedSteps</code></li><li><code>serve</code></li><li><code>SERVE_USAGE</code></li><li><code>servePreview</code></li><li><code>serverBatchIds</code></li><li><code>serveStore</code></li><li><code>shots</code></li><li><code>stepsMigration</code></li><li><code>storageBytes</code></li><li><code>syncSeed</code></li><li><code>visitorPresence</code></li><li><code>WIRE</code></li><li><code>wireRefusalOf</code></li></ul>
+      <ul class="names"><li><code>announcePresence</code></li><li><code>applySteps</code></li><li><code>applyToSnapshot</code></li><li><code>assertBundle</code></li><li><code>assertPhotoFits</code></li><li><code>authoredBy</code></li><li><code>backendFrom</code></li><li><code>browserStartsFresh</code></li><li><code>conflictSentence</code></li><li><code>contentOperation</code></li><li><code>countSteps</code></li><li><code>createBroadcastPresence</code></li><li><code>createBrowserAdapter</code></li><li><code>createFileAdapter</code></li><li><code>createStoreHandler</code></li><li><code>exportBundle</code></li><li><code>filesAt</code></li><li><code>forgetFreshParam</code></li><li><code>freshHref</code></li><li><code>health</code></li><li><code>heldBy</code></li><li><code>holdBackend</code></li><li><code>holdFileOf</code></li><li><code>holdStore</code></li><li><code>isClientBatch</code></li><li><code>LIVE_PATH</code></li><li><code>LIVE_SUBPROTOCOL</code></li><li><code>LIVE_WIRE</code></li><li><code>liveProtocol</code></li><li><code>liveSubprotocol</code></li><li><code>migrateSnapshot</code></li><li><code>openRemote</code></li><li><code>openStore</code></li><li><code>pendingMigrations</code></li><li><code>PHOTO_BUDGET_BYTES</code></li><li><code>PHOTO_MAX_BYTES</code></li><li><code>photosUsed</code></li><li><code>PhotoTooLarge</code></li><li><code>presenceChannelName</code></li><li><code>presenceFrom</code></li><li><code>presenceSeenBy</code></li><li><code>preview</code></li><li><code>previewPrincipal</code></li><li><code>primitivesFor</code></li><li><code>primitivesForSteps</code></li><li><code>PRINCIPAL_KEY</code></li><li><code>REFUSAL_REASONS</code></li><li><code>rememberedPrincipal</code></li><li><code>RemoteRefusedError</code></li><li><code>sayHeld</code></li><li><code>sayStep</code></li><li><code>SEAT_HEADERS</code></li><li><code>seatFromHeaders</code></li><li><code>seatHeaders</code></li><li><code>seatOfTab</code></li><li><code>SEED_SYNC_AUTHOR</code></li><li><code>seedSteps</code></li><li><code>serve</code></li><li><code>SERVE_USAGE</code></li><li><code>servePreview</code></li><li><code>serverBatchIds</code></li><li><code>serveStore</code></li><li><code>shots</code></li><li><code>stepsMigration</code></li><li><code>storageBytes</code></li><li><code>syncSeed</code></li><li><code>visitorPresence</code></li><li><code>WIRE</code></li><li><code>wireRefusalOf</code></li></ul>
     </section>
 
   </main>
@@ -1541,9 +1542,11 @@ live.since(seq, { seat, via: "api" });</code></pre></div>
 <footer>
   <p class="sm dim">
     Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. These pages are
-    generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
-    on them can disagree with the code they describe.
+    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+    <a href="../site.html">Open it as an app</a>.
   </p>
 </footer>
 <script>

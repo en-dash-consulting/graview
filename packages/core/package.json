@@ -49,6 +49,10 @@
       "types": "./dist/arrange.d.ts",
       "default": "./dist/arrange.js"
     },
+    "./navigate": {
+      "types": "./dist/navigate.d.ts",
+      "default": "./dist/navigate.js"
+    },
     "./provenance": {
       "types": "./dist/provenance.d.ts",
       "default": "./dist/provenance.js"

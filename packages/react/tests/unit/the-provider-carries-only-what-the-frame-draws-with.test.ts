@@ -15,6 +15,8 @@ const DRAWN_ONLY = [
   "anchorOf",
   "AUDIENCE_ROW",
   "kitConnector",
+  // A face's own sections of the context menu: drawn only once a menu is.
+  "MenuSections",
   "NOTHING_FOUND",
   "placeOthers",
   "useActivity",
@@ -25,6 +27,7 @@ const DRAWN_ONLY = [
   "useImplicated",
   "useKit",
   "useMarqueeRoom",
+  "useMenuSections",
   "useReached",
   "useTextMeasure",
   "ViewBoundary",

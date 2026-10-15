@@ -1,6 +1,6 @@
 import type { HostAi } from "@graview/tools";
 import { EMPTY_VIEW, type ViewState } from "@graview/layout";
-import { GraviewProvider, useGraph, useGraview, type Scheme } from "@graview/react";
+import { GraviewProvider, useGraph, useGraview, type SceneProps, type Scheme } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
 import { templateIntelligence, type ToolCall } from "@graview/tools";
@@ -29,6 +29,8 @@ export interface DiscographyAppProps {
   readonly remembers?: boolean;
   /** The host's model for the seat — a dev server's, when it holds a key (`aiThroughDevServer`). */
   readonly ai?: HostAi;
+  /** The GPU capture path, when the page asked for it (`?gpu=1`, see main.tsx). */
+  readonly attachRenderer?: SceneProps["attachRenderer"];
 }
 
 /**
@@ -45,6 +47,7 @@ export function DiscographyApp({
   onSchemeChange,
   remembers = false,
   ai,
+  attachRenderer,
 }: DiscographyAppProps) {
   const created = useMemo(() => store ?? createStore(), [store]);
   const registry = useMemo(() => views(), []);
@@ -78,6 +81,7 @@ export function DiscographyApp({
         studio={<StudioPlace app={discographyApp} />}
         seat={(onCall) => <Starter onCall={onCall} />}
         remembers={remembers}
+        {...(attachRenderer ? { renderer: "gpu" as const, attachRenderer } : {})}
         syncUrl={syncUrl}
         scheme={scheme}
         onScheme={(next) => {

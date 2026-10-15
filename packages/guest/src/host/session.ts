@@ -1,5 +1,8 @@
 import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
+import type { Arrival, Destination } from "./links.js";
+/* The links' judging — a filter held to the kind's fields — fetched with the first navigate, so a frame's host carries none of it before. */
+const linksChunk = () => import("./links.js");
 import type { GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestPlace, GuestProps, GuestRefusal, GuestTheme, HostMessage } from "../protocol.js";
 
 /**
@@ -87,6 +90,16 @@ export interface GuestHostOptions<S extends AnySchema> {
   readonly onSize?: (height: number) => void;
   /** The guest asked to go to a named place of the app, one `places` lists (FR-93). */
   readonly onNavigatePlace?: (as: string) => void;
+  /**
+   * WHERE THE GUEST ASKED TO GO, JUDGED (FR-93): a record the viewer may
+   * see, a place `placesShown` lists or a kind's list the viewer sees —
+   * narrowed by `where`, held to the kind's fields, and to a `section`.
+   * Given, it is told every navigate in place of `onNavigate` and
+   * `onNavigatePlace`; what goes nowhere is `onLost`'s, in a sentence.
+   */
+  readonly onArrive?: (to: Arrival) => void;
+  /** A navigate went nowhere: the sentence saying why. */
+  readonly onLost?: (said: string) => void;
   /** The app's named places, by slug: where a guest may ask to go besides a record. */
   readonly places?: () => readonly string[];
   /** The app's named places as a guest is told of them (`props.places`), when the host builds the props. */
@@ -330,6 +343,22 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
         return;
       }
       if (data.type === "act" && (typeof data.id === "string" || typeof data.id === "number")) return act(data.id, data.name, data.args);
+      if (data.type === "navigate" && options.onArrive && (typeof data.place === "string" || typeof data.to === "string")) {
+        const also = { ...(data.where !== undefined ? { where: data.where } : {}), ...(data.section !== undefined ? { section: data.section } : {}) };
+        const to: Destination = typeof data.place === "string" ? { place: data.place, ...also } : { record: data.to as string, ...also };
+        const arrive = options.onArrive;
+        void linksChunk().then(({ judgeDestination, listsOf }) => {
+          if (disposed) return;
+          const kept = new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]);
+          const judged = judgeDestination(to, { sees: (id) => seen().graph.has(id), places: options.placesShown?.() ?? [], lists: listsOf(options.store.schema, kept), schema: options.store.schema });
+          if (judged.ok) arrive(judged.arrival);
+          else {
+            stats.dropped += 1;
+            options.onLost?.(judged.says);
+          }
+        });
+        return;
+      }
       if (data.type === "navigate" && typeof data.place === "string") {
         if (options.places?.().includes(data.place)) options.onNavigatePlace?.(data.place);
         else stats.dropped += 1;

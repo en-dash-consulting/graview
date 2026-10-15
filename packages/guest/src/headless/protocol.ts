@@ -1,5 +1,6 @@
 import type { DescribedPart, DescribedProblem } from "@graview/core/describe";
 import type { GuestProps } from "../protocol.js";
+import type { NamedPlace } from "../host/links-words.js";
 
 /*
  * WHAT A HOST AND A HEADLESS RUN SAY TO EACH OTHER (FR-95): text in, text
@@ -23,8 +24,12 @@ export interface HeadlessInput {
   readonly props: GuestProps;
   /** What the view may ask for or bind a press to, by the name it uses: the manifest's acts. */
   readonly acts: readonly string[];
-  /** The app's places, by slug. */
-  readonly places: readonly string[];
+  /** The `https:` origins the host lists for a view's images (WorkerViewOptions.images). */
+  readonly imageOrigins?: readonly string[];
+  /** The app's places, by slug, each with its title: a view may name one by either. */
+  readonly places: readonly NamedPlace[];
+  /** The kinds' lists the seat sees, by their plural's slug and by the kind's name: where a view may go by name besides a place. */
+  readonly lists?: readonly string[];
   readonly limits: { readonly maxNodes: number; readonly messages: number; readonly pushMs: number };
 }
 
@@ -36,8 +41,8 @@ export interface HeadlessTranscript {
   readonly css?: string;
   /** The acts it asked for from its code. Nothing is applied in a headless run. */
   readonly asked: readonly { readonly name: string; readonly args: unknown }[];
-  /** Where it asked to go. */
-  readonly went: readonly ({ readonly record: string } | { readonly place: string })[];
+  /** Where it asked to go: narrowed (`where`) and to a section, as it asked. */
+  readonly went: readonly ({ readonly record: string; readonly where?: unknown; readonly section?: string } | { readonly place: string; readonly where?: unknown; readonly section?: string })[];
   /** The view's own time, at the top of its script and over the push, as the isolate's clock says it. */
   readonly ms: number;
   /** What it wrote to the console, the first 50 lines. */

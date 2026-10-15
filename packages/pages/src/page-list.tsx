@@ -293,7 +293,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const label = labelOf(definition, node);
     if (ownRowOf) {
       return (
-        <li key={node.id} data-testid="record-row" style={{ minWidth: 0 }} {...chooseAt(node.id)}>
+        <li key={node.id} data-testid="record-row" data-graview-record={node.id} style={{ minWidth: 0 }} {...chooseAt(node.id)}>
           {box(node, label)}
           {ownRowOf(node as NodeOfSchema<S>, { label, href: recordPath(store.schema, kind, node.id), flagged: flagged.has(node.id), glance: glance(unsaid(node), definition, label) })}
         </li>
@@ -309,7 +309,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
       const rest = Object.fromEntries(Object.entries(unsaid(node)).filter(([key]) => !rowSays?.fields.has(key)));
       const facts = rowSays ? glance(rest, definition, rowSays.title ?? label) : "";
       return (
-        <li key={node.id} data-testid="record-row" style={{ position: "relative", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 2, paddingBlock: 10, borderTop: "1px solid var(--graview-edge)" }} {...chooseAt(node.id)}>
+        <li key={node.id} data-testid="record-row" data-graview-record={node.id} style={{ position: "relative", display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 16, rowGap: 2, paddingBlock: 10, borderTop: "1px solid var(--graview-edge)" }} {...chooseAt(node.id)}>
           {box(node, label)}
           <div style={{ flex: "1 1 14rem", minWidth: 0 }}>
             <RowView node={node as never} cardinality="one" fidelity="glyph" mode="fullscreen" selected={false} {...(flagged.has(node.id) ? { flagged: [node.id] } : {})} />
@@ -340,7 +340,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     );
     // The name, then its glance in a column of its own (`ROWS_CSS`).
     return (
-      <li key={node.id} className="graview-row" {...chooseAt(node.id)}>
+      <li key={node.id} className="graview-row" data-graview-record={node.id} {...chooseAt(node.id)}>
         {box(node, label)}
         {picture ? (
           <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>

@@ -52,12 +52,21 @@ already set a record aside.
    purpose with the `excerpt` formatter — `{summary|excerpt}` is its first
    sentence or about 140 characters cut at a word, `{summary|excerpt: 80}`
    at most 80 (20 to 1000) — and leave the whole text to the record's page.
-   A list cut by its `limit` says "See all 120 features" and goes to the
-   kind's list. Prose written in Markdown says so —
+   A list block draws 100, then "Show 58 more" (`limit` up to 1000);
+   `group: "inGenre"` heads it by linked record. Markdown prose says so —
    `{"type": "text", "format": "markdown"}`, or `markdownField()` — and the
    record's page draws it as prose (headings, lists, links, code; no HTML),
    while a row, a card, a describe line and a search hit say its first
    paragraph or about 160 characters with the syntax taken out.
+   A card with no blocks of its own says its kind's `glance` — exactly
+   those fields, nothing after them; prose there is a line under the
+   chips, never a cut chip. A choice another chip beside it shares (a
+   severity and a confidence, both "high") says its field: "Confidence:
+   high". A related record in a template is said by its kind's `label`:
+   `{out('affects') | and}` is "src/files.ts and tsconfig.json"; a count
+   starting a headline, `{n | words | capital}`, is "Two findings". A place
+   titled as a kind's list is keeps the name on the bar, and the list folds
+   into More as "All root causes" (`pages-place-named-as-a-list`).
 
 3. **Set records aside instead of deleting them.** Every kind has
    `archive-<kind>` and `unarchive-<kind>` (`{ id }`, "Bring it back") and
@@ -93,7 +102,10 @@ already set a record aside.
    "/requests", { viewer, locale })` from `@graview/pages/static` answers
    `{ html, css, title, found }`: one self-contained page, no script, in the
    app's look, under the viewer's sight, the same words the routed face
-   says. It imports no React, so a Worker renders it on each change.
+   says. It imports no React, so a Worker renders it on each change. A
+   `design` puts it in the product's own markup — `records[kind](record,
+   site)` writes a record's page, `document(page)` what goes around it —
+   which is how graview.dev renders its pages (`apps/site/design.mjs`).
 
 6. **Know what a kind opens to before you draw it a picture.** Gone into
    with no lens of its own (`#focus=aggregate:room`), a kind opens to its
@@ -160,6 +172,9 @@ from the list and the count, and `?archived=true` finds it. Undo the merge
 you tried; both records come back with their links. Have a test actor suggest a link and
 decline it from the tray: `suggest(store, …)` of the same calls then refuses,
 and a record left alone refuses the actor's change by name.
+
+Right-click opens the scene's menu on the pages. A design's own row joins
+with `data-graview-record`, its value with `data-graview-field`.
 
 ## What the check cannot see
 

@@ -15,6 +15,7 @@
       "@graview/core/cli": ["./packages/core/src/cli/index.ts"],
       "@graview/core/blocks": ["./packages/core/src/blocks.ts"],
       "@graview/core/arrange": ["./packages/core/src/arrange.ts"],
+      "@graview/core/navigate": ["./packages/core/src/navigate.ts"],
       "@graview/core/search": ["./packages/core/src/search.ts"],
       "@graview/core/words": ["./packages/core/src/words.ts"],
       "@graview/core/markdown": ["./packages/core/src/markdown.ts"],
