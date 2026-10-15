@@ -304,6 +304,18 @@ const ViewSpecsSpec = z.strictObject({
   page: z.optional(z.array(z.unknown())),
 });
 
+/** A kind's list's declared order (`pages.lists.<kind>.sort`): a key, or a key with a direction and a tiebreak. */
+const ListSortSpec = () => {
+  const direction = z.optional(z.enum(["asc", "desc"]));
+  return z.union([
+    str(1, 120),
+    z.strictObject({ by: str(1, 120), direction, then: z.optional(z.union([str(1, 120), z.strictObject({ by: str(1, 120), direction })])) }),
+  ]);
+};
+/** A kind's list's declared grouping (`pages.lists.<kind>.group`): a field, or a field with its groups' order and the closed ones. */
+const ListGroupSpec = () =>
+  z.union([str(1, 120), z.strictObject({ by: str(1, 120), order: z.optional(some(str(1, 80), undefined, 40)), closed: z.optional(some(str(1, 80), undefined, 40)) })]);
+
 /**
  * THE ARRANGEMENT (FR-80): the kinds in order, the kinds the home leaves
  * off, the place the app opens on. Loose enough that a document which
@@ -327,7 +339,18 @@ export const PagesSpec = z.looseObject({
    * What each kind's list offers to filter by, by kind (`pages.lists.request.filters`): fields, relations,
    * `is`, and `<relation>.<field>` for a choice at a relation's far end. Its choice fields stand as chips.
    */
-  lists: z.optional(z.record(z.string(), z.strictObject({ filters: z.optional(some(str(1, 120), undefined, 40)) }))),
+  lists: z.optional(
+    z.record(
+      z.string(),
+      z.strictObject({
+        filters: z.optional(some(str(1, 120), undefined, 40)),
+        /* The order it opens in: a field, a computed field or `label`, lowest first — or { by, direction, then }. */
+        sort: z.optional(ListSortSpec()),
+        /* How it opens grouped: a choice or yes-or-no field — or { by, order, closed }, the closed groups last and shut. */
+        group: z.optional(ListGroupSpec()),
+      }),
+    ),
+  ),
 });
 
 export const DocumentSpec = z.strictObject({

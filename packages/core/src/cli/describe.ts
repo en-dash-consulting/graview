@@ -1,5 +1,6 @@
 import { capitalize } from "../capital.js";
 import { arrangeable } from "../arrangement.js";
+import { kindListWords } from "../kind-list.js";
 import { searchableFields } from "../search.js";
 import { capabilitiesOf, describeCapability, type GraviewApp, type IntelligenceProviderDeclaration } from "../app.js";
 import { beginning } from "../beginning.js";
@@ -231,6 +232,15 @@ export function describeApp<S extends AnySchema>(
       `  ${kind}: sort by ${list(say(offers.sorts))}; filter by ${list(say(offers.filters))}; group by ${offers.groups.length === 0 ? "nothing" : list(say(offers.groups))}` +
         `${offers.natural ? `; sorted by ${offers.natural.by} unless asked` : ""}.`,
     );
+    // How its list opens, where the declaration says (`pages.lists.<kind>.sort` and `.group`).
+    const declared = app.pages?.lists?.[kind];
+    const typeOf = (key: string) => {
+      const type = offers.sorts.find((offer) => offer.key === key)?.type;
+      if (type === "choice" || type === "boolean" || type === "number" || type === "date") return type;
+      return app.schema.tryDefinition(kind)?.computed?.[key] !== undefined ? "number" : "text";
+    };
+    const opens = declared ? kindListWords(declared, typeOf) : {};
+    if (opens.sort || opens.group) lines.push(`    Its list opens ${[opens.sort, opens.group].filter(Boolean).join(", ")}.`);
   }
   for (const lens of app.lenses ?? []) {
     if (!lens.arrangedBy) continue;

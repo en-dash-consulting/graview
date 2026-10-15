@@ -113,6 +113,8 @@ function sortValue(ctx: ArrangeContext, node: ArrangeNode, by: string): unknown 
   if (by === "label") return labelFor(ctx, node);
   const definition = ctx.schema.tryDefinition(node.kind);
   if (definition && by in ((definition.fields.shape ?? {}) as Record<string, unknown>)) return dateOn(fields(node), by, ctx.today ?? isoToday());
+  // A computed field (a rank the kind works out), where the caller can work it out.
+  if (definition?.computed?.[by] !== undefined) return ctx.read?.(node, by);
   const ends = farEnds(ctx.graph, node.id, by).map((end) => labelFor(ctx, end)).sort();
   return ends[0];
 }
@@ -194,14 +196,20 @@ export function arrange<N extends ArrangeNode>(nodes: readonly N[], arrangement:
     ? found.filter((node) => arrangement.filter!.every((condition) => conditionHolds(ctx, node, condition)))
     : [...found];
 
-  const sort = arrangement.sort;
-  const ordered = sort
+  // By the sort, then by each tiebreak it carries; what still ties keeps the order it was handed.
+  const sorts: Sort[] = [];
+  for (let at = arrangement.sort; at && sorts.length < 4; at = at.then) sorts.push(at);
+  const ordered = sorts.length > 0
     ? kept
-        .map((node, index) => ({ node, index, value: sortValue(ctx, node, sort.by) }))
+        .map((node, index) => ({ node, index, values: sorts.map((one) => sortValue(ctx, node, one.by)) }))
         .sort((a, b) => {
-          const byValue = compare(a.value, b.value);
-          const signed = sort.direction === "desc" && byValue !== 0 && a.value !== undefined && b.value !== undefined ? -byValue : byValue;
-          return signed !== 0 ? signed : a.index - b.index;
+          for (const [at, one] of sorts.entries()) {
+            const [x, y] = [a.values[at], b.values[at]];
+            const byValue = compare(x, y);
+            const signed = one.direction === "desc" && byValue !== 0 && x !== undefined && y !== undefined ? -byValue : byValue;
+            if (signed !== 0) return signed;
+          }
+          return a.index - b.index;
         })
         .map((entry) => entry.node)
     : kept;
