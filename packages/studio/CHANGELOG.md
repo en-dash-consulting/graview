@@ -1,5 +1,86 @@
 # @graview/studio
 
+## 0.1.30
+
+### Patch Changes
+
+- ea43f4a: The studio's own kinds — the kinds, fields, acts, edges, rules, lenses, roles, grants and sights a declaration is made of — are declared never tidied, so a record of the declaration offers no "Leave this one alone" or "Allow tidying again": nothing automated decides what is in an app. Without it the new act took a place in a kind's strip ahead of "Add a field", which fell out of the acts shown.
+  
+  Compatibility: no surface changes.
+- 5b8ac1f: A lens can be kept off the lists (Roadmap f-hidden-lenses). A kind could be left off the home, but a lens could not be left off anything, so an app whose custom home links to lenses as targets ended with a long page list of them. A lens marked `hidden: true` is still a place at its address — a link, a view's `navigate` and `/places/<as>` reach it, and `placesOf` lists it with `hidden: true` — but the bar's places, the scene's tabs (unless it is the one shown), the page list and the home's gallery do not offer it, and it never becomes what its kind draws when an address names no picture. In a document `set-lens-hidden` sets it — `{ "op": "set-lens-hidden", "title": "Building now", "hidden": true }`, with `on` where two lenses share a title — and says so ("The lens "Building now" is kept off the bar and the page list; a link or navigate still reaches it.", and "… is listed on the bar and the page list again."), as `diffDocuments` does; a lens drawn anew in a hidden one's place (`add-lens` with `replace`) stays hidden, and a lens `pages.primary` stands on the bar is refused, in a sentence, until it is taken out of `primary`. `graview check` says a `hidden` that is not true or false (`lens-hidden-not-a-boolean`, a warning), a hidden lens with no title to be a place (`lens-hidden-untitled`, a note), and `pages.primary` naming a hidden lens (`pages-primary-hidden`, a warning). In TypeScript a lens says `hidden: true` beside its `title`, and a registration `views.register(kind, cell, View, { title, hidden: true })`. The studio reads a hidden lens as hidden and keeps one off the lists, or lists it again, with its own act, said to the document as `set-lens-hidden`. The graview-pages and graview-studio skills teach it.
+  
+  Compatibility: ops, stored records and the wire are unchanged. The document format takes `lenses[].hidden` (a boolean, optional within `graview-document@1`); a build that predates it draws the lens listed. New edit op `set-lens-hidden` (`title`, `on?`, `hidden`); `EDIT_OPS` lists it. New check finding codes `lens-hidden-not-a-boolean` (a warning), `lens-hidden-untitled` (a note) and `pages-primary-hidden` (a warning). `DocumentDiff`'s sentences may say "The lens "…" is kept off the bar and the page list; a link or navigate still reaches it." `LensDeclaration.hidden`, `DrawnLens.hidden`, `Place.hidden`, `ViewMeta.hidden`, `ViewRegistration.hidden` and `AppPlace.hidden` (now a lens's too) are `boolean | undefined`. The studio's meta-schema gives `lens` a `hidden` field and the act `set-lens-hidden` (`id`, `hidden`).
+- Updated dependencies [e46f304]
+- Updated dependencies [6cbecc0]
+- Updated dependencies [6862f3a]
+- Updated dependencies [ec39547]
+- Updated dependencies [ed2a75d]
+- Updated dependencies [0d45ba0]
+- Updated dependencies [6862f3a]
+- Updated dependencies [825838f]
+- Updated dependencies [f901dfb]
+- Updated dependencies [4feaed1]
+- Updated dependencies [6862f3a]
+- Updated dependencies [e46f304]
+- Updated dependencies [dc5a737]
+- Updated dependencies [489ff27]
+- Updated dependencies [648fc05]
+- Updated dependencies [6862f3a]
+- Updated dependencies [37f2b3b]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [6862f3a]
+- Updated dependencies [057931a]
+- Updated dependencies [412abf0]
+- Updated dependencies [e46f304]
+- Updated dependencies [489ff27]
+- Updated dependencies [e46f304]
+- Updated dependencies [489ff27]
+- Updated dependencies [489ff27]
+- Updated dependencies [312521c]
+- Updated dependencies [37745ff]
+- Updated dependencies [84ad32f]
+- Updated dependencies [412abf0]
+- Updated dependencies [e46f304]
+- Updated dependencies [e46f304]
+- Updated dependencies [412abf0]
+- Updated dependencies [b6c81b2]
+- Updated dependencies [c4a953d]
+- Updated dependencies [93770ac]
+- Updated dependencies [6cbecc0]
+- Updated dependencies [f901dfb]
+- Updated dependencies [e46f304]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [f7c1a9e]
+- Updated dependencies [1a1f996]
+- Updated dependencies [6770f65]
+- Updated dependencies [f901dfb]
+- Updated dependencies [cf85240]
+- Updated dependencies [e46f304]
+- Updated dependencies [6931bf7]
+- Updated dependencies [489ff27]
+- Updated dependencies [56dbbe3]
+- Updated dependencies [412abf0]
+- Updated dependencies [91716ae]
+- Updated dependencies [c70440c]
+- Updated dependencies [c3564eb]
+- Updated dependencies [01fa7c5]
+- Updated dependencies [412abf0]
+- Updated dependencies [8ca608c]
+- Updated dependencies [c9d1840]
+- Updated dependencies [489ff27]
+- Updated dependencies [eb3bdb7]
+- Updated dependencies [489ff27]
+- Updated dependencies [88c84c3]
+- Updated dependencies [c3e789b]
+- Updated dependencies [489ff27]
+  - @graview/pages@0.1.30
+  - @graview/core@0.1.30
+  - @graview/primitives@0.1.30
+  - @graview/react@0.1.30
+  - @graview/layout@0.1.30
+  - @graview/tools@0.1.30
+  - @graview/ship@0.1.30
+
 ## 0.1.29
 
 ### Patch Changes

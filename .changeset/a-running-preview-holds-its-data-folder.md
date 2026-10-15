@@ -1,9 +1,0 @@
----
-"@graview/ship": patch
-"@graview/tools": patch
-"@graview/skills": patch
----
-
-A running preview holds its data folder, so nothing writes it behind the preview's back. `graview preview app.json --data data` keeps the graph in memory and writes it back as it changes, and `graview sync-seed --apply` against the same folder said it had landed while the open pages kept the old records (44 instead of 50) and the preview's next write could put them back: a write lost with nobody told. Now `graview preview --data`, `graview serve`, `graview sync-seed --apply`, `graview apply` and `graview mcp` each take the store first, in a file beside it (`data/graview.lock`, or `<file>.graview.lock` beside a SQLite file) that names the command, its pid and, once it listens, its address; any other writer refuses before it writes and says so: "a preview on :5190 (pid 4120, since …) holds ./data. Syncing the seed into it would not reach the pages it has open, and its next write could put the old records back, so nothing was written. Stop the preview (Ctrl-C in its shell) and run this again, then start the preview once more." `apply` and `mcp` are told the way through instead: `--remote-url` the preview's own address. A dry run of `sync-seed` still reads beside a preview and says the apply would be refused. A hold whose process has died is taken over, so a crash leaves nothing to delete by hand. Refusing was chosen over watching the folder or applying through the server: it is the one answer under which no write is lost and the person is told which process to stop. Tested with real processes in a scratch folder.
-
-Compatibility: stored formats unchanged — the snapshot, the log and the meta are written as before; the folder gains `graview.lock` while a writer holds it. The wire and the declaration are unchanged. `@graview/ship` exports `holdStore`, `heldBy`, `holdFileOf`, `sayHeld` and `holdBackend`, and `StoreBackend` carries `holdFile`.

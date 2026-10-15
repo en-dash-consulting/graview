@@ -1,5 +1,57 @@
 # graview
 
+## 0.1.30
+
+### Patch Changes
+
+- 412abf0: The graview command line is one line from PATH in a framework checkout. On a machine with the checkout and no published install there was no `graview` command, and every use was `node <checkout>/packages/graview/dist/cli.js`. The checkout's `pnpm graview:link` is `pnpm link --global` for `packages/graview` (after `pnpm setup` once, where pnpm has no global bin folder), written in the README's commands and AGENTS.md's; and `graview doctor`, run from a checkout with no `graview` on PATH, says so with that line and the full path to use until then — even in a folder with no package.json, which is where a document-only app lives.
+  
+  Compatibility: no surface changes. `graview doctor` may print one more note; its exit code is unchanged.
+- Updated dependencies [6cbecc0]
+- Updated dependencies [6862f3a]
+- Updated dependencies [ed2a75d]
+- Updated dependencies [6862f3a]
+- Updated dependencies [4feaed1]
+- Updated dependencies [6862f3a]
+- Updated dependencies [e46f304]
+- Updated dependencies [648fc05]
+- Updated dependencies [6862f3a]
+- Updated dependencies [37f2b3b]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [6862f3a]
+- Updated dependencies [412abf0]
+- Updated dependencies [e46f304]
+- Updated dependencies [e46f304]
+- Updated dependencies [37745ff]
+- Updated dependencies [84ad32f]
+- Updated dependencies [412abf0]
+- Updated dependencies [412abf0]
+- Updated dependencies [93770ac]
+- Updated dependencies [6cbecc0]
+- Updated dependencies [e46f304]
+- Updated dependencies [6862f3a]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [6862f3a]
+- Updated dependencies [6862f3a]
+- Updated dependencies [f7c1a9e]
+- Updated dependencies [1a1f996]
+- Updated dependencies [6770f65]
+- Updated dependencies [cf85240]
+- Updated dependencies [56dbbe3]
+- Updated dependencies [412abf0]
+- Updated dependencies [91716ae]
+- Updated dependencies [c70440c]
+- Updated dependencies [c3564eb]
+- Updated dependencies [412abf0]
+- Updated dependencies [8ca608c]
+- Updated dependencies [eb3bdb7]
+- Updated dependencies [c3e789b]
+  - @graview/core@0.1.30
+  - @graview/skills@0.1.30
+  - @graview/tools@0.1.30
+  - @graview/ship@0.1.30
+  - @graview/guest@0.1.30
+
 ## 0.1.29
 
 ### Patch Changes

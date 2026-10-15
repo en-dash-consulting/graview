@@ -1,7 +1,0 @@
----
-"@graview/core": patch
----
-
-A role's grant to make a kind no longer lets it remove, archive, bring back or merge somebody else's record of that kind. The derived remove, archive, unarchive and merge acts ride the acts that make the kind, and since the ninth walk (W-201) riding a grant to everybody reached only what the seat made, but riding a role's own grant still reached every record: a member who may log an inspection could remove anybody's. Riding the making of a kind, whoever's grant it is, they now reach only the records this principal made, and a refusal says "only on what you made" and who could do the rest. Over the rest, the policy names the act (`remove-<kind>`, `archive-<kind>`, `unarchive-<kind>`, `merge-<kind>`) or says `*`. A derived edit is unchanged: a role's grant on the acts that write or make a kind still reaches every record's edit. The todo example's policy now names the keeping acts for its keeper and members, who keep every task and list whoever wrote it down. The hosted page carries 36 bytes more up front, raised by 0.1 KB more up front (and 0.1 KB more up front handed a compiled app) in `scripts/budget-raises/a-grant-to-make-a-kind-takes-out-only-what-you-made-*.json`.
-
-Compatibility: an app whose roles removed, archived or merged records other people made only through a grant on the act that makes the kind is refused those acts on others' records; name them in the grant to keep them. No API changes.

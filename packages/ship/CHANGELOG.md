@@ -1,5 +1,46 @@
 # @graview/ship
 
+## 0.1.30
+
+### Patch Changes
+
+- 412abf0: A running preview holds its data folder, so nothing writes it behind the preview's back. `graview preview app.json --data data` keeps the graph in memory and writes it back as it changes, and `graview sync-seed --apply` against the same folder said it had landed while the open pages kept the old records (44 instead of 50) and the preview's next write could put them back: a write lost with nobody told. Now `graview preview --data`, `graview serve`, `graview sync-seed --apply`, `graview apply` and `graview mcp` each take the store first, in a file beside it (`data/graview.lock`, or `<file>.graview.lock` beside a SQLite file) that names the command, its pid and, once it listens, its address; any other writer refuses before it writes and says so: "a preview on :5190 (pid 4120, since …) holds ./data. Syncing the seed into it would not reach the pages it has open, and its next write could put the old records back, so nothing was written. Stop the preview (Ctrl-C in its shell) and run this again, then start the preview once more." `apply` and `mcp` are told the way through instead: `--remote-url` the preview's own address. A dry run of `sync-seed` still reads beside a preview and says the apply would be refused. A hold whose process has died is taken over, so a crash leaves nothing to delete by hand. Refusing was chosen over watching the folder or applying through the server: it is the one answer under which no write is lost and the person is told which process to stop. Tested with real processes in a scratch folder.
+  
+  Compatibility: stored formats unchanged — the snapshot, the log and the meta are written as before; the folder gains `graview.lock` while a writer holds it. The wire and the declaration are unchanged. `@graview/ship` exports `holdStore`, `heldBy`, `holdFileOf`, `sayHeld` and `holdBackend`, and `StoreBackend` carries `holdFile`.
+- Updated dependencies [6cbecc0]
+- Updated dependencies [6862f3a]
+- Updated dependencies [ed2a75d]
+- Updated dependencies [6862f3a]
+- Updated dependencies [4feaed1]
+- Updated dependencies [6862f3a]
+- Updated dependencies [e46f304]
+- Updated dependencies [648fc05]
+- Updated dependencies [6862f3a]
+- Updated dependencies [37f2b3b]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [6862f3a]
+- Updated dependencies [412abf0]
+- Updated dependencies [e46f304]
+- Updated dependencies [e46f304]
+- Updated dependencies [37745ff]
+- Updated dependencies [84ad32f]
+- Updated dependencies [412abf0]
+- Updated dependencies [6cbecc0]
+- Updated dependencies [e46f304]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [f7c1a9e]
+- Updated dependencies [1a1f996]
+- Updated dependencies [6770f65]
+- Updated dependencies [cf85240]
+- Updated dependencies [56dbbe3]
+- Updated dependencies [412abf0]
+- Updated dependencies [91716ae]
+- Updated dependencies [c70440c]
+- Updated dependencies [c3564eb]
+- Updated dependencies [412abf0]
+- Updated dependencies [c3e789b]
+  - @graview/core@0.1.30
+
 ## 0.1.29
 
 ### Patch Changes
