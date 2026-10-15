@@ -28,6 +28,13 @@
  *   offered-then-refused    a press reached the store and the policy
  *                           refused it: something offered an act to a seat
  *                           that may not take it.
+ *   control-covered         a press at a control's middle or a quarter in
+ *                           from a corner lands on something else standing
+ *                           over it (not a menu, dialog or popover opened
+ *                           over the page, nor a sticky bar).
+ *   card-wider-than-screen  a card is laid out wider than the screen, or
+ *                           holds what reaches past its own edge and the
+ *                           screen's, cut off rather than scrolled.
  *   page-error              an uncaught error in the page.
  *
  * Each harness writes what it saw to docs/watch/<script>.json, and
@@ -330,10 +337,169 @@ function watchInPage() {
       report("target-too-small", `${describe(el)} is ${Math.round(own.width)}×${Math.round(own.height)} pixels at ${document.documentElement.clientWidth} wide, within 12 pixels of ${describe(crowded.el)}`, `${location.pathname}|${describe(el)}|${document.documentElement.clientWidth}`);
     }
   };
+  /*
+   * NOTHING STANDS OVER A CONTROL (layout-collision-or-overflow). The class
+   * was logged by hand, walk after walk, and measured by nothing: the
+   * rota's raised "Shifts ×" stood over its week's "Sort" (the tenth walk).
+   * A control is covered where a press at a point of it — its middle, and
+   * a quarter in from each corner — would land on something else. Not when
+   * something was opened over the page on purpose (a menu, a dialog, a
+   * popover), nor under a sticky bar a page scrolls beneath, nor while the
+   * scene is still moving; and asked again before it is said.
+   */
+  let unsettled = 0;
+  /* Laid over the page on purpose: a menu, a dialog, a popover, a panel or sheet laid on the map, the seat opened to talk. */
+  const OPENED_OVER = "[popover],dialog,[role=dialog],[role=alertdialog],[role=menu],[role=listbox],[role=tooltip],[data-graview-popover],[data-graview-overlay],[data-graview-seat=open]";
+  const clips = (style) => style.overflowX !== "visible" || style.overflowY !== "visible";
+  /** What of a control can be seen through the boxes that clip it: a point outside is scrolled or cut away, not covered. */
+  const seenOf = (el) => {
+    let { left, top, right, bottom } = el.getBoundingClientRect();
+    for (let at = el.parentElement; at && at !== document.documentElement; at = at.parentElement) {
+      if (!clips(getComputedStyle(at))) continue;
+      const box = at.getBoundingClientRect();
+      left = Math.max(left, box.left);
+      top = Math.max(top, box.top);
+      right = Math.min(right, box.right);
+      bottom = Math.min(bottom, box.bottom);
+    }
+    return { left, top, right, bottom };
+  };
+  /** The boxes a control scrolls in, nearest first, and the page. */
+  const scrollersOf = (el) => {
+    const found = [];
+    for (let at = el.parentElement; at && at !== document.body; at = at.parentElement) {
+      const style = getComputedStyle(at);
+      if ((style.overflowY === "auto" || style.overflowY === "scroll") && at.scrollHeight > at.clientHeight + 1) found.push(at);
+    }
+    found.push(document.scrollingElement ?? document.documentElement);
+    return found;
+  };
+  const pinned = (el, within) => {
+    for (let at = el; at && at !== within && at !== document.body; at = at.parentElement) {
+      const position = getComputedStyle(at).position;
+      if (position === "sticky" || position === "fixed" || at.hasAttribute("data-graview-foot")) return true;
+    }
+    return false;
+  };
+  /*
+   * A bar that stays put while what is under it scrolls — a sticky heading,
+   * the ask field at the foot — covers nothing a person can scroll out from
+   * under it, by any box it scrolls in; it does cover what is already as far
+   * as it can go.
+   */
+  const scrollsClear = (el, cover) => {
+    const mine = el.getBoundingClientRect();
+    const theirs = cover.getBoundingClientRect();
+    // Which way it scrolls clear: away from the side the bar stands on.
+    const below = theirs.top + theirs.bottom > mine.top + mine.bottom;
+    const needed = below ? mine.bottom - theirs.top : theirs.bottom - mine.top;
+    return scrollersOf(el).some((scroller) => {
+      const page = scroller === document.scrollingElement || scroller === document.documentElement;
+      const stays = page ? pinned(cover, document.body) : !scroller.contains(cover) || pinned(cover, scroller);
+      if (!stays) return false;
+      const room = below ? scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop : scroller.scrollTop;
+      return room >= needed - 1;
+    });
+  };
+  const coveredAt = (el) => {
+    const box = el.getBoundingClientRect();
+    const seen = seenOf(el);
+    const points = [[0.5, 0.5], [0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]];
+    for (const [fx, fy] of points) {
+      const x = box.left + box.width * fx;
+      const y = box.top + box.height * fy;
+      if (x < seen.left || x > seen.right || y < seen.top || y > seen.bottom) continue;
+      const top = document.elementFromPoint(x, y);
+      // Itself, or a box that holds it: not covered.
+      if (!top || top === el || el.contains(top) || top.contains(el)) continue;
+      if (top.closest(OPENED_OVER)) continue;
+      const cover = top.closest(CONTROL) ?? top;
+      if (scrollsClear(el, cover)) continue;
+      return cover;
+    }
+    return null;
+  };
+  const covered = () => {
+    const width = document.documentElement.clientWidth;
+    const height = document.documentElement.clientHeight;
+    const found = [];
+    for (const el of document.querySelectorAll(CONTROL)) {
+      if (el.closest("[hidden],[aria-hidden='true'],[inert]") || !visible(el)) continue;
+      const style = getComputedStyle(el);
+      if (style.pointerEvents === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) continue;
+      const box = el.getBoundingClientRect();
+      if (box.width < 8 || box.height < 8 || box.left < 0 || box.top < 0 || box.right > width || box.bottom > height) continue;
+      const cover = coveredAt(el);
+      if (cover) found.push({ el, cover });
+    }
+    if (found.length === 0) return;
+    setTimeout(() => {
+      for (const { el, cover } of found) {
+        if (!el.isConnected || coveredAt(el) !== cover) continue;
+        report("control-covered", `${describe(el)} is covered by ${describe(cover)} at ${width} wide — a press there lands on the other`, `${location.pathname}|${describe(el)}|${describe(cover)}|${width}`);
+      }
+    }, 700);
+  };
+  /*
+   * A CARD NO WIDER THAN ITS SCREEN. Seedbed's plot card on a phone held a
+   * column of facts and a column of relationships, 200 and 220 pixels, in
+   * 293: its relationships ran past the card and the screen, cut off, and
+   * the page never scrolled, so `breaks-at-width` had nothing to say (the
+   * tenth walk). A card is judged where it is on the screen: laid out wider
+   * than the screen, or holding what reaches past both its edge and the
+   * screen's — unless that is a scroller of its own.
+   */
+  const CARD = "[data-graview-primitive=panel][data-graview-variant=card]";
+  const scrollsWithin = (el, card) => {
+    for (let at = el.parentElement; at && at !== card; at = at.parentElement) {
+      // A row meant to scroll sideways: not a column that scrolls down (a browser makes either scroll both ways).
+      const style = getComputedStyle(at);
+      const sideways = style.overflowX === "auto" || style.overflowX === "scroll";
+      const down = style.overflowY === "auto" || style.overflowY === "scroll";
+      if ((sideways && !(down && at.scrollHeight > at.clientHeight + 1)) || at.hasAttribute("data-graview-scrolls")) return true;
+    }
+    return false;
+  };
+  const wide = () => {
+    const width = document.documentElement.clientWidth;
+    for (const card of document.querySelectorAll(CARD)) {
+      if (card.closest("[hidden],[aria-hidden='true'],[inert]") || !visible(card)) continue;
+      const box = card.getBoundingClientRect();
+      // On the screen, and a card a person reads rather than a mark at altitude.
+      if (box.right <= 0 || box.left >= width || box.width < width * 0.5) continue;
+      let reach = box.right;
+      let widest = null;
+      for (const el of card.querySelectorAll("*")) {
+        const at = el.getBoundingClientRect();
+        if (at.width === 0 || at.height === 0 || at.right <= reach) continue;
+        if (scrollsWithin(el, card)) continue;
+        reach = at.right;
+        widest = el;
+      }
+      const laidOut = card instanceof HTMLElement ? card.offsetWidth : box.width;
+      if (laidOut > width + 1) {
+        report("card-wider-than-screen", `${describe(card)} is laid out ${Math.round(laidOut)} pixels wide on a screen ${width} wide`, `${location.pathname}|${describe(card)}|${width}`);
+      } else if (reach > width + 1 && reach > box.right + 1) {
+        report("card-wider-than-screen", `${describe(card)} holds ${describe(widest)}, which reaches ${Math.round(reach - width)} pixels past the screen's edge at ${width} wide, cut off`, `${location.pathname}|${describe(card)}|${width}`);
+      }
+    }
+  };
   const scan = () => {
     queued = false;
     sideways();
     small();
+    /*
+     * A scene still moving draws its cards over each other on the way: what
+     * stands over what is judged where it settles, looked at again until it
+     * has (a few times, for a scene that never stops).
+     */
+    if (document.querySelector(".graview-ground:not([data-graview-settled])")) {
+      if (unsettled++ < 12) setTimeout(schedule, 500);
+    } else {
+      unsettled = 0;
+      covered();
+      wide();
+    }
     if ((!pattern && unsaid.size === 0 && !unseen) || !document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const work = (deadline) => {
