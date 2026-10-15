@@ -159,8 +159,8 @@ createPageRegistry<S, PageComponent<S>>(schema)
   // ... every kind
 ```
 
-The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, not for its type
-but because everything a person tries there works: sort, filter and group come from `ArrangeBar` and live
+The shell surface receives `{ context, children }`. `apps/todo/src/ui/design.tsx` is the finished
+example: all a person tries there works: sort, filter and group come from `ArrangeBar` and live
 in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is
 shown, heading included, through `editableFields(store, id)`; an act's form
 opens where the act is, prefilled, with the store's own refusal said at the
