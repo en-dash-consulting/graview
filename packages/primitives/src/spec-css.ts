@@ -89,6 +89,8 @@ ${/* CARDS IN ONE ROW KEEP THEIR OWN HEIGHT: a card with a long summary
 .graview-spec-item .graview-spec-listing { z-index: ${LOCAL_LAYERS.raised}; }
 .graview-spec-empty,.graview-spec-more{color:var(--graview-ink-muted)}
 .graview-spec-see-all{position:static;font-weight:600}
+.graview-spec-show-more{font:inherit;font-weight:600;color:var(--graview-accent);background:none;border:1px solid var(--graview-edge);border-radius:var(--graview-radius,8px);min-height:32px;padding:4px 12px;cursor:pointer}
+.graview-spec-show-more:focus-visible{outline:2px solid var(--graview-accent);outline-offset:2px}
 ${/* A LONG TEXT IS READ AT A GLANCE ON A CARD AND A ROW: three lines on a
    card, one on a row, cut with an ellipsis; the record's page says it whole.
    A card that printed a thirty-line summary made a row of cards a wall of

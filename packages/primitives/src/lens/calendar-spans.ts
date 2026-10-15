@@ -56,7 +56,12 @@ export function startOfQuarter(day: string): string {
 export function spanOf(
   range: CalendarRange,
   at: string,
-  options: { readonly weekStartsOn?: number; readonly horizon?: CalendarHorizon } = {},
+  options: {
+    readonly weekStartsOn?: number;
+    readonly horizon?: CalendarHorizon;
+    /** The first and last years the records are dated in: a span of years reaches them both, where the horizon names no years of its own. */
+    readonly fit?: { readonly first: number; readonly last: number };
+  } = {},
 ): CalendarSpan {
   const weekStartsOn = options.weekStartsOn ?? 1;
   const day = (one: string, outside?: boolean): CalendarCell => ({
@@ -127,8 +132,19 @@ export function spanOf(
      * thirty-six cells to one year must not be a guess about which cell was
      * meant.
      */
-    const span = Math.max(1, options.horizon?.years ?? 1);
-    const first = Number(at.slice(0, 4));
+    /*
+     * FROM THE FIRST RECORD TO THE LAST. A career opened on 1970 with a
+     * horizon of thirty drew 1970–1999, and a discography from 1962 to 2023
+     * lost both ends. The years reach back to the first record and on to
+     * the last as well as across the horizon; years the app says outright
+     * (`from`, `to`) are drawn as said.
+     */
+    const opened = Number(at.slice(0, 4));
+    const ahead = opened + Math.max(1, options.horizon?.years ?? 1) - 1;
+    const said = options.horizon?.from !== undefined || options.horizon?.to !== undefined;
+    const first = said ? (options.horizon?.from ?? opened) : Math.min(opened, options.fit?.first ?? opened);
+    const last = said ? Math.max(first, options.horizon?.to ?? first + Math.max(1, options.horizon?.years ?? 1) - 1) : Math.max(ahead, options.fit?.last ?? ahead);
+    const span = last - first + 1;
     const years = Array.from({ length: span }, (_, step) => String(first + step));
     /*
      * PAST A DECADE, A YEAR PER CELL. Thirty years of months is 360 cells,

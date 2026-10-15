@@ -57,13 +57,29 @@ export const FIGURE_EMPHASES = ["large"] as const;
 export type FigureEmphasis = (typeof FIGURE_EMPHASES)[number];
 /** How a `list` block draws each record it lists: with the kind's own card, or its own row (FR-81, FR-82). */
 export const LIST_AS = ["card", "row"] as const;
-/** The most records one list draws; a `limit` says fewer. */
-export const MAX_LIST_LIMIT = 100;
+/**
+ * The most records one list holds; a `limit` says fewer. It draws
+ * `LIST_PAGE` of them at first, and "Show N more" draws the next page.
+ */
+export const MAX_LIST_LIMIT = 1000;
+/** How many records a list draws before it offers to show more (2026-10-15: 158 songs were split by name to fit 100). */
+export const LIST_PAGE = 100;
 
 /** A list's order: a key read from each record, ascending — or `{ by, direction }`, where "choices" is the order a choice field's choices are declared in. */
 export type ListSort = string | { readonly by: string; readonly direction?: "asc" | "desc" | "choices" };
-/** A list's grouping: a choice field, with a heading per choice where its value does not say it. */
+/**
+ * A list's grouping: a choice field, with a heading per choice where its
+ * value does not say it — or a relation (`"inGenre"`, or `"out('inGenre')"`
+ * and `"in('writtenBy')"` to say which way), a heading per linked record.
+ */
 export type ListGroup = string | { readonly by: string; readonly headings?: Readonly<Record<string, string>> };
+
+/** A list's group by a relation, read from how it is written: `inGenre`, `out('inGenre')` or `in('writtenBy')`. */
+export function groupRelationOf(by: string): { readonly edge: string; readonly way?: "out" | "in" } | undefined {
+  const walked = /^\s*(out|in)\(\s*['"]([A-Za-z][A-Za-z0-9_-]*)['"]\s*\)\s*$/.exec(by);
+  if (walked) return { edge: walked[2]!, way: walked[1] as "out" | "in" };
+  return /^[A-Za-z][A-Za-z0-9_-]*$/.test(by) ? { edge: by } : undefined;
+}
 
 /** A block of a view. Any block may say its `key`: what a face claims it by (`BlockSlots`), its own in its view. */
 export type ViewBlock = OneBlock & { readonly key?: string };
@@ -492,10 +508,13 @@ function listBlock(raw: Record<string, unknown>, path: string, scope: Scope): vo
     const by = typeof group === "string" ? group : isObject(group) && typeof group["by"] === "string" ? group["by"] : undefined;
     const shaped = typeof group === "string" || (isObject(group) && Object.keys(group).every((k) => k === "by" || k === "headings"));
     if (!shaped || by === undefined) {
-      scope.findings.push(error("list-group", `${path}.group`, 'a group is a choice field, like "type", or {"by": "type", "headings": {"pain": "What hurts"}}'));
+      scope.findings.push(error("list-group", `${path}.group`, 'a group is a choice field, like "type", or {"by": "type", "headings": {"pain": "What hurts"}} — or a relation, like "inGenre", a heading per linked record'));
     } else {
       const choices = choicesOf(by);
-      if (choices === undefined) scope.findings.push(error("list-group", `${path}.group`, `"${by}" is not a choice field of ${named}, so it has no choices to group by`, "group by a field whose type is enum"));
+      /* A relation of the kinds listed (or, written out('…') or in('…'), any relation) groups by the records at its far end. */
+      const relation = choices === undefined ? groupRelationOf(by) : undefined;
+      const linked = relation !== undefined && (relation.way !== undefined ? scope.edges.has(relation.edge) : kinds ? kinds.every((kind) => scope.vocabulary.namesOf(kind)?.relation(relation.edge)) : scope.edges.has(relation.edge));
+      if (choices === undefined && !linked) scope.findings.push(error("list-group", `${path}.group`, `"${by}" is not a choice field or a relation of ${named}, so it has nothing to group by`, "group by a field whose type is enum, or by a relation of the kind listed, like \"inGenre\""));
       if (isObject(group) && "headings" in group) {
         const headings = group["headings"];
         if (!isObject(headings) || Object.values(headings).some((words) => typeof words !== "string" || words.length === 0 || words.length > 80)) {

@@ -9,7 +9,7 @@ export { renderTemplate, formatValue, formatMoney, FORMATTERS } from "./template
 export { parseTemplate } from "./template-parse.js";
 export type { TemplatePart, Formatter, Money, RenderContext } from "./template.js";
 export { validateViewSpecs } from "./view-specs.js";
-export { homeOf, validateViews, viewsOf, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_SLOTS, VIEW_TONES, VIEW_FIELD_FORMATS, MAX_VIEW_DEPTH, MAX_VIEW_BLOCKS, MAX_VIEW_BLOCKS_IN_ALL } from "./views.js";
+export { homeOf, validateViews, viewsOf, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, LIST_PAGE, MAX_LIST_LIMIT, VIEW_SLOTS, VIEW_TONES, VIEW_FIELD_FORMATS, MAX_VIEW_DEPTH, MAX_VIEW_BLOCKS, MAX_VIEW_BLOCKS_IN_ALL } from "./views.js";
 export type { FigureEmphasis, FigureFormat, HomeView, ListGroup, ListSort, ToneSpec, ViewBlock, ViewSpecs, ViewSpecsByKind, ViewSlot, ViewTone, ViewFieldFormat } from "./views.js";
 export * from "./expr/index.js";
 export { diffDocuments } from "./diff.js";

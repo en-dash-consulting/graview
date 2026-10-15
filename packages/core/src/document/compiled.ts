@@ -191,10 +191,9 @@ export const refName = (v: unknown): string | undefined => (typeof v === "string
 /** What one of these is called, when the kind says nothing: the first required word-ish field. */
 export function defaultLabelField(spec: KindSpec): string | undefined {
   const entries = Object.entries(spec.fields);
-  return (
-    entries.find(([, f]) => f.required && (f.type === "string" || f.type === "text"))?.[0] ??
-    entries.find(([, f]) => f.type === "string")?.[0]
-  );
+  /* Among the fields that could name it, one called `name` or `title` before a `label` (a release's record label) or anything else. */
+  const first = (fits: readonly (readonly [string, KindSpec["fields"][string]])[]) => (["name", "title", "label"] as const).find((word) => fits.some(([n]) => n === word)) ?? fits[0]?.[0];
+  return first(entries.filter(([, f]) => f.required && (f.type === "string" || f.type === "text"))) ?? first(entries.filter(([, f]) => f.type === "string"));
 }
 
 /*
@@ -383,7 +382,10 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     const { label: labelParts, describe: describeParts, durations } = plan.kinds[kind] ?? {};
     const computed = Object.entries(spec.computed ?? {}).map(([name, field]) => [name, typeof field === "string" ? { expr: field } : field] as const);
     // A computed field's words are said like a field's: its label, where it has one.
+    /* A field called `label` the kind is not named by is an ordinary field, said as "Label" rather than as the record's name. */
+    const ordinaryLabel = Object.hasOwn(spec.fields, "label") && !spec.fields["label"]!.label && !/\{\s*label\b/.test(spec.label ?? `{${defaultLabelField(spec) ?? ""}}`);
     const labels = Object.fromEntries([
+      ...(ordinaryLabel ? [["label", "Label"] as const] : []),
       ...Object.entries(spec.fields).filter(([, f]) => f.label).map(([n, f]) => [n, f.label!]),
       ...computed.filter(([, c]) => c.label).map(([n, c]) => [n, c.label!]),
     ]);

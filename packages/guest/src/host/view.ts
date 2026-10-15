@@ -1,3 +1,5 @@
+import { imageRefusedWords } from "./open-judge.js";
+import { guestPlacesOf } from "./links-words.js";
 import type { AnySchema, Principal, Store } from "@graview/core";
 import { retryingImport } from "@graview/core/retry";
 import type { GuestDomEvent, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
@@ -165,6 +167,14 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    * under a base answers `base + path`. Without it, such an image is refused.
    */
   readonly asset?: (path: string) => string | undefined;
+  /**
+   * WHERE A VIEW'S IMAGES MAY COME FROM BY ADDRESS (2026-10-15): the
+   * `https:` origins the host lists (`["https://upload.wikimedia.org"]`).
+   * An image on one of them is drawn as the view gave it, asked for with no
+   * referrer; any other address is refused, and said once — in the view's
+   * console and to `onProblem`. None by default: a view loads nothing.
+   */
+  readonly images?: { readonly origins: readonly string[] };
   /** Who made it, said under the region (ADR 0007: "Made by Claude for Nick"). Nothing by default. */
   readonly author?: string;
 }
@@ -417,7 +427,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const lists = () => listsOf(options.store.schema, new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]));
   const links = createLinks({
     sees: (id) => options.store.seenBy(options.principal).graph.has(id),
-    places: () => options.places?.() ?? [],
+    places: () => guestPlacesOf(options.places?.() ?? []),
     lists,
     schema: options.store.schema,
     ...(options.onNavigate ? { onNavigate: options.onNavigate } : options.goTo ? { onNavigate: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
@@ -430,6 +440,8 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
 
   /* The records the view was last shown: a press may be bound to one of these, and to nothing else (FR-92). */
   let shown: ReadonlySet<string> = new Set();
+  /* The image addresses already said to be refused: each is said once. */
+  const toldImages = new Set<string>();
   void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, fillPrefills, judgePress, prefillOf }]) => {
     if (failed) return;
     const reader = createPressReader();
@@ -438,6 +450,15 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
       ...(options.asset ? { asset: options.asset } : {}),
+      ...(options.images ? { imageOrigins: options.images.origins } : {}),
+      /* An image's address refused is said once, with why and what would do — not left to be found in `refused`. */
+      onRefused: (refusal) => {
+        if (refusal.reason !== "url" || refusal.element !== "img" || refusal.address === undefined || toldImages.has(refusal.address)) return;
+        toldImages.add(refusal.address);
+        const said = imageRefusedWords(refusal.address, options.images?.origins);
+        port?.postMessage({ type: "notice", text: said });
+        options.onProblem?.(said);
+      },
       ...(options.limits?.maxNodes !== undefined ? { maxNodes: options.limits.maxNodes } : {}),
       onOverBudget: () => fail("nodes"),
       send,
@@ -500,7 +521,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           given.postMessage(message);
         },
         props: () => {
-          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: options.places() } : {}) });
+          const props = workerViewProps(options.store, options.principal, { manifest, ...(options.input ? { input: options.input() } : {}), theme: theme(), ...(options.places ? { places: guestPlacesOf(options.places()) } : {}) });
           shown = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
           lastProps = props;
           return props;
@@ -518,7 +539,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
         onStyle: (css) => draw(["style", css]),
-        places: () => [...new Set([...(options.places?.() ?? []).map((place) => place.as), ...lists().map((list) => list.slug)])],
+        places: () => [...new Set([...guestPlacesOf(options.places?.() ?? []).map((place) => place.as), ...lists().map((list) => list.slug)])],
         ...(options.limits ? { limits: options.limits } : {}),
         limiter,
       });

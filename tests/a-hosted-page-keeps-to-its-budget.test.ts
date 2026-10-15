@@ -93,7 +93,8 @@ describe("a hosted page", () => {
     // 897 KB with the templates' fixes over the scene's cards and the GPU hand-off.
     // 891 KB since blocks came to lay out as written (2026-10-15, fix/blocks-layout: a nested headline a section's, row groups, rows, badges, a large figure, a rule's sentence first, a place without its form): the scene face measured 911_746 B, 2_706 more than before them (909_040).
     // 900 KB with the blocks' layout over the templates' fixes, the scene's cards and the GPU hand-off.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(900 * 1024);
+    // 906 KB since the Beatles' discography's fixes (2026-10-15, fix/lenses-and-views): a list that shows its next page and groups by a linked record, a coverage that says it has nothing to cross and orders its rows, a career calendar spanning its records, a place known by its title and an image from an origin the host lists: the scene face measured 926_488 B, 6_044 more than main (920_444).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(906 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

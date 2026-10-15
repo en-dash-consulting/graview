@@ -163,8 +163,8 @@ describe("a hostile stylesheet", () => {
 });
 
 describe("what stays in the region", () => {
-  it("drops position: fixed and sticky, in any case and with an escape", () => {
-    for (const css of [".x { position: fixed }", ".x { position: FIXED }", ".x { position: sticky }", ".x { po\\73 ition: fixed }", ".x { position: f\\69 xed }", ".x { position: -webkit-sticky }"]) {
+  it("drops position: fixed, in any case and with an escape, and a prefixed sticky", () => {
+    for (const css of [".x { position: fixed }", ".x { position: FIXED }", ".x { po\\73 ition: fixed }", ".x { position: f\\69 xed }", ".x { position: -webkit-sticky }"]) {
       const said = sanitizeStylesheet(css);
       expect(said.css, css).not.toMatch(/fixed|sticky/i);
       expect(said.refused, css).toContainEqual({ reason: "value", name: "position" });

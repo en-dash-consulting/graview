@@ -29,6 +29,7 @@ import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { guestFileOf, handFiles } from "../host/pictures.js";
 import { judgeDestination, listsOf } from "../host/links.js";
+import { guestPlacesOf, placeNamed } from "../host/links-words.js";
 import type { GuestViewInput } from "../host/session.js";
 import { checkViewSource } from "../host/view-source.js";
 import type { WorkerViewLimits } from "../host/view.js";
@@ -97,8 +98,10 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   /** The app's look. A light one in the framework's own colors by default. */
   readonly theme?: GuestTheme;
   /** The app's named places, which the view may link to (FR-93). */
-  readonly places?: readonly GuestPlace[];
+  readonly places?: readonly (GuestPlace | { readonly slug: string; readonly title: string; readonly kind: string | null })[];
   readonly limits?: HeadlessLimits;
+  /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
+  readonly images?: { readonly origins: readonly string[] };
   /**
    * The width it is said at, in CSS pixels, as `describePlace` takes it:
    * 1440 by default. Nothing is laid out headless, so it changes the words
@@ -201,14 +204,16 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   const unloadable = checkViewSource(source);
   if (unloadable.length > 0) return failed("source", unloadable.join(" "));
 
-  const places = options.places ?? [];
+  /* A guest's places or an app's as `placesOf` lists them: each by its slug and title, never "undefined" (2026-10-15). */
+  const places = guestPlacesOf(options.places ?? []);
   const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places });
   /* A view that asks for pictures (FR-175) is handed each file without the host's path; headless, no bytes are fetched, so a picture comes without its address, as it does before the host has made it. */
   const props = manifest.pictures ? handFiles(shown, (file) => guestFileOf(file)) : shown;
   const input: HeadlessInput = {
     props,
     acts: manifestActs(manifest).map((one) => one.as ?? one.act),
-    places: places.map((place) => place.as),
+    places: places.map((place) => ({ as: place.as, title: place.title })),
+    ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
     lists: listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds])).flatMap((list) => [list.slug, list.kind]),
     limits: { maxNodes: limits.maxNodes, messages: limits.messages, pushMs: limits.pushMs },
   };
@@ -258,7 +263,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   for (const went of transcript.went) {
     if (!("where" in went) && !("section" in went)) continue;
     const outcome = judgeDestination(went, { sees: (id) => shownIds.has(id), places, lists, schema: store.schema });
-    const known = "place" in went ? input.places.includes(went.place) || (input.lists ?? []).includes(went.place) : true;
+    const known = "place" in went ? placeNamed(input.places, went.place) !== undefined || (input.lists ?? []).includes(went.place) : true;
     if (!outcome.ok && known) narrowing.push({ at: "navigate", says: outcome.says });
   }
   const problems = [...judged.problems, ...narrowing];

@@ -1,4 +1,4 @@
-import { pluralLabel, counted, isCurrent, labelOf, LOCAL_LAYERS, type AnyGraphNode, type AnySchema } from "@graview/core";
+import { pluralLabel, counted, isCurrent, labelOf, LOCAL_LAYERS, sortForGrid, type AnyGraphNode, type AnySchema, type GridSort } from "@graview/core";
 import { columnMoves, columnOf, statusColumns, type ColumnMove, type StatusColumn } from "@graview/core/describe";
 import { useGraph, useGraview, ViewModeProvider, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
@@ -37,6 +37,8 @@ export interface ColumnsBindings {
 
 export interface ColumnsOptions {
   readonly bindings: ColumnsBindings;
+  /** The cards' order in each column: a field, or `{ by, direction }` (`label` is the name). As they were written, unsaid. */
+  readonly sort?: GridSort;
 }
 
 export interface ColumnsLens<S extends AnySchema> {
@@ -96,7 +98,8 @@ export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions):
     const boards: Board[] = kinds.map((kind) => {
       const field = options.bindings[kind]!.column;
       const columns = statusColumns(store.schema, kind, field);
-      const drawn = own.has(kind) ? given.filter((node) => node.kind === kind) : current(kind).slice(0, props.budget ?? Infinity);
+      const read = (node: Card, key: string) => (key === "label" ? labelOf(store.schema.tryDefinition(node.kind), node) : node[key]);
+      const drawn = sortForGrid(own.has(kind) ? given.filter((node) => node.kind === kind) : current(kind).slice(0, props.budget ?? Infinity), options.sort, read);
       // A count is how many this seat's board holds, not how many a thumbnail had room for.
       const all = own.has(kind) && !cut ? drawn : current(kind);
       return {
