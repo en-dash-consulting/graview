@@ -20,6 +20,7 @@
  */
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { spelled } from "./site-numbers.mjs";
@@ -55,6 +56,81 @@ function apps() {
     })
     .filter((app) => app.description && !["spike", "promo"].includes(app.dir));
 }
+
+/**
+ * THE RECIPES, read off their files: docs/site/recipes/recipes.json names
+ * them and the prompt, and each one's app.json and seed.json are what an
+ * agent wrote. What `graview check --document` prints about each is run
+ * here, from the built CLI, so the page quotes the checker rather than
+ * paraphrasing it.
+ */
+function recipes() {
+  const index = JSON.parse(readFileSync(at("docs/site/recipes/recipes.json"), "utf8"));
+  return index.recipes.map((entry) => {
+    const file = at("docs/site/recipes", entry.slug, "app.json");
+    const source = readFileSync(file, "utf8");
+    const document = JSON.parse(source);
+    const seed = JSON.parse(readFileSync(at("docs/site/recipes", entry.slug, "seed.json"), "utf8"));
+    const counts = {};
+    for (const node of seed.nodes ?? []) counts[node.kind] = (counts[node.kind] ?? 0) + 1;
+    let check;
+    try {
+      check = execFileSync(process.execPath, [at("packages/graview/dist/cli.js"), "check", "--document", file], { cwd: repoRoot, encoding: "utf8", stdio: "pipe" });
+    } catch (error) {
+      throw new Error(`docs/site/recipes/${entry.slug}/app.json does not pass graview check:\n${error.stdout ?? ""}${error.stderr ?? ""}`);
+    }
+    return {
+      ...entry,
+      prompt: index.prompt.replace("{task}", entry.task),
+      name: document.name,
+      description: document.description,
+      source,
+      kinds: Object.entries(document.kinds ?? {}).map(([name, kind]) => ({
+        name,
+        plural: kind.plural ?? `${name}s`,
+        fields: Object.keys(kind.fields ?? {}),
+        edges: Object.entries(kind.edges ?? {}).map(([edge, spec]) => ({ name: edge, to: spec.to ?? [] })),
+        count: counts[name] ?? 0,
+      })),
+      acts: Object.keys(document.acts ?? {}).length,
+      rules: Object.entries(document.rules ?? {}).map(([name, rule]) => ({ name, ...rule, repairs: rule.repairs ?? [] })),
+      records: (seed.nodes ?? []).length,
+      ties: (seed.edges ?? []).length,
+      check: check.trim().split("\n").filter(Boolean),
+    };
+  });
+}
+
+/**
+ * THE FRONT PAGE'S RECIPE ROWS, between their markers: each recipe's task,
+ * the prompt, what it declared and where its proof is, from the same files.
+ */
+function recipeRows(rcps) {
+  const rows = rcps.map((r, i) =>
+    `      <li class="recipe-row">\n` +
+    `        <div>\n` +
+    `          <h3>${escape(r.title)}</h3>\n` +
+    `          <p class="recipe-prompt">${escape(r.prompt).replace(escape(`repo's ${r.task}`), `repo's <b>${escape(r.task)}</b>`)}</p>\n` +
+    `        </div>\n` +
+    `        <div>\n` +
+    `          <p class="recipe-blurb">${escape(r.blurb)}</p>\n` +
+    `          <dl>\n` +
+    `            <dt>Kinds</dt><dd>${r.kinds.map((k) => escape(k.plural)).join(", ")}</dd>\n` +
+    `            <dt>Rules</dt><dd>${r.rules.map((rule) => escape(rule.title)).join("; ")}</dd>\n` +
+    `            <dt>Seed</dt><dd>${r.records} records and ${r.ties} relations, read out of Larkspur</dd>\n` +
+    `            <dt>Check</dt><dd>${escape(r.check.some((line) => line.startsWith("!")) ? "warnings" : "clean, on every push")}</dd>\n` +
+    `          </dl>\n` +
+    `          <p class="recipe-links"><a href="docs/recipes/${r.slug}.html">Open it, live &rarr;</a><a href="recipes/${r.slug}/app.json">app.json</a><a href="recipes/${r.slug}/seed.json">seed.json</a></p>\n` +
+    `        </div>\n` +
+    `      </li>`);
+  return (
+    `${RECIPES_START}\n    <ol class="recipe-list">\n${rows.join("\n")}\n    </ol>\n` +
+    `    <p class="sm dim recipes-note">How these were made: an agent ran each prompt once, with nothing but the prompt and <a class="inl" href="start.md">start.md</a>, at the root of Larkspur, a made-up repository written for the purpose (<code>scripts/fixtures/recipes/larkspur.mjs</code>). CI does not run an agent. On every push it checks the declaration that run produced, loads its seed, and opens each recipe&rsquo;s page in a browser to see the app mount.</p>\n    ${RECIPES_END}`
+  );
+}
+const RECIPES_START = "<!-- site-recipes:start — written by scripts/site-docs.mjs. -->";
+const RECIPES_END = "<!-- site-recipes:end -->";
+const RECIPES_BLOCK = /<!-- site-recipes:start[\s\S]*?<!-- site-recipes:end -->/;
 const OUT = at("docs/site/docs");
 
 /* ── reading the repository ───────────────────────────────────────────── */
@@ -377,6 +453,7 @@ function trail(path, title) {
   const crumbs = [["Graview", `${SITE}/`], ["Docs", `${SITE}/docs/index.html`]];
   if (path.startsWith("packages/")) crumbs.push(["Packages", `${SITE}/docs/packages.html`]);
   if (path.startsWith("skills/")) crumbs.push(["Skills", `${SITE}/docs/skills.html`]);
+  if (path.startsWith("recipes/")) crumbs.push(["Recipes", `${SITE}/docs/recipes.html`]);
   if (path !== "index.html") crumbs.push([title, `${SITE}/docs/${path}`]);
   return crumbs;
 }
@@ -442,6 +519,7 @@ function shell({ path, title, blurb, here, body, scripts = [] }) {
   const nav = [
     ["index.html", "Docs home"],
     ["getting-started.html", "Getting started"],
+    ["recipes.html", "Recipes"],
     ["concepts.html", "Concepts"],
     ["packages.html", "Packages"],
     ["cli.html", "The CLI"],
@@ -463,6 +541,7 @@ function shell({ path, title, blurb, here, body, scripts = [] }) {
 
     <div class="jump">
 ${nav.map(([href, label]) => `      <a href="${docsRoot}${href}"${href === here ? ' aria-current="page"' : ""}>${label}</a>`).join("\n")}
+      <a href="${up}/tour.html">The tour</a>
       <a href="${up}/progression.html">The garden, grown</a>
       <a href="${up}/index.html">&larr; graview.dev</a>
     </div>
@@ -846,6 +925,68 @@ async function build() {
       section("promise", "The promise", render(stability.replace(/^#\s+.*\n+/, ""))),
   }));
 
+  /*
+   * THE RECIPES: one page each, and an index. A recipe is the prompt on the
+   * front page with a different task, and what an agent made of it in
+   * Larkspur, a made-up repository: the declaration document and the seed
+   * under docs/site/recipes/<slug>/. Everything on these pages is read off
+   * those two files and off what `graview check --document` says about the
+   * first, so a recipe's page cannot describe a declaration it does not have.
+   */
+  const rcps = recipes();
+  for (const r of rcps) {
+    const kindsTable =
+      `      <div class="tablewrap" data-scroller aria-label="The kinds the ${escape(r.task)} recipe declares"><table>\n` +
+      `        <tr><th>Kind</th><th>Fields</th><th>Relations</th><th>Records in the seed</th></tr>\n` +
+      r.kinds.map((k) => `        <tr><td><code>${escape(k.name)}</code></td><td>${k.fields.map((f) => `<code>${escape(f)}</code>`).join(", ")}</td><td>${k.edges.length ? k.edges.map((e) => `<code>${escape(e.name)}</code> to ${e.to.map((t) => `<code>${escape(t)}</code>`).join(", ")}`).join("; ") : "none"}</td><td>${k.count}</td></tr>`).join("\n") +
+      `\n      </table></div>`;
+    const rulesList =
+      `      <ul>\n` +
+      r.rules.map((rule) => `        <li><b>${escape(rule.title)}.</b> Over each ${escape(rule.over)}${rule.when ? `, when <code>${escape(rule.when)}</code>` : ""}: requires <code>${escape(rule.require)}</code>. ${rule.repairs.length ? `Repaired by ${rule.repairs.map((x) => `“${escape(x.label ?? x.act)}” (<code>${escape(x.act)}</code>)`).join(" or ")}.` : "No repair."}</li>`).join("\n") +
+      `\n      </ul>`;
+    files.set(`recipes/${r.slug}.html`, shell({ path: `recipes/${r.slug}.html`,
+      title: r.title, here: "recipes.html",
+      blurb: `A Graview recipe: ${r.blurb}`,
+      scripts: ["../../chapters.js"],
+      body:
+        `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
+        `      <h1 id="h-what">${escape(r.title)}</h1>\n` +
+        `      <p class="lede" style="margin-top: 18px;">This recipe is what an agent made of one prompt, in a repository it had never seen. ${escape(r.blurb)}</p>\n` +
+        `      <div class="cta"><div class="cta-line"><code>${escape(r.prompt)}</code><button type="button" class="copy" data-copy="${escape(r.prompt)}">Copy</button></div>\n` +
+        `      <p class="cta-sub sm dim">Paste it into Claude Code, Codex or Cursor at the root of your repository. <a class="inl" href="../../start.md">start.md</a> is the page the agent reads.</p></div>\n` +
+        `    </section>\n` +
+        section("live", "The app, running",
+          `      <p>This is the declaration below, compiled in your browser by the same compiler <code>graview check</code> uses, over the seed below. Press a district; open the problems; take a repair.</p>\n` +
+          `      <div class="chapter-live" data-graview-recipe="${r.slug}" data-label="${escape(r.name)}" role="region" aria-label="${escape(`The app the ${r.task} prompt made, live`)}"><p class="chapter-loading">${escape(r.title)}, loading…</p></div>`) +
+        section("declared", "What the agent declared",
+          `      <p><b>${escape(r.name)}</b>: ${escape(r.description)} ${r.kinds.length} kinds, ${r.acts} acts and ${r.rules.length} rules, each rule with the act that repairs it.</p>\n` +
+          kindsTable + `\n` + `      <h3>The rules</h3>\n` + rulesList) +
+        section("checked", "What graview check says",
+          `      <p>Run on every push, against the committed file:</p>\n` +
+          `      <div class="term" data-scroller aria-label="graview check on the ${escape(r.task)} recipe"><div class="l"><span class="p">$</span> <span class="c2">npx graview check --document app.json</span></div>${r.check.map((line) => `<div class="l"><span class="c2">${escape(line)}</span></div>`).join("")}</div>\n` +
+          (r.check.some((line) => line.startsWith("·")) ? `      <p class="sm dim">A line starting with a dot is a note, not a warning: advice the checker leaves for a person to weigh.</p>\n` : "")) +
+        section("made", "How it was made",
+          `      <p>An agent was given the prompt above and nothing else, at the root of Larkspur: a booking service for small clinics that does not exist, written as a TypeScript monorepo the size of a real one, with sixteen modules, guides and runbooks with gaps, a CODEOWNERS that misses some, fourteen decision records and pinned dependencies. It followed <a class="inl" href="../../start.md">start.md</a>, scaffolded, declared, ran <code>graview check</code> until it was clean, opened <code>graview preview</code> and reported back. The two files it wrote are committed as they came out of that run.</p>\n` +
+          `      <p>CI does not run an agent. On every push it checks the committed declaration with <code>graview check --document</code>, loads the seed into a store, and opens this page in a browser to see the app mount. To run the prompt again yourself:</p>\n` +
+          `      <div class="code" data-scroller aria-label="Running the recipe again"><pre><code class="language-sh">node scripts/fixtures/recipes/larkspur.mjs larkspur\ncd larkspur &amp;&amp; git init -q &amp;&amp; git add -A &amp;&amp; git commit -qm larkspur\n# then paste the prompt into your agent</code></pre></div>\n` +
+          `      <p class="sm dim">The files: <a class="inl" href="../../recipes/${r.slug}/app.json"><code>app.json</code></a> and <a class="inl" href="../../recipes/${r.slug}/seed.json"><code>seed.json</code></a> (${r.records} records and ${r.ties} relations).</p>`) +
+        section("declaration", "The declaration, in full",
+          `      <div class="code" data-scroller aria-label="The ${escape(r.task)} recipe's app.json" style="max-height: 560px; overflow: auto;"><pre><code class="language-json">${escape(r.source.trimEnd())}</code></pre></div>`),
+    }));
+  }
+  files.set("recipes.html", shell({ path: "recipes.html",
+    title: "Recipes", here: "recipes.html",
+    blurb: "Graview recipes: one prompt to hand an agent, with a different task each, and the app it made, checked on every push and live on its page.",
+    body:
+      `    <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">\n` +
+      `      <h1 id="h-what">Recipes</h1>\n` +
+      `      <p class="lede" style="margin-top: 18px;">A recipe is one prompt to hand your agent, with a different task each, and the app an agent made of it. Each was made from the prompt alone in Larkspur, a made-up repository, and each runs on its page.</p>\n` +
+      `      <div class="cta"><div class="cta-line"><code>${escape(rcps[0].prompt)}</code><button type="button" class="copy" data-copy="${escape(rcps[0].prompt)}">Copy</button></div></div>\n` +
+      `    </section>\n` +
+      section("list", "The recipes",
+        `      <ul class="cards">\n` + rcps.map((r) => `        <li><a href="recipes/${r.slug}.html"><strong>${escape(r.title)}</strong><span>${escape(r.blurb)}</span></a></li>`).join("\n") + `\n      </ul>`),
+  }));
+
   files.set("index.html", shell({ path: "index.html",
     title: "Documentation", here: "index.html",
     blurb: "Graview's documentation: the concepts, the packages, the skills, the CLI and everything the checker can say.",
@@ -859,6 +1000,8 @@ async function build() {
       section("map", "Where things are",
         `      <ul class="cards">\n` +
         `        <li><a href="getting-started.html"><strong>Getting started</strong><span>One command to a running product, what it writes, and the loop from there.</span></a></li>\n` +
+        `        <li><a href="recipes.html"><strong>Recipes</strong><span>One prompt for your agent, a different task each, and the app it made, live.</span></a></li>\n` +
+        `        <li><a href="../tour.html"><strong>The tour</strong><span>Every surface Graview derives from one declaration, each beside a live frame.</span></a></li>\n` +
         `        <li><a href="concepts.html"><strong>Concepts</strong><span>The declaration, and the seven things in it.</span></a></li>\n` +
         `        <li><a href="agents.html"><strong>Working with a model</strong><span>The seat, the typed tools, what a model reads, and the studio.</span></a></li>\n` +
         `        <li><a href="demos.html"><strong>Live demos</strong><span>Every surface of the garden, running on the page, and the example apps.</span></a></li>\n` +
@@ -946,6 +1089,7 @@ export function toMarkdown(html, base) {
 
 const LANDING = at("docs/site/index.html");
 const PROGRESSION = at("docs/site/progression.html");
+const TOUR = at("docs/site/tour.html");
 const metaOf = (html, name) => decode(new RegExp(`<meta (?:name|property)="${name}" content="([^"]*)">`).exec(html)?.[1] ?? "");
 const titleOf = (html) => decode(/<title>([\s\S]*?)<\/title>/.exec(html)?.[1] ?? "");
 
@@ -1020,6 +1164,25 @@ function progressionData(html) {
   };
 }
 
+/** The tour is an article too, one step from the home page. */
+function tourData(html) {
+  const url = `${SITE}/tour.html`;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "TechArticle", "@id": `${url}#article`, headline: titleOf(html), description: metaOf(html, "description"), url,
+        inLanguage: "en", image: `${SITE}/og.png`, isPartOf: { "@id": `${SITE}/#website` }, about: { "@id": `${SITE}/#software` },
+        publisher: { "@id": `${SITE}/#endash` }, breadcrumb: { "@id": `${url}#breadcrumb` },
+      },
+      {
+        "@type": "BreadcrumbList", "@id": `${url}#breadcrumb`,
+        itemListElement: [["Graview", `${SITE}/`], ["The tour", url]].map(([name, item], i) => ({ "@type": "ListItem", position: i + 1, name, item })),
+      },
+    ],
+  };
+}
+
 /** A page with its structured data written between its markers, which go just before `</head>` the first time. */
 function withSeo(html, data) {
   const block = `${SEO_START}\n${ldScript(data)}\n${SEO_END}\n`;
@@ -1038,6 +1201,7 @@ function sections() {
     ["Start here", START_HERE.filter((p) => PAGES.has(p))],
     ["Packages", ["packages.html", ...paths.filter((p) => p.startsWith("packages/")).sort()]],
     ["Skills", ["skills.html", ...paths.filter((p) => p.startsWith("skills/")).sort()]],
+    ["Recipes", ["recipes.html", ...paths.filter((p) => p.startsWith("recipes/")).sort()]],
     ["Examples", ["demos.html"]],
   ];
 }
@@ -1054,6 +1218,7 @@ function preamble(landing, pkgCount) {
     "",
     `> ${summary(landing)}`,
     "",
+    `- Start with an agent: ${SITE}/start.md is the procedure, written for the agent — hand it "Read ${SITE}/start.md, then turn this repo's docs into a Graview app."`,
     "- Start a product: `npm create graview@latest my-app` (Node 22 or later)",
     "- License: Elastic License 2.0 — source-available, free to build with and to ship products on",
     `- Source: ${REPOSITORY}`,
@@ -1077,6 +1242,7 @@ function llmsTxt(landing, progression, examples, pkgCount) {
   for (const [heading, paths] of sections()) {
     out.push("", `## ${heading}`, "", ...paths.map(line));
     if (heading === "Examples") {
+      out.push(`- [The tour](${SITE}/tour.html): ${metaOf(read(TOUR), "description")}`);
       out.push(`- [The garden, grown](${SITE}/progression.html): ${metaOf(progression, "description")}`);
       out.push(...examples.map((app) => `- [apps/${app.dir}](${REPOSITORY}/tree/main/apps/${app.dir}): ${app.description}`));
     }
@@ -1155,17 +1321,21 @@ for (const [path, page] of PAGES) {
   files.set(path.replace(/\.html$/, ".md"), twin);
 }
 
-const landing = withSeo(read(LANDING), landingData(read(LANDING)));
+const landingRecipes = read(LANDING).replace(RECIPES_BLOCK, recipeRows(recipes()));
+const landing = withSeo(landingRecipes, landingData(landingRecipes));
+const tour = withSeo(read(TOUR), tourData(read(TOUR)));
 const progression = withSeo(read(PROGRESSION), progressionData(read(PROGRESSION)));
 const pkgCount = dirsIn("packages").length;
 files.set("../index.html", landing);
 files.set("../progression.html", progression);
+files.set("../tour.html", tour);
 files.set("../llms.txt", llmsTxt(landing, progression, apps(), pkgCount));
 files.set("../llms-full.txt", llmsFullTxt(landing, pkgCount));
 files.set("../robots.txt", robotsTxt());
 files.set("../sitemap.xml", sitemap([
   [`${SITE}/`, landing],
   [`${SITE}/progression.html`, progression],
+  [`${SITE}/tour.html`, tour],
   ...[...PAGES.keys()].sort().map((path) => [`${SITE}/docs/${path}`, files.get(path)]),
 ], read(at("docs/site/sitemap.xml"))));
 let stale = 0;

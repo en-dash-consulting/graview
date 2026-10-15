@@ -28,45 +28,66 @@ const PAGE = resolve(repoRoot, "docs/site/index.html");
 const START = "<!-- site-poster:start — written by scripts/site-poster.mjs. -->";
 const END = "<!-- site-poster:end -->";
 
-/** The chapter the hero mounts, read off the hero itself. */
+/*
+ * What the hero mounts, read off the hero itself: a recipe (the front page
+ * now opens on one, the app an agent made from the prompt), or a chapter.
+ */
 const html = readFileSync(PAGE, "utf8");
+const recipe = /class="chapter-live hero-live" data-graview-recipe="([a-z-]+)"/.exec(html)?.[1];
 const chapter = Number(/class="chapter-live hero-live" data-graview-chapter="(\d+)"/.exec(html)?.[1]);
-if (!chapter) throw new Error("docs/site/index.html has no hero-live chapter to draw a poster of");
+if (!recipe && !chapter) throw new Error("docs/site/index.html has no hero-live recipe or chapter to draw a poster of");
 
-/* The chapters are TypeScript in apps/seedbed; bundle the two calls this needs for Node. */
-const bundled = await build({
-  stdin: {
-    contents: `
-      import { sceneThumbnail } from "@graview/core/scene";
-      import { CHAPTERS } from "./domain/chapters.js";
-      export function draw(n) {
-        const chapter = CHAPTERS[n - 1];
-        const counts = {};
-        for (const node of Object.values(chapter.seed.nodes ?? {})) counts[node.kind] = (counts[node.kind] ?? 0) + 1;
-        const title = "The example garden from altitude: each kind a plot on its map, a block for each record.";
-        return {
-          light: sceneThumbnail(chapter.app, { width: 800, height: 600, counts, scheme: "light", background: false, title }),
-          dark: sceneThumbnail(chapter.app, { width: 800, height: 600, counts, scheme: "dark", background: false, title }),
-        };
-      }`,
-    resolveDir: resolve(repoRoot, "apps/seedbed/src"),
-    loader: "ts",
-  },
-  bundle: true,
-  platform: "node",
-  format: "esm",
-  write: false,
-  logLevel: "error",
-  external: ["react", "react-dom"],
-});
-const dir = mkdtempSync(join(tmpdir(), "graview-poster-"));
 let drawn;
-try {
-  const file = join(dir, "poster.mjs");
-  writeFileSync(file, bundled.outputFiles[0].text);
-  drawn = (await import(pathToFileURL(file).href)).draw(chapter);
-} finally {
-  rmSync(dir, { recursive: true, force: true });
+if (recipe) {
+  /* The recipe's own document and seed, compiled by the checker's compiler: the same app the page mounts. */
+  const { compileDocument } = await import(pathToFileURL(resolve(repoRoot, "packages/core/dist/check.js")).href);
+  const { sceneThumbnail } = await import(pathToFileURL(resolve(repoRoot, "packages/core/dist/scene.js")).href);
+  const document = JSON.parse(readFileSync(resolve(repoRoot, `docs/site/recipes/${recipe}/app.json`), "utf8"));
+  const seed = JSON.parse(readFileSync(resolve(repoRoot, `docs/site/recipes/${recipe}/seed.json`), "utf8"));
+  const compiled = compileDocument(document);
+  if (!compiled.ok) throw new Error(`docs/site/recipes/${recipe}/app.json does not compile`);
+  const counts = {};
+  for (const node of seed.nodes ?? []) counts[node.kind] = (counts[node.kind] ?? 0) + 1;
+  const title = `${compiled.app.name} from altitude: each kind a plot on its map, a block for each record.`;
+  drawn = {
+    light: sceneThumbnail(compiled.app, { width: 800, height: 600, counts, scheme: "light", background: false, title }),
+    dark: sceneThumbnail(compiled.app, { width: 800, height: 600, counts, scheme: "dark", background: false, title }),
+  };
+} else {
+/* The chapters are TypeScript in apps/seedbed; bundle the two calls this needs for Node. */
+  const bundled = await build({
+    stdin: {
+      contents: `
+        import { sceneThumbnail } from "@graview/core/scene";
+        import { CHAPTERS } from "./domain/chapters.js";
+        export function draw(n) {
+          const chapter = CHAPTERS[n - 1];
+          const counts = {};
+          for (const node of Object.values(chapter.seed.nodes ?? {})) counts[node.kind] = (counts[node.kind] ?? 0) + 1;
+          const title = "The example garden from altitude: each kind a plot on its map, a block for each record.";
+          return {
+            light: sceneThumbnail(chapter.app, { width: 800, height: 600, counts, scheme: "light", background: false, title }),
+            dark: sceneThumbnail(chapter.app, { width: 800, height: 600, counts, scheme: "dark", background: false, title }),
+          };
+        }`,
+      resolveDir: resolve(repoRoot, "apps/seedbed/src"),
+      loader: "ts",
+    },
+    bundle: true,
+    platform: "node",
+    format: "esm",
+    write: false,
+    logLevel: "error",
+    external: ["react", "react-dom"],
+  });
+  const dir = mkdtempSync(join(tmpdir(), "graview-poster-"));
+  try {
+    const file = join(dir, "poster.mjs");
+    writeFileSync(file, bundled.outputFiles[0].text);
+    drawn = (await import(pathToFileURL(file).href)).draw(chapter);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 const poster =
@@ -82,8 +103,8 @@ if (process.argv.includes("--check")) {
     process.stderr.write("docs/site/index.html carries a stale poster of the hero — run `pnpm site:poster`.\n");
     process.exit(1);
   }
-  process.stdout.write("the hero's poster is the chapter it mounts\n");
+  process.stdout.write("the hero's poster is the app it mounts\n");
 } else {
   if (next !== html) writeFileSync(PAGE, next);
-  process.stdout.write(`drew chapter ${chapter} into the hero's poster\n`);
+  process.stdout.write(`drew ${recipe ? `the ${recipe} recipe` : `chapter ${chapter}`} into the hero's poster\n`);
 }

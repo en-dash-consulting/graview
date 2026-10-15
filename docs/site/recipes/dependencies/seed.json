@@ -1,0 +1,1809 @@
+{
+  "nodes": [
+    {
+      "id": "mod-root",
+      "kind": "module",
+      "path": ".",
+      "name": "larkspur"
+    },
+    {
+      "id": "mod-services-admin",
+      "kind": "module",
+      "path": "services/admin",
+      "name": "@larkspur/admin",
+      "summary": "The clinic staff's admin console: calendars, staff, billing settings."
+    },
+    {
+      "id": "mod-services-api",
+      "kind": "module",
+      "path": "services/api",
+      "name": "@larkspur/api",
+      "summary": "The HTTP API: REST for the booking site, GraphQL for the admin console."
+    },
+    {
+      "id": "mod-services-web",
+      "kind": "module",
+      "path": "services/web",
+      "name": "@larkspur/web",
+      "summary": "The patient-facing booking site (Next.js)."
+    },
+    {
+      "id": "mod-services-worker",
+      "kind": "module",
+      "path": "services/worker",
+      "name": "@larkspur/worker",
+      "summary": "Background jobs: reminders, invoice retries, search reindexing."
+    },
+    {
+      "id": "mod-packages-api-client",
+      "kind": "module",
+      "path": "packages/api-client",
+      "name": "@larkspur/api-client",
+      "summary": "The typed client the booking site calls the API with."
+    },
+    {
+      "id": "mod-packages-auth",
+      "kind": "module",
+      "path": "packages/auth",
+      "name": "@larkspur/auth",
+      "summary": "Sign-in, sessions and staff roles."
+    },
+    {
+      "id": "mod-packages-billing",
+      "kind": "module",
+      "path": "packages/billing",
+      "name": "@larkspur/billing",
+      "summary": "Invoices, payments and the retry schedule, on Stripe."
+    },
+    {
+      "id": "mod-packages-config",
+      "kind": "module",
+      "path": "packages/config",
+      "name": "@larkspur/config",
+      "summary": "Environment parsing and feature flags."
+    },
+    {
+      "id": "mod-packages-notifications",
+      "kind": "module",
+      "path": "packages/notifications",
+      "name": "@larkspur/notifications",
+      "summary": "Email and SMS reminders."
+    },
+    {
+      "id": "mod-packages-scheduling",
+      "kind": "module",
+      "path": "packages/scheduling",
+      "name": "@larkspur/scheduling",
+      "summary": "Availability, appointment slots and the booking rules."
+    },
+    {
+      "id": "mod-packages-search",
+      "kind": "module",
+      "path": "packages/search",
+      "name": "@larkspur/search",
+      "summary": "Clinic and practitioner search."
+    },
+    {
+      "id": "mod-packages-shared-types",
+      "kind": "module",
+      "path": "packages/shared-types",
+      "name": "@larkspur/shared-types",
+      "summary": "Types shared by the API and its clients."
+    },
+    {
+      "id": "mod-packages-telemetry",
+      "kind": "module",
+      "path": "packages/telemetry",
+      "name": "@larkspur/telemetry",
+      "summary": "Logging and tracing setup."
+    },
+    {
+      "id": "mod-packages-ui-kit",
+      "kind": "module",
+      "path": "packages/ui-kit",
+      "name": "@larkspur/ui-kit",
+      "summary": "Shared React components on Radix primitives."
+    },
+    {
+      "id": "mod-tools-migrate",
+      "kind": "module",
+      "path": "tools/migrate",
+      "name": "@larkspur/migrate",
+      "summary": "Database migrations and the runner."
+    },
+    {
+      "id": "mod-tools-seed-data",
+      "kind": "module",
+      "path": "tools/seed-data",
+      "name": "@larkspur/seed-data",
+      "summary": "Fake clinics and patients for local development."
+    },
+    {
+      "id": "person-maya-r",
+      "kind": "person",
+      "handle": "maya-r"
+    },
+    {
+      "id": "person-ola-b",
+      "kind": "person",
+      "handle": "ola-b"
+    },
+    {
+      "id": "person-devon-k",
+      "kind": "person",
+      "handle": "devon-k"
+    },
+    {
+      "id": "person-tomas-l",
+      "kind": "person",
+      "handle": "tomas-l"
+    },
+    {
+      "id": "person-priya-s",
+      "kind": "person",
+      "handle": "priya-s"
+    },
+    {
+      "id": "person-wen-h",
+      "kind": "person",
+      "handle": "wen-h"
+    },
+    {
+      "id": "person-sam-j",
+      "kind": "person",
+      "handle": "sam-j"
+    },
+    {
+      "id": "dep-root-typescript",
+      "kind": "dependency",
+      "name": "typescript",
+      "version": "5.4.5",
+      "section": "devDependencies",
+      "manifest": "package.json"
+    },
+    {
+      "id": "dep-root-vitest",
+      "kind": "dependency",
+      "name": "vitest",
+      "version": "1.6.0",
+      "section": "devDependencies",
+      "manifest": "package.json"
+    },
+    {
+      "id": "dep-root-eslint",
+      "kind": "dependency",
+      "name": "eslint",
+      "version": "8.57.0",
+      "section": "devDependencies",
+      "manifest": "package.json"
+    },
+    {
+      "id": "dep-root-prettier",
+      "kind": "dependency",
+      "name": "prettier",
+      "version": "3.2.5",
+      "section": "devDependencies",
+      "manifest": "package.json"
+    },
+    {
+      "id": "dep-root-playwright-test",
+      "kind": "dependency",
+      "name": "@playwright/test",
+      "version": "1.44.0",
+      "section": "devDependencies",
+      "manifest": "package.json"
+    },
+    {
+      "id": "dep-root-turbo",
+      "kind": "dependency",
+      "name": "turbo",
+      "version": "1.13.3",
+      "section": "devDependencies",
+      "manifest": "package.json"
+    },
+    {
+      "id": "dep-root-types-node",
+      "kind": "dependency",
+      "name": "@types/node",
+      "version": "18.19.31",
+      "section": "devDependencies",
+      "manifest": "package.json"
+    },
+    {
+      "id": "dep-services-admin-react",
+      "kind": "dependency",
+      "name": "react",
+      "version": "18.2.0",
+      "section": "dependencies",
+      "manifest": "services/admin/package.json"
+    },
+    {
+      "id": "dep-services-admin-react-dom",
+      "kind": "dependency",
+      "name": "react-dom",
+      "version": "18.2.0",
+      "section": "dependencies",
+      "manifest": "services/admin/package.json"
+    },
+    {
+      "id": "dep-services-admin-react-router-dom",
+      "kind": "dependency",
+      "name": "react-router-dom",
+      "version": "6.22.3",
+      "section": "dependencies",
+      "manifest": "services/admin/package.json"
+    },
+    {
+      "id": "dep-services-admin-graphql",
+      "kind": "dependency",
+      "name": "graphql",
+      "version": "16.8.1",
+      "section": "dependencies",
+      "manifest": "services/admin/package.json"
+    },
+    {
+      "id": "dep-services-admin-apollo-client",
+      "kind": "dependency",
+      "name": "@apollo/client",
+      "version": "3.9.9",
+      "section": "dependencies",
+      "manifest": "services/admin/package.json"
+    },
+    {
+      "id": "dep-services-api-express",
+      "kind": "dependency",
+      "name": "express",
+      "version": "4.18.3",
+      "section": "dependencies",
+      "manifest": "services/api/package.json"
+    },
+    {
+      "id": "dep-services-api-graphql",
+      "kind": "dependency",
+      "name": "graphql",
+      "version": "16.8.1",
+      "section": "dependencies",
+      "manifest": "services/api/package.json"
+    },
+    {
+      "id": "dep-services-api-graphql-http",
+      "kind": "dependency",
+      "name": "graphql-http",
+      "version": "1.22.0",
+      "section": "dependencies",
+      "manifest": "services/api/package.json"
+    },
+    {
+      "id": "dep-services-api-pg",
+      "kind": "dependency",
+      "name": "pg",
+      "version": "8.11.3",
+      "section": "dependencies",
+      "manifest": "services/api/package.json"
+    },
+    {
+      "id": "dep-services-api-zod",
+      "kind": "dependency",
+      "name": "zod",
+      "version": "3.22.4",
+      "section": "dependencies",
+      "manifest": "services/api/package.json"
+    },
+    {
+      "id": "dep-services-api-pino",
+      "kind": "dependency",
+      "name": "pino",
+      "version": "8.19.0",
+      "section": "dependencies",
+      "manifest": "services/api/package.json"
+    },
+    {
+      "id": "dep-services-api-jsonwebtoken",
+      "kind": "dependency",
+      "name": "jsonwebtoken",
+      "version": "9.0.2",
+      "section": "dependencies",
+      "manifest": "services/api/package.json"
+    },
+    {
+      "id": "dep-services-web-next",
+      "kind": "dependency",
+      "name": "next",
+      "version": "14.1.0",
+      "section": "dependencies",
+      "manifest": "services/web/package.json"
+    },
+    {
+      "id": "dep-services-web-react",
+      "kind": "dependency",
+      "name": "react",
+      "version": "18.2.0",
+      "section": "dependencies",
+      "manifest": "services/web/package.json"
+    },
+    {
+      "id": "dep-services-web-react-dom",
+      "kind": "dependency",
+      "name": "react-dom",
+      "version": "18.2.0",
+      "section": "dependencies",
+      "manifest": "services/web/package.json"
+    },
+    {
+      "id": "dep-services-web-date-fns",
+      "kind": "dependency",
+      "name": "date-fns",
+      "version": "2.30.0",
+      "section": "dependencies",
+      "manifest": "services/web/package.json"
+    },
+    {
+      "id": "dep-services-worker-bullmq",
+      "kind": "dependency",
+      "name": "bullmq",
+      "version": "5.4.2",
+      "section": "dependencies",
+      "manifest": "services/worker/package.json"
+    },
+    {
+      "id": "dep-services-worker-ioredis",
+      "kind": "dependency",
+      "name": "ioredis",
+      "version": "5.3.2",
+      "section": "dependencies",
+      "manifest": "services/worker/package.json"
+    },
+    {
+      "id": "dep-services-worker-pino",
+      "kind": "dependency",
+      "name": "pino",
+      "version": "8.19.0",
+      "section": "dependencies",
+      "manifest": "services/worker/package.json"
+    },
+    {
+      "id": "dep-packages-api-client-zod",
+      "kind": "dependency",
+      "name": "zod",
+      "version": "3.22.4",
+      "section": "dependencies",
+      "manifest": "packages/api-client/package.json"
+    },
+    {
+      "id": "dep-packages-auth-jsonwebtoken",
+      "kind": "dependency",
+      "name": "jsonwebtoken",
+      "version": "9.0.2",
+      "section": "dependencies",
+      "manifest": "packages/auth/package.json"
+    },
+    {
+      "id": "dep-packages-auth-node-rs-argon2",
+      "kind": "dependency",
+      "name": "@node-rs/argon2",
+      "version": "1.8.0",
+      "section": "dependencies",
+      "manifest": "packages/auth/package.json"
+    },
+    {
+      "id": "dep-packages-auth-zod",
+      "kind": "dependency",
+      "name": "zod",
+      "version": "3.22.4",
+      "section": "dependencies",
+      "manifest": "packages/auth/package.json"
+    },
+    {
+      "id": "dep-packages-billing-stripe",
+      "kind": "dependency",
+      "name": "stripe",
+      "version": "14.21.0",
+      "section": "dependencies",
+      "manifest": "packages/billing/package.json"
+    },
+    {
+      "id": "dep-packages-billing-zod",
+      "kind": "dependency",
+      "name": "zod",
+      "version": "3.22.4",
+      "section": "dependencies",
+      "manifest": "packages/billing/package.json"
+    },
+    {
+      "id": "dep-packages-config-zod",
+      "kind": "dependency",
+      "name": "zod",
+      "version": "3.22.4",
+      "section": "dependencies",
+      "manifest": "packages/config/package.json"
+    },
+    {
+      "id": "dep-packages-config-dotenv",
+      "kind": "dependency",
+      "name": "dotenv",
+      "version": "16.4.5",
+      "section": "dependencies",
+      "manifest": "packages/config/package.json"
+    },
+    {
+      "id": "dep-packages-notifications-nodemailer",
+      "kind": "dependency",
+      "name": "nodemailer",
+      "version": "6.9.13",
+      "section": "dependencies",
+      "manifest": "packages/notifications/package.json"
+    },
+    {
+      "id": "dep-packages-notifications-twilio",
+      "kind": "dependency",
+      "name": "twilio",
+      "version": "4.23.0",
+      "section": "dependencies",
+      "manifest": "packages/notifications/package.json"
+    },
+    {
+      "id": "dep-packages-scheduling-date-fns",
+      "kind": "dependency",
+      "name": "date-fns",
+      "version": "2.30.0",
+      "section": "dependencies",
+      "manifest": "packages/scheduling/package.json"
+    },
+    {
+      "id": "dep-packages-scheduling-date-fns-tz",
+      "kind": "dependency",
+      "name": "date-fns-tz",
+      "version": "2.0.1",
+      "section": "dependencies",
+      "manifest": "packages/scheduling/package.json"
+    },
+    {
+      "id": "dep-packages-scheduling-zod",
+      "kind": "dependency",
+      "name": "zod",
+      "version": "3.22.4",
+      "section": "dependencies",
+      "manifest": "packages/scheduling/package.json"
+    },
+    {
+      "id": "dep-packages-search-pg",
+      "kind": "dependency",
+      "name": "pg",
+      "version": "8.11.3",
+      "section": "dependencies",
+      "manifest": "packages/search/package.json"
+    },
+    {
+      "id": "dep-packages-telemetry-opentelemetry-api",
+      "kind": "dependency",
+      "name": "@opentelemetry/api",
+      "version": "1.8.0",
+      "section": "dependencies",
+      "manifest": "packages/telemetry/package.json"
+    },
+    {
+      "id": "dep-packages-telemetry-opentelemetry-sdk-node",
+      "kind": "dependency",
+      "name": "@opentelemetry/sdk-node",
+      "version": "0.49.1",
+      "section": "dependencies",
+      "manifest": "packages/telemetry/package.json"
+    },
+    {
+      "id": "dep-packages-telemetry-pino",
+      "kind": "dependency",
+      "name": "pino",
+      "version": "8.19.0",
+      "section": "dependencies",
+      "manifest": "packages/telemetry/package.json"
+    },
+    {
+      "id": "dep-packages-ui-kit-radix-ui-react-dialog",
+      "kind": "dependency",
+      "name": "@radix-ui/react-dialog",
+      "version": "1.0.5",
+      "section": "dependencies",
+      "manifest": "packages/ui-kit/package.json"
+    },
+    {
+      "id": "dep-packages-ui-kit-radix-ui-react-popover",
+      "kind": "dependency",
+      "name": "@radix-ui/react-popover",
+      "version": "1.0.7",
+      "section": "dependencies",
+      "manifest": "packages/ui-kit/package.json"
+    },
+    {
+      "id": "dep-packages-ui-kit-class-variance-authority",
+      "kind": "dependency",
+      "name": "class-variance-authority",
+      "version": "0.7.0",
+      "section": "dependencies",
+      "manifest": "packages/ui-kit/package.json"
+    },
+    {
+      "id": "dep-tools-migrate-pg",
+      "kind": "dependency",
+      "name": "pg",
+      "version": "8.11.3",
+      "section": "dependencies",
+      "manifest": "tools/migrate/package.json"
+    },
+    {
+      "id": "dep-tools-migrate-node-pg-migrate",
+      "kind": "dependency",
+      "name": "node-pg-migrate",
+      "version": "6.2.2",
+      "section": "dependencies",
+      "manifest": "tools/migrate/package.json"
+    },
+    {
+      "id": "dep-tools-seed-data-faker-js-faker",
+      "kind": "dependency",
+      "name": "@faker-js/faker",
+      "version": "8.4.1",
+      "section": "dependencies",
+      "manifest": "tools/seed-data/package.json"
+    },
+    {
+      "id": "pkg-apollo-client",
+      "kind": "package",
+      "name": "@apollo/client",
+      "pinned": "3.9.9",
+      "latest": "4.3.3",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-faker-js-faker",
+      "kind": "package",
+      "name": "@faker-js/faker",
+      "pinned": "8.4.1",
+      "latest": "10.6.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-node-rs-argon2",
+      "kind": "package",
+      "name": "@node-rs/argon2",
+      "pinned": "1.8.0",
+      "latest": "2.2.2",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-opentelemetry-api",
+      "kind": "package",
+      "name": "@opentelemetry/api",
+      "pinned": "1.8.0",
+      "latest": "1.9.1",
+      "upgrade": "minor"
+    },
+    {
+      "id": "pkg-opentelemetry-sdk-node",
+      "kind": "package",
+      "name": "@opentelemetry/sdk-node",
+      "pinned": "0.49.1",
+      "latest": "0.223.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-playwright-test",
+      "kind": "package",
+      "name": "@playwright/test",
+      "pinned": "1.44.0",
+      "latest": "1.64.1",
+      "upgrade": "minor"
+    },
+    {
+      "id": "pkg-radix-ui-react-dialog",
+      "kind": "package",
+      "name": "@radix-ui/react-dialog",
+      "pinned": "1.0.5",
+      "latest": "1.3.1",
+      "upgrade": "minor"
+    },
+    {
+      "id": "pkg-radix-ui-react-popover",
+      "kind": "package",
+      "name": "@radix-ui/react-popover",
+      "pinned": "1.0.7",
+      "latest": "1.3.1",
+      "upgrade": "minor"
+    },
+    {
+      "id": "pkg-types-node",
+      "kind": "package",
+      "name": "@types/node",
+      "pinned": "18.19.31",
+      "latest": "26.6.5",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-bullmq",
+      "kind": "package",
+      "name": "bullmq",
+      "pinned": "5.4.2",
+      "latest": "6.3.15",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-class-variance-authority",
+      "kind": "package",
+      "name": "class-variance-authority",
+      "pinned": "0.7.0",
+      "latest": "0.7.1",
+      "upgrade": "patch"
+    },
+    {
+      "id": "pkg-date-fns",
+      "kind": "package",
+      "name": "date-fns",
+      "pinned": "2.30.0",
+      "latest": "4.4.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-date-fns-tz",
+      "kind": "package",
+      "name": "date-fns-tz",
+      "pinned": "2.0.1",
+      "latest": "3.2.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-dotenv",
+      "kind": "package",
+      "name": "dotenv",
+      "pinned": "16.4.5",
+      "latest": "18.0.8",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-eslint",
+      "kind": "package",
+      "name": "eslint",
+      "pinned": "8.57.0",
+      "latest": "10.12.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-express",
+      "kind": "package",
+      "name": "express",
+      "pinned": "4.18.3",
+      "latest": "5.3.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-graphql",
+      "kind": "package",
+      "name": "graphql",
+      "pinned": "16.8.1",
+      "latest": "17.0.2",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-graphql-http",
+      "kind": "package",
+      "name": "graphql-http",
+      "pinned": "1.22.0",
+      "latest": "1.23.1",
+      "upgrade": "minor"
+    },
+    {
+      "id": "pkg-ioredis",
+      "kind": "package",
+      "name": "ioredis",
+      "pinned": "5.3.2",
+      "latest": "6.0.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-jsonwebtoken",
+      "kind": "package",
+      "name": "jsonwebtoken",
+      "pinned": "9.0.2",
+      "latest": "9.0.3",
+      "upgrade": "patch"
+    },
+    {
+      "id": "pkg-next",
+      "kind": "package",
+      "name": "next",
+      "pinned": "14.1.0",
+      "latest": "16.4.1",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-node-pg-migrate",
+      "kind": "package",
+      "name": "node-pg-migrate",
+      "pinned": "6.2.2",
+      "latest": "9.0.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-nodemailer",
+      "kind": "package",
+      "name": "nodemailer",
+      "pinned": "6.9.13",
+      "latest": "10.1.1",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-pg",
+      "kind": "package",
+      "name": "pg",
+      "pinned": "8.11.3",
+      "latest": "8.23.1",
+      "upgrade": "minor"
+    },
+    {
+      "id": "pkg-pino",
+      "kind": "package",
+      "name": "pino",
+      "pinned": "8.19.0",
+      "latest": "10.4.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-prettier",
+      "kind": "package",
+      "name": "prettier",
+      "pinned": "3.2.5",
+      "latest": "3.9.10",
+      "upgrade": "minor"
+    },
+    {
+      "id": "pkg-react",
+      "kind": "package",
+      "name": "react",
+      "pinned": "18.2.0",
+      "latest": "19.3.1",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-react-dom",
+      "kind": "package",
+      "name": "react-dom",
+      "pinned": "18.2.0",
+      "latest": "19.3.1",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-react-router-dom",
+      "kind": "package",
+      "name": "react-router-dom",
+      "pinned": "6.22.3",
+      "latest": "7.18.4",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-stripe",
+      "kind": "package",
+      "name": "stripe",
+      "pinned": "14.21.0",
+      "latest": "23.0.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-turbo",
+      "kind": "package",
+      "name": "turbo",
+      "pinned": "1.13.3",
+      "latest": "2.11.8",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-twilio",
+      "kind": "package",
+      "name": "twilio",
+      "pinned": "4.23.0",
+      "latest": "6.2.0",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-typescript",
+      "kind": "package",
+      "name": "typescript",
+      "pinned": "5.4.5",
+      "latest": "7.0.2",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-vitest",
+      "kind": "package",
+      "name": "vitest",
+      "pinned": "1.6.0",
+      "latest": "5.0.4",
+      "upgrade": "major"
+    },
+    {
+      "id": "pkg-zod",
+      "kind": "package",
+      "name": "zod",
+      "pinned": "3.22.4",
+      "latest": "4.6.7",
+      "upgrade": "major"
+    },
+    {
+      "id": "adr-1",
+      "kind": "decision",
+      "number": 1,
+      "title": "One repository, managed with pnpm workspaces",
+      "status": "accepted",
+      "date": "2023-03-02",
+      "file": "docs/adr/0001-one-repository-managed-with-pnpm-workspaces.md"
+    },
+    {
+      "id": "adr-2",
+      "kind": "decision",
+      "number": 2,
+      "title": "PostgreSQL as the only database",
+      "status": "accepted",
+      "date": "2023-03-09",
+      "file": "docs/adr/0002-postgresql-as-the-only-database.md"
+    },
+    {
+      "id": "adr-3",
+      "kind": "decision",
+      "number": 3,
+      "title": "REST for every client",
+      "status": "superseded",
+      "date": "2023-03-16",
+      "file": "docs/adr/0003-rest-for-every-client.md"
+    },
+    {
+      "id": "adr-4",
+      "kind": "decision",
+      "number": 4,
+      "title": "Sessions as signed JWTs",
+      "status": "superseded",
+      "date": "2023-04-04",
+      "file": "docs/adr/0004-sessions-as-signed-jwts.md"
+    },
+    {
+      "id": "adr-5",
+      "kind": "decision",
+      "number": 5,
+      "title": "Background jobs in a Postgres table",
+      "status": "superseded",
+      "date": "2023-04-20",
+      "file": "docs/adr/0005-background-jobs-in-a-postgres-table.md"
+    },
+    {
+      "id": "adr-6",
+      "kind": "decision",
+      "number": 6,
+      "title": "Feature flags in configuration, not a service",
+      "status": "accepted",
+      "date": "2023-05-11",
+      "file": "docs/adr/0006-feature-flags-in-configuration-not-a-service.md"
+    },
+    {
+      "id": "adr-7",
+      "kind": "decision",
+      "number": 7,
+      "title": "The UI kit is built on Radix primitives",
+      "status": "accepted",
+      "date": "2023-06-01",
+      "file": "docs/adr/0007-the-ui-kit-is-built-on-radix-primitives.md"
+    },
+    {
+      "id": "adr-8",
+      "kind": "decision",
+      "number": 8,
+      "title": "Every clinic has exactly one time zone",
+      "status": "accepted",
+      "date": "2023-07-19",
+      "file": "docs/adr/0008-every-clinic-has-exactly-one-time-zone.md"
+    },
+    {
+      "id": "adr-9",
+      "kind": "decision",
+      "number": 9,
+      "title": "Server-side sessions in Postgres",
+      "status": "accepted",
+      "date": "2023-11-08",
+      "file": "docs/adr/0009-server-side-sessions-in-postgres.md"
+    },
+    {
+      "id": "adr-10",
+      "kind": "decision",
+      "number": 10,
+      "title": "Stripe for payments and invoices",
+      "status": "accepted",
+      "date": "2023-08-24",
+      "file": "docs/adr/0010-stripe-for-payments-and-invoices.md"
+    },
+    {
+      "id": "adr-11",
+      "kind": "decision",
+      "number": 11,
+      "title": "GraphQL for the admin console",
+      "status": "accepted",
+      "date": "2024-01-17",
+      "file": "docs/adr/0011-graphql-for-the-admin-console.md"
+    },
+    {
+      "id": "adr-12",
+      "kind": "decision",
+      "number": 12,
+      "title": "Move the job queue to Redis with BullMQ",
+      "status": "accepted",
+      "date": "2024-04-02",
+      "file": "docs/adr/0012-move-the-job-queue-to-redis-with-bullmq.md"
+    },
+    {
+      "id": "adr-13",
+      "kind": "decision",
+      "number": 13,
+      "title": "Search on Postgres full-text search",
+      "status": "proposed",
+      "date": "2025-02-12",
+      "file": "docs/adr/0013-search-on-postgres-full-text-search.md"
+    },
+    {
+      "id": "adr-14",
+      "kind": "decision",
+      "number": 14,
+      "title": "Drop Node 18",
+      "status": "proposed",
+      "date": "2025-03-03",
+      "file": "docs/adr/0014-drop-node-18.md"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "kind": "ownedBy",
+      "from": "mod-services-web",
+      "to": "person-maya-r"
+    },
+    {
+      "id": "e2",
+      "kind": "ownedBy",
+      "from": "mod-services-admin",
+      "to": "person-maya-r"
+    },
+    {
+      "id": "e3",
+      "kind": "ownedBy",
+      "from": "mod-services-admin",
+      "to": "person-ola-b"
+    },
+    {
+      "id": "e4",
+      "kind": "ownedBy",
+      "from": "mod-services-api",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e5",
+      "kind": "ownedBy",
+      "from": "mod-services-worker",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e6",
+      "kind": "ownedBy",
+      "from": "mod-packages-auth",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e7",
+      "kind": "ownedBy",
+      "from": "mod-packages-auth",
+      "to": "person-priya-s"
+    },
+    {
+      "id": "e8",
+      "kind": "ownedBy",
+      "from": "mod-packages-billing",
+      "to": "person-priya-s"
+    },
+    {
+      "id": "e9",
+      "kind": "ownedBy",
+      "from": "mod-packages-scheduling",
+      "to": "person-wen-h"
+    },
+    {
+      "id": "e10",
+      "kind": "ownedBy",
+      "from": "mod-packages-notifications",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e11",
+      "kind": "ownedBy",
+      "from": "mod-packages-ui-kit",
+      "to": "person-ola-b"
+    },
+    {
+      "id": "e12",
+      "kind": "ownedBy",
+      "from": "mod-packages-api-client",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e13",
+      "kind": "ownedBy",
+      "from": "mod-packages-shared-types",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e14",
+      "kind": "ownedBy",
+      "from": "mod-packages-config",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e15",
+      "kind": "ownedBy",
+      "from": "mod-tools-migrate",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e16",
+      "kind": "declaredIn",
+      "from": "dep-root-typescript",
+      "to": "mod-root"
+    },
+    {
+      "id": "e17",
+      "kind": "pins",
+      "from": "dep-root-typescript",
+      "to": "pkg-typescript"
+    },
+    {
+      "id": "e18",
+      "kind": "declaredIn",
+      "from": "dep-root-vitest",
+      "to": "mod-root"
+    },
+    {
+      "id": "e19",
+      "kind": "pins",
+      "from": "dep-root-vitest",
+      "to": "pkg-vitest"
+    },
+    {
+      "id": "e20",
+      "kind": "declaredIn",
+      "from": "dep-root-eslint",
+      "to": "mod-root"
+    },
+    {
+      "id": "e21",
+      "kind": "pins",
+      "from": "dep-root-eslint",
+      "to": "pkg-eslint"
+    },
+    {
+      "id": "e22",
+      "kind": "declaredIn",
+      "from": "dep-root-prettier",
+      "to": "mod-root"
+    },
+    {
+      "id": "e23",
+      "kind": "pins",
+      "from": "dep-root-prettier",
+      "to": "pkg-prettier"
+    },
+    {
+      "id": "e24",
+      "kind": "declaredIn",
+      "from": "dep-root-playwright-test",
+      "to": "mod-root"
+    },
+    {
+      "id": "e25",
+      "kind": "pins",
+      "from": "dep-root-playwright-test",
+      "to": "pkg-playwright-test"
+    },
+    {
+      "id": "e26",
+      "kind": "declaredIn",
+      "from": "dep-root-turbo",
+      "to": "mod-root"
+    },
+    {
+      "id": "e27",
+      "kind": "pins",
+      "from": "dep-root-turbo",
+      "to": "pkg-turbo"
+    },
+    {
+      "id": "e28",
+      "kind": "declaredIn",
+      "from": "dep-root-types-node",
+      "to": "mod-root"
+    },
+    {
+      "id": "e29",
+      "kind": "pins",
+      "from": "dep-root-types-node",
+      "to": "pkg-types-node"
+    },
+    {
+      "id": "e30",
+      "kind": "declaredIn",
+      "from": "dep-services-admin-react",
+      "to": "mod-services-admin"
+    },
+    {
+      "id": "e31",
+      "kind": "pins",
+      "from": "dep-services-admin-react",
+      "to": "pkg-react"
+    },
+    {
+      "id": "e32",
+      "kind": "declaredIn",
+      "from": "dep-services-admin-react-dom",
+      "to": "mod-services-admin"
+    },
+    {
+      "id": "e33",
+      "kind": "pins",
+      "from": "dep-services-admin-react-dom",
+      "to": "pkg-react-dom"
+    },
+    {
+      "id": "e34",
+      "kind": "declaredIn",
+      "from": "dep-services-admin-react-router-dom",
+      "to": "mod-services-admin"
+    },
+    {
+      "id": "e35",
+      "kind": "pins",
+      "from": "dep-services-admin-react-router-dom",
+      "to": "pkg-react-router-dom"
+    },
+    {
+      "id": "e36",
+      "kind": "declaredIn",
+      "from": "dep-services-admin-graphql",
+      "to": "mod-services-admin"
+    },
+    {
+      "id": "e37",
+      "kind": "pins",
+      "from": "dep-services-admin-graphql",
+      "to": "pkg-graphql"
+    },
+    {
+      "id": "e38",
+      "kind": "declaredIn",
+      "from": "dep-services-admin-apollo-client",
+      "to": "mod-services-admin"
+    },
+    {
+      "id": "e39",
+      "kind": "pins",
+      "from": "dep-services-admin-apollo-client",
+      "to": "pkg-apollo-client"
+    },
+    {
+      "id": "e40",
+      "kind": "declaredIn",
+      "from": "dep-services-api-express",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e41",
+      "kind": "pins",
+      "from": "dep-services-api-express",
+      "to": "pkg-express"
+    },
+    {
+      "id": "e42",
+      "kind": "declaredIn",
+      "from": "dep-services-api-graphql",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e43",
+      "kind": "pins",
+      "from": "dep-services-api-graphql",
+      "to": "pkg-graphql"
+    },
+    {
+      "id": "e44",
+      "kind": "declaredIn",
+      "from": "dep-services-api-graphql-http",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e45",
+      "kind": "pins",
+      "from": "dep-services-api-graphql-http",
+      "to": "pkg-graphql-http"
+    },
+    {
+      "id": "e46",
+      "kind": "declaredIn",
+      "from": "dep-services-api-pg",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e47",
+      "kind": "pins",
+      "from": "dep-services-api-pg",
+      "to": "pkg-pg"
+    },
+    {
+      "id": "e48",
+      "kind": "declaredIn",
+      "from": "dep-services-api-zod",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e49",
+      "kind": "pins",
+      "from": "dep-services-api-zod",
+      "to": "pkg-zod"
+    },
+    {
+      "id": "e50",
+      "kind": "declaredIn",
+      "from": "dep-services-api-pino",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e51",
+      "kind": "pins",
+      "from": "dep-services-api-pino",
+      "to": "pkg-pino"
+    },
+    {
+      "id": "e52",
+      "kind": "declaredIn",
+      "from": "dep-services-api-jsonwebtoken",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e53",
+      "kind": "pins",
+      "from": "dep-services-api-jsonwebtoken",
+      "to": "pkg-jsonwebtoken"
+    },
+    {
+      "id": "e54",
+      "kind": "declaredIn",
+      "from": "dep-services-web-next",
+      "to": "mod-services-web"
+    },
+    {
+      "id": "e55",
+      "kind": "pins",
+      "from": "dep-services-web-next",
+      "to": "pkg-next"
+    },
+    {
+      "id": "e56",
+      "kind": "declaredIn",
+      "from": "dep-services-web-react",
+      "to": "mod-services-web"
+    },
+    {
+      "id": "e57",
+      "kind": "pins",
+      "from": "dep-services-web-react",
+      "to": "pkg-react"
+    },
+    {
+      "id": "e58",
+      "kind": "declaredIn",
+      "from": "dep-services-web-react-dom",
+      "to": "mod-services-web"
+    },
+    {
+      "id": "e59",
+      "kind": "pins",
+      "from": "dep-services-web-react-dom",
+      "to": "pkg-react-dom"
+    },
+    {
+      "id": "e60",
+      "kind": "declaredIn",
+      "from": "dep-services-web-date-fns",
+      "to": "mod-services-web"
+    },
+    {
+      "id": "e61",
+      "kind": "pins",
+      "from": "dep-services-web-date-fns",
+      "to": "pkg-date-fns"
+    },
+    {
+      "id": "e62",
+      "kind": "declaredIn",
+      "from": "dep-services-worker-bullmq",
+      "to": "mod-services-worker"
+    },
+    {
+      "id": "e63",
+      "kind": "pins",
+      "from": "dep-services-worker-bullmq",
+      "to": "pkg-bullmq"
+    },
+    {
+      "id": "e64",
+      "kind": "declaredIn",
+      "from": "dep-services-worker-ioredis",
+      "to": "mod-services-worker"
+    },
+    {
+      "id": "e65",
+      "kind": "pins",
+      "from": "dep-services-worker-ioredis",
+      "to": "pkg-ioredis"
+    },
+    {
+      "id": "e66",
+      "kind": "declaredIn",
+      "from": "dep-services-worker-pino",
+      "to": "mod-services-worker"
+    },
+    {
+      "id": "e67",
+      "kind": "pins",
+      "from": "dep-services-worker-pino",
+      "to": "pkg-pino"
+    },
+    {
+      "id": "e68",
+      "kind": "declaredIn",
+      "from": "dep-packages-api-client-zod",
+      "to": "mod-packages-api-client"
+    },
+    {
+      "id": "e69",
+      "kind": "pins",
+      "from": "dep-packages-api-client-zod",
+      "to": "pkg-zod"
+    },
+    {
+      "id": "e70",
+      "kind": "declaredIn",
+      "from": "dep-packages-auth-jsonwebtoken",
+      "to": "mod-packages-auth"
+    },
+    {
+      "id": "e71",
+      "kind": "pins",
+      "from": "dep-packages-auth-jsonwebtoken",
+      "to": "pkg-jsonwebtoken"
+    },
+    {
+      "id": "e72",
+      "kind": "declaredIn",
+      "from": "dep-packages-auth-node-rs-argon2",
+      "to": "mod-packages-auth"
+    },
+    {
+      "id": "e73",
+      "kind": "pins",
+      "from": "dep-packages-auth-node-rs-argon2",
+      "to": "pkg-node-rs-argon2"
+    },
+    {
+      "id": "e74",
+      "kind": "declaredIn",
+      "from": "dep-packages-auth-zod",
+      "to": "mod-packages-auth"
+    },
+    {
+      "id": "e75",
+      "kind": "pins",
+      "from": "dep-packages-auth-zod",
+      "to": "pkg-zod"
+    },
+    {
+      "id": "e76",
+      "kind": "declaredIn",
+      "from": "dep-packages-billing-stripe",
+      "to": "mod-packages-billing"
+    },
+    {
+      "id": "e77",
+      "kind": "pins",
+      "from": "dep-packages-billing-stripe",
+      "to": "pkg-stripe"
+    },
+    {
+      "id": "e78",
+      "kind": "declaredIn",
+      "from": "dep-packages-billing-zod",
+      "to": "mod-packages-billing"
+    },
+    {
+      "id": "e79",
+      "kind": "pins",
+      "from": "dep-packages-billing-zod",
+      "to": "pkg-zod"
+    },
+    {
+      "id": "e80",
+      "kind": "declaredIn",
+      "from": "dep-packages-config-zod",
+      "to": "mod-packages-config"
+    },
+    {
+      "id": "e81",
+      "kind": "pins",
+      "from": "dep-packages-config-zod",
+      "to": "pkg-zod"
+    },
+    {
+      "id": "e82",
+      "kind": "declaredIn",
+      "from": "dep-packages-config-dotenv",
+      "to": "mod-packages-config"
+    },
+    {
+      "id": "e83",
+      "kind": "pins",
+      "from": "dep-packages-config-dotenv",
+      "to": "pkg-dotenv"
+    },
+    {
+      "id": "e84",
+      "kind": "declaredIn",
+      "from": "dep-packages-notifications-nodemailer",
+      "to": "mod-packages-notifications"
+    },
+    {
+      "id": "e85",
+      "kind": "pins",
+      "from": "dep-packages-notifications-nodemailer",
+      "to": "pkg-nodemailer"
+    },
+    {
+      "id": "e86",
+      "kind": "declaredIn",
+      "from": "dep-packages-notifications-twilio",
+      "to": "mod-packages-notifications"
+    },
+    {
+      "id": "e87",
+      "kind": "pins",
+      "from": "dep-packages-notifications-twilio",
+      "to": "pkg-twilio"
+    },
+    {
+      "id": "e88",
+      "kind": "declaredIn",
+      "from": "dep-packages-scheduling-date-fns",
+      "to": "mod-packages-scheduling"
+    },
+    {
+      "id": "e89",
+      "kind": "pins",
+      "from": "dep-packages-scheduling-date-fns",
+      "to": "pkg-date-fns"
+    },
+    {
+      "id": "e90",
+      "kind": "declaredIn",
+      "from": "dep-packages-scheduling-date-fns-tz",
+      "to": "mod-packages-scheduling"
+    },
+    {
+      "id": "e91",
+      "kind": "pins",
+      "from": "dep-packages-scheduling-date-fns-tz",
+      "to": "pkg-date-fns-tz"
+    },
+    {
+      "id": "e92",
+      "kind": "declaredIn",
+      "from": "dep-packages-scheduling-zod",
+      "to": "mod-packages-scheduling"
+    },
+    {
+      "id": "e93",
+      "kind": "pins",
+      "from": "dep-packages-scheduling-zod",
+      "to": "pkg-zod"
+    },
+    {
+      "id": "e94",
+      "kind": "declaredIn",
+      "from": "dep-packages-search-pg",
+      "to": "mod-packages-search"
+    },
+    {
+      "id": "e95",
+      "kind": "pins",
+      "from": "dep-packages-search-pg",
+      "to": "pkg-pg"
+    },
+    {
+      "id": "e96",
+      "kind": "declaredIn",
+      "from": "dep-packages-telemetry-opentelemetry-api",
+      "to": "mod-packages-telemetry"
+    },
+    {
+      "id": "e97",
+      "kind": "pins",
+      "from": "dep-packages-telemetry-opentelemetry-api",
+      "to": "pkg-opentelemetry-api"
+    },
+    {
+      "id": "e98",
+      "kind": "declaredIn",
+      "from": "dep-packages-telemetry-opentelemetry-sdk-node",
+      "to": "mod-packages-telemetry"
+    },
+    {
+      "id": "e99",
+      "kind": "pins",
+      "from": "dep-packages-telemetry-opentelemetry-sdk-node",
+      "to": "pkg-opentelemetry-sdk-node"
+    },
+    {
+      "id": "e100",
+      "kind": "declaredIn",
+      "from": "dep-packages-telemetry-pino",
+      "to": "mod-packages-telemetry"
+    },
+    {
+      "id": "e101",
+      "kind": "pins",
+      "from": "dep-packages-telemetry-pino",
+      "to": "pkg-pino"
+    },
+    {
+      "id": "e102",
+      "kind": "declaredIn",
+      "from": "dep-packages-ui-kit-radix-ui-react-dialog",
+      "to": "mod-packages-ui-kit"
+    },
+    {
+      "id": "e103",
+      "kind": "pins",
+      "from": "dep-packages-ui-kit-radix-ui-react-dialog",
+      "to": "pkg-radix-ui-react-dialog"
+    },
+    {
+      "id": "e104",
+      "kind": "declaredIn",
+      "from": "dep-packages-ui-kit-radix-ui-react-popover",
+      "to": "mod-packages-ui-kit"
+    },
+    {
+      "id": "e105",
+      "kind": "pins",
+      "from": "dep-packages-ui-kit-radix-ui-react-popover",
+      "to": "pkg-radix-ui-react-popover"
+    },
+    {
+      "id": "e106",
+      "kind": "declaredIn",
+      "from": "dep-packages-ui-kit-class-variance-authority",
+      "to": "mod-packages-ui-kit"
+    },
+    {
+      "id": "e107",
+      "kind": "pins",
+      "from": "dep-packages-ui-kit-class-variance-authority",
+      "to": "pkg-class-variance-authority"
+    },
+    {
+      "id": "e108",
+      "kind": "declaredIn",
+      "from": "dep-tools-migrate-pg",
+      "to": "mod-tools-migrate"
+    },
+    {
+      "id": "e109",
+      "kind": "pins",
+      "from": "dep-tools-migrate-pg",
+      "to": "pkg-pg"
+    },
+    {
+      "id": "e110",
+      "kind": "declaredIn",
+      "from": "dep-tools-migrate-node-pg-migrate",
+      "to": "mod-tools-migrate"
+    },
+    {
+      "id": "e111",
+      "kind": "pins",
+      "from": "dep-tools-migrate-node-pg-migrate",
+      "to": "pkg-node-pg-migrate"
+    },
+    {
+      "id": "e112",
+      "kind": "declaredIn",
+      "from": "dep-tools-seed-data-faker-js-faker",
+      "to": "mod-tools-seed-data"
+    },
+    {
+      "id": "e113",
+      "kind": "pins",
+      "from": "dep-tools-seed-data-faker-js-faker",
+      "to": "pkg-faker-js-faker"
+    },
+    {
+      "id": "e114",
+      "kind": "affects",
+      "from": "adr-2",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e115",
+      "kind": "affects",
+      "from": "adr-2",
+      "to": "mod-tools-migrate"
+    },
+    {
+      "id": "e116",
+      "kind": "affects",
+      "from": "adr-2",
+      "to": "mod-packages-search"
+    },
+    {
+      "id": "e117",
+      "kind": "affects",
+      "from": "adr-3",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e118",
+      "kind": "affects",
+      "from": "adr-3",
+      "to": "mod-packages-api-client"
+    },
+    {
+      "id": "e119",
+      "kind": "affects",
+      "from": "adr-4",
+      "to": "mod-packages-auth"
+    },
+    {
+      "id": "e120",
+      "kind": "affects",
+      "from": "adr-4",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e121",
+      "kind": "affects",
+      "from": "adr-5",
+      "to": "mod-services-worker"
+    },
+    {
+      "id": "e122",
+      "kind": "affects",
+      "from": "adr-6",
+      "to": "mod-packages-config"
+    },
+    {
+      "id": "e123",
+      "kind": "affects",
+      "from": "adr-7",
+      "to": "mod-packages-ui-kit"
+    },
+    {
+      "id": "e124",
+      "kind": "affects",
+      "from": "adr-7",
+      "to": "mod-services-web"
+    },
+    {
+      "id": "e125",
+      "kind": "affects",
+      "from": "adr-7",
+      "to": "mod-services-admin"
+    },
+    {
+      "id": "e126",
+      "kind": "affects",
+      "from": "adr-8",
+      "to": "mod-packages-scheduling"
+    },
+    {
+      "id": "e127",
+      "kind": "affects",
+      "from": "adr-9",
+      "to": "mod-packages-auth"
+    },
+    {
+      "id": "e128",
+      "kind": "affects",
+      "from": "adr-9",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e129",
+      "kind": "supersedes",
+      "from": "adr-9",
+      "to": "adr-4"
+    },
+    {
+      "id": "e130",
+      "kind": "affects",
+      "from": "adr-10",
+      "to": "mod-packages-billing"
+    },
+    {
+      "id": "e131",
+      "kind": "affects",
+      "from": "adr-10",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e132",
+      "kind": "affects",
+      "from": "adr-11",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e133",
+      "kind": "affects",
+      "from": "adr-11",
+      "to": "mod-services-admin"
+    },
+    {
+      "id": "e134",
+      "kind": "supersedes",
+      "from": "adr-11",
+      "to": "adr-3"
+    },
+    {
+      "id": "e135",
+      "kind": "affects",
+      "from": "adr-12",
+      "to": "mod-services-worker"
+    },
+    {
+      "id": "e136",
+      "kind": "supersedes",
+      "from": "adr-12",
+      "to": "adr-5"
+    },
+    {
+      "id": "e137",
+      "kind": "affects",
+      "from": "adr-13",
+      "to": "mod-packages-search"
+    },
+    {
+      "id": "e138",
+      "kind": "affects",
+      "from": "adr-14",
+      "to": "mod-services-web"
+    },
+    {
+      "id": "e139",
+      "kind": "affects",
+      "from": "adr-14",
+      "to": "mod-services-admin"
+    },
+    {
+      "id": "e140",
+      "kind": "affects",
+      "from": "adr-14",
+      "to": "mod-services-api"
+    },
+    {
+      "id": "e141",
+      "kind": "affects",
+      "from": "adr-14",
+      "to": "mod-services-worker"
+    },
+    {
+      "id": "e142",
+      "kind": "drops",
+      "from": "adr-9",
+      "to": "pkg-jsonwebtoken"
+    }
+  ]
+}

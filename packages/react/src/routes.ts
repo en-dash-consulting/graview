@@ -125,6 +125,15 @@ export function roundedPolylineD(points: readonly Point[], radius: number): stri
   return parts.join(" ");
 }
 
+/**
+ * A LINE THROUGH THE GUTTERS, IN THE KIT'S ROUTE. The gutters decide where
+ * a tie on the ground goes; the kit decides how it turns: its corners eased
+ * on the default curve, square where the kit asks for right angles.
+ */
+export function channelD(points: readonly Point[], route: ConnectorRoute): string {
+  return route === "orthogonal" ? polylineD([points]) : roundedPolylineD(points, 10);
+}
+
 /** Where a route is at parameter t, for sampling a hit corridor. */
 export function routePoint(route: ConnectorRoute, q: Quadratic, t: number): Point {
   if (route === "orthogonal") {

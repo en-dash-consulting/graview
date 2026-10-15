@@ -2,6 +2,7 @@
 
 > Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong. Graview Cloud (https://graview.cloud) is the hosted product built on it.
 
+- Start with an agent: https://graview.dev/start.md is the procedure, written for the agent — hand it "Read https://graview.dev/start.md, then turn this repo's docs into a Graview app."
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
@@ -61,9 +62,17 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 - [graview-view-drawing](https://graview.dev/docs/skills/graview-view-drawing.md): Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
 - [graview-worker-view](https://graview.dev/docs/skills/graview-worker-view.md): Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
+## Recipes
+
+- [Recipes](https://graview.dev/docs/recipes.md): Graview recipes: one prompt to hand an agent, with a different task each, and the app it made, checked on every push and live on its page.
+- [Your decisions, as an app](https://graview.dev/docs/recipes/decisions.md): A Graview recipe: The architecture decision records: what each decided, what it superseded and which modules it affects, with the loose ends flagged.
+- [Your dependencies, as an upgrade plan](https://graview.dev/docs/recipes/dependencies.md): A Graview recipe: Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.
+- [Your docs, as an app](https://graview.dev/docs/recipes/docs.md): A Graview recipe: The repository's docs, the modules they cover and who owns each, with every module that has no doc or no owner flagged and the repair offered.
+
 ## Examples
 
 - [Live demos](https://graview.dev/docs/demos.md): The example garden's surfaces, running on this page, and the example apps in the repository.
+- [The tour](https://graview.dev/tour.html): A tour of what Graview derives from one declaration: the routed web app, rules that repair, lenses that rebind, the agent’s seat, the studio and permissions, each shown live, and the example garden grown a step at a time.
 - [The garden, grown](https://graview.dev/progression.html): One Graview example, a garden, declared a little at a time: every chapter live on the page, the declaration in full, the packages, the lenses, the kit and what an agent may do.
 - [apps/discography](https://github.com/en-dash-consulting/graview/tree/main/apps/discography): The example at real size: Tech N9ne's discography from MusicBrainz — 1,177 songs, 568 artists, 479 releases.
 - [apps/gauntlet](https://github.com/en-dash-consulting/graview/tree/main/apps/gauntlet): The example built to be awkward: ten years of a conference's program, with every shape of data the walks found by accident declared on purpose.

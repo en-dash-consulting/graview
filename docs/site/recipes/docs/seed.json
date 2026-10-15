@@ -1,0 +1,910 @@
+{
+  "nodes": [
+    {
+      "id": "module-services-admin",
+      "kind": "module",
+      "path": "services/admin",
+      "packageName": "@larkspur/admin",
+      "area": "service",
+      "summary": "The clinic staff's admin console: calendars, staff, billing settings.",
+      "readme": "services/admin/README.md"
+    },
+    {
+      "id": "module-services-api",
+      "kind": "module",
+      "path": "services/api",
+      "packageName": "@larkspur/api",
+      "area": "service",
+      "summary": "The HTTP API: REST for the booking site, GraphQL for the admin console.",
+      "readme": "services/api/README.md"
+    },
+    {
+      "id": "module-services-web",
+      "kind": "module",
+      "path": "services/web",
+      "packageName": "@larkspur/web",
+      "area": "service",
+      "summary": "The patient-facing booking site (Next.js).",
+      "readme": "services/web/README.md"
+    },
+    {
+      "id": "module-services-worker",
+      "kind": "module",
+      "path": "services/worker",
+      "packageName": "@larkspur/worker",
+      "area": "service",
+      "summary": "Background jobs: reminders, invoice retries, search reindexing.",
+      "readme": "services/worker/README.md"
+    },
+    {
+      "id": "module-packages-api-client",
+      "kind": "module",
+      "path": "packages/api-client",
+      "packageName": "@larkspur/api-client",
+      "area": "package",
+      "summary": "The typed client the booking site calls the API with.",
+      "readme": "packages/api-client/README.md"
+    },
+    {
+      "id": "module-packages-auth",
+      "kind": "module",
+      "path": "packages/auth",
+      "packageName": "@larkspur/auth",
+      "area": "package",
+      "summary": "Sign-in, sessions and staff roles.",
+      "readme": "packages/auth/README.md"
+    },
+    {
+      "id": "module-packages-billing",
+      "kind": "module",
+      "path": "packages/billing",
+      "packageName": "@larkspur/billing",
+      "area": "package",
+      "summary": "Invoices, payments and the retry schedule, on Stripe.",
+      "readme": "packages/billing/README.md"
+    },
+    {
+      "id": "module-packages-config",
+      "kind": "module",
+      "path": "packages/config",
+      "packageName": "@larkspur/config",
+      "area": "package",
+      "summary": "Environment parsing and feature flags."
+    },
+    {
+      "id": "module-packages-notifications",
+      "kind": "module",
+      "path": "packages/notifications",
+      "packageName": "@larkspur/notifications",
+      "area": "package",
+      "summary": "Email and SMS reminders.",
+      "readme": "packages/notifications/README.md"
+    },
+    {
+      "id": "module-packages-scheduling",
+      "kind": "module",
+      "path": "packages/scheduling",
+      "packageName": "@larkspur/scheduling",
+      "area": "package",
+      "summary": "Availability, appointment slots and the booking rules.",
+      "readme": "packages/scheduling/README.md"
+    },
+    {
+      "id": "module-packages-search",
+      "kind": "module",
+      "path": "packages/search",
+      "packageName": "@larkspur/search",
+      "area": "package",
+      "summary": "Clinic and practitioner search."
+    },
+    {
+      "id": "module-packages-shared-types",
+      "kind": "module",
+      "path": "packages/shared-types",
+      "packageName": "@larkspur/shared-types",
+      "area": "package",
+      "summary": "Types shared by the API and its clients.",
+      "readme": "packages/shared-types/README.md"
+    },
+    {
+      "id": "module-packages-telemetry",
+      "kind": "module",
+      "path": "packages/telemetry",
+      "packageName": "@larkspur/telemetry",
+      "area": "package",
+      "summary": "Logging and tracing setup."
+    },
+    {
+      "id": "module-packages-ui-kit",
+      "kind": "module",
+      "path": "packages/ui-kit",
+      "packageName": "@larkspur/ui-kit",
+      "area": "package",
+      "summary": "Shared React components on Radix primitives.",
+      "readme": "packages/ui-kit/README.md"
+    },
+    {
+      "id": "module-tools-migrate",
+      "kind": "module",
+      "path": "tools/migrate",
+      "packageName": "@larkspur/migrate",
+      "area": "tool",
+      "summary": "Database migrations and the runner.",
+      "readme": "tools/migrate/README.md"
+    },
+    {
+      "id": "module-tools-seed-data",
+      "kind": "module",
+      "path": "tools/seed-data",
+      "packageName": "@larkspur/seed-data",
+      "area": "tool",
+      "summary": "Fake clinics and patients for local development."
+    },
+    {
+      "id": "person-maya-r",
+      "kind": "person",
+      "handle": "maya-r"
+    },
+    {
+      "id": "person-ola-b",
+      "kind": "person",
+      "handle": "ola-b"
+    },
+    {
+      "id": "person-devon-k",
+      "kind": "person",
+      "handle": "devon-k"
+    },
+    {
+      "id": "person-tomas-l",
+      "kind": "person",
+      "handle": "tomas-l"
+    },
+    {
+      "id": "person-priya-s",
+      "kind": "person",
+      "handle": "priya-s"
+    },
+    {
+      "id": "person-wen-h",
+      "kind": "person",
+      "handle": "wen-h"
+    },
+    {
+      "id": "person-sam-j",
+      "kind": "person",
+      "handle": "sam-j"
+    },
+    {
+      "id": "doc-readme",
+      "kind": "doc",
+      "title": "Larkspur",
+      "path": "README.md",
+      "section": "overview"
+    },
+    {
+      "id": "doc-docs-adr-readme",
+      "kind": "doc",
+      "title": "Decision records",
+      "path": "docs/adr/README.md",
+      "section": "index"
+    },
+    {
+      "id": "doc-docs-api-graphql",
+      "kind": "doc",
+      "title": "Admin GraphQL schema",
+      "path": "docs/api/graphql.md",
+      "section": "api",
+      "lastReviewed": "2025-04-23"
+    },
+    {
+      "id": "doc-docs-api-rest",
+      "kind": "doc",
+      "title": "REST API",
+      "path": "docs/api/rest.md",
+      "section": "api",
+      "lastReviewed": "2025-10-11"
+    },
+    {
+      "id": "doc-docs-api-webhooks",
+      "kind": "doc",
+      "title": "Webhooks",
+      "path": "docs/api/webhooks.md",
+      "section": "api",
+      "lastReviewed": "2025-10-11"
+    },
+    {
+      "id": "doc-docs-architecture",
+      "kind": "doc",
+      "title": "Architecture",
+      "path": "docs/architecture.md",
+      "section": "overview",
+      "lastReviewed": "2025-05-15"
+    },
+    {
+      "id": "doc-docs-guides-auth-flows",
+      "kind": "doc",
+      "title": "Auth flows",
+      "path": "docs/guides/auth-flows.md",
+      "section": "guide",
+      "lastReviewed": "2025-03-13"
+    },
+    {
+      "id": "doc-docs-guides-feature-flags",
+      "kind": "doc",
+      "title": "Feature flags",
+      "path": "docs/guides/feature-flags.md",
+      "section": "guide",
+      "lastReviewed": "2025-06-16"
+    },
+    {
+      "id": "doc-docs-guides-notifications",
+      "kind": "doc",
+      "title": "Sending reminders",
+      "path": "docs/guides/notifications.md",
+      "section": "guide",
+      "lastReviewed": "2025-10-20"
+    },
+    {
+      "id": "doc-docs-guides-scheduling-rules",
+      "kind": "doc",
+      "title": "Scheduling rules",
+      "path": "docs/guides/scheduling-rules.md",
+      "section": "guide",
+      "lastReviewed": "2025-09-19"
+    },
+    {
+      "id": "doc-docs-guides-ui-kit",
+      "kind": "doc",
+      "title": "Using the UI kit",
+      "path": "docs/guides/ui-kit.md",
+      "section": "guide",
+      "lastReviewed": "2025-09-19"
+    },
+    {
+      "id": "doc-docs-guides-writing-migrations",
+      "kind": "doc",
+      "title": "Writing migrations",
+      "path": "docs/guides/writing-migrations.md",
+      "section": "guide",
+      "lastReviewed": "2025-02-21"
+    },
+    {
+      "id": "doc-docs-onboarding",
+      "kind": "doc",
+      "title": "Onboarding",
+      "path": "docs/onboarding.md",
+      "section": "overview",
+      "lastReviewed": "2025-03-13"
+    },
+    {
+      "id": "doc-docs-runbooks-billing-retries",
+      "kind": "doc",
+      "title": "Failed payments",
+      "path": "docs/runbooks/billing-retries.md",
+      "section": "runbook",
+      "lastReviewed": "2025-08-18"
+    },
+    {
+      "id": "doc-docs-runbooks-deploys",
+      "kind": "doc",
+      "title": "Deploying",
+      "path": "docs/runbooks/deploys.md",
+      "section": "runbook",
+      "lastReviewed": "2025-02-12"
+    },
+    {
+      "id": "doc-docs-runbooks-incidents",
+      "kind": "doc",
+      "title": "Incidents",
+      "path": "docs/runbooks/incidents.md",
+      "section": "runbook",
+      "lastReviewed": "2025-02-12"
+    },
+    {
+      "id": "doc-docs-runbooks-queue-backlog",
+      "kind": "doc",
+      "title": "Queue backlog",
+      "path": "docs/runbooks/queue-backlog.md",
+      "section": "runbook",
+      "lastReviewed": "2025-06-16"
+    },
+    {
+      "id": "decision-1",
+      "kind": "decision",
+      "number": 1,
+      "title": "One repository, managed with pnpm workspaces",
+      "path": "docs/adr/0001-one-repository-managed-with-pnpm-workspaces.md",
+      "status": "accepted",
+      "decided": "2023-03-02",
+      "wholeRepository": true
+    },
+    {
+      "id": "decision-2",
+      "kind": "decision",
+      "number": 2,
+      "title": "PostgreSQL as the only database",
+      "path": "docs/adr/0002-postgresql-as-the-only-database.md",
+      "status": "accepted",
+      "decided": "2023-03-09"
+    },
+    {
+      "id": "decision-3",
+      "kind": "decision",
+      "number": 3,
+      "title": "REST for every client",
+      "path": "docs/adr/0003-rest-for-every-client.md",
+      "status": "superseded",
+      "decided": "2023-03-16"
+    },
+    {
+      "id": "decision-4",
+      "kind": "decision",
+      "number": 4,
+      "title": "Sessions as signed JWTs",
+      "path": "docs/adr/0004-sessions-as-signed-jwts.md",
+      "status": "superseded",
+      "decided": "2023-04-04"
+    },
+    {
+      "id": "decision-5",
+      "kind": "decision",
+      "number": 5,
+      "title": "Background jobs in a Postgres table",
+      "path": "docs/adr/0005-background-jobs-in-a-postgres-table.md",
+      "status": "superseded",
+      "decided": "2023-04-20"
+    },
+    {
+      "id": "decision-6",
+      "kind": "decision",
+      "number": 6,
+      "title": "Feature flags in configuration, not a service",
+      "path": "docs/adr/0006-feature-flags-in-configuration-not-a-service.md",
+      "status": "accepted",
+      "decided": "2023-05-11"
+    },
+    {
+      "id": "decision-7",
+      "kind": "decision",
+      "number": 7,
+      "title": "The UI kit is built on Radix primitives",
+      "path": "docs/adr/0007-the-ui-kit-is-built-on-radix-primitives.md",
+      "status": "accepted",
+      "decided": "2023-06-01"
+    },
+    {
+      "id": "decision-8",
+      "kind": "decision",
+      "number": 8,
+      "title": "Every clinic has exactly one time zone",
+      "path": "docs/adr/0008-every-clinic-has-exactly-one-time-zone.md",
+      "status": "accepted",
+      "decided": "2023-07-19"
+    },
+    {
+      "id": "decision-9",
+      "kind": "decision",
+      "number": 9,
+      "title": "Server-side sessions in Postgres",
+      "path": "docs/adr/0009-server-side-sessions-in-postgres.md",
+      "status": "accepted",
+      "decided": "2023-11-08"
+    },
+    {
+      "id": "decision-10",
+      "kind": "decision",
+      "number": 10,
+      "title": "Stripe for payments and invoices",
+      "path": "docs/adr/0010-stripe-for-payments-and-invoices.md",
+      "status": "accepted",
+      "decided": "2023-08-24"
+    },
+    {
+      "id": "decision-11",
+      "kind": "decision",
+      "number": 11,
+      "title": "GraphQL for the admin console",
+      "path": "docs/adr/0011-graphql-for-the-admin-console.md",
+      "status": "accepted",
+      "decided": "2024-01-17"
+    },
+    {
+      "id": "decision-12",
+      "kind": "decision",
+      "number": 12,
+      "title": "Move the job queue to Redis with BullMQ",
+      "path": "docs/adr/0012-move-the-job-queue-to-redis-with-bullmq.md",
+      "status": "accepted",
+      "decided": "2024-04-02"
+    },
+    {
+      "id": "decision-13",
+      "kind": "decision",
+      "number": 13,
+      "title": "Search on Postgres full-text search",
+      "path": "docs/adr/0013-search-on-postgres-full-text-search.md",
+      "status": "proposed",
+      "decided": "2025-02-12"
+    },
+    {
+      "id": "decision-14",
+      "kind": "decision",
+      "number": 14,
+      "title": "Drop Node 18",
+      "path": "docs/adr/0014-drop-node-18.md",
+      "status": "proposed",
+      "decided": "2025-03-03"
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-ownedBy-1",
+      "kind": "ownedBy",
+      "from": "module-services-admin",
+      "to": "person-maya-r"
+    },
+    {
+      "id": "e-ownedBy-2",
+      "kind": "ownedBy",
+      "from": "module-services-admin",
+      "to": "person-ola-b"
+    },
+    {
+      "id": "e-ownedBy-3",
+      "kind": "ownedBy",
+      "from": "module-services-api",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e-ownedBy-4",
+      "kind": "ownedBy",
+      "from": "module-services-web",
+      "to": "person-maya-r"
+    },
+    {
+      "id": "e-ownedBy-5",
+      "kind": "ownedBy",
+      "from": "module-services-worker",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e-ownedBy-6",
+      "kind": "ownedBy",
+      "from": "module-packages-api-client",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e-ownedBy-7",
+      "kind": "ownedBy",
+      "from": "module-packages-auth",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e-ownedBy-8",
+      "kind": "ownedBy",
+      "from": "module-packages-auth",
+      "to": "person-priya-s"
+    },
+    {
+      "id": "e-ownedBy-9",
+      "kind": "ownedBy",
+      "from": "module-packages-billing",
+      "to": "person-priya-s"
+    },
+    {
+      "id": "e-ownedBy-10",
+      "kind": "ownedBy",
+      "from": "module-packages-config",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e-ownedBy-11",
+      "kind": "ownedBy",
+      "from": "module-packages-notifications",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e-ownedBy-12",
+      "kind": "ownedBy",
+      "from": "module-packages-scheduling",
+      "to": "person-wen-h"
+    },
+    {
+      "id": "e-ownedBy-13",
+      "kind": "ownedBy",
+      "from": "module-packages-shared-types",
+      "to": "person-devon-k"
+    },
+    {
+      "id": "e-ownedBy-14",
+      "kind": "ownedBy",
+      "from": "module-packages-ui-kit",
+      "to": "person-ola-b"
+    },
+    {
+      "id": "e-ownedBy-15",
+      "kind": "ownedBy",
+      "from": "module-tools-migrate",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e-documentedIn-16",
+      "kind": "documentedIn",
+      "from": "module-services-api",
+      "to": "doc-docs-api-graphql"
+    },
+    {
+      "id": "e-documentedIn-17",
+      "kind": "documentedIn",
+      "from": "module-services-admin",
+      "to": "doc-docs-api-graphql"
+    },
+    {
+      "id": "e-documentedIn-18",
+      "kind": "documentedIn",
+      "from": "module-services-api",
+      "to": "doc-docs-api-rest"
+    },
+    {
+      "id": "e-documentedIn-19",
+      "kind": "documentedIn",
+      "from": "module-packages-api-client",
+      "to": "doc-docs-api-rest"
+    },
+    {
+      "id": "e-documentedIn-20",
+      "kind": "documentedIn",
+      "from": "module-services-api",
+      "to": "doc-docs-api-webhooks"
+    },
+    {
+      "id": "e-documentedIn-21",
+      "kind": "documentedIn",
+      "from": "module-packages-billing",
+      "to": "doc-docs-api-webhooks"
+    },
+    {
+      "id": "e-documentedIn-22",
+      "kind": "documentedIn",
+      "from": "module-services-web",
+      "to": "doc-docs-architecture"
+    },
+    {
+      "id": "e-documentedIn-23",
+      "kind": "documentedIn",
+      "from": "module-services-admin",
+      "to": "doc-docs-architecture"
+    },
+    {
+      "id": "e-documentedIn-24",
+      "kind": "documentedIn",
+      "from": "module-services-api",
+      "to": "doc-docs-architecture"
+    },
+    {
+      "id": "e-documentedIn-25",
+      "kind": "documentedIn",
+      "from": "module-services-worker",
+      "to": "doc-docs-architecture"
+    },
+    {
+      "id": "e-documentedIn-26",
+      "kind": "documentedIn",
+      "from": "module-packages-auth",
+      "to": "doc-docs-guides-auth-flows"
+    },
+    {
+      "id": "e-documentedIn-27",
+      "kind": "documentedIn",
+      "from": "module-packages-config",
+      "to": "doc-docs-guides-feature-flags"
+    },
+    {
+      "id": "e-documentedIn-28",
+      "kind": "documentedIn",
+      "from": "module-packages-notifications",
+      "to": "doc-docs-guides-notifications"
+    },
+    {
+      "id": "e-documentedIn-29",
+      "kind": "documentedIn",
+      "from": "module-services-worker",
+      "to": "doc-docs-guides-notifications"
+    },
+    {
+      "id": "e-documentedIn-30",
+      "kind": "documentedIn",
+      "from": "module-packages-scheduling",
+      "to": "doc-docs-guides-scheduling-rules"
+    },
+    {
+      "id": "e-documentedIn-31",
+      "kind": "documentedIn",
+      "from": "module-packages-ui-kit",
+      "to": "doc-docs-guides-ui-kit"
+    },
+    {
+      "id": "e-documentedIn-32",
+      "kind": "documentedIn",
+      "from": "module-tools-migrate",
+      "to": "doc-docs-guides-writing-migrations"
+    },
+    {
+      "id": "e-documentedIn-33",
+      "kind": "documentedIn",
+      "from": "module-services-web",
+      "to": "doc-docs-onboarding"
+    },
+    {
+      "id": "e-documentedIn-34",
+      "kind": "documentedIn",
+      "from": "module-services-api",
+      "to": "doc-docs-onboarding"
+    },
+    {
+      "id": "e-documentedIn-35",
+      "kind": "documentedIn",
+      "from": "module-services-worker",
+      "to": "doc-docs-onboarding"
+    },
+    {
+      "id": "e-documentedIn-36",
+      "kind": "documentedIn",
+      "from": "module-tools-seed-data",
+      "to": "doc-docs-onboarding"
+    },
+    {
+      "id": "e-documentedIn-37",
+      "kind": "documentedIn",
+      "from": "module-packages-billing",
+      "to": "doc-docs-runbooks-billing-retries"
+    },
+    {
+      "id": "e-documentedIn-38",
+      "kind": "documentedIn",
+      "from": "module-services-worker",
+      "to": "doc-docs-runbooks-billing-retries"
+    },
+    {
+      "id": "e-ownedBy-39",
+      "kind": "ownedBy",
+      "from": "doc-docs-runbooks-billing-retries",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e-ownedBy-40",
+      "kind": "ownedBy",
+      "from": "doc-docs-runbooks-billing-retries",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e-documentedIn-41",
+      "kind": "documentedIn",
+      "from": "module-services-web",
+      "to": "doc-docs-runbooks-deploys"
+    },
+    {
+      "id": "e-documentedIn-42",
+      "kind": "documentedIn",
+      "from": "module-services-api",
+      "to": "doc-docs-runbooks-deploys"
+    },
+    {
+      "id": "e-documentedIn-43",
+      "kind": "documentedIn",
+      "from": "module-services-worker",
+      "to": "doc-docs-runbooks-deploys"
+    },
+    {
+      "id": "e-ownedBy-44",
+      "kind": "ownedBy",
+      "from": "doc-docs-runbooks-deploys",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e-ownedBy-45",
+      "kind": "ownedBy",
+      "from": "doc-docs-runbooks-deploys",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e-ownedBy-46",
+      "kind": "ownedBy",
+      "from": "doc-docs-runbooks-incidents",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e-ownedBy-47",
+      "kind": "ownedBy",
+      "from": "doc-docs-runbooks-incidents",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e-documentedIn-48",
+      "kind": "documentedIn",
+      "from": "module-services-worker",
+      "to": "doc-docs-runbooks-queue-backlog"
+    },
+    {
+      "id": "e-ownedBy-49",
+      "kind": "ownedBy",
+      "from": "doc-docs-runbooks-queue-backlog",
+      "to": "person-tomas-l"
+    },
+    {
+      "id": "e-ownedBy-50",
+      "kind": "ownedBy",
+      "from": "doc-docs-runbooks-queue-backlog",
+      "to": "person-sam-j"
+    },
+    {
+      "id": "e-affects-51",
+      "kind": "affects",
+      "from": "decision-2",
+      "to": "module-services-api"
+    },
+    {
+      "id": "e-affects-52",
+      "kind": "affects",
+      "from": "decision-2",
+      "to": "module-tools-migrate"
+    },
+    {
+      "id": "e-affects-53",
+      "kind": "affects",
+      "from": "decision-2",
+      "to": "module-packages-search"
+    },
+    {
+      "id": "e-affects-54",
+      "kind": "affects",
+      "from": "decision-3",
+      "to": "module-services-api"
+    },
+    {
+      "id": "e-affects-55",
+      "kind": "affects",
+      "from": "decision-3",
+      "to": "module-packages-api-client"
+    },
+    {
+      "id": "e-affects-56",
+      "kind": "affects",
+      "from": "decision-4",
+      "to": "module-packages-auth"
+    },
+    {
+      "id": "e-affects-57",
+      "kind": "affects",
+      "from": "decision-4",
+      "to": "module-services-api"
+    },
+    {
+      "id": "e-affects-58",
+      "kind": "affects",
+      "from": "decision-5",
+      "to": "module-services-worker"
+    },
+    {
+      "id": "e-affects-59",
+      "kind": "affects",
+      "from": "decision-6",
+      "to": "module-packages-config"
+    },
+    {
+      "id": "e-affects-60",
+      "kind": "affects",
+      "from": "decision-7",
+      "to": "module-packages-ui-kit"
+    },
+    {
+      "id": "e-affects-61",
+      "kind": "affects",
+      "from": "decision-7",
+      "to": "module-services-web"
+    },
+    {
+      "id": "e-affects-62",
+      "kind": "affects",
+      "from": "decision-7",
+      "to": "module-services-admin"
+    },
+    {
+      "id": "e-affects-63",
+      "kind": "affects",
+      "from": "decision-8",
+      "to": "module-packages-scheduling"
+    },
+    {
+      "id": "e-affects-64",
+      "kind": "affects",
+      "from": "decision-9",
+      "to": "module-packages-auth"
+    },
+    {
+      "id": "e-affects-65",
+      "kind": "affects",
+      "from": "decision-9",
+      "to": "module-services-api"
+    },
+    {
+      "id": "e-affects-66",
+      "kind": "affects",
+      "from": "decision-10",
+      "to": "module-packages-billing"
+    },
+    {
+      "id": "e-affects-67",
+      "kind": "affects",
+      "from": "decision-10",
+      "to": "module-services-api"
+    },
+    {
+      "id": "e-affects-68",
+      "kind": "affects",
+      "from": "decision-11",
+      "to": "module-services-api"
+    },
+    {
+      "id": "e-affects-69",
+      "kind": "affects",
+      "from": "decision-11",
+      "to": "module-services-admin"
+    },
+    {
+      "id": "e-affects-70",
+      "kind": "affects",
+      "from": "decision-12",
+      "to": "module-services-worker"
+    },
+    {
+      "id": "e-affects-71",
+      "kind": "affects",
+      "from": "decision-13",
+      "to": "module-packages-search"
+    },
+    {
+      "id": "e-affects-72",
+      "kind": "affects",
+      "from": "decision-14",
+      "to": "module-services-web"
+    },
+    {
+      "id": "e-affects-73",
+      "kind": "affects",
+      "from": "decision-14",
+      "to": "module-services-admin"
+    },
+    {
+      "id": "e-affects-74",
+      "kind": "affects",
+      "from": "decision-14",
+      "to": "module-services-api"
+    },
+    {
+      "id": "e-affects-75",
+      "kind": "affects",
+      "from": "decision-14",
+      "to": "module-services-worker"
+    },
+    {
+      "id": "e-supersedes-76",
+      "kind": "supersedes",
+      "from": "decision-9",
+      "to": "decision-4"
+    },
+    {
+      "id": "e-supersedes-77",
+      "kind": "supersedes",
+      "from": "decision-11",
+      "to": "decision-3"
+    },
+    {
+      "id": "e-supersedes-78",
+      "kind": "supersedes",
+      "from": "decision-12",
+      "to": "decision-5"
+    }
+  ]
+}
