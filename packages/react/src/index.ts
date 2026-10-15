@@ -1,5 +1,7 @@
 export { GraviewProvider, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
+export { MenuSections, useMenuSections } from "./menu-sections.js";
+export type { MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-sections.js";
 export { BesideTheMap } from "./beside-the-map.js";
 export { HostFilesContext, useHostFiles } from "./files.js";
 export type { GoTo, GoToAlso } from "./go.js";

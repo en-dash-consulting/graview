@@ -38,6 +38,16 @@ product is for, and it is four seams, all of which the framework ships.
 4. **A review** — `<PlanReview plan={plan} onApplied={...} />`. Applied as one
    turn, so `store.undo(batch)` takes the whole thing back.
 
+## Or in the context menu
+
+A desk can be a section of the menu a right-click opens on either face
+(on the pages Shift+F10 and a long press too): `menuSections` on the
+provider, `embed()` or the pages' context. Each source is told what the
+menu was opened on — `{ face, on, about, field, place, href }` — and answers
+`{ id, heading?, items?: [{ id, label, run }], render?: (close) => node }`
+or nothing. It is drawn beside the acts the store would accept, never
+instead of them, and what it proposes goes through the same four seams.
+
 ## Do this
 
 1. **Write the prompt from the graph.** What kinds exist, what acts exist and

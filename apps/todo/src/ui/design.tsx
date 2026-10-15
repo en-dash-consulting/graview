@@ -789,6 +789,8 @@ function InPlace({
         type="button"
         className={plain ? "th-plain" : "th-btn"}
         data-graview-editable={editable.mutation}
+        // Which value it is, so the context menu offers to change it (`@graview/pages`).
+        data-graview-field={field}
         // Which fact, and what it holds: "Due: Aug 28, 2026", never "Aug 28, 2026, button". A heading says what it is itself.
         {...(plain ? {} : { "aria-label": `${fieldWords(store.schema.tryDefinition(String(store.graph.getNode(nodeId)?.kind)), field)}: ${value || "nothing yet"}` })}
         title={`${editable.title} — an act, so it is in the history and can be taken back`}

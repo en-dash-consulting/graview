@@ -12,9 +12,15 @@
  * the scene, and with it the filter field and "Show N more" (the seat is a
  * guide, not a control panel): the claims about the filter went with them.
  *
+ * And the same menu on the routed face, at a desk and a phone's width: a
+ * row, a record's page, a value on it, a picture's mark and ground, a list's
+ * ground; Shift+F10 and the context-menu key; a finger resting on the page;
+ * Escape giving the keyboard back; the browser's own menu kept in a text
+ * field and with Shift held; and axe over the menu while it is open.
+ *
  *   node scripts/verify-menu.mjs [--engine=chromium|webkit|firefox]
  */
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
@@ -352,6 +358,8 @@ try {
       await page.keyboard.press("Enter");
       answered.push(`${step}: skipped`);
     } else {
+      // Over what the box opened on: a record's change starts from what it holds ("590"), and "59090" is past the box's own max, so the form would not submit.
+      await page.keyboard.press("ControlOrMeta+A");
       await page.keyboard.type("90");
       await page.keyboard.press("Enter");
       answered.push(`${step}: typed`);
@@ -366,6 +374,231 @@ try {
     answered,
     ok: !afterAnAct.body && afterAPin.inside && !afterAnAsk.body,
   };
+
+  /* ================================================ THE SAME MENU ON THE PAGES */
+  /*
+   * The routed face opens the scene's own menu — the same pane, the same
+   * derived acts — on what a right-click lands on there: a row, a record's
+   * page, one of its values, a picture's mark or its ground, the page's own
+   * ground. Shift+F10 and the context-menu key open it on what has the
+   * keyboard, a finger resting on the page opens it on a phone, Escape gives
+   * the keyboard back, and the browser keeps its own menu in a text field
+   * and with Shift held. At a desk and at a phone's width.
+   */
+  const pagesAt = (path) => `${at("todo")}/pages${path}?today=2026-09-01`;
+  /** What the menu is showing: its words, its acts, the face's own rows, and whether the keyboard is in it. */
+  const menuSays = (on) =>
+    on.evaluate(() => {
+      const menu = document.querySelector('[data-testid="context-menu"]');
+      if (!menu) return null;
+      const box = menu.getBoundingClientRect();
+      return {
+        text: menu.textContent ?? "",
+        acts: [...menu.querySelectorAll("[data-affordance]:not([disabled])")].map((act) => (act.textContent ?? "").replace(/ …$/, "").trim()),
+        rows: [...menu.querySelectorAll("[data-menu-item]")].map((row) => row.getAttribute("data-menu-item")),
+        focusIn: menu.contains(document.activeElement),
+        inTheWindow: box.left >= 0 && box.top >= 0 && box.right <= innerWidth + 1 && box.bottom <= innerHeight + 1,
+      };
+    });
+  const pagesMenu = async (on, selector, options = {}) => {
+    await on.click(selector, { button: "right", ...options });
+    await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+    await on.waitForTimeout(200);
+    return menuSays(on);
+  };
+  const putAway = async (on) => {
+    if (await on.$(MENU)) await on.keyboard.press("Escape");
+    await on.waitForTimeout(200);
+  };
+
+  for (const [width, height, size] of [
+    [1560, 940, "desk"],
+    [390, 844, "phone"],
+  ]) {
+    const context = await browser.newContext({ viewport: { width, height }, hasTouch: size === "phone" });
+    const on = await context.newPage();
+    on.on("pageerror", (error) => errors.push(`${size}: ${error.message}`));
+
+    /* ------------------------------------------------- a row, and its record's page */
+    reach(`pagesRecordOpensTheMenu_${size}`);
+    await on.goto(pagesAt("/tasks"), { waitUntil: "networkidle" });
+    await on.waitForSelector('[data-graview-record="t-deposit"]', { timeout: 30_000 });
+    const row = await pagesMenu(on, '[data-graview-record="t-deposit"]');
+    /* The menu open, judged by axe with Cloud's tags (verify-a11y.mjs): every item named, nothing it draws refused. */
+    reach(`pagesMenuPassesAxe_${size}`);
+    await on.addScriptTag({ content: readFileSync(resolve(repoRoot, "node_modules/axe-core/axe.min.js"), "utf8") });
+    const axe = await on.evaluate(async () => {
+      const result = await window.axe.run({ include: [['[data-testid="context-menu"]']] }, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"] }, resultTypes: ["violations"] });
+      return result.violations.map((violation) => ({ rule: violation.id, nodes: violation.nodes.map((node) => node.html.slice(0, 160)) }));
+    });
+    report.checks[`pagesMenuPassesAxe_${size}`] = { open: row !== null, axe, ok: row !== null && axe.length === 0 };
+    await putAway(on);
+    await on.goto(pagesAt("/tasks/t-deposit"), { waitUntil: "networkidle" });
+    await on.waitForSelector("main h1", { timeout: 30_000 });
+    // The page's own ground: the heading over its facts, which is no value and no link.
+    const record = await pagesMenu(on, '[data-testid="record-fields"] h2');
+    await putAway(on);
+    report.checks[`pagesRecordOpensTheMenu_${size}`] = {
+      row,
+      record,
+      ok:
+        row !== null &&
+        row.text.includes("Pay the deposit") &&
+        row.acts.includes("Finish it") &&
+        row.rows.includes("open") &&
+        row.focusIn &&
+        row.inTheWindow &&
+        record !== null &&
+        record.text.includes("Pay the deposit") &&
+        record.acts.includes("Finish it") &&
+        // Already on its page: no "Open", and the way to it in the scene.
+        !record.rows.includes("open") &&
+        record.rows.includes("in-the-scene") &&
+        record.inTheWindow,
+    };
+
+    /* ------------------------------------------------- a value, changed where it stands */
+    reach(`pagesFieldOffersItsChange_${size}`);
+    const field = await pagesMenu(on, '[data-testid="record-fields"] [data-graview-editable][data-graview-field]');
+    await on.click(`${MENU} [data-menu-item="change-field"]`).catch(() => undefined);
+    await on.waitForTimeout(300);
+    const editing = await on.evaluate(() => {
+      const active = document.activeElement;
+      return { tag: active?.tagName.toLowerCase() ?? null, inTheFacts: active?.closest('[data-testid="record-fields"]') !== null, menuGone: !document.querySelector('[data-testid="context-menu"]') };
+    });
+    await on.keyboard.press("Escape");
+    await on.waitForTimeout(200);
+    report.checks[`pagesFieldOffersItsChange_${size}`] = {
+      field,
+      editing,
+      ok: field !== null && field.rows[0] === "change-field" && field.acts.includes("Finish it") && editing.menuGone && editing.inTheFacts && ["input", "select", "textarea"].includes(editing.tag ?? ""),
+    };
+
+    /* ------------------------------------------------- a picture's mark, and its ground */
+    reach(`pagesBlockAndGroundOpenTheMenu_${size}`);
+    await on.goto(pagesAt("/places/the-week"), { waitUntil: "networkidle" });
+    await on.waitForSelector('[data-testid="place-lens"] [data-graview-pick]', { timeout: 30_000 });
+    const picked = await on.getAttribute('[data-testid="place-lens"] [data-graview-pick]', "data-graview-pick");
+    const mark = await pagesMenu(on, `[data-testid="place-lens"] [data-graview-pick="${picked}"]`);
+    await putAway(on);
+    const ground = await pagesMenu(on, '[data-testid="place-lens"]', { position: { x: 3, y: 3 } });
+    await putAway(on);
+    await on.goto(pagesAt("/tasks"), { waitUntil: "networkidle" });
+    const heading = "main :is([data-graview-page-title], h1, h2) >> nth=0";
+    await on.waitForSelector(heading, { timeout: 30_000 });
+    const list = await pagesMenu(on, heading);
+    await putAway(on);
+    report.checks[`pagesBlockAndGroundOpenTheMenu_${size}`] = {
+      picked,
+      mark,
+      ground,
+      list,
+      ok:
+        mark !== null &&
+        mark.rows.includes("open") &&
+        mark.acts.length > 0 &&
+        ground !== null &&
+        ground.text.includes("The week") &&
+        ground.acts.includes("Add a task") &&
+        ground.rows.includes("find") &&
+        !ground.rows.includes("open") &&
+        list !== null &&
+        list.acts.includes("Add a task") &&
+        list.rows.includes("find"),
+    };
+
+    /* ------------------------------------------------- the keyboard, and Escape */
+    reach(`pagesKeyboardOpensAndReturns_${size}`);
+    const opener = '[data-graview-record="t-deposit"] a[href]';
+    const keyed = {};
+    for (const key of ["Shift+F10", "ContextMenu"]) {
+      await on.focus(opener);
+      await on.keyboard.press(key);
+      await on.waitForSelector(MENU, { timeout: 10_000 }).catch(() => undefined);
+      await on.waitForTimeout(200);
+      const said = await menuSays(on);
+      await on.keyboard.press("Escape");
+      await on.waitForTimeout(250);
+      const back = await on.evaluate((selector) => document.activeElement === document.querySelector(selector), opener);
+      keyed[key] = { opened: said !== null && said.text.includes("Pay the deposit"), focusIn: said?.focusIn ?? false, closed: !(await on.$(MENU)), back };
+    }
+    report.checks[`pagesKeyboardOpensAndReturns_${size}`] = {
+      keyed,
+      ok: Object.values(keyed).every((one) => one.opened && one.focusIn && one.closed && one.back),
+    };
+
+    /* ------------------------------------------------- the browser's own menu */
+    reach(`pagesBrowserMenuKept_${size}`);
+    // A right-click the page did not take is one whose default was not prevented.
+    const prevented = (selector, shiftKey) =>
+      on.evaluate(
+        ([selector, shiftKey]) => {
+          const target = document.querySelector(selector);
+          if (!target) return null;
+          const box = target.getBoundingClientRect();
+          const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, shiftKey, clientX: box.left + 4, clientY: box.top + 4 });
+          target.dispatchEvent(event);
+          return event.defaultPrevented;
+        },
+        [selector, shiftKey],
+      );
+    const inFind = await prevented('[data-testid="nav-find"]', false);
+    await putAway(on);
+    const shifted = await prevented(opener, true);
+    await putAway(on);
+    const plain = await prevented(opener, false);
+    await putAway(on);
+    report.checks[`pagesBrowserMenuKept_${size}`] = {
+      inFind,
+      shifted,
+      plain,
+      // In the Find box and with Shift the browser's; elsewhere the page's.
+      ok: inFind === false && shifted === false && plain === true,
+    };
+
+    /* ------------------------------------------------- a finger resting on the page */
+    if (size === "phone") {
+      reach("pagesLongPressOpensTheMenu_phone");
+      await on.goto(pagesAt("/tasks/t-deposit"), { waitUntil: "networkidle" });
+      await on.waitForSelector("main h1", { timeout: 30_000 });
+      const box = await on.evaluate(() => {
+        const at = document.querySelector('[data-testid="record-fields"] h2')?.getBoundingClientRect();
+        return at ? { x: Math.round(at.left + at.width / 2), y: Math.round(at.top + at.height / 2) } : null;
+      });
+      /*
+       * A REAL FINGER where the engine can be given one (Chromium's touch
+       * input, which raises the pointer events a phone does); elsewhere the
+       * same pointer events, said by the page.
+       */
+      let how = "touch";
+      if (ENGINE === "chromium" && box) {
+        const cdp = await context.newCDPSession(on);
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: box.x, y: box.y }] });
+        await on.waitForTimeout(800);
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      } else if (box) {
+        how = "pointer events";
+        await on.evaluate(({ x, y }) => {
+          const target = document.elementFromPoint(x, y);
+          target?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y }));
+        }, box);
+        await on.waitForTimeout(800);
+        await on.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y })), box);
+      }
+      await on.waitForTimeout(300);
+      const rested = await menuSays(on);
+      // Still on the record's page: the press that opened the menu followed nothing.
+      const stayed = on.url().includes("/pages/tasks/t-deposit");
+      await putAway(on);
+      report.checks.pagesLongPressOpensTheMenu_phone = {
+        how,
+        rested,
+        stayed,
+        ok: rested !== null && rested.text.includes("Pay the deposit") && rested.acts.includes("Finish it") && rested.inTheWindow && stayed,
+      };
+    }
+    await context.close();
+  }
 
   reach.done();
   report.pageErrors = errors;

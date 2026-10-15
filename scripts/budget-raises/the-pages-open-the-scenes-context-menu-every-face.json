@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 537,
+  "gzipped": 305,
+  "note": "Raised when the pages came to open the scene's context menu: what a right-click, Shift+F10, the context-menu key or a long press landed on there and the face's own rows beside the acts, and the menu's sections (`menuSections`, `MenuSections`) on both faces; the menu's pane itself was already in every face. Measured at 2_094_114 / 690_617–690_623 (gzip differs by a few bytes from run to run) against 2_093_577 / 690_328: 537 / 305 more."
+}

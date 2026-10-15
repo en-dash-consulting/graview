@@ -1440,6 +1440,8 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><strong>A plan</strong> — what came back, as an object rather than a list: ordered by the chain, judged against the policy and the provider's <code>may</code>, reviewable. <code>planFrom(store, proposals, { app, principal })</code>.</li>
 <li><strong>A review</strong> — <code>&lt;PlanReview plan={plan} onApplied={...} /&gt;</code>. Applied as one turn, so <code>store.undo(batch)</code> takes the whole thing back.</li>
 </ol>
+<h3>Or in the context menu</h3>
+<p>A desk can be a section of the menu a right-click opens on either face (on the pages Shift+F10 and a long press too): <code>menuSections</code> on the provider, <code>embed()</code> or the pages' context. Each source is told what the menu was opened on — <code>{ face, on, about, field, place, href }</code> — and answers <code>{ id, heading?, items?: [{ id, label, run }], render?: (close) =&gt; node }</code> or nothing. It is drawn beside the acts the store would accept, never instead of them, and what it proposes goes through the same four seams.</p>
 <h3>Do this</h3>
 <ol>
 <li><strong>Write the prompt from the graph.</strong> What kinds exist, what acts exist and what they take — <code>generateLlmsTxt(app)</code> from <code>@graview/core/check</code> writes that — plus what is already there. A model that cannot see the graph invents a second Back Lawn.</li>

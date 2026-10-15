@@ -2,7 +2,7 @@ import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
-import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -290,6 +290,12 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly linkedRecords?: LinkedRecords;
   /**
+   * SECTIONS OF THE CONTEXT MENU beside its acts, on either face: each is
+   * told what the menu was opened on (`MenuTarget`) and answers rows or what
+   * it draws (`MenuSection`), or nothing.
+   */
+  readonly menuSections?: readonly MenuSectionSource[];
+  /**
    * TOLD WHAT WENT WRONG (FR-24). A view, a page or the bar that throws
    * is contained where it threw, the rest of the embed keeps working, and
    * the host is told the error's class and the framework module that
@@ -574,6 +580,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     resolveApp: props.resolveApp,
     history: props.history,
     linkedRecords: props.linkedRecords,
+    menuSections: props.menuSections,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */
     app: props.app,

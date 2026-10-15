@@ -52,6 +52,8 @@ graview describe src/domain/app.ts --place requests --seed seed.json --width 390
 
 It says the list's headings, each record's card and what is filtered, as the page draws them. Archive one record by its act and ask again: it is gone from the list and the count, and `?archived=true` finds it. Undo the merge you tried; both records come back with their links. Have a test actor suggest a link and decline it from the tray: `suggest(store, …)` of the same calls then refuses, and a record left alone refuses the actor's change by name.
 
+A right-click on a row, a value or the page's ground opens the scene's menu on the pages (Shift+right-click, a text field or selected text keep the browser's). A design's own row takes part as a link to its record or with `data-graview-record`, its own value with `data-graview-field` and `data-graview-editable`, which adds "Change …" to the menu.
+
 ### What the check cannot see
 
 Whether the filters you named are the ones a person reaches for — that is a question for someone who uses the list. Whether a card's first sentence is a useful one: `excerpt` cuts where the text does. Whether a rule should still count an archived record: it does not unless it asks with `all(kind, true)`. And `renderPlace` writes no history and no acts by design; a host that wants them on paper writes them itself.

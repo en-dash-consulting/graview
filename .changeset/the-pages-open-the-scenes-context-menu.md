@@ -1,0 +1,15 @@
+---
+"@graview/react": patch
+"@graview/primitives": patch
+"@graview/pages": patch
+"@graview/embed": patch
+"@graview/skills": patch
+---
+
+A right-click on the pages opens the scene's context menu. It was the scene's alone, so on a list, a record's page or a picture's page a right-click met the browser's menu and the acts were a scroll away. It is the same menu now — the same pane, the same acts `@graview/tools` derives, narrowed by the seat, with what is withheld said the way the scene says it — opened on what the gesture landed on: a list's row, a record's page, a card or a link to a record, a lens's mark, all about that record, with "Open", "Open in a new tab" and "Show in the scene" beside its acts; a value on a record's page, with "Change “Due”" first, which opens that value's own edit in place; a picture's ground, about its place, headed with its title and offering what its kind offers ("Add a task"); and the page's own ground, with the list's kind's acts and Find. Shift+F10 and the context-menu key open it on what has the keyboard, and a finger resting on the page opens it on a phone (on a list that chooses, resting on a row still chooses it). The keyboard goes into the menu and back where it was opened; Escape closes it.
+
+The browser keeps its own menu in a text field or editable text, over text somebody selected, and whenever Shift is held with the right-click — the way to the browser's "Open link in new tab", which the menu also offers itself. A design's own value takes part by carrying `data-graview-field` beside `data-graview-editable`, and its own row by being a link to the record or carrying `data-graview-record`.
+
+A host adds a section of its own to the menu on either face: `menuSections` on `GraviewProvider`, on `embed()` and on the pages' context, each a function told what the menu was opened on (`MenuTarget`: `face`, `on`, `about`, `field`, `place`, `href`, `element`) that answers a `MenuSection` — rows (`items`: `{ id, label, run, hint? }`) or what it draws itself (`render(close)`), before the acts (`at: "start"`) or after them — or nothing. A face adds its own with `MenuSections` from `@graview/react/drawing`. `graview-desk` teaches the seam, and `graview-lists` how a design's own rows and values take part. The menu and its pane stay off a page's first load: they are fetched when the page is first idle, or at the first right-click, and a hosted page's first load carries nothing more for them. The embed's pages face alone carries 3.7 KB more in all (the menu's pane, now fetched there too), every face 0.5 KB and the embed with the studio handed in 5.0 KB, raised in `scripts/budget-raises/the-pages-open-the-scenes-context-menu-*.json`.
+
+Compatibility: no surface changes. New on the provider, `embed()` and `PageContext`: `menuSections` (the context menu's section seam). New on `PointerMenu`: `about`, `face`, `field`, `place`, `href`, `title` and `returnTo`, all optional. `Inspector` takes `openActs`. The `acts` popover is drawn on the pages too.

@@ -29,7 +29,7 @@ export const POPOVERS = {
   /** The districts the row could not hold, from "+N more" on the ground. */
   districts: { trigger: "beyond-more", pane: "beyond-list", opens: "press", focus: "into", drawn: ["shell", "embed"] },
   /** A card's acts at the pointer: right-click, the context menu. The card is what the keyboard goes back to. */
-  acts: { trigger: null, pane: "context-menu", opens: "context-menu", focus: "into", drawn: ["shell", "embed"] },
+  acts: { trigger: null, pane: "context-menu", opens: "context-menu", focus: "into", drawn: ["shell", "embed", "pages"] },
   /** How a list is sorted, grouped and narrowed, from the words on its arranging line ("Sort", "Group", "Filter"; "Arrange" on a phone). Each opens its own list, one at a time. */
   arrange: { trigger: "arrange-add", pane: "arrange-list", opens: "press", focus: "into", drawn: ["pages"] },
   /** The studio's own seat, from its bar. */

@@ -3,7 +3,7 @@ import { edgeWords } from "@graview/core/words";
 import { failureWords } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
-import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, usePopover, useSelection } from "@graview/react";
+import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, useMenuSections, usePopover, useSelection, type MenuSection, type MenuTarget } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
@@ -18,10 +18,11 @@ import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, p
  * derived by `@graview/tools`, which a scene drawn before anybody selects
  * or right-clicks does not need.
  */
-export function InspectorPane({ placement = "float" }: { readonly placement?: InspectorPlacement } = {}) {
+export function InspectorPane({ placement = "float", chosen = true }: { readonly placement?: InspectorPlacement; readonly chosen?: boolean } = {}) {
   const { menuAt } = useGraview<AnySchema>();
   // A menu with nothing at the pointer derives nothing: at most the chosen record's "Acts…".
-  return placement === "menu" && menuAt === null ? <ChosenActs /> : <Pane placement={placement} />;
+  if (placement === "menu" && menuAt === null) return chosen ? <ChosenActs /> : null;
+  return <Pane placement={placement} />;
 }
 
 /**
@@ -109,10 +110,13 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const keptFocus = useRef<{ readonly key: string; readonly element: HTMLElement } | null>(null);
   /** The picture the pane sits on: where the keyboard goes if the pane goes. */
   const scene = useRef<HTMLElement | null>(null);
+  /** Where the menu was opened from, when its opener said: where the keyboard goes when the menu goes. */
+  const openedFrom = useRef<HTMLElement | null>(null);
+  if (menuAt?.returnTo) openedFrom.current = menuAt.returnTo;
   const remember = (target: HTMLElement) => {
     const asking = target.closest("[data-graview-asking]")?.getAttribute("data-graview-asking");
     const pin = target.getAttribute("data-pin-for");
-    const key = asking ?? target.getAttribute("data-affordance") ?? (pin === null ? null : `pin:${pin}`);
+    const key = asking ?? target.getAttribute("data-affordance") ?? (pin === null ? null : `pin:${pin}`) ?? target.getAttribute("data-menu-item");
     keptFocus.current = key === null ? null : { key, element: target };
   };
   useEffect(() => {
@@ -134,7 +138,10 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
      */
     if (!pane) {
       keptFocus.current = null;
-      scene.current?.focus();
+      // Where the menu was opened, when that is still on the page (the routed face's row, its field).
+      const from = openedFrom.current;
+      openedFrom.current = null;
+      (from?.isConnected ? from : scene.current)?.focus();
       return;
     }
     const home =
@@ -164,7 +171,13 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         : { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
     );
   });
-  const { selection, set, clear } = useSelection();
+  const { selection: chosen, set, clear } = useSelection();
+  /*
+   * WHAT THE PANE IS ABOUT: the selection, or what a menu opened on the
+   * routed face names (`about`) — that face selects nothing, and a
+   * right-click on a row there is about the row's record.
+   */
+  const selection = menuAt?.about ?? chosen;
   /*
    * THE PERSON'S OWN PINS, loaded once per mount and passed into the same
    * derivation every surface reads — so a pin made here reorders the strip,
@@ -187,7 +200,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
    * opened it, else the most recent addition to the selection.
    */
   const focus = menuAt?.on ?? selection[selection.length - 1];
-  const deriveOptions = useMemo(() => ({ pins, ...(focus === undefined ? {} : { focus }) }), [pins, focus]);
+  const about = menuAt?.about;
+  const deriveOptions = useMemo(() => ({ pins, ...(focus === undefined ? {} : { focus }), ...(about ? { about } : {}) }), [pins, focus, about]);
   // Which acts the app itself pinned — the star on those demotes rather
   // than doubling up, so pressing it always visibly does something.
   const declaredPins = useMemo(
@@ -195,6 +209,16 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     [store],
   );
   const { affordances, withheld, observations } = useAffordances(deriveOptions);
+  /*
+   * THE MENU'S OTHER SECTIONS, beside the acts: the face's own (the routed
+   * face's "Open", "Change the date") and the host's (`menuSections`), each
+   * told what the menu was opened on.
+   */
+  const target: MenuTarget | null =
+    menuAt === null
+      ? null
+      : { face: menuAt.face ?? "scene", on: menuAt.on, about: selection, field: menuAt.field, place: menuAt.place, href: menuAt.href, element: menuAt.returnTo };
+  const beside = useMenuSections(target);
   /*
    * Whether the derivation is withholding a creating act for want of the
    * kind it connects to, rather than for want of a mutation. The observation
@@ -294,7 +318,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     setAllWithheld(false);
     setFailed(null);
     setQuery("");
-  }, [selection]);
+  }, [selection, menuAt?.about]);
 
   /*
    * The strip reserves NOTHING. It is a transient elevated surface, and it
@@ -326,6 +350,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     },
     at: () => (pointAt.current ? { x: pointAt.current.x, y: pointAt.current.y } : null),
     returnTo: () => {
+      const back = pointAt.current?.returnTo;
+      if (back?.isConnected) return back;
       const on = pointAt.current?.on;
       return on ? document.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(on)}"]`) : null;
     },
@@ -381,7 +407,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
    * from the bottom of the window read as a stale leftover of the previous
    * stop.
    */
-  const named = !(selection.length === 1 && selection[0] === view.focusId);
+  const named = menuAt?.title !== undefined || (selection.length > 0 && !(selection.length === 1 && selection[0] === view.focusId));
 
   /*
    * Nine rows before "Show N more", and the ranking has already put what
@@ -628,9 +654,10 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         {!named ? null : (
           <>
             <strong style={{ fontSize: "0.9375rem", whiteSpace: "nowrap" }}>
-              {selection.length === 1
-                ? nameOf(store, selection[0]!)
-                : `${selection.length} selected`}
+              {menuAt?.title ??
+                (selection.length === 1
+                  ? nameOf(store, selection[0]!)
+                  : `${selection.length} selected`)}
             </strong>
             {kinds.length > 0 || edge ? (
               <span
@@ -644,7 +671,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
                 thing is exactly when "how do I go into it" arises, and the
                 jacked-in header was the one place that answered, which is
                 after you had already found out. */}
-            {selection.length === 1 && !edge ? (
+            {selection.length === 1 && !edge && menuAt?.face !== "pages" ? (
               <span
                 style={{ fontSize: "0.75rem", color: "var(--graview-ink-faint)", whiteSpace: "nowrap" }}
               >
@@ -778,6 +805,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </div>
       ) : null}
 
+      {atPointer ? beside.start.map((section) => <SectionDrawn key={section.id} section={section} close={() => setMenuAt(null)} />) : null}
+
       {failed ? (
         <p
           data-testid="refused"
@@ -833,7 +862,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           Nothing offered here matches “{query.trim()}”.
         </p>
       ) : null}
-      {affordances.length === 0 && !waiting ? (
+      {affordances.length === 0 && !waiting && selection.length === 0 ? null : affordances.length === 0 && !waiting ? (
         /*
          * An empty action list is a RESULT, not a blank space. Saying which
          * kind has no mutations declaring it as a subject is the same honesty
@@ -1149,6 +1178,8 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         </ul>
       ) : null}
 
+      {atPointer ? beside.end.map((section) => <SectionDrawn key={section.id} section={section} close={() => setMenuAt(null)} />) : null}
+
       {/* The arguments appear in place, under the action that asked for them,
           rather than turning the strip into a form. */}
       {open ? (
@@ -1164,5 +1195,47 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         />
       ) : null}
     </section>
+  );
+}
+
+/**
+ * A SECTION BESIDE THE ACTS (`menuSections`, or a face's own): its rows,
+ * each pressed to close the menu and run, or what it draws itself. Rows of
+ * the acts' own look, so the menu reads as one list.
+ */
+function SectionDrawn({ section, close }: { readonly section: MenuSection; readonly close: () => void }) {
+  return (
+    <div
+      data-menu-section={section.id}
+      {...(section.heading ? { role: "group", "aria-label": section.heading } : {})}
+      style={{ display: "grid", gap: 2, borderTop: "1px solid var(--graview-edge)", paddingTop: 5 }}
+    >
+      {section.heading ? (
+        <p aria-hidden="true" style={{ margin: 0, padding: "2px 2px 1px", fontSize: "0.75rem", lineHeight: 1.4, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--graview-ink-faint)" }}>
+          {section.heading}
+        </p>
+      ) : null}
+      {section.items && section.items.length > 0 ? (
+        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
+          {section.items.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                data-menu-item={item.id}
+                onClick={() => {
+                  close();
+                  item.run();
+                }}
+                style={{ padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, width: "100%", textAlign: "left", borderWidth: 1, borderStyle: "solid", borderColor: "transparent", background: "none", boxShadow: "none" }}
+              >
+                {item.label}
+                {item.hint ? <span style={{ color: "var(--graview-ink-faint)" }}> · {item.hint}</span> : null}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {section.render?.(close)}
+    </div>
   );
 }
