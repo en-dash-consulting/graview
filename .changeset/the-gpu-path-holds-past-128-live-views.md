@@ -1,0 +1,9 @@
+---
+"@graview/render": patch
+"@graview/react": patch
+"@graview/skills": patch
+---
+
+The GPU capture path keeps a page of live views under the capture cliff. Chrome Canary 158 respelled HTML-in-Canvas and every capture threw; the canvas now says `content="drawable"` as well as `layoutsubtree`, each view carries `drawable`, and the capture call's destination shape is found on the first call. Capture costs about 0.22 ms a view on that build, so retaking every live view every frame held 42, 21, 10 and 6 fps at 64, 128, 256 and 512 views (median of three runs). A live view is now retaken only when the `paint` event's `changedElements` says it changed, a view off the canvas is neither taken nor drawn, a frame spends at most `CAPTURE_BUDGET` (32) retakes, and a view that keeps changing faster than that is handed to the DOM path and drawn at the same transform under the canvas. The discography holds 417 fps with 512 live views moving every frame, and 125 with the processor at a quarter speed, and `verify-scale` holds it at 256 and 512. `attachGpu()` from `@graview/render/gpu` is the capture path as a Scene's `attachRenderer`; the discography opts in with `?gpu=1`. The uniforms of every view go up in one write, and geometry is reported only for what moved, once a crowd stops.
+
+Compatibility: no surface changes. New on `@graview/render`: `CAPTURE_BUDGET`, `PlanOptions.changed` and `.captureBudget`, `PlannedView.dom`, `FramePlan.deferred` and `.culled`, and a `viewId` on each of `FramePlan.placements`; `planFrame` no longer draws a view wholly off the canvas. New on `@graview/render/gpu`: `attachGpu`, `AttachGpuOptions`, `GpuScene`, `CompositedFrame`, `markDrawable`, `changedElementsOf`, `Compositor.paint`, and `CompositorOptions.captureBudget` and `.transparent`; `Compositor.render` takes the changed elements and returns a `CompositedFrame`. `SceneProps.attachRenderer`'s argument gains `drawOnDom`.

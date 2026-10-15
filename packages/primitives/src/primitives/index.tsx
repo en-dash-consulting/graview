@@ -93,25 +93,54 @@ export const FAINT_TEXT: CSSProperties = { color: "var(--graview-ink-faint, #625
  * on two screens of a real product; nothing found it at desk width because
  * at desk width the question never comes up.
  */
-function useOverflowing(ref: { current: HTMLElement | null }): boolean {
-  const [overflowing, setOverflowing] = useState(false);
+function useOverflowing(ref: { current: HTMLElement | null }): Overflow {
+  const [overflow, setOverflow] = useState<Overflow>(FITS);
   useEffect(() => {
     const element = ref.current;
     if (!element || typeof ResizeObserver === "undefined") return;
-    const check = () =>
-      setOverflowing(
-        element.scrollHeight > element.clientHeight + 1 ||
-          element.scrollWidth > element.clientWidth + 1,
-      );
+    const check = () => {
+      const next = overflowOf(element, parseFloat(getComputedStyle(element).paddingBottom) || 0);
+      setOverflow((was) => (was.overflowing === next.overflowing && was.above === next.above && was.below === next.below ? was : next));
+    };
     check();
     const observer = new ResizeObserver(check);
     observer.observe(element);
     for (const child of element.children) observer.observe(child);
-    return () => observer.disconnect();
+    // Scrolling changes which edge has more past it, and nothing resizes.
+    element.addEventListener("scroll", check, { passive: true });
+    return () => {
+      observer.disconnect();
+      element.removeEventListener("scroll", check);
+    };
     // No dependency list: children change shape as the graph does, and this
     // has to stay true across those without every caller remembering to say so.
   });
-  return overflowing;
+  return overflow;
+}
+
+/** What a scroller holds past its edges: anything at all, and whether there is more above or below where it is scrolled to. */
+interface Overflow {
+  readonly overflowing: boolean;
+  readonly above: boolean;
+  readonly below: boolean;
+}
+
+const FITS: Overflow = { overflowing: false, above: false, below: false };
+
+/**
+ * WHERE THERE IS MORE, measured: at the top edge once it is scrolled from
+ * its top, at the bottom edge only while rows stand below it. Scrolled to
+ * its end, a card says nothing is below — the edge that said so used to
+ * stay, over the last row of chips, however far it was scrolled.
+ */
+function overflowOf(element: { readonly scrollHeight: number; readonly clientHeight: number; readonly scrollWidth: number; readonly clientWidth: number; readonly scrollTop: number }, room = 0): Overflow {
+  const down = element.scrollHeight > element.clientHeight + 1;
+  const across = element.scrollWidth > element.clientWidth + 1;
+  return {
+    overflowing: down || across,
+    above: down && element.scrollTop > 1,
+    below: down && element.scrollTop + element.clientHeight < element.scrollHeight - room - 1,
+  };
 }
 
 /**
@@ -154,7 +183,7 @@ export function Panel({
   heading,
 }: PanelProps) {
   const scroller = useRef<HTMLDivElement | null>(null);
-  const overflowing = useOverflowing(scroller);
+  const { overflowing, above, below } = useOverflowing(scroller);
   /*
    * A page unless the panel says otherwise, when it is ON a page.
    *
@@ -200,9 +229,6 @@ export function Panel({
         overflow: page ? "visible" : "hidden",
         ...TONES[tone],
         ...(page ? { background: "transparent" } : {}),
-        // The panel's own ground, handed to the scroll shadow so its cover
-        // gradients match whatever tone this panel is.
-        ["--graview-panel-bg" as string]: TONES[tone].background,
         ...style,
       }}
     >
@@ -299,10 +325,8 @@ export function Panel({
         */}
       <div
         ref={scroller}
-        // A page does not scroll inside itself — the page scrolls — so it must
-        // not carry the scroll region's cover gradients either. They paint the
-        // panel's own ground, which on a page is a white band across a
-        // document that has no card behind it.
+        // A page does not scroll inside itself — the page scrolls — so it
+        // carries no scroll region's edges either.
         className={page ? undefined : "graview-scroll"}
         // A tab stop ONLY where there is something to scroll to, and named by
         // the panel so it is not an anonymous stop in the order.
@@ -319,7 +343,15 @@ export function Panel({
           gap: page ? 22 : "var(--graview-gap, 7px)",
           flex: "1 1 auto",
           // A page never scrolls inside itself: the page scrolls.
-          ...(page ? { overflow: "visible" } : {}),
+          /*
+           * A CARD'S SCROLLER RUNS TO THE CARD'S OWN BOTTOM EDGE. Inside the
+           * card's padding it stopped fifteen pixels short of it, so a row
+           * scrolled past was cut across the card above a strip of empty
+           * ground, which looks like a rendering fault. The padding moves
+           * inside the scroller: the same room under the last row, and the
+           * cut, where there is one, is the card's edge.
+           */
+          ...(page ? { overflow: "visible" } : { marginBottom: "calc(-1 * var(--graview-pad, 15px))", paddingBottom: "var(--graview-pad, 15px)" }),
           /*
            * A CUT ROW AND A SCROLLED ROW LOOK THE SAME, and only one of them
            * is all right.
@@ -328,20 +360,23 @@ export function Panel({
            * broken — somebody reported it as text being cut off, which is
            * exactly what it looks like — when in fact the panel scrolls and
            * nothing is lost. The tab stop above says so to a keyboard and to
-           * a screen reader; this says the same thing to an eye. A few
-           * pixels of fade is the oldest way there is to write "there is
-           * more of this", and it costs nothing when there is not.
-           */
-          /*
-           * Painted, not masked: the fade is the theme's (`.graview-scroll`
-           * with `data-graview-overflowing`), a strip of the panel's own
-           * ground that sticks to the bottom. A mask made the whole scroller
-           * its own offscreen layer — a cost on every frame it moved — and
-           * a layer painted before the rows arrived stayed painted: the
-           * tracklists panel drew solid black until something repainted it.
+           * a screen reader; the edge says the same thing to an eye.
+           *
+           * THE EDGE SAYS IT, AND NOTHING IS PAINTED OVER A ROW. A strip of
+           * the panel's ground stuck to the bottom covered the last row of
+           * chips however far the card was scrolled, and the scroll shadows
+           * painted in the scroller's background stood as a dark band in the
+           * middle of the card, over its description, once it was scrolled.
+           * Now a shadow is cast inward from the edge past which there is
+           * more (`.graview-scroll` with `data-graview-more-below` or
+           * `-above`, in the theme), measured rather than assumed, drawn
+           * under the rows, and gone once the card is scrolled to that end.
+           * Not a mask: a mask made the whole scroller an offscreen layer,
+           * and one painted before the rows arrived stayed painted.
            */
         }}
-        data-graview-overflowing={overflowing && !page ? "" : undefined}
+        data-graview-more-above={above && !page ? "" : undefined}
+        data-graview-more-below={below && !page ? "" : undefined}
       >
         {children}
       </div>

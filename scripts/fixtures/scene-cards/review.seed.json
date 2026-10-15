@@ -1,0 +1,203 @@
+{
+  "nodes": [
+    {
+      "id": "module:hospital-services",
+      "kind": "module",
+      "title": "Hospital Services",
+      "summary": "Hospital relationship management: the referrals, the admitting physicians and the outreach to clinics that send patients, kept in one place so a liaison sees the whole relationship before a visit. It also holds the contracts with each hospital and who signed them, and it is where the quarterly review starts."
+    },
+    {
+      "id": "module:billing",
+      "kind": "module",
+      "title": "Billing",
+      "summary": "Claims and statements, from the visit to the paid bill."
+    },
+    {
+      "id": "finding:h1",
+      "kind": "finding",
+      "title": "Referral intake is retyped from fax",
+      "severity": "high"
+    },
+    {
+      "id": "finding:h2",
+      "kind": "finding",
+      "title": "No audit trail on physician changes",
+      "severity": "high"
+    },
+    {
+      "id": "finding:h3",
+      "kind": "finding",
+      "title": "Outreach visits logged in a spreadsheet",
+      "severity": "medium"
+    },
+    {
+      "id": "finding:h4",
+      "kind": "finding",
+      "title": "Duplicate clinic records",
+      "severity": "medium"
+    },
+    {
+      "id": "finding:h5",
+      "kind": "finding",
+      "title": "Liaison notes are not searchable",
+      "severity": "low"
+    },
+    {
+      "id": "finding:h6",
+      "kind": "finding",
+      "title": "Stale contact numbers",
+      "severity": "low"
+    },
+    {
+      "id": "finding:h7",
+      "kind": "finding",
+      "title": "Two logins for one task",
+      "severity": "low"
+    },
+    {
+      "id": "finding:h8",
+      "kind": "finding",
+      "title": "Reports are emailed by hand",
+      "severity": "medium"
+    },
+    {
+      "id": "finding:h9",
+      "kind": "finding",
+      "title": "No export for the board",
+      "severity": "low"
+    },
+    {
+      "id": "finding:h10",
+      "kind": "finding",
+      "title": "Physician changes wait a week",
+      "severity": "medium"
+    },
+    {
+      "id": "finding:b1",
+      "kind": "finding",
+      "title": "Statements printed twice",
+      "severity": "low"
+    },
+    {
+      "id": "finding:b2",
+      "kind": "finding",
+      "title": "Claims rejected without a reason",
+      "severity": "high"
+    },
+    {
+      "id": "artist:the-beatles",
+      "kind": "artist",
+      "name": "The Beatles"
+    },
+    {
+      "id": "album:beatles-for-sale",
+      "kind": "album",
+      "title": "Beatles for Sale",
+      "year": 1964
+    },
+    {
+      "id": "album:help",
+      "kind": "album",
+      "title": "Help!",
+      "year": 1965
+    },
+    {
+      "id": "album:rubber-soul",
+      "kind": "album",
+      "title": "Rubber Soul",
+      "year": 1965
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "kind": "in",
+      "from": "finding:h1",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e2",
+      "kind": "in",
+      "from": "finding:h2",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e3",
+      "kind": "in",
+      "from": "finding:h3",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e4",
+      "kind": "in",
+      "from": "finding:h4",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e5",
+      "kind": "in",
+      "from": "finding:h5",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e6",
+      "kind": "in",
+      "from": "finding:h6",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e7",
+      "kind": "in",
+      "from": "finding:h7",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e8",
+      "kind": "in",
+      "from": "finding:h8",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e9",
+      "kind": "in",
+      "from": "finding:h9",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e10",
+      "kind": "in",
+      "from": "finding:h10",
+      "to": "module:hospital-services"
+    },
+    {
+      "id": "e11",
+      "kind": "in",
+      "from": "finding:b1",
+      "to": "module:billing"
+    },
+    {
+      "id": "e12",
+      "kind": "in",
+      "from": "finding:b2",
+      "to": "module:billing"
+    },
+    {
+      "id": "e13",
+      "kind": "madeBy",
+      "from": "album:beatles-for-sale",
+      "to": "artist:the-beatles"
+    },
+    {
+      "id": "e14",
+      "kind": "madeBy",
+      "from": "album:help",
+      "to": "artist:the-beatles"
+    },
+    {
+      "id": "e15",
+      "kind": "madeBy",
+      "from": "album:rubber-soul",
+      "to": "artist:the-beatles"
+    }
+  ]
+}

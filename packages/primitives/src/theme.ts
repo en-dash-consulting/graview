@@ -407,37 +407,27 @@ ${/* A fine measure under the scene. Faint enough to feel like calibration
   mask-image: radial-gradient(120% 90% at 50% 40%, #000 30%, transparent 78%);
 }
 
-${/* Content that scrolls inside a panel, and SAYS SO.
- *
- * A pure-CSS scroll shadow: two cover gradients painted in the panel's own
- * ground scroll with the content, two shadows stay put, and so a shadow
- * only shows at an edge there is more content past. No
- * JavaScript, no measurement, and nothing to go stale — which matters
- * because the failure it prevents is silent. macOS hides overlay scrollbars
- * until you scroll, so without this a clipped list looks like a finished
- * one. */ ""}
+${/* Content that scrolls inside a panel, and SAYS SO, at the edge there is
+ * more past. macOS hides overlay scrollbars until you scroll, so without it
+ * a clipped list looks like a finished one. A shadow cast inward from that
+ * edge, which the panel measures (`data-graview-more-below`, `-above`):
+ * an inset shadow is painted under the rows, so no row is ever covered by
+ * it, and it is gone once the panel is scrolled to that end. Painted in the
+ * scroller's background, the shadows were a dark band across the middle of
+ * a scrolled card and a strip of ground over its last row of chips. */ ""}
 .graview-scroll {
   overflow: auto;
   min-height: 0;
-  background:
-    linear-gradient(var(--graview-panel-bg, var(--graview-panel)) 30%, transparent) center top,
-    linear-gradient(transparent, var(--graview-panel-bg, var(--graview-panel)) 70%) center bottom,
-    radial-gradient(farthest-side at 50% 0, ${scheme === "light" ? "rgba(20,30,32,0.30)" : "rgba(0,0,0,0.7)"}, transparent) center top,
-    radial-gradient(farthest-side at 50% 100%, ${scheme === "light" ? "rgba(20,30,32,0.30)" : "rgba(0,0,0,0.7)"}, transparent) center bottom;
-  background-repeat: no-repeat;
-  background-size: 100% 24px, 100% 24px, 100% 10px, 100% 10px;
-  background-attachment: local, local, scroll, scroll;
+  --graview-scroll-shade: ${scheme === "light" ? "rgba(20,30,32,0.22)" : "rgba(0,0,0,0.55)"};
 }
-${/* "There is more of this", said by the ground: a few pixels of the panel's
- * own color over the last row, stuck to the bottom of what scrolls. */ ""}
-.graview-scroll[data-graview-overflowing]::after {
-  content: "";
-  position: sticky;
-  bottom: 0;
-  flex: 0 0 14px;
-  margin-top: calc(-14px - var(--graview-gap, 7px));
-  background: linear-gradient(transparent, var(--graview-panel-bg, var(--graview-panel)));
-  pointer-events: none;
+.graview-scroll[data-graview-more-below] {
+  box-shadow: inset 0 -12px 10px -10px var(--graview-scroll-shade);
+}
+.graview-scroll[data-graview-more-above] {
+  box-shadow: inset 0 12px 10px -10px var(--graview-scroll-shade);
+}
+.graview-scroll[data-graview-more-above][data-graview-more-below] {
+  box-shadow: inset 0 12px 10px -10px var(--graview-scroll-shade), inset 0 -12px 10px -10px var(--graview-scroll-shade);
 }
 
 

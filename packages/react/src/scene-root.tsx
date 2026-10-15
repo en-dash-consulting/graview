@@ -106,6 +106,12 @@ export interface SceneProps {
     dirty: ReadonlySet<string>;
     /** The DOM host for a view id — what the capture API is given. */
     hostOf(id: string): HTMLElement | null;
+    /**
+     * The views the renderer cannot take — over its capture budget, or with
+     * no capture at all — replacing the last set. The Scene draws these on
+     * the DOM path, under the canvas, at the same transform.
+     */
+    drawOnDom(ids: ReadonlySet<string>): void;
   }) => (() => void) | void;
   readonly className?: string;
   readonly style?: CSSProperties;
@@ -415,6 +421,7 @@ function useAttachedRenderer(
   canvasRef: RefObject<HTMLCanvasElement | null>,
   frame: InterpolatedLayout,
   touched: ReadonlySet<string>,
+  drawOnDom: (ids: ReadonlySet<string>) => void,
 ) {
   useEffect(() => {
     if (renderer === "dom") return;
@@ -430,13 +437,27 @@ function useAttachedRenderer(
       canvas,
       layout: frame,
       dirty,
+      // In the canvas, or on the DOM path beside it.
       hostOf: (id) =>
-        canvas.querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"]`),
+        (canvas.parentElement ?? canvas).querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"]`),
+      drawOnDom,
     });
     return () => {
       detach?.();
     };
-  }, [renderer, attachRenderer, frame, touched]);
+  }, [renderer, attachRenderer, frame, touched, drawOnDom]);
+}
+
+/**
+ * The views a renderer handed to the DOM path, as state. A set equal to the
+ * last one is not a new render: only a change of hands should cost one.
+ */
+function useDrawnOnDom(): [ReadonlySet<string>, (ids: ReadonlySet<string>) => void] {
+  const [onDom, setOnDom] = useState<ReadonlySet<string>>(() => new Set());
+  const drawOnDom = useCallback((ids: ReadonlySet<string>) => {
+    setOnDom((current) => (current.size === ids.size && [...ids].every((id) => current.has(id)) ? current : new Set(ids)));
+  }, []);
+  return [onDom, drawOnDom];
 }
 
 /**
@@ -795,7 +816,8 @@ export function Scene<S extends AnySchema>({
 
   useLentWhereIs(context, frame, wrapperRef);
   usePointerReport(context.pointer, wrapperRef);
-  useAttachedRenderer(renderer, attachRenderer, canvasRef, frame, touched);
+  const [onDom, drawOnDom] = useDrawnOnDom();
+  useAttachedRenderer(renderer, attachRenderer, canvasRef, frame, touched, drawOnDom);
 
   const useDom = renderer === "dom" || (renderer === "auto" && !attachRenderer);
 
@@ -889,12 +911,14 @@ export function Scene<S extends AnySchema>({
    * at full size (the lens panel); the stop is the same, so an address, the
    * bar and Back still name it.
    */
+  // On the capture path a view the renderer handed on is drawn as the DOM path draws it.
+  const hostedOnDom = (id: string) => useDom || onDom.has(id);
   const hosts = frame.nodes.filter((node) => node.screenOf === undefined).map((node) => (
     <SceneViewHost
       key={node.id}
       node={node}
       crowded={crowded(node)}
-      useDom={useDom}
+      useDom={hostedOnDom(node.id)}
       {...(node.plot && frame.city && Math.round(node.plane) === 2
         ? { frontY: plotY(frame.city, node, node.plot, 1), centerY: plotY(frame.city, node, node.plot, 2) }
         : {})}
@@ -1068,16 +1092,31 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </div>
       ) : (
-        <canvas
-          ref={canvasRef}
-          data-graview-stage="gpu"
-          // The attribute form works before the property is available.
-          {...{ layoutsubtree: "" }}
-          {...extent}
-          style={{ display: "block", ...stage }}
-        >
-          {hosts}
-        </canvas>
+        <div style={stage}>
+          {/*
+           * THE DOM PATH UNDER THE CANVAS: the views the renderer handed
+           * on, drawn at the same transform. The canvas clears to
+           * transparent, so they show wherever the GPU drew nothing — and a
+           * view the GPU draws over one of them is nearer, as it should be.
+           */}
+          <div
+            data-graview-stage="dom"
+            data-graview-under-canvas=""
+            style={{ position: "absolute", left: 0, top: 0, ...extent, overflow: "hidden" }}
+          >
+            {hosts.filter((host) => onDom.has(String(host.key)))}
+          </div>
+          <canvas
+            ref={canvasRef}
+            data-graview-stage="gpu"
+            // Both spellings: `content="drawable"` (Chromium 158) and `layoutsubtree` (154).
+            {...{ content: "drawable", layoutsubtree: "" }}
+            {...extent}
+            style={{ display: "block", position: "relative", ...extent }}
+          >
+            {hosts.filter((host) => !onDom.has(String(host.key)))}
+          </canvas>
+        </div>
       )}
       {view.overview && !dragging ? (
         /* What the window does not reach, named on the edge it lies past (see edge-signs.tsx). */

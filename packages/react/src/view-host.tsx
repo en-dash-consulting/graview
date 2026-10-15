@@ -312,6 +312,8 @@ export function SceneViewHost({
     <div
       ref={ref}
       data-graview-view={node.id}
+      // What the capture path draws: Chromium 158 takes only a canvas child that says so.
+      {...(useDom ? {} : { drawable: "" })}
       data-graview-plane={Math.round(node.plane)}
       data-graview-selected={selected || undefined}
       data-graview-touched={touched || undefined}
