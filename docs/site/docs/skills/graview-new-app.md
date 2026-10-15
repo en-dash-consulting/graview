@@ -43,6 +43,8 @@ src/
 
 The domain/ui split keeps the declaration inspectable by a build, a CLI and an agent: `graview check` reads `defineApp`, and a React import there would drag a UI package into the checker.
 
+**Or as one JSON document.** `app.json` with `"format": "graview-document"` and `"$schema": "./node_modules/@graview/core/dist/document.schema.json"` holds the same kinds, acts and rules, compiled and never run. `graview check --document app.json` (findings at their JSON path), `graview describe --document app.json`, `graview preview app.json --seed seed.json`.
+
 ### Do this
 
 1. **Install.** The scaffold already did. Reach for `@graview/render/gpu` only if you want the experimental capture path; the DOM path is what ships.

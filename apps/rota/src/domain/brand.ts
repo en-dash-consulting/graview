@@ -44,6 +44,12 @@ export const rotaBrand: Brand = {
   // Squarer and denser than Things: this is a grid of slots, not a list.
   shape: { radius: 8, density: 0.94 },
   /*
+   * An invitation's hue from its name lands 11° from a volunteer's, and the
+   * two read as one color (`brand-hues-crowded`): an invitation is not a
+   * volunteer, so it is given a hue of its own.
+   */
+  accents: { invitation: 300 },
+  /*
    * THE KIT: what the scene draws that is not a view.
    *
    * One relation, and it means one thing — somebody is covering something —

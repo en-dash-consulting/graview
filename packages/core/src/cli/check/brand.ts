@@ -1,4 +1,4 @@
-import { checkBrandContrast } from "../../theme/derive.js";
+import { checkBrandContrast, crowdedHues, HUE_CROWDING } from "../../theme/derive.js";
 import { passingShade, ratioWords } from "../../theme/accent.js";
 import { TEXT_PAIRS } from "../../theme/types.js";
 import { checkKitContrast, resolveKit } from "../../theme/kit.js";
@@ -45,6 +45,24 @@ export function checkAccents<S extends AnySchema>(ctx: CheckContext<S>): void {
         fix: `Use a number 0–360, e.g. 152 for a green.`,
       });
     }
+  }
+  /*
+   * KINDS THAT READ AS ONE COLOR. The same answer `graview describe` says
+   * (`crowdedHues`), so describe never flags a clash the check passed.
+   * A note, not a warning: a kind with no accent takes a hue from its
+   * name, and six names land two within 12° more often than not — a
+   * question worth one look, which an accent answers.
+   */
+  const { hues, crowded } = crowdedHues([...kinds], app.brand?.accents);
+  if (crowded.length > 1) {
+    const at = (kind: string) => hues.find((entry) => entry.kind === kind)!.hue;
+    add({
+      severity: "note",
+      code: "brand-hues-crowded",
+      where: "brand.accents",
+      message: `${crowded.map((kind) => `${kind} (${at(kind)}°)`).join(", ")} are within ${HUE_CROWDING}° of each other on the color wheel and will read as one color.`,
+      fix: `Give ${crowded.slice(1).map((kind) => `"${kind}"`).join(", ")} an accent in brand.accents at least ${HUE_CROWDING}° from the others, e.g. "${crowded[1]}": ${(at(crowded[0]!) + 180) % 360}.`,
+    });
   }
   /*
    * THE APP'S MONEY (FR-100). A currency or a locale the runtime cannot

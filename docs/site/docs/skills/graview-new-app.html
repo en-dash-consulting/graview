@@ -1274,6 +1274,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
     app.tsx          # the provider, the scene, the workbench
   main.tsx</code></pre></div>
 <p>The domain/ui split keeps the declaration inspectable by a build, a CLI and an agent: <code>graview check</code> reads <code>defineApp</code>, and a React import there would drag a UI package into the checker.</p>
+<p><strong>Or as one JSON document.</strong> <code>app.json</code> with <code>"format": "graview-document"</code> and <code>"$schema": "./node_modules/@graview/core/dist/document.schema.json"</code> holds the same kinds, acts and rules, compiled and never run. <code>graview check --document app.json</code> (findings at their JSON path), <code>graview describe --document app.json</code>, <code>graview preview app.json --seed seed.json</code>.</p>
 <h3>Do this</h3>
 <ol>
 <li><strong>Install.</strong> The scaffold already did. Reach for <code>@graview/render/gpu</code> only if you want the experimental capture path; the DOM path is what ships.</li>

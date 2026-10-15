@@ -84,6 +84,16 @@ export const pricedPackages = expressionRule("priced-packages", {
 });
 ```
 
+Each repair is handed the record the rule judged, so it must be an act ON
+that kind: a rule over `task` repaired by an act on `module` could only
+refuse, and `graview check` says `repair-wrong-kind` (a function rule names
+its repairs' arguments itself, so it may act elsewhere).
+
+In a document (`app.json`, a graview-document) the same rule is
+`rules.priced-packages`: `{ "over": "package", "require": "net > 0", "says":
+"…", "repairs": [{ "act": "edit-package" }] }`; `graview check --document
+app.json` says each finding at its JSON path (`rules.priced-packages.repairs.0`).
+
 A rule in the rule language is drawn as its shape, in the declaration's
 labels: "◆ Scenario margin ≥ target margin, when plan's price > $0", and
 broken, with the record's values: "A club on Team — margin 44% < target
@@ -139,7 +149,7 @@ and the repair on a thing that has already left the picture.
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-The checker catches `repair-unknown-mutation`, `invariant-scope-undeclared` and
+The checker catches `repair-unknown-mutation`, `repair-wrong-kind`, `invariant-scope-undeclared` and
 `required-invariant-unregistered`. Report the real output, warnings included.
 
 **And make it fire.** A rule that never returns a violation passes every check

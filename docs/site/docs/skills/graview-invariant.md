@@ -37,6 +37,10 @@ export const pricedPackages = expressionRule("priced-packages", {
 });
 ```
 
+Each repair is handed the record the rule judged, so it must be an act ON that kind: a rule over `task` repaired by an act on `module` could only refuse, and `graview check` says `repair-wrong-kind` (a function rule names its repairs' arguments itself, so it may act elsewhere).
+
+In a document (`app.json`, a graview-document) the same rule is `rules.priced-packages`: `{ "over": "package", "require": "net > 0", "says": "…", "repairs": [{ "act": "edit-package" }] }`; `graview check --document app.json` says each finding at its JSON path (`rules.priced-packages.repairs.0`).
+
 A rule in the rule language is drawn as its shape, in the declaration's labels: "◆ Scenario margin ≥ target margin, when plan's price > $0", and broken, with the record's values: "A club on Team — margin 44% < target margin 50%". Its title is a second line under that, so keep it short ("Margin above target") or leave it out; "A scenario keeps the target margin" only says the shape again, less clearly. Label a field that reads badly when spoken (`display.labels`) rather than writing round it.
 
 Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')` and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`; `sum`/`min`/`max(S, expr)` with an expression per member (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list key sorts by its first value, then its next), `first(S)` for one record, `either(a, b)` for the first that is something; `if(cond, a, b)`, which works out only the branch it takes; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set and give each record reached once; sets meet with `&`, join with `|` and part with `-` — LifeLogics' coverage is one figure, `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step read from what the seat may see. (Inside a template's braces, a `|` within brackets joins; the last bar outside them is the formatter's.) A kind's `computed` fields read like stored ones, and `fact('name')` reads a fact of the whole graph — a document's top-level `computed`, like `"mapProposed": "every(all('area'), proposed)"` — so a rule over the graph, a block and a face's own screen say it once (`factValues` from `@graview/core/blocks`; `describe_place` on the home lists them). Every evaluation has a step budget: a rule that reads too much is `over-budget`, never a hang.
@@ -55,7 +59,7 @@ So a rule about the past and the present — "nothing closed may still depend on
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-The checker catches `repair-unknown-mutation`, `invariant-scope-undeclared` and `required-invariant-unregistered`. Report the real output, warnings included.
+The checker catches `repair-unknown-mutation`, `repair-wrong-kind`, `invariant-scope-undeclared` and `required-invariant-unregistered`. Report the real output, warnings included.
 
 **And make it fire.** A rule that never returns a violation passes every check and does nothing. Write a test that builds a graph which breaks it:
 
