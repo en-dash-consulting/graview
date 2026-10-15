@@ -107,7 +107,8 @@ export function Inspector({ placement = "float" }: { readonly placement?: Inspec
     });
     return () => registerActsDoor(null);
   }, [placement, registerActsDoor, setMenuAt]);
-  const wanted = menuAt !== null || (placement === "float" && selection.length > 0);
+  // A menu's pane is drawn for a selection too: in a narrow scene it says the chosen record's acts (the tenth walk).
+  const wanted = menuAt !== null || selection.length > 0;
   const [drawn, setDrawn] = useState(wanted);
   useEffect(() => {
     if (wanted) setDrawn(true);

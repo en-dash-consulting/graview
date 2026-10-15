@@ -307,7 +307,8 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
    */
   useLayoutEffect(() => {
     const parent = asideRef.current?.offsetParent as HTMLElement | null;
-    if (!parent || !narrow || atPointer) return;
+    // A menu standing down (at most a chosen record's "Acts…") floats; it takes no room from the picture.
+    if (!parent || !narrow || atPointer || standDown) return;
     const height = asideRef.current?.getBoundingClientRect().height ?? 0;
     const room = `${Math.round(height) + 20}px`;
     if (parent.style.paddingBottom === room) return;
@@ -445,7 +446,37 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
     .filter((observation) => !headed.has(observation.text))
     .map((observation) => ({ ...observation, text: trim(observation.text) }));
 
-  if (standDown) return null;
+  if (standDown) {
+    /*
+     * A RECORD CHOSEN WHERE NOTHING CAN STAND BESIDE IT SAYS ITS ACTS (the
+     * tenth walk). The menu opens at the pointer — a right-click, or the acts
+     * key — and a finger on a phone has neither: choosing "Today" lit it and
+     * "Add a task" was on no screen. In a scene too narrow for a rail, on the
+     * ground (the map's panel says it from above, W-195), the one record
+     * chosen gets "Acts…", which opens the same menu under it. Measured from
+     * the scene's box, so this stands in the box it is drawn in.
+     */
+    const one = selection.length === 1 && !view.overview ? store.graph.getNode(selection[0]!) : undefined;
+    if (!one || !narrow) return <span ref={asideRef} hidden />;
+    const about = nameOf(store, one.id);
+    return (
+      <button
+        type="button"
+        ref={asideRef as never}
+        data-testid="chosen-acts"
+        aria-label={`What can be done with ${about}`}
+        aria-haspopup="menu"
+        onClick={(event) => {
+          const at = event.currentTarget.getBoundingClientRect();
+          setMenuAt({ x: Math.round(at.right), y: Math.round(at.bottom + 4), on: one.id });
+        }}
+        // Under Up and the key, in the picture's own column of controls: at its foot, a notice stood over it (the tenth walk's journeys).
+        style={{ position: "absolute", right: "calc(14px + var(--graview-dock, 0px))", top: 98, zIndex: "var(--graview-layer-overview, 10)" as never, minHeight: 30, padding: "0 12px", borderRadius: 8, fontSize: "0.8125rem", background: "var(--graview-float)", boxShadow: "var(--graview-lift-low)" }}
+      >
+        Acts…
+      </button>
+    );
+  }
   return (
     <section
       {...(atPointer ? popover.pane : {})}
