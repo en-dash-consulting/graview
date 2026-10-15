@@ -371,5 +371,43 @@ export interface PagesArrangement {
    *
    *   pages: { lists: { request: { filters: ["status", "area", "became.stage"] } } }
    */
-  readonly lists?: Readonly<Record<string, { readonly filters?: readonly string[] }>>;
+  readonly lists?: Readonly<Record<string, KindList>>;
+}
+
+/**
+ * ONE KIND'S LIST, AS THE DECLARATION OPENS IT: what it offers to filter
+ * by, the order it opens in, and how it opens grouped. The order and the
+ * grouping are where the list starts, not a rule: a person sorts or groups
+ * it another way, and the address says so.
+ *
+ *   lists: { request: {
+ *     filters: ["status", "area"],
+ *     sort: { by: "votes", direction: "desc", then: "label" },
+ *     group: { by: "status", order: ["new", "planned", "done", "declined"], closed: ["done", "declined"] },
+ *   } }
+ */
+export interface KindList {
+  readonly filters?: readonly string[];
+  /** A field, a computed field or `label`, lowest first — or with a direction and a tiebreak. */
+  readonly sort?: string | KindListSort;
+  /** A choice or yes-or-no field — or with the groups' order and which are closed. */
+  readonly group?: string | KindListGroup;
+}
+
+export interface KindListSort {
+  /** `label`, a field, or a computed field (a rank worked out from the record). */
+  readonly by: string;
+  /** `asc` (lowest, earliest, A to Z first) when unsaid. */
+  readonly direction?: "asc" | "desc";
+  /** What orders records that tie: a key, ascending, or `{ by, direction }`. */
+  readonly then?: string | { readonly by: string; readonly direction?: "asc" | "desc" };
+}
+
+export interface KindListGroup {
+  /** A choice field, or a yes-or-no field (its values `"true"` and `"false"`). */
+  readonly by: string;
+  /** The groups in this order; the values it leaves out follow in their declared order. */
+  readonly order?: readonly string[];
+  /** The groups drawn last and closed, each said with its count ("done · 12"): what is finished with. */
+  readonly closed?: readonly string[];
 }

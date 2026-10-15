@@ -40,15 +40,16 @@ const store = new Store({ schema, mutations: [sell, signUp] });
 describe("a form for an act that makes a record", () => {
   it("names each field and each choice as the record does", () => {
     const html = renderToStaticMarkup(<DerivedForm store={store} mutation={sell} />);
-    expect(html).toContain("VIN *");
-    expect(html).toContain("Body style *");
+    // The star is drawn and not said: the field says it is required itself.
+    expect(html).toContain('VIN<span aria-hidden="true"> *</span>');
+    expect(html).toContain('Body style<span aria-hidden="true"> *</span>');
     expect(html).toMatch(/<option value="suv">SUV<\/option>/);
     expect(html).not.toMatch(/>Vin \*|>Body \*|>suv</);
   });
 
   it("asks for a record's name as its name", () => {
     const html = renderToStaticMarkup(<DerivedForm store={store} mutation={signUp} />);
-    expect(html).toContain("Name *");
+    expect(html).toContain('Name<span aria-hidden="true"> *</span>');
     expect(html).not.toContain("Label");
   });
 

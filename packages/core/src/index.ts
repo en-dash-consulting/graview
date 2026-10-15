@@ -370,6 +370,9 @@ export type { AppPlace } from "./app-places.js";
 export type {
   Cardinality,
   PagesArrangement,
+  KindList,
+  KindListGroup,
+  KindListSort,
   Fidelity,
   ViewCell,
   ViewRegistration,

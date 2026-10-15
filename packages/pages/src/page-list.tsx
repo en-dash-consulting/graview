@@ -1,5 +1,5 @@
 import { AppLink, ArrangeBar, CHOOSING_CSS, Files, pageSays, prefetchSeveral, SeveralBarDoor, useChoosing } from "@graview/primitives/pages";
-import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, parseArrangement, throughEdges } from "@graview/core/arrange";
+import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, listGroup, listOpening, orderListGroups, parseArrangement, throughEdges, withWorkedOut } from "@graview/core/arrange";
 import {
   archivedFrom,
   humanizeField,
@@ -122,6 +122,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   const { store, brand, invariantContext } = context;
   useStoreTick(store);
   const [search, setSearch] = useSearchParams();
+  const listId = `list-${useId().replace(/:/g, "")}`;
   const definition = store.schema.tryDefinition(kind);
   // The live records, unless the address asks for the archived (`?archived=true` or `all`, FR-173).
   const askedArchived = archivedFrom(search.get("archived"));
@@ -137,8 +138,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    * `?past=1` widens the horizon — because a record's "all the tasks on this
    * list" is a link somebody may have sent.
    */
-  // Its kind's own, and through each relation the far end's choices (`became.stage`).
-  const offers = throughEdges(store.schema, arrangeable(store.schema, kind));
+  // Its kind's own, through each relation the far end's choices (`became.stage`), and what it works out to sort by (a rank).
+  const offers = withWorkedOut(store.schema, throughEdges(store.schema, arrangeable(store.schema, kind)));
   const edgeKinds = relations.map((relation) => relation.edgeKind);
   const asked = arrangementFromSearch(search, offers, edgeKinds);
   // What the address says, or — saying nothing — how the design opens the list, or a large list's meaningful order.
@@ -146,7 +147,22 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   const large = all.length >= LARGE_LIST;
   // The kind's natural time, which its list opens newest first by and indexes by year.
   const when = definition?.fieldRoles?.["when"];
-  const arrangement = addressed ? asked.arrangement : admitArrangement(opening ?? naturalOpening(large, when), offers).arrangement;
+  /*
+   * HOW THE DECLARATION OPENS THIS LIST (`pages.lists.<kind>`): what it
+   * filters by, the order it opens in, and its grouping — the closed groups
+   * (done, declined) last and shut. A person sorts or groups it another way,
+   * and the address says so; a design's own opening wins over it.
+   */
+  const declared = context.views?.arrangement?.()?.lists?.[kind];
+  const declaredOpening = listOpening(declared);
+  const declaredGroup = listGroup(declared?.group);
+  const natural = naturalOpening(large, when);
+  const opened = opening ?? (declaredOpening ? { ...natural, ...declaredOpening } : natural);
+  const chosen = addressed ? asked.arrangement : admitArrangement(opened, offers).arrangement;
+  // A declared order keeps its tiebreak while the list is in that order, however it was reached.
+  const declaredSort = declaredOpening?.sort;
+  const arrangement: Arrangement =
+    chosen.sort && declaredSort?.then && chosen.sort.by === declaredSort.by && chosen.sort.direction === declaredSort.direction ? { ...chosen, sort: declaredSort } : chosen;
   // The words may say `is:any` too, as they do in the Find box.
   const typed = parseQuery(arrangement.query ?? "");
   const showingPast =
@@ -158,12 +174,45 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
   const effective: Arrangement = showingPast || !definition?.lifecycle
     ? arrangement
     : { ...arrangement, filter: [...(arrangement.filter ?? []), { key: "is", value: "current" }] };
+  // A rank the kind works out is worked out once a record, over what this seat sees (FR-83).
+  const worked = new Map<string, Record<string, unknown>>();
   const arranged = arrange(all, effective, {
     schema: store.schema,
     graph: store.graph,
     flagged,
     ...(typeof invariantContext?.["today"] === "string" ? { today: invariantContext["today"] as string } : {}),
+    read: (node, key) => {
+      let values = worked.get(node.id);
+      if (!values) worked.set(node.id, (values = withComputed(store.schema, store.graph as never, node as never) as unknown as Record<string, unknown>));
+      return values[key];
+    },
   });
+  /*
+   * THE DECLARED GROUPS, IN THEIR ORDER, THE CLOSED ONES LAST AND SHUT —
+   * while the list is grouped the way the declaration groups it. A closed
+   * group opens for a person who presses it (the address keeps it open,
+   * `?open=done`), and stands open when the list is narrowed to find
+   * something: by words, or by the very field it groups.
+   */
+  const groupField = declaredGroup && arrangement.group?.by === declaredGroup.by && !arrangement.group.bucket ? offers.groups.find((offer) => offer.key === declaredGroup.by) : undefined;
+  const groupsDrawn =
+    declaredGroup && groupField && (groupField.type === "choice" || groupField.type === "boolean")
+      ? orderListGroups(arranged.groups, declaredGroup, { type: groupField.type, ...(groupField.options ? { options: groupField.options } : {}) })
+      : arranged.groups.map((group) => ({ ...group, closed: false }));
+  const openedGroups = new Set((search.get("open") ?? "").split(",").filter(Boolean));
+  const narrowedToFind = Boolean(arrangement.query) || (arrangement.filter ?? []).some((condition) => condition.key === declaredGroup?.by);
+  const groupKeyOf = (key: string) => (groupField?.type === "boolean" ? (key === "1" ? "true" : "false") : key);
+  const isShut = (group: { key: string; closed: boolean }) => group.closed && !narrowedToFind && !openedGroups.has(groupKeyOf(group.key));
+  const toggleGroup = (key: string) => {
+    const params = new URLSearchParams(search);
+    const next = new Set(openedGroups);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    if (next.size > 0) params.set("open", [...next].join(","));
+    else params.delete("open");
+    // Opening a group is not a new place to go back to.
+    setSearch(params, { replace: true });
+  };
   const members = arranged.nodes;
   const current = definition?.lifecycle && !showingPast ? all.filter((node) => isCurrent(definition, node)) : all;
   const retired = all.length - current.length;
@@ -174,7 +223,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const words = formatArrangement(next);
     for (const key of ["sort", "filter", "group", "q", "archived"] as const) if (words[key]) params.set(key, words[key]!);
     // Everything taken off is still a choice, and not the opening one.
-    if (![...params.keys()].some((key) => ["sort", "filter", "group", "q"].includes(key)) && (opening || large || when)) params.set("sort", "");
+    if (![...params.keys()].some((key) => ["sort", "filter", "group", "q"].includes(key)) && (opening || declaredOpening || large || when)) params.set("sort", "");
     setSearch(params);
   };
   /*
@@ -285,7 +334,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const app = firstAppLink(node as Record<string, unknown>, definition);
     const title = (
       <Link to={recordPath(store.schema, kind, node.id)} className="graview-row-title" {...(label.length > 60 ? { title: label } : {})}>
-        {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
+        {flagged.has(node.id) ? <><span role="img" aria-label="Breaks a rule:" style={{ color: "var(--graview-warn)" }}>⚠</span>{" "}</> : null}
         {label}
       </Link>
     );
@@ -329,7 +378,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    */
   const pictures = placesOf(context).filter((place) => place.kind === kind);
   // What the declaration says this list filters by (`pages.lists.<kind>.filters`), when it says.
-  const named = context.views?.arrangement?.()?.lists?.[kind]?.filters;
+  const named = declared?.filters;
   // `is:any` is the horizon widened by "+N past", not an arrangement to undo.
   const narrowed = (arrangement.filter ?? []).some((condition) => condition.key !== "is" || condition.value !== "any");
   const arrangedAlready = Boolean(arrangement.sort || arrangement.group || arrangement.query || narrowed);
@@ -368,7 +417,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
    * some act on one of these at all.
    */
   // The records in the order they are drawn — by group, by section, else as arranged — which a range and Cmd/Ctrl-A read.
-  const drawn = arranged.grouped && grouping ? arranged.groups.flatMap((group) => group.nodes) : sections && sections.length > 1 ? sections.flatMap((section) => section.nodes) : members;
+  const drawn = arranged.grouped && grouping ? groupsDrawn.flatMap((group) => (isShut(group) ? [] : group.nodes)) : sections && sections.length > 1 ? sections.flatMap((section) => section.nodes) : members;
   const order = useMemo(() => drawn.map((node) => node.id), [drawn.map((node) => node.id).join("\n")]); // eslint-disable-line react-hooks/exhaustive-deps
   const choosing = useChoosing(order);
   const choosable = (principal ? store.permittedMutations(principal) : store.permittedMutations()).some((mutation) => {
@@ -439,7 +488,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                   Related:{" "}
                   {roads.map(({ relation, far, words }, index) => (
                     <span key={`${relation.edgeKind}|${relation.from}|${relation.to}`} data-relation={relation.edgeKind}>
-                      {index > 0 ? " · " : null}
+                      {index > 0 ? <span aria-hidden="true"> · </span> : null}
                       {far === "*" ? (
                         capitalize(words ?? humanizeField(relation.edgeKind))
                       ) : (
@@ -456,7 +505,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                   Also as:{" "}
                   {pictures.map((place, index) => (
                     <span key={placeKey(place)}>
-                      {index > 0 ? " · " : null}
+                      {index > 0 ? <span aria-hidden="true"> · </span> : null}
                       <Link to={pathOfPlace(context, place)} style={link}>
                         {place.title}
                       </Link>
@@ -539,14 +588,46 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
           </p>
         ) : arranged.grouped && grouping ? (
           <div style={{ display: "grid", gap: "1rem" }} data-testid="records" data-grouped={grouping}>
-            {arranged.groups.map((group) => (
-              <section key={group.key || "-"} style={{ display: "grid", gap: 0 }} data-testid="list-group">
-                <h2 className="graview-group-head">
-                  {group.label} <span>{group.nodes.length}</span>
-                </h2>
-                <ul style={rowsStyle} className={rowsClass} data-graview-rows="">{group.nodes.map(row)}</ul>
-              </section>
-            ))}
+            {groupsDrawn.map((group) => {
+              if (!group.closed) {
+                return (
+                  <section key={group.key || "-"} style={{ display: "grid", gap: 0 }} data-testid="list-group">
+                    <h2 className="graview-group-head">
+                      {group.label} <span>{group.nodes.length}</span>
+                    </h2>
+                    <ul style={rowsStyle} className={rowsClass} data-graview-rows="">{group.nodes.map(row)}</ul>
+                  </section>
+                );
+              }
+              /*
+               * A CLOSED GROUP IS A DISCLOSURE: its heading a button that says
+               * what it holds and how many ("done · 12 requests"), expanded or
+               * not, the rows it controls drawn once it opens.
+               */
+              const shut = isShut(group);
+              const rowsId = `${listId}-${anchor(group.key || "none")}`;
+              return (
+                <section key={group.key || "-"} style={{ display: "grid", gap: 0 }} data-testid="list-group" data-closed={shut ? "shut" : "open"}>
+                  <h2 className="graview-group-head">
+                    <button
+                      type="button"
+                      className="graview-group-toggle"
+                      aria-expanded={!shut}
+                      aria-controls={rowsId}
+                      data-testid="list-group-toggle"
+                      onClick={() => toggleGroup(groupKeyOf(group.key))}
+                    >
+                      <span aria-hidden="true">{shut ? "▸" : "▾"}</span>
+                      {group.label} <span>· {group.nodes.length}</span>
+                      <span style={visuallyHidden}> {group.nodes.length === 1 ? nounOf(definition, kind) : plural.toLowerCase()}</span>
+                    </button>
+                  </h2>
+                  <ul id={rowsId} style={shut ? { ...rowsStyle, display: "none" } : rowsStyle} className={rowsClass} data-graview-rows="" hidden={shut}>
+                    {shut ? null : group.nodes.map(row)}
+                  </ul>
+                </section>
+              );
+            })}
           </div>
         ) : sections && sections.length > 1 ? (
           <div style={{ display: "grid", gap: 14 }} data-testid="records" data-sectioned={sortOffer?.type === "date" ? "year" : "letter"}>
@@ -652,6 +733,9 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     </Frame>
   );
 }
+
+/** Words a screen reader says and a sighted reader does not need: the noun after a closed group's count. */
+const visuallyHidden: React.CSSProperties = { position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap", border: 0 };
 
 /** The bar stands at the foot of the embed the list is drawn in, or of the window. */
 const anchorOf = (): HTMLElement | null => document.querySelector<HTMLElement>("[data-graview-choosable]")?.closest<HTMLElement>("[data-embed-content]") ?? null;

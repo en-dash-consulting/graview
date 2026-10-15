@@ -1,8 +1,16 @@
-import { checkKitContrast, resolveKit, type KitOverrides, type Principal } from "@graview/core";
+import { checkKitContrast, resolveKit, type AnySchema, type GraviewApp, type KitOverrides, type Principal } from "@graview/core";
+import { compileDocument } from "@graview/core/check";
 import { mount, mountWhenNear, type EmbedFace, type EmbedHandle } from "@graview/embed";
 import { rotaApp } from "@graview/rota";
 import { rotaViews } from "@graview/rota/views";
 import rotaSeed from "../../rota/src/data/example.json";
+import recipeIndex from "@recipes/recipes.json";
+import docsApp from "@recipes/docs/app.json";
+import docsSeed from "@recipes/docs/seed.json";
+import decisionsApp from "@recipes/decisions/app.json";
+import decisionsSeed from "@recipes/decisions/seed.json";
+import dependenciesApp from "@recipes/dependencies/app.json";
+import dependenciesSeed from "@recipes/dependencies/seed.json";
 import { seedbedBrand as SEEDBED_BRAND } from "./domain/brand.js";
 import { CHAPTERS, type Chapter } from "./domain/chapters.js";
 import { seedbedDesign } from "./ui/design.js";
@@ -24,6 +32,7 @@ declare global {
     graviewChapters?: {
       mount: typeof mountChapter;
       mountRota: typeof mountRota;
+      mountRecipe: typeof mountRecipe;
       mountAll: typeof mountAll;
       chapters: readonly Chapter[];
       /** Every embed the page has mounted, by its element, so the page can re-dress or re-seat one. */
@@ -142,10 +151,67 @@ export function mountRota(element: HTMLElement, stop?: string, label?: string, f
   return handle;
 }
 
-/** Every `[data-graview-chapter]` and `[data-graview-app]` on the page, mounted as the reader comes near. */
+/*
+ * THE RECIPES, LIVE.
+ *
+ * A recipe is the one prompt on graview.dev with a different task, and what
+ * an agent made of it: a declaration document and a seed, committed under
+ * docs/site/recipes/<slug>/ and checked on every push. The page shows that
+ * very document running — compiled here, in the reader's browser, by the
+ * same compiler `graview check --document` and `graview preview` use — so
+ * the app on the page cannot be a different app from the one in the file.
+ */
+interface RecipeEntry {
+  readonly slug: string;
+  readonly title: string;
+  readonly task: string;
+  readonly stop?: string;
+}
+export const RECIPES: readonly RecipeEntry[] = (recipeIndex as { readonly recipes: readonly RecipeEntry[] }).recipes;
+const RECIPE_FILES: Record<string, { readonly document: unknown; readonly seed: unknown }> = {
+  docs: { document: docsApp, seed: docsSeed },
+  decisions: { document: decisionsApp, seed: decisionsSeed },
+  dependencies: { document: dependenciesApp, seed: dependenciesSeed },
+};
+const compiledRecipes = new Map<string, GraviewApp<AnySchema>>();
+
+/** A recipe's declaration, compiled once per page. */
+export function recipeApp(slug: string): GraviewApp<AnySchema> {
+  const known = compiledRecipes.get(slug);
+  if (known) return known;
+  const files = RECIPE_FILES[slug];
+  if (!files) throw new Error(`No recipe "${slug}"; there are ${Object.keys(RECIPE_FILES).join(", ")}.`);
+  const compiled = compileDocument(files.document);
+  if (!compiled.ok) throw new Error(`The ${slug} recipe does not compile: ${compiled.findings.map((f) => f.message).join("; ")}`);
+  compiledRecipes.set(slug, compiled.app as GraviewApp<AnySchema>);
+  return compiled.app as GraviewApp<AnySchema>;
+}
+
+export function mountRecipe(element: HTMLElement, slug: string, face?: EmbedFace, stop?: string, label?: string, scheme?: "light" | "dark"): EmbedHandle {
+  const entry = RECIPES.find((recipe) => recipe.slug === slug);
+  const app = recipeApp(slug);
+  const handle = mount(element, {
+    app,
+    seed: RECIPE_FILES[slug]!.seed as never,
+    ...(face ? { face } : {}),
+    ...(stop ?? entry?.stop ? { stop: (stop ?? entry?.stop)! } : {}),
+    ...(scheme ? { scheme } : {}),
+    label: label ?? entry?.title ?? app.name,
+  });
+  handles.set(element, handle);
+  element.dispatchEvent(new CustomEvent("graview:mounted", { bubbles: true, detail: { recipe: slug, handle } }));
+  return handle;
+}
+
+/** Every `[data-graview-chapter]`, `[data-graview-app]` and `[data-graview-recipe]` on the page, mounted as the reader comes near. */
 export function mountAll(root: ParentNode = document): void {
-  mountWhenNear([...root.querySelectorAll<HTMLElement>("[data-graview-chapter], [data-graview-app]")], (element) => {
+  mountWhenNear([...root.querySelectorAll<HTMLElement>("[data-graview-chapter], [data-graview-app], [data-graview-recipe]")], (element) => {
     element.replaceChildren();
+    if (element.dataset["graviewRecipe"]) {
+      const scheme = element.dataset["scheme"];
+      mountRecipe(element, element.dataset["graviewRecipe"], element.dataset["face"] as EmbedFace | undefined, element.dataset["stop"], element.dataset["label"], scheme === "light" || scheme === "dark" ? scheme : undefined);
+      return;
+    }
     if (element.dataset["graviewApp"] === "rota") {
       mountRota(element, element.dataset["stop"], element.dataset["label"], element.dataset["face"] as EmbedFace | undefined);
       return;
@@ -154,6 +220,6 @@ export function mountAll(root: ParentNode = document): void {
   });
 }
 
-window.graviewChapters = { mount: mountChapter, mountRota, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
+window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => mountAll());
 else mountAll();

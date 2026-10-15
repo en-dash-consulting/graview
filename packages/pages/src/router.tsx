@@ -301,6 +301,13 @@ function FaceRoot<S extends AnySchema>({
   );
 }
 
+/** Whether the keyboard is in somewhere a person types: a text field, a choice, a box that edits. */
+function typingIn(active: Element | null): boolean {
+  if (!(active instanceof HTMLElement)) return false;
+  if (active.isContentEditable || active.tagName === "TEXTAREA" || active.tagName === "SELECT") return true;
+  return active.tagName === "INPUT" && !["button", "submit", "reset", "checkbox", "radio", "image", "file", "color", "range"].includes((active as HTMLInputElement).type);
+}
+
 function ScrollReset() {
   const { pathname } = useLocation();
   const type = useNavigationType();
@@ -333,8 +340,14 @@ function ScrollReset() {
   useEffect(() => {
     if (!moved.current && pathname === arrivedAt.current) return;
     moved.current = true;
+    /*
+     * AND FROM A LINK THAT STAYS. A place followed from the bar left the
+     * keyboard on the bar's link, which is still there: the page under it
+     * changed and a screen reader said nothing at all. Only a person
+     * typing — the Find box, the seat, a field — keeps the keyboard where it is.
+     */
     const active = document.activeElement;
-    if (active !== null && active !== document.body && active !== document.documentElement) return;
+    if (typingIn(active)) return;
     const main = mark.current?.closest("main") ?? document.querySelector("main");
     const heading = mark.current?.closest("[data-graview-face]")?.querySelector<HTMLElement>("[data-graview-page-title]") ?? main?.querySelector<HTMLElement>("h1, h2") ?? null;
     const target = heading ?? main ?? null;

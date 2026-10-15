@@ -147,7 +147,7 @@ export function DefaultHomePage<S extends AnySchema>({ context }: { context: Pag
           <h2 style={h2}>What is here</h2>
           {relations.length > 0 ? (
             <Link to="/map" style={{ ...link, ...quiet, marginLeft: "auto" }} data-testid="map-link">
-              Connections · {relations.length === 1 ? "1 relation" : `${relations.length} relations`} →
+              Connections · {relations.length === 1 ? "1 relation" : `${relations.length} relations`} <span aria-hidden="true">→</span>
             </Link>
           ) : null}
         </div>

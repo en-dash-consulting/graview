@@ -1,0 +1,26 @@
+{
+  "prompt": "Read https://graview.dev/start.md, then turn this repo's {task} into a Graview app.",
+  "recipes": [
+    {
+      "slug": "docs",
+      "task": "docs",
+      "title": "Your docs, as an app",
+      "blurb": "The repository's docs, the modules they cover and who owns each, with every module that has no doc or no owner flagged and the repair offered.",
+      "stop": "#overview=1"
+    },
+    {
+      "slug": "decisions",
+      "task": "decisions",
+      "title": "Your decisions, as an app",
+      "blurb": "The architecture decision records: what each decided, what it superseded and which modules it affects, with the loose ends flagged.",
+      "stop": "#overview=1"
+    },
+    {
+      "slug": "dependencies",
+      "task": "dependencies",
+      "title": "Your dependencies, as an upgrade plan",
+      "blurb": "Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.",
+      "stop": "#overview=1"
+    }
+  ]
+}

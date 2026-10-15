@@ -162,6 +162,7 @@ export function SceneLink<S extends AnySchema>({
   context,
   stop,
   title,
+  label,
   style,
   className,
   children,
@@ -170,19 +171,28 @@ export function SceneLink<S extends AnySchema>({
   readonly context: PageContext<S>;
   readonly stop: string;
   readonly title?: string;
+  /** What a screen reader calls it, where its words are a mark ("↗"): the mark is said as nothing at all. */
+  readonly label?: string;
   readonly style?: CSSProperties;
   /** A design's own class for the link. */
   readonly className?: string;
   readonly children?: ReactNode;
 } & Record<`data-${string}`, string>) {
-  const label = sceneTitle(context.views?.arrangement?.());
-  const words = children ?? `In ${label === "Scene" ? "the scene" : label.replace(/^The /, "the ")} ↗`;
+  const scene = sceneTitle(context.views?.arrangement?.());
+  // The arrow is drawn, not said: "In the scene, link", never "In the scene north east arrow".
+  const words = children ?? (
+    <>
+      In {scene === "Scene" ? "the scene" : scene.replace(/^The /, "the ")} <span aria-hidden="true">↗</span>
+    </>
+  );
+  const named = label ? { "aria-label": label } : {};
   if (context.overview) {
     const go = context.overview;
     return (
       <a
         href={stop}
         {...rest}
+        {...named}
         {...(title ? { title } : {})}
         style={style}
         {...(className ? { className } : {})}
@@ -197,7 +207,7 @@ export function SceneLink<S extends AnySchema>({
   }
   if (context.embedded) return null;
   return (
-    <a href={`${context.sceneHref ?? "/"}${stop}`} {...rest} {...(title ? { title } : {})} style={style} {...(className ? { className } : {})}>
+    <a href={`${context.sceneHref ?? "/"}${stop}`} {...rest} {...named} {...(title ? { title } : {})} style={style} {...(className ? { className } : {})}>
       {words}
     </a>
   );

@@ -31,11 +31,19 @@ export function EditableValue<S extends AnySchema>({
   field,
   value,
   stored = value,
+  said,
 }: {
   readonly nodeId: string;
   readonly field: string;
   /** The value as a person reads it: "Aug 28, 2026", "Tue". */
   readonly value: string;
+  /**
+   * What a screen reader calls the control. By default the fact and its
+   * value — "Stage: Shipped" — since a value read alone ("Shipped,
+   * button") does not say which fact it is. A heading's words are said as
+   * they are (`said={value}`): the heading already says what it is.
+   */
+  readonly said?: string;
   /** The value as the record keeps it, which the edit control holds and writes back: "2026-08-28", "tue". The value said, when not given. */
   readonly stored?: string;
 }) {
@@ -45,7 +53,9 @@ export function EditableValue<S extends AnySchema>({
   const { store } = useGraview<S>();
   const kind = store.graph.getNode(nodeId)?.kind as string | undefined;
   const definition = store.schema.definitions.find((one) => one.kind === kind);
-  const words = fieldWords(definition, field).toLowerCase();
+  const fact = fieldWords(definition, field);
+  const words = fact.toLowerCase();
+  const named = said ?? `${fact.charAt(0).toUpperCase()}${fact.slice(1)}: ${value}`;
   const [editing, setEditing] = useState(false);
   // An amount is edited as it is said, less its symbol: "10,000" beside "$", never a bare 10000 (money said as money).
   const amount = editable?.shape.type === "number" ? editable.shape.amount : undefined;
@@ -104,6 +114,8 @@ export function EditableValue<S extends AnySchema>({
         type="button"
         data-graview-field={field}
         data-graview-editable={editable.mutation}
+        // Named only where the name is more than the words it shows: a heading's words are its name already.
+        {...(named === value ? {} : { "aria-label": named })}
         title={`${editable.title} — changes the ${words}, and can be undone`}
         onClick={() => setEditing(true)}
         style={{
@@ -604,5 +616,6 @@ export function EditableTitle<S extends AnySchema>({
     return typeof value === "string" && value === children;
   });
   if (!writable) return <>{children}</>;
-  return <EditableValue<S> nodeId={nodeId} field={writable.field} value={children} />;
+  // A heading's words, said as they are: the heading says what it is.
+  return <EditableValue<S> nodeId={nodeId} field={writable.field} value={children} said={children} />;
 }

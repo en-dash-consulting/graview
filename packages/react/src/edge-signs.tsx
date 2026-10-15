@@ -24,10 +24,16 @@ const MARGIN = 56;
 export function EdgeSigns({
   result,
   schema,
+  chrome = [],
   onGo,
 }: {
   readonly result: Pick<Layout, "nodes" | "width" | "height" | "city" | "visible">;
   readonly schema: AnySchema;
+  /**
+   * The controls standing on the ground, in canvas pixels (the layout's
+   * `chrome`): the altitude control and the key in the top right corner.
+   */
+  readonly chrome?: readonly { readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
   /** Pan the ground by this much. */
   readonly onGo: (by: { readonly x: number; readonly y: number }) => void;
 }): ReactElement | null {
@@ -44,6 +50,13 @@ export function EdgeSigns({
     const card = result.nodes.find((node) => node.id === hung.id);
     return card ? [{ left: card.x + hung.x, top: card.y + hung.y, right: card.x + hung.x + hung.width, bottom: card.y + hung.y + hung.height }] : [];
   });
+  /*
+   * AND CLEAR OF THE CORNER. On a phone the city runs past the right edge
+   * near the top, and the sign for the district there stood under "Close
+   * the map", its name read through the control. The corner the altitude
+   * control and the key stand in is ground a sign steps past too.
+   */
+  const taken = [...showings, ...chrome.map((box) => ({ left: box.x, top: box.y, right: box.x + box.width, bottom: box.y + box.height }))];
   const signs: ReactElement[] = [];
   for (const side of ["left", "right", "top", "bottom"] as const) {
     // The reader's window: a panel over the scene is not part of it (`Layout.visible`).
@@ -53,7 +66,7 @@ export function EdgeSigns({
     const onSide = past.filter((one) => one.side === side).sort((a, b) => a.along - b.along);
     for (const one of onSide) {
       const plural = pluralLabel(schema, one.kind);
-      const { at, inset } = clearOf(showings, side, Math.max(MARGIN, Math.min(span - MARGIN, Math.max(one.along, last + SPACING))), signLength(plural), seen, span);
+      const { at, inset } = clearOf(taken, side, Math.max(MARGIN, Math.min(span - MARGIN, Math.max(one.along, last + SPACING))), signLength(plural), seen, span);
       last = at;
       const place: CSSProperties =
         side === "left"

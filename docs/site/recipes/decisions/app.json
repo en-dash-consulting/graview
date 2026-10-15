@@ -1,0 +1,99 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Larkspur decisions",
+  "description": "Larkspur's architecture decision records (docs/adr): each decision, its status and date, what superseded it, and the modules it affects.",
+  "kinds": {
+    "decision": {
+      "noun": "decision",
+      "plural": "decisions",
+      "label": "ADR {number}: {title}",
+      "description": "One numbered record in docs/adr. Never edited after it is accepted; a changed mind is a new record that supersedes the old one.",
+      "fields": {
+        "number": { "type": "integer", "required": true, "min": 1, "description": "The record's number, from its file name and heading." },
+        "title": { "type": "string", "required": true, "description": "The record's heading, without its number." },
+        "status": { "type": "enum", "options": ["proposed", "accepted", "rejected", "superseded"], "required": true, "description": "The record's Status line." },
+        "date": { "type": "date", "required": true, "description": "The record's Date line." },
+        "file": { "type": "string", "required": true, "description": "Where the record lives in the repository." },
+        "wholeRepository": { "type": "boolean", "label": "Affects the whole repository", "description": "The record's Affects line says the whole repository rather than naming modules." }
+      },
+      "edges": {
+        "supersededBy": { "to": ["decision"], "cardinality": "one", "description": "the decision that superseded it", "inverse": "the decisions it supersedes" },
+        "affects": { "to": ["module"], "cardinality": "many", "description": "the modules it affects", "inverse": "the decisions that affect it" }
+      },
+      "fieldRoles": { "when": "date" },
+      "glance": ["status", "date", "wholeRepository"]
+    },
+    "module": {
+      "noun": "module",
+      "plural": "modules",
+      "label": "{path}",
+      "description": "A workspace package that pnpm-workspace.yaml takes in: a directory under services/, packages/ or tools/ with its own package.json.",
+      "fields": {
+        "path": { "type": "string", "required": true, "description": "The directory, from the repository root." },
+        "packageName": { "type": "string", "required": true, "label": "Package", "description": "The name in its package.json." },
+        "description": { "type": "string", "description": "The description in its package.json." }
+      }
+    }
+  },
+  "acts": {
+    "add-decision": { "creates": "decision", "title": "Record a decision", "description": "Add a decision record from docs/adr." },
+    "add-module": { "creates": "module", "title": "Add a module", "description": "Record a workspace package." },
+    "affect-module": { "on": "decision", "connects": "affects", "title": "Say it affects a module", "description": "Name a module this decision affects.", "fromTheOtherEnd": "Name a decision that affects it" },
+    "unaffect-module": { "on": "decision", "severs": "affects", "title": "Say it no longer affects a module", "description": "Take a module off this decision's Affects line.", "fromTheOtherEnd": "Take a decision off it" },
+    "mark-superseded": { "on": "decision", "connects": "supersededBy", "sets": { "status": "superseded" }, "title": "Name what superseded it", "description": "Name the decision that superseded this one, and mark it superseded.", "fromTheOtherEnd": "Name a decision it supersedes" },
+    "unmark-superseded": { "on": "decision", "severs": "supersededBy", "sets": { "status": "accepted" }, "title": "It is not superseded", "description": "Take back what superseded this decision, and mark it accepted again.", "fromTheOtherEnd": "Take back a decision it supersedes" },
+    "accept-decision": { "on": "decision", "sets": { "status": "accepted" }, "title": "Accept it", "description": "Mark the decision accepted." },
+    "reject-decision": { "on": "decision", "sets": { "status": "rejected" }, "title": "Reject it", "description": "Mark the decision rejected: it was considered and not taken." }
+  },
+  "rules": {
+    "superseded-names-successor": {
+      "title": "A superseded decision names what superseded it",
+      "over": "decision",
+      "when": "status == 'superseded'",
+      "require": "present(supersededBy)",
+      "says": "ADR {number} is superseded but does not say by what",
+      "repairs": [{ "act": "mark-superseded", "label": "Name what superseded it" }]
+    },
+    "successor-is-marked-superseded": {
+      "title": "A decision something supersedes says so",
+      "over": "decision",
+      "when": "present(supersededBy)",
+      "require": "status == 'superseded'",
+      "says": "ADR {number} has a successor but its status is {status}",
+      "repairs": [{ "act": "mark-superseded", "label": "Mark it superseded" }, { "act": "unmark-superseded", "label": "It is not superseded" }]
+    },
+    "successor-is-accepted": {
+      "title": "What supersedes a decision is accepted",
+      "over": "decision",
+      "when": "present(supersededBy)",
+      "require": "supersededBy.status == 'accepted'",
+      "says": "ADR {number} is superseded by a decision that is not accepted",
+      "repairs": [{ "act": "unmark-superseded", "label": "It is not superseded" }]
+    },
+    "successor-is-newer": {
+      "title": "A decision is superseded only by a later one",
+      "over": "decision",
+      "when": "present(supersededBy)",
+      "require": "supersededBy.date >= date",
+      "says": "ADR {number} is superseded by a decision dated before it",
+      "repairs": [{ "act": "unmark-superseded", "label": "It is not superseded" }]
+    },
+    "proposal-not-left-open": {
+      "title": "A proposal is decided within 90 days",
+      "over": "decision",
+      "when": "status == 'proposed'",
+      "require": "days(date, today()) <= 90",
+      "says": "ADR {number} has been proposed since {date} and is still open",
+      "repairs": [{ "act": "accept-decision", "label": "Accept it" }, { "act": "reject-decision", "label": "Reject it" }]
+    },
+    "accepted-affects-something": {
+      "title": "An accepted decision affects something",
+      "over": "decision",
+      "when": "status == 'accepted'",
+      "require": "wholeRepository == true or exists(out('affects'))",
+      "says": "ADR {number} is accepted but names no module it affects",
+      "repairs": [{ "act": "affect-module", "label": "Name a module it affects" }]
+    }
+  }
+}

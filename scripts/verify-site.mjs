@@ -64,8 +64,10 @@ const arrive = async (page, url) => {
 };
 
 const PAGES = [
-  /* The hero, four feature frames, and the first step of the stepper. */
-  { file: "index.html", name: "the page", live: 10, skip: "#what" },
+  /* The prompt and the recipe it opens on, live; the other recipes mount when their tab is chosen. */
+  { file: "index.html", name: "the page", live: 1, skip: "#what" },
+  /* The long tour, moved off the front page: eight feature frames and the first step of the stepper. */
+  { file: "tour.html", name: "the tour", live: 9, skip: "#tour" },
   /* Sixteen chapters and the kit's own frame. */
   { file: "progression.html", name: "the long version", live: 17, skip: "#grown" },
   /*
@@ -83,6 +85,8 @@ const PAGES = [
   { file: "docs/agents.html", name: "working with a model", live: 0, skip: "#main", widths: [320, 768, 1280] },
   /* Four live frames on a docs page, so it takes the same sweep the page does. */
   { file: "docs/demos.html", name: "the demos", live: 4, skip: "#main", widths: [320, 768, 1280] },
+  /* A recipe's page: its app, live, beside the declaration it runs. */
+  { file: "docs/recipes/docs.html", name: "a recipe", live: 1, skip: "#main", widths: [320, 768, 1280] },
 ];
 const PAGE = pageAt("index.html");
 const ENGINE = engineName();
@@ -136,7 +140,7 @@ try {
       if (sheet.live > 0) {
         await page
           .waitForFunction(
-            () => [...document.querySelectorAll("[data-graview-chapter], [data-graview-app]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
+            () => [...document.querySelectorAll("[data-graview-chapter], [data-graview-app], [data-graview-recipe]")].every((el) => el.querySelector("[data-graview-embed]") !== null),
             null,
             { timeout: 20_000 },
           )
@@ -286,7 +290,7 @@ try {
    * and does not is the worst thing this page could ship.
    */
   const stepper = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await arrive(stepper, pageAt("index.html"));
+  await arrive(stepper, pageAt("tour.html"));
   await stepper.locator("#grow").scrollIntoViewIfNeeded();
   await stepper
     .waitForFunction(() => document.querySelector('[data-step-live="1"] [data-graview-embed]') !== null, null, { timeout: 20_000 })
@@ -311,6 +315,43 @@ try {
       [...document.querySelectorAll(".step-panel")].filter((p) => !p.hidden).length === 1,
   );
   await stepper.close();
+
+  /*
+   * THE RECIPE TABS, which are the front page's whole argument now: choose
+   * another task and the prompt says it, Copy copies it, and the app on the
+   * stage is a DIFFERENT app, the one that prompt made. Tabs that change the
+   * words and leave the picture would be the worst thing this page could do.
+   */
+  const front = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await arrive(front, pageAt("index.html"));
+  await front.waitForFunction(() => document.querySelector('#stage-docs [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
+  const districtsOn = (id) => front.evaluate((id) => [...document.querySelectorAll(`#${id} [data-graview-view^="kind:"]`)].map((el) => el.getAttribute("data-graview-view")).sort().join(","), id);
+  const docsDistricts = await districtsOn("stage-docs");
+  await front.click("#rt-decisions");
+  await front.waitForFunction(() => document.querySelector('#stage-decisions [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
+  const decisionsDistricts = await districtsOn("stage-decisions");
+  report.criteria.aRecipeTabMountsThatRecipesApp =
+    docsDistricts !== "" && decisionsDistricts !== "" && docsDistricts !== decisionsDistricts &&
+    (await front.evaluate(() => document.getElementById("stage-docs")?.hidden === true && document.getElementById("stage-decisions")?.hidden === false));
+  report.criteria.theTabSaysItsTaskInThePrompt = await front.evaluate(
+    () => document.getElementById("prompt-task")?.textContent === "decisions" && (document.querySelector(".copy-prompt")?.getAttribute("data-copy") ?? "").includes("repo's decisions into"),
+  );
+  await front.focus("#rt-decisions");
+  await front.keyboard.press("ArrowRight");
+  await front.waitForTimeout(300);
+  report.criteria.theRecipeTabsAreReachableFromTheKeyboard = await front.evaluate(
+    () => document.activeElement?.id === "rt-dependencies" && [...document.querySelectorAll(".stage-panel")].filter((p) => !p.hidden).length === 1,
+  );
+  await front.close();
+  /* The first frame is finished before anything loads: a picture of the city and the prompt, not a box that says loading. */
+  const bare = await browser.newPage({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });
+  await bare.goto(pageAt("index.html"), { waitUntil: "load" });
+  report.criteria.theFirstFrameIsFinishedWithoutScript = await bare.evaluate(() => {
+    const poster = document.querySelector("#stage-docs .poster .dark svg");
+    const box = poster?.getBoundingClientRect();
+    return !!box && box.width > 200 && box.height > 150 && (document.getElementById("prompt-text")?.textContent ?? "").includes("start.md");
+  });
+  await bare.close();
 
   /* The long version is where the chapters and the kit went. */
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });

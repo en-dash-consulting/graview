@@ -17,7 +17,7 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graview — One declaration. A UI for people, tools for agents, rules for both.</title>
-<meta name="description" content="Graview is a TypeScript framework for apps that people and AI agents work in together. Declare your domain once and the interface, the permissions and the agent&rsquo;s tools are derived from it, so they can&rsquo;t drift apart. The isometric scene is the proof.">
+<meta name="description" content="Hand your agent one prompt and it turns your repository&rsquo;s docs, decisions or dependencies into a running Graview app. Graview is a TypeScript framework: declare a domain once and the interface, the permissions and the agent&rsquo;s tools are derived from it, so they can&rsquo;t drift apart.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
@@ -63,7 +63,7 @@ img { max-width: 100%; }
    "@id": "https://graview.dev/#website",
    "url": "https://graview.dev/",
    "name": "Graview",
-   "description": "Graview is a TypeScript framework for apps that people and AI agents work in together. Declare your domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart. The isometric scene is the proof.",
+   "description": "Hand your agent one prompt and it turns your repository’s docs, decisions or dependencies into a running Graview app. Graview is a TypeScript framework: declare a domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart.",
    "inLanguage": "en",
    "publisher": {
     "@id": "https://graview.dev/#endash"
@@ -86,7 +86,7 @@ img { max-width: 100%; }
    "@type": "SoftwareApplication",
    "@id": "https://graview.dev/#software",
    "name": "Graview",
-   "description": "Graview is a TypeScript framework for apps that people and AI agents work in together. Declare your domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart. The isometric scene is the proof.",
+   "description": "Hand your agent one prompt and it turns your repository’s docs, decisions or dependencies into a running Graview app. Graview is a TypeScript framework: declare a domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart.",
    "url": "https://graview.dev/",
    "applicationCategory": "DeveloperApplication",
    "operatingSystem": "Any platform with Node.js 22 or later",
@@ -116,7 +116,7 @@ img { max-width: 100%; }
    "@type": "SoftwareSourceCode",
    "@id": "https://graview.dev/#source",
    "name": "Graview",
-   "description": "Graview is a TypeScript framework for apps that people and AI agents work in together. Declare your domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart. The isometric scene is the proof.",
+   "description": "Hand your agent one prompt and it turns your repository’s docs, decisions or dependencies into a running Graview app. Graview is a TypeScript framework: declare a domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart.",
    "codeRepository": "https://github.com/en-dash-consulting/graview",
    "programmingLanguage": {
     "@type": "ComputerLanguage",
@@ -169,7 +169,7 @@ img { max-width: 100%; }
      "name": "How do I start a Graview app?",
      "acceptedAnswer": {
       "@type": "Answer",
-      "text": "Run npm create graview@latest my-app with Node 22 or later. It writes a running product for your own domain — the declaration, a shell, a test, a CI workflow and the authoring skills for Claude Code and Codex — and npm run verify checks it."
+      "text": "Hand your agent one sentence: Read https://graview.dev/start.md, then turn this repo's docs into a Graview app. The page it reads walks it through scaffolding the project, declaring the app, running graview check and opening graview preview. To drive it yourself, run npm create graview@latest my-app with Node 22 or later: it writes a running product, a test, a CI workflow and the authoring skills for Claude Code and Codex, and npm run verify checks it."
      }
     },
     {
@@ -804,7 +804,7 @@ footer {
   .plane .no i { max-width: 92px; }
   .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .two { gap: 20px; }
-  section { padding-top: 42px; }
+  section:where(:not([data-graview-embed], [data-graview-embed] *)) { padding-top: 42px; }
 }
 
 /* ── The landing page ─────────────────────────────────────────────────────
@@ -1290,24 +1290,200 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 .qa h3 { font-size: 17px; margin: 0 0 8px; }
 .qa p { color: var(--ink-2); max-width: 62ch; }
 @media (max-width: 760px) { .faq-list { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
+
+/* ── The landing page, fourth cut: one thing to hand your agent ─────────
+   Almost everyone starts by asking an assistant, so the first screen is
+   the sentence to paste, in big type on a dark stage, with the app that
+   sentence made running under it. One accent, the symbol's turquoise:
+   the task word, the live dot and the copy buttons. Nothing decorative:
+   the city in the frame is the only picture.
+   ─────────────────────────────────────────────────────────────────── */
+
+/* A region that is dark in either scheme: the dark tokens, scoped. */
+.night {
+  color-scheme: dark;
+  --paper:     #0A0F1F;
+  --panel:     #111933;
+  --sunk:      #0E1529;
+  --ink:       #EEF0F6;
+  --ink-2:     #C3CAD9;
+  --ink-3:     #A0A9BD;
+  --rule:      #27314F;
+  --rule-2:    #1C2541;
+  --pine:      #A3B3FF;
+  --pine-2:    #C6D0FF;
+  --pine-wash: #18224A;
+  --amber:     #D4A162;
+  --amber-wash:#2A2115;
+  --logo:      #FFFFFF;
+  --night:     #060A16;
+  color: var(--ink);
+}
+.topbar.night { background: var(--night); border-bottom-color: var(--rule-2); }
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .topbar.night { background: color-mix(in srgb, var(--night) 90%, transparent); }
+}
+.topbar.night .jump a { color: var(--ink-2); }
+.topbar.night .jump a:hover { color: var(--ink); background: var(--panel); }
+.topbar.night .jump a.go { color: var(--night); background: var(--ink); }
+.topbar.night .jump a.go:hover { color: var(--night); background: var(--pine-2); }
+
+/* Full-bleed without widening the page: the band's color reaches the
+   window's edges, its box stays the column's, so nothing scrolls sideways. */
+main.page > section.agent-hero {
+  padding-top: clamp(36px, 6vh, 80px);
+  padding-bottom: clamp(48px, 8vh, 96px);
+  background: var(--night);
+  box-shadow: 0 0 0 100vmax var(--night);
+  clip-path: inset(0 -100vmax);
+  display: grid; gap: 28px;
+}
+.ah-label {
+  margin: 0 0 14px; display: flex; align-items: center; gap: 10px;
+  font-family: var(--sans); font-size: 12px; font-weight: var(--w-label);
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2);
+}
+.ah-label .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); flex: 0 0 auto; }
+
+.prompt {
+  border: 1px solid var(--rule); border-radius: 10px; background: var(--sunk);
+  padding: clamp(18px, 2.4vw, 30px) clamp(18px, 2.6vw, 34px) clamp(14px, 1.6vw, 20px);
+}
+.prompt-text {
+  margin: 0; max-width: none;
+  font-family: var(--mono); font-size: clamp(19px, 2.45vw, 34px); line-height: 1.38;
+  letter-spacing: -0.01em; color: var(--ink); overflow-wrap: break-word; text-wrap: pretty;
+}
+.prompt-text .task { color: var(--mint); }
+.prompt-foot {
+  margin-top: clamp(16px, 2vw, 26px); padding-top: 14px; border-top: 1px solid var(--rule-2);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
+}
+.recipe-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.recipe-tabs [role="tab"] {
+  font: inherit; font-family: var(--mono); font-size: 14px; color: var(--ink-2);
+  background: transparent; border: 1px solid var(--rule); border-radius: 999px;
+  min-height: 34px; padding: 0 14px; cursor: pointer;
+}
+.recipe-tabs [role="tab"]:hover { color: var(--ink); border-color: var(--ink-3); }
+.recipe-tabs [role="tab"][aria-selected="true"] { color: var(--night); background: var(--mint); border-color: var(--mint); }
+.night .copy { color: var(--night); background: var(--mint); }
+.night .copy:hover { background: #5CF0D2; }
+.night .copy[data-copied] { background: var(--ink); }
+.copy-prompt { min-height: 36px; padding: 0 16px; font-size: 13.5px; }
+
+.ah-diy {
+  margin: 14px 0 0; max-width: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px;
+  font-size: 14px; color: var(--ink-3);
+}
+.diy-line { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.diy-line code { font-size: 14px; color: var(--ink); }
+.diy-line .copy { margin-left: 0; }
+
+.ah-stage { min-width: 0; }
+.stage-panel { display: grid; gap: 10px; }
+.agent-hero .hero-live {
+  height: min(600px, 66vh); min-height: 420px; background: var(--night);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.agent-hero .stage-caption { color: var(--ink-3); }
+.agent-hero .stage-caption a { color: var(--pine); font-weight: var(--w-label); text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; min-height: 24px; }
+.agent-hero .stage-caption a:hover { text-decoration: underline; }
+.agent-hero .stage-caption .live { color: var(--mint); }
+/* The stage is dark in either scheme, and so is its first frame. */
+.agent-hero .hero-live .poster .light { display: none !important; }
+.agent-hero .hero-live .poster .dark { display: block !important; }
+
+.ah-why {
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 20px 48px; align-items: end;
+  padding-top: clamp(20px, 3vw, 36px); border-top: 1px solid var(--rule-2);
+}
+.ah-why h1 { font-size: clamp(28px, 3.1vw, 44px); line-height: 1.12; letter-spacing: var(--track-display); max-width: 20ch; font-weight: var(--w-display); }
+.ah-why .lede { font-size: 17px; color: var(--ink-2); }
+
+@media (max-width: 900px) {
+  .ah-why { grid-template-columns: minmax(0, 1fr); }
+  .agent-hero .hero-live { height: 460px; min-height: 0; }
+}
+@media (max-width: 560px) {
+  .agent-hero .hero-live { height: 400px; }
+  .copy-prompt { margin-left: 0; width: 100%; }
+  /* Small enough that the address stays on one line at 320px. */
+  .prompt-text { font-size: clamp(14px, 4.4vw, 18px); letter-spacing: -0.02em; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ah-ask > * { animation: rise 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .ah-ask > :nth-child(2) { animation-delay: 60ms; }
+  .ah-ask > :nth-child(3) { animation-delay: 120ms; }
+}
+@media (forced-colors: active) {
+  .recipe-tabs [role="tab"][aria-selected="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+  .ah-label .dot { forced-color-adjust: none; background: CanvasText; }
+}
+
+/* The recipes: one row each, the task, what it declared and the proof. */
+main.page > section.recipes { padding-top: 104px; }
+.recipe-list { margin: 40px 0 0; padding: 0; list-style: none; display: grid; gap: 0; }
+.recipe-row {
+  display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 16px 48px;
+  padding: 30px 0; border-top: 1px solid var(--rule);
+}
+.recipe-row h3 { font-size: clamp(22px, 2.2vw, 28px); font-weight: var(--w-display); letter-spacing: var(--track-display); }
+.recipe-row .recipe-prompt { margin-top: 12px; font-family: var(--mono); font-size: 13.5px; line-height: 1.6; color: var(--ink-2); overflow-wrap: anywhere; }
+.recipe-row .recipe-prompt b { color: var(--ink); font-weight: 600; }
+.recipe-row .recipe-blurb { font-size: 15.5px; color: var(--ink-2); }
+.recipe-row dl { margin: 14px 0 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 14px; }
+.recipe-row dt { color: var(--ink-3); }
+.recipe-row dd { margin: 0; color: var(--ink); min-width: 0; }
+.recipe-row .recipe-links { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 4px 18px; font-family: var(--sans); font-size: 14px; font-weight: 600; }
+.recipe-row .recipe-links a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; }
+.recipe-row .recipe-links a:hover { text-decoration: underline; }
+.recipes-note { margin-top: 8px; padding-top: 18px; border-top: 1px solid var(--rule); max-width: 78ch; }
+@media (max-width: 900px) { .recipe-row { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 420px) { .recipe-row dl { grid-template-columns: minmax(0, 1fr); gap: 2px; } .recipe-row dd { margin-bottom: 8px; } }
+
+/* The tour's opening, on the page the long argument moved to. */
+main.page > section.tour-intro { padding-top: 64px; }
+.tour-intro h1 { font-size: clamp(32px, 3.8vw, 52px); line-height: 1.08; letter-spacing: var(--track-display); max-width: 20ch; }
+.tour-intro .lede { margin-top: 20px; }
+
+/*
+ * THE TOP BAR ON A PHONE. A row of section links that scrolls sideways
+ * inside the bar was cut off at the right edge ("Recipes, How it works,
+ * C…"), which reads as broken, not as more. Below a tablet's width the bar
+ * keeps the links a visitor starts from and drops the in-page ones (every
+ * one of them is a scroll away); and if what is left still does not fit,
+ * it wraps under the logo rather than running off the edge.
+ */
+@media (max-width: 760px) {
+  .topbar .jump a.wide { display: none; }
+  .topbar-in { flex-wrap: wrap; row-gap: 0; }
+  .topbar .jump { flex-wrap: wrap; justify-content: flex-end; overflow: visible; margin: 0 0 0 auto; padding: 4px 0; }
+}
+@media (max-width: 480px) {
+  /* A phone: the mark a little smaller, the links a little closer, and GitHub
+     left to the footer, so the bar is one row at 320px. */
+  .topbar .logo svg { height: 26px; }
+  .topbar-in { gap: 10px; }
+  .topbar .jump a { padding: 6px 8px; }
+  .topbar .jump a[href^="https://github.com"] { display: none; }
+}
 /* site-css:end */
 </style>
 
 <a class="skip" href="#what">Skip to content</a>
 
-<header class="topbar">
+<header class="topbar night">
   <div class="topbar-in" lang="en">
     <div class="brand">
       <a class="logo" href="index.html" aria-label="Graview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 847.64 180" aria-hidden="true" focusable="false"><g transform="translate(12 7)"><g fill="none" stroke="currentColor" stroke-width="8.4" stroke-linejoin="round"><path d="M81 63 L15 49 L84 12 H181 L120 56"/><path d="M60 100 L15 127 L101 150 L179 107 L123 98"/><path d="M101 95 V125" stroke-linecap="round"/></g><circle cx="101" cy="74" r="11.7" fill="var(--point, currentColor)"/></g><g transform="translate(234 0)"><path d="M323.0216778668979 -200.0173422935183Q249.98699327986125 -200.0173422935183 179.9826577064817 -180.52818122696726Q109.9783221331021 -161.03902016041621 64.95230869282463 -123.05636245393453L118.05202688055495 -37.75720789074355Q154.03468458703662 -67.73553002384566 208.01517450682852 -85.72035551701713Q261.9956644266204 -103.7051810101886 318.9393019726859 -103.7051810101886Q409.84825493171473 -103.7051810101886 452.29406026447 -61.75937567743334Q494.7398655972252 -19.813570344678084 494.7398655972252 65.05636245393453V167.80923477129852L504.7398655972252 281.0563624539345L499.7658790375027 395.299154563191V532.0650336006937H605.2427921092565V77.13873834814655Q605.2427921092565 -65.93063082592673 533.1734229351832 -132.9739865597225Q461.1040537611099 -200.0173422935183 323.0216778668979 -200.0173422935183ZM311.87860394537176 23.030349013657055Q233.91762410578798 23.030349013657055 172.42412746585734 55.53034901365706Q110.93063082592673 88.03034901365706 75.42412746585737 146.03468458703662Q39.91762410578799 204.03902016041621 39.91762410578799 281.0563624539345Q39.91762410578799 358.07370474745284 75.42412746585737 416.07804032083243Q110.93063082592673 474.082375894212 172.42412746585734 506.08237589421196Q233.91762410578798 538.082375894212 311.87860394537176 538.082375894212Q378.8959462388901 538.082375894212 434.3525905050943 511.07804032083243Q489.8092347712985 484.07370474745284 523.7572078907435 427.0672013873835Q557.7051810101887 370.0606980273141 557.7051810101887 281.0563624539345Q557.7051810101887 192.05202688055496 523.7572078907435 135.04552352048557Q489.8092347712985 78.03902016041621 434.3525905050943 50.53468458703664Q378.8959462388901 23.030349013657055 311.87860394537176 23.030349013657055ZM324.0867114675916 119.37719488402341Q374.9826577064817 119.37719488402341 413.90461738564926 139.8360069369174Q452.82657706481683 160.2948189898114 474.783221331021 196.72328202904833Q496.7398655972252 233.15174506828527 496.7398655972252 281.0563624539345Q496.7398655972252 328.9653154129634 474.783221331021 365.3916106655105Q452.82657706481683 401.81790591805765 413.90461738564926 421.7767179709516Q374.9826577064817 441.7355300238456 324.0867114675916 441.7355300238456Q274.1907652287015 441.7355300238456 234.7688055495339 421.7767179709516Q195.34684587036637 401.81790591805765 173.38803381747238 365.3916106655105Q151.42922176457836 328.9653154129634 151.42922176457836 281.0563624539345Q151.42922176457836 233.15174506828527 173.38803381747238 196.72328202904833Q195.34684587036637 160.2948189898114 234.7688055495339 139.8360069369174Q274.1907652287015 119.37719488402341 324.0867114675916 119.37719488402341Z" transform="translate(0.0 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H192.3164968567093V387.9739865597225L181.21244309559938 429.9956644266204Q204.22111424235857 483.0433557337958 255.73628874918708 510.5628658140039Q307.2514632560156 538.082375894212 383.2557988293952 538.082375894212V430.6791675699111Q376.22111424235857 431.6835031432907 370.19726858877084 432.18567092998046Q364.17342293518317 432.6878387166703 358.1474094949057 432.6878387166703Q284.247127682636 432.6878387166703 240.7948189898114 389.2615434641231Q197.34251029698677 345.83524821157596 197.34251029698677 260.92195967916757V0Z" transform="translate(101.592 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M414.8525905050943 0V109.94363754606547L409.8048991979189 131.96097983958379V321.9349663993063Q409.8048991979189 378.86126165185345 375.3482549317147 410.81357034467806Q340.8916106655105 442.7658790375027 271.9523086928246 442.7658790375027Q225.99132885324084 442.7658790375027 182.0173422935183 428.27888575764143Q138.0433557337958 413.7918924777802 107.06069802731412 388.81357034467806L61.94363754606547 471.1040537611099Q103.96965098634294 504.09104704097115 162.50650336006936 521.0867114675916Q221.0433557337958 538.082375894212 285.0433557337958 538.082375894212Q397.1690873618036 538.082375894212 458.7384565358769 483.5455235204856Q520.3078257099502 429.0086711467592 520.3078257099502 315.90461738564926V0ZM245.91328853240842 -6.017342293518318Q185.88293951875136 -6.017342293518318 140.88293951875136 13.995664426620419Q95.88293951875136 34.008671146759156 71.38944287882072 70.01951008020811Q46.89594623889009 106.03034901365706 46.89594623889009 152.03468458703662Q46.89594623889009 196.07370474745284 67.92195967916757 231.58020810752222Q88.94797311944505 267.0867114675916 136.9804899197919 288.57587253414266Q185.01300672013875 310.0650336006937 265.0346845870366 310.0650336006937H425.8309126381964V230.93496639930632H270.1690873618036Q202.30782570995012 230.93496639930632 179.33600693691739 208.9804899197919Q156.36418816388468 187.02601344027747 156.36418816388468 156.06069802731412Q156.36418816388468 120.13440277476695 185.30132234988076 99.17125514849339Q214.23845653587688 78.20810752221982 265.1257316280078 78.20810752221982Q315.0086711467592 78.20810752221982 353.9241274658574 100.16691957511381Q392.83958378495555 122.1257316280078 409.8048991979189 165.05636245393453L429.84391935833514 89.09538261435074Q410.86993279861264 44.02601344027748 363.8916106655105 19.00433557337958Q316.9132885324084 -6.017342293518318 245.91328853240842 -6.017342293518318Z" transform="translate(154.53 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M226.90461738564926 0 -3.052026880554955 532.0650336006937H111.45957077823542L313.3078257099501 57.19943637546066H257.0433557337958L463.917624105788 532.0650336006937H571.381530457403L340.42922176457836 0Z" transform="translate(242.046 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H197.34251029698677V0ZM142.09104704097118 626.8439193583351Q110.95664426620422 626.8439193583351 90.38510730544115 646.9002818122697Q69.81357034467808 666.9566442662042 69.81357034467808 696.0433557337958Q69.81357034467808 725.1300672013874 90.38510730544115 745.186429655322Q110.95664426620422 765.2427921092565 142.09104704097118 765.2427921092565Q173.22544981573813 765.2427921092565 193.7969867765012 746.1907652287015Q214.36852373726427 727.1387383481465 214.36852373726427 698.052026880555Q214.36852373726427 667.9566442662042 194.2948189898114 647.4002818122697Q174.22111424235854 626.8439193583351 142.09104704097118 626.8439193583351Z" transform="translate(326.808 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M330.09538261435074 -6.017342293518318Q243.03902016041621 -6.017342293518318 177.5 28.99132885324084Q111.96097983958379 64 75.93930197268588 125.51300672013873Q39.91762410578799 187.02601344027747 39.91762410578799 266.0346845870366Q39.91762410578799 345.05202688055493 74.94146975937568 406.5628658140039Q109.96531541296336 468.07370474745284 171.5043355733796 503.07804032083243Q233.0433557337958 538.082375894212 311.0867114675916 538.082375894212Q389.09971818773033 538.082375894212 449.1365705614568 503.593214827661Q509.17342293518317 469.1040537611099 543.20593973553 407.09971818773033Q577.2384565358768 345.09538261435074 577.2384565358768 262.05202688055493Q577.2384565358768 255.03034901365706 576.736288749187 245.50867114675916Q576.2341209624973 235.98699327986125 575.2341209624973 227.96965098634294H127.35118144374593V307.09971818773033H516.9653154129634L472.7875569044006 281.0867114675916Q473.783221331021 329.0173422935183 452.82440927812706 365.95447647951437Q431.86559722523305 402.8916106655105 395.4371341859961 423.85475829178404Q359.0086711467592 444.81790591805765 311.09538261435074 444.81790591805765Q263.18209408194235 444.81790591805765 226.25363104270542 423.85475829178404Q189.32516800346846 402.8916106655105 168.86635595057447 365.4566442662042Q148.40754389768045 328.0216778668979 148.40754389768045 278.09971818773033V260.03034901365703Q148.40754389768045 210.09538261435074 171.36852373726424 171.65391285497506Q194.32950357684803 133.21244309559938 236.26013440277475 111.7514632560156Q278.1907652287015 90.29048341643181 333.11272490786905 90.29048341643181Q379.07804032083243 90.29048341643181 416.5216778668979 105.26880554953392Q453.9653154129634 120.24712768263603 481.9609798395838 151.19943637546066L542.2124430955994 79.99132885324084Q506.1951008020811 37.98699327986126 452.17559072187294 15.98482549317147Q398.15608064166486 -6.017342293518318 330.09538261435074 -6.017342293518318Z" transform="translate(365.823 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M201.92195967916757 0 4.952308692824626 532.0650336006937H109.42922176457836L281.3078257099501 57.19943637546066H232.07370474745284L410.9523086928246 532.0650336006937H504.38153045740296L679.247127682636 57.19943637546066H630.0260134402774L806.9046173856492 532.0650336006937H905.3381747236072L707.3728593106439 0H601.8742683719922L440.07804032083243 426.67483199653157H472.2254498157381L307.42055061781923 0Z" transform="translate(454.40999999999997 133.2397) scale(.153 -.153)" fill="currentColor"/></g></svg></a>
     </div>
     <nav class="jump" aria-label="Sections">
-      <a href="#how">How it works</a>
-      <a href="#surfaces">Features</a>
-      <a href="#grow">Watch it grow</a>
-      <a href="#cases">Use cases</a>
-      <a href="#cloud">Cloud</a>
-      <a href="#start">Start</a>
-      <a href="progression.html">The garden</a>
+      <a href="#recipes">Recipes</a>
+      <a class="wide" href="#how">How it works</a>
+      <a class="wide" href="#cloud">Cloud</a>
+      <a class="wide" href="#faq">FAQ</a>
+      <a class="wide" href="tour.html">The tour</a>
       <a href="https://github.com/en-dash-consulting/graview">GitHub</a>
       <a class="go" href="docs/index.html">Docs</a>
     </nav>
@@ -1317,63 +1493,189 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 <main class="page col" id="main" tabindex="-1" lang="en">
 
   <!--
-    THE HERO IS THE CLAIM, AND THE PRODUCT IS ITS PROOF. The headline says
-    why a developer should care: one declaration, and the interface, the
-    permissions and the agent's tools come from it. The subhead names the
-    work it ends. The city beside it, live, is that claim running, and a
-    reader can drag it before they have read a word.
+    THE FIRST SCREEN IS ONE THING TO HAND YOUR AGENT. Almost everyone will
+    start a Graview app by asking an assistant to make one, so the page
+    opens with the sentence to paste. The recipes are that same sentence
+    with another task in it, and each one's app runs beside it: what the
+    prompt made, live, not a picture of it. The headline comes after, as
+    the reason.
   -->
-  <section id="what" class="hero" aria-labelledby="h-what">
-    <div class="hero-copy">
-      <p class="eyebrow"><span class="dot" aria-hidden="true"></span><span>A TypeScript framework for agent-native apps</span><span>v0.1 · Elastic License 2.0</span></p>
-      <h1 id="h-what">One declaration. A UI for people, tools for agents, rules for both.</h1>
-      <p class="lede">
-        Today you build the UI, the API, the permissions and the
-        agent&rsquo;s tools separately, and keep them in step by hand.
-        Declare your domain once in Graview and all of them are derived
-        from it, so they can&rsquo;t drift apart. The isometric garden
-        here is one such declaration, running.
-      </p>
-      <div class="cta">
-        <div class="way-in">
-          <p class="way-label">Build with the framework</p>
-          <div class="cta-line"><code>npm create graview@latest my-app</code>
-            <button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button>
+  <section id="what" class="agent-hero night" aria-labelledby="h-what">
+    <div class="ah-ask">
+      <p class="ah-label"><span class="dot" aria-hidden="true"></span>Hand this to your agent</p>
+      <div class="prompt">
+        <p class="prompt-text" id="prompt-text">Read https://graview.dev/start.md, then turn this repo&rsquo;s <span class="task" id="prompt-task">docs</span> into a Graview app.</p>
+        <div class="prompt-foot">
+          <div class="recipe-tabs" role="tablist" aria-label="Recipes: the same prompt with another task">
+            <button type="button" role="tab" id="rt-docs" aria-selected="true" aria-controls="stage-docs" data-recipe="docs" data-task="docs">docs</button>
+            <button type="button" role="tab" id="rt-decisions" aria-selected="false" aria-controls="stage-decisions" data-recipe="decisions" data-task="decisions" tabindex="-1">decisions</button>
+            <button type="button" role="tab" id="rt-dependencies" aria-selected="false" aria-controls="stage-dependencies" data-recipe="dependencies" data-task="dependencies" tabindex="-1">dependencies</button>
           </div>
-        </div>
-        <div class="way-in">
-          <p class="way-label">Don&rsquo;t write TypeScript?</p>
-          <a class="cloud-line" href="https://graview.cloud"><span><strong>Graview Cloud</strong>: keep working in Claude or ChatGPT. Graview gives your AI a shared, live app for everyone you invite.</span><span class="arr" aria-hidden="true">&rarr;</span></a>
+          <button type="button" class="copy copy-prompt" data-copy-from="prompt-text" data-copy="Read https://graview.dev/start.md, then turn this repo's docs into a Graview app.">Copy prompt</button>
         </div>
       </div>
-      <p class="hero-links">
-        <a href="docs/getting-started.html">Read the docs &rarr;</a>
-        <a href="#how">How it works &darr;</a>
-        <a href="progression.html">The whole example, live &rarr;</a>
+      <p class="ah-diy">
+        <span>Claude Code, Codex, Cursor: anything that can run a shell.</span>
+        <span class="diy-line">Driving it yourself? <code>npm create graview@latest</code> <button type="button" class="copy" data-copy="npm create graview@latest">Copy</button></span>
       </p>
     </div>
-    <div class="hero-stage">
-      <div class="chapter-live hero-live" data-graview-chapter="16" data-stop="#overview=1" data-label="The garden, grown" role="region" aria-label="The example garden, running on this page">
-        <!-- site-poster:start — written by scripts/site-poster.mjs. -->
-        <div class="poster" aria-hidden="true"><div class="light"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="-104 -182 528 396" preserveAspectRatio="xMidYMid meet" role="img" data-scheme="light"><title>The example garden from altitude: each kind a plot on its map, a block for each record.</title><g fill-opacity="0.12" stroke-opacity="0.55" stroke-linejoin="round"><g data-kind="plot"><title>Plots: 3</title><polygon fill="#c4a764" stroke="#ab8e49" points="100,-50 140,-30 100,-10 60,-30"/></g><g data-kind="invitation"><title>Invitations: 1</title><polygon fill="#64c487" stroke="#49ab6d" points="200,0 240,20 200,40 160,20"/></g><g data-kind="gardener"><title>Gardeners: 2</title><polygon fill="#c49164" stroke="#ab7749" points="0,0 40,20 0,40 -40,20"/></g><g data-kind="rule"><title>Rules: 1</title><polygon fill="#6494c4" stroke="#497aab" points="300,150 340,170 300,190 260,170"/></g><g data-kind="planting"><title>Plantings: 2</title><polygon fill="#64c467" stroke="#49ab4d" points="200,-100 240,-80 200,-60 160,-80"/></g><g data-kind="rotation"><title>Rotations: 8</title><polygon fill="#648cc4" stroke="#4972ab" points="300,-150 360,-120 300,-90 240,-120"/></g><g data-kind="user"><title>People: 2</title><polygon fill="#c4a764" stroke="#ab8e49" points="100,50 140,70 100,90 60,70"/></g></g><g stroke-opacity="0.75" stroke-linejoin="round"><path fill="#6586b3" d="M291 -154l9 5v11l-9 -5z"/><path fill="#86a3cb" d="M300 -149l9 -5v11l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M300 -158l9 4l-9 5l-9 -5z"/><path fill="#6586b3" d="M276 -144l9 5v9l-9 -5z"/><path fill="#86a3cb" d="M285 -139l9 -5v9l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M285 -149l9 5l-9 5l-9 -5z"/><path fill="#6586b3" d="M306 -141l9 4v6l-9 -4z"/><path fill="#86a3cb" d="M315 -137l9 -4v6l-9 4z"/><path fill="#bbcde7" stroke="#ffffff" d="M315 -146l9 5l-9 4l-9 -4z"/><path fill="#6586b3" d="M261 -138l9 5v10l-9 -5z"/><path fill="#86a3cb" d="M270 -133l9 -5v10l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M270 -143l9 5l-9 5l-9 -5z"/><path fill="#6586b3" d="M321 -136l9 5v8l-9 -5z"/><path fill="#86a3cb" d="M330 -131l9 -5v8l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M330 -140l9 4l-9 5l-9 -5z"/><path fill="#6586b3" d="M246 -126l9 5v6l-9 -5z"/><path fill="#86a3cb" d="M255 -121l9 -5v6l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M255 -130l9 4l-9 5l-9 -5z"/><path fill="#6586b3" d="M336 -130l9 5v10l-9 -5z"/><path fill="#86a3cb" d="M345 -125l9 -5v10l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M345 -134l9 4l-9 5l-9 -5z"/><path fill="#6586b3" d="M261 -120l9 5v7l-9 -5z"/><path fill="#86a3cb" d="M270 -115l9 -5v7l-9 5z"/><path fill="#bbcde7" stroke="#ffffff" d="M270 -124l9 4l-9 5l-9 -5z"/><path fill="#65b368" d="M192 -103l8 4v10l-8 -4z"/><path fill="#86cb88" d="M200 -99l8 -4v10l-8 4z"/><path fill="#bbe7bd" stroke="#ffffff" d="M200 -107l8 4l-8 4l-8 -4z"/><path fill="#65b368" d="M178 -93l9 4v6l-9 -4z"/><path fill="#86cb88" d="M187 -89l8 -4v6l-8 4z"/><path fill="#bbe7bd" stroke="#ffffff" d="M187 -97l8 4l-8 4l-9 -4z"/><path fill="#b39c65" d="M92 -49l8 4v6l-8 -4z"/><path fill="#cbb686" d="M100 -45l8 -4v6l-8 4z"/><path fill="#e7dabb" stroke="#ffffff" d="M100 -53l8 4l-8 4l-8 -4z"/><path fill="#b39c65" d="M105 -47l8 4v10l-8 -4z"/><path fill="#cbb686" d="M113 -43l9 -4v10l-9 4z"/><path fill="#e7dabb" stroke="#ffffff" d="M113 -51l9 4l-9 4l-8 -4z"/><path fill="#b39c65" d="M78 -45l9 5v8l-9 -5z"/><path fill="#cbb686" d="M87 -40l8 -5v8l-8 5z"/><path fill="#e7dabb" stroke="#ffffff" d="M87 -49l8 4l-8 5l-9 -5z"/><path fill="#65b382" d="M192 2l8 4v5l-8 -4z"/><path fill="#86cb9f" d="M200 6l8 -4v5l-8 4z"/><path fill="#bbe7cb" stroke="#ffffff" d="M200 -2l8 4l-8 4l-8 -4z"/><path fill="#b38a65" d="M-8 0l8 4v6l-8 -4z"/><path fill="#cba686" d="M0 4l8 -4v6l-8 4z"/><path fill="#e7d0bb" stroke="#ffffff" d="M0 -4l8 4l-8 4l-8 -4z"/><path fill="#b38a65" d="M-22 3l9 5v10l-9 -5z"/><path fill="#cba686" d="M-13 8l8 -5v10l-8 5z"/><path fill="#e7d0bb" stroke="#ffffff" d="M-13 -1l8 4l-8 5l-9 -5z"/><path fill="#b39c65" d="M92 52l8 4v5l-8 -4z"/><path fill="#cbb686" d="M100 56l8 -4v5l-8 4z"/><path fill="#e7dabb" stroke="#ffffff" d="M100 48l8 4l-8 4l-8 -4z"/><path fill="#b39c65" d="M78 56l9 4v7l-9 -4z"/><path fill="#cbb686" d="M87 60l8 -4v7l-8 4z"/><path fill="#e7dabb" stroke="#ffffff" d="M87 52l8 4l-8 4l-9 -4z"/><path fill="#658cb3" d="M292 147l8 5v9l-8 -5z"/><path fill="#86a8cb" d="M300 152l8 -5v9l-8 5z"/><path fill="#bbd1e7" stroke="#ffffff" d="M300 143l8 4l-8 5l-8 -5z"/></g></svg></div><div class="dark"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="-104 -182 528 396" preserveAspectRatio="xMidYMid meet" role="img" data-scheme="dark"><title>The example garden from altitude: each kind a plot on its map, a block for each record.</title><g fill-opacity="0.2" stroke-opacity="0.55" stroke-linejoin="round"><g data-kind="plot"><title>Plots: 3</title><polygon fill="#b19043" stroke="#c5ae77" points="100,-50 140,-30 100,-10 60,-30"/></g><g data-kind="invitation"><title>Invitations: 1</title><polygon fill="#43b16c" stroke="#77c594" points="200,0 240,20 200,40 160,20"/></g><g data-kind="gardener"><title>Gardeners: 2</title><polygon fill="#b17743" stroke="#c59c77" points="0,0 40,20 0,40 -40,20"/></g><g data-kind="rule"><title>Rules: 1</title><polygon fill="#437ab1" stroke="#779ec5" points="300,150 340,170 300,190 260,170"/></g><g data-kind="planting"><title>Plantings: 2</title><polygon fill="#43b147" stroke="#77c57a" points="200,-100 240,-80 200,-60 160,-80"/></g><g data-kind="rotation"><title>Rotations: 8</title><polygon fill="#4371b1" stroke="#7798c5" points="300,-150 360,-120 300,-90 240,-120"/></g><g data-kind="user"><title>People: 2</title><polygon fill="#b19043" stroke="#c5ae77" points="100,50 140,70 100,90 60,70"/></g></g><g stroke-opacity="0.14" stroke-linejoin="round"><path fill="#151f2e" d="M291 -154l9 5v11l-9 -5z"/><path fill="#20324b" d="M300 -149l9 -5v11l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M300 -158l9 4l-9 5l-9 -5z"/><path fill="#151f2e" d="M276 -144l9 5v9l-9 -5z"/><path fill="#20324b" d="M285 -139l9 -5v9l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M285 -149l9 5l-9 5l-9 -5z"/><path fill="#151f2e" d="M306 -141l9 4v6l-9 -4z"/><path fill="#20324b" d="M315 -137l9 -4v6l-9 4z"/><path fill="#2f4c74" stroke="#ffffff" d="M315 -146l9 5l-9 4l-9 -4z"/><path fill="#151f2e" d="M261 -138l9 5v10l-9 -5z"/><path fill="#20324b" d="M270 -133l9 -5v10l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M270 -143l9 5l-9 5l-9 -5z"/><path fill="#151f2e" d="M321 -136l9 5v8l-9 -5z"/><path fill="#20324b" d="M330 -131l9 -5v8l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M330 -140l9 4l-9 5l-9 -5z"/><path fill="#151f2e" d="M246 -126l9 5v6l-9 -5z"/><path fill="#20324b" d="M255 -121l9 -5v6l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M255 -130l9 4l-9 5l-9 -5z"/><path fill="#151f2e" d="M336 -130l9 5v10l-9 -5z"/><path fill="#20324b" d="M345 -125l9 -5v10l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M345 -134l9 4l-9 5l-9 -5z"/><path fill="#151f2e" d="M261 -120l9 5v7l-9 -5z"/><path fill="#20324b" d="M270 -115l9 -5v7l-9 5z"/><path fill="#2f4c74" stroke="#ffffff" d="M270 -124l9 4l-9 5l-9 -5z"/><path fill="#152e15" d="M192 -103l8 4v10l-8 -4z"/><path fill="#204b22" d="M200 -99l8 -4v10l-8 4z"/><path fill="#2f7432" stroke="#ffffff" d="M200 -107l8 4l-8 4l-8 -4z"/><path fill="#152e15" d="M178 -93l9 4v6l-9 -4z"/><path fill="#204b22" d="M187 -89l8 -4v6l-8 4z"/><path fill="#2f7432" stroke="#ffffff" d="M187 -97l8 4l-8 4l-9 -4z"/><path fill="#2e2615" d="M92 -49l8 4v6l-8 -4z"/><path fill="#4b3e20" d="M100 -45l8 -4v6l-8 4z"/><path fill="#745f2f" stroke="#ffffff" d="M100 -53l8 4l-8 4l-8 -4z"/><path fill="#2e2615" d="M105 -47l8 4v10l-8 -4z"/><path fill="#4b3e20" d="M113 -43l9 -4v10l-9 4z"/><path fill="#745f2f" stroke="#ffffff" d="M113 -51l9 4l-9 4l-8 -4z"/><path fill="#2e2615" d="M78 -45l9 5v8l-9 -5z"/><path fill="#4b3e20" d="M87 -40l8 -5v8l-8 5z"/><path fill="#745f2f" stroke="#ffffff" d="M87 -49l8 4l-8 5l-9 -5z"/><path fill="#152e1e" d="M192 2l8 4v5l-8 -4z"/><path fill="#204b30" d="M200 6l8 -4v5l-8 4z"/><path fill="#2f7448" stroke="#ffffff" d="M200 -2l8 4l-8 4l-8 -4z"/><path fill="#2e2015" d="M-8 0l8 4v6l-8 -4z"/><path fill="#4b3420" d="M0 4l8 -4v6l-8 4z"/><path fill="#744f2f" stroke="#ffffff" d="M0 -4l8 4l-8 4l-8 -4z"/><path fill="#2e2015" d="M-22 3l9 5v10l-9 -5z"/><path fill="#4b3420" d="M-13 8l8 -5v10l-8 5z"/><path fill="#744f2f" stroke="#ffffff" d="M-13 -1l8 4l-8 5l-9 -5z"/><path fill="#2e2615" d="M92 52l8 4v5l-8 -4z"/><path fill="#4b3e20" d="M100 56l8 -4v5l-8 4z"/><path fill="#745f2f" stroke="#ffffff" d="M100 48l8 4l-8 4l-8 -4z"/><path fill="#2e2615" d="M78 56l9 4v7l-9 -4z"/><path fill="#4b3e20" d="M87 60l8 -4v7l-8 4z"/><path fill="#745f2f" stroke="#ffffff" d="M87 52l8 4l-8 4l-9 -4z"/><path fill="#15212e" d="M292 147l8 5v9l-8 -5z"/><path fill="#20364b" d="M300 152l8 -5v9l-8 5z"/><path fill="#2f5274" stroke="#ffffff" d="M300 143l8 4l-8 5l-8 -5z"/></g></svg></div></div>
+
+    <div class="ah-stage">
+      <div class="stage-panel" id="stage-docs" role="tabpanel" aria-labelledby="rt-docs">
+        <div class="chapter-live hero-live" data-graview-recipe="docs" data-scheme="dark" data-label="Your docs, as an app" role="region" aria-label="The app the docs prompt made, running on this page">
+          <!-- site-poster:start — written by scripts/site-poster.mjs. -->
+        <div class="poster" aria-hidden="true"><div class="light"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="-84 -222 468 351" preserveAspectRatio="xMidYMid meet" role="img" data-scheme="light"><title>Larkspur docs from altitude: each kind a plot on its map, a block for each record.</title><g fill-opacity="0.12" stroke-opacity="0.55" stroke-linejoin="round"><g data-kind="decision"><title>decision records: 14</title><polygon fill="#646cc4" stroke="#4952ab" points="300,-150 360,-120 300,-90 240,-120"/></g><g data-kind="doc"><title>docs: 17</title><polygon fill="#c4648f" stroke="#ab4976" points="100,-50 160,-20 100,10 40,-20"/></g><g data-kind="module"><title>modules: 16</title><polygon fill="#c4ac64" stroke="#ab9349" points="200,-100 260,-70 200,-40 140,-70"/></g><g data-kind="person"><title>people: 7</title><polygon fill="#64c471" stroke="#49ab56" points="0,0 60,30 0,60 -60,30"/></g></g><g stroke-opacity="0.75" stroke-linejoin="round"><path fill="#656cb3" d="M291 -149l9 5v6l-9 -5z"/><path fill="#868bcb" d="M300 -144l9 -5v6l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M300 -153l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M276 -145l9 4v10l-9 -4z"/><path fill="#868bcb" d="M285 -141l9 -4v10l-9 4z"/><path fill="#bbbfe7" stroke="#ffffff" d="M285 -150l9 5l-9 4l-9 -4z"/><path fill="#656cb3" d="M306 -143l9 5v8l-9 -5z"/><path fill="#868bcb" d="M315 -138l9 -5v8l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M315 -147l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M261 -133l9 5v5l-9 -5z"/><path fill="#868bcb" d="M270 -128l9 -5v5l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M270 -137l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M321 -137l9 5v9l-9 -5z"/><path fill="#868bcb" d="M330 -132l9 -5v9l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M330 -141l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M246 -127l9 5v7l-9 -5z"/><path fill="#868bcb" d="M255 -122l9 -5v7l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M255 -131l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M336 -131l9 5v11l-9 -5z"/><path fill="#868bcb" d="M345 -126l9 -5v11l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M345 -136l9 5l-9 5l-9 -5z"/><path fill="#656cb3" d="M261 -121l9 5v8l-9 -5z"/><path fill="#868bcb" d="M270 -116l9 -5v8l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M270 -126l9 5l-9 5l-9 -5z"/><path fill="#656cb3" d="M321 -118l9 4v6l-9 -4z"/><path fill="#868bcb" d="M330 -114l9 -4v6l-9 4z"/><path fill="#bbbfe7" stroke="#ffffff" d="M330 -123l9 5l-9 4l-9 -4z"/><path fill="#656cb3" d="M276 -115l9 5v10l-9 -5z"/><path fill="#868bcb" d="M285 -110l9 -5v10l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M285 -120l9 5l-9 5l-9 -5z"/><path fill="#656cb3" d="M306 -112l9 5v7l-9 -5z"/><path fill="#868bcb" d="M315 -107l9 -5v7l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M315 -117l9 5l-9 5l-9 -5z"/><path fill="#656cb3" d="M291 -107l9 5v9l-9 -5z"/><path fill="#868bcb" d="M300 -102l9 -5v9l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M300 -112l9 5l-9 5l-9 -5z"/><path fill="#b3a065" d="M191 -98l9 5v6l-9 -5z"/><path fill="#cbba86" d="M200 -93l9 -5v6l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M200 -103l9 5l-9 5l-9 -5z"/><path fill="#b3a065" d="M176 -95l9 5v10l-9 -5z"/><path fill="#cbba86" d="M185 -90l9 -5v10l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M185 -99l9 4l-9 5l-9 -5z"/><path fill="#b3a065" d="M206 -96l9 5v11l-9 -5z"/><path fill="#cbba86" d="M215 -91l9 -5v11l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M215 -100l9 4l-9 5l-9 -5z"/><path fill="#b3a065" d="M161 -86l9 5v8l-9 -5z"/><path fill="#cbba86" d="M170 -81l9 -5v8l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M170 -90l9 4l-9 5l-9 -5z"/><path fill="#b3a065" d="M221 -86l9 4v9l-9 -4z"/><path fill="#cbba86" d="M230 -82l9 -4v9l-9 4z"/><path fill="#e7dcbb" stroke="#ffffff" d="M230 -91l9 5l-9 4l-9 -4z"/><path fill="#b3a065" d="M146 -76l9 4v6l-9 -4z"/><path fill="#cbba86" d="M155 -72l9 -4v6l-9 4z"/><path fill="#e7dcbb" stroke="#ffffff" d="M155 -81l9 5l-9 4l-9 -4z"/><path fill="#b3a065" d="M236 -77l9 5v7l-9 -5z"/><path fill="#cbba86" d="M245 -72l9 -5v7l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M245 -82l9 5l-9 5l-9 -5z"/><path fill="#b3a065" d="M161 -74l9 5v11l-9 -5z"/><path fill="#cbba86" d="M170 -69l9 -5v11l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M170 -78l9 4l-9 5l-9 -5z"/><path fill="#b3a065" d="M221 -68l9 4v6l-9 -4z"/><path fill="#cbba86" d="M230 -64l9 -4v6l-9 4z"/><path fill="#e7dcbb" stroke="#ffffff" d="M230 -73l9 5l-9 4l-9 -4z"/><path fill="#b3a065" d="M176 -65l9 5v10l-9 -5z"/><path fill="#cbba86" d="M185 -60l9 -5v10l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M185 -70l9 5l-9 5l-9 -5z"/><path fill="#b3a065" d="M206 -65l9 4v10l-9 -4z"/><path fill="#cbba86" d="M215 -61l9 -4v10l-9 4z"/><path fill="#e7dcbb" stroke="#ffffff" d="M215 -70l9 5l-9 4l-9 -4z"/><path fill="#b3a065" d="M191 -54l9 5v6l-9 -5z"/><path fill="#cbba86" d="M200 -49l9 -5v6l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M200 -59l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M91 -53l9 5v10l-9 -5z"/><path fill="#cb86a5" d="M100 -48l9 -5v10l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M100 -58l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M76 -43l9 5v8l-9 -5z"/><path fill="#cb86a5" d="M85 -38l9 -5v8l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M85 -48l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M106 -44l9 5v9l-9 -5z"/><path fill="#cb86a5" d="M115 -39l9 -5v9l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M115 -48l9 4l-9 5l-9 -5z"/><path fill="#b36588" d="M61 -34l9 5v6l-9 -5z"/><path fill="#cb86a5" d="M70 -29l9 -5v6l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M70 -38l9 4l-9 5l-9 -5z"/><path fill="#b36588" d="M121 -34l9 4v7l-9 -4z"/><path fill="#cb86a5" d="M130 -30l9 -4v7l-9 4z"/><path fill="#e7bbcf" stroke="#ffffff" d="M130 -39l9 5l-9 4l-9 -4z"/><path fill="#b36588" d="M46 -31l9 5v11l-9 -5z"/><path fill="#cb86a5" d="M55 -26l9 -5v11l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M55 -36l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M136 -25l9 4v5l-9 -4z"/><path fill="#cb86a5" d="M145 -21l9 -4v5l-9 4z"/><path fill="#e7bbcf" stroke="#ffffff" d="M145 -30l9 5l-9 4l-9 -4z"/><path fill="#b36588" d="M61 -22l9 5v9l-9 -5z"/><path fill="#cb86a5" d="M70 -17l9 -5v9l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M70 -27l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M121 -23l9 5v10l-9 -5z"/><path fill="#cb86a5" d="M130 -18l9 -5v10l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M130 -27l9 4l-9 5l-9 -5z"/><path fill="#b36588" d="M76 -13l9 5v8l-9 -5z"/><path fill="#cb86a5" d="M85 -8l9 -5v8l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M85 -17l9 4l-9 5l-9 -5z"/><path fill="#b36588" d="M106 -11l9 4v6l-9 -4z"/><path fill="#cb86a5" d="M115 -7l9 -4v6l-9 4z"/><path fill="#e7bbcf" stroke="#ffffff" d="M115 -16l9 5l-9 4l-9 -4z"/><path fill="#b36588" d="M91 -6l9 4v9l-9 -4z"/><path fill="#cb86a5" d="M100 -2l9 -4v9l-9 4z"/><path fill="#e7bbcf" stroke="#ffffff" d="M100 -11l9 5l-9 4l-9 -4z"/><path fill="#65b370" d="M-9 1l9 5v7l-9 -5z"/><path fill="#86cb8f" d="M0 6l9 -5v7l-9 5z"/><path fill="#bbe7c1" stroke="#ffffff" d="M0 -4l9 5l-9 5l-9 -5z"/><path fill="#65b370" d="M-24 6l9 5v9l-9 -5z"/><path fill="#86cb8f" d="M-15 11l9 -5v9l-9 5z"/><path fill="#bbe7c1" stroke="#ffffff" d="M-15 1l9 5l-9 5l-9 -5z"/><path fill="#65b370" d="M6 7l9 4v8l-9 -4z"/><path fill="#86cb8f" d="M15 11l9 -4v8l-9 4z"/><path fill="#bbe7c1" stroke="#ffffff" d="M15 2l9 5l-9 4l-9 -4z"/><path fill="#65b370" d="M-39 12l9 4v11l-9 -4z"/><path fill="#86cb8f" d="M-30 16l9 -4v11l-9 4z"/><path fill="#bbe7c1" stroke="#ffffff" d="M-30 7l9 5l-9 4l-9 -4z"/><path fill="#65b370" d="M21 13l9 4v10l-9 -4z"/><path fill="#86cb8f" d="M30 17l9 -4v10l-9 4z"/><path fill="#bbe7c1" stroke="#ffffff" d="M30 8l9 5l-9 4l-9 -4z"/><path fill="#65b370" d="M-54 24l9 5v6l-9 -5z"/><path fill="#86cb8f" d="M-45 29l9 -5v6l-9 5z"/><path fill="#bbe7c1" stroke="#ffffff" d="M-45 20l9 4l-9 5l-9 -5z"/><path fill="#65b370" d="M36 19l9 4v11l-9 -4z"/><path fill="#86cb8f" d="M45 23l9 -4v11l-9 4z"/><path fill="#bbe7c1" stroke="#ffffff" d="M45 14l9 5l-9 4l-9 -4z"/></g></svg></div><div class="dark"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="-84 -222 468 351" preserveAspectRatio="xMidYMid meet" role="img" data-scheme="dark"><title>Larkspur docs from altitude: each kind a plot on its map, a block for each record.</title><g fill-opacity="0.2" stroke-opacity="0.55" stroke-linejoin="round"><g data-kind="decision"><title>decision records: 14</title><polygon fill="#434db1" stroke="#777ec5" points="300,-150 360,-120 300,-90 240,-120"/></g><g data-kind="doc"><title>docs: 17</title><polygon fill="#b14375" stroke="#c5779a" points="100,-50 160,-20 100,10 40,-20"/></g><g data-kind="module"><title>modules: 16</title><polygon fill="#b19643" stroke="#c5b177" points="200,-100 260,-70 200,-40 140,-70"/></g><g data-kind="person"><title>people: 7</title><polygon fill="#43b152" stroke="#77c582" points="0,0 60,30 0,60 -60,30"/></g></g><g stroke-opacity="0.14" stroke-linejoin="round"><path fill="#15172e" d="M291 -149l9 5v6l-9 -5z"/><path fill="#20244b" d="M300 -144l9 -5v6l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M300 -153l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M276 -145l9 4v10l-9 -4z"/><path fill="#20244b" d="M285 -141l9 -4v10l-9 4z"/><path fill="#2f3574" stroke="#ffffff" d="M285 -150l9 5l-9 4l-9 -4z"/><path fill="#15172e" d="M306 -143l9 5v8l-9 -5z"/><path fill="#20244b" d="M315 -138l9 -5v8l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M315 -147l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M261 -133l9 5v5l-9 -5z"/><path fill="#20244b" d="M270 -128l9 -5v5l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M270 -137l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M321 -137l9 5v9l-9 -5z"/><path fill="#20244b" d="M330 -132l9 -5v9l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M330 -141l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M246 -127l9 5v7l-9 -5z"/><path fill="#20244b" d="M255 -122l9 -5v7l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M255 -131l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M336 -131l9 5v11l-9 -5z"/><path fill="#20244b" d="M345 -126l9 -5v11l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M345 -136l9 5l-9 5l-9 -5z"/><path fill="#15172e" d="M261 -121l9 5v8l-9 -5z"/><path fill="#20244b" d="M270 -116l9 -5v8l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M270 -126l9 5l-9 5l-9 -5z"/><path fill="#15172e" d="M321 -118l9 4v6l-9 -4z"/><path fill="#20244b" d="M330 -114l9 -4v6l-9 4z"/><path fill="#2f3574" stroke="#ffffff" d="M330 -123l9 5l-9 4l-9 -4z"/><path fill="#15172e" d="M276 -115l9 5v10l-9 -5z"/><path fill="#20244b" d="M285 -110l9 -5v10l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M285 -120l9 5l-9 5l-9 -5z"/><path fill="#15172e" d="M306 -112l9 5v7l-9 -5z"/><path fill="#20244b" d="M315 -107l9 -5v7l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M315 -117l9 5l-9 5l-9 -5z"/><path fill="#15172e" d="M291 -107l9 5v9l-9 -5z"/><path fill="#20244b" d="M300 -102l9 -5v9l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M300 -112l9 5l-9 5l-9 -5z"/><path fill="#2e2715" d="M191 -98l9 5v6l-9 -5z"/><path fill="#4b4020" d="M200 -93l9 -5v6l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M200 -103l9 5l-9 5l-9 -5z"/><path fill="#2e2715" d="M176 -95l9 5v10l-9 -5z"/><path fill="#4b4020" d="M185 -90l9 -5v10l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M185 -99l9 4l-9 5l-9 -5z"/><path fill="#2e2715" d="M206 -96l9 5v11l-9 -5z"/><path fill="#4b4020" d="M215 -91l9 -5v11l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M215 -100l9 4l-9 5l-9 -5z"/><path fill="#2e2715" d="M161 -86l9 5v8l-9 -5z"/><path fill="#4b4020" d="M170 -81l9 -5v8l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M170 -90l9 4l-9 5l-9 -5z"/><path fill="#2e2715" d="M221 -86l9 4v9l-9 -4z"/><path fill="#4b4020" d="M230 -82l9 -4v9l-9 4z"/><path fill="#74632f" stroke="#ffffff" d="M230 -91l9 5l-9 4l-9 -4z"/><path fill="#2e2715" d="M146 -76l9 4v6l-9 -4z"/><path fill="#4b4020" d="M155 -72l9 -4v6l-9 4z"/><path fill="#74632f" stroke="#ffffff" d="M155 -81l9 5l-9 4l-9 -4z"/><path fill="#2e2715" d="M236 -77l9 5v7l-9 -5z"/><path fill="#4b4020" d="M245 -72l9 -5v7l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M245 -82l9 5l-9 5l-9 -5z"/><path fill="#2e2715" d="M161 -74l9 5v11l-9 -5z"/><path fill="#4b4020" d="M170 -69l9 -5v11l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M170 -78l9 4l-9 5l-9 -5z"/><path fill="#2e2715" d="M221 -68l9 4v6l-9 -4z"/><path fill="#4b4020" d="M230 -64l9 -4v6l-9 4z"/><path fill="#74632f" stroke="#ffffff" d="M230 -73l9 5l-9 4l-9 -4z"/><path fill="#2e2715" d="M176 -65l9 5v10l-9 -5z"/><path fill="#4b4020" d="M185 -60l9 -5v10l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M185 -70l9 5l-9 5l-9 -5z"/><path fill="#2e2715" d="M206 -65l9 4v10l-9 -4z"/><path fill="#4b4020" d="M215 -61l9 -4v10l-9 4z"/><path fill="#74632f" stroke="#ffffff" d="M215 -70l9 5l-9 4l-9 -4z"/><path fill="#2e2715" d="M191 -54l9 5v6l-9 -5z"/><path fill="#4b4020" d="M200 -49l9 -5v6l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M200 -59l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M91 -53l9 5v10l-9 -5z"/><path fill="#4b2033" d="M100 -48l9 -5v10l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M100 -58l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M76 -43l9 5v8l-9 -5z"/><path fill="#4b2033" d="M85 -38l9 -5v8l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M85 -48l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M106 -44l9 5v9l-9 -5z"/><path fill="#4b2033" d="M115 -39l9 -5v9l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M115 -48l9 4l-9 5l-9 -5z"/><path fill="#2e1520" d="M61 -34l9 5v6l-9 -5z"/><path fill="#4b2033" d="M70 -29l9 -5v6l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M70 -38l9 4l-9 5l-9 -5z"/><path fill="#2e1520" d="M121 -34l9 4v7l-9 -4z"/><path fill="#4b2033" d="M130 -30l9 -4v7l-9 4z"/><path fill="#742f4e" stroke="#ffffff" d="M130 -39l9 5l-9 4l-9 -4z"/><path fill="#2e1520" d="M46 -31l9 5v11l-9 -5z"/><path fill="#4b2033" d="M55 -26l9 -5v11l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M55 -36l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M136 -25l9 4v5l-9 -4z"/><path fill="#4b2033" d="M145 -21l9 -4v5l-9 4z"/><path fill="#742f4e" stroke="#ffffff" d="M145 -30l9 5l-9 4l-9 -4z"/><path fill="#2e1520" d="M61 -22l9 5v9l-9 -5z"/><path fill="#4b2033" d="M70 -17l9 -5v9l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M70 -27l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M121 -23l9 5v10l-9 -5z"/><path fill="#4b2033" d="M130 -18l9 -5v10l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M130 -27l9 4l-9 5l-9 -5z"/><path fill="#2e1520" d="M76 -13l9 5v8l-9 -5z"/><path fill="#4b2033" d="M85 -8l9 -5v8l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M85 -17l9 4l-9 5l-9 -5z"/><path fill="#2e1520" d="M106 -11l9 4v6l-9 -4z"/><path fill="#4b2033" d="M115 -7l9 -4v6l-9 4z"/><path fill="#742f4e" stroke="#ffffff" d="M115 -16l9 5l-9 4l-9 -4z"/><path fill="#2e1520" d="M91 -6l9 4v9l-9 -4z"/><path fill="#4b2033" d="M100 -2l9 -4v9l-9 4z"/><path fill="#742f4e" stroke="#ffffff" d="M100 -11l9 5l-9 4l-9 -4z"/><path fill="#152e18" d="M-9 1l9 5v7l-9 -5z"/><path fill="#204b26" d="M0 6l9 -5v7l-9 5z"/><path fill="#2f7438" stroke="#ffffff" d="M0 -4l9 5l-9 5l-9 -5z"/><path fill="#152e18" d="M-24 6l9 5v9l-9 -5z"/><path fill="#204b26" d="M-15 11l9 -5v9l-9 5z"/><path fill="#2f7438" stroke="#ffffff" d="M-15 1l9 5l-9 5l-9 -5z"/><path fill="#152e18" d="M6 7l9 4v8l-9 -4z"/><path fill="#204b26" d="M15 11l9 -4v8l-9 4z"/><path fill="#2f7438" stroke="#ffffff" d="M15 2l9 5l-9 4l-9 -4z"/><path fill="#152e18" d="M-39 12l9 4v11l-9 -4z"/><path fill="#204b26" d="M-30 16l9 -4v11l-9 4z"/><path fill="#2f7438" stroke="#ffffff" d="M-30 7l9 5l-9 4l-9 -4z"/><path fill="#152e18" d="M21 13l9 4v10l-9 -4z"/><path fill="#204b26" d="M30 17l9 -4v10l-9 4z"/><path fill="#2f7438" stroke="#ffffff" d="M30 8l9 5l-9 4l-9 -4z"/><path fill="#152e18" d="M-54 24l9 5v6l-9 -5z"/><path fill="#204b26" d="M-45 29l9 -5v6l-9 5z"/><path fill="#2f7438" stroke="#ffffff" d="M-45 20l9 4l-9 5l-9 -5z"/><path fill="#152e18" d="M36 19l9 4v11l-9 -4z"/><path fill="#204b26" d="M45 23l9 -4v11l-9 4z"/><path fill="#2f7438" stroke="#ffffff" d="M45 14l9 5l-9 4l-9 -4z"/></g></svg></div></div>
         <!-- site-poster:end -->
-        <p class="chapter-loading">The garden, loading…</p>
+          <p class="chapter-loading">The docs recipe, loading…</p>
+        </div>
+        <p class="stage-caption"><span class="live">Live</span><span>What the docs prompt made of Larkspur, a made-up repository: its modules, docs and owners, with every module that has no doc or no owner flagged and its repair offered.</span><a href="docs/recipes/docs.html">The recipe &rarr;</a></p>
       </div>
-      <p class="stage-caption">
-        <span class="live">Live</span>
-        <span>the example garden: one declaration, running on this page</span>
-        <span>drag the ground · zoom out · press a district · switch it to Pages</span>
+      <div class="stage-panel" id="stage-decisions" role="tabpanel" aria-labelledby="rt-decisions" hidden>
+        <div class="chapter-live hero-live" data-recipe-later="decisions" data-scheme="dark" data-label="Your decisions, as an app" role="region" aria-label="The app the decisions prompt made, running on this page"><p class="chapter-loading">The decisions recipe, loading…</p></div>
+        <p class="stage-caption"><span class="live">Live</span><span>What the decisions prompt made of Larkspur&rsquo;s decision records: what each decided, what it superseded and what it affects.</span><a href="docs/recipes/decisions.html">The recipe &rarr;</a></p>
+      </div>
+      <div class="stage-panel" id="stage-dependencies" role="tabpanel" aria-labelledby="rt-dependencies" hidden>
+        <div class="chapter-live hero-live" data-recipe-later="dependencies" data-scheme="dark" data-label="Your dependencies, as an upgrade plan" role="region" aria-label="The app the dependencies prompt made, running on this page"><p class="chapter-loading">The dependencies recipe, loading…</p></div>
+        <p class="stage-caption"><span class="live">Live</span><span>What the dependencies prompt made of Larkspur&rsquo;s manifests: every package against the latest on npm, and the upgrade each needs.</span><a href="docs/recipes/dependencies.html">The recipe &rarr;</a></p>
+      </div>
+    </div>
+
+    <div class="ah-why">
+      <h1 id="h-what">One declaration. A UI for people, tools for agents, rules for both.</h1>
+      <p class="lede">
+        Your agent writes one declaration: the kinds of thing, how they
+        relate, what changes them and the rules they keep. Graview derives
+        the interface, the permissions and a typed tool for every act from
+        it, so they can&rsquo;t drift apart. The app above is one such
+        declaration, running.
       </p>
     </div>
   </section>
 
-  <ul class="numbers band" aria-label="Graview by the numbers">
-    <li><strong data-number="packages">14</strong> <span>packages, one version</span></li>
-    <li><strong data-number="lenses">6</strong> <span>lenses that rebind to any domain</span></li>
-    <li><strong data-number="skills">19</strong> <span>skills your assistant reads before it writes</span></li>
-    <li><strong data-number="codes">102</strong> <span>things the checker can tell you, in words</span></li>
-    <li><strong data-number="tests">4650</strong> <span>named tests, green on every push</span></li>
-  </ul>
+  <!--
+    THE RECIPES: the same prompt, a different task each, and what the
+    agent declared. Written between the markers by scripts/site-docs.mjs
+    from docs/site/recipes/, so a recipe's kinds, rules and counts here are
+    its committed declaration's and cannot drift from it.
+  -->
+  <section id="recipes" class="recipes" aria-labelledby="h-recipes">
+    <div class="claim">
+      <p class="eyebrow"><span>Recipes</span></p>
+      <h2 id="h-recipes">The same prompt. A different task.</h2>
+      <p class="lede">
+        Each recipe is what an agent produced from the prompt alone, in a
+        repository it had never seen. The declaration it wrote is committed,
+        checked by <code>graview check</code> on every push, and running on its page.
+      </p>
+    </div>
+    <!-- site-recipes:start — written by scripts/site-docs.mjs. -->
+    <ol class="recipe-list">
+      <li class="recipe-row">
+        <div>
+          <h3>Your docs, as an app</h3>
+          <p class="recipe-prompt">Read https://graview.dev/start.md, then turn this repo's <b>docs</b> into a Graview app.</p>
+        </div>
+        <div>
+          <p class="recipe-blurb">The repository's docs, the modules they cover and who owns each, with every module that has no doc or no owner flagged and the repair offered.</p>
+          <dl>
+            <dt>Kinds</dt><dd>modules, docs, decision records, people</dd>
+            <dt>Rules</dt><dd>Every module has a doc; Every module has an owner; Every module has a README; Every guide, runbook and API doc covers a module; A superseded decision names its successor</dd>
+            <dt>Seed</dt><dd>54 records and 78 relations, read out of Larkspur</dd>
+            <dt>Check</dt><dd>clean, on every push</dd>
+          </dl>
+          <p class="recipe-links"><a href="docs/recipes/docs.html">Open it, live &rarr;</a><a href="recipes/docs/app.json">app.json</a><a href="recipes/docs/seed.json">seed.json</a></p>
+        </div>
+      </li>
+      <li class="recipe-row">
+        <div>
+          <h3>Your decisions, as an app</h3>
+          <p class="recipe-prompt">Read https://graview.dev/start.md, then turn this repo's <b>decisions</b> into a Graview app.</p>
+        </div>
+        <div>
+          <p class="recipe-blurb">The architecture decision records: what each decided, what it superseded and which modules it affects, with the loose ends flagged.</p>
+          <dl>
+            <dt>Kinds</dt><dd>decisions, modules</dd>
+            <dt>Rules</dt><dd>A superseded decision names what superseded it; A decision something supersedes says so; What supersedes a decision is accepted; A decision is superseded only by a later one; A proposal is decided within 90 days; An accepted decision affects something</dd>
+            <dt>Seed</dt><dd>30 records and 28 relations, read out of Larkspur</dd>
+            <dt>Check</dt><dd>clean, on every push</dd>
+          </dl>
+          <p class="recipe-links"><a href="docs/recipes/decisions.html">Open it, live &rarr;</a><a href="recipes/decisions/app.json">app.json</a><a href="recipes/decisions/seed.json">seed.json</a></p>
+        </div>
+      </li>
+      <li class="recipe-row">
+        <div>
+          <h3>Your dependencies, as an upgrade plan</h3>
+          <p class="recipe-prompt">Read https://graview.dev/start.md, then turn this repo's <b>dependencies</b> into a Graview app.</p>
+        </div>
+        <div>
+          <p class="recipe-blurb">Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.</p>
+          <dl>
+            <dt>Kinds</dt><dd>modules, people, packages, dependencies, decisions</dd>
+            <dt>Rules</dt><dd>One version per package; A major upgrade has someone on it; What an accepted decision drops is planned to go</dd>
+            <dt>Seed</dt><dd>122 records and 142 relations, read out of Larkspur</dd>
+            <dt>Check</dt><dd>clean, on every push</dd>
+          </dl>
+          <p class="recipe-links"><a href="docs/recipes/dependencies.html">Open it, live &rarr;</a><a href="recipes/dependencies/app.json">app.json</a><a href="recipes/dependencies/seed.json">seed.json</a></p>
+        </div>
+      </li>
+    </ol>
+    <p class="sm dim recipes-note">How these were made: an agent ran each prompt once, with nothing but the prompt and <a class="inl" href="start.md">start.md</a>, at the root of Larkspur, a made-up repository written for the purpose (<code>scripts/fixtures/recipes/larkspur.mjs</code>). CI does not run an agent. On every push it checks the declaration that run produced, loads its seed, and opens each recipe&rsquo;s page in a browser to see the app mount.</p>
+    <!-- site-recipes:end -->
+  </section>
+
+<script>
+/*
+ * THE RECIPE TABS. One prompt, three tasks: a tab swaps the task word in
+ * the prompt, what Copy copies, and the app on the stage. An app mounts the
+ * first time its tab is chosen and stays mounted, so going back is instant
+ * and a reader who never presses one pays for one app. Real tabs: arrow
+ * keys move, Home and End jump. Without the bundle the stage keeps its
+ * picture and the prompt still changes.
+ */
+(function () {
+  var tabs = [].slice.call(document.querySelectorAll('.recipe-tabs [role="tab"]'));
+  var task = document.getElementById("prompt-task");
+  var text = document.getElementById("prompt-text");
+  var copy = document.querySelector(".copy-prompt");
+  if (tabs.length === 0 || !task || !text || !copy) return;
+  function mount(slug) {
+    var host = document.querySelector('[data-recipe-later="' + slug + '"]');
+    var api = window.graviewChapters || {};
+    if (!host || typeof api.mountRecipe !== "function") return;
+    host.removeAttribute("data-recipe-later");
+    host.setAttribute("data-graview-recipe", slug);
+    host.replaceChildren();
+    api.mountRecipe(host, slug, undefined, undefined, host.getAttribute("data-label") || undefined, "dark");
+  }
+  function show(tab, focus) {
+    tabs.forEach(function (other) {
+      var on = other === tab;
+      other.setAttribute("aria-selected", on ? "true" : "false");
+      other.tabIndex = on ? 0 : -1;
+      var panel = document.getElementById(other.getAttribute("aria-controls"));
+      if (panel) panel.hidden = !on;
+    });
+    task.textContent = tab.dataset.task;
+    copy.dataset.copy = text.textContent.replace(/’/g, "'");
+    mount(tab.dataset.recipe);
+    if (focus) tab.focus();
+  }
+  tabs.forEach(function (tab, index) {
+    tab.addEventListener("click", function () { show(tab, false); });
+    tab.addEventListener("keydown", function (event) {
+      var to =
+        event.key === "ArrowRight" ? (index + 1) % tabs.length :
+        event.key === "ArrowLeft" ? (index - 1 + tabs.length) % tabs.length :
+        event.key === "Home" ? 0 :
+        event.key === "End" ? tabs.length - 1 : -1;
+      if (to === -1) return;
+      event.preventDefault();
+      show(tabs[to], true);
+    });
+  });
+})();
+</script>
+
 
   <section id="how" class="how" aria-labelledby="h-how">
     <div class="claim">
@@ -1389,7 +1691,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       <div class="step3">
         <span class="n" aria-hidden="true">1</span>
         <h3>Declare</h3>
-        <p>Say what your domain is made of, once, in TypeScript: the kinds of thing, the fields on each, the relations between them, the actions that change them, the rules they must keep, and who may do what.</p>
+        <p>Say what your domain is made of, once, in TypeScript or as a JSON document your agent writes: the kinds of thing, the fields on each, the relations between them, the actions that change them, the rules they must keep, and who may do what.</p>
         <div class="tags"><span>kinds</span><span>relations</span><span>actions</span><span>rules</span><span>roles</span></div>
       </div>
       <div class="step3">
@@ -1405,344 +1707,6 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
         <div class="tags"><span>serve</span><span>persist</span><span>migrate</span><span>export</span><span>self-host</span></div>
       </div>
     </div>
-  </section>
-
-  <!-- ONE FEATURE PER SECTION, one picture each. -->
-  <section id="surfaces" class="feature" aria-labelledby="h-surfaces">
-    <div class="feature-grid">
-      <div class="claim">
-        <p class="eyebrow"><span>The routed face</span></p>
-        <h2 id="h-surfaces">An ordinary web app, for free. Or entirely in your own design.</h2>
-        <p class="lede">
-          The same declaration that draws the city also produces a routed
-          web application: a home page, a list per kind, a record per thing,
-          a form per action, and a problems page — at phone width, with
-          nothing to write.
-        </p>
-        <ul class="plain">
-          <li><b>Replace one page or all of them.</b> Keep the derived pages you like and design the rest. The store, the actions and the rules stay underneath either way.</li>
-          <li><b>Both faces, one address.</b> Every record has a place on the map and a page on the web. A link goes to whichever a person needs.</li>
-          <li><b>Mount it anywhere.</b> The scene, the city or the pages inside any element of somebody else's site, themed within it.</li>
-        </ul>
-        <p class="more"><a href="docs/skills/graview-pages.html">How the routed face is made &rarr;</a></p>
-      </div>
-      <div class="visual">
-        <div class="chapter-live" data-graview-chapter="13" data-face="pages" data-label="The garden's own face" role="region" aria-label="The garden's routed pages, in its own design, live">
-          <p class="chapter-loading">The pages, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>the example's pages, redesigned as an almanac over the same store</span></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="feature flip" aria-labelledby="h-rules">
-    <div class="feature-grid">
-      <div class="claim">
-        <p class="eyebrow"><span>Rules that repair</span></p>
-        <h2 id="h-rules">A rule is not an error message. It is a problem with a way out.</h2>
-        <p class="lede">
-          A rule in Graview names the actions that would fix what it finds.
-          When one is broken, the interface says so in a sentence and offers
-          the repair as a button — to a person, or to an agent — instead of
-          refusing a save and leaving somebody to guess.
-        </p>
-        <ul class="plain">
-          <li><b>Rules are data.</b> They live on the map like anything else, can be adopted, declared and read, and travel with the declaration.</li>
-          <li><b>The checker reads them too.</b> A rule that names an action nobody declared is caught before the page ever loads.</li>
-          <li><b>Nothing fails in silence.</b> A problem is a count in the corner, a card on the map, and a page of its own.</li>
-        </ul>
-        <p class="more"><a href="docs/skills/graview-invariant.html">Writing a rule that repairs &rarr;</a></p>
-      </div>
-      <div class="visual">
-        <div class="chapter-live" data-graview-chapter="3" data-stop="#overview=1&amp;expand=kind:rule" data-label="The garden's agreement" role="region" aria-label="The garden with one rule and one problem, live">
-          <p class="chapter-loading">The rule, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>one rule, one problem it found, and the repair it names — press the problem</span></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="feature" aria-labelledby="h-lenses">
-    <div class="feature-grid">
-      <div class="claim">
-        <p class="eyebrow"><span>Lenses</span></p>
-        <h2 id="h-lenses">A calendar written for a rota works, unchanged, over a garden.</h2>
-        <p class="lede">
-          A lens is a picture with a rule for where things go: a week, a
-          month, a board, a matrix, a plan. Lenses bind to <em>roles</em> —
-          what starts, what ends, what belongs where — rather than to your
-          field names, so one written for a domain the kit has never seen
-          works in yours the day you declare which field plays which role.
-        </p>
-        <ul class="plain">
-          <li><b><span data-number-word="lenses">Six</span> ship with it.</b> A timeline, a calendar, a coverage matrix, a board, a status board in columns and a plan — each with drag, keyboard and a screen reader in mind.</li>
-          <li><b>Write your own.</b> The kit scaffolds a lens with its reuse test already written, red until the lens really does rebind.</li>
-          <li><b>Every lens is a place.</b> On the map, a lens stands on its own plot with the things it draws around it.</li>
-        </ul>
-        <p class="more"><a href="docs/skills/graview-lens.html">Building a lens that rebinds &rarr;</a></p>
-      </div>
-      <div class="visual">
-        <div class="chapter-live picture" data-graview-app="rota" data-face="picture" data-stop="#view=the-week&amp;in.at=2026-09-14" data-label="The rota's week" role="region" aria-label="The calendar lens over a volunteer rota's shifts, live">
-          <p class="chapter-loading">The rota's week, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>the calendar lens where it was written: a volunteer rota's week</span></p>
-        <div class="chapter-live picture" data-graview-chapter="16" data-face="picture" data-stop="#view=the-season" data-label="The season" role="region" aria-label="The calendar lens over the garden's plantings, live">
-          <p class="chapter-loading">The season, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>the same lens, unchanged, over what is in a garden's ground</span></p>
-        <div class="chapter-live picture short" data-graview-chapter="10" data-face="picture" data-stop="#view=who-tends-what" data-label="Who tends what" role="region" aria-label="The coverage lens over gardeners and plots, live">
-          <p class="chapter-loading">The coverage matrix, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>a second lens, the coverage matrix — written for a tender response, here over who tends what</span></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="feature flip" aria-labelledby="h-agent">
-    <div class="feature-grid">
-      <div class="claim">
-        <p class="eyebrow"><span>Built for a person and a model</span></p>
-        <h2 id="h-agent">Your agent gets the same buttons you do. No more, no less.</h2>
-        <p class="lede">
-          Every action in the declaration is also a typed tool with a sentence
-          attached, narrowed by the same permissions a person is under. A
-          model works the same graph, in the same log, and what it proposes
-          is a plan you read before it lands — one batch, one undo.
-        </p>
-        <ul class="plain">
-          <li><b>A seat in the product.</b> Ask what is wrong, ask about anything by name, or say a change in your own words. The seat answers from the graph first and from a model when it needs one.</li>
-          <li><b>Readable from the outside.</b> The kit describes the whole application in words for something that cannot see it, and writes the files an assistant reads.</li>
-          <li><b><span data-number-word="skills">Nineteen</span> skills ship with it.</b> Each teaches an assistant one shape of the declaration and ends by running the checker and reporting what it said.</li>
-        </ul>
-        <p class="more"><a href="docs/agents.html">Working with a model &rarr;</a></p>
-        <p class="sm dim">The same seat, from a chat: on <a class="inl" href="https://graview.cloud">Graview Cloud</a>, ChatGPT or Claude works in your app with your permissions, and every change it makes is labeled as made for you.</p>
-      </div>
-      <div class="visual">
-        <div class="chapter-live" data-graview-chapter="5" data-stop="#overview=1" data-label="A seat for an agent" role="region" aria-label="The garden with an agent's seat open, live">
-          <p class="chapter-loading">The seat, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>the seat, listening — ask it what is wrong, or tell it to plant something</span></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="feature" aria-labelledby="h-studio">
-    <div class="feature-grid">
-      <div class="claim">
-        <p class="eyebrow"><span>The studio</span></p>
-        <h2 id="h-studio">The declaration is itself a graph. Edit it in the same interface.</h2>
-        <p class="lede">
-          Open your product's declaration in Graview's own interface: kinds,
-          fields, relations, actions, rules, roles and grants become districts
-          and buildings of their own. Change them with ordinary actions, let
-          the checker judge the change before it applies, migrate the stored
-          data, and write the files back.
-        </p>
-        <ul class="plain">
-          <li><b>Same interface, one level up.</b> A person who can use the product can change the product.</li>
-          <li><b>Checked before it lands.</b> Every edit is judged the way the build would judge it, in the studio, with the reason in words.</li>
-          <li><b>Migrations are data.</b> A stored graph follows the declaration through the same operation log it always used.</li>
-        </ul>
-        <p class="more"><a href="docs/skills/graview-studio.html">The studio, in full &rarr;</a></p>
-      </div>
-      <div class="visual">
-        <div class="chapter-live" data-graview-chapter="15" data-stop="#overview=1" data-label="Seedbed, in the studio" role="region" aria-label="The garden's own declaration open in the studio, live">
-          <p class="chapter-loading">The studio, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>the example's declaration, as a city of kinds, fields, acts and rules</span></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="feature flip" aria-labelledby="h-acts">
-    <div class="feature-grid">
-      <div class="claim">
-        <p class="eyebrow"><span>Actions and permissions</span></p>
-        <h2 id="h-acts">What you can press is what you can see.</h2>
-        <p class="lede">
-          Select a thing and the actions it allows appear, ranked, with the
-          destructive ones last. Declare who may do what once, and the
-          buttons, the pages and the agent's tools all narrow from it. An
-          action a role may not take is struck through with the sentence
-          saying who can — never a button that silently fails.
-        </p>
-        <ul class="plain">
-          <li><b>History you can read.</b> Every change is an operation with an author and an intent. Undo one out of order, and the log says what blocks it if something does.</li>
-          <li><b>Presence.</b> See who is here and where they are working, in the product people actually open.</li>
-          <li><b>Accessible by construction.</b> Every view is exposed by name, the keyboard reaches all three planes, and axe-core reports nothing on every push.</li>
-        </ul>
-        <p class="more"><a href="docs/skills/graview-permissions.html">Declaring who may do what &rarr;</a></p>
-      </div>
-      <div class="visual">
-        <div class="chapter-live" data-graview-chapter="7" data-stop="#focus=plot-1" data-label="Who may do what" role="region" aria-label="A plot selected in the garden, with the acts its seat may take, live">
-          <p class="chapter-loading">The garden, loading…</p>
-        </div>
-        <p class="stage-caption"><span class="live">Live</span><span>one plot selected: its acts ranked, its ties drawn, and the ones this seat may not take struck through — change seats above it</span></p>
-      </div>
-    </div>
-  </section>
-
-  <!--
-    WATCH IT GROW. The single most persuasive thing the kit can do is show
-    the same application after one more declaration. Press a step: the left
-    says what was declared, in words, and the right IS the application at
-    that point. The steps are real tabs, and each application mounts the
-    first time its step is shown.
-  -->
-  <section id="grow" class="grow" aria-labelledby="h-grow">
-    <div class="claim">
-      <p class="eyebrow"><span>Watch it grow</span></p>
-      <h2 id="h-grow">Add a declaration. Watch the application follow.</h2>
-      <p class="lede">
-        One example — a community garden — declared a little at a time.
-        Press a step. The left says what was declared; the right is the
-        application, running on this page, at exactly that point.
-      </p>
-    </div>
-
-    <div class="steps" role="tablist" aria-label="Steps in the garden's declaration">
-      <button type="button" role="tab" id="step-tab-1" aria-controls="step-panel-1" aria-selected="true" data-step="1">
-        <span class="step-n">1</span> One kind of thing
-      </button>
-      <button type="button" role="tab" id="step-tab-3" aria-controls="step-panel-3" aria-selected="false" tabindex="-1" data-step="3">
-        <span class="step-n">3</span> A rule that repairs
-      </button>
-      <button type="button" role="tab" id="step-tab-5" aria-controls="step-panel-5" aria-selected="false" tabindex="-1" data-step="5">
-        <span class="step-n">5</span> A seat for an agent
-      </button>
-      <button type="button" role="tab" id="step-tab-9" aria-controls="step-panel-9" aria-selected="false" tabindex="-1" data-step="9">
-        <span class="step-n">9</span> The web app
-      </button>
-      <button type="button" role="tab" id="step-tab-13" aria-controls="step-panel-13" aria-selected="false" tabindex="-1" data-step="13">
-        <span class="step-n">13</span> Its own design
-      </button>
-    </div>
-
-    <div class="step-panel" role="tabpanel" id="step-panel-1" aria-labelledby="step-tab-1" tabindex="0">
-      <div class="two step-two">
-        <div class="stack">
-          <p class="step-claim">One kind, one action. The city, the district, the form and the routed pages all exist before a line of interface is written.</p>
-          <div class="step-adds">
-            <span class="chapter-label">Declared</span>
-            <ul><li>A plot: a patch of ground with a number of beds</li><li>One action: stake out a plot</li></ul>
-          </div>
-        </div>
-        <div class="chapter-live" data-step-live="1" role="region" aria-label="The garden after step 1, live">
-          <p class="chapter-loading">Loading the garden at step 1…</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="step-panel" role="tabpanel" id="step-panel-3" aria-labelledby="step-tab-3" tabindex="0" hidden>
-      <div class="two step-two">
-        <div class="stack">
-          <p class="step-claim">A rule lands on the map and names its own repair. The moment it does, an untended plot is a problem with a one-press fix, not a bug report.</p>
-          <div class="step-adds">
-            <span class="chapter-label">Declared</span>
-            <ul><li>Gardeners, and who tends which plot</li><li>A rule: every plot has a caretaker</li><li>The repair it names: tend a plot</li></ul>
-          </div>
-        </div>
-        <div class="chapter-live" data-step-live="3" role="region" aria-label="The garden after step 3, live">
-          <p class="chapter-loading">Loading the garden at step 3…</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="step-panel" role="tabpanel" id="step-panel-5" aria-labelledby="step-tab-5" tabindex="0" hidden>
-      <div class="two step-two">
-        <div class="stack">
-          <p class="step-claim">An agent gets the same actions a person does, through one declared seam. Its turn is attributed in the log, watchable from altitude, and undoable out of order.</p>
-          <div class="step-adds">
-            <span class="chapter-label">Declared</span>
-            <ul><li>A seat: which actions a model may take</li><li>How words reach it, and what it may not do</li></ul>
-          </div>
-        </div>
-        <div class="chapter-live" data-step-live="5" role="region" aria-label="The garden after step 5, live">
-          <p class="chapter-loading">Loading the garden at step 5…</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="step-panel" role="tabpanel" id="step-panel-9" aria-labelledby="step-tab-9" tabindex="0" hidden>
-      <div class="two step-two">
-        <div class="stack">
-          <p class="step-claim">The same declaration is also an ordinary web application: lists, records, forms and problems, routed, at phone width. Any page can be replaced with one of your own.</p>
-          <div class="step-adds">
-            <span class="chapter-label">Declared</span>
-            <ul><li>The routed face, over the same store</li><li>One page in the garden's own words</li></ul>
-          </div>
-        </div>
-        <div class="chapter-live" data-step-live="9" role="region" aria-label="The garden after step 9, live">
-          <p class="chapter-loading">Loading the garden at step 9…</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="step-panel" role="tabpanel" id="step-panel-13" aria-labelledby="step-tab-13" tabindex="0" hidden>
-      <div class="two step-two">
-        <div class="stack">
-          <p class="step-claim">Every surface of the routed face replaced with the garden's own design — an almanac, not an admin panel — over the same store, the same actions and the same rules.</p>
-          <div class="step-adds">
-            <span class="chapter-label">Declared</span>
-            <ul><li>A shell, a home and a problems page of the garden's own</li><li>A map the garden drew of itself</li></ul>
-          </div>
-        </div>
-        <div class="chapter-live" data-step-live="13" role="region" aria-label="The garden after step 13, live">
-          <p class="chapter-loading">Loading the garden at step 13…</p>
-        </div>
-      </div>
-    </div>
-
-    <p class="sm dim" style="margin-top: 16px;">
-      <span data-number-word="chapters">Sixteen</span> steps in all, each a real declaration that passes its own
-      check, opened in a real browser on every push.
-      <a class="inl" href="progression.html">Read all <span data-number-word="chapters">sixteen</span>, with what each declared &rarr;</a>
-    </p>
-  </section>
-
-  <section id="cases" class="cases" aria-labelledby="h-cases">
-    <div class="claim">
-      <p class="eyebrow"><span>What gets built on it</span></p>
-      <h2 id="h-cases">Anything that is really a graph of things and the rules between them.</h2>
-      <p class="lede">
-        Scheduling, coverage, planning, operations — the products where the
-        hard part is the relationships, and where a form per table was never
-        the interface anybody wanted. These four were built on Graview to
-        prove specific claims; each is a product now.
-      </p>
-    </div>
-    <div class="case-grid">
-      <div class="case">
-        <span class="kind">Scheduling</span>
-        <h3>A volunteer rota</h3>
-        <p>Shifts, locations and the people who cover them. Three roles — coordinator, volunteer, viewer — one policy, and a calendar that a person and an agent both fill in.</p>
-        <p class="gave"><b>The graph gave it</b> the calendar, the coverage matrix, permissions on every button, a served store, and a seat that covers a shift when asked.</p>
-      </div>
-      <div class="case">
-        <span class="kind">Coverage</span>
-        <h3>A tender response</h3>
-        <p>Requirements on one side, answers on the other, and the two failures that lose a bid: a requirement nobody answered, and work nobody asked for. Both are absences of a relationship.</p>
-        <p class="gave"><b>The graph gave it</b> a matrix where an empty row or column is readable without a word, and rules that say which one it is.</p>
-      </div>
-      <div class="case">
-        <span class="kind">Planning</span>
-        <h3>A coaching week</h3>
-        <p>The team you intend to put out decides which skills matter, and the skills that matter decide what training is for. A chain that spans a board, a matrix and a week.</p>
-        <p class="gave"><b>The graph gave it</b> a board where things sit where the domain says, and a rule that walks the whole chain end to end.</p>
-      </div>
-      <div class="case">
-        <span class="kind">Operations</span>
-        <h3>A household week</h3>
-        <p>People, time and capacity, ported from an existing application and held to the original's output violation for violation.</p>
-        <p class="gave"><b>The graph gave it</b> the timeline lens, a calendar sync with conflicts surfaced as problems with repairs, and a parity test.</p>
-      </div>
-    </div>
-    <ul class="proof" aria-label="What is verified">
-      <li><strong>Verified, not claimed.</strong> A lens works in a domain the kit has never seen; a policy narrows the interface and the agent alike; a stranger can install the packages and build from them — each is a test or a measurement that names the claim when it fails.</li>
-      <li><strong>Three browsers.</strong> The interface that ships is checked in Chromium, WebKit and Firefox, at phone width, on every push.</li>
-      <li><strong>This page too.</strong> Ten widths, both schemes, a keyboard, and axe-core, with every live frame on it mounted.</li>
-      <li><strong>Read the receipts.</strong> The checker's whole vocabulary and every claim the kit holds itself to are in the docs.</li>
-    </ul>
   </section>
 
   <!--
@@ -1806,38 +1770,6 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     </p>
   </section>
 
-  <section id="start" class="closing" aria-labelledby="h-start">
-    <div class="closing-box">
-      <div>
-        <p class="eyebrow"><span>Start a product</span></p>
-        <h2 id="h-start">One command from anywhere.</h2>
-        <p class="lede">
-          It writes chapter one for your own domain: the declaration split
-          into domain and interface, an eighty-line shell, a test, a CI
-          workflow, and the skills already installed where Claude Code and
-          Codex look for them. Then declare a kind, let your assistant draft
-          the rest, run the checker, look at the picture, declare more.
-        </p>
-        <p class="hero-links">
-          <a href="docs/getting-started.html">Getting started &rarr;</a>
-          <a href="docs/packages.html">The packages &rarr;</a>
-          <a href="https://github.com/en-dash-consulting/graview">GitHub &rarr;</a>
-        </p>
-      </div>
-      <div class="cta">
-        <div class="cta-line"><code>npm create graview@latest my-app</code>
-          <button type="button" class="copy" data-copy="npm create graview@latest my-app">Copy</button>
-        </div>
-        <p class="cta-sub sm dim">
-          Source-available under the Elastic License 2.0: free to build
-          with and to ship products on. <span data-number-word="packages">Fourteen</span> packages, one version, on npm.
-          Rather describe an app than write one? <a class="inl" href="https://graview.cloud">Graview Cloud</a>,
-          the hosted product built on it, is in private alpha.
-        </p>
-      </div>
-    </div>
-  </section>
-
   <!--
     QUESTIONS, ANSWERED PLAINLY. What a person arriving from a search asks
     first, in the words the rest of the page already earns. The page's
@@ -1861,7 +1793,7 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
       </div>
       <div class="qa">
         <h3>How do I start a Graview app?</h3>
-        <p>Run <code>npm create graview@latest my-app</code> with Node 22 or later. It writes a running product for your own domain — the declaration, a shell, a test, a CI workflow and the authoring skills for Claude Code and Codex — and <code>npm run verify</code> checks it.</p>
+        <p>Hand your agent one sentence: <code>Read https://graview.dev/start.md, then turn this repo's docs into a Graview app.</code> The page it reads walks it through scaffolding the project, declaring the app, running <code>graview check</code> and opening <code>graview preview</code>. To drive it yourself, run <code>npm create graview@latest my-app</code> with Node 22 or later: it writes a running product, a test, a CI workflow and the authoring skills for Claude Code and Codex, and <code>npm run verify</code> checks it.</p>
       </div>
       <div class="qa">
         <h3>How do AI agents use a Graview app?</h3>
@@ -1874,60 +1806,14 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
     </div>
   </section>
 
-  <section id="endash" aria-labelledby="h-endash">
-    <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-endash">Who builds it</h2></div>
-    <div class="endash">
-        <div class="lockup">
-          <div class="dashmark"><svg viewBox="0 0 330 330" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-<rect x="7.5" y="7.5" width="315" height="315" stroke="#00E5B9" stroke-width="15"/>
-<path d="M315 15H15V315H315V15Z" fill="#001769"/>
-<path d="M315 232.119H47.0074V247.705H315V232.119Z" fill="#00E5B9"/>
-<path d="M139.795 164.997L145.324 169.838C140.942 178.372 126.191 192.894 100.589 192.894C71.774 192.894 45.0248 174.678 45.0248 139.625C45.0248 103.424 73.6102 85.438 102.425 85.438C127.088 85.438 146.471 98.8126 146.471 119.323C146.471 137.538 131.261 140.084 106.807 141.002L81.4555 141.92C77.3033 142.15 76.3853 145.613 77.7624 150.913C83.5212 167.522 96.8958 176.974 113.964 176.974C122.727 176.995 131.72 174.679 139.795 164.997ZM74.5491 124.185C74.3196 131.112 76.6148 133.866 82.624 133.866H94.851C114.673 133.866 120.682 127.648 120.682 117.028C120.682 105.26 112.837 94.2014 99.0031 94.2014C83.3125 94.2222 75.6967 106.658 74.5491 124.185Z" fill="white"/>
-<path d="M244.225 173.531V131.571C244.225 114.503 237.068 102.986 223.005 102.986C208.253 102.986 199.261 114.524 199.261 131.571V169.608C199.261 179.519 203.183 182.754 213.783 183.672V191.517H156.842V183.672C167.671 182.754 171.593 179.519 171.593 169.608V112.187C171.593 101.588 167.212 98.8128 156.842 99.7308V91.8855L189.12 85.8972C195.797 84.7496 199.261 87.7333 199.261 93.054C199.261 101.358 202.954 103.424 205.937 99.9812C211.008 94.4519 220.23 85 238.445 85C255.284 85 271.871 93.3044 271.871 125.583V171.006C271.871 178.622 275.794 181.376 283.639 179.77V187.615C279.487 190.849 270.953 192.685 264.277 192.685C251.611 192.664 244.225 185.988 244.225 173.531Z" fill="white"/>
-</svg></div>
-          <p style="max-width: 56ch;">
-            <strong>En&nbsp;Dash</strong> is a consultancy headquartered in
-            Richmond, Virginia, with practitioners across the United States. We
-            work alongside teams to remove delivery friction and leave them
-            stronger. We build the tools we wanted while doing it.
-          </p>
-        </div>
-        <div class="sibs">
-          <div class="sib">
-            <a href="https://graview.cloud">Graview Cloud</a>
-            <span>Graview, hosted. Make an app from a conversation in ChatGPT or Claude, or from a template, give it its own address, and work in it together with the people you invite and your AI. In private alpha.</span>
-          </div>
-          <div class="sib">
-            <a href="https://endash.us">n-dx</a>
-            <span>An AI development toolkit. Static analysis of a codebase, a hierarchical PRD that stays in step with it, and an agent that picks up the next task and does it.</span>
-          </div>
-          <div class="sib">
-            <a href="https://html-in-canvas.dev">html-in-canvas.dev</a>
-            <span>Eighteen working examples of the WICG HTML-in-Canvas proposal across 2D, WebGL and WebGPU. Graview's capture path composites through the same API, so the two were written next to each other.</span>
-          </div>
-          <div class="sib">
-            <a href="https://endash.us/toolkit">The En&nbsp;Dash Toolkit</a>
-            <span>Workshops, field guides, handouts and small apps for teams: meeting cadence, team norms, AI governance, refinement and retrospectives.</span>
-          </div>
-        </div>
-        <p class="sm dim" style="margin-top: 2px;">Built for people everywhere, by people at En&nbsp;Dash.</p>
-      </div>
-    <p class="sm dim" style="margin-top: 18px; max-width: 70ch;">
-      <strong>Where it stands.</strong> 0.1, and pre-1.0 on purpose: the public
-      API is designed to be depended on, and it still moves between minor
-      versions while the shape settles. The GPU capture path is experimental,
-      the calendar sync has never run against Google, and no screen-reader
-      pass with real assistive technology has been done yet. The changelogs
-      say what changed and why.
-    </p>
-  </section>
-
   <footer>
     <span>Graview</span>
-    <span>graview · @graview/core · layout · tools · render · react · primitives · pages · ship · studio · embed · skills · create-graview</span>
+    <span><strong data-number="tests">4650</strong> named tests, green on every push</span>
+    <span><a href="tour.html" style="text-decoration: none;">The tour</a> · <a href="progression.html" style="text-decoration: none;">The garden, grown</a> · <a href="docs/index.html" style="text-decoration: none;">Docs</a></span>
     <span style="flex: 1 1 auto;"></span>
     <span><a href="https://github.com/en-dash-consulting/graview" style="text-decoration: none;">GitHub</a> · <a href="https://www.npmjs.com/package/graview" style="text-decoration: none;">npm</a> · <a href="https://graview.cloud" style="text-decoration: none;">Graview Cloud</a> · <a href="https://endash.us" style="text-decoration: none;">En&nbsp;Dash</a>, Richmond, VA, and across the US</span>
   </footer>
+
 </main>
 
 <script>
@@ -1958,105 +1844,9 @@ markScrollers();
 window.addEventListener("resize", markScrollers);
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(markScrollers);
 </script>
-<!-- The garden's chapters, live: built by `pnpm site:build` from apps/seedbed. -->
+<!-- The garden's chapters and the recipes, live: built by `pnpm site:build` from apps/seedbed. -->
 <script src="chapters.js"></script>
 <script>
-/*
- * THE STEPPER, and the one thing it must not do: mount five applications
- * nobody asked for. Each step mounts the first time its panel is shown and
- * stays mounted after that, so pressing back and forth is instant and a
- * reader who never presses anything pays for one.
- *
- * The tabs are real tabs — arrow keys move, Home and End jump — because a
- * row of buttons that looks like tabs and behaves like a list is worse than
- * either. Without the chapters bundle the panels are still there, still
- * readable, and say so rather than spinning.
- */
-(function () {
-  var tabs = [].slice.call(document.querySelectorAll('.steps [role="tab"]'));
-  if (tabs.length === 0) return;
-  var mounted = Object.create(null);
-
-  function mount(step) {
-    if (mounted[step]) return;
-    var host = document.querySelector('[data-step-live="' + step + '"]');
-    var api = window.graviewChapters || {};
-    /* The bundle exposes its module namespace, so the name is
-       `mountChapter`; `mount` is the older one and is checked second rather
-       than assumed either way. */
-    var put = typeof api.mountChapter === "function" ? api.mountChapter
-            : typeof api.mount === "function" ? api.mount : null;
-    if (!host || put === null) return;
-    mounted[step] = true;
-    host.replaceChildren();
-    put(host, Number(step));
-  }
-
-  function show(tab, focus) {
-    tabs.forEach(function (other) {
-      var on = other === tab;
-      other.setAttribute("aria-selected", on ? "true" : "false");
-      other.tabIndex = on ? 0 : -1;
-      var panel = document.getElementById(other.getAttribute("aria-controls"));
-      if (panel) panel.hidden = !on;
-    });
-    mount(tab.dataset.step);
-    if (focus) tab.focus();
-  }
-
-  tabs.forEach(function (tab, index) {
-    tab.addEventListener("click", function () { show(tab, false); });
-    tab.addEventListener("keydown", function (event) {
-      var to =
-        event.key === "ArrowRight" ? (index + 1) % tabs.length :
-        event.key === "ArrowLeft" ? (index - 1 + tabs.length) % tabs.length :
-        event.key === "Home" ? 0 :
-        event.key === "End" ? tabs.length - 1 : -1;
-      if (to === -1) return;
-      event.preventDefault();
-      show(tabs[to], true);
-    });
-  });
-
-  /* The first one when it comes into view, not on load: the page should not
-     start an application for somebody who never scrolls this far. */
-  var first = document.querySelector('[data-step-live="1"]');
-  if (first) {
-    /* A sweep on scroll, the way the chapter frames mount, rather than an
-       IntersectionObserver: with five applications mounting above it as a
-       reader scrolls, an observer's threshold was measured against a layout
-       still moving and missed, and a step that stayed "loading…" is the
-       worst thing this section could show. Near below, on screen, or
-       already scrolled past all count as near. */
-    var pending = false;
-    function near() {
-      pending = false;
-      var rect = first.getBoundingClientRect();
-      /* Reached, or passed: a reader who flung past it will scroll back, and
-         a frame five screens above the foot of the page is not "far" in any
-         sense that should leave it loading. */
-      if (rect.top < innerHeight + 900) {
-        removeEventListener("scroll", later);
-        removeEventListener("resize", later);
-        mount("1");
-      }
-    }
-    function later() {
-      if (pending) return;
-      pending = true;
-      requestAnimationFrame(near);
-    }
-    addEventListener("scroll", later, { passive: true });
-    addEventListener("resize", later, { passive: true });
-    near();
-    /* And within a few seconds regardless. The first step is the section's
-       whole argument, and one application is what the page always paid for
-       a reader who never pressed anything; it should not depend on how a
-       scroll happened to land while five others were mounting. */
-    setTimeout(function () { mount("1"); }, 4000);
-  }
-})();
-
 /*
  * COPY, AND SAY SO. A copy button that does nothing visible is a copy button
  * a person presses three times. Where the clipboard is refused the command

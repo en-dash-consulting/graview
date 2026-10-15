@@ -5,7 +5,10 @@ written twice.**
 
 | | | |
 |---|---|---|
-| `index.html` | the landing page | what the kit does and who it is for, one picture per claim, the product live where it fits |
+| `index.html` | the landing page | one prompt to hand an agent, the recipes under it with the app each made running beside it, the three moves, Cloud, the questions |
+| `tour.html` | the tour | the feature-by-feature argument that used to follow the hero: one live frame per claim, the stepper, the use cases |
+| `start.md` | for the agent | the procedure the prompt points at: scaffold, read, declare, check, preview, report back; `tests/recipes.test.ts` holds its commands to the CLI's |
+| `recipes/` | the recipes | each one's `app.json` and `seed.json` as an agent wrote them in Larkspur (`scripts/fixtures/recipes/larkspur.mjs`), checked by `pnpm check` and `tests/recipes.test.ts`, opened in a browser by `scripts/progression.mjs` |
 | `progression.html` | the long version | sixteen live chapters, the packages, the lenses, the kit |
 | `docs/` | the reference | every page written out of the repository — getting started, concepts, packages, the CLI, working with a model, skills, the findings, live demos, stability — each with a Markdown twin beside it |
 

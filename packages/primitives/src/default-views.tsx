@@ -1088,6 +1088,12 @@ export function registerDefaultViews<S extends AnySchema>(
                 className="graview-kind-open"
                 data-testid={`open-${String(kind)}`}
                 aria-expanded={listed}
+                /*
+                 * NAMED IN WORDS, not by what shows. From altitude the word
+                 * is hidden until the card is hovered, and a reader heard
+                 * the arrow alone: "▾, button, collapsed", once a district.
+                 */
+                aria-label={listed ? `Close up the ${plural}` : `See the ${plural} in here`}
                 title={listed ? "Close it up" : `See the ${plural} in here`}
                 onClick={(event) => {
                   event.stopPropagation();
@@ -1108,7 +1114,7 @@ export function registerDefaultViews<S extends AnySchema>(
                 onDoubleClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
               >
-                <span className="graview-kind-open-word">{listed ? "close" : "open"}</span> {listed ? "▴" : "▾"}
+                <span className="graview-kind-open-word">{listed ? "close" : "open"}</span> <span aria-hidden="true">{listed ? "▴" : "▾"}</span>
               </button>
             ) : null}
           </div>

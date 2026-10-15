@@ -141,7 +141,7 @@ export function countsFor({ release = false } = {}) {
 }
 
 /** The pages that carry counts: the landing page, and the long version. */
-export const PAGES = ["docs/site/index.html", "docs/site/progression.html"];
+export const PAGES = ["docs/site/index.html", "docs/site/tour.html", "docs/site/progression.html"];
 
 /** Fill every marked count on a page; `wrong` collects what disagreed. */
 export function fill(html, counts, wrong = []) {

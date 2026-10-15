@@ -9,7 +9,7 @@ import {
   latticePoints,
   orthogonalPoints,
   polylineD,
-  roundedPolylineD,
+  channelD,
   routedQuadratic,
 } from "./routes.js";
 import { cardRoute, channelRoute } from "./channels.js";
@@ -931,7 +931,14 @@ export function Connectors({
           // circle, so it closes cleanly at any size.
           `M ${anchor.x - radius} ${anchor.y} A ${radius} ${radius} 0 1 1 ${anchor.x + radius} ${anchor.y}` +
           ` A ${radius} ${radius} 0 0 1 ${anchor.x - radius} ${anchor.y}`;
-        const d = self ? loopD : channeled ? roundedPolylineD(channeled, 10) : orthogonal ? polylineD(legs) : quad(runs);
+        /*
+         * A LINE THROUGH THE GUTTERS STILL TAKES THE KIT'S ROUTE. The
+         * gutters decide where it goes; the kit decides how it turns: its
+         * corners eased on the default curve, and square where the kit asks
+         * for right angles, which the garden's kit on graview.dev is there
+         * to show and stopped showing once ground ties took the gutters.
+         */
+        const d = self ? loopD : channeled ? channelD(channeled, kitLine.route) : orthogonal ? polylineD(legs) : quad(runs);
         // The hit stroke also keeps out of the cards an end is drawn inside.
         /*
          * The hit corridor keeps OFF the cards by its own half-width: a

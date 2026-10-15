@@ -238,7 +238,19 @@ function Control<S extends AnySchema>({
       ? spec.kinds.map((kind) => humanizeField(nounOf(store.schema.tryDefinition(kind), kind))).join(" or ")
       : words(spec.name).label;
   // A box is always answered — unticked is a no — so it is never marked as one that must be.
-  const title = named + (spec.optional || spec.control === "boolean" ? "" : " *");
+  const asked = !(spec.optional || spec.control === "boolean");
+  /*
+   * The star is drawn, not said: the field itself says it is required, and
+   * a reader heard "Name star, edit text, required".
+   */
+  const title: ReactNode = asked ? (
+    <>
+      {named}
+      <span aria-hidden="true"> *</span>
+    </>
+  ) : (
+    named
+  );
 
   switch (spec.control) {
     case "text":
@@ -459,7 +471,7 @@ function Control<S extends AnySchema>({
     case "list": {
       // A picture or a document, or a list of them put there several at once, through the host's upload (FR-163).
       const file = spec.control === "file" ? spec : spec.item.control === "file" ? spec.item : undefined;
-      if (file || spec.control === "file") return <Files as="control" title={title} value={value} onChange={onChange} several={file !== spec} image={file?.image === true} label={named} />;
+      if (file || spec.control === "file") return <Files as="control" title={asked ? `${named} *` : named} value={value} onChange={onChange} several={file !== spec} image={file?.image === true} label={named} />;
       const items = Array.isArray(value) ? (value as unknown[]) : [];
       return (
         <fieldset data-graview-part="group" data-graview-field="list">
@@ -492,7 +504,7 @@ function Control<S extends AnySchema>({
       // A record in another app (FR-171), picked from what the host lists for this viewer.
       return (
         <div data-graview-part="field" data-graview-field="linked">
-          <LinkedPicker relation={spec.relation} value={value} onChange={onChange} label={title} />
+          <LinkedPicker relation={spec.relation} value={value} onChange={onChange} label={named} />
         </div>
       );
     case "repeat":
