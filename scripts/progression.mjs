@@ -249,17 +249,29 @@ try {
           // opened the activity rail has chips there too (a log entry, not a thing),
           // and a lens drawn small as a picture is inert.
           // Or, where a picture stands beside the map, a record in it; or, where opening a district lists its records there, the first of them.
-          const member = (
-            await page.evaluateHandle(() =>
-              [...document.querySelectorAll("[data-graview-stage] [data-graview-pick]")].find((el) => !el.closest("[inert]")) ??
-              document.querySelector('[data-testid="lens-panel"] [data-graview-pick]') ??
-              document.querySelector('[data-testid="district-panel"] [data-graview-record]'),
-            )
-          ).asElement();
-          if (member) {
-            // Its acts: the menu a right-click opens on it.
-            await member.click({ button: "right" });
-            await page.waitForTimeout(600);
+          const memberOf = async () =>
+            (
+              await page.evaluateHandle(() =>
+                [...document.querySelectorAll("[data-graview-stage] [data-graview-pick]")].find((el) => !el.closest("[inert]")) ??
+                document.querySelector('[data-testid="lens-panel"] [data-graview-pick]') ??
+                document.querySelector('[data-testid="district-panel"] [data-graview-record]'),
+              )
+            ).asElement();
+          /*
+           * Its acts: the menu a right-click opens on it. Found again if the
+           * scene drew it anew between finding and pressing — a member that
+           * left the page is not a failed chapter, and the run goes on.
+           */
+          for (let attempt = 0; attempt < 3; attempt += 1) {
+            const member = await memberOf();
+            if (!member) break;
+            try {
+              await member.click({ button: "right", timeout: 5000 });
+              await page.waitForTimeout(600);
+              break;
+            } catch {
+              await page.waitForTimeout(400);
+            }
           }
           entry.seatSees = await page.evaluate(() => ({
             offered: [...document.querySelectorAll('[data-testid="context-menu"] [data-testid="affordances"] [data-affordance]')].map(
