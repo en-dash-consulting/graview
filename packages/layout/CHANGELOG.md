@@ -1,5 +1,46 @@
 # @graview/layout
 
+## 0.1.30
+
+### Patch Changes
+
+- 489ff27: A focused card begins below the trail. The picture's trail stands over the ground's top corner, and a zoomed place began at 3% of the height, under it: the rota's raised "Shifts ×" stood over its week's "Sort", and "zoomed in ×" over the gauntlet's timetable's title. The layout takes a `headroom`, the room words over the corner take, and on the ground the focused card begins below it and gives that much of its height back; the scene says it wherever its trail says something.
+  
+  Compatibility: no surface changes; `LayoutOptions` takes an optional `headroom`, and nothing moves without it.
+- Updated dependencies [6cbecc0]
+- Updated dependencies [6862f3a]
+- Updated dependencies [ed2a75d]
+- Updated dependencies [6862f3a]
+- Updated dependencies [4feaed1]
+- Updated dependencies [6862f3a]
+- Updated dependencies [e46f304]
+- Updated dependencies [648fc05]
+- Updated dependencies [6862f3a]
+- Updated dependencies [37f2b3b]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [6862f3a]
+- Updated dependencies [412abf0]
+- Updated dependencies [e46f304]
+- Updated dependencies [e46f304]
+- Updated dependencies [37745ff]
+- Updated dependencies [84ad32f]
+- Updated dependencies [412abf0]
+- Updated dependencies [6cbecc0]
+- Updated dependencies [e46f304]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [f7c1a9e]
+- Updated dependencies [1a1f996]
+- Updated dependencies [6770f65]
+- Updated dependencies [cf85240]
+- Updated dependencies [56dbbe3]
+- Updated dependencies [412abf0]
+- Updated dependencies [91716ae]
+- Updated dependencies [c70440c]
+- Updated dependencies [c3564eb]
+- Updated dependencies [412abf0]
+- Updated dependencies [c3e789b]
+  - @graview/core@0.1.30
+
 ## 0.1.29
 
 ### Patch Changes

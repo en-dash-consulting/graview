@@ -1,8 +1,0 @@
----
-"@graview/core": patch
-"@graview/skills": patch
----
-
-A template says related records by their labels, and a count in words can start a sentence (a review app built as a document on 0.1.29). A finding's page said `{out('affects') | and}` as "module:files, module:app-code and module:tsc" while `{out('dependsOn') | and}` beside it said task titles: `and`, and a set or a record said bare, looked for a field called name, title or label and fell back to the id, so a module labeled `{path}` was said by its id. A record is now said by its kind's declared label — in a block, in a rule's sentence, and in a computed field shown as words — and by those fields only where no label is declared. And `{count(all('finding')) | words} findings` read "fifty-seven findings" at the start of a headline: the new `capital` formatter upper-cases the first letter of what was said, after another formatter or alone — `{count(all('finding')) | words | capital} findings` is "Fifty-seven findings". It is the one formatter that may follow another; two others in a row (`{n | words | money}`) are refused in a sentence rather than read as a join of sets. The graview-node-kind and graview-lists skills teach it.
-
-Compatibility: ops, stored records and wire messages are unchanged. A template's formatters take `capital`, alone or after one other (`{n | words | capital}`), within `graview-document@1`; a build that predates it refuses a document that says it (`template`). `TemplatePart` may carry `capital: true`; `formatValue` takes an optional sixth argument, how a record is said, and `RenderContext` an optional `name`, which unsaid reads the labels of the schema the graph carries. A rule's sentence, a block and a describe line that listed records by id now list them by label.

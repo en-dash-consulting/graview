@@ -1,5 +1,104 @@
 # @graview/embed
 
+## 0.1.30
+
+### Patch Changes
+
+- 6cbecc0: A card says its kind's glance and no more, the bar names a place once, and a drawn home stays Home beside `pages.first` (the same review app). A finding card read "Critical · Security · High" — the third its confidence, though a severity can be high too — and still did after `confidence` was taken out of the kind's `glance`: the glance chose the order and the rest of the kind followed it. A glance a kind declares is now said exactly, and a choice another field shown beside it shares says its field ("Confidence: high", "Likelihood: low"), on a card, a row, a describe line and a table alike. A default card no longer draws a long or Markdown text as a chip cut after a couple of dozen characters: it says the text's start on a line of its own under the chips. With a home declared and `pages.first: "This week"`, the app opened on This week, and a press on Home from the scene drew the pages at their first entry and went to This week again, so the home the author drew was nowhere: `pages.first` now picks where a new visit lands, once, and after that `/` is the home on both faces. `graview check` says so when both are set (`pages-first-beside-home`, a note). And a kind whose plural is "root causes" beside a blocks place titled "Root causes" put two "Root causes" on the bar: the place keeps the name and stands, as `pages.first` and `pages.primary` already read the word, and the kind's list folds into More as "All root causes", still at `/root-causes`; `graview check` warns of it (`pages-place-named-as-a-list`). The graview-pages and graview-lists skills teach each. With the template fixes beside them, a hosted page carries 1.2 KB more up front (and 0.6 KB more up front handed a compiled app).
+  
+  Compatibility: ops, stored records and wire messages are unchanged. New check finding codes `pages-first-beside-home` (a note) and `pages-place-named-as-a-list` (a warning). `readableFields` with `glance: true` says only a kind's declared `display.glance` when it has one, and a choice's `alone` may carry its field's label. `barPlaces` labels a kind's list "All <plural>" and folds it when a place has its name (`allLabel` from `@graview/core`). `@graview/react/provider` exports `hasLanded(views)` and `markLanded(views)`, which the pages and the embed read `pages.first` once by. A default card's prose is `p[data-graview-excerpt="<field>"]`.
+- dc5a737: A new app can point a person at its own controls once. A host that wanted to introduce the switch between the scene and the pages, the problems count, Activity and the Ask box could only do it by their selectors, which are not a surface it may hold the framework to, so its tour broke the first time the bar was drawn differently. `firstLook` on `mount` and `<Embed>`, the whole-page `Shell` and `PagesApp` runs a short sequence of hints the framework anchors to its own controls: one at a time, beside the control each names and never over it, a non-modal dialog the keyboard moves into and is said as it opens, with Next, Done on the last, Skip and Escape; a press anywhere else ends it, and the keyboard goes back where it was. A hint whose control is not drawn — no Ask box, nothing yet in Activity, the switch gone from a phone's bar while Find is open — is skipped, and it works on either face of an embed, kept across a change of face. It is shown once per viewer: the host says whether this viewer has seen it and is told when it is over; with no host seam, the browser remembers it in `localStorage` for the app. A host adds hints of its own after the framework's by naming one of the framework's controls. The hints are fetched only when a first look is shown: a hosted page's first load is about 1.1 KB more (0.4 KB gzipped), inside its budget, and every face 7.6 KB more minified.
+  
+  Compatibility: additive. New: `firstLook?: FirstLook` on `FrameOptions` (so `mount`, `<Embed>` and `@graview/embed/pages`' `mount`), `ShellProps` and `PagesAppProps`, where `FirstLook = boolean | { seen?: boolean | (() => boolean); onDone?: (how: "finished" | "dismissed") => void; steps?: readonly { anchor: FirstLookAnchor; title: string; words: string }[] }` and `FirstLookAnchor` is one of `FIRST_LOOK_ANCHORS`: `"faces"`, `"problems"`, `"activity"`, `"ask"`, `"find"`, `"profile"`, `"home"`. `FIRST_LOOK_ANCHORS`, `FirstLookDoor`, `firstLookKey` and the types `FirstLook`, `FirstLookAnchor`, `FirstLookEnd`, `FirstLookOptions`, `FirstLookStep` and `FirstLookDoorProps` from `@graview/primitives`, `/frame` and `/pages`; `FIRST_LOOK_ANCHORS` and those types from `@graview/embed`. Off unless given: an app that passes nothing draws and loads what it did. Ops, stored formats, the wire, the document format, the compiled format, check finding codes and derived tool names and schemas are unchanged. What Graview Cloud does: pass `firstLook: { seen: () => <the viewer has seen it>, onDone: () => <record that they have> }` to `mount` for a new app, and name an anchor rather than a selector in any hint of its own; `true` remembers it in the browser instead.
+- 37745ff: A relation can go to a kind in another app, and the linked record is read there as whoever is looking (FR-171, the full relation). 0.1.29 named another app; this names a record in it. A relation's `to` may be `"@<app address>/<kind>"` — `"forHouse": { "to": ["@nick/house/house"], "cardinality": "one" }` — and `linkedRecordField("@nick/house/house")` says the same in a declaration, which `toDocument` writes back as the relation. Linking picks a record there and never touches the other app: the record that links keeps which one under the relation's name, as `"house:h1"` (or a list), so its derived edit sets it, undoes it, logs it and keeps it from a seat a sight keeps it from like any value. `graview check` says in sentences what such a relation cannot be — `linked-mixed`, `linked-apps`, `linked-target`, `linked-inverse`, `linked-append-only`, `act-linked`, `rule-linked` — with the checker, so a page that compiles without it carries none of their words. The host reads the far side beside `resolveApp`: `linkedRecords` on `mount`, `<Embed>`, `GraviewProvider` and the routed face answers `resolve(ref, viewer)` with the record's label, describe line, card and the fields that viewer may see, `{ denied: true }` or `null`, `find(search, viewer)` with the records that viewer may link, and `open(ref, viewer)`, optional, the seam a press on a linked record opens it through. The record's page and the scene's record panel draw it with its own card from its home app, and a document card's `{ "field": "forHouse" }` names it; a viewer the host refuses sees "linked record (no access)" and nothing of it. "Change" beside it, a form and the scene's ask pick another from what the host lists. The rule language walks it by name, `forHouse.listPrice`, in a computed field, a block or a rule, as the viewer: a far record it cannot read reads as nothing and is said — a computed value says why it has none, a rule that would not hold without it cannot be judged — and never thrown; the page reads again as each answer arrives (`store.reread()`). When the far value changes, the host calls `recordLinkedChange(store, { ref, fields, app })` and the reading app's history keeps an op authored by the other app on each record that links it — "Buy it outright: the linked record changed in House — list price" — naming what changed and none of its values. `describe_app` lists each relation under "Linked from other apps" with how to link one, the derived edit's tool says its argument is a record of that app as `"<kind>:<id>"`, and a seat finds one with `find_linked`, listed only for an app with such a relation. `@graview/core/linked` holds `linkedRecordsOver`, the host over stores held in memory, read through each far store's `seenBy(viewer)`, which the tests read two compiled documents through and a host holding both apps can use as it is; `graview-linked-records` is the skill that teaches it. A hosted page's first load is 5 107 bytes larger (550 088 over the vendors document, 544 981 on main), 4 648 handed a compiled app, both under their budgets; what draws a linked record is a chunk fetched with the first one drawn, and the embed's budgets are raised by files of their own: the pages face 4 585 / 1 704 bytes minified / gzipped, every face 20 162 / 7 423, the studio handed in 13 618 / 4 936.
+  
+  Compatibility: additive. The document format gains a relation target `"@<app address>/<kind>"` in `kinds.<kind>.edges.<name>.to` (`document.schema.json`'s `edges.to` items match a kind name or that target), its value kept on the linking record as `"<kind>:<id>"` or a list of them, and `graview-compiled@1` carries it; a build that predates it refuses such a target by path. The check gains `linked-mixed`, `linked-target`, `linked-apps`, `linked-inverse`, `linked-append-only`, `act-linked` and `rule-linked`. `mount`, `<Embed>`, `GraviewProvider` and the routed face's context gain an optional `linkedRecords: { resolve(ref: { address, kind, id }, viewer): Promise<{ address, kind, id, label, describe?, card?, fields, href?, app? } | { denied: true } | null>; find({ address, kinds, query, limit }, viewer): Promise<LinkedRecord[] | { denied: true }>; open?(ref, viewer): void }`. Ops and primitives are unchanged: a far change is an ordinary op appended with author `{ kind: "system", id: "app:<address>", name }`, `via: "app:<address>"`, the linking records in `reads` and no primitives. `ReadableField` gains `linked`, a form gains the control `linked`, a document card's resolved field block gains `linked`, and the derived `edit-<kind>` of an app with such a relation describes its argument with `"x-graview-linked"`; an app with none has the same tools as before. What a host does: read `capabilities().shipped` for FR-171 before writing such a relation, pass `linkedRecords` to have a linked record drawn and walked, and call `recordLinkedChange` when a far value changes.
+- c70440c: A person can scrub back through an app's history and watch it being built (Roadmap f-playback). `pastOf(store, seq)` and `pastOf(store, time)`, on the new `@graview/core/past`, are the app as it stood then — its records, its links, its log and its problems — read, never changed: it offers no act, declared or derived, `permits` says "Nothing changes while you look back.", and every change asked of it is refused with a `PastError`. A seek folds from the nearest point it can, an epoch or a point kept in memory for that store every `pastEvery` ops (64) as an earlier seek passed it, so scrubbing never folds the whole log twice; a store reopened with its log but not the epoch its seed began (a page's browser adapter keeps none) works back from the graph it holds with each op's inverse, so the past begins at the seed rather than at nothing. `pastOf` asked of a seat's view of a store answers under that seat's sight, so a seat sees the past only as it could see it then. `seqAt(store, time)` says where a time falls, and `pastAt(store, when, host)` is the past under the declaration a host says the moment was made under (`declarationAt`). The past is an entry of its own, apart from the store, because a page needs none of it until somebody looks back: the provider fetches it then. `@graview/core/history`, fetched with the timeline, holds what the timeline reads around it: `ticksOf(store, { me, declarations })` is a tick per gesture marked by who made it (`you`, `person`, `agent`, `app`), with a bigger tick where the declaration changed and the sentence it said, from an epoch's `change` or a host's `DeclarationMark`; `declarationSentence` ("Added a Budget kind"), `makerOf`, `makerWords` and `restoreBatches`.
+  
+  On both faces, every row of Activity has "Show the app as it was here": the face draws the app as it stood just after that change, from the one store every surface reads, with a timeline over the scene and at the head of the routed face's page — "As of" the moment, what was done there and by whom, a tick per change, Play at 1× to 8×, and Back to now. While the past is shown nothing is offered to change it: no act, no undo on Activity, no ask field, no way back after an act, and a design's own control that asks `permits` is disabled. "Restore to here" takes back every change since as one undo, itself undone as one, offered only when this seat may make every one of those changes and the log lets them go together. An undo whose target also came after the earliest op being taken back no longer blocks it, since the two leave the graph as if neither was made.
+  
+  What the log does not hold is the host's: `GraviewProvider`, `mount` and `PageContext` take `history: { declarations, viewAt }`, the declaration changes it knows (each with the declaration the past is drawn under from its seq) and `viewAt(name, seq)`, a script view's code at a moment, `null` where the view did not exist then. `HostFiles.kept(href)` says whether the host still keeps a file's bytes, and one it has let go of is drawn as "removed later", as is a picture that does not load while somebody looks back. `verify playback` drives it on the todo example in three engines. Up front, the hosted page carries only the seam the faces read the moment from and a store's refusal of a change to the past; the fold, its kept points and the timeline are fetched when somebody first looks back (what the 0.1.30 wave adds up front together is said in `.changeset/the-0-1-30-wave-leaves-the-past-and-the-suggestions-off-the-first-load.md`). The every-face, pages-face, studio and registering-a-worker-view budgets grow by 13_243 / 5_442, 4_630 / 1_928, 5_790 / 2_173 and 482 / 154 bytes in their raise files.
+  
+  Compatibility: ops and primitives fold as before (`OperationLog.fold` lands each op through the new `foldOp`, unchanged); `checkUndo` no longer counts as blocking a live undo whose target is itself after the earliest op being undone, so an undo that was refused with "Include batch …" over such a pair now runs, and nothing it was allowed before is refused. New API: the `@graview/core/past` entry — `pastOf(store, when: number | string | Date, options?: { declaration?: PastDeclaration }): Store`, `pastAt(store, when, host?: HistoryHost): Store`, `seqAt(store, when: string | Date): number` and `declarationAt(marks, seq)` — and `Store.past`, `Store.pastEvery`, `StoreOptions.pastEvery`, `PastError`, `PastPoint`, `PastDeclaration`, the `@graview/core/history` entry (`ticksOf`, `declarationSentence`, `makerOf`, `makerWords`, `restoreBatches`), `HostFiles.kept`, `history` on `GraviewProvider`, `FrameOptions` and `PageContext`, `usePlayback`, `useLiveStore`, `useOwnPlayback`, `PlaybackContext`, `PastBar` and `prefetchTimeline`.
+- eb3bdb7: A right-click on the pages opens the scene's context menu. It was the scene's alone, so on a list, a record's page or a picture's page a right-click met the browser's menu and the acts were a scroll away. It is the same menu now — the same pane, the same acts `@graview/tools` derives, narrowed by the seat, with what is withheld said the way the scene says it — opened on what the gesture landed on: a list's row, a record's page, a card or a link to a record, a lens's mark, all about that record, with "Open", "Open in a new tab" and "Show in the scene" beside its acts; a value on a record's page, with "Change “Due”" first, which opens that value's own edit in place; a picture's ground, about its place, headed with its title and offering what its kind offers ("Add a task"); and the page's own ground, with the list's kind's acts and Find. Shift+F10 and the context-menu key open it on what has the keyboard, and a finger resting on the page opens it on a phone (on a list that chooses, resting on a row still chooses it). The keyboard goes into the menu and back where it was opened; Escape closes it.
+  
+  The browser keeps its own menu in a text field or editable text, over text somebody selected, and whenever Shift is held with the right-click — the way to the browser's "Open link in new tab", which the menu also offers itself. A design's own value takes part by carrying `data-graview-field` beside `data-graview-editable`, and its own row by being a link to the record or carrying `data-graview-record`.
+  
+  A host adds a section of its own to the menu on either face: `menuSections` on `GraviewProvider`, on `embed()` and on the pages' context, each a function told what the menu was opened on (`MenuTarget`: `face`, `on`, `about`, `field`, `place`, `href`, `element`) that answers a `MenuSection` — rows (`items`: `{ id, label, run, hint? }`) or what it draws itself (`render(close)`), before the acts (`at: "start"`) or after them — or nothing. A face adds its own with `MenuSections` from `@graview/react/drawing`. `graview-desk` teaches the seam, and `graview-lists` how a design's own rows and values take part. The menu and its pane stay off a page's first load: they are fetched when the page is first idle, or at the first right-click, and a hosted page's first load carries nothing more for them. The embed's pages face alone carries 3.7 KB more in all (the menu's pane, now fetched there too), every face 0.5 KB and the embed with the studio handed in 5.0 KB, raised in `scripts/budget-raises/the-pages-open-the-scenes-context-menu-*.json`.
+  
+  Compatibility: no surface changes. New on the provider, `embed()` and `PageContext`: `menuSections` (the context menu's section seam). New on `PointerMenu`: `about`, `face`, `field`, `place`, `href`, `title` and `returnTo`, all optional. `Inspector` takes `openActs`. The `acts` popover is drawn on the pages too.
+- Updated dependencies [e46f304]
+- Updated dependencies [6cbecc0]
+- Updated dependencies [6862f3a]
+- Updated dependencies [ec39547]
+- Updated dependencies [ed2a75d]
+- Updated dependencies [0d45ba0]
+- Updated dependencies [6862f3a]
+- Updated dependencies [825838f]
+- Updated dependencies [ea43f4a]
+- Updated dependencies [f901dfb]
+- Updated dependencies [4feaed1]
+- Updated dependencies [6862f3a]
+- Updated dependencies [e46f304]
+- Updated dependencies [dc5a737]
+- Updated dependencies [489ff27]
+- Updated dependencies [648fc05]
+- Updated dependencies [6862f3a]
+- Updated dependencies [37f2b3b]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [6862f3a]
+- Updated dependencies [057931a]
+- Updated dependencies [412abf0]
+- Updated dependencies [e46f304]
+- Updated dependencies [489ff27]
+- Updated dependencies [e46f304]
+- Updated dependencies [489ff27]
+- Updated dependencies [489ff27]
+- Updated dependencies [312521c]
+- Updated dependencies [37745ff]
+- Updated dependencies [84ad32f]
+- Updated dependencies [412abf0]
+- Updated dependencies [e46f304]
+- Updated dependencies [e46f304]
+- Updated dependencies [412abf0]
+- Updated dependencies [b6c81b2]
+- Updated dependencies [c4a953d]
+- Updated dependencies [93770ac]
+- Updated dependencies [6cbecc0]
+- Updated dependencies [f901dfb]
+- Updated dependencies [e46f304]
+- Updated dependencies [5b8ac1f]
+- Updated dependencies [f7c1a9e]
+- Updated dependencies [1a1f996]
+- Updated dependencies [6770f65]
+- Updated dependencies [f901dfb]
+- Updated dependencies [cf85240]
+- Updated dependencies [e46f304]
+- Updated dependencies [6931bf7]
+- Updated dependencies [489ff27]
+- Updated dependencies [56dbbe3]
+- Updated dependencies [412abf0]
+- Updated dependencies [91716ae]
+- Updated dependencies [c70440c]
+- Updated dependencies [c3564eb]
+- Updated dependencies [01fa7c5]
+- Updated dependencies [412abf0]
+- Updated dependencies [8ca608c]
+- Updated dependencies [c9d1840]
+- Updated dependencies [489ff27]
+- Updated dependencies [eb3bdb7]
+- Updated dependencies [489ff27]
+- Updated dependencies [88c84c3]
+- Updated dependencies [c3e789b]
+- Updated dependencies [489ff27]
+  - @graview/pages@0.1.30
+  - @graview/core@0.1.30
+  - @graview/primitives@0.1.30
+  - @graview/react@0.1.30
+  - @graview/studio@0.1.30
+  - @graview/layout@0.1.30
+  - @graview/tools@0.1.30
+
 ## 0.1.29
 
 ### Patch Changes
