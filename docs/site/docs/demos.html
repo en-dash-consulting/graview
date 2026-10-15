@@ -1404,14 +1404,15 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="checks.html">What check says</a>
       <a href="demos.html" aria-current="page">Live demos</a>
       <a href="stability.html">Stability</a>
+      <a href="site.html">This site, as an app</a>
       <a href="../tour.html">The tour</a>
       <a href="../progression.html">The garden, grown</a>
       <a href="../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
-      written out of the repository<br>
-      by scripts/site-docs.mjs<br>
+      records of a Graview app,<br>
+      written out of the repository,<br>
       never by hand
     </div>
   </nav>
@@ -1470,9 +1471,11 @@ main.page > section.tour-intro { padding-top: 64px; }
 <footer>
   <p class="sm dim">
     Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. These pages are
-    generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
-    on them can disagree with the code they describe.
+    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+    <a href="site.html">Open it as an app</a>.
   </p>
 </footer>
 <script>

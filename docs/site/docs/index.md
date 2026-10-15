@@ -22,6 +22,7 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 - [What check says (105)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.
+- [This site, as an app](https://graview.dev/docs/site.html): graview.dev is a Graview app: its pages are records, and its city is one click away.
 
 ---
 

@@ -1410,14 +1410,15 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
       <a href="../../index.html">&larr; graview.dev</a>
     </div>
 
     <div class="railfoot">
-      written out of the repository<br>
-      by scripts/site-docs.mjs<br>
+      records of a Graview app,<br>
+      written out of the repository,<br>
       never by hand
     </div>
   </nav>
@@ -1451,7 +1452,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><strong>Let the app's own actor tidy, and say what it may not.</strong> An actor that links and prunes on its own is an author that says <code>automated: true</code> (<code>kind: "system"</code> or <code>"agent"</code>). What it is sure of it applies with <code>lineage: { basis, confidence }</code>; what it is not it suggests: <code>suggest(store, calls, { author, lineage })</code> (from <code>@graview/core/tidying</code>) keeps the calls in the log, changes nothing, and they wait in the Suggested tray beside Activity until a person accepts (made as them) or declines them; <code>declined(store, calls)</code> says so, and the actor is refused the same change again. Its run of changes is one Activity row, "Tidied 6 things today". A person says "Leave this one alone" on a record (<code>leave-alone-&lt;kind&gt;</code>, cleared by <code>allow-tidying-&lt;kind&gt;</code>; <code>isLeftAlone(store, id)</code>), and the declaration says a kind is never tidied or never linked — <code>tidying: "never" | "no-links"</code> on <code>defineNode</code>, <code>tidying: "never"</code> on a relation; in a document the edit <code>{"op": "set-tidying", "kind": "vendor", "tidying": "no-links"}</code> (with <code>"relation"</code> for one relation, <code>"allowed"</code> to undo it). The store refuses the actor each in a sentence.</li>
 </ol>
 <ol>
-<li><strong>Print a place when a fixed link wants one.</strong> `renderPlace(store, app, "/requests", { viewer, locale })<code> from </code>@graview/pages/static` answers <code>{ html, css, title, found }</code>: one self-contained page, no script, in the app's look, under the viewer's sight, the same words the routed face says. It imports no React, so a Worker renders it on each change.</li>
+<li><strong>Print a place when a fixed link wants one.</strong> `renderPlace(store, app, "/requests", { viewer, locale })<code> from </code>@graview/pages/static` answers <code>{ html, css, title, found }</code>: one self-contained page, no script, in the app's look, under the viewer's sight, the same words the routed face says. It imports no React, so a Worker renders it on each change. A <code>design</code> puts it in the product's own markup — `records[kind](record, site)<code> writes a record's page, </code>document(page)` what goes around it — which is how graview.dev renders its pages (<code>apps/site/design.mjs</code>).</li>
 </ol>
 <ol>
 <li><strong>Know what a kind opens to before you draw it a picture.</strong> Gone into with no lens of its own (<code>#focus=aggregate:room</code>), a kind opens to its stop: its plural, count and description; its creating act first ("Add a room"), asked in place; how many are overdue or due this week on its due date; its problems counted by rule, each opening its repairs; what changed since this reader last looked; and a picture its data chooses — a board by its main choice (<code>status</code>, <code>stage</code>, <code>state</code>, <code>phase</code> or the lifecycle's field) up to 300 records, a calendar where today's month has short records on its main date, else a table of its glance and its relations, 50 rows at a time. "Keep as a lens" declares that picture (<code>add-lens</code>). So give a kind a lifecycle or a <code>status</code>, a <code>glance</code>, and a creating act with a <code>title</code> before you write it a view.</li>
@@ -1477,9 +1478,11 @@ main.page > section.tour-intro { padding-top: 64px; }
 <footer>
   <p class="sm dim">
     Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. These pages are
-    generated from the repository — <code>node scripts/site-docs.mjs</code> — so nothing
-    on them can disagree with the code they describe.
+    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+    <a href="../site.html">Open it as an app</a>.
   </p>
 </footer>
 <script>
