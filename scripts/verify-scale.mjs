@@ -11,13 +11,22 @@
  * every frame's length from a requestAnimationFrame recorder with vsync off,
  * so a frame is exactly as long as the work in it.
  *
+ * Then THE GPU CAPTURE PATH, in Chrome Canary with the capture flag: the
+ * discography with `?gpu=1` at altitude and at the hub, and live.html —
+ * the catalog's songs as 64, 128, 256 and 512 live views a frame, every one
+ * moving each frame and a few changing — under today's capture policy and
+ * under the one before it (every live view retaken every frame), so the
+ * cliff is measured rather than remembered (`CAPTURE_BUDGET` keeps the
+ * numbers). The scene never draws 512 views itself; a stop holds what its
+ * band can.
+ *
  *   node scripts/verify-scale.mjs            (writes docs/scale.json)
  */
 import { spawn, execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { engineName, launchEngine } from "./lib/engine.mjs";
+import { engineName, launchCanaryGpu, launchEngine } from "./lib/engine.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -25,6 +34,12 @@ const app = resolve(repoRoot, "apps/discography");
 const PORT = portFor("discography-preview");
 const ENGINE = engineName();
 const report = { at: new Date().toISOString(), engine: ENGINE, stops: {} };
+const QUICK = process.env["GRAVIEW_QUICK"] === "1";
+/** Live views a frame the GPU path is measured at. */
+const LIVE_COUNTS = [64, 128, 256, 512];
+/** The floor a GPU frame rate is held to, as verify-panning holds a drag. */
+const GPU_FLOOR = 55;
+const GPU_ARGS = ["--enable-unsafe-webgpu", "--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=metal", "--disable-gpu-vsync", "--disable-frame-rate-limit"];
 
 /* The page as it ships: built, then served by vite preview. */
 execFileSync("npx", ["vite", "build"], { cwd: app, stdio: "ignore" });
@@ -268,6 +283,10 @@ try {
    */
   const holds = (stop) => stop && stop.p95 <= 20 && stop.worst <= 50;
   const quiet = (stop) => stop && stop.worst <= 50;
+  await browser.close();
+  browser = undefined;
+  report.gpu = await measureGpu();
+
   report.verdict = {
     // The city at altitude is a map of districts, not every member of every lens drawn small —
     // and every place is still named on its district: light because a marquee says names (FR-118), not by saying nothing.
@@ -295,6 +314,16 @@ try {
     aTransitionHolds60: [descend, hub, rise].every((stop) => stop.first <= 150 && holds(stop)),
     // Selecting and typing at the hub never drop a frame past 50 ms after the first.
     aSelectionAndASearchAreCheap: quiet(select) && quiet(search),
+    /*
+     * THE GPU PATH draws the discography itself: views captured and drawn
+     * at altitude and at the hub, nothing thrown.
+     */
+    theDiscographyDrawsOnTheGpuPath: Boolean(report.gpu.discography?.every((stop) => stop.drawn > 0)) && (report.gpu.pageErrors?.length ?? 1) === 0,
+    // A view the budget cannot follow is drawn on the DOM path, where the GPU drew it (within the pixel a texture rounds to).
+    aViewTheGpuCannotFollowIsDrawnOnTheDomInPlace: (report.gpu.handedOn?.onDom.length ?? 0) > 0 && report.gpu.handedOn.onDom.every((view) => view.off !== null && view.off <= 1.5),
+    // 256 and 512 live views on the GPU path, every one moving each frame, at 55fps or better.
+    theGpuPathHolds55At256LiveViews: holdsGpu(report.gpu.after?.[256]),
+    theGpuPathHolds55At512LiveViews: holdsGpu(report.gpu.after?.[512]),
   };
 } catch (error) {
   report.error = String(error).slice(0, 1800);
@@ -303,6 +332,134 @@ try {
   try {
     process.kill(-server.pid);
   } catch {}
+}
+
+/** A GPU run at the floor: its median frame, and no more than one frame in ten slower than the floor allows. */
+function holdsGpu(run) {
+  return Boolean(run) && !run.error && run.fps >= GPU_FLOOR && run.slowShare <= 0.1;
+}
+
+/**
+ * The GPU capture path, measured: its own browser (Canary, with the capture
+ * flag), the same preview server. Frames are the page's own animation
+ * frames with vsync off, as above.
+ */
+async function measureGpu() {
+  const gpu = { pageErrors: [] };
+  let canary;
+  try {
+    canary = await launchCanaryGpu({ headless: !process.argv.includes("--headed"), extraArgs: GPU_ARGS });
+    const frames = (page, ms) =>
+      page.evaluate(async (span) => {
+        const gaps = [];
+        let last = performance.now();
+        const began = last;
+        await new Promise((done) => {
+          const tick = (now) => {
+            gaps.push(now - last);
+            last = now;
+            if (now - began < span) requestAnimationFrame(tick);
+            else done();
+          };
+          requestAnimationFrame(tick);
+        });
+        gaps.sort((a, b) => a - b);
+        const p50 = gaps[gaps.length >> 1] ?? 0;
+        return {
+          frames: gaps.length,
+          fps: Math.round(1000 / Math.max(p50, 0.1)),
+          p50: Math.round(p50 * 10) / 10,
+          p95: Math.round((gaps[Math.floor(gaps.length * 0.95)] ?? 0) * 10) / 10,
+          slowShare: Math.round((gaps.filter((gap) => gap > 1000 / 55).length / Math.max(1, gaps.length)) * 100) / 100,
+        };
+      }, ms);
+
+    /* THE DISCOGRAPHY ON THE GPU PATH, at altitude and at the hub. */
+    const page = await canary.newPage({ viewport: { width: 1440, height: 900 } });
+    page.on("pageerror", (error) => gpu.pageErrors.push(String(error).slice(0, 200)));
+    await page.goto(`${at("discography-preview")}/?fresh=1&gpu=1#overview=1`, { waitUntil: "load" });
+    await page.waitForSelector('[data-graview-stage="gpu"] [data-graview-view]', { timeout: 120_000 });
+    await page.waitForTimeout(2000);
+    const drawn = () => page.evaluate(() => ({ drawn: window.__graviewGpu?.drawn ?? 0, captures: window.__graviewGpu?.captures ?? 0, onDom: document.querySelectorAll('[data-graview-under-canvas] [data-graview-view]').length }));
+    const dragFrames = async (x, y) => {
+      const recording = frames(page, 1200);
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      for (let i = 1; i <= 30; i++) {
+        await page.mouse.move(x - (260 * i) / 30, y - (120 * i) / 30);
+        await page.waitForTimeout(16);
+      }
+      await page.mouse.up();
+      return recording;
+    };
+    gpu.discography = [];
+    gpu.discography.push({ stop: "altitude, still", ...(await frames(page, 1000)), ...(await drawn()) });
+    gpu.discography.push({ stop: "altitude, drag", ...(await dragFrames(700, 520)), ...(await drawn()) });
+    await page.evaluate(() => {
+      location.hash = "#focus=artist%3Atech-n9ne";
+    });
+    await page.waitForTimeout(2500);
+    gpu.discography.push({ stop: "hub, still", ...(await frames(page, 1000)), ...(await drawn()) });
+    gpu.discography.push({ stop: "hub, drag", ...(await dragFrames(1300, 330)), ...(await drawn()) });
+    await page.close();
+
+    /*
+     * THE HAND-OFF: with no capture budget at all, a view that keeps
+     * changing is handed to the DOM path — and drawn there exactly where
+     * the GPU drew it, under the canvas.
+     */
+    const starved = await canary.newPage({ viewport: { width: 1440, height: 900 } });
+    starved.on("pageerror", (error) => gpu.pageErrors.push(String(error).slice(0, 200)));
+    await starved.goto(`${at("discography-preview")}/?fresh=1&gpu=1&budget=0#focus=artist%3Atech-n9ne`, { waitUntil: "load" });
+    await starved.waitForSelector('[data-graview-stage="gpu"] [data-graview-view]', { timeout: 120_000 });
+    await starved.waitForTimeout(3000);
+    gpu.handedOn = await starved.evaluate(() => {
+      const canvas = document.querySelector('[data-graview-stage="gpu"]').getBoundingClientRect();
+      const placed = new Map((window.__graviewGpuPlaced?.() ?? []).map((one) => [one.id, one]));
+      const onDom = [...document.querySelectorAll("[data-graview-under-canvas] > [data-graview-view]")].map((el) => {
+        const box = el.getBoundingClientRect();
+        const drawn = placed.get(el.getAttribute("data-graview-view"));
+        return drawn
+          ? { id: el.getAttribute("data-graview-view"), off: Math.max(Math.abs(box.x - canvas.x - drawn.x), Math.abs(box.y - canvas.y - drawn.y), Math.abs(box.width - drawn.width), Math.abs(box.height - drawn.height)) }
+          : { id: el.getAttribute("data-graview-view"), off: null };
+      });
+      return { onDom, inCanvas: document.querySelectorAll('[data-graview-stage="gpu"] > [data-graview-view]').length };
+    });
+    await starved.close();
+    for (const stop of gpu.discography) process.stdout.write(`gpu ${stop.stop.padEnd(28)} ${JSON.stringify(stop)}\n`);
+
+    /* LIVE VIEWS: the cliff before, and the page under it now. */
+    const liveRun = async (mode, n) => {
+      const live = await canary.newPage({ viewport: { width: 1440, height: 900 } });
+      live.on("pageerror", (error) => gpu.pageErrors.push(String(error).slice(0, 200)));
+      try {
+        await live.goto(`${at("discography-preview")}/live.html?n=${n}&mode=${mode}`, { waitUntil: "load" });
+        await live.waitForFunction(() => window.__live?.ready || window.__live?.error, null, { timeout: 30_000 });
+        await live.waitForTimeout(800);
+        const before = await live.evaluate(() => ({ ...window.__live }));
+        const run = await frames(live, 2000);
+        const after = await live.evaluate(() => ({ ...window.__live }));
+        const painted = Math.max(1, after.frames - before.frames);
+        return { ...run, ...(after.error ? { error: after.error } : {}), capturesPerFrame: Math.round(((after.captures - before.captures) / painted) * 10) / 10, onDom: after.onDom };
+      } finally {
+        await live.close();
+      }
+    };
+    gpu.after = {};
+    gpu.before = {};
+    for (const n of LIVE_COUNTS) {
+      gpu.after[n] = await liveRun("after", n);
+      process.stdout.write(`gpu live ${String(n).padStart(3)} after   ${JSON.stringify(gpu.after[n])}\n`);
+      if (QUICK) continue;
+      gpu.before[n] = await liveRun("before", n);
+      process.stdout.write(`gpu live ${String(n).padStart(3)} before  ${JSON.stringify(gpu.before[n])}\n`);
+    }
+  } catch (error) {
+    gpu.error = String(error).split("\n")[0].slice(0, 400);
+  } finally {
+    await canary?.close();
+  }
+  return gpu;
 }
 
 report.passed = !report.error && report.verdict && Object.values(report.verdict).every(Boolean) && (report.pageErrors?.length ?? 0) === 0;

@@ -90,7 +90,7 @@ Worth stealing later: a browser harness that walks your own acceptance criteria 
 
 ### Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` from `@graview/render/gpu`; there is no URL switch) — never a requirement.
+Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` set to `attachGpu()` from `@graview/render/gpu`; there is no URL switch) — never a requirement.
 
 ### Then find out whether it worked
 
