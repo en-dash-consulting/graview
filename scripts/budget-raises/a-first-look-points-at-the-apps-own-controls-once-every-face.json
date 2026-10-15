@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 7737,
+  "gzipped": 3311,
+  "note": "Raised when an app came to point a new person at its own controls once (`firstLook` on `mount`, `Shell` and `PagesApp`): the door that asks whether this viewer has seen it (`first-look-door.tsx`) rides with the frame, and the hints themselves (`first-look.tsx`) are a chunk fetched only when a first look is shown. 7_737 / 3_311 more than main at 0.1.29 (1_987_172 / 651_235), while a hosted page's first load is 1_141 / 401 bytes more, inside its base. Measured at 1_994_909 / 654_546."
+}

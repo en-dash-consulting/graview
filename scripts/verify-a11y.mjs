@@ -20,6 +20,12 @@
  *   what it is (`page-has-heading-one`): every word on the page is the
  *   framework's to write.
  *
+ *   a first look (`firstLook`) on Cloud's vendor app, on both faces, with
+ *   each of its hints open in turn: axe holds with a hint open, each hint
+ *   stands beside its control and never on it, inside the screen, the
+ *   keyboard on it; on a phone at twice the text size it still fits; and
+ *   Escape ends it with the keyboard given back.
+ *
  *   the example apps (todo, seedbed, rota, discography, the desk), whole:
  *   every node on their pages is this repository's.
  *
@@ -86,6 +92,8 @@ async function buildHost() {
           app: compiled.app,
           seed: { nodes: seed.nodes, edges: seed.edges.map((edge, i) => ({ id: edge.id ?? "e" + i, ...edge })) },
           face: asked.get("face") ?? "graview",
+          // A first look, as Cloud turns it on for a new app: shown whatever this browser remembers.
+          ...(asked.get("firstLook") ? { firstLook: { seen: false } } : {}),
           principal: { kind: "human", id: "u:owner", roles: ["owner"] },
           label: compiled.app.name,
           // As Cloud mounts it: the page IS the app, so its name is the page's one level-one heading.
@@ -130,8 +138,11 @@ const hosted = (doc) =>
   ["graview", "pages"].map((face) => ({ name: `${doc} · ${face}`, group: doc, url: () => `${at("a11y-host")}/?doc=${doc}&face=${face}`, hosted: true }));
 const example = (app, paths) =>
   paths.map((path) => ({ name: `${app} · ${path}`, group: app, app, url: () => `${at(app)}${path}${path.includes("?") ? "&" : "?"}today=2026-09-01`, hosted: false }));
+/** The first look's screens: Cloud's vendor app on both faces, each hint opened in turn. */
+const firstLook = ["scene", "pages"].map((face) => ({ name: `vendors · first look · ${face}`, group: "first-look", url: () => `${at("a11y-host")}/?doc=vendors&face=${face}&firstLook=1`, hosted: true, firstLook: true }));
 const SCREENS = [
   ...hosted("vendors"),
+  ...firstLook,
   ...hosted("workshop"),
   ...example("todo", ["/", "/pages", "/pages/tasks", "/pages/tasks/t-deposit", "/pages/problems", "/pages/search?q=the"]),
   ...example("seedbed", ["/", "/pages"]),
@@ -149,6 +160,47 @@ async function ready(page, screen) {
   );
   await page.waitForLoadState("networkidle").catch(() => undefined);
   await page.waitForTimeout(1200);
+}
+
+/** The hint open now, and where it stands against its control and the screen; null when none is open. */
+const hintNow = (page) =>
+  page.evaluate(() => {
+    const hint = document.querySelector('[data-testid="first-look"]');
+    if (!hint) return null;
+    const anchor = hint.getAttribute("data-first-look-anchor");
+    const found = {
+      faces: '[data-testid="app-faces"]',
+      problems: '[data-testid="standing"], [data-testid="standing-link"]',
+      activity: '[data-testid="activity-button"]',
+      ask: '[data-testid="seat-field"]',
+      find: '[data-testid="app-find"], [data-testid="app-find-open"]',
+      profile: '[data-testid="profile-button"]',
+      home: '[data-testid="app-home"]',
+    }[anchor];
+    const control = [...document.querySelectorAll(found)].find((one) => one.getBoundingClientRect().width > 1);
+    const h = hint.getBoundingClientRect();
+    const c = control?.getBoundingClientRect();
+    const covers = !c || (h.left < c.right && h.right > c.left && h.top < c.bottom && h.bottom > c.top);
+    const width = document.documentElement.clientWidth;
+    const height = innerHeight;
+    return {
+      anchor,
+      covers,
+      fits: h.left >= 0 && h.top >= 0 && h.right <= width + 0.5 && h.bottom <= height + 0.5 && hint.scrollWidth <= hint.clientWidth + 1,
+      keyboardOn: hint.contains(document.activeElement),
+      title: hint.querySelector('[data-testid="first-look-title"]')?.textContent ?? "",
+    };
+  });
+
+/** Waits for the first hint; null when none came. */
+async function firstHint(page) {
+  try {
+    await page.waitForSelector('[data-testid="first-look"]', { timeout: 15_000 });
+  } catch {
+    return null;
+  }
+  await page.waitForTimeout(150);
+  return hintNow(page);
 }
 
 /** axe over the page; each node marked as inside the framework's root or not. */
@@ -179,6 +231,10 @@ async function scan(page) {
 }
 
 const servers = [];
+/** What each first-look screen found, hint by hint. */
+const hints = [];
+const largeText = [];
+const escapes = [];
 let host;
 let browser;
 const findings = [];
@@ -199,7 +255,28 @@ try {
       try {
         await page.goto(screen.url(), { waitUntil: "load" });
         await ready(page, screen);
-        const violations = await scan(page);
+        /*
+         * With a first look: every hint opened in turn, axe run with each
+         * open, and Next pressed until Done.
+         */
+        const scans = [];
+        if (screen.firstLook) {
+          let shown = await firstHint(page);
+          if (!shown) errors.push(`${label}: no first look was shown`);
+          for (let turn = 0; shown && turn < 8; turn++) {
+            hints.push({ screen: label, ...shown });
+            scans.push(...(await scan(page)));
+            const pressed = await page.evaluate(() => {
+              const button = document.querySelector('[data-testid="first-look-next"], [data-testid="first-look-done"]');
+              const done = button?.getAttribute("data-testid") === "first-look-done";
+              button?.click();
+              return done;
+            });
+            await page.waitForTimeout(200);
+            shown = pressed ? null : await hintNow(page);
+          }
+        }
+        const violations = screen.firstLook ? scans : await scan(page);
         let count = 0;
         for (const v of violations) {
           for (const node of v.nodes) {
@@ -210,6 +287,56 @@ try {
           }
         }
         scanned.push({ screen: label, nodes: count });
+      } catch (error) {
+        errors.push(`${label}: ${error.message.split("\n")[0]}`);
+      }
+      await context.close();
+    }
+    /*
+     * A PHONE AT THE LARGEST TEXT: the first look again, the page's text at
+     * twice its size, each hint inside the screen; and Escape ends it with
+     * the keyboard back in the app, not on <body>.
+     */
+    if (screen.firstLook) {
+      const label = `${screen.name} · phone · largest text`;
+      const context = await browser.newContext({ viewport: VIEWPORTS.phone, colorScheme: "light" });
+      const page = await context.newPage();
+      page.on("pageerror", (error) => errors.push(`${label}: ${error.message}`));
+      await page.addInitScript(() => {
+        document.addEventListener("DOMContentLoaded", () => {
+          document.documentElement.style.fontSize = "200%";
+        });
+      });
+      try {
+        await page.goto(screen.url(), { waitUntil: "load" });
+        await ready(page, screen);
+        let shown = await firstHint(page);
+        if (!shown) errors.push(`${label}: no first look was shown`);
+        for (let turn = 0; shown && turn < 8; turn++) {
+          largeText.push({ screen: label, ...shown });
+          const pressed = await page.evaluate(() => {
+            const button = document.querySelector('[data-testid="first-look-next"], [data-testid="first-look-done"]');
+            const done = button?.getAttribute("data-testid") === "first-look-done";
+            button?.click();
+            return done;
+          });
+          await page.waitForTimeout(200);
+          shown = pressed ? null : await hintNow(page);
+        }
+        // Again, and ended with Escape.
+        await page.goto(screen.url(), { waitUntil: "load" });
+        await ready(page, screen);
+        if (await firstHint(page)) {
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(300);
+          escapes.push({
+            screen: label,
+            ...(await page.evaluate(() => ({
+              gone: document.querySelector('[data-testid="first-look"]') === null,
+              keyboardInApp: document.activeElement !== null && document.activeElement !== document.body && document.querySelector("#graview-app").contains(document.activeElement),
+            }))),
+          });
+        }
       } catch (error) {
         errors.push(`${label}: ${error.message.split("\n")[0]}`);
       }
@@ -245,6 +372,27 @@ const checks = {
     rules: [...new Set(findings.filter((finding) => !hostedFindings.includes(finding)).map((finding) => finding.rule))],
     ok: scanned.length > 0 && findings.length === hostedFindings.length,
   },
+  aFirstLookPassesAxeWithEachHintOpen: {
+    hints: hints.length,
+    nodes: findings.filter((finding) => finding.screen.includes("first look")).length,
+    ok: SCREENS.every((screen) => !screen.firstLook) || (hints.length > 0 && findings.every((finding) => !finding.screen.includes("first look"))),
+  },
+  aFirstLookPointsAtTheSwitchAndTheProblemsOnBothFaces: {
+    faces: [...new Set(hints.map((hint) => hint.screen.replace(/ · (desk|phone).*/, "")))].map((screen) => ({ screen, anchors: [...new Set(hints.filter((hint) => hint.screen.startsWith(screen)).map((hint) => hint.anchor))] })),
+    ok: SCREENS.every((screen) => !screen.firstLook) || SCREENS.filter((screen) => screen.firstLook).every((screen) => ["faces", "problems"].every((anchor) => hints.some((hint) => hint.screen.startsWith(screen.name) && hint.anchor === anchor))),
+  },
+  aHintNeverCoversItsControl: { covering: [...hints, ...largeText].filter((hint) => hint.covers).map((hint) => `${hint.screen} · ${hint.anchor}`), ok: [...hints, ...largeText].every((hint) => !hint.covers) },
+  aHintFitsTheScreenAtDeskAndPhoneWidths: { over: hints.filter((hint) => !hint.fits).map((hint) => `${hint.screen} · ${hint.anchor}`), ok: hints.every((hint) => hint.fits) },
+  aHintFitsAPhoneAtTheLargestText: {
+    hints: largeText.length,
+    over: largeText.filter((hint) => !hint.fits).map((hint) => `${hint.screen} · ${hint.anchor}`),
+    ok: SCREENS.every((screen) => !screen.firstLook) || (largeText.length > 0 && largeText.every((hint) => hint.fits)),
+  },
+  theKeyboardIsOnEachHintAsItOpens: { off: hints.filter((hint) => !hint.keyboardOn).map((hint) => `${hint.screen} · ${hint.anchor}`), ok: hints.every((hint) => hint.keyboardOn) },
+  escapeEndsTheFirstLookAndGivesTheKeyboardBack: {
+    escapes,
+    ok: SCREENS.every((screen) => !screen.firstLook) || (escapes.length === SCREENS.filter((screen) => screen.firstLook).length && escapes.every((one) => one.gone && one.keyboardInApp)),
+  },
   everyScreenWasScanned: { scanned: scanned.length, expected: SCREENS.length * SWEEP.length, ok: scanned.length === SCREENS.length * SWEEP.length },
   noPageThrew: { errors, ok: errors.length === 0 },
 };
@@ -255,6 +403,7 @@ const report = {
   checks,
   byRule,
   scanned,
+  firstLook: { hints, largeText },
   passed: Object.values(checks).every((check) => check.ok),
 };
 writeFileSync(resolve(repoRoot, "docs/a11y.json"), `${JSON.stringify(report, null, 2)}\n`);

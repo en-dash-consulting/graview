@@ -13,7 +13,7 @@ import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, Def
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
 import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
-import { appKeyOf, BarFindContext, HeadingsUnder, registerReaderLenses, SpecLinks, type BarFind } from "@graview/primitives/pages";
+import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 import { OwnBarFind } from "./page-shell.js";
 import { recordPath } from "./registry.js";
 
@@ -104,6 +104,13 @@ export interface PagesAppProps<S extends AnySchema> {
    * somewhere, for its tabs.
    */
   readonly steering?: PagesSteering;
+  /**
+   * A FIRST LOOK, ONCE, when this face owns the page: hints beside the
+   * app's own controls on its bar — as the whole-page Shell's `firstLook`,
+   * remembered for the same app, so a person who saw it on the scene is not
+   * shown it again here. Off unless given.
+   */
+  readonly firstLook?: FirstLook;
 }
 
 /** What a bar drawn outside the router holds of it: where the face is, and the way to move it. */
@@ -485,6 +492,9 @@ export function PagesRoutes<S extends AnySchema>({
   );
 }
 
+/** Where a first look finds the controls of a face that owns the page. */
+const thePage = (): Element | null => (typeof document === "undefined" ? null : document.body);
+
 export function PagesApp<S extends AnySchema>({
   context: given,
   registry,
@@ -493,6 +503,7 @@ export function PagesApp<S extends AnySchema>({
   onNavigate,
   path,
   steering,
+  firstLook,
 }: PagesAppProps<S>) {
   /*
    * WHAT THE SEAT MAY SEE. Every page reads `context.store`; under a policy
@@ -519,6 +530,8 @@ export function PagesApp<S extends AnySchema>({
       {steering ? <Steered steering={steering} /> : null}
       {context.presence || outer ? <SaysWhere context={context} to={outer} /> : null}
       <PagesRoutes context={context} {...(registry ? { registry } : {})} />
+      {/* The face owns the page: its controls are found in the page. */}
+      {firstLook ? <FirstLookDoor firstLook={firstLook} root={thePage} app={appKeyOf(given.brand, given.store.schema)} /> : null}
     </>
   );
   /*

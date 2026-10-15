@@ -228,11 +228,11 @@ handle.setPeople(next);                     // an agent who first acted after th
 
 Nothing touches `localStorage` or `sessionStorage` without a fallback, so a frame that throws on either still mounts. `scheme: "auto"` (the default) follows the host context, then the page's `data-theme` stamp, then the system's preference, each as it changes. Presence a channel reports is dropped once its last word is older than `REMOTE_PRESENCE_TTL_MS`, whether or not the channel says the person left. A host that builds presence itself keys each participant with `participantKey({ kind, id, session })` from `@graview/core`, the op log's own `kind:id:session`.
 
-## What it exports (11)
+## What it exports (12)
 
 Read off the package's own barrel, so this is what is there today.
 
-`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`
+`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `FIRST_LOOK_ANCHORS`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`
 
 ---
 

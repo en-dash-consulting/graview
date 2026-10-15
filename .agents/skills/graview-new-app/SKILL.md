@@ -89,6 +89,9 @@ drag a UI package into the checker.
    Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`,
    `OverviewButton`) are exported for a shell of your own; one is about
    eighty lines, and a longer one is probably rebuilding something derived.
+   `firstLook` on `Shell` and `PagesApp` (`true`, or `{ seen, onDone,
+   steps }`) points a new person at the switch, the problems count,
+   Activity and the Ask box once; write no tour of your own.
 
    Search comes with `Shell`: Find answers `/` or ⌘K from anywhere, lights
    what the words find in whatever picture is open and dims the rest, and

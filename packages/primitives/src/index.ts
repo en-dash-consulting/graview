@@ -243,3 +243,6 @@ export { fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews } from 
 // A declared lens draws (FR-79): each titled lens a place, from the declaration alone; the arrangement beside them (FR-80).
 export { fetchDeclaredLenses, fetchHomeView, registerDeclaredLenses } from "./declared-lens-doors.js";
 export { declaredViews } from "./declared-views.js";
+// A first look that points at the app's own controls, once (its hints fetched as they are first shown).
+export { FIRST_LOOK_ANCHORS, FirstLookDoor, firstLookKey } from "./first-look-door.js";
+export type { FirstLook, FirstLookAnchor, FirstLookDoorProps, FirstLookEnd, FirstLookOptions, FirstLookStep } from "./first-look-door.js";

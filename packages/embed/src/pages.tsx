@@ -11,9 +11,9 @@ const pagesViews = <S extends AnySchema>(schema: S, specs: Parameters<typeof reg
   registerViewSpecs(registerDefaultViews(schema, createViews(schema)), schema, specs) as unknown as ReactViewRegistry<S>;
 import { flushSync } from "react-dom";
 import { createNoticeBoard, NoticeBoardContext, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { FaceBoundary, FrameBar, FrameNotices, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
+import { FaceBoundary, FrameBar, FrameFirstLook, FrameNotices, providerProps, storeOf, titleBelow, useErrorReport, useFrame, useIntrinsicHeight, useReady, useSteering, useViews, type EmbedHostContext, type FrameOptions } from "./frame.js";
 import { addressOf, pathWithin } from "@graview/core";
-import { BarFindContext, type BarFind } from "@graview/primitives/frame";
+import { appKeyOf, BarFindContext, type BarFind } from "@graview/primitives/frame";
 
 /**
  * THE PAGES AND NOTHING ELSE (FR-19). `@graview/embed/pages` mounts the
@@ -66,6 +66,7 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
         <FrameNotices rootRef={rootRef} board={notices} />
+        <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
         <FaceBoundary module="@graview/react" report={report} content>
           <GraviewProvider store={store} views={views} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
             {bar ? (

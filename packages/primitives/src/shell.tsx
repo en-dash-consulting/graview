@@ -20,6 +20,7 @@ import { BackOut, Inspector, OverviewButton, Standing } from "./workbench/index.
 import { useFavicon } from "./app-title.js";
 import { useViewportHeight } from "./primitives/measure.js";
 import { ResolveAppContext } from "./resolve-app-context.js";
+import { FirstLookDoor, type FirstLook } from "./first-look-door.js";
 
 /**
  * The shell: everything an application's window holds that is not about
@@ -121,6 +122,15 @@ export interface ShellProps<S extends AnySchema> {
    * provider's.
    */
   readonly resolveApp?: ResolveApp;
+  /**
+   * A FIRST LOOK, ONCE: a short run of hints beside the app's own controls —
+   * the switch between the scene and the pages, the problems count,
+   * Activity and the Ask box, each skipped where it is not drawn — then out
+   * of the way. `true` remembers it in this browser; `{ seen, onDone, steps }`
+   * hands that to the host and adds its own hints, each naming a control
+   * (`FirstLookAnchor`). Off unless given.
+   */
+  readonly firstLook?: FirstLook;
 }
 
 export function Shell<S extends AnySchema>({
@@ -143,6 +153,7 @@ export function Shell<S extends AnySchema>({
   notices,
   files,
   resolveApp,
+  firstLook,
 }: ShellProps<S>) {
   const { brand, views, store } = useGraview<S>();
   const { view, go } = useNavigation();
@@ -159,6 +170,8 @@ export function Shell<S extends AnySchema>({
   // The picture the notices are drawn over (FR-75).
   const picture = useRef<HTMLElement>(null);
   const scene = useCallback(() => picture.current, []);
+  // Where a first look finds the app's own controls.
+  const inShell = useCallback(() => shell.current, []);
   const [calls, onCall] = useCallLog();
   // Where the bar keeps Find and the face's own tool, once it has drawn them.
   const [barFind, setBarFind] = useState<BarFind | null>(null);
@@ -273,6 +286,7 @@ export function Shell<S extends AnySchema>({
         <SceneWayBack />
       </main>
       <Notices board={board} anchor={scene} />
+      {firstLook ? <FirstLookDoor firstLook={firstLook} root={inShell} app={appKeyOf(brand, store.schema)} /> : null}
     </div>
     </BesideTheMap.Provider>
     </NoticeBoardContext.Provider>

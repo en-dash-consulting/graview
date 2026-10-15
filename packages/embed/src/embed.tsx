@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnySchema, type Brand, type GraviewApp, type Person, type Place, type Principal, type Store } from "@graview/core";
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
-import { BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
+import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { SeatStart } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
@@ -15,6 +15,7 @@ import {
   AUTO_SCENE_HEIGHT,
   FaceBoundary,
   FrameBar,
+  FrameFirstLook,
   FrameNotices,
   providerProps,
   storeOf,
@@ -484,6 +485,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
       <FrameNotices rootRef={rootRef} board={notices} />
+      {/* A first look at the app's own controls, once, over whichever face is drawn. */}
+      <FrameFirstLook rootRef={rootRef} firstLook={props.firstLook} app={appKeyOf(brand ?? { name: app.name }, app.schema)} />
       <FaceBoundary module="@graview/react" report={report} content>
       <GraviewProvider store={store} views={views} initialView={initialView} scheme={scheme} {...providerProps(props, presence, brand)} {...(props.onSeat ? { onSeat: props.onSeat } : {})}>
         <NoticeBoardContext.Provider value={notices}>
