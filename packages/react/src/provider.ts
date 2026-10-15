@@ -23,7 +23,7 @@ export { GoToContext, useGoTo } from "./go.js";
 export { BesideTheMap } from "./beside-the-map.js";
 // The host's files (FR-163), where a file field's editor finds them.
 export { HostFilesContext, useHostFiles } from "./files.js";
-export type { GoTo } from "./go.js";
+export type { GoTo, GoToAlso } from "./go.js";
 export type { ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode } from "./context.js";
 export { HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { PresenceInputs, PresenceState } from "./presence.js";

@@ -35,6 +35,8 @@ export interface ViewRegistration<V = unknown> {
   readonly beside?: boolean;
   /** Every kind the one picture is over, when it is over several (`ViewMeta.over`). */
   readonly over?: readonly string[];
+  /** A place kept off the lists (`ViewMeta.hidden`). */
+  readonly hidden?: boolean;
 }
 
 /**
@@ -69,6 +71,15 @@ export interface ViewMeta {
    * every list of places names it once.
    */
   readonly over?: readonly string[];
+  /**
+   * A PLACE KEPT OFF THE LISTS: reached by its address, a link or
+   * `graview.navigate`, but not offered by the bar's places, the page list
+   * or the home's gallery — a link target of a custom home rather than a
+   * way of looking a person picks. It never takes its kind's own cell
+   * either: what a kind draws when an address names no picture is a place
+   * a person can find.
+   */
+  readonly hidden?: boolean;
 }
 
 /** A named group view: somewhere to go, by name. */
@@ -92,6 +103,8 @@ export interface Place {
    * district goes in to it — and one place in every list (`onePerPicture`).
    */
   readonly over?: readonly string[];
+  /** Kept off the lists (`ViewMeta.hidden`): reached by its address, a link or `navigate`, never offered. */
+  readonly hidden?: boolean;
 }
 
 /** A place as the lists compare it: its name, its kind, and every kind when it is one picture over several. */
@@ -248,8 +261,8 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
     },
     homeView: () => homeView,
     register(kind, cell, view, meta) {
-      // One picture over several kinds says so on each registration and each place it makes.
-      const over = meta?.over?.[1] ? { over: meta.over } : {};
+      // One picture over several kinds says so on each registration and each place it makes; one kept off the lists, likewise.
+      const over = { ...(meta?.over?.[1] ? { over: meta.over } : {}), ...(meta?.hidden ? { hidden: true } : {}) };
       const registration: ViewRegistration<V> = {
         kind,
         cardinality: cell.cardinality,
@@ -271,7 +284,8 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
        * kind could only ever have one answer.
        */
       order.push(registration);
-      if (!meta?.beside) entries.set(key(kind, cell), registration);
+      // A place beside the kind's pictures, or one kept off the lists, is reached by its name alone.
+      if (!meta?.beside && !over.hidden) entries.set(key(kind, cell), registration);
       if (meta?.title) {
         const as = placeSlug(meta.title);
         entries.set(key(kind, cell, as), registration);

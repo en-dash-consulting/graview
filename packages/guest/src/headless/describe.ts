@@ -1,6 +1,6 @@
 import type { DescribedItem, DescribedPart, DescribedProblem } from "@graview/core/describe";
 import type { GuestNode, GuestProps } from "../protocol.js";
-import { placesSaid } from "../host/links.js";
+import { placesSaid } from "../host/links-words.js";
 import { TreeElement, type TreeNode, TreeText } from "./tree.js";
 
 /*

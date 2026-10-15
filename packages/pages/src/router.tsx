@@ -1,6 +1,8 @@
 import { numberAsRead, pluralLabel, type AnySchema, type Store } from "@graview/core";
 import { BrowserRouter, Link, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 import { openingOf, OVERVIEW_PATH, OVERVIEW_SLUG, sayIn } from "@graview/core";
+import { narrowedPath } from "@graview/core/navigate";
+import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
@@ -91,7 +93,8 @@ export interface PagesAppProps<S extends AnySchema> {
   readonly initialPath?: string;
   /**
    * TOLD WHERE THE FACE WENT (FR-106): the path, basename-relative with its
-   * search, each time it changes after arrival — and how, `"push"`,
+   * search and the section it went to (`#shipping-soon`), each time it
+   * changes after arrival — and how, `"push"`,
    * `"replace"` or `"pop"` — so a host that keeps its own history can.
    */
   readonly onNavigate?: (path: string, how: NavigationHow) => void;
@@ -218,7 +221,9 @@ function Reported({ onNavigate, path }: { readonly onNavigate: PagesAppProps<Any
   const location = useLocation();
   const type = useNavigationType();
   const navigate = useNavigate();
-  const here = `${location.pathname}${location.search}`;
+  // A section the face went to (`#shipping-soon`) is part of where it is, so a host that keeps the address can share it.
+  const section = location.hash && !location.hash.includes("=") ? location.hash : "";
+  const here = `${location.pathname}${location.search}${section}`;
   const told = useRef(onNavigate);
   told.current = onNavigate;
   // The address the face arrived at is no navigation, so it is not reported.
@@ -361,25 +366,46 @@ function ScrollReset() {
 
 /**
  * GOING SOMEWHERE, ON THIS FACE: a record is its page, a place is its
- * address under `/places/`. What a view that is not React — a worker view
- * (FR-93) — reaches through `useGoTo`.
+ * address under `/places/`, a kind's list is `/<plural>`. What a view that
+ * is not React — a worker view (FR-93) — reaches through `useGoTo`. A list
+ * or a place narrowed carries `?filter=` — the word its arranging line
+ * writes — and a section `#<section>`, so the address can be shared.
  */
 function GoesByAddress<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
   const navigate = useNavigate();
   const goTo = useMemo<GoTo>(
     () => ({
-      record: (id) => {
+      record: (id, also) => {
         const node = context.store.graph.getNode(id);
-        if (node) navigate(recordPath(context.store.schema, node.kind, id));
+        if (node) navigate(narrowedPath(recordPath(context.store.schema, node.kind, id), { section: also?.section }));
       },
-      place: (as) => {
+      place: (as, also) => {
         const place = context.views?.places().find((candidate) => candidate.as === as);
-        if (place) navigate(pathOfPlace(context, place));
+        if (place) navigate(narrowedPath(pathOfPlace(context, place), also));
+      },
+      list: (kind, also) => {
+        if (context.store.schema.tryDefinition(kind)) navigate(narrowedPath(`/${pluralSlug(context.store.schema, kind)}`, also));
       },
     }),
     [context, navigate],
   );
   return <GoToContext.Provider value={goTo}>{children}</GoToContext.Provider>;
+}
+
+/**
+ * A SECTION OF THE PAGE, FROM THE ADDRESS: `#shipping-soon` scrolls to the
+ * heading that says it (or the element with that id) once it is drawn, and
+ * gives it the keyboard — on arrival from a shared link as after a view's
+ * `navigate`. A scene's fragment (`#view=…`) is no section.
+ */
+function SectionOnArrival() {
+  const { pathname, search, hash } = useLocation();
+  useEffect(() => {
+    const section = decodeURIComponent(hash.replace(/^#/, ""));
+    if (!section || section.includes("=")) return;
+    return revealSection(section);
+  }, [pathname, search, hash]);
+  return null;
 }
 
 /**
@@ -454,6 +480,7 @@ export function PagesRoutes<S extends AnySchema>({
     <PastBar face="pages" />
     <RecordLinks context={inside}>
       <ScrollReset />
+      <SectionOnArrival />
       <Routes>
         {/*
           * THE APP'S OWN ROUTES FIRST — a survey desk, an onboarding, a

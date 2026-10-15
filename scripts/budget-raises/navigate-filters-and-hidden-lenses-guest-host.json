@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 1207,
+  "gzipped": 623,
+  "note": "Raised when a frame guest's navigate came to go to a kind's list narrowed and to a section of a page, as a worker view's does (Roadmap f-navigate-filters): the host judges where it asked to go with the same links — a filter held to the keys the kind's list filters by (`filterOfWhere`, read off the declaration), a section, a kind's list by its plural — fetched with the first navigate, so a page drawing frames loads none of it first (this budget counts every chunk). 17_909 / 8_407 before it, 19_116 / 9_030 with it: 1_207 / 623 more."
+}

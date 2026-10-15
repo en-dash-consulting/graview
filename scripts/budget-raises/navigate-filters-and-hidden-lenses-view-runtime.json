@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 168,
+  "gzipped": 66,
+  "note": "Raised when a view's navigate came to go to a kind's list narrowed and to a section of a page (Roadmap f-navigate-filters): `graview.navigate` takes `{ place, where, section }` and `{ record, section }` and sends them as data (`navigateRequest`). 60_379 / 20_765 before it, 60_547 / 20_831 with it: 168 / 66 more."
+}

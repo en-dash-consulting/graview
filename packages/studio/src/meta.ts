@@ -339,9 +339,11 @@ export const lensNode = defineNode("lens", {
      * could ever be.
      */
     requires: z.array(z.string()).optional(),
+    /** Kept off the bar's places and the page list: still reached by its address, a link or `navigate` (`set-lens-hidden`). */
+    hidden: z.boolean().optional(),
   }),
   label: (node) => node.label,
-  display: { labels: { label: "name", requires: "the slots it asks an app to bind" } },
+  display: { labels: { label: "name", requires: "the slots it asks an app to bind", hidden: "kept off the lists" } },
 });
 
 export const brandNode = defineNode("brand", {
@@ -999,6 +1001,24 @@ export const removeLens = act("remove-lens", {
   },
 });
 
+/**
+ * KEEP A PLACE OFF THE LISTS, or put it back: a lens with a title stays a
+ * place at its address — a link or a view's `navigate` still reaches it —
+ * but the bar and the page list do not offer it. Said to the document as
+ * `set-lens-hidden`.
+ */
+export const setLensHidden = act("set-lens-hidden", {
+  title: "Keep the lens off the lists",
+  description: "Keep this lens off the bar and the page list, or list it again. It stays a place at its address, reached by a link or a view's navigate.",
+  subject: { kinds: ["lens"], arg: "id" },
+  writes: ["hidden"],
+  input: z.object({ id: nodeRef(["lens"]), hidden: z.boolean() }),
+  describe: (args, graph) => `${args.hidden ? "Keep" : "List"} the lens ${labelOf(graph, args.id)}${args.hidden ? " off the lists" : " again"}`,
+  apply(ctx, args) {
+    ctx.patchNode(args.id, { hidden: args.hidden ? true : undefined });
+  },
+});
+
 export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = [
   addKind,
   renameKind,
@@ -1027,6 +1047,7 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   changeSight,
   removeSight,
   removeLens,
+  setLensHidden,
 ];
 
 /** The studio as an app: the meta-schema, its acts, and an agent seat that may propose any of them. */

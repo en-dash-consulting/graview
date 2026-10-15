@@ -460,6 +460,7 @@ export default defineConfig({
       "@graview/core/document.schema.json": framework("core/dist/document.schema.json"),
       "@graview/core/blocks": framework("core/src/blocks.ts"),
       "@graview/core/arrange": framework("core/src/arrange.ts"),
+      "@graview/core/navigate": framework("core/src/navigate.ts"),
       "@graview/core/search": framework("core/src/search.ts"),
       "@graview/core/words": framework("core/src/words.ts"),
       "@graview/core/markdown": framework("core/src/markdown.ts"),

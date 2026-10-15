@@ -91,8 +91,8 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         store,
         principal,
         input: () => latest.current.input?.() ?? {},
-        /* Links stay in the app (FR-93): a record or a place, on whichever face the view is drawn. */
-        onNavigate: (to) => ("record" in to ? latest.current.goTo?.record(to.record) : latest.current.goTo?.place(to.place)),
+        /* Links stay in the app (FR-93): a record, a place or a kind's list — narrowed and to a section — on whichever face the view is drawn. */
+        goTo: () => latest.current.goTo,
         places: () => latest.current.places?.() ?? [],
         brand: () => latest.current.brand,
         onFailure: (reason, detail) => latest.current.onFailure(reason, detail),

@@ -71,7 +71,7 @@ These are pinned by tests, not by convention:
   (`checkApp`, `compileDocument`, `describeApp`) lives on
   `@graview/core/check`, the city and `sceneThumbnail` on `/scene` (the map alone, which the scene lays out with, on `/city`), the
   shipped drawings on `/figures`, a view's block resolver on `/blocks`,
-  a status board's reach and `resolveFor` on `/describe`, arranging a list on `/arrange`, a link's provenance on `/provenance`, the app as it stood (`pastOf`, `pastAt`, `seqAt`) on `/past`, the timeline around it (ticks, what "Restore to here" takes back) on `/history`, another app's records read as the viewer (`linkedRecordsOver`, `recordLinkedChange`) on `/linked`, an act's form on `/forms`,
+  a status board's reach and `resolveFor` on `/describe`, arranging a list on `/arrange`, where a view's navigate goes as an address (`narrowedPath`) on `/navigate`, a link's provenance on `/provenance`, the app as it stood (`pastOf`, `pastAt`, `seqAt`) on `/past`, the timeline around it (ticks, what "Restore to here" takes back) on `/history`, another app's records read as the viewer (`linkedRecordsOver`, `recordLinkedChange`) on `/linked`, an act's form on `/forms`,
   the matcher on `/search`, a record and an argument said in words on `/words`, what the seat and
   the seeding read (`answerSeenBy`, `placesOf`, `beginning`) on `/seat`, the app's
   own actor's suggestions (`suggest`, `suggestions`, `acceptSuggestion`, `declineSuggestion`, `declined`, `tidyingOf`, Activity's digest) on `/tidying`,
@@ -150,7 +150,7 @@ pinned at 1.49.1 on purpose.
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
   entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`,
-  `./figures`, `./blocks`, `./describe`, `./arrange`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
+  `./figures`, `./blocks`, `./describe`, `./arrange`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
   `./lines`, `./testing` and the `./document.schema.json` the build writes; layout's `./view`, `./sizes` and `./view-moves`; guest's `./host/frame`; react's `./provider` and `./drawing`;
   tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn` and `./several`; embed's `./pages`; pages' `./static` (a place as static HTML, no React);
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and

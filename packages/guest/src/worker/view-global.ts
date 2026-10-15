@@ -16,7 +16,7 @@
 import { RemoteRootElement, remoteId } from "@remote-dom/core/elements";
 import type { Unsent } from "../channel.js";
 import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
-import type { GuestAnswer, GuestDomEvent, GuestPressed, GuestProps, HostMessage } from "../protocol.js";
+import { navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
 import type { Hardening } from "./harden.js";
 import { createListenerLedger } from "./listeners.js";
 
@@ -54,7 +54,8 @@ export interface GraviewView {
   style(css: string): void;
   on(type: string, selector: string, listener: (event: ViewEvent) => void): () => void;
   act(name: string, args?: Readonly<Record<string, unknown>>): Promise<GuestAnswer>;
-  navigate(to: string | { readonly place: string }): void;
+  /** Go to a record, a place or a kind's list — narrowed (`where`) and to a `section`, as `GuestNavigateTo` says. */
+  navigate(to: GuestNavigateTo): void;
   html(strings: TemplateStringsArray, ...values: unknown[]): Html;
   /** What the host will not draw of the last render, as the open kit says it: an author's early word, not the host's judgment. */
   readonly refused: readonly string[];
@@ -308,9 +309,10 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
       return () => void delegated.delete(one);
     },
     act: (name: string, args: Readonly<Record<string, unknown>> = {}) => io.act(name, args),
-    navigate(to: string | { readonly place: string }) {
-      if (typeof to === "string") io.navigate(to);
-      else if (to && typeof to.place === "string") io.send({ type: "navigate", place: to.place });
+    navigate(to: GuestNavigateTo) {
+      if (typeof to === "string") return io.navigate(to);
+      const request = navigateRequest(to);
+      if (request) io.send(request);
     },
     html(strings: TemplateStringsArray, ...values: unknown[]) {
       return markup(strings.reduce((out, text, index) => out + text + (index < values.length ? piece(values[index]) : ""), ""));

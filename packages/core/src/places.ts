@@ -79,6 +79,8 @@ export interface DrawnLens {
   readonly across?: string;
   /** What the factory is handed, as data. */
   readonly options: Readonly<Record<string, unknown>>;
+  /** Kept off the lists (`LensDeclaration.hidden`): reached by its address, a link or `navigate`. */
+  readonly hidden?: boolean;
 }
 
 /** A declared lens that does not draw, and why — what `describe` says and `check` explains. */
@@ -280,7 +282,7 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
       }
     }
     for (const kind of stands) taken.set(`${kind}|${as}`, index);
-    drawn.push({ index, lens: lens.name, title, as, kinds: stands, ...(across ? { across } : {}), options });
+    drawn.push({ index, lens: lens.name, title, as, kinds: stands, ...(across ? { across } : {}), options, ...(lens.hidden === true ? { hidden: true } : {}) });
   });
   return { drawn, undrawn, findings };
 }

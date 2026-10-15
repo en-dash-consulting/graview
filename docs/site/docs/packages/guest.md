@@ -271,11 +271,11 @@ export default { async fetch(request) { return answer(await run(await request.te
 
 `graview view check view.js --app app.js --manifest manifest.json --seed seed.json --roles partner` does the same from a terminal, with `nodeIsolate`.
 
-## What it exports (6)
+## What it exports (7)
 
 Read off the package's own barrel, so this is what is there today.
 
-`connectGuest`, `GUEST_PROTOCOL`, `GUEST_SANDBOX`, `isGuestReady`, `isHostHello`, `OPAQUE_ORIGIN`
+`connectGuest`, `GUEST_PROTOCOL`, `GUEST_SANDBOX`, `isGuestReady`, `isHostHello`, `navigateRequest`, `OPAQUE_ORIGIN`
 
 ---
 

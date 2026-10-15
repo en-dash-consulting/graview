@@ -497,9 +497,12 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     const binds = (str(lens, "binds") as "fields" | "entities" | undefined) ?? (kept ? bindsOf(kept) : "fields");
     const followed = followBindings(kept?.bindings, binds);
     if (!followed.ok) return [];
+    // Kept off the lists, or not, as the studio now says (`set-lens-hidden`).
+    const { hidden: _kept, ...keptRest } = kept ?? {};
     return [
       {
-        ...(kept ?? {}),
+        ...keptRest,
+        ...(bool(lens, "hidden") ? { hidden: true } : {}),
         name: name(lens),
         requiredRoles,
         ...(str(lens, "binds") ? { binds: str(lens, "binds") as "fields" | "entities" } : {}),

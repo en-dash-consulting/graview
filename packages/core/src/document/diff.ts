@@ -291,8 +291,16 @@ function lensSentences(before: readonly LooseLens[], after: readonly LooseLens[]
   const now = new Map(after.map((lens, i) => [lensKey(lens, i), lens]));
   for (const [key, lens] of now) {
     const old = was.get(key);
-    if (!old) out.push(`${lensName(lens)} is added.`);
-    else if (!same(old, lens)) out.push(`${lensName(lens).replace(/^A lens/, "The lens").replace(/^A /, "The ")} changes.`);
+    const the = lensName(lens).replace(/^A lens/, "The lens").replace(/^A /, "The ");
+    if (!old) out.push(`${lensName(lens)} is added${lens["hidden"] === true ? ", kept off the bar and the page list" : ""}.`);
+    else if (!same(old, lens)) {
+      // Kept off the lists or put back on them: said as itself, and whatever else changed besides.
+      const hiding = (old["hidden"] === true) !== (lens["hidden"] === true);
+      if (hiding) out.push(lens["hidden"] === true ? `${the} is kept off the bar and the page list; a link or navigate still reaches it.` : `${the} is listed on the bar and the page list again.`);
+      const { hidden: _was, ...oldRest } = old;
+      const { hidden: _now, ...rest } = lens;
+      if (!hiding || !same(oldRest, rest)) out.push(`${the} changes.`);
+    }
   }
   for (const [key, lens] of was) if (!now.has(key)) out.push(`${lensName(lens).replace(/^A lens/, "The lens").replace(/^A /, "The ")} is removed.`);
   const order = (lenses: readonly LooseLens[]) => lenses.map(lensKey).filter((key) => was.has(key) && now.has(key));

@@ -127,8 +127,8 @@ export function barPlaces(input: {
   const stands = (kind: string, as?: string): boolean => (!store.graph.size.nodes || store.graph.count(kind) > 0) && (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
   const out: BarPlace[] = [{ key: HOME_KEY, label: "Home", path: HOME_PATH, group: "home", primary: true }];
   for (const kind of orderKinds(live, arrangement?.order)) out.push({ key: `kind:${kind}`, label: pluralLabel(store.schema, kind), path: kindPath(store.schema, kind), group: "lists", kind, primary: stands(kind) });
-  // A place at the scene's address is not offered: the address is the scene's (FR-132).
-  const seen = all.filter((place) => live.includes(place.kind) && place.as !== OVERVIEW_SLUG);
+  // A place at the scene's address is not offered: the address is the scene's (FR-132). Nor one kept off the lists (`hidden`): a link reaches it.
+  const seen = all.filter((place) => live.includes(place.kind) && place.as !== OVERVIEW_SLUG && !place.hidden);
   // Each picture once: one over several kinds is one entry, under the first of them this seat sees.
   for (const place of onePerPicture(seen)) {
     // Two DIFFERENT pictures of one name say whose, at `?of=` and beside the name (as the routed face addresses and lists them).

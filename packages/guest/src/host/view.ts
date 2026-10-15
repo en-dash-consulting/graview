@@ -9,7 +9,9 @@ import { judgeCodeAct } from "./writes.js";
 import { createDrawBudget } from "./draw-budget.js";
 import { checkViewSource } from "./view-source.js";
 import { viewScript } from "./view-script.js";
-import { createLinks, type Destination } from "./links.js";
+import { createLinks, listsOf, type Arrival, type Destination } from "./links.js";
+import { arriveAt } from "./arrive-at.js";
+import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
@@ -111,12 +113,17 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
   /** Where the view is drawn: the record, or the members, the face hands it. */
   readonly input?: () => GuestViewInput;
   /**
-   * The view asked to go to a record or a named place of this app — by a
-   * link it drew (`<a data-record>`, `<a data-place>`) or from its code.
-   * Only a record the viewer may see and a place `places` lists get here;
-   * a worker view has no way to an address outside the app (FR-93).
+   * The view asked to go to a record, a named place or a kind's list of
+   * this app — by a link it drew (`<a data-record>`, `<a data-place>`) or
+   * from its code — narrowed (`filter`, in the address's words) and to a
+   * section, as it asked. Only a record the viewer may see, a place
+   * `places` lists and a kind the viewer sees get here, with a filter held
+   * to the kind's fields; a worker view has no way to an address outside
+   * the app (FR-93).
    */
-  readonly onNavigate?: (to: Destination) => void;
+  readonly onNavigate?: (to: Arrival) => void;
+  /** The face's own way of going (`useGoTo`), read when the view goes: where `onNavigate` is not given, the arrival is gone to by it. */
+  readonly goTo?: () => GoTo | undefined;
   /** The app's named places: what the view is told of, and may link to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
   /**
@@ -407,10 +414,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     if (one[0] === "render") refill();
   };
   /* Links stay in the app (FR-93): a record the viewer may see, or a place the app has. */
+  const lists = () => listsOf(options.store.schema, new Set([...options.store.kindsKeptFrom(options.principal), ...options.store.modules.disabledKinds]));
   const links = createLinks({
     sees: (id) => options.store.seenBy(options.principal).graph.has(id),
     places: () => options.places?.() ?? [],
-    ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
+    lists,
+    schema: options.store.schema,
+    ...(options.onNavigate ? { onNavigate: options.onNavigate } : options.goTo ? { onNavigate: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
     /* Said in the view's console, and to the host. */
     onLost: (said) => {
       port?.postMessage({ type: "notice", text: said });
@@ -508,7 +518,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
         onStyle: (css) => draw(["style", css]),
-        places: () => [...new Set((options.places?.() ?? []).map((place) => place.as))],
+        places: () => [...new Set([...(options.places?.() ?? []).map((place) => place.as), ...lists().map((list) => list.slug)])],
         ...(options.limits ? { limits: options.limits } : {}),
         limiter,
       });
@@ -519,7 +529,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         tally();
         /* Where the view asked to go is the links' to judge, so one that goes nowhere says why (FR-93); one that names no string is refused unsaid. */
         if (!failed && data?.nonce === nonce && data.type === "navigate") {
-          const to = typeof data.place === "string" ? { place: data.place } : typeof data.to === "string" && { record: data.to };
+          /* Narrowed and to a section, as it asked: the links hold the filter to the kind's fields. */
+          const also = { ...(data.where !== undefined ? { where: data.where } : {}), ...(data.section !== undefined ? { section: data.section } : {}) };
+          const to: Destination | false = typeof data.place === "string" ? { place: data.place, ...also } : typeof data.to === "string" && { record: data.to, ...also };
           if (to) links.go(to);
         }
       };

@@ -47,8 +47,8 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
    * once, for the scene and the shelf; the bar reads the same answer.
    */
   const all = views.places().filter((place) => !hiddenKinds.has(place.kind));
-  // A picture over several kinds is one tab, pressed from either kind's district.
-  const places = onePerPicture(all);
+  // A picture over several kinds is one tab, pressed from either kind's district; one kept off the lists (`hidden`) only while it is the one shown.
+  const listed = onePerPicture(all);
   /*
    * Which picture a group draws when the address names none: the LAST
    * registration for the cell, because that is what the registry resolves
@@ -58,6 +58,7 @@ export function Places<S extends AnySchema>({ compact = false }: { compact?: boo
   const showing = view.within?.["view"];
   const isHereOn = (place: Place) => !view.overview && view.focusId === aggregateId(place.kind) && (showing === undefined ? isDefault(all, place) : showing === place.as);
   const isHere = (place: Place) => all.some((one) => samePicture(one, place) && isHereOn(one));
+  const places = listed.filter((place) => !place.hidden || isHere(place));
   const here = places.find(isHere);
   const row = useRef<HTMLElement>(null);
   /* The place you are on, in view: a row that scrolls never hides the tab that says where you are. */

@@ -28,6 +28,7 @@ import type { AnySchema, Principal, Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
 import { guestFileOf, handFiles } from "../host/pictures.js";
+import { judgeDestination, listsOf } from "../host/links.js";
 import type { GuestViewInput } from "../host/session.js";
 import { checkViewSource } from "../host/view-source.js";
 import type { WorkerViewLimits } from "../host/view.js";
@@ -157,7 +158,13 @@ function transcriptOf(value: unknown): HeadlessTranscript | undefined {
     renders: renders as unknown[][],
     ...(typeof css === "string" ? { css } : {}),
     asked: asked.filter(isRecord).map((one) => ({ name: String(one["name"]), args: one["args"] })),
-    went: went.filter(isRecord).flatMap((one): HeadlessTranscript["went"][number][] => (typeof one["record"] === "string" ? [{ record: one["record"] }] : typeof one["place"] === "string" ? [{ place: one["place"] }] : [])),
+    went: went.filter(isRecord).flatMap((one): HeadlessTranscript["went"][number][] => {
+      const section = typeof one["section"] === "string" ? { section: one["section"] } : {};
+      const where = one["where"] !== undefined ? { where: one["where"] } : {};
+      if (typeof one["record"] === "string") return [{ record: one["record"], ...where, ...section }];
+      if (typeof one["place"] === "string") return [{ place: one["place"], ...where, ...section }];
+      return [];
+    }),
     ms,
     logs: logs.map(String).slice(0, 50),
     messages,
@@ -202,6 +209,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     props,
     acts: manifestActs(manifest).map((one) => one.as ?? one.act),
     places: places.map((place) => place.as),
+    lists: listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds])).flatMap((list) => [list.slug, list.kind]),
     limits: { maxNodes: limits.maxNodes, messages: limits.messages, pushMs: limits.pushMs },
   };
 
@@ -238,6 +246,22 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   /* Judged again here, from the transcript alone. */
   const judged = judgeTranscript(transcript, input);
   if (!judged.ok) return failed(judged.reason, judged.detail, transcript);
+  /*
+   * A FILTER OR A SECTION IT ASKED FOR, held to the kind here, where the
+   * schema is: a filter on a field the kind does not have goes nowhere, and
+   * says so, as the live host says it (FR-93). Where it goes is the
+   * transcript's judging above.
+   */
+  const shownIds = new Set([...(props.node ? [props.node.id] : []), ...(props.nodes ?? []).map((node) => node.id)]);
+  const lists = listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds]));
+  const narrowing: { at: string; says: string }[] = [];
+  for (const went of transcript.went) {
+    if (!("where" in went) && !("section" in went)) continue;
+    const outcome = judgeDestination(went, { sees: (id) => shownIds.has(id), places, lists, schema: store.schema });
+    const known = "place" in went ? input.places.includes(went.place) || (input.lists ?? []).includes(went.place) : true;
+    if (!outcome.ok && known) narrowing.push({ at: "navigate", says: outcome.says });
+  }
+  const problems = [...judged.problems, ...narrowing];
   const title = manifest.title ?? manifest.name;
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
@@ -248,7 +272,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     variant: (options.width ?? 1440) < 640 ? "phone" : "wide",
     drawnBy: `view:${manifest.name}`,
     parts: judged.parts,
-    problems: judged.problems,
+    problems,
   };
   const { placeText } = await import("@graview/core/describe");
   return { ok: true, description: { ...description, text: placeText(description) }, props, transcript };

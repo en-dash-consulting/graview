@@ -70,6 +70,14 @@ export interface LensDeclaration {
    * it is bindings the checker holds.
    */
   readonly title?: string;
+  /**
+   * A PLACE KEPT OFF THE LISTS: still at its address, reached by a link or
+   * `graview.navigate`, but not offered by the bar's places, the page list
+   * or the home's gallery, and never what its kind draws when an address
+   * names no picture — for a lens that is a link target of a custom home
+   * (`set-lens-hidden` in a document).
+   */
+  readonly hidden?: boolean;
   /** The kind it is a place over, when its bindings do not say (the reach lens) or say several. */
   readonly on?: string;
   /**

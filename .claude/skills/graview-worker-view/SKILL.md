@@ -45,7 +45,8 @@ graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
 graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
-graview.navigate("offer:7")     // a record, else a place by slug; or { place: "…" }
+graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
+graview.navigate({ place: "features", where: { stage: "building" }, section: "Shipping soon" })
 ```
 
 `props` holds `node`, the record a view of one is drawn for, and `nodes`,
@@ -79,8 +80,22 @@ logo, the app's own images, the pictures on records) are
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links
 the host follows, on both faces. `<a href="https://…">` is drawn as text.
-A destination is a record's id, else a place's slug; any other says
-why in the console.
+A destination is a record's id, else a lens's slug, else a kind's list
+(`features` or `feature`); any other says why in the console.
+
+A list or a lens may be gone to **narrowed**: `where: { stage: "building" }`
+in navigate, `data-filter="stage:building"` on a link — the words the
+list's own arranging line writes, so the address is `/features?filter=
+stage%3Abuilding` and can be shared. A lens narrows the records it is
+handed; a blocks lens lists what its own `where` says. Any destination may
+take a **section**, a heading's words or an element's id (`section:
+"Every feature"`, `data-section`): the page scrolls there and gives it the
+keyboard (`#every-feature`). On the scene a list is the kind's stop
+narrowed (`in.filter`); a section is looked for there too. A filter on a
+field the kind lacks, or a choice it lacks, goes nowhere and says why
+(`Features have no field "stag" to filter by; they filter by …`), so link
+to the list narrowed rather than to a lens per filter; a lens kept only
+as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
 ## Writes
 
