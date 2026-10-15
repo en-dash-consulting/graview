@@ -39,7 +39,9 @@ export { announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
 export { SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";
-export { backendFrom, preview, serve, SERVE_USAGE, shots, syncSeed } from "./cli.js";
+export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, syncSeed } from "./cli.js";
+export { heldBy, holdFileOf, holdStore, sayHeld } from "./store-hold.js";
+export type { StoreHold, StoreHolder } from "./store-hold.js";
 export type { PreviewPage } from "./cli.js";
 export { previewPrincipal, servePreview } from "./serve-preview.js";
 export type { Preview, PreviewOptions } from "./serve-preview.js";

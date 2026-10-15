@@ -104,7 +104,7 @@ export type HomeView = readonly ViewBlock[];
 export type ViewSpecsByKind = Readonly<Record<string, ViewSpecs>>;
 
 /** What each block may say besides the key that names it. */
-const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
+export const BLOCK_KEYS: Readonly<Record<string, readonly string[]>> = {
   title: [],
   headline: [],
   list: ["sort", "limit", "group", "empty", "as"],

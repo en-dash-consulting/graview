@@ -102,6 +102,7 @@ pnpm dev                       # apps/todo → http://localhost:5193
 ANTHROPIC_API_KEY=… pnpm dev   # the same, its seat lent a model by the dev server (aiDevProxy; GRAVIEW_AI_MODEL to choose; never in a build, never in a harness)
 pnpm apps                      # the desk → http://localhost:5199 (opens the others in place)
 pnpm graview -- <args>         # the CLI from this checkout
+pnpm graview:link              # `graview` on PATH from this checkout (pnpm link --global for packages/graview; `pnpm setup` once if pnpm has no global bin)
 
 pnpm pack:inspect              # what goes in each tarball (docs/pack.json)
 pnpm smoke                     # install the tarballs into a scratch app and build it

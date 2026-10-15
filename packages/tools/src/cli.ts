@@ -4,7 +4,7 @@ import { entryArg, loadApp } from "@graview/core/cli";
 import { instantiateTemplate } from "@graview/core/check";
 import { sayFindings, templateSeedPrimitives } from "@graview/core/document";
 import { Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal } from "@graview/core";
-import { backendFrom, openRemote, openStore, type RemoteRefusal, type RemoteStore } from "@graview/ship";
+import { backendFrom, holdStore, openRemote, openStore, sayHeld, type RemoteRefusal, type RemoteStore } from "@graview/ship";
 import { createMcpAdapter } from "./agent/adapters.js";
 import { createToolRuntime } from "./agent/tools.js";
 import { serveMcpStdio } from "./mcp-stdio.js";
@@ -129,7 +129,20 @@ export async function openHost<S extends AnySchema>(
     };
   }
   const backend = await backendFrom(argv);
-  const opened = await openStore({ app, adapter: backend.adapter, scope: app.name, ...(backend.seed ? { seed: backend.seed } : {}) });
+  /*
+   * A store on disk has one writer at a time. A preview or a server holding
+   * this folder would neither show what is written here nor keep it past its
+   * own next write, so the command acts through it (--remote-url) instead.
+   */
+  const hold = holdStore(backend.holdFile, via === "mcp" ? "mcp" : "apply");
+  if ("heldBy" in hold) throw new Error(sayHeld(hold.heldBy, backend.where, "Writing to it from here", { remote: true }).trimEnd());
+  let opened;
+  try {
+    opened = await openStore({ app, adapter: backend.adapter, scope: app.name, ...(backend.seed ? { seed: backend.seed } : {}) });
+  } catch (error) {
+    hold.release();
+    throw error;
+  }
   return {
     store: opened.store,
     where: backend.where,
@@ -139,6 +152,7 @@ export async function openHost<S extends AnySchema>(
     close: async () => {
       await opened.flush();
       opened.close();
+      hold.release();
     },
   };
 }

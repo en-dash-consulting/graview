@@ -94,6 +94,11 @@ export type ArgPlan =
   | { readonly ref: readonly string[] | "*"; readonly required: boolean }
   | { readonly any: true; readonly required: false };
 
+/** The argument of an act's that takes the record at the far end of what it ties, when it takes a `kind`: never its subject. */
+export function farEndArg(args: readonly (readonly [string, ArgPlan])[], kind: string): string | undefined {
+  return args.find(([name, arg]) => name !== SUBJECT_ARG && "ref" in arg && (arg.ref === "*" || arg.ref.includes(kind)))?.[0];
+}
+
 /** A relation, as every kind that declares it says it. */
 export interface EdgePlan {
   readonly from: readonly string[];
@@ -634,11 +639,22 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
       const repairList: Repair[] = repairs.flatMap((r) => {
         const act = document.acts?.[r.act];
         const args: Record<string, unknown> = {};
-        if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge|skip|detach|split)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
+        /*
+         * AN ACT ON THE OTHER END OF A RELATION. A rule over findings that
+         * wants each serious one to have an initiative is repaired by
+         * `resolve-finding`, an act on the initiative read from the finding
+         * as "Name the work that fixes it" — so it is handed the finding as
+         * its far end, and the initiative is the question left open, as a
+         * record page standing on the finding offers it.
+         */
+        const far = subject && act?.on && act.fromTheOtherEnd && ![act.on].flat().includes(subject.kind) ? farEndArg(plan.acts[r.act]!.args, subject.kind) : undefined;
+        if (far) args[far] = subject!.id;
+        else if (subject && (act?.on || /^(edit|remove|archive|unarchive|merge|skip|detach|split)-/.test(r.act))) args[SUBJECT_ARG] = subject.id;
         for (const [k, v] of Object.entries(r.args ?? {})) args[k] = refName(v) === "subject" ? subject?.id : v;
         const declared = act ? plan.acts[r.act]!.args : [];
         const missing = declared.filter(([k, a]) => a.required && args[k] === undefined).map(([k]) => k);
-        return [{ mutation: r.act, label: r.label ?? act?.title ?? r.act.replace(/-/g, " "), args, ...(missing.length > 0 ? { missing } : {}) }];
+        // Said as the act reads from where the rule stands: from the finding, "Name the work that fixes it".
+        return [{ mutation: r.act, label: r.label ?? (far ? act!.fromTheOtherEnd : act?.title) ?? r.act.replace(/-/g, " "), args, ...(missing.length > 0 ? { missing } : {}) }];
       });
       return [
         {

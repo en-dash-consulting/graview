@@ -9,6 +9,7 @@ import { frameworkPath, inDocumentText } from "./framework-path.js";
 import { compileDocumentWithoutCheck, inDocumentWords, readDocument, type CompiledDocument, type CompileOptions, type RefusedDocument } from "./compile.js";
 import { hasErrors, type Finding } from "./findings.js";
 import { viewBraces, viewKeys } from "./views.js";
+import { withRightNames } from "./right-names.js";
 
 /*
  * THE CHECKED COMPILE, in a module of its own: `compile.ts` is what a page
@@ -27,7 +28,9 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   if (!compiled.ok) {
     // A range and the other end of a link are judged here too (FR-114, FR-115), so a refusal says all of what is wrong.
     const read = readDocument(raw).document;
-    return read ? { ok: false, findings: [...compiled.findings, ...actFindings(read), ...computedFindings(read), ...factFindings(read), ...roleFindings(read), ...formatFindings(read), ...linkedFindings(read)] } : compiled;
+    // A name written in the other convention is told its right spelling (`right-names.ts`).
+    const named = withRightNames(compiled.findings, raw);
+    return { ok: false, findings: read ? [...named, ...actFindings(read), ...computedFindings(read), ...factFindings(read), ...roleFindings(read), ...formatFindings(read), ...linkedFindings(read)] : named };
   }
   const { app, document } = compiled;
   // What the brand may hold (FR-124): a mark that could act or load, a face from off the list.
