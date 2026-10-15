@@ -479,7 +479,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         <PageTitle context={context}>No picture is called that.</PageTitle>
         <p style={lede}>
           <Link to="/places" style={link}>
-            The pictures there are →
+            The pictures there are <span aria-hidden="true">→</span>
           </Link>
         </p>
       </PageMain>
@@ -523,7 +523,7 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         <p style={{ ...quiet, margin: 0, display: "flex", flexWrap: "wrap", gap: "4px 16px" }}>
           {kindsOfPlace(context, place).map((kind, index) => (
             <Link key={kind} to={`/${pluralSlug(store.schema, kind)}`} style={{ ...link, ...quiet }} {...(index === 0 ? { "data-testid": "place-as-list" } : {})}>
-              All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list →
+              All {(kind === place.kind ? plural : pluralOf(store, kind)).toLowerCase()} as a list <span aria-hidden="true">→</span>
             </Link>
           ))}
         </p>

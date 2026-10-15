@@ -285,7 +285,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     const app = firstAppLink(node as Record<string, unknown>, definition);
     const title = (
       <Link to={recordPath(store.schema, kind, node.id)} className="graview-row-title" {...(label.length > 60 ? { title: label } : {})}>
-        {flagged.has(node.id) ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
+        {flagged.has(node.id) ? <><span role="img" aria-label="Breaks a rule:" style={{ color: "var(--graview-warn)" }}>⚠</span>{" "}</> : null}
         {label}
       </Link>
     );
@@ -439,7 +439,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                   Related:{" "}
                   {roads.map(({ relation, far, words }, index) => (
                     <span key={`${relation.edgeKind}|${relation.from}|${relation.to}`} data-relation={relation.edgeKind}>
-                      {index > 0 ? " · " : null}
+                      {index > 0 ? <span aria-hidden="true"> · </span> : null}
                       {far === "*" ? (
                         capitalize(words ?? humanizeField(relation.edgeKind))
                       ) : (
@@ -456,7 +456,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                   Also as:{" "}
                   {pictures.map((place, index) => (
                     <span key={placeKey(place)}>
-                      {index > 0 ? " · " : null}
+                      {index > 0 ? <span aria-hidden="true"> · </span> : null}
                       <Link to={pathOfPlace(context, place)} style={link}>
                         {place.title}
                       </Link>

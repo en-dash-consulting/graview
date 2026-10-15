@@ -124,7 +124,7 @@ export function DefaultSearchPage<S extends AnySchema>({ context }: { context: P
               .map((hit) => (
                 <li key={hit.id} data-testid="search-hit" data-about="node" className="graview-row">
                   <Link to={recordPath(store.schema, kind, hit.id)} className="graview-row-title" {...(hit.label.length > 60 ? { title: hit.label } : {})}>
-                    {hit.flagged ? <span style={{ color: "var(--graview-warn)" }}>⚠ </span> : null}
+                    {hit.flagged ? <><span role="img" aria-label="Breaks a rule:" style={{ color: "var(--graview-warn)" }}>⚠</span>{" "}</> : null}
                     {hit.label}
                   </Link>
                   {hit.apart || !hit.current ? <span className="graview-row-glance">{[hit.apart, hit.current ? "" : "past"].filter(Boolean).join(" · ")}</span> : null}

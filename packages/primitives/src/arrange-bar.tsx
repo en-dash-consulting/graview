@@ -474,7 +474,7 @@ const ARRANGE_CSS = `
 .graview-arrange-line{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;min-width:0;font-size:.875rem;line-height:1.35;color:var(--graview-ink-muted)}
 .graview-arrange-count{margin-right:2px;color:var(--graview-ink-muted)}
 .graview-arrange-part{display:inline-flex;align-items:center;min-width:0}
-.graview-arrange-count~.graview-arrange-part::before{content:"·";margin-right:6px;color:var(--graview-ink-muted)}
+.graview-arrange-count~.graview-arrange-part::before{content:"·" / "";margin-right:6px;color:var(--graview-ink-muted)}
 .graview-arrange-open{display:inline-flex;align-items:center;gap:5px;min-height:28px;min-width:0;max-width:100%;margin:0;padding:0 6px;border:1px solid transparent;border-radius:7px;background:none;box-shadow:none;font:inherit;letter-spacing:normal;text-transform:none;text-align:left;color:var(--graview-ink-muted);cursor:pointer}
 .graview-arrange-open[data-set]{color:var(--graview-ink)}
 .graview-arrange-open:hover,.graview-arrange-open[aria-expanded=true]{border-color:var(--graview-edge);color:var(--graview-ink)}

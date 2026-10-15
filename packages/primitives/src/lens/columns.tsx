@@ -5,7 +5,7 @@ import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type Re
 import { CHOOSING_CSS, useChoosing, type Choosing } from "../choosing.js";
 import { prefetchSeveral, SeveralBarDoor } from "../several-door.js";
 import { hueFor } from "../default-views.js";
-import { Chip, Panel } from "../primitives/index.js";
+import { Chip, NamedByItsLink, Panel } from "../primitives/index.js";
 import { ListedLink, SaidAround } from "../spec-views.js";
 import { withMore } from "./more.js";
 
@@ -384,15 +384,20 @@ function ColumnCard({
       }}
       onDragEnd={() => onDrag(false)}
     >
+      {/* The link first, and the card's own title not said again (`NamedByItsLink`): a reader hears the name once, then the rest. */}
+      <ListedLink node={card} label={label} />
       {View ? (
         // A card on the board is a card as the scene draws it, on either face.
         <ViewModeProvider mode="scene">
-          <View node={card as never} cardinality="one" fidelity="summary" mode="scene" selected={false} />
+          <NamedByItsLink.Provider value={label}>
+            <View node={card as never} cardinality="one" fidelity="summary" mode="scene" selected={false} />
+          </NamedByItsLink.Provider>
         </ViewModeProvider>
       ) : (
-        <span className="graview-spec-item-name">{label}</span>
+        <span className="graview-spec-item-name" aria-hidden="true">
+          {label}
+        </span>
       )}
-      <ListedLink node={card} label={label} />
       {choosing ? (
         <span className="graview-choose-at">
           <input {...choosing.boxProps(card.id, label)} onPointerEnter={prefetchSeveral} onFocus={prefetchSeveral} />
