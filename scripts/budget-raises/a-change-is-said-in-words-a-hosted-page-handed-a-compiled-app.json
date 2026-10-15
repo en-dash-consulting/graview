@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1032,
+  "gzipped": 415,
+  "changeset": "a-change-is-said-in-words.md",
+  "note": "Raised when the derived edit came to say a change in words (Roadmap f-change-sentences-in-words): what writes the sentence is in `derive-edits.ts`, which the store derives its acts with up front. 1_032 / 415 more than main (513_549 / 177_627): measured at 514_581 / 178_042."
+}

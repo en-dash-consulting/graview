@@ -27,6 +27,6 @@ describe("a kind's label field", () => {
     store.apply({ name: "add-category", args: { label: "Woodworking" } });
     const id = store.graph.nodesOfKind("category")[0]!.id;
     store.apply({ name: "edit-category", args: { id, label: "Woodshop" } });
-    expect(store.log.all().at(-1)?.intent).toBe("Change Woodworking: name → \"Woodshop\"");
+    expect(store.log.all().at(-1)?.intent).toBe("Changed the name of Woodworking to “Woodshop”");
   });
 });
