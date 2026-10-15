@@ -73,7 +73,7 @@ describe("checkApp", () => {
     const finding = checkApp(app).findings[0]!;
     // The message has to be actionable on its own — an agent reading only
     // this line must know which file-level thing to change.
-    expect(finding.where).toBe('defineInvariant("clash").repairs');
+    expect(finding.where).toBe('defineInvariant("clash").repairs[0]');
     expect(finding.fix).toContain('Register a mutation called "reassign"');
   });
 

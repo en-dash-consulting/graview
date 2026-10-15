@@ -1285,6 +1285,7 @@ chain.unreachable;  // what nothing here can make — often right, always worth 
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build:domain &amp;&amp; npx graview check ./dist/domain/app.js
 npx graview describe ./dist/domain/app.js</code></pre></div>
+<p>A document (<code>app.json</code>, a graview-document) needs no build: <code>npx graview describe --document app.json</code> reads the same chain out, and <code>npx graview preview app.json --seed seed.json</code> serves the scene and Pages over a snapshot (<code>{ "nodes": [{ "id", "kind", …fields }], "edges": [{ "kind", "from", "to" }] }</code>) so you can walk in as a person would.</p>
 <p>Then open it with an empty store (<code>?fresh=1</code> with a ship browser adapter) and go through your own front door. A test holds it: derive the affordances of each root kind on an empty graph and assert the way in is offered, and that a kind deeper in the chain offers nothing and says what it waits for.</p>
 <h3>What the check cannot see</h3>
 <ul>

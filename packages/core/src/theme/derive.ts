@@ -255,3 +255,19 @@ export function hueFor(kind: string, accents?: Readonly<Record<string, number>>)
   }
   return (h >>> 0) % 360;
 }
+
+/** How close two kinds' hues may sit before they read as one color. */
+export const HUE_CROWDING = 12;
+
+/**
+ * THE HUES, AND WHICH OF THEM CROWD. Kinds whose hues land within
+ * {@link HUE_CROWDING} degrees of each other on the wheel read as one color —
+ * a city drawn in one color reads as a rendering fault. The one answer both
+ * `graview describe` (which says it) and `graview check` (which warns of it)
+ * read, so the two never disagree.
+ */
+export function crowdedHues(kinds: readonly string[], accents?: Readonly<Record<string, number>>): { readonly hues: readonly { readonly kind: string; readonly hue: number }[]; readonly crowded: readonly string[] } {
+  const hues = kinds.map((kind) => ({ kind, hue: Math.round(hueFor(kind, accents)) }));
+  const crowded = hues.filter((a, index) => hues.some((b, other) => other !== index && hueGap(a.hue, b.hue) < HUE_CROWDING)).map((entry) => entry.kind);
+  return { hues, crowded };
+}

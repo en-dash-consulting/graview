@@ -266,19 +266,44 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
         fix: `Use one of: ${[...kinds].join(", ")}.`,
       });
     }
-    for (const repair of invariant.repairs ?? []) {
+    (invariant.repairs ?? []).forEach((repair, index) => {
+      /*
+       * A REPAIR ON ANOTHER KIND. A rule over tasks that offers an act on
+       * modules hands that act the task it judged, and the act refuses it:
+       * a repair button that can only ever fail. Said here, with both kinds
+       * and the act, rather than by the first person who presses it.
+       *
+       * Asked of a rule in the rule language — a document's rule, or
+       * `expressionRule` in a declaration — whose every repair is handed the
+       * record it judged. A rule that is a function names each repair's
+       * arguments itself (todo's rule records offer to finish a task), so
+       * the act's subject is whatever it chose.
+       */
+      const act = mutations.get(repair);
+      const on = act?.subject?.kinds;
+      if (invariant.judgment && invariant.scope !== "graph" && kinds.has(invariant.scope.kind) && on && on !== "*" && !(on as readonly string[]).includes(invariant.scope.kind)) {
+        const judged = invariant.scope.kind;
+        const fitting = [...mutations.values()].filter((m) => m.subject && (m.subject.kinds === "*" || (m.subject.kinds as readonly string[]).includes(judged))).map((m) => m.name);
+        add({
+          severity: "error",
+          code: "repair-wrong-kind",
+          where: `defineInvariant("${invariant.name}").repairs[${index}]`,
+          message: `Names repair "${repair}", an act on ${(on as readonly string[]).join(" or ")}, but the rule judges a ${judged}: the act is handed the ${judged} and refuses it, so the repair could never work.`,
+          fix: `Name an act on ${judged} instead${fitting.length > 0 ? ` (${fitting.slice(0, 6).join(", ")})` : ""}, or judge the rule over ${(on as readonly string[]).join(" or ")}.`,
+        });
+      }
       if (!mutations.has(repair)) {
         add({
           severity: "error",
           code: "repair-unknown-mutation",
-          where: `defineInvariant("${invariant.name}").repairs`,
+          where: `defineInvariant("${invariant.name}").repairs[${index}]`,
           message: `Names repair mutation "${repair}", which is not registered on this app.`,
           fix: `Register a mutation called "${repair}", or drop it from repairs. Registered: ${
             [...mutations.keys()].join(", ") || "(none)"
           }.`,
         });
       }
-    }
+    });
   }
 }
 

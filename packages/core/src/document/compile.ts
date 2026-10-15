@@ -606,15 +606,6 @@ function planOf(document: GraviewDocument, findings: Finding[]): CompiledApp {
 }
 
 
-/** Map a framework check's "where" (a kind, an act, a rule by name) back to a document path when we can. */
-export function frameworkPath(where: string, document: GraviewDocument): string {
-  const word = where.split(/[\s:·]/).find((w) => w.length > 0) ?? where;
-  if (document.kinds[word]) return `kinds.${word}`;
-  if (document.acts?.[word]) return `acts.${word}`;
-  if (document.rules?.[word]) return `rules.${word}`;
-  return where;
-}
-
 /**
  * The check tells a TypeScript author to write `display: { glance }`; a
  * document's author writes `kinds.<kind>.glance` (FR-39) — the same choice

@@ -5,7 +5,8 @@ import { factFindings, roleFindings } from "./facts-and-roles.js";
 import { computedFindings } from "./computed.js";
 import { brandFindings } from "./brand-check.js";
 import { formatFindings } from "./format-findings.js";
-import { compileDocumentWithoutCheck, frameworkPath, inDocumentWords, readDocument, type CompiledDocument, type CompileOptions, type RefusedDocument } from "./compile.js";
+import { frameworkPath, inDocumentText } from "./framework-path.js";
+import { compileDocumentWithoutCheck, inDocumentWords, readDocument, type CompiledDocument, type CompileOptions, type RefusedDocument } from "./compile.js";
 import { hasErrors, type Finding } from "./findings.js";
 import { viewBraces, viewKeys } from "./views.js";
 
@@ -40,7 +41,8 @@ export function compileDocument(raw: unknown, options: CompileOptions = {}): Com
   const findings: Finding[] = [...said, ...own, ...viewBraces(document.views, "views", undefined, document.lenses)];
   const check = checkApp(app);
   for (const f of check.findings) {
-    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: f.message, ...(f.fix ? { fix: f.fix } : {}) } as const;
+    // Located and said in the document's own words: `acts.finish.on`, never `defineMutation("finish")`.
+    const finding = { severity: f.severity === "error" ? "error" : f.severity === "warning" ? "warning" : "note", code: `check:${f.code}`, path: frameworkPath(f.where, document), message: inDocumentText(f.message, document), ...(f.fix ? { fix: inDocumentText(f.fix, document) } : {}) } as const;
     // The document already said it, at the same path (a blocks lens's words are held by both): once is enough.
     if (compiled.findings.some((said) => said.code === f.code && said.path === finding.path)) continue;
     findings.push(f.code === "glance-unchosen" ? inDocumentWords(finding, f.where, document) : finding);

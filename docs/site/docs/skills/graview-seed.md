@@ -52,6 +52,8 @@ pnpm build:domain && npx graview check ./dist/domain/app.js
 npx graview describe ./dist/domain/app.js
 ```
 
+A document (`app.json`, a graview-document) needs no build: `npx graview describe --document app.json` reads the same chain out, and `npx graview preview app.json --seed seed.json` serves the scene and Pages over a snapshot (`{ "nodes": [{ "id", "kind", …fields }], "edges": [{ "kind", "from", "to" }] }`) so you can walk in as a person would.
+
 Then open it with an empty store (`?fresh=1` with a ship browser adapter) and go through your own front door. A test holds it: derive the affordances of each root kind on an empty graph and assert the way in is offered, and that a kind deeper in the chain offers nothing and says what it waits for.
 
 ### What the check cannot see
