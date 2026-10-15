@@ -13,7 +13,8 @@
  *
  * Writes docs/progression/NN-slug-{light,dark}.png and docs/progression.json.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
@@ -67,7 +68,9 @@ function listen(page, entry) {
   });
 }
 
-const report = { at: new Date().toISOString(), engine: engineName(), chapters: [] };
+const report = { at: new Date().toISOString(), engine: engineName(), chapters: [], recipes: [] };
+const RECIPES = JSON.parse(readFileSync(resolve(repoRoot, "docs/site/recipes/recipes.json"), "utf8")).recipes;
+const CLI = resolve(repoRoot, "packages/graview/dist/cli.js");
 let vite;
 let browser;
 try {
@@ -260,6 +263,54 @@ try {
     report.chapters.push(entry);
     process.stdout.write(`${entry.n} ${entry.slug}: check ${check.ok ? "ok" : "FAILED"} · ${entry.saw?.standing ?? ""} · ${entry.errors.length} console errors\n`);
   }
+
+  /*
+   * THE RECIPES, checked the way the chapters are. A recipe is the prompt on
+   * graview.dev with another task, and the declaration document and seed an
+   * agent made of it (docs/site/recipes/<slug>/). CI does not run an agent;
+   * it holds what that run produced: `graview check --document` on the
+   * committed declaration, and the recipe's own docs page opened in a real
+   * browser, where the app has to mount from the site's bundle, draw its
+   * districts and say what its rules found.
+   */
+  for (const recipe of RECIPES) {
+    const file = resolve(repoRoot, "docs/site/recipes", recipe.slug, "app.json");
+    const entry = { slug: recipe.slug, check: { ok: false, said: "" }, pictures: {}, errors: [], offTheMachine: [] };
+    try {
+      entry.check = { ok: true, said: execFileSync(process.execPath, [CLI, "check", "--document", file], { cwd: repoRoot, encoding: "utf8" }).trim() };
+      entry.check.ok = !entry.check.said.split("\n").some((line) => line.startsWith("!"));
+    } catch (error) {
+      entry.check = { ok: false, said: `${error.stdout ?? ""}${error.stderr ?? ""}`.trim() };
+    }
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 });
+    for (const scheme of ["light", "dark"]) {
+      const page = await context.newPage();
+      await page.emulateMedia({ colorScheme: scheme });
+      listen(page, entry);
+      await page.goto(pathToFileURL(resolve(repoRoot, "docs/site/docs/recipes", `${recipe.slug}.html`)).href, { waitUntil: "load" });
+      const frame = page.locator(`[data-graview-recipe="${recipe.slug}"]`);
+      await frame.scrollIntoViewIfNeeded();
+      await page.waitForFunction((slug) => document.querySelector(`[data-graview-recipe="${slug}"] [data-graview-view^="kind:"]`) !== null, recipe.slug, { timeout: 30_000 }).catch(() => {});
+      await page.waitForTimeout(900);
+      const file = `recipe-${recipe.slug}-${scheme}.png`;
+      await frame.screenshot({ path: resolve(out, file) }).catch(() => {});
+      entry.pictures[scheme] = `docs/progression/${file}`;
+      if (scheme === "light") {
+        entry.saw = await page.evaluate((slug) => {
+          const host = document.querySelector(`[data-graview-recipe="${slug}"]`);
+          return {
+            mounted: host?.querySelector("[data-graview-embed]") !== null,
+            districts: [...(host?.querySelectorAll('[data-graview-view^="kind:"]') ?? [])].map((el) => el.textContent?.trim().replace(/\s+/g, " ") ?? ""),
+            standing: host?.querySelector('[data-testid="standing"]')?.getAttribute("aria-label") ?? null,
+          };
+        }, recipe.slug);
+      }
+      await page.close();
+    }
+    await context.close();
+    report.recipes.push(entry);
+    process.stdout.write(`recipe ${recipe.slug}: check ${entry.check.ok ? "ok" : "FAILED"} · ${entry.saw?.standing ?? ""} · ${entry.saw?.districts.length ?? 0} districts · ${entry.errors.length} console errors\n`);
+  }
 } catch (error) {
   report.error = String(error?.stack ?? error).slice(0, 4000);
   process.stdout.write(`${report.error}\n`);
@@ -268,6 +319,10 @@ try {
   if (vite && !process.argv.includes("--keep-vite")) { vite.stop(); }
 }
 report.verdict = {
+  /* The recipes: each committed declaration passes the checker, and each mounts on its page with its rules' word on it. */
+  everyRecipeChecksClean: report.recipes.length === RECIPES.length && RECIPES.length >= 3 && report.recipes.every((r) => r.check.ok),
+  everyRecipeRunsOnItsPage: report.recipes.length === RECIPES.length && report.recipes.every((r) => r.saw?.mounted && r.saw.districts.length > 0 && r.errors.length === 0 && r.offTheMachine.length === 0),
+  everyRecipeSaysWhatItsRulesFound: report.recipes.length === RECIPES.length && report.recipes.every((r) => /broken/.test(r.saw?.standing ?? "")),
   everyChapterChecksClean: report.chapters.length === CHAPTERS.length && report.chapters.every((c) => c.check.ok),
   everyChapterRenderedWithoutErrors: report.chapters.every((c) => c.errors.length === 0 && c.pictures.light && c.pictures.dark),
   // The chapters are photographed from this checkout: nothing they draw is fetched from anywhere else.

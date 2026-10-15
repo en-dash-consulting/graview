@@ -69,6 +69,12 @@ export default defineConfig({
        */
       "@graview/rota/views": fileURLToPath(new URL("../rota/src/ui/views.tsx", import.meta.url)),
       "@graview/rota": fileURLToPath(new URL("../rota/src/index.ts", import.meta.url)),
+      /*
+       * THE RECIPES RIDE ALONG TOO: each one's declaration document and
+       * seed, from where the site serves them, so the app on a recipe's
+       * page is the file an agent can fetch beside it.
+       */
+      "@recipes": fileURLToPath(new URL("../../docs/site/recipes", import.meta.url)),
     },
   },
   // The app's own favicons are its page's, not the docs site's: the site has its own in brand/.

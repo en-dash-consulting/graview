@@ -11,6 +11,8 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 ## Where things are
 
 - [Getting started](https://graview.dev/docs/getting-started.html): One command to a running product, what it writes, and the loop from there.
+- [Recipes](https://graview.dev/docs/recipes.html): One prompt for your agent, a different task each, and the app it made, live.
+- [The tour](https://graview.dev/tour.html): Every surface Graview derives from one declaration, each beside a live frame.
 - [Concepts](https://graview.dev/docs/concepts.html): The declaration, and the seven things in it.
 - [Working with a model](https://graview.dev/docs/agents.html): The seat, the typed tools, what a model reads, and the studio.
 - [Live demos](https://graview.dev/docs/demos.html): Every surface of the garden, running on the page, and the example apps.

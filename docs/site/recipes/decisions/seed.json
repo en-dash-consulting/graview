@@ -1,0 +1,426 @@
+{
+  "nodes": [
+    {
+      "id": "module:services-admin",
+      "kind": "module",
+      "path": "services/admin",
+      "packageName": "@larkspur/admin",
+      "description": "The clinic staff's admin console: calendars, staff, billing settings."
+    },
+    {
+      "id": "module:services-api",
+      "kind": "module",
+      "path": "services/api",
+      "packageName": "@larkspur/api",
+      "description": "The HTTP API: REST for the booking site, GraphQL for the admin console."
+    },
+    {
+      "id": "module:services-web",
+      "kind": "module",
+      "path": "services/web",
+      "packageName": "@larkspur/web",
+      "description": "The patient-facing booking site (Next.js)."
+    },
+    {
+      "id": "module:services-worker",
+      "kind": "module",
+      "path": "services/worker",
+      "packageName": "@larkspur/worker",
+      "description": "Background jobs: reminders, invoice retries, search reindexing."
+    },
+    {
+      "id": "module:packages-api-client",
+      "kind": "module",
+      "path": "packages/api-client",
+      "packageName": "@larkspur/api-client",
+      "description": "The typed client the booking site calls the API with."
+    },
+    {
+      "id": "module:packages-auth",
+      "kind": "module",
+      "path": "packages/auth",
+      "packageName": "@larkspur/auth",
+      "description": "Sign-in, sessions and staff roles."
+    },
+    {
+      "id": "module:packages-billing",
+      "kind": "module",
+      "path": "packages/billing",
+      "packageName": "@larkspur/billing",
+      "description": "Invoices, payments and the retry schedule, on Stripe."
+    },
+    {
+      "id": "module:packages-config",
+      "kind": "module",
+      "path": "packages/config",
+      "packageName": "@larkspur/config",
+      "description": "Environment parsing and feature flags."
+    },
+    {
+      "id": "module:packages-notifications",
+      "kind": "module",
+      "path": "packages/notifications",
+      "packageName": "@larkspur/notifications",
+      "description": "Email and SMS reminders."
+    },
+    {
+      "id": "module:packages-scheduling",
+      "kind": "module",
+      "path": "packages/scheduling",
+      "packageName": "@larkspur/scheduling",
+      "description": "Availability, appointment slots and the booking rules."
+    },
+    {
+      "id": "module:packages-search",
+      "kind": "module",
+      "path": "packages/search",
+      "packageName": "@larkspur/search",
+      "description": "Clinic and practitioner search."
+    },
+    {
+      "id": "module:packages-shared-types",
+      "kind": "module",
+      "path": "packages/shared-types",
+      "packageName": "@larkspur/shared-types",
+      "description": "Types shared by the API and its clients."
+    },
+    {
+      "id": "module:packages-telemetry",
+      "kind": "module",
+      "path": "packages/telemetry",
+      "packageName": "@larkspur/telemetry",
+      "description": "Logging and tracing setup."
+    },
+    {
+      "id": "module:packages-ui-kit",
+      "kind": "module",
+      "path": "packages/ui-kit",
+      "packageName": "@larkspur/ui-kit",
+      "description": "Shared React components on Radix primitives."
+    },
+    {
+      "id": "module:tools-migrate",
+      "kind": "module",
+      "path": "tools/migrate",
+      "packageName": "@larkspur/migrate",
+      "description": "Database migrations and the runner."
+    },
+    {
+      "id": "module:tools-seed-data",
+      "kind": "module",
+      "path": "tools/seed-data",
+      "packageName": "@larkspur/seed-data",
+      "description": "Fake clinics and patients for local development."
+    },
+    {
+      "id": "decision:adr-0001",
+      "kind": "decision",
+      "number": 1,
+      "title": "One repository, managed with pnpm workspaces",
+      "status": "accepted",
+      "date": "2023-03-02",
+      "file": "docs/adr/0001-one-repository-managed-with-pnpm-workspaces.md",
+      "wholeRepository": true
+    },
+    {
+      "id": "decision:adr-0002",
+      "kind": "decision",
+      "number": 2,
+      "title": "PostgreSQL as the only database",
+      "status": "accepted",
+      "date": "2023-03-09",
+      "file": "docs/adr/0002-postgresql-as-the-only-database.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0003",
+      "kind": "decision",
+      "number": 3,
+      "title": "REST for every client",
+      "status": "superseded",
+      "date": "2023-03-16",
+      "file": "docs/adr/0003-rest-for-every-client.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0004",
+      "kind": "decision",
+      "number": 4,
+      "title": "Sessions as signed JWTs",
+      "status": "superseded",
+      "date": "2023-04-04",
+      "file": "docs/adr/0004-sessions-as-signed-jwts.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0005",
+      "kind": "decision",
+      "number": 5,
+      "title": "Background jobs in a Postgres table",
+      "status": "superseded",
+      "date": "2023-04-20",
+      "file": "docs/adr/0005-background-jobs-in-a-postgres-table.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0006",
+      "kind": "decision",
+      "number": 6,
+      "title": "Feature flags in configuration, not a service",
+      "status": "accepted",
+      "date": "2023-05-11",
+      "file": "docs/adr/0006-feature-flags-in-configuration-not-a-service.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0007",
+      "kind": "decision",
+      "number": 7,
+      "title": "The UI kit is built on Radix primitives",
+      "status": "accepted",
+      "date": "2023-06-01",
+      "file": "docs/adr/0007-the-ui-kit-is-built-on-radix-primitives.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0008",
+      "kind": "decision",
+      "number": 8,
+      "title": "Every clinic has exactly one time zone",
+      "status": "accepted",
+      "date": "2023-07-19",
+      "file": "docs/adr/0008-every-clinic-has-exactly-one-time-zone.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0009",
+      "kind": "decision",
+      "number": 9,
+      "title": "Server-side sessions in Postgres",
+      "status": "accepted",
+      "date": "2023-11-08",
+      "file": "docs/adr/0009-server-side-sessions-in-postgres.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0010",
+      "kind": "decision",
+      "number": 10,
+      "title": "Stripe for payments and invoices",
+      "status": "accepted",
+      "date": "2023-08-24",
+      "file": "docs/adr/0010-stripe-for-payments-and-invoices.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0011",
+      "kind": "decision",
+      "number": 11,
+      "title": "GraphQL for the admin console",
+      "status": "accepted",
+      "date": "2024-01-17",
+      "file": "docs/adr/0011-graphql-for-the-admin-console.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0012",
+      "kind": "decision",
+      "number": 12,
+      "title": "Move the job queue to Redis with BullMQ",
+      "status": "accepted",
+      "date": "2024-04-02",
+      "file": "docs/adr/0012-move-the-job-queue-to-redis-with-bullmq.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0013",
+      "kind": "decision",
+      "number": 13,
+      "title": "Search on Postgres full-text search",
+      "status": "proposed",
+      "date": "2025-02-12",
+      "file": "docs/adr/0013-search-on-postgres-full-text-search.md",
+      "wholeRepository": false
+    },
+    {
+      "id": "decision:adr-0014",
+      "kind": "decision",
+      "number": 14,
+      "title": "Drop Node 18",
+      "status": "proposed",
+      "date": "2025-03-03",
+      "file": "docs/adr/0014-drop-node-18.md",
+      "wholeRepository": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "affects:adr-0002-services-api",
+      "kind": "affects",
+      "from": "decision:adr-0002",
+      "to": "module:services-api"
+    },
+    {
+      "id": "affects:adr-0002-tools-migrate",
+      "kind": "affects",
+      "from": "decision:adr-0002",
+      "to": "module:tools-migrate"
+    },
+    {
+      "id": "affects:adr-0002-packages-search",
+      "kind": "affects",
+      "from": "decision:adr-0002",
+      "to": "module:packages-search"
+    },
+    {
+      "id": "affects:adr-0003-services-api",
+      "kind": "affects",
+      "from": "decision:adr-0003",
+      "to": "module:services-api"
+    },
+    {
+      "id": "affects:adr-0003-packages-api-client",
+      "kind": "affects",
+      "from": "decision:adr-0003",
+      "to": "module:packages-api-client"
+    },
+    {
+      "id": "supersededBy:adr-0003",
+      "kind": "supersededBy",
+      "from": "decision:adr-0003",
+      "to": "decision:adr-0011"
+    },
+    {
+      "id": "affects:adr-0004-packages-auth",
+      "kind": "affects",
+      "from": "decision:adr-0004",
+      "to": "module:packages-auth"
+    },
+    {
+      "id": "affects:adr-0004-services-api",
+      "kind": "affects",
+      "from": "decision:adr-0004",
+      "to": "module:services-api"
+    },
+    {
+      "id": "supersededBy:adr-0004",
+      "kind": "supersededBy",
+      "from": "decision:adr-0004",
+      "to": "decision:adr-0009"
+    },
+    {
+      "id": "affects:adr-0005-services-worker",
+      "kind": "affects",
+      "from": "decision:adr-0005",
+      "to": "module:services-worker"
+    },
+    {
+      "id": "supersededBy:adr-0005",
+      "kind": "supersededBy",
+      "from": "decision:adr-0005",
+      "to": "decision:adr-0012"
+    },
+    {
+      "id": "affects:adr-0006-packages-config",
+      "kind": "affects",
+      "from": "decision:adr-0006",
+      "to": "module:packages-config"
+    },
+    {
+      "id": "affects:adr-0007-packages-ui-kit",
+      "kind": "affects",
+      "from": "decision:adr-0007",
+      "to": "module:packages-ui-kit"
+    },
+    {
+      "id": "affects:adr-0007-services-web",
+      "kind": "affects",
+      "from": "decision:adr-0007",
+      "to": "module:services-web"
+    },
+    {
+      "id": "affects:adr-0007-services-admin",
+      "kind": "affects",
+      "from": "decision:adr-0007",
+      "to": "module:services-admin"
+    },
+    {
+      "id": "affects:adr-0008-packages-scheduling",
+      "kind": "affects",
+      "from": "decision:adr-0008",
+      "to": "module:packages-scheduling"
+    },
+    {
+      "id": "affects:adr-0009-packages-auth",
+      "kind": "affects",
+      "from": "decision:adr-0009",
+      "to": "module:packages-auth"
+    },
+    {
+      "id": "affects:adr-0009-services-api",
+      "kind": "affects",
+      "from": "decision:adr-0009",
+      "to": "module:services-api"
+    },
+    {
+      "id": "affects:adr-0010-packages-billing",
+      "kind": "affects",
+      "from": "decision:adr-0010",
+      "to": "module:packages-billing"
+    },
+    {
+      "id": "affects:adr-0010-services-api",
+      "kind": "affects",
+      "from": "decision:adr-0010",
+      "to": "module:services-api"
+    },
+    {
+      "id": "affects:adr-0011-services-api",
+      "kind": "affects",
+      "from": "decision:adr-0011",
+      "to": "module:services-api"
+    },
+    {
+      "id": "affects:adr-0011-services-admin",
+      "kind": "affects",
+      "from": "decision:adr-0011",
+      "to": "module:services-admin"
+    },
+    {
+      "id": "affects:adr-0012-services-worker",
+      "kind": "affects",
+      "from": "decision:adr-0012",
+      "to": "module:services-worker"
+    },
+    {
+      "id": "affects:adr-0013-packages-search",
+      "kind": "affects",
+      "from": "decision:adr-0013",
+      "to": "module:packages-search"
+    },
+    {
+      "id": "affects:adr-0014-services-web",
+      "kind": "affects",
+      "from": "decision:adr-0014",
+      "to": "module:services-web"
+    },
+    {
+      "id": "affects:adr-0014-services-admin",
+      "kind": "affects",
+      "from": "decision:adr-0014",
+      "to": "module:services-admin"
+    },
+    {
+      "id": "affects:adr-0014-services-api",
+      "kind": "affects",
+      "from": "decision:adr-0014",
+      "to": "module:services-api"
+    },
+    {
+      "id": "affects:adr-0014-services-worker",
+      "kind": "affects",
+      "from": "decision:adr-0014",
+      "to": "module:services-worker"
+    }
+  ]
+}

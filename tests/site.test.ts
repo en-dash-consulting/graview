@@ -92,7 +92,29 @@ describe("what the pages promise each other", () => {
     const landing = read("index.html");
     expect(landing).not.toContain('data-graview-chapter="2"');
     expect(landing).toContain('href="progression.html"');
-    expect(landing).toContain('data-step-live="1"');
+    /* The long feature tour, the stepper with it, moved to tour.html rather than away. */
+    expect(landing).not.toContain('data-step-live="1"');
+    expect(landing).toContain('href="tour.html"');
+    expect(read("tour.html")).toContain('data-step-live="1"');
+    expect(read("tour.html")).toContain('id="surfaces"');
+  });
+
+  it("opens the landing page on the prompt, with the recipes under it and nothing in front of it", () => {
+    const landing = read("index.html");
+    const main = landing.slice(landing.indexOf("<main"));
+    const prompt = main.indexOf('id="prompt-text"');
+    expect(prompt).toBeGreaterThan(-1);
+    // The prompt comes first, then the recipe tabs, then the headline as the why.
+    expect(main.indexOf('class="recipe-tabs"')).toBeGreaterThan(prompt);
+    expect(main.indexOf("<h1")).toBeGreaterThan(prompt);
+    // No stat strip in the hero: the one number left on the page is the footer's.
+    const hero = /<section id="what"[\s\S]*?<\/section>/.exec(main)?.[0] ?? "";
+    expect(hero).not.toMatch(/data-number=/);
+    // The sections the page is cut to, in order.
+    const order = ["what", "recipes", "how", "cloud", "faq"].map((id) => main.indexOf(`<section id="${id}"`));
+    expect(order.every((at) => at > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(main.match(/<section id="/g)).toHaveLength(5);
   });
 
   it("links the docs and the long version to each other and back", () => {

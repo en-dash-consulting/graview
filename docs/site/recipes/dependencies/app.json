@@ -1,0 +1,432 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Dependencies",
+  "description": "Larkspur's third-party packages: the version each package.json pins, the latest on npm, which modules use each, and the upgrade each needs.",
+  "kinds": {
+    "module": {
+      "noun": "module",
+      "plural": "modules",
+      "label": "{path}",
+      "description": "A directory with its own package.json: the repository root, a service, a package or a tool.",
+      "fields": {
+        "path": {
+          "type": "string",
+          "required": true,
+          "description": "The directory, from the repository root."
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The name its package.json gives it."
+        },
+        "summary": {
+          "type": "string",
+          "description": "The description its package.json gives it."
+        }
+      },
+      "edges": {
+        "ownedBy": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "many",
+          "description": "who CODEOWNERS says reviews it",
+          "inverse": "the modules they review"
+        }
+      }
+    },
+    "person": {
+      "noun": "person",
+      "plural": "people",
+      "label": "{handle}",
+      "description": "Someone .github/CODEOWNERS names.",
+      "fields": {
+        "handle": {
+          "type": "string",
+          "required": true,
+          "description": "Their GitHub handle."
+        }
+      }
+    },
+    "package": {
+      "noun": "package",
+      "plural": "packages",
+      "label": "{name}",
+      "description": "A third-party npm package some package.json depends on.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Its name on npm."
+        },
+        "pinned": {
+          "type": "string",
+          "required": true,
+          "description": "The version the repository pins (the highest, where modules differ)."
+        },
+        "latest": {
+          "type": "string",
+          "required": true,
+          "description": "The latest version on npm (npm view <name> version)."
+        },
+        "upgrade": {
+          "type": "enum",
+          "options": [
+            "major",
+            "minor",
+            "patch",
+            "none"
+          ],
+          "required": true,
+          "description": "How far pinned is from latest. Major means a breaking change: the first non-zero number of the version moves."
+        },
+        "plan": {
+          "type": "enum",
+          "options": [
+            "upgrade",
+            "hold",
+            "drop"
+          ],
+          "description": "What the team means to do with it."
+        }
+      },
+      "edges": {
+        "assignedTo": {
+          "to": [
+            "person"
+          ],
+          "cardinality": "one",
+          "description": "who is doing its upgrade",
+          "inverse": "the upgrades they are doing"
+        }
+      }
+    },
+    "dependency": {
+      "noun": "dependency",
+      "plural": "dependencies",
+      "label": "{name}@{version} in {manifest}",
+      "description": "One line of one package.json: a module depending on a package at a version.",
+      "fields": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "The package name as the line writes it."
+        },
+        "version": {
+          "type": "string",
+          "required": true,
+          "description": "The version the line pins."
+        },
+        "section": {
+          "type": "enum",
+          "options": [
+            "dependencies",
+            "devDependencies"
+          ],
+          "required": true,
+          "description": "Which list of the package.json it is in."
+        },
+        "manifest": {
+          "type": "string",
+          "required": true,
+          "description": "The package.json it is in."
+        }
+      },
+      "edges": {
+        "declaredIn": {
+          "to": [
+            "module"
+          ],
+          "cardinality": "one",
+          "description": "the module whose package.json has this line",
+          "inverse": "its third-party dependencies"
+        },
+        "pins": {
+          "to": [
+            "package"
+          ],
+          "cardinality": "one",
+          "description": "the package it pins",
+          "inverse": "the modules' lines that pin it"
+        }
+      }
+    },
+    "decision": {
+      "noun": "decision",
+      "plural": "decisions",
+      "label": "ADR {number}: {title}",
+      "description": "An architecture decision record in docs/adr.",
+      "fields": {
+        "number": {
+          "type": "integer",
+          "required": true,
+          "min": 1,
+          "description": "Its number."
+        },
+        "title": {
+          "type": "string",
+          "required": true,
+          "description": "Its heading."
+        },
+        "status": {
+          "type": "enum",
+          "options": [
+            "proposed",
+            "accepted",
+            "superseded"
+          ],
+          "required": true,
+          "description": "Its Status line."
+        },
+        "date": {
+          "type": "date",
+          "description": "Its Date line."
+        },
+        "file": {
+          "type": "string",
+          "required": true,
+          "description": "Its file, from the repository root."
+        }
+      },
+      "edges": {
+        "affects": {
+          "to": [
+            "module"
+          ],
+          "cardinality": "many",
+          "description": "the modules its Affects line names",
+          "inverse": "the decisions that affect it"
+        },
+        "supersedes": {
+          "to": [
+            "decision"
+          ],
+          "cardinality": "many",
+          "description": "the decisions it replaces",
+          "inverse": "the decision that replaced it"
+        },
+        "drops": {
+          "to": [
+            "package"
+          ],
+          "cardinality": "many",
+          "description": "the packages it makes unnecessary",
+          "inverse": "the decisions that drop it"
+        }
+      }
+    }
+  },
+  "acts": {
+    "add-module": {
+      "creates": "module",
+      "title": "Add a module",
+      "description": "Record a directory with its own package.json."
+    },
+    "add-person": {
+      "creates": "person",
+      "title": "Add a person",
+      "description": "Record someone who reviews or upgrades code."
+    },
+    "add-package": {
+      "creates": "package",
+      "title": "Add a package",
+      "description": "Record a third-party package the repository depends on."
+    },
+    "add-dependency": {
+      "creates": "dependency",
+      "title": "Add a dependency",
+      "description": "Record one line of one package.json."
+    },
+    "add-decision": {
+      "creates": "decision",
+      "title": "Add a decision",
+      "description": "Record an architecture decision record."
+    },
+    "give-owner": {
+      "on": "module",
+      "connects": "ownedBy",
+      "title": "Give it an owner",
+      "description": "Say who reviews this module.",
+      "fromTheOtherEnd": "Give them a module"
+    },
+    "take-owner": {
+      "on": "module",
+      "severs": "ownedBy",
+      "title": "Take an owner off",
+      "description": "Say this person no longer reviews this module.",
+      "fromTheOtherEnd": "Take a module off them"
+    },
+    "assign-upgrade": {
+      "on": "package",
+      "connects": "assignedTo",
+      "title": "Assign its upgrade",
+      "description": "Say who is doing this package's upgrade.",
+      "fromTheOtherEnd": "Give them an upgrade"
+    },
+    "unassign-upgrade": {
+      "on": "package",
+      "severs": "assignedTo",
+      "title": "Unassign its upgrade",
+      "description": "Say nobody is doing this package's upgrade now.",
+      "fromTheOtherEnd": "Take an upgrade off them"
+    },
+    "plan-drop": {
+      "on": "package",
+      "sets": {
+        "plan": "drop"
+      },
+      "title": "Plan to drop it",
+      "description": "Say the team means to remove this package."
+    },
+    "plan-upgrade": {
+      "on": "package",
+      "sets": {
+        "plan": "upgrade"
+      },
+      "title": "Plan to upgrade it",
+      "description": "Say the team means to move this package to its latest version."
+    },
+    "plan-hold": {
+      "on": "package",
+      "sets": {
+        "plan": "hold"
+      },
+      "title": "Hold it where it is",
+      "description": "Say the team means to keep this package at its pinned version."
+    },
+    "place-in": {
+      "on": "dependency",
+      "connects": "declaredIn",
+      "title": "Say which module has it",
+      "description": "Say whose package.json this line is in.",
+      "fromTheOtherEnd": "Add a dependency line"
+    },
+    "take-out-of": {
+      "on": "dependency",
+      "severs": "declaredIn",
+      "title": "Take it out of its module",
+      "description": "Say this line is in no module's package.json now.",
+      "fromTheOtherEnd": "Take a dependency line out"
+    },
+    "pin-package": {
+      "on": "dependency",
+      "connects": "pins",
+      "title": "Say which package it pins",
+      "description": "Say which package this line pins.",
+      "fromTheOtherEnd": "Add a line that pins it"
+    },
+    "unpin-package": {
+      "on": "dependency",
+      "severs": "pins",
+      "title": "Unlink its package",
+      "description": "Say this line pins no recorded package.",
+      "fromTheOtherEnd": "Unlink a line that pins it"
+    },
+    "align-pin": {
+      "on": "dependency",
+      "sets": {
+        "version": {
+          "expr": "pins.pinned"
+        }
+      },
+      "title": "Pin it like the others",
+      "description": "Set this line to the version the rest of the repository pins."
+    },
+    "affect-module": {
+      "on": "decision",
+      "connects": "affects",
+      "title": "Say it affects a module",
+      "description": "Add a module to this decision's Affects line.",
+      "fromTheOtherEnd": "Name a decision that affects it"
+    },
+    "unaffect-module": {
+      "on": "decision",
+      "severs": "affects",
+      "title": "Say it no longer affects a module",
+      "description": "Take a module off this decision's Affects line.",
+      "fromTheOtherEnd": "Take a decision off it"
+    },
+    "supersede": {
+      "on": "decision",
+      "connects": "supersedes",
+      "title": "Say what it supersedes",
+      "description": "Say which decision this one replaces.",
+      "fromTheOtherEnd": "Say what replaced it"
+    },
+    "unsupersede": {
+      "on": "decision",
+      "severs": "supersedes",
+      "title": "Take back what it supersedes",
+      "description": "Say this decision no longer replaces that one.",
+      "fromTheOtherEnd": "Take back what replaced it"
+    },
+    "drop-package": {
+      "on": "decision",
+      "connects": "drops",
+      "title": "Say it drops a package",
+      "description": "Say this decision makes a package unnecessary.",
+      "fromTheOtherEnd": "Name a decision that drops it"
+    },
+    "keep-package": {
+      "on": "decision",
+      "severs": "drops",
+      "title": "Say it keeps a package",
+      "description": "Say this decision does not make that package unnecessary.",
+      "fromTheOtherEnd": "Take a decision that drops it off"
+    },
+    "accept-decision": {
+      "on": "decision",
+      "sets": {
+        "status": "accepted"
+      },
+      "title": "Accept it",
+      "description": "Mark this decision accepted."
+    }
+  },
+  "rules": {
+    "one-version-per-package": {
+      "title": "One version per package",
+      "over": "dependency",
+      "require": "version == pins.pinned",
+      "says": "{manifest} pins {name} at {version}; the rest of the repository pins another version",
+      "repairs": [
+        {
+          "act": "align-pin",
+          "label": "Pin it like the others"
+        }
+      ]
+    },
+    "major-upgrade-has-someone": {
+      "title": "A major upgrade has someone on it",
+      "over": "package",
+      "when": "upgrade == 'major' && plan != 'drop'",
+      "require": "present(assignedTo)",
+      "says": "{name} is pinned at {pinned} and {latest} is out: a major upgrade nobody is assigned",
+      "repairs": [
+        {
+          "act": "assign-upgrade",
+          "label": "Assign its upgrade"
+        }
+      ]
+    },
+    "dropped-by-a-decision": {
+      "title": "What an accepted decision drops is planned to go",
+      "over": "package",
+      "when": "some(in('drops'), status == 'accepted')",
+      "require": "plan == 'drop'",
+      "says": "An accepted decision drops {name}, and it is not planned to go",
+      "repairs": [
+        {
+          "act": "plan-drop",
+          "label": "Plan to drop it"
+        }
+      ]
+    }
+  },
+  "brand": {
+    "accents": {
+      "decision": 175
+    }
+  }
+}
