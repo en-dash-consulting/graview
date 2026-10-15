@@ -57,11 +57,10 @@ The domain/ui split keeps the declaration inspectable by a build, a CLI and
 an agent: `graview check` reads `defineApp`, and a React import there would
 drag a UI package into the checker.
 
-**Or as one JSON document.** `app.json` with `"format": "graview-document"`
-and `"$schema": "./node_modules/@graview/core/dist/document.schema.json"`
-holds the same kinds, acts and rules, compiled and never run.
-`graview check --document app.json` (findings at their JSON path), `graview
-describe --document app.json`, `graview preview app.json --seed seed.json`.
+**Or as one JSON document:** `app.json` (`"format": "graview-document"`,
+schema `node_modules/@graview/core/dist/document.schema.json`), then
+`graview check --document app.json`, `graview describe --document app.json`,
+`graview preview app.json --seed seed.json`.
 
 ## Do this
 
@@ -95,9 +94,8 @@ describe --document app.json`, `graview preview app.json --seed seed.json`.
    Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`,
    `OverviewButton`) are exported for a shell of your own; one is about
    eighty lines, and a longer one is probably rebuilding something derived.
-   `firstLook` on `Shell` and `PagesApp` (`true`, or `{ seen, onDone,
-   steps }`) points a new person at the switch, the problems count,
-   Activity and the Ask box once; write no tour of your own.
+   `firstLook` on `Shell` and `PagesApp` (`true` or `{ seen, onDone,
+   steps }`) points a newcomer at the app's own controls once; write no tour.
 
    Search comes with `Shell`: Find answers `/` or ⌘K from anywhere, lights
    what the words find in whatever picture is open and dims the rest, and
