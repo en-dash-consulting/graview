@@ -17,7 +17,7 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graview — One declaration. A UI for people, tools for agents, rules for both.</title>
-<meta name="description" content="Hand your agent one prompt and it turns your repository&rsquo;s docs, decisions or dependencies into a running Graview app. Graview is a TypeScript framework: declare a domain once and the interface, the permissions and the agent&rsquo;s tools are derived from it, so they can&rsquo;t drift apart.">
+<meta name="description" content="Graview builds apps for anything that is really things and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository&rsquo;s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent&rsquo;s tools are derived from it, so they can&rsquo;t drift apart.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
@@ -63,7 +63,7 @@ img { max-width: 100%; }
    "@id": "https://graview.dev/#website",
    "url": "https://graview.dev/",
    "name": "Graview",
-   "description": "Hand your agent one prompt and it turns your repository’s docs, decisions or dependencies into a running Graview app. Graview is a TypeScript framework: declare a domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart.",
+   "description": "Graview builds apps for anything that is really things and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
    "inLanguage": "en",
    "publisher": {
     "@id": "https://graview.dev/#endash"
@@ -86,7 +86,7 @@ img { max-width: 100%; }
    "@type": "SoftwareApplication",
    "@id": "https://graview.dev/#software",
    "name": "Graview",
-   "description": "Hand your agent one prompt and it turns your repository’s docs, decisions or dependencies into a running Graview app. Graview is a TypeScript framework: declare a domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart.",
+   "description": "Graview builds apps for anything that is really things and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
    "url": "https://graview.dev/",
    "applicationCategory": "DeveloperApplication",
    "operatingSystem": "Any platform with Node.js 22 or later",
@@ -116,7 +116,7 @@ img { max-width: 100%; }
    "@type": "SoftwareSourceCode",
    "@id": "https://graview.dev/#source",
    "name": "Graview",
-   "description": "Hand your agent one prompt and it turns your repository’s docs, decisions or dependencies into a running Graview app. Graview is a TypeScript framework: declare a domain once and the interface, the permissions and the agent’s tools are derived from it, so they can’t drift apart.",
+   "description": "Graview builds apps for anything that is really things and the rules between them: a volunteer rota, a tender response, a coaching week, a household, your repository’s docs. Declare the domain once and the interface, the rules that repair, the permissions and an agent’s tools are derived from it, so they can’t drift apart.",
    "codeRepository": "https://github.com/en-dash-consulting/graview",
    "programmingLanguage": {
     "@type": "ComputerLanguage",
@@ -146,6 +146,14 @@ img { max-width: 100%; }
      "acceptedAnswer": {
       "@type": "Answer",
       "text": "Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong."
+     }
+    },
+    {
+     "@type": "Question",
+     "name": "What can I build with Graview?",
+     "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "Apps for anything that is really things and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household’s calendar and a shared garden are built on it, and so are apps over a repository’s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take."
      }
     },
     {
@@ -1200,6 +1208,10 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 
 /* Use cases. */
 .case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 36px; }
+/* Six cards read as two rows of three, not four and an orphaned two. */
+.case-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 980px) { .case-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .case-grid.three { grid-template-columns: minmax(0, 1fr); } }
 .case { display: grid; gap: 8px; align-content: start; padding: 22px 22px 24px; border-top: 3px solid var(--pine); background: var(--panel); border-radius: 0 0 var(--radius) var(--radius); min-width: 0; }
 .case .kind { font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .case h3 { font-size: 19px; }
@@ -1479,10 +1491,10 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a class="logo" href="index.html" aria-label="Graview"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 847.64 180" aria-hidden="true" focusable="false"><g transform="translate(12 7)"><g fill="none" stroke="currentColor" stroke-width="8.4" stroke-linejoin="round"><path d="M81 63 L15 49 L84 12 H181 L120 56"/><path d="M60 100 L15 127 L101 150 L179 107 L123 98"/><path d="M101 95 V125" stroke-linecap="round"/></g><circle cx="101" cy="74" r="11.7" fill="var(--point, currentColor)"/></g><g transform="translate(234 0)"><path d="M323.0216778668979 -200.0173422935183Q249.98699327986125 -200.0173422935183 179.9826577064817 -180.52818122696726Q109.9783221331021 -161.03902016041621 64.95230869282463 -123.05636245393453L118.05202688055495 -37.75720789074355Q154.03468458703662 -67.73553002384566 208.01517450682852 -85.72035551701713Q261.9956644266204 -103.7051810101886 318.9393019726859 -103.7051810101886Q409.84825493171473 -103.7051810101886 452.29406026447 -61.75937567743334Q494.7398655972252 -19.813570344678084 494.7398655972252 65.05636245393453V167.80923477129852L504.7398655972252 281.0563624539345L499.7658790375027 395.299154563191V532.0650336006937H605.2427921092565V77.13873834814655Q605.2427921092565 -65.93063082592673 533.1734229351832 -132.9739865597225Q461.1040537611099 -200.0173422935183 323.0216778668979 -200.0173422935183ZM311.87860394537176 23.030349013657055Q233.91762410578798 23.030349013657055 172.42412746585734 55.53034901365706Q110.93063082592673 88.03034901365706 75.42412746585737 146.03468458703662Q39.91762410578799 204.03902016041621 39.91762410578799 281.0563624539345Q39.91762410578799 358.07370474745284 75.42412746585737 416.07804032083243Q110.93063082592673 474.082375894212 172.42412746585734 506.08237589421196Q233.91762410578798 538.082375894212 311.87860394537176 538.082375894212Q378.8959462388901 538.082375894212 434.3525905050943 511.07804032083243Q489.8092347712985 484.07370474745284 523.7572078907435 427.0672013873835Q557.7051810101887 370.0606980273141 557.7051810101887 281.0563624539345Q557.7051810101887 192.05202688055496 523.7572078907435 135.04552352048557Q489.8092347712985 78.03902016041621 434.3525905050943 50.53468458703664Q378.8959462388901 23.030349013657055 311.87860394537176 23.030349013657055ZM324.0867114675916 119.37719488402341Q374.9826577064817 119.37719488402341 413.90461738564926 139.8360069369174Q452.82657706481683 160.2948189898114 474.783221331021 196.72328202904833Q496.7398655972252 233.15174506828527 496.7398655972252 281.0563624539345Q496.7398655972252 328.9653154129634 474.783221331021 365.3916106655105Q452.82657706481683 401.81790591805765 413.90461738564926 421.7767179709516Q374.9826577064817 441.7355300238456 324.0867114675916 441.7355300238456Q274.1907652287015 441.7355300238456 234.7688055495339 421.7767179709516Q195.34684587036637 401.81790591805765 173.38803381747238 365.3916106655105Q151.42922176457836 328.9653154129634 151.42922176457836 281.0563624539345Q151.42922176457836 233.15174506828527 173.38803381747238 196.72328202904833Q195.34684587036637 160.2948189898114 234.7688055495339 139.8360069369174Q274.1907652287015 119.37719488402341 324.0867114675916 119.37719488402341Z" transform="translate(0.0 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H192.3164968567093V387.9739865597225L181.21244309559938 429.9956644266204Q204.22111424235857 483.0433557337958 255.73628874918708 510.5628658140039Q307.2514632560156 538.082375894212 383.2557988293952 538.082375894212V430.6791675699111Q376.22111424235857 431.6835031432907 370.19726858877084 432.18567092998046Q364.17342293518317 432.6878387166703 358.1474094949057 432.6878387166703Q284.247127682636 432.6878387166703 240.7948189898114 389.2615434641231Q197.34251029698677 345.83524821157596 197.34251029698677 260.92195967916757V0Z" transform="translate(101.592 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M414.8525905050943 0V109.94363754606547L409.8048991979189 131.96097983958379V321.9349663993063Q409.8048991979189 378.86126165185345 375.3482549317147 410.81357034467806Q340.8916106655105 442.7658790375027 271.9523086928246 442.7658790375027Q225.99132885324084 442.7658790375027 182.0173422935183 428.27888575764143Q138.0433557337958 413.7918924777802 107.06069802731412 388.81357034467806L61.94363754606547 471.1040537611099Q103.96965098634294 504.09104704097115 162.50650336006936 521.0867114675916Q221.0433557337958 538.082375894212 285.0433557337958 538.082375894212Q397.1690873618036 538.082375894212 458.7384565358769 483.5455235204856Q520.3078257099502 429.0086711467592 520.3078257099502 315.90461738564926V0ZM245.91328853240842 -6.017342293518318Q185.88293951875136 -6.017342293518318 140.88293951875136 13.995664426620419Q95.88293951875136 34.008671146759156 71.38944287882072 70.01951008020811Q46.89594623889009 106.03034901365706 46.89594623889009 152.03468458703662Q46.89594623889009 196.07370474745284 67.92195967916757 231.58020810752222Q88.94797311944505 267.0867114675916 136.9804899197919 288.57587253414266Q185.01300672013875 310.0650336006937 265.0346845870366 310.0650336006937H425.8309126381964V230.93496639930632H270.1690873618036Q202.30782570995012 230.93496639930632 179.33600693691739 208.9804899197919Q156.36418816388468 187.02601344027747 156.36418816388468 156.06069802731412Q156.36418816388468 120.13440277476695 185.30132234988076 99.17125514849339Q214.23845653587688 78.20810752221982 265.1257316280078 78.20810752221982Q315.0086711467592 78.20810752221982 353.9241274658574 100.16691957511381Q392.83958378495555 122.1257316280078 409.8048991979189 165.05636245393453L429.84391935833514 89.09538261435074Q410.86993279861264 44.02601344027748 363.8916106655105 19.00433557337958Q316.9132885324084 -6.017342293518318 245.91328853240842 -6.017342293518318Z" transform="translate(154.53 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M226.90461738564926 0 -3.052026880554955 532.0650336006937H111.45957077823542L313.3078257099501 57.19943637546066H257.0433557337958L463.917624105788 532.0650336006937H571.381530457403L340.42922176457836 0Z" transform="translate(242.046 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M86.83958378495556 0V532.0650336006937H197.34251029698677V0ZM142.09104704097118 626.8439193583351Q110.95664426620422 626.8439193583351 90.38510730544115 646.9002818122697Q69.81357034467808 666.9566442662042 69.81357034467808 696.0433557337958Q69.81357034467808 725.1300672013874 90.38510730544115 745.186429655322Q110.95664426620422 765.2427921092565 142.09104704097118 765.2427921092565Q173.22544981573813 765.2427921092565 193.7969867765012 746.1907652287015Q214.36852373726427 727.1387383481465 214.36852373726427 698.052026880555Q214.36852373726427 667.9566442662042 194.2948189898114 647.4002818122697Q174.22111424235854 626.8439193583351 142.09104704097118 626.8439193583351Z" transform="translate(326.808 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M330.09538261435074 -6.017342293518318Q243.03902016041621 -6.017342293518318 177.5 28.99132885324084Q111.96097983958379 64 75.93930197268588 125.51300672013873Q39.91762410578799 187.02601344027747 39.91762410578799 266.0346845870366Q39.91762410578799 345.05202688055493 74.94146975937568 406.5628658140039Q109.96531541296336 468.07370474745284 171.5043355733796 503.07804032083243Q233.0433557337958 538.082375894212 311.0867114675916 538.082375894212Q389.09971818773033 538.082375894212 449.1365705614568 503.593214827661Q509.17342293518317 469.1040537611099 543.20593973553 407.09971818773033Q577.2384565358768 345.09538261435074 577.2384565358768 262.05202688055493Q577.2384565358768 255.03034901365706 576.736288749187 245.50867114675916Q576.2341209624973 235.98699327986125 575.2341209624973 227.96965098634294H127.35118144374593V307.09971818773033H516.9653154129634L472.7875569044006 281.0867114675916Q473.783221331021 329.0173422935183 452.82440927812706 365.95447647951437Q431.86559722523305 402.8916106655105 395.4371341859961 423.85475829178404Q359.0086711467592 444.81790591805765 311.09538261435074 444.81790591805765Q263.18209408194235 444.81790591805765 226.25363104270542 423.85475829178404Q189.32516800346846 402.8916106655105 168.86635595057447 365.4566442662042Q148.40754389768045 328.0216778668979 148.40754389768045 278.09971818773033V260.03034901365703Q148.40754389768045 210.09538261435074 171.36852373726424 171.65391285497506Q194.32950357684803 133.21244309559938 236.26013440277475 111.7514632560156Q278.1907652287015 90.29048341643181 333.11272490786905 90.29048341643181Q379.07804032083243 90.29048341643181 416.5216778668979 105.26880554953392Q453.9653154129634 120.24712768263603 481.9609798395838 151.19943637546066L542.2124430955994 79.99132885324084Q506.1951008020811 37.98699327986126 452.17559072187294 15.98482549317147Q398.15608064166486 -6.017342293518318 330.09538261435074 -6.017342293518318Z" transform="translate(365.823 133.2397) scale(.153 -.153)" fill="currentColor"/><path d="M201.92195967916757 0 4.952308692824626 532.0650336006937H109.42922176457836L281.3078257099501 57.19943637546066H232.07370474745284L410.9523086928246 532.0650336006937H504.38153045740296L679.247127682636 57.19943637546066H630.0260134402774L806.9046173856492 532.0650336006937H905.3381747236072L707.3728593106439 0H601.8742683719922L440.07804032083243 426.67483199653157H472.2254498157381L307.42055061781923 0Z" transform="translate(454.40999999999997 133.2397) scale(.153 -.153)" fill="currentColor"/></g></svg></a>
     </div>
     <nav class="jump" aria-label="Sections">
-      <a href="#recipes">Recipes</a>
-      <a class="wide" href="#how">How it works</a>
+      <a href="#builds">What it builds</a>
+      <a class="wide" href="#gives">What you get</a>
+      <a class="wide" href="#recipes">Recipes</a>
       <a class="wide" href="#cloud">Cloud</a>
-      <a class="wide" href="#faq">FAQ</a>
       <a class="wide" href="tour.html">The tour</a>
       <a href="https://github.com/en-dash-consulting/graview">GitHub</a>
       <a class="go" href="docs/index.html">Docs</a>
@@ -1543,12 +1555,150 @@ main.page > section.tour-intro { padding-top: 64px; }
     <div class="ah-why">
       <h1 id="h-what">One declaration. A UI for people, tools for agents, rules for both.</h1>
       <p class="lede">
-        Your agent writes one declaration: the kinds of thing, how they
-        relate, what changes them and the rules they keep. Graview derives
-        the interface, the permissions and a typed tool for every act from
-        it, so they can&rsquo;t drift apart. The app above is one such
-        declaration, running.
+        A rota, a bid, a season&rsquo;s plan, a household&rsquo;s week, your
+        repository&rsquo;s docs: anything that is really things and the
+        rules between them. Your agent writes one declaration of what the
+        domain is made of, and Graview derives the interface, the rules that
+        repair, the permissions and a typed tool for every act from it, so
+        they can&rsquo;t drift apart. The app above is one such declaration,
+        running.
       </p>
+    </div>
+  </section>
+
+  <!--
+    WHAT IT BUILDS. The prompt above is a developer's door, and its recipes
+    are a repository's; this is the answer to "what is it for" in the
+    domain's words, before a word about how. The rota is live because it is
+    the plainest proof: a product nobody would call a developer tool, built
+    on the same packages.
+  -->
+  <section id="builds" class="feature cases" aria-labelledby="h-builds">
+    <div class="feature-grid">
+      <div class="claim">
+        <p class="eyebrow"><span>What it builds</span></p>
+        <h2 id="h-builds">Anything that is really things, and the rules between them.</h2>
+        <p class="lede">
+          Scheduling, coverage, planning, operations: the work where the hard
+          part is how things relate, and where a form per table was never the
+          interface anybody wanted. Who covers which shift. Which requirement
+          nobody answered. Which plot nobody tends.
+        </p>
+        <ul class="plain">
+          <li><b>A person gets a real interface.</b> A calendar, a board, a matrix, lists, records and forms, at phone width, with nothing drawn by hand.</li>
+          <li><b>The rules watch.</b> An uncovered shift is a problem with a one-press fix, not something somebody finds on Saturday.</li>
+          <li><b>An agent works it too.</b> Ask the app to cover a shift and it takes the same action a coordinator would, in the same log.</li>
+        </ul>
+        <p class="more"><a href="tour.html#cases">Four products built on it &rarr;</a></p>
+      </div>
+      <div class="visual">
+        <div class="chapter-live" data-graview-app="rota" data-face="picture" data-stop="#view=the-week&amp;in.at=2026-09-14" data-label="The rota's week" role="region" aria-label="A volunteer rota built on Graview, live">
+          <p class="chapter-loading">The rota, loading…</p>
+        </div>
+        <p class="stage-caption"><span class="live">Live</span><span>a volunteer rota built on Graview: the week its coordinator and volunteers fill in, drawn by the calendar lens</span></p>
+      </div>
+    </div>
+    <div class="case-grid three">
+      <div class="case">
+        <span class="kind">Scheduling</span>
+        <h3>A volunteer rota</h3>
+        <p>Shifts, locations and the people who cover them. A coordinator, volunteers and viewers under one policy, and a calendar a person and an agent both fill in.</p>
+      </div>
+      <div class="case">
+        <span class="kind">Coverage</span>
+        <h3>A tender response</h3>
+        <p>Requirements against answers, and the two failures that lose a bid: a requirement nobody answered, and work nobody asked for. A matrix shows both at a glance.</p>
+      </div>
+      <div class="case">
+        <span class="kind">Planning</span>
+        <h3>A coaching week</h3>
+        <p>The team you intend to field decides which skills matter, and those decide what training is for: one chain across a board, a matrix and a week.</p>
+      </div>
+      <div class="case">
+        <span class="kind">Operations</span>
+        <h3>A household week</h3>
+        <p>People, time and capacity, with a calendar sync whose conflicts arrive as problems with repairs, ported from an existing app and matched to it result for result.</p>
+      </div>
+      <div class="case">
+        <span class="kind">Community</span>
+        <h3>A shared garden</h3>
+        <p>Plots, gardeners, plantings and rotations, with a rule that every plot has a caretaker. The example the docs teach from, grown one step at a time.</p>
+      </div>
+      <div class="case">
+        <span class="kind">Engineering</span>
+        <h3>Your repository</h3>
+        <p>Its docs and who owns them, its decisions and what they superseded, its dependencies and the upgrade each needs. The <a class="inl" href="#recipes">recipes</a> below were made from the prompt alone.</p>
+      </div>
+    </div>
+    <p class="sm dim ways-note">
+      Don&rsquo;t write code? On <a class="inl" href="https://graview.cloud">Graview Cloud</a>
+      the same kind of app comes from a conversation: a wedding&rsquo;s vendors,
+      a trip, a job search, at its own address, shared with the people involved.
+    </p>
+  </section>
+
+  <!--
+    WHAT YOU GET. The tour's six features, each in a sentence a person
+    could repeat, with the strongest of them live: a rule that finds a
+    problem and offers its own repair. Each card goes to its section of the
+    tour, where it is live beside the claim.
+  -->
+  <section id="gives" class="feature flip cases" aria-labelledby="h-gives">
+    <div class="feature-grid">
+      <div class="claim">
+        <p class="eyebrow"><span>What you get</span></p>
+        <h2 id="h-gives">One declaration. Everything a person and an agent need.</h2>
+        <p class="lede">
+          Say once what the domain is made of: the kinds of thing, how they
+          relate, what changes them, the rules they keep and who may do what.
+          Everything below is derived from that, and stays in step with it.
+        </p>
+        <p class="more"><a href="tour.html">Every one of them live, on the tour &rarr;</a></p>
+      </div>
+      <div class="visual">
+        <div class="chapter-live" data-graview-chapter="3" data-stop="#overview=1&amp;expand=kind:rule" data-label="The garden's agreement" role="region" aria-label="The garden with one rule and one problem, live">
+          <p class="chapter-loading">The rule, loading…</p>
+        </div>
+        <p class="stage-caption"><span class="live">Live</span><span>one rule, the problem it found, and the repair it names: press the problem</span></p>
+      </div>
+    </div>
+    <div class="case-grid three">
+      <div class="case">
+        <span class="kind">Rules that repair</span>
+        <h3>A problem with a way out</h3>
+        <p>A broken rule says what is wrong in a sentence and offers the fix as a button, to a person or an agent, instead of refusing a save.</p>
+        <p class="gave"><a class="inl" href="tour.html#rules">See it on the tour &rarr;</a></p>
+      </div>
+      <div class="case">
+        <span class="kind">The routed face</span>
+        <h3>An ordinary web app, free</h3>
+        <p>A home, a list per kind, a page per record, a form per action and a problems page, at phone width. Replace any page with your own design.</p>
+        <p class="gave"><a class="inl" href="tour.html#surfaces">See it on the tour &rarr;</a></p>
+      </div>
+      <div class="case">
+        <span class="kind">Lenses</span>
+        <h3>Pictures that travel</h3>
+        <p>A calendar, a board, a matrix, a timeline, a plan. Written once for one domain, they work unchanged in yours.</p>
+        <p class="gave"><a class="inl" href="tour.html#lenses">See it on the tour &rarr;</a></p>
+      </div>
+      <div class="case">
+        <span class="kind">People and agents</span>
+        <h3>The same buttons, no more</h3>
+        <p>Every action is a typed tool for an agent, under the same permissions. Its changes land in the same log with its name on them, and any one can be taken back.</p>
+        <p class="gave"><a class="inl" href="tour.html#agent">See it on the tour &rarr;</a></p>
+      </div>
+      <div class="case">
+        <span class="kind">Permissions</span>
+        <h3>What you can press is what you can see</h3>
+        <p>Declare who may do what once, and the buttons, the pages and the agent&rsquo;s tools all narrow from it, with a sentence saying who can.</p>
+        <p class="gave"><a class="inl" href="tour.html#acts">See it on the tour &rarr;</a></p>
+      </div>
+      <div class="case">
+        <span class="kind">The studio</span>
+        <h3>Change the app inside the app</h3>
+        <p>The declaration opens as a graph in the same interface. Edit it with ordinary actions, checked before it lands, with the stored data migrated.</p>
+        <p class="gave"><a class="inl" href="tour.html#studio">See it on the tour &rarr;</a></p>
+      </div>
     </div>
   </section>
 
@@ -1560,7 +1710,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   -->
   <section id="recipes" class="recipes" aria-labelledby="h-recipes">
     <div class="claim">
-      <p class="eyebrow"><span>Recipes</span></p>
+      <p class="eyebrow"><span>Recipes, for a repository</span></p>
       <h2 id="h-recipes">The same prompt. A different task.</h2>
       <p class="lede">
         Each recipe is what an agent produced from the prompt alone, in a
@@ -1782,6 +1932,10 @@ main.page > section.tour-intro { padding-top: 64px; }
       <div class="qa">
         <h3>What is Graview?</h3>
         <p>Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong.</p>
+      </div>
+      <div class="qa">
+        <h3>What can I build with Graview?</h3>
+        <p>Apps for anything that is really things and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household&rsquo;s calendar and a shared garden are built on it, and so are apps over a repository&rsquo;s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take.</p>
       </div>
       <div class="qa">
         <h3>How is Graview different from other app frameworks?</h3>

@@ -64,8 +64,8 @@ const arrive = async (page, url) => {
 };
 
 const PAGES = [
-  /* The prompt and the recipe it opens on, live; the other recipes mount when their tab is chosen. */
-  { file: "index.html", name: "the page", live: 1, skip: "#what" },
+  /* The prompt and the recipe it opens on, the rota and the rule, live; the other recipes mount when their tab is chosen. */
+  { file: "index.html", name: "the page", live: 3, skip: "#what" },
   /* The long tour, moved off the front page: eight feature frames and the first step of the stepper. */
   { file: "tour.html", name: "the tour", live: 9, skip: "#tour" },
   /* Sixteen chapters and the kit's own frame. */

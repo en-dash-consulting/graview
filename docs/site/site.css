@@ -1000,6 +1000,10 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 
 /* Use cases. */
 .case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-top: 36px; }
+/* Six cards read as two rows of three, not four and an orphaned two. */
+.case-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 980px) { .case-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .case-grid.three { grid-template-columns: minmax(0, 1fr); } }
 .case { display: grid; gap: 8px; align-content: start; padding: 22px 22px 24px; border-top: 3px solid var(--pine); background: var(--panel); border-radius: 0 0 var(--radius) var(--radius); min-width: 0; }
 .case .kind { font-family: var(--sans); font-weight: var(--w-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .case h3 { font-size: 19px; }

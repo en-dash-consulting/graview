@@ -87,5 +87,5 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 
 ## Optional
 
-- [Questions, answered plainly](https://graview.dev/#faq): What is Graview? How is Graview different from other app frameworks? What license is Graview under? How do I start a Graview app? How do AI agents use a Graview app? What is Graview Cloud?
+- [Questions, answered plainly](https://graview.dev/#faq): What is Graview? What can I build with Graview? How is Graview different from other app frameworks? What license is Graview under? How do I start a Graview app? How do AI agents use a Graview app? What is Graview Cloud?
 - [llms-full.txt](https://graview.dev/llms-full.txt): every docs page above, in full, as Markdown
