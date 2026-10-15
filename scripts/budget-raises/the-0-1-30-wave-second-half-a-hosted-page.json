@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 300,
+  "gzipped": 150,
+  "changeset": "a-screen-reader-is-told-each-stop.md",
+  "note": "Raised when the second half of the 0.1.30 wave landed together: graview.dev's scene fixes (an edge sign stepping clear of the corner controls, a tie taking the kit's route), a screen reader told each stop (named controls, focus after a move) and a kind's list in its declared order. Each fit alone; together the page measured 558_461 against 558_300."
+}

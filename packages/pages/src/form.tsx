@@ -504,7 +504,7 @@ function Control<S extends AnySchema>({
       // A record in another app (FR-171), picked from what the host lists for this viewer.
       return (
         <div data-graview-part="field" data-graview-field="linked">
-          <LinkedPicker relation={spec.relation} value={value} onChange={onChange} label={title} />
+          <LinkedPicker relation={spec.relation} value={value} onChange={onChange} label={named} />
         </div>
       );
     case "repeat":

@@ -84,7 +84,8 @@ describe("a hosted page", () => {
     // 883 KB since the bar ranks its places and a list arranges on one quiet line (its lists behind a door), over a rule saying its shape and FR-157: the scene face measured 903_581 B.
     // 884 KB since a broken rule says its values to a host (FR-159, the engine's hook), a showing's name a fingertip as drawn and the overview's address alone (FR-154), together: the scene face measured 904_192 B.
     // Still 884 KB when the inspector's pane and the seat's tools came to be fetched when an act is first wanted: the scene face measured 856_430 B, 46_530 under main's 902_960.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(884 * 1024);
+    // 887 KB since the second half of the 0.1.30 wave landed together: graview.dev's fixes to the scene (an edge sign clear of the corner, a tie taking the kit's route), a screen reader told each stop (named controls, focus after a move, another seat's change said) and a kind's list in its declared order: the scene face measured 906_948 B, 1_732 over 884.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(887 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

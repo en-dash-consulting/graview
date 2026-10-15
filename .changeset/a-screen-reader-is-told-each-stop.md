@@ -15,4 +15,6 @@ What a screen reader is told, stop by stop. `verify-screen-reader` walks the Roa
 
 Bundles: every face is about 2.6 kB larger minified (0.9 kB gzipped) and the embed with the studio handed in about 1.7 kB (0.5 kB), raised in `scripts/budget-raises/a-screen-reader-is-told-each-stop-*.json`; a hosted page's first load and the embed without the studio are unchanged.
 
+Landed beside graview.dev's scene fixes and a kind's list in its declared order, the three together carry 0.3 KB more up front on a hosted page.
+
 Compatibility: no surface changes. `EditableValue` takes an optional `said`, and its button's accessible name is now the fact and its value; a test that finds it by its value alone finds it by `data-graview-field` instead.
