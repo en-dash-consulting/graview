@@ -399,6 +399,16 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       const node = has.get(id);
       const changed = !old || !node || !same(old, node) || !same(outEdges(before, id), outEdges(after, id));
       if (!changed) continue;
+      /* A titled lens kept off the lists, or put back: `set-lens-hidden`, when that is all that changed. */
+      if (sort === "lens" && old && node && (old["hidden"] === true) !== (node["hidden"] === true)) {
+        const { hidden: _was, ...oldRest } = old;
+        const { hidden: _now, ...nodeRest } = node;
+        const declared = (document.lenses ?? []).find((lens) => typeof lens["title"] === "string" && lensNodeId(lens as unknown as LensIdentity) === id);
+        if (declared && same(oldRest, nodeRest) && same(outEdges(before, id), outEdges(after, id))) {
+          edits.push({ op: "set-lens-hidden", title: declared["title"] as string, ...(typeof declared["on"] === "string" ? { on: declared["on"] } : {}), hidden: node["hidden"] === true });
+          continue;
+        }
+      }
       // A titled lens taken away is a place taken away: `remove-lens`, the edit that takes back a lens the seat kept.
       if (sort === "lens" && old && !node) {
         const declared = (document.lenses ?? []).find((lens) => typeof lens["title"] === "string" && lensNodeId(lens as unknown as LensIdentity) === id);

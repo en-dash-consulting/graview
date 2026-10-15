@@ -1,6 +1,6 @@
 export { connectGuest } from "./guest.js";
 export type { ConnectGuestOptions, Guest } from "./guest.js";
-export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, isHostHello } from "./protocol.js";
+export { GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, isHostHello, navigateRequest } from "./protocol.js";
 export type {
   GuestAct,
   GuestAnswer,
@@ -8,11 +8,13 @@ export type {
   GuestDomEvent,
   GuestEvent,
   GuestFile,
+  GuestNavigateTo,
   GuestNode,
   GuestPlace,
   GuestPressed,
   GuestProps,
   GuestTheme,
+  GuestWhere,
   GuestReady,
   GuestRefusal,
   GuestRequest,

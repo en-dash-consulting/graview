@@ -5,6 +5,9 @@ import { createGuestHost, createGuestLimiter, type GuestHost, type GuestLimits, 
 import { retryingImport } from "@graview/core/retry";
 import { untilItArrives } from "./arrive.js";
 import type { GuestPictureHand, GuestPictures } from "./pictures.js";
+import type { Arrival } from "./links.js";
+import { arriveAt } from "./arrive-at.js";
+import type { GoTo } from "@graview/react/provider";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
 /* The pictures' host, fetched only for a frame that asks for them (FR-175): a page of frames that do not carries none of it. */
@@ -66,6 +69,12 @@ export interface MountGuestViewOptions<S extends AnySchema> {
   readonly onNavigate?: (id: string) => void;
   /** The guest asked to go to one of `places`, by its slug. */
   readonly onNavigatePlace?: (as: string) => void;
+  /** Where the guest asked to go, judged — a record, a place or a kind's list, narrowed and to a section — in place of `onNavigate` and `onNavigatePlace` (`GuestHostOptions.onArrive`). */
+  readonly onArrive?: (to: Arrival) => void;
+  /** A navigate went nowhere: the sentence saying why. */
+  readonly onLost?: (said: string) => void;
+  /** The face's own way of going (`useGoTo`), read when the guest goes: where `onArrive` is not given, the arrival is gone to by it. */
+  readonly goTo?: () => GoTo | undefined;
   /** The guest asked for a height. By default the frame takes it. */
   readonly onSize?: (height: number) => void;
   readonly limits?: GuestLimits;
@@ -199,6 +208,8 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
       ...(options.places ? { places: () => [...new Set(options.places!().map((place) => place.as))], placesShown: options.places } : {}),
       ...(options.onNavigatePlace ? { onNavigatePlace: options.onNavigatePlace } : {}),
       ...(options.onNavigate ? { onNavigate: options.onNavigate } : {}),
+      ...(options.onArrive ? { onArrive: options.onArrive } : options.goTo ? { onArrive: (to: Arrival) => arriveAt(options.goTo!(), to) } : {}),
+      ...(options.onLost ? { onLost: options.onLost } : {}),
       onSize: options.onSize ?? ((height) => (iframe.style.height = `${height}px`)),
       ...(options.limits ? { limits: options.limits } : {}),
       limiter,

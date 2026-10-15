@@ -22,6 +22,7 @@ export default defineConfig({
       "@graview/core/typed": fileURLToPath(new URL("./packages/core/src/typed.ts", import.meta.url)),
       "@graview/core/blocks": fileURLToPath(new URL("./packages/core/src/blocks.ts", import.meta.url)),
       "@graview/core/arrange": fileURLToPath(new URL("./packages/core/src/arrange.ts", import.meta.url)),
+      "@graview/core/navigate": fileURLToPath(new URL("./packages/core/src/navigate.ts", import.meta.url)),
       "@graview/core/search": fileURLToPath(new URL("./packages/core/src/search.ts", import.meta.url)),
       "@graview/core/words": fileURLToPath(new URL("./packages/core/src/words.ts", import.meta.url)),
       "@graview/core/markdown": fileURLToPath(new URL("./packages/core/src/markdown.ts", import.meta.url)),

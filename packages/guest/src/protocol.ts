@@ -11,8 +11,8 @@
  *   host  → guest    { graview: "host-hello", protocol, nonce, view } (window.postMessage, with the port)
  *   host  → guest    { type: "props", props }                        (over the port, whenever what it sees moves)
  *   guest → host     { type: "act", nonce, id, name, args }          (over the port: ask for an act)
- *   guest → host     { type: "navigate", nonce, to }                 (over the port: go to a record)
- *   guest → host     { type: "navigate", nonce, place }              (over the port: go to a named place of the app, by its slug)
+ *   guest → host     { type: "navigate", nonce, to, section? }       (over the port: go to a record)
+ *   guest → host     { type: "navigate", nonce, place, where?, section? } (over the port: go to a named place or a kind's list, by its slug, narrowed)
  *   guest → host     { type: "size", nonce, height }                 (over the port: the height it wants)
  *   host  → guest    { type: "answer", id, ok, … }                   (over the port: what became of an act)
  *
@@ -197,6 +197,31 @@ export interface GuestProps {
   readonly places?: readonly GuestPlace[];
 }
 
+/** What a list or a place is narrowed to: a field and the one value it keeps, `{ stage: "building" }`. */
+export type GuestWhere = Readonly<Record<string, string | number | boolean>>;
+
+/**
+ * WHERE A VIEW ASKS TO GO: a record by its id (a bare string is a record
+ * first, then a place by that slug); a named place, or a kind's list by its
+ * plural (`"features"`) or its name — narrowed by `where`, in the kind's
+ * own fields — and either one to a `section` of its page, a heading's
+ * words or an element's id.
+ *
+ *   graview.navigate({ place: "features", where: { stage: "building" }, section: "shipping-soon" })
+ */
+export type GuestNavigateTo =
+  | string
+  | { readonly record: string; readonly section?: string }
+  | { readonly place: string; readonly where?: GuestWhere; readonly section?: string };
+
+/** The message a destination is sent as, without its nonce: what the host judges (a `where` on a record is refused there, in a sentence). */
+export function navigateRequest(to: GuestNavigateTo): { readonly type: "navigate"; readonly to: string; readonly where?: GuestWhere; readonly section?: string } | { readonly type: "navigate"; readonly place: string; readonly where?: GuestWhere; readonly section?: string } | undefined {
+  if (typeof to === "string") return { type: "navigate", to };
+  const { place, record, where, section } = (to ?? {}) as { place?: unknown; record?: unknown; where?: GuestWhere; section?: unknown };
+  const also = { ...(where === undefined ? {} : { where }), ...(section === undefined ? {} : { section: String(section) }) };
+  return typeof place === "string" ? { type: "navigate", place, ...also } : typeof record === "string" ? { type: "navigate", to: record, ...also } : undefined;
+}
+
 /** A named place of the app: a picture by its title, and the slug a link names it by. */
 export interface GuestPlace {
   readonly as: string;
@@ -307,9 +332,13 @@ export type HostMessage =
 
 export type GuestRequest =
   | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> }
-  | { readonly type: "navigate"; readonly nonce: string; readonly to: string }
-  /** Go to a named place of this app, by its slug (FR-93): a worker view's links stay in the app. */
-  | { readonly type: "navigate"; readonly nonce: string; readonly place: string }
+  | { readonly type: "navigate"; readonly nonce: string; readonly to: string; readonly where?: GuestWhere; readonly section?: string }
+  /**
+   * Go to a named place or a kind's list of this app, by its slug (FR-93): a
+   * worker view's links stay in the app. `where` narrows it, held to the
+   * kind's fields; `section` is a heading's words or an element's id.
+   */
+  | { readonly type: "navigate"; readonly nonce: string; readonly place: string; readonly where?: GuestWhere; readonly section?: string }
   | { readonly type: "size"; readonly nonce: string; readonly height: number }
   /** A worker guest's drawing: Remote DOM mutation records, with each listener sent as `{ listener: id }`. */
   | { readonly type: "render"; readonly nonce: string; readonly records: readonly unknown[] }

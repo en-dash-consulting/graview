@@ -86,7 +86,8 @@ describe("a hosted page", () => {
     // Still 884 KB when the inspector's pane and the seat's tools came to be fetched when an act is first wanted: the scene face measured 856_430 B, 46_530 under main's 902_960.
     // 887 KB since the second half of the 0.1.30 wave landed together: graview.dev's fixes to the scene (an edge sign clear of the corner, a tie taking the kit's route), a screen reader told each stop (named controls, focus after a move, another seat's change said) and a kind's list in its declared order: the scene face measured 906_948 B, 1_732 over 884.
     // 888 KB since a change came to be said in words, said with nobody shown here, and asked from what the record holds in the scene's ask too: the scene face measured 909_040 B, 2_092 more than before them (906_948).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(888 * 1024);
+    // 889 KB since a view's navigate came to go to a kind's list narrowed and a lens came to be kept off the lists (Roadmap f-navigate-filters, f-hidden-lenses): the face's way of going to a list and the place kept off the bar and the tabs, the filter's judging and the section left to the worker view's host and the routed face: the scene face measured 909_395 B, 355 more than before them (909_040).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(889 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

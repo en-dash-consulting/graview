@@ -36,6 +36,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "set-page-fields": { op: "set-page-fields", kind: "vendor", fields: ["quote"], groups: [{ title: "Status", fields: ["status"] }] },
   "add-lens": { op: "add-lens", title: "The shortlist", on: "vendor", options: { blocks: [{ headline: "{count(all('vendor')) | words} vendors" }, { list: "all('vendor')", sort: "name", as: "row" }] } },
   "remove-lens": { op: "remove-lens", title: "The shortlist" },
+  "set-lens-hidden": { op: "set-lens-hidden", title: "The shortlist", hidden: true },
   "set-home": { op: "set-home", blocks: [{ headline: "The wedding" }, { figure: "sum(all('vendor'), quote)", as: "money", currency: "USD", label: "Quoted so far" }] },
   "arrange-pages": { op: "arrange-pages", order: ["vendor", "category"], first: "vendors" },
   "set-computed": { op: "set-computed", kind: "category", name: "spent", expr: "sum(in('fills'), quote)", label: "Quoted" },
@@ -48,7 +49,7 @@ const ONE_OF_EACH: Record<(typeof EDIT_OPS)[number], Record<string, unknown>> = 
   "remove-sight": { op: "remove-sight", roles: "*", kinds: ["category", "vendor"] },
 };
 /** An edit that needs something the fixture does not have, and what to do first. */
-const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"], "remove-grant": ONE_OF_EACH["add-grant"], "remove-sight": ONE_OF_EACH["add-sight"] };
+const FIRST: Partial<Record<(typeof EDIT_OPS)[number], Record<string, unknown>>> = { "remove-lens": ONE_OF_EACH["add-lens"], "set-lens-hidden": ONE_OF_EACH["add-lens"], "remove-grant": ONE_OF_EACH["add-grant"], "remove-sight": ONE_OF_EACH["add-sight"] };
 
 describe("every edit says what it did", () => {
   it.each(EDIT_OPS.map((op) => [op]))("%s", (op) => {

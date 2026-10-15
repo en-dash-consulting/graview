@@ -2,7 +2,7 @@ export { GraviewProvider, matchWith, openingView, ROBOT_REST_MS, useFound, useGr
 export { GoToContext, useGoTo } from "./go.js";
 export { BesideTheMap } from "./beside-the-map.js";
 export { HostFilesContext, useHostFiles } from "./files.js";
-export type { GoTo } from "./go.js";
+export type { GoTo, GoToAlso } from "./go.js";
 export { Figure, Occupants, PersonFigure } from "./occupants.js";
 export { HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState } from "./presence.js";
 export type { PresenceInputs, PresenceState } from "./presence.js";

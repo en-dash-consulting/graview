@@ -68,6 +68,8 @@ any other.
 
    Without the studio, `editDocument` covers the rest of a document too:
    `add-lens` (`replace` retitles; `at` puts one back), `remove-lens`,
+   `{ op: "set-lens-hidden" }` (`hidden: true` keeps a lens off the bar and the page
+   list, still reached by its address, a link or `navigate`),
    `set-home`, `arrange-pages` (`order`, `hide`, `first`, `scene` and `pages` — the switch's words; `null` clears),
    `set-computed` (`expr: null` removes it and what reads it),
    `set-format` (a number's `format` — `money`, `percent`, `duration` —

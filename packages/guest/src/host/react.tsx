@@ -122,8 +122,9 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
           ...(options.pictures ? { pictures: options.pictures } : {}),
           places: () => views.places(),
           brand: () => branded.current,
-          onNavigate: (id) => going.current.record(id),
-          onNavigatePlace: (as) => going.current.place(as),
+          /* A record, a place or a kind's list — narrowed and to a section — where the face goes; what goes nowhere is said in the console. */
+          goTo: () => going.current,
+          onLost: (said) => console.warn(`${options.name}: ${said}`),
           ...(options.limits ? { limits: options.limits } : {}),
         });
         mounted.iframe.style.height = `${options.height ?? 160}px`;

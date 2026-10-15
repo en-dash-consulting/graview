@@ -121,6 +121,7 @@ export const EDIT_OPS = [
   "set-page-fields",
   "add-lens",
   "remove-lens",
+  "set-lens-hidden",
   "set-home",
   "arrange-pages",
   "set-computed",
@@ -219,6 +220,8 @@ const SHAPES: Record<EditOp, z.ZodType> = {
     })
     .strict(),
   "remove-lens": z.object({ op: z.literal("remove-lens"), title: lensTitle, on: kindName.optional() }).strict(),
+  // A lens kept off the bar's places, the page list and the home's gallery, still reached by its address, a link or navigate.
+  "set-lens-hidden": z.object({ op: z.literal("set-lens-hidden"), title: lensTitle, on: kindName.optional(), hidden: z.boolean() }).strict(),
   "set-home": z.object({ op: z.literal("set-home"), blocks: z.union([z.array(z.unknown()).min(1), z.null()]) }).strict(),
   "arrange-pages": z
     .object({
@@ -856,6 +859,8 @@ class Editor {
         return this.addLens(i, e);
       case "remove-lens":
         return this.removeLens(i, e);
+      case "set-lens-hidden":
+        return this.setLensHidden(i, e);
       case "set-home":
         return this.setHome(i, e.blocks);
       case "arrange-pages":
@@ -980,7 +985,8 @@ class Editor {
       if (at < 0) return;
       was = lenses[at];
     }
-    const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}) };
+    // A lens drawn anew in another's place stays off the lists if that one was.
+    const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}), ...(was?.["hidden"] === true ? { hidden: true } : {}) };
     // A title is an address: one lens a title on a kind.
     const clash = lenses.findIndex((other, index) => index !== at && isObject(other) && typeof other["title"] === "string" && placeSlug(other["title"]) === placeSlug(e.title) && (e.on === undefined || other["on"] === undefined || other["on"] === e.on));
     if (clash >= 0) return this.fail(i, "title", `there is already a lens called "${String(lenses[clash]["title"])}"`, 'give it its own title, or say "replace" with the title of the lens it takes the place of');
@@ -1032,6 +1038,27 @@ class Editor {
       if (others.length > 0) return (this.fail(i, `bindings.${kind}.${others[0]}`, `a board binds only "column"`), false);
     }
     return true;
+  }
+
+  /**
+   * A LENS KEPT OFF THE LISTS, or put back on them: still a place at its
+   * address, reached by a link or `navigate`, but not offered by the bar,
+   * the page list or the home's gallery. A lens a custom home links to.
+   */
+  private setLensHidden(i: number, e: Doc) {
+    const index = this.lensIndex(i, e.title, e.on);
+    if (index < 0) return;
+    const lens: Doc = this.doc.lenses[index];
+    const title = String(lens["title"]);
+    const primary: readonly string[] = Array.isArray(this.doc.pages?.primary) ? this.doc.pages.primary : [];
+    if (e.hidden && primary.some((word) => namesLens(word, title))) {
+      return this.fail(i, "hidden", `pages.primary stands "${title}" on the bar, so it cannot be kept off the lists`, 'take it out of "primary" with arrange-pages first');
+    }
+    const was = lens["hidden"] === true;
+    if (e.hidden) lens["hidden"] = true;
+    else delete lens["hidden"];
+    if (was === e.hidden) this.said.push(e.hidden ? `The lens "${title}" was already kept off the lists.` : `The lens "${title}" was already listed.`);
+    else this.said.push(e.hidden ? `The lens "${title}" is kept off the bar and the page list; a link or navigate still reaches it.` : `The lens "${title}" is listed on the bar and the page list again.`);
   }
 
   private removeLens(i: number, e: Doc) {
