@@ -1,0 +1,28 @@
+{
+  "nodes": [
+    { "id": "f1", "kind": "finding", "title": "A token is written to the log", "severity": "critical", "category": "security", "confidence": "high" },
+    { "id": "f2", "kind": "finding", "title": "The type check runs twice", "severity": "high", "category": "performance", "confidence": "low" },
+    { "id": "module:files", "kind": "module", "path": "src/files.ts" },
+    { "id": "module:app-code", "kind": "module", "path": "src/app.ts" },
+    { "id": "module:tsc", "kind": "module", "path": "tsconfig.json" },
+    { "id": "t1", "kind": "task", "title": "Rotate the keys" },
+    { "id": "t2", "kind": "task", "title": "Scrub the old logs" },
+    { "id": "r1", "kind": "risk", "label": "Card data leaks", "likelihood": "low", "impact": "high", "area": "billing" },
+    {
+      "id": "i1",
+      "kind": "insight",
+      "label": "Secrets travel too far",
+      "strength": "strong",
+      "thesis": "Every secret the app holds reaches **three layers** further than it needs to: the logger, the error reporter and the cache.\n\nWhere a secret is read, it should be used and dropped; the review found none of the three dropping it."
+    },
+    { "id": "rc1", "kind": "root-cause", "label": "No owner for logging" },
+    { "id": "w1", "kind": "week", "label": "Week of Oct 12" }
+  ],
+  "edges": [
+    { "id": "e1", "kind": "affects", "from": "f1", "to": "module:files" },
+    { "id": "e2", "kind": "affects", "from": "f1", "to": "module:app-code" },
+    { "id": "e3", "kind": "affects", "from": "f1", "to": "module:tsc" },
+    { "id": "e4", "kind": "dependsOn", "from": "f1", "to": "t1" },
+    { "id": "e5", "kind": "dependsOn", "from": "f1", "to": "t2" }
+  ]
+}

@@ -509,12 +509,20 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
    * frame a list of cards became a box of its own to scroll, under the
    * page's own scroll. It is drawn in the page's column, as long as it is.
    */
-  const flows = (context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean } | undefined)?.flows === true;
+  const drawnBy = context.views?.resolve(place.kind, { cardinality: "many", fidelity: "full" }, place.as)?.view as { flows?: boolean; creates?: boolean } | undefined;
+  const flows = drawnBy?.flows === true;
+  /*
+   * A PLACE THAT IS READ, NOT WRITTEN. Every place ended with the forms
+   * that begin its kind; on a summary or a report that is a form nobody
+   * came for. A lens declared `"create": false` leaves them off — the
+   * kind's list and the bar still offer them.
+   */
+  const creates = drawnBy?.creates !== false;
   const facts = kindFacts(store, place.kind, {
     ...(principal ? { principal } : {}),
     ...(context.invariantContext ? { context: context.invariantContext } : {}),
   });
-  const creators = facts.actions.affordances
+  const creators = !creates ? [] : facts.actions.affordances
     .map((affordance) => ({ affordance, mutation: store.allMutations().find((m) => m.name === affordance.mutation) }))
     .filter((entry): entry is { affordance: typeof entry.affordance; mutation: NonNullable<typeof entry.mutation> } => entry.mutation !== undefined);
   return (
@@ -615,15 +623,17 @@ export function DefaultPlacePage<S extends AnySchema>({ context }: { context: Pa
         <LensOnPage context={context} place={place} filter={narrowedTo} {...(chosen?.at === placeKey(place) ? { chosen: chosen.ids } : {})} />
       </div>
       {/* The acts, at a reading width: a form as wide as a gallery is a form nobody can scan. */}
-      <div style={{ maxWidth: 760, display: "grid", gap: 40 }}>
-        {creators.map(({ affordance, mutation }) => (
-          <section key={affordance.id} style={{ ...rule, display: "grid", gap: 14 }}>
-            <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
-            {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
-            <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} label={affordance.label} {...(principal ? { principal } : {})} />
-          </section>
-        ))}
-      </div>
+      {creators.length > 0 ? (
+        <div style={{ maxWidth: 760, display: "grid", gap: 40 }} data-testid="place-creators">
+          {creators.map(({ affordance, mutation }) => (
+            <section key={affordance.id} style={{ ...rule, display: "grid", gap: 14 }}>
+              <h2 style={h2}>{mutation.title ?? mutation.name}</h2>
+              {mutation.description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{mutation.description}</p> : null}
+              <DerivedForm store={store} mutation={mutation} prefilled={affordance.args} open={affordance.open} label={affordance.label} {...(principal ? { principal } : {})} />
+            </section>
+          ))}
+        </div>
+      ) : null}
     </PageMain>
   );
 }

@@ -77,14 +77,15 @@ describe("view specs are checked into findings with JSON paths", () => {
     expect(at({ vendor: { card: [{ figure: true }] } })).toEqual(["view-figure @ views.vendor.card.0.figure"]);
   });
 
-  it("holds nesting to four deep and a view to forty blocks", () => {
+  it("holds nesting to four deep and a view to forty blocks at its top", () => {
     const nest = (depth: number): unknown => (depth === 0 ? { divider: true } : { group: [nest(depth - 1)] });
     expect(at({ vendor: { card: [nest(3)] } })).toEqual([]);
     expect(at({ vendor: { card: [nest(4)] } })).toEqual(["view-depth @ views.vendor.card.0.group.0.group.0.group.0.group"]);
     expect(at({ vendor: { card: Array.from({ length: 40 }, () => ({ divider: true })) } })).toEqual([]);
     expect(at({ vendor: { card: Array.from({ length: 41 }, () => ({ divider: true })) } })).toEqual(["view-size @ views.vendor.card"]);
-    expect(at({ vendor: { card: Array.from({ length: 20 }, () => ({ group: [{ divider: true }] })) } })).toEqual([]);
-    expect(at({ vendor: { card: Array.from({ length: 21 }, () => ({ group: [{ divider: true }] })) } })).toEqual(["view-size @ views.vendor.card"]);
+    // A group counts as one at the top, however much it holds.
+    expect(at({ vendor: { card: Array.from({ length: 40 }, () => ({ group: [{ divider: true }] })) } })).toEqual([]);
+    expect(at({ vendor: { card: Array.from({ length: 41 }, () => ({ group: [{ divider: true }] })) } })).toEqual(["view-size @ views.vendor.card"]);
   });
 
   it("refuses a document whose views do not check, when compiled", () => {

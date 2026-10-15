@@ -181,7 +181,7 @@ no act or edit form offers it, and an act that sets one is refused. It is
 worked out over the graph the reader holds, so a seat is served one from what
 it may see. A glance may name one; a `label` or `describe` only one worked out
 from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"),
-`{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C").
+`{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three").
 The check refuses a cycle (`computed-cycle`), a name that is already a field
 (`computed-clash`) and work that grows with the cube of the graph
 (`computed-cost`, a warning at the square). A document's top-level

@@ -1,7 +1,7 @@
 import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { blockContextFor, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
-import { useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { createContext, Suspense, useContext, type ComponentType, type MouseEvent, type ReactNode } from "react";
 import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
@@ -222,7 +222,7 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
     }
     case "number":
       return (
-        <span className="graview-spec-number">
+        <span className="graview-spec-number" {...(block.emphasis ? { "data-emphasis": block.emphasis } : {})}>
           <span className="graview-spec-number-value">{block.text}</span>
           {block.label ? <span className="graview-spec-label">{block.label}</span> : null}
         </span>
@@ -242,8 +242,31 @@ function SpecFigure() {
   ) : null;
 }
 
+/**
+ * BADGES SIDE BY SIDE. A card's "high", "layout" and "now" each stood on a
+ * line of its own, the view being a column: three states read as a list.
+ * Badges that follow one another are one run, flowing and wrapping as chips
+ * do; a badge alone stands where it is.
+ */
 function ResolvedBlocks({ blocks }: { readonly blocks: readonly ResolvedBlock[] }): ReactNode {
-  return blocks.map((block, i) => <Resolved key={i} block={block} />);
+  const drawn: ReactNode[] = [];
+  for (let i = 0; i < blocks.length; i++) {
+    let end = i;
+    while (blocks[end]?.t === "badge" && blocks[end + 1]?.t === "badge") end++;
+    if (end === i) {
+      drawn.push(<Resolved key={i} block={blocks[i]!} />);
+      continue;
+    }
+    drawn.push(
+      <span key={i} className="graview-spec-badges">
+        {blocks.slice(i, end + 1).map((block, at) => (
+          <Resolved key={at} block={block} />
+        ))}
+      </span>,
+    );
+    i = end;
+  }
+  return drawn;
 }
 
 /** Resolved blocks, drawn as `view` — `"home"`, `"<kind>.page"` — whose blocks a face claims by key (`BlockSlots`). */
@@ -310,6 +333,23 @@ function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode;
   const { store, views } = useGraview();
   const label = labelOf(store.schema.tryDefinition(node.kind), node);
   const View = views.lookup(node.kind as never, { cardinality: "one", fidelity: as === "card" ? "summary" : "glyph" }) as ViewComponent<AnySchema> | undefined;
+  /*
+   * A ROW IS A LINE OF THE LIST, AS WIDE AS THE LIST. A kind with no row of
+   * its own drew the framework's glyph — the scene's chip, capped at 28
+   * characters for a band slot — so a list of findings on a page 1440 wide
+   * was a column of pills, every name cut at about thirty characters. Here
+   * the record's name is the row's, whole, wrapping where it must.
+   */
+  if (as === "row" && depth <= MAX_LIST_DEPTH && (!View || isDefaultView(View))) {
+    return (
+      <li className="graview-spec-item" data-graview-listed={node.id} data-as={as}>
+        <ListedLink node={node} label={label} />
+        <div className="graview-spec graview-spec-row" data-graview-spec="row" data-graview-kind={node.kind} aria-hidden="true">
+          <strong className="graview-spec-title">{label}</strong>
+        </div>
+      </li>
+    );
+  }
   return (
     <li className="graview-spec-item" data-graview-listed={node.id} data-as={as}>
       {/* The link first: a reader hears the record's name, then what its card says of it. */}

@@ -5,7 +5,7 @@ import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNoti
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
 import type { SeatStart } from "@graview/primitives";
 import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
-import { ErrorReportContext, GraviewProvider, lazyModule, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
+import { ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
@@ -329,6 +329,11 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   // Where the declaration says the app opens (FR-80): the first view, and the scene's when the pages leave it holding nothing (FR-157).
   const opens = useMemo(() => openingView(views as ReactViewRegistry<S>, app.schema), [views, app.schema]);
   const initialView = useMemo(() => viewFor(face, at?.stop ?? (address ? stopAtAddress(props.basePath) : undefined) ?? stop, kinds, (views as ReactViewRegistry<S>).places(), opens), []);
+  // A visit that opened on the scene landed there: the pages, drawn later by a press on Home, open on the home (`hasLanded`).
+  const [openedOn] = useState(face);
+  useEffect(() => {
+    if (openedOn !== "pages") markLanded(views as object);
+  }, [openedOn, views]);
   /*
    * THE PAGE ON THE ROUTED FACE, KEPT (FR-116): where it is, or last was,
    * so the overview and back is the same page, and `where()` can say it.

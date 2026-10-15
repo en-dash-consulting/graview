@@ -210,6 +210,13 @@ export function pluralLabel(schema: { tryDefinition(kind: string): { readonly pl
   return capitalize(pluralOf(schema, kind));
 }
 
+/** A kind's whole list, said beside a place that has its name (`pages-place-named-as-a-list`): "All root causes". */
+export function allLabel(schema: { tryDefinition(kind: string): { readonly plural?: string } | undefined }, kind: string): string {
+  const plural = pluralOf(schema, kind);
+  // "Open questions" is a capital starting a label, not a name: "All open questions". "APIs" stays as it is.
+  return `All ${/^[A-Z][a-z]/.test(plural) ? plural.charAt(0).toLowerCase() + plural.slice(1) : plural}`;
+}
+
 export function fieldWords(
   definition: { readonly display?: { readonly labels?: Readonly<Record<string, string>> }; readonly computed?: Readonly<Record<string, string | { readonly label?: string }>> } | undefined,
   key: string,

@@ -1,4 +1,4 @@
-import { hueFor, kindPath, MOST_STANDING, onePerPicture, orderKinds, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
+import { allLabel, hueFor, kindPath, MOST_STANDING, onePerPicture, orderKinds, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
@@ -126,9 +126,21 @@ export function barPlaces(input: {
   // Which kinds hold anything, from the counts the graph keeps as records come and go: never a walk of every record.
   const stands = (kind: string, as?: string): boolean => (!store.graph.size.nodes || store.graph.count(kind) > 0) && (declared ? (as ? declared.places.has(`${kind}|${as}`) : declared.kinds.has(kind)) : !supporting.has(kind));
   const out: BarPlace[] = [{ key: HOME_KEY, label: "Home", path: HOME_PATH, group: "home", primary: true }];
-  for (const kind of orderKinds(live, arrangement?.order)) out.push({ key: `kind:${kind}`, label: pluralLabel(store.schema, kind), path: kindPath(store.schema, kind), group: "lists", kind, primary: stands(kind) });
   // A place at the scene's address is not offered: the address is the scene's (FR-132). Nor one kept off the lists (`hidden`): a link reaches it.
   const seen = all.filter((place) => live.includes(place.kind) && place.as !== OVERVIEW_SLUG && !place.hidden);
+  /*
+   * A PLACE TITLED AS A KIND'S LIST IS (`pages-place-named-as-a-list`):
+   * the place the declaration drew is the one by that name — it stands, as
+   * `openingOf` and `pages.primary` already read the word — and the kind's
+   * list folds into More as "All root causes", still at its address. Two
+   * tabs both reading "Root causes" left a reader to guess which was which.
+   */
+  const titled = new Set(onePerPicture(seen).map((place) => placeLabel(place, all, store.schema).toLowerCase()));
+  for (const kind of orderKinds(live, arrangement?.order)) {
+    const label = pluralLabel(store.schema, kind);
+    const named = titled.has(label.toLowerCase());
+    out.push({ key: `kind:${kind}`, label: named ? allLabel(store.schema, kind) : label, path: kindPath(store.schema, kind), group: "lists", kind, primary: named ? false : stands(kind) });
+  }
   // Each picture once: one over several kinds is one entry, under the first of them this seat sees.
   for (const place of onePerPicture(seen)) {
     // Two DIFFERENT pictures of one name say whose, at `?of=` and beside the name (as the routed face addresses and lists them).

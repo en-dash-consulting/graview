@@ -56,6 +56,8 @@ function doorFor<S extends AnySchema>(lens: DrawnLens): ViewComponent<S> {
   };
   // A place drawn from blocks is a page's own column of words and cards: it flows with the page, never a box that scrolls inside itself.
   if (lens.lens === "blocks") (Door as { flows?: boolean }).flows = true;
+  // A place declared `"create": false` is read, not written: its page offers no form to begin its kind.
+  if (lens.create === false) (Door as { creates?: boolean }).creates = false;
   return Door;
 }
 

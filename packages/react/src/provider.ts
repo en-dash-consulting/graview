@@ -17,7 +17,7 @@
  * the boundary, the emphasis sets, the editable fields, the others placed —
  * is `@graview/react/drawing`'s, fetched with the face that draws it.
  */
-export { GraviewProvider, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
 // Whether a panel beside the map lists a district opened from altitude.
 export { BesideTheMap } from "./beside-the-map.js";
