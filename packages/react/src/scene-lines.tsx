@@ -14,6 +14,7 @@ import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-node.js";
 import { captionRuns, type CaptionEntry, type CaptionRun } from "./captions.js";
 import { railInset } from "./rails.js";
+import { placeTieLabels, tiesReached, type TieLabel, type TieReach } from "./tie-labels.js";
 import { retryingImport } from "@graview/core/retry";
 import { lazyModule } from "./lazy-part.js";
 import { mapChoice } from "./map-choice.js";
@@ -307,6 +308,8 @@ const RecordLinks = /* @__PURE__ */ recordLinks.part(
  * a hairball, not an answer.
  */
 type Box = { x: number; y: number; width: number; height: number };
+/** The strip at the top of a card where its title is said, which a tie's words keep off. */
+const TITLE_STRIP = 44;
 type TieLine = {
   key: string;
   kind: string;
@@ -728,12 +731,94 @@ function SelectionTies<S extends AnySchema>({
   return found;
   };
   const [lines, setLines] = useState<TieLine[]>([]);
+  const [labels, setLabels] = useState<TieLabel[]>([]);
   useLayoutEffect(() => {
-    setLines(measure());
+    const measured = measure();
+    setLines(measured);
+    setLabels(measured.some((line) => line.said) ? labelsFor(measured) : []);
     // The measurement depends on the DOM the frame committed, which these
     // name; `measure` itself closes over nothing that changes without them.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ties, nodes, overview, scheme, width, height, alreadyDrawn, tick, stageRef]);
+  /* Each tie's words beside its far end, once, clear of the cards' titles (`tie-labels.ts`). */
+  const labelsFor = (measured: readonly TieLine[]): TieLabel[] => {
+    const stageEl = stageRef.current;
+    if (!stageEl) return [];
+    const cards: { box: Box; title: Box }[] = [];
+    for (const host of stageEl.querySelectorAll("[data-graview-view]")) {
+      const frame = [...host.children].find((child) => !child.classList.contains("graview-kind-tag"));
+      const box = frame ? visibleRect(frame, stageEl) : null;
+      if (box) cards.push({ box, title: { ...box, height: Math.min(box.height, TITLE_STRIP) } });
+    }
+    return placeTieLabels(
+      measured.flatMap((line) => (line.said ? [{ key: line.key, said: line.said, end: { x: line.endX, y: line.endY }, far: line.toBox }] : [])),
+      cards,
+      { width, height },
+    );
+  };
+  /*
+   * A TIE'S WORDS WAIT TO BE ASKED FOR: shown while the tie, or a card at
+   * either end of it, is under the pointer or holds the keyboard.
+   */
+  const [reached, setReached] = useState<ReadonlySet<string>>(() => new Set());
+  const reachable = useRef<readonly TieReach[]>([]);
+  reachable.current = lines.map((line) => ({ key: line.key, fromBox: line.fromBox, toBox: line.toBox, ids: [line.self, line.other], edgeId: line.edgeId }));
+  const anySaid = labels.length > 0;
+  useEffect(() => {
+    const stageEl = stageRef.current;
+    if (!stageEl || !anySaid) return;
+    const settle = (next: Set<string>) =>
+      setReached((was) => (was.size === next.size && [...next].every((key) => was.has(key)) ? was : next));
+    let queued = 0;
+    let last: PointerEvent | null = null;
+    const pointed = () => {
+      queued = 0;
+      if (!last) return;
+      const stage = stageEl.getBoundingClientRect();
+      const target = last.target instanceof Element ? last.target : null;
+      settle(
+        tiesReached(reachable.current, {
+          point: { x: last.clientX - stage.left, y: last.clientY - stage.top },
+          edgeId: target?.closest("[data-graview-edge]")?.getAttribute("data-graview-edge") ?? null,
+        }),
+      );
+    };
+    const onMove = (event: PointerEvent) => {
+      last = event;
+      if (!queued) queued = requestAnimationFrame(pointed);
+    };
+    const onLeave = () => {
+      last = null;
+      settle(new Set());
+    };
+    const onFocus = (event: FocusEvent) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+      const stage = stageEl.getBoundingClientRect();
+      const rect = target.getBoundingClientRect();
+      const id = target.closest("[data-graview-pick]")?.getAttribute("data-graview-pick") ?? target.closest("[data-graview-view]")?.getAttribute("data-graview-view");
+      settle(
+        tiesReached(reachable.current, {
+          ...(id ? { ids: [id] } : {}),
+          box: { x: rect.left - stage.left, y: rect.top - stage.top, width: rect.width, height: rect.height },
+        }),
+      );
+    };
+    const onBlur = (event: FocusEvent) => {
+      if (!(event.relatedTarget instanceof Node && stageEl.contains(event.relatedTarget))) settle(new Set());
+    };
+    stageEl.addEventListener("pointermove", onMove, { passive: true });
+    stageEl.addEventListener("pointerleave", onLeave);
+    stageEl.addEventListener("focusin", onFocus);
+    stageEl.addEventListener("focusout", onBlur);
+    return () => {
+      if (queued) cancelAnimationFrame(queued);
+      stageEl.removeEventListener("pointermove", onMove);
+      stageEl.removeEventListener("pointerleave", onLeave);
+      stageEl.removeEventListener("focusin", onFocus);
+      stageEl.removeEventListener("focusout", onBlur);
+    };
+  }, [stageRef, anySaid]);
   if (lines.length === 0) return null;
 
   return (
@@ -853,13 +938,23 @@ function SelectionTies<S extends AnySchema>({
       })}
     </svg>
     <div aria-hidden="true" data-graview-world="" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: SCENE_LAYERS.tieLabels }}>
-      {lines.map((line) =>
-        line.said ? (
-          <span key={line.key} className="graview-record-link-said" data-graview-link-said={line.kind} data-graview-lands={line.proxy ? "district" : "record"} style={{ position: "absolute", left: line.endX, top: line.endY - 26 }}>
-            {line.said}
+      {labels.map((label) => {
+        const first = lines.find((line) => line.key === label.keys[0]);
+        return (
+          <span
+            key={label.said}
+            className="graview-record-link-said"
+            data-graview-link-said={first?.kind}
+            data-graview-lands={first?.proxy ? "district" : "record"}
+            /* How many ties these words speak for, and whether one of them is reached. */
+            data-graview-said-for={label.keys.length}
+            data-graview-tie-said={label.keys.some((key) => reached.has(key)) ? "shown" : "waiting"}
+            style={{ position: "absolute", left: label.x, top: label.y }}
+          >
+            {label.said}
           </span>
-        ) : null,
-      )}
+        );
+      })}
     </div>
     </>
   );

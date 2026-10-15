@@ -271,7 +271,9 @@ const GROUND_LINES = () => {
     const y = c.top + c.height / 2;
     return !boxes.some((b) => x >= b.left - 4 && x <= b.right + 4 && y >= b.top - 4 && y <= b.bottom + 4);
   }).length;
-  return { lines: lines.length, said: said.length, repeated: said.length - new Set(said).size, loose, left: s.left };
+  // Words two ties would both say are said once, for both (`data-graview-said-for`): counted for each tie they speak for.
+  const saidFor = [...document.querySelectorAll("[data-graview-link-said]")].reduce((sum, el) => sum + (Number(el.getAttribute("data-graview-said-for")) || 1), 0);
+  return { lines: lines.length, said: saidFor, repeated: said.length - new Set(said).size, loose, left: s.left };
 };
 
 /*

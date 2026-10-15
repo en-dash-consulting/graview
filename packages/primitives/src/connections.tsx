@@ -1,6 +1,7 @@
 import { humanizeField, labelOf, nounOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { useGraph, useGraview } from "@graview/react/provider";
+import { useState, type CSSProperties } from "react";
 import { Chip } from "./primitives/index.js";
 import { hueFor } from "@graview/render";
 
@@ -20,7 +21,7 @@ import { hueFor } from "@graview/render";
  */
 export interface ConnectionsProps {
   readonly id: string;
-  /** Chips per group before it says "+N more" rather than truncating. */
+  /** Chips per group before it offers "+N more", which opens the rest, rather than truncating. */
   readonly max?: number;
   /** Shown when the node has no edges at all. Omit for silence. */
   readonly empty?: string;
@@ -48,6 +49,8 @@ export function Connections({ id, max = 8, empty, hide }: ConnectionsProps) {
   // nodes it is about, and a card saying "nothing is connected" over a band
   // of them was two surfaces disagreeing.
   const all = groupsFor(store, id, store.violations());
+  /* The groups opened past their first chips, by key: "+N more" opens one, "Show fewer" closes it. */
+  const [opened, setOpened] = useState<ReadonlySet<string>>(() => new Set());
   const groups = hide
     ? all.flatMap((group) => {
         const ids = group.ids.filter((other) => !hide.has(other));
@@ -68,8 +71,11 @@ export function Connections({ id, max = 8, empty, hide }: ConnectionsProps) {
       style={{ display: "flex", flexDirection: "column", gap: 12 }}
     >
       {groups.map((group) => {
-        const shown = group.ids.slice(0, max);
-        const hidden = group.ids.length - shown.length;
+        const open = opened.has(group.key);
+        const cut = group.ids.length > max;
+        const shown = open ? group.ids : group.ids.slice(0, max);
+        const hidden = group.ids.length - Math.min(max, group.ids.length);
+        const chips = `graview-more-${id}-${group.key}`.replace(/[^A-Za-z0-9_-]/g, "-");
         return (
           <section key={group.key} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {/*
@@ -94,7 +100,7 @@ export function Connections({ id, max = 8, empty, hide }: ConnectionsProps) {
             >
               {group.label}
             </h2>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            <div id={chips} style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {shown.map((neighborId) => {
                 const node = store.graph.getNode(neighborId);
                 if (!node) return null;
@@ -108,7 +114,35 @@ export function Connections({ id, max = 8, empty, hide }: ConnectionsProps) {
                   />
                 );
               })}
-              {hidden > 0 ? <Chip label={`+${hidden} more`} /> : null}
+              {/*
+                * "+N MORE" IS A BUTTON. It was a chip with no press behind
+                * it, so a card said there were two more findings and offered
+                * no way to see them. It opens the group in place, every chip
+                * of it, and closes again; the card scrolls if they need the
+                * room.
+                */}
+              {cut ? (
+                <button
+                  type="button"
+                  data-graview-more={group.key}
+                  aria-expanded={open}
+                  aria-controls={chips}
+                  {...(open ? {} : { "aria-label": `${hidden} more: ${group.said ?? group.label}` })}
+                  onClick={(event) => {
+                    // Its own meaning, not a press on the card it sits on.
+                    event.stopPropagation();
+                    setOpened((was) => {
+                      const next = new Set(was);
+                      if (next.has(group.key)) next.delete(group.key);
+                      else next.add(group.key);
+                      return next;
+                    });
+                  }}
+                  style={MORE}
+                >
+                  {open ? "Show fewer" : `+${hidden} more`}
+                </button>
+              ) : null}
             </div>
           </section>
         );
@@ -116,6 +150,25 @@ export function Connections({ id, max = 8, empty, hide }: ConnectionsProps) {
     </div>
   );
 }
+
+/** "+N more" at a chip's size, as the control it is. */
+const MORE: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  alignSelf: "flex-start",
+  minHeight: 24,
+  boxSizing: "border-box",
+  padding: "3px 9px",
+  borderRadius: 6,
+  border: "1px solid var(--graview-edge)",
+  background: "var(--graview-panel-muted)",
+  color: "var(--graview-accent)",
+  font: "inherit",
+  fontSize: "0.8125rem",
+  lineHeight: 1.5,
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+};
 
 /**
  * Neighbors grouped by the edge that reaches them.
