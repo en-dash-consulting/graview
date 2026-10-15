@@ -19,6 +19,56 @@ import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, p
  * or right-clicks does not need.
  */
 export function InspectorPane({ placement = "float" }: { readonly placement?: InspectorPlacement } = {}) {
+  const { menuAt } = useGraview<AnySchema>();
+  // A menu with nothing at the pointer derives nothing: at most the chosen record's "Acts…".
+  return placement === "menu" && menuAt === null ? <ChosenActs /> : <Pane placement={placement} />;
+}
+
+/**
+ * A RECORD CHOSEN WHERE NOTHING CAN STAND BESIDE IT SAYS ITS ACTS (the tenth
+ * walk). The menu opens at the pointer — a right-click, or the acts key — and
+ * a finger on a phone has neither: choosing "Today" lit it and "Add a task"
+ * was on no screen. In a scene too narrow for a rail, on the ground (the
+ * map's panel says it from above, W-195), the one record chosen gets
+ * "Acts…", which opens the same menu. Measured from the scene's box, so it
+ * stands in the box it is drawn in; under Up and the key, in the picture's
+ * column of controls, because at the picture's foot a notice stood over it.
+ */
+function ChosenActs() {
+  const { store, setMenuAt, view } = useGraview<AnySchema>();
+  const { selection } = useSelection();
+  const mark = useRef<HTMLElement | null>(null);
+  const [width, setWidth] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const parent = mark.current?.offsetParent ?? mark.current?.parentElement;
+    if (!parent) return;
+    const measured = Math.round(parent.getBoundingClientRect().width);
+    if (measured !== width) setWidth(measured);
+  });
+  const one = selection.length === 1 && !view.overview ? store.graph.getNode(selection[0]!) : undefined;
+  if (!one || width === null || width >= RAIL_NEEDS) return <span ref={mark} hidden />;
+  return (
+    <button
+      type="button"
+      ref={mark as never}
+      data-testid="chosen-acts"
+      aria-label={`What can be done with ${nameOf(store, one.id)}`}
+      aria-haspopup="menu"
+      onClick={(event) => {
+        const at = event.currentTarget.getBoundingClientRect();
+        setMenuAt({ x: Math.round(at.right), y: Math.round(at.bottom + 4), on: one.id });
+      }}
+      style={{ position: "absolute", right: "calc(14px + var(--graview-dock, 0px))", top: 98, zIndex: "var(--graview-layer-overview, 10)" as never, minHeight: 30, padding: "0 12px", borderRadius: 8, fontSize: "0.8125rem", background: "var(--graview-float)", boxShadow: "var(--graview-lift-low)" }}
+    >
+      Acts…
+    </button>
+  );
+}
+
+/** Whether the picture has room for a rail beside it: the scene's own box, not the window's. */
+const RAIL_NEEDS = 14 + 236 + 14 + 300;
+
+function Pane({ placement }: { readonly placement: InspectorPlacement }) {
   const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
   /*
    * The pane is positioned within the SCENE'S BOX, not the window. It was
@@ -287,7 +337,6 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
    * scene's own box, not the window's: an embed in a column of an article is
    * narrow on the widest monitor there is.
    */
-  const RAIL_NEEDS = 14 + 236 + 14 + 300;
   const narrow = (box?.width ?? Number.POSITIVE_INFINITY) < RAIL_NEEDS;
 
   /*
@@ -307,8 +356,7 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
    */
   useLayoutEffect(() => {
     const parent = asideRef.current?.offsetParent as HTMLElement | null;
-    // A menu standing down (at most a chosen record's "Acts…") floats; it takes no room from the picture.
-    if (!parent || !narrow || atPointer || standDown) return;
+    if (!parent || !narrow || atPointer) return;
     const height = asideRef.current?.getBoundingClientRect().height ?? 0;
     const room = `${Math.round(height) + 20}px`;
     if (parent.style.paddingBottom === room) return;
@@ -446,37 +494,7 @@ export function InspectorPane({ placement = "float" }: { readonly placement?: In
     .filter((observation) => !headed.has(observation.text))
     .map((observation) => ({ ...observation, text: trim(observation.text) }));
 
-  if (standDown) {
-    /*
-     * A RECORD CHOSEN WHERE NOTHING CAN STAND BESIDE IT SAYS ITS ACTS (the
-     * tenth walk). The menu opens at the pointer — a right-click, or the acts
-     * key — and a finger on a phone has neither: choosing "Today" lit it and
-     * "Add a task" was on no screen. In a scene too narrow for a rail, on the
-     * ground (the map's panel says it from above, W-195), the one record
-     * chosen gets "Acts…", which opens the same menu under it. Measured from
-     * the scene's box, so this stands in the box it is drawn in.
-     */
-    const one = selection.length === 1 && !view.overview ? store.graph.getNode(selection[0]!) : undefined;
-    if (!one || !narrow) return <span ref={asideRef} hidden />;
-    const about = nameOf(store, one.id);
-    return (
-      <button
-        type="button"
-        ref={asideRef as never}
-        data-testid="chosen-acts"
-        aria-label={`What can be done with ${about}`}
-        aria-haspopup="menu"
-        onClick={(event) => {
-          const at = event.currentTarget.getBoundingClientRect();
-          setMenuAt({ x: Math.round(at.right), y: Math.round(at.bottom + 4), on: one.id });
-        }}
-        // Under Up and the key, in the picture's own column of controls: at its foot, a notice stood over it (the tenth walk's journeys).
-        style={{ position: "absolute", right: "calc(14px + var(--graview-dock, 0px))", top: 98, zIndex: "var(--graview-layer-overview, 10)" as never, minHeight: 30, padding: "0 12px", borderRadius: 8, fontSize: "0.8125rem", background: "var(--graview-float)", boxShadow: "var(--graview-lift-low)" }}
-      >
-        Acts…
-      </button>
-    );
-  }
+  if (standDown) return null;
   return (
     <section
       {...(atPointer ? popover.pane : {})}
