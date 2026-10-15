@@ -193,13 +193,27 @@ try {
           // The standing is a dot and a number; what it says is its name.
           standing: document.querySelector('[data-testid="standing"]')?.getAttribute("aria-label") ?? null,
           districts: [...document.querySelectorAll('[data-graview-view^="kind:"]')].map((el) => el.textContent?.trim().replace(/\s+/g, " ") ?? ""),
-          trail: document.querySelector("header")?.textContent?.trim().replace(/\s+/g, " ").slice(0, 160) ?? null,
+          trail: ((at, most) => {
+            // What a reader sees, not the styles a part brings along: a <style> in the plane is text too.
+            const el = document.querySelector(at);
+            if (!el) return null;
+            const copy = el.cloneNode(true);
+            copy.querySelectorAll("style, script").forEach((one) => one.remove());
+            return (copy.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, most);
+          })("header", 160),
           withheld: document.querySelector('[data-testid="withheld"]')?.textContent?.trim() ?? null,
           activity: [...document.querySelectorAll('[data-testid="diff-log"] li')].map((li) => li.textContent?.trim().replace(/\s+/g, " ") ?? "").slice(0, 6),
           remembered: document.querySelector('[data-testid="remembered"]')?.textContent?.trim() ?? null,
           problems: document.querySelector('[data-testid="problems"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 300) ?? null,
           wordmark: document.querySelector('[data-testid="app-name"]')?.textContent?.trim() ?? null,
-          focused: document.querySelector('[data-graview-plane="0"]')?.textContent?.trim().replace(/\s+/g, " ").slice(0, 400) ?? null,
+          focused: ((at, most) => {
+            // What a reader sees, not the styles a part brings along: a <style> in the plane is text too.
+            const el = document.querySelector(at);
+            if (!el) return null;
+            const copy = el.cloneNode(true);
+            copy.querySelectorAll("style, script").forEach((one) => one.remove());
+            return (copy.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, most);
+          })('[data-graview-plane="0"]', 400),
         }));
         /*
          * WHAT THE SEAT MAY DO, asked somewhere it could do something.
