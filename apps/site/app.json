@@ -1,0 +1,229 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "graview.dev",
+  "description": "Graview's own site and docs as a Graview app: every page graview.dev serves is a record, written out of the repository by scripts/site-docs.mjs and rendered by renderPlace, beside the packages, skills, checks and recipes it is about.",
+  "kinds": {
+    "page": {
+      "noun": "page",
+      "plural": "pages",
+      "label": "{title}",
+      "description": "An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models.",
+      "fields": {
+        "path": { "type": "string", "required": true, "description": "Where it is served, from the site's root: index.html, docs/packages/core.html, llms.txt." },
+        "title": { "type": "string", "required": true, "description": "What the page calls itself." },
+        "description": { "type": "string", "description": "The one line it says about itself, to a search engine and in llms.txt." },
+        "design": {
+          "type": "enum",
+          "required": true,
+          "options": ["landing", "tour", "progression", "missing", "docs-home", "getting-started", "recipes", "recipe", "concepts", "packages", "package", "cli", "agents", "skills", "skill", "checks", "demos", "stability", "site", "llms", "llms-full", "robots", "sitemap", "start"],
+          "description": "Which of the site's designed pages writes it (apps/site/design.mjs)."
+        },
+        "format": { "type": "enum", "required": true, "options": ["html", "markdown", "text", "xml"], "description": "What is served at its address." },
+        "twin": { "type": "string", "description": "Where its Markdown twin is served, for a docs page." },
+        "rail": { "type": "string", "description": "The docs rail's entry it stands under." },
+        "template": { "type": "string", "description": "The hand-designed page it is filled into, under apps/site/pages/." },
+        "body": { "type": "text", "format": "markdown", "description": "What it says, where that is a document in the repository rather than a design." }
+      },
+      "edges": {
+        "about": { "to": ["package", "skill", "recipe", "scaffold"], "cardinality": "one", "description": "what the page is about", "inverse": "the page about it" },
+        "under": { "to": ["page"], "cardinality": "one", "description": "the page it sits under", "inverse": "the pages under it" }
+      },
+      "glance": ["path", "design"]
+    },
+    "package": {
+      "noun": "package",
+      "plural": "packages",
+      "label": "{name}",
+      "description": "An npm package Graview ships, read off its package.json, its README.md and its barrel.",
+      "fields": {
+        "name": { "type": "string", "required": true, "description": "Its name on npm." },
+        "dir": { "type": "string", "required": true, "description": "Its folder under packages/." },
+        "description": { "type": "string", "description": "The description in its package.json." },
+        "version": { "type": "string", "description": "The version in its package.json." },
+        "readme": { "type": "text", "format": "markdown", "label": "README", "description": "Its README.md, without the heading that repeats its name." },
+        "api": { "type": "list", "of": "string", "label": "Exports", "description": "What its barrel, src/index.ts, exports by name." }
+      },
+      "edges": {
+        "dependsOn": { "to": ["package"], "cardinality": "many", "description": "the packages it depends on", "inverse": "the packages that depend on it" },
+        "exports": { "to": ["entry"], "cardinality": "many", "description": "its entry points", "inverse": "the package it is an entry of" }
+      },
+      "glance": ["version", "description"]
+    },
+    "entry": {
+      "noun": "entry point",
+      "plural": "entry points",
+      "label": "{specifier}",
+      "description": "One subpath a package exports, as a product imports it.",
+      "fields": {
+        "specifier": { "type": "string", "required": true, "description": "What a product imports: @graview/core/check." },
+        "subpath": { "type": "string", "required": true, "description": "The key in the package's exports: ./check." },
+        "position": { "type": "integer", "required": true, "min": 0, "description": "Where its package.json lists it." }
+      }
+    },
+    "skill": {
+      "noun": "skill",
+      "plural": "skills",
+      "label": "{name}",
+      "description": "An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md.",
+      "fields": {
+        "name": { "type": "string", "required": true, "description": "The name in its front matter." },
+        "dir": { "type": "string", "required": true, "description": "Its folder under packages/skills/skills/." },
+        "description": { "type": "string", "description": "What it teaches, from its front matter." },
+        "body": { "type": "text", "format": "markdown", "description": "The skill itself." }
+      },
+      "glance": ["description"]
+    },
+    "check": {
+      "noun": "check finding",
+      "plural": "check findings",
+      "label": "{code}",
+      "description": "A thing graview check can say, read out of the checker's source.",
+      "fields": {
+        "code": { "type": "string", "required": true, "description": "Its code." },
+        "severity": { "type": "enum", "required": true, "options": ["error", "warning", "note"], "description": "How loudly it says it." }
+      },
+      "glance": ["severity"]
+    },
+    "command": {
+      "noun": "command",
+      "plural": "commands",
+      "label": "graview {name}",
+      "description": "A graview subcommand, read off the help the CLI prints.",
+      "fields": {
+        "name": { "type": "string", "required": true, "description": "The subcommand." },
+        "usage": { "type": "text", "description": "Its usage and its flags, as graview --help prints them." },
+        "blurb": { "type": "text", "description": "What it does, as the help says it." }
+      },
+      "edges": {
+        "livesIn": { "to": ["package"], "cardinality": "one", "description": "the package whose concern it is", "inverse": "the commands it answers" }
+      }
+    },
+    "concept": {
+      "noun": "concept",
+      "plural": "concepts",
+      "label": "{title}",
+      "description": "One of the ideas a Graview declaration is made of: not in the repository, the reason it is shaped the way it is.",
+      "fields": {
+        "title": { "type": "string", "required": true, "description": "Its name." },
+        "says": { "type": "text", "required": true, "description": "The idea, in a few sentences." },
+        "position": { "type": "integer", "required": true, "min": 0, "description": "Where it comes on the concepts page." }
+      },
+      "edges": {
+        "taughtBy": { "to": ["skill"], "cardinality": "one", "description": "the skill that teaches it", "inverse": "the concepts it teaches" }
+      }
+    },
+    "recipe": {
+      "noun": "recipe",
+      "plural": "recipes",
+      "label": "{title}",
+      "description": "The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/.",
+      "fields": {
+        "slug": { "type": "string", "required": true, "description": "Its folder under docs/site/recipes/." },
+        "title": { "type": "string", "required": true, "description": "What the front page calls it." },
+        "task": { "type": "string", "required": true, "description": "The word the prompt takes." },
+        "prompt": { "type": "string", "required": true, "description": "The prompt, with the task in it." },
+        "blurb": { "type": "string", "description": "What the app it made keeps track of." },
+        "name": { "type": "string", "description": "The name its declaration gives the app." },
+        "summary": { "type": "string", "description": "The description its declaration gives the app." },
+        "document": { "type": "text", "label": "app.json", "description": "Its declaration, as the agent wrote it." },
+        "counts": { "type": "list", "of": "string", "description": "How many records of each kind its seed holds: kind=count." },
+        "records": { "type": "integer", "min": 0, "description": "How many records its seed holds." },
+        "relations": { "type": "integer", "min": 0, "description": "How many relations its seed holds." },
+        "check": { "type": "list", "of": "string", "description": "What graview check --document says about its declaration, line by line." },
+        "position": { "type": "integer", "required": true, "min": 0, "description": "Where recipes.json lists it." }
+      },
+      "glance": ["task", "records"]
+    },
+    "chapter": {
+      "noun": "chapter",
+      "plural": "chapters",
+      "label": "{number}. {title}",
+      "description": "A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push.",
+      "fields": {
+        "number": { "type": "integer", "required": true, "min": 1, "description": "Its number." },
+        "title": { "type": "string", "required": true, "description": "Its heading." },
+        "claim": { "type": "text", "description": "What it shows." },
+        "adds": { "type": "list", "of": "string", "description": "What the declaration gained." }
+      }
+    },
+    "example": {
+      "noun": "example app",
+      "plural": "example apps",
+      "label": "apps/{dir}",
+      "description": "An example app in the repository, described by its own package.json.",
+      "fields": {
+        "dir": { "type": "string", "required": true, "description": "Its folder under apps/." },
+        "description": { "type": "string", "description": "The description in its package.json." }
+      }
+    },
+    "question": {
+      "noun": "question",
+      "plural": "questions",
+      "label": "{question}",
+      "description": "A question the front page answers plainly, read off its FAQ.",
+      "fields": {
+        "question": { "type": "string", "required": true, "description": "The question." },
+        "answer": { "type": "text", "format": "markdown", "description": "The answer, as the front page gives it." },
+        "position": { "type": "integer", "required": true, "min": 0, "description": "Where it comes in the FAQ." }
+      }
+    },
+    "release": {
+      "noun": "release",
+      "plural": "releases",
+      "label": "{version}",
+      "description": "A version every package shares, read off @graview/core's changelog and the CLI's package.json.",
+      "fields": {
+        "version": { "type": "string", "required": true, "description": "The version." },
+        "changes": { "type": "integer", "min": 0, "description": "How many changes @graview/core's changelog lists under it." },
+        "current": { "type": "boolean", "description": "The version the packages are at now." }
+      },
+      "glance": ["changes"]
+    },
+    "scaffold": {
+      "noun": "scaffold",
+      "plural": "scaffolds",
+      "label": "{name}",
+      "description": "What graview create writes, read from the generator itself.",
+      "fields": {
+        "name": { "type": "string", "required": true, "description": "What it is called." },
+        "files": { "type": "list", "of": "string", "description": "The files it writes." },
+        "scripts": { "type": "list", "of": "string", "description": "The scripts it gives a project: name = command." },
+        "dependencies": { "type": "list", "of": "string", "description": "What it depends on." },
+        "devDependencies": { "type": "list", "of": "string", "label": "Dev dependencies", "description": "What it develops with." }
+      }
+    }
+  },
+  "brand": {
+    "name": "graview.dev",
+    "accents": { "page": 210, "package": 150, "entry": 125, "skill": 280, "check": 355, "command": 30, "concept": 330, "recipe": 60, "chapter": 90, "example": 180, "question": 240, "release": 305, "scaffold": 10 }
+  },
+  "acts": {
+    "add-page": { "creates": "page", "title": "Add a page", "description": "Serve another address." },
+    "add-package": { "creates": "package", "title": "Add a package", "description": "Record a package Graview ships." },
+    "add-entry": { "creates": "entry", "title": "Add an entry point", "description": "Record a subpath a package exports." },
+    "add-skill": { "creates": "skill", "title": "Add a skill", "description": "Record an authoring skill." },
+    "add-check": { "creates": "check", "title": "Add a check finding", "description": "Record a thing graview check can say." },
+    "add-command": { "creates": "command", "title": "Add a command", "description": "Record a graview subcommand." },
+    "add-concept": { "creates": "concept", "title": "Add a concept", "description": "Record an idea a declaration is made of." },
+    "add-recipe": { "creates": "recipe", "title": "Add a recipe", "description": "Record a prompt and what an agent made of it." },
+    "add-chapter": { "creates": "chapter", "title": "Add a chapter", "description": "Record a step of the garden, grown." },
+    "add-example": { "creates": "example", "title": "Add an example app", "description": "Record an example app in the repository." },
+    "add-question": { "creates": "question", "title": "Add a question", "description": "Record a question the front page answers." },
+    "add-release": { "creates": "release", "title": "Add a release", "description": "Record a version every package shares." },
+    "add-scaffold": { "creates": "scaffold", "title": "Add a scaffold", "description": "Record what graview create writes." },
+
+    "point-page-at": { "on": "page", "connects": "about", "title": "Say what it is about", "description": "Name the record this page is about.", "fromTheOtherEnd": "Give it a page" },
+    "unpoint-page": { "on": "page", "severs": "about", "title": "Take back what it is about", "description": "Say this page is no longer about that record.", "fromTheOtherEnd": "Take its page off" },
+    "file-page-under": { "on": "page", "connects": "under", "title": "File it under a page", "description": "Name the page it sits under.", "fromTheOtherEnd": "File a page under it" },
+    "unfile-page": { "on": "page", "severs": "under", "title": "Take it out from under", "description": "Say it no longer sits under that page.", "fromTheOtherEnd": "Take a page out from under it" },
+    "depend-on": { "on": "package", "connects": "dependsOn", "title": "Depend on a package", "description": "Name a package it depends on.", "fromTheOtherEnd": "Have a package depend on it" },
+    "stop-depending": { "on": "package", "severs": "dependsOn", "title": "Stop depending on a package", "description": "Say it no longer depends on that package.", "fromTheOtherEnd": "Have a package stop depending on it" },
+    "export-entry": { "on": "package", "connects": "exports", "title": "Export an entry point", "description": "Name an entry point it exports.", "fromTheOtherEnd": "Say which package exports it" },
+    "unexport-entry": { "on": "package", "severs": "exports", "title": "Stop exporting an entry point", "description": "Say it no longer exports that entry point.", "fromTheOtherEnd": "Take it off its package" },
+    "house-command": { "on": "command", "connects": "livesIn", "title": "Say which package answers it", "description": "Name the package whose concern it is.", "fromTheOtherEnd": "Give it a command" },
+    "unhouse-command": { "on": "command", "severs": "livesIn", "title": "Take it out of its package", "description": "Say that package no longer answers it.", "fromTheOtherEnd": "Take a command out of it" },
+    "teach-concept": { "on": "concept", "connects": "taughtBy", "title": "Say which skill teaches it", "description": "Name the skill that teaches this idea.", "fromTheOtherEnd": "Have it teach a concept" },
+    "unteach-concept": { "on": "concept", "severs": "taughtBy", "title": "Take back which skill teaches it", "description": "Say that skill no longer teaches this idea.", "fromTheOtherEnd": "Take a concept off it" }
+  }
+}

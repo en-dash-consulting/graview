@@ -4,7 +4,7 @@
  *
  * `docs/progression.json` is what `scripts/progression.mjs` saw: every
  * chapter's declaration, check verdict and pictures. This renders that
- * record into `docs/site/progression.html` between two markers, so the marketing
+ * record into `apps/site/pages/progression.html` between two markers, so the marketing
  * page's spine is generated from the real app and re-generated whenever the
  * pictures are — never hand-written prose about pictures that moved on.
  *
@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // The chapters have their own page since the landing page learned to make the case (854529d2).
-const page = resolve(repoRoot, "docs/site/progression.html");
+const page = resolve(repoRoot, "apps/site/pages/progression.html");
 const report = JSON.parse(readFileSync(resolve(repoRoot, "docs/progression.json"), "utf8"));
 const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -83,7 +83,7 @@ const end = "<!-- progression:end -->";
 const a = source.indexOf(start);
 const b = source.indexOf(end);
 if (a === -1 || b === -1 || b < a) {
-  process.stderr.write(`docs/site/progression.html needs ${start} … ${end} markers.\n`);
+  process.stderr.write(`apps/site/pages/progression.html needs ${start} … ${end} markers.\n`);
   process.exit(1);
 }
 const next = `${source.slice(0, a + start.length)}\n${section}    ${source.slice(b)}`;
@@ -102,4 +102,4 @@ const counted = next.replace(/(<span data-chapters-word(?:="title")?>)([^<]*)(<\
   return `${open}${open.includes("title") ? titled : word}${rest}${close}`;
 });
 writeFileSync(page, counted, "utf8");
-process.stdout.write(`wrote ${report.chapters.length} chapters into docs/site/progression.html\n`);
+process.stdout.write(`wrote ${report.chapters.length} chapters into apps/site/pages/progression.html\n`);

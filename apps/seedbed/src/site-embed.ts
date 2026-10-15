@@ -33,6 +33,7 @@ declare global {
       mount: typeof mountChapter;
       mountRota: typeof mountRota;
       mountRecipe: typeof mountRecipe;
+      mountDocument: typeof mountDocument;
       mountAll: typeof mountAll;
       chapters: readonly Chapter[];
       /** Every embed the page has mounted, by its element, so the page can re-dress or re-seat one. */
@@ -203,10 +204,48 @@ export function mountRecipe(element: HTMLElement, slug: string, face?: EmbedFace
   return handle;
 }
 
-/** Every `[data-graview-chapter]`, `[data-graview-app]` and `[data-graview-recipe]` on the page, mounted as the reader comes near. */
+/*
+ * A DECLARATION THE PAGE CARRIES, LIVE.
+ *
+ * graview.dev is itself a Graview app: a declaration document and the
+ * records `scripts/site-docs.mjs` writes out of the repository, every page
+ * rendered from one of them. The page about the site carries both as JSON
+ * (`<script type="application/json" id="…">`) and names them on its frame
+ * (`data-graview-document`, `data-graview-seed`), so the app it opens is
+ * the very document and records the pages were rendered from — compiled
+ * here by the checker's compiler — and the bundle every other page loads
+ * carries none of it.
+ */
+function carried(id: string): unknown {
+  const script = document.getElementById(id);
+  if (!script || script.getAttribute("type") !== "application/json") throw new Error(`The page carries no JSON called "${id}" to mount.`);
+  return JSON.parse(script.textContent ?? "null");
+}
+
+export function mountDocument(element: HTMLElement, documentId: string, seedId: string, face?: EmbedFace, stop?: string, label?: string): EmbedHandle {
+  const compiled = compileDocument(carried(documentId));
+  if (!compiled.ok) throw new Error(`The document "${documentId}" does not compile: ${compiled.findings.map((f) => f.message).join("; ")}`);
+  const app = compiled.app as GraviewApp<AnySchema>;
+  const handle = mount(element, {
+    app,
+    seed: carried(seedId) as never,
+    ...(face ? { face } : {}),
+    ...(stop ? { stop } : {}),
+    label: label ?? app.name,
+  });
+  handles.set(element, handle);
+  element.dispatchEvent(new CustomEvent("graview:mounted", { bubbles: true, detail: { document: documentId, handle } }));
+  return handle;
+}
+
+/** Every `[data-graview-chapter]`, `[data-graview-app]`, `[data-graview-recipe]` and `[data-graview-document]` on the page, mounted as the reader comes near. */
 export function mountAll(root: ParentNode = document): void {
-  mountWhenNear([...root.querySelectorAll<HTMLElement>("[data-graview-chapter], [data-graview-app], [data-graview-recipe]")], (element) => {
+  mountWhenNear([...root.querySelectorAll<HTMLElement>("[data-graview-chapter], [data-graview-app], [data-graview-recipe], [data-graview-document]")], (element) => {
     element.replaceChildren();
+    if (element.dataset["graviewDocument"]) {
+      mountDocument(element, element.dataset["graviewDocument"], element.dataset["graviewSeed"] ?? "", element.dataset["face"] as EmbedFace | undefined, element.dataset["stop"], element.dataset["label"]);
+      return;
+    }
     if (element.dataset["graviewRecipe"]) {
       const scheme = element.dataset["scheme"];
       mountRecipe(element, element.dataset["graviewRecipe"], element.dataset["face"] as EmbedFace | undefined, element.dataset["stop"], element.dataset["label"], scheme === "light" || scheme === "dark" ? scheme : undefined);
@@ -220,6 +259,6 @@ export function mountAll(root: ParentNode = document): void {
   });
 }
 
-window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
+window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountDocument, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => mountAll());
 else mountAll();

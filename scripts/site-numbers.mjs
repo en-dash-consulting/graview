@@ -56,7 +56,7 @@ export function countOf() {
       .filter((file) => /export function create[A-Za-z]+Lens/.test(readFileSync(at("packages/primitives/src/lens", file), "utf8")))
       .length,
     codes: codes.size,
-    chapters: [...readFileSync(at("docs/site/progression.html"), "utf8").matchAll(/id="chapter-\d+"/g)].length,
+    chapters: [...readFileSync(at("apps/site/pages/progression.html"), "utf8").matchAll(/id="chapter-\d+"/g)].length,
     tests: tested(),
     testFiles: testFiles(),
   };
@@ -141,7 +141,7 @@ export function countsFor({ release = false } = {}) {
 }
 
 /** The pages that carry counts: the landing page, and the long version. */
-export const PAGES = ["docs/site/index.html", "docs/site/tour.html", "docs/site/progression.html"];
+export const PAGES = ["apps/site/pages/index.html", "apps/site/pages/tour.html", "apps/site/pages/progression.html"];
 
 /** Fill every marked count on a page; `wrong` collects what disagreed. */
 export function fill(html, counts, wrong = []) {

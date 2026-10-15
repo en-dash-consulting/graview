@@ -72,6 +72,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 ## Examples
 
 - [Live demos](https://graview.dev/docs/demos.md): The example garden's surfaces, running on this page, and the example apps in the repository.
+- [This site, as an app](https://graview.dev/docs/site.md): graview.dev is itself a Graview app: one declaration and the records written out of the repository, every page rendered from a record by renderPlace, and the whole of it live on this page.
 - [The tour](https://graview.dev/tour.html): A tour of what Graview derives from one declaration: the routed web app, rules that repair, lenses that rebind, the agent’s seat, the studio and permissions, each shown live, and the example garden grown a step at a time.
 - [The garden, grown](https://graview.dev/progression.html): One Graview example, a garden, declared a little at a time: every chapter live on the page, the declaration in full, the packages, the lenses, the kit and what an agent may do.
 - [apps/discography](https://github.com/en-dash-consulting/graview/tree/main/apps/discography): The example at real size: Tech N9ne's discography from MusicBrainz — 1,177 songs, 568 artists, 479 releases.

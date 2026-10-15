@@ -87,6 +87,8 @@ const PAGES = [
   { file: "docs/demos.html", name: "the demos", live: 4, skip: "#main", widths: [320, 768, 1280] },
   /* A recipe's page: its app, live, beside the declaration it runs. */
   { file: "docs/recipes/docs.html", name: "a recipe", live: 1, skip: "#main", widths: [320, 768, 1280] },
+  /* The site itself, as the Graview app it is: its declaration and its records, live. */
+  { file: "docs/site.html", name: "this site, as an app", live: 1, skip: "#main", widths: [320, 768, 1280] },
 ];
 const PAGE = pageAt("index.html");
 const ENGINE = engineName();
@@ -352,6 +354,27 @@ try {
     return !!box && box.width > 200 && box.height > 150 && (document.getElementById("prompt-text")?.textContent ?? "").includes("start.md");
   });
   await bare.close();
+
+  /*
+   * THE SITE OPENS AS ITS OWN APP, one click from the landing page: the
+   * link in its footer lands on the page that mounts the site's declaration
+   * over the records its pages were rendered from, and the city it draws
+   * has the districts the docs are about — packages, skills, check findings
+   * and the pages themselves.
+   */
+  const own = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await arrive(own, pageAt("index.html"));
+  await own.click('footer a[href="docs/site.html"]');
+  await own.waitForLoadState("load");
+  await own.locator('[data-graview-document="site-app"]').scrollIntoViewIfNeeded();
+  await own
+    .waitForFunction(() => document.querySelectorAll('[data-graview-document="site-app"] [data-graview-view^="kind:"]').length >= 4, null, { timeout: 30_000 })
+    .catch(() => {});
+  const ownDistricts = await own.evaluate(() => [...document.querySelectorAll('[data-graview-document="site-app"] [data-graview-view^="kind:"]')].map((el) => el.getAttribute("data-graview-view")));
+  report.siteApp = { districts: [...new Set(ownDistricts)].sort() };
+  report.criteria.theSiteOpensAsItsOwnAppFromTheLandingPage =
+    own.url().endsWith("/docs/site.html") && ["kind:package", "kind:skill", "kind:check", "kind:page"].every((kind) => ownDistricts.includes(kind));
+  await own.close();
 
   /* The long version is where the chapters and the kit went. */
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
