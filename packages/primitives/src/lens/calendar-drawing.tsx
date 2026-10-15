@@ -193,8 +193,12 @@ export function Grid({
                 padding: 4,
                 borderRadius: 7,
                 border: "1px solid var(--graview-edge)",
-                background: now ? "var(--graview-panel)" : "transparent",
-                opacity: cell.outside ? 0.45 : 1,
+                /*
+                 * A day of the next or last month is told by its ground, not
+                 * faded: at 45% its number read at 1.9:1 against the page,
+                 * where it has to be read at 4.5.
+                 */
+                background: now ? "var(--graview-panel)" : cell.outside ? "var(--graview-panel-muted)" : "transparent",
               }}
             >
               <span style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
