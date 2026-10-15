@@ -4,7 +4,7 @@ import { createViews, GraviewProvider } from "@graview/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createBoardLens, createCalendarLens, createTimelineLens } from "../../src/index.js";
+import { createBoardLens, createCalendarLens, createCoverageLens, createTimelineLens } from "../../src/index.js";
 
 /**
  * A lens arranges before it draws. The arrangement travels in the stop
@@ -119,5 +119,31 @@ describe("the calendar", () => {
     const headings = [...agenda.matchAll(/data-testid="calendar-group"[\s\S]*?<h3[^>]*>([^<]*)</g)].map((match) => match[1]!.trim());
     expect(headings).toEqual(["The north table", "The south table"]);
     expect(agenda).toContain('data-testid="arrange-group"');
+  });
+});
+
+describe("the coverage grid", () => {
+  /*
+   * The tenth walk's callouts and the discography's songs stop at a coverage
+   * grid, and it took no arrangement: narrowing the songs by track, or the
+   * callouts by the hours they took, had no Filter on the scene at all.
+   */
+  const lens = createCoverageLens<typeof schema>({ rows: "guest", columns: "party", link: "with" });
+  const view = (within: Record<string, string>) => ({ ...EMPTY_VIEW, focusId: aggregateId("guest"), within });
+  const guestsOnly = nodes.filter((node) => node.kind === "guest");
+  const grid = (within: Record<string, string>, fidelity: "full" | "summary" = "full") =>
+    draw(<lens.View nodes={guestsOnly as never} fidelity={fidelity} cardinality="many" mode="scene" selected={false} />, view(within));
+
+  it("draws the row over its rows, filtering and never grouping", () => {
+    const html = grid({});
+    expect(html).toContain('data-testid="arrange-bar"');
+    expect(html).not.toContain('data-testid="arrange-group"');
+    expect(grid({}, "summary")).not.toContain('data-testid="arrange-bar"');
+  });
+
+  it("keeps the rows the filter keeps, and every column", () => {
+    const vip = grid({ filter: "vip:true" });
+    expect(guests(vip).sort()).toEqual(["g-ada", "g-cleo"]);
+    expect(vip).toContain("The south table");
   });
 });

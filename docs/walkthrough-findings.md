@@ -4832,3 +4832,73 @@ committed verdict, and walk10's first run finished 60 of its 84 runs.
 - where it belongs: `packages/primitives/src/workbench/inspector.tsx`
 - harness that should have caught it: the watch, which did, over walk10; the gauntlet's staff ("staff member") is never chosen from the map with the pointer's menu open — the state the walk reached through the problems — so the gauntlet holds no instance
 - status: fixed in "walkthrough: C · the menu over a record says what one is called" · the head says each kind's noun. Criterion: `packages/primitives/tests/unit/the-inspector-says-what-one-is-called.test.tsx` (verified failing without the fix: it said "kit")
+
+### W-210 · Narrowing the callouts, or the discography's songs, has no Filter on the scene: their stop is a coverage grid
+- stage: D (two titled lenses over the callouts) · face: scene · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Narrowing the callouts by hours" and the discography's "Narrowing the songs by track" on the scene, at both widths and with either hand: "there is no “Filter” to narrow … with" (carried from the eighth walk as "narrowing on the scene where a kind's stop is a lens")
+- class: no-way-to-do-a-job (also: faces-disagree)
+- expected: a lens arranges before it draws, as the board, the timeline and the calendar do since "a lens arranges before it draws"
+- actual: the coverage grid read its rows from the graph and took no arrangement, so a kind whose last-registered picture is a coverage grid stopped at a picture with nothing to narrow it by
+- where it belongs: `packages/primitives/src/lens/coverage.tsx`
+- harness that should have caught it: the journeys' "narrow", which did; `a-lens-arranges-before-it-draws.test.tsx` held three lenses of four
+- status: fixed in "walkthrough: D · a coverage grid arranges its rows" · the grid draws the arranging line over its rows at full size and filters the rows, its columns whole, with no sort or grouping. Criterion: "the coverage grid" in `packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx` (both verified failing without the fix); the journeys' discography "narrow" on the scene, done at both widths and with either hand. Todo's tasks are not this: their stop arranges, and the journeys, starting from "The lists", raise Tasks as a relation of it and never go in — carried below
+
+### W-211 · "Find anything" for last March's callout finds nothing and says "add is:any for the past"
+- stage: A (finding a record by part of its name, at real size) · face: scene and pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Finding a callout by part of its name", every way: of 1,459 callouts one is under way; Find and `/search` kept to it, so a callout from 2021 by its number was "nothing here is called that", with the query language as the way on
+- class: data-shape-not-in-fixtures (also: no-way-to-do-a-job)
+- expected: a name typed finds the record of that name; where nothing current answers, the past that does is the answer, said as past
+- actual: the matcher left every record behind the horizon out unless the words said `is:any` or named a retired state (W-104); no example keeps more past than present
+- where it belongs: `packages/core/src/search.ts`
+- harness that should have caught it: none — every example's records are mostly current
+- status: fixed in "walkthrough: A · Find reaches the past when nothing current answers" · where the words find no current record, the past ones they find are the answer, marked past, and `searched.past` says so; a current answer, or `is:`, keeps the horizon. Criterion: `packages/core/tests/unit/find-reaches-the-past-when-nothing-current-answers.test.ts` (verified failing without the fix), and `one-matcher-finds-it.test.ts` says the claim it now holds. The journeys also chose "mountain" — a word in a hundred callouts' names — where a person types the record's own two ("2021 063"): fixed in the journeys with W-216
+
+### W-212 · On a phone, a list chosen in the todo's lists has no way to its acts
+- stage: A (making a task on a list, on the scene) · face: scene · width: 390 (and 1440 for the journeys) · scheme: light
+- impact: blocks a job — "Making a task" on the scene with the pointer, at both widths (carried from the eighth walk as "todo's “Add a task” after “Today”"): choosing "Today" lit it and dimmed the rest, and nothing else — its acts open by a right-click or the acts key, and a finger has neither
+- class: no-way-to-do-a-job (also: breaks-at-width-zoom-or-engine)
+- expected: what can be done with what is chosen is a press away, on the ground as the map's panel makes it from above (W-195)
+- actual: the scene's acts menu stands down unless a pointer opened it; on a desk a right-click on "Today" opens it (the journeys never tried one on a record drawn inside a picture), on a phone nothing does
+- where it belongs: `packages/primitives/src/workbench/inspector.tsx`, `inspector-door.tsx`
+- harness that should have caught it: the journeys' "make" with a subject, which did; they now right-click a record chosen inside a picture, as a person at a desk does
+- status: fixed in "walkthrough: A · a record chosen on a phone says its acts" · in a scene too narrow for a rail, on the ground, the one record chosen gets "Acts…" in the picture's column of controls under Up and the key, opening the same menu; it floats and takes no room. Placed first at the picture's foot, a notice stood over it and the journeys' press timed out: it moved under the key. Criterion: `packages/primitives/tests/unit/a-record-chosen-on-a-phone-says-its-acts.test.tsx` (verified failing without the fix); the journeys' todo "make" on the scene, done at both widths and with either hand
+
+### W-213 · Renaming a callout on a phone scrolls the page sideways by 383 pixels
+- stage: E (the record page, renamed in place, W-206) · face: pages · width: 390 · scheme: light
+- impact: costs a job — renaming on a phone: the field took the name's sixty characters as its width (1,008 pixels) inside a heading that grows to its content, and the page slid sideways under the person typing; the watch caught it on every run
+- class: breaks-at-width-zoom-or-engine
+- expected: a field edited in place grows with its value as far as its box
+- actual: `EditableValue`'s input was `width: <n>ch` with no ceiling, in an inline form inside a grid item that takes its content's width
+- where it belongs: `packages/primitives/src/editable.tsx`
+- harness that should have caught it: the watch's `breaks-at-width`, which did, once a record page put a long name in place on a phone
+- status: fixed in "walkthrough: E · a long name edited in place keeps to its box" · the field is `min(<n>ch, 100%)` and may shrink, and its form keeps to its box. Criterion: `packages/primitives/tests/unit/a-long-name-edited-in-place-keeps-to-its-box.test.tsx` (verified failing without the fix); measured on walk10 at 390: 1,028 pixels of page before, 390 after
+
+### W-214 · From the keyboard, Find's arrow takes five keys a record
+- stage: I (the keyboard pass) · face: scene · width: 1440 and 390 · scheme: light
+- impact: blocks a job — the gauntlet's "Finding a talk by part of its name" on the scene from the keyboard, at both widths: "the keys do not reach “A Practical Guide to Incremental Type Checking …” in the Find strip" (carried from the eighth walk), 131 presses and given up
+- class: keyboard-lands-nowhere (also: data-shape-not-in-fixtures)
+- expected: ↓ goes to the next record
+- actual: a record lit unfolds four acts under it, and ↓ walked into them: five keys a record, so twenty records down was a hundred keys
+- where it belongs: `packages/primitives/src/find.tsx`
+- harness that should have caught it: the journeys' "find" from the keyboard, which did
+- status: fixed in "walkthrough: I · the arrows walk Find's records one key each" · ↓ and ↑ go record to record, → into the acts under the one lit, ← back to it. Criterion: `packages/primitives/tests/unit/the-arrows-walk-finds-records-one-key-each.test.tsx` (both verified failing without the fix); the gauntlet's "find" on the scene from the keyboard, done (89 presses — the strip lists every talk before the one wanted; the keyboard's cost is carried below)
+
+### W-215 · Seedbed's plot page offers only sowing, and its repairs and its design's apply as nobody
+- stage: E (the examples a project copies) · face: pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Tying a plot to another with “Name a caretaker”" on the pages, at both widths and with either hand (carried from the eighth walk)
+- class: what-a-project-copies-is-wrong (also: offered-then-refused)
+- expected: an example's own page offers what the derivation offers, and applies as the seat at the keyboard
+- actual: the plot's page drew one form, "Sow something here"; its repairs, and the design's on the rule page and the problems page, called `store.apply` with no author — under a policy, refused on press
+- where it belongs: `apps/seedbed/src/ui/pages.tsx`, `apps/seedbed/src/ui/design.tsx` (an example; the class's fix is W-206's, in the scaffold)
+- harness that should have caught it: the journeys' "relate" on the pages, which did
+- status: fixed in "walkthrough: E · seedbed's plot page offers every act" · every affordance is offered, sowing first; repairs go through `Repairs` as the seat; the design's repairs pass the seat. Criterion: the journeys' seedbed "relate" on the pages, done at both widths and with either hand (an example has no unit tests of its own pages)
+
+### W-216 · The journeys dead-end where a person would not: past the horizon, a short list, a shared word, a raised district, a record inside a picture
+- stage: setup (the journeys on walk10 and every example) · face: both · width: both · scheme: light
+- impact: blocks a job's measure — five lines at the head of the friction list said "cannot be done" of jobs a person does: narrowing 1,459 callouts with one current ("no Filter"), narrowing seedbed's four plots, finding a callout by "mountain" (in a hundred names), the rota's viewer told nothing of "Add a shift" (the district pressed at a lens stop is raised as a relation, so nothing was chosen), and the acts of a record chosen inside a picture
+- class: harness-or-setup-itself
+- expected: the harness does what a person does — presses "+1458 past", leaves a list of four to be read, types the words that are the record's own, goes Up when a press raised the district, right-clicks a record where it is drawn — and says why it gave up, as a picture
+- actual: none of those were tried
+- where it belongs: `scripts/lib/journeys.mjs`, `scripts/verify-journeys.mjs` (`GRAVIEW_JOURNEYS_SHOTS=<dir>` keeps a picture of every dead end)
+- harness that should have caught it: the journeys themselves
+- status: fixed in "walkthrough: setup · the journeys do what a person does" · criterion: the journeys on walk10, todo, seedbed, rota, discography and the gauntlet: the rota's viewer is told "Add a shift" is not theirs on the scene with the pointer, seedbed's plots are "read, not narrowed", walk10's callouts are found and narrowed at a desk
