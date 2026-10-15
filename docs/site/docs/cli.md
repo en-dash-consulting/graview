@@ -84,7 +84,7 @@ Writes llms.txt and agents.md next to the entry, or into <dir>.
 graview doctor [<dir>] [--document <file>] [--json]
 ```
 
-Says whether the product in <dir> (default .) is on one Graview release: every graview and @graview/* pin in its package.json the same version, its lockfile and its node_modules holding that version, each declaration document's formatVersion one the installed core reads, and react beside react-dom at one version (React refuses a mismatched pair at startup, and the page is blank). Each problem is said with its fix; exits 1 on any.
+Says whether the product in <dir> (default .) is on one Graview release: every graview and @graview/* pin in its package.json the same version, its lockfile and its node_modules holding that version, each declaration document's formatVersion one the installed core reads, and react beside react-dom at one version (React refuses a mismatched pair at startup, and the page is blank). Run from a framework checkout with no graview on PATH, it says how to put it there. Each problem is said with its fix; exits 1 on any.
 
 ## graview figure
 

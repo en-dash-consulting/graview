@@ -367,7 +367,7 @@ Writes llms.txt and agents.md next to the entry, or into <dir>.
 graview doctor [<dir>] [--document <file>] [--json]
 ```
 
-Says whether the product in <dir> (default .) is on one Graview release: every graview and @graview/* pin in its package.json the same version, its lockfile and its node_modules holding that version, each declaration document's formatVersion one the installed core reads, and react beside react-dom at one version (React refuses a mismatched pair at startup, and the page is blank). Each problem is said with its fix; exits 1 on any.
+Says whether the product in <dir> (default .) is on one Graview release: every graview and @graview/* pin in its package.json the same version, its lockfile and its node_modules holding that version, each declaration document's formatVersion one the installed core reads, and react beside react-dom at one version (React refuses a mismatched pair at startup, and the page is blank). Run from a framework checkout with no graview on PATH, it says how to put it there. Each problem is said with its fix; exits 1 on any.
 
 ## graview figure
 
@@ -1879,11 +1879,11 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 
 Anything **one** deployment needs lives here. Anything only the **operator of many** deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the `graview-cloud` repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.
 
-## What it exports (64)
+## What it exports (69)
 
 Read off the package's own barrel, so this is what is there today.
 
-`announcePresence`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `filesAt`, `forgetFreshParam`, `freshHref`, `health`, `isClientBatch`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `syncSeed`, `visitorPresence`, `WIRE`, `wireRefusalOf`
+`announcePresence`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `filesAt`, `forgetFreshParam`, `freshHref`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `sayHeld`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `syncSeed`, `visitorPresence`, `WIRE`, `wireRefusalOf`
 
 ---
 
@@ -2561,6 +2561,8 @@ Each repair is handed the record the rule judged, so it must be an act ON that k
 
 In a document (`app.json`, a graview-document) the same rule is `rules.priced-packages`: `{ "over": "package", "require": "net > 0", "says": "…", "repairs": [{ "act": "edit-package" }] }`; `graview check --document app.json` says each finding at its JSON path (`rules.priced-packages.repairs.0`).
 
+A document's repair may also be an act from the OTHER end of the rule's relation. A rule over `finding` requiring `exists(in('resolves'))` is repaired by `resolve-finding`, declared `on: "initiative"`, `connects: "resolves"`, `fromTheOtherEnd: "Name the work that fixes it"`: the rule hands it the finding as the far end (`to`), labels the repair with those words, and leaves the initiative for the person to choose (`missing: ["id"]`), as the finding's own page offers it. Without `fromTheOtherEnd`, or without a relation between the two kinds, it is still `repair-wrong-kind`.
+
 A rule in the rule language is drawn as its shape, in the declaration's labels: "◆ Scenario margin ≥ target margin, when plan's price > $0", and broken, with the record's values: "A club on Team — margin 44% < target margin 50%". Its title is a second line under that, so keep it short ("Margin above target") or leave it out; "A scenario keeps the target margin" only says the shape again, less clearly. Label a field that reads badly when spoken (`display.labels`) rather than writing round it.
 
 Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')` and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`; `sum`/`min`/`max(S, expr)` with an expression per member (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list key sorts by its first value, then its next), `first(S)` for one record, `either(a, b)` for the first that is something; `if(cond, a, b)`, which works out only the branch it takes; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set and give each record reached once; sets meet with `&`, join with `|` and part with `-` — LifeLogics' coverage is one figure, `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step read from what the seat may see. (Inside a template's braces, a `|` within brackets joins; the last bar outside them is the formatter's.) A kind's `computed` fields read like stored ones, and `fact('name')` reads a fact of the whole graph — a document's top-level `computed`, like `"mapProposed": "every(all('area'), proposed)"` — so a rule over the graph, a block and a face's own screen say it once (`factValues` from `@graview/core/blocks`; `describe_place` on the home lists them). Every evaluation has a step budget: a rule that reads too much is `over-budget`, never a hang.
@@ -2881,9 +2883,9 @@ src/
   main.tsx
 ```
 
-The domain/ui split keeps the declaration inspectable by a build, a CLI and an agent: `graview check` reads `defineApp`, and a React import there would drag a UI package into the checker.
+`graview check` reads `defineApp`; a React import in `domain/` would drag a UI package into the checker.
 
-**Or as one JSON document:** `app.json` (`"format": "graview-document"`, schema `node_modules/@graview/core/dist/document.schema.json`), then `graview check --document app.json`, `graview describe --document app.json`, `graview preview app.json --seed seed.json`.
+**Or as one JSON document:** `app.json` (`"format": "graview-document"`, `$schema` `node_modules/@graview/core/dist/document.schema.json`, which types lenses and view blocks), then `graview check --document app.json`, `graview describe --document app.json`, `graview preview app.json --seed seed.json`. Kinds, acts and rules are kebab-case (`tool-note`), fields and relations camelCase (`supersededBy`). `preview --data` holds its folder: stop it to `sync-seed --apply`. In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
 
 ### Do this
 
@@ -2926,17 +2928,17 @@ Copy the shape from the framework's own `.github/workflows/ci.yml`, minus the pa
 - **Headless tests** — the domain tier has no DOM in it. Test that your rules fire on graphs that break them and that their repairs resolve them; that is the test that catches a real regression.
 - **An accessibility run, in BOTH schemes.** Copy `apps/todo/scripts/run-a11y.mjs`: the real accessibility tree through CDP, plus axe-core. A light palette that clears AA in the dark is what it catches.
 
-Worth stealing later: a browser harness that walks your own acceptance criteria and writes a JSON verdict (the framework has several; each names the claim that stopped being true), and a persistence adapter test.
+Later: a browser harness, a JSON verdict per claim.
 
 ### Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` set to `attachGpu()` from `@graview/render/gpu`; there is no URL switch) — never a requirement.
+Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` set to `attachGpu()` from `@graview/render/gpu`) — never a requirement.
 
 ### Then find out whether it worked
 
 ```sh
 pnpm verify        # typecheck, tests, build, graview check
-graview doctor     # one Graview release in pins, lockfile, node_modules, documents; React's pair
+graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout
 ```
 
 Run the project's own `graview`, not `npx -y graview@<pin>`: inside a pnpm workspace that already holds the release, npx finds no bin (`sh: graview: command not found`).
@@ -2979,7 +2981,7 @@ A kind is the unit of everything here. Declaring one gets you, without another l
 
 ```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), // Host-kept picture ("image"/"file"); appLinkField() another app // (its records: graview-linked-records); phoneField(), placeField(). crest: imageField().optional(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
 
-**In a document** (`app.json`, `"format": "graview-document"`) it is `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type": "string", "required": true } }, "edges": { "picked-for": { "to": ["player"] } } }`. Every key is in `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
+**In a document** (`app.json`, `"format": "graview-document"`) it is `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type": "string", "required": true } }, "edges": { "pickedFor": { "to": ["player"] } } }`. Kinds are kebab-case (`tool-note`), fields and relations camelCase (`pickedFor`). Every key, lens and block is in `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
 
 1. **Add it to `createSchema([...])`.** An edge to a kind not in that array fails *typecheck* (`ValidateEdgeTargets`).
 
@@ -2993,7 +2995,7 @@ An id is still a name a caller may choose: every act that declares `creates: ["f
 
 ### Worked examples
 
-`apps/todo/src/domain/schema.ts` (a `rule` kind whose `spec` makes rules data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a `lifecycle`: the past is a horizon, not a delete).
+`apps/todo/src/domain/schema.ts` (`fieldRoles`); `apps/seedbed/src/domain/schema.ts` (a `lifecycle`).
 
 ### The declarations that keep paying
 
@@ -3001,7 +3003,7 @@ An id is still a name a caller may choose: every act that declares `creates: ["f
 - **`fromTheOtherEnd`** on the act that makes or breaks the edge. An act declaring `connects` or `severs` is offered from BOTH ends of the tie, and `title` is written from the subject's side: "Name a caretaker", offered on the gardener, reads as naming hers. Say how it reads standing there (`fromTheOtherEnd: "Take on a plot"`) — `graview check` warns `act-without-far-end-reading` and names the end it has no words for.
 - **`display.page`** when a record should not read in declared order: `page: { fields: ["subject", "draft"], groups: [{ title: "Schedule", fields: ["due"] }] }` puts those first, the rest under "Details" (a document's `kinds.<kind>.page`; `{ op: "set-page-fields" }`). A string allowed past 500 characters (`.max(5000)`, a `text`) is prose: full width, paragraphs and lists kept, edited in a text area.
 - **`lifecycle`** when members expire — `{ field: "status", retired: ["played"] }` or `{ field: "until", retired: "date" }`. Every count then aggregates over the horizon ("4, +12 past") instead of drowning, and `graview check` refuses a lifecycle reading a missing field.
-- **A figure**, line art of the THING at the city's three-quarter angle — a person, a plot, a gutter — drawn wherever the kind is. Nine ship; draw the rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a roof edge"` prints the brief, and `--judge <file>` holds the answer to the rules `graview check` holds a figure to and prints the line to paste. Then look at it at twenty pixels, a chip's size.
+- **A figure**, line art of the THING at the city's three-quarter angle — a person, a plot, a gutter — drawn wherever the kind is. Nine ship; draw the rest: `graview figure ./dist/domain/app.js --kind gutter --from "a gutter along a roof edge"` prints the brief, and `--judge <file>` holds the answer to the rules `graview check` holds a figure to and prints the line to paste. Then look at it at twenty pixels.
 - **A declared hue** in the brand (`accents: { fixture: 210 }`) for a chosen color, not a stable hash: every chip dot, roof and focus tag follows.
 
 ### How it looks, as data
@@ -3526,7 +3528,7 @@ Write, close, reopen, and read: the graph must survive the round trip and the pe
 
 `version` links every projected record at the version it was made from, so the first run sends nothing. `report` holds a field both sides changed and sends neither until `resolve`; `theirs` lands theirs through `applyInbound`; `ours` sends ours — `report.resolved` says which it took. A refused delete is said once; one made there goes through `removeInbound`, or, without it, stays here unsynced (`report.gone`). A remote that speaks MCP is `mcpRemote({ call, pull, push })`: `call` is `mcpClient({ url, allow })` in Node, or `doorClient()` in a page behind `mcpDoor({ call, allow })` on the dev server — the door holds the token, takes only JSON from its own origin on this machine (`hosts` names others), and only the allowed tools. It knows no seat: never put it where sight is a boundary.
 
-1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where — and `graview shots … --places home,overview --out shots` photographs named places headless (Playwright is yours to install). Prove a change to an emitted document with these, not hand-written screenshots. In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
+1. **Look at a document with no product.** `graview preview <document.json> --seed <snapshot.json>` is `serve` with Graview's own faces over the store — the scene and Pages, in memory unless `--data` says where, which it then holds: `sync-seed --apply` and `apply` refuse until it stops — and `graview shots … --places home,overview --out shots` photographs named places headless (you install Playwright). In a test, `compileDocumentFiles(path, { seed })` from `@graview/core/testing` reads the document where it lives — no fixture copy to drift.
 
 ### The boundary
 

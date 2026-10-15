@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { basename, dirname, join, relative, resolve } from "node:path";
+import { accessSync, constants, existsSync, readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { basename, delimiter, dirname, join, relative, resolve, sep } from "node:path";
 import { FORMAT, FORMAT_VERSION } from "../document/schema.js";
 import { FRAMEWORK_VERSION } from "../version.js";
 
@@ -21,7 +21,8 @@ export const DOCTOR_USAGE = `  graview doctor [<dir>] [--document <file>] [--jso
       version, its lockfile and its node_modules holding that version, each
       declaration document's formatVersion one the installed core reads, and
       react beside react-dom at one version (React refuses a mismatched pair
-      at startup, and the page is blank). Each problem is said with its fix;
+      at startup, and the page is blank). Run from a framework checkout with
+      no graview on PATH, it says how to put it there. Each problem is said with its fix;
       exits 1 on any.
 `;
 
@@ -164,13 +165,65 @@ function coreFormatVersion(dir: string): { readonly version: number; readonly fr
 
 const listed = (names: readonly string[]) => (names.length <= 2 ? names.join(" and ") : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`);
 
+/** The framework checkout a `graview` script runs from, when it is one: the folder holding `pnpm-workspace.yaml` and `packages/graview`. */
+export function checkoutOf(cli: string | undefined): string | undefined {
+  if (!cli) return undefined;
+  let script: string;
+  try {
+    script = realpathSync(cli);
+  } catch {
+    return undefined;
+  }
+  if (script.split(sep).includes("node_modules")) return undefined;
+  // <checkout>/packages/graview/dist/cli.js
+  const checkout = resolve(dirname(script), "..", "..", "..");
+  return existsSync(join(checkout, "pnpm-workspace.yaml")) && existsSync(join(checkout, "packages", "graview", "package.json")) ? checkout : undefined;
+}
+
+/** Whether a command is on a PATH: an executable file of that name in one of its folders. */
+export function onPath(command: string, path: string | undefined): boolean {
+  const names = process.platform === "win32" ? [`${command}.cmd`, `${command}.exe`, command] : [command];
+  return (path ?? "")
+    .split(delimiter)
+    .filter(Boolean)
+    .some((folder) =>
+      names.some((name) => {
+        try {
+          accessSync(join(folder, name), constants.X_OK);
+          return statSync(join(folder, name)).isFile();
+        } catch {
+          return false;
+        }
+      }),
+    );
+}
+
+/**
+ * A GRAVIEW RUN FROM A CHECKOUT, WITH NO `graview` ON PATH. On a machine
+ * with the framework checked out and nothing published installed, the
+ * command was `node <checkout>/packages/graview/dist/cli.js`, every time,
+ * and nothing said there was a shorter way. Said once, with the one line
+ * that puts it on PATH.
+ */
+export function checkoutFindings(options: { readonly cli?: string; readonly path?: string } = {}): DoctorFinding[] {
+  const checkout = checkoutOf(options.cli ?? process.argv[1]);
+  if (!checkout || onPath("graview", options.path ?? process.env["PATH"])) return [];
+  return [
+    {
+      level: "note",
+      says: `This graview runs from the checkout at ${checkout}, and there is no graview command on PATH.`,
+      fix: `Put it there once: pnpm graview:link in ${checkout} (pnpm link --global for packages/graview; run pnpm setup first if pnpm has no global bin folder). Until then: node ${join(checkout, "packages", "graview", "dist", "cli.js")} <command>.`,
+    },
+  ];
+}
+
 /** What the doctor finds in a product's directory. Reads the disk; writes nothing. */
-export function diagnose(dir: string, options: { readonly documents?: readonly string[] } = {}): DoctorFinding[] {
-  const findings: DoctorFinding[] = [];
+export function diagnose(dir: string, options: { readonly documents?: readonly string[]; readonly cli?: string; readonly path?: string } = {}): DoctorFinding[] {
+  const findings: DoctorFinding[] = [...checkoutFindings(options)];
   const root = resolve(dir);
   const manifest = readJson(join(root, "package.json"));
   if (!manifest) {
-    return [{ level: "problem", says: `There is no package.json in ${root}.`, fix: "Run graview doctor in the product's own directory, or name it: graview doctor <dir>." }];
+    return [...findings, { level: "problem", says: `There is no package.json in ${root}.`, fix: "Run graview doctor in the product's own directory, or name it: graview doctor <dir>." }];
   }
   const lock = lockfileOf(root);
   const install = `${lock?.manager ?? "npm"} install`;

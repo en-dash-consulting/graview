@@ -64,6 +64,14 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   backendFrom: "the CLI",
   syncSeed: "the CLI",
   StoreBackend: "the CLI",
+  holdBackend: "the CLI",
+  // One writer at a time on a store on disk: a file beside it, and a pid asked whether it lives.
+  heldBy: "node:fs",
+  holdFileOf: "node:fs",
+  holdStore: "node:fs",
+  sayHeld: "node:fs",
+  StoreHold: "node:fs",
+  StoreHolder: "node:fs",
   // `graview preview` and `graview shots`: a page served from a folder on disk, behind node:http.
   preview: "the CLI",
   shots: "the CLI",

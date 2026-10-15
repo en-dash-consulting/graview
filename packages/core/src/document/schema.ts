@@ -38,18 +38,18 @@ const sized = (min?: number, max?: number) => [...(min === undefined ? [] : [z.m
 const str = (min?: number, max?: number) => z.string().check(...sized(min, max));
 const some = <T extends z.ZodMiniType>(of: T, min?: number, max?: number) => z.array(of).check(...sized(min, max));
 
-const name = (what: string) => z.string().check(z.regex(NAME, `${what} names are lower-case words joined by hyphens, like "booked-vendor"`));
+const name = (what: string) => z.string().check(z.regex(NAME, `${what} names are kebab-case, lower-case words joined by hyphens like "tool-note" (field and relation names are camelCase, like "supersededBy")`));
 /**
  * A RELATION'S NAME may be kebab-case or one camelCase word. camelCase is
  * recommended: a rule can then walk it bare (`tendedBy.name`), where
  * `tended-by.name` would read as a subtraction.
  */
 export const EDGE_NAME = /^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*|[a-z][A-Za-z0-9]*)$/;
-const edgeName = z.string().check(z.regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"'), notInherited);
+const edgeName = z.string().check(z.regex(EDGE_NAME, 'relation names are one camelCase word, like "supersededBy" (kind names are kebab-case, like "tool-note")'), notInherited);
 const fieldName = z
   .string()
   .check(
-    z.regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate" — rules say them bare'),
+    z.regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate", so rules say them bare (kind names are kebab-case, like "tool-note")'),
     z.refine((n: string) => !RESERVED_FIELDS.has(n), 'a field cannot be called "id" or "kind" — the framework keeps those; try "type" or "category"'),
     notInherited,
   );
