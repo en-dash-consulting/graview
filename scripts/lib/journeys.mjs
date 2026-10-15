@@ -56,7 +56,8 @@ export function appsNamed(args, apps, cwd = process.cwd()) {
   const isPath = (arg) => arg.includes("/") || arg.startsWith(".");
   const beside = named.filter(isPath).map((path) => ({ dir: resolve(cwd, path), name: basename(resolve(cwd, path)), query: {} }));
   const asked = named.filter((arg) => !isPath(arg));
-  return [...apps.filter((one) => asked.includes(one.dir) || (asked.length === 0 && beside.length === 0)), ...beside];
+  // An app by its directory, or a fixture of one by its own name (`discography-past`).
+  return [...apps.filter((one) => asked.includes(one.dir) || (one.name !== undefined && asked.includes(one.name)) || (asked.length === 0 && beside.length === 0)), ...beside];
 }
 
 const article = (noun) => (/^[aeiou]/i.test(noun) ? `an ${noun}` : `a ${noun}`);
@@ -827,8 +828,35 @@ async function openFind(person, face) {
   return shown;
 }
 
-/** Find a record by part of its name and open it. Returns once it is open. */
-async function findAndOpen(person, face, target, query) {
+/**
+ * Into a kind by its name, from the keyboard: "/", the kind's name, and
+ * Enter on the row that is the kind. Falls back to the district where Find
+ * offers no row for it.
+ */
+async function goByFind(person, kind, plural) {
+  const page = person.page;
+  const before = person.presses;
+  await openFind(person, "scene");
+  await person.type(plural.toLowerCase());
+  await person.settle(450);
+  const row = page.locator('[data-testid="find-hit"][data-about="kind"]').filter({ hasText: new RegExp(`^${plural}(?!\\p{L})`, "u") }).first();
+  if (!(await row.isVisible().catch(() => false))) {
+    await person.key("Escape");
+    await person.key("Escape");
+    person.note(`Find "${plural.toLowerCase()}" (no row for the kind)`, before);
+    return pressDistrict(person, kind, plural);
+  }
+  const wanted = await row.getAttribute("id");
+  const lit = () => page.locator('[data-testid="find-box"]').getAttribute("aria-activedescendant");
+  for (let i = 0; i < 12 && (await lit()) !== wanted; i++) await person.key("ArrowDown");
+  if ((await lit()) !== wanted) throw new DeadEnd(`the keys do not reach "${plural}" in the Find strip`);
+  await person.key("Enter");
+  person.note(`Find "${plural.toLowerCase()}"`, before);
+  await person.settle(800);
+}
+
+/** Find a record by part of its name and open it. Returns once it is open. `more` is a word of the name that narrows a long answer. */
+async function findAndOpen(person, face, target, query, more = null) {
   const page = person.page;
   const before = person.presses;
   await openFind(person, face);
@@ -844,19 +872,42 @@ async function findAndOpen(person, face, target, query) {
     if (reading.length === 0) throw new DeadEnd(`Find does not offer "${target.label}" for "${query}" among ${count}`);
     // Of several that read the name, a person takes the one that says it is what they want — "· song" — else the first.
     const saysNoun = target.noun ? new RegExp(`· ${target.noun.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|·|$)`) : null;
-    const index = (saysNoun && reading.find((at) => saysNoun.test(texts[at]))) ?? reading[0];
+    let index = (saysNoun && reading.find((at) => saysNoun.test(texts[at]))) ?? reading[0];
     // Rows that read the same: a person cannot tell which is which, and takes the first.
     person.twins = texts.filter((text) => text.trim() === texts[index].trim()).length;
     if (person.input === "pointer") {
       await hits.nth(index).click();
       person.presses += 1;
     } else {
+      /*
+       * A LONG ANSWER, NARROWED BY ANOTHER WORD (the tenth walk). Where the
+       * row wanted is past what the strip shows and the strip says "another
+       * word of the name narrows them", a person types it rather than walk a
+       * hundred rows; then walks what is left.
+       */
+      let wanted = await hits.nth(index).evaluate((el) => el.id || el.closest("[id]")?.id || "");
+      if (more && index >= 12 && (await page.locator('[data-testid="find-more-words"]').isVisible().catch(() => false))) {
+        const before = person.presses;
+        await person.type(` ${more}`);
+        person.note(`another word, "${more}"`, before);
+        await person.settle(450);
+        const narrowed = await hits.allTextContents();
+        const at = narrowed.findIndex((text) => text.includes(target.label));
+        if (at < 0) throw new DeadEnd(`Find does not offer "${target.label}" for "${query} ${more}"`);
+        index = at;
+        wanted = await hits.nth(index).evaluate((el) => el.id || el.closest("[id]")?.id || "");
+      }
       // Arrowed to, watching the highlight move as a person does, until the row wanted is the one lit.
-      const wanted = await hits.nth(index).evaluate((el) => el.id || el.closest("[id]")?.id || "");
       const lit = () => page.locator('[data-testid="find-box"]').getAttribute("aria-activedescendant");
+      const position = async () => {
+        const id = await lit();
+        return id ? page.locator('[data-testid="find-hit"]').evaluateAll((els, id) => els.findIndex((el) => el.id === id), id) : -1;
+      };
+      // A page at a time while the row is more than a page away, then a row at a time (PageDown walks records, as ↓ does).
+      for (let i = 0; i < 40 && index - (await position()) > 12; i++) await person.key("PageDown");
       // A highlighted record opens its acts under it, so the rows grow as the keys move: the bound is the rows there are now.
       const rowsNow = () => page.locator('[data-testid="find-hit"]').count();
-      for (let i = 0; i < (await rowsNow()) + 2 && index > 0 && (await lit()) !== wanted; i++) await person.key("ArrowDown");
+      for (let i = 0; i < (await rowsNow()) + 2 && index > 0 && (await lit()) !== wanted; i++) await person.key((await position()) > index ? "ArrowUp" : "ArrowDown");
       if ((await lit()) !== wanted) throw new DeadEnd(`the keys do not reach "${target.label}" in the Find strip`);
       await person.key("Enter");
     }
@@ -891,6 +942,19 @@ function partOf(label, others) {
     if (others.filter((other) => holds(other, pair)).length === 1) return pair.join(" ").toLowerCase();
   }
   return (words.sort((a, b) => b.length - a.length)[0] ?? label).toLowerCase();
+}
+
+/**
+ * THE WORD A PERSON TYPES NEXT, when what they typed finds a hundred: the
+ * word of the name, not yet typed, that the fewest other names share with
+ * what was (the tenth walk: "incremental", then "kubernetes").
+ */
+function anotherWord(label, others, query) {
+  const typed = query.toLowerCase().split(/\s+/);
+  const holds = (other, words) => words.every((word) => other.toLowerCase().includes(word));
+  const words = [...new Set(label.split(/[^\p{L}\p{N}']+/u).filter((word) => word.length >= 4).map((word) => word.toLowerCase()))].filter((word) => !typed.includes(word));
+  const ranked = words.map((word) => ({ word, sharing: others.filter((other) => holds(other, [...typed, word])).length })).sort((a, b) => a.sharing - b.sharing || b.word.length - a.word.length);
+  return ranked[0]?.word ?? null;
 }
 
 /** Wait for the store to say the job happened. */
@@ -929,15 +993,45 @@ export const JOBS = {
     async prepare(ctx, job) {
       const count = await inStore(ctx.page, ctx.kinds, (store, kind) => store.graph.count(kind), job.kind);
       if (typeof count === "number" && count < 8) return { skip: `${count} ${job.plural.toLowerCase()} are read, not narrowed` };
-      return {};
+      // The number a person has in mind: the middle of what the list holds, as they would type it.
+      const typical = await inStore(ctx.page, ctx.kinds, (store, { kind, field }) => {
+        const held = store.graph.allNodes().filter((node) => node.kind === kind && typeof node[field] === "number").map((node) => node[field]).sort((a, b) => a - b);
+        return held.length > 0 ? Math.round(held[Math.floor(held.length / 2)]) : null;
+      }, { kind: job.kind, field: job.field });
+      // How many are behind the horizon, by the kind's own lifecycle.
+      const split = await inStore(ctx.page, ctx.kinds, (store, kind) => {
+        const lifecycle = store.schema.tryDefinition(kind)?.lifecycle;
+        const nodes = store.graph.allNodes().filter((node) => node.kind === kind);
+        const past = Array.isArray(lifecycle?.retired) ? nodes.filter((node) => lifecycle.retired.includes(node[lifecycle.field])).length : 0;
+        return { current: nodes.length - past, past };
+      }, job.kind);
+      return { ...(typeof typical === "number" ? { typical } : {}), ...(split && typeof split.current === "number" ? split : {}) };
     },
     start: (ctx) => ctx.home,
-    async run(person, ctx, job) {
+    async run(person, ctx, job, prep) {
       const page = person.page;
       if (ctx.face === "pages") await openKindPage(person, job.plural);
-      else {
+      else if (person.input === "keyboard") {
+        /*
+         * FROM THE KEYBOARD, BY NAME: "/" and the kind's name, Enter — where
+         * a Tab walk to the district, then to Down, cost forty keys (the
+         * tenth walk). Find goes into the kind whole, and the keys land on
+         * its arranging line.
+         */
+        await goByFind(person, job.kind, job.plural);
+      } else {
         await pressDistrict(person, job.kind, job.plural);
         await person.settle(300);
+        /*
+         * PRESSED FROM INSIDE ANOTHER PLACE, a district is raised as a
+         * relation of it (todo's Tasks from "The lists"): its name on the
+         * trail goes in, as a person reads it (the tenth walk).
+         */
+        const into = page.locator('[data-testid="raised-into"]').locator("visible=true").first();
+        if (!(await page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').locator("visible=true").first().isVisible().catch(() => false)) && (await into.isVisible().catch(() => false))) {
+          await person.press(into, `"${((await into.textContent()) ?? job.plural).replace(/\s*↘\s*$/, "").trim()}" on the trail`);
+          await person.settle(600);
+        }
         // The list arranges where the kind is drawn whole: down into its district.
         const down = page.locator('[data-testid="overview"][aria-pressed="true"]').locator("visible=true").first();
         if (!(await page.locator('button[data-testid$="-add"], button[data-testid$="-all"]').locator("visible=true").first().isVisible().catch(() => false)) && (await down.isVisible().catch(() => false))) {
@@ -953,13 +1047,35 @@ export const JOBS = {
        * offers nothing to arrange, and a person who wants the long ones
        * presses "+1458 past" and then narrows (the tenth walk).
        */
-      const past = page.locator('[data-testid="past-link"], button.graview-kind-past').locator("visible=true").first();
-      if (!(await appears(filter, 2_500)) && (await past.isVisible().catch(() => false))) {
+      // The district's "+1458 past", the list's own link, or — where the district is folded away on a phone — the arranging line's.
+      const past = page.locator('[data-testid="past-link"], [data-testid$="-past"], button.graview-kind-past').locator("visible=true").first();
+      // Where most of the list is past — one callout under way, 1,458 behind it — the past is what is narrowed.
+      const mostlyPast = typeof prep.current === "number" && typeof prep.past === "number" && prep.past > prep.current;
+      if ((mostlyPast || !(await appears(filter, 2_500))) && (await past.isVisible().catch(() => false))) {
         await person.press(past, `"${((await past.textContent()) ?? "past").trim()}"`);
         await person.settle(600);
       }
       if (!(await appears(filter))) throw new DeadEnd(`there is no "Filter" to narrow the ${job.plural.toLowerCase()} with`);
       await person.press(filter, '"Filter"');
+      /*
+       * A NUMBER, TYPED. From the keyboard the number a person has in mind
+       * is typed into the list's own box, and "at most" it is the first
+       * entry under it (the tenth walk); the pointer steps to one.
+       */
+      if (person.input === "keyboard" && typeof prep.typical === "number") {
+        const box = page.locator('[data-testid="arrange-list"] input[data-testid$="-filter-find"]').first();
+        if (await appears(box, 3_000)) {
+          await person.fill(box, String(prep.typical), `${job.label} ${prep.typical}`);
+          const typed = page.locator(`[data-testid="arrange-list"] [data-value="${job.field}:at-most:${prep.typical}"]`).first();
+          if (!(await appears(typed, 3_000))) throw new DeadEnd(`typing ${prep.typical} into "Filter" offers no ${job.label.toLowerCase()} of at most ${prep.typical}`);
+          const option = (await typed.textContent())?.trim() ?? job.label;
+          await person.pick(typed, `"${option}"`);
+          await person.settle(300);
+          const chip = page.locator('[data-testid$="-condition"]').filter({ hasText: job.label }).locator("visible=true").first();
+          if (!(await appears(chip, 3_000))) throw new DeadEnd(`choosing "${option}" did not narrow the ${job.plural.toLowerCase()}`);
+          return;
+        }
+      }
       /*
        * Each heading of the list starts closed: the one the field stands
        * under is opened, as a person opens it — once the list is there. The
@@ -1057,11 +1173,12 @@ export const JOBS = {
       }, job.kind);
       if (!target) return { skip: `there is no ${job.noun} to find` };
       target.noun = job.noun;
-      return { target, query: partOf(target.label, ctx.labels) };
+      const query = partOf(target.label, ctx.labels);
+      return { target, query, more: anotherWord(target.label, ctx.labels, query) };
     },
     start: (ctx) => ctx.home,
     async run(person, ctx, job, prep) {
-      await findAndOpen(person, ctx.face, prep.target, prep.query);
+      await findAndOpen(person, ctx.face, prep.target, prep.query, prep.more);
       const page = person.page;
       const open = await page.evaluate((id) => {
         const hash = decodeURIComponent(location.hash);

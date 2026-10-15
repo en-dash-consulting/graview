@@ -949,7 +949,8 @@ function SelectionTies<S extends AnySchema>({
             /* How many ties these words speak for, and whether one of them is reached. */
             data-graview-said-for={label.keys.length}
             data-graview-tie-said={label.keys.some((key) => reached.has(key)) ? "shown" : "waiting"}
-            style={{ position: "absolute", left: label.x, top: label.y }}
+            /* Kept on the screen: landing near a phone's edge, the words step back by as much as they would run over (the tenth walk). */
+            style={{ position: "absolute", left: label.x, top: label.y, transform: `translateX(min(0px, calc(${Math.round(width - label.x - 8)}px - 100%)))` }}
           >
             {label.said}
           </span>

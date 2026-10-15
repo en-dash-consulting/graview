@@ -4946,3 +4946,113 @@ main's verdict and on this branch's. Open, and carried to the eleventh walk:
   card on a phone is wider than the screen, its relation captions past the
   edge; the coverage grid over the callouts marks every member "on no
   callout", counting only the callout on the horizon.
+
+### The tenth walk's carried dead ends (2026-10-15)
+
+Fixed after the walk, from its "carried open" list, each found again by the
+journeys (`GRAVIEW_JOURNEYS_SHOTS` kept a picture of every dead end). Walk10
+lived in a worktree that is gone, so its one-current-and-1,458-past shape is
+a fixture of the journeys' own now: `discography-past`, the discography with
+every song but one scrapped by its label in one change (1 current, 1,176
+past), driven for the job that shape is about.
+
+### W-217 · From todo's "The lists", pressing Tasks raises them, and nothing goes into them to narrow
+- stage: I (the journeys' "narrow" on todo) · face: scene · width: 1440 · scheme: light
+- impact: blocks a job — "Narrowing the tasks by blocked" on the scene at a desk, with either hand: "there is no “Filter” to narrow the tasks with" (carried from the tenth walk)
+- class: no-way-to-do-a-job
+- expected: a kind pressed from another place, and raised as its relation, can be gone into where its list is arranged
+- actual: the press raises the tasks as a relation of the lists, which is what it means there; the raised chip, "Tasks ×", only let them down, and the way in was a double-click nobody is told about
+- where it belongs: `packages/primitives/src/workbench/trail.tsx`
+- harness that should have caught it: the journeys' "narrow", which did
+- status: fixed in "A kind raised as a relation is a way into it" · carried from the tenth walk · the chip is two controls: the kind's name, "Go into the tasks" (`raised-into`), and its ×, "Stop showing tasks". Criterion: `packages/primitives/tests/unit/a-raised-kind-is-a-way-into-it.test.tsx` (verified failing without the fix); the journeys' todo "narrow" on the scene at 1440, done with the pointer in 5 presses (the district, "Tasks" on the trail, Filter, Blocked, at most) and the keyboard in 8
+
+### W-218 · With one record current and over a thousand past, the past cannot be narrowed on a phone
+- stage: I (the journeys' "narrow" on `discography-past`) · face: scene · width: 390 · scheme: light
+- impact: blocks a job — "Narrowing the songs by track" on the scene on a phone, with either hand: "there is no “Filter” to narrow the songs with" (walk10's callouts, carried from the tenth walk; reproduced on the fixture)
+- class: no-way-to-do-a-job (also: breaks-at-width-zoom-or-engine)
+- expected: the records behind the horizon are reached from the place their kind is drawn
+- actual: the picture of one current song drew one row and no arranging line (a line is drawn from two records), and the district that says "+1176 past" was folded away with the others on a phone
+- where it belongs: `packages/primitives/src/lens/arranging.tsx`, `packages/primitives/src/kind-stop.tsx`, `packages/primitives/src/arrange-bar.tsx` (`past`)
+- harness that should have caught it: the journeys, on an example at the shape: none had one, so the fixture is the journeys' own
+- status: fixed in "The past has a way in from the line that arranges a list" · carried from the tenth walk · a lens's line and a kind's stop are drawn wherever records stand behind the horizon, with "+1,176 past" on the line itself; pressed, the past is in view and the keys go on along the line. The journeys press the past first where most of a list is past. Criterion: the journeys' `discography-past` "narrow" on the scene at 390, done with the pointer (6 presses) and the keyboard (8), a dead end with both before the fix
+
+### W-219 · From the keyboard, Find reaches the gauntlet's longest title in 89 presses where the pointer takes 3
+- stage: I (the keyboard pass) · face: scene · width: 1440 and 390 · scheme: light
+- impact: costs a job — "Finding a talk by part of its name" from the keyboard: 89 presses, every talk "incremental" finds a row before the one wanted (149 of them; the title is one of six twins), carried from the tenth walk
+- class: keyboard-lands-nowhere (also: data-shape-not-in-fixtures)
+- expected: the keyboard's way to a record in a long answer costs about what the pointer's does
+- actual: ↓ was the only way down the strip (W-214 made it one key a record), and nothing said that another word would make the answer short
+- where it belongs: `packages/primitives/src/find.tsx`; the journeys' keyboard person (`scripts/lib/journeys.mjs`)
+- harness that should have caught it: the journeys' "find" from the keyboard, which did
+- status: fixed in "Find costs the keyboard about what it costs the pointer" · carried from the tenth walk · chosen to fit W-214's keys: the words stay the box's, so typing is the type-ahead — another word narrows the answer, and an answer of more than twelve records says "149 found: another word of the name narrows them"; PageDown and PageUp walk a page of records past the acts unfolded under one; Home and End stay the caret's, in a field being written in. The strip scrolls to the row lit. Criterion: `packages/primitives/tests/unit/find-costs-the-keyboard-what-it-costs-the-pointer.test.tsx`, "walks a page of records with PageDown" and "says a long answer narrows with another word" (verified failing without the fix); the gauntlet's "find" on the scene from the keyboard, 89 → 4 presses at both widths ("/", "incremental", "kubernetes", Enter), the pointer's 3
+
+### W-220 · Narrowing a list by a number takes the keyboard 62 presses where the pointer takes 6
+- stage: I (the keyboard pass) · face: scene · width: 1440 and 390 · scheme: light
+- impact: costs a job — walk10's callouts by a number: 62 presses against 6; the gauntlet's talks by length 74 and 60 against 5; `discography-past` 50 against 6 — most of them Tabs to the district, to Down and to Filter, then a heading and a walk down its steps (carried from the tenth walk)
+- class: keyboard-lands-nowhere
+- expected: the keyboard reaches a kind and narrows it about as cheaply as the pointer
+- actual: Find's row for a kind went in narrowed by the kind's own name ("talks" kept 10 talks of 1,960), stayed at altitude, and let the keys go on nothing; a number could only be stepped to
+- where it belongs: `packages/primitives/src/find.tsx`, `packages/primitives/src/arrange-lists.tsx`
+- harness that should have caught it: the journeys' "narrow" from the keyboard, which did
+- status: fixed in "Find costs the keyboard about what it costs the pointer" and "A number is narrowed by typing it" · carried from the tenth walk · chosen to fit the keyboard model the scene already had ("/" reaches Find, Enter travels): Enter on a kind goes into it whole, on the ground, and the keys land on its arranging line; the Filter list's own box takes a number typed — "25" offers "at most 25 min" and "at least 25 min" first. The journeys' keyboard person goes by name ("/", the kind's plural, Enter) and types the number. Criterion: `find-costs-the-keyboard-what-it-costs-the-pointer.test.tsx`, "goes into a kind its words name whole … and the keys land on its arranging line", and `packages/primitives/tests/unit/a-number-is-narrowed-by-typing-it.test.tsx` (verified failing without the fix); the journeys from the keyboard: the gauntlet 74 → 8 at 1440 and 60 → 8 at 390 (pointer 5), `discography-past` 50 → 8 (pointer 6), the rota 29 → 8 at 1440 (pointer 4), todo a dead end → 8 (pointer 5)
+
+### W-221 · The rota's raised "Shifts ×" stands over its week's "Sort"
+- stage: I (the journeys on the rota) · face: scene · width: 1440 · scheme: light
+- impact: cosmetic — the arranging line's first control half under the trail's chip; "zoomed in ×" stood over the gauntlet's timetable's title the same way (carried from the tenth walk)
+- class: layout-collision-or-overflow
+- expected: what stands over the ground's top corner leaves the focused card below it
+- actual: a zoomed place began at 3% of the height, under the trail 14 pixels from the top
+- where it belongs: `packages/layout/src/layout.ts` (`headroom`), `packages/react/src/scene-root.tsx`
+- harness that should have caught it: the watch, which now does (W-223)
+- status: fixed in "A focused card begins below the trail" · carried from the tenth walk · the scene says the room its trail takes where the trail says something, and the focused card begins below it. Criterion: `packages/layout/tests/unit/a-focused-card-begins-below-the-trail.test.ts` (verified failing without the fix), and the watch's `control-covered` on the rota's week with Shifts raised: "Sort … is covered by … Shifts↘" without the fix, nothing with it
+
+### W-222 · Seedbed's plot card on a phone is wider than the screen, its relationships cut off
+- stage: I (the journeys on seedbed) · face: scene · width: 390 · scheme: light
+- impact: cosmetic — the plot's relationships, and what its link says where it lands ("what it grows, year by year"), past the screen's edge (carried from the tenth walk)
+- class: layout-collision-or-overflow (also: breaks-at-width-zoom-or-engine)
+- expected: a card reads down where it is narrower than its columns
+- actual: a record's facts and relationships stood side by side in columns of 200 and 220 pixels, in a card 293 wide; a link's words began where it landed, at 279 of 390
+- where it belongs: `packages/primitives/src/default-views.tsx`, `packages/react/src/scene-lines.tsx`
+- harness that should have caught it: the watch, which now does (W-223)
+- status: fixed in "A record's card reads down when it is narrower than its two columns" and "The scene's foot keeps its controls clear of the ask field" · carried from the tenth walk · side by side in the same proportion where both fit, one under the other where they do not; a link's words step back onto the ground. Criterion: the watch's `card-wider-than-screen` on seedbed's plot at 390: "… reaches 105 pixels past the screen's edge at 390 wide, cut off" without the fix, nothing with it
+
+### W-223 · The watch measures neither a control covered by another nor a card wider than its screen
+- stage: setup (the watch) · face: every face · width: every width · scheme: every scheme
+- impact: costs a job's measure — `layout-collision-or-overflow` was logged by hand walk after walk (W-203, W-221, W-222) and judged by nothing
+- class: harness-or-setup-itself
+- expected: the class is caught on every screen every harness reaches
+- actual: the watch judged sideways scroll and target size; nothing standing over a control, and nothing cut off inside a card
+- where it belongs: `scripts/lib/watch.mjs`, `scripts/verify-watch.mjs`
+- harness that should have caught it: `verify-watch`
+- status: fixed in "The watch catches a control covered by another and a card wider than its screen" · carried from the tenth walk · `control-covered`: a press at a control's middle, or a quarter in from a corner, would land on something else — not on something opened over the page on purpose (a menu, a dialog, a popover, a panel or sheet on the map, the seat opened to talk), not under a bar a page can scroll it out from under, not while the scene is moving, and asked again before it is said. `card-wider-than-screen`: a card laid out wider than the screen, or holding what reaches past its own edge and the screen's, cut off rather than in a row that scrolls sideways. Criterion: `verify-watch`'s `aControlCoveredByAnotherIsCaught` and `aCardWiderThanItsScreenIsCaught`, each with pages that must stay silent (a chip clear of the line, a menu opened over it, a wide row that scrolls); run without `--quick` over every harness
+
+### W-224 · What `control-covered` found on its first run, carried open
+- stage: setup (every harness, run without `--quick`) · face: both · width: every width · scheme: both
+- impact: cosmetic, up to costing a job — each a control a press cannot reach where it is drawn
+- class: layout-collision-or-overflow
+- expected: nothing stands over a control a person may press
+- actual: from altitude, todo's Tasks district hangs its drive-in pictures over its own problem count (navigation, shrunk, lines, who); the sign to a person somewhere else under "Close the map" (chrome); the bar's faces switch over the app's name at 320 and 390 (gauntlet, chrome); on a phone at altitude a district's count or "close ▴" under the zoom (chrome; the gauntlet's journeys); the history's timeline over a problem count (playback); a top-edge sign under "Reset view" (navigation); the folded districts' "+3 more" under the focused picture (navigation); a declared lens in the lifelogics document drawing two records' links over each other (declared); pages and lens columns that end under the closed ask field and cannot scroll clear of it — an app's own page with no foot room, the rota's repairs, a columns lens (gauntlet, pages, screen-reader, the journeys); and in Firefox, where the chain does not fail on it, a seat's draft lens drawn over Up, the key and the zoom (seat-goes-and-draws)
+- where it belongs: `packages/primitives/src/default-views.tsx` (drive-ins, problem counts), `packages/primitives/src/app-bar.tsx`, the occupants layer, `packages/primitives/src/timeline.tsx`, the declared lenses, and each app's own pages' foot room
+- harness that should have caught it: the watch, which now does
+- status: open — carried to the eleventh walk. Each is acknowledged by name in `scripts/lib/watch-acknowledged.mjs`, to the harness that met it, so a new collision anywhere else fails; fixed, an entry goes
+
+### W-225 · On a phone the zoom stands under the ask field, the edge's signs on each other, and the routed face's last line under the field
+- stage: setup (what `control-covered` found on its first run, fixed with it) · face: scene, pages · width: 390 · scheme: light
+- impact: costs a job — on a phone at altitude the zoom (−, its level, +, "From above") was wholly under the ask field and could not be pressed; "← Plots" stood on "← Gardeners", "Topics →" on "Workshops →", "Rules ↓" under "From above"; "Start fresh" under the ask field however far the page scrolled
+- class: layout-collision-or-overflow (also: breaks-at-width-zoom-or-engine)
+- expected: the foot's controls stand clear of the field across it; one sign never stands on another; a page's last line scrolls clear of the field
+- actual: the zoom kept 16 pixels from a foot the field covers; signs along an edge were spaced 36 pixels whatever their length, and held at the edge's end once it ran out; the routed face's footer came after the main that kept the room
+- where it belongs: `packages/primitives/src/scene-css.ts` (`--graview-scene-foot`), `packages/react/src/edge-signs.tsx`, `packages/pages/src/page-shell.tsx`
+- harness that should have caught it: the watch, which now does
+- status: fixed in "The scene's foot keeps its controls clear of the ask field" and "The routed face's last line clears the ask field" · found by the tenth walk's carried pass · on a phone the zoom and the foot's signs stand above the field; each sign stands past the one before by its own length, each edge's foot is the zoom's, and a sign with no room left is not drawn (its district is panned to and folded as before); the footer keeps the foot's room. Criterion: the watch's `control-covered`, silent on these in the journeys on todo, seedbed and rota after the fix
+
+Nine findings, W-217 to W-225: seven carried from the tenth walk's open list
+and fixed, one fixed from what the new watch rule found, and one (W-224)
+carried open as the rule's first catch. On todo, seedbed, rota, the gauntlet
+and `discography-past` the journeys finish every run. The three keyboard
+regressions they still name — "Making a task" and the gauntlet's talk and
+speaker on the pages at a desk, 21 presses then 28 to 30 — are in the run on
+main before any of these changes, and are not theirs. Still open from the
+tenth walk: W-201 (Nick's), a repair from the in-app seat needing a model,
+"Stand the team down" to three callouts (the data's shape), and the coverage
+grid that counts only the callout on the horizon.

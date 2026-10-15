@@ -62,12 +62,33 @@ export function EdgeSigns({
     // The reader's window: a panel over the scene is not part of it (`Layout.visible`).
     const seen = result.visible ?? result;
     const span = side === "left" || side === "right" ? seen.height : seen.width;
-    let last = -Infinity;
+    const across = side === "left" || side === "right";
+    /*
+     * ONE SIGN NEVER STANDS ON ANOTHER (the tenth walk's carried pass: the
+     * watch's `control-covered`). Along the foot a sign is as long as its
+     * name, not 36 pixels, so "Plots" stood on "Gardeners"; and where more
+     * districts lay past an edge than it had room for, the last were all
+     * held at its end, one on another. Each stands past the one before by
+     * its own length; one with no room left on its edge is not drawn —
+     * its district is still panned to, and listed with the folded ones.
+     * The foot's far end is the zoom's, and so is each side's foot: on a
+     * phone the zoom runs most of the way across.
+     */
+    const end = side === "bottom" ? ZOOM_ROOM : side === "top" ? MARGIN : ZOOM_TALL + MARGIN / 2;
+    let reached = -Infinity;
+    const placed: { left: number; top: number; right: number; bottom: number }[] = [];
     const onSide = past.filter((one) => one.side === side).sort((a, b) => a.along - b.along);
     for (const one of onSide) {
       const plural = pluralLabel(schema, one.kind);
-      const { at, inset } = clearOf(taken, side, Math.max(MARGIN, Math.min(span - MARGIN, Math.max(one.along, last + SPACING))), signLength(plural), seen, span);
-      last = at;
+      const length = signLength(plural);
+      const half = across ? HALF_TALL : length / 2;
+      const limit = span - end - (across ? 0 : half);
+      const wanted = Math.max(MARGIN, one.along, reached + half + SIGN_GAP);
+      if (wanted > limit) continue;
+      const { at, inset } = clearOf([...taken, ...placed], side, wanted, length, seen, span);
+      if (at > limit + 0.5) continue;
+      reached = at + half;
+      placed.push(signBox(side, at, length, seen, inset));
       const place: CSSProperties =
         side === "left"
           ? { left: inset, top: at, transform: "translateY(-50%)" }
@@ -75,7 +96,8 @@ export function EdgeSigns({
             ? { right: `calc(${inset}px + var(--graview-dock, 0px))`, top: at, transform: "translateY(-50%)" }
             : side === "top"
               ? { top: inset, left: at, transform: "translateX(-50%)" }
-              : { bottom: `calc(${inset}px + var(--graview-sheet, 0px))`, left: at, transform: "translateX(-50%)" };
+              : // Above the ask field on a phone, as the zoom is (`--graview-scene-foot`), and above a sheet.
+                { bottom: `calc(${inset}px + var(--graview-scene-foot, var(--graview-sheet, 0px)))`, left: at, transform: "translateX(-50%)" };
       signs.push(
         <button
           key={one.id}
@@ -112,6 +134,19 @@ const signLength = (plural: string) => (plural.length + 2) * 7.4 + 22;
 const HALF_TALL = SPACING / 2;
 /** How far in from its edge a sign stands. */
 const EDGE_INSET = 6;
+/** The least ground between two signs along one edge. */
+const SIGN_GAP = 6;
+/** The foot's far end, the zoom's: its −, its level, its + and "From above", and its inset from the corner. */
+const ZOOM_ROOM = 236;
+/** How tall the zoom stands from the foot, its inset with it. */
+const ZOOM_TALL = 56;
+
+/** A sign's box at `along` on its edge, `inset` in from it, in the window's pixels. */
+function signBox(side: PastTheEdge["side"], along: number, length: number, seen: { readonly width: number; readonly height: number }, inset = EDGE_INSET) {
+  return side === "left" || side === "right"
+    ? { left: side === "left" ? inset : seen.width - inset - length, right: side === "left" ? inset + length : seen.width - inset, top: along - HALF_TALL, bottom: along + HALF_TALL }
+    : { left: along - length / 2, right: along + length / 2, top: side === "top" ? inset : seen.height - inset - SPACING, bottom: side === "top" ? inset + SPACING : seen.height - inset };
+}
 
 /**
  * Where a sign stands clear of the showings: where it was asked to, else
@@ -128,10 +163,7 @@ function clearOf(
 ): { readonly at: number; readonly inset: number } {
   const across = side === "left" || side === "right";
   // The sign's box at `along`, from the edge it stands on.
-  const box = (along: number) =>
-    across
-      ? { left: side === "left" ? EDGE_INSET : seen.width - EDGE_INSET - length, right: side === "left" ? EDGE_INSET + length : seen.width - EDGE_INSET, top: along - HALF_TALL, bottom: along + HALF_TALL }
-      : { left: along - length / 2, right: along + length / 2, top: side === "top" ? EDGE_INSET : seen.height - EDGE_INSET - SPACING, bottom: side === "top" ? EDGE_INSET + SPACING : seen.height - EDGE_INSET };
+  const box = (along: number) => signBox(side, along, length, seen);
   const covers = (along: number) => showings.find((hung) => { const b = box(along); return b.left < hung.right && hung.left < b.right && b.top < hung.bottom && hung.top < b.bottom; });
   const hung = covers(at);
   if (!hung) return { at, inset: EDGE_INSET };

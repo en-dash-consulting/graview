@@ -1,4 +1,4 @@
-import { counted, type AnySchema, type Hit } from "@graview/core";
+import { counted, numberAsRead, type AnySchema, type Hit } from "@graview/core";
 import { actsOn, search, touchWeights } from "@graview/core/search";
 import { kindCardId, withFocus, withJackIn, withOverview, withPicture, withSelection } from "@graview/layout/view";
 import { withoutSearch, withQuery } from "@graview/layout/view-moves";
@@ -127,12 +127,44 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
   const asking: AskRow | null = seat.drawn > 0 && q.trim() ? { id: `${strip}-ask`, ask: q.trim() } : null;
   const rows = useMemo<readonly (Row | AskRow)[]>(() => [...groups.flatMap(([, entries]) => entries), ...(asking ? [asking] : [])], [groups, asking?.ask]);
   const current = rows.find((row) => row.id === active) ?? rows[0];
+  const manyFound = (found?.hits ?? []).filter((hit) => hit.about === "node").length;
 
   // A new answer starts at its first row, as a list does.
   useEffect(() => {
     setActive(null);
     setAnchor(null);
   }, [q]);
+
+  /*
+   * WHERE ENTER WENT, THE KEYS GO (the tenth walk). Into a kind or one of
+   * its pictures, the keyboard was let go on nothing, and narrowing what
+   * Find had opened began with twenty Tabs back down the page. It lands on
+   * the place's own arranging line — Sort, Filter — or, where the place
+   * draws none, on the place; unless something else took the keys first.
+   */
+  const landOn = useRef<string | null>(null);
+  useEffect(() => {
+    const kind = landOn.current;
+    if (!kind) return;
+    landOn.current = null;
+    let frames = 0;
+    const look = () => {
+      const place = document.querySelector<HTMLElement>(`[data-graview-view="aggregate:${CSS.escape(kind)}"]`);
+      const at = document.activeElement;
+      const free = !at || at === document.body || at === document.documentElement || at === input.current || at === place;
+      if (!free) return;
+      const line = place?.querySelector<HTMLElement>('[role="group"][aria-label="Arrange"] :is(button, input)');
+      if (line) return line.focus({ preventScroll: true });
+      /*
+       * The line comes with the place's picture, which may be fetched the
+       * first time: meanwhile the keys wait on the place itself, and go on
+       * to its line when it comes.
+       */
+      if (place && place.tabIndex >= 0 && at !== place && frames > 30) place.focus({ preventScroll: true });
+      if (++frames < 240) requestAnimationFrame(look);
+    };
+    requestAnimationFrame(look);
+  }, [view]);
 
   const highlight = (row: Row | AskRow | undefined) => {
     if (!row) return;
@@ -144,6 +176,19 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
     if (row.hit.about === "node") setAnchor(row.hit.id);
     else if (row.hit.about !== "act") setAnchor(null);
   };
+
+  /** How many rows a page of the strip is: what it shows at once, less one kept for context. */
+  const pageOf = (count: number) => {
+    const pane = document.getElementById(strip);
+    const one = pane?.querySelector<HTMLElement>('[role="option"]')?.getBoundingClientRect().height ?? 0;
+    const room = pane?.clientHeight ?? 0;
+    return Math.min(count, one > 0 && room > 0 ? Math.max(1, Math.floor(room / one) - 1) : FIND_PAGE);
+  };
+
+  // The row lit is the row in sight: the strip scrolls to it as the keys move.
+  useEffect(() => {
+    if (active) document.getElementById(active)?.scrollIntoView?.({ block: "nearest" });
+  }, [active]);
 
   const travel = (row: Row | AskRow | undefined) => {
     if (!row) return;
@@ -160,11 +205,19 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
         setView((stop) => withSelection(withFocus(withOverview(stop, false), hit.id), [hit.id]));
         break;
       case "kind":
-        // Into the district, narrowed by the same words — the same descent a double-click on the lit district makes.
-        setView((stop) => withJackIn(stop, kindCardId(hit.kind), { ownPicture: true, ...(stop.q ? { carry: stop.q } : {}) }));
+        /*
+         * INTO THE KIND, WHOLE (the tenth walk). The row is there because the
+         * words NAME the kind — "talks" — so they are not words to narrow its
+         * records by: carried in, "talks" kept ten talks of 1,960. The
+         * district's own "N match" is the way in narrowed by the words. And
+         * on the ground, as a search's descent is: the words took you to it.
+         */
+        setView((stop) => withJackIn(withOverview(stop, false), kindCardId(hit.kind), { ownPicture: true }));
+        landOn.current = hit.kind;
         break;
       case "place":
         setView((stop) => withPicture(stop, hit.kind, hit.as));
+        landOn.current = hit.kind;
         break;
       case "rule": {
         const named = violations.filter((violation) => violation.invariant === hit.name).flatMap((violation) => violation.nodeIds);
@@ -258,6 +311,19 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
             highlight(rows[Math.max(0, at - 1)]);
+          } else if ((event.key === "PageDown" || event.key === "PageUp") && rows.length > 0) {
+            /*
+             * A PAGE OF RECORDS AT A TIME (the tenth walk): the strip's own
+             * height of them, past the acts unfolded under one, so a hundred
+             * talks are ten keys and not a hundred. Home and End stay the
+             * words' own: the box is a field being written in.
+             */
+            event.preventDefault();
+            setOpen(true);
+            const records = rows.flatMap((row, index) => (anAct(row) ? [] : [index]));
+            const from = Math.max(0, records.findIndex((index) => index >= Math.max(at, 0)));
+            const step = event.key === "PageDown" ? pageOf(rows.length) : -pageOf(rows.length);
+            highlight(rows[records[Math.min(records.length - 1, Math.max(0, (at < 0 ? -1 : from) + step))]!]);
           } else if (event.key === "ArrowRight" && onRecord && anAct(rows[at + 1])) {
             event.preventDefault();
             highlight(rows[at + 1]);
@@ -360,6 +426,12 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
             </span>
           </div>
         ) : null}
+        {/* A long answer says how to make it short: another word, as a list's far end says "type more of the name". */}
+        {manyFound > MANY_FOUND ? (
+          <p role="presentation" style={{ margin: 0, padding: "6px 12px 2px", color: "var(--graview-ink-faint)", fontSize: "0.75rem" }} data-testid="find-more-words">
+            {numberAsRead(manyFound)} found: another word of the name narrows them.
+          </p>
+        ) : null}
         {found && found.searched.past === false && found.searched.kinds.some((kind) => store.schema.tryDefinition(kind)?.lifecycle) ? (
           <p role="presentation" style={{ margin: 0, padding: "6px 12px 8px", color: "var(--graview-ink-faint)", fontSize: "0.75rem" }}>
             Current ones; add is:any for the past.
@@ -436,6 +508,12 @@ function spoken(byKind: Readonly<Record<string, number>>, hits: readonly Hit[], 
   const near = hits.filter((hit) => hit.about === "node" && hit.near).length;
   return parts.length === 0 ? "Nothing found" : `${parts.join(", ")} found${near > 0 ? `, ${near} of them near` : ""}`;
 }
+
+/** A page of the strip's rows where it cannot be measured. */
+const FIND_PAGE = 10;
+
+/** From how many records an answer asks for another word rather than being walked. */
+const MANY_FOUND = 12;
 
 const STRIP: CSSProperties = {
   ...POPOVER_STYLE,

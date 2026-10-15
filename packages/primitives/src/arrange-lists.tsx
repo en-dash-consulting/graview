@@ -139,6 +139,26 @@ export interface FilterSection {
   readonly label: string;
   readonly entries: readonly FilterEntry[];
   readonly typed?: readonly { readonly id: string; readonly label: string }[];
+  /** For a number, the entries a number typed in the list's box makes: "at most 30 min", "at least 30 min". */
+  readonly atNumber?: (value: number) => readonly FilterEntry[];
+}
+
+/** Two entries for a number typed rather than stepped to: at most it, and at least it. */
+function numberEntries(schema: AnySchema, kind: string, offer: ArrangeOffer, value: number): readonly FilterEntry[] {
+  const definition = schema.tryDefinition(kind);
+  return (["at-most", "at-least"] as const).map((op) => ({
+    value: `${offer.key}:${op}:${value}`,
+    label: `${op === "at-most" ? "at most" : "at least"} ${valueWords(definition, offer.key, value)}`,
+    group: offer.label,
+    key: offer.key,
+    condition: { key: offer.key, value: `${op}:${value}` },
+  }));
+}
+
+/** A number as a person types it into the list's box: "30", "2.5", "1,200". */
+export function typedNumber(words: string): number | null {
+  const plain = words.trim().replace(/(?<=\d),(?=\d{3}\b)/g, "");
+  return /^-?\d+(\.\d+)?$/.test(plain) ? Number(plain) : null;
 }
 
 /**
@@ -152,6 +172,8 @@ export function filterSections(schema: AnySchema, graph: ArrangeGraph, offers: A
   const entries = filterEntries(schema, graph, offers);
   return offers.filters.flatMap((offer): FilterSection[] => {
     const own = entries.filter((entry) => entry.key === offer.key);
+    // A number is offered whatever steps its records make: it can be typed (the tenth walk).
+    if (offer.type === "number" && offer.about !== "edge") return [{ key: offer.key, label: offer.label, entries: own, atNumber: (value) => numberEntries(schema, offers.kind, offer, value) }];
     if (own.length === 0) return [];
     if (offer.about !== "edge") return [{ key: offer.key, label: offer.label, entries: own }];
     const far = everyFarEnd(schema, graph, offer);
@@ -318,14 +340,20 @@ function FilterList({ sections, has, testId, onToggle }: { readonly sections: re
     <>
       <label className="graview-arrange-find">
         <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Find a filter</span>
-        <input type="search" data-testid={`${testId}-filter-find`} value={find} placeholder="Find a filter or a name…" onChange={(event) => setFind(event.target.value)} />
+        <input type="search" data-testid={`${testId}-filter-find`} value={find} placeholder="Find a filter, a name or a number…" onChange={(event) => setFind(event.target.value)} />
       </label>
       {sections.map((section) => {
         const on = section.entries.filter((entry) => entry.condition && has(entry.condition)).length + (section.typed ?? []).filter((end) => has({ key: section.key, value: end.id })).length;
         if (looking) {
           // What was typed, across every heading: the heading's own entries whose words hold it, or all of them when the heading's does.
           const whole = section.label.toLocaleLowerCase().includes(looking);
-          const entries = whole ? section.entries : section.entries.filter((entry) => entry.label.toLocaleLowerCase().includes(looking));
+          /*
+           * A NUMBER TYPED IS A NUMBER TO NARROW BY (the tenth walk): "30"
+           * offers "Length: at most 30 min" and "at least" first, in one key,
+           * where stepping to it was a heading and a walk down its steps.
+           */
+          const typed = section.atNumber && typedNumber(looking) !== null ? section.atNumber(typedNumber(looking)!) : [];
+          const entries = [...typed, ...(whole ? section.entries : section.entries.filter((entry) => entry.label.toLocaleLowerCase().includes(looking) && !typed.some((one) => one.value === entry.value)))];
           const ends = section.typed ? typedMatches(section.typed, looking) : { shown: [], more: 0 };
           if (entries.length === 0 && ends.shown.length === 0) return null;
           return (
@@ -336,6 +364,8 @@ function FilterList({ sections, has, testId, onToggle }: { readonly sections: re
             </div>
           );
         }
+        // A number with no steps of its own is found by typing it, and has nothing to open.
+        if (section.entries.length === 0 && !section.typed) return null;
         const opened = open.has(section.key);
         return (
           <div key={section.key} role="group" aria-label={section.label} data-section={section.key}>

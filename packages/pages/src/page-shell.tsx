@@ -64,7 +64,13 @@ export function DefaultShell<S extends AnySchema>({
         <footer
           style={{
             borderTop: "1px solid var(--graview-edge)",
-            padding: "14px 20px 20px",
+            /*
+             * The page's very end, so it clears what stands over the foot as
+             * the main does: on a phone the ask field stood over "Start
+             * fresh" however far the page scrolled (the watch's
+             * `control-covered`, the tenth walk's carried pass).
+             */
+            padding: "14px 20px max(20px, calc(var(--graview-foot-room, 0px) + env(safe-area-inset-bottom, 0px)))",
             ...quiet,
           }}
         >

@@ -2,6 +2,7 @@ import { arrangeAllows, arrangeable, formatArrangement } from "@graview/core/arr
 import {
   dayAsRead,
   labelOf,
+  numberAsRead,
   type AnySchema,
   type Arrangeable,
   type ArrangeOffer,
@@ -72,6 +73,13 @@ export interface ArrangeBarProps {
   readonly chips?: { readonly nodes: readonly ArrangeNode[]; readonly flagged?: ReadonlySet<string>; readonly today?: string };
   /** What the kind can be arranged by, where the surface says more than its declaration alone: a list's `throughEdges`. */
   readonly offers?: Arrangeable;
+  /**
+   * THE RECORDS BEHIND THE HORIZON, and the way to them: "+1458 past" on
+   * the line itself. A rescue team with one callout under way and 1,458
+   * behind it had a list of one, no line, and on a phone the district that
+   * says "+1458 past" folded away (the tenth walk).
+   */
+  readonly past?: { readonly count: number; readonly widen: () => void };
   readonly style?: CSSProperties;
 }
 
@@ -195,7 +203,8 @@ export function ArrangeBar(props: ArrangeBarProps) {
   const canFilter = menu.length > 0;
   const words = props.query !== false && props.allow !== false;
   const count = countWords(props.noun, props.kept);
-  if (!canSort && !canGroup && !canFilter && !words && !count) return null;
+  const past = props.past && props.past.count > 0 ? props.past : null;
+  if (!canSort && !canGroup && !canFilter && !words && !count && !past) return null;
 
   /*
    * TWO CHANGES BEFORE ONE RENDER ARE TWO CHANGES. The bar merged each change
@@ -273,6 +282,34 @@ export function ArrangeBar(props: ArrangeBarProps) {
             {count.kept ? <span data-testid={`${id}-kept`}>{count.kept}</span> : null}
             {count.words}
           </span>
+        ) : null}
+        {past ? (
+          <button
+            type="button"
+            className="graview-arrange-open"
+            data-testid={`${id}-past`}
+            title={`${numberAsRead(past.count)} more behind the horizon — press to widen the view to the past`}
+            onClick={(event) => {
+              /*
+               * Pressed, it is gone — the past is in view and has nothing more
+               * to say — and the keys go on along the line it stood on rather
+               * than to nothing (the place's line, drawn again with the past).
+               */
+              const place = event.currentTarget.closest<HTMLElement>("[data-graview-view]");
+              const pressed = event.currentTarget;
+              past.widen();
+              let frames = 0;
+              const land = () => {
+                if (document.activeElement !== pressed && document.activeElement !== document.body && pressed.isConnected) return;
+                const next = place?.querySelector<HTMLElement>('[role="group"][aria-label="Arrange"] :is(button, input)');
+                if (next && next !== pressed && next.isConnected) return next.focus({ preventScroll: true });
+                if (++frames < 120) requestAnimationFrame(land);
+              };
+              requestAnimationFrame(land);
+            }}
+          >
+            +{numberAsRead(past.count)} past
+          </button>
         ) : null}
         {/* What is on, beside the count, each a chip that takes itself off. */}
         {conditions.map((condition, at) => {

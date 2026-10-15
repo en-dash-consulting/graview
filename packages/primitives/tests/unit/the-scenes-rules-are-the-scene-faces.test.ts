@@ -33,7 +33,7 @@ const rulesOf = (css: string): string[] => {
 
 /* The modules only the scene face draws with; a name the scene's rules use must appear in one of these and in no other source. */
 const SCENE_FILES = [
-  ...["scene-root.tsx", "view-host.tsx", "plots.tsx", "scene-hand.ts", "scene-lines.tsx", "connectors.tsx", "scene.tsx", "resolved-view.tsx", "where-drawn.tsx", "occupants.tsx", "seat-marks.tsx", "ribbons-layer.tsx", "record-links-layer.tsx"].map((file) => `react/src/${file}`),
+  ...["scene-root.tsx", "view-host.tsx", "edge-signs.tsx", "plots.tsx", "scene-hand.ts", "scene-lines.tsx", "connectors.tsx", "scene.tsx", "resolved-view.tsx", "where-drawn.tsx", "occupants.tsx", "seat-marks.tsx", "ribbons-layer.tsx", "record-links-layer.tsx"].map((file) => `react/src/${file}`),
   // The altitude control: the scene face's (and the Shell's, which draws `themeCss`).
   "primitives/src/workbench/back-out.tsx",
   // The panel beside the map: drawn only with the scene, by the faces that draw it.
@@ -98,9 +98,9 @@ describe("the scene's rules are the scene face's", () => {
 
   it("names in every selector something only the scene draws", () => {
     const strays: string[] = [];
-    // A rule inside an at-rule (the reduced-motion ones) is judged by its own selectors.
+    // A rule inside an at-rule (the reduced-motion ones, a phone's foot) is judged by its own selectors.
     const within = (rule: string): string[] =>
-      rule.startsWith("@media") ? rulesOf(rule.slice(rule.indexOf("{") + 1, rule.lastIndexOf("}"))).flatMap(within) : [rule];
+      rule.startsWith("@media") || rule.startsWith("@container") ? rulesOf(rule.slice(rule.indexOf("{") + 1, rule.lastIndexOf("}"))).flatMap(within) : [rule];
     for (const rule of rulesOf(sceneCss("light")).flatMap(within)) {
       const prelude = rule.slice(0, rule.indexOf("{"));
       for (const selector of prelude.split(",")) {

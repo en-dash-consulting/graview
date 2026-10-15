@@ -356,6 +356,14 @@ export interface LayoutOptions {
    * foot on a phone. Not the scene's size: the ground still fills the box.
    */
   readonly dock?: { readonly right?: number; readonly bottom?: number };
+  /**
+   * THE ROOM AT THE TOP OF THE GROUND, in pixels, that words standing over
+   * the picture's corner take — the trail's "zoomed in ×", a raised kind's
+   * chip. On the ground the focused card begins below it, so the trail never
+   * stands over the card's title or its arranging line (the tenth walk:
+   * the rota's "Shifts ×" over "Sort"). Nothing is kept by default.
+   */
+  readonly headroom?: number;
   readonly chrome?: readonly { readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
   /**
    * Kinds whose group is shown by the framework's own list rather than a
@@ -421,7 +429,7 @@ export interface LayoutOptions {
  * canvas and never exceeds the cap. Heights come from the band proportions in
  * `layout()`, which is what keeps the composition together at any size.
  */
-export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt" | "dock">> = {
+export const DEFAULT_OPTIONS: Required<Omit<LayoutOptions, "plurals" | "today" | "hiddenKinds" | "inset" | "plainGroups" | "besideTheMap" | "judged" | "relevance" | "cityOrder" | "plots" | "screens" | "cityZoom" | "nameWidth" | "chrome" | "tilt" | "dock" | "headroom">> = {
   width: 1200,
   height: 760,
   focusSize: { width: 1200, height: 420 },

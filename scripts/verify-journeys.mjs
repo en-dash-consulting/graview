@@ -83,6 +83,28 @@ const APPS = [
   },
   { dir: "rota", query: { today: "2026-09-14" } },
   { dir: "discography", query: {} },
+  /*
+   * ONE CURRENT AND OVER A THOUSAND PAST (the tenth walk): a rescue team
+   * has one callout under way and 1,458 behind it, and on a phone the past
+   * could not be narrowed. The discography at that shape — every song but
+   * one scrapped, as a label would scrap them, in one change — and only
+   * the job that shape is about.
+   */
+  {
+    dir: "discography",
+    name: "discography-past",
+    query: {},
+    jobs: ["narrow"],
+    arrange: (store) => {
+      const retired = ["unreleased", "scrapped"];
+      const current = store.graph.allNodes().filter((node) => node.kind === "song" && !retired.includes(node.status));
+      if (current.length <= 1) return;
+      store.applyAll(
+        current.slice(1).map((song) => ({ name: "scrap-song", args: { id: song.id } })),
+        { author: { kind: "human", id: "the-label", roles: ["label"] } },
+      );
+    },
+  },
   // The awkward example, built in parallel: driven when it is here, skipped when it is not.
   { dir: "gauntlet", query: {} },
 ];
@@ -191,7 +213,9 @@ async function runVariant({ setupFile, variant, out }) {
 async function setUp(browser, entry, declaration) {
   const port = portFor(entry.dir);
   const served = await serving(entry.dir, port, repoRoot);
-  const plan = planJobs(declaration);
+  const planned = planJobs(declaration);
+  // A fixture at a shape of its own drives only the jobs that shape is about.
+  const plan = entry.jobs ? { ...planned, jobs: planned.jobs.filter((job) => entry.jobs.includes(job.job)) } : planned;
   const setup = {
     app: entry.name ?? entry.dir,
     base: served.url,

@@ -120,6 +120,49 @@ await settle();
 const alone = takeViolations().filter((v) => v.rule === "target-too-small");
 checks.aTargetTooSmallIsCaught = crowded.length > 0 && alone.length === 0;
 
+/*
+ * control-covered: a raised chip standing over the arranging line's "Sort"
+ * (the rota, the tenth walk) — and nothing where a menu was opened over the
+ * same control on purpose, or where the chip stands clear of it.
+ */
+const chipOver = (top) =>
+  `<main style="position:relative;padding:40px"><div style="padding-top:20px"><button style="width:80px;height:28px">Sort</button><button style="width:80px;height:28px">Filter</button></div>
+<div style="position:absolute;left:30px;top:${top}px;background:#fff;padding:4px"><button style="width:90px;height:26px">Shifts ×</button></div></main>`;
+await show(chipOver(52));
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+const standsOver = takeViolations().filter((v) => v.rule === "control-covered");
+await show(chipOver(0));
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+const standsClear = takeViolations().filter((v) => v.rule === "control-covered");
+await show(`<main style="position:relative;padding:40px"><button style="width:80px;height:28px">Sort</button>
+<div role="menu" style="position:absolute;left:30px;top:30px;background:#fff;padding:4px"><button role="menuitem" style="width:120px;height:40px">Sort by name</button></div></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+const openedOver = takeViolations().filter((v) => v.rule === "control-covered");
+checks.aControlCoveredByAnotherIsCaught = standsOver.length > 0 && standsOver[0].detail.includes("Sort") && standsClear.length === 0 && openedOver.length === 0;
+
+/*
+ * card-wider-than-screen: seedbed's plot card on a phone, two columns of 200
+ * and 220 pixels in a card 293 wide, its relationships cut off past the
+ * screen (the tenth walk) — and nothing where the wide part is a scroller.
+ */
+await page.setViewportSize({ width: 390, height: 800 });
+const plotCard = (scrolls) =>
+  `<main><div data-graview-primitive="panel" data-graview-variant="card" style="width:293px;margin-left:24px;overflow:hidden"><h2>Plot 1</h2>
+<div style="${scrolls ? "overflow-x:auto" : ""}"><div style="display:grid;grid-template-columns:200px 220px;gap:34px"><div>Beds 4</div><div>Who looks after it: June</div></div></div></div></main>`;
+await show(plotCard(false));
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+const cutOff = takeViolations().filter((v) => v.rule === "card-wider-than-screen");
+await show(plotCard(true));
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await settle();
+const scrolled = takeViolations().filter((v) => v.rule === "card-wider-than-screen");
+checks.aCardWiderThanItsScreenIsCaught = cutOff.length > 0 && scrolled.length === 0;
+await page.setViewportSize({ width: 1280, height: 800 });
+
 /* offered-then-refused: the store refused a press. */
 await show(`<main><button>Close the deal</button></main>`);
 await page.evaluate(() => window.__graviewWatch.refused({ mutation: "close-deal", kind: "deal", message: "Not permitted", author: "user-priya" }));

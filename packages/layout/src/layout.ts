@@ -230,7 +230,7 @@ export function layout<S extends AnySchema>(
    */
   const zoomedContextH = Math.max(56, opts.height * 0.062);
   const zoomedContextY = Math.min(opts.height * 0.895, opts.height - zoomedContextH);
-  const band = zoomed
+  const proportioned = zoomed
     ? focus !== undefined
       ? {
           // A zoomed RECORD is a reading column with its neighborhood
@@ -291,6 +291,18 @@ export function layout<S extends AnySchema>(
             contextH: h * 0.092,
           };
         })();
+  /*
+   * BELOW THE WORDS OVER THE CORNER. The trail stands over the ground's top
+   * corner; a focused card that began under it had its title, or its
+   * arranging line's "Sort", covered by "zoomed in ×" (the tenth walk). The
+   * card begins below the room the scene says the trail takes, and gives
+   * that much of its height back — never more than a fifth of it.
+   */
+  const headroom = Math.min(opts.headroom ?? 0, proportioned.focusY + proportioned.focusH * 0.2);
+  const band =
+    headroom > proportioned.focusY
+      ? { ...proportioned, focusY: headroom, focusH: proportioned.focusH - (headroom - proportioned.focusY) }
+      : proportioned;
 
   /*
    * A group gets the whole width; a single node does not.
