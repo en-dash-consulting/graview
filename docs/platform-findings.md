@@ -147,6 +147,28 @@ nothing to observe.
 
 ## Capture budget
 
+### Chromium 158: linear, and costlier
+
+Canary 158.0.8105.0 respelled the API — `content="drawable"` on the canvas
+(`layoutsubtree` is gone), `drawable` on each child, and a destination of
+`{ texture }` — and capture there costs about 0.22 ms a view, linearly, with
+no cliff and no crash at 512. Every live view every frame, the discography's
+songs as N views all moving (median of three runs, `scripts/verify-scale.mjs`):
+
+| Live views | fps, desk | fps, GRAVIEW_SLOW=4 | fps, only what changed (desk) | same, SLOW=4 |
+|-----------:|----------:|--------------------:|------------------------------:|-------------:|
+| 64 | 42 | 74 | 714 | 455 |
+| 128 | 21 | 37 | 769 | 417 |
+| 256 | 10 | 19 | 667 | 244 |
+| 512 | 6 | 10 | 417 | 125 |
+
+So the budget is no longer a ceiling the fidelity split stays under; it is
+spent only on what the `paint` event's `changedElements` names, at most
+`CAPTURE_BUDGET` retakes a frame, with a view that keeps changing faster
+than that handed to the DOM path (`attachGpu`). The table below is
+Chromium 154's.
+
+
 Per-frame cost of capturing N 160×100 elements, median of 10 frames, one
 `drawElementImageToTexture` per element inside a single `paint`:
 

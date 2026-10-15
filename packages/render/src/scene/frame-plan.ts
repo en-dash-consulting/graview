@@ -16,6 +16,11 @@ export interface PlannedView {
   /** Set when the view's DOM changed and its texture is stale. */
   readonly dirty?: boolean;
   readonly opacity?: number;
+  /**
+   * Drawn by its host on the DOM path rather than captured: placed, so a
+   * press still finds it, but never captured, drawn or reported.
+   */
+  readonly dom?: boolean;
 }
 
 export interface PlannedConnector {
@@ -66,10 +71,18 @@ export interface FramePlan {
   readonly connectors: readonly ConnectorDraw[];
   /** What to tell the browser about where each view ended up. */
   readonly geometry: readonly GeometryReport[];
-  /** What the pointer router needs to route a click. */
-  readonly placements: readonly Omit<Placement, "element">[];
+  /** What the pointer router needs to route a click, nearest last. */
+  readonly placements: readonly (Omit<Placement, "element"> & { readonly viewId: string })[];
   /** Captures this frame. The number the budget is spent on. */
   readonly captureCount: number;
+  /**
+   * Views whose pixels are out of date and were not retaken this frame,
+   * because the budget was spent: retaken on a later frame, nearest plane
+   * first. A view with no pixels at all is never deferred.
+   */
+  readonly deferred: readonly string[];
+  /** Views wholly outside the canvas: neither captured nor drawn. */
+  readonly culled: readonly string[];
 }
 
 export interface PlanOptions {
@@ -78,7 +91,55 @@ export interface PlanOptions {
   /** Frame index of the last capture per view; absent means never captured. */
   readonly capturedAt?: Readonly<Record<string, number>>;
   readonly connectorOverrides?: Readonly<Record<string, Partial<ConnectorStyle>>>;
+  /**
+   * The views whose DOM the browser says changed since the last frame (a
+   * `paint` event's `changedElements`). Given, a live view is retaken only
+   * when it is in here or marked dirty — which is what keeps a page under
+   * the cliff: a view that did not change does not cost a capture. Absent,
+   * nothing is known unchanged and a live view is retaken every frame.
+   */
+  readonly changed?: ReadonlySet<string>;
+  /**
+   * The most RE-captures one frame may spend. What is over it is deferred to
+   * a later frame, nearest plane first (see `CAPTURE_BUDGET`). A view seen
+   * for the first time is always taken: the frame a stop lands in is allowed
+   * to be long, and it is every frame after it the budget protects. Absent,
+   * no limit.
+   */
+  readonly captureBudget?: number;
 }
+
+/**
+ * How many captures one frame may spend, measured rather than chosen.
+ *
+ * Chromium 158 (Canary 158.0.8105.0, Apple silicon, headless, vsync off),
+ * the discography's songs as N live views all moving every frame
+ * (`apps/discography/live.html`, read by `scripts/verify-scale.mjs`): frames
+ * a second, median of three runs, on a desk and with GRAVIEW_SLOW=4. Other
+ * builds ran beside these, so each number is noisy by a third either way.
+ *
+ * | Live views | all retaken, desk | all retaken, SLOW=4 | changed only, desk | changed only, SLOW=4 |
+ * |-----------:|------------------:|--------------------:|-------------------:|---------------------:|
+ * |         64 |                42 |                  74 |                714 |                  455 |
+ * |        128 |                21 |                  37 |                769 |                  417 |
+ * |        256 |                10 |                  19 |                667 |                  244 |
+ * |        512 |                 6 |                  10 |                417 |                  125 |
+ *
+ * "All retaken" is the policy before this budget: no word from the browser
+ * about what changed, so every live view every frame. "Changed only" is
+ * `attachGpu`: four views change a frame, so four are retaken.
+ *
+ * Capture costs ~0.22 ms a view on this build — linear, where 154 was
+ * 0.016 ms up to ~128 and then fell off a cliff and crashed at 256
+ * (docs/platform-findings.md) — so sixty frames a second holds only below
+ * about 64 captures a frame. CPU throttling barely moves it: the
+ * cost is the raster, not script. Thirty-two leaves half a frame for
+ * everything else, and since only a view that CHANGED is retaken, a page of
+ * 512 live views spends a handful of captures a frame, not 512. A view that
+ * keeps changing past the budget is handed to the DOM path (`attachGpu`),
+ * where a change costs no capture at all.
+ */
+export const CAPTURE_BUDGET = 32;
 
 /**
  * What a frame consists of, as data — no GPU, no DOM, no browser.
@@ -94,10 +155,11 @@ export function planFrame(
   options: PlanOptions,
 ): FramePlan {
   const capturedAt = options.capturedAt ?? {};
-  const captures: CaptureCommand[] = [];
+  const wanted: (CaptureCommand & { plane: number })[] = [];
+  const culled: string[] = [];
   const draws: ViewDraw[] = [];
   const geometry: GeometryReport[] = [];
-  const placements: Omit<Placement, "element">[] = [];
+  const placements: (Omit<Placement, "element"> & { viewId: string })[] = [];
   const centers = new Map<string, { x: number; y: number }>();
 
   // Back to front: the deepest plane is drawn first so the focus plane lands
@@ -107,9 +169,6 @@ export function planFrame(
 
   for (const view of ordered) {
     const style = styleAt(view.plane);
-    const reason = captureReason(view, style, capturedAt[view.id]);
-    if (reason) captures.push({ viewId: view.id, reason });
-
     const transform = transformFor(
       style,
       view.x,
@@ -119,6 +178,31 @@ export function planFrame(
     );
     const width = view.width * style.scale;
     const height = view.height * style.scale;
+    centers.set(view.id, {
+      x: transform[12] + width / 2,
+      y: transform[13] + height / 2,
+    });
+
+    // IN VIEW, or nothing: a view wholly off the canvas costs no capture and
+    // no draw. Its connector still runs toward it, from its center.
+    const left = transform[12];
+    const top = transform[13];
+    if (left >= options.canvasWidth || top >= options.canvasHeight || left + width <= 0 || top + height <= 0) {
+      culled.push(view.id);
+      continue;
+    }
+
+    placements.push({
+      viewId: view.id,
+      transform,
+      width: view.width,
+      height: view.height,
+      depth: view.plane,
+    });
+    if (view.dom) continue;
+
+    const reason = captureReason(view, style, capturedAt[view.id], options.changed);
+    if (reason) wanted.push({ viewId: view.id, reason, plane: view.plane });
 
     draws.push({
       viewId: view.id,
@@ -129,17 +213,22 @@ export function planFrame(
       opacity: view.opacity ?? 1,
     });
     geometry.push({ viewId: view.id, transform });
-    placements.push({
-      transform,
-      width: view.width,
-      height: view.height,
-      depth: view.plane,
-    });
-    centers.set(view.id, {
-      x: transform[12] + width / 2,
-      y: transform[13] + height / 2,
-    });
   }
+
+  // THE BUDGET, on what is only out of date: the nearest plane first. A view
+  // with no pixels at all is always taken — a stale texture is a frame late,
+  // a missing one is a hole.
+  const budget = options.captureBudget ?? Number.POSITIVE_INFINITY;
+  const granted = new Set(
+    wanted
+      .filter((capture) => capture.reason !== "first")
+      .sort((a, b) => a.plane - b.plane)
+      .slice(0, Math.max(0, budget))
+      .map((capture) => capture.viewId),
+  );
+  const taken = (capture: CaptureCommand) => capture.reason === "first" || granted.has(capture.viewId);
+  const captures: CaptureCommand[] = wanted.filter(taken).map(({ viewId, reason }) => ({ viewId, reason }));
+  const deferred = wanted.filter((capture) => !taken(capture));
 
   const connectorDraws: ConnectorDraw[] = [];
   for (const connector of connectors) {
@@ -166,6 +255,8 @@ export function planFrame(
     geometry,
     placements,
     captureCount: captures.length,
+    deferred: deferred.map((capture) => capture.viewId),
+    culled,
   };
 }
 
@@ -187,7 +278,8 @@ function styleAt(plane: number): PlaneStyle {
  * capture costs ~0.016 ms per node up to about 128 live captures a frame and
  * then falls off a cliff (see docs/platform-findings.md).
  *
- * - `full`    live: captured every frame, because it is being edited
+ * - `full`    live: captured every frame its DOM changed — every frame,
+ *             when the browser does not say what changed
  * - `summary` cached: captured only when its DOM actually changed
  * - `glyph`   captured once, then only when its content actually changed —
  *             at glyph scale a cached texture is indistinguishable from a
@@ -197,6 +289,7 @@ function captureReason(
   view: PlannedView,
   style: PlaneStyle,
   lastCapture: number | undefined,
+  changed: ReadonlySet<string> | undefined,
 ): CaptureCommand["reason"] | null {
   if (lastCapture === undefined) return "first";
   // Mid-transition a view's own DOM is still fading, so whatever was captured
@@ -206,10 +299,13 @@ function captureReason(
   if (view.opacity !== undefined && view.opacity < 1) return "changed";
   switch (style.fidelity) {
     case "full":
+      // Live means CAN change any frame, not does: told what changed, a
+      // live view whose DOM did not is not retaken.
+      if (changed) return view.dirty || changed.has(view.id) ? "live" : null;
       return "live";
+    // A cached view is retaken when its host says it changed, or the browser does.
     case "summary":
-      return view.dirty ? "changed" : null;
     case "glyph":
-      return view.dirty ? "changed" : null;
+      return view.dirty || changed?.has(view.id) ? "changed" : null;
   }
 }

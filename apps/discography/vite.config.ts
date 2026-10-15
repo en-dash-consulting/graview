@@ -75,7 +75,12 @@ export default defineConfig({
   },
   // Top-level await in main.tsx (the store opens before the first render);
   // the page goes to build/ so tsc's dist/ (the declaration, for graview check) stays.
-  build: { target: "es2022", outDir: "build" },
+  // live.html: the catalog's songs as N live views on the GPU path, for verify-scale (src/live.ts).
+  build: {
+    target: "es2022",
+    outDir: "build",
+    rollupOptions: { input: { main: fileURLToPath(new URL("index.html", import.meta.url)), live: fileURLToPath(new URL("live.html", import.meta.url)) } },
+  },
   preview: { port: moved(5198), strictPort: true },
   server: { port: moved(5197), strictPort: true },
 });
