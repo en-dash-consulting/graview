@@ -49,6 +49,8 @@ const stop = (child: ChildProcess) =>
   });
 
 beforeAll(() => {
+  // CI's test job builds the packages (typecheck) but not the page `preview` serves: build it here when it is missing.
+  if (!existsSync(resolve(root, "packages/graview/dist/preview"))) execFileSync("node", [resolve(root, "scripts/build-preview-page.mjs")], { cwd: root, stdio: "ignore" });
   dir = mkdtempSync(join(tmpdir(), "graview-held-"));
   copyFileSync(join(fixtures, "org.gdd.json"), join(dir, "app.json"));
   seed = JSON.parse(readFileSync(join(fixtures, "org.seed.json"), "utf8"));
@@ -56,7 +58,7 @@ beforeAll(() => {
   const person = seed.nodes.find((node) => node.kind === "person")!;
   const grown = { ...seed, nodes: [...seed.nodes, { ...person, id: "person-new", name: "Somebody New" }] };
   writeFileSync(join(dir, "seed-grown.json"), JSON.stringify(grown));
-});
+}, 120_000);
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 describe("a running preview holds its data folder", () => {
