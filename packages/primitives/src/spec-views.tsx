@@ -6,7 +6,7 @@ import { createContext, Suspense, useContext, type ComponentType, type MouseEven
 import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
 import { KindFigure } from "./figure.js";
-import { Panel } from "./primitives/index.js";
+import { NamedByItsLink, Panel } from "./primitives/index.js";
 import { hasShape, TextBody } from "./text-body.js";
 import { Files } from "./files-door.js";
 import { AppLink } from "./app-link-door.js";
@@ -115,13 +115,18 @@ function Drawn({ block }: { readonly block: ResolvedBlock }): ReactNode {
   const said = useContext(SaidAround);
   const under = useContext(HeadingsUnder);
   const homeLine = useContext(HomeLine);
+  const linked = useContext(NamedByItsLink);
   if (said && block.t === "badge" && said.values.some((value) => sameWords(value, block.text))) return null;
   if (said && block.t === "field" && said.field !== undefined && block.field === said.field) return null;
   // A count of nothing is not a badge: "0 votes" was a pill saying there is nothing to say.
   if (block.t === "badge" && /^0(?:\s+\p{L}+)?$/u.test(block.text.trim())) return null;
   switch (block.t) {
     case "title":
-      return <strong className="graview-spec-title">{block.text}</strong>;
+      return (
+        <strong className="graview-spec-title" {...(linked !== null && sameWords(linked, block.text) ? { "aria-hidden": true } : {})}>
+          {block.text}
+        </strong>
+      );
     case "text":
       // A value with lines in it keeps them — its paragraphs and lists (FR-146); one line of words stays a line. A Markdown field is drawn as prose (FR-180).
       if (block.markdown || hasShape(block.text)) {
@@ -307,24 +312,34 @@ function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode;
   const View = views.lookup(node.kind as never, { cardinality: "one", fidelity: as === "card" ? "summary" : "glyph" }) as ViewComponent<AnySchema> | undefined;
   return (
     <li className="graview-spec-item" data-graview-listed={node.id} data-as={as}>
+      {/* The link first: a reader hears the record's name, then what its card says of it. */}
+      <ListedLink node={node} label={label} />
       {depth <= MAX_LIST_DEPTH && View ? (
         // A listed card is a card on a page as in the scene: drawn as the scene draws it.
         <ViewModeProvider mode="scene">
           <ListDepth.Provider value={depth}>
             <SaidAround.Provider value={said}>
-              <View node={node as never} cardinality="one" fidelity={as === "card" ? "summary" : "glyph"} mode="scene" selected={false} />
+              <NamedByItsLink.Provider value={label}>
+                <View node={node as never} cardinality="one" fidelity={as === "card" ? "summary" : "glyph"} mode="scene" selected={false} />
+              </NamedByItsLink.Provider>
             </SaidAround.Provider>
           </ListDepth.Provider>
         </ViewModeProvider>
       ) : (
-        <span className="graview-spec-item-name">{label}</span>
+        <span className="graview-spec-item-name" aria-hidden="true">
+          {label}
+        </span>
       )}
-      <ListedLink node={node} label={label} />
     </li>
   );
 }
 
-/** The whole item is the way to its record: a link stretched over it, under any link the item draws itself. */
+/**
+ * The whole item is the way to its record: a link stretched over it, under
+ * any link the item draws itself. First in the item, so a reader hears the
+ * name before the details; raised over the picture drawn after it, and
+ * under what is raised after it (a link, a box to choose it).
+ */
 export function ListedLink({ node, label }: { readonly node: AnyGraphNode; readonly label: string }) {
   const links = useContext(SpecLinks);
   if (links) {
@@ -363,8 +378,10 @@ function SpecList({ list }: { readonly list: ResolvedList }) {
       <ul className="graview-spec-list" data-as="names">
         {members.map((node) => (
           <li key={node.id} className="graview-spec-item" data-graview-listed={node.id} data-as="name">
-            <span className="graview-spec-item-name">{labelOf(store.schema.tryDefinition(node.kind), node)}</span>
             <ListedLink node={node} label={labelOf(store.schema.tryDefinition(node.kind), node)} />
+            <span className="graview-spec-item-name" aria-hidden="true">
+              {labelOf(store.schema.tryDefinition(node.kind), node)}
+            </span>
           </li>
         ))}
       </ul>

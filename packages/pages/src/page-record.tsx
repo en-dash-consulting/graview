@@ -58,6 +58,12 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const [open, setOpen] = useState<string | null>(null);
   const [more, setMore] = useState(false);
   const actsHeading = useRef<HTMLHeadingElement | null>(null);
+  const actForm = useRef<HTMLDivElement | null>(null);
+  /** The act that opened the form, given the keyboard back. */
+  const backTo = (asked: string) => {
+    const opener = actsHeading.current?.parentElement?.querySelector<HTMLElement>(`[data-affordance="${asked.replace(/["\\]/g, "\\$&")}"]`);
+    (opener ?? actsHeading.current)?.focus();
+  };
   if (!facts) {
     return (
       <PageMain context={context}>
@@ -136,7 +142,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           </Link>
         </p>
         {/* The name is changed where it stands, as the scene's record changes it: a shelf renamed on its page took "Change the category" (W-181). */}
-        <PageTitle context={context}>{inPlace && node?.["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} /> : facts.label}</PageTitle>
+        <PageTitle context={context}>{inPlace && node?.["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} said={facts.label} /> : facts.label}</PageTitle>
         {described && described !== facts.label ? <p style={lede}>{described}</p> : null}
         {/* WHAT IT WAS MADE ON (FR-172): the record's own beginning, when its maker said what it was based on. */}
         {madeOn?.lineage ? (
@@ -153,12 +159,12 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               .filter((place) => place.kind === facts.kind || place.across === facts.kind)
               .map((place, index) => (
                 <span key={placeKey(place)}>
-                  {index > 0 ? " · " : null}
+                  {index > 0 ? <span aria-hidden="true"> · </span> : null}
                   <Link to={pathOfPlace(context, place)} style={link}>
                     {place.title}
                   </Link>{" "}
-                  <SceneLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet, display: "inline-block", minWidth: 24, textAlign: "center" }} title={`${place.title}, in the scene`}>
-                    ↗
+                  <SceneLink context={context} stop={`#view=${encodeURIComponent(place.as)}`} style={{ ...link, ...quiet, display: "inline-block", minWidth: 24, textAlign: "center" }} title={`${place.title}, in the scene`} label={`${place.title}, in the scene`}>
+                    <span aria-hidden="true">↗</span>
                   </SceneLink>
                 </span>
               ))}
@@ -348,7 +354,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                 * whichever end it happened to fit.
                 */}
               Sort and filter {group.description ?? `these ${pluralOf(store, farKind).toLowerCase()}`}
-              {group.targets.some((target) => target.kind !== farKind) ? ` (${pluralOf(store, farKind).toLowerCase()})` : ""} →
+              {group.targets.some((target) => target.kind !== farKind) ? ` (${pluralOf(store, farKind).toLowerCase()})` : ""} <span aria-hidden="true">→</span>
             </Link>
           ))}
         </section>
@@ -376,7 +382,15 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   // Shown by "Show N more", the first of them takes the keyboard, never <body>.
                   autoFocus={more && affordance === aside[0]}
                   aria-expanded={opened}
-                  onClick={() => setOpen(opened ? null : affordance.id)}
+                  onClick={() => {
+                    setOpen(opened ? null : affordance.id);
+                    /*
+                     * THE KEYBOARD GOES INTO THE FORM IT OPENED, as a list's
+                     * own beginning does: a reader heard "expanded" and then
+                     * had to find the form by hand, past every act after it.
+                     */
+                    if (!opened) requestAnimationFrame(() => actForm.current?.querySelector<HTMLElement>("input:not([type=hidden]), select, textarea, button")?.focus());
+                  }}
                   style={{
                     ...button,
                     ...(opened
@@ -401,6 +415,15 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
             return (
               <div
                 key={affordance.id}
+                ref={actForm}
+                // Escape puts the form away and gives the keyboard back to the act that opened it.
+                onKeyDown={(event) => {
+                  if (event.key !== "Escape" || event.defaultPrevented) return;
+                  event.preventDefault();
+                  setOpen(null);
+                  const asked = affordance.id;
+                  requestAnimationFrame(() => backTo(asked));
+                }}
                 style={{
                   display: "grid",
                   gap: 10,
@@ -429,10 +452,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                      * act is no longer offered, the heading of the acts.
                      */
                     const asked = affordance.id;
-                    requestAnimationFrame(() => {
-                      const opener = actsHeading.current?.parentElement?.querySelector<HTMLElement>(`[data-affordance="${asked.replace(/["\\]/g, "\\$&")}"]`);
-                      (opener ?? actsHeading.current)?.focus();
-                    });
+                    requestAnimationFrame(() => backTo(asked));
                   }}
                   {...(principal ? { principal } : {})}
                 />

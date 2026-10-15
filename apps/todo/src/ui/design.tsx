@@ -1,4 +1,4 @@
-import { dayAsRead, dayOfMonthAsRead, humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
+import { dayAsRead, dayOfMonthAsRead, fieldWords, humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
 import { KindFigure, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
@@ -16,7 +16,7 @@ import {
   useStoreTick,
 } from "@graview/pages";
 import { editableFields, type Affordance, type AffordanceSet, type EditableField } from "@graview/tools";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import type { TodoSchema } from "../domain/schema.js";
 import { today } from "./when.js";
@@ -694,7 +694,7 @@ function TaskRow({ task, context, flagged, now }: { task: TaskNode; context: Ctx
         {task.label ?? task.id}
       </Link>
       <span className="meta">
-        {flagged.has(task.id) ? <span className="th-chip warn">⚠</span> : null}
+        {flagged.has(task.id) ? <span className="th-chip warn" role="img" aria-label="Breaks a rule">⚠</span> : null}
         {task.due ? <span className={late ? "late" : undefined}>{shortDate(task.due)}</span> : null}
       </span>
     </div>
@@ -789,6 +789,8 @@ function InPlace({
         type="button"
         className={plain ? "th-plain" : "th-btn"}
         data-graview-editable={editable.mutation}
+        // Which fact, and what it holds: "Due: Aug 28, 2026", never "Aug 28, 2026, button". A heading says what it is itself.
+        {...(plain ? {} : { "aria-label": `${fieldWords(store.schema.tryDefinition(String(store.graph.getNode(nodeId)?.kind)), field)}: ${value || "nothing yet"}` })}
         title={`${editable.title} — an act, so it is in the history and can be taken back`}
         onClick={() => {
           setDraft(stored);
@@ -878,6 +880,17 @@ function Acts({
   );
   const [failed, setFailed] = useState<string | null>(null);
   const [more, setMore] = useState(false);
+  const controls = useRef<HTMLDivElement | null>(null);
+  const form = useRef<HTMLDivElement | null>(null);
+  /*
+   * THE KEYBOARD GOES INTO THE FORM AN ACT OPENS, and back to the act when
+   * the form is sent or put away with Escape: a reader heard "expanded"
+   * and then had to find the form by hand, and a form sent from the
+   * keyboard left it nowhere.
+   */
+  const into = () => requestAnimationFrame(() => form.current?.querySelector<HTMLElement>("input:not([type=hidden]), select, textarea, button")?.focus());
+  const backTo = (id: string) =>
+    requestAnimationFrame(() => controls.current?.querySelector<HTMLElement>(`[data-affordance="${id.replace(/["\\]/g, "\\$&")}"]`)?.focus());
   // What takes the record away — archive, merge, remove — waits one press behind the rest (FR-173).
   const aside = actions.affordances.filter((affordance) => affordance.destructive || affordance.setsAside);
   const shown = more || aside.length < 2 ? actions.affordances : actions.affordances.filter((affordance) => !aside.includes(affordance));
@@ -889,7 +902,7 @@ function Acts({
           <h2 className="th-h2">{title}</h2>
         </header>
       ) : null}
-      <div className="th-controls">
+      <div className="th-controls" ref={controls}>
         {shown.map((affordance) => (
           <button
             key={affordance.id}
@@ -903,6 +916,7 @@ function Acts({
               setFailed(null);
               if (affordance.open.length > 0) {
                 setOpen(open === affordance.id ? null : affordance.id);
+                if (open !== affordance.id) into();
                 return;
               }
               try {
@@ -925,7 +939,27 @@ function Acts({
         ) : null}
       </div>
       {actions.affordances.map((affordance) =>
-        open === affordance.id ? <Ask key={affordance.id} affordance={affordance} context={context} onDone={() => setOpen(null)} /> : null,
+        open === affordance.id ? (
+          <div
+            key={affordance.id}
+            ref={form}
+            onKeyDown={(event) => {
+              if (event.key !== "Escape" || event.defaultPrevented) return;
+              event.preventDefault();
+              setOpen(null);
+              backTo(affordance.id);
+            }}
+          >
+            <Ask
+              affordance={affordance}
+              context={context}
+              onDone={() => {
+                setOpen(null);
+                backTo(affordance.id);
+              }}
+            />
+          </div>
+        ) : null,
       )}
       {failed ? <p className="th-warn th-quiet">{failed}</p> : null}
       {actions.withheld.length > 0 ? (

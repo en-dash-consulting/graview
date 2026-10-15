@@ -1,4 +1,4 @@
-import { LOCAL_LAYERS, safeFileHref, type AppResolution, type LinkedApp, type ResolveApp } from "@graview/core";
+import { fieldWords, LOCAL_LAYERS, safeFileHref, type AppResolution, type LinkedApp, type ResolveApp } from "@graview/core";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraviewIfAny } from "@graview/react/provider";
 import { useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
@@ -192,12 +192,15 @@ export function AppLink({ address, as = "chip", nodeId, field, style }: AppLinkP
 /** The app, and beside it the control that changes the address — where an act may write it. */
 function InPlace({ nodeId, field, address, drawn }: { readonly nodeId: string; readonly field: string; readonly address: string; readonly drawn: ReactNode }) {
   const writable = useEditableFields(nodeId).fields.some((one) => one.field === field);
+  const store = useGraviewIfAny()?.store;
   if (!writable) return drawn;
+  // Said as what it changes: "Change the app", never a bare "Change" beside some other field's.
+  const fact = fieldWords(store ? store.schema.tryDefinition(String(store.graph.getNode(nodeId)?.kind)) : undefined, field).toLowerCase();
   return (
     <span style={{ display: "inline-flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 12px", maxWidth: "100%", minWidth: 0 }}>
       {drawn}
       <span style={{ fontSize: "0.8125rem" }}>
-        <EditableValue nodeId={nodeId} field={field} value="Change" stored={address} />
+        <EditableValue nodeId={nodeId} field={field} value="Change" stored={address} said={`Change the ${fact}`} />
       </span>
     </span>
   );

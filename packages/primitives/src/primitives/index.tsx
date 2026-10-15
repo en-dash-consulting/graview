@@ -123,10 +123,20 @@ function useOverflowing(ref: { current: HTMLElement | null }): boolean {
  */
 export const NamedAbove = createContext<string | null>(null);
 
+/**
+ * THE NAME THE ITEM'S LINK SAYS. A listed card is a link stretched over its
+ * picture, named by the record; the picture's own title, drawn in the same
+ * words, is said once — by the link, first — and not again among the
+ * card's details. A reader heard "Themes without a build, Considering,
+ * Framework, Themes without a build, link" on every card of a board.
+ */
+export const NamedByItsLink = createContext<string | null>(null);
+
 /** The default container: a titled box. Most views are one of these. */
 /** A panel's title: a heading of the level asked for, else the label it has always been. */
-function Title({ level, style, children }: { readonly level: 1 | 2 | 3 | 4 | undefined; readonly style: CSSProperties; readonly children: ReactNode }) {
-  if (level === undefined) return <strong style={style}>{children}</strong>;
+function Title({ level, said = true, style, children }: { readonly level: 1 | 2 | 3 | 4 | undefined; readonly said?: boolean; readonly style: CSSProperties; readonly children: ReactNode }) {
+  // A card's title its link already says is drawn, and not said again (`NamedByItsLink`).
+  if (level === undefined) return <strong style={style} {...(said ? {} : { "aria-hidden": true })}>{children}</strong>;
   const Tag = `h${level}` as const;
   return <Tag style={{ margin: 0, ...style }}>{children}</Tag>;
 }
@@ -158,6 +168,7 @@ export function Panel({
   const mode = useViewMode();
   const page = (variant ?? (mode === "fullscreen" ? "page" : "card")) === "page";
   const namedAbove = useContext(NamedAbove);
+  const linked = useContext(NamedByItsLink);
   return (
     <div
       data-graview-primitive="panel"
@@ -231,6 +242,7 @@ export function Panel({
           ) : null}
           <Title
             level={heading}
+            said={linked === null || title !== linked}
             style={{
               /*
                * A panel's title is the HEADING of this product.

@@ -57,6 +57,8 @@ const CHAIN = [
   ["site", "verify-site.mjs"],
   // axe-core over the framework's markup as Cloud hosts it and over every example, on both faces, at a desk and a phone, light and dark.
   ["a11y", "verify-a11y.mjs"],
+  // What a screen reader is told at each stop — the bar, the switch, a list, a record, columns, blocks, a form, the Ask box, another tab's change — read from the tree Chromium and WebKit expose, written as a walk.
+  ["screen-reader", "verify-screen-reader.mjs"],
   // The awkward example in every face, width, scheme and seat — long, so it starts early.
   ["gauntlet", "verify-gauntlet.mjs"],
   ["lines", "verify-lines.mjs"],
