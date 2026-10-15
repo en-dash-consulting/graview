@@ -31,7 +31,8 @@ import {
   type GraviewDocument,
 } from "./schema.js";
 import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES } from "../places.js";
-import { placeSlug } from "../views/types.js";
+import { placeSlug, type KindList } from "../views/types.js";
+import { documentListFields, kindListFindings, kindListWords, listGroup, listSort, sortTypeOfDocumentField } from "../kind-list.js";
 import { computedOf, validateComputed } from "./computed.js";
 import type { TemplatePart } from "./template.js";
 import { parseTemplate, templateBraces, TemplateError } from "./template-parse.js";
@@ -143,6 +144,10 @@ const MAX_EDITS = 50;
 // ── shapes ─────────────────────────────────────────────────────────────────
 
 const kindName = z.string().regex(NAME, 'kind names are lower-case words joined by hyphens, like "guest-list"');
+const listKey = z.string().min(1).max(120);
+const listDirection = z.enum(["asc", "desc"]).optional();
+const listSortShape = z.union([listKey, z.object({ by: listKey, direction: listDirection, then: z.union([listKey, z.object({ by: listKey, direction: listDirection }).strict()]).optional() }).strict()]);
+const listGroupShape = z.union([listKey, z.object({ by: listKey, order: z.array(z.string().min(1).max(80)).max(40).optional(), closed: z.array(z.string().min(1).max(80)).max(40).optional() }).strict()]);
 const fieldName = z.string().regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate"');
 const edgeName = z.string().regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"');
 const actName = z.string().regex(NAME, 'act names are lower-case words joined by hyphens, like "mark-paid"');
@@ -226,6 +231,10 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       pages: z.union([z.string().min(1).max(40), z.null()]).optional(),
       // What a kind's list offers to filter by: `{ "request": ["status", "became.stage"] }`; null or [] gives a kind back its derived filters.
       filters: z.record(kindName, z.union([z.array(z.string().min(1).max(120)).max(40), z.null()])).optional(),
+      // The order a kind's list opens in: `{ "feature": { "by": "score", "direction": "desc", "then": "label" } }` or a key; null gives it back its own.
+      sort: z.record(kindName, z.union([listSortShape, z.null()])).optional(),
+      // How a kind's list opens grouped: `{ "request": { "by": "status", "order": [...], "closed": ["done"] } }` or a field; null opens it ungrouped.
+      group: z.record(kindName, z.union([listGroupShape, z.null()])).optional(),
       // The scene's word as a chat or a tool written before 0.1.17 sends it (FR-132's key, RESPELLED as `scene`).
       overview: z.union([z.string().min(1).max(40), z.null()]).optional(),
     })
@@ -1036,7 +1045,16 @@ class Editor {
     // `overview` is the scene's word as 0.1.15 and 0.1.16 took it (FR-134): read as `scene`, which wins when both are said.
     const { overview, ...rest } = given;
     const e: Doc = rest.scene === undefined && overview !== undefined ? { ...rest, scene: overview } : rest;
-    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined && e.filters === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene", "pages" or "filters"');
+    if (e.order === undefined && e.hide === undefined && e.first === undefined && e.scene === undefined && e.pages === undefined && e.primary === undefined && e.filters === undefined && e.sort === undefined && e.group === undefined) return this.fail(i, "", 'arrange-pages says at least one of "order", "hide", "first", "primary", "scene", "pages", "filters", "sort" or "group"');
+    // A list's order and grouping are judged as the checker judges them, each refusal its sentence.
+    for (const part of ["sort", "group"] as const) {
+      for (const [kind, spec] of Object.entries((e[part] ?? {}) as Record<string, unknown>)) {
+        if (!this.doc.kinds[kind]) return this.fail(i, `${part}.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
+        if (spec === null) continue;
+        const [finding] = kindListFindings(kind, { [part]: spec } as KindList, documentListFields(this.doc.kinds[kind]), `${part}.${kind}`);
+        if (finding) return this.fail(i, finding.path.replace(new RegExp(`^${part}\\.${kind}\\.${part}`), `${part}.${kind}`), finding.message.replace(/\.$/, ""), finding.fix.replace(/\.$/, ""));
+      }
+    }
     for (const [kind, keys] of Object.entries((e.filters ?? {}) as Record<string, readonly string[] | null>)) {
       if (!this.doc.kinds[kind]) return this.fail(i, `filters.${kind}`, `"${kind}" is not a kind this app has; it has ${Object.keys(this.doc.kinds).join(", ")}`);
       for (const [n, key] of (keys ?? []).entries()) {
@@ -1112,19 +1130,106 @@ class Editor {
         said.push(`the switch calls the ${face} "${pages[face]}"`);
       }
     }
-    for (const [kind, keys] of Object.entries((e.filters ?? {}) as Record<string, readonly string[] | null>)) {
+    // Each kind's list keeps what this edit does not say: its filters, its order, its grouping.
+    const listOfKind = (kind: string, part: "filters" | "sort" | "group", value: unknown) => {
       const lists = (pages.lists ??= {});
+      const list = (lists[kind] ??= {});
+      if (value === null) delete list[part];
+      else list[part] = value;
+      if (Object.keys(list).length === 0) delete lists[kind];
+      if (Object.keys(lists).length === 0) delete pages.lists;
+    };
+    for (const [kind, keys] of Object.entries((e.filters ?? {}) as Record<string, readonly string[] | null>)) {
       if (keys === null || keys.length === 0) {
-        delete lists[kind];
+        listOfKind(kind, "filters", null);
         said.push(`the list of ${pluralWords(this.doc, kind)} offers its own filters again`);
       } else {
-        lists[kind] = { filters: [...keys] };
+        listOfKind(kind, "filters", [...keys]);
         said.push(`the list of ${pluralWords(this.doc, kind)} filters by ${listOf(keys.map((key) => `"${key}"`))}`);
       }
-      if (Object.keys(lists).length === 0) delete pages.lists;
+    }
+    for (const part of ["sort", "group"] as const) {
+      for (const [kind, spec] of Object.entries((e[part] ?? {}) as Record<string, KindList["sort"] | KindList["group"] | null>)) {
+        listOfKind(kind, part, spec === null ? null : clone(spec));
+        const plural = pluralWords(this.doc, kind);
+        if (spec === null) said.push(part === "sort" ? `the list of ${plural} opens in its own order again` : `the list of ${plural} opens ungrouped again`);
+        else said.push(`the list of ${plural} opens ${kindListWords({ [part]: spec } as KindList, this.listKeyType(kind))[part]}`);
+      }
     }
     if (Object.keys(pages).length === 0) delete this.doc.pages;
     this.said.push(`${capitalize(listOf(said))}.`);
+  }
+
+  /**
+   * A KIND'S LIST FOLLOWS ITS FIELDS. Its order and grouping name a field
+   * renamed by its new name; one gone (or a computed field no longer worked
+   * out) lets go of the part that named it — a tiebreak, the order, the
+   * grouping — and says so. A list left saying nothing is unsaid.
+   */
+  private listsFollow(kind: string, from: string, to: string | undefined): string[] {
+    const list: Doc | undefined = this.doc.pages?.lists?.[kind];
+    if (!list) return [];
+    const out: string[] = [];
+    const sort = listSort(list.sort);
+    if (sort && (sort.by === from || sort.then?.by === from)) {
+      if (to !== undefined) {
+        if (typeof list.sort === "string") list.sort = to;
+        else {
+          if (list.sort.by === from) list.sort.by = to;
+          if (list.sort.then === from) list.sort.then = to;
+          else if (isObject(list.sort.then) && list.sort.then["by"] === from) list.sort.then.by = to;
+        }
+      } else if (sort.by === from) delete list.sort;
+      else delete list.sort.then;
+      out.push(`the ${kind} list's order`);
+    }
+    if (listGroup(list.group)?.by === from) {
+      if (to === undefined) delete list.group;
+      else if (typeof list.group === "string") list.group = to;
+      else list.group.by = to;
+      out.push(`the ${kind} list's grouping`);
+    }
+    this.listsTidied(kind);
+    return out;
+  }
+
+  /** A field retyped or a choice dropped: the list's order and grouping keep what still holds, and let go of what does not. */
+  private listsHold(kind: string, removedOptions: readonly string[] = []): string[] {
+    const list: Doc | undefined = this.doc.pages?.lists?.[kind];
+    if (!list) return [];
+    const out: string[] = [];
+    if (isObject(list.group) && removedOptions.length > 0) {
+      for (const part of ["order", "closed"] as const) {
+        if (!Array.isArray(list.group[part])) continue;
+        const kept = (list.group[part] as string[]).filter((value) => !removedOptions.includes(value));
+        if (kept.length === list.group[part].length) continue;
+        if (kept.length > 0) list.group[part] = kept;
+        else delete list.group[part];
+        if (!out.includes(`the ${kind} list's grouping`)) out.push(`the ${kind} list's grouping`);
+      }
+    }
+    for (const finding of kindListFindings(kind, list as KindList, documentListFields(this.doc.kinds[kind]))) {
+      const part = finding.path.slice(`pages.lists.${kind}.`.length).startsWith("sort") ? "sort" : "group";
+      if (list[part] === undefined) continue;
+      delete list[part];
+      out.push(`the ${kind} list's ${part === "sort" ? "order" : "grouping"}`);
+    }
+    this.listsTidied(kind);
+    return out;
+  }
+
+  private listsTidied(kind: string) {
+    const lists = this.doc.pages?.lists;
+    if (!lists) return;
+    if (lists[kind] && Object.keys(lists[kind]).length === 0) delete lists[kind];
+    if (Object.keys(lists).length === 0) delete this.doc.pages.lists;
+    if (Object.keys(this.doc.pages).length === 0) delete this.doc.pages;
+  }
+
+  /** What a key of a kind's list reads as, for the words its order is said in: a computed field is a number. */
+  private listKeyType(kind: string): (key: string) => ReturnType<typeof sortTypeOfDocumentField> {
+    const spec = this.doc.kinds[kind];
+    return (key) => (spec?.computed?.[key] !== undefined ? "number" : sortTypeOfDocumentField(spec?.fields?.[key]?.type));
   }
 
   /** What a kind's list may be filtered by: its fields, its relations either way, `is`, and a choice at a relation's single far kind. */
@@ -1427,6 +1532,13 @@ class Editor {
     const pluralWas: string = spec.plural ?? `${words(from)}s`;
     if (e.plural) spec.plural = e.plural;
     else if (spec.plural && (spec.plural === `${words(from)}s` || spec.plural === `${from}s`)) spec.plural = `${words(to)}s`;
+    // Its list's filters, order and grouping follow it.
+    const lists = this.doc.pages?.lists;
+    if (lists?.[from] !== undefined && lists[to] === undefined) {
+      lists[to] = lists[from];
+      delete lists[from];
+      touched.push(`its list`);
+    }
     // Where the app opens, when it named the kind by its plural, follows the plural (FR-80).
     const pluralNow: string = spec.plural ?? `${words(to)}s`;
     if (typeof this.doc.pages?.first === "string" && placeSlug(this.doc.pages.first) === placeSlug(pluralWas) && placeSlug(pluralWas) !== placeSlug(pluralNow)) {
@@ -1618,6 +1730,7 @@ class Editor {
       spec.page = renamedOnPage(spec.page, field, to);
       touched.push(`${kind}'s page`);
     }
+    touched.push(...this.listsFollow(kind, field, to));
     for (const x of this.fills) {
       if (x.kind === kind && x.field === field) (x as { field: string }).field = to;
       if (x.kind === kind && x.from === field) (x as { from: string }).from = to;
@@ -1649,6 +1762,9 @@ class Editor {
     if (f.default !== undefined && coerce(f.default, was, f) === undefined) delete f.default;
     else if (f.default !== undefined) f.default = coerce(f.default, was, f);
     const said = f.format && f.format !== "markdown" ? formatWords(f, this.doc.brand) : undefined;
+    // A list grouped by a choice that is no longer one opens ungrouped, and says so.
+    const held = this.listsHold(e.kind);
+    if (held.length > 0) this.said.push(`${capitalize(listOf(held))} ${held.length === 1 ? "goes" : "go"} back to the list's own, since ${e.field} is no longer ${was === "enum" ? "a choice" : `a ${was}`}.`);
     if (was === e.type && e.type === "text") this.said.push(`${e.kind}'s ${e.field} ${e.format === "markdown" ? "is now written in Markdown, drawn as prose on the record's page" : "is drawn as written, not as Markdown"}; its values are kept.`);
     else this.said.push(`${e.kind}'s ${e.field} changes from ${was} to ${e.type}${said ? `, said as ${said}` : ""}; values that convert are kept.`);
   }
@@ -1720,6 +1836,8 @@ class Editor {
       delete f.default;
       out.push("has no default now");
     }
+    const held = this.listsHold(e.kind, remove);
+    if (held.length > 0) out.push(`${listOf(held)} ${held.length === 1 ? "lets" : "let"} go of ${remove.length === 1 ? "it" : "them"}`);
     // An act that sets a dropped option cannot stand.
     for (const [name, act] of Object.entries(this.doc.acts ?? {}) as [string, Doc][]) {
       for (const t of setTargets(act, this.doc)) if (hasKind(t.kinds, e.kind) && typeof t.set[e.field] === "string" && remove.includes(t.set[e.field] as string)) {
@@ -2111,6 +2229,8 @@ class Editor {
   private dropMentions(r: Rename, worked = false): string[] {
     const doc = this.doc;
     const gone: string[] = [];
+    // A kind's list ordered or grouped by it lets that go (a stored field removed, a computed one no longer worked out).
+    if (r.t === "field") gone.push(...this.listsFollow(r.kind, r.from, undefined));
     for (const [kind, spec] of Object.entries(doc.kinds) as [string, Doc][]) {
       for (const key of ["label", "describe"] as const) {
         if (templateMentions(doc, spec[key], new Set([kind]), r)) {

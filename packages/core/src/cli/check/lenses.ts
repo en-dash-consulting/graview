@@ -16,7 +16,8 @@ import type { AnySchema } from "../../schema/schema.js";
 import type { CheckContext } from "./context.js";
 import { bindsOf, declaredLenses, isShippedLens, requiredRolesOf } from "../../places.js";
 import { arrangementFindings } from "../../app-places.js";
-import { arrangeable, throughEdges } from "../../arrangement.js";
+import { arrangeable, listFieldsOf, throughEdges } from "../../arrangement.js";
+import { kindListFindings } from "../../kind-list.js";
 import { fieldOf } from "./context.js";
 import { columnReach } from "../../columns.js";
 import { deriveMutations } from "../../mutations/derive-edits.js";
@@ -368,5 +369,9 @@ export function checkPagesArrangement<S extends AnySchema>(ctx: CheckContext<S>)
         fix: `Name a field, a relation, "is", or a choice at a relation's far end: ${offers.map((offer) => offer.key).join(", ")}.`,
       });
     });
+    // The order and grouping it opens in are refused when they name what the kind does not have: the list would open some other way, unsaid.
+    for (const finding of kindListFindings(kind, list, listFieldsOf(ctx.app.schema, kind))) {
+      ctx.add({ severity: "error", code: "pages-list-arrangement", where: finding.path, message: finding.message, fix: finding.fix });
+    }
   }
 }

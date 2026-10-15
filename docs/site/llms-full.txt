@@ -2,7 +2,6 @@
 
 > Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong. Graview Cloud (https://graview.cloud) is the hosted product built on it.
 
-- Start with an agent: https://graview.dev/start.md is the procedure, written for the agent — hand it "Read https://graview.dev/start.md, then turn this repo's docs into a Graview app."
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
@@ -25,7 +24,7 @@ The Elastic License 2.0. The source is on GitHub, and you may build with it and 
 
 ### How do I start a Graview app?
 
-Hand your agent one sentence: `Read https://graview.dev/start.md, then turn this repo's docs into a Graview app.` The page it reads walks it through scaffolding the project, declaring the app, running `graview check` and opening `graview preview`. To drive it yourself, run `npm create graview@latest my-app` with Node 22 or later: it writes a running product, a test, a CI workflow and the authoring skills for Claude Code and Codex, and `npm run verify` checks it.
+Run `npm create graview@latest my-app` with Node 22 or later. It writes a running product for your own domain — the declaration, a shell, a test, a CI workflow and the authoring skills for Claude Code and Codex — and `npm run verify` checks it.
 
 ### How do AI agents use a Graview app?
 
@@ -238,7 +237,7 @@ graview describe <entry> [--as <role>] [--views <module>] [--place <slug|id>]
 graview docs <entry> [--out <dir>] [--views <module>]
 ```
 
-## What a model reads before it writes (19 skills)
+## What a model reads before it writes (18 skills)
 
 Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by `graview skills install .` — which `graview create` runs for you — into `.claude/skills` and `.agents/skills`, so Claude Code and Codex find the same instructions.
 
@@ -248,8 +247,7 @@ Skills that teach an assistant the authoring moves, each ending in a real gravie
 - [graview-embed](https://graview.dev/docs/skills/graview-embed.html): Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 - [graview-invariant](https://graview.dev/docs/skills/graview-invariant.html): Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 - [graview-lens](https://graview.dev/docs/skills/graview-lens.html): Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
-- [graview-linked-records](https://graview.dev/docs/skills/graview-linked-records.html): Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
-- [graview-lists](https://graview.dev/docs/skills/graview-lists.html): Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
+- [graview-lists](https://graview.dev/docs/skills/graview-lists.html): Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 - [graview-new-app](https://graview.dev/docs/skills/graview-new-app.html): Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 - [graview-node-kind](https://graview.dev/docs/skills/graview-node-kind.html): Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 - [graview-pages](https://graview.dev/docs/skills/graview-pages.html): Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
@@ -450,23 +448,23 @@ Source: https://graview.dev/docs/checks.html
 
 # What `graview check` says
 
-`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 104 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
+`graview check` reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 102 things, read here out of the checker's own source. An **error** should fail your build. A **warning** is a judgment call. A **note** is a question worth answering once.
 
-## 67 errors
+## 66 errors
 
-`brand-accent-not-a-hue`, `brand-accent-unknown-kind`, `brand-currency`, `brand-emoji`, `brand-locale`, `creates-unknown-kind`, `edge-claim-unknown-kind`, `edge-target-undeclared`, `field-role-ill-typed`, `field-role-missing-field`, `figure-undrawable`, `figure-unknown-kind`, `fixed-unknown-field`, `glance-unknown-field`, `grant-own-end-without-link`, `grant-unknown-kind`, `grant-unknown-mutation`, `intelligence-decision-cannot-call`, `intelligence-reach-unknown`, `intelligence-unknown-mutation`, `invariant-scope-undeclared`, `kit-contrast-below-aa`, `lens-binding-empty`, `lens-binding-empty-path`, `lens-binding-fieldless-owner`, `lens-binding-missing-field`, `lens-binding-not-a-field`, `lens-binding-path-misses`, `lens-binding-undeclared-edge`, `lens-binding-undeclared-kind`, `lens-role-unbound`, `lifecycle-missing-field`, `lifecycle-never-retires`, `migration-gap`, `migration-not-single-step`, `migration-without-version`, `module-unknown-invariant`, `module-unknown-kind`, `module-unknown-mutation`, `module-unknown-requirement`, `mutation-subject-arg-missing`, `mutation-subject-undeclared`, `mutation-unreachable-by-any-role`, `mutation-untitled`, `node-ref-undeclared`, `page-too-large`, `pages-kind-unknown`, `people-ambiguous`, `people-unsaid`, `plot-overlap`, `plural-slug-collision`, `repair-unknown-mutation`, `repair-wrong-kind`, `setting-name-taken`, `setting-name-unusable`, `setting-not-a-length`, `setting-not-honorable`, `setting-starts-nowhere`, `setting-without-a-choice`, `sight-hides-a-required-field`, `sight-names-an-unknown-field`, `sight-unknown-kind`, `sight-via-misses-people`, `sight-via-unknown-edge`, `theme-contrast-below-aa`, `view-for-undeclared-kind`, `writes-unknown-field`
+`brand-accent-not-a-hue`, `brand-accent-unknown-kind`, `brand-currency`, `brand-locale`, `creates-unknown-kind`, `edge-claim-unknown-kind`, `edge-target-undeclared`, `field-role-ill-typed`, `field-role-missing-field`, `figure-undrawable`, `figure-unknown-kind`, `fixed-unknown-field`, `glance-unknown-field`, `grant-own-end-without-link`, `grant-unknown-kind`, `grant-unknown-mutation`, `intelligence-decision-cannot-call`, `intelligence-reach-unknown`, `intelligence-unknown-mutation`, `invariant-scope-undeclared`, `kit-contrast-below-aa`, `lens-binding-empty`, `lens-binding-empty-path`, `lens-binding-fieldless-owner`, `lens-binding-missing-field`, `lens-binding-not-a-field`, `lens-binding-path-misses`, `lens-binding-undeclared-edge`, `lens-binding-undeclared-kind`, `lens-role-unbound`, `lifecycle-missing-field`, `lifecycle-never-retires`, `migration-gap`, `migration-not-single-step`, `migration-without-version`, `module-unknown-invariant`, `module-unknown-kind`, `module-unknown-mutation`, `module-unknown-requirement`, `mutation-subject-arg-missing`, `mutation-subject-undeclared`, `mutation-unreachable-by-any-role`, `mutation-untitled`, `node-ref-undeclared`, `page-too-large`, `pages-kind-unknown`, `pages-list-arrangement`, `people-ambiguous`, `people-unsaid`, `plot-overlap`, `plural-slug-collision`, `repair-unknown-mutation`, `setting-name-taken`, `setting-name-unusable`, `setting-not-a-length`, `setting-not-honorable`, `setting-starts-nowhere`, `setting-without-a-choice`, `sight-hides-a-required-field`, `sight-names-an-unknown-field`, `sight-unknown-kind`, `sight-via-misses-people`, `sight-via-unknown-edge`, `theme-contrast-below-aa`, `view-for-undeclared-kind`, `writes-unknown-field`
 
 ## 27 warnings
 
 `act-reads-hidden-kind`, `act-without-far-end-reading`, `brand-unnamed`, `edge-without-inverse`, `edge-without-severer`, `field-without-writer`, `fixed-but-written`, `intelligence-decision-prose-door`, `intelligence-key-without-storage`, `intelligence-local-without-bridge`, `intelligence-reach-on-graph`, `kind-without-view`, `kit-color-unreadable`, `lens-title-repeated`, `module-edge-leak`, `mutation-title-ambiguous`, `mutation-title-is-an-identifier`, `mutation-undescribed`, `order-role-unknown`, `pages-filter-unknown`, `required-invariant-unregistered`, `role-may-do-nothing`, `rule-says-hidden-fact`, `sight-hides-a-labeled-field`, `sight-hides-required-ref`, `sight-unnamed-kind`, `theme-token-unreadable`
 
-## 10 notes
+## 9 notes
 
-`blank-graph-has-no-door`, `blank-graph-unreachable`, `brand-hues-crowded`, `glance-unchosen`, `label-unbounded`, `lens-arrangement-unknown`, `lens-authored-here`, `lens-binding-disagrees-with-field-role`, `lens-column-unreached`, `rules-read-the-clock`
+`blank-graph-has-no-door`, `blank-graph-unreachable`, `glance-unchosen`, `label-unbounded`, `lens-arrangement-unknown`, `lens-authored-here`, `lens-binding-disagrees-with-field-role`, `lens-column-unreached`, `rules-read-the-clock`
 
 ---
 
-Every one of the 104 things graview check can tell you, and how loudly.
+Every one of the 102 things graview check can tell you, and how loudly.
 
 The page: https://graview.dev/docs/checks.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -500,8 +498,6 @@ A major that must change them ships `upgradeOp` steps (below).
 
 FR-173 added one optional field and no primitive. An archived record is said on the record itself, `$archived: true` (a key no declared field can take), written and taken off by an ordinary `patch-node`, so archive and unarchive fold, undo and travel through every adapter as any patch does. The op of a merge carries `mergedInto`, the id of the record the duplicate went into; an op without it reads as before. A version before FR-173 folds the same log to the same graph, and reads an archived record as a live one with one more key.
 
-The app's own actor (0.1.30) added two optional op fields, one optional author field and one record mark, and no primitive. A suggestion that waits is an op with `suggests: MutationCall[]`, its `lineage`, and no primitives (`suggest(store, calls, options)`, `@graview/core/tidying`): it folds to nothing. Accepting it applies the calls as an ordinary change whose `lineage.suggestion` names the suggestion's op; declining it is an ordinary undo of that op, with `undoneLineage`. An author may say `automated: true` (a `system` or `agent` author: the app's own actor), which the store holds to what a person declined, to records left alone and to the declaration's `tidying`. A record left alone is `$leftAlone: true` on the record, written and taken off by an ordinary `patch-node`, as `$archived` is. A version before folds the same log to the same graph, keeps the fields on an op it receives, and lists a suggestion's op as a change that touched nothing.
-
 #### 2. Snapshot and log formats: versioned
 
 What is stored carries the format it was written in (FR-31). `FORMATS` names the current formats (`snapshot`, `op`), and `formatStamp()` gives `{ framework, formats }`. A store's meta and every bundle are stamped with it.
@@ -519,7 +515,7 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 
 - Within a major, a route or a response field may be added. None is removed, renamed or changed in meaning.
 - A request field the server does not know is ignored, never refused.
-- A `call` or an `undo`, on the socket and over `POST /graview/ops`, may carry `lineage` (FR-172), and a lineage may name the suggestion a change accepts (`lineage.suggestion`), so accepting and declining a suggestion travel as a `call` and an `undo` with nothing new on the wire; the store checks it, a change whose lineage is not one is refused as `invalid` with nothing kept, and the ops every client is sent carry it. `openRemote` sends the lineage a call or an undo was applied with, and again when it sends a change again. A server that predates it ignores the field and keeps no lineage, so a host reads `capabilities().shipped` for FR-172 before it relies on one.
+- A `call` or an `undo`, on the socket and over `POST /graview/ops`, may carry `lineage` (FR-172); the store checks it, a change whose lineage is not one is refused as `invalid` with nothing kept, and the ops every client is sent carry it. `openRemote` sends the lineage a call or an undo was applied with, and again when it sends a change again. A server that predates it ignores the field and keeps no lineage, so a host reads `capabilities().shipped` for FR-172 before it relies on one.
 - The live socket at `/graview/live` (FR-05) holds to the same rules: a message type or a field may be added, and a message the server does not know is ignored. `hello` and `welcome` carry `WIRE_PROTOCOL`, so either side can tell what the other speaks. Its seqs mean what `/graview/since?seq=N` means.
 - A refusal's `reason` (FR-46) is one of `REFUSAL_REASONS` — `forbidden`, `missing`, `invalid`, `limit`, `unavailable`, `refused` — on the socket's `refused`, on every refusing answer of the routes and on an agent tool's refused answer. A code never changes meaning. Before 1.0 a code may be added, and the changelog says so as a change to this surface; from 1.0 none is added within a major, so a program that branches on all six has branched on every refusal. `refused` (FR-119) is an act's own rule saying no to a well-formed call — a document act's `allowedWhen`, a TypeScript mutation's `ActRefusal`, whose reason is `refused` unless it names another; `invalid` is the call as sent — its arguments, one the act does not take (FR-121), a call that changes nothing. A client that predates `refused` treats it as it treats any code but `unavailable`: final, the change taken back. `wouldNeed` is the roles that could, when the policy knows them. A call naming a record the seat may not see is refused exactly as one naming a record that does not exist — `missing`, one sentence that names the act and not the id (FR-55) — and permission is asked of it as if the record were not there, so no refusal tells a guessed id from a real one. An act runs under its caller's sight (FR-55): its body, its condition, its refusal and its sentence read the store as the caller is served it, so a record the caller may not see is to the act what one that does not exist is — whether it runs, what it refuses with and why, what it writes and what problems it answers with are the same for a hidden record as for an absent one, and the page that guessed the outcome from the seat's view is confirmed by the host rather than refused after it. What it writes lands on the whole store, and the store's own bookkeeping reads the whole store — a removed record's links, a patch's prior values, a single source's other links, an id already taken — without telling the seat (FR-55). Ids are unique across the store, so a seat that may not see every record may not ask for the id of one it makes: it is refused alike (`invalid`, "… makes its own id here") whether a hidden record holds that id or nothing does. An id minted from a label for a kind the seat may not see every record of is the seat's own — `room:green.<mark>`, where the mark is `seatMark(<the seat's id>)`: seven letters and digits, the same for the seat on any store, which no other seat's label mints and which does not spell who the seat is, since every seat that sees the record reads its id — stepping only past what it sees, and one that would land on a hidden record anyway (an id somebody asked for) takes a suffix no guess collides with; a seat that sees every record of the kind gets `room:green`, `room:green-2` as before. An act that sets a single-source link and takes a hidden record's link with it is served to the seat whole, with what it may see — the link it took is no part of its op — and the seat may undo it, which puts that link back. A rule that must hold across what a seat may not see — no double booking — is an invariant's, not an act's. `graview check` warns of each act that reads a kind some role allowed to run it may not see (`act-reads-hidden-kind`, FR-105), reading a document's act for itself and a TypeScript act by the kinds it declares it `reads`: run by that role, it judges as though there were none. A seat's problems are judged over what it sees, facts and lines included, wherever it reads them — `seenBy(…).violations()`, a seat's tools, a page served only what its seat sees — so a rule that counts records the seat may not see says the count it sees, and a record it may not see never makes, mends or words one of its problems. An act's answer to a seat (`answerSeenBy`) gives what the act broke, what it mended and what stands after it — a change made or a preview — as the seat judges them over its own world: what it is served, and that world with the change as it is served taken back, or for a preview put on. So whether a rule that reads beyond its subject (a fact, a sweep, a relation) was broken or mended is the seat's own answer, in its own words, and never the whole graph's; the judging is `@graview/core/lines`', which a seat's tools load, and without it an answer to a seat says no problems at all. A fact in a rule's line is said by its `label`, or its name in words. `graview check` warns of each rule whose message says a fact over a kind some role told of it may not see in full (`rule-says-hidden-fact`). A rule is judged on every change and once on load; one that reads the clock — `today()`, `now()`, a computed field that does, a kind whose records retire on a date — is judged again on the day a host ticks the store to (`store.tick(now)`, FR-176), which answers `{ day, was?, appeared, cleared }` and tells every subscriber with an empty diff and no ops, logging nothing. `@graview/ship`'s `openStore` and `openRemote` tick just after each midnight by the clock `today()` reads (UTC) until `close()` (`openStore`'s `tick: false` leaves it to the host); a host that sleeps through timers ticks from its own alarm. A tick holds for the rest of the day the clock read when it was made: once the clock's day moves past it, the store judges on the clock again until it is ticked, so a timer that slept through midnight never leaves a store on yesterday. `clockReaders(schema, rules)` on `@graview/core/check` says which rules and computed fields read the clock, and `graview check` notes them (`rules-read-the-clock`). A store pinned to a day (`invariantOptions.today`) stays on it.
 - `busy` (FR-45) is not a refusal: the host asked for the change again after `retryAfter` milliseconds (429 with `Retry-After` over HTTP), nothing was judged, and a client keeps the change. `limit` is a refusal: the change can never succeed as asked, and is taken back. `unavailable` is the one refusal that is not final: the host takes no changes for a while and cannot say how long (503 over HTTP), nothing was judged, and a client keeps the change and sends it again, backing off. A call sent again after it landed is answered with its ops before a host's `limit` is asked, so it is never told busy, `limit` or `unavailable`.
@@ -536,7 +532,6 @@ What is stored carries the format it was written in (FR-31). `FORMATS` names the
 - A status board's moves (FR-108) are judged against the graph the page holds, and the host judges them under the seat's sight. On a served app the page holds the seat's view, so a named step whose condition reads a record the seat may not see is judged without it on the page and at the host alike: a step is offered exactly when the host would run it, and run when offered. Nothing tells the seat what it cannot see, and nothing moves `WIRE_PROTOCOL`.
 - A host's files (FR-163) are a seam on the page, `files: { upload(file, name), maxBytes, kinds }` on `mount`, `<Embed>`, `GraviewProvider`, the Shell and the routed face's context, and the route that serves them is the host's own; within a major the seam's three members keep their meaning, and the value `upload` answers is a `FileValue` (FR-162) the record keeps as it is. What the route serves is part of the app's origin, and the page draws it as such: a picture in an `<img>`, which never runs a script, an SVG's included; a PDF in an `<object>`, which draws whatever type the route answers with; anything else as a link with `download`. So a host's files route: serves each file as the type the host decided from its bytes, never the type the uploader said, with `X-Content-Type-Options: nosniff`; sends `Content-Security-Policy: sandbox` with everything but a PDF (an SVG or an HTML file opened from it, in a tab or in that `<object>`, runs as the app otherwise), and with a PDF where its readers' browsers draw one sandboxed; says `Content-Disposition: attachment` for anything that is not a picture, a PDF or plain text; and serves a file only to a seat that sees a record holding it, the framework's sight being per record (`seesId(store, principal)` over the records whose fields hold the `href`, by `filesOf`). The dev door (`devFiles`, `@graview/ship/dev`) does the rest but the first and the last: it keeps the type it was sent, which under `nosniff` and the sandbox runs nothing, and every seat on a dev server is its one person.
 - A host's way to name another app (FR-171) is a seam on the page, `resolveApp(address, viewer)` on `mount`, `<Embed>`, `GraviewProvider`, the `Shell` (asked before the provider's) and the routed face's context, answering `{ name, icon?, headline?, href }`, `{ denied: true }` or `null`; within a major those three answers keep their meaning. The page asks once per address and viewer and remembers the answer for as long as it holds that resolver; a throw is taken as `null`. A viewer the host refuses is shown "linked app (no access)" and nothing the host did not answer, so whether another app exists, what it is called and what its home says stay the host's to tell each viewer. Without a resolver the address is drawn as it is kept, a link only when it is an absolute http(s) address, opened apart from the app (`rel="noopener noreferrer"`). `href` is followed only when it is a path on the host or an http(s) address.
-- A host's way to read another app's records (FR-171) is a seam beside it, `linkedRecords: LinkedRecords` on `mount`, `<Embed>`, `GraviewProvider` and the routed face's context: `resolve(ref, viewer)` with `ref` `{ address, kind, id }`, answering `{ address, kind, id, label, describe?, card?, fields, href?, app? }` (`fields` only what that viewer may see there), `{ denied: true }`, or `null`; `find({ address, kinds, query, limit }, viewer)`, answering the records that viewer may link or `{ denied: true }`; and `open(ref, viewer)`, optional, the navigation seam a press on a linked record calls in place of following its `href`. Within a major those answers keep their meaning. A page asks once per record and viewer; a throw is `null`. A viewer refused is shown "linked record (no access)" and nothing the host did not answer. `href` is followed only when it is a path on the host or an http(s) address. `linkedRecordsOver` (`@graview/core/linked`) is that seam over stores a host holds in memory, each record read through the far store's `seenBy(viewer)`; `recordLinkedChange(store, { ref, fields, app?, at? })` keeps a far change in the reading store's history as an ordinary op — author `{ kind: "system", id: "app:<address>", name }`, `via: "app:<address>"`, `reads` the linking records, no primitives, no new op field, naming the fields that changed and none of their values.
 - A worker view's manifest and what it is handed are held to the guest protocol's rules: a key may be added when it is optional and a manifest without it means what it meant; a build that predates a key passes it over (one before 0.1.18 draws a view with `replaces` as it drew every view of one: alone). `replaces` arrived this way (FR-149): `"page"` on a view of one record draws it alone in place of the record's own fields, and `checkManifest` refuses any other value and the key on a view of many or of the home. What a view of one record replaces changed without the manifest's text: since FR-149 a view of one is drawn above the record's own editable fields on the scene (on Pages it always was), where it was drawn alone; a host that relied on the record being the view alone adds `replaces: "page"`. `data-prefill` (FR-150) is an attribute a view draws, judged by the host: it fills only an empty `input` or `textarea` whose `name` is the field, from a record the view was shown, read through the viewer's sight, when an act in its `fieldset` named in the manifest writes that field of that record and the viewer may run it there; a press carries the value only back into that field, and any other press carrying it is refused `untyped`. A view's props are as they were: each record's fields on it by name, beside `id`, `kind` and `label` (FR-151 corrected the guide, not the props). `GUEST_PROTOCOL` does not move.
 
 #### 4. The declaration, the document format and check finding codes
@@ -562,8 +557,7 @@ A declaration that compiled and checked clean on one version compiles on the nex
 - A kind's page arrived the same way (FR-148): `kinds.<kind>.page`, `{ "fields": [...], "groups": [{ "title", "fields" }] }`, each part optional, says which facts a record's page shows first and under which headings; the rest follow in the kind's declared order, under "Details" when there are groups. The declaration's `display.page` is the same choice. The edit vocabulary gained `set-page-fields` (`{ kind, fields, groups? }`; an empty `fields` and no `groups` take the choice away), and the compile and `graview check` refuse a name the kind does not have or one named twice (`page-field`, `page-field-twice`, `page-group-twice` in a document; `page-unknown-field` and `page-field-twice` in TypeScript). A build that predates the key refuses it as `unknown-key`. One reading changed without a key: a record's facts are read in the kind's declared order on every face, in `describePlace` and in `readableFields`, where they were read in the order the record's own keys were written.
 - A document's facts and a kind's roles arrived the same way, with no FR id (0.1.22). The document's top-level `computed` names facts of the whole graph, each a rule-language expression or `{ "expr", "label" }`, read as `fact('<name>')` wherever the language is read; a fact that reads another in a circle is refused (`computed-cycle`). `kinds.<kind>.fieldRoles` says which field fills a role a lens binds by name, and the framework reads two: `when` (a date; a list of the kind opens newest first by it, and a timeline or calendar draws the kind there) and `who` (a name; an unchosen glance leads with it and `when`); `graview check` refuses a role naming no field (`field-role-missing-field`) or of the wrong type (`field-role-ill-typed`). A kind may word its own end of a relation several kinds declare, so `edge-name-shared` is no longer reported. A build that predates the keys refuses them by path. These carry no FR id, so `capabilities().shipped` cannot announce them, and `capabilities()` does not list document keys: it is on every page's first load, and the keys a build reads are already published with it, as `@graview/core/document.schema.json` (JSON Schema, one per version). A host that writes a document for more than one build validates it against the schema of the oldest build it serves, or lets `readDocument` there refuse it by path.
 - A picture or a document on a record arrived the same way (FR-162): the field types `image` and `file`, and `list` with `of: "image"` or `of: "file"`, in a document; `imageField()` and `fileField()` in a declaration, which `toDocument` writes as those types. The value is a `FileValue`, `{ href, name, type, bytes, width?, height?, caption? }`, its `href` a path on the host under its base (`/graview/files/3f9a….jpg`, or one relative to the page) and never a scheme, another host, a backslash or a path that climbs (`safeFileHref`); a store refuses any other value as it refuses any value that does not fit its field. A view's blocks gained `{ "image": "<field>", "as": "thumb" | "gallery", "label"? }`, judged by the check (`view-image`, an error about a block that could not be written before, and `view-format` for its `as`). `graview types` writes such a field as `FileValue` (or `readonly FileValue[]`). A build that predates them refuses the types and the block by path, so a host reads `capabilities().shipped` for FR-162 before it writes them. A compiled app carries the new field types within `graview-compiled@1`: a page that predates them cannot build such a field, refuses the compiled app as `compiled-shape` and compiles the document, which refuses the type by path. A change that leaves no record holding a file says so: `MigrationPlan.files` lists them, and the plan's words name them; what becomes of their bytes is the host's to decide.
-- A link to another app arrived the same way (FR-171): the field type `app-link` in a document, `appLinkField()` in a declaration, which `toDocument` writes as that type. The value is another app's address — `@owner/app`, an id its host knows it by, or an absolute http(s) address, at most 500 characters (`isAppAddress`) — and a store refuses any other value as it refuses any value that does not fit its field. `graview types` writes it as `string`. A build that predates it refuses the type by path, so a host reads `capabilities().shipped` for FR-171 before it writes one; a compiled app carries it within `graview-compiled@1`, and a page that predates it refuses the compiled app as `compiled-shape` and compiles the document, which refuses the type by path. A relation whose `to` is another app's kind is the next line.
-- A relation to a kind in another app arrived the same way (FR-171, the full relation): a relation's `to` may name `"@<app address>/<kind>"` — `"@nick/house/house"`, `"@app_kf5eydr9z58jzf/house"`, `"@https://example.com/a/house/house"` — every target one app's kind (`parseLinkedTarget`; the address is the one an app-link holds), and `linkedRecordField("@nick/house/house", { cardinality? })` in a declaration, which `toDocument` writes as that relation. The record that links keeps which far record as a value under the relation's name, `"<kind>:<id>"` (`linkedValue`), or a list of them for `"many"`; the far document is never written. `graview check` refuses a relation that mixes this app's kinds with another's (`linked-mixed`), reaches two apps (`linked-apps`), is no app's kind (`linked-target`), or says `inverse` (`linked-inverse`) or `appendOnly` (`linked-append-only`), a declared act that connects, severs or sets one (`act-linked`), and a rule that walks one with `out()` or `in()` (`rule-linked`); a page that compiles without the checker reads such a relation as no relation. The rule language walks it by name (`forHouse.listPrice`) through the reader of whoever is looking: a far record it cannot read, refused or not yet answered, reads as nothing and is said — a computed value's `refused` sentence, a rule `could-not-judge` where it would not hold without it — never thrown. `graview types` writes it as `string` (or `readonly string[]`). A build that predates it refuses an `@` target by path, so a host reads `capabilities().shipped` for FR-171 before it writes one; a compiled app carries it within `graview-compiled@1`.
+- A link to another app arrived the same way (FR-171): the field type `app-link` in a document, `appLinkField()` in a declaration, which `toDocument` writes as that type. The value is another app's address — `@owner/app`, an id its host knows it by, or an absolute http(s) address, at most 500 characters (`isAppAddress`) — and a store refuses any other value as it refuses any value that does not fit its field. `graview types` writes it as `string`. A build that predates it refuses the type by path, so a host reads `capabilities().shipped` for FR-171 before it writes one; a compiled app carries it within `graview-compiled@1`, and a page that predates it refuses the compiled app as `compiled-shape` and compiles the document, which refuses the type by path. A relation whose `to` is another app's kind, an expression that walks one and the history of the far value are not this, and are left for 0.2.
 - A phone, a place and a length of time arrived the same way, with no FR id (the Graview Roadmap's f-more-field-types): the field types `phone`, `place` and `duration` in a document, `phoneField()`, `placeField()` and `durationField()` in a declaration, which `toDocument` writes as those types. A phone is a string of at most 40 characters with at least three digits and only the spaces, `+`, `-`, `.`, `/`, parentheses and extension (`ext. 12`, `x12`) people write one with (`PHONE`); a place a string of at most 500; a duration a whole number of minutes, none less than none, which a duration field's `min`, `max` and `step` bound as a number's do (FR-114). A store refuses any other value as it refuses any value that does not fit its field. How each is said and linked is the page's and may change in a minor: a phone grouped as a reader in the US or Canada reads a North American number and as entered elsewhere, linked `tel:`; a place linked to maps.apple.com on Apple's platforms and Google's universal Maps address elsewhere, opened apart (`rel="noopener noreferrer"`); a duration said "1 h 30 min", and so is a computed field that says `as: "duration"` — which a TypeScript declaration says itself, and a document's compile writes for each computed field whose parsed expression adds, subtracts, negates or sums durations over a relation (`KindPlan.durations` in `graview-compiled@1`, optional; a face reads only `as`, never the expression's words). `graview types` writes a phone and a place as `string` and a duration as `number`. A build that predates them refuses the types by path; these carry no FR id, so a host validates a document that uses them against the `document.schema.json` of the oldest build it serves. A compiled app carries them within `graview-compiled@1`: a page that predates them cannot build such a field, refuses the compiled app as `compiled-shape` and compiles the document, which refuses the type by path.
 - Markdown in a text field arrived the same way (FR-180): `"format": "markdown"` on a document's `text` field, `markdownField()` in a declaration (a string of at most 20,000 characters, marked so `isMarkdownField`, from `@graview/core/words`, says so through optional, default and nullable), which `toDocument` writes as that format. The value is kept as written. `retype-field` takes `"format": "markdown"` to make a text field Markdown and drops it when left out; `diffDocuments` says either change and neither is breaking. The checker refuses `markdown` on any type but `text`, and a number's format on a `text`, as `field-format`. A build that predates it refuses the format by path, so a host reads `capabilities().shipped` for FR-180 before it writes one; a compiled app carries it within `graview-compiled@1`. The record's page draws it as prose through `@graview/core/markdown` — headings demoted under the page's own, paragraphs with their line breaks kept, lists, emphasis, code, quotations, rules and tables, links only to `http:`, `https:` and `mailto:` (`rel="noopener noreferrer nofollow"`, a new tab), a picture as its words, and no HTML: within a major that reading only grows, and nothing it reads ever becomes markup. A row, a card, a describe line, a table cell, a search hit and a seat's line about a record say a text field by its start (`excerptOf`, from `@graview/core/words`): its first paragraph, heading or item, or about 160 characters, Markdown's syntax taken out; the exact words may be tuned within a major.
 - A date that repeats arrived the same way, with no FR id (0.1.29, the Roadmap's f-recurring-dates): `"repeats": true` on a `date` or `datetime` field in a document, `repeatField()` beside the date in a declaration (`startsAtRepeat: repeatField()` beside `startsAt`), which `toDocument` writes as `repeats`. A record of the kind may keep, under the date's name and `Repeat`, `{ "every": "day" | "week" | "month" | "year", "interval"?: 1–99, "on"?: weekdays ("tue") for a week or days of the month (1–31, -1 the last) for a month, "until"?: a day, "count"?: 1–1000, "except"?: days, "continues"?: a record's id }`, or `null` once it no longer repeats; the date itself is the first occurrence, and a store refuses any other value (`validRepeat`). The key `<date>Repeat` is the framework's: a kind that has a field, relation or computed field of that name is refused (`repeat-clash`). Occurrences are worked out, never stored, and what reads the date reads the occurrence on or after the day it is judged on — the rule language, `today()`'s comparisons, a template, a list's sort, filter and date groups, and a kind's "in the next 7 days" — so a rule over a repeating date is judged anew when the day turns (FR-176) with nothing written. A day the series falls on that the month lacks (the 31st, Feb 29) is the month's last; a moment's time of day is kept as written, so one written without a zone stays at its wall time across a clock change and one written with a zone keeps that offset; `count` counts skipped days. Time zones beyond the one a moment says, and the rest of RFC 5545 (by-week-number, by-set-position, hourly), are not this. The edit vocabulary gained `set-repeats` (`{ kind, field, repeats }`, refused of a field that is not a date); `retype-field` away from a date lets `repeats` go; a migration moves a record's repeat with its date when the date is renamed, and a change that stops a date repeating drops each record's repeat and says so (`DocumentDiff` counts `<date>Repeat` among `removedFields`, so it is breaking). `graview types` writes `<date>Repeat?: Repeat | null`. A build that predates it refuses `repeats` as `unknown-key`, and a compiled app carries it within `graview-compiled@1`; a page that predates it refuses such a compiled app as `compiled-shape` and compiles the document, which refuses the key by path, so a host that writes `repeats` serves builds of 0.1.29 or later. These carry no FR id, so `capabilities().shipped` cannot announce them.
@@ -574,9 +568,9 @@ A declaration that compiled and checked clean on one version compiles on the nex
 - A kind that is never archived arrived the same way (FR-173): `kinds.<kind>.archives`, only ever `false`, says what `defineNode({ archives: false })` says — the kind is given its `edit-` and `remove-<kind>` and no `archive-`, `unarchive-` or `merge-<kind>` — and `toDocument` writes it. A document without it archives every kind as before. A grant naming one of the three on such a kind is `grant-act`, as a grant naming any act the app lacks is. The edit vocabulary gained `set-archives` (`{ kind, archives }`), which says what the app stops or starts offering and is refused as `grant-unknown-mutation` while a grant names one of the three. `planMigration` brings back, in the same op and said, a record already archived of a kind the change makes never archived (`counts.broughtBack`), and keeps `$archived` on every other record it plans, where it used to clear it.
 - The app's locale says more than its money (FR-178), with no new key: `brand.locale` (a document's and a declaration's) is what every day, time and number is said in on every face, through `Intl` — a record's facts and glance, a template's `{due}` and `{due | date}`, a moment's `{at}`, a block's field, a rule's line, the calendar, the timeline's hours, the seat's lines, an arrangement's headings — and it is en-US where it names none: "Sep 10, 2023", "3:30 PM", "1,250", where every day was said day first before ("10 Sep 2023"). A host passes the reader's locale as `locale` on the embed, `GraviewProvider` and a pages `PageContext`, which wins over the brand's. What changes is the order and the punctuation of the words a person reads, never a stored value, an op, a tool schema or a finding code; `editDocument`'s and `diffDocuments`' sentences about a locale say "Days, times, numbers and money are written for …", and `describeApp` says what the locale makes of a day, a time and a figure. A host that matched the old day-first words reads them from its build's `capabilities().shipped`, FR-178.
 - What a list offers to filter by arrived the same way, with no FR id (0.1.29, the Roadmap's f-filters-that-scale): `pages.lists`, `{ "<kind>": { "filters": [...] } }`, names in order what a kind's list offers — a field, a relation, `is`, or `<relation>.<field>` (a choice at the far end of a relation); a list a document does not name offers what it offered before. `arrange-pages` takes `filters: { "<kind>": [...] | null }` and refuses a key the kind cannot be filtered by, and a filter's grammar takes `<relation>.<field>:<value>`. A template's formatter `excerpt` (`{summary|excerpt}`, `{summary|excerpt: <20–1000>}`) arrived with it, the same way: a build that predates it refuses the template. The finding codes that came with them are warnings and judge only what is new: `pages-filter-unknown` (a filter the kind cannot be filtered by, passed over), `pages-kind-unknown`, the code it was, which now also says a kind `pages.lists` names that is not there and `view-whole-text` (a card or a row that puts a `text` field whole in a text block, which is clamped).
+- The order and groups a kind's list opens in arrived the same way, with no FR id (0.1.30, asked while prioritizing the Graview Roadmap): `pages.lists.<kind>.sort` (`"<key>"` or `{ "by", "direction"?, "then"? }`, a field, a computed field or `label`) and `pages.lists.<kind>.group` (`"<field>"` or `{ "by", "order"?, "closed"? }`, a choice or yes-or-no field), beside `filters`; a list a document does not order or group opens as it did before. `arrange-pages` takes `sort: { "<kind>": … | null }` and `group: { "<kind>": … | null }`, which a build that predates them refuses as keys it does not know. Unlike `pages-filter-unknown`, the finding that came with them, `pages-list-arrangement`, is an error: a list sorted by what the kind does not have, grouped by a field that is not a choice or a yes or no, or ordering or closing a value that is not one of its choices is refused, since such a list would open some other way unsaid; only a document that says the new keys can meet it.
 - How a number is said arrived with no new key (0.1.29, the money bug found on a Cloud app): a number field's `format` (`money`, `percent`) and `unit`, which a document always held, are now said on every face, and a number's `"format": "duration"` now means exactly the `duration` type — whole minutes, said, typed and described to a tool as that type is (`x-graview-type: "duration"`), its `unit` no longer read. The edit vocabulary gained `set-format` (`{ kind, field, format?, unit? }`, `null` clearing either): a number's `money`, `percent` or `duration` and `unit`, or a text field's `markdown` (FR-180), refused on a field the format does not fit, which a build that predates it refuses as an edit it does not know. `add-field` and `retype-field` refuse a format on a field it does not fit, which they took silently before for a number's format. One checker code, `field-format`, says a format on a field it does not fit in one sentence ("`"format": "money"` is a number's format, and this field is a text"): an error for `markdown`, a warning for a number's format, which a declaration could always hold; and a note for a number shown as a duration, which the type says once. `money-currency` warns of money with neither `brand.currency` nor a currency `unit`.
 - No key is taken away from a document format within its version, and none is renamed without the old name still being read. 0.1.16 broke this: its American spelling pass renamed a setting's `honored` (was `honoured`) in the document as well as in the declaration, and its notes said the document format was unchanged, so every document `toDocument` wrote before 0.1.16 that carried settings failed to compile ("Nothing knows how to apply undefined"). Since 0.1.17 (FR-134), a key renamed within a format is a line in `RESPELLED` (`@graview/core/document`): every reader — `readDocument`, `compileDocument`, `appFrom` and `appFromOrCompile` on a compiled app an older build made, `diffDocuments` and `editDocument` — reads the old name as the new one, keeps the new one when a document says both, and never changes the document handed; `toDocument` and an edit write the new name. `respellDocument` does the same for a host and says which paths it respelled. A document stored with the old name is read the same on every later build of the major, so a host need not rewrite it, though its next save writes the new name. `packages/core/tests/document/fixtures/` keeps documents and compiled apps as older builds wrote them, made by those builds from npm, and each must compile; a test records every key path a document has been able to carry and fails when one is no longer read, by either name.
-- What the app's own actor may tidy on its own (0.1.30) arrived the same way: `kinds.<kind>.tidying` (`"never"` or `"no-links"`) and `kinds.<kind>.edges.<relation>.tidying` (`"never"`), optional in `graview-document@1`, and the edit `set-tidying` (`{ kind, relation?, tidying: "never" | "no-links" | "allowed" }`), said in a sentence by `editDocument` and the same sentence by `diffDocuments`. A kind that says `"never"` is given no `leave-alone-<kind>` or `allow-tidying-<kind>`, and a grant naming one is the error `grant-act`; a relation that says what its kind already says is the warning `tidying-redundant`. A build that predates them refuses the keys as `unknown-key`.
 
 #### 5. Derived tool names and input schemas
 
@@ -592,8 +586,6 @@ Tools are derived from the declaration (`createToolRuntime`, `graview mcp`), and
 - A number field's argument with a `format` or a `unit` (0.1.29) is described with `"x-graview-format"` (`money`, `percent`, `duration`, or `unit` for a measure), `"x-graview-currency"` for money and `"x-graview-unit"` for a measure or a duration, and a description saying the value is a plain number ("An amount of money in USD: a plain number, 1250.5 for 1,250.50 USD."; "A fraction said as a percent: 0.15 is 15%."), after the field's own description where it has one; the type and range are unchanged. The conformance kit announces it on `document:vendors`.
 
 - An app-link field's argument (FR-171) is described as a string of at most 500 characters with the address's `pattern` and `"x-graview-app-link": true`; a seat sets it to another app's address, and anything else is refused as `invalid`. The derived `edit-<kind>` of a declaration that has no such field is unchanged.
-
-- A relation to another app's kind (FR-171) is an argument of the derived `edit-<kind>`, described as a string of at most 300 characters — or an array of at most 200 — with `"x-graview-linked": { address, kinds, cardinality }` and a description saying it is `"<kind>:<id>"`; a seat finds the value with `find_linked` (`relation`, `query`, `of`, `limit`), a read listed only for an app with such a relation, answered through the host's `linkedRecords` as the seat. The tools of an app with no such relation are unchanged.
 
 - A Markdown field's argument (FR-180) is described as the text field's string with `"contentMediaType": "text/markdown"` and its description ending "Written in Markdown."; what it takes is unchanged. A derived edit's history line says a string longer than 60 characters by its start (`excerpt`), not whole.
 
@@ -637,8 +629,6 @@ What a page draws while a part it fetches has not arrived is kept the same way (
 How the seat looks is the look too: one ask field at the foot of both faces that grows into a panel over the app when asked, a bottom sheet below 640 px of its box. What a host's page or harness reaches is kept and said on the `Compatibility:` line when it moves: the region `[data-testid="seat"]` (`role="region"`, named "Ask <the app>", `data-graview-foot`, `data-graview-seat` `open` or `closed`, `data-graview-seat-side` `left` or `right`, `data-graview-seat-shape` `desk` or `phone`), its field `seat-field`, the panel `seat-panel` with its line `seat-where`, its questions `seat-suggestion` (at most three), its acts `seat-act` (at most three), `seat-side` (⇄), `seat-close` and on a phone `seat-grab`; in the conversation a proposal's `seat-apply` ("Do it") and `seat-decline` ("Not now"), a name's `seat-pick`, a question's `seat-question`, and under an answer a model gave, `seat-answered-with-ai` ("Answered with AI"); Find's last row `find-ask`; the lines' key beside Up, `lines-key` and its pane `lines-key-pane`. The embed's `seat` option (`"field"`, the default, or `"hidden"`) and the Shell's `ask` say whether it is drawn. Nothing in it asks a reader which machine answers: the host gives the seat its AI once, as `ai` on `GraviewProvider`, `mount`, `<Embed>` or a routed face's context (`HostAi`: `complete`, `turn`, `decide`, `onDevice`, `name`; a `turn` hands the host's model the seat's read tools as the person, at most twelve calls a turn, and is preferred to `complete`); with none, an open question is told "I can answer about what's in this app. Open questions need AI, which isn't on here.", and a change a model proposed is logged with `via: "ai:<name>"`, which no reader is shown. The conversation is the app's (`useGraview().seatTalk`), kept in the tab's session storage under `graview:seat:<the app's name>`, so a face switch, in place or by a page load, keeps it.
 
 Sentences a program may match are said in the changeset when they move: the insight observation `insight:load:<id>:<edge>` reads "<name> <the relation's words>: all <n> <plural>" (or "<n> of the <m> <plural>") since FR-142, a relation's words from its `description` or `inverse`, else its key spoken (`edgeWords`, `@graview/core/words`).
-
-- Every kind is given `leave-alone-<kind>` and `allow-tidying-<kind>` (`{ id }`, 0.1.30), unless its declaration says it is never tidied, and an agent's tools gain `list_suggestions`, `accept_suggestion` and `decline_suggestion` (`{ suggestion }`). The conformance kit announces the new tools on `document:vendors`, `document:two-lines` and `document:shortlist-0.1.10`.
 
 ### The conformance kit
 
@@ -693,15 +683,13 @@ New here? [Getting started](https://graview.dev/docs/getting-started.html) is th
 ## Where things are
 
 - [Getting started](https://graview.dev/docs/getting-started.html): One command to a running product, what it writes, and the loop from there.
-- [Recipes](https://graview.dev/docs/recipes.html): One prompt for your agent, a different task each, and the app it made, live.
-- [The tour](https://graview.dev/tour.html): Every surface Graview derives from one declaration, each beside a live frame.
 - [Concepts](https://graview.dev/docs/concepts.html): The declaration, and the seven things in it.
 - [Working with a model](https://graview.dev/docs/agents.html): The seat, the typed tools, what a model reads, and the studio.
 - [Live demos](https://graview.dev/docs/demos.html): Every surface of the garden, running on the page, and the example apps.
 - [Packages (14)](https://graview.dev/docs/packages.html): What each ships and what each exports.
-- [Skills (19)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
+- [Skills (18)](https://graview.dev/docs/skills.html): What your assistant reads before it writes.
 - [The CLI](https://graview.dev/docs/cli.html): create, check, types, docs, describe, lens, figure, serve, skills.
-- [What check says (104)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
+- [What check says (102)](https://graview.dev/docs/checks.html): Every finding, and how loudly.
 - [Stability](https://graview.dev/docs/stability.html): What a version may change, and what a host can hold it to.
 - [The garden, grown](https://graview.dev/progression.html): Sixteen live chapters, from one kind to a product.
 
@@ -754,7 +742,7 @@ Source: https://graview.dev/docs/packages/core.html
 pnpm add @graview/core
 ```
 
-Entry points: `@graview/core`, `@graview/core/document`, `@graview/core/compiled`, `@graview/core/retry`, `@graview/core/describe`, `@graview/core/figures`, `@graview/core/scene`, `@graview/core/city`, `@graview/core/check`, `@graview/core/blocks`, `@graview/core/arrange`, `@graview/core/provenance`, `@graview/core/history`, `@graview/core/past`, `@graview/core/linked`, `@graview/core/tidying`, `@graview/core/markdown`, `@graview/core/words`, `@graview/core/seat`, `@graview/core/field-sight`, `@graview/core/search`, `@graview/core/forms`, `@graview/core/lines`, `@graview/core/json-schema`, `@graview/core/sync`, `@graview/core/import`, `@graview/core/snapshot`, `@graview/core/conformance`, `@graview/core/sqlite`, `@graview/core/scaffold`, `@graview/core/cli`, `@graview/core/testing`, `@graview/core/typed`, `@graview/core/document.schema.json`
+Entry points: `@graview/core`, `@graview/core/document`, `@graview/core/compiled`, `@graview/core/retry`, `@graview/core/describe`, `@graview/core/figures`, `@graview/core/scene`, `@graview/core/city`, `@graview/core/check`, `@graview/core/blocks`, `@graview/core/arrange`, `@graview/core/provenance`, `@graview/core/markdown`, `@graview/core/words`, `@graview/core/seat`, `@graview/core/field-sight`, `@graview/core/search`, `@graview/core/forms`, `@graview/core/lines`, `@graview/core/json-schema`, `@graview/core/sync`, `@graview/core/import`, `@graview/core/snapshot`, `@graview/core/conformance`, `@graview/core/sqlite`, `@graview/core/scaffold`, `@graview/core/cli`, `@graview/core/testing`, `@graview/core/typed`, `@graview/core/document.schema.json`
 
 ## What it is
 
@@ -789,11 +777,11 @@ npx graview docs ./dist/domain/app.js
 
 `create` writes the declaration split into domain and UI, a shell, a headless test and a CI workflow, initializes a repository, installs, and says what to do next. `--link <path>` consumes the framework from a sibling checkout by path instead of a registry — the only way that works until the packages are published — and refuses a framework that is not built. The generator behind it is `@graview/core/scaffold`, a pure function from a name and a first kind to a list of files, for a host that provisions apps.
 
-## What it exports (312)
+## What it exports (295)
 
 Read off the package's own barrel, so this is what is there today.
 
-`accentProblem`, `actingAs`, `ActRefusal`, `actTitle`, `addressOf`, `AI_BRIDGE_PATH`, `appLinkField`, `ARCHIVED`, `archivedFrom`, `argumentsTaken`, `article`, `assertReadable`, `basePathOf`, `bindSchema`, `bindsOf`, `brandFromAccent`, `brokenWords`, `capabilities`, `capabilitiesOf`, `checkBrandContrast`, `checkContrast`, `checkKitContrast`, `checkpoint`, `checkpointOn`, `checkpointsBetween`, `checkUndo`, `colorsIn`, `compileMutation`, `composite`, `connectorHueColor`, `connectorKitFor`, `contrast`, `counted`, `createMemoryAdapter`, `createSchema`, `createSqlAdapter`, `createSqliteAdapter`, `createViewRegistry`, `DARK`, `dateOn`, `dayAsRead`, `dayOf`, `dayOfMonthAsRead`, `daysAsRead`, `DECISION_BRIDGE_PATH`, `declaredLenses`, `declareInstallation`, `DEFAULT_KIT`, `DEFAULT_LOCALE`, `defineApp`, `defineInvariant`, `defineMutation`, `defineNode`, `defOf`, `deriveArchiveMutations`, `derivedVia`, `deriveEditMutations`, `deriveMutations`, `deriveRemoveMutations`, `describeCapability`, `descriptionOf`, `diffSnapshots`, `DISPLAY_TRACKING`, `DOCUMENT_FONTS`, `documentSchemes`, `durationField`, `edgeId`, `editMutationName`, `editVia`, `effectivity`, `emojiMark`, `emojiOf`, `emojiProblem`, `emojiSvg`, `EMPTY_DIFF`, `evaluate`, `excerpt`, `extendInvariants`, `extendMutations`, `familiesIn`, `faviconHref`, `FIDELITIES`, `FIELD_SIGHT`, `FieldRevisions`, `fieldsWritten`, `fieldsWrittenBy`, `fieldWords`, `fieldWriters`, `fileField`, `fileKindOf`, `filesOf`, `foldPresence`, `fontProblem`, `FORMATS`, `formatStamp`, `FRAMEWORK_VERSION`, `Graph`, `GRAPH_FINDING_CODES`, `GraphError`, `GRAVIEW_COLORS`, `GRAVIEW_FACE`, `graviewSymbol`, `hidesFrom`, `hueFor`, `humanizeField`, `imageField`, `INSTALLATION_MODULE`, `InvalidArguments`, `invert`, `isAppAddress`, `isAppLinkField`, `isArchived`, `isAutomated`, `isCurrent`, `isEffectiveBetween`, `isEffectiveOn`, `isEmptyDiff`, `isFileValue`, `isImage`, `isInlineSvg`, `isLeftAlone`, `isLinkedTarget`, `isoDate`, `isoShade`, `isRepeat`, `isRepeatField`, `isShippedLens`, `isSystem`, `isSystemFamily`, `isUnset`, `isWithheld`, `KEEP_LINK`, `kindPath`, `kitVariables`, `labelOf`, `layer`, `layerProperty`, `LAYERS`, `layerVariables`, `LIGHT`, `Lineage`, `LINEAGE_BASIS_LIMIT`, `LINEAGE_MODEL_LIMIT`, `lineageOf`, `linkedReads`, `linkedRecordField`, `linkedRefOf`, `linkedRefsOf`, `linkedRelationOf`, `linkedRelations`, `linkedValue`, `LOCAL_BRIDGE_PATH`, `LOCAL_LAYERS`, `localeFor`, `LOGO_RULES`, `logSeenBy`, `luminance`, `markdownField`, `markHref`, `markProblem`, `MAX_INLINE_SVG`, `minutesAsRead`, `MissingRecordError`, `MODULES_AUTHOR`, `momentAsRead`, `monthAsRead`, `MOST_STANDING`, `motion`, `nameKey`, `nameOfAuthor`, `namesUnseen`, `NEVER_WRITTEN`, `NewerFormatError`, `nextExpiry`, `nextOccurrence`, `nodeRef`, `nodeRefArgs`, `nodeRefKinds`, `normalize`, `nounOf`, `numberAsRead`, `occurrences`, `onePerPicture`, `openingOf`, `OperationLog`, `orderKinds`, `OVERVIEW_PATH`, `OVERVIEW_SLUG`, `pagesTitle`, `parseLinkedTarget`, `parseParticipant`, `participantKey`, `passingShade`, `PastError`, `pathWithin`, `PermissionDeniedError`, `permits`, `permittedMutations`, `phoneField`, `placeField`, `placeLabel`, `placePath`, `placeSlug`, `PLAIN_WEIGHTS`, `pluralLabel`, `pluralOf`, `PRESENCE_TTL_MS`, `presenceName`, `presenceStands`, `PREVIEW_BATCH`, `primaryOf`, `problemsMoved`, `providerCan`, `readerSettings`, `readLinkedThrough`, `ReceiveError`, `recordPath`, `recordsOf`, `redact`, `REFUSAL_REASONS`, `refusalOf`, `REMOTE_PRESENCE_TTL_MS`, `removeMutationName`, `removeVia`, `repairPlan`, `repeatedBy`, `repeatField`, `repeatKey`, `requiredRolesOf`, `resolveKit`, `resolveModules`, `rolesOf`, `rolesWhoCould`, `RuleBudgetError`, `safeFileHref`, `samePicture`, `samePresence`, `sayIn`, `SCENE_LAYERS`, `sceneTitle`, `SchemaError`, `SCHEMES`, `seatLens`, `SeatLens`, `seatMark`, `seenBy`, `sees`, `seesId`, `settableFields`, `sha256Hex`, `SHAPE`, `shapedRules`, `shapeOf`, `sharesItsName`, `SHIPPED_LENS_NAMES`, `SHIPPED_LENSES`, `sightedKinds`, `snapshotHash`, `sqlFromDatabase`, `SQLITE_TABLE_SHAPE`, `stackOf`, `Store`, `STUDIO_DOOR_PATH`, `subjectKindsOf`, `summarize`, `supportingKinds`, `svgProblem`, `symbolCut`, `SYSTEM_FONTS`, `SYSTEM_STACKS`, `takesAnId`, `tellTheWatchWhatIsUnseen`, `TEXT_PAIRS`, `textSize`, `tickEachDay`, `timeAsRead`, `touchedBy`, `touchesUnseen`, `TrackedReader`, `TYPOGRAPHY`, `typographyOf`, `UndoBlockedError`, `undoPrimitives`, `UnknownMutationError`, `UnregisteredInvariantError`, `UNSET`, `untilTheDayTurns`, `unwrittenFields`, `upgradeOp`, `upgradeSnapshot`, `validateGraph`, `validRepeat`, `violationKey`, `violationsTouching`, `VISITOR_PRESENCE_TTL_MS`, `walkKinds`, `weekdayAsRead`, `weekdayName`, `WEEKDAYS`, `WEIGHTS`, `whenAsRead`, `whyNot`, `WIRE_PROTOCOL`, `withArticle`, `WITHHELD_AUTHOR`, `WITHHELD_INTENT`, `withhold`, `Writers`, `writersOf`, `writesOf`, `writtenBy`, `z`
+`accentProblem`, `actingAs`, `ActRefusal`, `actTitle`, `addressOf`, `AI_BRIDGE_PATH`, `appLinkField`, `ARCHIVED`, `archivedFrom`, `argumentsTaken`, `article`, `assertReadable`, `basePathOf`, `bindSchema`, `bindsOf`, `brandFromAccent`, `brokenWords`, `capabilities`, `capabilitiesOf`, `checkBrandContrast`, `checkContrast`, `checkKitContrast`, `checkpoint`, `checkpointOn`, `checkpointsBetween`, `checkUndo`, `colorsIn`, `compileMutation`, `composite`, `connectorHueColor`, `connectorKitFor`, `contrast`, `counted`, `createMemoryAdapter`, `createSchema`, `createSqlAdapter`, `createSqliteAdapter`, `createViewRegistry`, `DARK`, `dateOn`, `dayAsRead`, `dayOf`, `dayOfMonthAsRead`, `daysAsRead`, `DECISION_BRIDGE_PATH`, `declaredLenses`, `declareInstallation`, `DEFAULT_KIT`, `DEFAULT_LOCALE`, `defineApp`, `defineInvariant`, `defineMutation`, `defineNode`, `defOf`, `deriveArchiveMutations`, `derivedVia`, `deriveEditMutations`, `deriveMutations`, `deriveRemoveMutations`, `describeCapability`, `descriptionOf`, `diffSnapshots`, `DISPLAY_TRACKING`, `DOCUMENT_FONTS`, `documentSchemes`, `durationField`, `edgeId`, `editMutationName`, `editVia`, `effectivity`, `EMPTY_DIFF`, `evaluate`, `excerpt`, `extendInvariants`, `extendMutations`, `familiesIn`, `faviconHref`, `FIDELITIES`, `FIELD_SIGHT`, `FieldRevisions`, `fieldsWritten`, `fieldsWrittenBy`, `fieldWords`, `fieldWriters`, `fileField`, `fileKindOf`, `filesOf`, `foldPresence`, `fontProblem`, `FORMATS`, `formatStamp`, `FRAMEWORK_VERSION`, `Graph`, `GRAPH_FINDING_CODES`, `GraphError`, `GRAVIEW_COLORS`, `GRAVIEW_FACE`, `graviewSymbol`, `hidesFrom`, `hueFor`, `humanizeField`, `imageField`, `INSTALLATION_MODULE`, `InvalidArguments`, `invert`, `isAppAddress`, `isAppLinkField`, `isArchived`, `isCurrent`, `isEffectiveBetween`, `isEffectiveOn`, `isEmptyDiff`, `isFileValue`, `isImage`, `isInlineSvg`, `isoDate`, `isoShade`, `isRepeat`, `isRepeatField`, `isShippedLens`, `isSystem`, `isSystemFamily`, `isUnset`, `isWithheld`, `KEEP_LINK`, `kindPath`, `kitVariables`, `labelOf`, `layer`, `layerProperty`, `LAYERS`, `layerVariables`, `LIGHT`, `Lineage`, `LINEAGE_BASIS_LIMIT`, `LINEAGE_MODEL_LIMIT`, `lineageOf`, `LOCAL_BRIDGE_PATH`, `LOCAL_LAYERS`, `localeFor`, `LOGO_RULES`, `logSeenBy`, `luminance`, `markdownField`, `markHref`, `markProblem`, `MAX_INLINE_SVG`, `minutesAsRead`, `MissingRecordError`, `MODULES_AUTHOR`, `momentAsRead`, `monthAsRead`, `MOST_STANDING`, `motion`, `nameKey`, `nameOfAuthor`, `namesUnseen`, `NEVER_WRITTEN`, `NewerFormatError`, `nextExpiry`, `nextOccurrence`, `nodeRef`, `nodeRefArgs`, `nodeRefKinds`, `normalize`, `nounOf`, `numberAsRead`, `occurrences`, `onePerPicture`, `openingOf`, `OperationLog`, `orderKinds`, `OVERVIEW_PATH`, `OVERVIEW_SLUG`, `pagesTitle`, `parseParticipant`, `participantKey`, `passingShade`, `pathWithin`, `PermissionDeniedError`, `permits`, `permittedMutations`, `phoneField`, `placeField`, `placeLabel`, `placePath`, `placeSlug`, `PLAIN_WEIGHTS`, `pluralLabel`, `pluralOf`, `PRESENCE_TTL_MS`, `presenceName`, `presenceStands`, `PREVIEW_BATCH`, `primaryOf`, `problemsMoved`, `providerCan`, `readerSettings`, `ReceiveError`, `recordPath`, `recordsOf`, `redact`, `REFUSAL_REASONS`, `refusalOf`, `REMOTE_PRESENCE_TTL_MS`, `removeMutationName`, `removeVia`, `repairPlan`, `repeatedBy`, `repeatField`, `repeatKey`, `requiredRolesOf`, `resolveKit`, `resolveModules`, `rolesOf`, `rolesWhoCould`, `RuleBudgetError`, `safeFileHref`, `samePicture`, `samePresence`, `sayIn`, `SCENE_LAYERS`, `sceneTitle`, `SchemaError`, `SCHEMES`, `seatLens`, `SeatLens`, `seatMark`, `seenBy`, `sees`, `seesId`, `settableFields`, `sha256Hex`, `SHAPE`, `shapedRules`, `shapeOf`, `sharesItsName`, `SHIPPED_LENS_NAMES`, `SHIPPED_LENSES`, `sightedKinds`, `snapshotHash`, `sqlFromDatabase`, `SQLITE_TABLE_SHAPE`, `stackOf`, `Store`, `STUDIO_DOOR_PATH`, `subjectKindsOf`, `summarize`, `supportingKinds`, `svgProblem`, `symbolCut`, `SYSTEM_FONTS`, `SYSTEM_STACKS`, `takesAnId`, `tellTheWatchWhatIsUnseen`, `TEXT_PAIRS`, `textSize`, `tickEachDay`, `timeAsRead`, `touchedBy`, `touchesUnseen`, `TrackedReader`, `TYPOGRAPHY`, `typographyOf`, `UndoBlockedError`, `undoPrimitives`, `UnknownMutationError`, `UnregisteredInvariantError`, `UNSET`, `untilTheDayTurns`, `unwrittenFields`, `upgradeOp`, `upgradeSnapshot`, `validateGraph`, `validRepeat`, `violationKey`, `violationsTouching`, `VISITOR_PRESENCE_TTL_MS`, `walkKinds`, `weekdayAsRead`, `weekdayName`, `WEEKDAYS`, `WEIGHTS`, `whenAsRead`, `whyNot`, `WIRE_PROTOCOL`, `withArticle`, `WITHHELD_AUTHOR`, `WITHHELD_INTENT`, `withhold`, `Writers`, `writersOf`, `writesOf`, `writtenBy`, `z`
 
 ---
 
@@ -1080,11 +1068,11 @@ handle.setPeople(next);                     // an agent who first acted after th
 
 Nothing touches `localStorage` or `sessionStorage` without a fallback, so a frame that throws on either still mounts. `scheme: "auto"` (the default) follows the host context, then the page's `data-theme` stamp, then the system's preference, each as it changes. Presence a channel reports is dropped once its last word is older than `REMOTE_PRESENCE_TTL_MS`, whether or not the channel says the person left. A host that builds presence itself keys each participant with `participantKey({ kind, id, session })` from `@graview/core`, the op log's own `kind:id:session`.
 
-## What it exports (12)
+## What it exports (11)
 
 Read off the package's own barrel, so this is what is there today.
 
-`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `FIRST_LOOK_ANCHORS`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`
+`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`
 
 ---
 
@@ -1570,11 +1558,11 @@ How the scene reads against any district's color: a kind's hue is the brand's (`
 
 The words are set in Montserrat when the host has it, and in the reader's system sans otherwise: the framework names the face and never fetches it. A host that wants it imports the optional copy once — `import "@graview/primitives/montserrat.css"`, 32 KB of woff2, weights 400–700, Latin, under the SIL Open Font License (beside it in the package). `GraviewMark` is the symbol for a host drawing Graview's own identity — a signature, a hosting service's chrome — inline in the ink it stands in, the point in `--graview-mark-point` when set, decorative unless given a `title`, and the optical micro cut under 28 px.
 
-## What it exports (258)
+## What it exports (251)
 
 Read off the package's own barrel, so this is what is there today.
 
-`activeWindow`, `ActivityRail`, `actThatMoves`, `addDays`, `addMonths`, `AgentSeat`, `Aggregate`, `AnswerArgs`, `AppBar`, `appKeyOf`, `AppLink`, `AppMark`, `AppTitle`, `ARRANGE_NARROW`, `ArrangeBar`, `arrangementCaption`, `arrangementOf`, `assignLanes`, `Axis`, `BackOut`, `BAR_HEIGHT`, `BAR_PHONE`, `BarActivity`, `BarFindContext`, `barPlaceAt`, `barPlaces`, `Begin`, `BlockSlots`, `BOARD_REQUIRED_ROLES`, `BoardBindingError`, `BoardView`, `buildBoard`, `buildCoverage`, `buildPlanLens`, `buildReach`, `CALENDAR_RANGES`, `CALENDAR_REQUIRED_ROLES`, `CalendarBindingError`, `capCoverage`, `ChatPanel`, `Chip`, `CHIP_FIELDS`, `chipOffers`, `CHOOSING_CSS`, `compileBlocks`, `Connections`, `Connector`, `COVERAGE_MAX_COLUMNS`, `COVERAGE_MAX_ROWS`, `COVERAGE_REQUIRED_ROLES`, `CoverageBindingError`, `CoverageView`, `createBoardLens`, `createCalendarLens`, `createCoverageLens`, `createNoticeBoard`, `createPlanLens`, `createTimelineLens`, `DARK`, `dayOf`, `daysBetween`, `daysFrom`, `declaredViews`, `DefaultView`, `DefaultViewElsewhere`, `defaultViewsOf`, `descentTarget`, `directionWords`, `Door`, `downscale`, `DraftDoor`, `EditableTitle`, `EditableValue`, `endOfMonth`, `entriesIn`, `entriesOn`, `FAINT_TEXT`, `farCount`, `farCounts`, `fetchDeclaredLenses`, `fetchFrameworkViews`, `fetchHomeView`, `fetchInspector`, `fetchNotices`, `FEWEST_STANDING`, `FieldLink`, `Fields`, `Files`, `FindBox`, `finerThan`, `FIRST_LOOK_ANCHORS`, `FirstLookDoor`, `firstLookKey`, `FOOT_MOVED`, `FOOT_OBSTACLES`, `frameworkViewDoors`, `freshChangeOf`, `GRAVIEW_BRAND`, `GraviewMark`, `Grid`, `handles`, `hasFigure`, `hasShape`, `HeadingsUnder`, `HOME_KEY`, `HOME_PATH`, `HomeLine`, `hueFor`, `humanize`, `Inspector`, `Intake`, `isTakeBackKey`, `KeptLens`, `KindFigure`, `lastChangeOf`, `LIGHT`, `LinesKey`, `LinkedPicker`, `LinkedRecordView`, `LONG_PRESS_MS`, `LongValue`, `MANY_AT_THE_FAR_END`, `MapPanel`, `mapPanelShows`, `MAX_LIST_DEPTH`, `minutesOf`, `MUTED_TEXT`, `nameOf`, `NARROW_PICTURE`, `NoticeBoardContext`, `Notices`, `offeredFilters`, `OverviewButton`, `pageSays`, `Panel`, `PastBar`, `PHOTO_MAX_EDGE`, `PHOTO_QUALITY`, `PLACE_GAP`, `placeAtTheFoot`, `placeAtTheTop`, `placeOnCalendar`, `placeOnTimeline`, `Places`, `placesThatStand`, `PLAN_REQUIRED_ROLES`, `PlanBindingError`, `PlanReview`, `PlanView`, `prefetchSeveral`, `prefetchTimeline`, `preloadArrangeLists`, `problemLine`, `problemTitle`, `Profile`, `proposalKey`, `Prose`, `QuickRelations`, `rangesOf`, `reachLens`, `ReachView`, `readerLenses`, `readerLensesKey`, `RecordHeadContext`, `registerDeclaredLenses`, `registerDefaultViews`, `registerFrameworkViews`, `registerLensPlaces`, `registerReaderLenses`, `registerViewSpecs`, `RelationKey`, `RelationMark`, `relationWords`, `RepeatEditor`, `RepeatPicker`, `Roster`, `rosterOf`, `RuleLineView`, `RuleParts`, `safeHref`, `sayCondition`, `sayNumber`, `SceneBarTools`, `sceneCss`, `sceneMove`, `SceneMove`, `ScenePlaces`, `scenePlacesOf`, `SceneTrail`, `SceneWayBack`, `SCHEMES`, `SEAT_PHONE_BELOW`, `SEAT_WIDTH`, `SeatComposer`, `SeatField`, `SeatHeader`, `Seats`, `SeatThread`, `Settled`, `SeveralBarDoor`, `Shell`, `ShowInstallation`, `spanOf`, `SPEC_VIEW_CSS`, `SpecBlocks`, `SpecLinks`, `SpecPlace`, `SpecView`, `splitAside`, `Standing`, `StartFresh`, `startOfMonth`, `startOfQuarter`, `startOfWeek`, `takeBackLast`, `takeBackWords`, `TextBlock`, `textBlocks`, `TextBody`, `themeBaseCss`, `themeCss`, `themeVariables`, `TIMELINE_REQUIRED_ROLES`, `TimelineBindingError`, `TimelineView`, `titleOf`, `TOAST_MS`, `TOOL`, `toolStyle`, `Trail`, `TYPED_FROM`, `UndoTurn`, `useArranging`, `useBarFind`, `useCallLog`, `useChoosing`, `useDefaultElsewhere`, `useFavicon`, `useLined`, `useMarkup`, `useRecentChanges`, `useRuleLines`, `useSceneGo`, `useScenePlaces`, `useSeatConversation`, `useSpecContext`, `useSubject`, `useViewportHeight`, `useWidth`, `viewsCss`, `VISUALLY_HIDDEN`, `WAY_BACK_MS`, `weekdayOf`, `WHOLE_KEY`, `WHOLE_LABEL`, `withArrangement`, `withMore`, `withNaturalTime`
+`activeWindow`, `ActivityRail`, `actThatMoves`, `addDays`, `addMonths`, `AgentSeat`, `Aggregate`, `AnswerArgs`, `AppBar`, `appKeyOf`, `AppLink`, `AppMark`, `AppTitle`, `ARRANGE_NARROW`, `ArrangeBar`, `arrangementCaption`, `arrangementOf`, `assignLanes`, `Axis`, `BackOut`, `BAR_HEIGHT`, `BAR_PHONE`, `BarActivity`, `BarFindContext`, `barPlaceAt`, `barPlaces`, `Begin`, `BlockSlots`, `BOARD_REQUIRED_ROLES`, `BoardBindingError`, `BoardView`, `buildBoard`, `buildCoverage`, `buildPlanLens`, `buildReach`, `CALENDAR_RANGES`, `CALENDAR_REQUIRED_ROLES`, `CalendarBindingError`, `capCoverage`, `ChatPanel`, `Chip`, `CHIP_FIELDS`, `chipOffers`, `CHOOSING_CSS`, `compileBlocks`, `Connections`, `Connector`, `COVERAGE_MAX_COLUMNS`, `COVERAGE_MAX_ROWS`, `COVERAGE_REQUIRED_ROLES`, `CoverageBindingError`, `CoverageView`, `createBoardLens`, `createCalendarLens`, `createCoverageLens`, `createNoticeBoard`, `createPlanLens`, `createTimelineLens`, `DARK`, `dayOf`, `daysBetween`, `daysFrom`, `declaredViews`, `DefaultView`, `DefaultViewElsewhere`, `defaultViewsOf`, `descentTarget`, `directionWords`, `Door`, `downscale`, `DraftDoor`, `EditableTitle`, `EditableValue`, `endOfMonth`, `entriesIn`, `entriesOn`, `FAINT_TEXT`, `farCount`, `farCounts`, `fetchDeclaredLenses`, `fetchFrameworkViews`, `fetchHomeView`, `fetchInspector`, `fetchNotices`, `FEWEST_STANDING`, `FieldLink`, `Fields`, `Files`, `FindBox`, `finerThan`, `FOOT_MOVED`, `FOOT_OBSTACLES`, `frameworkViewDoors`, `freshChangeOf`, `GRAVIEW_BRAND`, `GraviewMark`, `Grid`, `handles`, `hasFigure`, `hasShape`, `HeadingsUnder`, `HOME_KEY`, `HOME_PATH`, `HomeLine`, `hueFor`, `humanize`, `Inspector`, `Intake`, `isTakeBackKey`, `KeptLens`, `KindFigure`, `lastChangeOf`, `LIGHT`, `LinesKey`, `LONG_PRESS_MS`, `LongValue`, `MANY_AT_THE_FAR_END`, `MapPanel`, `mapPanelShows`, `MAX_LIST_DEPTH`, `minutesOf`, `MUTED_TEXT`, `nameOf`, `NARROW_PICTURE`, `NoticeBoardContext`, `Notices`, `offeredFilters`, `OverviewButton`, `pageSays`, `Panel`, `PHOTO_MAX_EDGE`, `PHOTO_QUALITY`, `PLACE_GAP`, `placeAtTheFoot`, `placeAtTheTop`, `placeOnCalendar`, `placeOnTimeline`, `Places`, `placesThatStand`, `PLAN_REQUIRED_ROLES`, `PlanBindingError`, `PlanReview`, `PlanView`, `prefetchSeveral`, `preloadArrangeLists`, `problemLine`, `problemTitle`, `Profile`, `proposalKey`, `Prose`, `QuickRelations`, `rangesOf`, `reachLens`, `ReachView`, `readerLenses`, `readerLensesKey`, `RecordHeadContext`, `registerDeclaredLenses`, `registerDefaultViews`, `registerFrameworkViews`, `registerLensPlaces`, `registerReaderLenses`, `registerViewSpecs`, `RelationKey`, `RelationMark`, `relationWords`, `RepeatEditor`, `RepeatPicker`, `Roster`, `rosterOf`, `RuleLineView`, `RuleParts`, `safeHref`, `sayCondition`, `sayNumber`, `SceneBarTools`, `sceneCss`, `sceneMove`, `SceneMove`, `ScenePlaces`, `scenePlacesOf`, `SceneTrail`, `SceneWayBack`, `SCHEMES`, `SEAT_PHONE_BELOW`, `SEAT_WIDTH`, `SeatComposer`, `SeatField`, `SeatHeader`, `Seats`, `SeatThread`, `Settled`, `SeveralBarDoor`, `Shell`, `ShowInstallation`, `spanOf`, `SPEC_VIEW_CSS`, `SpecBlocks`, `SpecLinks`, `SpecPlace`, `SpecView`, `splitAside`, `Standing`, `StartFresh`, `startOfMonth`, `startOfQuarter`, `startOfWeek`, `takeBackLast`, `takeBackWords`, `TextBlock`, `textBlocks`, `TextBody`, `themeBaseCss`, `themeCss`, `themeVariables`, `TIMELINE_REQUIRED_ROLES`, `TimelineBindingError`, `TimelineView`, `titleOf`, `TOAST_MS`, `TOOL`, `toolStyle`, `Trail`, `TYPED_FROM`, `UndoTurn`, `useArranging`, `useBarFind`, `useCallLog`, `useChoosing`, `useDefaultElsewhere`, `useFavicon`, `useLined`, `useMarkup`, `useRecentChanges`, `useRuleLines`, `useSceneGo`, `useScenePlaces`, `useSeatConversation`, `useSpecContext`, `useSubject`, `useViewportHeight`, `useWidth`, `viewsCss`, `VISUALLY_HIDDEN`, `WAY_BACK_MS`, `weekdayOf`, `WHOLE_KEY`, `WHOLE_LABEL`, `withArrangement`, `withMore`, `withNaturalTime`
 
 ---
 
@@ -1613,11 +1601,11 @@ The provider holds the store, the view registry, the current view, the selection
 
 A part fetched only when it is first drawn is a `lazyModule` over `retryingImport(() => import("./part.js"))` (from `@graview/core/retry`), drawn with its `part(draw, { what })`. Until it arrives, its place says so in one line with a "Try again" button (`lazy-part-missing`, `lazy-part-retry`) rather than throwing; it is asked for again when the browser is back online, when it is drawn again, on `prefetch()`, and when the button is pressed (`retryLazyParts`). Every part the framework fetches as it is drawn — the person's menu, the problems' rows, the faces, the views and lenses, the studio, the assistant — is one.
 
-## What it exports (128)
+## What it exports (124)
 
 Read off the package's own barrel, so this is what is there today.
 
-`ACTIVITY_HOLD_MS`, `adjustment`, `altitudeOpacity`, `anchorOf`, `applySettings`, `AUDIENCE_ROW`, `bandRows`, `BesideTheMap`, `channelRoute`, `clipPolyline`, `clipQuadratic`, `connectorStrands`, `createMotionStore`, `createPointerStore`, `createSeatTalk`, `createViews`, `DEFAULT_VIEW`, `DefaultDrawnElsewhere`, `districtOf`, `ErrorReportContext`, `Figure`, `foldRobots`, `GoToContext`, `GraviewProvider`, `HEARTBEAT_MS`, `honorSetting`, `HostFilesContext`, `inTopLayer`, `isDefaultView`, `kitConnector`, `landingIn`, `latticePoints`, `layerViews`, `lazyModule`, `loadSetting`, `mapChoice`, `markActivity`, `markDefaultView`, `markReplacesPage`, `matchWith`, `NOTHING_FOUND`, `Occupants`, `onScreen`, `openingView`, `orthogonalPoints`, `participantOf`, `PersonFigure`, `pickedFrom`, `placeOthers`, `placePane`, `PlaybackContext`, `polylineD`, `POPOVER_STYLE`, `POPOVERS`, `PRESENCE_SETTINGS`, `raiseOverPopovers`, `rememberSetting`, `REPLACES_PAGE`, `replacesPage`, `ResolvedView`, `retryLazyParts`, `RIBBON_WIDTH`, `ribbonSentence`, `ribbonsOf`, `ribbonWidth`, `ROBOT_REST_MS`, `roundedPolylineD`, `routedQuadratic`, `routePoint`, `Scene`, `SeatMarks`, `seatTalkKey`, `selectionFor`, `SHARE_OVER`, `SHARE_WHERE`, `stackOpacity`, `standingFor`, `tabSession`, `tieRoute`, `UrlSync`, `useActivity`, `useAffordances`, `useAnimatedLayout`, `useApplyAffordance`, `useAttention`, `useBacktrack`, `useDrawnSize`, `useEditableFields`, `useFlagged`, `useFound`, `useGoTo`, `useGraph`, `useGraview`, `useGraviewIfAny`, `useHostFiles`, `useImplicated`, `useJackIn`, `useKit`, `useLiveStore`, `useLocalIntelligence`, `useMarqueeRoom`, `useNavigation`, `useNode`, `useOwnPlayback`, `usePlayback`, `usePopover`, `usePresenceState`, `useReached`, `useRobots`, `useScenePointer`, `useSceneStill`, `useSeatDrawn`, `useSeatTalkState`, `useSeatWork`, `useSelection`, `useTextMeasure`, `useTheKeyboardLandsSomewhere`, `useTheWatchKnowsWhatIsUnseen`, `useTopLayer`, `useTouched`, `useUrlSync`, `useViewMode`, `useViolations`, `useWhereIs`, `ViewBoundary`, `ViewModeProvider`, `VISIT_EACH_UP_TO`, `whereIsIn`
+`ACTIVITY_HOLD_MS`, `adjustment`, `altitudeOpacity`, `anchorOf`, `applySettings`, `AUDIENCE_ROW`, `bandRows`, `BesideTheMap`, `channelRoute`, `clipPolyline`, `clipQuadratic`, `connectorStrands`, `createMotionStore`, `createPointerStore`, `createSeatTalk`, `createViews`, `DEFAULT_VIEW`, `DefaultDrawnElsewhere`, `districtOf`, `ErrorReportContext`, `Figure`, `foldRobots`, `GoToContext`, `GraviewProvider`, `HEARTBEAT_MS`, `honorSetting`, `HostFilesContext`, `inTopLayer`, `isDefaultView`, `kitConnector`, `landingIn`, `latticePoints`, `layerViews`, `lazyModule`, `loadSetting`, `mapChoice`, `markActivity`, `markDefaultView`, `markReplacesPage`, `matchWith`, `NOTHING_FOUND`, `Occupants`, `onScreen`, `openingView`, `orthogonalPoints`, `participantOf`, `PersonFigure`, `pickedFrom`, `placeOthers`, `placePane`, `polylineD`, `POPOVER_STYLE`, `POPOVERS`, `PRESENCE_SETTINGS`, `raiseOverPopovers`, `rememberSetting`, `REPLACES_PAGE`, `replacesPage`, `ResolvedView`, `retryLazyParts`, `RIBBON_WIDTH`, `ribbonSentence`, `ribbonsOf`, `ribbonWidth`, `ROBOT_REST_MS`, `roundedPolylineD`, `routedQuadratic`, `routePoint`, `Scene`, `SeatMarks`, `seatTalkKey`, `selectionFor`, `SHARE_OVER`, `SHARE_WHERE`, `stackOpacity`, `standingFor`, `tabSession`, `tieRoute`, `UrlSync`, `useActivity`, `useAffordances`, `useAnimatedLayout`, `useApplyAffordance`, `useAttention`, `useBacktrack`, `useDrawnSize`, `useEditableFields`, `useFlagged`, `useFound`, `useGoTo`, `useGraph`, `useGraview`, `useGraviewIfAny`, `useHostFiles`, `useImplicated`, `useJackIn`, `useKit`, `useLocalIntelligence`, `useMarqueeRoom`, `useNavigation`, `useNode`, `usePopover`, `usePresenceState`, `useReached`, `useRobots`, `useScenePointer`, `useSceneStill`, `useSeatDrawn`, `useSeatTalkState`, `useSeatWork`, `useSelection`, `useTextMeasure`, `useTheKeyboardLandsSomewhere`, `useTheWatchKnowsWhatIsUnseen`, `useTopLayer`, `useTouched`, `useUrlSync`, `useViewMode`, `useViolations`, `useWhereIs`, `ViewBoundary`, `ViewModeProvider`, `VISIT_EACH_UP_TO`, `whereIsIn`
 
 ---
 
@@ -2113,7 +2101,7 @@ Source: https://graview.dev/docs/skills.html
 
 # The skills
 
-Graview's 19 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
+Graview's 18 skills are instructions an AI coding assistant reads before it writes a Graview app. Each teaches a model one shape of the declaration, and each ends in `graview check` — reporting what it actually said, rather than claiming the work is done.
 
 ```sh
 graview skills install .
@@ -2127,8 +2115,7 @@ graview skills install .
 - [graview-embed](https://graview.dev/docs/skills/graview-embed.html): Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 - [graview-invariant](https://graview.dev/docs/skills/graview-invariant.html): Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 - [graview-lens](https://graview.dev/docs/skills/graview-lens.html): Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
-- [graview-linked-records](https://graview.dev/docs/skills/graview-linked-records.html): Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
-- [graview-lists](https://graview.dev/docs/skills/graview-lists.html): Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
+- [graview-lists](https://graview.dev/docs/skills/graview-lists.html): Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 - [graview-new-app](https://graview.dev/docs/skills/graview-new-app.html): Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 - [graview-node-kind](https://graview.dev/docs/skills/graview-node-kind.html): Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 - [graview-pages](https://graview.dev/docs/skills/graview-pages.html): Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
@@ -2143,7 +2130,7 @@ graview skills install .
 
 ---
 
-The 19 skills that teach an assistant the authoring moves, each ending in a real check.
+The 18 skills that teach an assistant the authoring moves, each ending in a real check.
 
 The page: https://graview.dev/docs/skills.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -2153,7 +2140,7 @@ Source: https://graview.dev/docs/skills/graview-agent-seat.html
 
 # graview-agent-seat
 
-`graview-agent-seat` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
+`graview-agent-seat` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2252,7 +2239,7 @@ Source: https://graview.dev/docs/skills/graview-brand.html
 
 # graview-brand
 
-`graview-brand` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
+`graview-brand` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put an installation's own name, mark, typeface and palette on a Graview app without forking a package, and let graview check measure the contrast rather than trusting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2310,7 +2297,7 @@ A document (`graview-document@1`) holds the same brand as data, every key option
 - **A mark** is inline SVG or a path on the app's own host — never another origin. It is drawn as given (`currentColor` takes the accent), so it is read element by element as the browser reads it: shapes, groups, gradients, filters, text and links to its own `#id`s, every attribute quoted, and nothing after `</svg>`. A script, a handler, `<a>`, `<style>`, an animation, `foreignObject` or anything it loads is refused (`brand-mark`, with the reason), never rewritten. On Cloud, `add_image` answers the path.
 - **A face** is `system-serif`, `system-sans`, `system-mono`, a face every system has (Georgia, Menlo), or a web font on `DOCUMENT_FONTS`; one named by its address is refused (`brand-font`). The host decides where web fonts load from.
 - **An accent** must read as given in light: `set-brand` refuses one that does not with the pair, its ratio and the shade that would pass — "#e6c200 text on #f6f4f0 is 1.5:1; 4.5:1 is needed — #836e00 would pass." Send the shade it names.
-- **The icon** is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes `favicon: true`. `"favicon": { "emoji": "🏡" }` — exactly one standard emoji (👩🏽‍🌾 and 🇺🇸 count as one) — is the icon and, with no logo, the mark; anything else is refused (`brand-emoji`).
+- **The icon** is set only by a face that owns the page; an embed on somebody else's page leaves theirs alone unless the host passes `favicon: true`.
 
 `describe_place("home")` says the app as the home draws it (its `masthead`): the name, the line under it, and the logo by its alt text.
 
@@ -2364,7 +2351,7 @@ Source: https://graview.dev/docs/skills/graview-desk.html
 
 # graview-desk
 
-`graview-desk` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
+`graview-desk` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2419,7 +2406,7 @@ Source: https://graview.dev/docs/skills/graview-embed.html
 
 # graview-embed
 
-`graview-embed` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
+`graview-embed` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2456,7 +2443,7 @@ handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 8. **Register only what differs.** `views(schema, registry)` is handed the framework's own view for every cell, with the declaration's `viewSpecs` already drawn; register onto it the cells you want different, and the rest stay. The same registry draws every face — the gallery's card, the list's row (one × glyph), the record's page (one × full). A view that adds to the default draws it inside itself with `<DefaultView {...props} />` (`@graview/primitives`); on the record page, which is the default, that draws nothing. `@graview/embed/pages` takes `views` too.
 9. **Say its name at the right level.** The bar says the app's name once, as a heading: `heading: 1` when the page is the app (and `height: "viewport"`, re-measured as a phone turns), the default `2` inside an article, `false` when your heading already says it.
 10. **In a chat's widget, let the frame be sized from the embed.** `height: "auto"` with `onIntrinsicHeight` tells the host the height to give it; `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the scene for the pages on a phone; `remote` takes an `openRemote` store. A hosted reader sits only as who signed in: name members through `people` (and `setPeople`), never as `seats`, which offer "sit as somebody else". Where readers cannot save a declaration, `studio: false` (or `studio: { onApply }` to keep what it applies: return `{ ok: false, sentence, findings }` when you could not (the sentence heads the studio's panel; findings may be empty; an Apply with nothing changed never asks), `offered: true` when you decided who builds, and `place: StudioPlace`, imported, when the page is the studio and should not wait for its chunk); where only the pages are shown, import `mount` from `@graview/embed/pages` and bundle nothing else. `onError` and `onReady` tell the host failures (class and module only) and time to the first face drawn. Each face is fetched as it is first drawn: `preload(face)` starts it beside the host's own requests, and `handle.drawn()` waits for it.
-11. **Put the host's own furniture inside the embed, never over it.** `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the host's links in the person's menu, under who is signed in, reached by the keyboard. Every popover the embed draws stands in the browser's top layer, so a host needs no `z-index` override. `seat: "hidden"` draws no ask field on either face. Say the host's own news through `handle.notify({ kind: "toast" | "banner", sentence, tone, action })`, not a toast of your own fixed over the app: it floats at the app's foot, moving nothing. No tour of your own: `firstLook: { seen, onDone, steps }` points at the app's controls once, your `steps` naming a `FIRST_LOOK_ANCHORS` control.
+11. **Put the host's own furniture inside the embed, never over it.** `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the host's links — "Your apps", "Report this app" — in the person's menu, under who is signed in, reached by the keyboard. Every popover the embed draws stands in the browser's top layer, so a host needs no `z-index` override and nothing fixed over the scene. `seat: "hidden"` draws no ask field on either face (`"field"`, the default, draws it, its conversation kept across a face switch). Say the host's own news through `handle.notify({ kind: "toast" | "banner", sentence, tone, action })`, not a toast of your own fixed over the app: it floats at the app's foot, read aloud, moving nothing.
 12. **When the page IS the app, hand it the address bar.** The default, `routing: "memory"`, never touches the host's `location` or `history` — right in an article. A host whose whole page is the app passes `routing: "address"` (and `basePath: "/apps/a1/"` when it is not served at `/`), and answers every address under the base with the one page: `<base>/places/<as>`, `<base>/<plural>/<id>` and the home are the routed face's pages, pushed and reloadable; the scene is `<base>/places/overview#overview=1`; the switch is a step Back undoes. `faceAtAddress(options)` is the face an address opens on, and `addressOf(place, { basePath })` (`@graview/core`) spells a place's link. A host that keeps its own history stays on memory, hears `onNavigate(path, how)` and answers its own Back with `setPath(path)`.
 13. **A changed app keeps the reader's place.** `handle.setApp(app, store)`, not a remount, keeps the face, the page and the stop, and a `label` that was the app's name takes the new name. To remount, pass `handle.where()` back as `mount(…, { at })`.
 
@@ -2516,7 +2503,7 @@ Source: https://graview.dev/docs/skills/graview-invariant.html
 
 # graview-invariant
 
-`graview-invariant` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
+`graview-invariant` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2553,10 +2540,6 @@ export const pricedPackages = expressionRule("priced-packages", {
 });
 ```
 
-Each repair is handed the record the rule judged, so it must be an act ON that kind: a rule over `task` repaired by an act on `module` could only refuse, and `graview check` says `repair-wrong-kind` (a function rule names its repairs' arguments itself, so it may act elsewhere).
-
-In a document (`app.json`, a graview-document) the same rule is `rules.priced-packages`: `{ "over": "package", "require": "net > 0", "says": "…", "repairs": [{ "act": "edit-package" }] }`; `graview check --document app.json` says each finding at its JSON path (`rules.priced-packages.repairs.0`).
-
 A rule in the rule language is drawn as its shape, in the declaration's labels: "◆ Scenario margin ≥ target margin, when plan's price > $0", and broken, with the record's values: "A club on Team — margin 44% < target margin 50%". Its title is a second line under that, so keep it short ("Margin above target") or leave it out; "A scenario keeps the target margin" only says the shape again, less clearly. Label a field that reads badly when spoken (`display.labels`) rather than writing round it.
 
 Fields and one-edge hops by name, `out('edge')`, `in('edge')`, `all('kind')` and `S where cond`; `count`, `exists`, `every`/`some(S, cond)`; `sum`/`min`/`max(S, expr)` with an expression per member (`sum(out('includes'), list * units)`); `sort(S, key, 'asc'|'desc')` (a list key sorts by its first value, then its next), `first(S)` for one record, `either(a, b)` for the first that is something; `if(cond, a, b)`, which works out only the branch it takes; `present`, `len`, dates. `out(S, 'edge')` and `in(S, 'edge')` walk from every member of a set and give each record reached once; sets meet with `&`, join with `|` and part with `-` — LifeLogics' coverage is one figure, `count(out(out('includes'), 'answers') & out(client, 'needs'))`, each step read from what the seat may see. (Inside a template's braces, a `|` within brackets joins; the last bar outside them is the formatter's.) A kind's `computed` fields read like stored ones, and `fact('name')` reads a fact of the whole graph — a document's top-level `computed`, like `"mapProposed": "every(all('area'), proposed)"` — so a rule over the graph, a block and a face's own screen say it once (`factValues` from `@graview/core/blocks`; `describe_place` on the home lists them). Every evaluation has a step budget: a rule that reads too much is `over-budget`, never a hang.
@@ -2575,7 +2558,7 @@ So a rule about the past and the present — "nothing closed may still depend on
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-The checker catches `repair-unknown-mutation`, `repair-wrong-kind`, `invariant-scope-undeclared` and `required-invariant-unregistered`. Report the real output, warnings included.
+The checker catches `repair-unknown-mutation`, `invariant-scope-undeclared` and `required-invariant-unregistered`. Report the real output, warnings included.
 
 **And make it fire.** A rule that never returns a violation passes every check and does nothing. Write a test that builds a graph which breaks it:
 
@@ -2611,7 +2594,7 @@ Source: https://graview.dev/docs/skills/graview-lens.html
 
 # graview-lens
 
-`graview-lens` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
+`graview-lens` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2707,68 +2690,11 @@ The page: https://graview.dev/docs/skills/graview-lens.html · Every Graview doc
 
 ---
 
-Source: https://graview.dev/docs/skills/graview-linked-records.html
-
-# graview-linked-records
-
-`graview-linked-records` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
-
-Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
-
-## The skill
-
-## Link a record in another app
-
-A relation usually goes to a kind of the same app. When the thing lives in an app of its own — a purchase scenario that buys a house kept in the house app — the relation goes THERE: its target is `@` + the other app's address + `/` + its kind. Linking picks a record in that app; the other app is never changed. What the far record is, and whether this viewer may see it, is the host's to say, every time, as the viewer.
-
-### Do this
-
-1. **Declare the relation to the other app's kind.** In a document:
-
-```json "scenario": { "fields": { "name": { "type": "string", "required": true }, "budget": { "type": "number", "format": "money" } }, "edges": { "forHouse": { "to": ["@nick/house/house"], "cardinality": "one", "description": "the house this scenario buys" } } } ```
-
-The address is the one an `app-link` field would hold: `@owner/app`, the id the host knows the app by (`@app_kf5eydr9z58jzf/house`), or its https address (`@https://example.com/a/house/house`). Every target names ONE app; mix in a kind of this app, a second app, an `inverse` or `appendOnly`, and the check refuses it in a sentence. In TypeScript the link is a field it is kept in: `forHouse: linkedRecordField("@nick/house/house").optional()` (`{ cardinality: "many" }` for several).
-
-1. **Let the record's own edit link one.** The link is kept on the record that links, as the far kind and its id — `"house:h1"`, or a list — so the derived `edit-scenario` sets it, undoes it, logs it and hides it from a seat a sight keeps it from, like any field. The faces draw a picker that lists what the host finds there for this viewer; an agent finds the value with `find_linked` and passes it to the edit. A declared act may not `connects` it or set it (`act-linked`).
-
-1. **Walk it by name.** `forHouse.listPrice` reads the far record's field, in a computed field, a view's block or a rule:
-
-```json "computed": { "price": { "expr": "forHouse.listPrice", "label": "Asking price" } }, "rules": { "within-budget": { "over": "scenario", "when": "budget != null", "require": "forHouse.listPrice <= budget" } } ```
-
-It is read AS THE VIEWER: a field they may not see there reads as nothing. A link they may not open, or not read yet, is said, never thrown — the computed value says why it has none, and a rule that would fail without it is "could not be judged" rather than broken. `out('forHouse')` does not walk it (`rule-linked`).
-
-1. **Show it.** A record's page and the scene's record panel draw the far record with its own card — label, describe line, a glance at its fields, its app's name — and `{ "field": "forHouse" }` in a card names it. Pressing it opens it in its own app through the host. A viewer who may not open that app sees "linked record (no access)" and nothing of it.
-
-1. **Hand the host's reader in.** The host implements `LinkedRecords` and passes it where it passes `resolveApp` (`mount`, `<Embed>`, `GraviewProvider`, `PagesApp`) as `linkedRecords`: `resolve(ref, viewer)` answers `{ address, kind, id, label, describe?, card?, fields, href?, app? }`, `{ denied: true }` or `null`; `find({ address, kinds, query, limit }, viewer)` the records it may link; `open(ref, viewer)`, optional, opens one in place. `linkedRecordsOver({ "@nick/house": { store, name, opens, href } })` from `@graview/core/linked` is that host over stores in memory — tests and a host holding both apps use it as is. When the far record changes there, the host calls `recordLinkedChange(store, { ref, fields, app })`: one op per linking record, authored by the far app, naming what changed and none of its values, so Activity and the record's history say it.
-
-### Then find out whether it worked
-
-```sh
-pnpm build && npx graview check ./app.gdd.json
-npx graview describe ./app.gdd.json   # "Linked from other apps" says each relation and how to link one
-```
-
-Report **the actual output**. What it catches here: `linked-target`, `linked-mixed`, `linked-apps`, `linked-inverse`, `linked-append-only`, `act-linked`, `rule-linked`. Then open a record that links one as a viewer the host refuses that app, and confirm the page says "linked record (no access)" and shows nothing of it — not its name, not a value worked out from it.
-
-### What the check cannot see
-
-- Whether the other app exists, has that kind, or lets this viewer in: the host answers that, every time, and nothing in the document can.
-- Whether a far field the expression names (`listPrice`) is one the other app has: a field it lacks, or hides from this viewer, reads as nothing.
-- Whether linking across apps was the right shape at all. If both kinds change together and the same people keep them, one app with a local relation is simpler.
-
----
-
-Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.
-
-The page: https://graview.dev/docs/skills/graview-linked-records.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
-
----
-
 Source: https://graview.dev/docs/skills/graview-lists.html
 
 # graview-lists
 
-`graview-lists` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
+`graview-lists` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2786,11 +2712,15 @@ A list that worked at twelve records stops working at three hundred: Filter list
 
 In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key is a field, a relation, `is`, or `<relation>.<field>` — a choice on the record at the far end ("The feature it became · Stage: Building"). The choice fields among them stand over the list as chips with counts; the rest are under Filter, each heading closed until pressed, with a box that finds a filter or a far record by a few letters. Unsaid, a list offers every way but a relation to a kind with more than forty records (offered by that kind's choices instead), and its first two choice fields as chips. An address says the same: `/requests?filter=status:open`.
 
+**Say the order and grouping it opens in**, beside its filters:
+
+```json "feature": { "sort": { "by": "rank", "direction": "desc", "then": "name" } }, "request": { "group": { "by": "status", "order": ["planned", "new"], "closed": ["done", "declined"] } } ```
+
+`sort` is a field, a computed field (a rank the kind works out) or `label`, lowest first unless `"desc"`, with a `then` for ties; `group` is a choice or yes-or-no field (`"true"`, `"false"`). `order` puts its groups first; `closed` ones are drawn last and shut, each a button saying "done · 12 requests" that opens it (`?open=done` keeps it open; words in the Find box open them all). A person still sorts or groups the list another way from its arranging line. The edit is `arrange-pages` with `sort: { "<kind>": … | null }` and `group: { "<kind>": … | null }`.
+
 1. **Let a card say a long text's start.** A card shows a `text` field in three lines at most and a row in one, cut with an ellipsis. Say it on purpose with the `excerpt` formatter — `{summary|excerpt}` is its first sentence or about 140 characters cut at a word, `{summary|excerpt: 80}` at most 80 (20 to 1000) — and leave the whole text to the record's page. A list cut by its `limit` says "See all 120 features" and goes to the kind's list. Prose written in Markdown says so — `{"type": "text", "format": "markdown"}`, or `markdownField()` — and the record's page draws it as prose (headings, lists, links, code; no HTML), while a row, a card, a describe line and a search hit say its first paragraph or about 160 characters with the syntax taken out.
 
 1. **Set records aside instead of deleting them.** Every kind has `archive-<kind>` and `unarchive-<kind>` (`{ id }`, "Bring it back") and `merge-<kind>` (`{ id, into }`: `into` takes the duplicate's links and the duplicate is archived), permitted through the acts that create the kind. An archived record is out of lists, the scene, counts, computed fields and rules; its own page and search still find it, marked. A list says "+3 archived" and opens them at `?archived=true`; a rule reads them with `all('feature', true)` (`'all'` for both) and `archived()`. A kind that should never be archived says `archives: false` in `defineNode` (a document's `"archives": false`; the edit `set-archives`).
-
-1. **Let the app's own actor tidy, and say what it may not.** An actor that links and prunes on its own is an author that says `automated: true` (`kind: "system"` or `"agent"`). What it is sure of it applies with `lineage: { basis, confidence }`; what it is not it suggests: `suggest(store, calls, { author, lineage })` (from `@graview/core/tidying`) keeps the calls in the log, changes nothing, and they wait in the Suggested tray beside Activity until a person accepts (made as them) or declines them; `declined(store, calls)` says so, and the actor is refused the same change again. Its run of changes is one Activity row, "Tidied 6 things today". A person says "Leave this one alone" on a record (`leave-alone-<kind>`, cleared by `allow-tidying-<kind>`; `isLeftAlone(store, id)`), and the declaration says a kind is never tidied or never linked — `tidying: "never" | "no-links"` on `defineNode`, `tidying: "never"` on a relation; in a document the edit `{"op": "set-tidying", "kind": "vendor", "tidying": "no-links"}` (with `"relation"` for one relation, `"allowed"` to undo it). The store refuses the actor each in a sentence.
 
 1. **Print a place when a fixed link wants one.** `renderPlace(store, app, "/requests", { viewer, locale })` from `@graview/pages/static` answers `{ html, css, title, found }`: one self-contained page, no script, in the app's look, under the viewer's sight, the same words the routed face says. It imports no React, so a Worker renders it on each change.
 
@@ -2806,13 +2736,13 @@ In TypeScript, the same under `defineApp({ pages: { lists: … } })`. Each key i
 graview check src/domain/app.ts
 ```
 
-It warns of a filter the kind cannot be filtered by (`pages-filter-unknown`) and names the keys it can, a kind `pages.lists` names that is not there (`pages-kind-unknown`), and a card or row that puts a `text` field whole in a text block (`view-whole-text`: "feature card shows summary whole; it will be clamped"). Then look at the list at a phone's width as well as a desk's:
+It warns of a filter the kind cannot be filtered by (`pages-filter-unknown`) and names the keys it can, a kind `pages.lists` names that is not there (`pages-kind-unknown`); it refuses a list sorted by what the kind does not have, grouped by a field that is not a choice or a yes or no, or closing a value that is not one of its choices (`pages-list-arrangement`, an error, in a sentence); and it warns of a card or row that puts a `text` field whole in a text block (`view-whole-text`: "feature card shows summary whole; it will be clamped"). Then look at the list at a phone's width as well as a desk's:
 
 ```sh
 graview describe src/domain/app.ts --place requests --seed seed.json --width 390
 ```
 
-It says the list's headings, each record's card and what is filtered, as the page draws them. Archive one record by its act and ask again: it is gone from the list and the count, and `?archived=true` finds it. Undo the merge you tried; both records come back with their links. Have a test actor suggest a link and decline it from the tray: `suggest(store, …)` of the same calls then refuses, and a record left alone refuses the actor's change by name.
+It says the list's headings, each record's card and what is filtered, as the page draws them. Archive one record by its act and ask again: it is gone from the list and the count, and `?archived=true` finds it. Undo the merge you tried; both records come back with their links.
 
 ### What the check cannot see
 
@@ -2820,7 +2750,7 @@ Whether the filters you named are the ones a person reaches for — that is a qu
 
 ---
 
-Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
+Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 
 The page: https://graview.dev/docs/skills/graview-lists.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -2830,7 +2760,7 @@ Source: https://graview.dev/docs/skills/graview-new-app.html
 
 # graview-new-app
 
-`graview-new-app` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
+`graview-new-app` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2873,8 +2803,6 @@ src/
 
 The domain/ui split keeps the declaration inspectable by a build, a CLI and an agent: `graview check` reads `defineApp`, and a React import there would drag a UI package into the checker.
 
-**Or as one JSON document:** `app.json` (`"format": "graview-document"`, schema `node_modules/@graview/core/dist/document.schema.json`), then `graview check --document app.json`, `graview describe --document app.json`, `graview preview app.json --seed seed.json`.
-
 ### Do this
 
 1. **Install.** The scaffold already did. Reach for `@graview/render/gpu` only if you want the experimental capture path; the DOM path is what ships.
@@ -2885,7 +2813,7 @@ The domain/ui split keeps the declaration inspectable by a build, a CLI and an a
 
 1. **Declare the seams that make the interface smart.** These are one-line declarations on mutations and kinds, and every derived surface reads them: - `creates: ["<kind>"]` on every mutation that adds a kind — the chain `Begin` and `graview describe` read, and the empty card's own way in. - `connects: [...]` / `severs: [...]` naming the edge kinds a mutation makes or breaks — what makes drawn LINES selectable, offers the act from either end, and hides a severing act with nothing to sever. - `lifecycle: { field, retired }` on kinds whose members expire — counts say "+N past". - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
-1. **Take the shell.** `Shell` from `@graview/primitives` is everything not about your domain: the one app bar an embed wears too (the name, the Scene and Pages switch, the scene's pictures, Find, Activity, the standing, the person), the scene, its key, the ask field — a seat that answers from the graph with no API key — and the acts at the pointer. Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`, `OverviewButton`) are exported for a shell of your own; one is about eighty lines, and a longer one is probably rebuilding something derived. `firstLook` on `Shell` and `PagesApp` (`true` or `{ seen, onDone, steps }`) points a newcomer at the app's own controls once; write no tour.
+1. **Take the shell.** `Shell` from `@graview/primitives` is everything not about your domain: the one app bar an embed wears too (the name, the Scene and Pages switch, the scene's pictures, Find, Activity, the standing, the person), the scene, its key, the ask field — a seat that answers from the graph with no API key — and the acts at the pointer. Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`, `OverviewButton`) are exported for a shell of your own; one is about eighty lines, and a longer one is probably rebuilding something derived.
 
 Search comes with `Shell`: Find answers `/` or ⌘K from anywhere, lights what the words find in whatever picture is open and dims the rest, and `#q=` makes a search a stop Back returns to. Nothing is declared per kind.
 
@@ -2951,7 +2879,7 @@ Source: https://graview.dev/docs/skills/graview-node-kind.html
 
 # graview-node-kind
 
-`graview-node-kind` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
+`graview-node-kind` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -2959,7 +2887,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Add a node kind
 
-A kind is the unit of everything here. Declaring one gets you, without another line: a place in the layout, a card at three fidelities, an aggregate view, an accessibility label, a hue, and inclusion in every agent tool that walks the graph.
+A kind is the unit of everything here. Declaring one gets you, without another line: a place in the layout, a card at three fidelities, an aggregate view, an accessibility label, a hue, a slot in the kinds plane, and inclusion in every agent tool that walks the graph.
 
 ### Do this
 
@@ -2967,27 +2895,26 @@ A kind is the unit of everything here. Declaring one gets you, without another l
 
 1. **Declare the kind.** Zod is the one place a field is described: validation, types and JSON Schema.
 
-```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), // Host-kept picture ("image"/"file"); appLinkField() another app // (its records: graview-linked-records); phoneField(), placeField(). crest: imageField().optional(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
+```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), // Host-kept picture ("image"/"file"); appLinkField() another app, // named by resolveApp; phoneField(), placeField(), durationField(). crest: imageField().optional(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
 
-**In a document** (`app.json`, `"format": "graview-document"`) it is `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type": "string", "required": true } }, "edges": { "picked-for": { "to": ["player"] } } }`. Every key is in `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
-
-1. **Add it to `createSchema([...])`.** An edge to a kind not in that array fails *typecheck* (`ValidateEdgeTargets`).
+1. **Add it to `createSchema([...])`.** An edge pointing at a kind that is not in that array is a *typecheck* failure, not a runtime one — `createSchema`'s `ValidateEdgeTargets` sees it.
 
 1. **Say what a node of it is called.** `label` defaults to a `label` field and then to the id. An id in the interface is a bug you shipped, not a placeholder. And say what ONE of the kind is called where its id does not: `noun: "staff member"` on a kind called `staff`, or every sentence about one reads "Change the staff".
 
 An id is still a name a caller may choose: every act that declares `creates: ["fixture"]` takes an optional `id` argument the framework adds, so a seed being synced or an agent that will refer to the node next call gets exactly the id it asked for, or a refusal by name. Never hardcode a bootstrap id — `"today"`, `"u-nick"` — in a mutation body or an invariant; bind a role, a flag or an edge, so a store seeded differently still works. And every kind gets `remove-<kind>` derived, permitted through the acts that create it.
 
-1. **Give it verbs.** A kind no mutation names as a subject can have nothing done to it, and the strip says so. Unless you meant that, add a mutation whose `subject.kinds` includes it.
+1. **Give it verbs.** A kind no mutation names as a subject can have nothing done to it, and the strip says so. Unless you meant that, add a mutation whose `subject.kinds` includes it (the rule shape: `graview-invariant`).
 
-1. **Let the fields be changed, or say why not.** A field you could set at creation, you can change: every settable field no mutation writes is covered by a derived act per kind (`edit-<kind>`, "Change the drill"), editable where it is shown. Two declarations shape it. `writes: ["done"]` on a mutation says which fields it sets when its arguments do not (`finish()` writing `done`) — and a mutation whose argument merely shares a field's name should say `writes: []` (a document's act is read, not guessed); the edit refuses an argument it does not take. A number's bounds (`.int().min(1).max(5)`; a document's `min`, `max`, `step`) bound every form, tool and apply. `fixed: { text: "the client's words, as sent" }` on the kind says a field never changes, and why; the sentence is the documentation. The checker warns `field-without-writer` when a field is still out of everyone's reach, and refuses `writes-unknown-field`, `fixed-unknown-field` and a `fixed-but-written` contradiction.
+1. **Let the fields be changed, or say why not.** A field you could set at creation, you can change: every settable field no mutation writes is covered by a derived act per kind (`edit-<kind>`, "Change the drill"), editable where it is shown and logged like any other. Two declarations shape it. `writes: ["done"]` on a mutation says which fields it sets when its arguments do not (`finish()` writing `done`) — and a mutation whose argument merely shares a field's name should say `writes: []` (a document's act is read, not guessed); the edit refuses an argument it does not take. A number's bounds (`.int().min(1).max(5)`; a document's `min`, `max`, `step`) bound every form, tool and apply. `fixed: { text: "the client's words, as sent" }` on the kind says a field never changes, and why; the sentence is the documentation. The checker warns `field-without-writer` when a field is still out of everyone's reach, and refuses `writes-unknown-field`, `fixed-unknown-field` and a `fixed-but-written` contradiction.
 
 ### Worked examples
 
-`apps/todo/src/domain/schema.ts` (a `rule` kind whose `spec` makes rules data; `fieldRoles` for the timeline); `apps/seedbed/src/domain/schema.ts` (a `lifecycle`: the past is a horizon, not a delete).
+- `apps/todo/src/domain/schema.ts` — four kinds, including a `rule` kind whose `spec` makes the rules a domain enforces into data, and `fieldRoles` binding the timeline lens to a task's own field names
+- `apps/seedbed/src/domain/schema.ts` — a kind with a declared `lifecycle`, so the past is a horizon rather than a delete
 
 ### The declarations that keep paying
 
-- **`creates`** on the mutation that adds this kind (`creates: ["fixture"]`): the empty kind card then offers "Add a fixture" by derivation — the blank graph onboards itself, FROM THE ROOT OF THE CHAIN. An act that also takes a `nodeRef` has no candidates on an empty graph, so it is withheld and the district says what it is waiting for instead: *"Place a feature" cannot begin until there is a zone.*
+- **`creates`** on the mutation that adds this kind (`creates: ["fixture"]`): the empty kind card then offers "Add a fixture" by derivation — the blank graph onboards itself, FROM THE ROOT OF THE CHAIN. An act that also takes a `nodeRef` has no candidates on an empty graph, so it is withheld (a picker with nothing in it is worse than no button) and the district says what it is waiting for instead: *"Place a feature" cannot begin until there is a zone.*
 - **`fromTheOtherEnd`** on the act that makes or breaks the edge. An act declaring `connects` or `severs` is offered from BOTH ends of the tie, and `title` is written from the subject's side: "Name a caretaker", offered on the gardener, reads as naming hers. Say how it reads standing there (`fromTheOtherEnd: "Take on a plot"`) — `graview check` warns `act-without-far-end-reading` and names the end it has no words for.
 - **`display.page`** when a record should not read in declared order: `page: { fields: ["subject", "draft"], groups: [{ title: "Schedule", fields: ["due"] }] }` puts those first, the rest under "Details" (a document's `kinds.<kind>.page`; `{ op: "set-page-fields" }`). A string allowed past 500 characters (`.max(5000)`, a `text`) is prose: full width, paragraphs and lists kept, edited in a text area.
 - **`lifecycle`** when members expire — `{ field: "status", retired: ["played"] }` or `{ field: "until", retired: "date" }`. Every count then aggregates over the horizon ("4, +12 past") instead of drowning, and `graview check` refuses a lifecycle reading a missing field.
@@ -3026,7 +2953,6 @@ Every template, view spec, rule, sum and sort reads `net` like a field (`{ field
 
 ```sh
 pnpm build && npx graview check ./dist/domain/app.js
-npx graview check --document app.json   # a document
 ```
 
 Report **the actual output**, including warnings. What it catches here:
@@ -3041,8 +2967,11 @@ Report **the actual output**, including warnings. What it catches here:
 
 ### What the check cannot see
 
+Say so rather than implying otherwise:
+
 - Whether the kind is a *kind* at all, or should have been a field on an existing one. The test: does anything point AT it, and does it have a life of its own? A color is a field. A fixture is a kind.
-- Whether the default views read well, and the plural in a sentence ("3 Fixtures", never "3 Person"). Run the app and look.
+- Whether the default views read well. Run the app and look.
+- Whether the plural reads naturally in a sentence — "3 Fixtures" is fine, "3 Person" is not.
 
 ---
 
@@ -3056,7 +2985,7 @@ Source: https://graview.dev/docs/skills/graview-pages.html
 
 # graview-pages
 
-`graview-pages` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
+`graview-pages` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3192,7 +3121,7 @@ Source: https://graview.dev/docs/skills/graview-permissions.html
 
 # graview-permissions
 
-`graview-permissions` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
+`graview-permissions` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3216,7 +3145,7 @@ Two things must not be got wrong, and they are the reason to follow this rather 
 
 1. **Hand it to both `defineApp` and the `Store`.** `defineApp` is what `graview check` reads; the `Store` is what enforces.
 
-The derived acts ride your grants rather than needing their own line: `edit-<kind>` is permitted to whoever may change or make the kind, and `remove-<kind>`, `archive-<kind>`, `unarchive-<kind>` and `merge-<kind>` to whoever may make it — but only over the records that seat made. To take out anybody's, name the act in the grant or say `*`. A grant to every role (`roles: "*"`) is a door, not a key: riding only it, even the edit reaches just the seat's own records, so "anybody may join" lets each person change or remove their own record, never everybody's. A refusal names who could, so a seat told no learns what it lacks rather than concluding the capability is missing.
+The derived acts ride your grants rather than needing their own line: `edit-<kind>` is permitted to whoever may change or make the kind, `remove-<kind>`, `archive-<kind>`, `unarchive-<kind>` and `merge-<kind>` to whoever may make it — or to any grant that names the act or says `*`. A grant to every role (`roles: "*"`) is a door, not a key: riding only it, a derived act reaches the records that seat made, so "anybody may join" lets each person change or remove their own record, never everybody's. A refusal names who could, so a seat told no learns what it lacks rather than concluding the capability is missing.
 
 1. **Give the provider a principal.** `<GraviewProvider principal={{ kind: "human", id: me.id, roles: me.roles }}>`. The interface reads it to decide what to OFFER; the store decides what to allow; the log attributes to it. Three readings of one object, which is why they cannot drift.
 
@@ -3288,7 +3217,7 @@ Source: https://graview.dev/docs/skills/graview-port-app.html
 
 # graview-port-app
 
-`graview-port-app` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
+`graview-port-app` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Port an existing application onto Graview — deciding what is a node, what is a field and what is an edge — and proving the port with a parity test rather than an assertion.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3370,7 +3299,7 @@ Source: https://graview.dev/docs/skills/graview-seed.html
 
 # graview-seed
 
-`graview-seed` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
+`graview-seed` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Get a Graview app from a blank graph to a useful one — the order the declaration already states, a plan a model proposes, and one turn that can be taken back.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3422,8 +3351,6 @@ pnpm build:domain && npx graview check ./dist/domain/app.js
 npx graview describe ./dist/domain/app.js
 ```
 
-A document (`app.json`, a graview-document) needs no build: `npx graview describe --document app.json` reads the same chain out, and `npx graview preview app.json --seed seed.json` serves the scene and Pages over a snapshot (`{ "nodes": [{ "id", "kind", …fields }], "edges": [{ "kind", "from", "to" }] }`) so you can walk in as a person would.
-
 Then open it with an empty store (`?fresh=1` with a ship browser adapter) and go through your own front door. A test holds it: derive the affordances of each root kind on an empty graph and assert the way in is offered, and that a kind deeper in the chain offers nothing and says what it waits for.
 
 ### What the check cannot see
@@ -3444,7 +3371,7 @@ Source: https://graview.dev/docs/skills/graview-ship.html
 
 # graview-ship
 
-`graview-ship` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
+`graview-ship` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Deploy a Graview app — persistence, op-log-native migrations, export and health — with one declaration and one adapter, self-hosted or behind a service.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3534,7 +3461,7 @@ Source: https://graview.dev/docs/skills/graview-sight.html
 
 # graview-sight
 
-`graview-sight` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
+`graview-sight` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Say who sees which records of a Graview app, and which of their fields — so a seat is served only what it may see, on every surface at once — verified by graview check and by comparing what a seat is told with a hidden value and without one.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3610,7 +3537,7 @@ Source: https://graview.dev/docs/skills/graview-studio.html
 
 # graview-studio
 
-`graview-studio` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
+`graview-studio` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Open an app's declaration as a graph in Graview's own interface, change it with ordinary acts, let graview check judge the result before it is applied, migrate a stored graph, and write the declaration back as the files graview create writes.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3669,7 +3596,7 @@ Source: https://graview.dev/docs/skills/graview-view-drawing.html
 
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3732,7 +3659,7 @@ Source: https://graview.dev/docs/skills/graview-worker-view.html
 
 # graview-worker-view
 
-`graview-worker-view` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
+`graview-worker-view` is one of Graview's 18 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -3846,913 +3773,6 @@ A view with `attach: "home"` given to `registerWorkerView` is the home's own vie
 Write a Graview worker view — one plain script, no imports and no build, that draws HTML, SVG and CSS for a kind or the home through the graview global — with a manifest the host enforces, and prove it runs rather than assuming it does.
 
 The page: https://graview.dev/docs/skills/graview-worker-view.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
-
----
-
-Source: https://graview.dev/docs/recipes.html
-
-# Recipes
-
-A recipe is one prompt to hand your agent, with a different task each, and the app an agent made of it. Each was made from the prompt alone in Larkspur, a made-up repository, and each runs on its page.
-
-```sh
-Read https://graview.dev/start.md, then turn this repo's docs into a Graview app.
-```
-
-## The recipes
-
-- [Your docs, as an app](https://graview.dev/docs/recipes/docs.html): The repository's docs, the modules they cover and who owns each, with every module that has no doc or no owner flagged and the repair offered.
-- [Your decisions, as an app](https://graview.dev/docs/recipes/decisions.html): The architecture decision records: what each decided, what it superseded and which modules it affects, with the loose ends flagged.
-- [Your dependencies, as an upgrade plan](https://graview.dev/docs/recipes/dependencies.html): Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.
-
----
-
-Graview recipes: one prompt to hand an agent, with a different task each, and the app it made, checked on every push and live on its page.
-
-The page: https://graview.dev/docs/recipes.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
-
----
-
-Source: https://graview.dev/docs/recipes/decisions.html
-
-# Your decisions, as an app
-
-This recipe is what an agent made of one prompt, in a repository it had never seen. The architecture decision records: what each decided, what it superseded and which modules it affects, with the loose ends flagged.
-
-```sh
-Read https://graview.dev/start.md, then turn this repo's decisions into a Graview app.
-```
-
-Paste it into Claude Code, Codex or Cursor at the root of your repository. [start.md](https://graview.dev/start.md) is the page the agent reads.
-
-## The app, running
-
-This is the declaration below, compiled in your browser by the same compiler `graview check` uses, over the seed below. Press a district; open the problems; take a repair.
-
-*The app the decisions prompt made, live: a live demo, on the HTML page.*
-
-## What the agent declared
-
-**Larkspur decisions**: Larkspur's architecture decision records (docs/adr): each decision, its status and date, what superseded it, and the modules it affects. 2 kinds, 8 acts and 6 rules, each rule with the act that repairs it.
-
-| Kind | Fields | Relations | Records in the seed |
-| --- | --- | --- | --- |
-| `decision` | `number`, `title`, `status`, `date`, `file`, `wholeRepository` | `supersededBy` to `decision`; `affects` to `module` | 14 |
-| `module` | `path`, `packageName`, `description` | none | 16 |
-
-### The rules
-
-- **A superseded decision names what superseded it.** Over each decision, when `status == 'superseded'`: requires `present(supersededBy)`. Repaired by “Name what superseded it” (`mark-superseded`).
-- **A decision something supersedes says so.** Over each decision, when `present(supersededBy)`: requires `status == 'superseded'`. Repaired by “Mark it superseded” (`mark-superseded`) or “It is not superseded” (`unmark-superseded`).
-- **What supersedes a decision is accepted.** Over each decision, when `present(supersededBy)`: requires `supersededBy.status == 'accepted'`. Repaired by “It is not superseded” (`unmark-superseded`).
-- **A decision is superseded only by a later one.** Over each decision, when `present(supersededBy)`: requires `supersededBy.date >= date`. Repaired by “It is not superseded” (`unmark-superseded`).
-- **A proposal is decided within 90 days.** Over each decision, when `status == 'proposed'`: requires `days(date, today()) <= 90`. Repaired by “Accept it” (`accept-decision`) or “Reject it” (`reject-decision`).
-- **An accepted decision affects something.** Over each decision, when `status == 'accepted'`: requires `wholeRepository == true or exists(out('affects'))`. Repaired by “Name a module it affects” (`affect-module`).
-
-## What graview check says
-
-Run on every push, against the committed file:
-
-```sh
-npx graview check --document app.json
-· rules.proposal-not-left-open: Rule "proposal-not-left-open" reads the clock (today(), now(), a computed field that does, or a kind whose records retire on a date), so the day turning breaks or mends it with nothing changed. A store judges it again only when its host ticks it. — Host it with @graview/ship (openStore, serve and openRemote tick at each midnight, UTC), or call store.tick(now) when the day turns — once a day from a host's own alarm — and its subscribers hear what appeared and cleared.
-```
-
-A line starting with a dot is a note, not a warning: advice the checker leaves for a person to weigh.
-
-## How it was made
-
-An agent was given the prompt above and nothing else, at the root of Larkspur: a booking service for small clinics that does not exist, written as a TypeScript monorepo the size of a real one, with sixteen modules, guides and runbooks with gaps, a CODEOWNERS that misses some, fourteen decision records and pinned dependencies. It followed [start.md](https://graview.dev/start.md), scaffolded, declared, ran `graview check` until it was clean, opened `graview preview` and reported back. The two files it wrote are committed as they came out of that run.
-
-CI does not run an agent. On every push it checks the committed declaration with `graview check --document`, loads the seed into a store, and opens this page in a browser to see the app mount. To run the prompt again yourself:
-
-```sh
-node scripts/fixtures/recipes/larkspur.mjs larkspur
-cd larkspur && git init -q && git add -A && git commit -qm larkspur
-# then paste the prompt into your agent
-```
-
-The files: [`app.json`](https://graview.dev/recipes/decisions/app.json) and [`seed.json`](https://graview.dev/recipes/decisions/seed.json) (30 records and 28 relations).
-
-## The declaration, in full
-
-```json
-{
-  "format": "graview-document",
-  "formatVersion": 1,
-  "name": "Larkspur decisions",
-  "description": "Larkspur's architecture decision records (docs/adr): each decision, its status and date, what superseded it, and the modules it affects.",
-  "kinds": {
-    "decision": {
-      "noun": "decision",
-      "plural": "decisions",
-      "label": "ADR {number}: {title}",
-      "description": "One numbered record in docs/adr. Never edited after it is accepted; a changed mind is a new record that supersedes the old one.",
-      "fields": {
-        "number": { "type": "integer", "required": true, "min": 1, "description": "The record's number, from its file name and heading." },
-        "title": { "type": "string", "required": true, "description": "The record's heading, without its number." },
-        "status": { "type": "enum", "options": ["proposed", "accepted", "rejected", "superseded"], "required": true, "description": "The record's Status line." },
-        "date": { "type": "date", "required": true, "description": "The record's Date line." },
-        "file": { "type": "string", "required": true, "description": "Where the record lives in the repository." },
-        "wholeRepository": { "type": "boolean", "label": "Affects the whole repository", "description": "The record's Affects line says the whole repository rather than naming modules." }
-      },
-      "edges": {
-        "supersededBy": { "to": ["decision"], "cardinality": "one", "description": "the decision that superseded it", "inverse": "the decisions it supersedes" },
-        "affects": { "to": ["module"], "cardinality": "many", "description": "the modules it affects", "inverse": "the decisions that affect it" }
-      },
-      "fieldRoles": { "when": "date" },
-      "glance": ["status", "date", "wholeRepository"]
-    },
-    "module": {
-      "noun": "module",
-      "plural": "modules",
-      "label": "{path}",
-      "description": "A workspace package that pnpm-workspace.yaml takes in: a directory under services/, packages/ or tools/ with its own package.json.",
-      "fields": {
-        "path": { "type": "string", "required": true, "description": "The directory, from the repository root." },
-        "packageName": { "type": "string", "required": true, "label": "Package", "description": "The name in its package.json." },
-        "description": { "type": "string", "description": "The description in its package.json." }
-      }
-    }
-  },
-  "acts": {
-    "add-decision": { "creates": "decision", "title": "Record a decision", "description": "Add a decision record from docs/adr." },
-    "add-module": { "creates": "module", "title": "Add a module", "description": "Record a workspace package." },
-    "affect-module": { "on": "decision", "connects": "affects", "title": "Say it affects a module", "description": "Name a module this decision affects.", "fromTheOtherEnd": "Name a decision that affects it" },
-    "unaffect-module": { "on": "decision", "severs": "affects", "title": "Say it no longer affects a module", "description": "Take a module off this decision's Affects line.", "fromTheOtherEnd": "Take a decision off it" },
-    "mark-superseded": { "on": "decision", "connects": "supersededBy", "sets": { "status": "superseded" }, "title": "Name what superseded it", "description": "Name the decision that superseded this one, and mark it superseded.", "fromTheOtherEnd": "Name a decision it supersedes" },
-    "unmark-superseded": { "on": "decision", "severs": "supersededBy", "sets": { "status": "accepted" }, "title": "It is not superseded", "description": "Take back what superseded this decision, and mark it accepted again.", "fromTheOtherEnd": "Take back a decision it supersedes" },
-    "accept-decision": { "on": "decision", "sets": { "status": "accepted" }, "title": "Accept it", "description": "Mark the decision accepted." },
-    "reject-decision": { "on": "decision", "sets": { "status": "rejected" }, "title": "Reject it", "description": "Mark the decision rejected: it was considered and not taken." }
-  },
-  "rules": {
-    "superseded-names-successor": {
-      "title": "A superseded decision names what superseded it",
-      "over": "decision",
-      "when": "status == 'superseded'",
-      "require": "present(supersededBy)",
-      "says": "ADR {number} is superseded but does not say by what",
-      "repairs": [{ "act": "mark-superseded", "label": "Name what superseded it" }]
-    },
-    "successor-is-marked-superseded": {
-      "title": "A decision something supersedes says so",
-      "over": "decision",
-      "when": "present(supersededBy)",
-      "require": "status == 'superseded'",
-      "says": "ADR {number} has a successor but its status is {status}",
-      "repairs": [{ "act": "mark-superseded", "label": "Mark it superseded" }, { "act": "unmark-superseded", "label": "It is not superseded" }]
-    },
-    "successor-is-accepted": {
-      "title": "What supersedes a decision is accepted",
-      "over": "decision",
-      "when": "present(supersededBy)",
-      "require": "supersededBy.status == 'accepted'",
-      "says": "ADR {number} is superseded by a decision that is not accepted",
-      "repairs": [{ "act": "unmark-superseded", "label": "It is not superseded" }]
-    },
-    "successor-is-newer": {
-      "title": "A decision is superseded only by a later one",
-      "over": "decision",
-      "when": "present(supersededBy)",
-      "require": "supersededBy.date >= date",
-      "says": "ADR {number} is superseded by a decision dated before it",
-      "repairs": [{ "act": "unmark-superseded", "label": "It is not superseded" }]
-    },
-    "proposal-not-left-open": {
-      "title": "A proposal is decided within 90 days",
-      "over": "decision",
-      "when": "status == 'proposed'",
-      "require": "days(date, today()) <= 90",
-      "says": "ADR {number} has been proposed since {date} and is still open",
-      "repairs": [{ "act": "accept-decision", "label": "Accept it" }, { "act": "reject-decision", "label": "Reject it" }]
-    },
-    "accepted-affects-something": {
-      "title": "An accepted decision affects something",
-      "over": "decision",
-      "when": "status == 'accepted'",
-      "require": "wholeRepository == true or exists(out('affects'))",
-      "says": "ADR {number} is accepted but names no module it affects",
-      "repairs": [{ "act": "affect-module", "label": "Name a module it affects" }]
-    }
-  }
-}
-```
-
----
-
-A Graview recipe: The architecture decision records: what each decided, what it superseded and which modules it affects, with the loose ends flagged.
-
-The page: https://graview.dev/docs/recipes/decisions.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
-
----
-
-Source: https://graview.dev/docs/recipes/dependencies.html
-
-# Your dependencies, as an upgrade plan
-
-This recipe is what an agent made of one prompt, in a repository it had never seen. Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.
-
-```sh
-Read https://graview.dev/start.md, then turn this repo's dependencies into a Graview app.
-```
-
-Paste it into Claude Code, Codex or Cursor at the root of your repository. [start.md](https://graview.dev/start.md) is the page the agent reads.
-
-## The app, running
-
-This is the declaration below, compiled in your browser by the same compiler `graview check` uses, over the seed below. Press a district; open the problems; take a repair.
-
-*The app the dependencies prompt made, live: a live demo, on the HTML page.*
-
-## What the agent declared
-
-**Dependencies**: Larkspur's third-party packages: the version each package.json pins, the latest on npm, which modules use each, and the upgrade each needs. 5 kinds, 24 acts and 3 rules, each rule with the act that repairs it.
-
-| Kind | Fields | Relations | Records in the seed |
-| --- | --- | --- | --- |
-| `module` | `path`, `name`, `summary` | `ownedBy` to `person` | 17 |
-| `person` | `handle` | none | 7 |
-| `package` | `name`, `pinned`, `latest`, `upgrade`, `plan` | `assignedTo` to `person` | 35 |
-| `dependency` | `name`, `version`, `section`, `manifest` | `declaredIn` to `module`; `pins` to `package` | 49 |
-| `decision` | `number`, `title`, `status`, `date`, `file` | `affects` to `module`; `supersedes` to `decision`; `drops` to `package` | 14 |
-
-### The rules
-
-- **One version per package.** Over each dependency: requires `version == pins.pinned`. Repaired by “Pin it like the others” (`align-pin`).
-- **A major upgrade has someone on it.** Over each package, when `upgrade == 'major' && plan != 'drop'`: requires `present(assignedTo)`. Repaired by “Assign its upgrade” (`assign-upgrade`).
-- **What an accepted decision drops is planned to go.** Over each package, when `some(in('drops'), status == 'accepted')`: requires `plan == 'drop'`. Repaired by “Plan to drop it” (`plan-drop`).
-
-## What graview check says
-
-Run on every push, against the committed file:
-
-```sh
-npx graview check --document app.json
-✓ the document compiles and checks clean
-```
-
-## How it was made
-
-An agent was given the prompt above and nothing else, at the root of Larkspur: a booking service for small clinics that does not exist, written as a TypeScript monorepo the size of a real one, with sixteen modules, guides and runbooks with gaps, a CODEOWNERS that misses some, fourteen decision records and pinned dependencies. It followed [start.md](https://graview.dev/start.md), scaffolded, declared, ran `graview check` until it was clean, opened `graview preview` and reported back. The two files it wrote are committed as they came out of that run.
-
-CI does not run an agent. On every push it checks the committed declaration with `graview check --document`, loads the seed into a store, and opens this page in a browser to see the app mount. To run the prompt again yourself:
-
-```sh
-node scripts/fixtures/recipes/larkspur.mjs larkspur
-cd larkspur && git init -q && git add -A && git commit -qm larkspur
-# then paste the prompt into your agent
-```
-
-The files: [`app.json`](https://graview.dev/recipes/dependencies/app.json) and [`seed.json`](https://graview.dev/recipes/dependencies/seed.json) (122 records and 142 relations).
-
-## The declaration, in full
-
-```json
-{
-  "format": "graview-document",
-  "formatVersion": 1,
-  "name": "Dependencies",
-  "description": "Larkspur's third-party packages: the version each package.json pins, the latest on npm, which modules use each, and the upgrade each needs.",
-  "kinds": {
-    "module": {
-      "noun": "module",
-      "plural": "modules",
-      "label": "{path}",
-      "description": "A directory with its own package.json: the repository root, a service, a package or a tool.",
-      "fields": {
-        "path": {
-          "type": "string",
-          "required": true,
-          "description": "The directory, from the repository root."
-        },
-        "name": {
-          "type": "string",
-          "required": true,
-          "description": "The name its package.json gives it."
-        },
-        "summary": {
-          "type": "string",
-          "description": "The description its package.json gives it."
-        }
-      },
-      "edges": {
-        "ownedBy": {
-          "to": [
-            "person"
-          ],
-          "cardinality": "many",
-          "description": "who CODEOWNERS says reviews it",
-          "inverse": "the modules they review"
-        }
-      }
-    },
-    "person": {
-      "noun": "person",
-      "plural": "people",
-      "label": "{handle}",
-      "description": "Someone .github/CODEOWNERS names.",
-      "fields": {
-        "handle": {
-          "type": "string",
-          "required": true,
-          "description": "Their GitHub handle."
-        }
-      }
-    },
-    "package": {
-      "noun": "package",
-      "plural": "packages",
-      "label": "{name}",
-      "description": "A third-party npm package some package.json depends on.",
-      "fields": {
-        "name": {
-          "type": "string",
-          "required": true,
-          "description": "Its name on npm."
-        },
-        "pinned": {
-          "type": "string",
-          "required": true,
-          "description": "The version the repository pins (the highest, where modules differ)."
-        },
-        "latest": {
-          "type": "string",
-          "required": true,
-          "description": "The latest version on npm (npm view <name> version)."
-        },
-        "upgrade": {
-          "type": "enum",
-          "options": [
-            "major",
-            "minor",
-            "patch",
-            "none"
-          ],
-          "required": true,
-          "description": "How far pinned is from latest. Major means a breaking change: the first non-zero number of the version moves."
-        },
-        "plan": {
-          "type": "enum",
-          "options": [
-            "upgrade",
-            "hold",
-            "drop"
-          ],
-          "description": "What the team means to do with it."
-        }
-      },
-      "edges": {
-        "assignedTo": {
-          "to": [
-            "person"
-          ],
-          "cardinality": "one",
-          "description": "who is doing its upgrade",
-          "inverse": "the upgrades they are doing"
-        }
-      }
-    },
-    "dependency": {
-      "noun": "dependency",
-      "plural": "dependencies",
-      "label": "{name}@{version} in {manifest}",
-      "description": "One line of one package.json: a module depending on a package at a version.",
-      "fields": {
-        "name": {
-          "type": "string",
-          "required": true,
-          "description": "The package name as the line writes it."
-        },
-        "version": {
-          "type": "string",
-          "required": true,
-          "description": "The version the line pins."
-        },
-        "section": {
-          "type": "enum",
-          "options": [
-            "dependencies",
-            "devDependencies"
-          ],
-          "required": true,
-          "description": "Which list of the package.json it is in."
-        },
-        "manifest": {
-          "type": "string",
-          "required": true,
-          "description": "The package.json it is in."
-        }
-      },
-      "edges": {
-        "declaredIn": {
-          "to": [
-            "module"
-          ],
-          "cardinality": "one",
-          "description": "the module whose package.json has this line",
-          "inverse": "its third-party dependencies"
-        },
-        "pins": {
-          "to": [
-            "package"
-          ],
-          "cardinality": "one",
-          "description": "the package it pins",
-          "inverse": "the modules' lines that pin it"
-        }
-      }
-    },
-    "decision": {
-      "noun": "decision",
-      "plural": "decisions",
-      "label": "ADR {number}: {title}",
-      "description": "An architecture decision record in docs/adr.",
-      "fields": {
-        "number": {
-          "type": "integer",
-          "required": true,
-          "min": 1,
-          "description": "Its number."
-        },
-        "title": {
-          "type": "string",
-          "required": true,
-          "description": "Its heading."
-        },
-        "status": {
-          "type": "enum",
-          "options": [
-            "proposed",
-            "accepted",
-            "superseded"
-          ],
-          "required": true,
-          "description": "Its Status line."
-        },
-        "date": {
-          "type": "date",
-          "description": "Its Date line."
-        },
-        "file": {
-          "type": "string",
-          "required": true,
-          "description": "Its file, from the repository root."
-        }
-      },
-      "edges": {
-        "affects": {
-          "to": [
-            "module"
-          ],
-          "cardinality": "many",
-          "description": "the modules its Affects line names",
-          "inverse": "the decisions that affect it"
-        },
-        "supersedes": {
-          "to": [
-            "decision"
-          ],
-          "cardinality": "many",
-          "description": "the decisions it replaces",
-          "inverse": "the decision that replaced it"
-        },
-        "drops": {
-          "to": [
-            "package"
-          ],
-          "cardinality": "many",
-          "description": "the packages it makes unnecessary",
-          "inverse": "the decisions that drop it"
-        }
-      }
-    }
-  },
-  "acts": {
-    "add-module": {
-      "creates": "module",
-      "title": "Add a module",
-      "description": "Record a directory with its own package.json."
-    },
-    "add-person": {
-      "creates": "person",
-      "title": "Add a person",
-      "description": "Record someone who reviews or upgrades code."
-    },
-    "add-package": {
-      "creates": "package",
-      "title": "Add a package",
-      "description": "Record a third-party package the repository depends on."
-    },
-    "add-dependency": {
-      "creates": "dependency",
-      "title": "Add a dependency",
-      "description": "Record one line of one package.json."
-    },
-    "add-decision": {
-      "creates": "decision",
-      "title": "Add a decision",
-      "description": "Record an architecture decision record."
-    },
-    "give-owner": {
-      "on": "module",
-      "connects": "ownedBy",
-      "title": "Give it an owner",
-      "description": "Say who reviews this module.",
-      "fromTheOtherEnd": "Give them a module"
-    },
-    "take-owner": {
-      "on": "module",
-      "severs": "ownedBy",
-      "title": "Take an owner off",
-      "description": "Say this person no longer reviews this module.",
-      "fromTheOtherEnd": "Take a module off them"
-    },
-    "assign-upgrade": {
-      "on": "package",
-      "connects": "assignedTo",
-      "title": "Assign its upgrade",
-      "description": "Say who is doing this package's upgrade.",
-      "fromTheOtherEnd": "Give them an upgrade"
-    },
-    "unassign-upgrade": {
-      "on": "package",
-      "severs": "assignedTo",
-      "title": "Unassign its upgrade",
-      "description": "Say nobody is doing this package's upgrade now.",
-      "fromTheOtherEnd": "Take an upgrade off them"
-    },
-    "plan-drop": {
-      "on": "package",
-      "sets": {
-        "plan": "drop"
-      },
-      "title": "Plan to drop it",
-      "description": "Say the team means to remove this package."
-    },
-    "plan-upgrade": {
-      "on": "package",
-      "sets": {
-        "plan": "upgrade"
-      },
-      "title": "Plan to upgrade it",
-      "description": "Say the team means to move this package to its latest version."
-    },
-    "plan-hold": {
-      "on": "package",
-      "sets": {
-        "plan": "hold"
-      },
-      "title": "Hold it where it is",
-      "description": "Say the team means to keep this package at its pinned version."
-    },
-    "place-in": {
-      "on": "dependency",
-      "connects": "declaredIn",
-      "title": "Say which module has it",
-      "description": "Say whose package.json this line is in.",
-      "fromTheOtherEnd": "Add a dependency line"
-    },
-    "take-out-of": {
-      "on": "dependency",
-      "severs": "declaredIn",
-      "title": "Take it out of its module",
-      "description": "Say this line is in no module's package.json now.",
-      "fromTheOtherEnd": "Take a dependency line out"
-    },
-    "pin-package": {
-      "on": "dependency",
-      "connects": "pins",
-      "title": "Say which package it pins",
-      "description": "Say which package this line pins.",
-      "fromTheOtherEnd": "Add a line that pins it"
-    },
-    "unpin-package": {
-      "on": "dependency",
-      "severs": "pins",
-      "title": "Unlink its package",
-      "description": "Say this line pins no recorded package.",
-      "fromTheOtherEnd": "Unlink a line that pins it"
-    },
-    "align-pin": {
-      "on": "dependency",
-      "sets": {
-        "version": {
-          "expr": "pins.pinned"
-        }
-      },
-      "title": "Pin it like the others",
-      "description": "Set this line to the version the rest of the repository pins."
-    },
-    "affect-module": {
-      "on": "decision",
-      "connects": "affects",
-      "title": "Say it affects a module",
-      "description": "Add a module to this decision's Affects line.",
-      "fromTheOtherEnd": "Name a decision that affects it"
-    },
-    "unaffect-module": {
-      "on": "decision",
-      "severs": "affects",
-      "title": "Say it no longer affects a module",
-      "description": "Take a module off this decision's Affects line.",
-      "fromTheOtherEnd": "Take a decision off it"
-    },
-    "supersede": {
-      "on": "decision",
-      "connects": "supersedes",
-      "title": "Say what it supersedes",
-      "description": "Say which decision this one replaces.",
-      "fromTheOtherEnd": "Say what replaced it"
-    },
-    "unsupersede": {
-      "on": "decision",
-      "severs": "supersedes",
-      "title": "Take back what it supersedes",
-      "description": "Say this decision no longer replaces that one.",
-      "fromTheOtherEnd": "Take back what replaced it"
-    },
-    "drop-package": {
-      "on": "decision",
-      "connects": "drops",
-      "title": "Say it drops a package",
-      "description": "Say this decision makes a package unnecessary.",
-      "fromTheOtherEnd": "Name a decision that drops it"
-    },
-    "keep-package": {
-      "on": "decision",
-      "severs": "drops",
-      "title": "Say it keeps a package",
-      "description": "Say this decision does not make that package unnecessary.",
-      "fromTheOtherEnd": "Take a decision that drops it off"
-    },
-    "accept-decision": {
-      "on": "decision",
-      "sets": {
-        "status": "accepted"
-      },
-      "title": "Accept it",
-      "description": "Mark this decision accepted."
-    }
-  },
-  "rules": {
-    "one-version-per-package": {
-      "title": "One version per package",
-      "over": "dependency",
-      "require": "version == pins.pinned",
-      "says": "{manifest} pins {name} at {version}; the rest of the repository pins another version",
-      "repairs": [
-        {
-          "act": "align-pin",
-          "label": "Pin it like the others"
-        }
-      ]
-    },
-    "major-upgrade-has-someone": {
-      "title": "A major upgrade has someone on it",
-      "over": "package",
-      "when": "upgrade == 'major' && plan != 'drop'",
-      "require": "present(assignedTo)",
-      "says": "{name} is pinned at {pinned} and {latest} is out: a major upgrade nobody is assigned",
-      "repairs": [
-        {
-          "act": "assign-upgrade",
-          "label": "Assign its upgrade"
-        }
-      ]
-    },
-    "dropped-by-a-decision": {
-      "title": "What an accepted decision drops is planned to go",
-      "over": "package",
-      "when": "some(in('drops'), status == 'accepted')",
-      "require": "plan == 'drop'",
-      "says": "An accepted decision drops {name}, and it is not planned to go",
-      "repairs": [
-        {
-          "act": "plan-drop",
-          "label": "Plan to drop it"
-        }
-      ]
-    }
-  },
-  "brand": {
-    "accents": {
-      "decision": 175
-    }
-  }
-}
-```
-
----
-
-A Graview recipe: Every third-party package, the version pinned against the latest on npm, the modules that use it and the upgrade it needs, with the risky ones flagged.
-
-The page: https://graview.dev/docs/recipes/dependencies.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
-
----
-
-Source: https://graview.dev/docs/recipes/docs.html
-
-# Your docs, as an app
-
-This recipe is what an agent made of one prompt, in a repository it had never seen. The repository's docs, the modules they cover and who owns each, with every module that has no doc or no owner flagged and the repair offered.
-
-```sh
-Read https://graview.dev/start.md, then turn this repo's docs into a Graview app.
-```
-
-Paste it into Claude Code, Codex or Cursor at the root of your repository. [start.md](https://graview.dev/start.md) is the page the agent reads.
-
-## The app, running
-
-This is the declaration below, compiled in your browser by the same compiler `graview check` uses, over the seed below. Press a district; open the problems; take a repair.
-
-*The app the docs prompt made, live: a live demo, on the HTML page.*
-
-## What the agent declared
-
-**Larkspur docs**: Larkspur's docs, the modules they cover, who owns each module, and where the docs and the owners run out. 4 kinds, 18 acts and 5 rules, each rule with the act that repairs it.
-
-| Kind | Fields | Relations | Records in the seed |
-| --- | --- | --- | --- |
-| `module` | `path`, `packageName`, `summary`, `area`, `readme` | `ownedBy` to `person`; `documentedIn` to `doc` | 16 |
-| `doc` | `title`, `path`, `section`, `lastReviewed` | `ownedBy` to `person` | 17 |
-| `decision` | `number`, `title`, `path`, `status`, `decided`, `wholeRepository` | `affects` to `module`; `supersedes` to `decision` | 14 |
-| `person` | `handle` | none | 7 |
-
-### The rules
-
-- **Every module has a doc.** Over each module: requires `exists(out('documentedIn'))`. Repaired by “Point it at a doc” (`document-in`).
-- **Every module has an owner.** Over each module: requires `exists(out('ownedBy'))`. Repaired by “Give it an owner” (`give-module-owner`).
-- **Every module has a README.** Over each module: requires `present(readme)`. Repaired by “Record its README” (`edit-module`).
-- **Every guide, runbook and API doc covers a module.** Over each doc, when `section == 'guide' or section == 'runbook' or section == 'api'`: requires `exists(in('documentedIn'))`. Repaired by “Say which module it covers” (`cover-module`).
-- **A superseded decision names its successor.** Over each decision, when `status == 'superseded'`: requires `exists(in('supersedes'))`. Repaired by “Say which record supersedes it” (`supersede`).
-
-## What graview check says
-
-Run on every push, against the committed file:
-
-```sh
-npx graview check --document app.json
-✓ the document compiles and checks clean
-```
-
-## How it was made
-
-An agent was given the prompt above and nothing else, at the root of Larkspur: a booking service for small clinics that does not exist, written as a TypeScript monorepo the size of a real one, with sixteen modules, guides and runbooks with gaps, a CODEOWNERS that misses some, fourteen decision records and pinned dependencies. It followed [start.md](https://graview.dev/start.md), scaffolded, declared, ran `graview check` until it was clean, opened `graview preview` and reported back. The two files it wrote are committed as they came out of that run.
-
-CI does not run an agent. On every push it checks the committed declaration with `graview check --document`, loads the seed into a store, and opens this page in a browser to see the app mount. To run the prompt again yourself:
-
-```sh
-node scripts/fixtures/recipes/larkspur.mjs larkspur
-cd larkspur && git init -q && git add -A && git commit -qm larkspur
-# then paste the prompt into your agent
-```
-
-The files: [`app.json`](https://graview.dev/recipes/docs/app.json) and [`seed.json`](https://graview.dev/recipes/docs/seed.json) (54 records and 78 relations).
-
-## The declaration, in full
-
-```json
-{
-  "format": "graview-document",
-  "formatVersion": 1,
-  "name": "Larkspur docs",
-  "description": "Larkspur's docs, the modules they cover, who owns each module, and where the docs and the owners run out.",
-  "kinds": {
-    "module": {
-      "noun": "module",
-      "plural": "modules",
-      "label": "{path}",
-      "description": "A workspace directory with its own package.json, under services/, packages/ or tools/.",
-      "fields": {
-        "path": { "type": "string", "required": true, "description": "The directory, from the repository root." },
-        "packageName": { "type": "string", "label": "Package", "description": "The name in its package.json." },
-        "summary": { "type": "string", "description": "The description in its package.json." },
-        "area": { "type": "enum", "options": ["service", "package", "tool"], "required": true, "description": "Which workspace folder it sits in." },
-        "readme": { "type": "string", "label": "README", "description": "Its own README.md, if it has one." }
-      },
-      "edges": {
-        "ownedBy": { "to": ["person"], "cardinality": "many", "description": "who CODEOWNERS says reviews it", "inverse": "the modules they own" },
-        "documentedIn": { "to": ["doc"], "cardinality": "many", "description": "the docs that cover it", "inverse": "the modules it covers" }
-      }
-    },
-    "doc": {
-      "noun": "doc",
-      "plural": "docs",
-      "label": "{title}",
-      "description": "A Markdown file under docs/ (outside the decision records) or the repository's README.",
-      "fields": {
-        "title": { "type": "string", "required": true, "description": "Its first heading." },
-        "path": { "type": "string", "required": true, "description": "The file, from the repository root." },
-        "section": { "type": "enum", "options": ["overview", "guide", "runbook", "api", "index"], "required": true, "description": "Where it sits in docs/." },
-        "lastReviewed": { "type": "date", "label": "Last reviewed", "description": "The date on its Last reviewed line." }
-      },
-      "edges": {
-        "ownedBy": { "to": ["person"], "cardinality": "many", "description": "who CODEOWNERS says reviews it", "inverse": "the docs they own" }
-      },
-      "fieldRoles": { "when": "lastReviewed" }
-    },
-    "decision": {
-      "noun": "decision record",
-      "plural": "decision records",
-      "label": "ADR {number}: {title}",
-      "description": "A numbered decision record under docs/adr/.",
-      "fields": {
-        "number": { "type": "integer", "required": true, "min": 1, "description": "Its number." },
-        "title": { "type": "string", "required": true, "description": "Its heading, without the number." },
-        "path": { "type": "string", "required": true, "description": "The file, from the repository root." },
-        "status": { "type": "enum", "options": ["proposed", "accepted", "superseded"], "required": true, "description": "Its Status line." },
-        "decided": { "type": "date", "label": "Date", "description": "Its Date line." },
-        "wholeRepository": { "type": "boolean", "label": "Affects the whole repository", "description": "Its Affects line names the whole repository rather than modules." }
-      },
-      "edges": {
-        "affects": { "to": ["module"], "cardinality": "many", "description": "the modules its Affects line names", "inverse": "the decisions that affect it" },
-        "supersedes": { "to": ["decision"], "cardinality": "one", "description": "the earlier decision it replaces", "inverse": "the decision that replaced it" }
-      },
-      "fieldRoles": { "when": "decided" },
-      "glance": ["number", "status", "decided"]
-    },
-    "person": {
-      "noun": "person",
-      "plural": "people",
-      "label": "{handle}",
-      "description": "Someone .github/CODEOWNERS names.",
-      "fields": {
-        "handle": { "type": "string", "required": true, "description": "Their handle in CODEOWNERS." }
-      }
-    }
-  },
-  "acts": {
-    "add-module": { "creates": "module", "title": "Add a module", "description": "Record a workspace directory with its own package.json." },
-    "add-doc": { "creates": "doc", "title": "Add a doc", "description": "Record a Markdown file under docs/." },
-    "add-decision": { "creates": "decision", "title": "Add a decision record", "description": "Record a numbered decision under docs/adr/." },
-    "add-person": { "creates": "person", "title": "Add a person", "description": "Record someone CODEOWNERS names." },
-
-    "give-module-owner": { "on": "module", "connects": "ownedBy", "title": "Give the module an owner", "description": "Say who reviews this module.", "fromTheOtherEnd": "Give them a module" },
-    "take-module-owner": { "on": "module", "severs": "ownedBy", "title": "Take an owner off the module", "description": "Say this person no longer reviews this module.", "fromTheOtherEnd": "Take a module off them" },
-    "give-doc-owner": { "on": "doc", "connects": "ownedBy", "title": "Give the doc an owner", "description": "Say who reviews this doc.", "fromTheOtherEnd": "Give them a doc" },
-    "take-doc-owner": { "on": "doc", "severs": "ownedBy", "title": "Take an owner off the doc", "description": "Say this person no longer reviews this doc.", "fromTheOtherEnd": "Take a doc off them" },
-
-    "document-in": { "on": "module", "connects": "documentedIn", "title": "Point it at a doc", "description": "Say which doc covers this module.", "fromTheOtherEnd": "Say it covers a module" },
-    "cover-module": { "on": "doc", "connects": "documentedIn", "title": "Say which module it covers", "description": "Name a module this doc covers.", "fromTheOtherEnd": "Point it at this doc" },
-    "undocument-in": { "on": "module", "severs": "documentedIn", "title": "Take a doc off it", "description": "Say this doc no longer covers this module.", "fromTheOtherEnd": "Say it no longer covers a module" },
-
-    "add-affected": { "on": "decision", "connects": "affects", "title": "Name a module it affects", "description": "Add a module to its Affects line.", "fromTheOtherEnd": "Name a decision that affects it" },
-    "remove-affected": { "on": "decision", "severs": "affects", "title": "Take a module off it", "description": "Take a module off its Affects line.", "fromTheOtherEnd": "Take a decision off it" },
-    "supersede": { "on": "decision", "connects": "supersedes", "title": "Say what it supersedes", "description": "Name the earlier decision this one replaces.", "fromTheOtherEnd": "Say what superseded it" },
-    "unsupersede": { "on": "decision", "severs": "supersedes", "title": "Take back what it supersedes", "description": "Say this decision no longer replaces that one.", "fromTheOtherEnd": "Take back what superseded it" },
-
-    "accept-decision": { "on": "decision", "sets": { "status": "accepted" }, "title": "Accept it", "description": "Mark the decision accepted." },
-    "propose-decision": { "on": "decision", "sets": { "status": "proposed" }, "title": "Put it back to proposed", "description": "Mark the decision proposed again." },
-    "mark-superseded": { "on": "decision", "sets": { "status": "superseded" }, "title": "Mark it superseded", "description": "Mark the decision superseded by a later one." }
-  },
-  "rules": {
-    "module-has-doc": {
-      "title": "Every module has a doc",
-      "over": "module",
-      "require": "exists(out('documentedIn'))",
-      "says": "No doc covers {path}",
-      "repairs": [{ "act": "document-in", "label": "Point it at a doc" }]
-    },
-    "module-has-owner": {
-      "title": "Every module has an owner",
-      "over": "module",
-      "require": "exists(out('ownedBy'))",
-      "says": "{path} has no owner in CODEOWNERS",
-      "repairs": [{ "act": "give-module-owner", "label": "Give it an owner" }]
-    },
-    "module-has-readme": {
-      "title": "Every module has a README",
-      "over": "module",
-      "require": "present(readme)",
-      "says": "{path} has no README.md",
-      "repairs": [{ "act": "edit-module", "label": "Record its README" }]
-    },
-    "doc-covers-a-module": {
-      "title": "Every guide, runbook and API doc covers a module",
-      "over": "doc",
-      "when": "section == 'guide' or section == 'runbook' or section == 'api'",
-      "require": "exists(in('documentedIn'))",
-      "says": "{title} ({path}) names no module it covers",
-      "repairs": [{ "act": "cover-module", "label": "Say which module it covers" }]
-    },
-    "superseded-has-successor": {
-      "title": "A superseded decision names its successor",
-      "over": "decision",
-      "when": "status == 'superseded'",
-      "require": "exists(in('supersedes'))",
-      "says": "{title} is marked superseded but no record supersedes it",
-      "repairs": [{ "act": "supersede", "label": "Say which record supersedes it" }]
-    }
-  }
-}
-```
-
----
-
-A Graview recipe: The repository's docs, the modules they cover and who owns each, with every module that has no doc or no owner flagged and the repair offered.
-
-The page: https://graview.dev/docs/recipes/docs.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
 ---
 

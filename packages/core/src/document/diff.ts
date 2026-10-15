@@ -9,6 +9,8 @@ import { respellDocument } from "./respell.js";
 import type { GraviewDocument } from "./schema.js";
 import { homeOf, VIEW_SLOTS, viewsOf } from "./views.js";
 import { capitalize } from "../capital.js";
+import { kindListWords, sortTypeOfDocumentField } from "../kind-list.js";
+import type { KindList } from "../views/types.js";
 import { FIRST_GRANT, FIRST_SIGHT, grantGone, grantSentence, NO_GRANT_LEFT, NO_SIGHT_LEFT, archivesSentence, tidyingSentence, peopleSentence, sightGone, sightSentence, whoWords } from "./policy-words.js";
 
 /*
@@ -189,7 +191,7 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
   if (!same(before.brand?.locale, after.brand?.locale)) sentences.push(localeSentence(after.brand?.locale));
   sentences.push(...viewSentences(before, after));
   sentences.push(...lensSentences(before.lenses ?? [], after.lenses ?? []));
-  sentences.push(...pagesSentences(before.pages, after.pages));
+  sentences.push(...pagesSentences(before.pages, after.pages, after.kinds));
   for (const k of ["modules", "settings"] as const) if (!same(before[k], after[k])) sentences.push(`The app's ${k} change.`);
 
   const breaking = removedKinds.length + removedFields.length + retypedFields.length + droppedOptions.length + removedEdges.length + newlyRequired.length + narrowedRanges.length > 0;
@@ -298,10 +300,10 @@ function lensSentences(before: readonly LooseLens[], after: readonly LooseLens[]
   return out;
 }
 
-type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string; primary?: readonly string[]; scene?: string; pages?: string; lists?: Readonly<Record<string, { filters?: readonly string[] }>> } | undefined;
+type Arrangement = { order?: readonly string[]; hide?: readonly string[]; first?: string; primary?: readonly string[]; scene?: string; pages?: string; lists?: Readonly<Record<string, KindList>> } | undefined;
 
 /** The arrangement (FR-80), compared part by part. */
-function pagesSentences(before: Arrangement, after: Arrangement): string[] {
+function pagesSentences(before: Arrangement, after: Arrangement, kinds: GraviewDocument["kinds"]): string[] {
   if (same(before, after)) return [];
   const out: string[] = [];
   if (!same(before?.order, after?.order)) out.push(after?.order && after.order.length > 0 ? `The kinds are put in a new order: ${after.order.join(", ")}.` : "The kinds go back to the order they were declared in.");
@@ -319,6 +321,11 @@ function pagesSentences(before: Arrangement, after: Arrangement): string[] {
   for (const kind of new Set([...Object.keys(before?.lists ?? {}), ...Object.keys(after?.lists ?? {})])) {
     const filters = after?.lists?.[kind]?.filters;
     if (!same(before?.lists?.[kind]?.filters, filters)) out.push(filters && filters.length > 0 ? `The ${kind} list filters by ${filters.join(", ")}.` : `The ${kind} list offers the filters it works out again.`);
+    // The order and grouping it opens in, said as the edit says them.
+    const spec = kinds[kind] as { fields?: Record<string, { type?: string }>; computed?: Record<string, unknown> } | undefined;
+    const words = kindListWords(after?.lists?.[kind] ?? {}, (key) => (spec?.computed?.[key] !== undefined ? "number" : sortTypeOfDocumentField(spec?.fields?.[key]?.type)));
+    if (!same(before?.lists?.[kind]?.sort, after?.lists?.[kind]?.sort)) out.push(words.sort ? `The ${kind} list opens ${words.sort}.` : `The ${kind} list opens in its own order again.`);
+    if (!same(before?.lists?.[kind]?.group, after?.lists?.[kind]?.group)) out.push(words.group ? `The ${kind} list opens ${words.group}.` : `The ${kind} list opens ungrouped again.`);
   }
   if (out.length === 0) out.push("The app's pages change.");
   return out;

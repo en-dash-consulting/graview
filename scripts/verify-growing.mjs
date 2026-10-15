@@ -117,6 +117,27 @@ const report = {
   checks: {},
 };
 
+/*
+ * `?lists=2`: the roadmap as Nick prioritizes it. Features work out a rank
+ * (three a request that became one) and their list opens by it, highest
+ * first, ties by name; requests open grouped by status, the open ones in
+ * the order they are worked through, done and declined last and shut.
+ */
+const ORDER = ["planned", "considering", "new"];
+const CLOSED = ["done", "declined"];
+const ORDERED = `(roadmap) => ({
+  ...roadmap,
+  kinds: { ...roadmap.kinds, feature: { ...roadmap.kinds.feature, computed: { rank: { expr: "count(in('became')) * 3", label: "Rank" } } } },
+  pages: { lists: {
+    feature: { sort: { by: "rank", direction: "desc", then: "name" } },
+    request: { group: { by: "status", order: ${JSON.stringify(ORDER)}, closed: ${JSON.stringify(CLOSED)} } },
+  } },
+})`;
+const byStatus = (status) => requests.filter((request) => request.status === status);
+const ranked = [...features]
+  .sort((a, b) => answering(b.id) - answering(a.id) || a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }))
+  .map((feature) => feature.id);
+
 const HOST_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>The roadmap</title>
 <style>body{margin:0;font:16px/1.4 system-ui,sans-serif;background:#f6f6f2;color:#222}</style></head>
 <body><div id="app"></div><script type="module" src="/entry.js"></script></body></html>`;
@@ -134,7 +155,12 @@ async function buildHost() {
         import roadmap from ${JSON.stringify(ROADMAP)};
         const seed = ${JSON.stringify(SEED)};
         const asked = new URLSearchParams(location.search);
-        const document_ = asked.get("lists") === "1" ? { ...roadmap, pages: { lists: { request: { filters: ["status", "became", "became.stage"] } } } } : roadmap;
+        const document_ =
+          asked.get("lists") === "1"
+            ? { ...roadmap, pages: { lists: { request: { filters: ["status", "became", "became.stage"] } } } }
+            : asked.get("lists") === "2"
+              ? (${ORDERED})(roadmap)
+              : roadmap;
         const compiled = compileDocumentWithoutCheck(document_, { today: () => "2026-10-12" });
         if (!compiled.ok) {
           window.__failed = compiled.findings.map((finding) => finding.message).join("; ");
@@ -306,11 +332,31 @@ function wholeSummary(first) {
   return { found: true, paragraphs, clipped: holder.scrollHeight > holder.clientHeight + 1 };
 }
 
+/** A list drawn in groups: each group's heading, whether it is shut, its toggle, and the records in it. Runs in the page. */
+function groupState() {
+  return [...document.querySelectorAll('[data-testid="list-group"]')].map((section) => {
+    const toggle = section.querySelector('[data-testid="list-group-toggle"]');
+    const controlled = toggle ? document.getElementById(toggle.getAttribute("aria-controls") ?? "") : null;
+    const box = toggle?.getBoundingClientRect();
+    return {
+      head: (section.querySelector("h2")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+      shut: section.getAttribute("data-closed") === "shut",
+      toggle: toggle ? { button: toggle.tagName === "BUTTON", expanded: toggle.getAttribute("aria-expanded"), controls: Boolean(controlled), height: Math.round(box.height), focused: document.activeElement === toggle } : null,
+      rows: [...section.querySelectorAll("li a")].filter((a) => a.getBoundingClientRect().height > 0).map((a) => /\/requests\/([^/?#]+)/.exec(a.getAttribute("href") ?? "")?.[1]).filter(Boolean),
+    };
+  });
+}
+
+/** A list's records, in the order drawn. Runs in the page. */
+function drawnOrder(kindPath) {
+  return [...document.querySelectorAll('[data-testid="records"] li a')].map((a) => new RegExp(`/${kindPath}/([^/?#]+)`).exec(a.getAttribute("href") ?? "")?.[1]).filter(Boolean);
+}
+
 /* ── the run ──────────────────────────────────────────────────────────── */
 
 const host = await buildHost();
 const errors = [];
-const seen = { chips: [], pane: [], typed: [], via: [], named: [], badges: [], cards: [], seeAll: [], rows: [], page: [] };
+const seen = { chips: [], pane: [], typed: [], via: [], named: [], badges: [], cards: [], seeAll: [], rows: [], page: [], grouped: [], opened: [], resorted: [], ranked: [] };
 const featureNames = features.map((feature) => feature.name);
 let browser;
 try {
@@ -438,6 +484,38 @@ try {
         await close();
       }
 
+      /* The declaration opens the lists: requests grouped by status with done and declined shut last; features by their rank. */
+      {
+        const { page, close } = await open("/requests", "lists=2");
+        const groups = await page.evaluate(groupState);
+        await shot(page, "requests-grouped", true);
+        seen.grouped.push({ engine, screen: screen.name, groups: groups.map((group) => ({ ...group, rows: group.rows.length })) });
+        // The first shut group, reached and opened from the keyboard.
+        const toggle = page.locator('[data-testid="list-group-toggle"]').first();
+        await toggle.focus();
+        await page.keyboard.press("Enter");
+        await settle();
+        const after = await page.evaluate(groupState);
+        const search = await page.evaluate(() => location.search);
+        await shot(page, "requests-done-opened");
+        seen.opened.push({ engine, screen: screen.name, done: after.find((group) => group.head.includes("done")), declined: after.find((group) => group.head.includes("declined")), search });
+        await close();
+
+        // A person sorts it another way (the address the arranging line writes): the groups stand, the closed ones last.
+        const resorted = await open("/requests", "lists=2&sort=label:desc&group=status");
+        const regrouped = await resorted.page.evaluate(groupState);
+        const names = new Map(requests.map((request) => [request.id, request.name]));
+        const planned = regrouped[0]?.rows.map((id) => names.get(id)) ?? [];
+        seen.resorted.push({ engine, screen: screen.name, heads: regrouped.map((group) => group.head), shut: regrouped.map((group) => group.shut), plannedFirst: planned.slice(0, 3), descending: planned.every((name, at) => at === 0 || planned[at - 1].localeCompare(name, undefined, { numeric: true, sensitivity: "base" }) >= 0) });
+        await resorted.close();
+
+        const featuresList = await open("/features", "lists=2");
+        const order = await featuresList.page.evaluate(drawnOrder, "features");
+        await shot(featuresList.page, "features-ranked");
+        seen.ranked.push({ engine, screen: screen.name, first: order.slice(0, 8), expected: ranked.slice(0, 8), rows: order.length });
+        await featuresList.close();
+      }
+
       /* "Up next": cards at a glance, no box of their own, and the way to the rest. */
       {
         const { page, close } = await open("/places/up-next");
@@ -541,7 +619,30 @@ report.checks.theFeaturesStageAndAreaStandAsChips = {
   seen: seen.rows.map((one) => ({ engine: one.engine, screen: one.screen, chips: one.chips })),
   ok: every(seen.rows, (one) => one.chips.join() === "stage,area"),
 };
-report.checks.noPageScrollsSideways = { seen: seen.page, ok: seen.page.length > 0 && seen.page.every((one) => !one.sideways) };
+const heads = (status, shut) => (shut ? `▸${status} · ${byStatus(status).length} requests` : `${status} ${byStatus(status).length}`);
+report.checks.aDeclaredListOpensItsGroupsInOrderWithDoneAndDeclinedShutLast = {
+  seen: seen.grouped,
+  ok: every(seen.grouped, (one) =>
+    one.groups.map((group) => group.head).join("|") === [...ORDER.map((status) => heads(status, false)), ...CLOSED.map((status) => heads(status, true))].join("|") &&
+    one.groups.slice(0, ORDER.length).every((group, at) => !group.shut && group.rows === byStatus(ORDER[at]).length) &&
+    one.groups.slice(ORDER.length).every((group) => group.shut && group.rows === 0 && group.toggle?.button && group.toggle.expanded === "false" && group.toggle.controls && group.toggle.height >= 24),
+  ),
+};
+report.checks.aShutGroupOpensFromTheKeyboardAndTheAddressKeepsIt = {
+  seen: seen.opened,
+  ok: every(seen.opened, (one) =>
+    one.done?.toggle?.expanded === "true" && one.done.toggle.focused && one.done.rows.length === byStatus("done").length && one.declined?.shut === true && /[?&]open=done(&|$)/.test(one.search),
+  ),
+};
+report.checks.aPersonsOwnOrderKeepsTheDeclaredGroupsAndTheClosedLast = {
+  seen: seen.resorted,
+  ok: every(seen.resorted, (one) => one.heads[0] === heads("planned", false) && one.shut.join() === "false,false,false,true,true" && one.descending),
+};
+report.checks.featuresOpenByTheRankTheyWorkOutThenByName = {
+  seen: seen.ranked,
+  ok: every(seen.ranked, (one) => one.rows === features.length && one.first.join() === one.expected.join()),
+};
+report.checks.noPageScrollsSideways ={ seen: seen.page, ok: seen.page.length > 0 && seen.page.every((one) => !one.sideways) };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 
 const failed = Object.entries(report.checks).filter(([, check]) => !check.ok).map(([name]) => name);

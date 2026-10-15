@@ -5,6 +5,7 @@ import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { capitalize } from "./capital.js";
 import { dateOn } from "./repeat.js";
+import type { ListFields } from "./kind-list.js";
 import { isoToday } from "./days.js";
 
 /**
@@ -27,6 +28,8 @@ export interface Sort {
   /** `label`, a field name, or an edge kind (by the far end's label). */
   readonly by: string;
   readonly direction: SortDirection;
+  /** What orders the records that tie on `by` (a list's declared tiebreak); their order as handed when unsaid. */
+  readonly then?: Sort;
 }
 
 /**
@@ -259,6 +262,40 @@ export function throughEdges(schema: AnySchema, offers: Arrangeable): Arrangeabl
   return { ...offers, filters: [...filters, ...via, ...offers.filters.filter((offer) => offer.about === "is")] };
 }
 
+/**
+ * WHAT A KIND WORKS OUT IS AN ORDER TOO: a kind's list sorted by a rank it
+ * computes ("features by their score"). Its computed fields added to the
+ * offers' sorts, read as numbers unless they say otherwise — a list's
+ * offers, which hands `arrange` the values (`ArrangeContext.read`).
+ */
+export function withWorkedOut(schema: AnySchema, offers: Arrangeable): Arrangeable {
+  const definition = schema.tryDefinition(offers.kind);
+  const computed = Object.entries(definition?.computed ?? {});
+  if (!definition || computed.length === 0) return offers;
+  const worked: ArrangeOffer[] = computed
+    .filter(([name]) => !offers.sorts.some((offer) => offer.key === name))
+    .map(([name, field]) => ({
+      key: name,
+      label: (typeof field === "object" ? field.label : undefined) ?? readingOf(definition, name),
+      about: "field" as const,
+      type: "number" as const,
+    }));
+  return { ...offers, sorts: [...offers.sorts, ...worked] };
+}
+
+/** A declared kind's fields, as a list's declared order and grouping are judged against them (`kindListFindings`). */
+export function listFieldsOf(schema: AnySchema, kind: string): ListFields {
+  const definition = schema.tryDefinition(kind);
+  const shape = (definition?.fields.shape ?? {}) as Record<string, unknown>;
+  const fields: Record<string, ListFields["fields"][string]> = {};
+  for (const [name, field] of Object.entries(shape)) {
+    if (name === "id" || name === "kind") continue;
+    const type = fieldType(field);
+    fields[name] = type === "choice" ? { type, options: describeArgOptions(field) } : type === "boolean" ? { type } : type ? { type: "scalar" } : { type: "other" };
+  }
+  return { fields, computed: Object.keys(definition?.computed ?? {}) };
+}
+
 export function describeArgOptions(schema: unknown): readonly string[] {
   const shape = describeArg(schema);
   return shape.type === "choice" ? shape.options : [];
@@ -305,6 +342,12 @@ export interface ArrangeContext {
   readonly flagged?: ReadonlySet<string>;
   /** For the lifecycle: today, as YYYY-MM-DD. */
   readonly today?: string;
+  /**
+   * A value arranging cannot read off the record itself: a computed field,
+   * worked out over the graph the reader holds. A list that sorts by a
+   * rank its kind works out hands this; unhanded, such a key sorts nothing.
+   */
+  readonly read?: (node: ArrangeNode, key: string) => unknown;
 }
 
 export interface ArrangedGroup<N extends ArrangeNode = ArrangeNode> {

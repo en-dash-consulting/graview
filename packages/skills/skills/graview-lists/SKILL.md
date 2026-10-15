@@ -1,6 +1,6 @@
 ---
 name: graview-lists
-description: Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
+description: Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.
 ---
 
 # Lists that stay usable as an app grows
@@ -29,6 +29,23 @@ already set a record aside.
    offers every way but a relation to a kind with more than forty records
    (offered by that kind's choices instead), and its first two choice
    fields as chips. An address says the same: `/requests?filter=status:open`.
+
+   **Say the order and grouping it opens in**, beside its filters:
+
+   ```json
+   "feature": { "sort": { "by": "rank", "direction": "desc", "then": "name" } },
+   "request": { "group": { "by": "status", "order": ["planned", "new"], "closed": ["done", "declined"] } }
+   ```
+
+   `sort` is a field, a computed field (a rank the kind works out) or
+   `label`, lowest first unless `"desc"`, with a `then` for ties; `group`
+   is a choice or yes-or-no field (`"true"`, `"false"`). `order` puts its
+   groups first; `closed` ones are drawn last and shut, each a button
+   saying "done · 12 requests" that opens it (`?open=done` keeps it open;
+   words in the Find box open them all). A person still sorts or groups
+   the list another way from its arranging line. The edit is
+   `arrange-pages` with `sort: { "<kind>": … | null }` and
+   `group: { "<kind>": … | null }`.
 
 2. **Let a card say a long text's start.** A card shows a `text` field in
    three lines at most and a row in one, cut with an ellipsis. Say it on
@@ -126,7 +143,10 @@ graview check src/domain/app.ts
 
 It warns of a filter the kind cannot be filtered by (`pages-filter-unknown`)
 and names the keys it can, a kind `pages.lists` names that is not there
-(`pages-kind-unknown`), and a card or row that puts a `text` field whole in
+(`pages-kind-unknown`); it refuses a list sorted by what the kind does
+not have, grouped by a field that is not a choice or a yes or no, or
+closing a value that is not one of its choices (`pages-list-arrangement`,
+an error, in a sentence); and it warns of a card or row that puts a `text` field whole in
 a text block (`view-whole-text`: "feature card shows summary whole; it will
 be clamped"). Then look at the list at a phone's width as well as a desk's:
 

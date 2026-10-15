@@ -33,7 +33,7 @@ import * as tidying from "../../src/tidying.js";
  * that drifts back to a barrel is a name every hosted page pays for again.
  */
 const OFF_THE_PAGE = {
-  "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement", "throughEdges"] },
+  "@graview/core/arrange": { from: arrange, names: ["admitArrangement", "arrange", "arrangeable", "arrangeAllows", "asksForThePast", "bucketStart", "conditionHolds", "edgesOf", "formatArrangement", "matches", "NO_ARRANGEMENT", "parseArrangement", "throughEdges", "kindListFindings", "listFieldsOf", "listGroup", "listOpening", "listSort", "orderListGroups", "withWorkedOut"] },
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "makerOf", "makerWords", "restoreBatches", "ticksOf"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.

@@ -716,7 +716,7 @@ footer {
   .plane .no i { max-width: 92px; }
   .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .two { gap: 20px; }
-  section:where(:not([data-graview-embed], [data-graview-embed] *)) { padding-top: 42px; }
+  section { padding-top: 42px; }
 }
 
 /* ── The landing page ─────────────────────────────────────────────────────
@@ -1202,184 +1202,6 @@ main.page > section.grow, main.page > section.ways, main.page > section.closing 
 .qa h3 { font-size: 17px; margin: 0 0 8px; }
 .qa p { color: var(--ink-2); max-width: 62ch; }
 @media (max-width: 760px) { .faq-list { grid-template-columns: minmax(0, 1fr); gap: 24px; } }
-
-/* ── The landing page, fourth cut: one thing to hand your agent ─────────
-   Almost everyone starts by asking an assistant, so the first screen is
-   the sentence to paste, in big type on a dark stage, with the app that
-   sentence made running under it. One accent, the symbol's turquoise:
-   the task word, the live dot and the copy buttons. Nothing decorative:
-   the city in the frame is the only picture.
-   ─────────────────────────────────────────────────────────────────── */
-
-/* A region that is dark in either scheme: the dark tokens, scoped. */
-.night {
-  color-scheme: dark;
-  --paper:     #0A0F1F;
-  --panel:     #111933;
-  --sunk:      #0E1529;
-  --ink:       #EEF0F6;
-  --ink-2:     #C3CAD9;
-  --ink-3:     #A0A9BD;
-  --rule:      #27314F;
-  --rule-2:    #1C2541;
-  --pine:      #A3B3FF;
-  --pine-2:    #C6D0FF;
-  --pine-wash: #18224A;
-  --amber:     #D4A162;
-  --amber-wash:#2A2115;
-  --logo:      #FFFFFF;
-  --night:     #060A16;
-  color: var(--ink);
-}
-.topbar.night { background: var(--night); border-bottom-color: var(--rule-2); }
-@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-  .topbar.night { background: color-mix(in srgb, var(--night) 90%, transparent); }
-}
-.topbar.night .jump a { color: var(--ink-2); }
-.topbar.night .jump a:hover { color: var(--ink); background: var(--panel); }
-.topbar.night .jump a.go { color: var(--night); background: var(--ink); }
-.topbar.night .jump a.go:hover { color: var(--night); background: var(--pine-2); }
-
-/* Full-bleed without widening the page: the band's color reaches the
-   window's edges, its box stays the column's, so nothing scrolls sideways. */
-main.page > section.agent-hero {
-  padding-top: clamp(36px, 6vh, 80px);
-  padding-bottom: clamp(48px, 8vh, 96px);
-  background: var(--night);
-  box-shadow: 0 0 0 100vmax var(--night);
-  clip-path: inset(0 -100vmax);
-  display: grid; gap: 28px;
-}
-.ah-label {
-  margin: 0 0 14px; display: flex; align-items: center; gap: 10px;
-  font-family: var(--sans); font-size: 12px; font-weight: var(--w-label);
-  letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2);
-}
-.ah-label .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); flex: 0 0 auto; }
-
-.prompt {
-  border: 1px solid var(--rule); border-radius: 10px; background: var(--sunk);
-  padding: clamp(18px, 2.4vw, 30px) clamp(18px, 2.6vw, 34px) clamp(14px, 1.6vw, 20px);
-}
-.prompt-text {
-  margin: 0; max-width: none;
-  font-family: var(--mono); font-size: clamp(19px, 2.45vw, 34px); line-height: 1.38;
-  letter-spacing: -0.01em; color: var(--ink); overflow-wrap: break-word; text-wrap: pretty;
-}
-.prompt-text .task { color: var(--mint); }
-.prompt-foot {
-  margin-top: clamp(16px, 2vw, 26px); padding-top: 14px; border-top: 1px solid var(--rule-2);
-  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
-}
-.recipe-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
-.recipe-tabs [role="tab"] {
-  font: inherit; font-family: var(--mono); font-size: 14px; color: var(--ink-2);
-  background: transparent; border: 1px solid var(--rule); border-radius: 999px;
-  min-height: 34px; padding: 0 14px; cursor: pointer;
-}
-.recipe-tabs [role="tab"]:hover { color: var(--ink); border-color: var(--ink-3); }
-.recipe-tabs [role="tab"][aria-selected="true"] { color: var(--night); background: var(--mint); border-color: var(--mint); }
-.night .copy { color: var(--night); background: var(--mint); }
-.night .copy:hover { background: #5CF0D2; }
-.night .copy[data-copied] { background: var(--ink); }
-.copy-prompt { min-height: 36px; padding: 0 16px; font-size: 13.5px; }
-
-.ah-diy {
-  margin: 14px 0 0; max-width: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px;
-  font-size: 14px; color: var(--ink-3);
-}
-.diy-line { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
-.diy-line code { font-size: 14px; color: var(--ink); }
-.diy-line .copy { margin-left: 0; }
-
-.ah-stage { min-width: 0; }
-.stage-panel { display: grid; gap: 10px; }
-.agent-hero .hero-live {
-  height: min(600px, 66vh); min-height: 420px; background: var(--night);
-  box-shadow: 0 0 0 1px var(--rule);
-}
-.agent-hero .stage-caption { color: var(--ink-3); }
-.agent-hero .stage-caption a { color: var(--pine); font-weight: var(--w-label); text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; min-height: 24px; }
-.agent-hero .stage-caption a:hover { text-decoration: underline; }
-.agent-hero .stage-caption .live { color: var(--mint); }
-/* The stage is dark in either scheme, and so is its first frame. */
-.agent-hero .hero-live .poster .light { display: none !important; }
-.agent-hero .hero-live .poster .dark { display: block !important; }
-
-.ah-why {
-  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 20px 48px; align-items: end;
-  padding-top: clamp(20px, 3vw, 36px); border-top: 1px solid var(--rule-2);
-}
-.ah-why h1 { font-size: clamp(28px, 3.1vw, 44px); line-height: 1.12; letter-spacing: var(--track-display); max-width: 20ch; font-weight: var(--w-display); }
-.ah-why .lede { font-size: 17px; color: var(--ink-2); }
-
-@media (max-width: 900px) {
-  .ah-why { grid-template-columns: minmax(0, 1fr); }
-  .agent-hero .hero-live { height: 460px; min-height: 0; }
-}
-@media (max-width: 560px) {
-  .agent-hero .hero-live { height: 400px; }
-  .copy-prompt { margin-left: 0; width: 100%; }
-  /* Small enough that the address stays on one line at 320px. */
-  .prompt-text { font-size: clamp(14px, 4.4vw, 18px); letter-spacing: -0.02em; }
-}
-@media (prefers-reduced-motion: no-preference) {
-  .ah-ask > * { animation: rise 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-  .ah-ask > :nth-child(2) { animation-delay: 60ms; }
-  .ah-ask > :nth-child(3) { animation-delay: 120ms; }
-}
-@media (forced-colors: active) {
-  .recipe-tabs [role="tab"][aria-selected="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
-  .ah-label .dot { forced-color-adjust: none; background: CanvasText; }
-}
-
-/* The recipes: one row each, the task, what it declared and the proof. */
-main.page > section.recipes { padding-top: 104px; }
-.recipe-list { margin: 40px 0 0; padding: 0; list-style: none; display: grid; gap: 0; }
-.recipe-row {
-  display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 16px 48px;
-  padding: 30px 0; border-top: 1px solid var(--rule);
-}
-.recipe-row h3 { font-size: clamp(22px, 2.2vw, 28px); font-weight: var(--w-display); letter-spacing: var(--track-display); }
-.recipe-row .recipe-prompt { margin-top: 12px; font-family: var(--mono); font-size: 13.5px; line-height: 1.6; color: var(--ink-2); overflow-wrap: anywhere; }
-.recipe-row .recipe-prompt b { color: var(--ink); font-weight: 600; }
-.recipe-row .recipe-blurb { font-size: 15.5px; color: var(--ink-2); }
-.recipe-row dl { margin: 14px 0 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; font-size: 14px; }
-.recipe-row dt { color: var(--ink-3); }
-.recipe-row dd { margin: 0; color: var(--ink); min-width: 0; }
-.recipe-row .recipe-links { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 4px 18px; font-family: var(--sans); font-size: 14px; font-weight: 600; }
-.recipe-row .recipe-links a { text-decoration: none; display: inline-flex; align-items: center; min-height: 28px; }
-.recipe-row .recipe-links a:hover { text-decoration: underline; }
-.recipes-note { margin-top: 8px; padding-top: 18px; border-top: 1px solid var(--rule); max-width: 78ch; }
-@media (max-width: 900px) { .recipe-row { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 420px) { .recipe-row dl { grid-template-columns: minmax(0, 1fr); gap: 2px; } .recipe-row dd { margin-bottom: 8px; } }
-
-/* The tour's opening, on the page the long argument moved to. */
-main.page > section.tour-intro { padding-top: 64px; }
-.tour-intro h1 { font-size: clamp(32px, 3.8vw, 52px); line-height: 1.08; letter-spacing: var(--track-display); max-width: 20ch; }
-.tour-intro .lede { margin-top: 20px; }
-
-/*
- * THE TOP BAR ON A PHONE. A row of section links that scrolls sideways
- * inside the bar was cut off at the right edge ("Recipes, How it works,
- * C…"), which reads as broken, not as more. Below a tablet's width the bar
- * keeps the links a visitor starts from and drops the in-page ones (every
- * one of them is a scroll away); and if what is left still does not fit,
- * it wraps under the logo rather than running off the edge.
- */
-@media (max-width: 760px) {
-  .topbar .jump a.wide { display: none; }
-  .topbar-in { flex-wrap: wrap; row-gap: 0; }
-  .topbar .jump { flex-wrap: wrap; justify-content: flex-end; overflow: visible; margin: 0 0 0 auto; padding: 4px 0; }
-}
-@media (max-width: 480px) {
-  /* A phone: the mark a little smaller, the links a little closer, and GitHub
-     left to the footer, so the bar is one row at 320px. */
-  .topbar .logo svg { height: 26px; }
-  .topbar-in { gap: 10px; }
-  .topbar .jump a { padding: 6px 8px; }
-  .topbar .jump a[href^="https://github.com"] { display: none; }
-}
 /* site-css:end */
 </style>
 
@@ -1395,7 +1217,6 @@ main.page > section.tour-intro { padding-top: 64px; }
     <div class="jump">
       <a href="index.html">Docs home</a>
       <a href="getting-started.html">Getting started</a>
-      <a href="recipes.html">Recipes</a>
       <a href="concepts.html">Concepts</a>
       <a href="packages.html">Packages</a>
       <a href="cli.html">The CLI</a>
@@ -1404,7 +1225,6 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="checks.html">What check says</a>
       <a href="demos.html">Live demos</a>
       <a href="stability.html">Stability</a>
-      <a href="../tour.html">The tour</a>
       <a href="../progression.html">The garden, grown</a>
       <a href="../index.html">&larr; graview.dev</a>
     </div>
@@ -1446,7 +1266,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <div class="code" data-scroller aria-label="graview docs, usage" style="margin-top: 10px;"><pre><code class="language-text">graview docs &lt;entry&gt; [--out &lt;dir&gt;] [--views &lt;module&gt;]</code></pre></div>
     </section>
     <section id="skills" aria-labelledby="h-skills">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skills">What a model reads before it writes (19 skills)</h2></div>
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-skills">What a model reads before it writes (18 skills)</h2></div>
       <p>Skills that teach an assistant the authoring moves, each ending in a real graview check verdict. Installed into a product by <code>graview skills install .</code> — which <code>graview create</code> runs for you — into <code>.claude/skills</code> and <code>.agents/skills</code>, so Claude Code and Codex find the same instructions.</p>
       <ul class="cards">
         <li><a href="skills/graview-agent-seat.html"><strong>graview-agent-seat</strong><span>Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.</span></a></li>
@@ -1455,8 +1275,7 @@ main.page > section.tour-intro { padding-top: 64px; }
         <li><a href="skills/graview-embed.html"><strong>graview-embed</strong><span>Put a Graview app on somebody else's page — a picture in an article, a chapter in the docs, a live demo in a landing page — with its own theme scoped to one element, and nothing on the host touched.</span></a></li>
         <li><a href="skills/graview-invariant.html"><strong>graview-invariant</strong><span>Write a Graview invariant that judges the graph and NAMES the mutations that would repair it, then verify it with graview check and by making it actually fire.</span></a></li>
         <li><a href="skills/graview-lens.html"><strong>graview-lens</strong><span>Build a Graview lens that binds ROLES rather than field names, so a second domain can reuse it unchanged — and prove the reuse rather than asserting it.</span></a></li>
-        <li><a href="skills/graview-linked-records.html"><strong>graview-linked-records</strong><span>Link a record in one Graview app to a record in another app — a relation whose target is another app's kind, read there as whoever is looking, walked by computed fields and rules, its far changes kept in this app's history — and verify it with graview check and by opening it as a viewer who may not see the other app.</span></a></li>
-        <li><a href="skills/graview-lists.html"><strong>graview-lists</strong><span>Keep a Graview app's lists usable as it grows — what a list offers to filter by, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.</span></a></li>
+        <li><a href="skills/graview-lists.html"><strong>graview-lists</strong><span>Keep a Graview app's lists usable as it grows — what a list offers to filter by, the order and groups it opens in, cards read at a glance, records set aside instead of deleted, a list printed as a static page, and a date that repeats instead of a record per occurrence — and verify each with graview check and the page itself rather than assuming it.</span></a></li>
         <li><a href="skills/graview-new-app.html"><strong>graview-new-app</strong><span>Start a product on Graview in its own repository — the shape of the declaration, the shell that comes for free, and the CI that keeps it honest afterwards.</span></a></li>
         <li><a href="skills/graview-node-kind.html"><strong>graview-node-kind</strong><span>Add a node kind to a Graview app — fields, edges, label, plural and field roles — and verify it with graview check rather than claiming it worked.</span></a></li>
         <li><a href="skills/graview-pages.html"><strong>graview-pages</strong><span>Give a Graview app the routed face it wants — from the derived pages, to one page in the app's own words, to a product design that replaces every surface.</span></a></li>
