@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 20000,
+  "gzipped": 7000,
+  "note": "Room for ordinary growth, decided by Nick on 2026-10-14. Every face measures every chunk of the whole embed, the ones fetched on demand included, so it guards no reader's first load; that is the hosted page's budget, which stays tight and is raised only by a change that names its changeset. After the 0.1.30 wave every face stood 33 bytes under its budget (2_053_015 / 676_290), so every pull request was filing a raise of its own for a few hundred bytes. This gives it about 1% of room; a change that spends it says so in its changeset as before, and a file like this one is written again when the room is gone."
+}

@@ -53,8 +53,40 @@ describe("a grant to everybody", () => {
     expect(kept.permits({ name: "remove-member", args: { id: mine.id } }, novice).ok).toBe(true);
   });
 
-  it("leaves a role's own grant to make a kind reaching every record of it, as before", () => {
+  it("leaves a role's own grant to make a kind reaching every record's edit, as before", () => {
     const kept = store({ grants: [{ roles: ["member"], mutations: ["join"] }] });
-    for (const call of acts) expect(kept.permits(call, novice).ok, call.name).toBe(true);
+    expect(kept.permits(acts[0]!, novice).ok).toBe(true);
+  });
+});
+
+/*
+ * AND A ROLE'S DOOR IS NOT A KEY TO TAKE A RECORD OUT (W-201, decided by
+ * Nick, 2026-10-14). A member who may log an inspection could remove,
+ * archive or merge anybody's: the grant to make a kind is a grant to make
+ * one, not to unmake the rest.
+ */
+describe("a role's own grant to make a kind", () => {
+  const unmaking = [
+    { name: "remove-member", args: { id: "member:mentor" } },
+    { name: "archive-member", args: { id: "member:mentor" } },
+    { name: "merge-member", args: { id: "member:mentor", into: "member:novice" } },
+  ];
+
+  it("removes, archives or merges only the records the seat made, and says who could do the rest", () => {
+    const kept = store({ roles: ["member", "coordinator"], grants: [{ roles: ["member"], mutations: ["join"] }, { roles: ["coordinator"], mutations: "*" }] });
+    for (const call of unmaking) {
+      const verdict = kept.permits(call, novice);
+      expect(verdict.ok, call.name).toBe(false);
+      if (!verdict.ok) expect(verdict.refusal.message).toMatch(/only on what you made; a coordinator can/);
+    }
+    kept.apply({ name: "join", args: { label: "Novice" } }, { author: novice });
+    const mine = kept.graph.nodesOfKind("member").find((one) => one.label === "Novice")!;
+    expect(kept.permits({ name: "archive-member", args: { id: mine.id } }, novice).ok).toBe(true);
+    expect(kept.permits({ name: "remove-member", args: { id: mine.id } }, novice).ok).toBe(true);
+  });
+
+  it("reaches every record once the policy names the act itself", () => {
+    const kept = store({ grants: [{ roles: ["member"], mutations: ["join", "remove-member", "archive-member", "merge-member"] }] });
+    for (const call of unmaking) expect(kept.permits(call, novice).ok, call.name).toBe(true);
   });
 });

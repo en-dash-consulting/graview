@@ -169,8 +169,18 @@ describe("the derived remove act", () => {
       expect(verdict.refusal.message).toMatch(/owner can/);
     }
     expect(() => store.apply({ name: "remove-task", args: { id: "t-milk" } }, { author: helper })).toThrow(/Not permitted/);
-    store.apply({ name: "remove-task", args: { id: "t-milk" } }, { author: owner });
-    expect(store.graph.getNode("t-milk")).toBeUndefined();
+    // Riding the act that makes a task, an owner removes the tasks they made, not the rest (W-201).
+    const theirs = store.permits({ name: "remove-task", args: { id: "t-milk" } }, owner);
+    expect(theirs.ok).toBe(false);
+    if (!theirs.ok) expect(theirs.refusal.message).toMatch(/only on what you made/);
+    store.apply({ name: "add-task", args: { listId: "today", label: "Eggs" } }, { author: owner });
+    const eggs = store.graph.nodesOfKind("task").find((task) => task.label === "Eggs")!;
+    store.apply({ name: "remove-task", args: { id: eggs.id } }, { author: owner });
+    expect(store.graph.getNode(eggs.id)).toBeUndefined();
+    // A grant that names the act reaches every task.
+    const named = new Store({ schema, mutations, policy: { grants: [{ roles: ["owner"], mutations: ["remove-task"] }] }, snapshot: seed as never });
+    named.apply({ name: "remove-task", args: { id: "t-milk" } }, { author: owner });
+    expect(named.graph.getNode("t-milk")).toBeUndefined();
   });
 
   it("is counted by the checker as an act a grant may name", () => {

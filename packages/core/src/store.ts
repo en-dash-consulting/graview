@@ -347,6 +347,8 @@ export function violationKey(v: Violation, shaped?: ReadonlySet<string>): string
 }
 
 /** Every rule, as `violationKey` reads its `shaped`: a problem known by its rule, its record and its name. */
+/** The derived acts that take a record out or fold it away: riding the making of a kind, they reach only what the principal made (W-201). */
+const UNMAKING: ReadonlySet<string> = new Set(["remove", "archive", "unarchive", "merge"]);
 const EVERY_RULE = { has: () => true } as unknown as ReadonlySet<string>;
 
 /** The rules that have a shape, by name: what `violationKey` keys by the rule and the record. */
@@ -840,6 +842,8 @@ export class Store<S extends AnySchema> {
       },
       // Who made the record a derived act is about: riding only everybody's grant, it reaches what this principal made (W-201).
       mutation?.derived && (() => recordsOf(this.log).creatorOf(id as string)),
+      // Taking a record out, or folding it away, rides the making of the kind only over what this principal made (W-201).
+      mutation?.derived !== undefined && UNMAKING.has(mutation.derived.act),
     );
   }
 

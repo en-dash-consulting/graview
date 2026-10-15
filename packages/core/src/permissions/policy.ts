@@ -84,6 +84,13 @@ export function permits(
    * every role, the act reaches what this principal made (W-201).
    */
   madeBy?: () => string | undefined,
+  /**
+   * Whether the derived act takes a record out or folds it away — remove,
+   * archive, bring back or merge — rather than changing what it says. Riding
+   * the acts that make the kind, such an act reaches only what this principal
+   * made, whoever's grant it rides (W-201).
+   */
+  unmakes?: boolean,
 ): { readonly ok: true } | { readonly ok: false; readonly refusal: Refusal } {
   // No policy means permission is not a concern in this installation.
   if (!policy) return { ok: true };
@@ -105,11 +112,19 @@ export function permits(
        * co-op, and anybody at all archive or merge any member they could see:
        * the grant that lets everybody make a record is not a grant over every
        * record of its kind. Riding only a grant to every role, a derived
-       * edit, remove, archive, bring-back or merge reaches the records this
-       * principal made; a role's own grant on the acts it rides, or one that
-       * names the act or says `*`, reaches the rest, as it always has.
+       * edit reaches the records this principal made; a role's own grant on
+       * the acts it rides, or one that names the act or says `*`, reaches
+       * the rest.
+       *
+       * AND A ROLE'S DOOR IS NOT A KEY EITHER, to take a record out. A
+       * member who may log an inspection could remove, archive or merge
+       * anybody's: the grant to make a kind is a grant to make one, not to
+       * unmake the rest. Riding the acts that make the kind — whoever's
+       * grant — a derived remove, archive, bring-back or merge reaches only
+       * what this principal made; over the rest the policy names the act,
+       * or says `*` (decided by Nick, 2026-10-14).
        */
-      if (!madeBy || subjectId === undefined || (principal.id !== undefined && madeBy() === principal.id) || policy.grants.some((grant) => grant.roles !== "*" && grantsTo(grant, principal) && via.some((name) => matches(grant.mutations, name)))) return { ok: true };
+      if (!madeBy || subjectId === undefined || (principal.id !== undefined && madeBy() === principal.id) || (!unmakes && policy.grants.some((grant) => grant.roles !== "*" && grantsTo(grant, principal) && via.some((name) => matches(grant.mutations, name))))) return { ok: true };
       ridden = true;
     }
     /*
