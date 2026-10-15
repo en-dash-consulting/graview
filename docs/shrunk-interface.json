@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T21:29:21.732Z",
+  "at": "2026-10-15T00:43:13.173Z",
   "engine": "canary-gpu",
   "flags": [
     "--enable-unsafe-webgpu",
@@ -144,64 +144,64 @@
       "picks": [
         {
           "id": "t-boxes",
-          "x": 958,
-          "y": 277,
+          "x": 944,
+          "y": 502,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-quote",
-          "x": 1045,
-          "y": 278,
+          "x": 1036,
+          "y": 484,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-deposit",
-          "x": 1045,
-          "y": 277,
+          "x": 1036,
+          "y": 391,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-book",
-          "x": 1045,
-          "y": 277,
+          "x": 1036,
+          "y": 428,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-notice",
-          "x": 1133,
-          "y": 278,
+          "x": 1128,
+          "y": 419,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-broadband",
           "x": 1220,
-          "y": 278,
+          "y": 481,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-meter",
           "x": 1220,
-          "y": 277,
+          "y": 317,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-post",
           "x": 1220,
-          "y": 277,
+          "y": 354,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-keys",
-          "x": 1308,
-          "y": 277,
+          "x": 1312,
+          "y": 836,
           "inside": true,
           "reachable": true
         }
@@ -348,64 +348,64 @@
       "picks": [
         {
           "id": "t-boxes",
-          "x": 958,
-          "y": 277,
+          "x": 944,
+          "y": 502,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-quote",
-          "x": 1045,
-          "y": 278,
+          "x": 1036,
+          "y": 484,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-deposit",
-          "x": 1045,
-          "y": 277,
+          "x": 1036,
+          "y": 391,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-book",
-          "x": 1045,
-          "y": 277,
+          "x": 1036,
+          "y": 428,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-notice",
-          "x": 1133,
-          "y": 278,
+          "x": 1128,
+          "y": 419,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-broadband",
           "x": 1220,
-          "y": 278,
+          "y": 481,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-meter",
           "x": 1220,
-          "y": 277,
+          "y": 317,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-post",
           "x": 1220,
-          "y": 277,
+          "y": 354,
           "inside": true,
           "reachable": true
         },
         {
           "id": "t-keys",
-          "x": 1308,
-          "y": 277,
+          "x": 1312,
+          "y": 836,
           "inside": true,
           "reachable": true
         }

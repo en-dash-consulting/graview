@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:10:43.786Z",
+  "at": "2026-10-15T01:58:17.962Z",
   "transport": "open",
   "engine": "chromium",
   "policy": "Claude (claudemcpcontent.com /mcp_apps header, observed 2026-10-04)",
@@ -45,8 +45,8 @@
     "the progress ring turns: its keyframes are drawn and running": {
       "ok": true,
       "detail": {
-        "before": "matrix(0.000193731, 1, -1, 0.000193731, 0, 0)",
-        "after": "matrix(-0.984759, 0.173925, -0.173925, -0.984759, 0, 0)"
+        "before": "matrix(0.0870636, 0.996203, -0.996203, 0.0870636, 0, 0)",
+        "after": "matrix(-0.939574, 0.342346, -0.342346, -0.939574, 0, 0)"
       }
     },
     "after the app's toggle to dark, the same view takes the dark panel, edge and accent": {
@@ -277,7 +277,7 @@
           "href": null,
           "text": "a link out"
         },
-        "url": "http://127.0.0.1:6192/"
+        "url": "http://127.0.0.1:5892/"
       }
     },
     "srcset is not drawn": {
@@ -496,13 +496,13 @@
     "connections": 0
   },
   "requests": [
-    "http://127.0.0.1:6192/",
-    "http://localhost:6193/proxy/claude.html",
-    "blob:null/6e2bb2e1-f5ef-4a52-ba1a-6ec23ea21d8b",
-    "blob:null/b48a3e52-c21c-4430-9af1-1e7412f07d4f",
-    "blob:null/6f12358d-50a9-46e9-bc8e-51e12e01ad2a",
-    "blob:null/ad39653d-dd48-4919-8392-57d2a680e443",
-    "blob:null/7a76e0ff-0f2f-4cda-a6c2-a8b05aac3a69"
+    "http://127.0.0.1:5892/",
+    "http://localhost:5893/proxy/claude.html",
+    "blob:null/dd594128-a90e-4e74-b628-47e117d06ed1",
+    "blob:null/f8719b49-4d10-4ef4-9001-ac53f12a71a2",
+    "blob:null/a0f90427-ab67-466b-8d49-282693408412",
+    "blob:null/7852ae7e-6cbd-4a1e-9609-4e70e5efb303",
+    "blob:null/f2ac5f45-c037-47fb-9096-c81374c34fba"
   ],
   "passed": true
 }

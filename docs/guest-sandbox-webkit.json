@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-12T17:41:43.365Z",
+  "at": "2026-10-15T01:57:37.556Z",
   "transport": "frame",
   "engine": "webkit",
   "claims": {
@@ -68,6 +68,11 @@
       "detail": [
         {
           "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        },
+        {
+          "author": "shopper:bethan",
           "via": "view:hostile",
           "intent": "Ask Flood 0"
         },
@@ -85,11 +90,6 @@
           "author": "shopper:bethan",
           "via": "view:hostile",
           "intent": "Ask Flood 3"
-        },
-        {
-          "author": "shopper:bethan",
-          "via": "view:card",
-          "intent": "Ask Is the Golf still there?"
         }
       ]
     },
@@ -98,6 +98,11 @@
       "detail": [
         {
           "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        },
+        {
+          "author": "shopper:bethan",
           "via": "view:hostile",
           "intent": "Ask Flood 0"
         },
@@ -115,11 +120,6 @@
           "author": "shopper:bethan",
           "via": "view:hostile",
           "intent": "Ask Flood 3"
-        },
-        {
-          "author": "shopper:bethan",
-          "via": "view:card",
-          "intent": "Ask Is the Golf still there?"
         }
       ]
     },
@@ -128,6 +128,11 @@
       "detail": [
         {
           "author": "shopper:bethan",
+          "via": "view:card",
+          "intent": "Ask Is the Golf still there?"
+        },
+        {
+          "author": "shopper:bethan",
           "via": "view:hostile",
           "intent": "Ask Flood 0"
         },
@@ -145,11 +150,6 @@
           "author": "shopper:bethan",
           "via": "view:hostile",
           "intent": "Ask Flood 3"
-        },
-        {
-          "author": "shopper:bethan",
-          "via": "view:card",
-          "intent": "Ask Is the Golf still there?"
         }
       ]
     },
@@ -253,7 +253,7 @@
     "the guest cannot navigate the top window": {
       "ok": true,
       "detail": {
-        "url": "http://127.0.0.1:5282/",
+        "url": "http://127.0.0.1:5892/",
         "tried": {
           "ok": false,
           "error": "SecurityError"
@@ -289,14 +289,14 @@
     "the host page throws nothing": {
       "ok": true,
       "detail": [
-        "Fetch API cannot load http: /127.0.0.1:5282/secret?from=bare due to access control checks.",
-        "Unsafe JavaScript attempt to initiate navigation for frame with URL 'http: /127.0.0.1:5282/' from frame with URL 'http://localhost:5283/hostile.html'. The frame attempting navigation of the top-level "
+        "Unsafe JavaScript attempt to initiate navigation for frame with URL 'http: /127.0.0.1:5892/' from frame with URL 'http://localhost:5893/hostile.html'. The frame attempting navigation of the top-level ",
+        "Fetch API cannot load http: /127.0.0.1:5892/secret?from=bare due to access control checks."
       ]
     }
   },
   "pageErrors": [
-    "Fetch API cannot load http: /127.0.0.1:5282/secret?from=bare due to access control checks.",
-    "Unsafe JavaScript attempt to initiate navigation for frame with URL 'http: /127.0.0.1:5282/' from frame with URL 'http://localhost:5283/hostile.html'. The frame attempting navigation of the top-level "
+    "Unsafe JavaScript attempt to initiate navigation for frame with URL 'http: /127.0.0.1:5892/' from frame with URL 'http://localhost:5893/hostile.html'. The frame attempting navigation of the top-level ",
+    "Fetch API cannot load http: /127.0.0.1:5892/secret?from=bare due to access control checks."
   ],
   "findings": {
     "cookieOnAFetchWithNoCsp": [

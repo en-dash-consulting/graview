@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-14T02:36:40.806Z",
+  "at": "2026-10-15T00:59:34.013Z",
   "engines": [
     "chromium",
     "webkit",
@@ -2517,10 +2517,11 @@
           "width": 1440,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "chromium",
@@ -2529,6 +2530,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2539,10 +2541,11 @@
           "width": 390,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "chromium",
@@ -2551,6 +2554,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2561,10 +2565,11 @@
           "width": 1440,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "chromium",
@@ -2573,6 +2578,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2583,10 +2589,11 @@
           "width": 390,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "chromium",
@@ -2595,6 +2602,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2605,10 +2613,11 @@
           "width": 1440,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "webkit",
@@ -2617,6 +2626,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2627,10 +2637,11 @@
           "width": 390,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "webkit",
@@ -2639,6 +2650,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2649,10 +2661,11 @@
           "width": 1440,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "webkit",
@@ -2661,6 +2674,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2671,10 +2685,11 @@
           "width": 390,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "webkit",
@@ -2683,6 +2698,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2693,10 +2709,11 @@
           "width": 1440,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "firefox",
@@ -2705,6 +2722,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2715,10 +2733,11 @@
           "width": 390,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "firefox",
@@ -2727,6 +2746,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2737,10 +2757,11 @@
           "width": 1440,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "firefox",
@@ -2749,6 +2770,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"
@@ -2759,10 +2781,11 @@
           "width": 390,
           "id": "brief-0128",
           "found": true,
-          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only… · Sent after the release. Cloud read it the same day.",
+          "said": "Answered · 0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. · Sent after the release. Cloud read it the same day.",
+          "lines": 2,
           "breaks": false,
           "syntax": [],
-          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped. Offer the five ops only…"
+          "expected": "0.1.28 answers your brief after 0.1.27: FR-170, in capabilities().shipped."
         },
         {
           "engine": "firefox",
@@ -2771,6 +2794,7 @@
           "id": "brief-markdown",
           "found": true,
           "said": "Sent · Markdown in a text field…",
+          "lines": 1,
           "breaks": false,
           "syntax": [],
           "expected": "Markdown in a text field…"

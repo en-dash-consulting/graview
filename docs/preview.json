@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T12:26:20.788Z",
+  "at": "2026-10-15T00:57:26.722Z",
   "engine": "chromium",
   "document": "packages/core/tests/document/fixtures/org.gdd.json",
   "seed": "packages/core/tests/document/fixtures/org.seed.json",
@@ -17,12 +17,12 @@
     "theSceneDrawsTheGraphAtTheOverviewsAddress": {
       "first": {
         "sceneOn": true,
-        "districts": 312,
+        "districts": 313,
         "path": "/places/overview"
       },
       "again": {
         "sceneOn": true,
-        "districts": 312,
+        "districts": 313,
         "path": "/places/overview"
       },
       "ok": true
@@ -35,7 +35,7 @@
     },
     "shotsWritesAPngForEachNamedPlace": {
       "status": 0,
-      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-UL1kkO",
+      "said": "graview shots: 3 pictures of En Dash Org in /var/folders/46/sw5shzmn5tzck4z7_lslsw1w0000gn/T/graview-shots-0cAVgc",
       "pngs": [
         true,
         true,
@@ -54,8 +54,8 @@
     }
   },
   "said": [
-    "graview preview: En Dash Org on http://127.0.0.1:6410",
-    "  Pages: http://127.0.0.1:6410/   the scene: http://127.0.0.1:6410/places/overview",
+    "graview preview: En Dash Org on http://127.0.0.1:5810",
+    "  Pages: http://127.0.0.1:5810/   the scene: http://127.0.0.1:5810/places/overview",
     "  data: in memory, gone when the preview stops",
     "  sits as You",
     "  53 nodes. Ctrl-C stops it."

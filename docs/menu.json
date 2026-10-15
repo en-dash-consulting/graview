@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-12T03:55:44.970Z",
+  "at": "2026-10-15T00:45:59.005Z",
   "engine": "chromium",
   "checks": {
     "pinThenReorder": {
@@ -9,6 +9,9 @@
         "rename",
         "edit-task",
         "plan-it",
+        "archive-task",
+        "leave-alone-task",
+        "merge-task",
         "explain",
         "move-to-list",
         "wait-for",
@@ -21,6 +24,9 @@
         "edit-task",
         "rename",
         "plan-it",
+        "archive-task",
+        "leave-alone-task",
+        "merge-task",
         "explain",
         "move-to-list",
         "wait-for",
@@ -73,9 +79,7 @@
           12,
           13,
           14,
-          15,
-          16,
-          17
+          15
         ]
       },
       "inbox": {
@@ -84,8 +88,31 @@
       },
       "namedItsOwn": true,
       "ok": true
+    },
+    "theKeyboardKeepsItsPlace": {
+      "afterAnAct": {
+        "where": "main",
+        "inside": false,
+        "body": false
+      },
+      "afterAPin": {
+        "where": "edit-task",
+        "inside": true,
+        "body": false
+      },
+      "afterAnAsk": {
+        "where": "main",
+        "inside": false,
+        "body": false
+      },
+      "answered": [
+        "Until · 1 of 3: typed",
+        "Notes · 2 of 3: typed",
+        "Attachments · 3 of 3: skipped"
+      ],
+      "ok": true
     }
   },
-  "error": "Error: page.waitForTimeout: Target page, context or browser has been closed",
-  "passed": false
+  "pageErrors": [],
+  "passed": true
 }

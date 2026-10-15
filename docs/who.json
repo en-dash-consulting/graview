@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T12:30:50.393Z",
+  "at": "2026-10-15T01:33:20.526Z",
   "engine": "chromium",
   "checks": {
     "bSeesAAtTheTasksPlot": {
@@ -105,14 +105,14 @@
     },
     "aClosesAndIsGoneWithinTheTtl": {
       "gone": null,
-      "tookMs": 2059,
+      "tookMs": 2138,
       "promisedMs": 4500,
       "ok": true
     },
     "aloneTheBarDrawsNobodyNotEvenYourOtherTab": {
       "scene": null,
       "pages": null,
-      "tookMs": 2060,
+      "tookMs": 2139,
       "ok": true
     },
     "aReaderOnPagesIsSaidWhereTheyAreOnTheOthersBars": {

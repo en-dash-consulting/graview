@@ -1,82 +1,84 @@
 {
-  "at": "2026-10-13T05:36:08.032Z",
+  "at": "2026-10-15T01:44:49.133Z",
   "engines": [
-    "chromium"
+    "chromium",
+    "webkit",
+    "firefox"
   ],
-  "quick": true,
+  "quick": false,
   "checks": {
     "landsWhereAsked": {
-      "cases": 20,
+      "cases": 60,
       "failing": [],
       "ok": true
     },
     "saidInASentence": {
-      "cases": 20,
+      "cases": 60,
       "failing": [],
       "ok": true
     },
     "backUndoes": {
-      "cases": 4,
+      "cases": 12,
       "failing": [],
       "ok": true
     },
     "noModelCall": {
-      "cases": 8,
+      "cases": 24,
       "failing": [],
       "ok": true
     },
     "whoIsWorkingIsTheGraphsToAnswer": {
-      "cases": 4,
+      "cases": 12,
       "failing": [],
       "ok": true
     },
     "hiddenNeverResolves": {
-      "cases": 4,
+      "cases": 12,
       "failing": [],
       "ok": true
     },
     "aDraftAppearsQuickly": {
-      "cases": 10,
+      "cases": 30,
       "failing": [],
       "ok": true
     },
     "refiningReplaces": {
-      "cases": 8,
+      "cases": 24,
       "failing": [],
       "ok": true
     },
     "aDrawnCalendarOpensOnTheStoresDay": {
-      "cases": 4,
+      "cases": 12,
       "failing": [],
       "ok": true
     },
     "aFailedDraftKeepsTheLastGood": {
-      "cases": 8,
+      "cases": 24,
       "failing": [],
       "ok": true
     },
     "keptLensIsAPlace": {
-      "cases": 8,
+      "cases": 24,
       "failing": [],
       "ok": true
     },
     "takeBackRemovesIt": {
-      "cases": 8,
+      "cases": 24,
       "failing": [],
       "ok": true
     },
     "theRoutedFaceWearsTheOneBar": {
-      "cases": 2,
+      "cases": 6,
       "failing": [],
       "ok": true
     },
     "nothingWritesButDeclaredActs": {
-      "cases": 8,
+      "cases": 24,
       "failing": [],
       "ok": true
     },
     "aPhonesSheetYieldsToTheDrawnView": {
-      "cases": 4,
+      "cases": 12,
       "failing": [],
       "ok": true
     }

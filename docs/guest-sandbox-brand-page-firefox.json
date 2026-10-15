@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T04:12:20.823Z",
+  "at": "2026-10-15T01:59:53.457Z",
   "transport": "brand",
   "engine": "firefox",
   "policy": "the app's own page, with no content security policy",
@@ -23,7 +23,7 @@
           "font": "Georgia, \"Times New Roman\", serif"
         },
         "marked": false,
-        "src": "blob:http://127.0.0.1:6192/508d32fa-2412-49be-af45-091a43505",
+        "src": "blob:http://127.0.0.1:5892/a10ebd94-9452-471d-a5f8-85b596a9d",
         "bytes": 192
       }
     },
@@ -48,7 +48,7 @@
     "the logo is handed as a blob: URL of the page itself, which the policy lets an image load from": {
       "ok": true,
       "detail": {
-        "src": "blob:http://127.0.0.1:6192/508d32fa-2412-49be-af45-091a43505"
+        "src": "blob:http://127.0.0.1:5892/a10ebd94-9452-471d-a5f8-85b596a9d"
       }
     },
     "after the brand changes, the view says \"En Dash Consulting\" in the new display face, as the app's wordmark and headings do": {
@@ -70,7 +70,7 @@
           "font": "\"Courier New\", Courier, monospace"
         },
         "marked": true,
-        "src": "blob:http://127.0.0.1:6192/226f5946-cd71-4e25-900d-83c8056c9",
+        "src": "blob:http://127.0.0.1:5892/5d3818ba-4725-4717-9690-2f7960eb3",
         "bytes": 89
       }
     },
@@ -105,7 +105,7 @@
     "the last logo's blob: URL is let go once the new one is drawn": {
       "ok": true,
       "detail": {
-        "url": "blob:http://127.0.0.1:6192/508d32fa-2412-49be-af45-091a43505d31"
+        "url": "blob:http://127.0.0.1:5892/a10ebd94-9452-471d-a5f8-85b596a9d865"
       }
     },
     "the PNG at the page's own address was fetched once, by the host: the view loaded nothing": {
@@ -118,11 +118,11 @@
         "requests": [
           {
             "type": "fetch",
-            "url": "http://127.0.0.1:6192/graview/assets/logo.png"
+            "url": "http://127.0.0.1:5892/graview/assets/logo.png"
           },
           {
             "type": "image",
-            "url": "http://127.0.0.1:6192/graview/assets/logo.png"
+            "url": "http://127.0.0.1:5892/graview/assets/logo.png"
           }
         ],
         "appMarks": 1,

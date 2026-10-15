@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-13T05:36:08.702Z",
+  "at": "2026-10-15T00:54:31.291Z",
   "engine": "chromium",
   "checks": {
     "threePicturesAndTheWayIn": {
@@ -41,7 +41,7 @@
     },
     "aGradientRatherThanADifference": {
       "coordinator": {
-        "offered": 9,
+        "offered": 10,
         "withheld": [],
         "installation": true,
         "studio": true
@@ -49,6 +49,7 @@
       "volunteer": {
         "offered": 1,
         "withheld": [
+          "coordinator",
           "coordinator",
           "coordinator",
           "coordinator",
@@ -65,6 +66,7 @@
         "offered": 0,
         "withheld": [
           "coordinator,volunteer",
+          "coordinator",
           "coordinator",
           "coordinator",
           "coordinator",
@@ -136,8 +138,8 @@
           "under": 48,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 249,
-          "fromTop": 201,
+          "first": 241,
+          "fromTop": 193,
           "lines": 1,
           "selects": 0,
           "count": "10 shifts",
@@ -157,8 +159,8 @@
           "under": 93,
           "seatFromTheFoot": 16,
           "relatedRepeats": [],
-          "first": 362,
-          "fromTop": 269,
+          "first": 342,
+          "fromTop": 249,
           "lines": 1,
           "selects": 0,
           "count": "10 shifts",

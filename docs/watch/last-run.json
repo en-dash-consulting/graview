@@ -1,20 +1,10 @@
 {
-  "at": "2026-10-14T01:55:16.396Z",
+  "at": "2026-10-15T02:00:11.106Z",
   "results": [
     {
-      "name": "hosted",
+      "name": "guest",
       "code": 0,
-      "took": 1
-    },
-    {
-      "name": "studio",
-      "code": 0,
-      "took": 39
-    },
-    {
-      "name": "navigation",
-      "code": 0,
-      "took": 97
+      "took": 156
     }
   ]
 }

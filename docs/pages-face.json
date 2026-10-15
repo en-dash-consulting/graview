@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-14T02:17:09.442Z",
+  "at": "2026-10-15T01:05:58.848Z",
   "engine": "chromium",
   "checks": {
     "phoneHome": {
@@ -360,6 +360,71 @@
       "before": 2,
       "after": 1,
       "ok": true
+    },
+    "severalTasksAreChosenAndSaidByCount": {
+      "said": "3 tasks chosen",
+      "heard": "status",
+      "acts": [
+        "Mark it done",
+        "Note why this is here…",
+        "Move it to another list…"
+      ],
+      "names": [
+        "Choose Find someone who moves pianos",
+        "Choose Take down the shelves",
+        "Choose Touch up the paint"
+      ],
+      "ok": true
+    },
+    "threeTasksAreMarkedDoneAsOneChangeWithOneUndo": {
+      "before": 10,
+      "done": {
+        "rows": 7,
+        "bar": 0,
+        "offer": "↶Take back “Mark it done — 3 tasks”",
+        "focus": "graview-list"
+      },
+      "back": 10,
+      "ok": true
+    },
+    "theKeyboardChoosesAndPutsDown": {
+      "one": "1 task chosen",
+      "all": "10 tasks chosen",
+      "reaches": true,
+      "put": {
+        "bar": 0,
+        "inList": true
+      },
+      "ok": true
+    },
+    "theArrowsChooseRowsFromOneTabStop": {
+      "arrowed": "3 tasks chosen",
+      "extended": "4 tasks chosen",
+      "stops": 1,
+      "ok": true
+    },
+    "onAPhoneALongPressChoosesAndOneActDoesThree": {
+      "atRest": 0,
+      "pressed": {
+        "said": "1 task chosen",
+        "path": "/pages/tasks"
+      },
+      "tapped": {
+        "said": "3 tasks chosen",
+        "path": "/pages/tasks"
+      },
+      "after": {
+        "rows": 7,
+        "offer": "↶Take back “Mark it done — 3 tasks”"
+      },
+      "ok": true
+    },
+    "phoneChoosing": {
+      "noSideScroll": true,
+      "hasH1": true,
+      "namedLinks": true,
+      "labeledInputs": true,
+      "bigEnoughToHit": []
     },
     "everyRouteOfTheOwnFaceIsReachable": {
       "ok": true
