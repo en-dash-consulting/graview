@@ -1,0 +1,9 @@
+{
+  "nodes": [
+    { "id": "f1", "kind": "finding", "name": "The headline inside a nested group is drawn at the page title's size", "severity": "high", "area": "layout", "phase": "now" },
+    { "id": "f2", "kind": "finding", "name": "A row group stacks its text blocks one above another, full width", "severity": "medium", "area": "layout", "phase": "later" },
+    { "id": "f3", "kind": "finding", "name": "Badges on a card each stand on a line of their own instead of flowing", "severity": "low", "area": "words", "phase": "later" },
+    { "id": "f4", "kind": "finding", "name": "A rule's problem box leads with its expression, not its sentence", "severity": "medium", "area": "speed", "phase": "later" }
+  ],
+  "edges": []
+}

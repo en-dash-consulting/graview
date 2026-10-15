@@ -12,6 +12,7 @@ import { sayStep } from "./steps.js";
 import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
 import { applySteps, seedSteps } from "./sync-seed.js";
+import { heldBy, holdFileOf, holdStore, sayHeld, type StoreHold } from "./store-hold.js";
 import type { StoredMeta } from "./meta.js";
 
 /**
@@ -80,7 +81,23 @@ export interface StoreBackend {
   };
   /** Where the data is, in words a person can open. */
   readonly where: string;
+  /** The file that says which process writes this store now (`./store-hold.ts`). */
+  readonly holdFile: string;
   readonly seed?: GraphSnapshot;
+}
+
+/**
+ * Takes the store for `command`, or writes the sentence that says who holds
+ * it and returns undefined. Every command that writes a store on disk asks
+ * this first, so a running preview's folder is never written behind its back.
+ */
+export function holdBackend(backend: StoreBackend, command: string, wanted: string, options: { readonly remote?: boolean } = {}): StoreHold | undefined {
+  const held = holdStore(backend.holdFile, command);
+  if ("heldBy" in held) {
+    process.stderr.write(`graview ${command}: ${sayHeld(held.heldBy, backend.where, wanted, options)}`);
+    return undefined;
+  }
+  return held;
 }
 
 /**
@@ -96,9 +113,9 @@ export async function backendFrom(argv: readonly string[], cwd = process.cwd()):
   const seed = seedFile ? readSeed(resolve(cwd, seedFile)) : undefined;
   if (sqlite) {
     const file = resolve(cwd, sqlite);
-    return { adapter: await sqliteAdapter(file), where: file, ...(seed ? { seed } : {}) };
+    return { adapter: await sqliteAdapter(file), where: file, holdFile: holdFileOf(file, "file"), ...(seed ? { seed } : {}) };
   }
-  return { adapter: createFileAdapter(data), where: data, ...(seed ? { seed } : {}) };
+  return { adapter: createFileAdapter(data), where: data, holdFile: holdFileOf(data, "folder"), ...(seed ? { seed } : {}) };
 }
 
 /** A seed file in either snapshot format: the line format with its header, or an old `{ nodes, edges }`. */
@@ -149,6 +166,8 @@ export async function serve(argv: readonly string[]): Promise<number> {
     return 1;
   }
   const backend = await backendFrom(argv);
+  const hold = holdBackend(backend, "serve", "Serving it a second time");
+  if (!hold) return 1;
   const served = await serveStore({
     app: app as never,
     adapter: backend.adapter,
@@ -158,6 +177,7 @@ export async function serve(argv: readonly string[]): Promise<number> {
     trustSeatHeaders: trust.trust,
     where: backend.where,
   });
+  hold.serving(served.url);
 
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
@@ -168,7 +188,10 @@ export async function serve(argv: readonly string[]): Promise<number> {
       `${served.opened.migrated.length > 0 ? `, migrated: ${served.opened.migrated.map((op) => op.intent).join("; ")}` : ""}\n`,
   );
   const stop = () => {
-    void served.close().then(() => process.exit(0));
+    void served.close().then(() => {
+      hold.release();
+      process.exit(0);
+    });
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
@@ -198,6 +221,16 @@ export async function syncSeed(argv: readonly string[]): Promise<number> {
     process.stderr.write(`graview sync-seed: --seed <file> is required\n\n${SERVE_USAGE}`);
     return 2;
   }
+  const applying = argv.includes("--apply");
+  /*
+   * A dry run only reads, so it runs beside a preview, and says the apply
+   * would be refused rather than letting a person find out after. An apply
+   * takes the store first: written behind a running preview it would be
+   * invisible to its pages, and the preview's next write could undo it.
+   */
+  const hold = applying ? holdBackend(backend, "sync-seed", "Syncing the seed into it") : undefined;
+  if (applying && !hold) return 1;
+  const holder = applying ? null : heldBy(backend.holdFile);
   const opened = await openStore({ app: app as never, adapter: backend.adapter, scope: app.name, seed: backend.seed });
   try {
     const live = opened.store.graph.snapshot() as GraphSnapshot;
@@ -213,7 +246,9 @@ export async function syncSeed(argv: readonly string[]): Promise<number> {
           ? `${JSON.stringify({ steps, applied: null }, null, 2)}\n`
           : `graview sync-seed: ${steps.length} step${steps.length === 1 ? "" : "s"} would bring ${backend.where} in step with the seed:\n` +
               steps.map((step) => `  ${sayStep(step)}\n`).join("") +
-              `Nothing was written. Add --apply to land them as one undoable operation.\n`,
+              (holder
+                ? `Nothing was written. A ${holder.command} (pid ${holder.pid}${holder.url ? `, ${holder.url}` : ""}) holds ${backend.where}: stop it before adding --apply, or the apply will be refused.\n`
+                : `Nothing was written. Add --apply to land them as one undoable operation.\n`),
       );
       return 0;
     }
@@ -233,6 +268,7 @@ export async function syncSeed(argv: readonly string[]): Promise<number> {
     return 0;
   } finally {
     opened.close();
+    hold?.release();
   }
 }
 
@@ -290,6 +326,9 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
   if (backend === undefined) return 1;
   const roles = flag(argv, "--roles");
   const as = flag(argv, "--as");
+  // A preview that keeps its data holds the store while it runs: nothing else may write it behind the pages it serves.
+  const hold = keeps ? holdBackend(backend, "preview", "Previewing it a second time") : undefined;
+  if (keeps && !hold) return 1;
   let opened;
   try {
     opened = await servePreview({
@@ -304,19 +343,24 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       principal: previewPrincipal(input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
     });
   } catch (error) {
+    hold?.release();
     process.stderr.write(`graview preview: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
   const { app, served, url, principal } = opened;
+  hold?.serving(url);
   process.stdout.write(
     `graview preview: ${app.name} on ${url}\n` +
       `  Pages: ${url}/   the scene: ${url}/places/overview\n` +
-      `  data: ${keeps ? `${backend.where}  (${backend.adapter.name})` : "in memory, gone when the preview stops"}\n` +
+      `  data: ${keeps ? `${backend.where}  (${backend.adapter.name}), held by this preview: other writers are refused until it stops` : "in memory, gone when the preview stops"}\n` +
       `  sits as ${principal.name ?? principal.id}${principal.roles?.length ? `, holding ${principal.roles.join(", ")}` : ""}\n` +
       `  ${served.store.graph.allNodes().length} nodes. Ctrl-C stops it.\n`,
   );
   const stop = () => {
-    void opened.close().then(() => process.exit(0));
+    void opened.close().then(() => {
+      hold?.release();
+      process.exit(0);
+    });
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);

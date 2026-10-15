@@ -38,18 +38,18 @@ const sized = (min?: number, max?: number) => [...(min === undefined ? [] : [z.m
 const str = (min?: number, max?: number) => z.string().check(...sized(min, max));
 const some = <T extends z.ZodMiniType>(of: T, min?: number, max?: number) => z.array(of).check(...sized(min, max));
 
-const name = (what: string) => z.string().check(z.regex(NAME, `${what} names are lower-case words joined by hyphens, like "booked-vendor"`));
+const name = (what: string) => z.string().check(z.regex(NAME, `${what} names are kebab-case, lower-case words joined by hyphens like "tool-note" (field and relation names are camelCase, like "supersededBy")`));
 /**
  * A RELATION'S NAME may be kebab-case or one camelCase word. camelCase is
  * recommended: a rule can then walk it bare (`tendedBy.name`), where
  * `tended-by.name` would read as a subtraction.
  */
 export const EDGE_NAME = /^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*|[a-z][A-Za-z0-9]*)$/;
-const edgeName = z.string().check(z.regex(EDGE_NAME, 'relation names are one camelCase word, like "tendedBy"'), notInherited);
+const edgeName = z.string().check(z.regex(EDGE_NAME, 'relation names are one camelCase word, like "supersededBy" (kind names are kebab-case, like "tool-note")'), notInherited);
 const fieldName = z
   .string()
   .check(
-    z.regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate" — rules say them bare'),
+    z.regex(FIELD_NAME, 'field names are one word or camelCase, like "dueDate", so rules say them bare (kind names are kebab-case, like "tool-note")'),
     z.refine((n: string) => !RESERVED_FIELDS.has(n), 'a field cannot be called "id" or "kind" — the framework keeps those; try "type" or "category"'),
     notInherited,
   );
@@ -311,6 +311,13 @@ export type BrandSpec = z.infer<typeof BrandSpec>;
 
 const loose = z.record(z.string(), z.unknown());
 
+/**
+ * A lens: checked by `graview check` against the lenses the framework ships
+ * (`declaredLenses`), so loose here but for what its page is: `create`,
+ * false where the place's page leaves off the forms that begin its kind.
+ */
+const LensSpec = z.looseObject({ create: z.optional(z.boolean()) });
+
 /** A kind's view specs: which slots it fills. The blocks are checked in views.ts, sentence by sentence. */
 const ViewSpecsSpec = z.strictObject({
   card: z.optional(z.array(z.unknown())),
@@ -393,7 +400,7 @@ export const DocumentSpec = z.strictObject({
   roles: z.optional(z.array(name("role"))),
   policy: z.optional(PolicySpec),
   modules: z.optional(loose),
-  lenses: z.optional(z.array(loose)),
+  lenses: z.optional(z.array(LensSpec)),
   pages: z.optional(PagesSpec),
   /** Each kind's views by kind, and `home`: the home view, a list of blocks about no one record (FR-81). */
   views: z.optional(z.record(z.string(), z.union([ViewSpecsSpec, z.array(z.unknown())]))),

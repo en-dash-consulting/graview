@@ -1307,6 +1307,20 @@ export function useScenePointer(): ScenePoint | null {
   return useSyncExternalStore(pointer.subscribe, pointer.snapshot, NO_POINT);
 }
 
+/*
+ * WHERE A VISIT LANDED (FR-80): `pages.first` picks where a new visit
+ * lands, once, and nothing after. A face that took the opening says so,
+ * by the views it was drawn with; a face drawn after it — the pages
+ * reached by a press on Home from the scene the visit opened on — does
+ * not take it again. It did: the review app opened on "This week", and
+ * pressing Home went to "This week" again, so its drawn home was nowhere.
+ */
+const LANDED = new WeakSet<object>();
+/** Whether the visit drawn with these views has already landed where `pages.first` says. */
+export const hasLanded = (views: object): boolean => LANDED.has(views);
+/** The visit drawn with these views has landed: `pages.first` is not taken again. */
+export const markLanded = (views: object): void => void LANDED.add(views);
+
 /**
  * THE VIEW A DECLARATION OPENS ON (FR-80): `pages.first` as the registry
  * holds it, resolved against the places beside it — a place is its kind's

@@ -269,7 +269,7 @@ export {
 } from "./temporal/effectivity.js";
 export type { Checkpoint, Effectivity } from "./temporal/effectivity.js";
 export { excerpt } from "./excerpt.js";
-export { actTitle, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, nounOf, summarize, withArticle } from "./schema/define-node.js";
+export { actTitle, allLabel, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, nounOf, summarize, withArticle } from "./schema/define-node.js";
 // Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178).
 export {
   DEFAULT_LOCALE,

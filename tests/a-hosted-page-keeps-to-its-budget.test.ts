@@ -89,7 +89,11 @@ describe("a hosted page", () => {
     // 889 KB since the GPU path holds past 128 live views (the scene hands a view the GPU cannot follow to the DOM in place): the scene face measured 909_597 B, 285 over 888.
     // 893 KB since the scene's cards and ties were fixed together (2026-10-15): a card says there is more at its edge, its "+N more" opens the rest, and a chosen record's ties keep their words until reached, placed clear of the cards' titles: the scene face measured 913_594 B, 4_554 more than before them (909_040).
     // 894 KB with both landed: the scene's cards and ties over the GPU path's hand-off to the DOM.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(894 * 1024);
+    // 891 KB since 2026-10-15, when a template came to say records by their labels and take `capital`, a card to say its glance exactly and its prose on a line, and the bar to name a place once and read `pages.first` once a visit: the scene face measured 911_198 B, 2_158 more than before them (909_040).
+    // 897 KB with the templates' fixes over the scene's cards and the GPU hand-off.
+    // 891 KB since blocks came to lay out as written (2026-10-15, fix/blocks-layout: a nested headline a section's, row groups, rows, badges, a large figure, a rule's sentence first, a place without its form): the scene face measured 911_746 B, 2_706 more than before them (909_040).
+    // 900 KB with the blocks' layout over the templates' fixes, the scene's cards and the GPU hand-off.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(900 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -82,7 +82,14 @@ checkout **by path** instead, the way the first-party products do:
 ```sh
 pnpm install && pnpm build                      # the framework, first
 pnpm graview create ../my-app --link . --name "My App" --kind thing
+pnpm graview:link                               # optional: `graview` on PATH from this checkout
 ```
+
+`pnpm graview:link` is `pnpm link --global` for `packages/graview`, so
+`graview check`, `graview preview` and the rest run anywhere on a machine
+with the checkout and no published install (run `pnpm setup` once first if
+pnpm has no global bin folder). `graview doctor`, run from a checkout with
+no `graview` on PATH, says the same.
 
 The chapters on the page are the app itself, not pictures of it:
 `@graview/embed` mounts each one into its place with the scene, the Graview
@@ -198,6 +205,7 @@ pnpm pack:inspect  # what would actually go in each tarball
 pnpm smoke         # install the tarballs into a scratch project and build
 pnpm smoke:create  # graview create → install → its own verify → a real browser
 pnpm skills        # install the authoring skills for Claude Code and Codex
+pnpm graview:link  # put this checkout's `graview` on PATH (pnpm link --global for packages/graview)
 ```
 
 Each writes its verdict to `docs/`, as criteria rather than as a pass count:

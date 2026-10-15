@@ -94,6 +94,15 @@ In a document (`app.json`, a graview-document) the same rule is
 "…", "repairs": [{ "act": "edit-package" }] }`; `graview check --document
 app.json` says each finding at its JSON path (`rules.priced-packages.repairs.0`).
 
+A document's repair may also be an act from the OTHER end of the rule's
+relation. A rule over `finding` requiring `exists(in('resolves'))` is
+repaired by `resolve-finding`, declared `on: "initiative"`, `connects:
+"resolves"`, `fromTheOtherEnd: "Name the work that fixes it"`: the rule
+hands it the finding as the far end (`to`), labels the repair with those
+words, and leaves the initiative for the person to choose (`missing:
+["id"]`), as the finding's own page offers it. Without `fromTheOtherEnd`,
+or without a relation between the two kinds, it is still `repair-wrong-kind`.
+
 A rule in the rule language is drawn as its shape, in the declaration's
 labels: "◆ Scenario margin ≥ target margin, when plan's price > $0", and
 broken, with the record's values: "A club on Team — margin 44% < target

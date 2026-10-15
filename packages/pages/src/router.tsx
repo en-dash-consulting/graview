@@ -6,7 +6,7 @@ import { revealSection } from "./section.js";
 import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
-import { GoToContext, GraviewProvider, HostFilesContext, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
+import { GoToContext, GraviewProvider, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
 import { PageAsk } from "./ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
@@ -417,12 +417,19 @@ function SectionOnArrival() {
  * whose declaration names `pages.first` is taken there instead — a place
  * to its page, a kind to its list — once: the arrival is replaced, so Back
  * leaves the app rather than bouncing, and the masthead and every link to
- * the home still go home.
+ * the home still go home. Once a visit has landed — on this face, or on the
+ * scene it opened on (`hasLanded`) — the home is the home: a press on Home
+ * from the scene draws the pages at their first entry, and that is no
+ * arrival.
  */
 function Opening<S extends AnySchema>({ context, Home }: { readonly context: PageContext<S>; readonly Home: PageComponent<S> }) {
   const location = useLocation();
+  const views = context.views;
   // The address the reader arrived at is the router's first entry, which no navigation made.
-  const arriving = location.key === "default";
+  const arriving = location.key === "default" && !(views && hasLanded(views));
+  useEffect(() => {
+    if (views) markLanded(views);
+  }, [views]);
   const opening = arriving ? openingOf(context.views?.arrangement?.()?.first, context.store.schema, context.views?.places() ?? []) : undefined;
   const to =
     opening?.to === "place" ? pathOfPlace(context, opening.place) : opening?.to === "kind" ? `/${pluralSlug(context.store.schema, opening.kind)}` : undefined;

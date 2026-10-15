@@ -98,7 +98,11 @@ describe("a declared lens that cannot draw says why, at its path", () => {
     expect(findingsOf([
       { name: "calendar", title: "Shifts", bindings: { shift: { start: "on" } } },
       { name: "calendar", title: "Shifts", bindings: { shift: { start: "on" } }, options: { range: "week" } },
-    ])).toEqual([expect.objectContaining({ code: "lens-title-taken", path: "lenses.1.title" })]);
+    ])).toEqual([
+      expect.objectContaining({ code: "lens-title-taken", path: "lenses.1.title" }),
+      // And a place titled as the shifts' list is: the bar names the place, and the list is "All shifts".
+      expect.objectContaining({ code: "pages-place-named-as-a-list" }),
+    ]);
   });
 
   it("names a kind it stands on that is not there", () => {

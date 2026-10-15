@@ -281,7 +281,16 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
        */
       const act = mutations.get(repair);
       const on = act?.subject?.kinds;
-      if (invariant.judgment && invariant.scope !== "graph" && kinds.has(invariant.scope.kind) && on && on !== "*" && !(on as readonly string[]).includes(invariant.scope.kind)) {
+      if (
+        invariant.judgment &&
+        invariant.scope !== "graph" &&
+        kinds.has(invariant.scope.kind) &&
+        on &&
+        on !== "*" &&
+        !(on as readonly string[]).includes(invariant.scope.kind) &&
+        // An act that ties the judged record to its own subject, offered from the far end, is handed the judged record there (a document's rule does).
+        !(documentOf(app) && act && fromTheJudgedEnd(app.schema.definitions, act, invariant.scope.kind))
+      ) {
         const judged = invariant.scope.kind;
         const fitting = [...mutations.values()].filter((m) => m.subject && (m.subject.kinds === "*" || (m.subject.kinds as readonly string[]).includes(judged))).map((m) => m.name);
         add({
@@ -289,7 +298,9 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
           code: "repair-wrong-kind",
           where: `defineInvariant("${invariant.name}").repairs[${index}]`,
           message: `Names repair "${repair}", an act on ${(on as readonly string[]).join(" or ")}, but the rule judges a ${judged}: the act is handed the ${judged} and refuses it, so the repair could never work.`,
-          fix: `Name an act on ${judged} instead${fitting.length > 0 ? ` (${fitting.slice(0, 6).join(", ")})` : ""}, or judge the rule over ${(on as readonly string[]).join(" or ")}.`,
+          fix:
+            `Name an act on ${judged} instead${fitting.length > 0 ? ` (${fitting.slice(0, 6).join(", ")})` : ""}, or judge the rule over ${(on as readonly string[]).join(" or ")}` +
+            (documentOf(app) ? `, or let "${repair}" connect a relation between ${withArticle(judged)} and ${(on as readonly string[]).map((kind) => withArticle(kind)).join(" or ")} and say fromTheOtherEnd: the rule then hands it the ${judged} as the far end.` : "."),
         });
       }
       if (!mutations.has(repair)) {
@@ -305,6 +316,31 @@ export function checkActsFromEnds<S extends AnySchema>(ctx: CheckContext<S>, wri
       }
     });
   }
+}
+
+/**
+ * Whether an act on another kind can repair a rule over `judged` from the
+ * far end: it says how it reads there (`fromTheOtherEnd`), it connects or
+ * severs a relation between its own subject and `judged`, and it takes a
+ * `judged` record as an argument — the one a document's rule hands it
+ * (`../../document/compiled.ts`). The same act a record page offers
+ * standing on that record.
+ */
+export function fromTheJudgedEnd(
+  definitions: readonly { readonly kind: string; readonly edges: Readonly<Record<string, { readonly to: readonly string[] | "*" }>> }[],
+  act: { readonly fromTheOtherEnd?: string; readonly connects?: readonly string[]; readonly severs?: readonly string[]; readonly subject?: { readonly kinds: unknown; readonly arg: string }; readonly input: unknown },
+  judged: string,
+): boolean {
+  if (!act.fromTheOtherEnd || !act.subject || act.subject.kinds === "*") return false;
+  const on = act.subject.kinds as readonly string[];
+  const ties = new Set([...(act.connects ?? []), ...(act.severs ?? [])]);
+  const reaches = (to: readonly string[] | "*", kind: string) => to === "*" || to.includes(kind);
+  const between = definitions.some((definition) =>
+    Object.entries(definition.edges).some(
+      ([edge, spec]) => ties.has(edge) && ((definition.kind === judged && on.some((kind) => reaches(spec.to, kind))) || (on.includes(definition.kind) && reaches(spec.to, judged))),
+    ),
+  );
+  return between && nodeRefArgs(act.input).some((ref) => ref.name !== act.subject!.arg && (ref.kinds.includes("*") || ref.kinds.includes(judged)));
 }
 
 export function checkUnmakeable<S extends AnySchema>(ctx: CheckContext<S>): void {

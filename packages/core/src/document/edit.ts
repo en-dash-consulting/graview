@@ -215,6 +215,8 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       on: kindName.optional(),
       bindings: z.record(z.string(), z.unknown()).optional(),
       options: z.record(z.string(), z.unknown()).optional(),
+      // False: the place's page leaves off the forms that begin its kind.
+      create: z.boolean().optional(),
       at: z.number().int().min(0).optional(),
       replace: lensTitle.optional(),
     })
@@ -986,7 +988,7 @@ class Editor {
       was = lenses[at];
     }
     // A lens drawn anew in another's place stays off the lists if that one was.
-    const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}), ...(was?.["hidden"] === true ? { hidden: true } : {}) };
+    const lens: Doc = { name, title: e.title, ...(e.on !== undefined ? { on: e.on } : {}), ...(e.bindings !== undefined ? { bindings: e.bindings } : {}), ...(e.options !== undefined ? { options: e.options } : {}), ...(was?.["hidden"] === true ? { hidden: true } : {}), ...(e.create === false ? { create: false } : {}) };
     // A title is an address: one lens a title on a kind.
     const clash = lenses.findIndex((other, index) => index !== at && isObject(other) && typeof other["title"] === "string" && placeSlug(other["title"]) === placeSlug(e.title) && (e.on === undefined || other["on"] === undefined || other["on"] === e.on));
     if (clash >= 0) return this.fail(i, "title", `there is already a lens called "${String(lenses[clash]["title"])}"`, 'give it its own title, or say "replace" with the title of the lens it takes the place of');
@@ -1001,8 +1003,9 @@ class Editor {
     if (name === "blocks" && !this.blocksHold(i, `lenses.${index}.options.blocks`)) return;
     const over = lens.on ?? kindsBound(lens)[0];
     const where = over ? `, over ${pluralWords(this.doc, over)}` : "";
+    const formless = lens.create === false ? "; its page offers no form to add one" : "";
     if (!was) {
-      this.said.push(`A lens "${e.title}" is added${where}.`);
+      this.said.push(`A lens "${e.title}" is added${where}${formless}.`);
       return;
     }
     const retitled = was["title"] !== e.title;
