@@ -33,6 +33,8 @@ export function useLayoutOptions<S extends AnySchema>(
   dock: { readonly right: number; readonly bottom: number },
   /** The graph's tick: the log only grows when the graph changes. */
   nodes: unknown,
+  /** The room words over the ground's top corner take (`headroom`): the trail's, when it says something. */
+  headroom = 0,
 ): LayoutOptions {
   const { store, views, hiddenKinds } = useGraview<S>();
   const found = useFound();
@@ -92,6 +94,7 @@ export function useLayoutOptions<S extends AnySchema>(
       // Up and the Key stand clear of a panel too, at the corner of what the reader sees.
       chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }],
       ...(dock.right > 0 || dock.bottom > 0 ? { dock } : {}),
+      ...(headroom > 0 ? { headroom } : {}),
       // The reader's own text size, which the cards are sized in: the city
       // grows with the words rather than holding them at a fixed 230×97.
       unit,
@@ -139,6 +142,6 @@ export function useLayoutOptions<S extends AnySchema>(
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated, besideTheMap, dock.right, dock.bottom],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated, besideTheMap, dock.right, dock.bottom, headroom],
   );
 }

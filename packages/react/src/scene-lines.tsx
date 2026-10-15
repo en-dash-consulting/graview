@@ -855,7 +855,19 @@ function SelectionTies<S extends AnySchema>({
     <div aria-hidden="true" data-graview-world="" style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: SCENE_LAYERS.tieLabels }}>
       {lines.map((line) =>
         line.said ? (
-          <span key={line.key} className="graview-record-link-said" data-graview-link-said={line.kind} data-graview-lands={line.proxy ? "district" : "record"} style={{ position: "absolute", left: line.endX, top: line.endY - 26 }}>
+          /*
+           * Said where the line lands, and kept on the ground: landing near
+           * the edge of a phone, "what it grows, year by year" ran past the
+           * screen, cut off (the tenth walk); it steps back by as much as it
+           * would have run over.
+           */
+          <span
+            key={line.key}
+            className="graview-record-link-said"
+            data-graview-link-said={line.kind}
+            data-graview-lands={line.proxy ? "district" : "record"}
+            style={{ position: "absolute", left: line.endX, top: line.endY - 26, transform: `translateX(min(0px, calc(${Math.round(width - line.endX - 8)}px - 100%)))` }}
+          >
             {line.said}
           </span>
         ) : null,

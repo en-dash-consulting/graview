@@ -2,6 +2,7 @@ import { arrange, arrangeable, throughEdges } from "@graview/core/arrange";
 import { counted, dayAsRead, fieldWords, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
 import { failureWords } from "@graview/core/words";
 import { kindCardId, withFocus, withOverview, withWithin, type ViewState } from "@graview/layout/view";
+import { withPast } from "@graview/layout/view-moves";
 import { useAffordances, useApplyAffordance } from "@graview/react";
 import { ViewBoundary } from "@graview/react/drawing";
 import { isDefaultView, useGraph, useGraview, useNavigation, useViolations, ViewModeProvider, type ViewComponent } from "@graview/react/provider";
@@ -72,6 +73,8 @@ export interface KindStopProps {
   readonly flagged?: readonly string[];
   /** What the place is called, when the address names it differently from the kind's plural. */
   readonly label?: string;
+  /** How many of its records stand behind the horizon: the line says "+N past" (the tenth walk). */
+  readonly retired?: number;
 }
 
 type Rec = { readonly id: string; readonly kind: string } & Readonly<Record<string, unknown>>;
@@ -99,7 +102,7 @@ function writeSeen(key: string, at: string): void {
 /** Going to a record from the stop: the same stop a double press on it makes. */
 const travelTo = (view: ViewState, id: string): ViewState => ({ ...withFocus(withOverview(view, false), id), relation: null });
 
-export function KindStop<S extends AnySchema>({ kind, members: given, flagged = [], label }: KindStopProps) {
+export function KindStop<S extends AnySchema>({ kind, members: given, flagged = [], label, retired = 0 }: KindStopProps) {
   const { store, brand, principal, views, view: stop } = useGraview<S>();
   const { go } = useNavigation();
   const graph = useGraph<S>();
@@ -155,7 +158,7 @@ export function KindStop<S extends AnySchema>({ kind, members: given, flagged = 
         * `in.filter`, `in.q`): a board and a calendar draw theirs, and the
         * table draws the list's — one line, never two.
         */}
-      {members.length > 1 && !pictured ? (
+      {(members.length > 1 || retired > 0) && !pictured ? (
         <ArrangeBar
           schema={schema}
           graph={store.graph as never}
@@ -167,6 +170,7 @@ export function KindStop<S extends AnySchema>({ kind, members: given, flagged = 
           kept={{ shown: arranged.nodes.length, of: members.length }}
           testId="kind-arrange"
           chips={{ nodes: members as never, flagged: flaggedSet, today }}
+          {...(retired > 0 ? { past: { count: retired, widen: () => go(withPast(stop, true)) } } : {})}
         />
       ) : null}
       {members.length > 0 ? <ShapeLine derived={derived} shape={shape} draft={draft} /> : null}

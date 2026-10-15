@@ -731,8 +731,9 @@ const audit = () => {
     .trim();
   // The raised chip names the raised relation the way the crumb names the
   // focus — and the group it names deliberately stays visible below.
-  const raisedChip = (document.querySelector("[data-testid=raised]")?.textContent ?? "")
-    .replace(/\s*×\s*$/, "")
+  // Its name is the way into it (`raised-into`); the × beside it lets it down.
+  const raisedChip = (document.querySelector("[data-testid=raised-into]")?.textContent ?? "")
+    .replace(/\s*↘\s*$/, "")
     .trim();
   /*
    * And the PLACE YOU ARE LOOKING AT is the crumb for a lens.

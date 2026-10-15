@@ -7,6 +7,7 @@ import {
   type NodeOfSchema,
 } from "@graview/core";
 import { useGraview, useNavigation, type ViewProps } from "@graview/react";
+import { withPast } from "@graview/layout/view-moves";
 import type { ReactNode } from "react";
 import { ArrangeBar, arrangementOf, withArrangement } from "../arrange-bar.js";
 
@@ -91,9 +92,16 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
     flagged: new Set(props.flagged ?? []),
   });
 
+  /*
+   * THE PAST HAS A WAY IN FROM THE PICTURE (the tenth walk). One callout
+   * current and 1,458 behind it drew a grid of one row with no line, and on
+   * a phone the district saying "+1458 past" was folded away: the line is
+   * drawn wherever records stand behind the horizon, and says so.
+   */
+  const retired = props.retired !== undefined && props.retired > 0 && (handed[0]?.kind ?? kind) === kind ? props.retired : 0;
   // No row on a picture with a budget: a lens handed a few of its members is a picture of itself, with no controls.
   const bar =
-    kind && allow !== false && props.fidelity === "full" && props.budget === undefined && subject.length > 1 ? (
+    kind && allow !== false && props.fidelity === "full" && props.budget === undefined && (subject.length > 1 || retired > 0) ? (
       <ArrangeBar
         schema={store.schema}
         graph={store.graph}
@@ -103,6 +111,7 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
         query={options.query !== false}
         onChange={(next) => go(withArrangement(view, next))}
         kept={{ shown: arranged.nodes.length, of: subject.length }}
+        {...(retired > 0 ? { past: { count: retired, widen: () => go(withPast(view, true)) } } : {})}
       />
     ) : null;
 

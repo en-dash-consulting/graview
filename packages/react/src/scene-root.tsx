@@ -772,7 +772,14 @@ export function Scene<S extends AnySchema>({
   const [above, setAbove] = useFromAbove();
   const seenFrom = useMemo(() => (above ? { ...options, tilt: TOP_DOWN } : options), [options, above]);
   const { probe: dockProbe, dock } = useDock();
-  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, dock, nodes);
+  /*
+   * THE TRAIL'S ROOM. On the ground, where the picture's trail says
+   * something — "zoomed in ×", "the past ×", a raised kind — the focused
+   * card begins below it rather than under it: its top, 14 pixels down, and
+   * a chip of the reader's text size (the tenth walk: "Shifts ×" over "Sort").
+   */
+  const headroom = !view.overview && (view.zoom || view.past || view.relation) ? Math.ceil(14 + (34 * unit) / 16 + 6) : 0;
+  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, dock, nodes, headroom);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
   // A district cannot be placed by hand from altitude, so no plot wears the pinned curb for one (a pin in an old bookmark is ignored).
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins).filter((id) => kindOfCard(id) === null)), [view.pins]);

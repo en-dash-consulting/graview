@@ -1147,11 +1147,25 @@ ${/* THE LANDMARK STANDS IN THE SQUARE: its feet at the plot's center, among
 }
 ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
    fingertip-sized buttons and the level between them, shown from altitude. */ ""}
+${/* THE SCENE'S FOOT: a sheet over it, and on a phone the ask field across
+   it. On a desk the field stands at the foot's other end; on a phone it is
+   the foot's whole width, and the zoom stood under it, every control of it
+   covered (the watch's "control-covered", the tenth walk's carried pass). */ ""}
+.graview-zoom,
+.graview-edge-sign {
+  --graview-scene-foot: var(--graview-sheet, 0px);
+}
+@container (max-width: 639px) {
+  .graview-zoom,
+  .graview-edge-sign {
+    --graview-scene-foot: calc(var(--graview-sheet, 0px) + var(--graview-foot-room, 0px));
+  }
+}
 .graview-zoom {
   position: absolute;
-  ${/* Clear of a panel floating over the scene's right edge, or a sheet over its foot. */ ""}
+  ${/* Clear of a panel floating over the scene's right edge, or a sheet over its foot, or the ask field across it. */ ""}
   right: calc(16px + var(--graview-dock, 0px));
-  bottom: calc(16px + var(--graview-sheet, 0px));
+  bottom: calc(16px + var(--graview-scene-foot, var(--graview-sheet, 0px)));
   ${/* Above the occupants: a robot walking past a control must not cover it. */ ""}
   z-index: ${SCENE_LAYERS.zoom};
   display: inline-flex;

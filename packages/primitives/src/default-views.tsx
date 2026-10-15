@@ -406,15 +406,21 @@ export function registerDefaultViews<S extends AnySchema>(
             */}
           <div
             style={{
-              display: "grid",
               /*
                * A record with prose in it is read down the page (FR-147): its
                * facts the panel's width, its relationships under them. A
                * draft in the left column was a third of the panel wide.
+               *
+               * And a card narrower than both columns reads down too (the
+               * tenth walk): two columns of 200 and 220 pixels held in a
+               * plot's card on a phone put its relationships past the
+               * screen's edge, cut off. Side by side where both fit, in the
+               * same 1 : 1.4; one under the other where they do not.
                */
-              gridTemplateColumns: readsDown(definition, node) ? "minmax(0, 1fr)" : "minmax(200px, 1fr) minmax(220px, 1.4fr)",
+              display: "flex",
+              flexWrap: "wrap",
               gap: "22px 34px",
-              alignItems: "start",
+              alignItems: "flex-start",
             }}
           >
             {/*
@@ -424,21 +430,25 @@ export function registerDefaultViews<S extends AnySchema>(
               * finding a named mutation in the strip and answering its
               * arguments in a form.
               */}
-            <Fields<S>
-              id={node.id}
-              // What the panel already said: its title and its subtitle. A
-              // record repeating its own heading is what made this read as a
-              // debug dump rather than as a page about something.
-              shown={[heading, short, definition?.description, head?.title]}
-              // And what a declared page at its head said, by name (FR-141).
-              {...(head ? { hide: [...head.fields] } : {})}
-            />
-            <Connections
-              id={node.id}
-              empty={`Nothing is connected to this ${nounOf(definition, String(kind))} yet.`}
-              // A tie the page already lists is not listed again (FR-141).
-              {...(head ? { hide: head.records } : {})}
-            />
+            <div style={{ flex: readsDown(definition, node) ? "1 1 100%" : "1 1 0", minWidth: "min(200px, 100%)" }}>
+              <Fields<S>
+                id={node.id}
+                // What the panel already said: its title and its subtitle. A
+                // record repeating its own heading is what made this read as a
+                // debug dump rather than as a page about something.
+                shown={[heading, short, definition?.description, head?.title]}
+                // And what a declared page at its head said, by name (FR-141).
+                {...(head ? { hide: [...head.fields] } : {})}
+              />
+            </div>
+            <div style={{ flex: readsDown(definition, node) ? "1 1 100%" : "1.4 1 0", minWidth: "min(220px, 100%)" }}>
+              <Connections
+                id={node.id}
+                empty={`Nothing is connected to this ${nounOf(definition, String(kind))} yet.`}
+                // A tie the page already lists is not listed again (FR-141).
+                {...(head ? { hide: head.records } : {})}
+              />
+            </div>
           </div>
           {touching.length > 0 ? (
             <p
@@ -529,7 +539,7 @@ export function registerDefaultViews<S extends AnySchema>(
     const Group = (props: ViewProps<S>) =>
       props.fidelity === "full" ? (
         <Suspense fallback={<GroupList {...props} />}>
-          <KindStopPart kind={String(kind)} members={props.nodes ?? []} {...(props.flagged ? { flagged: props.flagged } : {})} {...(props.label ? { label: props.label } : {})} />
+          <KindStopPart kind={String(kind)} members={props.nodes ?? []} {...(props.flagged ? { flagged: props.flagged } : {})} {...(props.label ? { label: props.label } : {})} {...(props.retired ? { retired: props.retired } : {})} />
         </Suspense>
       ) : (
         <GroupList {...props} />

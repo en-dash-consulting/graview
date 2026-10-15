@@ -1,6 +1,6 @@
 import { pluralLabel } from "@graview/core";
 import type { AnySchema } from "@graview/core";
-import { withoutMoves, withZoom } from "@graview/layout/view";
+import { kindCardId, withJackIn, withoutMoves, withZoom } from "@graview/layout/view";
 import { withPast } from "@graview/layout/view-moves";
 import { useGraview, useNavigation } from "@graview/react/provider";
 import { Fragment, type ReactNode } from "react";
@@ -189,22 +189,45 @@ export function Trail({
       ),
     });
   }
+  /*
+   * A RAISED KIND IS A WAY INTO IT (the tenth walk). Pressing the Tasks
+   * district from "The lists" raises the tasks as a relation of the lists,
+   * which is what a press there means — and then nothing on the screen went
+   * INTO them, where their list is narrowed: a double-click nobody is told
+   * about was the only way. Its name goes in; its × lets it down.
+   */
   if (view.relation) {
+    const raised = view.relation;
     chips.push({
       key: "raised",
       node: (
-        <button
-          type="button"
-          data-testid="raised"
-          onClick={() => show(null)}
-          title={`Stop showing ${plural(view.relation!)}`}
-          style={chip}
-        >
-          {plural(view.relation)}
-          <span aria-hidden="true" style={{ opacity: 0.7 }}>
-            ×
-          </span>
-        </button>
+        <span style={{ display: "inline-flex", alignItems: "center" }}>
+          <button
+            type="button"
+            data-testid="raised-into"
+            onClick={() => go(withJackIn(view, kindCardId(raised), { ownPicture: true }))}
+            title={`Go into the ${plural(raised).toLowerCase()}`}
+            aria-label={`Go into the ${plural(raised).toLowerCase()}`}
+            style={{ ...chip, color: "var(--graview-ink)" }}
+          >
+            {plural(raised)}
+            <span aria-hidden="true" style={{ opacity: 0.7 }}>
+              ↘
+            </span>
+          </button>
+          <button
+            type="button"
+            data-testid="raised"
+            onClick={() => show(null)}
+            title={`Stop showing ${plural(raised).toLowerCase()}`}
+            aria-label={`Stop showing ${plural(raised).toLowerCase()}`}
+            style={{ ...chip, minWidth: 26, justifyContent: "center" }}
+          >
+            <span aria-hidden="true" style={{ opacity: 0.7 }}>
+              ×
+            </span>
+          </button>
+        </span>
       ),
     });
   }
