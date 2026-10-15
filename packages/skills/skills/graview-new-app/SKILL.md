@@ -178,7 +178,8 @@ the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets`
 fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without
 either the graph still answers and the seat says AI isn't available. The GPU
 capture path is Chromium-only, experimental and opt-in (`attachRenderer`
-from `@graview/render/gpu`; there is no URL switch) — never a requirement.
+set to `attachGpu()` from `@graview/render/gpu`; there is no URL switch) —
+never a requirement.
 
 ## Then find out whether it worked
 

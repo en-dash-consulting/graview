@@ -9,6 +9,7 @@ import {
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  CAPTURE_BUDGET,
   connectorStyle,
   distinguishable,
   fromLayout,
@@ -85,8 +86,8 @@ describe("capture budget policy", () => {
   });
 
   it("keeps a big scene inside the measured ceiling", () => {
-    // 200 views is past the ~128-live-capture cliff measured in
-    // docs/platform-findings.md. The fidelity split is what keeps it safe:
+    // 200 live captures a frame is three times what sixty frames a second
+    // holds (`CAPTURE_BUDGET`). The fidelity split is what keeps it safe:
     // only the focus plane pays per frame.
     const views = Array.from({ length: 200 }, (_, i) =>
       view(`v${i}`, i < 6 ? 0 : i < 60 ? 1 : 2),
@@ -95,6 +96,69 @@ describe("capture budget policy", () => {
     const plan = planFrame(views, [], { ...CANVAS, capturedAt });
     expect(plan.captureCount).toBe(6);
     expect(plan.draws).toHaveLength(200);
+  });
+});
+
+describe("a page of live views under the capture cliff", () => {
+  const live = (count: number) => Array.from({ length: count }, (_, i) => view(`v${i}`, 0, { x: (i % 20) * 40, y: Math.floor(i / 20) * 20, width: 36, height: 16 }));
+  const seen = (views: readonly PlannedView[]) => Object.fromEntries(views.map((v) => [v.id, 1]));
+
+  it("retakes a live view only when the browser says it changed", () => {
+    const views = live(512);
+    const plan = planFrame(views, [], { ...CANVAS, capturedAt: seen(views), changed: new Set(["v3", "v400"]) });
+    expect(plan.captures).toEqual([
+      { viewId: "v3", reason: "live" },
+      { viewId: "v400", reason: "live" },
+    ]);
+    expect(plan.draws).toHaveLength(512);
+  });
+
+  it("still retakes every live view when the browser does not say what changed", () => {
+    const views = live(64);
+    expect(planFrame(views, [], { ...CANVAS, capturedAt: seen(views) }).captureCount).toBe(64);
+  });
+
+  it("retakes a view marked dirty whether or not the browser saw it change", () => {
+    const views = live(8).map((v) => (v.id === "v5" ? { ...v, dirty: true } : v));
+    const plan = planFrame(views, [], { ...CANVAS, capturedAt: seen(views), changed: new Set() });
+    expect(plan.captures.map((c) => c.viewId)).toEqual(["v5"]);
+  });
+
+  it("spends no more than the budget on retakes, nearest plane first, and defers the rest", () => {
+    const views = [view("far", 2), view("near", 0), view("mid", 1), view("near2", 0)];
+    const plan = planFrame(views, [], { ...CANVAS, capturedAt: seen(views), changed: new Set(["far", "near", "mid", "near2"]), captureBudget: 2 });
+    expect(plan.captures.map((c) => c.viewId).sort()).toEqual(["near", "near2"]);
+    expect([...plan.deferred].sort()).toEqual(["far", "mid"]);
+    // A deferred view keeps its old pixels on screen: it is drawn, a frame late.
+    expect(plan.draws.map((d) => d.viewId)).toContain("far");
+  });
+
+  it("always takes a view it has never seen, whatever the budget", () => {
+    const plan = planFrame(live(40), [], { ...CANVAS, captureBudget: 2 });
+    expect(plan.captureCount).toBe(40);
+    expect(plan.deferred).toEqual([]);
+  });
+
+  it("neither takes nor draws a view wholly off the canvas, and still runs its connector", () => {
+    const views = [view("in", 0), view("out", 0, { x: 5000 })];
+    const plan = planFrame(views, [{ id: "e", kind: "rel", from: "in", to: "out" }], CANVAS);
+    expect(plan.culled).toEqual(["out"]);
+    expect(plan.captures.map((c) => c.viewId)).toEqual(["in"]);
+    expect(plan.draws.map((d) => d.viewId)).toEqual(["in"]);
+    expect(plan.connectors).toHaveLength(1);
+  });
+
+  it("places a view drawn on the DOM path but never takes, draws or reports it", () => {
+    const plan = planFrame([view("gpu", 0), view("dom", 1, { dom: true })], [], CANVAS);
+    expect(plan.captures.map((c) => c.viewId)).toEqual(["gpu"]);
+    expect(plan.draws.map((d) => d.viewId)).toEqual(["gpu"]);
+    expect(plan.geometry.map((g) => g.viewId)).toEqual(["gpu"]);
+    expect(plan.placements.map((p) => p.viewId).sort()).toEqual(["dom", "gpu"]);
+  });
+
+  it("keeps a budget that leaves room in a sixty-frame second", () => {
+    // ~0.22 ms a capture on Chromium 158: the budget is under half a frame.
+    expect(CAPTURE_BUDGET * 0.22).toBeLessThan(1000 / 60 / 2);
   });
 });
 

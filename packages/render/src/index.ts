@@ -40,7 +40,7 @@ export {
 export type { PlaneIndex, PlaneStyle, Scheme } from "./scene/plane.js";
 
 // The frame, as data: what captures, what draws, and where it lands.
-export { planFrame } from "./scene/frame-plan.js";
+export { CAPTURE_BUDGET, planFrame } from "./scene/frame-plan.js";
 export type {
   CaptureCommand,
   ConnectorDraw,

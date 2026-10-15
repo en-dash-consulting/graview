@@ -22,11 +22,18 @@
  * resolved once, at runtime, behind names of our own. When the spec settles,
  * exactly one file changes.
  *
- * Verified against Chrome Canary 154.0.8032.0 with
- * `--enable-blink-features=CanvasDrawElement`. What that build actually
- * exposes, and the exact call shapes, are recorded in
- * `docs/platform-findings.md`; the shapes below are what it accepts, not what
+ * Verified against Chrome Canary 154.0.8032.0 and 158.0.8105.0 with
+ * `--enable-blink-features=CanvasDrawElement`. What those builds actually
+ * expose, and the exact call shapes, are recorded in
+ * `docs/platform-findings.md`; the shapes below are what they accept, not what
  * the README suggests.
+ *
+ * Between the two the API was respelled, and every capture on 158 threw:
+ * the canvas opts its children in with `content="drawable"` (not
+ * `layoutsubtree`, which 158 no longer knows), each element drawn carries a
+ * `drawable` attribute, and the capture's destination is the texture copy
+ * itself (`{ texture }`) rather than `{ destination: { texture } }`. Both
+ * spellings are written, and the call shape is found on the first capture.
  */
 
 import {
@@ -88,6 +95,17 @@ export interface PlatformCapabilities {
   readonly usable: boolean;
   readonly notes: readonly string[];
 }
+
+/**
+ * The second argument of the capture call. Chromium 154 took
+ * `{ destination: { texture } }`; 158 takes the texture copy itself. Which
+ * one this build wants is learned from the first call and kept.
+ */
+type DestinationShape = "texture" | "destination";
+let destinationShape: DestinationShape | null = null;
+
+const destinationFor = (shape: DestinationShape, texture: GPUTexture) =>
+  shape === "texture" ? { texture } : { destination: { texture } };
 
 interface CaptureCapableQueue extends GPUQueue {
   drawElementImageToTexture?: (source: unknown, destination: unknown) => void;
@@ -158,7 +176,9 @@ export function detectCapabilities(
   let layoutSubtree = false;
   if (typeof document !== "undefined") {
     const probe = document.createElement("canvas") as ElementCanvas;
-    layoutSubtree = "layoutSubtree" in probe;
+    // 158 dropped the property along with the attribute's old name; the
+    // paint record API is what says a canvas lays its children out now.
+    layoutSubtree = "layoutSubtree" in probe || typeof probe.captureElementImage === "function";
   }
 
   return {
@@ -201,12 +221,43 @@ export function captureElement(
   const q = queue as CaptureCapableQueue;
   for (const name of CAPTURE_METHOD_NAMES) {
     const method = q[name];
-    if (typeof method === "function") {
-      method.call(q, { source }, { destination: { texture } });
+    if (typeof method !== "function") continue;
+    if (destinationShape) {
+      method.call(q, { source }, destinationFor(destinationShape, texture));
       return;
     }
+    // The first capture finds the shape: a build that wants the other one
+    // rejects this one with a TypeError naming the member it missed.
+    try {
+      method.call(q, { source }, destinationFor("texture", texture));
+      destinationShape = "texture";
+    } catch (error) {
+      if (!(error instanceof TypeError) || !/texture/i.test(error.message)) throw error;
+      method.call(q, { source }, destinationFor("destination", texture));
+      destinationShape = "destination";
+    }
+    return;
   }
   throw new PlatformUnavailableError(detectCapabilities(queue));
+}
+
+/**
+ * Marks an element as one the canvas draws. Chromium 158 captures only an
+ * immediate child that carries `drawable`; 154 ignores the attribute.
+ */
+export function markDrawable(element: Element, on = true): void {
+  if (on) element.setAttribute("drawable", "");
+  else element.removeAttribute("drawable");
+}
+
+/**
+ * The elements the browser says changed since the canvas last painted, from
+ * a `paint` event — `null` when this build does not say, in which case
+ * nothing can be assumed unchanged.
+ */
+export function changedElementsOf(event: Event): ReadonlySet<Element> | null {
+  const changed = (event as Event & { changedElements?: ArrayLike<Element> }).changedElements;
+  return changed ? new Set(Array.from(changed)) : null;
 }
 
 /**
@@ -259,9 +310,14 @@ export function requestPaint(canvas: HTMLCanvasElement): void {
   (canvas as ElementCanvas).requestPaint?.();
 }
 
-/** Marks a canvas as owning its descendants' layout. */
+/**
+ * Marks a canvas as owning its descendants' layout, in both spellings:
+ * `content="drawable"` (Chromium 158) and `layoutsubtree` (154).
+ */
 export function setLayoutSubtree(canvas: HTMLCanvasElement, on = true): void {
   const target = canvas as ElementCanvas;
+  if (on) target.setAttribute("content", "drawable");
+  else target.removeAttribute("content");
   if ("layoutSubtree" in target) target.layoutSubtree = on;
   else if (on) target.setAttribute("layoutsubtree", "");
   else target.removeAttribute("layoutsubtree");

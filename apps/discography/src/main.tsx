@@ -50,6 +50,38 @@ applyScheme(scheme);
  */
 const ai = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? await aiThroughDevServer() : undefined;
 
+/*
+ * THE GPU CAPTURE PATH, asked for by name: `?gpu=1`, in a Chromium that
+ * captures (Canary with `--enable-blink-features=CanvasDrawElement`). Loaded
+ * only then, so the page a person opens carries none of it; where it cannot
+ * capture, every view is drawn on the DOM path as it is without the flag.
+ */
+const asked = new URLSearchParams(window.location.search);
+const gpu =
+  asked.get("gpu") === "1" && "gpu" in navigator
+    ? (await import("@graview/render/gpu")).attachGpu({
+        // `&budget=0`: a harness starving the capture budget, to see views handed to the DOM path.
+        ...(asked.has("budget") ? { captureBudget: Number(asked.get("budget")) } : {}),
+        // A harness counts what each frame captured, deferred and handed back, and where each view was drawn.
+        onFrame: (frame, compositor) => {
+          (window as unknown as Record<string, unknown>)["__graviewGpuPlaced"] = () =>
+            compositor.placements().map((placed) => ({
+              id: placed.element.getAttribute("data-graview-view"),
+              x: placed.transform[12],
+              y: placed.transform[13],
+              width: placed.width * placed.transform[0],
+              height: placed.height * placed.transform[5],
+            }));
+          const seen = ((window as unknown as Record<string, unknown>)["__graviewGpu"] ??= { frames: 0, captures: 0, deferred: 0, missed: 0, drawn: 0 }) as Record<string, number>;
+          seen["frames"]! += 1;
+          seen["captures"]! += frame.captureCount;
+          seen["deferred"]! += frame.deferred.length;
+          seen["missed"]! += frame.missed.length;
+          seen["drawn"] = frame.draws.length;
+        },
+      })
+    : undefined;
+
 const root = document.getElementById("root");
 if (!root) throw new Error("no #root");
 
@@ -97,7 +129,7 @@ if (window.location.pathname.startsWith("/pages")) {
   );
 } else {
   createRoot(root).render(
-    <DiscographyApp store={opened.store} {...(ai ? { ai } : {})} remembers syncUrl initialScheme={scheme} onSchemeChange={applyScheme} />,
+    <DiscographyApp store={opened.store} {...(ai ? { ai } : {})} {...(gpu ? { attachRenderer: gpu } : {})} remembers syncUrl initialScheme={scheme} onSchemeChange={applyScheme} />,
   );
 }
 
