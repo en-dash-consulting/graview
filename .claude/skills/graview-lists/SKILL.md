@@ -58,6 +58,15 @@ already set a record aside.
    record's page draws it as prose (headings, lists, links, code; no HTML),
    while a row, a card, a describe line and a search hit say its first
    paragraph or about 160 characters with the syntax taken out.
+   A card with no blocks of its own says its kind's `glance` — exactly
+   those fields, nothing after them; prose there is a line under the
+   chips, never a cut chip. A choice another chip beside it shares (a
+   severity and a confidence, both "high") says its field: "Confidence:
+   high". A related record in a template is said by its kind's `label`:
+   `{out('affects') | and}` is "src/files.ts and tsconfig.json"; a count
+   starting a headline, `{n | words | capital}`, is "Two findings". A place
+   titled as a kind's list is keeps the name on the bar, and the list folds
+   into More as "All root causes" (`pages-place-named-as-a-list`).
 
 3. **Set records aside instead of deleting them.** Every kind has
    `archive-<kind>` and `unarchive-<kind>` (`{ id }`, "Bring it back") and

@@ -24,14 +24,15 @@ if (location.pathname.startsWith("/pages")) {
 `PagesApp` renders with no registry at all:
 
 - `/` — a GALLERY. The standing as the headline ("2 gardeners, 3 plots and
-  1 planting." or "Nothing here yet."), then every picture as a large live
-  card, the kinds as a row of counts, a line to the map, and Recently. A kind
+  1 planting." or "Nothing here yet." and the act that begins it), then every
+  picture as a large live card, then the kinds as a row of counts, a line to the map, and Recently. A kind
   with no titled lens gets a contact sheet of its members, so a new app
   lands on a gallery. An empty picture names the act that fills it.
-- `/<plural>` — a list per kind, marking trouble, its creating acts beneath.
+- `/<plural>` — a list per kind, marking trouble, with the creating acts
+  beneath it.
 - `/<plural>/<id>` — a record: its facts, changed where they stand, its
   relations in the declaration's words, what can be done, what happened.
-- `/problems` — every broken rule, with repairs.
+- `/problems` — every broken rule with its repairs.
 
 The app bar, one row over any shell (`barAbove`): the name, the switch (Scene, Pages;
 `pages: { scene, pages }` renames them), the place you are on — whose list
@@ -43,16 +44,15 @@ A shell with a rail of its own says `surface("shell", Shell, { without:
 **Arrange it, declared**: `pages: { order: ["offer",
 "package"], hide: ["party"], first: "The offers" }`. `order` sorts
 gallery, nav, city; `hide` drops kinds from the home only; `first` (place,
-kind or `"home"`) opens both faces; `primary` stands on the bar.
-`placesOf(app)` (`/seat`) lists them. A lens only a custom home links to
-may be `hidden: true` (set-lens-hidden): off the bar and the page list,
-still at its address.
+kind or `"home"`) is where a new visit lands; a drawn home stays Home, on
+the bar and at `/`. `primary` stands on the bar.
+`placesOf(app)` (`/seat`) lists them.
 **Home as data** (FR-81): `home`, blocks as in `graview-node-kind`
 (`views.home`), replaces this body, and the app opens on it (FR-136).
 
 **Hand it `views`** (the scene's registry, plus `settings`/`presence`) —
 `graview create` does — and the face puts the scene's provider
-under its routes:
+under its routes, which buys three things at once:
 
 - `/places`, `/places/<as>` — every named lens as a page (fullscreen, over
   the kind's members, the beginning acts beneath). A kind's page lists its pictures; a pick in a lens
@@ -125,8 +125,7 @@ Rules for a page at this rung:
    `main`, and a hand-written one is a duplicate landmark.
 2. **`useStoreTick(store)`** at the top of every page that reads the graph,
    or it goes stale after the first act.
-3. **`pageStyles`** for the parts you did not design, so one custom page
-   still reads as the same face as the derived ones.
+3. **`pageStyles`** for the parts you did not design: one face, derived or not.
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record
    offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args },
@@ -134,7 +133,7 @@ Rules for a page at this rung:
    refuses on submit is the bug this prevents.
 6. **Link to a PICTURE, not only to a node.** `spatialHref(id)` opens the
    scene on one thing; `placeHref(as)` (`/#view=the-grounds`) on one named
-   place.
+   place, group in focus.
 7. **Take the act LIST from the derivation, not from the mutations.**
    `recordFacts(store, id, { principal }).actions` is the `AffordanceSet`
    the scene's strip reads: `affordances` can act here, `args` decided and
@@ -157,15 +156,16 @@ createPageRegistry<S, PageComponent<S>>(schema)
   // ... every kind
 ```
 
-The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, not for its type
-but because everything a person tries there works: sort, filter and group come from `ArrangeBar` and live
+The shell surface receives `{ context, children }`. Two worked examples. `apps/todo/src/ui/design.tsx` is the FINISHED one, and
+what makes it finished is not the type — it is that everything a person
+tries there works: sort, filter and group come from `ArrangeBar` and live
 in `useSearchParams` in the shared words (a list you arranged is a link); a record edits where it is
 shown, heading included, through `editableFields(store, id)`; an act's form
 opens where the act is, prefilled, with the store's own refusal said at the
 press; the problems page is an inbox, its repairs ordered by
 `rankedRepairs`; and every empty state offers the way out of itself.
-`apps/seedbed/src/ui/design.tsx` is the other end — an almanac whose own
-drawing has two homes, the page and the scene's lens reading one model.
+`apps/seedbed/src/ui/design.tsx` is the other end: an almanac drawn on the
+page and in the scene's lens from one model.
 
 What every design must keep doing:
 
@@ -186,8 +186,8 @@ What every design must keep doing:
   label, and the accent fails on the warning ground. `node
   scripts/verify-pages.mjs` runs axe over every route, both widths, both
   schemes.
-- **Withhold, do not hide.** Rule 7, on every surface: struck through with
-  the policy's sentence, not dropped.
+- **Withhold, do not hide.** Rule 7 again, at every surface: struck through
+  with the policy's own sentence rather than dropped.
 
 ## On somebody else's page
 

@@ -40,6 +40,14 @@
  * measure said as declared; the form to add one shows "$" beside its
  * amount and takes "$1,250.50" as written.
  *
+ * And a review app as a Cloud author built it (`review.gdd.json`): a home
+ * the declaration draws beside `pages.first: "This week"` — the visit lands
+ * on This week, and a press on Home draws the home at "/"; a finding's card
+ * says its kind's glance and nothing after it, and a risk's says whose
+ * "high" is ("Impact: high"); and a place titled "Root causes" beside the
+ * root causes' list is one "Root causes" on the bar, the list "All root
+ * causes" and still at /root-causes.
+ *
  *   node scripts/verify-declared.mjs [--engine=chromium|webkit|firefox]
  */
 import { createServer } from "node:http";
@@ -83,6 +91,9 @@ const STRENGTHS_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/
 const CHANGES = resolve(repoRoot, "packages/core/tests/document/fixtures/changes.gdd.json");
 /** Deals in dollars (the money bug found on a Cloud app, Oct 13): an amount, a margin, an effort, a weight and a fee in euros. */
 const MONEY = resolve(repoRoot, "packages/core/tests/document/fixtures/money.gdd.json");
+/** A code review's findings (the review app built as a document on CLI 0.1.29): a drawn home and `pages.first` beside it, a place named as a list, glances. */
+const REVIEW = resolve(repoRoot, "packages/core/tests/document/fixtures/review.gdd.json");
+const REVIEW_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/review.seed.json");
 const MONEY_SEED = {
   nodes: [
     { id: "d1", kind: "deal", name: "Acme rebrand", amount: 10000, margin: 0.125, effort: 90, weight: 12.5, fee: 1250.5, stage: "won" },
@@ -146,21 +157,24 @@ async function buildHost() {
         import strengthsSeed from ${JSON.stringify(STRENGTHS_SEED)};
         import changes from ${JSON.stringify(CHANGES)};
         import money from ${JSON.stringify(MONEY)};
+        import review from ${JSON.stringify(REVIEW)};
+        import reviewSeed from ${JSON.stringify(REVIEW_SEED)};
         const asked = new URLSearchParams(location.search);
+        const reviewed = asked.get("doc") === "review";
         const proposal = asked.get("doc") === "lifelogics";
         const board = asked.get("doc") === "tasks";
         const org = asked.get("doc") === "strengths";
         const changed = asked.get("doc") === "changes";
         const dollars = asked.get("doc") === "money";
-        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : hall, { today: () => "2026-09-01" });
+        const compiled = compileDocumentWithoutCheck(proposal ? lifelogics : board ? tasks : org ? strengths : changed ? changes : dollars ? money : reviewed ? review : hall, { today: () => "2026-09-01" });
         if (!compiled.ok) throw new Error("the document did not compile");
         window.__handle = mount(document.getElementById("app"), {
           app: compiled.app,
-          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : ${JSON.stringify(SEED)},
+          seed: proposal ? lifelogicsSeed : board ? ${JSON.stringify(TASKS_SEED)} : org ? strengthsSeed : changed ? ${JSON.stringify(CHANGES_SEED)} : dollars ? ${JSON.stringify(MONEY_SEED)} : reviewed ? reviewSeed : ${JSON.stringify(SEED)},
           /* "none": the app's to choose — its home view, else the scene (FR-136). */
           ...(asked.get("face") === "none" ? {} : { face: asked.get("face") ?? "scene" }),
           ...(asked.get("path") ? { path: asked.get("path") } : {}),
-          principal: proposal || org || changed || dollars
+          principal: proposal || org || changed || dollars || reviewed
             ? { kind: "human", id: "u:owner", roles: ["owner"] }
             : board
               ? asked.get("as") === "viewer" ? { kind: "human", id: "p2", roles: ["viewer"] } : { kind: "human", id: "p1", roles: ["owner"] }
@@ -720,6 +734,55 @@ try {
     }
     await form.close();
     report.checks.aMoneyFormShowsItsCurrencyAndTakesAnAmountAsWritten = { box, made, ok: box.type === "text" && box.mode === "decimal" && box.symbol === "$" && box.placeholder === "1,250.00" && made === "said" };
+  }
+
+  /*
+   * ---- A review app, as a Cloud author built it (CLI 0.1.29): a home the
+   * declaration draws and `pages.first` naming another place; a place
+   * titled as a kind's list is; cards that say their glance and no more.
+   */
+  {
+    /* `pages.first` picks where a visit lands; the drawn home stays Home, one press away. */
+    const page = await open("doc=review&face=none", { width: 1280, height: 900 });
+    const landed = await page.evaluate(() => window.__handle.where());
+    await page.click('[data-testid="app-home"]');
+    await page.waitForTimeout(1200);
+    const home = await page.evaluate(() => ({
+      where: window.__handle.where(),
+      headline: document.querySelector("[data-graview-embed] .graview-spec-headline")?.textContent?.trim() ?? null,
+    }));
+    report.checks.theDrawnHomeIsHomeWhenPagesFirstNamesAnotherPlace = {
+      landed,
+      home,
+      ok: (landed.path.includes("this-week") || landed.stop.includes("this-week")) && home.where.face === "pages" && home.where.path === "/" && home.headline === "Two findings, worst first",
+    };
+
+    /* A card says its kind's glance exactly, and a choice another chip shares says whose it is. */
+    const findingText = await page.evaluate(() => document.querySelector('[data-graview-embed] [data-graview-listed="f1"]')?.textContent ?? "");
+    report.checks.aCardSaysItsGlanceAndNothingMore = {
+      findingText,
+      ok: findingText.includes("Critical") && findingText.includes("Security") && !/\bHigh\b/.test(findingText) && !/confidence/i.test(findingText),
+    };
+    const riskText = await page.evaluate(() => document.querySelector('[data-graview-embed] [data-graview-listed="r1"]')?.textContent ?? "");
+    report.checks.aChoiceAnotherChipSharesSaysItsField = {
+      riskText,
+      ok: riskText.includes("Likelihood: low") && riskText.includes("Impact: high") && riskText.includes("Billing") && !riskText.includes("Area:"),
+    };
+
+    /* One "Root causes" on the bar: the place stands, and the kind's list is still reached, as "All root causes" and at its address. */
+    const bar = await page.evaluate(() =>
+      [...document.querySelectorAll("[data-graview-embed] [data-place-path]")].map((entry) => ({ path: entry.getAttribute("data-place-path"), text: entry.textContent?.trim() ?? "" })),
+    );
+    await page.close();
+    const listPage = await open(`doc=review&face=pages&path=${encodeURIComponent("/root-causes")}`, { width: 1280, height: 900 });
+    const byLink = await listPage.evaluate(() => document.querySelector("main")?.textContent?.includes("No owner for logging") ?? false);
+    await listPage.close();
+    const named = bar.filter((entry) => entry.text === "Root causes");
+    report.checks.aPlaceNamedAsAListIsOnTheBarOnce = {
+      bar,
+      byLink,
+      ok: named.length === 1 && named[0].path === "/places/root-causes" && bar.some((entry) => entry.path === "/root-causes" && entry.text === "All root causes") && byLink,
+    };
   }
 
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

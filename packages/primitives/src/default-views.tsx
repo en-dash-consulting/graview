@@ -480,6 +480,14 @@ export function registerDefaultViews<S extends AnySchema>(
         glance: true,
       });
       const hue = useHue(kind as string);
+      /*
+       * PROSE IS A LINE, NOT A CHIP: an insight's thesis on a chip was cut
+       * after a couple of dozen characters, mid-word. A long text or a
+       * Markdown field is said by its start under the chips, the syntax
+       * taken out (`excerptOf`, through the glance); the chips are facts.
+       */
+      const chips = fields.filter((field) => !field.long && !field.markdown);
+      const prose = fields.find((field) => field.long || field.markdown);
       // Its first picture, small, above its facts (FR-162).
       const picture = firstPicture(node, definition);
       return (
@@ -491,7 +499,7 @@ export function registerDefaultViews<S extends AnySchema>(
         >
           {picture ? <Files as="thumb" file={picture} size={64} style={{ marginBottom: 6 }} /> : null}
           <Roster
-            items={fields.map((field) => ({
+            items={chips.map((field) => ({
               id: field.key,
               // Alone on a chip a number or a yes/no is no fact at all.
               label: field.alone,
@@ -499,6 +507,24 @@ export function registerDefaultViews<S extends AnySchema>(
             }))}
             max={3}
           />
+          {prose ? (
+            <p
+              data-graview-excerpt={prose.key}
+              title={prose.value}
+              style={{
+                margin: chips.length > 0 ? "6px 0 0" : 0,
+                fontSize: "0.8125rem",
+                lineHeight: 1.35,
+                color: "var(--graview-ink-muted)",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {prose.value}
+            </p>
+          ) : null}
         </Panel>
       );
     };

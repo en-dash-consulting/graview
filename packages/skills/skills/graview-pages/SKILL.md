@@ -43,10 +43,10 @@ A shell with a rail of its own says `surface("shell", Shell, { without:
 **Arrange it, declared**: `pages: { order: ["offer",
 "package"], hide: ["party"], first: "The offers" }`. `order` sorts
 gallery, nav, city; `hide` drops kinds from the home only; `first` (place,
-kind or `"home"`) opens both faces; `primary` stands on the bar.
-`placesOf(app)` (`/seat`) lists them. A lens only a custom home links to
-may be `hidden: true` (set-lens-hidden): off the bar and the page list,
-still at its address.
+kind or `"home"`) is where a new visit lands; a drawn home stays Home, on
+the bar and at `/`. `primary` stands on the bar. `placesOf(app)` (`/seat`)
+lists them. A lens only a home links to may be `hidden: true`
+(set-lens-hidden): off the bar and the page list, still at its address.
 **Home as data** (FR-81): `home`, blocks as in `graview-node-kind`
 (`views.home`), replaces this body, and the app opens on it (FR-136).
 
@@ -125,8 +125,7 @@ Rules for a page at this rung:
    `main`, and a hand-written one is a duplicate landmark.
 2. **`useStoreTick(store)`** at the top of every page that reads the graph,
    or it goes stale after the first act.
-3. **`pageStyles`** for the parts you did not design, so one custom page
-   still reads as the same face as the derived ones.
+3. **`pageStyles`** for the parts you did not design: one face, derived or not.
 4. **Prefill, never wire.** `DerivedForm` with `prefilled` is how a record
    offers an act about itself; the form asks for the rest.
 5. **Read permission before drawing an act.** `store.permits({ name, args },
@@ -164,8 +163,8 @@ shown, heading included, through `editableFields(store, id)`; an act's form
 opens where the act is, prefilled, with the store's own refusal said at the
 press; the problems page is an inbox, its repairs ordered by
 `rankedRepairs`; and every empty state offers the way out of itself.
-`apps/seedbed/src/ui/design.tsx` is the other end — an almanac whose own
-drawing has two homes, the page and the scene's lens reading one model.
+`apps/seedbed/src/ui/design.tsx` is the other end: an almanac drawn on the
+page and in the scene's lens from one model.
 
 What every design must keep doing:
 

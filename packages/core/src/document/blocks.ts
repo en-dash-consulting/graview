@@ -5,7 +5,7 @@ import { valueWords } from "../schema/value-words.js";
 import { evaluateExpr, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import { parseExpr, type Expr } from "./expr/parse.js";
 import type { FieldSpec } from "./schema.js";
-import { EMPTY_GRAPH, formatMoney, formatValue, type Money, type TemplatePart } from "./template.js";
+import { capitalized, EMPTY_GRAPH, formatMoney, formatValue, namerOf, type Money, type TemplatePart } from "./template.js";
 import { parseTemplate } from "./template-parse.js";
 import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
@@ -308,7 +308,8 @@ function say(parts: Parsed<readonly TemplatePart[]>, ctx: BlockContext, prose?: 
       }
       // A field named bare (`{price}`) is said as it declares: money as money.
       const amount = !part.format && part.expr?.t === "ident" && typeof judged.value === "number" ? amountAt(ctx, part.expr.name) : undefined;
-      return amount ? sayAmount(judged.value as number, amount) : formatValue(judged.value, part.format, ctx.today, part.formatArgs, ctx.money);
+      // A record is said by its kind's label, `{out('affects') | and}` as "src/files.ts and tsconfig.json", never its id.
+      return capitalized(part, amount ? sayAmount(judged.value as number, amount) : formatValue(judged.value, part.format, ctx.today, part.formatArgs, ctx.money, namerOf(ctx.schema)));
     })
     .join("");
   return { text, ...(problem ? { problem } : {}), ...(markdown ? { markdown } : {}) };
@@ -405,7 +406,7 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
       if (worked) {
         const judged = judge({ t: "ident", name: block.field, at: 0 }, ctx);
         if (!judged.ok) problem = judged.problem;
-        else raw = judged.value !== null && typeof judged.value === "object" ? formatValue(judged.value, undefined, ctx.today) : judged.value;
+        else raw = judged.value !== null && typeof judged.value === "object" ? formatValue(judged.value, undefined, ctx.today, [], ctx.money, namerOf(ctx.schema)) : judged.value;
       } else raw = Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : undefined;
       // A web address, a phone (`tel:`) and a place (the reader's maps app) are links.
       const href = block.as !== undefined ? undefined : ctx.fields[block.field]?.type === "url" ? safeHref(raw) : typedHref(typedOf(ctx, block.field), raw);
