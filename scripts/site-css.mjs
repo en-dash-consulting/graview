@@ -19,7 +19,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const css = readFileSync(resolve(repoRoot, "docs/site/site.css"), "utf8").trimEnd();
 const START = "/* site-css:start — written by scripts/site-css.mjs. Edit docs/site/site.css. */";
 const END = "/* site-css:end */";
-export const PAGES = ["docs/site/index.html", "docs/site/tour.html", "docs/site/progression.html", "docs/site/404.html"];
+export const PAGES = ["apps/site/pages/index.html", "apps/site/pages/tour.html", "apps/site/pages/progression.html", "apps/site/pages/404.html"];
 
 const checking = process.argv.includes("--check");
 let stale = 0;

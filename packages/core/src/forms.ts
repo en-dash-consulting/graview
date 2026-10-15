@@ -10,6 +10,8 @@
  * seat read them, so a hosted page that has asked nothing carries none.
  */
 export { formArgs, formComplete, formField, formFields } from "./mutations/form.js";
+// Where a record's change starts, and what it sends: only what was changed (Roadmap f-edit-form-prefilled).
+export { changedArgs, editStart } from "./mutations/edit-start.js";
 export type { FormField, ScalarField } from "./mutations/form.js";
 export { undecidableArguments } from "./mutations/decidable.js";
 export type { UndecidableArgument } from "./mutations/decidable.js";

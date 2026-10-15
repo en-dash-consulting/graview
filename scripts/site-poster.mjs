@@ -14,7 +14,7 @@
  * the declaration's own map in its hue, a block per record — so it cannot
  * show anything the live scene does not, and the mount replaces it.
  *
- *   node scripts/site-poster.mjs            # write the poster into docs/site/index.html
+ *   node scripts/site-poster.mjs            # write the poster into apps/site/pages/index.html
  *   node scripts/site-poster.mjs --check    # fail if it is stale
  */
 import { build } from "esbuild";
@@ -24,7 +24,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const PAGE = resolve(repoRoot, "docs/site/index.html");
+const PAGE = resolve(repoRoot, "apps/site/pages/index.html");
 const START = "<!-- site-poster:start — written by scripts/site-poster.mjs. -->";
 const END = "<!-- site-poster:end -->";
 
@@ -35,7 +35,7 @@ const END = "<!-- site-poster:end -->";
 const html = readFileSync(PAGE, "utf8");
 const recipe = /class="chapter-live hero-live" data-graview-recipe="([a-z-]+)"/.exec(html)?.[1];
 const chapter = Number(/class="chapter-live hero-live" data-graview-chapter="(\d+)"/.exec(html)?.[1]);
-if (!recipe && !chapter) throw new Error("docs/site/index.html has no hero-live recipe or chapter to draw a poster of");
+if (!recipe && !chapter) throw new Error("apps/site/pages/index.html has no hero-live recipe or chapter to draw a poster of");
 
 let drawn;
 if (recipe) {
@@ -95,12 +95,12 @@ const poster =
   `<div class="light">${drawn.light}</div><div class="dark">${drawn.dark}</div></div>\n        ${END}`;
 const from = html.indexOf(START);
 const to = html.indexOf(END);
-if (from === -1 || to === -1) throw new Error("docs/site/index.html has no site-poster markers in its hero");
+if (from === -1 || to === -1) throw new Error("apps/site/pages/index.html has no site-poster markers in its hero");
 const next = `${html.slice(0, from)}${poster}${html.slice(to + END.length)}`;
 
 if (process.argv.includes("--check")) {
   if (next !== html) {
-    process.stderr.write("docs/site/index.html carries a stale poster of the hero — run `pnpm site:poster`.\n");
+    process.stderr.write("apps/site/pages/index.html carries a stale poster of the hero — run `pnpm site:poster`.\n");
     process.exit(1);
   }
   process.stdout.write("the hero's poster is the app it mounts\n");

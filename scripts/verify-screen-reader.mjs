@@ -24,7 +24,8 @@
  *
  * The stops: the bar; the Pages and Scene switch; a list; a record page; a
  * columns lens; a blocks lens; an act's form; the Ask box; and a change
- * from someone else. Over two apps: the Roadmap (a document mounted as
+ * from someone else, with the two shown to each other and with presence
+ * off, as a served store's change arrives. Over two apps: the Roadmap (a document mounted as
  * Graview Cloud mounts one, in two tabs sat down as Ada and Ben, every op
  * of one landed in the other through `store.receive` as a served store's
  * are) and the todo example on its own port.
@@ -297,6 +298,8 @@ const check = (name, ok, detail = {}) => {
 /** Every control named in words; what is not. */
 const unnamed = (order) => order.controls.filter((control) => !named(control.name)).map((control) => control.line);
 /** Text a reader lands on that is a mark and nothing else: "⚠", "·", "→" said as a word of its own. */
+/** A change said as it is kept (Roadmap f-change-sentences-in-words): an arrow, a value in a program's quotes, or a key spelled as code ("stage → \"considering\"", "minPlayers"). */
+const SAID_AS_KEPT = /→|"|\b[a-z]+[A-Z]\w*\b/;
 const bareMarks = (order) => [...new Set(order.said.filter((one) => one.role === "StaticText" && one.name.trim() && !named(one.name) && !/^[.,:;!?]+$/.test(one.name.trim())).map((one) => one.name.trim()))];
 
 const servers = [];
@@ -507,6 +510,13 @@ try {
       here.read("The form, read in order", form);
       report.stops.form = form.said.map((one) => one.line);
       check("an act's form: every field and button is named in words", form.controls.length > 0 && unnamed(form).length === 0, { unnamed: unnamed(form) });
+      // Roadmap f-edit-form-prefilled: the record's change opens on what the record holds, never "—": no field left blank that the page's facts say has a value.
+      const blank = await ada.evaluate(() =>
+        [...document.querySelectorAll('[data-testid="record-actions"] form :is(input[type=text], textarea, select)')]
+          .filter((one) => one.value === "" && [...document.querySelectorAll(`dd [data-graview-field="${one.name}"]`)].some((fact) => fact.textContent.trim() !== ""))
+          .map((one) => one.name),
+      );
+      check("an act's form: every field opens on the record's value, never “—”", blank.length === 0 && form.said.every((one) => !/, —, pop-up button/.test(one.line)), { blank });
       await ada.keyboard.press("Escape");
       await ada.waitForTimeout(500);
       const putAway = await focusSaid(ada, cdp);
@@ -518,7 +528,7 @@ try {
       const since = Date.now();
       const summary = ada.locator('[data-testid="record-actions"] form textarea, [data-testid="record-actions"] form input[type=text]').last();
       await summary.focus();
-      await ada.keyboard.press("End");
+      await ada.keyboard.press("ControlOrMeta+End");
       await ada.keyboard.type(" Said aloud.");
       await press(ada.locator('[data-testid="record-actions"] form button[type="submit"]').first());
       await ada.waitForTimeout(1200);
@@ -528,6 +538,7 @@ try {
       here.heard("after sending it", heard);
       check("an act's form: after it is sent the keyboard is on the page, not lost", !afterSend.lost, { focus: afterSend.line });
       check("an act's form: what it did is said aloud", heard.length > 0, { heard });
+      check("an act's form: what it did is said in words, with no field's key, no arrow and no value in a program's quotes", heard.length > 0 && heard.every((one) => !SAID_AS_KEPT.test(one.text)), { heard });
     }
 
     /* ── 6. A COLUMNS LENS ── */
@@ -617,14 +628,26 @@ try {
     }
 
     /* ── 9. A CHANGE FROM SOMEONE ELSE ── */
-    reach("a change from someone else");
+    /*
+     * Twice: with Ada and Ben shown to each other, and with presence off, as
+     * a served store's change arrives with nobody shown here (Roadmap
+     * f-changes-heard-without-presence). Either way it is said once, with
+     * who made it, in words (f-change-sentences-in-words).
+     */
+    for (const [title, note, shown, claim] of [
+      ["A change from someone else", "Ada is on a feature's page, her keyboard on one of its facts; Ben, in another tab sharing the store, changes its stage.", true, "a change from someone else"],
+      ["A change from a served store, nobody shown here", "As above with presence off: Ada is shown nobody, and Ben's op arrives as a served store's does.", false, "a change from a served store with nobody shown here"],
+    ]) {
+    reach(claim);
     {
-      const here = stop("Roadmap", "A change from someone else", "Ada is on a feature's page, her keyboard on one of its facts; Ben, in another tab sharing the store, changes its stage.");
+      const here = stop("Roadmap", title, note);
       const path = report.recordPath ?? "/features/feature-0";
-      await ada.goto(ROADMAP_AT(path), { waitUntil: "load" });
+      const at = (as) => `${ROADMAP_AT(path, as)}${shown ? "" : "&presence=off"}`;
+      await ada.goto(at("ada"), { waitUntil: "load" });
       await roadmapReady(ada);
-      const ben = await open(ROADMAP_AT(path, "ben"), roadmapReady);
+      const ben = await open(at("ben"), roadmapReady);
       await ada.waitForTimeout(1500);
+      const shownHere = await ada.locator('[data-testid="here"]').count();
       // Ada's keyboard on a fact, as a person reading the page would leave it.
       await ada.locator('dd button[data-graview-field="layer"], dd button[data-graview-field]').first().focus();
       const before = await focusSaid(ada, cdp);
@@ -641,9 +664,14 @@ try {
       here.heard("on Ada's page when Ben changed the stage", heard);
       const after = await focusSaid(ada, cdp);
       here.focus("Ben's change (Ada's keyboard was on a fact)", after);
-      check("a change from someone else: it is said aloud, with who made it", heard.some((one) => /Ben Okafor/.test(one.text)), { heard });
-      check("a change from someone else: Ada's keyboard stays where it was", !after.lost && after.line === before.line, { before: before.line, after: after.line });
+      const his = heard.filter((one) => /Ben Okafor/.test(one.text));
+      check(`${claim}: it is said aloud, with who made it`, his.length > 0, { heard });
+      check(`${claim}: it is said once`, his.length === 1, { heard });
+      check(`${claim}: it is said in words, with no field's key, no arrow and no value in a program's quotes`, his.length > 0 && his.every((one) => !SAID_AS_KEPT.test(one.text)), { heard });
+      check(`${claim}: Ada's keyboard stays where it was`, !after.lost && after.line === before.line, { before: before.line, after: after.line });
+      if (!shown) check(`${claim}: nobody is shown here`, shownHere === 0, { shownHere });
       await ben.close();
+    }
     }
 
     await ada.close();

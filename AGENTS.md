@@ -33,6 +33,7 @@ apps/
   rota/            a volunteer rota: the served store, the calendar, three seats
   launcher/        the desk — a Graview app whose subject is the other apps
   promo/           the promotional site
+  site/            graview.dev and its docs, as a Graview app: app.json, the design renderPlace writes every page with, the hand-designed pages
   spike/           platform capability validation against a real browser
 scripts/           verify-*.mjs browser harnesses, smoke-*.mjs packaging rehearsals, site-*.mjs docs build
 docs/              harness verdicts (*.json), the docs site (site/), walkthrough findings
@@ -197,7 +198,7 @@ License: Elastic License 2.0, at the root and in every tarball.
 | `packages/skills/skills/*/SKILL.md` | The authoring skills a product installs |
 | `scripts/verify-all.mjs` | The harness chain, cheapest first |
 | `scripts/lib/tarballs.mjs` | Pack and pin the workspace as a stranger would receive it |
-| `docs/site/` | The docs site; `docs/site/chapters.js` is built from `apps/seedbed` |
+| `docs/site/` | The docs site, rendered from the records of `apps/site/app.json` by `scripts/site-docs.mjs` (never edited by hand); `docs/site/chapters.js` is built from `apps/seedbed` |
 | `docs/walkthrough.md` | The stage-by-stage walk from `graview create` to a seamless app, with findings |
 | `.changeset/README.md` | The versioning convention |
 | `docs/stability.md` | What a version may change on the five surfaces a host holds it to |

@@ -4,7 +4,7 @@ Written by `scripts/verify-screen-reader.mjs` from the accessibility tree Chromi
 
 No system screen reader was turned on to write this. `scripts/voiceover-walk.mjs` listens to the same stops with real VoiceOver in Safari, when somebody chooses to.
 
-Claims: 52 of 52 hold. The verdict is `docs/screen-reader.json`.
+Claims: 59 of 59 hold. The verdict is `docs/screen-reader.json`.
 
 ## Roadmap: The bar
 
@@ -29,6 +29,7 @@ A Roadmap, sectionheader
     More — 7 more places, button, collapsed
   A Roadmap · Find anything, search landmark
     Find anything, search text
+  (no name), status
   Everything is in order, button, collapsed, dimmed
   Ada Lovelace — you, your seat and your settings, button, collapsed
 ```
@@ -376,7 +377,7 @@ A Roadmap, region landmark
   Sort and filter the briefs about it, link
   What can be done, heading level 2
   Change the feature, button, collapsed
-  Show 4 more, button, collapsed
+  Show 5 more, button, collapsed
 ```
 
 ## Roadmap: An act's form
@@ -386,16 +387,17 @@ A Roadmap, region landmark
 **Focus after opening the form**
 
 ```text
-Name, edit text
+Name, Billing across apps, edit text
 ```
 
 **The form, read in order**
 
 ```text
 Name
-Name, edit text
+Name, Billing across apps, edit text
+  Billing across apps
 Stage
-Stage, —, pop-up button, collapsed
+Stage, Building, pop-up button, collapsed
   (no name), MenuListPopup
     —, option
     Considering, option
@@ -403,7 +405,7 @@ Stage, —, pop-up button, collapsed
     Building, option
     Shipped, option
 Layer
-Layer, —, pop-up button, collapsed
+Layer, Cloud, pop-up button, collapsed
   (no name), MenuListPopup
     —, option
     Framework, option
@@ -429,7 +431,7 @@ Change the feature, button, collapsed
 **Heard: after sending it**
 
 ```text
-(polite) Take back “Change Billing across apps: summary → " Said aloud."”
+(polite) Take back “Changed the summary of Billing across apps to “Said aloud.””
 ```
 
 ## Roadmap: A columns lens
@@ -553,7 +555,7 @@ Move “Themes without a build” to another column, button, collapsed
 
 ```text
 (polite) Moved “Themes without a build” to Planned.Undo
-(polite) Take back “Change Themes without a build: stage → "planned"”
+(polite) Take back “Changed the stage of Themes without a build to Planned”
 ```
 
 ## Roadmap: A blocks lens
@@ -660,7 +662,23 @@ Ada is on a feature's page, her keyboard on one of its facts; Ben, in another ta
 **Heard: on Ada's page when Ben changed the stage**
 
 ```text
-(polite) Ben Okafor: Change Billing across apps: stage → "considering"
+(polite) Ben Okafor: Changed the stage of Billing across apps to Considering
+```
+
+**Focus after Ben's change (Ada's keyboard was on a fact)**
+
+```text
+Name: Billing across apps, button
+```
+
+## Roadmap: A change from a served store, nobody shown here
+
+As above with presence off: Ada is shown nobody, and Ben's op arrives as a served store's does.
+
+**Heard: on Ada's page when Ben changed the stage**
+
+```text
+(polite) Ben Okafor: Changed the stage of Billing across apps to Considering
 ```
 
 **Focus after Ben's change (Ada's keyboard was on a fact)**
@@ -691,6 +709,7 @@ The todo example's routed face, standalone: its own banner, main and footer.
     More — 8 more places, button, collapsed
   Find anything, search landmark
     Find anything, search text
+  (no name), status
   2 rules broken — open what is broken, and what would fix it, link
   Nora — you, your seat and your settings, button, collapsed
 (no name), sectionheader
@@ -855,7 +874,7 @@ Pay the deposit, heading level 1
   This has to happen first …, button, collapsed
   Change the task …, button, collapsed
   Block time for it …, button, collapsed
-  Show 4 more, button, collapsed
+  Show 5 more, button, collapsed
 ```
 
 ## Things (todo): An act's form
