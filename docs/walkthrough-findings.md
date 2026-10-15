@@ -35,23 +35,23 @@ Counts are primary / also.
 
 | Class | What it is | The shared check that owns it | Count |
 |-------|------------|-------------------------------|-------|
-| `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 13 / 2 |
-| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 18 / 5 |
-| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 11 / 4 |
+| `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 14 / 2 |
+| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 20 / 5 |
+| `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 11 / 5 |
 | `wrong-end-of-a-relation` | A relation, an act or a direction is read from the end it was declared at rather than the end it is seen from, or assumed to run one way | the gauntlet (every edge cross-kind with an `inverse`, declared from both sides, one name on two kinds, two relations on one pair) driven through both faces and the chat; `graview check`'s `edge-without-inverse` and `act-without-far-end-reading` hold the declaration only | 7 / 4 |
-| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 26 / 4 |
-| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 6 / 16 |
-| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's no-sideways-scroll rule (`breaks-at-width`, since the seventh walk — until then the watch had no rule for this class at all), on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`); and its `target-too-small` rule (since the eighth walk), each control at its laid-out size with the standard's exceptions | 16 / 4 |
+| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 26 / 5 |
+| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 6 / 20 |
+| `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's no-sideways-scroll rule (`breaks-at-width`, since the seventh walk — until then the watch had no rule for this class at all), on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`); and its `target-too-small` rule (since the eighth walk), each control at its laid-out size with the standard's exceptions | 17 / 5 |
 | `layout-collision-or-overflow` | Something is drawn over something else or out of its box at an ordinary size: chrome over content, two cards or captions on one spot, a line through a chip, a value out of its cell, a member hidden with no name | `audit-ui` (`covered`, collisions, `asking`) and `survey`, on their fixed states only; the watch should measure it on every state — none yet there | 14 / 3 |
-| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 11 / 42 |
+| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 13 / 43 |
 | `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 13 / 1 |
-| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 15 / 12 |
+| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 18 / 12 |
 | `accessibility-tree-wrong` | What assistive technology reads is wrong: a heading skipped or missing, a landmark missing, doubled or named twice, invalid nesting, a group with no name — or emphasis or a problem that is only a color | the watch's axe pass, with audit-ui's `halfSaid` and "a problem painted but not said" | 14 / 1 |
-| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 19 / 7 |
-| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 2 / 1 |
+| `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 20 / 7 |
+| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 4 / 2 |
 | `shown-what-is-not-theirs` | A seat is shown a record the declaration does not let it see — another customer's name, email or question — on any surface: a page, a card, a count, a picker, Find, the history, a problem | the watch: no screen shows the name or address of a record the seat at the keyboard may not see (`shown-what-is-not-theirs`); the gauntlet keeps its staff from its visitor | 2 / 2 |
 | `permitted-what-was-never-granted` | The store lets a seat run an act no grant gives it — a derived act riding a guess about what another act writes, a grant read wider than it says — so a seat changes what the policy keeps from it | `tests/an-edit-in-place-makes-nothing.test.ts` over every example (the eighth walk), and `tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts` (the ninth): a seat with no role runs a derived act on a record it did not make only where everybody is granted the act; nothing yet asks it of every role | 2 / 0 |
-| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 12 / 4 |
+| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 13 / 6 |
 
 Every class but two first appeared in the first walk (`faces-disagree` and
 `layout-collision-or-overflow` as an `also` there, W-004 and W-029). The
@@ -4902,3 +4902,47 @@ committed verdict, and walk10's first run finished 60 of its 84 runs.
 - where it belongs: `scripts/lib/journeys.mjs`, `scripts/verify-journeys.mjs` (`GRAVIEW_JOURNEYS_SHOTS=<dir>` keeps a picture of every dead end)
 - harness that should have caught it: the journeys themselves
 - status: fixed in "walkthrough: setup · the journeys do what a person does" · criterion: the journeys on walk10, todo, seedbed, rota, discography and the gauntlet: the rota's viewer is told "Add a shift" is not theirs on the scene with the pointer, seedbed's plots are "read, not narrowed", walk10's callouts are found and narrowed at a desk
+
+Thirteen findings, W-204 to W-216, every one fixed with a criterion; no new
+class. Two were holes in fixes the ninth walk made (W-205: W-197 held the
+graph and not the store around it; W-206: the record page a project starts
+from, which W-099 and W-167 had touched, still offered only ties), and one
+was in the committed verdict all along, read by nobody (W-207: 36 lines of
+"u-4f1c9a" at the head of main's friction list). On walk10, todo, seedbed,
+rota, discography and the gauntlet the journeys now finish 66 of 68, 80 of
+80, 84 of 84, 88 of 88, 108 of 108 and 78 of 84 runs. Of the eighth walk's
+carried items: narrowing on the scene where the stop is a coverage grid —
+fixed (W-210); seedbed's plots too few to narrow — the journeys' (W-216); "Name a
+caretaker" on seedbed's pages — fixed (W-215); the rota's viewer told "Add a
+shift" is not theirs on the scene — the journeys' (W-216: the viewer is told,
+from the map); todo's "Add a task" after "Today" — fixed (W-212); the
+gauntlet's longest title in Find from the keyboard — fixed (W-214). W-203 does
+not reproduce: `verify-gauntlet`'s `everyDistrictIsListedBesideTheMap` holds on
+main's verdict and on this branch's. Open, and carried to the eleventh walk:
+
+- W-201, Nick's to decide: a role's own grant to make a kind still carries
+  its derived remove, archive and merge over every record of it — a member
+  who may log a callout may remove anybody's — with no way in the policy to
+  say "theirs only". Not changed by this walk;
+- narrowing todo's tasks on the scene at a desk: from "The lists", pressing
+  the Tasks district raises it as a relation of the lists rather than going
+  in; "The month" and "The week" in the bar arrange and offer Filter, and the
+  journeys do not press them;
+- narrowing walk10's callouts on the scene on a phone: one is current and
+  1,458 past; the district's "+1458 past" is folded away with the districts on
+  a phone, and the coverage grid over one row draws no arranging line;
+- the keyboard's cost: Find on the scene reaches the gauntlet's longest title
+  in 89 presses (every talk before it is a row), narrowing walk10's callouts
+  by a number takes 62 presses where the pointer takes 6, most of them Tab
+  walks to the district, to Down and to Filter;
+- a repair from the in-app seat needs a model: asked "Take Rope 9 out of
+  service" with none, the seat said "Open questions need AI, which isn't on
+  here"; Find does not reach the act by those words either;
+- "Doing “Stand the team down” to three callouts at once" has no three
+  current callouts to do it to — the data's shape, not the framework's;
+- seen and not logged, as cosmetic instances of known classes the watch does
+  not yet measure (`layout-collision-or-overflow`): the rota's raised
+  "Shifts ×" chip stands over the arranging line's "Sort"; seedbed's plot
+  card on a phone is wider than the screen, its relation captions past the
+  edge; the coverage grid over the callouts marks every member "on no
+  callout", counting only the callout on the horizon.
