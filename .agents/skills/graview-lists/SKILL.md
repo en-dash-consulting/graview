@@ -57,10 +57,11 @@ already set a record aside.
    that links and prunes on its own is an author that says
    `automated: true` (`kind: "system"` or `"agent"`). What it is sure of it
    applies with `lineage: { basis, confidence }`; what it is not it
-   suggests: `store.suggest(calls, { author, lineage })` keeps the calls in
+   suggests: `suggest(store, calls, { author, lineage })` (from
+   `@graview/core/tidying`) keeps the calls in
    the log, changes nothing, and they wait in the Suggested tray beside
    Activity until a person accepts (made as them) or declines them;
-   `store.declined(calls)` says so, and the actor is refused the same change
+   `declined(store, calls)` says so, and the actor is refused the same change
    again. Its run of changes is one Activity row, "Tidied 6 things today".
    A person says "Leave this one alone" on a record (`leave-alone-<kind>`,
    cleared by `allow-tidying-<kind>`; `isLeftAlone(store, id)`), and the
@@ -137,7 +138,7 @@ It says the list's headings, each record's card and what is filtered, as the
 page draws them. Archive one record by its act and ask again: it is gone
 from the list and the count, and `?archived=true` finds it. Undo the merge
 you tried; both records come back with their links. Have a test actor suggest a link and
-decline it from the tray: `store.suggest` of the same calls then refuses,
+decline it from the tray: `suggest(store, …)` of the same calls then refuses,
 and a record left alone refuses the actor's change by name.
 
 ## What the check cannot see

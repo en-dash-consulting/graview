@@ -63,3 +63,6 @@ export type { SeveralBarProps } from "./several-door.js";
 // The app as it was (Roadmap f-playback): the timeline, fetched when somebody first looks back.
 export { PastBar, prefetchTimeline } from "./past-bar.js";
 export type { TimelineFace } from "./past-bar.js";
+// A first look that points at the app's own controls, once (its hints fetched as they are first shown).
+export { FIRST_LOOK_ANCHORS, FirstLookDoor, firstLookKey } from "./first-look-door.js";
+export type { FirstLook, FirstLookAnchor, FirstLookDoorProps, FirstLookEnd, FirstLookOptions, FirstLookStep } from "./first-look-door.js";

@@ -1,7 +1,7 @@
 import type { HistoryHost } from "@graview/core/history";
 import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
-import { AppBar, appKeyOf, barPlaceAt, barPlaces, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
+import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
@@ -305,6 +305,28 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * role and name; every landmark inside is named after the embed.
    */
   readonly label?: string;
+  /**
+   * A FIRST LOOK, ONCE: a short run of hints beside the app's own controls
+   * — the switch between the scene and the pages, the problems count,
+   * Activity and the Ask box, each skipped where it is not drawn — on
+   * either face, then out of the way. `true` remembers it in this browser;
+   * `{ seen, onDone, steps }` hands that to the host — `seen` says whether
+   * this viewer has seen it, `onDone(how)` is told when it is over — and
+   * adds the host's own hints after the framework's, each naming one of
+   * `FIRST_LOOK_ANCHORS`. Off unless given; nothing of it is fetched until
+   * it is shown.
+   */
+  readonly firstLook?: FirstLook;
+}
+
+/**
+ * THE FIRST LOOK OVER EVERY FACE: found in the embed's own element, so two
+ * embeds on a page each point at their own controls, and kept across a
+ * change of face.
+ */
+export function FrameFirstLook({ rootRef, firstLook, app }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly firstLook: FirstLook | undefined; readonly app: string }) {
+  const root = useCallback(() => rootRef.current, [rootRef]);
+  return firstLook ? <FirstLookDoor firstLook={firstLook} root={root} app={app} /> : null;
 }
 
 /*
