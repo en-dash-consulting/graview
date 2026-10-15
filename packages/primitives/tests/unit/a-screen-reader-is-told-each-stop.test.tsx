@@ -176,26 +176,46 @@ describe("a change somebody else makes", () => {
     expect(changeSaid(forMe, { store: one as never, principal: me })).toBeNull();
   });
 
-  it("is said aloud on the bar as it lands from another tab, politely", async () => {
+  const BEN_SAID = "Ben Okafor: Rename it to “Book the big hall”";
+  /** The bar over a store, with Ben shown here or with no presence at all; then Ben's op lands as a served store's does. */
+  async function landing(shown: boolean): Promise<{ drawn: HTMLElement; mine: Store<never> }> {
     const listeners = new Set<(who: readonly Presence[]) => void>();
     const wire: PresenceChannel = { here() {}, leave() {}, onWho: (listener) => (listeners.add(listener), () => listeners.delete(listener)) };
     const mine = store();
     const drawn = await draw(
       <AppBar brand={undefined} name="Workshop" home={{ go: () => undefined, current: false }} places={[]} current={null} reach={{}} tools={null} find={false} />,
-      { store: mine as never, views: createViews(schema) as never, presence: wire, principal: me },
+      { store: mine as never, views: createViews(schema) as never, ...(shown ? { presence: wire } : {}), principal: me },
     );
-    const at = new Date().toISOString();
-    await act(async () => {
-      for (const listener of listeners) listener([{ participant: "human:ben:s1", kind: "human", name: "Ben Okafor", hue: 30, stop: "#focus=t1", at, held: "socket" } as Presence]);
-    });
-    for (let turn = 0; turn < 20 && !drawn.querySelector('[data-testid="here-changed"]'); turn++) await act(async () => new Promise((done) => setTimeout(done, 10)));
-    const region = drawn.querySelector('[data-testid="here-changed"]')!;
-    expect(region.getAttribute("aria-live")).toBe("polite");
+    if (shown) {
+      const at = new Date().toISOString();
+      await act(async () => {
+        for (const listener of listeners) listener([{ participant: "human:ben:s1", kind: "human", name: "Ben Okafor", hue: 30, stop: "#focus=t1", at, held: "socket" } as Presence]);
+      });
+      for (let turn = 0; turn < 20 && !drawn.querySelector('[data-testid="here"]'); turn++) await act(async () => new Promise((done) => setTimeout(done, 10)));
+      expect(drawn.querySelector('[data-testid="here"]')).not.toBeNull();
+    }
     // Ben's tab, sharing the store: his op lands here as a served store's does.
-    const elsewhere = store();
-    const ops = elsewhere.apply({ name: "rename-task", args: { id: "t1", label: "Book the big hall" } }, { author: ben }).ops;
+    const ops = store().apply({ name: "rename-task", args: { id: "t1", label: "Book the big hall" } }, { author: ben }).ops;
     await act(async () => void mine.receive(ops));
-    await act(async () => new Promise((done) => setTimeout(done, 80)));
-    expect(region.textContent).toBe("Ben Okafor: Rename it to “Book the big hall”");
+    for (let turn = 0; turn < 50 && !heard(drawn).includes(BEN_SAID); turn++) await act(async () => new Promise((done) => setTimeout(done, 20)));
+    return { drawn, mine: mine as never };
+  }
+  /** What every polite region on the bar holds: a status is polite whether or not it says so. */
+  const heard = (drawn: HTMLElement): string[] =>
+    [...drawn.querySelectorAll('[role="status"], [aria-live="polite"]')].filter((region) => region.getAttribute("aria-live") !== "off" && region.getAttribute("aria-live") !== "assertive").map((region) => region.textContent ?? "");
+
+  it("is said aloud on the bar once, politely, with who made it, as it lands from another tab with them shown here", async () => {
+    const { drawn } = await landing(true);
+    expect(heard(drawn).filter((words) => words === BEN_SAID)).toHaveLength(1);
+  });
+
+  it("is said aloud on the bar once, politely, with who made it, as it lands from a served store with nobody shown here", async () => {
+    const { drawn, mine } = await landing(false);
+    expect(drawn.querySelector('[data-testid="here"]')).toBeNull();
+    expect(heard(drawn).filter((words) => words === BEN_SAID)).toHaveLength(1);
+    // A change made at this keyboard is not said back to it.
+    await act(async () => void mine.apply({ name: "rename-task" as never, args: { id: "t1", label: "Mine" } as never }, { author: me }));
+    await act(async () => new Promise((done) => setTimeout(done, 100)));
+    expect(heard(drawn).some((words) => words.includes("Mine"))).toBe(false);
   });
 });

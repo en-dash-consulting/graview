@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 1400,
+  "gzipped": 450,
+  "note": "Raised when three things the screen-reader pass found landed together on the pages face: a change said in words (the derived edit's sentence, written in `derive-edits.ts` as the change is applied), a change made elsewhere said with nobody shown here (the bar's own polite status), and a record's change starting from what it holds (`editStart`, `changedArgs`). 553_313 / 202_807 before them, 554_627 / 203_242 with them: 1_314 / 435 more."
+}
