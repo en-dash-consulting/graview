@@ -601,7 +601,13 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
           </ul>
         </section>
       ) : null}
-      <section aria-label={plural}>
+      {/*
+        * A GROUP, NOT A SECOND LANDMARK. The panel is already the region
+        * named for the kind ("Plots"); a section inside it named the same
+        * was the same landmark said twice, which a screen reader lists as
+        * two places and axe reports (landmark-unique).
+        */}
+      <div role="group" aria-label={plural}>
         <h3 style={heading}>
           {plural} <span style={{ fontWeight: 400, color: "var(--graview-ink-faint)" }}>· {members.length}</span>
         </h3>
@@ -635,7 +641,7 @@ function DistrictPanel<S extends AnySchema>({ kind }: { readonly kind: string })
             </li>
           ))}
         </ul>
-      </section>
+      </div>
     </PanelFrame>
   );
 }

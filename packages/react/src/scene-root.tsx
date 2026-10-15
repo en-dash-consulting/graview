@@ -1084,6 +1084,7 @@ export function Scene<S extends AnySchema>({
         <EdgeSigns
           result={result}
           schema={store.schema as AnySchema}
+          {...(sized.chrome ? { chrome: sized.chrome } : {})}
           onGo={(by) => {
             nudge(by.x, by.y);
             noteMoved();
