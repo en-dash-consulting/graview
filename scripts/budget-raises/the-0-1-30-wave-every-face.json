@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1800,
+  "gzipped": 1500,
+  "note": "Raised for the remainder when the 0.1.30 wave landed together: each change's own raise was measured alone against main, and the six together — with the past and the suggestions fetched from entries of their own (`@graview/core/past`, `@graview/core/tidying`), one more door each, and the chunks that split around them compressed apart — measure 1_767 / 1_474 bytes over the sum of those raises. Measured at 2_053_015 / 676_290 against 2_051_248 / 674_816."
+}
