@@ -711,7 +711,7 @@ footer {
   .plane .no i { max-width: 92px; }
   .sib { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .two { gap: 20px; }
-  section { padding-top: 42px; }
+  section:where(:not([data-graview-embed], [data-graview-embed] *)) { padding-top: 42px; }
 }
 
 /* ── The landing page ─────────────────────────────────────────────────────
@@ -1353,6 +1353,28 @@ main.page > section.recipes { padding-top: 104px; }
 main.page > section.tour-intro { padding-top: 64px; }
 .tour-intro h1 { font-size: clamp(32px, 3.8vw, 52px); line-height: 1.08; letter-spacing: var(--track-display); max-width: 20ch; }
 .tour-intro .lede { margin-top: 20px; }
+
+/*
+ * THE TOP BAR ON A PHONE. A row of section links that scrolls sideways
+ * inside the bar was cut off at the right edge ("Recipes, How it works,
+ * C…"), which reads as broken, not as more. Below a tablet's width the bar
+ * keeps the links a visitor starts from and drops the in-page ones (every
+ * one of them is a scroll away); and if what is left still does not fit,
+ * it wraps under the logo rather than running off the edge.
+ */
+@media (max-width: 760px) {
+  .topbar .jump a.wide { display: none; }
+  .topbar-in { flex-wrap: wrap; row-gap: 0; }
+  .topbar .jump { flex-wrap: wrap; justify-content: flex-end; overflow: visible; margin: 0 0 0 auto; padding: 4px 0; }
+}
+@media (max-width: 480px) {
+  /* A phone: the mark a little smaller, the links a little closer, and GitHub
+     left to the footer, so the bar is one row at 320px. */
+  .topbar .logo svg { height: 26px; }
+  .topbar-in { gap: 10px; }
+  .topbar .jump a { padding: 6px 8px; }
+  .topbar .jump a[href^="https://github.com"] { display: none; }
+}
 /* site-css:end */
 </style>
 
@@ -1365,12 +1387,12 @@ main.page > section.tour-intro { padding-top: 64px; }
     </div>
     <nav class="jump" aria-label="Sections">
       <a href="index.html">Start</a>
-      <a href="#surfaces">Features</a>
-      <a href="#grow">Watch it grow</a>
-      <a href="#cases">Use cases</a>
-      <a href="#endash">Who builds it</a>
+      <a class="wide" href="#surfaces">Features</a>
+      <a class="wide" href="#grow">Watch it grow</a>
+      <a class="wide" href="#cases">Use cases</a>
+      <a class="wide" href="#endash">Who builds it</a>
       <a href="progression.html">The garden</a>
-      <a href="https://github.com/en-dash-consulting/graview">GitHub</a>
+      <a class="wide" href="https://github.com/en-dash-consulting/graview">GitHub</a>
       <a class="go" href="docs/index.html">Docs</a>
     </nav>
   </div>
