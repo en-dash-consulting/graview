@@ -15,6 +15,10 @@
 
 Graview is an agent-native TypeScript framework, made by En Dash, for apps that people and AI agents work in together. A product declares its domain once — the kinds of thing, their fields and relations, the acts that change them, the rules they must keep and who may do what — and Graview derives the interface, the permissions and a typed tool for every act from that one declaration, so they cannot drift apart. The interface is an isometric scene a person flies over and a routed web app, and a checker says in plain words when the declaration is wrong.
 
+### What can I build with Graview?
+
+Apps for anything that is really things and the rules between them: scheduling, coverage, planning and operations. A volunteer rota, a tender response, a coaching week, a household’s calendar and a shared garden are built on it, and so are apps over a repository’s docs, decisions and dependencies. Each gets an interface for people, rules that flag a problem and offer the fix, permissions, and a typed tool for every action an agent may take.
+
 ### How is Graview different from other app frameworks?
 
 Most frameworks have you build the interface, the permissions and the API separately and keep them in step by hand. In Graview they are one thing: each is derived from the same declaration, so the button a person presses, the tool an agent calls and the rule that judges both cannot drift apart.
@@ -4832,7 +4836,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 367 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 368 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -4856,7 +4860,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `recipe` | The prompt on the front page with a different task, and the declaration and seed an agent made of it, under docs/site/recipes/. | 3 |
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
-| `question` | A question the front page answers plainly, read off its FAQ. | 6 |
+| `question` | A question the front page answers plainly, read off its FAQ. | 7 |
 | `release` | A version every package shares, read off @graview/core's changelog and the CLI's package.json. | 32 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
