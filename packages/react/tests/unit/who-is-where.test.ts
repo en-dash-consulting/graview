@@ -68,6 +68,14 @@ describe("who is where", () => {
     expect(placed[0]?.kind === "edge" && placed[0].point.x).toBe(792);
   });
 
+  it("stands the signs to people elsewhere below the corner's Up and key, one under the other", () => {
+    const placed = placeOthers([here("human:nora:a", "#focus=elsewhere"), here("human:sam:b", "#focus=elsewhere")], whereIs, 800);
+    const tops = placed.map((one) => (one.kind === "edge" ? one.point.y : -1));
+    // Up stands from 14 to 52 and the key from 60 to 90; a sign is 24 tall.
+    expect(tops[0]).toBeGreaterThanOrEqual(96);
+    expect(tops[1]! - tops[0]!).toBeGreaterThanOrEqual(28);
+  });
+
   it("stands their robot where it works, captioned as theirs, and outlines what they point at", () => {
     const placed = placeOthers(
       [here("human:nora:a", "#focus=aggregate%3Atask", { robot: { at: "t1", mode: "writing" }, over: "t1" })],

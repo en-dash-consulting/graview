@@ -395,10 +395,18 @@ export function layout<S extends AnySchema>(
    * focus keeps the context row anchored where it always is, so raising
    * something moves one band rather than re-composing the whole scene.
    */
+  /*
+   * AND STOPS CLEAR OF THE ROW AS IT IS DRAWN. A district card is never
+   * shorter than its floor, and one floored taller than the band grows up
+   * from the band's baseline — at a reader's largest text on a phone, 51
+   * pixels up into the focused card, whose last rows stood over the folded
+   * districts' "+3 more" (W-224). The focus ends above where the row begins.
+   */
+  const rowRisesBy = state.overview ? 0 : Math.max(0, CARD_MIN_HEIGHT * unit - band.contextH);
   const focusHeight =
     related.length > 0
       ? band.focusH
-      : band.contextY - band.focusY - opts.gap * 2;
+      : band.contextY - band.focusY - opts.gap * 2 - rowRisesBy;
 
   /*
    * Above the stack your interface STAYS, shrunk, in the middle of the ring.

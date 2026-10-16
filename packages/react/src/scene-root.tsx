@@ -53,7 +53,7 @@ matchWith({ search, touchWeights });
 import type { PointerStore } from "./pointer.js";
 import type { PlotsProps } from "./plots.js";
 import { Occupants } from "./occupants.js";
-import { EdgeSigns } from "./edge-signs.js";
+import { EdgeSigns, useTrailBox } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
 import { useKeyboardKeepsToWhatIsSeen } from "./scene-covered.js";
 import { useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
@@ -800,7 +800,10 @@ export function Scene<S extends AnySchema>({
    * a chip of the reader's text size (the tenth walk: "Shifts ×" over "Sort").
    */
   const headroom = !view.overview && (view.zoom || view.past || view.relation) ? Math.ceil(14 + (34 * unit) / 16 + 6) : 0;
-  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, dock, nodes, headroom);
+  // On the ground what stands over the foot (the timeline) is the layout's to keep clear; from altitude the city is fitted above it itself.
+  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, dock, nodes, headroom, view.overview ? 0 : dock.bottom);
+  // What the picture's trail covers, for the signs at the top edge to step past.
+  const trailBox = useTrailBox(wrapperRef);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
   // A district cannot be placed by hand from altitude, so no plot wears the pinned curb for one (a pin in an old bookmark is ignored).
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins).filter((id) => kindOfCard(id) === null)), [view.pins]);
@@ -1130,7 +1133,7 @@ export function Scene<S extends AnySchema>({
         <EdgeSigns
           result={result}
           schema={store.schema as AnySchema}
-          {...(sized.chrome ? { chrome: sized.chrome } : {})}
+          chrome={trailBox ? [...(sized.chrome ?? []), trailBox] : (sized.chrome ?? [])}
           onGo={(by) => {
             nudge(by.x, by.y);
             noteMoved();

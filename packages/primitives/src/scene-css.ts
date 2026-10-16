@@ -249,16 +249,18 @@ ${/* THE OTHERS: people and their agents in the city, each a small figure in
 ${/* ANOTHER PERSON, on your map: a head and shoulders in their own hue, at
    the plot their stop names or in the audience row of the showing they are
    watching. Press to follow them; their name is under them like a robot's. */ ""}
+${/* A fingertip wide, the head and shoulders drawn 22 wide inside it: at 22 a press beside the next person's was a press too small to tell them apart. */ ""}
 .graview-figure[data-graview-person] .graview-figure-body {
-  left: -11px;
+  left: -12px;
   top: -24px;
-  width: 22px;
+  width: 24px;
   height: 24px;
   min-height: 0;
 }
 .graview-figure[data-graview-person] .graview-figure-body svg {
   width: 22px;
   height: 24px;
+  margin: 0 auto;
 }
 .graview-figure[data-graview-person][data-graview-followed] .graview-figure-body {
   color: var(--graview-accent);
@@ -1128,7 +1130,8 @@ ${/* THE SHOWINGS COME UP WHEN THE DISTRICT IS REACHED FOR: under its name,
    on a backing of their own, and in the bar's place list always. */ ""}
 [data-graview-altitude] .graview-drive-in {
   ${/* Straight under the name, touching it, so the hand that reached for the name reaches the showings without crossing a gap. */ ""}
-  top: calc(var(--graview-front-y, 42px) + var(--graview-plate-h, 26px));
+  ${/* The name stands 4 pixels below the front (above); its height is as drawn, measured into --graview-plate-h. */ ""}
+  top: calc(var(--graview-front-y, 42px) + 4px + var(--graview-plate-h, 28px));
   padding: 4px 6px;
   border-radius: 5px;
   background: var(--graview-panel);
@@ -1165,7 +1168,8 @@ ${/* THE SCENE'S FOOT: a sheet over it, and on a phone the ask field across
 @container (max-width: 639px) {
   .graview-zoom,
   .graview-edge-sign {
-    --graview-scene-foot: calc(var(--graview-sheet, 0px) + var(--graview-foot-room, 0px));
+    ${/* A sheet stands over the field, so the foot is the taller of the two, not both. */ ""}
+    --graview-scene-foot: max(var(--graview-sheet, 0px), var(--graview-foot-room, 0px));
   }
 }
 .graview-zoom {

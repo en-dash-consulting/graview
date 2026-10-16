@@ -775,6 +775,26 @@ export function registerDefaultViews<S extends AnySchema>(
       const found = useFound();
       const hits = found && !nested ? (found.byKind[String(kind)] ?? 0) : 0;
       /*
+       * HOW TALL THE NAME UNDER THE DISTRICT STANDS, as drawn. The showings
+       * hang from its foot; a guess at its height (26 pixels, 42 with a
+       * states bar) left them six pixels over the problem count at its
+       * end, and a press on "⚠ 2" landed on the marquee (W-224).
+       */
+      const card = useRef<HTMLDivElement>(null);
+      const plate = useRef<HTMLDivElement>(null);
+      useLayoutEffect(() => {
+        const face = plate.current;
+        const holder = card.current;
+        if (!face || !holder || !altitude) return;
+        const measure = () => holder.style.setProperty("--graview-plate-h", `${face.offsetHeight}px`);
+        measure();
+        if (typeof ResizeObserver === "undefined") return;
+        const watch = new ResizeObserver(measure);
+        // Its border box: from the ground to altitude the padding changes and the content may not.
+        watch.observe(face, { box: "border-box" });
+        return () => watch.disconnect();
+      }, [altitude]);
+      /*
        * The block's height from altitude, in viewBox units: population under
        * a square root, so one giant kind is a tall building rather than a
        * tower the scene scrolls for.
@@ -811,6 +831,7 @@ export function registerDefaultViews<S extends AnySchema>(
       );
       return (
         <div
+          ref={card}
           className="graview-kind-card"
           data-graview-rank={props.rank}
           /*
@@ -853,8 +874,6 @@ export function registerDefaultViews<S extends AnySchema>(
              * the layout's own, from the names as the scene measured them,
              * and the building sizes from what is left.
              */
-            // How tall the name under the district stands, for the showings that hang from it.
-            ["--graview-plate-h" as string]: props.states && (props.nameplate ?? "full").startsWith("full") ? "42px" : "26px",
           }}
         >
           {/*
@@ -894,6 +913,7 @@ export function registerDefaultViews<S extends AnySchema>(
            */
           null}
           <div
+          ref={plate}
           className="graview-kind-face"
           data-graview-opened={props.opened || undefined}
           data-graview-nameplate={altitude ? (props.nameplate ?? "full") : undefined}

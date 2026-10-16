@@ -146,7 +146,8 @@ export function Occupants({ width, whereIs }: OccupantsProps): ReactElement | nu
               className="graview-figure-edge"
               data-testid="presence-edge"
               data-graview-person={one.presence.participant}
-              style={{ left: Math.max(8, one.point.x - 120), top: one.point.y }}
+              /* Its end at the edge, clear of a panel docked over the map's right side, however long the name. */
+              style={{ right: `calc(${Math.max(8, width - one.point.x)}px + var(--graview-dock, 0px))`, top: one.point.y }}
               onClick={() => follow(one.presence.participant)}
               aria-label={`${name} is somewhere else — press to go where they are`}
             >

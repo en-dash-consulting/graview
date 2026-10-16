@@ -96,7 +96,8 @@ describe("a hosted page", () => {
     // 906 KB since the Beatles' discography's fixes (2026-10-15, fix/lenses-and-views): a list that shows its next page and groups by a linked record, a coverage that says it has nothing to cross and orders its rows, a career calendar spanning its records, a place known by its title and an image from an origin the host lists: the scene face measured 926_488 B, 6_044 more than main (920_444).
     // 889 KB since the tenth walk's carried dead ends (W-217 to W-225): Find going into a kind whole and landing the keys on its line, a raised kind's way in, the past on the arranging line, the trail's headroom and the scene's foot clear of the ask field: the scene face measured 909_930 B, 1_642 over 887.
     // 908 KB with the tenth walk's carried dead ends over the Beatles' fixes and the rest of the 0.1.30 wave.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(908 * 1024);
+    // 910 KB since nothing came to stand over a control the watch found covered (W-224) and Pages came to honor the Ask box setting: the scene face measured 931_431 B, 1_966 more than before them (929_465).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(910 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

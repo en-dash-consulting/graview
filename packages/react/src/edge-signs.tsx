@@ -1,6 +1,6 @@
 import { pluralLabel, SCENE_LAYERS, type AnySchema } from "@graview/core";
 import { districtsPastTheEdge, type Layout, type PastTheEdge } from "@graview/layout";
-import type { CSSProperties, ReactElement } from "react";
+import { useLayoutEffect, useState, type CSSProperties, type ReactElement, type RefObject } from "react";
 
 /**
  * THE SIGNS AT THE EDGE OF THE GROUND. A city wider than the window keeps
@@ -197,3 +197,37 @@ const SIGN: CSSProperties = {
   boxShadow: "0 2px 8px rgb(0 0 0 / 0.12)",
   cursor: "pointer",
 };
+
+type Box = { readonly x: number; readonly y: number; readonly width: number; readonly height: number };
+
+/**
+ * WHERE THE PICTURE'S TRAIL STANDS on the ground, in the ground's pixels,
+ * while it says something: "Reset view" once the ground is panned by hand,
+ * "zoomed in ×", the past. It stands over the top-left corner, and on a
+ * phone a sign for a district past the top edge stood under it (W-224); a
+ * sign steps past it as it steps past Up and the key. The trail is the
+ * ground's sibling, drawn by the face around it, so it is measured.
+ */
+export function useTrailBox(ground: RefObject<HTMLElement | null>): Box | null {
+  const [box, setBox] = useState<Box | null>(null);
+  useLayoutEffect(() => {
+    const at = ground.current;
+    let trail: HTMLElement | null = null;
+    for (let up = at?.parentElement ?? null, depth = 0; up && !trail && depth < 4; up = up.parentElement, depth++) {
+      trail = up.querySelector<HTMLElement>(":scope > [data-graview-scene-trail]");
+    }
+    if (!at || !trail) return;
+    const read = () => {
+      const mine = at.getBoundingClientRect();
+      const theirs = trail.getBoundingClientRect();
+      const next = theirs.width > 0 && theirs.height > 0 ? { x: theirs.left - mine.left, y: theirs.top - mine.top, width: theirs.width, height: theirs.height } : null;
+      setBox((now) => (now === next || (now && next && now.x === next.x && now.y === next.y && now.width === next.width && now.height === next.height) ? now : next));
+    };
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const watch = new ResizeObserver(read);
+    watch.observe(trail);
+    return () => watch.disconnect();
+  }, [ground]);
+  return box;
+}

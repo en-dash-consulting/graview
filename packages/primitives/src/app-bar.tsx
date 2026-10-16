@@ -345,6 +345,7 @@ const BAR_CSS = `
 @container graview-bar (max-width: ${BAR_PHONE - 1}px){
 .graview-bar-row{gap:10px;padding:0 12px}
 .graview-bar-app,.graview-bar-home{max-width:none;flex:1 1 auto;min-width:0}
+.graview-bar-name,.graview-bar-app-name{min-width:0}
 .graview-bar-mid,.graview-bar-find{display:none}
 .graview-bar-find-open{display:inline-flex}
 .graview-bar-own{--graview-activity-mark:inline}

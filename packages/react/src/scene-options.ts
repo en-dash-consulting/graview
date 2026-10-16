@@ -35,6 +35,12 @@ export function useLayoutOptions<S extends AnySchema>(
   nodes: unknown,
   /** The room words over the ground's top corner take (`headroom`): the trail's, when it says something. */
   headroom = 0,
+  /**
+   * What stands over the ground's foot when it is not the map (a sheet's
+   * height, `--graview-sheet`: the timeline while the past is looked
+   * through). The ground is laid out above it, as above the ask field.
+   */
+  groundFoot = 0,
 ): LayoutOptions {
   const { store, views, hiddenKinds } = useGraview<S>();
   const found = useFound();
@@ -92,7 +98,7 @@ export function useLayoutOptions<S extends AnySchema>(
        */
       inset: { ...railInset((size?.width ?? 1200) - dock.right), top: 8, bottom: seated ? 0 : 56 },
       // Up and the Key stand clear of a panel too, at the corner of what the reader sees.
-      chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }],
+      chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }, zoomCorner(size, dock, seated)],
       ...(dock.right > 0 || dock.bottom > 0 ? { dock } : {}),
       ...(headroom > 0 ? { headroom } : {}),
       // The reader's own text size, which the cards are sized in: the city
@@ -138,10 +144,33 @@ export function useLayoutOptions<S extends AnySchema>(
              * stands under it, and opening it (over the picture) moves
              * nothing.
              */
-            height: seated ? Math.max(0, size.height - SEAT_FOOT) : size.height,
+            height: Math.max(0, size.height - Math.max(seated ? SEAT_FOOT : 0, groundFoot)),
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated, besideTheMap, dock.right, dock.bottom, headroom],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated, besideTheMap, dock.right, dock.bottom, headroom, groundFoot],
   );
+}
+
+/** The zoom's width (−, its level, +, "From above") and the room around it. */
+const ZOOM_WIDTH = 224;
+/** Below this the ask field is across the picture's foot (the seat's own `SEAT_PHONE_BELOW`). */
+const PHONE_BELOW = 640;
+
+/**
+ * THE CORNER THE ZOOM STANDS IN, at the picture's foot on the right, kept
+ * clear like Up's: a district whose count or "close" lay under it on a
+ * phone could not be pressed (W-224). On a phone with an ask field the
+ * zoom stands above the field across the foot, so its corner is taller.
+ */
+function zoomCorner(
+  size: { width: number; height: number } | null,
+  dock: { readonly right: number; readonly bottom: number },
+  seated: boolean,
+): { x: number; y: number; width: number; height: number } {
+  const width = size?.width ?? 1200;
+  const height = size?.height ?? 800;
+  // The zoom (38 tall) 16 from the foot; on a phone above the field (38 tall, 16 either side) too, unless a sheet stands over the field.
+  const room = seated && dock.bottom === 0 && width - dock.right < PHONE_BELOW ? 16 + 70 + 38 + 4 : 16 + 38 + 4;
+  return { x: width - dock.right - ZOOM_WIDTH, y: height - dock.bottom - room, width: ZOOM_WIDTH, height: room };
 }

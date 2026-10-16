@@ -1,7 +1,7 @@
 import { layer, momentAsRead, type AnySchema, type Principal, type Store } from "@graview/core";
 import { makerWords, restoreBatches, ticksOf, type Maker, type PlaybackTick } from "@graview/core/history";
 import { useGraviewIfAny, useLiveStore, usePlayback } from "@graview/react/provider";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { TimelineFace } from "./past-bar.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -86,6 +86,27 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
   const asOf = playback.past ? (playback.past.at ? momentAsRead(playback.past.at, graview?.locale) : "the start") : null;
   const caption = tick ? `${who(tick) === "you" ? "You" : who(tick)}: ${tick.said}` : "Nothing had happened yet";
 
+  /*
+   * ON THE SCENE IT STANDS OVER THE PICTURE'S FOOT, AND SAYS HOW TALL, as a
+   * sheet does (`--graview-sheet`): the city is fitted above it and the
+   * zoom stands over it. Laid over the city, it stood on a district's
+   * problem count, which a press could not reach (W-224).
+   */
+  const section = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const element = section.current;
+    const picture = element?.parentElement;
+    if (face !== "scene" || !element || !picture) return;
+    const measure = () => picture.style.setProperty("--graview-sheet", `${Math.ceil(element.getBoundingClientRect().height) + 24}px`);
+    measure();
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    watch?.observe(element);
+    return () => {
+      watch?.disconnect();
+      picture.style.removeProperty("--graview-sheet");
+    };
+  }, [face]);
+
   const box: CSSProperties =
     face === "scene"
       ? { position: "absolute", left: "50%", bottom: 12, transform: "translateX(-50%)", width: "min(720px, calc(100% - 32px))", zIndex: layer("rail") }
@@ -93,6 +114,7 @@ export function Timeline({ face }: { readonly face: TimelineFace }) {
 
   return (
     <section
+      ref={section}
       aria-label="Timeline"
       data-testid="timeline"
       data-graview-past={playback.past ? String(playback.past.seq) : "now"}

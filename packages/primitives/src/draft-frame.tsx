@@ -2,7 +2,7 @@ import { isCurrent, layer, type AnySchema } from "@graview/core";
 import { ViewBoundary } from "@graview/react/drawing";
 import { useGraph, useGraview, useSeatTalkState } from "@graview/react/provider";
 import type { SeatMove } from "@graview/tools";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { LINK } from "./chat.js";
 import { declaredLensView } from "./declared-lenses.js";
 import { useLensKeeping } from "./lens-keeping.js";
@@ -49,6 +49,31 @@ export function DraftFrame({ page = false, go, onPick, onDiscard }: DraftFramePr
   useEffect(() => {
     if (!page) problemsShown(false);
   }, [page]);
+  /*
+   * IN PLACE OF THE PICTURE, THE PICTURE IS PUT AWAY. Over the scene the
+   * view stands where the picture was, and what stood on the picture — its
+   * districts, Up, the key, the zoom — was still there under it, a press
+   * on the view landing on them where Firefox drew them through (W-224).
+   * What is drawn before the view in the picture (the scene and its
+   * corner's controls) is inert while it stands; the seat and what is
+   * drawn after it stay over it, as they are.
+   */
+  const frame = useRef<HTMLElement | null>(null);
+  const standing = draft !== null && !page;
+  useLayoutEffect(() => {
+    const own = frame.current;
+    if (!standing || !own?.parentElement) return;
+    const under: HTMLElement[] = [];
+    for (let before = own.previousElementSibling; before; before = before.previousElementSibling) {
+      if (before instanceof HTMLElement && !before.inert && before.tagName !== "STYLE") {
+        before.inert = true;
+        under.push(before);
+      }
+    }
+    return () => {
+      for (const one of under) one.inert = false;
+    };
+  }, [standing]);
   if (!draft) return null;
   const View = declaredLensView(draft.drawn);
   const definition = store.schema.tryDefinition(draft.kind);
@@ -59,6 +84,7 @@ export function DraftFrame({ page = false, go, onPick, onDiscard }: DraftFramePr
   };
   return (
     <section
+      ref={frame}
       data-testid="draft-frame"
       aria-label={`Draft: ${draft.title}`}
       style={
