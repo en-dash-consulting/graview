@@ -28,6 +28,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [0.1.31 · 07: Notify me when X happens: subscriptions declared, matched under sight, offered in place](./0-1-31-07-notify-me-when-x-happens.md) | pending |
 | [0.1.31 · 09–10: Quick-ask and in-place answer cards replace the Ask box, and graview.dev drops the chat box](./0-1-31-0910-quick-ask-and-in-place.md) | pending |
 | [Google Calendar, proven end to end against Google itself](./google-calendar-proven-end-to-end.md) | pending |
-| [0.1.31 · 12: Listen to the stops with real VoiceOver (and NVDA if a machine is available)](./0-1-31-12-listen-to-the-stops-with.md) | pending |
+| [0.1.31 · 12: Listen to the stops with real VoiceOver (and NVDA if a machine is available)](./0-1-31-12-listen-to-the-stops-with.md) | deferred |
 | [0.1.31 · 13: Connections declared in the app and run by graview serve: a Google calendar, filtered, read-only or both ways](./0-1-31-13-connections-declared-in-the.md) | pending |
 | [0.1.31 · 14: Dates and times are easy to enter and change: a real date and date-time editor built in](./0-1-31-14-dates-and-times-are-easy.md) | pending |
