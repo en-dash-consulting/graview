@@ -111,16 +111,15 @@ describe("every recipe", () => {
 });
 
 describe("the front page", () => {
-  it("opens on the prompt with the first recipe's task, and mounts that recipe's app beside it", () => {
+  it("opens on the prompt with the first recipe's task, mounts that recipe's app beside it, and links every recipe", () => {
     const landing = read("index.html");
     const first = index.recipes[0]!;
     const text = /<p class="prompt-text" id="prompt-text">([\s\S]*?)<\/p>/.exec(landing)?.[1] ?? "";
     expect(text.replace(/<[^>]+>/g, "").replace(/&rsquo;/g, "'")).toBe(index.prompt.replace("{task}", first.task));
     expect(landing).toContain(`class="chapter-live hero-live" data-graview-recipe="${first.slug}"`);
-    for (const recipe of index.recipes) {
-      expect(landing, recipe.slug).toContain(`data-task="${recipe.task}"`);
-      expect(landing, recipe.slug).toContain(`href="docs/recipes/${recipe.slug}.html"`);
-    }
+    // The first recipe is the hero's first tab; the others are listed under the recipes, each linked.
+    expect(landing).toContain(`data-task="${index.prompt.replace("Read https://graview.dev/start.md, then ", "").replace(/\.$/, "").replace("{task}", first.task).replace("'", "’")}"`);
+    for (const recipe of index.recipes) expect(landing, recipe.slug).toContain(`href="docs/recipes/${recipe.slug}.html"`);
     expect(landing).toContain("npm create graview@latest");
   });
 });
