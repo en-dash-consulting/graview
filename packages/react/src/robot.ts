@@ -18,8 +18,8 @@ import { kindCardId } from "@graview/layout/view";
 
 /**
  * What the seat is doing. `following` retired with the figure that walked
- * the ground: the seat speaks from its ask field now, and what it is about
- * is the panel's subject, not a body trailing the pointer. `docked` is the
+ * the ground: what this tab's AI is about is the quick ask's card, beside
+ * its subject, not a body trailing the pointer. `docked` is the
  * resting state, when it is listening.
  */
 export type RobotMode = "docked" | "reading" | "writing" | "refused" | "asking";

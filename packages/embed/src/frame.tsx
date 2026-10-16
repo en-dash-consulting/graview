@@ -314,7 +314,7 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   /**
    * A FIRST LOOK, ONCE: a short run of hints beside the app's own controls
    * — the switch between the scene and the pages, the problems count,
-   * Activity and the Ask box, each skipped where it is not drawn — on
+   * Activity and the quick ask, each skipped where it is not drawn — on
    * either face, then out of the way. `true` remembers it in this browser;
    * `{ seen, onDone, steps }` hands that to the host — `seen` says whether
    * this viewer has seen it, `onDone(how)` is told when it is over — and

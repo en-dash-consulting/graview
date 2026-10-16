@@ -7,7 +7,7 @@ import { useContext, useMemo } from "react";
 import { BesideTheMap } from "./beside-the-map.js";
 import { foundIds, useFound, useGraview } from "./context.js";
 import { useViolations } from "./hooks.js";
-import { railInset, SEAT_FOOT } from "./rails.js";
+import { FOOT, railInset } from "./rails.js";
 import { isDefaultView } from "./view-registry.js";
 
 /** What no search found: the layout's relevance when nobody is typing. */
@@ -26,8 +26,6 @@ export function useLayoutOptions<S extends AnySchema>(
   options: LayoutOptions | undefined,
   size: { width: number; height: number } | null,
   unit: number,
-  /** Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
-  seated: boolean,
   cityZoom: number,
   /** What a panel floating over the scene covers, in pixels (`useDock`): the city is fitted in what is left. */
   dock: { readonly right: number; readonly bottom: number },
@@ -38,7 +36,7 @@ export function useLayoutOptions<S extends AnySchema>(
   /**
    * What stands over the ground's foot when it is not the map (a sheet's
    * height, `--graview-sheet`: the timeline while the past is looked
-   * through). The ground is laid out above it, as above the ask field.
+   * through). The ground is laid out above it.
    */
   groundFoot = 0,
 ): LayoutOptions {
@@ -94,11 +92,11 @@ export function useLayoutOptions<S extends AnySchema>(
       /*
        * THE CORNER THE ALTITUDE CONTROL AND THE KEY STAND IN, and nothing of
        * the city opened under them: the districts and their names open
-       * clear of the chrome; the zoom at the foot when no ask field keeps it.
+       * clear of the chrome; the foot is the strip below (`FOOT`).
        */
-      inset: { ...railInset((size?.width ?? 1200) - dock.right), top: 8, bottom: seated ? 0 : 56 },
+      inset: { ...railInset((size?.width ?? 1200) - dock.right), top: 8, bottom: 0 },
       // Up and the Key stand clear of a panel too, at the corner of what the reader sees.
-      chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }, zoomCorner(size, dock, seated)],
+      chrome: [{ x: (size?.width ?? 1200) - dock.right - 176, y: 0, width: 176, height: 100 }, zoomCorner(size, dock)],
       ...(dock.right > 0 || dock.bottom > 0 ? { dock } : {}),
       ...(headroom > 0 ? { headroom } : {}),
       // The reader's own text size, which the cards are sized in: the city
@@ -136,41 +134,34 @@ export function useLayoutOptions<S extends AnySchema>(
             width: size.width,
             /*
              * The scene lays out into its WHOLE box, but for the strip at its
-             * foot the ask field stands in. The actions strip is a transient
-             * elevated surface — it floats in front of the scene the way a
-             * menu floats in front of a page, and reserving a band for it
-             * squeezed every band for chrome that mostly is not there. The
-             * ask field is always there, so its strip is kept: no district
-             * stands under it, and opening it (over the picture) moves
-             * nothing.
+             * foot (`FOOT`), where the zoom, the way back, a notice and the
+             * AI's proposal stand — or a sheet over the foot, when taller. The
+             * actions strip and the quick ask's cards are transient elevated
+             * surfaces — they float in front of the scene the way a menu
+             * floats in front of a page, and reserve nothing.
              */
-            height: Math.max(0, size.height - Math.max(seated ? SEAT_FOOT : 0, groundFoot)),
+            height: Math.max(0, size.height - Math.max(FOOT, groundFoot)),
           }
         : {}),
     }),
-    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, seated, besideTheMap, dock.right, dock.bottom, headroom, groundFoot],
+    [options, size, unit, store, views, hiddenKinds, judged, relevance, cityZoom, besideTheMap, dock.right, dock.bottom, headroom, groundFoot],
   );
 }
 
 /** The zoom's width (−, its level, +, "From above") and the room around it. */
 const ZOOM_WIDTH = 224;
-/** Below this the ask field is across the picture's foot (the seat's own `SEAT_PHONE_BELOW`). */
-const PHONE_BELOW = 640;
-
 /**
  * THE CORNER THE ZOOM STANDS IN, at the picture's foot on the right, kept
  * clear like Up's: a district whose count or "close" lay under it on a
- * phone could not be pressed (W-224). On a phone with an ask field the
- * zoom stands above the field across the foot, so its corner is taller.
+ * phone could not be pressed (W-224).
  */
 function zoomCorner(
   size: { width: number; height: number } | null,
   dock: { readonly right: number; readonly bottom: number },
-  seated: boolean,
 ): { x: number; y: number; width: number; height: number } {
   const width = size?.width ?? 1200;
   const height = size?.height ?? 800;
-  // The zoom (38 tall) 16 from the foot; on a phone above the field (38 tall, 16 either side) too, unless a sheet stands over the field.
-  const room = seated && dock.bottom === 0 && width - dock.right < PHONE_BELOW ? 16 + 70 + 38 + 4 : 16 + 38 + 4;
+  // The zoom (38 tall) 16 from the foot.
+  const room = 16 + 38 + 4;
   return { x: width - dock.right - ZOOM_WIDTH, y: height - dock.bottom - room, width: ZOOM_WIDTH, height: room };
 }

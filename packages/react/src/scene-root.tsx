@@ -64,7 +64,6 @@ import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
 import { Lines, provisionalLines, RelationCaptions } from "./scene-lines.js";
 import { railInset } from "./rails.js";
-import { useSeatDrawn } from "./seat-talk.js";
 import { useLayoutOptions } from "./scene-options.js";
 
 export { railInset };
@@ -827,11 +826,9 @@ export function Scene<S extends AnySchema>({
   children,
 }: SceneProps) {
   const context = useGraview<S>();
-  const { store, scheme, views, view, setView, selection, setSelection, setMenuAt, emphasis, brand, noteMoved, robots, seatTalk, motion } = context;
+  const { store, scheme, views, view, setView, selection, setSelection, setMenuAt, emphasis, brand, noteMoved, robots, motion } = context;
   // A panel beside the map shows what is chosen from altitude, a record in focus among it (`mapChoice`).
   const besideTheMap = useContext(BesideTheMap);
-  /* Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
-  const seated = useSeatDrawn(seatTalk);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -868,7 +865,7 @@ export function Scene<S extends AnySchema>({
    */
   const headroom = !view.overview && (view.zoom || view.past || view.relation) ? Math.ceil(14 + (34 * unit) / 16 + 6) : 0;
   // On the ground what stands over the foot (the timeline) is the layout's to keep clear; from altitude the city is fitted above it itself.
-  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, dock, nodes, headroom, view.overview ? 0 : dock.bottom);
+  const sized = useLayoutOptions<S>(seenFrom, size, unit, closer * zoom, dock, nodes, headroom, view.overview ? 0 : dock.bottom);
   // What the picture's trail covers, for the signs at the top edge to step past.
   const trailBox = useTrailBox(wrapperRef);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);

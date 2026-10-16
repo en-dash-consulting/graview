@@ -91,8 +91,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     `hostActions: [{ label, href }]` (or `onSelect` for a press) draws the
     host's links in the person's menu, under who is signed in, reached by
     the keyboard. Every popover the embed draws stands in the browser's
-    top layer, so a host needs no `z-index` override. `seat: "hidden"`
-    draws no ask field on either face. Say the
+    top layer, so a host needs no `z-index` override. `quickAsk: false`
+    draws no quick ask (⌘K) on either face. Say the
     host's own news through `handle.notify({ kind: "toast" | "banner",
     sentence, tone, action })`, not a toast of your own fixed over the app:
     it floats at the app's foot, moving nothing. No tour of your own:

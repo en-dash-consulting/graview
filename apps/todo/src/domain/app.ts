@@ -76,7 +76,7 @@ export const todoApp = defineApp({
        * The week is minutes of a day in named columns and cannot say "due
        * on the 14th of next month". It names no day: it opens on the
        * store's own (`?today=` for a harness, the real one otherwise), the
-       * same day the home's "late" and the ask field's "this week" mean.
+       * same day the home's "late" and the quick ask's "this week" mean.
        */
       name: "calendar",
       title: "The month",

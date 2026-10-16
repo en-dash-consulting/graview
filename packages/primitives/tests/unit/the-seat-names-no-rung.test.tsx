@@ -10,7 +10,6 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import * as primitives from "../../src/index.js";
 import { ChatPanel, registerDefaultViews } from "../../src/index.js";
-import { SeatPanel } from "../../src/seat-panel.js";
 
 /**
  * THE HOST DECIDES THE AI, AND THE SEAT NAMES NO RUNG.
@@ -84,9 +83,9 @@ async function ask(host: HTMLElement, words: string) {
 const store = () => new Store({ schema, mutations: [addPlot], invariants: [], snapshot: { nodes: [{ id: "front", kind: "plot", label: "Front bed" }] as never, edges: [] } });
 
 describe("nothing for a reader to choose", () => {
-  it("draws no ⚙, no source line and no rung's name in the open seat", async () => {
-    const { host, unmount } = await mounted(store(), <SeatPanel phone={false} side="right" name="Garden" onClose={() => {}} />);
-    expect(host.querySelector('[data-testid="seat-panel"]')).not.toBeNull();
+  it("draws no ⚙, no source line and no rung's name in the conversation", async () => {
+    const { host, unmount } = await mounted(store(), <ChatPanel<typeof schema> />);
+    expect(host.querySelector('[data-testid="chat-panel"]')).not.toBeNull();
     for (const gone of ["seat-settings", "seat-source", "seat-ladder", "setting-intelligence", "seat-offer-model"]) {
       expect(host.querySelector(`[data-testid="${gone}"]`), gone).toBeNull();
     }

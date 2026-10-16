@@ -9,12 +9,13 @@ import type { FirstLookAnchor, FirstLookEnd, FirstLookStep } from "./first-look-
  * with the other popovers, the keyboard on its Next.
  */
 
-/** Where each named control is drawn: the framework's own test ids, on every face's bar and the seat. */
+/** Where each named control is drawn: the framework's own test ids, on every face's bar. */
 const FOUND: Record<FirstLookAnchor, string> = {
   faces: '[data-testid="app-faces"]',
   problems: '[data-testid="standing"], [data-testid="standing-link"]',
   activity: '[data-testid="activity-button"]',
-  ask: '[data-testid="seat-field"]',
+  // The quick ask has no control of its own until ⌘K opens it: its hint stands by Find, where a quick ask is drawn.
+  ask: '[data-testid="app-find"], [data-testid="app-find-open"]',
   find: '[data-testid="app-find"], [data-testid="app-find-open"]',
   profile: '[data-testid="profile-button"]',
   home: '[data-testid="app-home"]',
@@ -37,6 +38,7 @@ function drawn(element: HTMLElement): boolean {
 /** The control a hint points at, as it is drawn now; null when it is not. */
 export function firstLookAnchor(root: Element | null, anchor: FirstLookAnchor): HTMLElement | null {
   if (!root) return null;
+  if (anchor === "ask" && !root.querySelector("[data-graview-quick-ask]")) return null;
   for (const element of root.querySelectorAll<HTMLElement>(FOUND[anchor])) if (drawn(element)) return element;
   return null;
 }
@@ -50,7 +52,7 @@ function frameworkSteps(root: Element): FirstLookStep[] {
     { anchor: "faces", title: `${scene} or ${pages}`, words: `One app, two ways to see it: ${scene} draws every record as one picture, ${pages} as lists and pages to read and change.` },
     { anchor: "problems", title: "Whether all is in order", words: "The dot is green while every rule holds. When one is broken it counts what is wrong, and pressing it shows each one and where." },
     { anchor: "activity", title: "Activity", words: "What has happened here and who did it, each change with its way back." },
-    { anchor: "ask", title: said('[data-testid="seat-field"]', "aria-label", "Ask"), words: "Ask in your own words: where something is, what it means, or to make a change for you." },
+    { anchor: "ask", title: "Ask", words: "Press ⌘K (Ctrl+K) to ask about what you have selected, or right-click it and choose Ask about this…. The answer stands beside it, and a change it proposes waits for you to accept it." },
   ];
 }
 
@@ -76,7 +78,7 @@ export function FirstLookHints({ root, steps, onEnd }: FirstLookHintsProps) {
 
   /*
    * WAITING FOR THE APP TO DRAW: its bar, then a moment with nothing new
-   * arriving — a face is fetched as it is drawn, and the Ask box with it —
+   * arriving — a face is fetched as it is drawn, and the quick ask with it —
    * and then the hints whose controls are drawn, in order.
    */
   useEffect(() => {

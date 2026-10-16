@@ -72,10 +72,9 @@ under its routes:
   back “…”", ⌘Z) are on every face: a shell places `<PageFind>` or
   `<PageUndo>` where it wants them, else they are drawn around it
   (`without: ["find"]` goes without).
-- **The assistant**, on every route: the scene's ask field, the ROUTE what
-  "this" means. Proposals apply through the same runtime, attributed and
-  undoable, withheld ones struck through; open questions are on
-  `/problems`; the model is the host's `ai`.
+- **The quick ask** (⌘K, where `ai` gives a model): a bar and answer
+  card by the page's heading, the ROUTE what "this" means.
+  `context.quickAsk: false` draws none.
 
 Everything a page shows is a derivation the scene uses too: `recordFacts`,
 `deriveAffordances`, `store.permits`. **A page never decides what an act is

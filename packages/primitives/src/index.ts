@@ -66,8 +66,12 @@ export type { LinkedPickerProps, LinkedRecordViewProps } from "./linked-record-d
 export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
 export type { RepeatPickerProps } from "./repeat-picker-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
-// The seat: an ask field at the picture's foot that grows into the conversation when asked.
-export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";
+// The quick ask (Roadmap f-quick-ask-framework): ⌘K's bar beside what is selected, and its answer cards, fetched when first opened.
+export { QuickAskDoor } from "./quick-ask-door.js";
+export { openQuickAsk, useQuickAskDrawn } from "./quick-ask-desk.js";
+export type { QuickAskDoorProps } from "./quick-ask-door.js";
+export type { QuickAskOpening } from "./quick-ask-desk.js";
+export { quickAskOf } from "./quick-ask-setting.js";
 export { DraftDoor } from "./draft-door.js";
 // The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.
 export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-door.js";
@@ -81,7 +85,6 @@ export type { DraftFrameProps } from "./draft-frame.js";
 export { appKeyOf, readerLenses, readerLensesKey, type KeptLens } from "./reader-lenses.js";
 export { registerLensPlaces, registerReaderLenses } from "./declared-lens-doors.js";
 export { NoticeBoardContext } from "./notices.js";
-export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 export { LinesKey } from "./lines-key.js";
 export { MapPanel, mapPanelShows } from "./map-panel-door.js";
 export type { MapPanelShowing } from "./map-panel-door.js";

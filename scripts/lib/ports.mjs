@@ -76,10 +76,6 @@ export const OWN = {
   "repeats-host": 5262,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */
   "long-text-host": 5271,
-  /** The host's page `verify-seat-guide` mounts the todo app into, to switch faces in place under one conversation. */
-  "seat-host": 5272,
-  /** The host's page `verify-seat-goes-and-draws` mounts Cloud's workshop document into, writing a kept lens into the document it holds. */
-  "seat-draw-host": 5270,
   /** The host's page `verify-viewport` mounts the embed into at the screen's height, to turn a phone and back (FR-165). */
   "viewport-host": 5266,
   /** The host's page `verify-a11y` mounts Cloud's two shapes of app into, inside `#graview-app`, for axe. */

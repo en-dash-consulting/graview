@@ -17,8 +17,9 @@
  *    launched with the feature turned OFF and the cut is measured.
  *
  *  - A host's on-device model needs WebGPU (or Chrome's Prompt API). In an engine
- *    with neither, the seat must answer from the graph and say AI isn't
- *    available in this browser. Firefox is launched with WebGPU off and the fallback driven.
+ *    with neither, nothing is drawn that would need it — no quick ask, ⌘K
+ *    stays Find's — and no reader is asked which machine answers. Firefox
+ *    is launched with WebGPU off and the page driven.
  *
  *   node scripts/verify-engines.mjs [--engines=chromium,webkit,firefox]
  */
@@ -308,30 +309,27 @@ async function verifyLocalFallback() {
       webgpu: "gpu" in navigator,
       promptApi: "LanguageModel" in globalThis,
     }));
-    /* The seat's field at the picture's foot opens into the conversation. */
-    await page.click('[data-testid="seat-field"]');
-    await page.waitForSelector('[data-testid="seat-panel"]');
-    await page.fill('[data-testid="seat-field"]', "should we repaint the hallway?");
-    await page.press('[data-testid="seat-field"]', "Enter");
-    // The bring-up fails at once (no WebGPU); the graph answers, and the answer says AI isn't available here.
-    await page.waitForFunction(
-      () => document.querySelectorAll('[data-testid="seat-panel"] ol > li').length >= 2,
-      null,
-      { timeout: 20_000 },
-    );
-    const answered = await page.evaluate(
-      () => document.querySelector('[data-testid="seat-panel"] ol > li:last-child')?.textContent ?? "",
-    );
+    /*
+     * No Ask box answers here any more (Roadmap f-quick-ask-framework), and an
+     * on-device model alone gives the quick ask nothing it can run: no quick
+     * ask is drawn, ⌘K is Find's, and nothing asks the reader which machine.
+     */
+    const errors = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.keyboard.press("Control+K");
+    await page.waitForTimeout(300);
+    const drawn = await page.evaluate(() => ({
+      quickAsk: document.querySelector("[data-graview-quick-ask], [data-testid=\"quick-ask\"]") !== null,
+      askBox: document.querySelector('[data-testid="seat-field"], [data-testid="seat"]') !== null,
+      findHasKeys: document.activeElement?.getAttribute("data-testid") === "find-box",
+    }));
     const chooser = await page.evaluate(() => ["seat-settings", "seat-source", "setting-intelligence"].filter((id) => document.querySelector(`[data-testid="${id}"]`) !== null));
     return {
-      ok:
-        !engineFacts.webgpu &&
-        !engineFacts.promptApi &&
-        answered.includes("AI isn't available in this browser, so this is from the app alone.") &&
-        chooser.length === 0,
+      ok: !engineFacts.webgpu && !engineFacts.promptApi && !drawn.quickAsk && !drawn.askBox && drawn.findHasKeys && chooser.length === 0 && errors.length === 0,
       engineFacts,
+      drawn,
       chooser,
-      answeredFromGraph: answered.slice(0, 160),
+      errors,
     };
   } finally {
     await browser.close();
@@ -345,7 +343,7 @@ say(`  ${matrix.degradation.ok ? "ok — clean cut" : `FAIL ${JSON.stringify(mat
 
 say(`\n=== capability: an on-device model without WebGPU/Prompt API (Firefox, WebGPU off) ===`);
 matrix.capability = await verifyLocalFallback();
-say(`  ${matrix.capability.ok ? "ok — graph answered, and said AI isn't available here" : `FAIL ${JSON.stringify(matrix.capability)}`}`);
+say(`  ${matrix.capability.ok ? "ok — no quick ask drawn for a model this browser cannot run, ⌘K is Find's, no chooser" : `FAIL ${JSON.stringify(matrix.capability)}`}`);
 
 /* ------------------------------------------------------------ the verdict */
 

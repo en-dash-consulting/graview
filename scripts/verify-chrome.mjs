@@ -7,7 +7,7 @@
  * own `z-index` in one stacking context. This drives every popover in the
  * framework's registry (`POPOVERS` in `@graview/react`) — not a list kept
  * here — on the embed's Graview and pages faces and on the whole-page
- * Shell, at a desk's width and a phone's, with the seat open, and asks the
+ * Shell, at a desk's width and a phone's, and asks the
  * browser what is actually under the middle of each pane and under its
  * last row.
  *
@@ -80,8 +80,8 @@ async function buildHost() {
           height: "100%",
           fonts: false,
           studio: false,
-          // Whether the seat's ask field is drawn, when the page asks.
-          ...(asked.get("seat") ? { seat: asked.get("seat") } : {}),
+          // Whether the quick ask is drawn, when the page asks.
+          ...(asked.get("quickAsk") ? { quickAsk: asked.get("quickAsk") !== "false" } : {}),
           /*
            * Somebody else here, when the page asks: Sam, on the whole thing, held as a socket holds a presence — so the bar
            * draws who is here (FR-155) and its list is opened with the rest of the family.
@@ -138,22 +138,9 @@ async function buildHost() {
   return { stop: () => (host.close(), rmSync(out, { recursive: true, force: true })) };
 }
 
-/** Opens the seat from its ask field, so every popover is driven with it open over the picture. */
-async function openTheSeat(page) {
-  const state = () => page.evaluate(() => document.querySelector('[data-testid="seat"]')?.getAttribute("data-graview-seat") ?? null);
-  const was = await state();
-  if (was === null || was === "open") return was;
-  /*
-   * On a phone the open seat is a bottom sheet over most of the picture —
-   * the triggers under it (the folded districts, a card's acts) are covered
-   * by design while it is up, and put away by its grab line. There the
-   * popovers are driven with the seat's field closed at the foot.
-   */
-  if ((await page.getAttribute('[data-testid="seat"]', "data-graview-seat-shape")) === "phone") return was;
-  await page.click('[data-testid="seat-field"]');
-  await page.waitForSelector('[data-testid="seat-panel"]', { timeout: 30_000 }).catch(() => {});
-  await page.waitForTimeout(300);
-  return state();
+/** Whether an Ask box is drawn anywhere on the page: none is, since the quick ask replaced it (Roadmap f-quick-ask-framework). */
+async function anAskBox(page) {
+  return page.evaluate(() => document.querySelector('[data-testid="seat-field"], [data-testid="seat"], [data-testid="page-seat"]') !== null);
 }
 
 /** Opens one popover of the registry the way a person would; false when nothing here opens it. */
@@ -418,38 +405,30 @@ async function hostActionsByKeyboard(page) {
   return { reached, ...looks, overTheScene };
 }
 
-/** The scene's box, the frame it stands in, the seat at its foot and where the city's leftmost card starts. */
+/** The scene's box, the frame it stands in, and whether an Ask box or a quick ask is drawn. */
 function picture(page) {
   return page.evaluate(() => {
     const ground = document.querySelector(".graview-ground");
-    const seat = document.querySelector('[data-testid="seat"]');
     const frame = ground?.parentElement;
     const box = ground?.getBoundingClientRect();
-    const at = seat?.getBoundingClientRect();
-    const cards = [...document.querySelectorAll(".graview-ground [data-graview-view]")].map((card) => card.getBoundingClientRect()).filter((one) => one.width > 0);
     return {
       frameWidth: Math.round(frame?.getBoundingClientRect().width ?? 0),
       sceneWidth: Math.round(box?.width ?? 0),
-      state: seat?.getAttribute("data-graview-seat") ?? null,
-      side: seat?.getAttribute("data-graview-seat-side") ?? null,
-      fromLeft: at && box ? Math.round(at.left - box.left) : null,
-      fromRight: at && box ? Math.round(box.right - at.right) : null,
-      keyboard: document.activeElement?.getAttribute("data-testid") ?? null,
-      firstCard: box && cards.length > 0 ? Math.round(Math.min(...cards.map((one) => one.left)) - box.left) : null,
+      askBox: document.querySelector('[data-testid="seat-field"], [data-testid="seat"]') !== null,
+      quickAsk: document.querySelector("[data-graview-quick-ask]") !== null,
     };
   });
 }
 
 /*
- * THE SEAT FLOATS, AND THE PICTURE KEEPS ITS WIDTH (FR-78, restated). The
- * seat was a rail that took a fifth of the picture, put away to a slim tab
- * that still took 36 pixels; it is an ask field at the picture's foot now,
- * that opens over the picture and is snapped between the two feet by ⇄.
- * Held here: opening it moves no card, ⇄ from the keyboard moves it to the
- * other foot and the tab's choice is kept across a reload, and a host can
- * leave it out with the picture keeping every pixel.
+ * THE PICTURE KEEPS ITS WIDTH, AND NO ASK BOX STANDS ON IT (FR-78, restated
+ * for Roadmap f-quick-ask-framework). The seat was a rail that took a fifth
+ * of the picture, then an ask field at its foot; neither is drawn now: the
+ * quick ask opens beside what it is about when ⌘K asks for it. Held here:
+ * the picture is its frame's whole width at a desk and below a laptop, no
+ * Ask box is drawn, and a host's `quickAsk: false` draws no quick ask.
  */
-async function theSeatSnapsAndHides(newPage, readyOf) {
+async function thePictureKeepsItsWidth(newPage, readyOf) {
   const said = {};
   const visit = async (page, url, ready) => {
     await page.goto(url, { waitUntil: "load" });
@@ -462,31 +441,9 @@ async function theSeatSnapsAndHides(newPage, readyOf) {
   ]) {
     const page = await newPage({ width: 1440, height: 900 });
     await visit(page, url, ready);
-    const closed = await picture(page);
-    await page.locator('[data-testid="seat-field"]').focus();
-    await page.keyboard.type("a");
-    await page.waitForSelector('[data-testid="seat-panel"]', { timeout: 30_000 }).catch(() => {});
-    await page.waitForTimeout(500);
-    const opened = await picture(page);
-    await page.locator('[data-testid="seat-side"]').focus();
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(500);
-    const snapped = await picture(page);
-    await visit(page, url, ready);
-    const afterAReload = await picture(page);
+    const drawn = await picture(page);
     await page.close();
-    said[where] = {
-      closed,
-      opened,
-      snapped,
-      afterAReload,
-      ok:
-        closed.state === "closed" && closed.side === "left" && closed.fromLeft !== null && closed.fromLeft <= 20 &&
-        closed.sceneWidth === closed.frameWidth &&
-        opened.state === "open" && opened.firstCard === closed.firstCard && opened.sceneWidth === closed.sceneWidth &&
-        snapped.side === "right" && snapped.fromRight !== null && snapped.fromRight <= 20 && snapped.keyboard === "seat-side" &&
-        afterAReload.side === "right",
-    };
+    said[where] = { drawn, ok: !drawn.askBox && drawn.sceneWidth === drawn.frameWidth };
   }
   /* Narrower than a laptop the picture still keeps its whole width: there is no rail to lay over it. */
   {
@@ -494,15 +451,15 @@ async function theSeatSnapsAndHides(newPage, readyOf) {
     await visit(page, `${at("chrome-host")}/?face=graview`, readyOf.embed);
     const narrow = await picture(page);
     await page.close();
-    said.thePictureKeepsItsWidthBelowALaptop = { narrow, ok: narrow.state === "closed" && narrow.sceneWidth === narrow.frameWidth };
+    said.thePictureKeepsItsWidthBelowALaptop = { narrow, ok: !narrow.askBox && narrow.sceneWidth === narrow.frameWidth };
   }
-  /* The host's choice: no seat at all. */
+  /* The host's choice: no quick ask at all. */
   {
     const page = await newPage({ width: 1440, height: 900 });
-    await visit(page, `${at("chrome-host")}/?face=graview&seat=hidden`, readyOf.embed);
+    await visit(page, `${at("chrome-host")}/?face=graview&quickAsk=false`, readyOf.embed);
     const started = await picture(page);
     await page.close();
-    said["startedAs-hidden"] = { started, ok: started.state === null && started.sceneWidth === started.frameWidth };
+    said.startedWithoutTheQuickAsk = { started, ok: !started.quickAsk && !started.askBox && started.sceneWidth === started.frameWidth };
   }
   return said;
 }
@@ -615,8 +572,8 @@ try {
       await page.goto(place.url, { waitUntil: "load" });
       await place.ready();
       await page.waitForTimeout(900);
-      const seat = await openTheSeat(page);
-      faces[`${place.where} ${size.width}×${size.height}`] = { seat, popovers: await everyPopoverOn(page, place.where, size, seen) };
+      const askBox = await anAskBox(page);
+      faces[`${place.where} ${size.width}×${size.height}`] = { askBox, popovers: await everyPopoverOn(page, place.where, size, seen) };
       /* ---- FR-72: the host's actions, by keyboard, in both schemes */
       if (place.url.startsWith(at("chrome-host"))) {
         for (const colorScheme of ["light", "dark"]) {
@@ -717,7 +674,6 @@ try {
         await page.goto(`${at("chrome-host")}/?face=graview`, { waitUntil: "load" });
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
         await page.waitForTimeout(900);
-        await openTheSeat(page);
         const said = await theHostsNotices(page);
         await page.close();
         const drawn = (one) => one !== null && one.topLayer && one.onTop && one.inTheViewport && one.floatingPanel && one.contrast >= 4.5;
@@ -807,8 +763,8 @@ try {
       ok: problems.length > 0 && !iso.test(problems) && /\b(?:\d{1,2} [A-Z][a-z]{2} \d{4}|[A-Z][a-z]{2} \d{1,2}, \d{4})\b/.test(problems) && !iso.test(record.text) && record.said.length > 0 && !record.said.some((one) => raw.test(one)) && record.said.includes("Tue"),
     };
   }
-  /* ---- FR-78, restated: the seat floats at the foot, snaps between the feet, and can be left out */
-  const seat = await theSeatSnapsAndHides(
+  /* ---- FR-78, restated: the picture keeps its width, no Ask box stands on it, and the quick ask can be left out */
+  const seat = await thePictureKeepsItsWidth(
     async (viewport) => {
       const page = await browser.newPage({ viewport });
       page.on("pageerror", (error) => errors.push(error.message));
@@ -819,7 +775,7 @@ try {
       shell: (page) => page.waitForFunction(() => "__todoReady" in window, null, { timeout: 60_000 }),
     },
   );
-  report.checks.theSeatFloatsSnapsAndCanBeLeftOut = { ...seat, ok: Object.values(seat).every((one) => one.ok) };
+  report.checks.thePictureKeepsItsWidthWithNoAskBox = { ...seat, ok: Object.values(seat).every((one) => one.ok) };
   /* ---- FR-72: a host's own actions are in the profile menu, reached by the keyboard, readable in both schemes, with nothing of the host's over the scene */
   const wanted = ["Change the app", "Your apps", "Report this app"];
   const astray = Object.entries(hosts)

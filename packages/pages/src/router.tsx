@@ -7,7 +7,7 @@ import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
 import { GoToContext, GraviewProvider, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
-import { PageAsk } from "./ask.js";
+import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
 import { FaceControlsRoot } from "./face-controls.js";
@@ -644,7 +644,7 @@ export function PagesApp<S extends AnySchema>({
       {...(context.menuSections ? { menuSections: context.menuSections } : {})}
     >
       {routed}
-      <PageAsk context={context} />
+      <PageQuickAsk context={context} />
     </GraviewProvider>
   ) : (
     routed

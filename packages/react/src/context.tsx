@@ -591,7 +591,7 @@ export function GraviewProvider<S extends AnySchema>({
   locale: readerLocale,
   onKeepLens,
   providers,
-  ai: givenAi = NO_AI,
+  ai: handedAi,
   files,
   resolveApp,
   history,
@@ -651,6 +651,8 @@ export function GraviewProvider<S extends AnySchema>({
    * AI OFF IS NO AI AT ALL: a host that says `off` is handed nothing else to
    * any surface, so no model is asked and every AI part reads it as hidden.
    */
+  /* A provider drawn inside another (the routed face in an embed) is handed the outer one's AI unless given its own: one app, one host's say. */
+  const givenAi = handedAi ?? outer?.ai ?? NO_AI;
   const ai = useMemo<HostAi>(() => (givenAi.off ? AI_OFF : givenAi), [givenAi]);
   /* One desk per app, like the conversation: the host's store of entries read as it is now. */
   const aiHost = useRef(ai.interactions);

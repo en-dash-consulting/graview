@@ -38,7 +38,7 @@ export {
   Repairs,
 } from "./pages.js";
 export type { PageContext, GalleryEntry, Beginning, ListPageProps, ListRowFacts } from "./pages.js";
-export { PageAsk } from "./ask.js";
+export { PageQuickAsk } from "./quick-ask.js";
 export { lastChangeOf, PageUndo } from "./face-controls.js";
 export type { FaceControl, LastChange } from "./face-controls.js";
 export { PagesApp, PagesRoutes } from "./router.js";

@@ -56,19 +56,19 @@ jobs:
       matrix:
         renderer: [dom, gpu]
         shard:
-          - gauntlet, chat, menu
+          - gauntlet, quick-ask, menu
           - site, audit
-          - survey, create, pages, seat-guide, navigation
+          - survey, create, pages, navigation
           - rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal, a11y, renderer
           - journeys (gauntlet)
           - journeys (todo, seedbed, rota, discography)
         include:
-          - shard: gauntlet, chat, menu
-            run: node scripts/verify-all.mjs --serial gauntlet chat menu
+          - shard: gauntlet, quick-ask, menu
+            run: node scripts/verify-all.mjs --serial gauntlet quick-ask menu
           - shard: site, audit
             run: node scripts/verify-all.mjs --serial site audit
-          - shard: survey, create, pages, seat-guide, navigation
-            run: node scripts/verify-all.mjs --serial survey create pages seat-guide navigation
+          - shard: survey, create, pages, navigation
+            run: node scripts/verify-all.mjs --serial survey create pages navigation
           - shard: rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal, a11y, renderer
             run: node scripts/verify-all.mjs --serial rota lines calendar desk remember studio watch who seat rehearsal a11y renderer
           - shard: journeys (gauntlet)
@@ -90,7 +90,7 @@ jobs:
       # only the packages skipped four apps' journeys and lost the desk.
       - run: pnpm typecheck
 
-      # seat-guide and a few others walk all three engines, so every shard has them.
+      # quick-ask and a few others walk all three engines, so every shard has them.
       - name: The engines
         run: npx playwright install --with-deps chromium webkit firefox
 

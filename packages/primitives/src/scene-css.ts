@@ -185,8 +185,7 @@ ${/* The press: the whole name, laid over it. */ ""}
 ${/* THE OTHERS: people and their agents in the city, each a small figure in
    the scene's own line vocabulary with a name under it. They move by a
    transition on transform — one number, the layout tween's curve — so a
-   quiet city runs nothing. This tab's own seat is not drawn here: the
-   ask field is where it speaks. */ ""}
+   quiet city runs nothing. This tab's own seat is not drawn here. */ ""}
 .graview-occupants {
   position: absolute;
   inset: 0;
@@ -1157,10 +1156,9 @@ ${/* THE LANDMARK STANDS IN THE SQUARE: its feet at the plot's center, among
 }
 ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
    fingertip-sized buttons and the level between them, shown from altitude. */ ""}
-${/* THE SCENE'S FOOT: a sheet over it, and on a phone the ask field across
-   it. On a desk the field stands at the foot's other end; on a phone it is
-   the foot's whole width, and the zoom stood under it, every control of it
-   covered (the watch's "control-covered", the tenth walk's carried pass). */ ""}
+${/* THE SCENE'S FOOT: a sheet over it. A control at the foot stood under
+   what was laid over it once, every control of it covered (the watch's
+   "control-covered", the tenth walk's carried pass). */ ""}
 .graview-zoom,
 .graview-edge-sign {
   --graview-scene-foot: var(--graview-sheet, 0px);
@@ -1174,7 +1172,7 @@ ${/* THE SCENE'S FOOT: a sheet over it, and on a phone the ask field across
 }
 .graview-zoom {
   position: absolute;
-  ${/* Clear of a panel floating over the scene's right edge, or a sheet over its foot, or the ask field across it. */ ""}
+  ${/* Clear of a panel floating over the scene's right edge, or a sheet over its foot. */ ""}
   right: calc(16px + var(--graview-dock, 0px));
   bottom: calc(16px + var(--graview-scene-foot, var(--graview-sheet, 0px)));
   ${/* Above the occupants: a robot walking past a control must not cover it. */ ""}

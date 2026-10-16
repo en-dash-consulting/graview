@@ -1,5 +1,5 @@
 import type { SearchRanker } from "@graview/core";
-import type { AiCatalog, AiContextState, AiInteraction, AiUsage } from "@graview/core/catalog";
+import type { AiCatalog, AiContextState, AiInteraction, AiTarget, AiUsage } from "@graview/core/catalog";
 import type { ToolDefinition } from "./agent/tools.js";
 import type { Completion } from "./intelligence.js";
 import type { Decide } from "./providers/jev.js";
@@ -86,8 +86,8 @@ export interface HostAi {
   /**
    * THE HOST SAYS AI IS OFF. Every AI part is HIDDEN, not disabled, on
    * both faces: the inline AI in the context menu, a proposal waiting to
-   * be accepted, a panel it drew, the ask field, Activity's AI entries and
-   * its AI filter. No model is asked, whatever else is given here.
+   * be accepted, a panel it drew, the quick ask (the command bar and its
+   * answer cards), Activity's AI entries and its AI filter. No model is asked, whatever else is given here.
    */
   readonly off?: boolean;
   /**
@@ -102,6 +102,17 @@ export interface HostAi {
    * cannot say — a panel drawn for an ask. Unsaid, `complete` serves it.
    */
   readonly thinking?: ThinkingProvider;
+  /**
+   * THE QUICK ASK'S ANSWERS (Roadmap f-quick-ask-framework): what answers
+   * words asked from the command bar (⌘K) or on an answer card, about the
+   * target they were asked on. Handed the words, the target, the state
+   * the viewer may see and the catalog; answers prose and, optionally,
+   * candidate ids from the catalog — a change among them is proposed as a
+   * ghost, never made. Unsaid, the Thinking slot answers (else the Fast
+   * slot picks among the candidates), so a host that filled those slots
+   * need not fill this one.
+   */
+  readonly answer?: AnswerProvider;
   /**
    * WHERE AI INTERACTIONS ARE KEPT (Roadmap f-ai-interaction-history): the
    * entries Activity draws, handed back by `load` when Activity first
@@ -153,6 +164,34 @@ export interface ThinkingProvider {
   readonly price?: AiPrice;
 }
 
+/** What a quick ask hands the answer provider: the words, what they are about, and the state and catalog it may answer from. */
+export interface AnswerRequest {
+  readonly said: string;
+  readonly target: AiTarget;
+  /** The target in words: a record's name, a kind's plural, a place's title. */
+  readonly targetLabel: string;
+  readonly state: AiContextState;
+  readonly catalog: AiCatalog;
+  /** The ask this one follows on the same card, and what it was answered: one step back, never a thread. */
+  readonly follows?: { readonly said: string; readonly answer: string };
+}
+
+/** What the answer provider says: the answer in words, and the catalog's candidates that act on it, best first. */
+export interface AnswerReply {
+  readonly text: string;
+  /** Candidate ids from the request's catalog; any other id is dropped. A change among them waits as a ghost. */
+  readonly pick?: readonly string[];
+  readonly usage?: { readonly inputTokens?: number; readonly outputTokens?: number; readonly costUsd?: number };
+}
+
+/** THE ANSWER SLOT: the host's own way to answer a quick ask, in place of the Thinking and Fast slots. */
+export interface AnswerProvider {
+  /** The model, as metering and lineage name it. */
+  readonly model: string;
+  answer(request: AnswerRequest): Promise<AnswerReply>;
+  readonly price?: AiPrice;
+}
+
 /** A host's store of AI interactions (`AiInteraction`, `@graview/core/catalog`). */
 export interface AiInteractionHost {
   /** The entries this host keeps for the app, newest first or in any order: asked once, when Activity first draws them. */
@@ -183,7 +222,7 @@ export const aiOff = (ai: HostAi | undefined): boolean => ai?.off === true;
 
 /** Whether the inline AI is drawn: AI is not off, and a fast or thinking model (or the `decide`, `complete` or `turn` that serve them) was given. */
 export const inlineAiOn = (ai: HostAi | undefined): boolean =>
-  ai !== undefined && !aiOff(ai) && (ai.fast !== undefined || ai.thinking !== undefined || ai.decide !== undefined || ai.complete !== undefined || ai.turn !== undefined);
+  ai !== undefined && !aiOff(ai) && (ai.fast !== undefined || ai.thinking !== undefined || ai.answer !== undefined || ai.decide !== undefined || ai.complete !== undefined || ai.turn !== undefined);
 
 /** No AI: the graph answers alone. */
 export const NO_AI: HostAi = {};

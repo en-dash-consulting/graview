@@ -14,7 +14,7 @@ import type { RobotState } from "./robot.js";
  * This tab's own seat is not here. It used to stand on a pad, walk to what
  * it wrote and follow the pointer — a thing in the middle of the picture
  * that moved on its own, and nothing at all inside a full-screen lens. The
- * seat's ask field says who it is and what it is doing, at every height;
+ * quick ask's card says what it is about, beside it, at every height;
  * what it wrote is marked on the things themselves. Somebody
  * else's agent keeps its body: that is how you see them at work.
  */

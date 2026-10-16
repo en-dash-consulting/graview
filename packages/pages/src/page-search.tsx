@@ -10,7 +10,8 @@ import {
 import { describeSearched, search } from "@graview/core/search";
 import { formFields } from "@graview/core/forms";
 import type { Affordance } from "@graview/tools";
-import { useGraviewIfAny, useSeatTalkState, type SeatTalk } from "@graview/react/provider";
+import { useGraviewIfAny, type AiDesk } from "@graview/react/provider";
+import { openQuickAsk, useQuickAskDrawn } from "@graview/primitives/pages";
 import { Link, useSearchParams } from "react-router-dom";
 import { kindFacts } from "./facts.js";
 import { DerivedForm } from "./form.js";
@@ -266,21 +267,21 @@ export function SearchToCreate<S extends AnySchema>({
   );
 }
 
-/** "Ask: ‘…’" — the words, asked of the seat, where the face has one. */
+/** "Ask: ‘…’" — the words, asked of the quick ask, where the face draws one: answered on a card beside the page's heading. */
 function AskTheSeat({ asked }: { readonly asked: string }) {
   const here = useGraviewIfAny();
-  return here ? <AskLine asked={asked} talk={here.seatTalk} /> : null;
+  return here ? <AskLine asked={asked} desk={here.aiDesk} /> : null;
 }
 
-function AskLine({ asked, talk }: { readonly asked: string; readonly talk: SeatTalk }) {
-  const { drawn } = useSeatTalkState(talk);
-  if (drawn === 0) return null;
+function AskLine({ asked, desk }: { readonly asked: string; readonly desk: AiDesk }) {
+  const drawn = useQuickAskDrawn(desk);
+  if (!drawn) return null;
   return (
     <p style={{ margin: 0 }}>
       <button
         type="button"
         data-testid="search-ask"
-        onClick={() => talk.ask(asked)}
+        onClick={(event) => openQuickAsk(desk, { pointed: { about: [] }, asked, returnTo: event.currentTarget })}
         style={{ ...link, font: "inherit", padding: 0, border: 0, background: "transparent", cursor: "pointer", textAlign: "start" }}
       >
         Ask: ‘{asked}’

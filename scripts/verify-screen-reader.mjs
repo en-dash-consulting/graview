@@ -23,7 +23,7 @@
  *   the store, changes a record.
  *
  * The stops: the bar; the Pages and Scene switch; a list; a record page; a
- * columns lens; a blocks lens; an act's form; the Ask box; and a change
+ * columns lens; a blocks lens; an act's form; the quick ask (⌘K); and a change
  * from someone else, with the two shown to each other and with presence
  * off, as a served store's change arrives. Over two apps: the Roadmap (a document mounted as
  * Graview Cloud mounts one, in two tabs sat down as Ada and Ben, every op
@@ -324,7 +324,7 @@ const todoReady = (page) => ready(page, () => Object.keys(window).some((key) => 
 const ROADMAP_AT = (path, as = "ada") => `${at("screen-reader-host")}${path}?as=${as}`;
 const TODO_AT = (path) => `${at("todo")}${path}${path.includes("?") ? "&" : "?"}today=${TODAY}`;
 const BAR = "[data-graview-app-bar]";
-const ASK = '[data-testid="seat-panel"], [data-graview-seat]';
+const ASK = '[data-testid="quick-ask"]';
 
 /** Presses a control by the keyboard, as a person without a pointer does: focus it, then Enter. */
 async function press(locator, key = "Enter") {
@@ -602,29 +602,18 @@ try {
       check("a blocks lens: a card's name is said once, as its link", twice === undefined, { saidTwice: twice ?? null });
     }
 
-    /* ── 8. THE ASK BOX ── */
-    reach("the Ask box");
+    /* ── 8. NO ASK BOX ── */
+    reach("no Ask box");
     {
-      const here = stop("Roadmap", "The Ask box", "The seat's box at the foot of the page, asked a question with no model lent.");
-      const region = ada.getByRole("region", { name: /Ask A Roadmap$/ });
-      here.read("Read in order", await readingOrder(ada, cdp, { selector: ASK }));
-      const box = region.getByRole("textbox").first();
-      await box.focus();
-      const since = Date.now();
-      await box.fill("How many features are being built?");
-      await box.press("Enter");
-      await ada.waitForTimeout(2500);
-      const focus = await focusSaid(ada, cdp);
-      here.focus("asking", focus);
-      const heard = await heardSince(ada, since);
-      here.heard("after asking", heard);
-      const after = await readingOrder(ada, cdp, { selector: ASK });
-      here.read("The seat after the question", after);
-      check("the Ask box: it is a named region with a heading and a named box", (await region.count()) === 1, {});
-      check("the Ask box: the keyboard stays in the conversation after asking", !focus.lost, { focus: focus.line });
-      check("the Ask box: the answer is said aloud", heard.length > 0, { heard });
-      check("the Ask box: every control is named in words", unnamed(after).length === 0, { unnamed: unnamed(after) });
-      await ada.keyboard.press("Escape").catch(() => undefined);
+      /*
+       * The Ask box is retired (Roadmap f-quick-ask-framework): no region at
+       * the foot to be read past on every page. The Roadmap is lent no model,
+       * so no quick ask is drawn either; todo's quick ask is walked below.
+       */
+      const here = stop("Roadmap", "No Ask box", "No field at the foot of the page, and no quick ask where no model is lent.");
+      const regions = await ada.getByRole("region", { name: /^Ask / }).count();
+      here.read("Read in order", await readingOrder(ada, cdp, { selector: "#app", skip: [BAR], items: 2 }));
+      check("no Ask box: no region asks at the page's foot", regions === 0, { regions });
     }
 
     /* ── 9. A CHANGE FROM SOMEONE ELSE ── */
@@ -733,19 +722,28 @@ try {
       check("todo · an act's form: after it is sent the keyboard is on the page, not lost", !afterSend.lost, { focus: afterSend.line });
       check("todo · an act's form: what it did is said aloud", heard.length > 0, { heard });
 
-      const ask = stop("Things (todo)", "The Ask box", "The seat at the page's foot, asked what is late.");
-      const box = todo.getByRole("region", { name: /^Ask Things/ }).getByRole("textbox").first();
-      await box.focus();
+      const ask = stop("Things (todo)", "The quick ask", "⌘K on a task's page, lent a stub model, asked what is left.");
+      await todo.goto(`${TODO_AT("/pages/tasks/t-deposit")}&ai=stub`, { waitUntil: "load" });
+      await todoReady(todo);
+      await todo.keyboard.press("ControlOrMeta+K");
+      await todo.waitForSelector(ASK, { timeout: 30_000 }).catch(() => undefined);
+      const card = todo.getByRole("region", { name: /^Ask about / });
+      const named = await card.count();
+      const box = card.getByRole("combobox").first();
       const asked = Date.now();
-      await box.fill("What is late?");
+      await box.fill("What is left?");
       await box.press("Enter");
       await todo.waitForTimeout(2500);
       const askFocus = await focusSaid(todo, tcdp);
       ask.focus("asking", askFocus);
       const askHeard = await heardSince(todo, asked);
       ask.heard("after asking", askHeard);
-      check("todo · the Ask box: the keyboard stays in the conversation after asking", !askFocus.lost, { focus: askFocus.line });
-      check("todo · the Ask box: the answer is said aloud", askHeard.length > 0, { heard: askHeard });
+      const after = await readingOrder(todo, tcdp, { selector: ASK });
+      ask.read("The answer card", after);
+      check("todo · the quick ask: it is a region named for what it is about", named === 1, { named });
+      check("todo · the quick ask: the keyboard stays on the card after asking", !askFocus.lost, { focus: askFocus.line });
+      check("todo · the quick ask: the answer is said aloud", askHeard.length > 0, { heard: askHeard });
+      check("todo · the quick ask: every control is named in words", unnamed(after).length === 0, { unnamed: unnamed(after) });
       await todo.close();
     }
     await context.close();

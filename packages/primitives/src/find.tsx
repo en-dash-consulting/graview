@@ -3,10 +3,11 @@ import { actsOn, search, touchWeights } from "@graview/core/search";
 import { kindCardId, withFocus, withJackIn, withOverview, withPicture, withSelection } from "@graview/layout/view";
 import { withoutSearch, withQuery } from "@graview/layout/view-moves";
 import { useKit } from "@graview/react/drawing";
-import { matchWith, POPOVER_STYLE, useFound, useGraview, usePopover, useSeatTalkState, useViolations } from "@graview/react/provider";
+import { matchWith, POPOVER_STYLE, useFound, useGraview, usePopover, useViolations } from "@graview/react/provider";
 import { hueFor } from "@graview/render";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { VISUALLY_HIDDEN } from "./primitives/index.js";
+import { openQuickAsk, useQuickAskDrawn } from "./quick-ask-desk.js";
 
 // The Find box searches: it hands the provider the matcher as it is fetched (FR-179).
 matchWith({ search, touchWeights });
@@ -27,8 +28,10 @@ matchWith({ search, touchWeights });
  *
  * AND THE LAST ROW ASKS. Words that are a question rather than a name —
  * "what is overdue", "who covers Thursday" — find little; the strip's last
- * row, "Ask: ‘…’", opens the seat with them as the question, where a seat
- * is drawn. ⌘K and `/` stay Find's: the seat has no chord of its own.
+ * row, "Ask: ‘…’", asks them of the quick ask, answered on a card beside
+ * what is selected, where a quick ask is drawn. There, ⌘K is the quick
+ * ask's command bar and `/` stays Find's; where none is drawn both are
+ * Find's.
  */
 
 /** One row of the strip: a hit, and the id the listbox knows it by. */
@@ -37,7 +40,7 @@ interface Row {
   readonly hit: Hit;
 }
 
-/** The strip's last row: the words, asked of the seat. */
+/** The strip's last row: the words, asked of the quick ask. */
 interface AskRow {
   readonly id: string;
   readonly ask: string;
@@ -47,8 +50,8 @@ interface AskRow {
 const groupOf = (hit: Hit): string => (hit.about === "rule" ? "rule:" : hit.about === "act" ? "act:" : hit.kind);
 
 export function FindBox<S extends AnySchema>({ compact = false }: { readonly compact?: boolean }) {
-  const { store, view, setView, principal, setMenuAt, brand, seatTalk } = useGraview<S>();
-  const seat = useSeatTalkState(seatTalk);
+  const { store, view, setView, principal, setMenuAt, brand, aiDesk, selection } = useGraview<S>();
+  const asks = useQuickAskDrawn(aiDesk);
   const found = useFound();
   const violations = useViolations<S>();
   const flag = useKit().marks.flag;
@@ -124,7 +127,7 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
     }
     return [...held.entries()];
   }, [found, acts, anchor, strip]);
-  const asking: AskRow | null = seat.drawn > 0 && q.trim() ? { id: `${strip}-ask`, ask: q.trim() } : null;
+  const asking: AskRow | null = asks && q.trim() ? { id: `${strip}-ask`, ask: q.trim() } : null;
   const rows = useMemo<readonly (Row | AskRow)[]>(() => [...groups.flatMap(([, entries]) => entries), ...(asking ? [asking] : [])], [groups, asking?.ask]);
   const current = rows.find((row) => row.id === active) ?? rows[0];
   const manyFound = (found?.hits ?? []).filter((hit) => hit.about === "node").length;
@@ -193,8 +196,8 @@ export function FindBox<S extends AnySchema>({ compact = false }: { readonly com
   const travel = (row: Row | AskRow | undefined) => {
     if (!row) return;
     if ("ask" in row) {
-      // The words become the seat's question; the picture lets go of them.
-      seatTalk.ask(row.ask);
+      // The words are asked about what is selected, answered on a card beside it; the picture lets go of them.
+      openQuickAsk(aiDesk, { pointed: { ...(selection[0] !== undefined ? { on: selection[0] } : {}), about: selection }, asked: row.ask });
       setView((stop) => withoutSearch(stop));
       setOpen(false);
       return;

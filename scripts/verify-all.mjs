@@ -57,7 +57,7 @@ const CHAIN = [
   ["site", "verify-site.mjs"],
   // axe-core over the framework's markup as Cloud hosts it and over every example, on both faces, at a desk and a phone, light and dark.
   ["a11y", "verify-a11y.mjs"],
-  // What a screen reader is told at each stop — the bar, the switch, a list, a record, columns, blocks, a form, the Ask box, another tab's change — read from the tree Chromium and WebKit expose, written as a walk.
+  // What a screen reader is told at each stop — the bar, the switch, a list, a record, columns, blocks, a form, the quick ask, another tab's change — read from the tree Chromium and WebKit expose, written as a walk.
   ["screen-reader", "verify-screen-reader.mjs"],
   // The awkward example in every face, width, scheme and seat — long, so it starts early.
   ["gauntlet", "verify-gauntlet.mjs"],
@@ -71,20 +71,15 @@ const CHAIN = [
   ["inline-ai", "verify-inline-ai.mjs"],
   // Notify me in two presses: from a right-click on a record in the scene, a kind's list and an act on the routed face, listed in Activity with one press to stop, somebody else's change told once and the reader's own not, and offered after an act's form.
   ["notify", "verify-notify.mjs"],
-  // The seat as a guide: a quiet field that grows into a conversation, on both faces, in three engines.
-  ["seat-guide", "verify-seat-guide.mjs"],
-  // The seat takes you where you ask and draws a view kept as a lens, on both faces and Cloud's workshop, in three engines.
-  ["seat-goes-and-draws", "verify-seat-goes-and-draws.mjs"],
-  ["chat", "verify-chat.mjs"],
+  // The quick ask, in place of the Ask box: ⌘K's bar beside what is selected completes acts, places, records and "Show …"; words asked are answered on a card beside the record or list, a change a ghost accepted as one batch, a follow-up on the card; and with AI off none of it — on both faces, in three engines.
+  ["quick-ask", "verify-quick-ask.mjs"],
   ["seat", "verify-seat.mjs"],
-  // A phone's seat put away by its ✕, a tap or a pull down, the keyboard down after, on an iPhone and a Pixel in Chromium and WebKit (FR-164).
-  ["phone-seat", "verify-phone-seat.mjs"],
   ["who", "verify-who.mjs"],
   ["calendar", "verify-calendar.mjs"],
   ["desk", "verify-desk.mjs"],
   ["rota", "verify-rota.mjs"],
   ["studio", "verify-studio.mjs"],
-  // The embed's chrome as one family: every popover over everything with the seat open, the host's actions, the seat snapped or left out, the host's notices (FR-72, FR-75–FR-78).
+  // The embed's chrome as one family: every popover over everything, the host's actions, the picture its whole width with no Ask box and the quick ask left out, the host's notices (FR-72, FR-75–FR-78).
   ["chrome", "verify-chrome.mjs"],
   // A part of the page missed while offline arrives when the network is back, in three engines, and never breaks the page (FR-139).
   ["offline", "verify-offline.mjs"],

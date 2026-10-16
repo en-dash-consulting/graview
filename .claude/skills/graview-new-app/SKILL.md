@@ -90,8 +90,8 @@ In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
 5. **Take the shell.** `Shell` from `@graview/primitives` is everything
    not about your domain: the one app bar an embed wears too (the name, the
    Scene and Pages switch, the scene's pictures, Find, Activity, the
-   standing, the person), the scene, its key, the ask field — a seat that
-   answers from the graph with no API key — and the acts at the pointer.
+   standing, the person), the scene, its key, the quick ask (⌘K, where
+   the host gives a model) and the acts at the pointer.
    Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`,
    `OverviewButton`) are exported for a shell of your own; one is about
    eighty lines, and a longer one is probably rebuilding something derived.

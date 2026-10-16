@@ -3,8 +3,7 @@ import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnyS
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
-import type { SeatStart } from "@graview/primitives";
-import { createNoticeBoard, type Notice, type NoticeHandle } from "@graview/primitives/frame";
+import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
@@ -244,11 +243,13 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    */
   readonly onDrawn?: (face: EmbedFace) => void;
   /**
-   * THE ASK FIELD (the seat) at the foot of both faces: `"field"`, the
-   * default, or `"hidden"` for none. Its conversation is the app's, so it
-   * is the same on the scene and on Pages.
+   * THE QUICK ASK on both faces (Roadmap f-quick-ask-framework): ⌘K's
+   * command bar beside what is selected, and the answer cards it leaves.
+   * On by default where `ai` gives a model; `false` draws none. It replaced
+   * the 0.1.30 Ask box's `seat: "field" | "hidden"`: a stored value of that is
+   * read with `quickAskOf`, and handed here it is read the same way.
    */
-  readonly seat?: SeatStart;
+  readonly quickAsk?: boolean;
   /**
    * WHERE TO OPEN, AS `handle.where()` SAID IT (FR-116): the face, the page
    * on Pages and the scene's stop, over `face`, `path` and `stop`, settled
@@ -603,11 +604,11 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
                 overview={toOverview}
                 scope={scope}
                 titleLevel={titleBelow(heading)}
-                ask={props.seat}
+                quickAsk={quickAskOf(props.quickAsk)}
                 props={{ ...props, onNavigate, ...(address ? {} : { path: pagesAt.current.path }) } as never}
               />
             ) : (
-              <SceneFace address={address} auto={auto} scheme={scheme} scope={scope} {...(props.seat ? { seat: props.seat } : {})} />
+              <SceneFace address={address} auto={auto} scheme={scheme} scope={scope} quickAsk={quickAskOf(props.quickAsk)} />
             )}
             <Drawn asked={face} shown={shown} onDrawn={drawn} />
           </Suspense>
@@ -779,8 +780,8 @@ export interface EmbedHandle {
   setSeat(principal: Principal): void;
   /** Offer other seats, or none: a seat switcher is drawn only for two or more. */
   setSeats(seats: EmbedOptions["seats"]): void;
-  /** The ask field at the foot of both faces, now (`seat` in the options): `"field"` or `"hidden"`. */
-  setAskField(start: SeatStart): void;
+  /** The quick ask on both faces, now (`quickAsk` in the options): on, or off. */
+  setQuickAsk(on: boolean): void;
   /** Name other people: an agent who first acts after the page opened is named from the next render. */
   setPeople(people: readonly Person[]): void;
   /** What the host now says about its frame: the chat's theme changed, say. */
@@ -813,7 +814,7 @@ interface Setters {
   scheme(scheme: Scheme): void;
   seat(principal: Principal): void;
   seats(seats: EmbedOptions["seats"]): void;
-  askField(start: SeatStart): void;
+  quickAsk(on: boolean): void;
   people(people: readonly Person[]): void;
   hostContext(context: EmbedHostContext): void;
   brand(brand: Brand | undefined): void;
@@ -872,7 +873,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
     const [principal, setSeat] = useState<Principal | undefined>(options.principal);
     const [seats, setSeats] = useState<EmbedOptions["seats"]>(options.seats);
-    const [askField, setAskField] = useState<SeatStart | undefined>(options.seat);
+    const [quickAsk, setQuickAsk] = useState<boolean | undefined>(options.quickAsk);
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
@@ -885,7 +886,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         setPath(undefined);
         setStop(undefined);
       },
-      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, askField: setAskField, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setCalled, hostActions: setHostActions };
+      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, quickAsk: setQuickAsk, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setCalled, hostActions: setHostActions };
     return (
       <Whereabouts.Provider value={here}>
       <Embed<S>
@@ -901,7 +902,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         {...(path !== undefined ? { path } : {})}
         {...(principal ? { principal } : {})}
         {...(seats ? { seats } : {})}
-        {...(askField ? { seat: askField } : {})}
+        {...(quickAsk !== undefined ? { quickAsk } : {})}
         {...(people ? { people } : {})}
         {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
@@ -973,7 +974,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
     setSeat: (principal) => flushSync(() => setters?.seat(principal)),
     setSeats: (seats) => flushSync(() => setters?.seats(seats)),
-    setAskField: (start) => flushSync(() => setters?.askField(start)),
+    setQuickAsk: (on) => flushSync(() => setters?.quickAsk(on)),
     setPeople: (people) => flushSync(() => setters?.people(people)),
     setHostContext: (context) => flushSync(() => setters?.hostContext(context)),
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),

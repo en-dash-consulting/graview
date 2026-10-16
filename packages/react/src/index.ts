@@ -86,11 +86,11 @@ export { inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, useP
 export type { PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions } from "./popover.js";
 export { lazyModule, retryLazyParts } from "./lazy-part.js";
 // The conversation with the seat, held by the app so a face switch keeps it.
-export { createSeatTalk, seatTalkKey, useSeatDrawn, useSeatTalkState } from "./seat-talk.js";
+export { createSeatTalk, seatTalkKey, useSeatTalkState } from "./seat-talk.js";
 // The inline AI's desk: the interactions Activity draws and the ghost waiting to be accepted, held by the app.
 export { createAiDesk, useAiDeskState } from "./ai-desk.js";
 export type { AiDesk, AiDeskState, HeldGhost } from "./ai-desk.js";
-export type { KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatSide, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
+export type { KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions } from "./lazy-part.js";
 export { useAffordances, useApplyAffordance } from "./affordances.js";
 // The app as it was (Roadmap f-playback): the moment a face draws instead of now, held by its outermost provider.

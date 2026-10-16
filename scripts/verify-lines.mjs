@@ -537,10 +537,11 @@ for (const { app, port, states, chosen = [], ground = [], record } of APPS.filte
       if (!tabbed) report.faults.push(`${where}: Tab never reaches a chip of the band or the card`);
       else if (keyed <= resting && (await tieFor(tabbed)) === 0) report.faults.push(`${where}: Tab onto ${tabbed} does not draw its tie`);
       /* Held: the card pressed and moved, and every tie measured while it is. */
-      const cardBox = await page.locator(`[data-graview-view="${record.id}"]`).boundingBox();
+      // The card's own panel, not the slot it stands centered in: a slot taller than its card leaves its top margin bare ground.
+      const cardBox = (await page.locator(`[data-graview-view="${record.id}"] [data-graview-primitive="panel"]`).first().boundingBox()) ?? (await page.locator(`[data-graview-view="${record.id}"]`).boundingBox());
       if (cardBox) {
         const x = cardBox.x + cardBox.width * 0.6;
-        const y = cardBox.y + 60;
+        const y = cardBox.y + Math.min(60, cardBox.height / 3);
         await page.mouse.move(x, y);
         await page.mouse.down();
         for (let step = 1; step <= 10; step++) {

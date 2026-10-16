@@ -5,6 +5,7 @@ import { aggregateId, EMPTY_VIEW } from "@graview/layout";
 import { PagesApp, type PageContext } from "@graview/pages";
 import { registerDefaultViews, Shell } from "@graview/primitives";
 import { createViews, GraviewProvider } from "@graview/react";
+import { stubFast } from "@graview/tools/inline-ai";
 import axe from "axe-core";
 import { act, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
@@ -15,13 +16,14 @@ import { mount, type EmbedHandle, type EmbedOptions, preload } from "../../src/i
 beforeAll(() => preload());
 
 /**
- * FR-40: THE SEAT IS A REGION, NOT A LANDMARK INSIDE ONE.
+ * FR-40: WHAT ASKS IS A REGION, NOT A LANDMARK INSIDE ONE.
  *
  * The seat was an `<aside>` — a complementary landmark — drawn inside the
  * Shell's main and inside an embed's own region, and what it held were
  * asides inside IT. axe's `landmark-complementary-is-top-level` failed on
- * every hosted app at every size and scheme. The seat lives in the picture
- * it is about, so it is a region there named "Ask <the app>", open or not.
+ * every hosted app at every size and scheme. The quick ask that replaced
+ * it (Roadmap f-quick-ask-framework) stands beside what it is about, so it
+ * is a region there named "Ask about <the thing>", and holds no aside.
  */
 const person = defineNode("person", {
   fields: z.object({ label: z.string() }),
@@ -39,6 +41,7 @@ const snapshot = {
   edges: [{ kind: "assigned-to", from: "ana", to: "morning" }],
 } as never;
 const store = () => new Store({ schema, mutations: [], invariants: [], snapshot });
+const ai = { fast: stubFast() };
 const views = () => registerDefaultViews(schema, createViews(schema));
 
 const LANDMARK = "main, nav, aside, header, footer, form[aria-label], section[aria-label], section[aria-labelledby], [role=main], [role=navigation], [role=complementary], [role=region], [role=banner], [role=contentinfo], [role=search], [role=form]";
@@ -84,30 +87,29 @@ async function rendered(tree: ReactNode, run: (host: HTMLElement) => Promise<voi
   }
 }
 
-/** Opens the seat from its field and waits for the panel, which is fetched when the seat first opens. */
-const openSeat = async (host: Element) => {
-  const field = host.querySelector<HTMLInputElement>('[data-testid="seat-field"]');
-  if (!field) return false;
-  await act(async () => field.click());
-  for (let turn = 0; turn < 200 && !host.querySelector('[data-testid="seat-panel"]'); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
-  return host.querySelector('[data-testid="seat-panel"]') !== null;
+/** Opens the quick ask with ⌘K and waits for its card, which is fetched when it is first opened. */
+const openQuickAsk = async (host: Element) => {
+  for (let turn = 0; turn < 200 && !host.querySelector("[data-graview-quick-ask]"); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
+  if (!host.querySelector("[data-graview-quick-ask]")) return false;
+  await act(async () => void window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true, cancelable: true })));
+  for (let turn = 0; turn < 200 && !host.querySelector('[data-testid="quick-ask"]'); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
+  return host.querySelector('[data-testid="quick-ask"]') !== null;
 };
 
-describe("the seat is a region, not a landmark inside one", () => {
-  it("in the Shell, with the seat, the key, the profile and the activity all open", async () => {
+describe("the quick ask is a region, not a landmark inside one", () => {
+  it("in the Shell, with the quick ask, the key, the profile and the activity all open", async () => {
     await rendered(
-      <GraviewProvider store={store()} views={views()} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("duty"), overview: true }} initialSelection={["ana"]} brand={{ name: "Field notes" } as never}>
+      <GraviewProvider store={store()} views={views()} initialView={{ ...EMPTY_VIEW, focusId: aggregateId("duty"), overview: true }} initialSelection={["ana"]} brand={{ name: "Field notes" } as never} ai={ai}>
         <Shell<typeof schema> scheme="light" onScheme={() => {}} remembers />
       </GraviewProvider>,
       async (host) => {
         expect(await click(host, "profile-button")).toBe(true);
         expect(await click(host, "activity-button")).toBe(true);
         expect(await click(host, "lines-key")).toBe(true);
-        expect(await openSeat(host)).toBe(true);
-        const seat = host.querySelector('[data-testid="seat"]');
-        expect(seat?.getAttribute("role")).toBe("region");
-        expect(seat?.getAttribute("aria-label")).toBe("Ask Field notes");
-        expect(seat?.querySelector("h2")?.textContent).toBe("Ask Field notes");
+        expect(await openQuickAsk(host)).toBe(true);
+        const asking = host.querySelector('[data-testid="quick-ask"]');
+        expect(asking?.getAttribute("role")).toBe("region");
+        expect(asking?.getAttribute("aria-label")).toBe("Ask about Ana");
         expect(nested(host)).toEqual([]);
         expect(await axeSays(host)).toEqual([]);
       },
@@ -120,13 +122,12 @@ describe("the seat is a region, not a landmark inside one", () => {
       document.body.appendChild(host);
       let handle: EmbedHandle | undefined;
       await act(async () => {
-        handle = mount(host, { app, fonts: false, face, seed: snapshot, label: "The notes" } as unknown as EmbedOptions);
+        handle = mount(host, { app, fonts: false, face, seed: snapshot, label: "The notes", ai } as unknown as EmbedOptions);
       });
       try {
-        for (let turn = 0; turn < 200 && !host.querySelector('[data-testid="seat-field"]'); turn++) await act(async () => new Promise((resolve) => setTimeout(resolve, 5)));
-        expect(await openSeat(host)).toBe(true);
+        expect(await openQuickAsk(host)).toBe(true);
         await click(host, "profile-button");
-        expect(host.querySelector('[data-testid="seat"]')?.getAttribute("role")).toBe("region");
+        expect(host.querySelector('[data-testid="quick-ask"]')?.getAttribute("role")).toBe("region");
         expect(nested(host)).toEqual([]);
         expect(await axeSays(host)).toEqual([]);
       } finally {
@@ -137,10 +138,10 @@ describe("the seat is a region, not a landmark inside one", () => {
     });
   }
 
-  it("on the pages face, with the seat open", async () => {
-    await rendered(<PagesApp context={{ store: store(), views: views() } as PageContext<typeof schema>} initialPath="/runs/morning" />, async (host) => {
-      expect(await openSeat(host)).toBe(true);
-      expect(host.querySelector('[data-testid="seat"]')?.getAttribute("role")).toBe("region");
+  it("on the pages face, with the quick ask open", async () => {
+    await rendered(<PagesApp context={{ store: store(), views: views(), ai } as PageContext<typeof schema>} initialPath="/runs/morning" />, async (host) => {
+      expect(await openQuickAsk(host)).toBe(true);
+      expect(host.querySelector('[data-testid="quick-ask"]')?.getAttribute("role")).toBe("region");
       expect(nested(host)).toEqual([]);
       expect(await axeSays(host)).toEqual([]);
     });

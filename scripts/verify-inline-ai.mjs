@@ -391,7 +391,7 @@ try {
   await host.click('[data-graview-pick="t-deposit"]', { button: "right" });
   await host.waitForSelector(MENU, { timeout: 10_000 });
   await host.waitForTimeout(400);
-  const sceneOff = await host.evaluate(() => ({ section: document.querySelector('[data-menu-section="inline-ai"]') !== null, seat: document.querySelector('[data-testid="seat-field"]') !== null }));
+  const sceneOff = await host.evaluate(() => ({ section: document.querySelector('[data-menu-section="inline-ai"]') !== null, seat: document.querySelector('[data-graview-quick-ask], [data-testid="seat-field"]') !== null }));
   await putAway(host);
   await host.click('[data-testid="activity-button"]').catch(() => undefined);
   await host.waitForTimeout(400);
@@ -405,7 +405,7 @@ try {
   await host.waitForTimeout(400);
   const pagesOff = await host.evaluate(() => ({
     section: document.querySelector('[data-menu-section="inline-ai"]') !== null,
-    seat: document.querySelector('[data-testid="seat-field"]') !== null,
+    seat: document.querySelector('[data-graview-quick-ask], [data-testid="seat-field"]') !== null,
     record: document.querySelector('[data-testid="record-ai"]') !== null,
   }));
   await host.keyboard.press("Escape");

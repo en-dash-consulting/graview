@@ -10,8 +10,8 @@
  * A notice is drawn OVER the picture it is about, never in its flow: at the
  * foot's middle on a phone, above the safe area, and at the foot's left on
  * a desk. It does not cover what already stands at that foot — a control
- * marked `data-graview-foot` (the seat's ask field, the way back, the scene's
- * zoom) — it stands above a short one and beside a tall one (the open seat), and
+ * marked `data-graview-foot` (the way back, the scene's zoom) — it stands
+ * above a short one and beside a tall one, and
  * several stand one above the other.
  */
 

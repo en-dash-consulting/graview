@@ -304,8 +304,8 @@ const measure = () => {
   /*
    * Chrome sitting ON TOP of the CONTENT.
    *
-   * The seat is an ask field at the picture's foot, in a strip the layout
-   * keeps clear, and grows over the picture only when asked. What would be
+   * The quick ask's card stands BESIDE what it is about, opened only when
+   * asked (⌘K); there is no ask field at the foot any more. What would be
    * wrong is it sitting on a real share of the focus or a raised card, so
    * that is what this counts — against the panel someone can see, not the
    * band slot the layout allots. (This measured the strip a selection drew;
@@ -318,7 +318,7 @@ const measure = () => {
     // A full page covers the scene on purpose; what is underneath it is not
     // something anyone can see, let alone something the strip is hiding.
     if (document.querySelector('[role="dialog"]')) return [];
-    const strip = document.querySelector('[data-testid="seat"]');
+    const strip = document.querySelector('[data-testid="quick-ask"]');
     if (!strip) return [];
     const over = strip.getBoundingClientRect();
     return [...document.querySelectorAll("[data-graview-view]")]

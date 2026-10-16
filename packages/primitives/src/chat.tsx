@@ -33,10 +33,12 @@ import { AnswerArgs } from "./workbench/index.js";
  * the same runtime a seat uses, attributed to `chat` in the log,
  * previewer-visible, undoable. Words in, the usual paths out.
  *
- * The seat (`seat-field.tsx`, `seat-panel.tsx`) draws this inside its
- * panel, with the app's conversation (`shared`), so a face switch keeps
- * it, and its own field outside it; drawn alone, it keeps its own
- * conversation and its own field.
+ * No face of the framework draws it: the Ask box that did (a field at the
+ * picture's foot that grew into this thread) is retired for the quick ask
+ * (`quick-ask-door.tsx`), whose answers are cards beside what they are
+ * about. A product that wants a conversation in its own layout places this
+ * — with the app's conversation (`shared`), so a face switch keeps it, or
+ * alone, with its own conversation and its own field.
  *
  * WHAT AN ANSWER CARRIES, AND WHERE IT GOES, is drawn here and nowhere
  * else: the words, the names the words found (each a link that moves the
@@ -60,10 +62,10 @@ export interface ChatPanelProps<S extends AnySchema> {
   /**
    * The app's conversation rather than this panel's own: kept by the
    * provider, so it outlives the panel and a face switch, and asked into
-   * from outside (the seat's field, a suggestion, Find's "Ask:" row).
+   * from outside (a suggestion, the provider's `seatTalk.ask`).
    */
   readonly shared?: boolean;
-  /** Its own field; the seat's is outside it. */
+  /** Its own field; false where the product draws the field outside it. */
   readonly composer?: boolean;
   /**
    * WHERE AN ANSWER TAKES THE APP ("go to The week"): the routed face
@@ -238,7 +240,7 @@ export function ChatPanel<S extends AnySchema>({
   const { outcomes, settle } = conversation;
 
   /*
-   * ASKED FROM OUTSIDE: the seat's field, a suggestion, Find's "Ask:" row.
+   * ASKED FROM OUTSIDE: a suggestion, or anything that calls `seatTalk.ask`.
    * They put the question on the app's conversation; the panel drawing it
    * sends it, once.
    */

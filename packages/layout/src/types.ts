@@ -339,7 +339,7 @@ export interface LayoutOptions {
   };
   /**
    * Room the picture must leave for chrome that lives ON the scene — the
-   * panes at its edges and the ask field at its foot.
+   * panes at its edges and the zoom at its foot.
    * The ring and the focused card center within what is left, so a
    * district is never drawn under a pane. Nothing is reserved by default.
    */

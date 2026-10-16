@@ -13,9 +13,13 @@
  */
 /* The scene's own rules, drawn by the scene face after the frame's sheet (FR-104). */
 export { sceneCss } from "./scene-css.js";
-export { SeatField } from "./seat-field.js";
 export { DraftDoor } from "./draft-door.js";
-export type { SeatFieldProps, SeatStart } from "./seat-field.js";
+// The quick ask (Roadmap f-quick-ask-framework): ⌘K's bar beside what is selected, and its answer cards, fetched when first opened.
+export { QuickAskDoor } from "./quick-ask-door.js";
+export { openQuickAsk, useQuickAskDrawn } from "./quick-ask-desk.js";
+export type { QuickAskDoorProps } from "./quick-ask-door.js";
+export type { QuickAskOpening } from "./quick-ask-desk.js";
+export { quickAskOf } from "./quick-ask-setting.js";
 export { LinesKey } from "./lines-key.js";
 /* What is chosen from altitude, beside the map at a size a person reads: a lens, a record's links, a district. */
 export { MapPanel, mapPanelShows } from "./map-panel-door.js";

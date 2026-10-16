@@ -660,6 +660,8 @@ export interface AiInteraction {
   /** The batches it made, in order: each carries lineage `interaction: <id>`. */
   readonly batches?: readonly string[];
   readonly panel?: AiPanel;
+  /** What a quick ask was answered, in words (`ask.kind` "ask"). */
+  readonly answer?: string;
   readonly usage?: readonly AiUsage[];
   readonly failed?: string;
 }

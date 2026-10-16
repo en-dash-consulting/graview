@@ -1,5 +1,6 @@
 import { allLabel, hueFor, kindPath, MOST_STANDING, onePerPicture, orderKinds, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
+import { useQuickAskDrawn } from "./quick-ask-desk.js";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
 import { barPanes } from "./bar-panes-door.js";
@@ -612,9 +613,7 @@ export function AppBar({
                   <div ref={setSlot} className="graview-bar-find-slot">
                     {findBox}
                   </div>
-                  <span className="graview-bar-find-keys" data-testid="app-find-keys" aria-hidden="true">
-                    {findKeys()}
-                  </span>
+                  <FindKeys />
                 </div>
               </>
             ) : null}
@@ -721,6 +720,16 @@ const plain = (event: MouseEvent): boolean => event.button === 0 && !(event.meta
 function findKeys(): string {
   const platform = globalThis.navigator?.platform ?? "";
   return /Mac|iPhone|iPad|iPod/.test(platform) ? "⌘K" : "Ctrl K";
+}
+
+/** Find's shortcut said over its box's end: `/` where the quick ask holds ⌘K (Roadmap f-quick-ask-framework), else ⌘K. */
+function FindKeys() {
+  const asks = useQuickAskDrawn(useGraviewIfAny()?.aiDesk);
+  return (
+    <span className="graview-bar-find-keys" data-testid="app-find-keys" aria-hidden="true">
+      {asks ? "/" : findKeys()}
+    </span>
+  );
 }
 
 /** A mark of the bar's, drawn in the ink it stands in, hidden from whoever reads its words. */

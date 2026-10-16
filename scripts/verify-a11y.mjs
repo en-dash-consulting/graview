@@ -172,7 +172,7 @@ const hintNow = (page) =>
       faces: '[data-testid="app-faces"]',
       problems: '[data-testid="standing"], [data-testid="standing-link"]',
       activity: '[data-testid="activity-button"]',
-      ask: '[data-testid="seat-field"]',
+      ask: '[data-testid="app-find"], [data-testid="app-find-open"]',
       find: '[data-testid="app-find"], [data-testid="app-find-open"]',
       profile: '[data-testid="profile-button"]',
       home: '[data-testid="app-home"]',

@@ -445,9 +445,9 @@ function Switcher({
 }) {
   const [open, setOpen] = useState(false);
   /*
-   * Out of the app's way. The foot of the picture is the seat's ask field,
-   * so a switcher there sat on it; the bottom right corner is the scene's
-   * zoom, and on a phone the seat's whole width.
+   * Out of the app's way. The foot of the picture holds the ghost of what
+   * the AI proposed and the notices, so a switcher there sat on them; the
+   * bottom right corner is the scene's zoom.
    * Above both, on the right, is clear in every app the desk mounts.
    */
   return (

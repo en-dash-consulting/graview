@@ -14,7 +14,11 @@
  *    in one call, and answers the fills as proposals;
  *  - `panelHere` asks the Thinking slot (else the Fast one) which panel to
  *    draw, and answers its recipe, which `@graview/tools/draft` draws and
- *    "Keep as a lens" keeps.
+ *    "Keep as a lens" keeps;
+ *  - `answerHere` answers words asked from the command bar or on an answer
+ *    card (the quick ask): the host's Answer slot, else the Thinking slot,
+ *    for prose and the candidates that act on it, else the Fast slot's
+ *    pick among the candidates.
  *
  * A proposed change is a GHOST (`ghostOf`): each call rehearsed as the
  * person and said in the act's own sentence, applied only when they accept
@@ -45,7 +49,7 @@ import {
   type CatalogPlace,
   type PanelCandidate,
 } from "@graview/core/catalog";
-import type { AiPrice, FastProvider, HostAi, ThinkingProvider } from "./ai.js";
+import type { AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, ThinkingProvider } from "./ai.js";
 import { firstJsonObject } from "./intelligence.js";
 import { JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide, type Answer, type ChoiceAnswer, type JevOptions } from "./providers/jev.js";
 import type { ChoiceQuestion, Question } from "./questions.js";
@@ -126,13 +130,15 @@ export interface Ghost {
   readonly proposals: readonly Proposal[];
 }
 
-/** What an ask came to: the entry, and what it offers — suggestions, a ghost, or a panel. */
+/** What an ask came to: the entry, and what it offers — suggestions, a ghost, a panel, or an answer in words. */
 export interface InlineResult {
   readonly interaction: AiInteraction;
   /** The candidates picked, best first, each ready to take with one press. */
   readonly offers: readonly AiCandidate[];
   readonly ghost?: Ghost;
   readonly panel?: AiPanel;
+  /** A quick ask's answer, in words. */
+  readonly answer?: string;
 }
 
 /** A fresh interaction id: `ai-` and something unique enough for one app's history. */
@@ -448,6 +454,88 @@ export async function panelHere<S extends AnySchema>(ai: HostAi, ask: InlineAsk<
   };
 }
 
+// ── a quick ask ─────────────────────────────────────────────────────────────
+
+/** The Answer slot as the host filled it; else none, and the Thinking or Fast slot answers. */
+export function answerOf(ai: HostAi): AnswerProvider | undefined {
+  return ai.off ? undefined : ai.answer;
+}
+
+/** A quick ask: the inline ask, with the ask it follows on the same card. */
+export interface QuickAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> {
+  readonly said: string;
+  /** The ask before this one on the card, and what it was answered: a follow-up, not a thread. */
+  readonly follows?: { readonly said: string; readonly answer: string };
+}
+
+const ANSWER_SYSTEM =
+  'You answer a person\'s question about what they are looking at in an app, from the state given and nothing else. Answer only JSON: {"answer": one to three short sentences, "pick": [candidate ids that act on the answer, best first, at most three]}. Pick only ids from the candidates, and none when nothing fits. Never say an id to the person.';
+
+/**
+ * WORDS ASKED ABOUT WHAT THE PERSON IS ON (the quick ask): answered in a
+ * few sentences, with the catalog's candidates that act on the answer —
+ * a change among them is a ghost, previewed as the person and kept only
+ * when accepted; a place, a record or a panel is one press on the card.
+ * The host's Answer slot answers when given; else the Thinking slot, as
+ * JSON; else the Fast slot picks the candidates that fit the words. A
+ * follow-up carries the ask before it and its answer, and nothing older.
+ */
+export async function answerHere<S extends AnySchema>(ai: HostAi, ask: QuickAsk<S>): Promise<InlineResult> {
+  const asked = begin(ai, ask);
+  const said = ask.said.trim();
+  const choices = asked.catalog.candidates.filter((candidate) => ready(candidate) || candidate.type === "panel" || candidate.type === "place" || candidate.type === "record").slice(0, 32);
+  const host = answerOf(ai);
+  const thinking = thinkingOf(ai);
+  const fast = fastOf(ai);
+  let text = "";
+  let picked: { candidate: AiCandidate; confidence?: number }[] = [];
+  const pickedOf = (ids: readonly unknown[]) => ids.flatMap((id) => choices.filter((candidate) => candidate.id === id)).slice(0, 3).map((candidate) => ({ candidate }));
+  try {
+    if (host) {
+      const reply: AnswerReply = await host.answer({ said, target: ask.target, targetLabel: asked.entry.targetLabel, state: asked.state, catalog: { target: asked.catalog.target, candidates: choices }, ...(ask.follows ? { follows: ask.follows } : {}) });
+      const inputTokens = reply.usage?.inputTokens;
+      const outputTokens = reply.usage?.outputTokens;
+      const cost = reply.usage?.costUsd ?? (inputTokens !== undefined ? costOf(host.price, inputTokens, outputTokens ?? 0) : undefined);
+      asked.meter({ tier: "thinking", model: host.model, ...(inputTokens !== undefined ? { inputTokens } : {}), ...(outputTokens !== undefined ? { outputTokens } : {}), ...(cost !== undefined ? { costUsd: cost } : {}) });
+      text = typeof reply.text === "string" ? reply.text.trim() : "";
+      picked = pickedOf(reply.pick ?? []);
+    } else if (thinking) {
+      const parsed = (await thought(
+        thinking,
+        ANSWER_SYSTEM,
+        JSON.stringify({ ask: said, about: asked.entry.targetLabel, ...(ask.follows ? { follows: ask.follows } : {}), state: asked.state, candidates: choices.map((candidate) => ({ id: candidate.id, says: candidate.description })) }),
+        asked,
+        asked.meter,
+      )) as { answer?: unknown; pick?: unknown } | undefined;
+      text = typeof parsed?.answer === "string" ? parsed.answer.trim() : "";
+      picked = pickedOf(Array.isArray(parsed?.pick) ? parsed.pick : []);
+    } else if (fast && choices.length > 0) {
+      const { question, of } = choiceAmong(choices, `Which of these best answers, or acts on: ${said}`);
+      const answers = await decided(fast, { ...asked.state, asked: said, candidates: choices.map((candidate) => ({ id: candidate.id, type: candidate.type, says: candidate.description })) }, { answer: question }, asked.meter);
+      picked = ranked(answers["answer"], of, 3);
+      text = picked.length > 0 ? `These fit “${said}”.` : "";
+    } else return failedResult(asked, said, "ask", NO_MODEL);
+  } catch (error) {
+    return failedResult(asked, said, "ask", error instanceof Error ? error.message : String(error));
+  }
+  if (!text && picked.length === 0) return failedResult(asked, said, "ask", "The AI had no answer to that here.");
+  const model = asked.usage.at(-1)?.model;
+  // A change picked is a proposal, previewed as the person: never made until it is accepted.
+  const proposals = picked.flatMap(({ candidate, confidence }) => {
+    const proposal = proposalOf(candidate);
+    return proposal ? [{ ...proposal, ...(confidence !== undefined ? { confidence } : {}) }] : [];
+  });
+  const ghost = proposals.length > 0 ? ghostOf(ask.store, { interaction: asked.id, target: ask.target, basis: said, ...(model ? { model } : {}), proposals }, ask.principal) : undefined;
+  const offers = picked.map(({ candidate }) => candidate).filter((candidate) => proposalOf(candidate) === undefined);
+  const offered = [...offers.map((candidate) => offeredOf(candidate, picked.find((one) => one.candidate === candidate)?.confidence)), ...(ghost?.proposals ?? []).map((proposal) => ({ id: proposal.id, type: (proposal.field !== undefined ? "fill" : "act") as AiOffered["type"], label: proposal.label, ...(proposal.confidence !== undefined ? { confidence: proposal.confidence } : {}) }))];
+  return {
+    interaction: { ...asked.entry, ask: { kind: "ask", said }, offered, outcome: "offered", ...(text ? { answer: text } : {}), usage: [...asked.usage] },
+    offers,
+    ...(ghost && ghost.proposals.length > 0 ? { ghost } : {}),
+    ...(text ? { answer: text } : {}),
+  };
+}
+
 // ── the ghost ───────────────────────────────────────────────────────────────
 
 /**
@@ -555,7 +643,9 @@ export function stubFast(options: { readonly model?: string; readonly prefer?: r
 
 /**
  * A THINKING SLOT FOR TESTS AND A DEV APP: answers each of the inline AI's
- * requests from its catalog alone — the first panel grouped by a choice
+ * requests from its catalog alone — a quick ask's answer "About <the
+ * target>: an answer to “<the words>”, as drafted." with its first three
+ * candidates one press takes, the first panel grouped by a choice
  * (else the first panel) titled "<label>, as drafted", the first act that
  * asks for words with each one "A new <argument>, as drafted", the first
  * candidates it was offered, one fill per field — and reports tokens by
@@ -570,7 +660,10 @@ export function stubThinking(options: { readonly model?: string } = {}): Thinkin
       const fills = catalog.candidates.filter((candidate) => candidate.type === "fill");
       const fields = new Set<string>();
       const maker = catalog.candidates.find((candidate) => candidate.type === "act" && candidate.asks.length > 0);
-      const text = /"act"/.test(system)
+      const asked = /"answer"/.test(system) ? (JSON.parse(prompt) as { ask?: string; about?: string }) : undefined;
+      const text = asked
+        ? JSON.stringify({ answer: `About ${asked.about ?? "this"}: an answer to “${asked.ask ?? ""}”, as drafted.`, pick: catalog.candidates.filter((candidate) => candidate.type !== "act" || candidate.asks.length === 0).slice(0, 3).map((candidate) => candidate.id) })
+        : /"act"/.test(system)
         ? JSON.stringify(maker?.type === "act" ? { act: maker.id, args: Object.fromEntries(maker.asks.map((name) => [name, `A new ${name}, as drafted`])) } : {})
         : /"panel"/.test(system)
         ? JSON.stringify(panel ? { panel: panel.id, title: `${panel.label}, as drafted` } : {})

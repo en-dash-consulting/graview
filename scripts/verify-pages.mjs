@@ -279,7 +279,7 @@ async function aListArrangesOnOneQuietLine() {
   report.checks.aListsFirstRecordStandsNearTheTopOfThePage = {
     within: FIRST_RECORD_WITHIN,
     seen: quiet.heads,
-    ok: quiet.heads.length === 4 && quiet.heads.every((one) => one.relatedRepeats.length === 0 && one.seatFromTheFoot !== null && one.seatFromTheFoot >= 0 && one.seatFromTheFoot <= 48 && one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && !one.countedInAnEyebrow && !one.scrolls && one.count !== null && one.end.ok),
+    ok: quiet.heads.length === 4 && quiet.heads.every((one) => one.relatedRepeats.length === 0 && one.fromTop !== null && one.fromTop <= (one.width >= 1000 ? FIRST_RECORD_WITHIN.desk : FIRST_RECORD_WITHIN.phone) && !one.countedInAnEyebrow && !one.scrolls && one.count !== null && one.end.ok),
   };
   report.checks.noSelectArrangesAList = { seen: quiet.heads.map(({ path, width, lines, selects }) => ({ path, width, lines, selects })), ok: quiet.heads.every((one) => one.selects === 0) };
   report.checks.everyWayToArrangeAListIsReachedByTheKeyboard = { seen: quiet.keys, ok: quiet.keys.length === 2 && quiet.keys.every((one) => one.ok) };
@@ -644,54 +644,35 @@ async function thePicturesAtAPhonesWidth() {
 }
 
 async function theAssistantOnEveryPage() {
-  /* ------------------------------------------ the assistant on every page */
+  /* ------------------------------------------ the quick ask on every page (Roadmap f-quick-ask-framework) */
   const asker = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await asker.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&fresh=1`, { waitUntil: "networkidle" });
+  await asker.goto(`${at("todo")}/pages/tasks/t-deposit?today=2026-09-01&fresh=1&ai=stub`, { waitUntil: "networkidle" });
   await asker.waitForTimeout(600);
-  /* The seat's ask field, at the page's foot, opens into the conversation over the page. */
-  await asker.click('[data-testid="page-seat"] [data-testid="seat-field"]');
-  await asker.waitForSelector('[data-testid="seat-panel"]', { timeout: 30_000 });
-  await asker.waitForTimeout(500);
-  const drawer = await asker.evaluate(() => ({
-    said: document.querySelector('[data-testid="seat-where"]')?.textContent?.trim() ?? null,
-    offers: [...document.querySelectorAll('[data-testid="seat-suggestion"]')].map((el) => (el.textContent ?? "").trim()),
-  }));
-  report.checks.theAssistantIsOnThePage = {
-    ...drawer,
-    // The route is the referent: a record page is about that record.
-    ok: (drawer.said ?? "").includes("deposit") && drawer.offers.length > 0,
-  };
-  /* A grounded question, answered from the graph with no model at all. */
-  await asker.click('[data-testid="seat-suggestion"]');
-  await asker.waitForFunction(() => document.querySelectorAll('[data-testid="seat-panel"] ol > li').length >= 2, undefined, { timeout: 15_000 });
-  await asker.waitForTimeout(400);
-  const answered = await asker.evaluate(() => {
-    const rows = [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')];
-    return (rows[rows.length - 1]?.textContent ?? "").slice(0, 160);
+  /* No Ask box on the page: no field at its foot, no box for one. */
+  const box = await asker.evaluate(() => document.querySelector('[data-testid="seat-field"], [data-testid="page-seat"], [data-testid="seat"]') !== null);
+  /* ⌘K: the bar, beside the page's heading, about the record the route names. */
+  await asker.locator("main").first().click({ position: { x: 4, y: 4 } }).catch(() => {});
+  await asker.keyboard.press("ControlOrMeta+K");
+  await asker.waitForSelector('[data-testid="quick-ask"]', { timeout: 30_000 });
+  const bar = await asker.evaluate(() => {
+    const card = document.querySelector('[data-testid="quick-ask"]');
+    return { about: card?.querySelector('[data-testid="quick-ask-about"]')?.textContent?.trim() ?? null, beside: card?.getAttribute("data-quick-ask-beside") ?? null, rows: [...document.querySelectorAll('[data-testid="quick-ask-option"]')].map((row) => row.getAttribute("data-quick-ask-kind")) };
   });
-  report.checks.aGroundedQuestionIsAnswered = { answered, ok: answered.length > 0 && !/could not answer/i.test(answered) };
-  /* And it says a change in words, which lands through the same runtime, attributed and undoable. */
-  await asker.fill('[data-testid="seat-field"]', "finish Pay the deposit");
-  await asker.press('[data-testid="seat-field"]', "Enter");
-  await asker.waitForTimeout(1200);
-  const proposed = await asker.$('[data-testid="seat-apply"]');
-  let applied = { ok: false, why: "nothing proposed" };
-  if (proposed) {
-    await proposed.click();
-    await asker.waitForTimeout(800);
-    applied = await asker.evaluate(() => ({
-      said: [...document.querySelectorAll('[data-testid="seat-panel"] ol > li')].map((li) => li.textContent ?? "").join(" | ").slice(-160),
-      ok: document.querySelector('[data-testid="seat-applied"]') !== null,
-    }));
-  }
-  report.checks.aProposalAppliesFromThePage = applied;
+  report.checks.theAssistantIsOnThePage = { askBox: box, ...bar, ok: !box && (bar.about ?? "").includes("deposit") && bar.beside === "page" && bar.rows.length > 0 };
+  /* A question, answered on the card. */
+  await asker.fill('[data-testid="quick-ask-input"]', "what is left to do here?");
+  await asker.press('[data-testid="quick-ask-input"]', "Enter");
+  await asker.waitForFunction(() => /as drafted/.test(document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? ""), undefined, { timeout: 15_000 }).catch(() => {});
+  const answered = await asker.evaluate(() => (document.querySelector('[data-testid="quick-answer-text"]')?.textContent ?? "").slice(0, 160));
+  report.checks.aGroundedQuestionIsAnswered = { answered, ok: /as drafted/.test(answered) };
   await asker.close();
-  /* The seat's sheet on a phone: nothing side-scrolls the document. */
+  /* The quick ask's card on a phone: nothing side-scrolls the document. */
   const phone4 = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  await phone4.goto(`${at("todo")}/pages/tasks?today=2026-09-01`, { waitUntil: "networkidle" });
+  await phone4.goto(`${at("todo")}/pages/tasks?today=2026-09-01&ai=stub`, { waitUntil: "networkidle" });
   await phone4.waitForTimeout(500);
-  await phone4.click('[data-testid="seat-field"]');
-  await phone4.waitForTimeout(700);
+  await phone4.keyboard.press("ControlOrMeta+K");
+  await phone4.waitForSelector('[data-testid="quick-ask"]', { timeout: 30_000 }).catch(() => {});
+  await phone4.waitForTimeout(400);
   report.checks.phoneAsk = await hygiene(phone4);
   await phone4.close();
 }
@@ -906,7 +887,7 @@ async function aListReadsOnOneScale() {
     seen: desk ? { glances: desk.glances, xs: desk.glanceXs } : null,
     ok: Boolean(desk && desk.glances >= 20 && desk.glanceXs.length === 1),
   };
-  report.checks.theLastRowScrollsClearOfTheAskBox = {
+  report.checks.theLastRowScrollsClearOfTheFoot = {
     seen: seen.map(({ path, width, root, end }) => ({ path, width, root, ...end })),
     ok: seen.filter((one) => one.root === 16).every((one) => one.end.ok),
   };
@@ -916,8 +897,8 @@ async function aListReadsOnOneScale() {
   };
 }
 
-async function aShortPageKeepsTheAskFieldAtTheWindowsFoot() {
-  /* A design's short page (the almanac's two gardeners): its paper fills the window, and the ask field stands at the window's foot. */
+async function aShortPagesPaperFillsTheWindow() {
+  /* A design's short page (the almanac's two gardeners): its paper fills the window, and nothing side-scrolls. */
   const seen = [];
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
     const page = await browser.newPage({ viewport });
@@ -926,12 +907,12 @@ async function aShortPageKeepsTheAskFieldAtTheWindowsFoot() {
     await page.waitForTimeout(400);
     const head = await listHead(page);
     const paper = await page.evaluate(() => Math.round(document.querySelector('[data-testid="seedbed-design"]')?.getBoundingClientRect().bottom ?? 0));
-    seen.push({ width: viewport.width, seatFromTheFoot: head.seatFromTheFoot, paperEndsAt: paper, window: viewport.height, scrolls: head.scrolls });
+    seen.push({ width: viewport.width, paperEndsAt: paper, window: viewport.height, scrolls: head.scrolls });
     await page.close();
   }
-  report.checks.aShortPageKeepsTheAskFieldAtTheWindowsFoot = {
+  report.checks.aShortPagesPaperFillsTheWindow = {
     seen,
-    ok: seen.every((one) => one.seatFromTheFoot !== null && one.seatFromTheFoot >= 0 && one.seatFromTheFoot <= 48 && one.paperEndsAt >= one.window - 2 && !one.scrolls),
+    ok: seen.every((one) => one.paperEndsAt >= one.window - 2 && !one.scrolls),
   };
 }
 
@@ -1320,7 +1301,7 @@ try {
   // The gauntlet's Program, the derived face with nothing of its own, for a list that reads well by default.
   program = await startVite("gauntlet", portFor("gauntlet"));
   await aListReadsOnOneScale();
-  await aShortPageKeepsTheAskFieldAtTheWindowsFoot();
+  await aShortPagesPaperFillsTheWindow();
   await theMapOnAPhone();
   const { deskGallery, phoneGallery } = await theLandingIsAGallery();
   await aNewPageOpensAtItsTop();

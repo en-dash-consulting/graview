@@ -129,7 +129,7 @@ function PanelFrame({
       className="graview-map-panel"
       style={{
         position: "absolute",
-        // On the rail's rung, drawn after the ask field: a sheet stands over the field rather than being cut through by it.
+        // On the rail's rung: a sheet stands over what is at the foot rather than being cut through by it.
         zIndex: layer("rail"),
         boxSizing: "border-box",
         display: "flex",
@@ -155,7 +155,7 @@ function PanelFrame({
       {/*
         * THE CITY TAKES THE ROOM THAT IS LEFT: the picture the panel stands in
         * says how wide it is (`--graview-dock`), the ground is laid out in
-        * the rest, and Up, the Key and the ask field keep clear of it. A
+        * the rest, and Up and the Key keep clear of it. A
         * sheet on a phone says how tall it is (`--graview-sheet`) and the
         * city is laid out above it: what was chosen stays in sight, where a
         * finger can still press it and open its acts, rather than under the

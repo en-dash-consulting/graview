@@ -23,6 +23,8 @@ export interface HeldGhost {
   readonly took?: number;
   /** Why the store refused it, said on the tray. */
   readonly refused?: string;
+  /** Drawn on the quick ask's answer card that proposed it, rather than on the tray at the foot; on the tray again once the card is put away. */
+  readonly onCard?: boolean;
 }
 
 export interface AiDeskState {

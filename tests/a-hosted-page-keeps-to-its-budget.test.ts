@@ -311,15 +311,15 @@ describe("a hosted page handed a compiled app", () => {
 
 /**
  * WHAT A FACE DRAWS IS FETCHED WITH THE FACE (FR-179). The studio's door,
- * the seat's panel, the lenses, a frame guest's host and the matcher are
+ * the quick ask's card, the lenses, a frame guest's host and the matcher are
  * each a door of their own, fetched when the face that draws them is first
  * drawn or asked — never before — and what only they use stays off the
  * barrels a page imports up front.
  */
 describe("a hosted page's faces", () => {
-  it("fetch the seat's panel, the declared lenses and a frame guest's host when they are first drawn or asked, and the matcher with the scene that searches, never up front", () => {
+  it("fetch the quick ask's card, the declared lenses and a frame guest's host when they are first drawn or asked, and the matcher with the scene that searches, never up front", () => {
     const doors = measured.whenAsked.doors.map((door) => door.module);
-    for (const module of ["primitives/src/seat-panel.tsx", "primitives/src/declared-lenses.tsx", "guest/src/host/frame.ts"]) {
+    for (const module of ["primitives/src/quick-ask.tsx", "primitives/src/declared-lenses.tsx", "guest/src/host/frame.ts"]) {
       expect(Object.keys(measured.upFront.modules), module).not.toContain(module);
       expect(Object.keys(handed.upFront.modules), module).not.toContain(module);
       expect(doors, module).toContain(module);

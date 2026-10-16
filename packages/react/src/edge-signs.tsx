@@ -96,7 +96,7 @@ export function EdgeSigns({
             ? { right: `calc(${inset}px + var(--graview-dock, 0px))`, top: at, transform: "translateY(-50%)" }
             : side === "top"
               ? { top: inset, left: at, transform: "translateX(-50%)" }
-              : // Above the ask field on a phone, as the zoom is (`--graview-scene-foot`), and above a sheet.
+              : // Above what stands at the foot, as the zoom is (`--graview-scene-foot`), and above a sheet.
                 { bottom: `calc(${inset}px + var(--graview-scene-foot, var(--graview-sheet, 0px)))`, left: at, transform: "translateX(-50%)" };
       signs.push(
         <button

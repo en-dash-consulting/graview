@@ -1,9 +1,8 @@
 import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type ResolveApp } from "@graview/core";
 import { BesideTheMap, HostFilesContext, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
-import type { Responder, ToolCall } from "@graview/tools";
+import type { ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
-import { SeatField, type SeatStart } from "./seat-field.js";
 import { LinesKey } from "./lines-key.js";
 import { MapPanel } from "./map-panel-door.js";
 import { ShowInstallation } from "./installation.js";
@@ -24,6 +23,7 @@ import { ResolveAppContext } from "./resolve-app-context.js";
 import { FirstLookDoor, type FirstLook } from "./first-look-door.js";
 import { GhostDoor, InlineAiSections } from "./inline-ai-door.js";
 import { NotifyDoor, NotifySections } from "./notify-door.js";
+import { QuickAskDoor } from "./quick-ask-door.js";
 
 /**
  * The shell: everything an application's window holds that is not about
@@ -35,7 +35,7 @@ import { NotifyDoor, NotifySections } from "./notify-door.js";
  * something has happened, the standing and the person — exactly as an
  * embed's scene face wears it, so the whole-page app and an embed are one
  * app on both faces. Then the scene with its key, the altitude control, what
- * the picture is doing (`SceneTrail`), the ask field and the inspector.
+ * the picture is doing (`SceneTrail`), the quick ask and the inspector.
  * Three apps carried this same eighty lines each and drifted; now an app
  * supplies a home, a sentence for when nothing is wrong, and whatever seat
  * it wants to give an agent, and the rest is derived.
@@ -43,7 +43,7 @@ import { NotifyDoor, NotifySections } from "./notify-door.js";
  * Landmarks are here too, once: the bar is the banner and says the app's
  * name as the page's one heading, and a main region holds the scene.
  */
-export interface ShellProps<S extends AnySchema> {
+export interface ShellProps {
   /** The view id that is "home" for the trail and for Escape; null for the whole graph. */
   readonly home?: string | null;
   /** What Standing says when no rule is broken. */
@@ -63,20 +63,6 @@ export interface ShellProps<S extends AnySchema> {
   readonly blur?: boolean;
   readonly scheme: Scheme;
   readonly onScheme: (scheme: Scheme) => void;
-  /**
-   * The chat seat, on by default: it answers from the graph with no key.
-   *
-   * `{ respond }` hands it the app's OWN responder. `ChatPanel` has always
-   * taken one — the agent-seat skill is about writing one — and the shell
-   * that every app uses, and that the scaffolder wires up, exposed the panel
-   * as a boolean. So an app that wrote a domain responder had no way to put
-   * it in the scene's chat: it could turn the chat off and rebuild that part
-   * of the shell, or leave the generic answer in the surface most people
-   * actually type into. A seam is only as reachable as the most convenient
-   * component sitting on top of it, and a prop the shell does not forward is
-   * in practice a prop that does not exist.
-   */
-  readonly chat?: boolean | { readonly respond?: Responder<S> };
   /**
    * Where a person's own record lives on the routed face. Given, the
    * profile pane links to it; absent, the pane says who you are without
@@ -105,10 +91,13 @@ export interface ShellProps<S extends AnySchema> {
    */
   readonly signature?: boolean;
   /**
-   * THE ASK FIELD at the picture's foot (the seat): `"field"`, the default,
-   * or `"hidden"` for none. `chat: false` hides it too.
+   * THE QUICK ASK (Roadmap f-quick-ask-framework): ⌘K opens a command bar
+   * beside what is selected, and words asked there are answered on a card
+   * beside it. On by default where the host gave a model; `false` draws
+   * none. A host that stored the Ask box's `"field"` or `"hidden"` reads it
+   * with `quickAskOf`.
    */
-  readonly ask?: SeatStart;
+  readonly quickAsk?: boolean;
   /**
    * A BOARD OF NOTICES (FR-75), made with `createNoticeBoard()`: what the
    * app or its host says on it is drawn over the scene — banners at its
@@ -131,7 +120,7 @@ export interface ShellProps<S extends AnySchema> {
   /**
    * A FIRST LOOK, ONCE: a short run of hints beside the app's own controls —
    * the switch between the scene and the pages, the problems count,
-   * Activity and the Ask box, each skipped where it is not drawn — then out
+   * Activity and the quick ask, each skipped where it is not drawn — then out
    * of the way. `true` remembers it in this browser; `{ seen, onDone, steps }`
    * hands that to the host and adds its own hints, each naming a control
    * (`FirstLookAnchor`). Off unless given.
@@ -151,17 +140,16 @@ export function Shell<S extends AnySchema>({
   blur = true,
   scheme,
   onScheme,
-  chat = true,
   profileHref,
   studio,
   hostActions,
   signature = false,
-  ask = "field",
+  quickAsk = true,
   notices,
   files,
   resolveApp,
   firstLook,
-}: ShellProps<S>) {
+}: ShellProps) {
   const { brand, views, store } = useGraview<S>();
   const { view, go } = useNavigation();
   /* The lenses this reader kept from the seat, beside the app's own places, before anything draws them. */
@@ -274,17 +262,10 @@ export function Shell<S extends AnySchema>({
         <OverviewButton />
         {/* What the lines mean, beside Up: the picture's own key. */}
         <LinesKey<S> />
-        {/* A view the seat drew, in place of the picture, under the seat. */}
+        {/* A panel the AI drew, in place of the picture. */}
         <DraftDoor />
-        {/*
-          * THE SEAT: a quiet ask field at the picture's foot that grows into
-          * a panel over it when asked — never a rail, never a column of acts.
-          */}
-        <SeatField<S>
-          start={chat === false ? "hidden" : ask}
-          onCall={onCall}
-          {...(typeof chat === "object" && chat.respond ? { respond: chat.respond } : {})}
-        />
+        {/* THE QUICK ASK: ⌘K's bar beside what is selected, and the answers it leaves there as cards. */}
+        <QuickAskDoor face="scene" on={quickAsk} />
         {/* What is chosen from altitude — a lens, a record's links, a district — beside the map, at a size a person reads. */}
         <MapPanel<S> />
         {/* The acts at the pointer: right-click, or the acts key on a card, is the context menu. */}

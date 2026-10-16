@@ -5,6 +5,7 @@ import { deriveAffordances } from "@graview/tools/derive";
 import { acceptedEntry, acceptGhost, dismissedEntry, fillHere, ghostOf, interactionId, panelHere, proposalOf, recordHere, suggestHere, thinkingOf, type InlineAsk, type InlineResult } from "@graview/tools/inline-ai";
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useInlineEnv, type InlineEnv } from "./inline-ai-env.js";
+import { openQuickAsk } from "./quick-ask-desk.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -23,11 +24,12 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  *
  * The runner (`inlineEnv`, `askInline`, `takeOffer`, `drawPanel`,
  * `askAgain`) takes plain values, not hooks, so Activity's "Ask again" and
- * "Show the panel" and a later quick ask reach the same code.
+ * "Show the panel" and the quick ask's card (`quick-ask.tsx`) reach the
+ * same code. "Ask about this…" opens the quick ask's bar on the target.
  */
 
 /** One ask of the inline AI, as the engine takes it: the acts the derivation offers this viewer there, the places, where they are. */
-function askOf(env: InlineEnv, target: AiTarget, said?: string): InlineAsk {
+export function askOf(env: InlineEnv, target: AiTarget, said?: string): InlineAsk {
   const about = target.on === "selection" ? target.ids : target.on === "record" || target.on === "field" ? [target.id] : [];
   const acts =
     about.length > 0
@@ -142,8 +144,16 @@ export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiC
   env.desk.record({ ...entry, outcome: "accepted", accepted: [offer.id] });
 }
 
-/** ASK AGAIN, from an entry in Activity: the same ask, on the same target, as a new interaction. A suggestion asked again is a fill. */
-export async function askAgain(env: InlineEnv, entry: AiInteraction): Promise<InlineResult> {
+/**
+ * ASK AGAIN, from an entry in Activity: the same ask, on the same target, as
+ * a new interaction. A suggestion asked again is a fill; words asked of the
+ * quick ask are asked again on its card, beside the target.
+ */
+export async function askAgain(env: InlineEnv, entry: AiInteraction): Promise<InlineResult | null> {
+  if (entry.ask.kind === "ask") {
+    openQuickAsk(env.desk, { target: entry.target, asked: entry.ask.said });
+    return null;
+  }
   const kind = entry.ask.kind === "panel" || entry.ask.kind === "record" ? entry.ask.kind : "fill";
   return askInline(env, kind, entry.target, entry.ask.said);
 }
@@ -233,6 +243,21 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
             </button>
           </li>
         ) : null}
+        <li>
+          {/* The quick ask's bar, opened on what the menu was opened on: words asked there are answered on a card beside it. */}
+          <button
+            type="button"
+            data-menu-item="ai-ask"
+            onClick={() => {
+              const back = document.activeElement;
+              close();
+              openQuickAsk(env.desk, { target, returnTo: back instanceof HTMLElement && back !== document.body ? back : null });
+            }}
+            style={ROW}
+          >
+            Ask about this…
+          </button>
+        </li>
       </ul>
     </div>
   );
@@ -246,7 +271,7 @@ const LINK: CSSProperties = { display: "inline-flex", alignItems: "center", minH
  * it out. Accept takes the ones ticked as one batch; Dismiss puts it away;
  * once taken, Undo takes the batch back.
  */
-export function GhostTray({ placement = "picture" }: { readonly placement?: "picture" | "page" }) {
+export function GhostTray({ placement = "picture" }: { readonly placement?: "picture" | "page" | "card" }) {
   const { store: shown, principal, aiDesk } = useGraview<AnySchema>();
   const store = useLiveStore(shown, principal);
   const { ghost: held, entries } = useAiDeskState(aiDesk);
@@ -286,7 +311,7 @@ export function GhostTray({ placement = "picture" }: { readonly placement?: "pic
       return;
     }
     if (entry) aiDesk.record(acceptedEntry(entry, kept.accepted, kept.batch));
-    aiDesk.setGhost({ ghost, batch: kept.batch, took: kept.accepted.length });
+    aiDesk.setGhost({ ghost, batch: kept.batch, took: kept.accepted.length, ...(held.onCard ? { onCard: true } : {}) });
   };
   const dismiss = () => {
     if (entry && held.batch === undefined) aiDesk.record(dismissedEntry(entry));
@@ -308,18 +333,16 @@ export function GhostTray({ placement = "picture" }: { readonly placement?: "pic
       data-interaction={ghost.interaction}
       aria-label="Proposed by AI"
       style={{
-        // Over the picture it stands in; on a page, over the window, above the ask field.
-        position: placement === "page" ? "fixed" : "absolute",
-        insetInline: "max(12px, calc(50% - 220px))",
-        bottom: "calc(var(--graview-foot-room, 0px) + 72px)",
-        zIndex: layer("toast"),
+        // Over the picture it stands in; on a page, over the window; on the quick ask's card, in its flow.
+        ...(placement === "card"
+          ? { position: "static" as const }
+          : { position: placement === "page" ? ("fixed" as const) : ("absolute" as const), insetInline: "max(12px, calc(50% - 220px))", bottom: "calc(var(--graview-foot-room, 0px) + 72px)", zIndex: layer("toast"), boxShadow: "var(--graview-lift-high)" }),
         display: "grid",
         gap: 8,
         padding: 12,
         borderRadius: 12,
         border: "1px dashed var(--graview-accent)",
         background: "var(--graview-float)",
-        boxShadow: "var(--graview-lift-high)",
         fontSize: "0.875rem",
       }}
     >

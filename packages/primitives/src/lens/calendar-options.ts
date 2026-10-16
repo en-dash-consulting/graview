@@ -96,7 +96,7 @@ export interface CalendarOptions {
    * morning, and no harness could photograph it twice.
    *
    * Unsaid, the store's own day (`Store.today()`, the day its rules are
-   * judged on) — so a calendar kept from the ask field, or declared without
+   * judged on) — so a calendar kept from a drawn panel, or declared without
    * a day, opens on the same day the app's late and due-this-week mean —
    * and only where the store names none, the reader's own.
    */

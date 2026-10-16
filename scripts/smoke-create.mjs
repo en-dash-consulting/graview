@@ -360,44 +360,14 @@ try {
     await narrow.waitForTimeout(400);
     await narrow.click('#here [data-testid="record-panel-go"]');
     await narrow.waitForTimeout(900);
-    b.narrow = await narrow.evaluate(() => {
-      const found = document.querySelector('#here [data-testid="seat"]');
-      const focus = document.querySelector('#here [data-graview-plane="0"] [data-graview-primitive="panel"]');
-      if (!found || !focus) return { strip: Boolean(found), focus: Boolean(focus) };
-      /* The seat's field across the foot must stay inside the Graview and off the thing being acted on. */
-      const strip = found;
-      const a = strip.getBoundingClientRect();
-      const b = focus.getBoundingClientRect();
-      const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-      const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-      const over = w > 0 && h > 0 ? w * h : 0;
-      /*
-       * The box the pane belongs to is the one it is positioned in — which
-       * in a narrow Graview is bigger than the stage, because the stage
-       * gives up room for the sheet rather than being covered by it.
-       */
-      const stage = document.querySelector("#here").getBoundingClientRect();
-      /*
-       * And nothing the picture drew is buried under it: a control a
-       * person needs, covered by the pane that appeared over it, is the
-       * same defect said a different way.
-       */
-      const buried = [...document.querySelectorAll("#here [data-testid^='open-'], #here [data-graview-pick]")]
-        .filter((el) => {
-          const box = el.getBoundingClientRect();
-          if (box.width < 2 || box.height < 2) return false;
-          const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-          return Boolean(top && strip.contains(top));
-        })
-        .map((el) => el.getAttribute("data-testid") ?? el.getAttribute("data-graview-pick"));
-      return {
-        strip: true,
-        focus: true,
-        share: Math.round((over / (b.width * b.height)) * 100),
-        buried,
-        inside: a.left >= stage.left - 1 && a.right <= stage.right + 1 && a.bottom <= stage.bottom + 1,
-      };
-    });
+    /*
+     * No Ask box stands over the thing being acted on: the quick ask replaced
+     * it (Roadmap f-quick-ask-framework), and nothing is drawn across the foot.
+     */
+    b.narrow = await narrow.evaluate(() => ({
+      askBox: document.querySelector('#here [data-testid="seat"], #here [data-testid="seat-field"]') !== null,
+      focus: document.querySelector('#here [data-graview-plane="0"] [data-graview-primitive="panel"]') !== null,
+    }));
     /*
      * THE PROFILE IS WHOLE AND ON TOP (W-119, FR-76). It hung from its
      * button's right edge, 280 wide: in a 350-wide embed it began off the
@@ -698,12 +668,9 @@ report.verdict = {
           b.escape?.pressed?.atAltitude === true,
         // A quarter of the card is a pane lapping its margin; most of it is
         // the pane sitting on the thing you came to act on.
-        theStripDoesNotCoverWhatYouAreActingOn:
-          b.narrow?.strip === true &&
-          b.narrow?.focus === true &&
-          b.narrow?.inside === true &&
-          (b.narrow?.share ?? 100) === 0 &&
-          (b.narrow?.buried ?? ["unrun"]).length === 0,
+        noAskBoxCoversWhatYouAreActingOn:
+          b.narrow?.askBox === false &&
+          b.narrow?.focus === true,
         theProjectMountsItselfOnSomebodyElsesPage:
           b.embed?.mounted === true &&
           b.embed?.tag === "SECTION" &&

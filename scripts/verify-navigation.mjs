@@ -485,9 +485,7 @@ try {
       });
       const meets = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
       const under = [];
-      for (const el of document.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face, [data-graview-plot] .graview-plot-tile, [data-testid="overview"], [data-testid="lines-key"], .graview-zoom, [data-testid="seat-field"]')) {
-        // On a phone a sheet stands over the ask field on purpose: the field is behind the sheet while it is open.
-        if (panel.getAttribute("data-graview-map-panel") === "sheet" && el.getAttribute("data-testid") === "seat-field") continue;
+      for (const el of document.querySelectorAll('[data-graview-view^="kind:"] .graview-kind-face, [data-graview-plot] .graview-plot-tile, [data-testid="overview"], [data-testid="lines-key"], .graview-zoom')) {
         const r = el.getBoundingClientRect();
         // What is drawn outside the window is not under anything.
         if (r.width > 0 && r.height > 0 && meets(r, box)) under.push(el.getAttribute("data-testid") ?? el.getAttribute("class")?.split(" ")[0] ?? el.tagName);
@@ -557,11 +555,13 @@ try {
       const sheet = element.getAttribute("data-graview-map-panel") === "sheet";
       const seen = [...document.querySelectorAll('.graview-ground [data-graview-view^="kind:"]')]
         .map((card) => card.getBoundingClientRect())
-        .filter((r) => r.right > ground.left && r.bottom > ground.top && (sheet ? r.bottom <= panel.top && r.top >= ground.top : r.right <= panel.left && r.left >= ground.left));
+        // Clear of the panel, or partly under a phone's sheet already: the one nearest it is carried under.
+        .filter((r) => r.right > ground.left && r.bottom > ground.top && (sheet ? r.top < panel.top && r.top >= ground.top : r.right <= panel.left && r.left >= ground.left));
       if (seen.length === 0) return null;
       // The one nearest the panel, carried just past its edge.
       const nearest = sheet ? seen.reduce((a, b) => (b.bottom > a.bottom ? b : a)) : seen.reduce((a, b) => (b.right > a.right ? b : a));
       const from = sheet ? { x: ground.left + ground.width / 2, y: ground.top + 40 } : { x: ground.left + 40, y: ground.top + ground.height / 2 };
+      // Under a phone's sheet its top is carried past the sheet's; one already partly under it is the nearest.
       return { from, dx: sheet ? 0 : panel.left - nearest.left + 24, dy: sheet ? panel.top - nearest.top + 24 : 0 };
     });
     if (toward) {
@@ -692,7 +692,7 @@ try {
       pane: await page.evaluate(
         () => document.querySelector('[data-testid="context-menu"]')?.innerText ?? null,
       ),
-      seat: await page.evaluate(() => document.querySelector('[data-testid="seat"]')?.innerText ?? null),
+      seat: await page.evaluate(() => document.querySelector('[data-testid="quick-ask"]')?.innerText ?? null),
       victim,
     };
   };

@@ -360,8 +360,8 @@ function watchInPage() {
    * scene is still moving; and asked again before it is said.
    */
   let unsettled = 0;
-  /* Laid over the page on purpose: a menu, a dialog, a popover, a panel or sheet laid on the map, the seat opened to talk. */
-  const OPENED_OVER = "[popover],dialog,[role=dialog],[role=alertdialog],[role=menu],[role=listbox],[role=tooltip],[data-graview-popover],[data-graview-overlay],[data-graview-seat=open]";
+  /* Laid over the page on purpose: a menu, a dialog, a popover, a panel or sheet laid on the map, the quick ask's card. */
+  const OPENED_OVER = "[popover],dialog,[role=dialog],[role=alertdialog],[role=menu],[role=listbox],[role=tooltip],[data-graview-popover],[data-graview-overlay]";
   const clips = (style) => style.overflowX !== "visible" || style.overflowY !== "visible";
   /** What of a control can be seen through the boxes that clip it: a point outside is scrolled or cut away, not covered. */
   const seenOf = (el) => {

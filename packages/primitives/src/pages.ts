@@ -4,10 +4,10 @@
  *
  * Everything here is also exported from `@graview/primitives`. It is its
  * own entry because a bundler splits a page by which files a chunk can
- * reach, and `@graview/primitives` reaches the seat's panel, the inspector
+ * reach, and `@graview/primitives` reaches the workbench, the inspector
  * and the scene they stand on: the pages face, importing a mark from it,
  * fetched the whole map to draw a list. `@graview/pages` imports from here,
- * and the seat's panel when its ask field is first opened. Nothing in this
+ * and the quick ask's bar when it is first opened. Nothing in this
  * module's files may import a barrel.
  */
 export { ArrangeBar, arrangementCaption, arrangementOf, withArrangement } from "./arrange-bar.js";
@@ -50,12 +50,15 @@ export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheT
 // The way back after an act, judged and timed alike on both faces (FR-152).
 export { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, WAY_BACK_MS } from "./way-back.js";
 export type { LastChange } from "./way-back.js";
-// The seat: the ask field at the foot of the face, its panel fetched when it is first opened.
-export { SeatField } from "./seat-field.js";
+// The quick ask (Roadmap f-quick-ask-framework): ⌘K's bar beside what the page is about, and its answer cards, fetched when first opened.
+export { QuickAskDoor } from "./quick-ask-door.js";
+export { openQuickAsk, useQuickAskDrawn } from "./quick-ask-desk.js";
+export type { QuickAskDoorProps } from "./quick-ask-door.js";
+export type { QuickAskOpening } from "./quick-ask-desk.js";
+export { quickAskOf } from "./quick-ask-setting.js";
 export { DraftDoor } from "./draft-door.js";
 export { appKeyOf } from "./reader-lenses.js";
 export { registerReaderLenses } from "./declared-lens-doors.js";
-export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 // The context menu (FR-77's `acts`): the acts at the pointer, its pane and the tools fetched when it is first opened.
 export { Inspector } from "./workbench/inspector-door.js";
 // The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.

@@ -67,7 +67,8 @@ export function InlineAiSections({ children }: { readonly children: ReactNode })
 export function GhostDoor(props: GhostDoorProps) {
   const { ai, aiDesk } = useGraview();
   const { ghost } = useAiDeskState(aiDesk);
-  if (ghost === null || ai.off) return null;
+  // One the quick ask's card draws itself is not drawn again at the foot.
+  if (ghost === null || ghost.onCard || ai.off) return null;
   return (
     <Suspense fallback={null}>
       <Tray {...props} />
