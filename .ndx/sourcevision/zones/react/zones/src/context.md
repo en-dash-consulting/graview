@@ -5,32 +5,117 @@
 <zone>
 
 Zone: Src (`react/src`)
-Files: 6, Cohesion: 0.39, Coupling: 0.61
-Description: 6 files, primarily TypeScript
-Entry points: packages/react/src/activity.ts, packages/react/src/attention.ts, packages/react/src/channels.ts, packages/react/src/connectors.tsx, packages/react/src/parallel.ts, packages/react/src/routes.ts
-Lines: 1710
+Files: 23, Cohesion: 0.56, Coupling: 0.44
+Description: 23 files, primarily TypeScript
+Entry points: packages/react/src/activity.ts, packages/react/src/animation.ts, packages/react/src/attention.ts, packages/react/src/context.tsx, packages/react/src/error-report.ts, packages/react/src/hooks.ts, packages/react/src/index.ts, packages/react/src/motion.ts, packages/react/src/occupants.tsx, packages/react/src/pointer.ts, packages/react/src/presence.ts, packages/react/src/resolved-view.tsx, packages/react/src/robot.ts, packages/react/src/scene.tsx, packages/react/src/seat-marks.tsx, packages/react/src/seat-talk.ts, packages/react/src/settings.ts, packages/react/src/view-boundary.tsx, packages/react/src/view-registry.ts
+Lines: 4510
 
 </zone>
 
 <files>
 
-packages/react/src/activity.ts (TypeScript, 260 lines, source)
+packages/react/src/activity.ts (TypeScript, 261 lines, source)
+packages/react/src/affordances.ts (TypeScript, 75 lines, source)
+packages/react/src/animation.ts (TypeScript, 285 lines, source)
 packages/react/src/attention.ts (TypeScript, 70 lines, source)
-packages/react/src/channels.ts (TypeScript, 118 lines, source)
-packages/react/src/connectors.tsx (TypeScript, 1056 lines, source)
-packages/react/src/parallel.ts (TypeScript, 30 lines, source)
-packages/react/src/routes.ts (TypeScript, 176 lines, source)
+packages/react/src/context.tsx (TypeScript, 1338 lines, source)
+packages/react/src/error-report.ts (TypeScript, 15 lines, source)
+packages/react/src/hooks.ts (TypeScript, 183 lines, source)
+packages/react/src/index.ts (TypeScript, 95 lines, source)
+packages/react/src/linked-reads.ts (TypeScript, 50 lines, source)
+packages/react/src/motion-store.ts (TypeScript, 30 lines, source)
+packages/react/src/motion.ts (TypeScript, 11 lines, source)
+packages/react/src/occupants.tsx (TypeScript, 206 lines, source)
+packages/react/src/pointer.ts (TypeScript, 61 lines, source)
+packages/react/src/presence.ts (TypeScript, 260 lines, source)
+packages/react/src/resolved-view.tsx (TypeScript, 480 lines, source)
+packages/react/src/robot.ts (TypeScript, 161 lines, source)
+packages/react/src/scene.tsx (TypeScript, 18 lines, source)
+packages/react/src/seat-marks.tsx (TypeScript, 108 lines, source)
+packages/react/src/seat-talk.ts (TypeScript, 194 lines, source)
+packages/react/src/settings.ts (TypeScript, 87 lines, source)
+packages/react/src/url-sync.ts (TypeScript, 247 lines, source)
+packages/react/src/view-boundary.tsx (TypeScript, 104 lines, source)
+packages/react/src/view-registry.ts (TypeScript, 171 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
+  packages/react/src/affordances.ts → packages/react/src/context.tsx {useGraph, useGraview}
+  packages/react/src/animation.ts → packages/react/src/context.tsx {useGraview}
   packages/react/src/attention.ts → packages/react/src/activity.ts {ActivityMark, ToolCallLike}
-  packages/react/src/channels.ts → packages/react/src/routes.ts {Box, Point}
-  packages/react/src/connectors.tsx → packages/react/src/activity.ts {ActivityMark}
-  packages/react/src/connectors.tsx → packages/react/src/channels.ts {channelRoute}
-  packages/react/src/connectors.tsx → packages/react/src/parallel.ts {parallelOffsets}
-  packages/react/src/connectors.tsx → packages/react/src/routes.ts {clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routedQuadratic}
+  packages/react/src/attention.ts → packages/react/src/context.tsx {useGraview}
+  packages/react/src/context.tsx → packages/react/src/activity.ts {useActivityState}
+  packages/react/src/context.tsx → packages/react/src/activity.ts {ActivityMark, Attention}
+  packages/react/src/context.tsx → packages/react/src/linked-reads.ts {useLinkedReads}
+  packages/react/src/context.tsx → packages/react/src/motion-store.ts {createMotionStore}
+  packages/react/src/context.tsx → packages/react/src/motion-store.ts {MotionStore}
+  packages/react/src/context.tsx → packages/react/src/pointer.ts {createPointerStore}
+  packages/react/src/context.tsx → packages/react/src/pointer.ts {PointerStore, ScenePoint}
+  packages/react/src/context.tsx → packages/react/src/presence.ts {PRESENCE_SETTINGS, tabSession, usePresenceState}
+  packages/react/src/context.tsx → packages/react/src/robot.ts {foldRobots}
+  packages/react/src/context.tsx → packages/react/src/robot.ts {RobotEvent, RobotState, SeatNote}
+  packages/react/src/context.tsx → packages/react/src/seat-talk.ts {createSeatTalk}
+  packages/react/src/context.tsx → packages/react/src/seat-talk.ts {KeepLensHost, SeatTalk}
+  packages/react/src/context.tsx → packages/react/src/settings.ts {honorSetting, loadSetting, rememberSetting}
+  packages/react/src/context.tsx → packages/react/src/settings.ts {ReaderMemory}
+  packages/react/src/context.tsx → packages/react/src/view-registry.ts {ViewComponent, ViewMode}
+  packages/react/src/hooks.ts → packages/react/src/context.tsx {useGraph, useGraview}
+  packages/react/src/index.ts → packages/react/src/activity.ts {ACTIVITY_HOLD_MS, markActivity}
+  packages/react/src/index.ts → packages/react/src/activity.ts {ActivityMark, Attention, Manner, ToolCallLike}
+  packages/react/src/index.ts → packages/react/src/affordances.ts {useAffordances, useApplyAffordance}
+  packages/react/src/index.ts → packages/react/src/animation.ts {useAnimatedLayout, useSeatWork, useTouched}
+  packages/react/src/index.ts → packages/react/src/animation.ts {SeatAct, SeatWork, TransitionOptions}
+  packages/react/src/index.ts → packages/react/src/attention.ts {useActivity, useAttention}
+  packages/react/src/index.ts → packages/react/src/context.tsx {GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider}
+  packages/react/src/index.ts → packages/react/src/context.tsx {ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode}
+  packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReportContext}
+  packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReport}
+  packages/react/src/index.ts → packages/react/src/hooks.ts {useViolations, useBacktrack, useJackIn, useNavigation, useSelection}
+  packages/react/src/index.ts → packages/react/src/motion.ts {createMotionStore, useSceneStill}
+  packages/react/src/index.ts → packages/react/src/motion.ts {MotionStore}
+  packages/react/src/index.ts → packages/react/src/occupants.tsx {Figure, Occupants, PersonFigure}
+  packages/react/src/index.ts → packages/react/src/occupants.tsx {OccupantsProps}
+  packages/react/src/index.ts → packages/react/src/pointer.ts {createPointerStore}
+  packages/react/src/index.ts → packages/react/src/pointer.ts {PointerStore, ScenePoint}
+  packages/react/src/index.ts → packages/react/src/presence.ts {HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState}
+  packages/react/src/index.ts → packages/react/src/presence.ts {PresenceInputs, PresenceState}
+  packages/react/src/index.ts → packages/react/src/robot.ts {foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO}
+  packages/react/src/index.ts → packages/react/src/robot.ts {RobotEvent, RobotMode, RobotState, SeatNote}
+  packages/react/src/index.ts → packages/react/src/scene.tsx {clipQuadratic, connectorStrands, altitudeOpacity, stackOpacity, onScreen, ResolvedView, Scene, selectionFor, tieRoute, whereIsIn}
+  packages/react/src/index.ts → packages/react/src/scene.tsx {SceneNode, Strand, ResolvedViewProps, SceneProps}
+  packages/react/src/index.ts → packages/react/src/seat-marks.tsx {SeatMarks}
+  packages/react/src/index.ts → packages/react/src/seat-talk.ts {createSeatTalk, seatTalkKey, useSeatDrawn, useSeatTalkState}
+  packages/react/src/index.ts → packages/react/src/seat-talk.ts {KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatSide, SeatTalk, SeatTalkState, SeatTurn}
+  packages/react/src/index.ts → packages/react/src/settings.ts {applySettings, honorSetting, loadSetting, rememberSetting}
+  packages/react/src/index.ts → packages/react/src/settings.ts {ReaderMemory}
+  packages/react/src/index.ts → packages/react/src/url-sync.ts {adjustment, UrlSync, useUrlSync}
+  packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundary}
+  packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundaryProps}
+  packages/react/src/index.ts → packages/react/src/view-registry.ts {createViews, layerViews}
+  packages/react/src/index.ts → packages/react/src/view-registry.ts {Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps}
+  packages/react/src/motion.ts → packages/react/src/context.tsx {useGraview}
+  packages/react/src/motion.ts → packages/react/src/motion-store.ts {createMotionStore}
+  packages/react/src/motion.ts → packages/react/src/motion-store.ts {MotionStore}
+  packages/react/src/occupants.tsx → packages/react/src/context.tsx {useGraview}
+  packages/react/src/occupants.tsx → packages/react/src/context.tsx {DrawnBox}
+  packages/react/src/occupants.tsx → packages/react/src/robot.ts {RobotState}
+  packages/react/src/presence.ts → packages/react/src/robot.ts {keyOf}
+  packages/react/src/presence.ts → packages/react/src/robot.ts {RobotState}
+  packages/react/src/presence.ts → packages/react/src/settings.ts {ReaderMemory}
+  packages/react/src/resolved-view.tsx → packages/react/src/context.tsx {foundIds, useFound, useGraph, useGraview, ViewModeProvider}
+  packages/react/src/resolved-view.tsx → packages/react/src/context.tsx {ViewMode}
+  packages/react/src/resolved-view.tsx → packages/react/src/hooks.ts {useNavigation}
+  packages/react/src/resolved-view.tsx → packages/react/src/view-boundary.tsx {ViewBoundary}
+  packages/react/src/resolved-view.tsx → packages/react/src/view-registry.ts {ViewComponent, ViewProps}
+  packages/react/src/scene.tsx → packages/react/src/resolved-view.tsx {*}
+  packages/react/src/seat-marks.tsx → packages/react/src/context.tsx {DrawnBox}
+  packages/react/src/url-sync.ts → packages/react/src/context.tsx {useGraview}
+  packages/react/src/url-sync.ts → packages/react/src/hooks.ts {trail}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReportContext, ErrorReport}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReportContext}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReport}
 
 </imports>

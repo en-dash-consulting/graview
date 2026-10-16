@@ -1,7 +1,7 @@
 ## Summary
 
-**Branch:** `chore/sourcevision-after-0-1-17`
-**Base:** `origin/main`
+**Branch:** `main`
+**Base:** `main`
 **Completed items:** 0
 
 ## Completed Work

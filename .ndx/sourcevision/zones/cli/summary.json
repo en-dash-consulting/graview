@@ -1,0 +1,28 @@
+{
+  "id": "cli",
+  "name": "Cli",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/cli/check/views.ts",
+    "packages/core/src/cli/document-schema.ts",
+    "packages/core/src/document/view-specs.ts",
+    "packages/core/src/document/views.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/check/views.ts",
+    "packages/core/src/cli/document-schema.ts",
+    "packages/core/src/document/view-specs.ts",
+    "packages/core/src/document/views.ts"
+  ],
+  "cohesion": 0.22,
+  "coupling": 0.78,
+  "fileCount": 4,
+  "lineCount": 1036,
+  "riskMetrics": {
+    "cohesion": 0.22,
+    "coupling": 0.78,
+    "riskScore": 0.78,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

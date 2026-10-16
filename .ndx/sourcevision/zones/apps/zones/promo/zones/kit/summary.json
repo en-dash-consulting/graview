@@ -1,0 +1,26 @@
+{
+  "id": "apps/promo/kit",
+  "name": "Kit",
+  "description": "7 files, primarily TypeScript",
+  "files": [
+    "apps/promo/src/components/TypePlate.tsx",
+    "apps/promo/src/kit/Backdrop.tsx",
+    "apps/promo/src/kit/ChatBubble.tsx",
+    "apps/promo/src/scenes/OpenBrand.tsx",
+    "apps/promo/src/scenes/SettleLockup.tsx",
+    "apps/promo/src/theme.ts",
+    "apps/promo/src/videos/Cooking.tsx"
+  ],
+  "entryPoints": [
+    "apps/promo/src/kit/Backdrop.tsx",
+    "apps/promo/src/kit/ChatBubble.tsx",
+    "apps/promo/src/scenes/OpenBrand.tsx",
+    "apps/promo/src/scenes/SettleLockup.tsx",
+    "apps/promo/src/theme.ts",
+    "apps/promo/src/videos/Cooking.tsx"
+  ],
+  "cohesion": 0.29,
+  "coupling": 0.71,
+  "fileCount": 7,
+  "lineCount": 806
+}

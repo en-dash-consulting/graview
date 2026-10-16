@@ -1,21 +1,19 @@
 {
   "id": "tests-apps",
   "name": "Tests Apps",
-  "description": "Non-source files in apps: domain.test.ts, lens-reuse.test.ts, the-awkward-shapes.test.ts (+4 more)",
+  "description": "5 files, primarily TypeScript",
   "files": [
     "apps/discography/tests/domain.test.ts",
     "apps/discography/tests/lens-reuse.test.ts",
     "apps/gauntlet/tests/the-awkward-shapes.test.ts",
     "apps/launcher/tests/integration/acceptance.test.ts",
-    "apps/rota/tests/integration/acceptance.test.ts",
-    "apps/todo/tests/integration/acceptance.test.tsx",
-    "apps/todo/tests/integration/who-is-here.test.tsx"
+    "apps/rota/tests/integration/acceptance.test.ts"
   ],
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 7,
-  "lineCount": 951,
+  "fileCount": 5,
+  "lineCount": 611,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

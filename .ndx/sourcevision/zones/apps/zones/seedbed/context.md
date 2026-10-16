@@ -5,29 +5,35 @@
 <zone>
 
 Zone: Seedbed (`apps/seedbed`)
-Files: 15, Cohesion: 1.00, Coupling: 0.00
-Description: 15 files, primarily TypeScript
-Entry points: apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx
-Lines: 3293
+Files: 21, Cohesion: 0.95, Coupling: 0.05
+Description: 21 files, primarily TypeScript
+Entry points: apps/promo/src/videos/scuba/ProposalCloud.tsx, apps/promo/src/videos/scuba/ProposalV2.tsx, apps/promo/src/videos/scuba/Template.tsx, apps/promo/src/videos/scuba/stories.tsx, apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/example.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/open.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx
+Lines: 5107
 
 </zone>
 
 <files>
 
-apps/seedbed/src/domain/app.ts (TypeScript, 88 lines, source)
+apps/promo/src/videos/scuba/ProposalCloud.tsx (TypeScript, 446 lines, source)
+apps/promo/src/videos/scuba/ProposalV2.tsx (TypeScript, 446 lines, source)
+apps/promo/src/videos/scuba/Template.tsx (TypeScript, 387 lines, source)
+apps/promo/src/videos/scuba/kit.tsx (TypeScript, 82 lines, source)
+apps/promo/src/videos/scuba/stories.tsx (TypeScript, 147 lines, source)
+apps/seedbed/src/domain/app.ts (TypeScript, 90 lines, source)
 apps/seedbed/src/domain/brand.ts (TypeScript, 39 lines, source)
 apps/seedbed/src/domain/chapters.ts (TypeScript, 764 lines, source)
+apps/seedbed/src/domain/example.ts (TypeScript, 23 lines, source)
 apps/seedbed/src/domain/invariants.ts (TypeScript, 58 lines, source)
 apps/seedbed/src/domain/mutations.ts (TypeScript, 193 lines, source)
 apps/seedbed/src/domain/schema.ts (TypeScript, 141 lines, source)
 apps/seedbed/src/index.ts (TypeScript, 6 lines, source)
-apps/seedbed/src/main.tsx (TypeScript, 151 lines, source)
-apps/seedbed/src/open.ts (TypeScript, 39 lines, source)
-apps/seedbed/src/site-embed.ts (TypeScript, 159 lines, source)
-apps/seedbed/src/ui/app.tsx (TypeScript, 183 lines, source)
-apps/seedbed/src/ui/design.tsx (TypeScript, 779 lines, source)
+apps/seedbed/src/main.tsx (TypeScript, 174 lines, source)
+apps/seedbed/src/open.ts (TypeScript, 125 lines, source)
+apps/seedbed/src/site-embed.ts (TypeScript, 268 lines, source)
+apps/seedbed/src/ui/app.tsx (TypeScript, 219 lines, source)
+apps/seedbed/src/ui/design.tsx (TypeScript, 795 lines, source)
 apps/seedbed/src/ui/garden-map.tsx (TypeScript, 414 lines, source)
-apps/seedbed/src/ui/pages.tsx (TypeScript, 96 lines, source)
+apps/seedbed/src/ui/pages.tsx (TypeScript, 107 lines, source)
 apps/seedbed/src/ui/views.tsx (TypeScript, 183 lines, source)
 
 </files>
@@ -35,6 +41,11 @@ apps/seedbed/src/ui/views.tsx (TypeScript, 183 lines, source)
 <imports>
 
 Internal:
+  apps/promo/src/videos/scuba/ProposalCloud.tsx → apps/promo/src/videos/scuba/kit.tsx {c, W, H, F, cl, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon}
+  apps/promo/src/videos/scuba/ProposalV2.tsx → apps/promo/src/videos/scuba/kit.tsx {c, font, W, H, F, cl, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon}
+  apps/promo/src/videos/scuba/Template.tsx → apps/promo/src/videos/scuba/kit.tsx {c, font, W, H, F, cl, eo, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon, IconKey}
+  apps/promo/src/videos/scuba/stories.tsx → apps/promo/src/videos/scuba/Template.tsx {Story}
+  apps/promo/src/videos/scuba/stories.tsx → apps/promo/src/videos/scuba/kit.tsx {c, sans, HL, Ic, icon, Avatar, Label, Row, Banner, AppHeader, lerp, tw}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/brand.ts {seedbedBrand}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/invariants.ts {seedbedInvariants}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/mutations.ts {seedbedMutations}
@@ -44,6 +55,8 @@ Internal:
   apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/invariants.ts {everyPlotTended}
   apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/mutations.ts {addGardener, addPlot, adoptRule, harvest, rotate, sow, sowInTurn, tend}
   apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/schema.ts {gardener, planting, plot, rotation, rule}
+  apps/seedbed/src/domain/example.ts → apps/seedbed/src/domain/chapters.ts {CHAPTERS}
+  apps/seedbed/src/domain/example.ts → apps/seedbed/src/domain/schema.ts {seedbedSchema}
   apps/seedbed/src/domain/invariants.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
   apps/seedbed/src/domain/mutations.ts → apps/seedbed/src/domain/schema.ts {seedbedSchema}
   apps/seedbed/src/domain/mutations.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
@@ -57,12 +70,14 @@ Internal:
   apps/seedbed/src/main.tsx → apps/seedbed/src/domain/brand.ts {seedbedBrand}
   apps/seedbed/src/main.tsx → apps/seedbed/src/domain/chapters.ts {chapterFromSearch}
   apps/seedbed/src/main.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/open.ts {browserEmptyChoice, forgetEmptyParam, openGarden}
   apps/seedbed/src/main.tsx → apps/seedbed/src/ui/app.tsx {SeedbedApp}
   apps/seedbed/src/main.tsx → apps/seedbed/src/ui/design.tsx {seedbedDesign}
   apps/seedbed/src/main.tsx → apps/seedbed/src/ui/pages.tsx {seedbedPages}
   apps/seedbed/src/main.tsx → apps/seedbed/src/ui/views.tsx {seedbedViews}
   apps/seedbed/src/open.ts → apps/seedbed/src/domain/app.ts {seedbedApp}
   apps/seedbed/src/open.ts → apps/seedbed/src/domain/brand.ts {seedbedBrand}
+  apps/seedbed/src/open.ts → apps/seedbed/src/domain/example.ts {EXAMPLE_GARDEN}
   apps/seedbed/src/open.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
   apps/seedbed/src/site-embed.ts → apps/seedbed/src/domain/brand.ts {SEEDBED_BRAND}
   apps/seedbed/src/site-embed.ts → apps/seedbed/src/domain/chapters.ts {CHAPTERS}

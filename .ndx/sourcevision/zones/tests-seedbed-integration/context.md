@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Tests Seedbed Integration (`tests-seedbed-integration`)
-Files: 4, Cohesion: 1.00, Coupling: 0.00
+Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in apps: acceptance.test.tsx, chapters.test.ts, design-keyboard.test.tsx (+1 more)
-Lines: 870
+Description: 5 files, primarily TypeScript
+Lines: 970
 
 </zone>
 
@@ -17,7 +17,8 @@ Lines: 870
 apps/seedbed/tests/integration/acceptance.test.tsx (TypeScript, 149 lines, test)
 apps/seedbed/tests/integration/chapters.test.ts (TypeScript, 342 lines, test)
 apps/seedbed/tests/integration/design-keyboard.test.tsx (TypeScript, 77 lines, test)
-apps/seedbed/tests/integration/embed.test.tsx (TypeScript, 302 lines, test)
+apps/seedbed/tests/integration/embed.test.tsx (TypeScript, 309 lines, test)
+apps/seedbed/tests/integration/the-garden-opens-planted.test.ts (TypeScript, 93 lines, test)
 
 </files>
 
@@ -25,7 +26,7 @@ apps/seedbed/tests/integration/embed.test.tsx (TypeScript, 302 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → apps: apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/app.tsx; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/views.tsx
+  → apps: apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/app.tsx; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/domain/example.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/open.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/open.ts
 
 </imports>
 
@@ -38,6 +39,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 53 internal calls, 31 outgoing, 0 incoming (cohesion: 0.63, coupling: 0.37)
+- [call graph] 62 internal calls, 42 outgoing, 0 incoming (cohesion: 0.6, coupling: 0.4)
 
 </insights>

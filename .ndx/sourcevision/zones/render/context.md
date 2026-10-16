@@ -5,25 +5,26 @@
 <zone>
 
 Zone: Render (`render`)
-Files: 11, Cohesion: 1.00, Coupling: 0.00
+Files: 12, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 11 files, mostly utilities and entry points; entry points gpu.ts, index.ts, pointer-router.ts; imported by Packages.
+Description: 12 files, primarily TypeScript
 Entry points: packages/render/src/gpu.ts, packages/render/src/index.ts, packages/render/src/interaction/pointer-router.ts, packages/render/src/scene/plane.ts
-Lines: 1728
+Lines: 2277
 
 </zone>
 
 <files>
 
-packages/render/src/gpu.ts (TypeScript, 54 lines, source)
-packages/render/src/index.ts (TypeScript, 69 lines, source)
+packages/render/src/gpu.ts (TypeScript, 62 lines, source)
+packages/render/src/index.ts (TypeScript, 71 lines, source)
 packages/render/src/interaction/pointer-router.ts (TypeScript, 204 lines, source)
-packages/render/src/platform/html-in-canvas.ts (TypeScript, 269 lines, source)
+packages/render/src/platform/html-in-canvas.ts (TypeScript, 325 lines, source)
 packages/render/src/platform/matrix.ts (TypeScript, 77 lines, source)
-packages/render/src/scene/compositor.ts (TypeScript, 441 lines, source)
+packages/render/src/scene/attach-gpu.ts (TypeScript, 224 lines, source)
+packages/render/src/scene/compositor.ts (TypeScript, 595 lines, source)
 packages/render/src/scene/compositor.wgsl.ts (TypeScript, 105 lines, source)
-packages/render/src/scene/connectors.ts (TypeScript, 121 lines, source)
-packages/render/src/scene/frame-plan.ts (TypeScript, 215 lines, source)
+packages/render/src/scene/connectors.ts (TypeScript, 130 lines, source)
+packages/render/src/scene/frame-plan.ts (TypeScript, 311 lines, source)
 packages/render/src/scene/from-layout.ts (TypeScript, 42 lines, source)
 packages/render/src/scene/plane.ts (TypeScript, 131 lines, source)
 
@@ -32,18 +33,20 @@ packages/render/src/scene/plane.ts (TypeScript, 131 lines, source)
 <imports>
 
 Internal:
-  packages/render/src/gpu.ts → packages/render/src/platform/html-in-canvas.ts {captureElement, captureElementImage, clearElementGeometry, detectCapabilities, IDENTITY, isAffine, perspectiveProbeMatrix, planeTransform, PlatformUnavailableError, requestPaint, setLayoutSubtree, toDOMMatrix, updateElementGeometry}
+  packages/render/src/gpu.ts → packages/render/src/platform/html-in-canvas.ts {captureElement, captureElementImage, changedElementsOf, clearElementGeometry, detectCapabilities, IDENTITY, isAffine, markDrawable, perspectiveProbeMatrix, planeTransform, PlatformUnavailableError, requestPaint, setLayoutSubtree, toDOMMatrix, updateElementGeometry}
   packages/render/src/gpu.ts → packages/render/src/platform/html-in-canvas.ts {CaptureMethodName, CaptureSource, ElementImage, GeometryUpdate, Matrix4, PlatformCapabilities}
+  packages/render/src/gpu.ts → packages/render/src/scene/attach-gpu.ts {attachGpu}
+  packages/render/src/gpu.ts → packages/render/src/scene/attach-gpu.ts {AttachGpuOptions, GpuScene}
   packages/render/src/gpu.ts → packages/render/src/scene/compositor.ts {Compositor, packUniform}
-  packages/render/src/gpu.ts → packages/render/src/scene/compositor.ts {CompositorDeps, CompositorOptions, SceneView, SurfaceLike, VgpuLike}
+  packages/render/src/gpu.ts → packages/render/src/scene/compositor.ts {CompositedFrame, CompositorDeps, CompositorOptions, SceneView, SurfaceLike, VgpuLike}
   packages/render/src/gpu.ts → packages/render/src/scene/compositor.wgsl.ts {COMPOSITOR_WGSL}
   packages/render/src/index.ts → packages/render/src/interaction/pointer-router.ts {PointerRouter, hitTest, invertPlaneTransform, toLocal}
   packages/render/src/index.ts → packages/render/src/interaction/pointer-router.ts {LocalHit, Placement, PointerRouterOptions}
   packages/render/src/index.ts → packages/render/src/platform/matrix.ts {IDENTITY, isAffine, perspectiveProbeMatrix, planeTransform, toDOMMatrix}
   packages/render/src/index.ts → packages/render/src/platform/matrix.ts {Matrix4}
-  packages/render/src/index.ts → packages/render/src/scene/connectors.ts {CONNECTOR_DASH, connectorStroke, connectorStyle, hueFor, connectorWidth, distinguishable}
+  packages/render/src/index.ts → packages/render/src/scene/connectors.ts {CONNECTOR_DASH, PROVISIONAL_DASH, PROVISIONAL_OPACITY, connectorStroke, connectorStyle, hueFor, connectorWidth, distinguishable}
   packages/render/src/index.ts → packages/render/src/scene/connectors.ts {ConnectorStyle, EndCap, StrokePattern}
-  packages/render/src/index.ts → packages/render/src/scene/frame-plan.ts {planFrame}
+  packages/render/src/index.ts → packages/render/src/scene/frame-plan.ts {CAPTURE_BUDGET, planFrame}
   packages/render/src/index.ts → packages/render/src/scene/frame-plan.ts {CaptureCommand, ConnectorDraw, FramePlan, GeometryReport, PlanOptions, PlannedConnector, PlannedView, ViewDraw}
   packages/render/src/index.ts → packages/render/src/scene/from-layout.ts {fromLayout}
   packages/render/src/index.ts → packages/render/src/scene/plane.ts {LIGHT_PLANE_STYLES, PLANES, PLANE_STYLES, mixStyles, styleFor, transformFor}
@@ -51,13 +54,17 @@ Internal:
   packages/render/src/interaction/pointer-router.ts → packages/render/src/platform/matrix.ts {Matrix4}
   packages/render/src/platform/html-in-canvas.ts → packages/render/src/platform/matrix.ts {IDENTITY, isAffine, perspectiveProbeMatrix, planeTransform, toDOMMatrix}
   packages/render/src/platform/html-in-canvas.ts → packages/render/src/platform/matrix.ts {Matrix4}
+  packages/render/src/scene/attach-gpu.ts → packages/render/src/platform/html-in-canvas.ts {detectCapabilities, requestPaint}
+  packages/render/src/scene/attach-gpu.ts → packages/render/src/scene/compositor.ts {Compositor}
+  packages/render/src/scene/attach-gpu.ts → packages/render/src/scene/compositor.ts {CompositedFrame, CompositorOptions, SceneView, VgpuLike}
+  packages/render/src/scene/attach-gpu.ts → packages/render/src/scene/from-layout.ts {fromLayout}
   packages/render/src/scene/compositor.ts → packages/render/src/interaction/pointer-router.ts {PointerRouter}
   packages/render/src/scene/compositor.ts → packages/render/src/interaction/pointer-router.ts {Placement}
-  packages/render/src/scene/compositor.ts → packages/render/src/platform/html-in-canvas.ts {captureElement, detectCapabilities, requestPaint, setLayoutSubtree, toDOMMatrix, updateElementGeometry}
-  packages/render/src/scene/compositor.ts → packages/render/src/platform/html-in-canvas.ts {PlatformCapabilities}
+  packages/render/src/scene/compositor.ts → packages/render/src/platform/html-in-canvas.ts {captureElement, changedElementsOf, detectCapabilities, markDrawable, requestPaint, setLayoutSubtree, toDOMMatrix, updateElementGeometry}
+  packages/render/src/scene/compositor.ts → packages/render/src/platform/html-in-canvas.ts {Matrix4, PlatformCapabilities}
   packages/render/src/scene/compositor.ts → packages/render/src/scene/compositor.wgsl.ts {COMPOSITOR_WGSL}
   packages/render/src/scene/compositor.ts → packages/render/src/scene/connectors.ts {ConnectorStyle}
-  packages/render/src/scene/compositor.ts → packages/render/src/scene/frame-plan.ts {planFrame}
+  packages/render/src/scene/compositor.ts → packages/render/src/scene/frame-plan.ts {CAPTURE_BUDGET, planFrame}
   packages/render/src/scene/compositor.ts → packages/render/src/scene/frame-plan.ts {FramePlan, PlannedConnector, PlannedView, ViewDraw}
   packages/render/src/scene/frame-plan.ts → packages/render/src/interaction/pointer-router.ts {Placement}
   packages/render/src/scene/frame-plan.ts → packages/render/src/platform/matrix.ts {Matrix4}
@@ -83,6 +90,6 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 33 internal calls, 0 outgoing, 57 incoming (cohesion: 1, coupling: 0)
+- [call graph] 46 internal calls, 0 outgoing, 64 incoming (cohesion: 1, coupling: 0)
 
 </insights>

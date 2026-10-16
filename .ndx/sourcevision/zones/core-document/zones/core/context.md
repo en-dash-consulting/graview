@@ -5,61 +5,66 @@
 <zone>
 
 Zone: Core (`core-document/core`)
-Files: 14, Cohesion: 0.53, Coupling: 0.47
-Description: 14 files, primarily TypeScript
-Entry points: packages/core/src/app.ts, packages/core/src/beginning.ts, packages/core/src/check.ts, packages/core/src/cli/check/beginnings.ts, packages/core/src/cli/describe.ts, packages/core/src/cli/docs.ts, packages/core/src/cli/index.ts, packages/core/src/figures.ts, packages/core/src/places.ts, packages/core/src/scaffold/lens.ts, packages/core/src/schema/figures.ts, packages/core/src/settings.ts, packages/core/src/testing.ts, packages/core/src/views/types.ts
-Lines: 3221
+Files: 15, Cohesion: 0.52, Coupling: 0.48
+Description: 15 files, primarily TypeScript
+Entry points: packages/core/src/address.ts, packages/core/src/cli/check/relations.ts, packages/core/src/coverage-words.ts, packages/core/src/document/describe-place.ts, packages/core/src/excerpt-of.ts, packages/core/src/grid-sort.ts, packages/core/src/schema/define-node.ts, packages/core/src/schema/reading.ts, packages/core/src/schema/types.ts, packages/core/src/schema/value-words.ts, packages/core/src/search.ts, packages/core/src/words.ts
+Lines: 3396
 
 </zone>
 
 <files>
 
-packages/core/src/app.ts (TypeScript, 388 lines, source)
-packages/core/src/beginning.ts (TypeScript, 196 lines, source)
-packages/core/src/check.ts (TypeScript, 20 lines, source)
-packages/core/src/cli/check/beginnings.ts (TypeScript, 66 lines, source)
-packages/core/src/cli/describe.ts (TypeScript, 392 lines, source)
-packages/core/src/cli/docs.ts (TypeScript, 233 lines, source)
-packages/core/src/cli/index.ts (TypeScript, 390 lines, source)
-packages/core/src/figures.ts (TypeScript, 14 lines, source)
-packages/core/src/places.ts (TypeScript, 484 lines, source)
-packages/core/src/scaffold/lens.ts (TypeScript, 224 lines, source)
-packages/core/src/schema/figures.ts (TypeScript, 233 lines, source)
-packages/core/src/settings.ts (TypeScript, 77 lines, source)
-packages/core/src/testing.ts (TypeScript, 269 lines, source)
-packages/core/src/views/types.ts (TypeScript, 235 lines, source)
+packages/core/src/address.ts (TypeScript, 48 lines, source)
+packages/core/src/cli/check/relations.ts (TypeScript, 394 lines, source)
+packages/core/src/coverage-words.ts (TypeScript, 27 lines, source)
+packages/core/src/document/describe-coverage.ts (TypeScript, 190 lines, source)
+packages/core/src/document/describe-place.ts (TypeScript, 430 lines, source)
+packages/core/src/excerpt-of.ts (TypeScript, 116 lines, source)
+packages/core/src/grid-sort.ts (TypeScript, 54 lines, source)
+packages/core/src/mutations/words.ts (TypeScript, 66 lines, source)
+packages/core/src/schema/define-node.ts (TypeScript, 273 lines, source)
+packages/core/src/schema/reading.ts (TypeScript, 365 lines, source)
+packages/core/src/schema/types.ts (TypeScript, 317 lines, source)
+packages/core/src/schema/value-words.ts (TypeScript, 40 lines, source)
+packages/core/src/search.ts (TypeScript, 1016 lines, source)
+packages/core/src/via.ts (TypeScript, 24 lines, source)
+packages/core/src/words.ts (TypeScript, 36 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/core/src/app.ts → packages/core/src/places.ts {PagesArrangement}
-  packages/core/src/app.ts → packages/core/src/views/types.ts {ViewRegistry}
-  packages/core/src/beginning.ts → packages/core/src/app.ts {GraviewApp}
-  packages/core/src/check.ts → packages/core/src/cli/describe.ts {describeApp}
-  packages/core/src/check.ts → packages/core/src/cli/describe.ts {DescribeOptions}
-  packages/core/src/check.ts → packages/core/src/cli/docs.ts {generateAgentsMd, generateLlmsTxt}
-  packages/core/src/cli/check/beginnings.ts → packages/core/src/beginning.ts {beginning}
-  packages/core/src/cli/describe.ts → packages/core/src/app.ts {capabilitiesOf, describeCapability}
-  packages/core/src/cli/describe.ts → packages/core/src/app.ts {GraviewApp, IntelligenceProviderDeclaration}
-  packages/core/src/cli/describe.ts → packages/core/src/beginning.ts {beginning}
-  packages/core/src/cli/describe.ts → packages/core/src/places.ts {declaredLenses, isShippedLens, placesOf}
-  packages/core/src/cli/docs.ts → packages/core/src/app.ts {GraviewApp}
-  packages/core/src/cli/index.ts → packages/core/src/app.ts {GraviewApp}
-  packages/core/src/cli/index.ts → packages/core/src/cli/describe.ts {describeApp}
-  packages/core/src/cli/index.ts → packages/core/src/cli/docs.ts {generateAgentsMd, generateLlmsTxt}
-  packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts {scaffoldLens, validateLensOptions}
-  packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts {LensScaffoldOptions}
-  packages/core/src/cli/index.ts → packages/core/src/schema/figures.ts {figureBrief, figureFaults, FIGURE_NAMES, FIGURES}
-  packages/core/src/figures.ts → packages/core/src/schema/figures.ts {FIGURES, FIGURE_NAMES, figureBrief, figureFaults, figureSvg}
-  packages/core/src/figures.ts → packages/core/src/schema/figures.ts {Figure}
-  packages/core/src/places.ts → packages/core/src/app.ts {GraviewApp, LensDeclaration}
-  packages/core/src/places.ts → packages/core/src/views/types.ts {placeSlug}
-  packages/core/src/places.ts → packages/core/src/views/types.ts {Place}
-  packages/core/src/settings.ts → packages/core/src/app.ts {SettingDeclaration}
-  packages/core/src/testing.ts → packages/core/src/app.ts {defineApp}
-  packages/core/src/testing.ts → packages/core/src/app.ts {GraviewApp}
-  packages/core/src/views/types.ts → packages/core/src/places.ts {PagesArrangement}
+  packages/core/src/cli/check/relations.ts → packages/core/src/schema/define-node.ts {withArticle}
+  packages/core/src/coverage-words.ts → packages/core/src/schema/define-node.ts {nounOf, pluralOf, withArticle}
+  packages/core/src/document/describe-coverage.ts → packages/core/src/coverage-words.ts {coverageUnlinkedWords}
+  packages/core/src/document/describe-coverage.ts → packages/core/src/document/describe-place.ts {DescribedItem, DescribedPart}
+  packages/core/src/document/describe-coverage.ts → packages/core/src/grid-sort.ts {sortForGrid}
+  packages/core/src/document/describe-coverage.ts → packages/core/src/schema/define-node.ts {counted, isCurrent, labelOf}
+  packages/core/src/document/describe-coverage.ts → packages/core/src/schema/reading.ts {readableFields}
+  packages/core/src/document/describe-place.ts → packages/core/src/document/describe-coverage.ts {coverageParts}
+  packages/core/src/document/describe-place.ts → packages/core/src/excerpt-of.ts {markdownWords}
+  packages/core/src/document/describe-place.ts → packages/core/src/grid-sort.ts {sortForGrid}
+  packages/core/src/document/describe-place.ts → packages/core/src/schema/define-node.ts {fieldWords, humanizeField, isCurrent, labelOf, pluralOf}
+  packages/core/src/document/describe-place.ts → packages/core/src/schema/reading.ts {pageSections, readableFields}
+  packages/core/src/mutations/words.ts → packages/core/src/schema/define-node.ts {fieldWords, humanizeField}
+  packages/core/src/schema/define-node.ts → packages/core/src/schema/types.ts {AnyNodeDefinition, EdgeMap, EmptyEdgeMap, NodeDefinition, NodeDefinitionSpec}
+  packages/core/src/schema/reading.ts → packages/core/src/excerpt-of.ts {excerptOf}
+  packages/core/src/schema/reading.ts → packages/core/src/schema/define-node.ts {fieldWords, labelOf, nounOf}
+  packages/core/src/schema/reading.ts → packages/core/src/schema/define-node.ts {ReadableField}
+  packages/core/src/schema/reading.ts → packages/core/src/schema/types.ts {AnyNodeDefinition, PageFields}
+  packages/core/src/schema/reading.ts → packages/core/src/schema/value-words.ts {valueWords}
+  packages/core/src/schema/value-words.ts → packages/core/src/schema/define-node.ts {humanizeField}
+  packages/core/src/schema/value-words.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
+  packages/core/src/search.ts → packages/core/src/address.ts {addressOf}
+  packages/core/src/search.ts → packages/core/src/excerpt-of.ts {markdownWords}
+  packages/core/src/search.ts → packages/core/src/schema/define-node.ts {actTitle, humanizeField, isCurrent, labelOf, pluralLabel, pluralOfKind}
+  packages/core/src/search.ts → packages/core/src/schema/reading.ts {readableFields, tellApart}
+  packages/core/src/search.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
+  packages/core/src/words.ts → packages/core/src/excerpt-of.ts {excerptOf}
+  packages/core/src/words.ts → packages/core/src/mutations/words.ts {argumentWords, failureWords}
+  packages/core/src/words.ts → packages/core/src/schema/reading.ts {describeNode, isLongText, pageSections, readableFields, tellApart}
+  packages/core/src/words.ts → packages/core/src/schema/value-words.ts {edgeWords, valueWords}
+  packages/core/src/words.ts → packages/core/src/via.ts {viaSaid}
 
 </imports>

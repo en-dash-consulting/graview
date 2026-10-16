@@ -5,29 +5,68 @@
 <zone>
 
 Zone: Primitives (`primitives/primitives`)
-Files: 4, Cohesion: 0.63, Coupling: 0.38
-Description: 4 files, primarily TypeScript
-Entry points: packages/primitives/src/bar-panes.tsx, packages/primitives/src/ladder.tsx, packages/primitives/src/seats.tsx
-Lines: 516
+Files: 19, Cohesion: 0.44, Coupling: 0.56
+Description: 19 files, primarily TypeScript
+Entry points: packages/primitives/src/arrangement.ts, packages/primitives/src/declared-lens-doors.tsx, packages/primitives/src/declared-views.ts, packages/primitives/src/draft-door.tsx, packages/primitives/src/draft-frame.tsx, packages/primitives/src/kind-shape.ts, packages/primitives/src/kind-stop.tsx, packages/primitives/src/lens-keeping.ts, packages/primitives/src/notice-place.ts, packages/primitives/src/notices.tsx, packages/primitives/src/primitives/measure.ts, packages/primitives/src/reader-lenses.ts, packages/primitives/src/scene-way-back.tsx, packages/primitives/src/seat-move.ts, packages/primitives/src/several-door.tsx, packages/primitives/src/way-back.ts
+Lines: 2886
 
 </zone>
 
 <files>
 
-packages/primitives/src/bar-panes.tsx (TypeScript, 280 lines, source)
-packages/primitives/src/choice.ts (TypeScript, 22 lines, source)
-packages/primitives/src/ladder.tsx (TypeScript, 136 lines, source)
-packages/primitives/src/seats.tsx (TypeScript, 78 lines, source)
+packages/primitives/src/arrangement.ts (TypeScript, 29 lines, source)
+packages/primitives/src/declared-lens-doors.tsx (TypeScript, 147 lines, source)
+packages/primitives/src/declared-views.ts (TypeScript, 16 lines, source)
+packages/primitives/src/draft-door.tsx (TypeScript, 29 lines, source)
+packages/primitives/src/draft-frame.tsx (TypeScript, 139 lines, source)
+packages/primitives/src/kind-shape.ts (TypeScript, 341 lines, source)
+packages/primitives/src/kind-stop.tsx (TypeScript, 789 lines, source)
+packages/primitives/src/lens-keeping.ts (TypeScript, 138 lines, source)
+packages/primitives/src/notice-place.ts (TypeScript, 102 lines, source)
+packages/primitives/src/notice-stacks.tsx (TypeScript, 202 lines, source)
+packages/primitives/src/notices.tsx (TypeScript, 220 lines, source)
+packages/primitives/src/primitives/measure.ts (TypeScript, 90 lines, source)
+packages/primitives/src/reader-lenses.ts (TypeScript, 39 lines, source)
+packages/primitives/src/scene-way-back-door.ts (TypeScript, 88 lines, source)
+packages/primitives/src/scene-way-back.tsx (TypeScript, 36 lines, source)
+packages/primitives/src/seat-move.ts (TypeScript, 75 lines, source)
+packages/primitives/src/several-bar.tsx (TypeScript, 283 lines, source)
+packages/primitives/src/several-door.tsx (TypeScript, 27 lines, source)
+packages/primitives/src/way-back.ts (TypeScript, 96 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/primitives/src/bar-panes.tsx → packages/primitives/src/choice.ts {choiceStyle}
-  packages/primitives/src/bar-panes.tsx → packages/primitives/src/ladder.tsx {LadderSetting}
-  packages/primitives/src/bar-panes.tsx → packages/primitives/src/seats.tsx {Seats}
-  packages/primitives/src/ladder.tsx → packages/primitives/src/choice.ts {choiceStyle}
-  packages/primitives/src/seats.tsx → packages/primitives/src/choice.ts {choiceStyle}
+  packages/primitives/src/declared-lens-doors.tsx → packages/primitives/src/reader-lenses.ts {readerLenses}
+  packages/primitives/src/declared-lens-doors.tsx → packages/primitives/src/reader-lenses.ts {KeptLens}
+  packages/primitives/src/declared-views.ts → packages/primitives/src/declared-lens-doors.tsx {registerDeclaredLenses}
+  packages/primitives/src/draft-door.tsx → packages/primitives/src/draft-frame.tsx {*}
+  packages/primitives/src/draft-door.tsx → packages/primitives/src/draft-frame.tsx {DraftFrameProps}
+  packages/primitives/src/draft-frame.tsx → packages/primitives/src/lens-keeping.ts {useLensKeeping}
+  packages/primitives/src/draft-frame.tsx → packages/primitives/src/seat-move.ts {problemsShown, useSceneGo}
+  packages/primitives/src/kind-stop.tsx → packages/primitives/src/arrangement.ts {arrangementOf, withArrangement}
+  packages/primitives/src/kind-stop.tsx → packages/primitives/src/kind-shape.ts {cellOf, changedSince, dateFacts, dateFilter, kindShape, problemsByRule, shapeRecipe, tableColumns, tableOrder, TABLE_PAGE}
+  packages/primitives/src/kind-stop.tsx → packages/primitives/src/kind-shape.ts {KindShape, ProblemGroup, TableColumn}
+  packages/primitives/src/kind-stop.tsx → packages/primitives/src/lens-keeping.ts {useLensKeeping}
+  packages/primitives/src/kind-stop.tsx → packages/primitives/src/reader-lenses.ts {appKeyOf}
+  packages/primitives/src/kind-stop.tsx → packages/primitives/src/seat-move.ts {useSceneGo}
+  packages/primitives/src/kind-stop.tsx → packages/primitives/src/several-door.tsx {prefetchSeveral, SeveralBarDoor}
+  packages/primitives/src/lens-keeping.ts → packages/primitives/src/declared-lens-doors.tsx {registerLensPlaces}
+  packages/primitives/src/lens-keeping.ts → packages/primitives/src/notices.tsx {NoticeBoardContext}
+  packages/primitives/src/lens-keeping.ts → packages/primitives/src/reader-lenses.ts {appKeyOf, readerLenses, readerLensesKey}
+  packages/primitives/src/lens-keeping.ts → packages/primitives/src/reader-lenses.ts {KeptLens}
+  packages/primitives/src/notice-stacks.tsx → packages/primitives/src/notice-place.ts {FOOT_MOVED, placeAtTheFoot, placeAtTheTop}
+  packages/primitives/src/notice-stacks.tsx → packages/primitives/src/notices.tsx {HeldNotice, NoticeBoard, NoticeTone}
+  packages/primitives/src/notices.tsx → packages/primitives/src/notice-stacks.tsx {*}
+  packages/primitives/src/notices.tsx → packages/primitives/src/primitives/measure.ts {VISUALLY_HIDDEN}
+  packages/primitives/src/scene-way-back-door.ts → packages/primitives/src/notices.tsx {NoticeBoard}
+  packages/primitives/src/scene-way-back-door.ts → packages/primitives/src/way-back.ts {freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, WAY_BACK_MS}
+  packages/primitives/src/scene-way-back.tsx → packages/primitives/src/notices.tsx {NoticeBoardContext}
+  packages/primitives/src/scene-way-back.tsx → packages/primitives/src/scene-way-back-door.ts {*}
+  packages/primitives/src/several-bar.tsx → packages/primitives/src/notice-place.ts {FOOT_MOVED, placeAtTheFoot}
+  packages/primitives/src/several-door.tsx → packages/primitives/src/several-bar.tsx {*}
+  packages/primitives/src/several-door.tsx → packages/primitives/src/several-bar.tsx {SeveralBarProps}
 
 </imports>

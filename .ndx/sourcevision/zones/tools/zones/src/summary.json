@@ -3,21 +3,21 @@
   "name": "Src",
   "description": "5 files, primarily TypeScript",
   "files": [
-    "packages/tools/src/conversation.ts",
-    "packages/tools/src/intelligence.ts",
-    "packages/tools/src/plan.ts",
-    "packages/tools/src/questions.ts",
-    "packages/tools/src/run.ts"
+    "packages/tools/src/ai.ts",
+    "packages/tools/src/dev-ai.ts",
+    "packages/tools/src/frame.ts",
+    "packages/tools/src/local.ts",
+    "packages/tools/src/turn.ts"
   ],
   "entryPoints": [
-    "packages/tools/src/conversation.ts",
-    "packages/tools/src/intelligence.ts",
-    "packages/tools/src/plan.ts",
-    "packages/tools/src/questions.ts",
-    "packages/tools/src/run.ts"
+    "packages/tools/src/ai.ts",
+    "packages/tools/src/dev-ai.ts",
+    "packages/tools/src/frame.ts",
+    "packages/tools/src/local.ts",
+    "packages/tools/src/turn.ts"
   ],
-  "cohesion": 0.39,
-  "coupling": 0.61,
+  "cohesion": 0.42,
+  "coupling": 0.58,
   "fileCount": 5,
-  "lineCount": 2877
+  "lineCount": 650
 }

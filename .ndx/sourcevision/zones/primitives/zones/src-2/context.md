@@ -5,29 +5,44 @@
 <zone>
 
 Zone: Src 2 (`primitives/src-2`)
-Files: 5, Cohesion: 0.50, Coupling: 0.50
-Description: 5 files, primarily TypeScript
-Entry points: packages/primitives/src/ladder.tsx, packages/primitives/src/popover.ts, packages/primitives/src/profile.tsx, packages/primitives/src/seats.tsx, packages/primitives/src/workbench/standing.tsx
-Lines: 853
+Files: 11, Cohesion: 0.40, Coupling: 0.60
+Description: 11 files, primarily TypeScript
+Entry points: packages/primitives/src/default-view.tsx, packages/primitives/src/editable.tsx, packages/primitives/src/files-door.tsx, packages/primitives/src/files.tsx, packages/primitives/src/home-view.tsx, packages/primitives/src/record-head.ts, packages/primitives/src/resample.ts, packages/primitives/src/spec-views.tsx, packages/primitives/src/text-body.tsx
+Lines: 2514
 
 </zone>
 
 <files>
 
-packages/primitives/src/ladder.tsx (TypeScript, 141 lines, source)
-packages/primitives/src/popover.ts (TypeScript, 52 lines, source)
-packages/primitives/src/profile.tsx (TypeScript, 414 lines, source)
-packages/primitives/src/seats.tsx (TypeScript, 87 lines, source)
-packages/primitives/src/workbench/standing.tsx (TypeScript, 159 lines, source)
+packages/primitives/src/default-view.tsx (TypeScript, 64 lines, source)
+packages/primitives/src/editable.tsx (TypeScript, 621 lines, source)
+packages/primitives/src/files-door.tsx (TypeScript, 13 lines, source)
+packages/primitives/src/files.tsx (TypeScript, 654 lines, source)
+packages/primitives/src/home-view.tsx (TypeScript, 23 lines, source)
+packages/primitives/src/markdown-body.tsx (TypeScript, 170 lines, source)
+packages/primitives/src/prose-editor.tsx (TypeScript, 123 lines, source)
+packages/primitives/src/record-head.ts (TypeScript, 29 lines, source)
+packages/primitives/src/resample.ts (TypeScript, 22 lines, source)
+packages/primitives/src/spec-views.tsx (TypeScript, 651 lines, source)
+packages/primitives/src/text-body.tsx (TypeScript, 144 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/primitives/src/profile.tsx → packages/primitives/src/ladder.tsx {LadderSetting}
-  packages/primitives/src/profile.tsx → packages/primitives/src/popover.ts {closeToTrigger, keepInside}
-  packages/primitives/src/profile.tsx → packages/primitives/src/seats.tsx {Seats}
-  packages/primitives/src/workbench/standing.tsx → packages/primitives/src/popover.ts {closeToTrigger}
+  packages/primitives/src/editable.tsx → packages/primitives/src/files-door.tsx {Files}
+  packages/primitives/src/editable.tsx → packages/primitives/src/prose-editor.tsx {*}
+  packages/primitives/src/editable.tsx → packages/primitives/src/text-body.tsx {TextBody}
+  packages/primitives/src/files-door.tsx → packages/primitives/src/files.tsx {*}
+  packages/primitives/src/files-door.tsx → packages/primitives/src/files.tsx {FilesProps}
+  packages/primitives/src/files.tsx → packages/primitives/src/resample.ts {resample}
+  packages/primitives/src/home-view.tsx → packages/primitives/src/spec-views.tsx {compileBlocks, SpecPlace}
+  packages/primitives/src/prose-editor.tsx → packages/primitives/src/text-body.tsx {TextBody}
+  packages/primitives/src/spec-views.tsx → packages/primitives/src/default-view.tsx {DefaultView, useDefaultElsewhere}
+  packages/primitives/src/spec-views.tsx → packages/primitives/src/files-door.tsx {Files}
+  packages/primitives/src/spec-views.tsx → packages/primitives/src/record-head.ts {RecordHeadContext}
+  packages/primitives/src/spec-views.tsx → packages/primitives/src/text-body.tsx {hasShape, TextBody}
+  packages/primitives/src/text-body.tsx → packages/primitives/src/markdown-body.tsx {*}
 
 </imports>

@@ -1,6 +1,6 @@
 {
   "id": "apps/launcher",
-  "name": "App Launcher",
+  "name": "Launcher",
   "description": "9 files, primarily TypeScript",
   "files": [
     "apps/launcher/src/domain/app.ts",
@@ -20,5 +20,5 @@
   "cohesion": 1,
   "coupling": 0,
   "fileCount": 9,
-  "lineCount": 1799
+  "lineCount": 1822
 }

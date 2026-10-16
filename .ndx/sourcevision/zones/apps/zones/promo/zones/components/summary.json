@@ -1,19 +1,31 @@
 {
   "id": "apps/promo/components",
-  "name": "Promo",
-  "description": "5 files, primarily TypeScript",
+  "name": "Components",
+  "description": "9 files, primarily TypeScript",
   "files": [
-    "apps/promo/src/Composition.tsx",
-    "apps/promo/src/components/CameraRig.tsx",
-    "apps/promo/src/components/Field.tsx",
-    "apps/promo/src/scenes/BrandMorph.tsx",
-    "apps/promo/src/scenes/OutroBumper.tsx"
+    "apps/promo/src/camera.ts",
+    "apps/promo/src/components/BrandPresence.tsx",
+    "apps/promo/src/components/CodeGlyphs.tsx",
+    "apps/promo/src/components/Constellation.tsx",
+    "apps/promo/src/components/LightCharacter.tsx",
+    "apps/promo/src/components/SurveyInsert.tsx",
+    "apps/promo/src/motion.ts",
+    "apps/promo/src/scenes/CityAltitude.tsx",
+    "apps/promo/src/scenes/GraphInterface.tsx"
   ],
   "entryPoints": [
-    "apps/promo/src/Composition.tsx"
+    "apps/promo/src/camera.ts",
+    "apps/promo/src/components/BrandPresence.tsx",
+    "apps/promo/src/components/CodeGlyphs.tsx",
+    "apps/promo/src/components/Constellation.tsx",
+    "apps/promo/src/components/LightCharacter.tsx",
+    "apps/promo/src/components/SurveyInsert.tsx",
+    "apps/promo/src/motion.ts",
+    "apps/promo/src/scenes/CityAltitude.tsx",
+    "apps/promo/src/scenes/GraphInterface.tsx"
   ],
-  "cohesion": 0.3,
-  "coupling": 0.7,
-  "fileCount": 5,
-  "lineCount": 415
+  "cohesion": 0.41,
+  "coupling": 0.59,
+  "fileCount": 9,
+  "lineCount": 1711
 }

@@ -1,0 +1,34 @@
+{
+  "id": "ship/src-3",
+  "name": "Src 3",
+  "description": "11 files, primarily TypeScript",
+  "files": [
+    "packages/ship/src/export.ts",
+    "packages/ship/src/handler.ts",
+    "packages/ship/src/health.ts",
+    "packages/ship/src/live-protocol.ts",
+    "packages/ship/src/live.ts",
+    "packages/ship/src/open-store.ts",
+    "packages/ship/src/remote.ts",
+    "packages/ship/src/runtime.ts",
+    "packages/ship/src/seat-headers.ts",
+    "packages/ship/src/serve.ts",
+    "packages/ship/src/websocket.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/export.ts",
+    "packages/ship/src/handler.ts",
+    "packages/ship/src/health.ts",
+    "packages/ship/src/live-protocol.ts",
+    "packages/ship/src/live.ts",
+    "packages/ship/src/open-store.ts",
+    "packages/ship/src/remote.ts",
+    "packages/ship/src/runtime.ts",
+    "packages/ship/src/seat-headers.ts",
+    "packages/ship/src/serve.ts"
+  ],
+  "cohesion": 0.58,
+  "coupling": 0.42,
+  "fileCount": 11,
+  "lineCount": 5443
+}

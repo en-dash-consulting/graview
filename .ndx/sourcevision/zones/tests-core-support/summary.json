@@ -1,0 +1,28 @@
+{
+  "id": "tests-core-support",
+  "name": "Tests Core Support",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/core/tests/support/adapter-contract.ts",
+    "packages/core/tests/support/hidden-holds.ts",
+    "packages/core/tests/support/hidden-phones.ts",
+    "packages/core/tests/support/unseen-worlds.ts"
+  ],
+  "entryPoints": [
+    "packages/core/tests/support/adapter-contract.ts",
+    "packages/core/tests/support/hidden-holds.ts",
+    "packages/core/tests/support/hidden-phones.ts",
+    "packages/core/tests/support/unseen-worlds.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 4,
+  "lineCount": 814,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

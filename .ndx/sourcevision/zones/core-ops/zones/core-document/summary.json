@@ -1,0 +1,35 @@
+{
+  "id": "core-ops/core-document",
+  "name": "Core Document",
+  "description": "11 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/compiled.ts",
+    "packages/core/src/document/compiled.ts",
+    "packages/core/src/document/computed-values.ts",
+    "packages/core/src/document/expr/evaluate.ts",
+    "packages/core/src/document/fact-values.ts",
+    "packages/core/src/document/rules.ts",
+    "packages/core/src/graph/primitives.ts",
+    "packages/core/src/ops/served.ts",
+    "packages/core/src/refusal.ts",
+    "packages/core/src/refused.ts",
+    "packages/core/src/validate-graph.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/compiled.ts",
+    "packages/core/src/document/compiled.ts",
+    "packages/core/src/document/computed-values.ts",
+    "packages/core/src/document/expr/evaluate.ts",
+    "packages/core/src/document/fact-values.ts",
+    "packages/core/src/document/rules.ts",
+    "packages/core/src/graph/primitives.ts",
+    "packages/core/src/ops/served.ts",
+    "packages/core/src/refusal.ts",
+    "packages/core/src/refused.ts",
+    "packages/core/src/validate-graph.ts"
+  ],
+  "cohesion": 0.31,
+  "coupling": 0.69,
+  "fileCount": 11,
+  "lineCount": 2528
+}

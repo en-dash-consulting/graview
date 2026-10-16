@@ -8,7 +8,7 @@ Zone: Worker (`guest/worker`)
 Files: 5, Cohesion: 0.50, Coupling: 0.50
 Description: 5 files, primarily TypeScript
 Entry points: packages/guest/src/worker/harden.ts, packages/guest/src/worker/index.ts, packages/guest/src/worker/listeners.ts, packages/guest/src/worker/view.ts
-Lines: 584
+Lines: 585
 
 </zone>
 
@@ -18,7 +18,7 @@ packages/guest/src/worker/harden.ts (TypeScript, 203 lines, source)
 packages/guest/src/worker/index.ts (TypeScript, 112 lines, source)
 packages/guest/src/worker/listeners.ts (TypeScript, 166 lines, source)
 packages/guest/src/worker/natives.ts (TypeScript, 29 lines, source)
-packages/guest/src/worker/view.ts (TypeScript, 74 lines, source)
+packages/guest/src/worker/view.ts (TypeScript, 75 lines, source)
 
 </files>
 

@@ -1,0 +1,311 @@
+{
+  "dependencies": [
+    {
+      "file": "apps/launcher/src/ui/liveness.tsx",
+      "line": 27,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/core/src/cli/create.ts",
+      "line": 363,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/core/src/snapshot.ts",
+      "line": 199,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/core/src/sync/mcp.ts",
+      "line": 99,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/core/src/sync/mcp.ts",
+      "line": 307,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/graview/preview/page.js",
+      "line": 19,
+      "kind": "http",
+      "target": "/graview/document",
+      "targetSource": "literal",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/guest/src/host/pictures.ts",
+      "line": 178,
+      "kind": "http",
+      "target": "url.href",
+      "targetSource": "config",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/guest/src/host/theme.ts",
+      "line": 110,
+      "kind": "http",
+      "target": "url.href",
+      "targetSource": "config",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/react/src/local-intelligence.ts",
+      "line": 50,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/react/src/local-intelligence.ts",
+      "line": 73,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/ship/src/files-at.ts",
+      "line": 15,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/studio/src/write-in-place.ts",
+      "line": 31,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/studio/src/write-in-place.ts",
+      "line": 47,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/studio/src/write-in-place.ts",
+      "line": 60,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "packages/tools/src/cli.ts",
+      "line": 274,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/lib/guest-brand-suite.mjs",
+      "line": 210,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/lib/guest-brand-suite.mjs",
+      "line": 249,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/lib/guest-pictures-suite.mjs",
+      "line": 176,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/lib/serve.mjs",
+      "line": 20,
+      "kind": "http",
+      "target": "http://localhost:",
+      "targetSource": "literal",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/lib/serve.mjs",
+      "line": 60,
+      "kind": "http",
+      "target": "http://localhost:",
+      "targetSource": "literal",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/rehearse-studio.mjs",
+      "line": 186,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/smoke-install.mjs",
+      "line": 350,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/smoke-install.mjs",
+      "line": 351,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/smoke-install.mjs",
+      "line": 352,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-all.mjs",
+      "line": 221,
+      "kind": "http",
+      "target": "http://localhost:",
+      "targetSource": "literal",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-preview.mjs",
+      "line": 56,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-preview.mjs",
+      "line": 121,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-preview.mjs",
+      "line": 122,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-preview.mjs",
+      "line": 132,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-seat.mjs",
+      "line": 279,
+      "kind": "http",
+      "target": "/pages/users/user-nora?today=2026-09-01",
+      "targetSource": "literal",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-served.mjs",
+      "line": 154,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-served.mjs",
+      "line": 164,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-served.mjs",
+      "line": 177,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-studio.mjs",
+      "line": 708,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    }
+  ],
+  "contracts": []
+}

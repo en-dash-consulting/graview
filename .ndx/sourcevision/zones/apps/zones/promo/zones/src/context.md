@@ -5,24 +5,32 @@
 <zone>
 
 Zone: Src (`apps/promo/src`)
-Files: 3, Cohesion: 0.29, Coupling: 0.71
-Description: 3 files, primarily TypeScript
-Lines: 106
+Files: 6, Cohesion: 0.63, Coupling: 0.37
+Description: 6 files, primarily TypeScript
+Entry points: apps/promo/src/kit/design.ts
+Lines: 736
 
 </zone>
 
 <files>
 
-apps/promo/src/FeedComposition.tsx (TypeScript, 68 lines, source)
-apps/promo/src/Root.tsx (TypeScript, 34 lines, source)
+apps/promo/src/Root.tsx (TypeScript, 33 lines, source)
 apps/promo/src/index.ts (TypeScript, 4 lines, source)
+apps/promo/src/kit/design.ts (TypeScript, 58 lines, source)
+apps/promo/src/style/StyleFrames.tsx (TypeScript, 267 lines, source)
+apps/promo/src/videos/ThreadV2.tsx (TypeScript, 367 lines, source)
+apps/promo/src/videos/scuba/index.tsx (TypeScript, 7 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  apps/promo/src/Root.tsx → apps/promo/src/FeedComposition.tsx {GraviewFeed}
+  apps/promo/src/Root.tsx → apps/promo/src/style/StyleFrames.tsx {GraviewStyleFrames}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/ThreadV2.tsx {GraviewThreadV2, THREAD_V2_DURATION}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/scuba/index.tsx {GraviewScuba, GraviewScubaPool, GraviewScubaProposal, SCUBA_TOTAL}
   apps/promo/src/index.ts → apps/promo/src/Root.tsx {RemotionRoot}
+  apps/promo/src/style/StyleFrames.tsx → apps/promo/src/kit/design.ts {c, font, t, radius, shadow, canvas}
+  apps/promo/src/videos/ThreadV2.tsx → apps/promo/src/kit/design.ts {c, font, t, radius, shadow, canvas, ease}
 
 </imports>

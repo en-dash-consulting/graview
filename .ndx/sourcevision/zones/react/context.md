@@ -5,67 +5,85 @@
 <zone>
 
 Zone: React (`react`)
-Files: 51, Cohesion: 1.00, Coupling: 0.00
+Files: 69, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 51 files, mostly components and utilities; entry points index.ts, local-intelligence.ts, picking.ts; imported by Packages.
-Entry points: packages/react/src/activity.ts, packages/react/src/animation.ts, packages/react/src/captions.ts, packages/react/src/channels.ts, packages/react/src/context.tsx, packages/react/src/drawing.ts, packages/react/src/index.ts, packages/react/src/lazy-part.tsx, packages/react/src/local-intelligence.ts, packages/react/src/parallel.ts, packages/react/src/picking.ts, packages/react/src/placement.ts, packages/react/src/plots.tsx, packages/react/src/popover.ts, packages/react/src/provider.ts, packages/react/src/robot.ts, packages/react/src/routes.ts, packages/react/src/scene.tsx, packages/react/src/view-registry.ts
-Lines: 11089
+Description: 69 files, primarily TypeScript
+Entry points: packages/react/src/activity.ts, packages/react/src/animation.ts, packages/react/src/captions.ts, packages/react/src/channels.ts, packages/react/src/connectors.tsx, packages/react/src/context.tsx, packages/react/src/drawing.ts, packages/react/src/edge-signs.tsx, packages/react/src/index.ts, packages/react/src/lazy-part.tsx, packages/react/src/local-intelligence.ts, packages/react/src/map-choice.ts, packages/react/src/parallel.ts, packages/react/src/picking.ts, packages/react/src/placement.ts, packages/react/src/plots.tsx, packages/react/src/popover.ts, packages/react/src/provider.ts, packages/react/src/record-links.ts, packages/react/src/ribbon-width.ts, packages/react/src/ribbons-layer.tsx, packages/react/src/ribbons.ts, packages/react/src/robot.ts, packages/react/src/routes.ts, packages/react/src/scene-lines.tsx, packages/react/src/scene-node.ts, packages/react/src/scene-root.tsx, packages/react/src/scene.tsx, packages/react/src/seat-talk.ts, packages/react/src/tie-labels.ts, packages/react/src/view-registry.ts
+Lines: 14429
 
 </zone>
 
 <files>
 
-packages/react/src/activity.ts (TypeScript, 260 lines, source)
-packages/react/src/affordances.ts (TypeScript, 73 lines, source)
+packages/react/src/activity.ts (TypeScript, 261 lines, source)
+packages/react/src/affordances.ts (TypeScript, 75 lines, source)
 packages/react/src/animation.ts (TypeScript, 285 lines, source)
 packages/react/src/attention.ts (TypeScript, 70 lines, source)
+packages/react/src/beside-the-map.ts (TypeScript, 14 lines, source)
 packages/react/src/captions.ts (TypeScript, 100 lines, source)
-packages/react/src/channels.ts (TypeScript, 118 lines, source)
-packages/react/src/connectors.tsx (TypeScript, 1056 lines, source)
-packages/react/src/context.tsx (TypeScript, 1107 lines, source)
-packages/react/src/drawing.ts (TypeScript, 24 lines, source)
+packages/react/src/channels.ts (TypeScript, 221 lines, source)
+packages/react/src/connectors.tsx (TypeScript, 1194 lines, source)
+packages/react/src/context.tsx (TypeScript, 1338 lines, source)
+packages/react/src/default-elsewhere.ts (TypeScript, 12 lines, source)
+packages/react/src/drawing.ts (TypeScript, 27 lines, source)
 packages/react/src/drawn.ts (TypeScript, 142 lines, source)
-packages/react/src/edge-signs.tsx (TypeScript, 102 lines, source)
+packages/react/src/edge-signs.tsx (TypeScript, 199 lines, source)
 packages/react/src/editable-fields.ts (TypeScript, 38 lines, source)
 packages/react/src/emphasis.ts (TypeScript, 85 lines, source)
 packages/react/src/error-report.ts (TypeScript, 15 lines, source)
-packages/react/src/go.ts (TypeScript, 45 lines, source)
+packages/react/src/files.ts (TypeScript, 13 lines, source)
+packages/react/src/go.ts (TypeScript, 73 lines, source)
 packages/react/src/hooks.ts (TypeScript, 183 lines, source)
-packages/react/src/index.ts (TypeScript, 79 lines, source)
-packages/react/src/keyboard.ts (TypeScript, 172 lines, source)
+packages/react/src/index.ts (TypeScript, 95 lines, source)
+packages/react/src/keyboard.ts (TypeScript, 211 lines, source)
 packages/react/src/kit.ts (TypeScript, 34 lines, source)
+packages/react/src/last-visit.ts (TypeScript, 77 lines, source)
 packages/react/src/lazy-part.tsx (TypeScript, 208 lines, source)
+packages/react/src/linked-reads.ts (TypeScript, 50 lines, source)
 packages/react/src/local-intelligence.ts (TypeScript, 90 lines, source)
+packages/react/src/map-choice.ts (TypeScript, 112 lines, source)
+packages/react/src/menu-sections.tsx (TypeScript, 89 lines, source)
 packages/react/src/motion-store.ts (TypeScript, 30 lines, source)
 packages/react/src/motion.ts (TypeScript, 11 lines, source)
 packages/react/src/occupants.tsx (TypeScript, 206 lines, source)
 packages/react/src/parallel.ts (TypeScript, 30 lines, source)
+packages/react/src/past.ts (TypeScript, 124 lines, source)
 packages/react/src/picked.ts (TypeScript, 13 lines, source)
 packages/react/src/picking.ts (TypeScript, 151 lines, source)
 packages/react/src/placement.ts (TypeScript, 108 lines, source)
-packages/react/src/plots.tsx (TypeScript, 388 lines, source)
+packages/react/src/plots.tsx (TypeScript, 445 lines, source)
 packages/react/src/pointer.ts (TypeScript, 61 lines, source)
-packages/react/src/popover.ts (TypeScript, 421 lines, source)
-packages/react/src/presence.ts (TypeScript, 249 lines, source)
-packages/react/src/provider.ts (TypeScript, 48 lines, source)
-packages/react/src/rails.ts (TypeScript, 18 lines, source)
-packages/react/src/resolved-view.tsx (TypeScript, 459 lines, source)
-packages/react/src/robot.ts (TypeScript, 160 lines, source)
-packages/react/src/routes.ts (TypeScript, 176 lines, source)
-packages/react/src/scene-camera.ts (TypeScript, 147 lines, source)
-packages/react/src/scene-hand.ts (TypeScript, 381 lines, source)
-packages/react/src/scene-helpers.tsx (TypeScript, 117 lines, source)
-packages/react/src/scene-lines.tsx (TypeScript, 817 lines, source)
+packages/react/src/popover.ts (TypeScript, 451 lines, source)
+packages/react/src/presence.ts (TypeScript, 260 lines, source)
+packages/react/src/provider.ts (TypeScript, 62 lines, source)
+packages/react/src/rails.ts (TypeScript, 19 lines, source)
+packages/react/src/record-links-layer.tsx (TypeScript, 207 lines, source)
+packages/react/src/record-links.ts (TypeScript, 106 lines, source)
+packages/react/src/resolved-view.tsx (TypeScript, 480 lines, source)
+packages/react/src/ribbon-width.ts (TypeScript, 15 lines, source)
+packages/react/src/ribbons-layer.tsx (TypeScript, 228 lines, source)
+packages/react/src/ribbons.ts (TypeScript, 432 lines, source)
+packages/react/src/robot.ts (TypeScript, 161 lines, source)
+packages/react/src/routes.ts (TypeScript, 185 lines, source)
+packages/react/src/scene-camera.ts (TypeScript, 153 lines, source)
+packages/react/src/scene-covered.ts (TypeScript, 111 lines, source)
+packages/react/src/scene-hand.ts (TypeScript, 424 lines, source)
+packages/react/src/scene-helpers.tsx (TypeScript, 141 lines, source)
+packages/react/src/scene-lines.tsx (TypeScript, 1089 lines, source)
 packages/react/src/scene-node.ts (TypeScript, 10 lines, source)
-packages/react/src/scene-root.tsx (TypeScript, 1146 lines, source)
+packages/react/src/scene-options.ts (TypeScript, 147 lines, source)
+packages/react/src/scene-root.tsx (TypeScript, 1210 lines, source)
 packages/react/src/scene.tsx (TypeScript, 18 lines, source)
 packages/react/src/seat-marks.tsx (TypeScript, 108 lines, source)
+packages/react/src/seat-talk.ts (TypeScript, 194 lines, source)
 packages/react/src/settings.ts (TypeScript, 87 lines, source)
-packages/react/src/url-sync.ts (TypeScript, 217 lines, source)
+packages/react/src/tie-labels.ts (TypeScript, 137 lines, source)
+packages/react/src/url-sync.ts (TypeScript, 247 lines, source)
 packages/react/src/view-boundary.tsx (TypeScript, 104 lines, source)
-packages/react/src/view-host.tsx (TypeScript, 658 lines, source)
-packages/react/src/view-registry.ts (TypeScript, 185 lines, source)
-packages/react/src/where-drawn.tsx (TypeScript, 279 lines, source)
+packages/react/src/view-host.tsx (TypeScript, 665 lines, source)
+packages/react/src/view-marks.ts (TypeScript, 42 lines, source)
+packages/react/src/view-registry.ts (TypeScript, 171 lines, source)
+packages/react/src/where-drawn.tsx (TypeScript, 275 lines, source)
 
 </files>
 
@@ -78,21 +96,28 @@ Internal:
   packages/react/src/attention.ts → packages/react/src/context.tsx {useGraview}
   packages/react/src/channels.ts → packages/react/src/routes.ts {Box, Point}
   packages/react/src/connectors.tsx → packages/react/src/activity.ts {ActivityMark}
-  packages/react/src/connectors.tsx → packages/react/src/channels.ts {channelRoute}
+  packages/react/src/connectors.tsx → packages/react/src/channels.ts {cardRoute, channelRoute}
   packages/react/src/connectors.tsx → packages/react/src/kit.ts {kitConnector, useKit}
   packages/react/src/connectors.tsx → packages/react/src/parallel.ts {parallelOffsets}
-  packages/react/src/connectors.tsx → packages/react/src/routes.ts {clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routedQuadratic}
+  packages/react/src/connectors.tsx → packages/react/src/routes.ts {clipPolyline, latticePoints, orthogonalPoints, polylineD, channelD, routedQuadratic}
   packages/react/src/connectors.tsx → packages/react/src/scene-node.ts {SceneNode}
   packages/react/src/connectors.tsx → packages/react/src/where-drawn.tsx {altitudeOpacity, drawnBox, measureVisible, onScreen, stackOpacity}
   packages/react/src/context.tsx → packages/react/src/activity.ts {useActivityState}
   packages/react/src/context.tsx → packages/react/src/activity.ts {ActivityMark, Attention}
+  packages/react/src/context.tsx → packages/react/src/files.ts {HostFilesContext}
+  packages/react/src/context.tsx → packages/react/src/linked-reads.ts {useLinkedReads}
+  packages/react/src/context.tsx → packages/react/src/menu-sections.tsx {MenuSectionSource}
   packages/react/src/context.tsx → packages/react/src/motion-store.ts {createMotionStore}
   packages/react/src/context.tsx → packages/react/src/motion-store.ts {MotionStore}
+  packages/react/src/context.tsx → packages/react/src/past.ts {PlaybackContext, useOwnPlayback}
+  packages/react/src/context.tsx → packages/react/src/past.ts {Playback}
   packages/react/src/context.tsx → packages/react/src/pointer.ts {createPointerStore}
   packages/react/src/context.tsx → packages/react/src/pointer.ts {PointerStore, ScenePoint}
   packages/react/src/context.tsx → packages/react/src/presence.ts {PRESENCE_SETTINGS, tabSession, usePresenceState}
   packages/react/src/context.tsx → packages/react/src/robot.ts {foldRobots}
   packages/react/src/context.tsx → packages/react/src/robot.ts {RobotEvent, RobotState, SeatNote}
+  packages/react/src/context.tsx → packages/react/src/seat-talk.ts {createSeatTalk}
+  packages/react/src/context.tsx → packages/react/src/seat-talk.ts {KeepLensHost, SeatTalk}
   packages/react/src/context.tsx → packages/react/src/settings.ts {honorSetting, loadSetting, rememberSetting}
   packages/react/src/context.tsx → packages/react/src/settings.ts {ReaderMemory}
   packages/react/src/context.tsx → packages/react/src/view-registry.ts {ViewComponent, ViewMode}
@@ -102,6 +127,8 @@ Internal:
   packages/react/src/drawing.ts → packages/react/src/editable-fields.ts {useEditableFields}
   packages/react/src/drawing.ts → packages/react/src/emphasis.ts {NOTHING_FOUND, useFlagged, useImplicated, useReached}
   packages/react/src/drawing.ts → packages/react/src/kit.ts {kitConnector, useKit}
+  packages/react/src/drawing.ts → packages/react/src/menu-sections.tsx {MenuSections, useMenuSections}
+  packages/react/src/drawing.ts → packages/react/src/menu-sections.tsx {MenuItem, MenuSection, MenuSectionSource, MenuTarget}
   packages/react/src/drawing.ts → packages/react/src/placement.ts {anchorOf, AUDIENCE_ROW, placeOthers}
   packages/react/src/drawing.ts → packages/react/src/placement.ts {Placed}
   packages/react/src/drawing.ts → packages/react/src/view-boundary.tsx {ViewBoundary}
@@ -117,17 +144,20 @@ Internal:
   packages/react/src/index.ts → packages/react/src/animation.ts {useAnimatedLayout, useSeatWork, useTouched}
   packages/react/src/index.ts → packages/react/src/animation.ts {SeatAct, SeatWork, TransitionOptions}
   packages/react/src/index.ts → packages/react/src/attention.ts {useActivity, useAttention}
+  packages/react/src/index.ts → packages/react/src/beside-the-map.ts {BesideTheMap}
   packages/react/src/index.ts → packages/react/src/channels.ts {bandRows, channelRoute}
-  packages/react/src/index.ts → packages/react/src/context.tsx {GraviewProvider, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider}
+  packages/react/src/index.ts → packages/react/src/context.tsx {GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider}
   packages/react/src/index.ts → packages/react/src/context.tsx {ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode}
+  packages/react/src/index.ts → packages/react/src/default-elsewhere.ts {DefaultDrawnElsewhere}
   packages/react/src/index.ts → packages/react/src/drawn.ts {useDrawnSize, useMarqueeRoom, useTextMeasure}
   packages/react/src/index.ts → packages/react/src/drawn.ts {DrawnOptions, DrawnSize}
   packages/react/src/index.ts → packages/react/src/editable-fields.ts {useEditableFields}
   packages/react/src/index.ts → packages/react/src/emphasis.ts {NOTHING_FOUND, useFlagged, useImplicated, useReached}
   packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReportContext}
   packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReport}
+  packages/react/src/index.ts → packages/react/src/files.ts {HostFilesContext, useHostFiles}
   packages/react/src/index.ts → packages/react/src/go.ts {GoToContext, useGoTo}
-  packages/react/src/index.ts → packages/react/src/go.ts {GoTo}
+  packages/react/src/index.ts → packages/react/src/go.ts {GoTo, GoToAlso}
   packages/react/src/index.ts → packages/react/src/hooks.ts {useViolations, useBacktrack, useJackIn, useNavigation, useSelection}
   packages/react/src/index.ts → packages/react/src/keyboard.ts {landingIn, useTheKeyboardLandsSomewhere}
   packages/react/src/index.ts → packages/react/src/kit.ts {kitConnector, useKit}
@@ -135,10 +165,17 @@ Internal:
   packages/react/src/index.ts → packages/react/src/lazy-part.tsx {LazyModule, LazyPartOptions}
   packages/react/src/index.ts → packages/react/src/local-intelligence.ts {useLocalIntelligence}
   packages/react/src/index.ts → packages/react/src/local-intelligence.ts {Ask, LocalIntelligence}
+  packages/react/src/index.ts → packages/react/src/map-choice.ts {districtOf, mapChoice, ribbonsOf, ribbonSentence}
+  packages/react/src/index.ts → packages/react/src/map-choice.ts {MapChoice, Ribbon}
+  packages/react/src/index.ts → packages/react/src/menu-sections.tsx {MenuSections, useMenuSections}
+  packages/react/src/index.ts → packages/react/src/menu-sections.tsx {MenuItem, MenuSection, MenuSectionSource, MenuTarget}
   packages/react/src/index.ts → packages/react/src/motion.ts {createMotionStore, useSceneStill}
   packages/react/src/index.ts → packages/react/src/motion.ts {MotionStore}
   packages/react/src/index.ts → packages/react/src/occupants.tsx {Figure, Occupants, PersonFigure}
   packages/react/src/index.ts → packages/react/src/occupants.tsx {OccupantsProps}
+  packages/react/src/index.ts → packages/react/src/past.ts {PlaybackContext, useLiveStore, useOwnPlayback, usePlayback}
+  packages/react/src/index.ts → packages/react/src/past.ts {PastShown, Playback}
+  packages/react/src/index.ts → packages/react/src/picked.ts {pickedFrom}
   packages/react/src/index.ts → packages/react/src/placement.ts {anchorOf, AUDIENCE_ROW, placeOthers}
   packages/react/src/index.ts → packages/react/src/placement.ts {Placed}
   packages/react/src/index.ts → packages/react/src/pointer.ts {createPointerStore}
@@ -147,20 +184,25 @@ Internal:
   packages/react/src/index.ts → packages/react/src/popover.ts {PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions}
   packages/react/src/index.ts → packages/react/src/presence.ts {HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState}
   packages/react/src/index.ts → packages/react/src/presence.ts {PresenceInputs, PresenceState}
+  packages/react/src/index.ts → packages/react/src/ribbon-width.ts {RIBBON_WIDTH, ribbonWidth}
   packages/react/src/index.ts → packages/react/src/robot.ts {foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO}
   packages/react/src/index.ts → packages/react/src/robot.ts {RobotEvent, RobotMode, RobotState, SeatNote}
   packages/react/src/index.ts → packages/react/src/routes.ts {clipPolyline, latticePoints, orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic}
   packages/react/src/index.ts → packages/react/src/scene.tsx {clipQuadratic, connectorStrands, altitudeOpacity, stackOpacity, onScreen, ResolvedView, Scene, selectionFor, tieRoute, whereIsIn}
   packages/react/src/index.ts → packages/react/src/scene.tsx {SceneNode, Strand, ResolvedViewProps, SceneProps}
   packages/react/src/index.ts → packages/react/src/seat-marks.tsx {SeatMarks}
+  packages/react/src/index.ts → packages/react/src/seat-talk.ts {createSeatTalk, seatTalkKey, useSeatDrawn, useSeatTalkState}
+  packages/react/src/index.ts → packages/react/src/seat-talk.ts {KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatSide, SeatTalk, SeatTalkState, SeatTurn}
   packages/react/src/index.ts → packages/react/src/settings.ts {applySettings, honorSetting, loadSetting, rememberSetting}
   packages/react/src/index.ts → packages/react/src/settings.ts {ReaderMemory}
   packages/react/src/index.ts → packages/react/src/url-sync.ts {adjustment, UrlSync, useUrlSync}
   packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundary}
   packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundaryProps}
-  packages/react/src/index.ts → packages/react/src/view-registry.ts {createViews, DEFAULT_VIEW, isDefaultView, layerViews, markDefaultView}
+  packages/react/src/index.ts → packages/react/src/view-marks.ts {DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage}
+  packages/react/src/index.ts → packages/react/src/view-registry.ts {createViews, layerViews}
   packages/react/src/index.ts → packages/react/src/view-registry.ts {Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps}
   packages/react/src/kit.ts → packages/react/src/context.tsx {useGraview}
+  packages/react/src/menu-sections.tsx → packages/react/src/context.tsx {useGraviewIfAny}
   packages/react/src/motion.ts → packages/react/src/context.tsx {useGraview}
   packages/react/src/motion.ts → packages/react/src/motion-store.ts {createMotionStore}
   packages/react/src/motion.ts → packages/react/src/motion-store.ts {MotionStore}
@@ -170,28 +212,36 @@ Internal:
   packages/react/src/occupants.tsx → packages/react/src/robot.ts {RobotState}
   packages/react/src/picking.ts → packages/react/src/picked.ts {pickedFrom}
   packages/react/src/placement.ts → packages/react/src/context.tsx {DrawnBox}
-  packages/react/src/plots.tsx → packages/react/src/context.tsx {useGraview}
+  packages/react/src/plots.tsx → packages/react/src/context.tsx {useGraph, useGraview}
   packages/react/src/plots.tsx → packages/react/src/emphasis.ts {useFlagged}
+  packages/react/src/plots.tsx → packages/react/src/last-visit.ts {ownRecords, useSinceLastVisit}
+  packages/react/src/plots.tsx → packages/react/src/provider.ts {*}
   packages/react/src/presence.ts → packages/react/src/picked.ts {pickedFrom}
   packages/react/src/presence.ts → packages/react/src/robot.ts {keyOf}
   packages/react/src/presence.ts → packages/react/src/robot.ts {RobotState}
   packages/react/src/presence.ts → packages/react/src/settings.ts {ReaderMemory}
   packages/react/src/provider.ts → packages/react/src/activity.ts {ACTIVITY_HOLD_MS, markActivity}
   packages/react/src/provider.ts → packages/react/src/activity.ts {ActivityMark, Attention, Manner, ToolCallLike}
-  packages/react/src/provider.ts → packages/react/src/context.tsx {GraviewProvider, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider}
+  packages/react/src/provider.ts → packages/react/src/beside-the-map.ts {BesideTheMap}
+  packages/react/src/provider.ts → packages/react/src/context.tsx {GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider}
   packages/react/src/provider.ts → packages/react/src/context.tsx {ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode}
+  packages/react/src/provider.ts → packages/react/src/default-elsewhere.ts {DefaultDrawnElsewhere}
   packages/react/src/provider.ts → packages/react/src/error-report.ts {ErrorReportContext}
   packages/react/src/provider.ts → packages/react/src/error-report.ts {ErrorReport}
+  packages/react/src/provider.ts → packages/react/src/files.ts {HostFilesContext, useHostFiles}
   packages/react/src/provider.ts → packages/react/src/go.ts {GoToContext, useGoTo}
-  packages/react/src/provider.ts → packages/react/src/go.ts {GoTo}
+  packages/react/src/provider.ts → packages/react/src/go.ts {GoTo, GoToAlso}
   packages/react/src/provider.ts → packages/react/src/hooks.ts {useBacktrack, useJackIn, useNavigation, useSelection, useViolations}
   packages/react/src/provider.ts → packages/react/src/keyboard.ts {landingIn, useTheKeyboardLandsSomewhere}
   packages/react/src/provider.ts → packages/react/src/lazy-part.tsx {lazyModule, retryLazyParts}
   packages/react/src/provider.ts → packages/react/src/lazy-part.tsx {LazyModule, LazyPartOptions}
   packages/react/src/provider.ts → packages/react/src/local-intelligence.ts {useLocalIntelligence}
   packages/react/src/provider.ts → packages/react/src/local-intelligence.ts {Ask, LocalIntelligence}
+  packages/react/src/provider.ts → packages/react/src/menu-sections.tsx {MenuItem, MenuSection, MenuSectionSource, MenuTarget}
   packages/react/src/provider.ts → packages/react/src/motion.ts {createMotionStore, useSceneStill}
   packages/react/src/provider.ts → packages/react/src/motion.ts {MotionStore}
+  packages/react/src/provider.ts → packages/react/src/past.ts {PlaybackContext, useLiveStore, useOwnPlayback, usePlayback}
+  packages/react/src/provider.ts → packages/react/src/past.ts {PastShown, Playback}
   packages/react/src/provider.ts → packages/react/src/pointer.ts {createPointerStore}
   packages/react/src/provider.ts → packages/react/src/pointer.ts {PointerStore, ScenePoint}
   packages/react/src/provider.ts → packages/react/src/popover.ts {inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, usePopover, useTopLayer}
@@ -200,11 +250,18 @@ Internal:
   packages/react/src/provider.ts → packages/react/src/presence.ts {PresenceInputs, PresenceState}
   packages/react/src/provider.ts → packages/react/src/robot.ts {foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO}
   packages/react/src/provider.ts → packages/react/src/robot.ts {RobotEvent, RobotMode, RobotState, SeatNote}
+  packages/react/src/provider.ts → packages/react/src/seat-talk.ts {createSeatTalk, seatTalkKey, useSeatDrawn, useSeatTalkState}
+  packages/react/src/provider.ts → packages/react/src/seat-talk.ts {KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatSide, SeatTalk, SeatTalkState, SeatTurn}
   packages/react/src/provider.ts → packages/react/src/settings.ts {applySettings, honorSetting, loadSetting, rememberSetting}
   packages/react/src/provider.ts → packages/react/src/settings.ts {ReaderMemory}
-  packages/react/src/provider.ts → packages/react/src/view-registry.ts {createViews, DEFAULT_VIEW, isDefaultView, layerViews, markDefaultView}
+  packages/react/src/provider.ts → packages/react/src/view-marks.ts {DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage}
+  packages/react/src/provider.ts → packages/react/src/view-registry.ts {createViews, layerViews}
   packages/react/src/provider.ts → packages/react/src/view-registry.ts {Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps}
-  packages/react/src/resolved-view.tsx → packages/react/src/context.tsx {useFound, useGraph, useGraview, ViewModeProvider}
+  packages/react/src/record-links-layer.tsx → packages/react/src/map-choice.ts {mapChoice}
+  packages/react/src/record-links-layer.tsx → packages/react/src/provider.ts {*}
+  packages/react/src/record-links-layer.tsx → packages/react/src/record-links.ts {linksOfRecords, placeLabels}
+  packages/react/src/record-links-layer.tsx → packages/react/src/record-links.ts {LinkOfRecord}
+  packages/react/src/resolved-view.tsx → packages/react/src/context.tsx {foundIds, useFound, useGraph, useGraview, ViewModeProvider}
   packages/react/src/resolved-view.tsx → packages/react/src/context.tsx {ViewMode}
   packages/react/src/resolved-view.tsx → packages/react/src/emphasis.ts {useFlagged, useImplicated}
   packages/react/src/resolved-view.tsx → packages/react/src/hooks.ts {useNavigation}
@@ -212,36 +269,62 @@ Internal:
   packages/react/src/resolved-view.tsx → packages/react/src/scene-node.ts {SceneNode}
   packages/react/src/resolved-view.tsx → packages/react/src/view-boundary.tsx {ViewBoundary}
   packages/react/src/resolved-view.tsx → packages/react/src/view-registry.ts {ViewComponent, ViewProps}
+  packages/react/src/ribbons-layer.tsx → packages/react/src/map-choice.ts {districtOf, mapChoice, ribbonsOf, ribbonSentence}
+  packages/react/src/ribbons-layer.tsx → packages/react/src/provider.ts {*}
+  packages/react/src/ribbons-layer.tsx → packages/react/src/ribbon-width.ts {ribbonWidth}
+  packages/react/src/ribbons-layer.tsx → packages/react/src/ribbons.ts {loopPoints, midpointOf, onCanvas, pathOf, routeOnTheGround}
+  packages/react/src/ribbons-layer.tsx → packages/react/src/ribbons.ts {Box, PlotLike, Point}
+  packages/react/src/ribbons.ts → packages/react/src/ribbon-width.ts {RIBBON_WIDTH, ribbonWidth}
   packages/react/src/scene-hand.ts → packages/react/src/scene-node.ts {SceneNode}
   packages/react/src/scene-helpers.tsx → packages/react/src/scene-node.ts {SceneNode}
   packages/react/src/scene-lines.tsx → packages/react/src/activity.ts {ActivityMark}
   packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {captionRuns}
   packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {CaptionEntry, CaptionRun}
-  packages/react/src/scene-lines.tsx → packages/react/src/connectors.tsx {Connectors, connectorStrands, tieRoute}
+  packages/react/src/scene-lines.tsx → packages/react/src/channels.ts {channelRoute}
+  packages/react/src/scene-lines.tsx → packages/react/src/connectors.tsx {clipQuadratic, Connectors, connectorStrands, movedBy, tieRoute}
   packages/react/src/scene-lines.tsx → packages/react/src/kit.ts {kitConnector, useKit}
+  packages/react/src/scene-lines.tsx → packages/react/src/lazy-part.tsx {lazyModule}
+  packages/react/src/scene-lines.tsx → packages/react/src/map-choice.ts {mapChoice}
   packages/react/src/scene-lines.tsx → packages/react/src/rails.ts {railInset}
-  packages/react/src/scene-lines.tsx → packages/react/src/routes.ts {orthogonalPoints, polylineD, routePoint, routedQuadratic}
+  packages/react/src/scene-lines.tsx → packages/react/src/record-links-layer.tsx {*}
+  packages/react/src/scene-lines.tsx → packages/react/src/routes.ts {orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic}
   packages/react/src/scene-lines.tsx → packages/react/src/scene-node.ts {SceneNode}
+  packages/react/src/scene-lines.tsx → packages/react/src/tie-labels.ts {placeTieLabels, tiesReached}
+  packages/react/src/scene-lines.tsx → packages/react/src/tie-labels.ts {TieLabel, TieReach}
   packages/react/src/scene-lines.tsx → packages/react/src/where-drawn.tsx {drawnBox, measureVisible, visibleRect}
+  packages/react/src/scene-options.ts → packages/react/src/beside-the-map.ts {BesideTheMap}
+  packages/react/src/scene-options.ts → packages/react/src/context.tsx {foundIds, useFound, useGraview}
+  packages/react/src/scene-options.ts → packages/react/src/hooks.ts {useViolations}
+  packages/react/src/scene-options.ts → packages/react/src/rails.ts {railInset, SEAT_FOOT}
+  packages/react/src/scene-options.ts → packages/react/src/view-registry.ts {isDefaultView}
   packages/react/src/scene-root.tsx → packages/react/src/activity.ts {ActivityMark}
   packages/react/src/scene-root.tsx → packages/react/src/animation.ts {useAnimatedLayout, useSeatWork, useTouched}
   packages/react/src/scene-root.tsx → packages/react/src/attention.ts {useActivity}
-  packages/react/src/scene-root.tsx → packages/react/src/context.tsx {useFound, useGraph, useGraview}
-  packages/react/src/scene-root.tsx → packages/react/src/drawn.ts {MarqueeRoomContext, useMarqueeNameWidth}
+  packages/react/src/scene-root.tsx → packages/react/src/beside-the-map.ts {BesideTheMap}
+  packages/react/src/scene-root.tsx → packages/react/src/context.tsx {matchWith, useFound, useGraph, useGraview}
+  packages/react/src/scene-root.tsx → packages/react/src/context.tsx {GraviewContextValue}
   packages/react/src/scene-root.tsx → packages/react/src/edge-signs.tsx {EdgeSigns}
-  packages/react/src/scene-root.tsx → packages/react/src/hooks.ts {useViolations}
+  packages/react/src/scene-root.tsx → packages/react/src/kit.ts {kitConnector, useKit}
+  packages/react/src/scene-root.tsx → packages/react/src/lazy-part.tsx {lazyModule}
+  packages/react/src/scene-root.tsx → packages/react/src/map-choice.ts {mapChoice}
   packages/react/src/scene-root.tsx → packages/react/src/occupants.tsx {Occupants}
-  packages/react/src/scene-root.tsx → packages/react/src/plots.tsx {Plots}
+  packages/react/src/scene-root.tsx → packages/react/src/plots.tsx {*}
+  packages/react/src/scene-root.tsx → packages/react/src/plots.tsx {PlotsProps}
+  packages/react/src/scene-root.tsx → packages/react/src/pointer.ts {PointerStore}
   packages/react/src/scene-root.tsx → packages/react/src/rails.ts {railInset}
   packages/react/src/scene-root.tsx → packages/react/src/resolved-view.tsx {BandCard, BeyondCard, SettledView}
+  packages/react/src/scene-root.tsx → packages/react/src/ribbons-layer.tsx {*}
   packages/react/src/scene-root.tsx → packages/react/src/scene-camera.ts {useCameraFlights}
-  packages/react/src/scene-root.tsx → packages/react/src/scene-hand.ts {useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-covered.ts {useKeyboardKeepsToWhatIsSeen}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-hand.ts {useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-hand.ts {Held}
   packages/react/src/scene-root.tsx → packages/react/src/scene-helpers.tsx {selectionFor, useElementSize, useRootUnit}
-  packages/react/src/scene-root.tsx → packages/react/src/scene-lines.tsx {Lines, RelationCaptions}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-lines.tsx {Lines, provisionalLines, RelationCaptions}
   packages/react/src/scene-root.tsx → packages/react/src/scene-node.ts {SceneNode}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-options.ts {useLayoutOptions}
   packages/react/src/scene-root.tsx → packages/react/src/seat-marks.tsx {SeatMarks}
+  packages/react/src/scene-root.tsx → packages/react/src/seat-talk.ts {useSeatDrawn}
   packages/react/src/scene-root.tsx → packages/react/src/view-host.tsx {SceneViewHost}
-  packages/react/src/scene-root.tsx → packages/react/src/view-registry.ts {isDefaultView}
   packages/react/src/scene-root.tsx → packages/react/src/where-drawn.tsx {whereIsIn}
   packages/react/src/scene.tsx → packages/react/src/connectors.tsx {*}
   packages/react/src/scene.tsx → packages/react/src/resolved-view.tsx {*}
@@ -263,62 +346,62 @@ Internal:
   packages/react/src/view-host.tsx → packages/react/src/scene-helpers.tsx {cssTransform, planeShadow}
   packages/react/src/view-host.tsx → packages/react/src/scene-node.ts {SceneNode}
   packages/react/src/view-host.tsx → packages/react/src/where-drawn.tsx {WHO}
+  packages/react/src/view-registry.ts → packages/react/src/view-marks.ts {DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage}
   packages/react/src/where-drawn.tsx → packages/react/src/activity.ts {Manner}
   packages/react/src/where-drawn.tsx → packages/react/src/context.tsx {DrawnBox}
   packages/react/src/where-drawn.tsx → packages/react/src/scene-node.ts {SceneNode}
 
 Incoming (other zones → this zone):
-  ← tests-react-unit: packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-door-that-is-not-there.test.tsx → packages/react/src/local-intelligence.ts; packages/react/tests/unit/a-door-the-back-button-knows.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx → packages/react/src/picking.ts; packages/react/tests/unit/a-lazy-part-that-failed-tries-again.test.tsx → packages/react/src/lazy-part.tsx; packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-link-to-a-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-link-to-a-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-relation-is-captioned-once.test.ts → packages/react/src/captions.ts; packages/react/tests/unit/a-relation-is-captioned-once.test.ts → packages/react/src/captions.ts; packages/react/tests/unit/a-search-lights-the-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-seat-change-is-not-a-stop.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-stop-that-still-exists.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-tile-is-its-district.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-tile-is-its-district.test.tsx → packages/react/src/plots.tsx; packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/activity.test.ts → packages/react/src/activity.ts; packages/react/tests/unit/activity.test.ts → packages/react/src/activity.ts; packages/react/tests/unit/administered.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/an-agent-in-the-room-says-for-whom.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/binding.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/binding.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/channels.test.ts → packages/react/src/channels.ts; packages/react/tests/unit/popovers-are-one-family.test.tsx → packages/react/src/popover.ts; packages/react/tests/unit/popovers-are-one-family.test.tsx → packages/react/src/popover.ts; packages/react/tests/unit/remote-presence-forgets-the-gone.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/routes.test.ts → packages/react/src/routes.ts; packages/react/tests/unit/strands.test.ts → packages/react/src/index.ts; packages/react/tests/unit/strands.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-crowd-recedes-in-the-stack.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-ground-under-a-district.test.ts → packages/react/src/plots.tsx; packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-occupants.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/drawing.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/provider.ts; packages/react/tests/unit/the-row-that-sheds.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/animation.ts; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/context.tsx; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/view-registry.ts; packages/react/tests/unit/the-seats-standing.test.ts → packages/react/src/robot.ts; packages/react/tests/unit/the-seats-standing.test.ts → packages/react/src/robot.ts; packages/react/tests/unit/tie-route.test.ts → packages/react/src/scene.tsx; packages/react/tests/unit/two-relations-are-two-lines.test.ts → packages/react/src/parallel.ts; packages/react/tests/unit/where-is.test.ts → packages/react/src/index.ts; packages/react/tests/unit/where-is.test.ts → packages/react/src/index.ts; packages/react/tests/unit/who-is-where.test.ts → packages/react/src/context.tsx; packages/react/tests/unit/who-is-where.test.ts → packages/react/src/placement.ts
+  ← tests-react-unit: packages/react/tests/unit/a-chosen-member-is-not-its-district.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-chosen-record-draws-its-own-links.test.ts → packages/react/src/record-links.ts; packages/react/tests/unit/a-door-that-is-not-there.test.tsx → packages/react/src/local-intelligence.ts; packages/react/tests/unit/a-door-the-back-button-knows.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-drawn-shape-is-a-control.test.tsx → packages/react/src/picking.ts; packages/react/tests/unit/a-held-card-keeps-its-ties-on-its-edge.test.ts → packages/react/src/connectors.tsx; packages/react/tests/unit/a-held-card-keeps-its-ties-on-its-edge.test.ts → packages/react/src/connectors.tsx; packages/react/tests/unit/a-held-card-keeps-its-ties-on-its-edge.test.ts → packages/react/src/scene-node.ts; packages/react/tests/unit/a-lazy-part-that-failed-tries-again.test.tsx → packages/react/src/lazy-part.tsx; packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-line-goes-under-what-it-crosses.test.ts → packages/react/src/index.ts; packages/react/tests/unit/a-link-to-a-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-link-to-a-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-pane-stays-in-its-embed.test.ts → packages/react/src/popover.ts; packages/react/tests/unit/a-provisional-line-is-drawn-as-such.test.ts → packages/react/src/scene-lines.tsx; packages/react/tests/unit/a-relation-is-captioned-once.test.ts → packages/react/src/captions.ts; packages/react/tests/unit/a-relation-is-captioned-once.test.ts → packages/react/src/captions.ts; packages/react/tests/unit/a-relation-is-one-ribbon.test.ts → packages/react/src/map-choice.ts; packages/react/tests/unit/a-relation-is-one-ribbon.test.ts → packages/react/src/ribbon-width.ts; packages/react/tests/unit/a-relation-is-one-ribbon.test.ts → packages/react/src/ribbons.ts; packages/react/tests/unit/a-relation-is-one-ribbon.test.ts → packages/react/src/ribbons.ts; packages/react/tests/unit/a-search-lights-the-picture.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-seat-change-is-not-a-stop.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-stop-that-still-exists.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-tie-through-the-gutters-takes-the-kits-route.test.ts → packages/react/src/routes.ts; packages/react/tests/unit/a-ties-words-wait-to-be-asked-for.test.ts → packages/react/src/tie-labels.ts; packages/react/tests/unit/a-tile-is-its-district.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-tile-is-its-district.test.tsx → packages/react/src/plots.tsx; packages/react/tests/unit/a-view-is-handed-values-as-stored.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-view-is-handed-values-as-stored.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/a-view-that-throws-keeps-the-scene.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/activity.test.ts → packages/react/src/activity.ts; packages/react/tests/unit/activity.test.ts → packages/react/src/activity.ts; packages/react/tests/unit/administered.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/an-agent-in-the-room-says-for-whom.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/an-edge-sign-stands-clear-of-the-corner-controls.test.tsx → packages/react/src/edge-signs.tsx; packages/react/tests/unit/binding.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/binding.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/binding.test.tsx → packages/react/src/ribbons-layer.tsx; packages/react/tests/unit/binding.test.tsx → packages/react/src/scene-root.tsx; packages/react/tests/unit/channels.test.ts → packages/react/src/channels.ts; packages/react/tests/unit/find-asks-the-hosts-ranker-when-the-typing-pauses.test.ts → packages/react/src/context.tsx; packages/react/tests/unit/popovers-are-one-family.test.tsx → packages/react/src/popover.ts; packages/react/tests/unit/popovers-are-one-family.test.tsx → packages/react/src/popover.ts; packages/react/tests/unit/remote-presence-forgets-the-gone.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/routes.test.ts → packages/react/src/routes.ts; packages/react/tests/unit/strands.test.ts → packages/react/src/index.ts; packages/react/tests/unit/strands.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-conversation-is-the-app-s.test.tsx → packages/react/src/context.tsx; packages/react/tests/unit/the-conversation-is-the-app-s.test.tsx → packages/react/src/seat-talk.ts; packages/react/tests/unit/the-conversation-is-the-app-s.test.tsx → packages/react/src/seat-talk.ts; packages/react/tests/unit/the-conversation-is-the-app-s.test.tsx → packages/react/src/view-registry.ts; packages/react/tests/unit/the-crowd-recedes-in-the-stack.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-edge-says-what-is-past-it.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-ground-under-a-district.test.ts → packages/react/src/plots.tsx; packages/react/tests/unit/the-keyboard-always-lands-somewhere.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-occupants.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-overviews-address-alone-is-the-overview.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/drawing.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/index.ts; packages/react/tests/unit/the-provider-carries-only-what-the-frame-draws-with.test.ts → packages/react/src/provider.ts; packages/react/tests/unit/the-row-that-sheds.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-scene-goes-to-a-stop-narrowed.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-scene-goes-to-a-stop-narrowed.test.tsx → packages/react/src/index.ts; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/animation.ts; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/context.tsx; packages/react/tests/unit/the-seat-marks-where-it-worked.test.tsx → packages/react/src/view-registry.ts; packages/react/tests/unit/the-seats-standing.test.ts → packages/react/src/robot.ts; packages/react/tests/unit/the-seats-standing.test.ts → packages/react/src/robot.ts; packages/react/tests/unit/tie-route.test.ts → packages/react/src/scene.tsx; packages/react/tests/unit/two-relations-are-two-lines.test.ts → packages/react/src/parallel.ts; packages/react/tests/unit/where-is.test.ts → packages/react/src/index.ts; packages/react/tests/unit/where-is.test.ts → packages/react/src/index.ts; packages/react/tests/unit/who-is-where.test.ts → packages/react/src/context.tsx; packages/react/tests/unit/who-is-where.test.ts → packages/react/src/placement.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] 19 entry points — wide API surface, consider consolidating exports
+[observation] [info] 31 entry points — wide API surface, consider consolidating exports
 [observation] [info] High cohesion (1) — files are tightly interconnected
+[anti-pattern] [warning] "packages/react/src/index.ts" is production code imported only by tests (32 importer(s), all test files) — either it is dead or its real caller is missing
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- 19 entry points — wide API surface, consider consolidating exports
-- [call graph] 400 internal calls, 0 outgoing, 204 incoming (cohesion: 1, coupling: 0)
+- 31 entry points — wide API surface, consider consolidating exports
+- "packages/react/src/index.ts" is production code imported only by tests (32 importer(s), all test files) — either it is dead or its real caller is missing
+- [call graph] 649 internal calls, 0 outgoing, 280 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
 <sub-crossings>
 
 Cross-dependencies between sub-zones:
-  react/react → react/src: 2
-  react/react → react/src-5: 3
-  react/scene → react/react: 6
-  react/scene → react/src: 3
-  react/scene → react/src-2: 6
-  react/scene → react/src-3: 3
-  react/scene → react/src-4: 1
-  react/scene → react/src-5: 1
+  react/react → react/src: 3
+  react/ribbons → react/src-3: 1
+  react/scene → react/react: 3
+  react/scene → react/ribbons: 2
+  react/scene → react/src: 12
+  react/scene → react/src-2: 4
+  react/scene → react/src-3: 1
+  react/scene → react/src-4: 2
   react/src → react/react: 1
-  react/src → react/src-2: 1
-  react/src → react/src-3: 2
-  react/src-2 → react/react: 20
-  react/src-2 → react/scene: 6
-  react/src-2 → react/src: 6
-  react/src-2 → react/src-3: 3
-  react/src-2 → react/src-4: 5
-  react/src-2 → react/src-5: 11
-  react/src-3 → react/react: 2
-  react/src-3 → react/scene: 1
-  react/src-3 → react/src: 4
-  react/src-3 → react/src-2: 2
-  react/src-4 → react/react: 6
-  react/src-4 → react/scene: 2
-  react/src-4 → react/src: 1
-  react/src-4 → react/src-2: 2
+  react/src → react/ribbons: 3
+  react/src → react/scene: 7
+  react/src → react/src-2: 6
+  react/src → react/src-3: 19
+  react/src → react/src-4: 11
+  react/src-2 → react/react: 1
+  react/src-2 → react/ribbons: 1
+  react/src-2 → react/scene: 3
+  react/src-2 → react/src: 5
+  react/src-2 → react/src-3: 2
+  react/src-3 → react/react: 1
+  react/src-3 → react/ribbons: 1
+  react/src-3 → react/src: 22
+  react/src-3 → react/src-4: 1
+  react/src-4 → react/src: 9
+  react/src-4 → react/src-2: 1
   react/src-4 → react/src-3: 1
-  react/src-5 → react/react: 14
-  react/src-5 → react/src: 2
-  react/src-5 → react/src-2: 4
 
 </sub-crossings>
 
@@ -326,13 +409,13 @@ Cross-dependencies between sub-zones:
 
 This zone has 7 sub-zone(s):
 
-- **React** (`react/react`): 11 files, cohesion 0.42, coupling 0.58
-- **Scene** (`react/scene`): 10 files, cohesion 0.43, coupling 0.57
-- **Src** (`react/src`): 6 files, cohesion 0.39, coupling 0.61
-- **Src 2** (`react/src-2`): 8 files, cohesion 0.31, coupling 0.69
-- **Src 3** (`react/src-3`): 4 files, cohesion 0.25, coupling 0.75
-- **Src 4** (`react/src-4`): 4 files, cohesion 0.32, coupling 0.68
-- **Src 5** (`react/src-5`): 8 files, cohesion 0.44, coupling 0.56
+- **React** (`react/react`): 3 files, cohesion 0.31, coupling 0.69
+- **Ribbons** (`react/ribbons`): 4 files, cohesion 0.53, coupling 0.47
+- **Scene** (`react/scene`): 10 files, cohesion 0.45, coupling 0.55
+- **Src** (`react/src`): 23 files, cohesion 0.56, coupling 0.44
+- **Src 2** (`react/src-2`): 9 files, cohesion 0.53, coupling 0.47
+- **Src 3** (`react/src-3`): 12 files, cohesion 0.4, coupling 0.6
+- **Src 4** (`react/src-4`): 8 files, cohesion 0.42, coupling 0.58
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
 

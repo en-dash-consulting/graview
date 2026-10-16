@@ -1,18 +1,20 @@
 {
   "id": "guest/host",
   "name": "Host",
-  "description": "26 files, primarily TypeScript, JavaScript",
+  "description": "30 files, primarily TypeScript",
   "files": [
-    "packages/guest/client.js",
+    "packages/guest/src/build.ts",
     "packages/guest/src/channel.ts",
+    "packages/guest/src/client.ts",
+    "packages/guest/src/host/arrive-at.ts",
     "packages/guest/src/host/arrive.ts",
     "packages/guest/src/host/draw-budget.ts",
     "packages/guest/src/host/frame.ts",
     "packages/guest/src/host/index.ts",
     "packages/guest/src/host/kit.ts",
-    "packages/guest/src/host/links.ts",
     "packages/guest/src/host/manifest.ts",
     "packages/guest/src/host/nonce.ts",
+    "packages/guest/src/host/pictures.ts",
     "packages/guest/src/host/press.ts",
     "packages/guest/src/host/react.tsx",
     "packages/guest/src/host/session.ts",
@@ -28,14 +30,19 @@
     "packages/guest/src/kit.ts",
     "packages/guest/src/protocol.ts",
     "packages/guest/src/worker/elements.ts",
-    "packages/guest/src/worker/view-global.ts"
+    "packages/guest/src/worker/view-global.ts",
+    "packages/skills/src/cli.ts",
+    "packages/skills/src/index.ts"
   ],
   "entryPoints": [
+    "packages/guest/src/build.ts",
     "packages/guest/src/channel.ts",
+    "packages/guest/src/client.ts",
+    "packages/guest/src/host/frame.ts",
     "packages/guest/src/host/index.ts",
     "packages/guest/src/host/kit.ts",
-    "packages/guest/src/host/links.ts",
     "packages/guest/src/host/manifest.ts",
+    "packages/guest/src/host/pictures.ts",
     "packages/guest/src/host/press.ts",
     "packages/guest/src/host/session.ts",
     "packages/guest/src/host/theme.ts",
@@ -48,10 +55,11 @@
     "packages/guest/src/kit.ts",
     "packages/guest/src/protocol.ts",
     "packages/guest/src/worker/elements.ts",
-    "packages/guest/src/worker/view-global.ts"
+    "packages/guest/src/worker/view-global.ts",
+    "packages/skills/src/index.ts"
   ],
-  "cohesion": 0.82,
-  "coupling": 0.18,
-  "fileCount": 26,
-  "lineCount": 3979
+  "cohesion": 0.8,
+  "coupling": 0.2,
+  "fileCount": 30,
+  "lineCount": 5079
 }

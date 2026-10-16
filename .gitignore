@@ -46,3 +46,7 @@ ndx-export/
 .hench-commit-msg.txt
 .run-logs/
 .claude/worktrees/
+.ndx/graview/
+.ndx/hench/runs/
+.ndx-commit-msg.txt
+apps/promo/

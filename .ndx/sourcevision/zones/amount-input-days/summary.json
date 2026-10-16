@@ -1,0 +1,26 @@
+{
+  "id": "amount-input-days",
+  "name": "Amount Input Days",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/amount-input.ts",
+    "packages/core/src/days.ts",
+    "packages/core/src/repeat-words.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/amount-input.ts",
+    "packages/core/src/days.ts",
+    "packages/core/src/repeat-words.ts"
+  ],
+  "cohesion": 0.13,
+  "coupling": 0.88,
+  "fileCount": 3,
+  "lineCount": 331,
+  "riskMetrics": {
+    "cohesion": 0.13,
+    "coupling": 0.88,
+    "riskScore": 0.875,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

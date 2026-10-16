@@ -5,42 +5,34 @@
 <zone>
 
 Zone: Skills (`skills`)
-Files: 4, Cohesion: 1.00, Coupling: 0.00
-Risk: healthy (score: 0.00)
-Description: 4 files, mostly entry points and pages; entry points index.ts; imported by Packages.
-Entry points: packages/skills/src/index.ts
-Lines: 230
+Files: 6, Cohesion: 0.00, Coupling: 0.00
+Risk: at-risk (score: 0.50)
+Description: 6 files, primarily JavaScript, TypeScript
+Lines: 876
 
 </zone>
 
 <files>
 
+apps/discography/src/live.ts (TypeScript, 171 lines, source)
+apps/gauntlet/scripts/generate-seed.mjs (JavaScript, 411 lines, build)
+packages/skills/skills/graview-worker-view/examples/a-record.js (JavaScript, 54 lines, source)
 packages/skills/skills/graview-worker-view/examples/front-page.js (JavaScript, 56 lines, source)
 packages/skills/skills/graview-worker-view/examples/offers-list.js (JavaScript, 54 lines, source)
-packages/skills/src/cli.ts (TypeScript, 56 lines, source)
-packages/skills/src/index.ts (TypeScript, 64 lines, source)
+vitest.config.ts (TypeScript, 130 lines, config)
 
 </files>
 
-<imports>
-
-Internal:
-  packages/skills/src/cli.ts → packages/skills/src/index.ts {readSkills, SKILLS_DIR, SKILL_DESTINATIONS}
-
-Incoming (other zones → this zone):
-  ← tests-packages: packages/skills/tests/unit/skills.test.ts → packages/skills/src/index.ts
-
-</imports>
-
 <findings>
 
-[observation] [info] High cohesion (1) — files are tightly interconnected
+[observation] [info] Isolated files — no import edges between 6 files, cohesion is unmeasurable (reported as 0)
+[suggestion] [info] Zone "Skills" is showing early signs of fragility, approaching architectural risk thresholds — cohesion: 0.00, coupling: 0.00 (risk score: 0.50)
 
 </findings>
 
 <insights>
 
-- High cohesion (1) — files are tightly interconnected
-- [call graph] 14 internal calls, 0 outgoing, 1 incoming (cohesion: 1, coupling: 0)
+- Isolated files — no import edges between 6 files, cohesion is unmeasurable (reported as 0)
+- [call graph] 133 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
 
 </insights>

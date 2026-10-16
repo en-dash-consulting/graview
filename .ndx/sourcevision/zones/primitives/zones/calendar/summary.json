@@ -1,0 +1,27 @@
+{
+  "id": "primitives/calendar",
+  "name": "Calendar",
+  "description": "8 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/lens/calendar-dates.ts",
+    "packages/primitives/src/lens/calendar-drawing.tsx",
+    "packages/primitives/src/lens/calendar-options.ts",
+    "packages/primitives/src/lens/calendar-placing.ts",
+    "packages/primitives/src/lens/calendar-spans.ts",
+    "packages/primitives/src/lens/calendar-view.tsx",
+    "packages/primitives/src/lens/calendar.tsx",
+    "packages/primitives/src/lens/natural-time.ts"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/lens/calendar-options.ts",
+    "packages/primitives/src/lens/calendar-placing.ts",
+    "packages/primitives/src/lens/calendar-spans.ts",
+    "packages/primitives/src/lens/calendar-view.tsx",
+    "packages/primitives/src/lens/calendar.tsx",
+    "packages/primitives/src/lens/natural-time.ts"
+  ],
+  "cohesion": 0.81,
+  "coupling": 0.19,
+  "fileCount": 8,
+  "lineCount": 1549
+}

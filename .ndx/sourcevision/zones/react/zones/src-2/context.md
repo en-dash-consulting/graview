@@ -5,46 +5,44 @@
 <zone>
 
 Zone: Src 2 (`react/src-2`)
-Files: 8, Cohesion: 0.31, Coupling: 0.69
-Description: 8 files, primarily TypeScript
-Entry points: packages/react/src/animation.ts, packages/react/src/error-report.ts, packages/react/src/index.ts, packages/react/src/popover.ts, packages/react/src/resolved-view.tsx, packages/react/src/scene-node.ts, packages/react/src/scene.tsx, packages/react/src/view-boundary.tsx
-Lines: 1391
+Files: 9, Cohesion: 0.53, Coupling: 0.47
+Description: 9 files, primarily TypeScript
+Entry points: packages/react/src/captions.ts, packages/react/src/channels.ts, packages/react/src/connectors.tsx, packages/react/src/kit.ts, packages/react/src/parallel.ts, packages/react/src/routes.ts, packages/react/src/scene-lines.tsx, packages/react/src/tie-labels.ts, packages/react/src/where-drawn.tsx
+Lines: 3265
 
 </zone>
 
 <files>
 
-packages/react/src/animation.ts (TypeScript, 285 lines, source)
-packages/react/src/error-report.ts (TypeScript, 15 lines, source)
-packages/react/src/index.ts (TypeScript, 79 lines, source)
-packages/react/src/popover.ts (TypeScript, 421 lines, source)
-packages/react/src/resolved-view.tsx (TypeScript, 459 lines, source)
-packages/react/src/scene-node.ts (TypeScript, 10 lines, source)
-packages/react/src/scene.tsx (TypeScript, 18 lines, source)
-packages/react/src/view-boundary.tsx (TypeScript, 104 lines, source)
+packages/react/src/captions.ts (TypeScript, 100 lines, source)
+packages/react/src/channels.ts (TypeScript, 221 lines, source)
+packages/react/src/connectors.tsx (TypeScript, 1194 lines, source)
+packages/react/src/kit.ts (TypeScript, 34 lines, source)
+packages/react/src/parallel.ts (TypeScript, 30 lines, source)
+packages/react/src/routes.ts (TypeScript, 185 lines, source)
+packages/react/src/scene-lines.tsx (TypeScript, 1089 lines, source)
+packages/react/src/tie-labels.ts (TypeScript, 137 lines, source)
+packages/react/src/where-drawn.tsx (TypeScript, 275 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/index.ts → packages/react/src/animation.ts {useAnimatedLayout, useSeatWork, useTouched}
-  packages/react/src/index.ts → packages/react/src/animation.ts {SeatAct, SeatWork, TransitionOptions}
-  packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReportContext}
-  packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReport}
-  packages/react/src/index.ts → packages/react/src/popover.ts {inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, usePopover, useTopLayer}
-  packages/react/src/index.ts → packages/react/src/popover.ts {PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions}
-  packages/react/src/index.ts → packages/react/src/scene.tsx {clipQuadratic, connectorStrands, altitudeOpacity, stackOpacity, onScreen, ResolvedView, Scene, selectionFor, tieRoute, whereIsIn}
-  packages/react/src/index.ts → packages/react/src/scene.tsx {SceneNode, Strand, ResolvedViewProps, SceneProps}
-  packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundary}
-  packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundaryProps}
-  packages/react/src/resolved-view.tsx → packages/react/src/popover.ts {POPOVER_STYLE, usePopover}
-  packages/react/src/resolved-view.tsx → packages/react/src/scene-node.ts {SceneNode}
-  packages/react/src/resolved-view.tsx → packages/react/src/view-boundary.tsx {ViewBoundary}
-  packages/react/src/scene.tsx → packages/react/src/resolved-view.tsx {*}
-  packages/react/src/scene.tsx → packages/react/src/scene-node.ts {*}
-  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReportContext, ErrorReport}
-  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReportContext}
-  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReport}
+  packages/react/src/channels.ts → packages/react/src/routes.ts {Box, Point}
+  packages/react/src/connectors.tsx → packages/react/src/channels.ts {cardRoute, channelRoute}
+  packages/react/src/connectors.tsx → packages/react/src/kit.ts {kitConnector, useKit}
+  packages/react/src/connectors.tsx → packages/react/src/parallel.ts {parallelOffsets}
+  packages/react/src/connectors.tsx → packages/react/src/routes.ts {clipPolyline, latticePoints, orthogonalPoints, polylineD, channelD, routedQuadratic}
+  packages/react/src/connectors.tsx → packages/react/src/where-drawn.tsx {altitudeOpacity, drawnBox, measureVisible, onScreen, stackOpacity}
+  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {captionRuns}
+  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {CaptionEntry, CaptionRun}
+  packages/react/src/scene-lines.tsx → packages/react/src/channels.ts {channelRoute}
+  packages/react/src/scene-lines.tsx → packages/react/src/connectors.tsx {clipQuadratic, Connectors, connectorStrands, movedBy, tieRoute}
+  packages/react/src/scene-lines.tsx → packages/react/src/kit.ts {kitConnector, useKit}
+  packages/react/src/scene-lines.tsx → packages/react/src/routes.ts {orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic}
+  packages/react/src/scene-lines.tsx → packages/react/src/tie-labels.ts {placeTieLabels, tiesReached}
+  packages/react/src/scene-lines.tsx → packages/react/src/tie-labels.ts {TieLabel, TieReach}
+  packages/react/src/scene-lines.tsx → packages/react/src/where-drawn.tsx {drawnBox, measureVisible, visibleRect}
 
 </imports>

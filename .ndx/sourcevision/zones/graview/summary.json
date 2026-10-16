@@ -1,18 +1,20 @@
 {
   "id": "graview",
   "name": "Graview",
-  "description": "2 files, mostly entry points; entry points index.ts; imported by Packages.",
+  "description": "4 files, primarily JavaScript, TypeScript",
   "files": [
+    "packages/graview/preview/page.js",
     "packages/graview/src/cli.ts",
-    "packages/graview/src/index.ts"
+    "packages/graview/src/index.ts",
+    "packages/guest/client.js"
   ],
   "entryPoints": [
     "packages/graview/src/index.ts"
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 2,
-  "lineCount": 68,
+  "fileCount": 4,
+  "lineCount": 131,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

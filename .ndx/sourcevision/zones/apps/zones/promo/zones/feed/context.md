@@ -5,15 +5,16 @@
 <zone>
 
 Zone: Feed (`apps/promo/feed`)
-Files: 8, Cohesion: 0.53, Coupling: 0.47
-Description: 8 files, primarily TypeScript
-Entry points: apps/promo/src/feed/Cta.tsx, apps/promo/src/feed/Lockup.tsx, apps/promo/src/feed/MagicHook.tsx, apps/promo/src/feed/StepsBeat.tsx, apps/promo/src/feed/StoryMontage.tsx, apps/promo/src/feed/TaglinePayoff.tsx, apps/promo/src/feedTheme.ts
-Lines: 962
+Files: 9, Cohesion: 0.76, Coupling: 0.24
+Description: 9 files, primarily TypeScript
+Entry points: apps/promo/src/FeedComposition.tsx, apps/promo/src/feedTheme.ts
+Lines: 1030
 
 </zone>
 
 <files>
 
+apps/promo/src/FeedComposition.tsx (TypeScript, 68 lines, source)
 apps/promo/src/feed/BeautyPlate.tsx (TypeScript, 132 lines, source)
 apps/promo/src/feed/Cta.tsx (TypeScript, 99 lines, source)
 apps/promo/src/feed/Lockup.tsx (TypeScript, 106 lines, source)
@@ -28,6 +29,13 @@ apps/promo/src/feedTheme.ts (TypeScript, 29 lines, source)
 <imports>
 
 Internal:
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/Cta.tsx {Cta}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/Lockup.tsx {Lockup}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/MagicHook.tsx {MagicHook}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/StepsBeat.tsx {StepsBeat}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/StoryMontage.tsx {StoryMontage}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feed/TaglinePayoff.tsx {TaglinePayoff}
+  apps/promo/src/FeedComposition.tsx → apps/promo/src/feedTheme.ts {colors, feedBeats}
   apps/promo/src/feed/BeautyPlate.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE}
   apps/promo/src/feed/Cta.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE}
   apps/promo/src/feed/Lockup.tsx → apps/promo/src/feedTheme.ts {colors, fonts, FEED_SAFE, feedBeats}

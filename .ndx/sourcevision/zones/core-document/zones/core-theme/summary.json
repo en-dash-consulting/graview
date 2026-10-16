@@ -1,15 +1,11 @@
 {
   "id": "core-document/core-theme",
   "name": "Core Theme",
-  "description": "16 files, primarily TypeScript",
+  "description": "13 files, primarily TypeScript",
   "files": [
-    "packages/core/src/city.ts",
     "packages/core/src/cli/check/brand.ts",
-    "packages/core/src/cli/check/city.ts",
+    "packages/core/src/document/brand-check.ts",
     "packages/core/src/document/brand.ts",
-    "packages/core/src/document/thumbnail.ts",
-    "packages/core/src/scene-districts.ts",
-    "packages/core/src/scene.ts",
     "packages/core/src/theme/accent.ts",
     "packages/core/src/theme/contrast.ts",
     "packages/core/src/theme/derive.ts",
@@ -17,15 +13,14 @@
     "packages/core/src/theme/identity.ts",
     "packages/core/src/theme/kit.ts",
     "packages/core/src/theme/look.ts",
+    "packages/core/src/theme/marks.ts",
     "packages/core/src/theme/palettes.ts",
     "packages/core/src/theme/types.ts"
   ],
   "entryPoints": [
-    "packages/core/src/city.ts",
     "packages/core/src/cli/check/brand.ts",
-    "packages/core/src/cli/check/city.ts",
+    "packages/core/src/document/brand-check.ts",
     "packages/core/src/document/brand.ts",
-    "packages/core/src/scene.ts",
     "packages/core/src/theme/accent.ts",
     "packages/core/src/theme/contrast.ts",
     "packages/core/src/theme/derive.ts",
@@ -33,11 +28,12 @@
     "packages/core/src/theme/identity.ts",
     "packages/core/src/theme/kit.ts",
     "packages/core/src/theme/look.ts",
+    "packages/core/src/theme/marks.ts",
     "packages/core/src/theme/palettes.ts",
     "packages/core/src/theme/types.ts"
   ],
-  "cohesion": 0.75,
-  "coupling": 0.25,
-  "fileCount": 16,
-  "lineCount": 2716
+  "cohesion": 0.67,
+  "coupling": 0.33,
+  "fileCount": 13,
+  "lineCount": 2168
 }

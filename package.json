@@ -30,8 +30,6 @@
     "pages": "node scripts/verify-pages.mjs",
     "journeys": "node scripts/verify-journeys.mjs",
     "remember": "node scripts/verify-remember.mjs",
-    "promo": "pnpm --filter @graview/promo dev",
-    "dev:promo": "pnpm --filter @graview/promo dev",
     "dev": "pnpm --filter @graview/todo dev",
     "dev:seedbed": "pnpm --filter @graview/seedbed dev",
     "a11y": "node apps/todo/scripts/run-a11y.mjs",

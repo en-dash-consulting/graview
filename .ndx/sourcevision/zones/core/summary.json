@@ -1,39 +1,31 @@
 {
   "id": "core",
   "name": "Core",
-  "description": "10 files, mostly utilities and types; entry points define-node.ts, types.ts, search.ts; imports Core and Core Invariants; imported by Core and Core Mutations.",
+  "description": "8 files, primarily TypeScript, JavaScript",
   "files": [
-    "packages/core/src/address.ts",
-    "packages/core/src/cli/check/relations.ts",
-    "packages/core/src/document/describe-coverage.ts",
-    "packages/core/src/document/describe-place.ts",
-    "packages/core/src/labels.ts",
-    "packages/core/src/mutations/words.ts",
-    "packages/core/src/schema/define-node.ts",
-    "packages/core/src/schema/types.ts",
-    "packages/core/src/search.ts",
-    "packages/core/src/theme/marks.ts"
+    "apps/spike/vite.config.ts",
+    "packages/core/scripts/write-document-schema.mjs",
+    "packages/core/src/markdown.ts",
+    "packages/core/src/navigate.ts",
+    "packages/core/src/retry.ts",
+    "packages/core/src/views/address.ts",
+    "packages/create-graview/src/cli.ts",
+    "packages/create-graview/src/index.ts"
   ],
   "entryPoints": [
-    "packages/core/src/address.ts",
-    "packages/core/src/cli/check/relations.ts",
-    "packages/core/src/document/describe-place.ts",
-    "packages/core/src/labels.ts",
-    "packages/core/src/mutations/words.ts",
-    "packages/core/src/schema/define-node.ts",
-    "packages/core/src/schema/types.ts",
-    "packages/core/src/search.ts",
-    "packages/core/src/theme/marks.ts"
+    "packages/core/src/markdown.ts",
+    "packages/core/src/navigate.ts",
+    "packages/core/src/retry.ts"
   ],
-  "cohesion": 0.23,
-  "coupling": 0.77,
-  "fileCount": 10,
-  "lineCount": 2692,
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 8,
+  "lineCount": 683,
   "riskMetrics": {
-    "cohesion": 0.23,
-    "coupling": 0.77,
-    "riskScore": 0.77,
-    "riskLevel": "catastrophic",
-    "failsThreshold": true
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
   }
 }

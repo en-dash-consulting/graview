@@ -1,21 +1,28 @@
 {
   "id": "react/src-4",
   "name": "Src 4",
-  "description": "4 files, primarily TypeScript",
+  "description": "8 files, primarily TypeScript",
   "files": [
     "packages/react/src/drawing.ts",
+    "packages/react/src/drawn.ts",
     "packages/react/src/editable-fields.ts",
-    "packages/react/src/occupants.tsx",
-    "packages/react/src/placement.ts"
+    "packages/react/src/emphasis.ts",
+    "packages/react/src/last-visit.ts",
+    "packages/react/src/menu-sections.tsx",
+    "packages/react/src/placement.ts",
+    "packages/react/src/plots.tsx"
   ],
   "entryPoints": [
     "packages/react/src/drawing.ts",
+    "packages/react/src/drawn.ts",
     "packages/react/src/editable-fields.ts",
-    "packages/react/src/occupants.tsx",
-    "packages/react/src/placement.ts"
+    "packages/react/src/emphasis.ts",
+    "packages/react/src/menu-sections.tsx",
+    "packages/react/src/placement.ts",
+    "packages/react/src/plots.tsx"
   ],
-  "cohesion": 0.32,
-  "coupling": 0.68,
-  "fileCount": 4,
-  "lineCount": 376
+  "cohesion": 0.42,
+  "coupling": 0.58,
+  "fileCount": 8,
+  "lineCount": 1011
 }

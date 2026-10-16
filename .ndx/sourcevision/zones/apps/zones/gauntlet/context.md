@@ -5,16 +5,51 @@
 <zone>
 
 Zone: Gauntlet (`apps/gauntlet`)
-Files: 3, Cohesion: 0.00, Coupling: 0.00
-Description: 3 files, primarily TypeScript, JavaScript
-Lines: 530
+Files: 10, Cohesion: 1.00, Coupling: 0.00
+Description: 10 files, primarily TypeScript
+Entry points: apps/gauntlet/src/domain/app.ts, apps/gauntlet/src/domain/schema.ts, apps/gauntlet/src/ui/seats.ts
+Lines: 1025
 
 </zone>
 
 <files>
 
-apps/gauntlet/scripts/generate-seed.mjs (JavaScript, 411 lines, build)
-apps/launcher/vite.config.ts (TypeScript, 63 lines, config)
-apps/promo/remotion.config.ts (TypeScript, 56 lines, config)
+apps/gauntlet/src/domain/app.ts (TypeScript, 62 lines, source)
+apps/gauntlet/src/domain/brand.ts (TypeScript, 26 lines, source)
+apps/gauntlet/src/domain/invariants.ts (TypeScript, 56 lines, source)
+apps/gauntlet/src/domain/mutations.ts (TypeScript, 380 lines, source)
+apps/gauntlet/src/domain/policy.ts (TypeScript, 64 lines, source)
+apps/gauntlet/src/domain/schema.ts (TypeScript, 227 lines, source)
+apps/gauntlet/src/main.tsx (TypeScript, 94 lines, source)
+apps/gauntlet/src/ui/app.tsx (TypeScript, 75 lines, source)
+apps/gauntlet/src/ui/seats.ts (TypeScript, 27 lines, source)
+apps/gauntlet/src/ui/views.tsx (TypeScript, 14 lines, source)
 
 </files>
+
+<imports>
+
+Internal:
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/brand.ts {gauntletBrand}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/invariants.ts {invariants}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/mutations.ts {mutations}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/policy.ts {policy}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/schema.ts {gauntletSchema}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/schema.ts {GauntletSchema}
+  apps/gauntlet/src/domain/invariants.ts → apps/gauntlet/src/domain/schema.ts {gauntletSchema}
+  apps/gauntlet/src/domain/mutations.ts → apps/gauntlet/src/domain/schema.ts {gauntletSchema, speakerKind, roomKind}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/domain/app.ts {gauntletApp}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/domain/brand.ts {gauntletBrand}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/ui/app.tsx {GauntletApp}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/ui/seats.ts {openingSeat, SEATS}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/ui/views.tsx {views}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/app.ts {gauntletApp, createStore}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/app.ts {GauntletStore}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/brand.ts {gauntletBrand}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/schema.ts {GauntletSchema}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/ui/seats.ts {openingSeat, SEATS}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/ui/views.tsx {views}
+  apps/gauntlet/src/ui/views.tsx → apps/gauntlet/src/domain/app.ts {gauntletApp}
+  apps/gauntlet/src/ui/views.tsx → apps/gauntlet/src/domain/schema.ts {gauntletSchema}
+
+</imports>

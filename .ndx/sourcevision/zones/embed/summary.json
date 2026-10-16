@@ -1,7 +1,7 @@
 {
   "id": "embed",
   "name": "Embed",
-  "description": "10 files, mostly components and utilities; entry points index.ts, pages.tsx; imported by Packages.",
+  "description": "10 files, primarily TypeScript",
   "files": [
     "packages/embed/src/address.tsx",
     "packages/embed/src/embed.tsx",
@@ -21,7 +21,7 @@
   "cohesion": 1,
   "coupling": 0,
   "fileCount": 10,
-  "lineCount": 2286,
+  "lineCount": 2473,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

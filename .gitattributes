@@ -17,3 +17,6 @@ CLAUDE.md  text eol=lf
 # PRD tree markdown merges through the rex-prd driver (three-way,
 # frontmatter-aware). The driver is registered in git config by 'ndx init'.
 .ndx/rex/prd_tree/** merge=rex-prd
+.ndx/rex/**/*.yaml text eol=lf
+.ndx/rex/product/**/state.yaml merge=rex-state
+.ndx/rex/changes/**/state.yaml merge=rex-state

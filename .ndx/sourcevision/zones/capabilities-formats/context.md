@@ -5,8 +5,8 @@
 <zone>
 
 Zone: Capabilities And Formats (`capabilities-formats`)
-Files: 3, Cohesion: 0.55, Coupling: 0.45
-Risk: healthy (score: 0.45)
+Files: 3, Cohesion: 0.50, Coupling: 0.50
+Risk: healthy (score: 0.50)
 Description: 3 files, mostly utilities; entry points capabilities.ts, formats.ts, version.ts; imports Core Graph and Core; imported by Core.
 Entry points: packages/core/src/capabilities.ts, packages/core/src/formats.ts, packages/core/src/version.ts
 Lines: 137
@@ -30,15 +30,23 @@ Internal:
 
 Outgoing (this zone → other zones):
   → core-document: packages/core/src/formats.ts → packages/core/src/ops/types.ts
-  → core-graph: packages/core/src/formats.ts → packages/core/src/graph/types.ts
+  → core-ops: packages/core/src/formats.ts → packages/core/src/graph/types.ts
 
 Incoming (other zones → this zone):
-  ← core-document: packages/core/src/index.ts → packages/core/src/capabilities.ts; packages/core/src/index.ts → packages/core/src/capabilities.ts; packages/core/src/index.ts → packages/core/src/formats.ts; packages/core/src/index.ts → packages/core/src/formats.ts; packages/core/src/index.ts → packages/core/src/version.ts
+  ← core-document: packages/core/src/cli/doctor.ts → packages/core/src/version.ts; packages/core/src/index.ts → packages/core/src/capabilities.ts; packages/core/src/index.ts → packages/core/src/capabilities.ts; packages/core/src/index.ts → packages/core/src/formats.ts; packages/core/src/index.ts → packages/core/src/formats.ts; packages/core/src/index.ts → packages/core/src/version.ts
+  ← tests-core-unit: packages/core/tests/unit/markdown-in-a-text-field-reads-as-prose.test.ts → packages/core/src/capabilities.ts
 
 </imports>
 
+<findings>
+
+[anti-pattern] [warning] "Capabilities And Formats" imports "Core Document" on 1 edge(s) while the 6 edge(s) between them run the other way — the minority direction looks like a layering violation
+
+</findings>
+
 <insights>
 
-- [call graph] 2 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
+- "Capabilities And Formats" imports "Core Document" on 1 edge(s) while the 6 edge(s) between them run the other way — the minority direction looks like a layering violation
+- [call graph] 2 internal calls, 0 outgoing, 1 incoming (cohesion: 1, coupling: 0)
 
 </insights>

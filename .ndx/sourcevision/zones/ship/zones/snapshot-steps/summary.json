@@ -1,0 +1,19 @@
+{
+  "id": "ship/snapshot-steps",
+  "name": "Snapshot Steps",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/ship/src/snapshot.ts",
+    "packages/ship/src/steps.ts",
+    "packages/ship/src/sync-seed.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/snapshot.ts",
+    "packages/ship/src/steps.ts",
+    "packages/ship/src/sync-seed.ts"
+  ],
+  "cohesion": 0.23,
+  "coupling": 0.77,
+  "fileCount": 3,
+  "lineCount": 512
+}

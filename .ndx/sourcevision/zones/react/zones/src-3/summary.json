@@ -1,21 +1,37 @@
 {
   "id": "react/src-3",
   "name": "Src 3",
-  "description": "4 files, primarily TypeScript",
+  "description": "12 files, primarily TypeScript",
   "files": [
-    "packages/react/src/captions.ts",
-    "packages/react/src/kit.ts",
-    "packages/react/src/scene-lines.tsx",
-    "packages/react/src/where-drawn.tsx"
+    "packages/react/src/default-elsewhere.ts",
+    "packages/react/src/files.ts",
+    "packages/react/src/go.ts",
+    "packages/react/src/keyboard.ts",
+    "packages/react/src/lazy-part.tsx",
+    "packages/react/src/local-intelligence.ts",
+    "packages/react/src/past.ts",
+    "packages/react/src/popover.ts",
+    "packages/react/src/provider.ts",
+    "packages/react/src/record-links-layer.tsx",
+    "packages/react/src/record-links.ts",
+    "packages/react/src/view-marks.ts"
   ],
   "entryPoints": [
-    "packages/react/src/captions.ts",
-    "packages/react/src/kit.ts",
-    "packages/react/src/scene-lines.tsx",
-    "packages/react/src/where-drawn.tsx"
+    "packages/react/src/default-elsewhere.ts",
+    "packages/react/src/files.ts",
+    "packages/react/src/go.ts",
+    "packages/react/src/keyboard.ts",
+    "packages/react/src/lazy-part.tsx",
+    "packages/react/src/local-intelligence.ts",
+    "packages/react/src/past.ts",
+    "packages/react/src/popover.ts",
+    "packages/react/src/provider.ts",
+    "packages/react/src/record-links-layer.tsx",
+    "packages/react/src/record-links.ts",
+    "packages/react/src/view-marks.ts"
   ],
-  "cohesion": 0.25,
-  "coupling": 0.75,
-  "fileCount": 4,
-  "lineCount": 1230
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 12,
+  "lineCount": 1599
 }

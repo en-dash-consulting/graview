@@ -1,29 +1,31 @@
 {
   "id": "react/src-2",
   "name": "Src 2",
-  "description": "8 files, primarily TypeScript",
+  "description": "9 files, primarily TypeScript",
   "files": [
-    "packages/react/src/animation.ts",
-    "packages/react/src/error-report.ts",
-    "packages/react/src/index.ts",
-    "packages/react/src/popover.ts",
-    "packages/react/src/resolved-view.tsx",
-    "packages/react/src/scene-node.ts",
-    "packages/react/src/scene.tsx",
-    "packages/react/src/view-boundary.tsx"
+    "packages/react/src/captions.ts",
+    "packages/react/src/channels.ts",
+    "packages/react/src/connectors.tsx",
+    "packages/react/src/kit.ts",
+    "packages/react/src/parallel.ts",
+    "packages/react/src/routes.ts",
+    "packages/react/src/scene-lines.tsx",
+    "packages/react/src/tie-labels.ts",
+    "packages/react/src/where-drawn.tsx"
   ],
   "entryPoints": [
-    "packages/react/src/animation.ts",
-    "packages/react/src/error-report.ts",
-    "packages/react/src/index.ts",
-    "packages/react/src/popover.ts",
-    "packages/react/src/resolved-view.tsx",
-    "packages/react/src/scene-node.ts",
-    "packages/react/src/scene.tsx",
-    "packages/react/src/view-boundary.tsx"
+    "packages/react/src/captions.ts",
+    "packages/react/src/channels.ts",
+    "packages/react/src/connectors.tsx",
+    "packages/react/src/kit.ts",
+    "packages/react/src/parallel.ts",
+    "packages/react/src/routes.ts",
+    "packages/react/src/scene-lines.tsx",
+    "packages/react/src/tie-labels.ts",
+    "packages/react/src/where-drawn.tsx"
   ],
-  "cohesion": 0.31,
-  "coupling": 0.69,
-  "fileCount": 8,
-  "lineCount": 1391
+  "cohesion": 0.53,
+  "coupling": 0.47,
+  "fileCount": 9,
+  "lineCount": 3265
 }

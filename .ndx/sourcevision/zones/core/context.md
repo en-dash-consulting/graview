@@ -5,85 +5,49 @@
 <zone>
 
 Zone: Core (`core`)
-Files: 10, Cohesion: 0.23, Coupling: 0.77
-Risk: catastrophic (score: 0.77)
-Description: 10 files, mostly utilities and types; entry points define-node.ts, types.ts, search.ts; imports Core and Core Invariants; imported by Core and Core Mutations.
-Entry points: packages/core/src/address.ts, packages/core/src/cli/check/relations.ts, packages/core/src/document/describe-place.ts, packages/core/src/labels.ts, packages/core/src/mutations/words.ts, packages/core/src/schema/define-node.ts, packages/core/src/schema/types.ts, packages/core/src/search.ts, packages/core/src/theme/marks.ts
-Lines: 2692
+Files: 8, Cohesion: 1.00, Coupling: 0.00
+Risk: healthy (score: 0.00)
+Description: 8 files, primarily TypeScript, JavaScript
+Entry points: packages/core/src/markdown.ts, packages/core/src/navigate.ts, packages/core/src/retry.ts
+Lines: 683
 
 </zone>
 
 <files>
 
-packages/core/src/address.ts (TypeScript, 48 lines, source)
-packages/core/src/cli/check/relations.ts (TypeScript, 331 lines, source)
-packages/core/src/document/describe-coverage.ts (TypeScript, 180 lines, source)
-packages/core/src/document/describe-place.ts (TypeScript, 389 lines, source)
-packages/core/src/labels.ts (TypeScript, 168 lines, source)
-packages/core/src/mutations/words.ts (TypeScript, 80 lines, source)
-packages/core/src/schema/define-node.ts (TypeScript, 368 lines, source)
-packages/core/src/schema/types.ts (TypeScript, 258 lines, source)
-packages/core/src/search.ts (TypeScript, 658 lines, source)
-packages/core/src/theme/marks.ts (TypeScript, 212 lines, source)
+apps/spike/vite.config.ts (TypeScript, 36 lines, config)
+packages/core/scripts/write-document-schema.mjs (JavaScript, 15 lines, build)
+packages/core/src/markdown.ts (TypeScript, 475 lines, source)
+packages/core/src/navigate.ts (TypeScript, 12 lines, source)
+packages/core/src/retry.ts (TypeScript, 94 lines, source)
+packages/core/src/views/address.ts (TypeScript, 29 lines, source)
+packages/create-graview/src/cli.ts (TypeScript, 11 lines, source)
+packages/create-graview/src/index.ts (TypeScript, 11 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/core/src/cli/check/relations.ts → packages/core/src/schema/define-node.ts {withArticle}
-  packages/core/src/document/describe-coverage.ts → packages/core/src/document/describe-place.ts {DescribedItem, DescribedPart}
-  packages/core/src/document/describe-coverage.ts → packages/core/src/schema/define-node.ts {counted, isCurrent, labelOf, readableFields}
-  packages/core/src/document/describe-place.ts → packages/core/src/document/describe-coverage.ts {coverageParts}
-  packages/core/src/document/describe-place.ts → packages/core/src/schema/define-node.ts {fieldWords, isCurrent, labelOf, readableFields}
-  packages/core/src/document/describe-place.ts → packages/core/src/theme/marks.ts {isInlineSvg, markHref}
-  packages/core/src/labels.ts → packages/core/src/schema/define-node.ts {labelOf, nounOf}
-  packages/core/src/mutations/words.ts → packages/core/src/schema/define-node.ts {fieldWords, humanizeField}
-  packages/core/src/schema/define-node.ts → packages/core/src/schema/types.ts {AnyNodeDefinition, EdgeMap, EmptyEdgeMap, NodeDefinition, NodeDefinitionSpec}
-  packages/core/src/search.ts → packages/core/src/address.ts {addressOf}
-  packages/core/src/search.ts → packages/core/src/schema/define-node.ts {humanizeField, isCurrent, labelOf, readableFields, tellApart}
-  packages/core/src/search.ts → packages/core/src/schema/types.ts {AnyNodeDefinition}
-
-Outgoing (this zone → other zones):
-  → check: packages/core/src/cli/check/relations.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/relations.ts → packages/core/src/cli/check/context.ts; packages/core/src/document/describe-coverage.ts → packages/core/src/schema/path.ts
-  → core-document: packages/core/src/cli/check/relations.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/document/describe-place.ts → packages/core/src/document/rules.ts; packages/core/src/document/describe-place.ts → packages/core/src/index.ts; packages/core/src/document/describe-place.ts → packages/core/src/places.ts; packages/core/src/document/describe-place.ts → packages/core/src/places.ts; packages/core/src/labels.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/schema/types.ts → packages/core/src/schema/figures.ts; packages/core/src/search.ts → packages/core/src/arrangement.ts; packages/core/src/search.ts → packages/core/src/arrangement.ts; packages/core/src/search.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/search.ts → packages/core/src/ops/types.ts; packages/core/src/search.ts → packages/core/src/permissions/types.ts; packages/core/src/search.ts → packages/core/src/seen.ts; packages/core/src/search.ts → packages/core/src/store.ts; packages/core/src/search.ts → packages/core/src/views/types.ts; packages/core/src/search.ts → packages/core/src/views/types.ts
-  → core-graph: packages/core/src/document/describe-coverage.ts → packages/core/src/graph/types.ts; packages/core/src/labels.ts → packages/core/src/graph/diff.ts; packages/core/src/labels.ts → packages/core/src/graph/graph.ts; packages/core/src/mutations/words.ts → packages/core/src/graph/graph.ts
-  → core-invariants: packages/core/src/cli/check/relations.ts → packages/core/src/schema/schema.ts; packages/core/src/document/describe-coverage.ts → packages/core/src/schema/schema.ts; packages/core/src/document/describe-place.ts → packages/core/src/schema/schema.ts; packages/core/src/labels.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/words.ts → packages/core/src/schema/schema.ts; packages/core/src/search.ts → packages/core/src/schema/schema.ts
-  → core-mutations: packages/core/src/document/describe-place.ts → packages/core/src/columns.ts
-  → document: packages/core/src/document/describe-place.ts → packages/core/src/document/blocks.ts; packages/core/src/document/describe-place.ts → packages/core/src/document/blocks.ts; packages/core/src/document/describe-place.ts → packages/core/src/document/computed-values.ts; packages/core/src/document/describe-place.ts → packages/core/src/document/expr/evaluate.ts
+  packages/core/src/navigate.ts → packages/core/src/views/address.ts {narrowedPath, sectionSlug}
+  packages/create-graview/src/cli.ts → packages/create-graview/src/index.ts {createGraview}
 
 Incoming (other zones → this zone):
-  ← core-cli: packages/core/src/cli/check/index.ts → packages/core/src/cli/check/relations.ts
-  ← core-document: packages/core/src/arrangement.ts → packages/core/src/schema/define-node.ts; packages/core/src/arrangement.ts → packages/core/src/schema/types.ts; packages/core/src/arranging.ts → packages/core/src/schema/define-node.ts; packages/core/src/arranging.ts → packages/core/src/search.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/describe.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/describe.ts → packages/core/src/search.ts; packages/core/src/cli/docs.ts → packages/core/src/search.ts; packages/core/src/cli/index.ts → packages/core/src/document/describe-place.ts; packages/core/src/describe.ts → packages/core/src/document/describe-place.ts; packages/core/src/describe.ts → packages/core/src/document/describe-place.ts; packages/core/src/document/computed.ts → packages/core/src/schema/types.ts; packages/core/src/document/diff.ts → packages/core/src/schema/define-node.ts; packages/core/src/index.ts → packages/core/src/address.ts; packages/core/src/index.ts → packages/core/src/labels.ts; packages/core/src/index.ts → packages/core/src/labels.ts; packages/core/src/index.ts → packages/core/src/mutations/words.ts; packages/core/src/index.ts → packages/core/src/schema/define-node.ts; packages/core/src/index.ts → packages/core/src/schema/define-node.ts; packages/core/src/index.ts → packages/core/src/schema/types.ts; packages/core/src/index.ts → packages/core/src/search.ts; packages/core/src/index.ts → packages/core/src/search.ts; packages/core/src/index.ts → packages/core/src/theme/marks.ts; packages/core/src/installation.ts → packages/core/src/schema/define-node.ts; packages/core/src/installation.ts → packages/core/src/schema/types.ts; packages/core/src/permissions/policy.ts → packages/core/src/schema/define-node.ts; packages/core/src/scaffold/index.ts → packages/core/src/schema/define-node.ts; packages/core/src/schema/json-schema.ts → packages/core/src/schema/types.ts; packages/core/src/store.ts → packages/core/src/labels.ts; packages/core/src/store.ts → packages/core/src/labels.ts; packages/core/src/store.ts → packages/core/src/schema/define-node.ts; packages/core/src/testing.ts → packages/core/src/schema/define-node.ts; packages/core/src/watched.ts → packages/core/src/schema/define-node.ts; packages/core/src/who.ts → packages/core/src/schema/define-node.ts
-  ← core-graph: packages/core/src/graph/graph.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/words.ts; packages/core/src/validate-graph.ts → packages/core/src/schema/define-node.ts
-  ← core-invariants: packages/core/src/invariants/engine.ts → packages/core/src/schema/define-node.ts; packages/core/src/schema/schema.ts → packages/core/src/schema/types.ts
-  ← core-mutations: packages/core/src/cli/check/fields.ts → packages/core/src/schema/define-node.ts; packages/core/src/columns.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/types.ts
-  ← document: packages/core/src/document/blocks.ts → packages/core/src/schema/define-node.ts; packages/core/src/document/computed-values.ts → packages/core/src/schema/define-node.ts; packages/core/src/document/expr/evaluate.ts → packages/core/src/schema/define-node.ts
-  ← findings: packages/core/src/document/act-findings.ts → packages/core/src/schema/define-node.ts; packages/core/src/document/brand-check.ts → packages/core/src/theme/marks.ts
-  ← tests-core-document: packages/core/tests/document/a-named-step-is-a-move.test.ts → packages/core/src/document/describe-place.ts; packages/core/tests/document/a-status-board-moves-by-acts.test.ts → packages/core/src/document/describe-place.ts
+  ← tests-core-unit: packages/core/tests/unit/a-lazy-part-tries-again.test.ts → packages/core/src/retry.ts; packages/core/tests/unit/a-narrowed-address-reads-back-as-its-filter-and-section.test.ts → packages/core/src/navigate.ts; packages/core/tests/unit/markdown-in-a-text-field-reads-as-prose.test.ts → packages/core/src/markdown.ts; packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts → packages/core/src/markdown.ts; packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts → packages/core/src/navigate.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] 9 entry points — wide API surface, consider consolidating exports
-[observation] [warning] High coupling (0.77) — 16 imports target "core-document"
-[observation] [warning] Low cohesion (0.23) — files are loosely related, consider splitting this zone
-[observation] [info] Zone "Core" depends on more of the rest of the codebase than a module of its size and purpose warrants.
-[observation] [info] Zones "Core" and "Core Document" may be one architectural concept; the import graph links them but the judgment was undecided.
-[suggestion] [info] Zone "core" has files across 6 directories — consider consolidating under a dedicated directory
-[suggestion] [critical] Zone "Core" is severely fragile and needs immediate architectural intervention — cohesion: 0.23, coupling: 0.77 (risk score: 0.77)
+[observation] [info] High cohesion (1) — files are tightly interconnected
+[suggestion] [info] Zone "core" has files across 5 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
-- Low cohesion (0.23) — files are loosely related, consider splitting this zone
-- High coupling (0.77) — 16 imports target "core-document"
-- 9 entry points — wide API surface, consider consolidating exports
-- Zones "Core" and "Core Document" may be one architectural concept; the import graph links them but the judgment was undecided.
-- Zone "Core" depends on more of the rest of the codebase than a module of its size and purpose warrants.
-- Zone "core" has files across 6 directories — consider consolidating under a dedicated directory
-- [call graph] 173 internal calls, 28 outgoing, 69 incoming (cohesion: 0.86, coupling: 0.14)
+- High cohesion (1) — files are tightly interconnected
+- Zone "core" has files across 5 directories — consider consolidating under a dedicated directory
+- [call graph] 65 internal calls, 0 outgoing, 30 incoming (cohesion: 1, coupling: 0)
 
 </insights>
