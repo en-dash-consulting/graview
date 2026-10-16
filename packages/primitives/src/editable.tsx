@@ -1,6 +1,6 @@
 import { fieldWords, humanizeField as humanize, type AnySchema } from "@graview/core";
 import { valueWords } from "@graview/core/words";
-import { amountBox, amountInBox, pageSections, parseDuration, readableFields, readAmount } from "@graview/core/words";
+import { amountBox, amountInBox, endAfterStartMoved, pageSections, parseDuration, readableFields, readAmount, startAndEndOf } from "@graview/core/words";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, useNode } from "@graview/react/provider";
@@ -11,6 +11,7 @@ import { Files } from "./files-door.js";
 import { AppLink } from "./app-link-door.js";
 import { LinkedRecordView } from "./linked-record-door.js";
 import { RepeatEditor } from "./repeat-picker-door.js";
+import { prefetchWhenInput, WhenInput } from "./when-input-door.js";
 
 /**
  * One field's value, changeable where it is shown when something can change
@@ -50,7 +51,7 @@ export function EditableValue<S extends AnySchema>({
   const { fields, commit } = useEditableFields<S>(nodeId);
   const editable = fields.find((candidate) => candidate.field === field);
   // The field as the declaration says it: a tooltip read "changes "plannedAt"".
-  const { store } = useGraview<S>();
+  const { store, principal } = useGraview<S>();
   const kind = store.graph.getNode(nodeId)?.kind as string | undefined;
   const definition = store.schema.definitions.find((one) => one.kind === kind);
   const fact = fieldWords(definition, field);
@@ -84,7 +85,13 @@ export function EditableValue<S extends AnySchema>({
   // The graph can change underneath an open editor — an agent turn, an undo —
   // and the draft must not silently overwrite it on blur.
   useEffect(() => setDraft(held), [held, editing]);
+  // A date that can be changed here fetches its editor while the page is idle, so it opens at once when pressed.
+  const dated = editable?.shape.type === "date";
   useEffect(() => {
+    if (dated) void prefetchWhenInput();
+  }, [dated]);
+  useEffect(() => {
+    // A date's editor takes the keyboard itself as it arrives (`autoSelect`): it may be fetched after this.
     if (editing) input.current?.focus();
     else if (comeBack.current) {
       comeBack.current = false;
@@ -155,7 +162,34 @@ export function EditableValue<S extends AnySchema>({
   const done = (next: unknown, { left = false } = {}) => {
     close(!left);
     if (next === stored || next === "" || next === undefined) return;
+    if (editable.shape.type === "date" && typeof next === "string" && withItsEnd(next)) return;
     commit(editable, next);
+  };
+
+  /*
+   * AN END MOVES WITH ITS START (Roadmap f-date-inputs). A meeting moved an
+   * hour later ends an hour later: where the kind has a start and an end
+   * (its `start` and `end` roles, else fields named for them) and both can
+   * be changed here, the new start and the end it carries are one change —
+   * one batch, one undo.
+   */
+  const withItsEnd = (next: string): boolean => {
+    if (editable.shape.type !== "date") return false;
+    const dates = fields.filter((one) => one.shape.type === "date" && one.takesValue);
+    const pair = startAndEndOf(dates.map((one) => one.field), (definition?.fieldRoles ?? {}) as Readonly<Record<string, string>>);
+    const ending = pair?.start === field ? dates.find((one) => one.field === pair.end) : undefined;
+    const record = store.graph.getNode(nodeId) as Record<string, unknown> | undefined;
+    const end = record?.[pair?.end ?? ""];
+    if (!ending || typeof end !== "string") return false;
+    const moved = endAfterStartMoved(stored === "" ? undefined : stored, next, end, { time: editable.shape.time === true, instant: editable.shape.instant === true });
+    if (moved === undefined || moved === end) return false;
+    const starting = editable.call(next);
+    const following = ending.call(moved);
+    store.applyAll(
+      starting.name === following.name ? [{ name: starting.name, args: { ...starting.args, ...following.args } }] : [starting, following],
+      { author: principal },
+    );
+    return true;
   };
 
   /*
@@ -202,7 +236,7 @@ export function EditableValue<S extends AnySchema>({
 
   return (
     <form
-      style={{ display: "inline-flex", gap: 4, maxWidth: "100%" }}
+      style={{ display: "inline-flex", flexWrap: "wrap", gap: 4, maxWidth: "100%" }}
       onSubmit={(event) => {
         event.preventDefault();
         done(coerce(editable, draft));
@@ -225,6 +259,20 @@ export function EditableValue<S extends AnySchema>({
             </option>
           ))}
         </select>
+      ) : editable.shape.type === "date" ? (
+        // A day or a moment, typed as people say it or picked from a month (Roadmap f-date-inputs).
+        <WhenInput
+          inputRef={input as { current: HTMLInputElement | null }}
+          label={humanize(field)}
+          value={draft === "" ? undefined : draft}
+          time={editable.shape.time === true}
+          instant={editable.shape.instant === true}
+          onChange={(next) => setDraft(next ?? "")}
+          onLeave={(next) => done(next, { left: true })}
+          onCancel={() => close(true)}
+          autoSelect
+          boxStyle={{ fontSize: "inherit", minHeight: 24, padding: "0 3px" }}
+        />
       ) : (
         <>
         {amount && amountBox(amount).prefix ? <span aria-hidden="true">{amountBox(amount).prefix}</span> : null}
@@ -238,11 +286,7 @@ export function EditableValue<S extends AnySchema>({
               ? "text"
               : editable.shape.type === "number" && !editable.shape.duration
               ? "number"
-              : editable.shape.type === "date"
-                ? editable.shape.time
-                  ? "datetime-local"
-                  : "date"
-                : "text"
+              : "text"
           }
           // The field's range, as every form asks for it (FR-114).
           // A length of time is typed as one: "1h 30m", "90" or "1:30".

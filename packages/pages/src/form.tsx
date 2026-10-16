@@ -6,13 +6,13 @@ import {
   type Principal,
   type Store,
 } from "@graview/core";
-import { amountBox, amountInBox, argumentWords, failureWords, readAmount, tellApart } from "@graview/core/words";
+import { amountBox, amountInBox, argumentWords, endAfterStartMoved, failureWords, readAmount, startAndEndOf, tellApart } from "@graview/core/words";
 import type { AmountMark } from "@graview/core";
 import { changedArgs, editStart, formFields, formArgs, keptArguments, type FormField } from "@graview/core/forms";
 import type { AnyMutationDefinition } from "@graview/core";
 import type { OpenParameter } from "@graview/tools";
-import { Files, LinkedPicker, RepeatPicker } from "@graview/primitives/pages";
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { Files, LinkedPicker, RepeatPicker, WhenInput } from "@graview/primitives/pages";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 /**
  * A form, walked off the mutation's own declaration.
@@ -48,7 +48,8 @@ form:where([data-graview-part="form"]) {
   min-width: 0;
   gap: 12px;
 }
-label:where([data-graview-part="field"]) {
+label:where([data-graview-part="field"]),
+div:where([data-graview-part="field"][data-graview-field="date"]) {
   display: grid;
   /* A track the width it was given: see the note on \`column\` in pages.tsx. */
   grid-template-columns: minmax(0, 1fr);
@@ -276,11 +277,28 @@ function Control<S extends AnySchema>({
           </label>
         );
       }
+      // A day or a moment, typed as people say it or picked from a month (Roadmap f-date-inputs).
+      if (spec.control === "date") {
+        return (
+          <div data-graview-part="field" data-graview-field="date">
+            <span data-graview-part="label">{title}</span>
+            <WhenInput
+              name={spec.name}
+              label={words(spec.name).label}
+              required={!spec.optional}
+              value={typeof value === "string" && value !== "" ? value : undefined}
+              time={spec.time === true}
+              instant={spec.instant === true}
+              onChange={onChange}
+            />
+          </div>
+        );
+      }
       return (
         <label data-graview-part="field" data-graview-field={spec.control === "text" && spec.holds ? spec.holds : spec.control}>
           <span data-graview-part="label">{title}</span>
           <input
-            type={spec.control === "date" ? (spec.time ? "datetime-local" : "date") : spec.control === "text" && spec.holds === "phone" ? "tel" : "text"}
+            type={spec.control === "text" && spec.holds === "phone" ? "tel" : "text"}
             name={spec.name}
             required={!spec.optional}
             // Another app's address (FR-171): what it takes, said where it is typed.
@@ -289,7 +307,7 @@ function Control<S extends AnySchema>({
             {...(spec.control === "text" && spec.holds ? { placeholder: HOLDS[spec.holds] } : {})}
             {...(spec.control === "text" && spec.holds === "phone" ? { autoComplete: "tel" } : {})}
             // A day or a moment as a date box holds one: a moment kept with its seconds or zone shows its minute.
-            value={typeof value === "string" ? (spec.control === "date" ? (spec.time ? value.slice(0, 16).replace(" ", "T") : value.slice(0, 10)) : value) : typeof value === "number" ? String(value) : ""}
+            value={typeof value === "string" ? value : typeof value === "number" ? String(value) : ""}
             onChange={(event) => onChange(event.target.value)}
             data-graview-part="control"
           />
@@ -593,6 +611,29 @@ export function DerivedForm<S extends AnySchema>({
   const kept = seat ? keptArguments(store, seat, mutation, typeof subject === "string" ? subject : undefined) : undefined;
   const fields = formFields(mutation.input).filter((spec) => (only === undefined || only.includes(spec.name)) && !kept?.has(spec.name));
   const words: Words = (name) => argumentWords(store.schema, mutation, name);
+  /*
+   * AN END MOVES WITH ITS START (Roadmap f-date-inputs): a start typed or
+   * picked carries its end as far as it moved, and a first start puts an
+   * empty end an hour after it. The start it moved from is the last one
+   * that read as a day, so the words typed on the way ("tomorrow 9…") move
+   * nothing.
+   */
+  const pair = startAndEndOf(fields.filter((spec) => spec.control === "date").map((spec) => spec.name));
+  const lastStart = useRef<string | undefined>(undefined);
+  const set = (spec: FormField, next: unknown) =>
+    setValues((current) => {
+      const out = { ...current, [spec.name]: next };
+      if (pair && spec.name === pair.start && spec.control === "date") {
+        const given = (value: unknown) => (typeof value === "string" && value !== "" ? value : undefined);
+        const before = given(current[pair.start]) ?? lastStart.current;
+        if (given(next)) {
+          lastStart.current = given(next);
+          const end = endAfterStartMoved(before, given(next)!, given(current[pair.end]), { time: spec.time === true, instant: spec.instant === true });
+          if (end !== undefined) out[pair.end] = end;
+        }
+      }
+      return out;
+    });
 
   return (
     <form
@@ -621,7 +662,7 @@ export function DerivedForm<S extends AnySchema>({
           spec={spec}
           value={values[spec.name]}
           values={values}
-          onChange={(next) => setValues((current) => ({ ...current, [spec.name]: next }))}
+          onChange={(next) => set(spec, next)}
           prefilled={prefilled}
           open={open}
           words={words}

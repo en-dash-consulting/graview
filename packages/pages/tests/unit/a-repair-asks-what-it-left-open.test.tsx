@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { Repairs } from "../../src/index.js";
+import { prefetchWhenInput } from "@graview/primitives/pages";
 
 /**
  * A REPAIR ASKS WHAT IT LEFT OPEN, AND ONLY THAT. "Correct when Kerosene
@@ -52,6 +53,8 @@ describe("a repair that leaves one argument open, on the routed face", () => {
      */
     const stop = store.subscribe(() => draw());
     await act(async () => host.querySelector<HTMLButtonElement>("[data-graview-repair]")!.click());
+    // A date's editor is fetched as it is first asked for.
+    await act(async () => prefetchWhenInput());
     const inputs = [...host.querySelectorAll("input, select")].map((el) => el.getAttribute("name"));
     expect(inputs).toEqual(["released"]);
     expect(host.querySelector('button[type="submit"]')!.textContent).toBe("Correct when Kerosene came out");

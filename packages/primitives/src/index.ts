@@ -65,6 +65,9 @@ export type { LinkedPickerProps, LinkedRecordViewProps } from "./linked-record-d
 // How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.
 export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
 export type { RepeatPickerProps } from "./repeat-picker-door.js";
+// A day or a moment, typed as people say it ("tomorrow 3pm") or picked from a month: every date a person gives, fetched when first asked for (Roadmap f-date-inputs).
+export { prefetchWhenInput, WhenInput } from "./when-input-door.js";
+export type { WhenInputProps } from "./when-input-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 // The seat: an ask field at the picture's foot that grows into the conversation when asked.
 export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";

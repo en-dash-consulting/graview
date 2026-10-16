@@ -1,4 +1,5 @@
 import { defOf } from "../schema/zod.js";
+import { isMoment } from "../days.js";
 import { fileKindOf } from "../schema/files.js";
 import { typedFieldOf } from "../schema/typed-field-of.js";
 import { amountOf, type AmountMark } from "../schema/amount-mark.js";
@@ -34,7 +35,12 @@ export type ArgShape =
    * `YYYY-MM-DD` the act's own pattern refused — on every face, so the
    * workshop could not be made and the talk could not be given its slot.
    */
-  | { readonly type: "date"; readonly time?: true }
+  | {
+      readonly type: "date";
+      readonly time?: true;
+      /** A moment that names an instant (a document's `datetime`, `z.iso.datetime()`): typed on the reader's clock and kept in UTC with its `Z`. Without it, a time is kept as the wall time written. */
+      readonly instant?: true;
+    }
   /**
    * A number, and its range where it says one: `step` is what its values are
    * whole multiples of (FR-114), 1 for a whole number. `duration` where it is
@@ -82,7 +88,7 @@ const NUMBER_FORMAT_RANGES: Readonly<Record<string, readonly [number, number]>> 
   float64: [-Number.MAX_VALUE, Number.MAX_VALUE],
 };
 
-type CheckDef = { readonly check?: string; readonly value?: unknown; readonly inclusive?: boolean; readonly format?: string; readonly pattern?: unknown };
+type CheckDef = { readonly check?: string; readonly value?: unknown; readonly inclusive?: boolean; readonly format?: string; readonly pattern?: unknown; readonly fn?: unknown };
 const checksOf = (field: unknown): CheckDef[] =>
   (((field as { _zod?: { def?: { checks?: readonly { _zod?: { def?: CheckDef } }[] } } })?._zod?.def?.checks ?? []).map((check) => check._zod?.def).filter((def): def is CheckDef => def !== undefined));
 
@@ -142,6 +148,8 @@ export function describeArg(schema: unknown): ArgShape {
   }
 
   if (type === "string") {
+    // A moment that names an instant: a document's `datetime` (checked by `isMoment`) or zod's own ISO date and time.
+    if (checks.some((check) => check.fn === isMoment || check.format === "datetime") || def?.format === "datetime") return { type: "date", time: true, instant: true };
     // A date is a string with a date-shaped pattern. Recognizing it means
     // the interface offers a date picker instead of a free text box, which
     // is the difference between an action anyone can run and one only its

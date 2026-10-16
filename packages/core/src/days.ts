@@ -109,15 +109,21 @@ export function dayAsRead(day: string, locale?: string): string {
  * the reader's clock; written without one, it is the time on the wall it
  * was written for, said as written.
  */
-function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string | undefined): string {
+function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string | undefined, zone = false): string {
   if (!ISO_MOMENT.test(at)) return at;
   const zoned = /[Z+-][\d:]*$/.test(at.slice(16));
   const stamp = Date.parse(at.replace(" ", "T") + (zoned ? "" : "Z"));
-  return Number.isNaN(stamp) ? at : said(stamp, { ...options, hour: "numeric", minute: "2-digit", ...(zoned ? {} : { timeZone: UTC }) }, locale);
+  return Number.isNaN(stamp) ? at : said(stamp, { ...options, hour: "numeric", minute: "2-digit", ...(zoned ? (zone ? { timeZoneName: "short" } : {}) : { timeZone: UTC }) }, locale);
 }
 
-/** A moment as a person reads it: "Sep 10, 2023, 3:30 PM" (en-US), "10 Sep 2023, 15:30" (en-GB). Anything else is said as it is. */
-export const momentAsRead = (at: string, locale?: string): string => moment(at, { year: "numeric", month: "short", day: "numeric" }, locale);
+/**
+ * A moment as a person reads it: "Sep 10, 2023, 3:30 PM" (en-US), "10 Sep
+ * 2023, 15:30" (en-GB). An instant is said on the reader's clock with the
+ * zone it is said in — "Oct 17, 2026, 3:00 PM EDT" — since the same words
+ * name another moment to a reader elsewhere (Roadmap f-date-inputs).
+ * Anything else is said as it is.
+ */
+export const momentAsRead = (at: string, locale?: string): string => moment(at, { year: "numeric", month: "short", day: "numeric" }, locale, true);
 
 /** A moment's time of day: "3:30 PM" (en-US), "15:30" (en-GB). Anything that is not a moment is said as it is. */
 export const timeAsRead = (at: string, locale?: string): string => moment(at, {}, locale);
