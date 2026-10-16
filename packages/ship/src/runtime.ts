@@ -10,6 +10,9 @@
  */
 export { createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE } from "./handler.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
+// Notify me (Roadmap f-notify-subscriptions): the wire's route, and its client.
+export { answerSubscriptions, remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./subscriptions.js";
+export type { RemoteSubscriptionsOptions, SubscriptionsAnswer, SubscriptionsPost } from "./subscriptions.js";
 export { announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, wireRefusalOf } from "./live-protocol.js";
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
 export { openStore } from "./open-store.js";

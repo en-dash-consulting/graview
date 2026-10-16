@@ -20,6 +20,8 @@ export interface MenuTarget {
   readonly place?: string | undefined;
   /** The address it landed on, when that was a link. */
   readonly href?: string | undefined;
+  /** The act it landed on — a record's "What can be done", a list's way to begin one — by its declared name. */
+  readonly act?: string | undefined;
   /** The element it was opened from, which the keyboard goes back to. */
   readonly element?: HTMLElement | null | undefined;
 }

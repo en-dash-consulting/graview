@@ -25,6 +25,7 @@ import {
   type RefCandidate,
   type RefusalReason,
   type Store,
+  type SubscriptionStore,
   type Violation,
 } from "@graview/core";
 import { answerSeenBy } from "@graview/core/seat";
@@ -32,6 +33,7 @@ import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/
 import { search, type SearchRanker } from "@graview/core/search";
 import { argumentsNeverShown, mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
 import { authorship, markHits } from "./untrusted.js";
+import { SUBSCRIPTION_TOOLS } from "./subscription-tools.js";
 import { READ_HITS } from "./bounds.js";
 import {
   deriveAffordances,
@@ -95,6 +97,9 @@ const drafter = lazily(() => import("../draft.js"));
 
 /* One act on several records, fetched when a seat first does one. A literal specifier, as above. */
 const several = lazily(() => import("../several.js"));
+
+/* Notify me (Roadmap f-notify-subscriptions), fetched with a seat's first subscribe, unsubscribe or list. A literal specifier, as above. */
+const subscribing = lazily(() => import("./subscribe-run.js"));
 
 /**
  * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).
@@ -228,6 +233,19 @@ export interface ToolRuntimeOptions<S extends AnySchema> {
    * answers through, as this seat. Unsaid, it says this host reads no other app.
    */
   readonly linked?: LinkedRecords;
+  /**
+   * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): given, the
+   * seat lists `subscribe`, `unsubscribe` and `list_subscriptions`, which
+   * keep its person's subscriptions here — the same store the menu's sheet
+   * and Activity's list keep them in. Unsaid, none of them is listed.
+   */
+  readonly subscriptions?: SubscriptionStore;
+  /**
+   * WHOSE SUBSCRIPTIONS THEY ARE: the person at the keyboard the seat sits
+   * with — a chat in a page, whose agent acts for nobody in the log. Unsaid,
+   * the person the seat acts for (`onBehalfOf`), else the seat itself.
+   */
+  readonly subscriber?: Principal;
 }
 
 /** Whether an app has a relation to another app's kind. */
@@ -627,7 +645,7 @@ export interface ToolRuntime<S extends AnySchema> {
 /** Said on every act whose arguments name records: a name is resolved as well as an id (FR-33). */
 export const BY_NAME = "An argument that names a record takes its id or its name.";
 
-const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name];
+const READ_NAMES: readonly string[] = [...READ_TOOLS.map((tool) => tool.name), ACT_ON_SEVERAL.name, DRAFT_VIEW.name, KEEP_LENS.name, FIND_LINKED.name, ...SUBSCRIPTION_TOOLS.map((tool) => tool.name)];
 const MAX_NAME = 64;
 
 /**
@@ -749,9 +767,11 @@ function surfaceOf(
   kept: (act: AnyMutationDefinition) => ReadonlySet<string>,
   /** Whether the app links another app's records (FR-171): `find_linked` is listed. */
   links = false,
+  /** Whether the host keeps subscriptions: `subscribe`, `unsubscribe` and `list_subscriptions` are listed. */
+  subscribes = false,
 ): { readonly definitions: readonly ToolDefinition[]; readonly names: ReadonlyMap<string, string> } {
   const names = toolNames(acts.map((act) => act.name));
-  const drawing = [...draftTools(drafts, readOnly), ...(links ? [FIND_LINKED] : [])];
+  const drawing = [...draftTools(drafts, readOnly), ...(links ? [FIND_LINKED] : []), ...(subscribes ? SUBSCRIPTION_TOOLS : [])];
   const definitions = readOnly
     ? [...READ_TOOLS.filter((tool) => !tool.mutating), ...drawing]
     : [...READ_TOOLS, ACT_ON_SEVERAL, ...drawing, ...acts.filter((act) => permitted.has(act.name)).map((act) => actTool(act, names.get(act.name)!, kept(act)))];
@@ -765,6 +785,8 @@ export interface ToolDefinitionsOptions {
   readonly enabledModules?: readonly string[];
   /** List `draft_view` ("draw"), or it and `keep_lens` ("keep"), as a runtime given `drafts` (with `drafts.keep`) lists them. */
   readonly drafts?: "draw" | "keep";
+  /** List `subscribe`, `unsubscribe` and `list_subscriptions`, as a runtime given `subscriptions` lists them. */
+  readonly subscriptions?: boolean;
 }
 
 /**
@@ -795,7 +817,7 @@ export function toolDefinitions<S extends AnySchema>(
       .filter((act) => act.derived !== undefined && permits(app.policy, principal, act.name, act.derived.kind, derivedVia(app.schema as AnySchema, every as never, act as never)).ok)
       .map((act) => act.name),
   ]);
-  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema));
+  const { definitions } = surfaceOf(acts, permitted, options.readOnly === true, options.drafts, (act) => argumentsNeverShown(app.schema as AnySchema, app.policy, principal, act as never), linksAnotherApp(app.schema as AnySchema), options.subscriptions === true);
   return { definitions, hash: surfaceHash(definitions) };
 }
 
@@ -830,6 +852,7 @@ export function createToolRuntime<S extends AnySchema>(
     options.drafts ? (options.drafts.keep ? "keep" : "draw") : undefined,
     (act) => argumentsNeverShown(store.schema as AnySchema, store.policy, principal, act as never),
     linksAnotherApp(store.schema as AnySchema),
+    options.subscriptions !== undefined,
   );
   const hash = surfaceHash(definitions);
   /** A tool's name, or an act's declared one, as the act it runs. */
@@ -1093,6 +1116,19 @@ export function createToolRuntime<S extends AnySchema>(
             },
             ...(seenResult ? { diff: seenResult.diff } : {}),
           };
+        }
+
+        case "subscribe":
+        case "unsubscribe":
+        case "list_subscriptions": {
+          // Kept for the person this seat acts for, judged as they see the app (Roadmap f-notify-subscriptions).
+          const answer = await (await subscribing()).runSubscriptionTool(definition.name, args, {
+            store: store as unknown as Store<AnySchema>,
+            principal: options.subscriber ?? principal,
+            app: options.app?.name ?? "app",
+            subscriptions: options.subscriptions!,
+          });
+          return answer.ok ? { ok: true, data: answer.data } : { ok: false, error: answer.error };
         }
 
         case "list_suggestions": {

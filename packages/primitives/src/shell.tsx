@@ -23,6 +23,7 @@ import { useViewportHeight } from "./primitives/measure.js";
 import { ResolveAppContext } from "./resolve-app-context.js";
 import { FirstLookDoor, type FirstLook } from "./first-look-door.js";
 import { GhostDoor, InlineAiSections } from "./inline-ai-door.js";
+import { NotifyDoor, NotifySections } from "./notify-door.js";
 
 /**
  * The shell: everything an application's window holds that is not about
@@ -287,10 +288,14 @@ export function Shell<S extends AnySchema>({
         {/* What is chosen from altitude — a lens, a record's links, a district — beside the map, at a size a person reads. */}
         <MapPanel<S> />
         {/* The acts at the pointer: right-click, or the acts key on a card, is the context menu. */}
-        {/* The acts at the pointer, and the inline AI's part of the menu where the host gave a model. */}
-        <InlineAiSections>
-          <Inspector placement="menu" />
-        </InlineAiSections>
+        {/* The acts at the pointer, the inline AI's part of the menu where the host gave a model, and "Notify me…" (Roadmap f-notify-subscriptions). */}
+        <NotifySections>
+          <InlineAiSections>
+            <Inspector placement="menu" />
+          </InlineAiSections>
+        </NotifySections>
+        {/* The sheet "Notify me…" opens, already filled in. */}
+        <NotifyDoor />
         {/* What the inline AI proposed and has not made: Accept, Accept some, Dismiss, then its undo. */}
         <GhostDoor />
         {/* After an act, the way back on the board, and ⌘Z (FR-153): as on the pages. */}

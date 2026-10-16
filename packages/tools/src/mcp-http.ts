@@ -39,6 +39,8 @@ export interface McpHttpOptions<S extends AnySchema> {
   readonly near?: ToolRuntimeOptions<S>["near"];
   /** The app `describe_place` describes: its home, lenses, views and arrangement (FR-89). */
   readonly app?: ToolRuntimeOptions<S>["app"];
+  /** Where the host keeps "Notify me" (Roadmap f-notify-subscriptions): given, a chat can `subscribe`, `unsubscribe` and `list_subscriptions` for its person. */
+  readonly subscriptions?: ToolRuntimeOptions<S>["subscriptions"];
   /** What a refused request's `WWW-Authenticate` says, e.g. `Bearer resource_metadata="…"`. `Bearer` when unsaid. */
   readonly challenge?: string;
   /**
@@ -107,6 +109,7 @@ export function createMcpHttpHandler<S extends AnySchema>(options: McpHttpOption
       ...(options.derive ? { derive: options.derive } : {}),
       ...(options.near ? { near: options.near } : {}),
       ...(options.app ? { app: options.app } : {}),
+      ...(options.subscriptions ? { subscriptions: options.subscriptions } : {}),
     });
     const adapter = createMcpAdapter(runtime);
     const told = async (message: JsonRpcRequest): Promise<void> => {

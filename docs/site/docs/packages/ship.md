@@ -45,9 +45,22 @@ Every route `serveStore` answers is `WIRE`, exported from the package and pinned
 | POST | `/graview/here` | say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under |
 | GET | `/graview/who` | who is here right now |
 | POST | `/graview/leave` | say you have gone — only ever yourself |
+| GET | `/graview/subscriptions` | the asking seat's own subscriptions (Notify me); POST `{ add: { when, alsoMine? } }` keeps one for the seat's person, `{ remove: id }` takes one of theirs away; 400 with a sentence when it could never be told anything, 403 for a seat with no id |
 | GET | `/graview/live` | the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request |
 
 Who is asking is the host's to say: `serveStore({ seatOf })` reads its own credential from the `Request` and returns the principal every call is judged under, or a promise of it. The framework's clients also send the seat as headers (`SEAT_HEADERS`: who, as what, by what name, and for whom), and a store believes them only when told to — `serveStore({ trustSeatHeaders: true })`, which `graview serve` sets for a server on 127.0.0.1 and says so. A store with neither answers 401 on every route but health. Whatever a host asks for rides along: `openRemote({ headers })` sends them with every request, and the framework never reads them. What a call came through (`via`: `web`, `api`, `mcp:Claude`), recorded on the op, is the host's word too: `viaOf(request, seat)` says it, or `SEAT_HEADERS.via` where the seat headers are trusted (`openRemote({ via })` sends it, `mcp` and `cli` from the commands). A `via` in a call's body or message is a claim, never read on its own: `openRemote` sends the one a call was applied with (a guest view applies with `view:<name>`), and `liveProtocol({ viaOf: (peer, claimed) => … })` lets a host judge it — asked of every change, it answers the via to record, and nothing keeps the host's own. Without any of these, a socket's calls are `web` and an HTTP call's `api`. `openRemote(...).settled()` resolves once every call sent so far has been answered — a browser never waits for it; a host that must report the server's verdict before it exits does.
+
+### Notify me
+
+A person subscribes once — from the context menu, a record's page, after an act's form, or from a chat (`subscribe`) — to an act running, a record of a kind added, a kind or one record changed, or a record reaching a condition in the app's rule language. The handler keeps them in `subscriptions` (any `SubscriptionStore`: `{ list, add, remove, onChange? }`; in memory when unsaid), serves each seat its own at `/graview/subscriptions`, and judges every commit against them as each subscriber may see it (`matchSubscriptions` from `@graview/core/subscriptions`): `onSubscriptionMatch(match)` is called once per batch per subscription that matched — never for a change to a record the subscriber cannot see, nor, unless they asked, for their own. Delivery (an email, a push) is the host's. `graview serve` keeps them in `subscriptions.json` beside the store (`fileSubscriptions`), which `graview mcp` on the same store writes too, and says each match on its output. A page reaches a served store's with `remoteSubscriptions({ url, principal })` from `@graview/ship/browser`, handed to the provider as `subscriptions`.
+
+```ts
+createStoreHandler({
+  app, adapter, seatOf,
+  subscriptions: myUsersSubscriptions,           // the host's own storage
+  onSubscriptionMatch: (match) => sendEmail(match.subscription.who, match.said, match.records),
+});
+```
 
 ### The live wire
 
@@ -194,11 +207,11 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 
 Anything **one** deployment needs lives here. Anything only the **operator of many** deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the `graview-cloud` repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.
 
-## What it exports (69)
+## What it exports (74)
 
 Read off the package's own barrel, so this is what is there today.
 
-`announcePresence`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `filesAt`, `forgetFreshParam`, `freshHref`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `sayHeld`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `syncSeed`, `visitorPresence`, `WIRE`, `wireRefusalOf`
+`announcePresence`, `answerSubscriptions`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `filesAt`, `fileSubscriptions`, `forgetFreshParam`, `freshHref`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `sayHeld`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `visitorPresence`, `WIRE`, `wireRefusalOf`
 
 ---
 

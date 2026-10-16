@@ -836,6 +836,8 @@ function Beginning({ name, title, description, open: opening, children }: { read
         ref={button}
         type="button"
         data-testid={`act-open-${name}`}
+        // The act it begins, so a right-click on it can offer "Notify me when someone does this" (Roadmap f-notify-subscriptions).
+        data-graview-act={name}
         aria-expanded={open}
         aria-controls={id}
         onClick={() => {

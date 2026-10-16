@@ -28,6 +28,8 @@ A served store sends a seat only what it sees, withholds the rest of the log in 
 
 1. **Edit it as a document.** `add-sight` and `remove-sight` take `hide` and `fields` like any other key; a field none of the sight's kinds has is refused (`sight-field`).
 
+1. **A notification is a read too.** "Notify me" (`@graview/core/subscriptions`) judges each commit as the subscriber's seat: a change to a record they cannot see never matches, a field kept from them is neither said in the match nor read by its condition, and a change withheld from them says "Someone". Prove it as above: `matchSubscriptions(store, ops, [sub])` for a world with the hidden record answers `[]` (`packages/core/tests/unit/a-subscription-is-told-what-its-subscriber-may-see.test.ts`).
+
 ### Then find out whether it worked
 
 ```sh

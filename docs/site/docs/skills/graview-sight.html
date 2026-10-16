@@ -1454,6 +1454,9 @@ main.page > section.tour-intro { padding-top: 64px; }
 <ol>
 <li><strong>Edit it as a document.</strong> <code>add-sight</code> and <code>remove-sight</code> take <code>hide</code> and <code>fields</code> like any other key; a field none of the sight's kinds has is refused (<code>sight-field</code>).</li>
 </ol>
+<ol>
+<li><strong>A notification is a read too.</strong> "Notify me" (<code>@graview/core/subscriptions</code>) judges each commit as the subscriber's seat: a change to a record they cannot see never matches, a field kept from them is neither said in the match nor read by its condition, and a change withheld from them says "Someone". Prove it as above: <code>matchSubscriptions(store, ops, [sub])</code> for a world with the hidden record answers <code>[]</code> (<code>packages/core/tests/unit/a-subscription-is-told-what-its-subscriber-may-see.test.ts</code>).</li>
+</ol>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build &amp;&amp; npx graview check ./dist/domain/app.js</code></pre></div>
 <ul>

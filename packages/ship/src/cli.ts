@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
 import { readSnapshot } from "@graview/core/snapshot";
 import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter } from "./file-adapter.js";
+import { fileSubscriptions } from "./file-subscriptions.js";
 import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
@@ -118,6 +119,17 @@ export async function backendFrom(argv: readonly string[], cwd = process.cwd()):
   return { adapter: createFileAdapter(data), where: data, holdFile: holdFileOf(data, "folder"), ...(seed ? { seed } : {}) };
 }
 
+/**
+ * WHERE "NOTIFY ME" IS KEPT FOR A STORE ON DISK (Roadmap
+ * f-notify-subscriptions): `subscriptions.json` in the app's own folder of
+ * a data directory, or beside a SQLite file — the one file `graview serve`
+ * and `graview mcp` on the same store both read.
+ */
+export function subscriptionsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
+  const root = (backend.adapter as { root?: string }).root;
+  return root !== undefined ? join(root, scope, "subscriptions.json") : `${backend.where}.subscriptions.json`;
+}
+
 /** A seed file in either snapshot format: the line format with its header, or an old `{ nodes, edges }`. */
 function readSeed(file: string): GraphSnapshot {
   try {
@@ -176,6 +188,11 @@ export async function serve(argv: readonly string[]): Promise<number> {
     host,
     trustSeatHeaders: trust.trust,
     where: backend.where,
+    // Notify me: kept beside the store, and each match said here, where a host would deliver it.
+    subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
+    onSubscriptionMatch: (match) => {
+      process.stdout.write(`graview serve: notify ${match.subscription.who.name ?? match.subscription.who.id}: ${match.said}\n`);
+    },
   });
   hold.serving(served.url);
 

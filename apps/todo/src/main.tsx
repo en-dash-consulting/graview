@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { PagesApp } from "@graview/pages";
 import { aiThroughDevServer, type HostAi } from "@graview/tools";
 import { filesAt } from "@graview/ship/browser";
+import { memorySubscriptions, type SubscriptionMatch } from "@graview/core";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
@@ -111,6 +112,28 @@ const ai =
 const files = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? filesAt("/__graview/files", { maxBytes: 10_000_000, kinds: ["image/*", "application/pdf", "text/plain"] }) : undefined;
 
 /*
+ * NOTIFY ME (Roadmap f-notify-subscriptions). Things keeps a reader's
+ * subscriptions in this page and is its own host's hook: each batch
+ * somebody else commits that a subscription asked about — judged as its
+ * subscriber may see it — is said once, here in the console, where Graview
+ * Cloud sends an email or a push. A served app gives the hook to its server
+ * instead (`createStoreHandler`'s `onSubscriptionMatch`). The matcher is
+ * fetched once the page is up; a harness reads what it was told as
+ * `__notified`.
+ */
+const subscriptions = memorySubscriptions();
+void import("@graview/core/subscriptions").then(({ watchSubscriptions }) =>
+  watchSubscriptions(opened.store, {
+    subscriptions,
+    app: todoApp.name,
+    onSubscriptionMatch: (match) => {
+      ((window as unknown as { __notified?: SubscriptionMatch[] }).__notified ??= []).push(match);
+      console.info(`Notify ${match.subscription.who.name ?? match.subscription.who.id}: ${match.said}`);
+    },
+  }),
+);
+
+/*
  * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
  * its view state); the routed face lives under "/pages" on ordinary paths.
  * Same store machinery, same ids — a record page links to its spatial stop
@@ -144,6 +167,7 @@ if (window.location.pathname.startsWith("/pages")) {
         ...(presence ? { presence } : {}),
         ...(ai ? { ai } : {}),
         ...(files ? { files } : {}),
+        subscriptions,
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is
@@ -163,6 +187,7 @@ if (window.location.pathname.startsWith("/pages")) {
       presence={presence}
       {...(ai ? { ai } : {})}
       {...(files ? { files } : {})}
+      subscriptions={subscriptions}
       syncUrl
       renderer="auto"
       initialScheme={scheme}

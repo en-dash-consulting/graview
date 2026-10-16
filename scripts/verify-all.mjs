@@ -69,6 +69,8 @@ const CHAIN = [
   ["menu", "verify-menu.mjs"],
   // The inline AI: suggestions from the catalog in the context menu, a ghost accepted in part as one batch with its undo, a panel kept as a lens, each interaction once in Activity and on its record's page, a host's stored entries, and nothing of it with AI off — on both faces.
   ["inline-ai", "verify-inline-ai.mjs"],
+  // Notify me in two presses: from a right-click on a record in the scene, a kind's list and an act on the routed face, listed in Activity with one press to stop, somebody else's change told once and the reader's own not, and offered after an act's form.
+  ["notify", "verify-notify.mjs"],
   // The seat as a guide: a quiet field that grows into a conversation, on both faces, in three engines.
   ["seat-guide", "verify-seat-guide.mjs"],
   // The seat takes you where you ask and draws a view kept as a lens, on both faces and Cloud's workshop, in three engines.

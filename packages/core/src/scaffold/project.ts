@@ -472,6 +472,7 @@ export default defineConfig({
       "@graview/core/linked": framework("core/src/linked.ts"),
       "@graview/core/tidying": framework("core/src/tidying.ts"),
       "@graview/core/catalog": framework("core/src/catalog.ts"),
+      "@graview/core/subscriptions": framework("core/src/subscriptions.ts"),
       "@graview/core/forms": framework("core/src/forms.ts"),
       "@graview/core/lines": framework("core/src/lines.ts"),
       "@graview/core/json-schema": framework("core/src/json-schema.ts"),

@@ -50,6 +50,7 @@ describe("the wire", () => {
       "/graview/here",
       "/graview/who",
       "/graview/leave",
+      "/graview/subscriptions",
       "/graview/live",
     ]);
     for (const route of WIRE) {

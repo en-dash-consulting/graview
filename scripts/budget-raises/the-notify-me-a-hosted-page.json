@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 864,
+  "gzipped": 330,
+  "changeset": "notify-me-when-something-happens.md",
+  "note": "Raised when Notify me came (Roadmap f-notify-subscriptions): the provider keeps the reader's subscriptions (the host's store, else `memorySubscriptions` in the page) and a menu target says the act it was opened on; the menu's row, the sheet and Activity's list are behind their doors, the matcher on `@graview/core/subscriptions`. Measured at 569_696 / 197_671 against 568_832 / 197_341 before."
+}

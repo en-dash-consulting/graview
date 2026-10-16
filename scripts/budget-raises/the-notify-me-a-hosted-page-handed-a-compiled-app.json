@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 864,
+  "gzipped": 320,
+  "changeset": "notify-me-when-something-happens.md",
+  "note": "Raised when Notify me came (Roadmap f-notify-subscriptions): the same store on the provider as the page that compiles. Measured at 522_703 / 181_082 against 521_839 / 180_762 before."
+}

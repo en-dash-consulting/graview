@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration } from "@graview/core";
+import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SubscriptionStore } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -122,6 +122,12 @@ export interface PageContext<S extends AnySchema> {
    * answers alone, and an open question is told AI isn't on here.
    */
   readonly ai?: HostAi;
+  /**
+   * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions), for the
+   * provider under the pages when `views` is given: the host's store, else
+   * the provider's around the face, else the page's own memory.
+   */
+  readonly subscriptions?: SubscriptionStore;
   /**
    * THE ASK FIELD at the foot of every page: `"field"`, the default, or
    * `"hidden"` for none — the same setting the scene's `ask` reads, so one

@@ -19,6 +19,7 @@ import * as linked from "../../src/linked.js";
 import * as scene from "../../src/scene.js";
 import * as search from "../../src/search.js";
 import * as seat from "../../src/seat.js";
+import * as subscriptions from "../../src/subscriptions.js";
 import * as words from "../../src/words.js";
 import * as markdown from "../../src/markdown.js";
 import * as navigate from "../../src/navigate.js";
@@ -63,6 +64,8 @@ const OFF_THE_PAGE = {
   "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "beginning", "placesFrom", "placesOf"] },
   // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
+  // Roadmap f-notify-subscriptions: what a person asked to be told of, matched against a commit under their sight — the host's and a sheet's, fetched when somebody first subscribes.
+  "@graview/core/subscriptions": { from: subscriptions, names: ["matchSubscriptions", "subscriptionProblem", "subscriptionWords", "watchSubscriptions"] },
   "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {

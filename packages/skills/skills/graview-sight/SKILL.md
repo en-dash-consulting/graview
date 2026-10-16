@@ -73,6 +73,14 @@ to remember.
    and `fields` like any other key; a field none of the sight's kinds has
    is refused (`sight-field`).
 
+5. **A notification is a read too.** "Notify me" (`@graview/core/subscriptions`)
+   judges each commit as the subscriber's seat: a change to a record they
+   cannot see never matches, a field kept from them is neither said in the
+   match nor read by its condition, and a change withheld from them says
+   "Someone". Prove it as above: `matchSubscriptions(store, ops, [sub])`
+   for a world with the hidden record answers `[]`
+   (`packages/core/tests/unit/a-subscription-is-told-what-its-subscriber-may-see.test.ts`).
+
 ## Then find out whether it worked
 
 ```sh

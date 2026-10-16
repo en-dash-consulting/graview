@@ -8,6 +8,7 @@ import type { ToolCall } from "@graview/tools";
 import { Suspense, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
 import { nameOf } from "./answer-args.js";
+import { NotifiedDoor, useNotifiedCount } from "../notify-door.js";
 import { useInteractions, type ActivityShows } from "./ai-feed.js";
 import type { AiInteraction } from "@graview/core/catalog";
 import { retryingImport } from "@graview/core/retry";
@@ -444,6 +445,8 @@ export function ActivityRail({
   /* Named from now's records, whichever moment the face draws (Roadmap f-playback). */
   const store = useLiveStore(shown, principal);
   const running = calls.some((call) => call.phase === "running");
+  // Somebody told of changes has Activity to open, though nothing has changed yet.
+  const notified = useNotifiedCount();
 
   /*
    * A POPOVER FROM THE BAR, not a rail pinned over the scene.
@@ -462,7 +465,7 @@ export function ActivityRail({
   /* Only a record still in the graph goes anywhere; the popover closes behind the reader as they go, and going there is going to it now, not as it was. */
   const goes = (id: string) => (store.graph.has(id) ? (to: string) => { popover.setOpen(false); if (playback?.past) playback.show(null); goTo.record(to); } : null);
 
-  if (seat === undefined && calls.length === 0 && recent.length === 0 && interactions.length === 0 && !remembers) return null;
+  if (seat === undefined && calls.length === 0 && recent.length === 0 && interactions.length === 0 && !remembers && notified === 0) return null;
 
   return (
     <div style={{ position: "relative" }}>
@@ -702,6 +705,8 @@ export function ActivityRail({
               )}
             </ol>
           ) : null}
+          {/* WHAT THE READER IS TOLD OF (Roadmap f-notify-subscriptions), each with one press to stop. */}
+          <NotifiedDoor style={{ paddingTop: 8, borderTop: "1px solid var(--graview-edge)" }} />
           {remembers ? (
             <div
               data-testid="remembered"

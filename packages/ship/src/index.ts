@@ -34,12 +34,16 @@ export type { LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, Rem
 export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, liveSubprotocol, REFUSAL_REASONS } from "./live.js";
 export type { Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal } from "./live.js";
 export { createStoreHandler, presenceSeenBy } from "./handler.js";
+// Notify me (Roadmap f-notify-subscriptions): the wire's route, its client, and the file `graview serve` keeps them in.
+export { answerSubscriptions, remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./subscriptions.js";
+export type { RemoteSubscriptionsOptions, SubscriptionsAnswer, SubscriptionsPost } from "./subscriptions.js";
+export { fileSubscriptions } from "./file-subscriptions.js";
 export type { AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions } from "./handler.js";
 export { announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, wireRefusalOf } from "./live-protocol.js";
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
 export { SEAT_HEADERS, seatFromHeaders, serveStore, WIRE } from "./serve.js";
 export type { ServeOptions, ServedStore } from "./serve.js";
-export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, syncSeed } from "./cli.js";
+export { backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, subscriptionsFileOf, syncSeed } from "./cli.js";
 export { heldBy, holdFileOf, holdStore, sayHeld } from "./store-hold.js";
 export type { StoreHold, StoreHolder } from "./store-hold.js";
 export type { PreviewPage } from "./cli.js";
