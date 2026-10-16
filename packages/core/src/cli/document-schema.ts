@@ -1,4 +1,5 @@
 import * as z from "../schema/zod.js";
+import { ConnectionSpec } from "../document/connection-spec.js";
 import { DocumentSpec, FieldSpec, KindSpec } from "../document/schema.js";
 import { BLOCK_KEYS, FIGURE_EMPHASES, FIGURE_FORMATS, LIST_AS, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_SLOTS, VIEW_TONES } from "../document/views.js";
 import { SHIPPED_LENSES, SHIPPED_LENS_NAMES } from "../places.js";
@@ -81,6 +82,14 @@ export function documentJsonSchema(version: string): Json {
         blocks("The home view's blocks (under `home`)."),
       ],
     },
+  };
+  // A connection is read loosely by the compiler and judged by the checker (`connection-findings.ts`): its whole shape, said here for an editor.
+  const { $schema: _connection, ...connection } = z.toJSONSchema(ConnectionSpec, { io: "input", unrepresentable: "any" }) as Json;
+  properties["connections"] = {
+    description: "Other systems this app is kept in step with, by name: today, Google calendars. `graview serve` and `graview preview` run them, with credentials from the environment; none is ever written here.",
+    type: "object",
+    propertyNames: at(properties, "connections", "propertyNames"),
+    additionalProperties: connection,
   };
   rest["$defs"] = { ...((rest["$defs"] as Json | undefined) ?? {}), ...blockDefs() };
   return {

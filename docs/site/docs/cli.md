@@ -108,7 +108,7 @@ Writes a lens that compiles: the role check that fails loudly, the createXLens f
 graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
 ```
 
-[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the document declares, unless --as or --roles say who.
+[--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync] Serves the store and Graview's own faces over it — the scene and Pages, with the bar — so a document and a snapshot can be looked at with no product. Nothing to build or install: the page ships with graview. The store is in memory unless --data or --sqlite name where to keep it; the page sits as a person holding every role the document declares, unless --as or --roles say who. Its connections run as serve's do, unless --no-sync.
 
 ## graview serve
 
@@ -116,10 +116,13 @@ graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
 graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
 
     --trust-seat-headers says the network in front of it can be trusted.
+    The app's declared connections (a Google calendar) run beside it, with
+    credentials from the environment and their cursors beside the data;
+    --no-sync leaves them off.
 
 ```
 
-[--host <address>] [--trust-seat-headers] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it; on any other --host it will not start unless
+[--host <address>] [--trust-seat-headers] [--no-sync] Serves the app's store over HTTP, and live over a WebSocket at /graview/live. The op log is the wire: a client sends calls, the store judges them under the caller's own seat, and the ops come back, pushed to every socket as they land. Data lives in <dir> (default ./data) as readable JSON, or in a SQLite file with --sqlite. It listens on 127.0.0.1 and believes the seat a request names in its headers, because only this machine can reach it; on any other --host it will not start unless
 
 ## graview shots
 

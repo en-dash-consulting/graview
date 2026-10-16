@@ -99,7 +99,10 @@ Everything a Graview app declares, and the checker that verifies it.
   against a real test calendar (credentials from
   `~/.graview-google-test.env`, made once by
   `scripts/google-calendar-once.mjs`; `scripts/calendar-sync-demo.mjs` is
-  the same by hand).
+  the same by hand). A document declares one as `connections.<name>` —
+  calendar, kind and fields, a color or tag filter, `read` or `both`, the
+  conflict policy — judged by `graview check` and run by `graview serve`
+  and `graview preview`; `connection(…)` builds its engine for any host.
 - **A spreadsheet brought in** — `@graview/core/import`: `importRows(store,
   kind, rows, mapping, { by })` reads each cell by its field's type, links a
   cell to a record by its name, keeps every row that fits as one undoable

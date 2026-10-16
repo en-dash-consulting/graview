@@ -25,5 +25,18 @@
     "meeting": {
       "card": [{ "title": "{name}" }, { "field": "starts" }, { "field": "ends" }, { "field": "where" }]
     }
+  },
+  "connections": {
+    "calendar": {
+      "system": "google-calendar",
+      "description": "The Google test calendar, kept in step both ways.",
+      "calendar": { "env": "GOOGLE_TEST_CALENDAR_ID" },
+      "auth": { "env": "GOOGLE", "file": "~/.graview-google-test.env" },
+      "kind": "meeting",
+      "fields": { "summary": "name", "start": "starts", "end": "ends", "location": "where", "description": "notes" },
+      "direction": "both",
+      "conflicts": "theirs",
+      "every": 4
+    }
   }
 }

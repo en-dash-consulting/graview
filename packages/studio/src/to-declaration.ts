@@ -530,6 +530,10 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     ...(base?.intelligence ? { intelligence: base.intelligence } : {}),
     ...(base?.version !== undefined ? { version: base.version } : {}),
     ...(base?.migrations ? { migrations: base.migrations } : {}),
+    // The connections are carried, not edited here yet: a renamed kind's calendar follows it.
+    ...(base?.connections
+      ? { connections: Object.fromEntries(Object.entries(base.connections).map(([key, connection]) => [key, { ...connection, kind: follow(connection.kind) }])) }
+      : {}),
   };
 }
 

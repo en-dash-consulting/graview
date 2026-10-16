@@ -202,16 +202,17 @@ A third party stands up their own host — a file store or SQLite, `graview serv
 | Default content moving | `seedSteps`, `applySteps`, `graview sync-seed` | when to run it, and for whom |
 | An agent attaching | `graview mcp`, `graview apply`, `--remote-url`, `--header` | issuing the keys those headers carry |
 | Schema moving | `version`, `migrations[]`, `graview check` | fleet upgrades |
+| Another system kept in step | `connections` in the declaration, `runConnections` (`graview serve`, `graview preview`; `--no-sync`) | each workspace's tokens, through `token({ connection, refresh })`, and where the engines' state is kept |
 
 ### The boundary
 
 Anything **one** deployment needs lives here. Anything only the **operator of many** deployments needs — tenancy, provisioning, deploy-to-URL, billing, fleet upgrades, the builder UX — lives in the `graview-cloud` repo, which consumes this package the way any customer would. If Cloud ever needs a private hook into the framework, that hook is a missing public seam to fix here first.
 
-## What it exports (74)
+## What it exports (80)
 
 Read off the package's own barrel, so this is what is there today.
 
-`announcePresence`, `answerSubscriptions`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `filesAt`, `fileSubscriptions`, `forgetFreshParam`, `freshHref`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `sayHeld`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `visitorPresence`, `WIRE`, `wireRefusalOf`
+`announcePresence`, `answerSubscriptions`, `applySteps`, `applyToSnapshot`, `assertBundle`, `assertPhotoFits`, `authoredBy`, `backendFrom`, `browserStartsFresh`, `conflictSentence`, `connectionsFileOf`, `contentOperation`, `countSteps`, `createBroadcastPresence`, `createBrowserAdapter`, `createFileAdapter`, `createStoreHandler`, `exportBundle`, `fileConnectionState`, `filesAt`, `fileSubscriptions`, `forgetFreshParam`, `freshHref`, `GOOGLE_TOKEN_URL`, `health`, `heldBy`, `holdBackend`, `holdFileOf`, `holdStore`, `isClientBatch`, `LIVE_PATH`, `LIVE_SUBPROTOCOL`, `LIVE_WIRE`, `liveProtocol`, `liveSubprotocol`, `migrateSnapshot`, `openRemote`, `openStore`, `pendingMigrations`, `PHOTO_BUDGET_BYTES`, `PHOTO_MAX_BYTES`, `photosUsed`, `PhotoTooLarge`, `presenceChannelName`, `presenceFrom`, `presenceSeenBy`, `preview`, `previewPrincipal`, `primitivesFor`, `primitivesForSteps`, `PRINCIPAL_KEY`, `readEnvFile`, `REFUSAL_REASONS`, `rememberedPrincipal`, `RemoteRefusedError`, `remoteSubscriptions`, `runConnections`, `sayHeld`, `sayReport`, `sayStep`, `SEAT_HEADERS`, `seatFromHeaders`, `seatHeaders`, `seatOfTab`, `SEED_SYNC_AUTHOR`, `seedSteps`, `serve`, `SERVE_USAGE`, `servePreview`, `serverBatchIds`, `serveStore`, `shots`, `stepsMigration`, `storageBytes`, `SUBSCRIPTIONS_PATH`, `subscriptionsFileOf`, `syncSeed`, `visitorPresence`, `WIRE`, `wireRefusalOf`
 
 ---
 

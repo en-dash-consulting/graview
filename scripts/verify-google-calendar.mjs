@@ -9,8 +9,9 @@
  * Google refuses (refreshed, and the run goes on), a sync token Google
  * rejects (a full resync that loses and duplicates nothing), events made in
  * Berlin and Tokyo read and moved with the instant kept, an all-day event
- * left as a day, every page of a pull followed, and everything the run made
- * removed again.
+ * left as a day, every page of a pull followed, a DECLARED connection
+ * (`connections.<name>`) filtered to one color and to a title tag, and
+ * everything the run made removed again.
  *
  * It needs credentials, so it is NOT in `pnpm verify` or CI. They are read
  * from ~/.graview-google-test.env (or GRAVIEW_GOOGLE_ENV) through
@@ -28,7 +29,8 @@ import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { bindSchema, createSchema, defineNode, nodeRef, Store, z } from "../packages/core/dist/index.js";
-import { SyncEngine, googleCalendar, googleCalendarMapping } from "../packages/core/dist/sync/index.js";
+import { compileDocument } from "../packages/core/dist/check.js";
+import { SyncEngine, connection, googleCalendar, googleCalendarMapping } from "../packages/core/dist/sync/index.js";
 import { googleAccessToken, requireGoogleEnv } from "./lib/google-test-env.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -341,15 +343,109 @@ try {
     },
   );
 
+  /* ------------------------------- a declared connection, filtered */
+  /**
+   * The same calendar through a declaration's `connections` entry, as
+   * `graview serve` runs it: an app of its own for each filter, so what
+   * the color or the tag lets in is all it holds.
+   */
+  const declared = (filter) => {
+    const compiled = compileDocument({
+      format: "graview-document",
+      formatVersion: 1,
+      name: `Filtered ${run}`,
+      kinds: { meeting: { fields: { name: { type: "string", required: true }, starts: { type: "datetime" }, ends: { type: "datetime" } } } },
+      acts: { "add-meeting": { creates: "meeting" } },
+      connections: { team: { system: "google-calendar", calendar: "unused", kind: "meeting", fields: { summary: "name", start: "starts", end: "ends" }, direction: "both", conflicts: "theirs", filter } },
+    });
+    if (!compiled.ok) throw new Error(`the filtered declaration does not compile: ${JSON.stringify(compiled.findings)}`);
+    const app = compiled.app;
+    const filtered = new Store({ schema: app.schema, mutations: app.mutations, snapshot: { nodes: [], edges: [] } });
+    const made = connection({ name: "team", declaration: app.connections.team, app, store: filtered, calendarId: env.GOOGLE_TEST_CALENDAR_ID, token });
+    const mine = () => filtered.graph.allNodes().filter((one) => one.kind === "meeting" && String(one.name).includes(run));
+    const pass = async () => {
+      const result = await made.engine.run();
+      if (result.offline) throw new Error("the declared connection could not reach Google");
+      return result;
+    };
+    return { store: filtered, mine, pass, engine: made.engine, as: { author: { kind: "human", id: "verify" }, intent: "by hand" } };
+  };
+
+  const basilEvent = await google("POST", "", { summary: `Basil ${run}`, colorId: "10", start: { dateTime: "2026-11-06T15:00:00Z" }, end: { dateTime: "2026-11-06T16:00:00Z" } });
+  await google("POST", "", { summary: `Tomato ${run}`, colorId: "11", start: { dateTime: "2026-11-06T17:00:00Z" }, end: { dateTime: "2026-11-06T18:00:00Z" } });
+  await google("POST", "", { summary: `No color ${run}`, start: { dateTime: "2026-11-06T19:00:00Z" }, end: { dateTime: "2026-11-06T20:00:00Z" } });
+  const byColor = declared({ color: "Basil" });
+  await byColor.pass();
+  const colorIn = byColor.mine().map((one) => one.name);
+  byColor.store.apply({ name: "add-meeting", args: { id: "sown", name: `Sown here ${run}`, starts: "2026-11-06T21:00:00Z", ends: "2026-11-06T22:00:00Z" } }, byColor.as);
+  await byColor.pass();
+  const sownId = byColor.engine.snapshot.links["sown"]?.id;
+  const sownThere = sownId ? await google("GET", `/${sownId}`) : undefined;
+  const colorEcho = await byColor.pass();
+  await google("PATCH", `/${basilEvent.id}`, { colorId: "4" });
+  const recolored = await byColor.pass();
+  claim(
+    "aDeclaredConnectionFilteredToOneColorKeepsOnlyThatColor",
+    colorIn.length === 1 &&
+      colorIn[0] === `Basil ${run}` &&
+      sownThere?.colorId === "10" &&
+      sownThere?.extendedProperties?.private?.graview === `Filtered ${run}` &&
+      colorEcho.applied.length === 0 &&
+      recolored.gone.length === 1 &&
+      byColor.mine().map((one) => one.name).join() === `Sown here ${run}`,
+    {
+      madeHere: colorIn,
+      madeThere: sownThere ? { colorId: sownThere.colorId, privateProperty: sownThere.extendedProperties?.private?.graview === `Filtered ${run}` } : null,
+      echoApplied: colorEcho.applied,
+      recoloredInGoogle: { gone: recolored.gone.length, left: byColor.mine().map((one) => one.name) },
+    },
+  );
+
+  const tag = `#${run}`;
+  await google("POST", "", { summary: `Review ${tag}`, start: { dateTime: "2026-11-07T15:00:00Z" }, end: { dateTime: "2026-11-07T16:00:00Z" } });
+  await google("POST", "", { summary: `Untagged ${run}x`, start: { dateTime: "2026-11-07T17:00:00Z" }, end: { dateTime: "2026-11-07T18:00:00Z" } });
+  const byTag = declared({ tag });
+  await byTag.pass();
+  const tagIn = byTag.store.graph.allNodes().filter((one) => one.kind === "meeting").map((one) => one.name);
+  byTag.store.apply({ name: "add-meeting", args: { id: "demo", name: "Demo", starts: "2026-11-07T19:00:00Z", ends: "2026-11-07T20:00:00Z" } }, byTag.as);
+  await byTag.pass();
+  const demoId = byTag.engine.snapshot.links["demo"]?.id;
+  const demoThere = demoId ? await google("GET", `/${demoId}`) : undefined;
+  const tagEcho = await byTag.pass();
+  claim(
+    "aDeclaredConnectionFilteredToATagKeepsTheTaggedEventsAndTagsItsOwn",
+    tagIn.length === 1 && tagIn[0] === "Review" && demoThere?.summary === `Demo ${tag}` && tagEcho.applied.length === 0 && byTag.store.graph.getNode("demo")?.name === "Demo",
+    {
+      tag: "#<run id>",
+      madeHere: tagIn,
+      madeThere: demoThere?.summary?.replace(run, "<run id>") ?? null,
+      echoApplied: tagEcho.applied,
+    },
+  );
+
   /* ---------------------------------------- everything it made, removed */
+  // What each app made here goes by its own deletes; what was made in Google as somebody else, by Google's.
   for (const one of meetings()) act("remove-meeting", { id: one.id });
   const removed = await pass();
-  await google("DELETE", `/${day.id}`);
+  for (const filtered of [byColor, byTag]) {
+    for (const one of filtered.store.graph.allNodes().filter((node) => node.kind === "meeting")) {
+      filtered.store.apply({ name: "remove-meeting", args: { id: one.id } }, filtered.as);
+    }
+  }
+  const removedFiltered = [await byColor.pass(), await byTag.pass()];
+  const refused = [...removed.refused, ...removedFiltered.flatMap((one) => one.refused)];
+  for (const event of await ours()) {
+    if (!event.extendedProperties?.private?.graview) await google("DELETE", `/${event.id}`);
+  }
+  // The first app also took in the filtered apps' events of this run; their deletion reaches it as news.
+  const settledHere = await pass();
   const left = await ours();
-  claim("everythingTheRunMadeIsRemoved", removed.refused.length === 0 && left.length === 0 && meetings().length === 0, {
-    deletesSentFromHere: removed.pushed.length,
-    refused: removed.refused,
+  claim("everythingTheRunMadeIsRemoved", refused.length === 0 && left.length === 0 && meetings().length === 0, {
+    deletesSentFromHere: removed.pushed.length + removedFiltered.reduce((sum, one) => sum + one.pushed.length, 0),
+    refused,
     leftInGoogle: left.length,
+    goneHereAfterwards: settledHere.gone.length,
+    meetingsLeftHere: meetings().length,
   });
 
   report.passed = Object.values(report.checks).every((check) => check.ok);

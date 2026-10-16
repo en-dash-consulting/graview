@@ -87,6 +87,15 @@ export interface GoogleCalendarOptions {
   readonly baseUrl?: string;
   /** Events per page of a pull (Google's `maxResults`; it allows up to 2500). Every page is followed. */
   readonly pageSize?: number;
+  /**
+   * Which of the calendar's events are this sync's, judged as they arrive
+   * (Google refuses a sync token beside a search). One that is not is
+   * reported deleted: never made here, and gone here if it was linked —
+   * an event that leaves the filter has left the sync.
+   */
+  readonly keep?: (event: Readonly<Record<string, unknown>>) => boolean;
+  /** Google event fields every event made from here carries (a `colorId`, `extendedProperties`), beside the mapped ones. */
+  readonly madeHere?: Readonly<Record<string, unknown>>;
 }
 
 const BASE = "https://www.googleapis.com/calendar/v3";
@@ -200,7 +209,7 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
         // The etag is Google's own version of the record, and the reason an
         // echo of our own write is recognizable at all.
         version: String(item["etag"] ?? ""),
-        ...(item["status"] === "cancelled"
+        ...(item["status"] === "cancelled" || (options.keep && !options.keep(item))
           ? { deleted: true }
           : { fields: flatten(item) }),
       }));
@@ -232,7 +241,7 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
       await call(`${events}/${encodeURIComponent(write.id)}`, { method: "DELETE" });
       return { localId: write.localId, id: write.id, version: "" };
     }
-    const body: Record<string, unknown> = {};
+    const body: Record<string, unknown> = write.id ? {} : { ...options.madeHere };
     for (const [path, value] of Object.entries(write.fields ?? {})) put(body, path, value);
 
     const result = await call(write.id ? `${events}/${encodeURIComponent(write.id)}` : events, {
