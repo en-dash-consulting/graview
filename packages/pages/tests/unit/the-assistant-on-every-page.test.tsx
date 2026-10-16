@@ -34,10 +34,10 @@ const store = () =>
 const Board: ViewComponent<typeof schema> = ({ nodes }) => <div>{nodes?.length ?? 0} on the board</div>;
 const views = () => createViews(schema).register("task", { cardinality: "many", fidelity: "full" }, Board, { title: "The board" });
 
-const draw = (path: string, withViews = true) =>
+const draw = (path: string, withViews = true, ask?: "field" | "hidden") =>
   renderToStaticMarkup(
     <PagesApp
-      context={{ store: store(), ...(withViews ? { views: views() } : {}) } as PageContext<typeof schema>}
+      context={{ store: store(), ...(withViews ? { views: views() } : {}), ...(ask ? { ask } : {}) } as PageContext<typeof schema>}
       initialPath={path}
     />,
   );
@@ -57,6 +57,13 @@ describe("the assistant on every page", () => {
     expect(html).not.toContain('data-testid="page-seat"');
     expect(html).not.toContain('data-testid="seat-field"');
     expect(html).not.toContain('data-testid="setting-intelligence"');
+  });
+
+  it("draws no ask field on any route when the app's setting hides it, as the scene draws none", () => {
+    for (const path of ["/", "/tasks", "/tasks/t1", "/places/the-board", "/problems"]) {
+      expect(draw(path, true, "hidden"), path).not.toContain('data-testid="seat-field"');
+      expect(draw(path, true, "field"), path).toContain('data-testid="seat-field"');
+    }
   });
 
   it("asks the reader nowhere which machine answers: the host decided, so no page and no menu offers a choice", () => {

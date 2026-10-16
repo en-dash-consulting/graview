@@ -3,6 +3,7 @@ import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
+import type { SeatStart } from "@graview/primitives/pages";
 
 
 /**
@@ -121,6 +122,12 @@ export interface PageContext<S extends AnySchema> {
    * answers alone, and an open question is told AI isn't on here.
    */
   readonly ai?: HostAi;
+  /**
+   * THE ASK FIELD at the foot of every page: `"field"`, the default, or
+   * `"hidden"` for none — the same setting the scene's `ask` reads, so one
+   * app shows the field on both faces or on neither.
+   */
+  readonly ask?: SeatStart;
   /**
    * THE HOST'S FILES (FR-163): where a picture or a document put on a
    * record from these pages is sent. Unsaid, the provider around them

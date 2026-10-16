@@ -544,6 +544,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
                 overview={toOverview}
                 scope={scope}
                 titleLevel={titleBelow(heading)}
+                ask={props.seat}
                 props={{ ...props, onNavigate, ...(address ? {} : { path: pagesAt.current.path }) } as never}
               />
             ) : (
@@ -719,6 +720,8 @@ export interface EmbedHandle {
   setSeat(principal: Principal): void;
   /** Offer other seats, or none: a seat switcher is drawn only for two or more. */
   setSeats(seats: EmbedOptions["seats"]): void;
+  /** The ask field at the foot of both faces, now (`seat` in the options): `"field"` or `"hidden"`. */
+  setAskField(start: SeatStart): void;
   /** Name other people: an agent who first acts after the page opened is named from the next render. */
   setPeople(people: readonly Person[]): void;
   /** What the host now says about its frame: the chat's theme changed, say. */
@@ -751,6 +754,7 @@ interface Setters {
   scheme(scheme: Scheme): void;
   seat(principal: Principal): void;
   seats(seats: EmbedOptions["seats"]): void;
+  askField(start: SeatStart): void;
   people(people: readonly Person[]): void;
   hostContext(context: EmbedHostContext): void;
   brand(brand: Brand | undefined): void;
@@ -809,6 +813,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     const [scheme, setScheme] = useState<Scheme | "auto">(options.scheme ?? "auto");
     const [principal, setSeat] = useState<Principal | undefined>(options.principal);
     const [seats, setSeats] = useState<EmbedOptions["seats"]>(options.seats);
+    const [askField, setAskField] = useState<SeatStart | undefined>(options.seat);
     const [people, setPeople] = useState<readonly Person[] | undefined>(options.people);
     const [hostContext, setHostContext] = useState<EmbedHostContext | undefined>(options.hostContext);
     const [brand, setBrand] = useState<Brand | undefined>(options.brand);
@@ -821,7 +826,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         setPath(undefined);
         setStop(undefined);
       },
-      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setCalled, hostActions: setHostActions };
+      face: setFace, stop: setStop, path: setPath, scheme: setScheme, seat: setSeat, seats: setSeats, askField: setAskField, people: setPeople, hostContext: setHostContext, brand: setBrand, label: setCalled, hostActions: setHostActions };
     return (
       <Whereabouts.Provider value={here}>
       <Embed<S>
@@ -837,6 +842,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
         {...(path !== undefined ? { path } : {})}
         {...(principal ? { principal } : {})}
         {...(seats ? { seats } : {})}
+        {...(askField ? { seat: askField } : {})}
         {...(people ? { people } : {})}
         {...(hostContext ? { hostContext } : {})}
         {...(brand ? { brand } : {})}
@@ -908,6 +914,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
     setScheme: (scheme) => flushSync(() => setters?.scheme(scheme)),
     setSeat: (principal) => flushSync(() => setters?.seat(principal)),
     setSeats: (seats) => flushSync(() => setters?.seats(seats)),
+    setAskField: (start) => flushSync(() => setters?.askField(start)),
     setPeople: (people) => flushSync(() => setters?.people(people)),
     setHostContext: (context) => flushSync(() => setters?.hostContext(context)),
     setBrand: (brand) => flushSync(() => setters?.brand(brand)),

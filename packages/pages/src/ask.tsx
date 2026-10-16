@@ -46,6 +46,8 @@ export function PageAsk<S extends AnySchema>({ context }: { readonly context: Pa
       >
         {/* A name in an answer goes to the record's page: there is no scene here to move. */}
         <SeatField<S>
+          /* The app's setting, read as the scene reads it: hidden, no field on any page. */
+          {...(context.ask ? { start: context.ask } : {})}
           onPick={(id) => {
             const node = context.store.graph.getNode(id);
             if (node) navigate(recordPath(context.store.schema, node.kind as string, id));

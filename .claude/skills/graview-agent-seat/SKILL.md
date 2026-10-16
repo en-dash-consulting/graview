@@ -159,7 +159,8 @@ path to the store:
   "This" is `useSubject()`: the selection, else where they are. Every other
   act is one question, the context menu (right-click, or A on a card), or
   Pages' "What can be done" away. The person never reads the word "seat".
-  `<Shell ask="hidden" />` and the embed's `seat: "hidden"` draw none.
+  `<Shell ask="hidden" />`, Pages' `context.ask: "hidden"` and the embed's
+  `seat: "hidden"` draw none.
 - **The conversation** belongs to the app (the provider's `seatTalk`), so it
   survives a switch between the scene and Pages. It answers in words.
   Keyless it answers from the graph (`graphResponder`: standings, named
