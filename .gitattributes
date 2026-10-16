@@ -20,3 +20,6 @@ CLAUDE.md  text eol=lf
 .ndx/rex/**/*.yaml text eol=lf
 .ndx/rex/product/**/state.yaml merge=rex-state
 .ndx/rex/changes/**/state.yaml merge=rex-state
+
+# Sourcevision output is machine-written: GitHub collapses it in reviews.
+.ndx/sourcevision/** linguist-generated=true

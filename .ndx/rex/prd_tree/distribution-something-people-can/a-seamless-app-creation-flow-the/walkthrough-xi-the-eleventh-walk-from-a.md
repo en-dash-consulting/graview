@@ -9,6 +9,12 @@ tags:
   - "walkthrough"
 blockedBy:
   - "07a4132b-6c2c-4d30-a409-12a433596a49"
+  - "96b54bdd-8bf4-494c-a946-ad0fd9463182"
+  - "b9e64a2e-8fdf-489e-a3f6-2a8bdeeb5605"
+  - "61161f4d-c45d-4b3e-801e-a133b5539d9f"
+  - "e493f990-e60a-44ca-b399-d6f6dae7188f"
+  - "b6ecaff4-09fc-40ca-9470-5b1677459493"
+  - "610d8397-c4cd-427a-bdd4-43dddd8a79d8"
 source: "The tenth walk, 2026-10-15: thirteen findings and nine carried dead ends fixed, no new class, so the log did not stay still."
 acceptanceCriteria:
   - "a fresh checkout, pnpm install && pnpm build && pnpm test, then graview create of a new app beside it"
