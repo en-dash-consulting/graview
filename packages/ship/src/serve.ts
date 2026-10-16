@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { gzipSync } from "node:zlib";
 import type { Duplex } from "node:stream";
 import type { AnySchema, Operation } from "@graview/core";
 import { sameOrigin } from "@graview/core/sync";
@@ -63,7 +64,7 @@ export async function serveStore<S extends AnySchema>(options: ServeOptions<S>):
     }
     void requestOf(incoming)
       .then(async (request) => (answer ? await answer(request) : undefined) ?? handler.handle(request))
-      .then((response) => write(outgoing, response))
+      .then((response) => write(outgoing, response, takesGzip(incoming)))
       .catch((error: unknown) => {
         const text = JSON.stringify({ error: error instanceof Error ? error.message : String(error) });
         if (!outgoing.headersSent) outgoing.writeHead(500, { "content-type": "application/json", "content-length": Buffer.byteLength(text) });
@@ -153,12 +154,34 @@ async function requestOf(incoming: IncomingMessage): Promise<Request> {
   });
 }
 
-async function write(outgoing: ServerResponse, response: Response): Promise<void> {
-  const body = Buffer.from(await response.arrayBuffer());
+/** Whether the asker takes a gzipped answer. */
+function takesGzip(incoming: IncomingMessage): boolean {
+  return /\bgzip\b/.test(String(incoming.headers["accept-encoding"] ?? ""));
+}
+
+/** What is worth compressing: text a browser reads, larger than a packet. */
+const COMPRESSIBLE = /^(text\/|application\/(json|javascript)|image\/svg)/;
+const SMALLEST_COMPRESSED = 1024;
+
+/*
+ * SENT GZIPPED to a browser that takes it (`graview serve`, `graview
+ * preview`). The page, its chunks, the document and the store's state went
+ * as written — about 1.3 MB for the preview's first load where a host's
+ * server sends about a third of that — and on a phone's network the bytes
+ * are the wait. What is already encoded, small, or not text is sent as is.
+ */
+async function write(outgoing: ServerResponse, response: Response, gzip = false): Promise<void> {
+  const raw = Buffer.from(await response.arrayBuffer());
   const headers: Record<string, string> = {};
   response.headers.forEach((value, name) => {
     headers[name] = value;
   });
+  const compress = gzip && raw.length >= SMALLEST_COMPRESSED && !headers["content-encoding"] && COMPRESSIBLE.test(headers["content-type"] ?? "");
+  const body = compress ? gzipSync(raw) : raw;
+  if (compress) {
+    headers["content-encoding"] = "gzip";
+    headers["vary"] = headers["vary"] ? `${headers["vary"]}, Accept-Encoding` : "Accept-Encoding";
+  }
   if (response.status !== 204) headers["content-length"] = String(body.length);
   outgoing.writeHead(response.status, headers);
   outgoing.end(body);

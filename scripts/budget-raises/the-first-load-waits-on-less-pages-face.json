@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 524,
+  "gzipped": 211,
+  "note": "Raised when the first load came to wait on less (Roadmap f-perf-first-load): the embed fetches the other face when a desk's page is idle and the switch's face when a hand reaches for it (`BarFace.reach`), and a press for the scene fetches it before drawing it, for at most 150 ms. Measured at 578991 / 211386 against 578467 / 211175 before it."
+}

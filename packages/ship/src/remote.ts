@@ -67,6 +67,22 @@ export interface LiveSocketLike {
   onerror: ((event: unknown) => void) | null;
 }
 
+/** What `/graview/state` answers a seat: the graph, the log that led to it, and what the host says about itself. */
+export interface RemoteState {
+  readonly version: number;
+  readonly snapshot: GraphSnapshot;
+  readonly log: readonly Operation[];
+  readonly migrated?: readonly string[];
+  /** Which modules the server has on (FR-12); absent from a server before it. */
+  readonly enabledModules?: readonly string[];
+  /** Where the server's log begins, when it was compacted (FR-23). */
+  readonly horizon?: number;
+  /** The host's build (FR-44); absent from a server before it, or a host that says none. */
+  readonly build?: string;
+  /** The host's hold, in its sentence (FR-66); absent while it takes changes, or from a server before it. */
+  readonly held?: string;
+}
+
 export interface RemoteOptions<S extends AnySchema> {
   readonly app: GraviewApp<S>;
   /** Where the server is: `http://localhost:5196`, say. */
@@ -138,6 +154,15 @@ export interface RemoteOptions<S extends AnySchema> {
    * this only keeps the two in agreement.
    */
   readonly localApp?: (app: GraviewApp<AnySchema>) => GraviewApp<AnySchema>;
+  /**
+   * THE FIRST ANSWER, HANDED. What `/graview/state` answers this seat, when
+   * the host already sent it beside the document (`graview preview` does):
+   * the store opens on it without asking, a round trip the page no longer
+   * waits on before it draws — half a second of a phone's network. Read
+   * once, for the first store; a store opened again on a new declaration
+   * asks the server.
+   */
+  readonly state?: RemoteState;
   /**
    * THE HOST'S BUILD THIS PAGE RUNS (FR-44), an opaque string said in
    * `hello`. A server on another build keeps serving it; `onBuild` is told
@@ -593,26 +618,13 @@ async function opening<S extends AnySchema>(
     return response;
   };
 
-  const fetchState = async (first = false) => {
+  const fetchState = async (first = false): Promise<RemoteState> => {
     const url = `${options.url}/graview/state`;
     const reached = first ? await call(url, { headers }) : await reach(url, { headers });
     if (!reached.ok) throw new Error(((await reached.json().catch(() => ({}))) as { error?: string }).error ?? `The server refused (${reached.status})`);
-    return (await reached.json()) as {
-      version: number;
-      snapshot: GraphSnapshot;
-      log: Operation[];
-      migrated: string[];
-      /** Which modules the server has on (FR-12); absent from a server before it. */
-      enabledModules?: string[];
-      /** Where the server's log begins, when it was compacted (FR-23). */
-      horizon?: number;
-      /** The host's build (FR-44); absent from a server before it, or a host that says none. */
-      build?: string;
-      /** The host's hold, in its sentence (FR-66); absent while it takes changes, or from a server before it. */
-      held?: string;
-    };
+    return (await reached.json()) as RemoteState;
   };
-  const state = await fetchState(true);
+  const state = options.state ?? (await fetchState(true));
   // A polling client has its first answer; a live one is connecting until its socket is welcomed.
   if (!live) status = "online";
   // Opened during a hold — or on a new declaration after one ended: known from the first answer (FR-66).
@@ -1281,7 +1293,8 @@ async function opening<S extends AnySchema>(
     try {
       const resolved = await resolveApp(version);
       // The host's wiring goes with it: its listeners, the counters, the build it was told of.
-      const next = await opening({ ...(options as unknown as RemoteOptions<AnySchema>), app: resolved }, carried, "The app was changed while your changes were on the way.", wiring);
+      const { state: _handed, ...asked } = options as unknown as RemoteOptions<AnySchema>;
+      const next = await opening({ ...asked, app: resolved }, carried, "The app was changed while your changes were on the way.", wiring);
       if (standing) next.remote.presence.here(standing);
       for (const listener of [...declarationListeners]) listener(next.remote, version);
       const said = [...(undos > 0 ? [refused(undosSaid(undos, "The app was changed"))] : []), ...next.unheard()];

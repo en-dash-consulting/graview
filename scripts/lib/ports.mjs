@@ -86,6 +86,9 @@ export const OWN = {
   "a11y-host": 5269,
   /** `pnpm site:serve`: docs/site served as graview.dev serves it, so the site's own font loads (a file:// page cannot load one). */
   "site-preview": 5275,
+  /** `verify-first-load`'s two previews of Cloud's shell: the roadmap at the Roadmap's size, and a small team's tasks. */
+  "first-load-roadmap": 5250,
+  "first-load-tasks": 5251,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
   "studio-model": 5289,
 };

@@ -4,7 +4,7 @@ import { kindFacts } from "./facts.js";
 import { ViewBoundary } from "@graview/react/drawing";
 import { isDefaultView, type ViewProps } from "@graview/react/provider";
 import { arrange, parseArrangement } from "@graview/core/arrange";
-import { useLayoutEffect, useRef, useState, type ComponentType } from "react";
+import { useLayoutEffect, useRef, useState, type ComponentType, type RefObject } from "react";
 import { DerivedForm } from "./form.js";
 import { placePath, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
@@ -283,6 +283,43 @@ function useMeasuredWidth(fallback: number) {
   return { ref, width };
 }
 
+/** The nearest ancestor that scrolls up and down: the box a card comes into view in. */
+function scrollerOf(element: HTMLElement): HTMLElement | null {
+  for (let at = element.parentElement; at; at = at.parentElement) {
+    if (/(auto|scroll)/.test(getComputedStyle(at).overflowY)) return at;
+  }
+  return null;
+}
+
+/*
+ * A PICTURE IS DRAWN AS IT COMES NEAR THE WINDOW. The home draws every
+ * picture the app has, and each is a lens fetched and laid out over every
+ * record it shows: on the Roadmap, a board, a coverage and a calendar a
+ * phone's reader would scroll a screen or three to reach, fetched and drawn
+ * before the page answered a press. A card's picture is drawn once it is
+ * within half a screen of the window, and stays; until then its frame
+ * stands empty. Where nothing can say what is in view (a test's document),
+ * every picture is drawn at once.
+ */
+function useNearTheWindow(ref: RefObject<HTMLElement | null>): boolean {
+  const [near, setNear] = useState(() => typeof IntersectionObserver === "undefined");
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (near || !element) return undefined;
+    const watch = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        watch.disconnect();
+        setNear(true);
+      },
+      { root: scrollerOf(element), rootMargin: "50% 0px" },
+    );
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, [near, ref]);
+  return near;
+}
+
 /**
  * A CARD OF THE GALLERY: the picture drawn live and inert — nothing in it is
  * a second control — with its name and how much it is over. The whole card
@@ -292,6 +329,7 @@ function useMeasuredWidth(fallback: number) {
 export function GalleryCard<S extends AnySchema>({ context, entry }: { context: PageContext<S>; entry: GalleryEntry }) {
   const { store, brand, principal } = context;
   const { ref, width } = useMeasuredWidth(PICTURE_WIDTH_UNMEASURED);
+  const near = useNearTheWindow(ref);
   const natural = width / PICTURE_SCALE;
   const members = membersOf(store, entry.kind);
   const definition = store.schema.tryDefinition(entry.kind);
@@ -347,9 +385,11 @@ export function GalleryCard<S extends AnySchema>({ context, entry }: { context: 
             * board's cards nested an <a> in this one — markup a browser's parser
             * takes apart, and React says so on every visit to the home.
             */}
-          <SpecLinks.Provider value={null}>
-            {entry.place ? <LensOnPage context={context} place={entry.place} /> : <KindOnPage context={context} kind={entry.kind} />}
-          </SpecLinks.Provider>
+          {near ? (
+            <SpecLinks.Provider value={null}>
+              {entry.place ? <LensOnPage context={context} place={entry.place} /> : <KindOnPage context={context} kind={entry.kind} />}
+            </SpecLinks.Provider>
+          ) : null}
         </span>
         {members.length === 0 ? (
           <span

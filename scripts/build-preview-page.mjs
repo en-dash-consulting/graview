@@ -19,7 +19,7 @@ import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { englishOnly, noStudio, workspaceSources } from "./lib/hosted-page.mjs";
+import { doorsOpenAtOnce, englishOnly, noStudio, preloadLinks, workspaceSources } from "./lib/hosted-page.mjs";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const out = join(repo, "packages/graview/dist/preview");
@@ -31,6 +31,7 @@ const PAGE = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Graview preview</title>
+<!--preloads-->
 <style>html,body{margin:0;height:100%}#graview-app{min-height:100dvh}</style>
 </head>
 <body>
@@ -42,7 +43,7 @@ const PAGE = `<!doctype html>
 
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
-await esbuild.build({
+const built = await esbuild.build({
   entryPoints: { page: join(repo, "packages/graview/preview/page.js") },
   bundle: true,
   format: "esm",
@@ -55,9 +56,12 @@ await esbuild.build({
   chunkNames: "chunk.[hash]",
   define: { "process.env.NODE_ENV": '"production"' },
   plugins: [englishOnly, noStudio, workspaceSources(repo)],
+  metafile: true,
+  write: false,
   logLevel: "warning",
 });
-writeFileSync(join(out, "index.html"), PAGE);
+for (const file of doorsOpenAtOnce(built.outputFiles, built.metafile)) writeFileSync(file.path, file.text);
+writeFileSync(join(out, "index.html"), PAGE.replace("<!--preloads-->", preloadLinks(built.metafile, { entry: "page.js", faces: ["pages"], fetches: ["/graview/document"] })));
 
 const bytes = readdirSync(out).reduce((sum, file) => sum + statSync(join(out, file)).size, 0);
 process.stdout.write(`the preview page: ${readdirSync(out).length} files, ${Math.round(bytes / 1024)} KB, in packages/graview/dist/preview\n`);

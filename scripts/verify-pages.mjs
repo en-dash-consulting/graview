@@ -962,6 +962,21 @@ async function theMapOnAPhone() {
 async function readGallery(page, path) {
   await page.goto(`${at("seedbed")}${path}`, { waitUntil: "networkidle" });
   await page.waitForTimeout(600);
+  /*
+   * A picture is drawn as it nears the window (the first load, 0.1.31):
+   * each card is scrolled to, so every frame has had its chance to draw,
+   * and the page is read from its top again.
+   */
+  const cardCount = await page.locator('[data-testid="place-card"], [data-testid="kind-card"]').count();
+  for (let at = 0; at < cardCount; at++) {
+    await page.locator('[data-testid="place-card"], [data-testid="kind-card"]').nth(at).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(150);
+  }
+  await page.evaluate(() => {
+    window.scrollTo(0, 0);
+    for (const scroller of document.querySelectorAll("*")) if (scroller.scrollTop > 0) scroller.scrollTop = 0;
+  });
+  await page.waitForTimeout(400);
   return page.evaluate(() => {
     const main = document.querySelector("main");
     const sections = [...(main?.children ?? [])];

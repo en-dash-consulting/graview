@@ -62,7 +62,7 @@ type SceneFaceProps = Parameters<typeof import("./scene-face.js").SceneFace<AnyS
 function door<P extends object>(load: () => Promise<ComponentType<P>>, options: { readonly what?: string; readonly quiet?: boolean } = {}) {
   const face = lazyModule(load);
   const Face = face.part((Drawn, props: P) => createElement(Drawn, props), options);
-  return { Face, fetch: (): Promise<void> => face.load().then(() => undefined) };
+  return { Face, fetch: (): Promise<void> => face.load().then(() => undefined), here: (): boolean => face.current !== undefined || face.failed };
 }
 
 /* Each face draws the framework's own views, so it fetches them beside its own chunk (`frameworkViewDoors`). */
@@ -90,13 +90,69 @@ const PictureFace = picture.Face;
  */
 export function preload(...faces: readonly EmbedFace[]): Promise<void> {
   const asked = faces.length > 0 ? faces : (["scene", "pages", "picture"] as const);
-  const doors = new Set<{ fetch(): Promise<void> }>(asked.flatMap((face): { fetch(): Promise<void> }[] => (face === "pages" ? [pages] : face === "picture" ? [picture] : [scene, sceneKeeping])));
+  const doors = new Set(asked.flatMap(doorsOf));
   // Resolved when they are here or did not arrive: a face that did not is asked for again as it is drawn (FR-139).
   // What draws a notice too: every face draws them.
   return Promise.all([...[...doors].map((one) => one.fetch()), fetchNotices()]).then(
     () => undefined,
     () => undefined,
   );
+}
+
+/** The doors a face is drawn through. */
+const doorsOf = (face: EmbedFace): readonly { fetch(): Promise<void>; here(): boolean }[] => (face === "pages" ? [pages] : face === "picture" ? [picture] : [scene, sceneKeeping]);
+
+/** Whether a face can be drawn now, with nothing to wait for: its chunks here, or failed (it then says so in its place). */
+const faceIsHere = (face: EmbedFace): boolean => doorsOf(face).every((door) => door.here());
+
+/*
+ * THE SCENE WAITS FOR ITSELF A MOMENT, NOT FOR A PLACEHOLDER. A face drawn
+ * before its chunk was here suspended into the ground that stands in for
+ * it, and React then holds the face back for 300 ms after a placeholder is
+ * shown, so that one does not flicker: the scene took a third of a second
+ * from a press at a desk though it was here in a tenth. So a press for the
+ * scene fetches it first, the page it leaves drawn meanwhile — for at most
+ * `SWITCH_WAITS`, after which the ground stands in for it as before, so a
+ * press on a slow network is still answered at once. A second press
+ * meanwhile is the one that is kept. The pages are drawn at once, as ever:
+ * a place picked in the moment Pages is pressed goes to that place (FR-140).
+ */
+const SWITCH_WAITS = 150;
+let switching = 0;
+function whenFaceIsHere(face: EmbedFace, go: () => void): void {
+  if (faceIsHere(face)) return go();
+  const mine = ++switching;
+  const once = () => {
+    if (mine !== switching) return;
+    switching += 1;
+    go();
+  };
+  void preload(face).then(once);
+  setTimeout(once, SWITCH_WAITS);
+}
+
+/*
+ * THE OTHER FACE, FETCHED WHILE NOTHING ELSE IS. At a desk, once a face is
+ * drawn and the page is idle, the other face's chunks are fetched, so the
+ * switch draws it at once. On a phone they are fetched when a hand reaches
+ * for the switch instead: its network is the page's to spend first.
+ */
+const DESK_WIDTH = 768;
+function useOtherFaceWhenIdle(shown: EmbedFace, width: number | null): void {
+  const desk = width !== null && width >= DESK_WIDTH;
+  useEffect(() => {
+    if (!desk || shown === "picture") return undefined;
+    const other: EmbedFace = shown === "pages" ? "scene" : "pages";
+    if (faceIsHere(other)) return undefined;
+    const idle = globalThis as { requestIdleCallback?: (run: () => void, options?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    const fetchIt = () => void preload(other);
+    if (idle.requestIdleCallback && idle.cancelIdleCallback) {
+      const asked = idle.requestIdleCallback(fetchIt, { timeout: 4000 });
+      return () => idle.cancelIdleCallback?.(asked);
+    }
+    const later = setTimeout(fetchIt, 1500);
+    return () => clearTimeout(later);
+  }, [shown, desk]);
 }
 
 /**
@@ -387,6 +443,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     window.history.replaceState(window.history.state, "", `${addressAt(OVERVIEW_PATH)}${search}${hash}`);
   });
   useIntrinsicHeight(rootRef, shown, props.onIntrinsicHeight);
+  useOtherFaceWhenIdle(shown, width);
   const report = useErrorReport(props.onError, shown);
   const ready = useReady(props.onReady, shown);
   const drawnTold = useRef(props.onDrawn);
@@ -435,11 +492,13 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
     setOverviewStop(stop);
     if (face === "scene" || face === "graview") {
       // Narrow, the scene was standing aside for the pages: the reader asked for it.
-      if (address) window.history.pushState(null, "", `${addressAt(OVERVIEW_PATH)}${stop ?? ""}`);
-      else told.current?.(OVERVIEW_PATH, "push");
+      whenFaceIsHere(face, () => {
+        if (address) window.history.pushState(null, "", `${addressAt(OVERVIEW_PATH)}${stop ?? ""}`);
+        else told.current?.(OVERVIEW_PATH, "push");
+      });
       return;
     }
-    toFace(sceneFace.current, undefined, stop);
+    whenFaceIsHere(sceneFace.current, () => toFace(sceneFace.current, undefined, stop));
   }, [address, face, props.basePath, toFace]);
   const toPage = useCallback((path: string) => {
     if (latest.current.shown === "pages") {
@@ -512,9 +571,9 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
               name={brand?.name ?? app.name}
               heading={heading}
               faces={{
-                scene: { label: sceneTitle(arrangement), current: !onPages, go: () => toOverview() },
+                scene: { label: sceneTitle(arrangement), current: !onPages, go: () => toOverview(), reach: () => void preload(sceneFace.current) },
                 // The pages, back at the page the reader was on.
-                pages: { label: pagesTitle(arrangement), current: onPages, go: () => toPage(pagesAt.current.path) },
+                pages: { label: pagesTitle(arrangement), current: onPages, go: () => toPage(pagesAt.current.path), reach: () => void preload("pages") },
               }}
               at={onPages ? pageAt : null}
               without={props.pages?.without()}

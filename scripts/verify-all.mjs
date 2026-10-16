@@ -119,6 +119,8 @@ const CHAIN = [
   // Whether a person can do each app's core jobs on both faces, and what it costs; fails only on a regression.
   ["journeys", "verify-journeys.mjs"],
   ["panning", "verify-panning.mjs"],
+  // How long a person waits: Cloud's shell over the Roadmap's size and a small team's tasks, cold and between pages, at a desk and on a slow phone.
+  ["first-load", "verify-first-load.mjs"],
   // A real catalog, built for production: what a person can read, at sixty frames a second.
   ["scale", "verify-scale.mjs"],
   // The example built to be awkward, driven into every face, width, scheme and seat it has.
@@ -140,7 +142,7 @@ const CHAIN = [
  * hold no state of a harness's (each opens its own browser context), and
  * runs side by side.
  */
-const ALONE = new Set(["lines", "panning", "scale", "who", "journeys", "create"]);
+const ALONE = new Set(["lines", "panning", "first-load", "scale", "who", "journeys", "create"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");

@@ -97,7 +97,8 @@ describe("a hosted page", () => {
     // 889 KB since the tenth walk's carried dead ends (W-217 to W-225): Find going into a kind whole and landing the keys on its line, a raised kind's way in, the past on the arranging line, the trail's headroom and the scene's foot clear of the ask field: the scene face measured 909_930 B, 1_642 over 887.
     // 908 KB with the tenth walk's carried dead ends over the Beatles' fixes and the rest of the 0.1.30 wave.
     // 910 KB since nothing came to stand over a control the watch found covered (W-224) and Pages came to honor the Ask box setting: the scene face measured 931_431 B, 1_966 more than before them (929_465).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(910 * 1024);
+    // 911 KB since the first load came to wait on less (Roadmap f-perf-first-load): the switch fetches the scene before it draws it, the other face is fetched when a desk's page is idle or a hand reaches for it, and a remote store opens on a handed state: the scene face measured 932_473 B, 1_042 more than before them (931_431).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(911 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

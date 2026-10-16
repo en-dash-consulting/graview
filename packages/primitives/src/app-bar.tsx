@@ -197,6 +197,8 @@ export interface BarFace {
   readonly label: string;
   readonly current: boolean;
   readonly go: () => void;
+  /** A hand or the keyboard reaching for it (the pointer over it, or on it, or the keyboard on it): fetch what drawing it needs before the press. */
+  readonly reach?: () => void;
 }
 
 /** THE SWITCH (FR-137): the scene and the pages, the app's two faces. */
@@ -654,6 +656,7 @@ function FaceSwitch({ faces, form, drawn }: { readonly faces: BarFaces; readonly
         data-testid={`app-face-${which}`}
         aria-pressed={one.current}
         title={one.label}
+        {...(one.reach && !one.current ? { onPointerEnter: one.reach, onPointerDown: one.reach, onFocus: one.reach } : {})}
         onClick={() => {
           if (!one.current) one.go();
         }}
