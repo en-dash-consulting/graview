@@ -202,7 +202,8 @@ describe("the derived edit's ask in the scene", { timeout: 30_000 }, () => {
   it("opens on the record's date, and saving it changes only the date and not how it repeats", async () => {
     const { host, store } = await asking();
     const steps = await walk(host, { reviewOn: typing("2026-10-27") });
-    expect(held(steps, "reviewOn")).toBe("2026-10-20");
+    // Said as a person reads it, and typed back as one (Roadmap f-date-inputs).
+    expect(held(steps, "reviewOn")).toBe("Tue, Oct 20, 2026");
     onlyChanged(store, "reviewOn", "2026-10-27");
   });
 

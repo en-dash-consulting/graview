@@ -158,7 +158,8 @@ describe("the derived edit's form on a record page", () => {
   it("holds the record's date and how it repeats, and saving the date changes only the date", async () => {
     const { host, store, submit } = await form();
     const day = host.querySelector<HTMLInputElement>('input[name="reviewOn"]')!;
-    expect(day.value).toBe("2026-10-20");
+    // Said as a person reads it, and typed back as one (Roadmap f-date-inputs).
+    expect(day.value).toBe("Tue, Oct 20, 2026");
     expect(host.querySelector<HTMLSelectElement>('select[name="reviewOnRepeat.every"]')!.value).toBe("week");
     await type(day, "2026-10-27");
     await submit();
