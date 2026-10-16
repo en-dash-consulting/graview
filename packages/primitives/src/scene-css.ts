@@ -1115,8 +1115,12 @@ ${/* Over the plot and its blocks, or beside it, where the ground under it is th
   opacity: 1;
   pointer-events: auto;
 }
+${/* And a district whose showings stand open under its name: they hang over
+   the ground beside it, and a neighbor later in the city's order stood over
+   them, so a press on "The fortnight" landed on the volunteers' district. */ ""}
 [data-graview-altitude] [data-graview-plot]:hover,
-[data-graview-altitude] [data-graview-plot]:focus-within {
+[data-graview-altitude] [data-graview-plot]:focus-within,
+[data-graview-altitude] [data-graview-plot]:has(.graview-drive-in[data-graview-showing]) {
   z-index: ${SCENE_LAYERS.opened} !important;
 }
 ${/* A landmark WITHOUT a plot — a nested card — keeps its plate floating
