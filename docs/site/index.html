@@ -1507,21 +1507,22 @@ main.page > section.tour-intro { padding-top: 64px; }
   <!--
     THE FIRST SCREEN IS ONE THING TO HAND YOUR AGENT. Almost everyone will
     start a Graview app by asking an assistant to make one, so the page
-    opens with the sentence to paste. The recipes are that same sentence
-    with another task in it, and each one's app runs beside it: what the
-    prompt made, live, not a picture of it. The headline comes after, as
+    opens with the sentence to paste. Its tabs are that same sentence with
+    a different app in it, as unlike each other as the page can show: a
+    repository's docs, a volunteer rota, a garden in its own design. Each
+    runs beside it, live, not a picture of it. The headline comes after, as
     the reason.
   -->
   <section id="what" class="agent-hero night" aria-labelledby="h-what">
     <div class="ah-ask">
       <p class="ah-label"><span class="dot" aria-hidden="true"></span>Hand this to your agent</p>
       <div class="prompt">
-        <p class="prompt-text" id="prompt-text">Read https://graview.dev/start.md, then turn this repo&rsquo;s <span class="task" id="prompt-task">docs</span> into a Graview app.</p>
+        <p class="prompt-text" id="prompt-text">Read https://graview.dev/start.md, then <span class="task" id="prompt-task">turn this repo&rsquo;s docs into a Graview app</span>.</p>
         <div class="prompt-foot">
-          <div class="recipe-tabs" role="tablist" aria-label="Recipes: the same prompt with another task">
-            <button type="button" role="tab" id="rt-docs" aria-selected="true" aria-controls="stage-docs" data-recipe="docs" data-task="docs">docs</button>
-            <button type="button" role="tab" id="rt-decisions" aria-selected="false" aria-controls="stage-decisions" data-recipe="decisions" data-task="decisions" tabindex="-1">decisions</button>
-            <button type="button" role="tab" id="rt-dependencies" aria-selected="false" aria-controls="stage-dependencies" data-recipe="dependencies" data-task="dependencies" tabindex="-1">dependencies</button>
+          <div class="recipe-tabs" role="tablist" aria-label="The same prompt with another app in it">
+            <button type="button" role="tab" id="rt-docs" aria-selected="true" aria-controls="stage-docs" data-task="turn this repo’s docs into a Graview app">a repo&rsquo;s docs</button>
+            <button type="button" role="tab" id="rt-rota" aria-selected="false" aria-controls="stage-rota" data-task="make a Graview app for our volunteer rota" tabindex="-1">a volunteer rota</button>
+            <button type="button" role="tab" id="rt-garden" aria-selected="false" aria-controls="stage-garden" data-task="make a Graview app for our community garden, in its own design" tabindex="-1">a community garden</button>
           </div>
           <button type="button" class="copy copy-prompt" data-copy-from="prompt-text" data-copy="Read https://graview.dev/start.md, then turn this repo's docs into a Graview app.">Copy prompt</button>
         </div>
@@ -1542,13 +1543,13 @@ main.page > section.tour-intro { padding-top: 64px; }
         </div>
         <p class="stage-caption"><span class="live">Live</span><span>What the docs prompt made of Larkspur, a made-up repository: its modules, docs and owners, with every module that has no doc or no owner flagged and its repair offered.</span><a href="docs/recipes/docs.html">The recipe &rarr;</a></p>
       </div>
-      <div class="stage-panel" id="stage-decisions" role="tabpanel" aria-labelledby="rt-decisions" hidden>
-        <div class="chapter-live hero-live" data-recipe-later="decisions" data-scheme="dark" data-label="Your decisions, as an app" role="region" aria-label="The app the decisions prompt made, running on this page"><p class="chapter-loading">The decisions recipe, loading…</p></div>
-        <p class="stage-caption"><span class="live">Live</span><span>What the decisions prompt made of Larkspur&rsquo;s decision records: what each decided, what it superseded and what it affects.</span><a href="docs/recipes/decisions.html">The recipe &rarr;</a></p>
+      <div class="stage-panel" id="stage-rota" role="tabpanel" aria-labelledby="rt-rota" hidden>
+        <div class="chapter-live hero-live" data-later="rota" data-scheme="dark" data-label="A volunteer rota" role="region" aria-label="A volunteer rota built on Graview, running on this page"><p class="chapter-loading">The rota, loading…</p></div>
+        <p class="stage-caption"><span class="live">Live</span><span>A volunteer rota built on Graview: shifts, places and who covers them, in a calendar a coordinator and an agent both fill in. Switch seats from the person menu.</span><a href="tour.html#lenses">The lens it uses &rarr;</a></p>
       </div>
-      <div class="stage-panel" id="stage-dependencies" role="tabpanel" aria-labelledby="rt-dependencies" hidden>
-        <div class="chapter-live hero-live" data-recipe-later="dependencies" data-scheme="dark" data-label="Your dependencies, as an upgrade plan" role="region" aria-label="The app the dependencies prompt made, running on this page"><p class="chapter-loading">The dependencies recipe, loading…</p></div>
-        <p class="stage-caption"><span class="live">Live</span><span>What the dependencies prompt made of Larkspur&rsquo;s manifests: every package against the latest on npm, and the upgrade each needs.</span><a href="docs/recipes/dependencies.html">The recipe &rarr;</a></p>
+      <div class="stage-panel" id="stage-garden" role="tabpanel" aria-labelledby="rt-garden" hidden>
+        <div class="chapter-live hero-live" data-later="chapter" data-chapter="13" data-scheme="dark" data-label="A community garden, in its own design" role="region" aria-label="The example garden in its own design, running on this page"><p class="chapter-loading">The garden, loading…</p></div>
+        <p class="stage-caption"><span class="live">Live</span><span>The example garden in its own design: an almanac, not an admin panel, with a map it draws of itself, over the same store, actions and rules. Switch it to the scene from the bar.</span><a href="progression.html">The garden, grown &rarr;</a></p>
       </div>
     </div>
 
@@ -1775,8 +1776,10 @@ main.page > section.tour-intro { padding-top: 64px; }
 
 <script>
 /*
- * THE RECIPE TABS. One prompt, three tasks: a tab swaps the task word in
- * the prompt, what Copy copies, and the app on the stage. An app mounts the
+ * THE HERO'S TABS. One prompt, three different apps: a tab swaps the task
+ * in the prompt, what Copy copies, and the app on the stage. A repository's
+ * docs is a recipe the prompt really made; the rota and the garden are
+ * products built on Graview, said so in their captions. An app mounts the
  * first time its tab is chosen and stays mounted, so going back is instant
  * and a reader who never presses one pays for one app. Real tabs: arrow
  * keys move, Home and End jump. Without the bundle the stage keeps its
@@ -1788,14 +1791,26 @@ main.page > section.tour-intro { padding-top: 64px; }
   var text = document.getElementById("prompt-text");
   var copy = document.querySelector(".copy-prompt");
   if (tabs.length === 0 || !task || !text || !copy) return;
-  function mount(slug) {
-    var host = document.querySelector('[data-recipe-later="' + slug + '"]');
+  function mount(panel) {
+    var host = panel && panel.querySelector("[data-later]");
     var api = window.graviewChapters || {};
-    if (!host || typeof api.mountRecipe !== "function") return;
-    host.removeAttribute("data-recipe-later");
-    host.setAttribute("data-graview-recipe", slug);
-    host.replaceChildren();
-    api.mountRecipe(host, slug, undefined, undefined, host.getAttribute("data-label") || undefined, "dark");
+    if (!host) return;
+    var what = host.getAttribute("data-later");
+    var label = host.getAttribute("data-label") || undefined;
+    var scheme = host.getAttribute("data-scheme") || undefined;
+    host.removeAttribute("data-later");
+    if (what === "rota" && typeof api.mountRota === "function") {
+      host.setAttribute("data-graview-app", "rota");
+      host.replaceChildren();
+      // A week's shifts are too narrow to press at phone width: there it is the calendar's picture.
+      var narrow = window.matchMedia("(max-width: 560px)").matches;
+      api.mountRota(host, undefined, label, narrow ? "picture" : undefined, scheme);
+    } else if (what === "chapter" && typeof api.mountChapter === "function") {
+      var n = Number(host.getAttribute("data-chapter"));
+      host.setAttribute("data-graview-chapter", String(n));
+      host.replaceChildren();
+      api.mountChapter(host, n, "pages", label, undefined, scheme);
+    }
   }
   function show(tab, focus) {
     tabs.forEach(function (other) {
@@ -1807,7 +1822,7 @@ main.page > section.tour-intro { padding-top: 64px; }
     });
     task.textContent = tab.dataset.task;
     copy.dataset.copy = text.textContent.replace(/’/g, "'");
-    mount(tab.dataset.recipe);
+    mount(document.getElementById(tab.getAttribute("aria-controls")));
     if (focus) tab.focus();
   }
   tabs.forEach(function (tab, index) {

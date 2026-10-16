@@ -1,8 +1,10 @@
 # Start a Graview app (for the agent)
 
-You are a coding agent. Someone has asked you to turn part of the repository
-you are in (its docs, its decisions, its dependencies, its issues) into a
-Graview app. This page is the procedure. Follow the steps in order, run every
+You are a coding agent. Someone has asked you for a Graview app: either one
+made from part of the repository you are in (its docs, its decisions, its
+dependencies, its issues), or one for something they named in words (a
+volunteer rota, a community garden, a tender response). This page is the
+procedure for both. Follow the steps in order, run every
 command, and report what each command actually printed.
 
 Graview is a TypeScript framework. An app is one declaration: the kinds of
@@ -16,7 +18,7 @@ sandbox blocks the network, ask the person to allow it for npm.
 
 ## 1. Scaffold
 
-From the repository root:
+From the repository root (or, with no repository, an empty folder):
 
 ```sh
 npm create graview@latest graview-app -- --no-git
@@ -25,7 +27,7 @@ cd graview-app
 
 This writes a Graview project into `graview-app/`, installs it, and installs
 the authoring skills. `--no-git` is there because the repository already has
-git. Do everything below inside `graview-app/`, and change nothing outside
+git; leave it off in an empty folder. Do everything below inside `graview-app/`, and change nothing outside
 it. If `graview-app/` already exists, pick another name. Don't pass `--force`.
 
 ## 2. Read the root file and the skills
@@ -69,7 +71,11 @@ Decide in this order:
    anything.** The records come from what is actually there: file paths,
    headings, CODEOWNERS, status lines, versions in `package.json`. Invent
    nothing. Where the repository says nothing, leave the field empty and let
-   a rule say so.
+   a rule say so. If the task names a domain in words instead, the domain
+   comes from the person: ask what they track and what goes wrong, if they
+   haven't said, and seed a small set of plainly made-up example records
+   (say so in the report) that leave at least one rule broken, so the app
+   opens with a problem and its repair.
 2. **A kind for each thing a person would point at.** A field for each fact
    about it, and an edge for each relation between two of them. Give every
    edge a `description` (what it means read forward) and an `inverse` (read
@@ -207,7 +213,7 @@ Tell the person, briefly:
 
 - what you declared: the kinds, and each rule in one sentence;
 - how many records the seed holds, and where in the repository each kind
-  came from;
+  came from (or that they are made-up examples);
 - what `graview check` printed, word for word;
 - the problems the rules found, each with its sentence and the repair it
   offers (a repair that still needs a value, `"missing": ["to"]`, is one a

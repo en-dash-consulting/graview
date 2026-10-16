@@ -319,31 +319,33 @@ try {
   await stepper.close();
 
   /*
-   * THE RECIPE TABS, which are the front page's whole argument now: choose
-   * another task and the prompt says it, Copy copies it, and the app on the
-   * stage is a DIFFERENT app, the one that prompt made. Tabs that change the
-   * words and leave the picture would be the worst thing this page could do.
+   * THE HERO'S TABS, which are the front page's whole argument now: choose
+   * another app and the prompt says it, Copy copies it, and the app on the
+   * stage is a DIFFERENT app — a repository's docs, a volunteer rota, a
+   * garden in its own design opened on its pages. Tabs that change the words
+   * and leave the picture would be the worst thing this page could do.
    */
   const front = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await arrive(front, pageAt("index.html"));
   await front.waitForFunction(() => document.querySelector('#stage-docs [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
   const districtsOn = (id) => front.evaluate((id) => [...document.querySelectorAll(`#${id} [data-graview-view^="kind:"]`)].map((el) => el.getAttribute("data-graview-view")).sort().join(","), id);
   const docsDistricts = await districtsOn("stage-docs");
-  await front.click("#rt-decisions");
-  await front.waitForFunction(() => document.querySelector('#stage-decisions [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
-  const decisionsDistricts = await districtsOn("stage-decisions");
-  report.criteria.aRecipeTabMountsThatRecipesApp =
-    docsDistricts !== "" && decisionsDistricts !== "" && docsDistricts !== decisionsDistricts &&
-    (await front.evaluate(() => document.getElementById("stage-docs")?.hidden === true && document.getElementById("stage-decisions")?.hidden === false));
+  await front.click("#rt-rota");
+  await front.waitForFunction(() => document.querySelector('#stage-rota [data-graview-view^="kind:"]') !== null, null, { timeout: 20_000 }).catch(() => {});
+  const rotaDistricts = await districtsOn("stage-rota");
+  report.criteria.aHeroTabMountsThatApp =
+    docsDistricts !== "" && rotaDistricts !== "" && docsDistricts !== rotaDistricts &&
+    (await front.evaluate(() => document.getElementById("stage-docs")?.hidden === true && document.getElementById("stage-rota")?.hidden === false));
   report.criteria.theTabSaysItsTaskInThePrompt = await front.evaluate(
-    () => document.getElementById("prompt-task")?.textContent === "decisions" && (document.querySelector(".copy-prompt")?.getAttribute("data-copy") ?? "").includes("repo's decisions into"),
+    () => document.getElementById("prompt-task")?.textContent === "make a Graview app for our volunteer rota" && (document.querySelector(".copy-prompt")?.getAttribute("data-copy") ?? "").includes("then make a Graview app for our volunteer rota."),
   );
-  await front.focus("#rt-decisions");
+  await front.focus("#rt-rota");
   await front.keyboard.press("ArrowRight");
-  await front.waitForTimeout(300);
-  report.criteria.theRecipeTabsAreReachableFromTheKeyboard = await front.evaluate(
-    () => document.activeElement?.id === "rt-dependencies" && [...document.querySelectorAll(".stage-panel")].filter((p) => !p.hidden).length === 1,
+  await front.waitForFunction(() => document.querySelector('#stage-garden [data-graview-face="pages"]') !== null, null, { timeout: 20_000 }).catch(() => {});
+  report.criteria.theHeroTabsAreReachableFromTheKeyboard = await front.evaluate(
+    () => document.activeElement?.id === "rt-garden" && [...document.querySelectorAll(".stage-panel")].filter((p) => !p.hidden).length === 1,
   );
+  report.criteria.theGardenOpensOnItsOwnPages = await front.evaluate(() => document.querySelector('#stage-garden [data-graview-face="pages"]') !== null);
   await front.close();
   /* The first frame is finished before anything loads: a picture of the city and the prompt, not a box that says loading. */
   const bare = await browser.newPage({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });

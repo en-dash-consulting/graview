@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-15T21:17:01.377Z",
+  "at": "2026-10-16T03:33:31.502Z",
   "engine": "chromium",
   "viewports": [
     {
@@ -799,9 +799,10 @@
     "textZoomToTwoHundredDoesNotScrollSidewaysOn_docs/site.html": true,
     "aStepMountsTheApplicationAtThatStep": true,
     "theStepsAreReachableFromTheKeyboard": true,
-    "aRecipeTabMountsThatRecipesApp": true,
+    "aHeroTabMountsThatApp": true,
     "theTabSaysItsTaskInThePrompt": true,
-    "theRecipeTabsAreReachableFromTheKeyboard": true,
+    "theHeroTabsAreReachableFromTheKeyboard": true,
+    "theGardenOpensOnItsOwnPages": true,
     "theFirstFrameIsFinishedWithoutScript": true,
     "theSiteOpensAsItsOwnAppFromTheLandingPage": true,
     "aChapterSwitchesFaceOnThePage": true,

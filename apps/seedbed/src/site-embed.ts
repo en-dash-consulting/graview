@@ -49,7 +49,7 @@ declare global {
 /** The embeds the page holds, so a control on the page can reach the one it stands next to. */
 export const handles = new Map<HTMLElement, EmbedHandle>();
 
-export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, label?: string, stop?: string): EmbedHandle {
+export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, label?: string, stop?: string, scheme?: "light" | "dark"): EmbedHandle {
   const chapter = CHAPTERS[n - 1];
   if (!chapter) throw new Error(`No chapter ${n}; there are ${CHAPTERS.length}.`);
   const schema = chapter.app.schema;
@@ -62,6 +62,8 @@ export function mountChapter(element: HTMLElement, n: number, face?: EmbedFace, 
     ...(stop ?? chapter.stop ? { stop: (stop ?? chapter.stop)! } : {}),
     path: (chapter.path ?? "/pages").replace(/^\/pages/, "") || "/",
     ...(chapter.principal ? { principal: chapter.principal } : {}),
+    // The page's scheme where it says one: a frame on a night band is dark whatever the reader's setting.
+    ...(scheme ? { scheme } : {}),
     ...(chapter.seats ? { seats: chapter.seats } : {}),
     /*
      * The cast here is the CHAPTER MODEL's, not the embed's: a chapter holds
@@ -135,12 +137,13 @@ const ROTA_SEATS: readonly { readonly label: string; readonly principal: Princip
 /** The rota's example week: the seed's shifts fall in it, so the calendar opens on something. */
 const ROTA_WEEK = "2026-09-14";
 
-export function mountRota(element: HTMLElement, stop?: string, label?: string, face?: EmbedFace): EmbedHandle {
+export function mountRota(element: HTMLElement, stop?: string, label?: string, face?: EmbedFace, scheme?: "light" | "dark"): EmbedHandle {
   const handle = mount(element, {
     app: rotaApp as never,
     seed: rotaSeed as never,
     ...(face ? { face } : {}),
     stop: stop ?? `#view=the-week&in.at=${ROTA_WEEK}`,
+    ...(scheme ? { scheme } : {}),
     principal: ROTA_SEATS[0]!.principal,
     seats: ROTA_SEATS,
     views: () => rotaViews() as never,
@@ -242,20 +245,21 @@ export function mountDocument(element: HTMLElement, documentId: string, seedId: 
 export function mountAll(root: ParentNode = document): void {
   mountWhenNear([...root.querySelectorAll<HTMLElement>("[data-graview-chapter], [data-graview-app], [data-graview-recipe], [data-graview-document]")], (element) => {
     element.replaceChildren();
+    const said = element.dataset["scheme"];
+    const scheme = said === "light" || said === "dark" ? said : undefined;
     if (element.dataset["graviewDocument"]) {
       mountDocument(element, element.dataset["graviewDocument"], element.dataset["graviewSeed"] ?? "", element.dataset["face"] as EmbedFace | undefined, element.dataset["stop"], element.dataset["label"]);
       return;
     }
     if (element.dataset["graviewRecipe"]) {
-      const scheme = element.dataset["scheme"];
-      mountRecipe(element, element.dataset["graviewRecipe"], element.dataset["face"] as EmbedFace | undefined, element.dataset["stop"], element.dataset["label"], scheme === "light" || scheme === "dark" ? scheme : undefined);
+      mountRecipe(element, element.dataset["graviewRecipe"], element.dataset["face"] as EmbedFace | undefined, element.dataset["stop"], element.dataset["label"], scheme);
       return;
     }
     if (element.dataset["graviewApp"] === "rota") {
-      mountRota(element, element.dataset["stop"], element.dataset["label"], element.dataset["face"] as EmbedFace | undefined);
+      mountRota(element, element.dataset["stop"], element.dataset["label"], element.dataset["face"] as EmbedFace | undefined, scheme);
       return;
     }
-    mountChapter(element, Number(element.dataset["graviewChapter"]), element.dataset["face"] as EmbedFace | undefined, element.dataset["label"], element.dataset["stop"]);
+    mountChapter(element, Number(element.dataset["graviewChapter"]), element.dataset["face"] as EmbedFace | undefined, element.dataset["label"], element.dataset["stop"], scheme);
   });
 }
 

@@ -987,16 +987,6 @@ function recipeRows(rcps) {
   );
 }
 
-/** THE RECIPE TABS: one tab per recipe record, the first chosen, in the order recipes.json gives them. */
-function recipeTabs(html, rcps) {
-  return html.replace(/(<div class="recipe-tabs" role="tablist"[^>]*>\n)[\s\S]*?(\n\s*<\/div>)/, (_, open, close) =>
-    open +
-    rcps.map((r, i) =>
-      `            <button type="button" role="tab" id="rt-${r.slug}" aria-selected="${i === 0}" aria-controls="stage-${r.slug}" data-recipe="${r.slug}" data-task="${escape(r.task)}"${i === 0 ? "" : ' tabindex="-1"'}>${escape(r.task)}</button>`,
-    ).join("\n") +
-    close);
-}
-
 /* ── for the crawlers and the models ──────────────────────────────────── */
 
 const START_HERE = ["getting-started.html", "concepts.html", "agents.html", "cli.html", "checks.html", "stability.html", "index.html"];
@@ -1078,7 +1068,8 @@ export function siteDesign({ template, served, today, declaration, data }) {
 
   const landing = (page, site) => {
     const rcps = recipesOf(site);
-    const filled = recipeTabs(template(page.fields.template), rcps).replace(RECIPES_BLOCK, recipeRows(rcps));
+    // The hero's tabs are written by hand: a recipe is one of them, the rota and the garden the others.
+    const filled = template(page.fields.template).replace(RECIPES_BLOCK, recipeRows(rcps));
     return withSeo(filled, landingData(filled, versionOf(site)));
   };
 
