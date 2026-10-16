@@ -56,6 +56,9 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   // Node: the filesystem, node:http and the CLI.
   createFileAdapter: "node:fs",
   fileSubscriptions: "node:fs",
+  fileConnectionState: "node:fs",
+  readEnvFile: "node:fs",
+  connectionsFileOf: "the CLI",
   FileAdapter: "node:fs",
   serveStore: "node:http",
   ServeOptions: "node:http",

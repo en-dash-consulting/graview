@@ -425,5 +425,12 @@ export const DocumentSpec = z.strictObject({
   brand: z.optional(BrandSpec),
   settings: z.optional(z.array(loose)),
   migrations: z.optional(z.array(loose)),
+  /**
+   * Other systems this app is kept in step with, by name: today, Google
+   * calendars. Read loosely here, as a page that draws the app never runs
+   * one; their shape (`ConnectionSpec`, `./connection-spec.ts`) is the
+   * checker's to judge, and the JSON schema says it to an editor.
+   */
+  connections: z.optional(z.record(name("connection"), loose)),
 });
 export type GraviewDocument = z.infer<typeof DocumentSpec>;

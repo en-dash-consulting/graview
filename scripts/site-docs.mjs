@@ -306,16 +306,15 @@ function chapters(html) {
 }
 const decodeHtml = (text) => text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
 
-/** The releases: every version @graview/core's changelog names, with how many changes it lists, and the one the packages are at now. */
+/**
+ * The releases, as the releases page says them: the records in
+ * apps/site/releases.json, written with each Version packages pull request
+ * (a test fails while a version in @graview/core's changelog has none), and
+ * which of them the packages are at now.
+ */
 function releases() {
   const current = JSON.parse(readFileSync(at("packages/graview/package.json"), "utf8")).version;
-  const log = readFileSync(at("packages/core/CHANGELOG.md"), "utf8");
-  const found = [...log.matchAll(/^## (\S+)\n([\s\S]*?)(?=^## |(?![\s\S]))/gm)].map(([, version, notes]) => ({
-    version,
-    changes: (notes.match(/^- (?!Updated dependencies)/gm) ?? []).length,
-  }));
-  if (!found.some((release) => release.version === current)) found.unshift({ version: current, changes: 0 });
-  return found.map((release) => ({ ...release, current: release.version === current }));
+  return JSON.parse(readFileSync(at("apps/site/releases.json"), "utf8")).releases.map((release) => ({ ...release, current: release.version === current }));
 }
 
 /* ── the records ──────────────────────────────────────────────────────── */
@@ -396,6 +395,7 @@ export async function siteRecords() {
   docs("checks.html", "checks", "What check says", `Every one of the ${findings().length} things graview check can tell you, and how loudly.`);
   docs("demos.html", "demos", "Live demos", "The example garden's surfaces, running on this page, and the example apps in the repository.");
   docs("stability.html", "stability", "Stability", "What a Graview version may change on the five surfaces a host holds it to — ops, stored formats, the wire, the declaration and the tool names — and how a host reads what a build ships.", { body: readFileSync(at("docs/stability.md"), "utf8") });
+  docs("releases.html", "releases", "Releases", "What came in each Graview version, newest first: a few plain lines each, what a host must know before upgrading, and links to its release and its full changelog.");
   docs("site.html", "site", "This site, as an app", "graview.dev is itself a Graview app: one declaration and the records written out of the repository, every page rendered from a record by renderPlace, and the whole of it live on this page.");
   page("start.md", { title: "Start here, agent", description: "The procedure the prompt on the front page points an agent at: scaffold, read, declare, check, preview, report back.", design: "start", body: readHand("start.md") }, undefined, "index.html");
   page("llms.txt", { title: "llms.txt", description: "What Graview is, and every docs page as its Markdown twin, for a language model.", design: "llms" }, undefined, "index.html");

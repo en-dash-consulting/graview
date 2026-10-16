@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 100,
+  "gzipped": 10,
+  "changeset": "dates-are-typed-as-people-say-them.md",
+  "note": "Raised when the 0.1.31 batch's branches were merged: the date editor's instant check `describeArg` reads (42 B up front, measured on its own branch) and the quick ask's raise were each measured alone, and together the page measured 569_983 minified against 569_937. Gzipped stayed within its budget; 10 B is the least a raise may add."
+}

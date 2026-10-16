@@ -17,6 +17,7 @@
  * design's own prose, the reason the repository is shaped the way it is.
  */
 import { createHash } from "node:crypto";
+import { releasesBody } from "./releases.mjs";
 
 /** The address the site is served at, and the one every canonical, card and twin names. */
 export const SITE = "https://graview.dev";
@@ -416,6 +417,7 @@ const RAIL = [
   ["checks.html", "What check says"],
   ["demos.html", "Live demos"],
   ["stability.html", "Stability"],
+  ["releases.html", "Releases"],
   ["site.html", "This site, as an app"],
 ];
 
@@ -480,18 +482,18 @@ ${RAIL.map(([href, label]) => `      <a href="${docsRoot}${href}"${href === here
   <main class="col" id="main" tabindex="-1">
 ${body}
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="${DECLARATION}">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="${docsRoot}site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="${DECLARATION}">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="${docsRoot}site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.
@@ -553,7 +555,7 @@ ${data}${scripts.map((src) => `<script src="${src}"></script>`).join("\n")}
 `;
 }
 
-const section = (id, heading, inner) =>
+export const section = (id, heading, inner) =>
   `    <section id="${id}" aria-labelledby="h-${id}">\n      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-${id}">${escape(heading)}</h2></div>\n${inner}\n    </section>\n`;
 
 const slug = (text) => text.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
@@ -822,6 +824,9 @@ const DOCS = {
     );
   },
 
+  /* What came in each version, newest first, from the release records: apps/site/releases.mjs. */
+  releases: (page, site) => releasesBody(site),
+
   /*
    * A RECIPE: the prompt on the front page with a different task, and what
    * an agent made of it in Larkspur, a made-up repository. Everything on
@@ -902,6 +907,7 @@ const DOCS = {
         `        <li><a href="cli.html"><strong>The CLI</strong><span>create, check, types, docs, describe, lens, figure, serve, skills.</span></a></li>\n` +
         `        <li><a href="checks.html"><strong>What check says (${codesOf(site).length})</strong><span>Every finding, and how loudly.</span></a></li>\n` +
         `        <li><a href="stability.html"><strong>Stability</strong><span>What a version may change, and what a host can hold it to.</span></a></li>\n` +
+        `        <li><a href="releases.html"><strong>Releases</strong><span>What came in each version, and what to know before upgrading.</span></a></li>\n` +
         `        <li><a href="../progression.html"><strong>The garden, grown</strong><span>${CHAPTERS[0].toUpperCase() + CHAPTERS.slice(1)} live chapters, from one kind to a product.</span></a></li>\n` +
         `        <li><a href="site.html"><strong>This site, as an app</strong><span>graview.dev is a Graview app: its pages are records, and its city is one click away.</span></a></li>\n` +
         `      </ul>`)
@@ -989,7 +995,7 @@ function recipeRows(rcps) {
 
 /* ── for the crawlers and the models ──────────────────────────────────── */
 
-const START_HERE = ["getting-started.html", "concepts.html", "agents.html", "cli.html", "checks.html", "stability.html", "index.html"];
+const START_HERE = ["getting-started.html", "concepts.html", "agents.html", "cli.html", "checks.html", "stability.html", "releases.html", "index.html"];
 const docsPath = (page) => page.fields.path.slice("docs/".length);
 const twinOf = (path) => `${SITE}/docs/${path.replace(/\.html$/, ".md")}`;
 

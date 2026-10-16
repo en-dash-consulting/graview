@@ -616,9 +616,13 @@ async function answerAsks(person, { name, choose = [], values = {} }) {
   for (let round = 0; round < 40; round++) {
     const ask = page.locator("[data-graview-asking]").last();
     if (!(await ask.isVisible().catch(() => false))) return;
+    // A date's editor arrives a beat after its question (fetched when first asked for).
+    await ask.locator("[data-graview-when-arriving]").first().waitFor({ state: "detached", timeout: 5_000 }).catch(() => undefined);
     const field = ask.locator("form input").first();
     if (await field.isVisible().catch(() => false)) {
-      const type = await field.getAttribute("type");
+      // A date's editor is a text box that reads what people say (Roadmap f-date-inputs): it takes a day, or a day and a time, as one.
+      const when = await field.evaluate((el) => el.closest("[data-graview-when]")?.getAttribute("data-graview-when") ?? null);
+      const type = when ? (when === "day" ? "date" : "datetime-local") : await field.getAttribute("type");
       const known = values[(await field.getAttribute("name")) ?? ""];
       const value = known !== undefined && (named || known !== name) ? known : type === "date" ? "2026-09-20" : type === "datetime-local" ? "2026-09-20T09:00" : type === "number" ? "2" : !named && name ? name : "Something";
       if (type === "date" || type === "datetime-local") {
@@ -692,6 +696,8 @@ async function validValues(ctx, act, kind, name) {
 
 /** Fill a routed page's form for one act and send it. */
 async function fillForm(person, form, { name, choose = [], values = {} }) {
+  // A date's editor arrives a beat after its form (fetched when first asked for): a person sees the box before typing in it.
+  await form.locator("[data-graview-when-arriving]").first().waitFor({ state: "detached", timeout: 5_000 }).catch(() => undefined);
   const fields = form.locator("input:not([type=hidden]):not([type=checkbox]):not([type=radio]), select, textarea");
   const count = await fields.count();
   let named = false;
@@ -703,7 +709,10 @@ async function fillForm(person, form, { name, choose = [], values = {} }) {
       // The label's own words, not the options of the select it wraps.
       const own = el.labels?.[0] ?? el.closest("label");
       const label = (own ? [...own.childNodes].filter((node) => node !== el && !node.contains?.(el)).map((node) => node.textContent).join(" ") : el.getAttribute("aria-label") ?? "").trim();
-      return { tag: el.tagName.toLowerCase(), type: el.type, name: el.name, label, required: el.required || /\*/.test(label), value: el.value };
+      // A date's editor is a text box that reads what people say (Roadmap f-date-inputs): it takes a day, or a day and a time, as one.
+      const when = el.closest("[data-graview-when]")?.getAttribute("data-graview-when");
+      const type = when ? (when === "day" ? "date" : "datetime-local") : el.type;
+      return { tag: el.tagName.toLowerCase(), type, name: el.name, label, required: el.required || /\*/.test(label), value: el.value };
     });
     const isName = !named && /label|name|title/i.test(info.label);
     if (!info.required && !isName) continue;

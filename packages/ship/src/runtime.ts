@@ -15,6 +15,8 @@ export { answerSubscriptions, remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./
 export type { RemoteSubscriptionsOptions, SubscriptionsAnswer, SubscriptionsPost } from "./subscriptions.js";
 export { announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, wireRefusalOf } from "./live-protocol.js";
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
+export { GOOGLE_TOKEN_URL, runConnections, sayReport } from "./connections.js";
+export type { ConnectionStates, ConnectionStateStore, ConnectionTokenRequest, RunConnectionsOptions, RunningConnections } from "./connections.js";
 export { openStore } from "./open-store.js";
 export type { Compaction, OpenStoreOptions, OpenedStore } from "./open-store.js";
 export { migrateSnapshot, pendingMigrations } from "./migrations.js";

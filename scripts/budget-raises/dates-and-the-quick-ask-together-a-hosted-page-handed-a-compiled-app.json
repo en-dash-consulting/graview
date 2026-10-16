@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 100,
+  "gzipped": 10,
+  "changeset": "dates-are-typed-as-people-say-them.md",
+  "note": "Raised when the 0.1.31 batch's branches were merged, for the reasons the hosted page's raise of the same name says. Measured at 522_954 minified against 522_913."
+}

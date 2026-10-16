@@ -92,7 +92,17 @@ Everything a Graview app declares, and the checker that verifies it.
   a conflict policy (`report`, `theirs`, `ours`), resources the remote owns
   (`readonly`, refused here with their `because`), links seeded from a
   version field, and transports for Google Calendar and for a tool server
-  over MCP (`mcpClient`, `mcpDoor`, `doorClient`, `mcpRemote`).
+  over MCP (`mcpClient`, `mcpDoor`, `doorClient`, `mcpRemote`). The Google
+  transport follows every page, starts a full resync when Google rejects
+  the sync token, and asks `token({ refresh: true })` once when Google
+  refuses an access token; `scripts/verify-google-calendar.mjs` proves it
+  against a real test calendar (credentials from
+  `~/.graview-google-test.env`, made once by
+  `scripts/google-calendar-once.mjs`; `scripts/calendar-sync-demo.mjs` is
+  the same by hand). A document declares one as `connections.<name>` —
+  calendar, kind and fields, a color or tag filter, `read` or `both`, the
+  conflict policy — judged by `graview check` and run by `graview serve`
+  and `graview preview`; `connection(…)` builds its engine for any host.
 - **A spreadsheet brought in** — `@graview/core/import`: `importRows(store,
   kind, rows, mapping, { by })` reads each cell by its field's type, links a
   cell to a record by its name, keeps every row that fits as one undoable

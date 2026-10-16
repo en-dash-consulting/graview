@@ -32,6 +32,8 @@ export const OWN = {
   /** `graview preview` of a Cloud document and its seed, for `verify-preview`; and the `graview shots` it runs after. */
   preview: 5200,
   "preview-shots": 5201,
+  /** `graview preview` of the meetings document, for `verify-date-inputs` to type and pick a meeting's start and end on both faces. */
+  "date-inputs": 5254,
   /** The discography's production build, `vite preview`, for `verify-scale`. */
   "discography-preview": 5198,
   /** The app `smoke-create` scaffolds, and the linked one after it. */
@@ -76,6 +78,8 @@ export const OWN = {
   "repeats-host": 5262,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */
   "long-text-host": 5271,
+  /** `calendar-sync-demo`'s meetings app, kept in step with the Google test calendar for a person to try by hand. */
+  "calendar-sync-demo": 5267,
   /** The host's page `verify-viewport` mounts the embed into at the screen's height, to turn a phone and back (FR-165). */
   "viewport-host": 5266,
   /** The host's page `verify-a11y` mounts Cloud's two shapes of app into, inside `#graview-app`, for axe. */

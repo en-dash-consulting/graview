@@ -189,7 +189,10 @@ GitHub release's notes carry the changelog sections of the versions before
 it that npm never had. A `Compatibility:` line on every changeset that
 touches a surface (`scripts/lib/surfaces.mjs`) is what `docs/stability.md`
 promises a host, and `capabilities().shipped` names the FR ids the
-changesets announce.
+changesets announce. The version's release record in `apps/site/releases.json`
+(headline, plain-words summary, what breaks for a host; graview.dev's
+Releases page) is written by hand in the Version packages pull request, then
+`pnpm site:build:all`; a test fails until it is.
 
 `main` is protected by a ruleset: changes arrive by pull request, `verify`
 and `changeset` must pass, and nothing force-pushes or deletes it.

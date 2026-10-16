@@ -260,6 +260,14 @@ a:hover { color: var(--pine-2); }
   min-width: 0;
 }
 
+/* A docs page's footer stands in the text's column, with the text's gutter,
+   and ends above the window's edge rather than on it. */
+.docfoot {
+  grid-column: 2;
+  margin: 0 var(--pad);
+  padding-bottom: 40px;
+}
+
 /* ── rail contents ─────────────────────────────────────────────────── */
 
 .brand { display: grid; gap: 6px; justify-items: start; }
@@ -614,6 +622,7 @@ footer {
 
 @media (max-width: 900px) {
   .wrap { grid-template-columns: minmax(0, 1fr); }
+  .docfoot { grid-column: 1; }
   .rail {
     position: sticky;
     top: 0;
@@ -1780,7 +1789,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   <footer>
     <span>Graview</span>
     <span><strong data-number="tests">5023</strong> named tests, green on every push</span>
-    <span><a href="tour.html" style="text-decoration: none;">The tour</a> · <a href="progression.html" style="text-decoration: none;">The garden, grown</a> · <a href="docs/index.html" style="text-decoration: none;">Docs</a></span>
+    <span><a href="tour.html" style="text-decoration: none;">The tour</a> · <a href="progression.html" style="text-decoration: none;">The garden, grown</a> · <a href="docs/index.html" style="text-decoration: none;">Docs</a> · <a href="docs/releases.html" style="text-decoration: none;">Releases</a></span>
     <span>This site is a Graview app: <a href="docs/site.html" style="text-decoration: none;">open it</a> · <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json" style="text-decoration: none;">its declaration</a></span>
     <span style="flex: 1 1 auto;"></span>
     <span><a href="https://github.com/en-dash-consulting/graview" style="text-decoration: none;">GitHub</a> · <a href="https://www.npmjs.com/package/graview" style="text-decoration: none;">npm</a> · <a href="https://graview.cloud" style="text-decoration: none;">Graview Cloud</a> · <a href="https://endash.us" style="text-decoration: none;">En&nbsp;Dash</a>, Richmond, VA, and across the US</span>

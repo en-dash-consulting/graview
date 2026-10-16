@@ -361,6 +361,13 @@ describe("renaming a kind", () => {
     expect(checkApp(back).errors).toBe(0);
   });
 
+  it("carries the app's declared connections, the calendar following the kind it fills", () => {
+    const calendar = { system: "google-calendar", calendar: "primary", kind: "plot", fields: { summary: "label", start: "label", end: "label" }, direction: "read" } as const;
+    const studio = createStudio({ ...garden, connections: { planting: calendar } } as never);
+    studio.store.apply({ name: "rename-kind", args: { id: "declared:plot", label: "bed" } });
+    expect(studio.declaration().connections).toEqual({ planting: { ...calendar, kind: "bed" } });
+  });
+
   it("is a migration that carries every record and its edges under the new name", () => {
     const studio = createStudio(garden);
     studio.store.apply({ name: "rename-kind", args: { id: "declared:plot", label: "bed" } });

@@ -16,7 +16,7 @@
         "design": {
           "type": "enum",
           "required": true,
-          "options": ["landing", "tour", "progression", "missing", "docs-home", "getting-started", "recipes", "recipe", "concepts", "packages", "package", "cli", "agents", "skills", "skill", "checks", "demos", "stability", "site", "llms", "llms-full", "robots", "sitemap", "start"],
+          "options": ["landing", "tour", "progression", "missing", "docs-home", "getting-started", "recipes", "recipe", "concepts", "packages", "package", "cli", "agents", "skills", "skill", "checks", "demos", "stability", "releases", "site", "llms", "llms-full", "robots", "sitemap", "start"],
           "description": "Which of the site's designed pages writes it (apps/site/design.mjs)."
         },
         "format": { "type": "enum", "required": true, "options": ["html", "markdown", "text", "xml"], "description": "What is served at its address." },
@@ -172,13 +172,18 @@
       "noun": "release",
       "plural": "releases",
       "label": "{version}",
-      "description": "A version every package shares, read off @graview/core's changelog and the CLI's package.json.",
+      "description": "A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json).",
       "fields": {
         "version": { "type": "string", "required": true, "description": "The version." },
-        "changes": { "type": "integer", "min": 0, "description": "How many changes @graview/core's changelog lists under it." },
+        "date": { "type": "date", "description": "The day npm published it (UTC)." },
+        "headline": { "type": "string", "required": true, "description": "What it brought, in one line." },
+        "summary": { "type": "text", "format": "markdown", "required": true, "description": "What came in it, in plain words for someone deciding whether to upgrade." },
+        "compatibility": { "type": "text", "format": "markdown", "description": "What breaks or moves for a host, from its changesets' Compatibility lines." },
+        "published": { "type": "boolean", "description": "Whether npm has it. A version that was versioned and never published shipped inside a later one." },
+        "shippedIn": { "type": "string", "label": "Shipped in", "description": "For a version npm never had, the version that carried its changes there." },
         "current": { "type": "boolean", "description": "The version the packages are at now." }
       },
-      "glance": ["changes"]
+      "glance": ["date", "headline"]
     },
     "scaffold": {
       "noun": "scaffold",
