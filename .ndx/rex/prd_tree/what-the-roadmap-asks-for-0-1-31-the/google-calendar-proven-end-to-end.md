@@ -2,7 +2,8 @@
 id: "70872e32-507e-47c1-ac6f-598cf520a1d3"
 level: "task"
 title: "Google Calendar, proven end to end against Google itself"
-status: "pending"
+status: "in_progress"
+startedAt: "2026-10-16T17:18:22.000Z"
 priority: "medium"
 tags:
   - "roadmap"

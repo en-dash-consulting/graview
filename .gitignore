@@ -50,3 +50,6 @@ ndx-export/
 .ndx/hench/runs/
 .ndx-commit-msg.txt
 apps/promo/
+
+# Google test credentials for the calendar proof (scripts/google-calendar-once.mjs); they belong in the home directory, never here
+.graview-google-test.env
