@@ -109,7 +109,7 @@ handle = mount(root, { app, store, at });
 
 ### What stands over what
 
-Every popover, menu and list of suggestions the embed draws — the profile, the problems, the districts a row could not hold, a card's acts at the pointer — opens in the browser's top layer, hung from what opened it and kept to the viewport, so nothing in the embed (the ask field, the altitude control, the scene) and nothing on the host's page stands over it. It is still inside the embed's element, so the scoped theme reaches it and nothing of it lands on the host. Everything that stays on screen takes a rung of one ladder, written once as custom properties on the embed's element: the scene, then the altitude control, then the rails and floating controls, then popovers, dialogs and notices, `--graview-layer-scene` through `--graview-layer-toast`. A host that lays something of its own over the embed reads the rung it means rather than guessing a number.
+Every popover, menu and list of suggestions the embed draws — the profile, the problems, the districts a row could not hold, a card's acts at the pointer — opens in the browser's top layer, hung from what opened it and kept to the viewport, so nothing in the embed (the quick ask's card, the altitude control, the scene) and nothing on the host's page stands over it. It is still inside the embed's element, so the scoped theme reaches it and nothing of it lands on the host. Everything that stays on screen takes a rung of one ladder, written once as custom properties on the embed's element: the scene, then the altitude control, then the rails and floating controls, then popovers, dialogs and notices, `--graview-layer-scene` through `--graview-layer-toast`. A host that lays something of its own over the embed reads the rung it means rather than guessing a number.
 
 ### The host's own actions
 
@@ -129,29 +129,31 @@ mount(root, {
 
 Each is a stop for the keyboard in the menu, in the order given, drawn in the embed's own scheme; a press closes the menu. The whole-page Shell takes the same host actions.
 
-### The ask field
+### The quick ask
 
-At the foot of both faces stands one quiet field, "Ask <the app>…". Asked, it grows into a panel over the app — never pushing the page — with a line about where the reader is, a few things to ask, at most three acts (the repairs a broken rule names for what they are on, and their own pins) and the conversation; ⇄ snaps it to the other foot, and on a phone it is a bottom sheet with a grab line to put it away. Escape closes it and puts the keyboard back. The conversation is the app's, so it is still there after a switch between the scene and Pages, and Find's last row, "Ask: ‘…’", asks it. The host can leave it out:
+Where the host gives a model, ⌘K (Ctrl+K) opens a command bar beside what the reader is on — the selected card on the scene, the record or list on a page — that completes the acts on it, "Show …" for a panel the app can draw of it, its places and its records. Words that complete nothing are asked, and the answer is a card beside the record or the list: a few sentences, what acts on it (a place, a record, a panel), and the changes it proposes waiting as a ghost to be accepted, in part or whole, as one batch with one undo. A follow-up is asked on the card and replaces its answer; it is not a thread. The context menu's "Ask about this…" and Find's last row, "Ask: ‘…’", open the same card. Escape closes it and puts the keyboard back. The host can leave it out:
 
 ```ts
-mount(root, { app, seat: "hidden" });   // "field" (the default) or "hidden"
+mount(root, { app, quickAsk: false });
+handle.setQuickAsk(true);                    // on whichever face is open, without mounting again
+mount(root, { app, quickAsk: quickAskOf(stored) }); // a 0.1.30 setting kept as "field" or "hidden"
 ```
 
-What answers it is the host's to decide, once — a reader is never asked. The graph answers first, always: where things are, what is wrong, what a record says, the repairs a rule names, a view a template draws. Give the seat a model and open questions go to it:
+What answers it is the host's to decide, once — a reader is never asked:
 
 ```ts
 mount(root, {
   app,
   ai: {
-    complete: (prompt) => myModel(prompt),   // prompt in, text out
-    name: "house-model",                     // logged as via "ai:house-model"; never shown
-    // decide: jevDecide({ ... }),            // typed decisions, if you have a provider
-    // onDevice: true,                        // a model in the reader's browser, off unless said
+    thinking: { model: "house-model", think: ({ system, prompt }) => myModel(system, prompt) },
+    fast: jevFast({ apiKey }),               // typed picks among what the app offers, if you have one
+    // answer: { model, answer: ({ said, targetLabel, state, catalog, follows }) => ({ text, pick }) },
+    // off: true,                            // AI off: no quick ask, no inline AI, nothing of either drawn
   },
 });
 ```
 
-With no `ai`, an open question is answered "I can answer about what's in this app. Open questions need AI, which isn't on here." An answer a model gave carries one quiet "Answered with AI"; one the graph gave carries nothing.
+`answer` is the quick ask's own slot: handed the words, what they are about, the state the reader may see, the catalog of what the app offers there and the one ask before it, it answers text and, optionally, ids from the catalog; any other id is dropped. Unsaid, the Thinking slot answers, else the Fast slot picks among the candidates. With no model, or `off`, there is no quick ask at all.
 
 ### The host's notices
 
@@ -228,11 +230,11 @@ handle.setPeople(next);                     // an agent who first acted after th
 
 Nothing touches `localStorage` or `sessionStorage` without a fallback, so a frame that throws on either still mounts. `scheme: "auto"` (the default) follows the host context, then the page's `data-theme` stamp, then the system's preference, each as it changes. Presence a channel reports is dropped once its last word is older than `REMOTE_PRESENCE_TTL_MS`, whether or not the channel says the person left. A host that builds presence itself keys each participant with `participantKey({ kind, id, session })` from `@graview/core`, the op log's own `kind:id:session`.
 
-## What it exports (12)
+## What it exports (13)
 
 Read off the package's own barrel, so this is what is there today.
 
-`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `FIRST_LOOK_ANCHORS`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`
+`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `FIRST_LOOK_ANCHORS`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`, `quickAskOf`
 
 ---
 

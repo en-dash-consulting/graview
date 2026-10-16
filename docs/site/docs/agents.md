@@ -6,6 +6,8 @@ An AI agent uses a Graview app through the same declaration a person does: the s
 
 An intelligence provider in the declaration says what a model may do and how words and pictures reach it. The seat gets the same acts a person has, narrowed by the same policy, and its turns land in the same operation log with an author and an intent — watchable from altitude, and undoable out of order. What comes back from a model is a plan before it is a change: one row per thing, what it was sure about, what goes with what if you decline something, then one batch with one undo.
 
+In the app, a person meets the model where the thing is. Right-click a record for what it picks from the acts, places and panels the app already has; press ⌘K to ask about what is selected, and the answer stands on a card beside it, a change it proposes waiting as a ghost until it is accepted. The host lends the model (`ai`), and with AI off none of it is drawn.
+
 - [graview-agent-seat](https://graview.dev/docs/skills/graview-agent-seat.html): Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.
 - [graview-permissions](https://graview.dev/docs/skills/graview-permissions.html): Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.
 - [graview-desk](https://graview.dev/docs/skills/graview-desk.html): Put a model INSIDE a Graview product — a surface that takes photographs or words, reaches the model through a declared door, and turns the answer into a plan somebody reviews before it touches the graph.

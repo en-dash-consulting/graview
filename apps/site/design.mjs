@@ -761,6 +761,8 @@ const DOCS = {
       `    </section>\n` +
       section("seat", "The seat",
         `      <p>An intelligence provider in the declaration says what a model may do and how words and pictures reach it. The seat gets the same acts a person has, narrowed by the same policy, and its turns land in the same operation log with an author and an intent — watchable from altitude, and undoable out of order. What comes back from a model is a plan before it is a change: one row per thing, what it was sure about, what goes with what if you decline something, then one batch with one undo.</p>\n` +
+        `      <p>In the app, a person meets the model where the thing is. Right-click a record for what it picks from the acts, places and panels the app already has; press ⌘K to ask about what is selected, and the answer stands on a card beside it, a change it proposes waiting as a ghost until it is accepted. The host lends the model (<code>ai</code>), and with AI off none of it is drawn.</p>\n` +
+        `      <figure class="shot"><img class="light" src="../img/quick-ask-light.png" width="1280" height="760" loading="lazy" alt="The todo example's scene with the task Pay the deposit selected and, beside it, an answer card proposing to mark it done, with Accept and Dismiss."><img class="dark" src="../img/quick-ask-dark.png" width="1280" height="760" loading="lazy" alt="The same answer card beside the selected task, in the dark scheme."><figcaption>The todo example, asked with ⌘K.</figcaption></figure>\n` +
         `      <ul class="cards">\n${skillCard("graview-agent-seat")}${skillCard("graview-permissions")}${skillCard("graview-desk")}      </ul>`) +
       section("tools", "Typed tools, derived",
         `      <p>${escape(toolsPkg?.fields.description ?? "")} Every act is a tool with a schema and a sentence attached; the tool surface is generated from the declaration and narrowed by the seat's role, so a model is never offered an act it may not take.</p>\n` +
@@ -799,7 +801,7 @@ const DOCS = {
       section("apps", "The example apps",
         `      <p>Each was built to prove a claim the others could not, and each is opened in a real browser on every push. They live under <code>apps/</code> in the repository; <code>pnpm apps</code> opens the desk, which opens the rest.</p>\n` +
         `      <ul class="cards">\n` + examplesOf(site).map((app) => `        <li><a href="${REPOSITORY}/tree/main/apps/${app.fields.dir}"><strong>${escape(app.fields.dir)}</strong><span>${escape(app.fields.description ?? "")}</span></a></li>`).join("\n") + `\n      </ul>`) +
-      /* The city and the lens settle the way the landing page's do: the seat closed, the city stepped back once, through the product's own controls. */
+      /* The city and the lens settle the way the landing page's do: the city stepped back once, through the product's own controls. */
       SETTLE
     );
   },
@@ -943,8 +945,6 @@ const SETTLE = `    <script>
       if (!(host instanceof Element) || !host.hasAttribute("data-settle")) return;
       var presses = Number(host.getAttribute("data-settle")) || 0;
       setTimeout(function () {
-        var seat = host.querySelector('[data-graview-seat="open"] [data-testid="seat-close"]');
-        if (seat) seat.click();
         for (var i = 0; i < presses; i += 1) { var out = host.querySelector('[data-testid="zoom-out"]'); if (out) out.click(); }
       }, 250);
     });
