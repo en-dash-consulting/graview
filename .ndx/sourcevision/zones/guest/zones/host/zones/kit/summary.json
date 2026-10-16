@@ -1,0 +1,23 @@
+{
+  "id": "guest/host/kit",
+  "name": "Kit",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/guest/src/host/kit.ts",
+    "packages/guest/src/host/worker-start.ts",
+    "packages/guest/src/host/worker.ts",
+    "packages/guest/src/kit.ts",
+    "packages/guest/src/worker/elements.ts"
+  ],
+  "entryPoints": [
+    "packages/guest/src/host/kit.ts",
+    "packages/guest/src/host/worker-start.ts",
+    "packages/guest/src/host/worker.ts",
+    "packages/guest/src/kit.ts",
+    "packages/guest/src/worker/elements.ts"
+  ],
+  "cohesion": 0.43,
+  "coupling": 0.57,
+  "fileCount": 5,
+  "lineCount": 1025
+}

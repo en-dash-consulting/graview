@@ -1,0 +1,23 @@
+{
+  "id": "core-ops/core-schema",
+  "name": "Core Schema",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/linked.ts",
+    "packages/core/src/schema/linked-field.ts",
+    "packages/core/src/schema/linked-reads.ts",
+    "packages/core/src/schema/linked-schema.ts",
+    "packages/core/src/schema/linked.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/linked.ts",
+    "packages/core/src/schema/linked-field.ts",
+    "packages/core/src/schema/linked-reads.ts",
+    "packages/core/src/schema/linked-schema.ts",
+    "packages/core/src/schema/linked.ts"
+  ],
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 5,
+  "lineCount": 590
+}

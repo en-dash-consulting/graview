@@ -1,7 +1,7 @@
 {
   "id": "apps/todo",
   "name": "Todo",
-  "description": "14 files, primarily TypeScript",
+  "description": "15 files, primarily TypeScript",
   "files": [
     "apps/todo/src/domain/app.ts",
     "apps/todo/src/domain/brand.ts",
@@ -16,6 +16,7 @@
     "apps/todo/src/ui/app.tsx",
     "apps/todo/src/ui/design.tsx",
     "apps/todo/src/ui/views.tsx",
+    "apps/todo/src/ui/what-is-left.ts",
     "apps/todo/src/ui/when.ts"
   ],
   "entryPoints": [
@@ -23,10 +24,11 @@
     "apps/todo/src/domain/policy.ts",
     "apps/todo/src/domain/schema.ts",
     "apps/todo/src/ui/app.tsx",
-    "apps/todo/src/ui/views.tsx"
+    "apps/todo/src/ui/views.tsx",
+    "apps/todo/src/ui/what-is-left.ts"
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 14,
-  "lineCount": 2891
+  "fileCount": 15,
+  "lineCount": 3130
 }

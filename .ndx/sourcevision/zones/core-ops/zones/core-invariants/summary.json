@@ -1,0 +1,29 @@
+{
+  "id": "core-ops/core-invariants",
+  "name": "Core Invariants",
+  "description": "8 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/bind.ts",
+    "packages/core/src/cli/check/clock-rules.ts",
+    "packages/core/src/clock.ts",
+    "packages/core/src/extend.ts",
+    "packages/core/src/invariants/engine.ts",
+    "packages/core/src/invariants/types.ts",
+    "packages/core/src/past.ts",
+    "packages/core/src/schema/schema.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/bind.ts",
+    "packages/core/src/cli/check/clock-rules.ts",
+    "packages/core/src/clock.ts",
+    "packages/core/src/extend.ts",
+    "packages/core/src/invariants/engine.ts",
+    "packages/core/src/invariants/types.ts",
+    "packages/core/src/past.ts",
+    "packages/core/src/schema/schema.ts"
+  ],
+  "cohesion": 0.34,
+  "coupling": 0.66,
+  "fileCount": 8,
+  "lineCount": 1013
+}

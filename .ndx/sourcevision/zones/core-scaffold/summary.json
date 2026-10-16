@@ -1,0 +1,33 @@
+{
+  "id": "core-scaffold",
+  "name": "Core Scaffold",
+  "description": "9 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/cli/create.ts",
+    "packages/core/src/scaffold/agents.ts",
+    "packages/core/src/scaffold/domain.ts",
+    "packages/core/src/scaffold/from-template.ts",
+    "packages/core/src/scaffold/index.ts",
+    "packages/core/src/scaffold/lens.ts",
+    "packages/core/src/scaffold/names.ts",
+    "packages/core/src/scaffold/project.ts",
+    "packages/core/src/scaffold/ui.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/create.ts",
+    "packages/core/src/scaffold/agents.ts",
+    "packages/core/src/scaffold/index.ts",
+    "packages/core/src/scaffold/lens.ts"
+  ],
+  "cohesion": 0.78,
+  "coupling": 0.22,
+  "fileCount": 9,
+  "lineCount": 2964,
+  "riskMetrics": {
+    "cohesion": 0.78,
+    "coupling": 0.22,
+    "riskScore": 0.21999999999999997,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

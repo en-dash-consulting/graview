@@ -18,8 +18,8 @@
     "packages/guest/src/host/open-render.ts",
     "packages/guest/src/open-kit.ts"
   ],
-  "cohesion": 0.69,
-  "coupling": 0.31,
+  "cohesion": 0.65,
+  "coupling": 0.35,
   "fileCount": 6,
-  "lineCount": 1960
+  "lineCount": 2045
 }

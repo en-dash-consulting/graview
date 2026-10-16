@@ -1,0 +1,33 @@
+{
+  "id": "core-ops/core-mutations",
+  "name": "Core Mutations",
+  "description": "10 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/cli/check/fields.ts",
+    "packages/core/src/columns.ts",
+    "packages/core/src/describe.ts",
+    "packages/core/src/mutations/derive-edits.ts",
+    "packages/core/src/mutations/keep-link.ts",
+    "packages/core/src/mutations/types.ts",
+    "packages/core/src/ops/suggestions.ts",
+    "packages/core/src/ops/tidying.ts",
+    "packages/core/src/seat-of.ts",
+    "packages/core/src/tidying.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/cli/check/fields.ts",
+    "packages/core/src/columns.ts",
+    "packages/core/src/describe.ts",
+    "packages/core/src/mutations/derive-edits.ts",
+    "packages/core/src/mutations/keep-link.ts",
+    "packages/core/src/mutations/types.ts",
+    "packages/core/src/ops/suggestions.ts",
+    "packages/core/src/ops/tidying.ts",
+    "packages/core/src/seat-of.ts",
+    "packages/core/src/tidying.ts"
+  ],
+  "cohesion": 0.36,
+  "coupling": 0.64,
+  "fileCount": 10,
+  "lineCount": 1492
+}

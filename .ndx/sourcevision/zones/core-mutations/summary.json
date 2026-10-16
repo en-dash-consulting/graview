@@ -1,27 +1,25 @@
 {
   "id": "core-mutations",
   "name": "Core Mutations",
-  "description": "4 files, mostly utilities and types; entry points types.ts, derive-edits.ts, fields.ts; imports Core and Core; imported by Core and Core Cli.",
+  "description": "3 files, primarily TypeScript",
   "files": [
-    "packages/core/src/cli/check/fields.ts",
-    "packages/core/src/columns.ts",
-    "packages/core/src/mutations/derive-edits.ts",
-    "packages/core/src/mutations/types.ts"
+    "packages/core/src/mutations/derive-repeats.ts",
+    "packages/core/src/repeat.ts",
+    "packages/core/src/schema/repeat-field.ts"
   ],
   "entryPoints": [
-    "packages/core/src/cli/check/fields.ts",
-    "packages/core/src/columns.ts",
-    "packages/core/src/mutations/derive-edits.ts",
-    "packages/core/src/mutations/types.ts"
+    "packages/core/src/mutations/derive-repeats.ts",
+    "packages/core/src/repeat.ts",
+    "packages/core/src/schema/repeat-field.ts"
   ],
-  "cohesion": 0.15,
-  "coupling": 0.85,
-  "fileCount": 4,
-  "lineCount": 932,
+  "cohesion": 0.14,
+  "coupling": 0.86,
+  "fileCount": 3,
+  "lineCount": 319,
   "riskMetrics": {
-    "cohesion": 0.15,
-    "coupling": 0.85,
-    "riskScore": 0.85,
+    "cohesion": 0.14,
+    "coupling": 0.86,
+    "riskScore": 0.86,
     "riskLevel": "catastrophic",
     "failsThreshold": true
   }

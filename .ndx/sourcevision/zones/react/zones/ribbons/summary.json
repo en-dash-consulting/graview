@@ -1,0 +1,21 @@
+{
+  "id": "react/ribbons",
+  "name": "Ribbons",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/map-choice.ts",
+    "packages/react/src/ribbon-width.ts",
+    "packages/react/src/ribbons-layer.tsx",
+    "packages/react/src/ribbons.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/map-choice.ts",
+    "packages/react/src/ribbon-width.ts",
+    "packages/react/src/ribbons-layer.tsx",
+    "packages/react/src/ribbons.ts"
+  ],
+  "cohesion": 0.53,
+  "coupling": 0.47,
+  "fileCount": 4,
+  "lineCount": 787
+}

@@ -1,15 +1,20 @@
 {
   "id": "apps/promo/src",
   "name": "Src",
-  "description": "3 files, primarily TypeScript",
+  "description": "6 files, primarily TypeScript",
   "files": [
-    "apps/promo/src/FeedComposition.tsx",
     "apps/promo/src/Root.tsx",
-    "apps/promo/src/index.ts"
+    "apps/promo/src/index.ts",
+    "apps/promo/src/kit/design.ts",
+    "apps/promo/src/style/StyleFrames.tsx",
+    "apps/promo/src/videos/ThreadV2.tsx",
+    "apps/promo/src/videos/scuba/index.tsx"
   ],
-  "entryPoints": [],
-  "cohesion": 0.29,
-  "coupling": 0.71,
-  "fileCount": 3,
-  "lineCount": 106
+  "entryPoints": [
+    "apps/promo/src/kit/design.ts"
+  ],
+  "cohesion": 0.63,
+  "coupling": 0.37,
+  "fileCount": 6,
+  "lineCount": 736
 }

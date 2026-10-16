@@ -5,20 +5,18 @@
 <zone>
 
 Zone: Src (`guest/src`)
-Files: 6, Cohesion: 0.60, Coupling: 0.40
-Description: 6 files, primarily TypeScript
-Entry points: packages/guest/src/build.ts, packages/guest/src/client.ts, packages/guest/src/index.ts
-Lines: 254
+Files: 4, Cohesion: 0.60, Coupling: 0.40
+Description: 4 files, primarily TypeScript
+Entry points: packages/guest/src/index.ts
+Lines: 112
 
 </zone>
 
 <files>
 
-packages/guest/src/build.ts (TypeScript, 134 lines, source)
 packages/guest/src/client-script.ts (TypeScript, 20 lines, source)
-packages/guest/src/client.ts (TypeScript, 11 lines, source)
 packages/guest/src/guest.ts (TypeScript, 37 lines, source)
-packages/guest/src/index.ts (TypeScript, 20 lines, source)
+packages/guest/src/index.ts (TypeScript, 23 lines, source)
 packages/guest/src/react.ts (TypeScript, 32 lines, source)
 
 </files>

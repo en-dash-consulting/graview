@@ -5,28 +5,38 @@
 <zone>
 
 Zone: Src 4 (`react/src-4`)
-Files: 4, Cohesion: 0.32, Coupling: 0.68
-Description: 4 files, primarily TypeScript
-Entry points: packages/react/src/drawing.ts, packages/react/src/editable-fields.ts, packages/react/src/occupants.tsx, packages/react/src/placement.ts
-Lines: 376
+Files: 8, Cohesion: 0.42, Coupling: 0.58
+Description: 8 files, primarily TypeScript
+Entry points: packages/react/src/drawing.ts, packages/react/src/drawn.ts, packages/react/src/editable-fields.ts, packages/react/src/emphasis.ts, packages/react/src/menu-sections.tsx, packages/react/src/placement.ts, packages/react/src/plots.tsx
+Lines: 1011
 
 </zone>
 
 <files>
 
-packages/react/src/drawing.ts (TypeScript, 24 lines, source)
+packages/react/src/drawing.ts (TypeScript, 27 lines, source)
+packages/react/src/drawn.ts (TypeScript, 142 lines, source)
 packages/react/src/editable-fields.ts (TypeScript, 38 lines, source)
-packages/react/src/occupants.tsx (TypeScript, 206 lines, source)
+packages/react/src/emphasis.ts (TypeScript, 85 lines, source)
+packages/react/src/last-visit.ts (TypeScript, 77 lines, source)
+packages/react/src/menu-sections.tsx (TypeScript, 89 lines, source)
 packages/react/src/placement.ts (TypeScript, 108 lines, source)
+packages/react/src/plots.tsx (TypeScript, 445 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
+  packages/react/src/drawing.ts → packages/react/src/drawn.ts {useDrawnSize, useMarqueeRoom, useTextMeasure}
+  packages/react/src/drawing.ts → packages/react/src/drawn.ts {DrawnOptions, DrawnSize}
   packages/react/src/drawing.ts → packages/react/src/editable-fields.ts {useEditableFields}
+  packages/react/src/drawing.ts → packages/react/src/emphasis.ts {NOTHING_FOUND, useFlagged, useImplicated, useReached}
+  packages/react/src/drawing.ts → packages/react/src/menu-sections.tsx {MenuSections, useMenuSections}
+  packages/react/src/drawing.ts → packages/react/src/menu-sections.tsx {MenuItem, MenuSection, MenuSectionSource, MenuTarget}
   packages/react/src/drawing.ts → packages/react/src/placement.ts {anchorOf, AUDIENCE_ROW, placeOthers}
   packages/react/src/drawing.ts → packages/react/src/placement.ts {Placed}
-  packages/react/src/occupants.tsx → packages/react/src/placement.ts {placeOthers}
+  packages/react/src/plots.tsx → packages/react/src/emphasis.ts {useFlagged}
+  packages/react/src/plots.tsx → packages/react/src/last-visit.ts {ownRecords, useSinceLastVisit}
 
 </imports>

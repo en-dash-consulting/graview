@@ -5,28 +5,49 @@
 <zone>
 
 Zone: Src 3 (`react/src-3`)
-Files: 4, Cohesion: 0.25, Coupling: 0.75
-Description: 4 files, primarily TypeScript
-Entry points: packages/react/src/captions.ts, packages/react/src/kit.ts, packages/react/src/scene-lines.tsx, packages/react/src/where-drawn.tsx
-Lines: 1230
+Files: 12, Cohesion: 0.40, Coupling: 0.60
+Description: 12 files, primarily TypeScript
+Entry points: packages/react/src/default-elsewhere.ts, packages/react/src/files.ts, packages/react/src/go.ts, packages/react/src/keyboard.ts, packages/react/src/lazy-part.tsx, packages/react/src/local-intelligence.ts, packages/react/src/past.ts, packages/react/src/popover.ts, packages/react/src/provider.ts, packages/react/src/record-links-layer.tsx, packages/react/src/record-links.ts, packages/react/src/view-marks.ts
+Lines: 1599
 
 </zone>
 
 <files>
 
-packages/react/src/captions.ts (TypeScript, 100 lines, source)
-packages/react/src/kit.ts (TypeScript, 34 lines, source)
-packages/react/src/scene-lines.tsx (TypeScript, 817 lines, source)
-packages/react/src/where-drawn.tsx (TypeScript, 279 lines, source)
+packages/react/src/default-elsewhere.ts (TypeScript, 12 lines, source)
+packages/react/src/files.ts (TypeScript, 13 lines, source)
+packages/react/src/go.ts (TypeScript, 73 lines, source)
+packages/react/src/keyboard.ts (TypeScript, 211 lines, source)
+packages/react/src/lazy-part.tsx (TypeScript, 208 lines, source)
+packages/react/src/local-intelligence.ts (TypeScript, 90 lines, source)
+packages/react/src/past.ts (TypeScript, 124 lines, source)
+packages/react/src/popover.ts (TypeScript, 451 lines, source)
+packages/react/src/provider.ts (TypeScript, 62 lines, source)
+packages/react/src/record-links-layer.tsx (TypeScript, 207 lines, source)
+packages/react/src/record-links.ts (TypeScript, 106 lines, source)
+packages/react/src/view-marks.ts (TypeScript, 42 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {captionRuns}
-  packages/react/src/scene-lines.tsx → packages/react/src/captions.ts {CaptionEntry, CaptionRun}
-  packages/react/src/scene-lines.tsx → packages/react/src/kit.ts {kitConnector, useKit}
-  packages/react/src/scene-lines.tsx → packages/react/src/where-drawn.tsx {drawnBox, measureVisible, visibleRect}
+  packages/react/src/provider.ts → packages/react/src/default-elsewhere.ts {DefaultDrawnElsewhere}
+  packages/react/src/provider.ts → packages/react/src/files.ts {HostFilesContext, useHostFiles}
+  packages/react/src/provider.ts → packages/react/src/go.ts {GoToContext, useGoTo}
+  packages/react/src/provider.ts → packages/react/src/go.ts {GoTo, GoToAlso}
+  packages/react/src/provider.ts → packages/react/src/keyboard.ts {landingIn, useTheKeyboardLandsSomewhere}
+  packages/react/src/provider.ts → packages/react/src/lazy-part.tsx {lazyModule, retryLazyParts}
+  packages/react/src/provider.ts → packages/react/src/lazy-part.tsx {LazyModule, LazyPartOptions}
+  packages/react/src/provider.ts → packages/react/src/local-intelligence.ts {useLocalIntelligence}
+  packages/react/src/provider.ts → packages/react/src/local-intelligence.ts {Ask, LocalIntelligence}
+  packages/react/src/provider.ts → packages/react/src/past.ts {PlaybackContext, useLiveStore, useOwnPlayback, usePlayback}
+  packages/react/src/provider.ts → packages/react/src/past.ts {PastShown, Playback}
+  packages/react/src/provider.ts → packages/react/src/popover.ts {inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, usePopover, useTopLayer}
+  packages/react/src/provider.ts → packages/react/src/popover.ts {PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions}
+  packages/react/src/provider.ts → packages/react/src/view-marks.ts {DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage}
+  packages/react/src/record-links-layer.tsx → packages/react/src/provider.ts {*}
+  packages/react/src/record-links-layer.tsx → packages/react/src/record-links.ts {linksOfRecords, placeLabels}
+  packages/react/src/record-links-layer.tsx → packages/react/src/record-links.ts {LinkOfRecord}
 
 </imports>

@@ -1,20 +1,48 @@
 {
   "id": "core-document/core-cli",
-  "name": "Arrangement Logic",
-  "description": "4 files, primarily TypeScript",
+  "name": "Core Cli",
+  "description": "18 files, primarily TypeScript",
   "files": [
+    "packages/core/src/app.ts",
     "packages/core/src/arrange.ts",
+    "packages/core/src/arrangement-words.ts",
     "packages/core/src/arrangement.ts",
     "packages/core/src/arranging.ts",
-    "packages/core/src/cli/check/arrangement.ts"
+    "packages/core/src/check.ts",
+    "packages/core/src/cli/check/arrangement.ts",
+    "packages/core/src/cli/describe.ts",
+    "packages/core/src/cli/docs.ts",
+    "packages/core/src/cli/doctor.ts",
+    "packages/core/src/cli/index.ts",
+    "packages/core/src/figures.ts",
+    "packages/core/src/installation.ts",
+    "packages/core/src/kind-list.ts",
+    "packages/core/src/mutations/node-ref.ts",
+    "packages/core/src/schema/figures.ts",
+    "packages/core/src/settings.ts",
+    "packages/core/src/testing.ts"
   ],
   "entryPoints": [
+    "packages/core/src/app.ts",
     "packages/core/src/arrange.ts",
+    "packages/core/src/arrangement-words.ts",
     "packages/core/src/arrangement.ts",
-    "packages/core/src/cli/check/arrangement.ts"
+    "packages/core/src/check.ts",
+    "packages/core/src/cli/check/arrangement.ts",
+    "packages/core/src/cli/describe.ts",
+    "packages/core/src/cli/docs.ts",
+    "packages/core/src/cli/doctor.ts",
+    "packages/core/src/cli/index.ts",
+    "packages/core/src/figures.ts",
+    "packages/core/src/installation.ts",
+    "packages/core/src/kind-list.ts",
+    "packages/core/src/mutations/node-ref.ts",
+    "packages/core/src/schema/figures.ts",
+    "packages/core/src/settings.ts",
+    "packages/core/src/testing.ts"
   ],
-  "cohesion": 0.53,
-  "coupling": 0.47,
-  "fileCount": 4,
-  "lineCount": 739
+  "cohesion": 0.47,
+  "coupling": 0.53,
+  "fileCount": 18,
+  "lineCount": 4076
 }

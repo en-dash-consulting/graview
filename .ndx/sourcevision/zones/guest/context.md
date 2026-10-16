@@ -5,75 +5,80 @@
 <zone>
 
 Zone: Guest (`guest`)
-Files: 51, Cohesion: 1.00, Coupling: 0.00
+Files: 56, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 51 files, mostly utilities and entry points; entry points index.ts, protocol.ts, session.ts; imported by Packages.
-Entry points: packages/guest/src/build.ts, packages/guest/src/channel.ts, packages/guest/src/cli.ts, packages/guest/src/client.ts, packages/guest/src/headless/index.ts, packages/guest/src/headless/node.ts, packages/guest/src/host/css.ts, packages/guest/src/host/index.ts, packages/guest/src/host/kit.ts, packages/guest/src/host/links.ts, packages/guest/src/host/manifest.ts, packages/guest/src/host/open-draw.ts, packages/guest/src/host/open-render.ts, packages/guest/src/host/press.ts, packages/guest/src/host/session.ts, packages/guest/src/host/theme.ts, packages/guest/src/host/view-script.ts, packages/guest/src/host/view-source.ts, packages/guest/src/host/view.ts, packages/guest/src/host/worker-react.tsx, packages/guest/src/host/worker.ts, packages/guest/src/host/writes.ts, packages/guest/src/index.ts, packages/guest/src/kit.ts, packages/guest/src/open-kit.ts, packages/guest/src/protocol.ts, packages/guest/src/worker/elements.ts, packages/guest/src/worker/harden.ts, packages/guest/src/worker/index.ts, packages/guest/src/worker/listeners.ts, packages/guest/src/worker/view.ts
-Lines: 7905
+Description: 56 files, primarily TypeScript
+Entry points: packages/guest/src/build.ts, packages/guest/src/channel.ts, packages/guest/src/cli.ts, packages/guest/src/client.ts, packages/guest/src/headless/index.ts, packages/guest/src/headless/judge.ts, packages/guest/src/headless/node.ts, packages/guest/src/host/css.ts, packages/guest/src/host/frame.ts, packages/guest/src/host/index.ts, packages/guest/src/host/kit.ts, packages/guest/src/host/links-words.ts, packages/guest/src/host/links.ts, packages/guest/src/host/manifest.ts, packages/guest/src/host/open-draw.ts, packages/guest/src/host/open-judge.ts, packages/guest/src/host/open-render.ts, packages/guest/src/host/pictures.ts, packages/guest/src/host/press.ts, packages/guest/src/host/session.ts, packages/guest/src/host/theme.ts, packages/guest/src/host/view-script.ts, packages/guest/src/host/view-source.ts, packages/guest/src/host/view.ts, packages/guest/src/host/where.ts, packages/guest/src/host/worker-react.tsx, packages/guest/src/host/worker.ts, packages/guest/src/host/writes.ts, packages/guest/src/index.ts, packages/guest/src/kit.ts, packages/guest/src/open-kit.ts, packages/guest/src/protocol.ts, packages/guest/src/worker/elements.ts, packages/guest/src/worker/harden.ts, packages/guest/src/worker/index.ts, packages/guest/src/worker/listeners.ts, packages/guest/src/worker/view.ts, packages/skills/src/index.ts
+Lines: 9354
 
 </zone>
 
 <files>
 
-packages/guest/client.js (JavaScript, 2 lines, source)
 packages/guest/src/build.ts (TypeScript, 134 lines, source)
-packages/guest/src/channel.ts (TypeScript, 155 lines, source)
-packages/guest/src/cli.ts (TypeScript, 80 lines, source)
+packages/guest/src/channel.ts (TypeScript, 160 lines, source)
+packages/guest/src/cli.ts (TypeScript, 83 lines, source)
 packages/guest/src/client-script.ts (TypeScript, 20 lines, source)
 packages/guest/src/client.ts (TypeScript, 11 lines, source)
 packages/guest/src/guest.ts (TypeScript, 37 lines, source)
-packages/guest/src/headless/describe.ts (TypeScript, 276 lines, source)
-packages/guest/src/headless/draw.ts (TypeScript, 43 lines, source)
-packages/guest/src/headless/index.ts (TypeScript, 252 lines, source)
-packages/guest/src/headless/judge.ts (TypeScript, 63 lines, source)
+packages/guest/src/headless/describe.ts (TypeScript, 278 lines, source)
+packages/guest/src/headless/draw.ts (TypeScript, 44 lines, source)
+packages/guest/src/headless/index.ts (TypeScript, 284 lines, source)
+packages/guest/src/headless/judge.ts (TypeScript, 68 lines, source)
 packages/guest/src/headless/node.ts (TypeScript, 85 lines, source)
-packages/guest/src/headless/protocol.ts (TypeScript, 78 lines, source)
-packages/guest/src/headless/runtime.ts (TypeScript, 165 lines, source)
+packages/guest/src/headless/protocol.ts (TypeScript, 83 lines, source)
+packages/guest/src/headless/runtime.ts (TypeScript, 168 lines, source)
 packages/guest/src/headless/tree.ts (TypeScript, 129 lines, source)
-packages/guest/src/host/arrive.ts (TypeScript, 35 lines, source)
+packages/guest/src/host/arrive-at.ts (TypeScript, 15 lines, source)
+packages/guest/src/host/arrive.ts (TypeScript, 42 lines, source)
 packages/guest/src/host/css.ts (TypeScript, 994 lines, source)
 packages/guest/src/host/draw-budget.ts (TypeScript, 38 lines, source)
-packages/guest/src/host/frame.ts (TypeScript, 185 lines, source)
-packages/guest/src/host/index.ts (TypeScript, 23 lines, source)
+packages/guest/src/host/frame.ts (TypeScript, 251 lines, source)
+packages/guest/src/host/index.ts (TypeScript, 26 lines, source)
 packages/guest/src/host/kit.ts (TypeScript, 411 lines, source)
-packages/guest/src/host/links.ts (TypeScript, 62 lines, source)
-packages/guest/src/host/manifest.ts (TypeScript, 146 lines, source)
+packages/guest/src/host/links-words.ts (TypeScript, 72 lines, source)
+packages/guest/src/host/links.ts (TypeScript, 159 lines, source)
+packages/guest/src/host/manifest.ts (TypeScript, 186 lines, source)
 packages/guest/src/host/nonce.ts (TypeScript, 6 lines, source)
-packages/guest/src/host/open-draw.ts (TypeScript, 141 lines, source)
-packages/guest/src/host/open-judge.ts (TypeScript, 142 lines, source)
-packages/guest/src/host/open-render.ts (TypeScript, 275 lines, source)
-packages/guest/src/host/press.ts (TypeScript, 147 lines, source)
-packages/guest/src/host/react.tsx (TypeScript, 128 lines, source)
-packages/guest/src/host/session.ts (TypeScript, 374 lines, source)
+packages/guest/src/host/open-draw.ts (TypeScript, 150 lines, source)
+packages/guest/src/host/open-judge.ts (TypeScript, 207 lines, source)
+packages/guest/src/host/open-render.ts (TypeScript, 280 lines, source)
+packages/guest/src/host/pictures.ts (TypeScript, 280 lines, source)
+packages/guest/src/host/press.ts (TypeScript, 291 lines, source)
+packages/guest/src/host/react.tsx (TypeScript, 144 lines, source)
+packages/guest/src/host/session.ts (TypeScript, 407 lines, source)
 packages/guest/src/host/theme.ts (TypeScript, 167 lines, source)
 packages/guest/src/host/view-script.ts (TypeScript, 23 lines, source)
 packages/guest/src/host/view-source.ts (TypeScript, 29 lines, source)
-packages/guest/src/host/view.ts (TypeScript, 510 lines, source)
-packages/guest/src/host/views.ts (TypeScript, 21 lines, source)
-packages/guest/src/host/worker-react.tsx (TypeScript, 198 lines, source)
+packages/guest/src/host/view.ts (TypeScript, 606 lines, source)
+packages/guest/src/host/views.ts (TypeScript, 22 lines, source)
+packages/guest/src/host/where.ts (TypeScript, 124 lines, source)
+packages/guest/src/host/worker-react.tsx (TypeScript, 253 lines, source)
 packages/guest/src/host/worker-start.ts (TypeScript, 241 lines, source)
 packages/guest/src/host/worker.ts (TypeScript, 230 lines, source)
-packages/guest/src/host/writes.ts (TypeScript, 106 lines, source)
-packages/guest/src/index.ts (TypeScript, 20 lines, source)
+packages/guest/src/host/writes.ts (TypeScript, 119 lines, source)
+packages/guest/src/index.ts (TypeScript, 23 lines, source)
 packages/guest/src/kit.ts (TypeScript, 113 lines, source)
-packages/guest/src/open-kit.ts (TypeScript, 365 lines, source)
-packages/guest/src/protocol.ts (TypeScript, 285 lines, source)
+packages/guest/src/open-kit.ts (TypeScript, 370 lines, source)
+packages/guest/src/protocol.ts (TypeScript, 361 lines, source)
 packages/guest/src/react.ts (TypeScript, 32 lines, source)
 packages/guest/src/worker/elements.ts (TypeScript, 30 lines, source)
 packages/guest/src/worker/harden.ts (TypeScript, 203 lines, source)
 packages/guest/src/worker/index.ts (TypeScript, 112 lines, source)
 packages/guest/src/worker/listeners.ts (TypeScript, 166 lines, source)
 packages/guest/src/worker/natives.ts (TypeScript, 29 lines, source)
-packages/guest/src/worker/view-global.ts (TypeScript, 314 lines, source)
-packages/guest/src/worker/view.ts (TypeScript, 74 lines, source)
+packages/guest/src/worker/view-global.ts (TypeScript, 329 lines, source)
+packages/guest/src/worker/view.ts (TypeScript, 75 lines, source)
+packages/skills/src/cli.ts (TypeScript, 65 lines, source)
+packages/skills/src/index.ts (TypeScript, 89 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/guest/src/channel.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, isHostHello}
-  packages/guest/src/channel.ts → packages/guest/src/protocol.ts {GuestAnswer, GuestEvent, GuestProps, GuestRequest, HostMessage}
+  packages/guest/src/channel.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, isHostHello, navigateRequest}
+  packages/guest/src/channel.ts → packages/guest/src/protocol.ts {GuestAnswer, GuestEvent, GuestNavigateTo, GuestProps, GuestRequest, HostMessage}
   packages/guest/src/cli.ts → packages/guest/src/headless/index.ts {runWorkerViewHeadless}
   packages/guest/src/cli.ts → packages/guest/src/headless/node.ts {nodeIsolate}
   packages/guest/src/cli.ts → packages/guest/src/host/manifest.ts {WorkerViewManifest}
@@ -83,6 +88,8 @@ Internal:
   packages/guest/src/guest.ts → packages/guest/src/channel.ts {Guest}
   packages/guest/src/headless/describe.ts → packages/guest/src/headless/tree.ts {TreeElement, TreeText}
   packages/guest/src/headless/describe.ts → packages/guest/src/headless/tree.ts {TreeNode}
+  packages/guest/src/headless/describe.ts → packages/guest/src/host/links-words.ts {placeNamed, placesSaid}
+  packages/guest/src/headless/describe.ts → packages/guest/src/host/links-words.ts {NamedPlace}
   packages/guest/src/headless/describe.ts → packages/guest/src/protocol.ts {GuestNode, GuestProps}
   packages/guest/src/headless/draw.ts → packages/guest/src/headless/tree.ts {createTree}
   packages/guest/src/headless/draw.ts → packages/guest/src/headless/tree.ts {TreeElement}
@@ -100,8 +107,11 @@ Internal:
   packages/guest/src/headless/index.ts → packages/guest/src/headless/protocol.ts {HEADLESS_ENTRY, HEADLESS_VIEW}
   packages/guest/src/headless/index.ts → packages/guest/src/headless/protocol.ts {HeadlessFailureReason, HeadlessInput, HeadlessTranscript, HeadlessOutcome}
   packages/guest/src/headless/index.ts → packages/guest/src/headless/tree.ts {createTree, TreeDocument, TreeElement, TreeText}
+  packages/guest/src/headless/index.ts → packages/guest/src/host/links-words.ts {guestPlacesOf, placeNamed}
+  packages/guest/src/headless/index.ts → packages/guest/src/host/links.ts {judgeDestination, listsOf}
   packages/guest/src/headless/index.ts → packages/guest/src/host/manifest.ts {checkManifest, manifestActs, workerViewProps}
   packages/guest/src/headless/index.ts → packages/guest/src/host/manifest.ts {WorkerViewManifest}
+  packages/guest/src/headless/index.ts → packages/guest/src/host/pictures.ts {guestFileOf, handFiles}
   packages/guest/src/headless/index.ts → packages/guest/src/host/session.ts {GuestViewInput}
   packages/guest/src/headless/index.ts → packages/guest/src/host/view-source.ts {checkViewSource}
   packages/guest/src/headless/index.ts → packages/guest/src/host/view.ts {WorkerViewLimits}
@@ -109,8 +119,11 @@ Internal:
   packages/guest/src/headless/judge.ts → packages/guest/src/headless/describe.ts {describeDrawing}
   packages/guest/src/headless/judge.ts → packages/guest/src/headless/draw.ts {drawTranscript}
   packages/guest/src/headless/judge.ts → packages/guest/src/headless/protocol.ts {HeadlessFailureReason, HeadlessInput, HeadlessTranscript}
+  packages/guest/src/headless/judge.ts → packages/guest/src/host/links-words.ts {placeNamed, placesSaid, quoted}
   packages/guest/src/headless/judge.ts → packages/guest/src/host/open-draw.ts {ViewRefusal}
+  packages/guest/src/headless/judge.ts → packages/guest/src/host/open-judge.ts {imageRefusedWords}
   packages/guest/src/headless/node.ts → packages/guest/src/headless/index.ts {HeadlessPayload, HeadlessRun}
+  packages/guest/src/headless/protocol.ts → packages/guest/src/host/links-words.ts {NamedPlace}
   packages/guest/src/headless/protocol.ts → packages/guest/src/protocol.ts {GuestProps}
   packages/guest/src/headless/runtime.ts → packages/guest/src/headless/judge.ts {judgeTranscript}
   packages/guest/src/headless/runtime.ts → packages/guest/src/headless/protocol.ts {HEADLESS_ENTRY, HEADLESS_VIEW}
@@ -120,31 +133,43 @@ Internal:
   packages/guest/src/headless/runtime.ts → packages/guest/src/worker/harden.ts {Hardening}
   packages/guest/src/headless/runtime.ts → packages/guest/src/worker/view-global.ts {createViewRuntime}
   packages/guest/src/headless/runtime.ts → packages/guest/src/worker/view-global.ts {GraviewView}
+  packages/guest/src/host/arrive-at.ts → packages/guest/src/host/links.ts {Arrival}
+  packages/guest/src/host/arrive.ts → packages/guest/src/host/frame.ts {*}
   packages/guest/src/host/arrive.ts → packages/guest/src/host/worker.ts {*}
   packages/guest/src/host/css.ts → packages/guest/src/open-kit.ts {CSS_AT_RULES, CSS_FRAGMENT_PROPERTIES, CSS_FUNCTIONS, CSS_KEYWORD_PROPERTIES, CSS_PROPERTIES, CSS_REFUSED_SELECTORS, HTML_DRAWN_AS, OPEN_MAX_STYLESHEET}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/arrive-at.ts {arriveAt}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/arrive.ts {untilItArrives}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/links.ts {Arrival}
   packages/guest/src/host/frame.ts → packages/guest/src/host/nonce.ts {mintNonce}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/pictures.ts {*}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/pictures.ts {GuestPictureHand, GuestPictures}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter, readAcross}
   packages/guest/src/host/frame.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter}
   packages/guest/src/host/frame.ts → packages/guest/src/host/session.ts {GuestHost, GuestLimits, GuestReads, GuestStats, GuestViewInput}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/theme.ts {readTheme}
   packages/guest/src/host/frame.ts → packages/guest/src/host/theme.ts {createGuestLogo, readTheme, themeWithBrand, watchTheme}
   packages/guest/src/host/frame.ts → packages/guest/src/host/theme.ts {GuestBrand}
+  packages/guest/src/host/frame.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN}
   packages/guest/src/host/frame.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady}
   packages/guest/src/host/frame.ts → packages/guest/src/protocol.ts {GuestPlace, GuestTheme, HostHello}
-  packages/guest/src/host/index.ts → packages/guest/src/host/frame.ts {mountGuestView}
   packages/guest/src/host/index.ts → packages/guest/src/host/frame.ts {GuestFrame, MountGuestViewOptions}
   packages/guest/src/host/index.ts → packages/guest/src/host/kit.ts {KitLinks, KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions}
+  packages/guest/src/host/index.ts → packages/guest/src/host/pictures.ts {GuestPictureLimits, GuestPictures}
   packages/guest/src/host/index.ts → packages/guest/src/host/react.tsx {guestView}
   packages/guest/src/host/index.ts → packages/guest/src/host/react.tsx {GuestViewOptions}
-  packages/guest/src/host/index.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter, readAcross}
   packages/guest/src/host/index.ts → packages/guest/src/host/session.ts {GuestHost, GuestHostOptions, GuestLimiter, GuestLimits, GuestReads, GuestStats, GuestViewInput}
-  packages/guest/src/host/index.ts → packages/guest/src/host/theme.ts {readTheme}
   packages/guest/src/host/index.ts → packages/guest/src/host/theme.ts {GuestBrand}
   packages/guest/src/host/index.ts → packages/guest/src/host/worker.ts {GuestWorker, GuestWorkerFailure, GuestWorkerSource, MountGuestWorkerOptions}
   packages/guest/src/host/index.ts → packages/guest/src/kit.ts {GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone}
-  packages/guest/src/host/index.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN}
-  packages/guest/src/host/index.ts → packages/guest/src/protocol.ts {GuestPlace, GuestProps, GuestTheme}
+  packages/guest/src/host/index.ts → packages/guest/src/protocol.ts {GuestFile, GuestPlace, GuestProps, GuestTheme}
   packages/guest/src/host/kit.ts → packages/guest/src/kit.ts {GUEST_KIT, KIT_HOST_ATTRIBUTES, KIT_HOST_EVENTS, KIT_HOST_TAGS, KIT_LINK_TARGETS, KIT_MAX_TEXT}
   packages/guest/src/host/kit.ts → packages/guest/src/kit.ts {Kit, KitComponent, KitProperty}
+  packages/guest/src/host/links.ts → packages/guest/src/host/links-words.ts {nowhere, placesSaid, quoted, whereOfWords}
+  packages/guest/src/host/links.ts → packages/guest/src/host/links-words.ts {nowhere, placeNamed, quoted, whereOfWords}
+  packages/guest/src/host/links.ts → packages/guest/src/host/links-words.ts {Destination}
+  packages/guest/src/host/links.ts → packages/guest/src/host/where.ts {filterOfWhere}
   packages/guest/src/host/links.ts → packages/guest/src/protocol.ts {GuestPlace}
+  packages/guest/src/host/manifest.ts → packages/guest/src/host/pictures.ts {GuestPictures}
   packages/guest/src/host/manifest.ts → packages/guest/src/host/session.ts {plainNode, readAcross}
   packages/guest/src/host/manifest.ts → packages/guest/src/host/session.ts {GuestViewInput}
   packages/guest/src/host/manifest.ts → packages/guest/src/protocol.ts {GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme}
@@ -161,24 +186,33 @@ Internal:
   packages/guest/src/host/open-render.ts → packages/guest/src/host/open-judge.ts {isEmptyElement, judgeAttribute, judgeElement}
   packages/guest/src/host/open-render.ts → packages/guest/src/host/open-judge.ts {JudgeContext, OpenNamespace, OpenRefusal}
   packages/guest/src/host/open-render.ts → packages/guest/src/open-kit.ts {HTML_NAMESPACE, OPEN_MAX_TEXT, SVG_NAMESPACE}
-  packages/guest/src/host/press.ts → packages/guest/src/host/manifest.ts {WorkerViewManifest}
+  packages/guest/src/host/pictures.ts → packages/guest/src/protocol.ts {GuestFile, GuestNode, GuestProps}
+  packages/guest/src/host/press.ts → packages/guest/src/host/manifest.ts {ManifestAct, WorkerViewManifest}
   packages/guest/src/host/press.ts → packages/guest/src/host/writes.ts {declaredValues, entryFor, refuse}
-  packages/guest/src/host/press.ts → packages/guest/src/host/writes.ts {Judged, Press, PressedField}
-  packages/guest/src/host/react.tsx → packages/guest/src/host/arrive.ts {untilItArrives, workerChunk}
-  packages/guest/src/host/react.tsx → packages/guest/src/host/frame.ts {mountGuestView}
+  packages/guest/src/host/press.ts → packages/guest/src/host/writes.ts {Judged, Prefilled, Press, PressedField}
+  packages/guest/src/host/react.tsx → packages/guest/src/host/arrive.ts {frameChunk, untilItArrives, workerChunk}
   packages/guest/src/host/react.tsx → packages/guest/src/host/frame.ts {GuestFrame}
   packages/guest/src/host/react.tsx → packages/guest/src/host/kit.ts {KitLinks}
+  packages/guest/src/host/react.tsx → packages/guest/src/host/pictures.ts {GuestPictures}
   packages/guest/src/host/react.tsx → packages/guest/src/host/session.ts {GuestLimits, GuestReads, GuestViewInput}
   packages/guest/src/host/react.tsx → packages/guest/src/host/worker.ts {GuestWorkerSource}
+  packages/guest/src/host/session.ts → packages/guest/src/host/links.ts {*}
+  packages/guest/src/host/session.ts → packages/guest/src/host/links.ts {Arrival, Destination}
+  packages/guest/src/host/session.ts → packages/guest/src/host/pictures.ts {GuestPictureLimits}
   packages/guest/src/host/session.ts → packages/guest/src/protocol.ts {GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestPlace, GuestProps, GuestRefusal, GuestTheme, HostMessage}
   packages/guest/src/host/theme.ts → packages/guest/src/protocol.ts {GuestTheme}
+  packages/guest/src/host/view.ts → packages/guest/src/host/arrive-at.ts {arriveAt}
   packages/guest/src/host/view.ts → packages/guest/src/host/draw-budget.ts {createDrawBudget}
-  packages/guest/src/host/view.ts → packages/guest/src/host/links.ts {createLinks}
-  packages/guest/src/host/view.ts → packages/guest/src/host/links.ts {Destination}
+  packages/guest/src/host/view.ts → packages/guest/src/host/links-words.ts {guestPlacesOf}
+  packages/guest/src/host/view.ts → packages/guest/src/host/links.ts {createLinks, listsOf}
+  packages/guest/src/host/view.ts → packages/guest/src/host/links.ts {Arrival, Destination}
   packages/guest/src/host/view.ts → packages/guest/src/host/manifest.ts {checkManifest, workerViewProps}
   packages/guest/src/host/view.ts → packages/guest/src/host/manifest.ts {WorkerViewManifest}
   packages/guest/src/host/view.ts → packages/guest/src/host/open-draw.ts {*}
   packages/guest/src/host/view.ts → packages/guest/src/host/open-draw.ts {OpenDrawing, ViewRefusal}
+  packages/guest/src/host/view.ts → packages/guest/src/host/open-judge.ts {imageRefusedWords}
+  packages/guest/src/host/view.ts → packages/guest/src/host/pictures.ts {*}
+  packages/guest/src/host/view.ts → packages/guest/src/host/pictures.ts {GuestPictureHand}
   packages/guest/src/host/view.ts → packages/guest/src/host/press.ts {*}
   packages/guest/src/host/view.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter}
   packages/guest/src/host/view.ts → packages/guest/src/host/session.ts {GuestHost, GuestLimits, GuestStats, GuestViewInput}
@@ -192,6 +226,7 @@ Internal:
   packages/guest/src/host/view.ts → packages/guest/src/protocol.ts {GuestDomEvent, GuestPlace, GuestProps, GuestTheme}
   packages/guest/src/host/views.ts → packages/guest/src/host/manifest.ts {checkManifest, manifestActs, workerViewProps}
   packages/guest/src/host/views.ts → packages/guest/src/host/manifest.ts {ManifestAct, WorkerViewManifest, WorkerViewPropsInput}
+  packages/guest/src/host/views.ts → packages/guest/src/host/pictures.ts {GuestPictureLimits, GuestPictures}
   packages/guest/src/host/views.ts → packages/guest/src/host/theme.ts {GuestBrand}
   packages/guest/src/host/views.ts → packages/guest/src/host/view-script.ts {viewScript}
   packages/guest/src/host/views.ts → packages/guest/src/host/view-source.ts {checkViewSource}
@@ -199,8 +234,8 @@ Internal:
   packages/guest/src/host/views.ts → packages/guest/src/host/worker-react.tsx {registerWorkerView, workerHome, workerView}
   packages/guest/src/host/views.ts → packages/guest/src/host/worker-react.tsx {WorkerHomeContext, WorkerViewDefinition}
   packages/guest/src/host/views.ts → packages/guest/src/host/writes.ts {judgeCodeAct, sightIsTotal}
-  packages/guest/src/host/views.ts → packages/guest/src/host/writes.ts {Judged, Press, PressedField}
-  packages/guest/src/host/views.ts → packages/guest/src/protocol.ts {GuestPlace, GuestTheme}
+  packages/guest/src/host/views.ts → packages/guest/src/host/writes.ts {Judged, Prefilled, Press, PressedField}
+  packages/guest/src/host/views.ts → packages/guest/src/protocol.ts {GuestFile, GuestPlace, GuestTheme}
   packages/guest/src/host/worker-react.tsx → packages/guest/src/host/arrive.ts {untilItArrives, workerChunk}
   packages/guest/src/host/worker-react.tsx → packages/guest/src/host/manifest.ts {WorkerViewManifest}
   packages/guest/src/host/worker-react.tsx → packages/guest/src/host/session.ts {GuestViewInput}
@@ -232,8 +267,8 @@ Internal:
   packages/guest/src/host/writes.ts → packages/guest/src/protocol.ts {GuestRefusal}
   packages/guest/src/index.ts → packages/guest/src/guest.ts {connectGuest}
   packages/guest/src/index.ts → packages/guest/src/guest.ts {ConnectGuestOptions, Guest}
-  packages/guest/src/index.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, isHostHello}
-  packages/guest/src/index.ts → packages/guest/src/protocol.ts {GuestAct, GuestAnswer, GuestEdge, GuestDomEvent, GuestEvent, GuestNode, GuestPlace, GuestPressed, GuestProps, GuestTheme, GuestReady, GuestRefusal, GuestRequest, HostHello, HostMessage}
+  packages/guest/src/index.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady, isHostHello, navigateRequest}
+  packages/guest/src/index.ts → packages/guest/src/protocol.ts {GuestAct, GuestAnswer, GuestEdge, GuestDomEvent, GuestEvent, GuestFile, GuestNavigateTo, GuestNode, GuestPlace, GuestPressed, GuestProps, GuestTheme, GuestWhere, GuestReady, GuestRefusal, GuestRequest, HostHello, HostMessage}
   packages/guest/src/react.ts → packages/guest/src/guest.ts {connectGuest}
   packages/guest/src/react.ts → packages/guest/src/guest.ts {ConnectGuestOptions, Guest}
   packages/guest/src/react.ts → packages/guest/src/protocol.ts {GuestProps}
@@ -252,7 +287,8 @@ Internal:
   packages/guest/src/worker/index.ts → packages/guest/src/worker/natives.ts {natives}
   packages/guest/src/worker/view-global.ts → packages/guest/src/channel.ts {Unsent}
   packages/guest/src/worker/view-global.ts → packages/guest/src/open-kit.ts {HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName}
-  packages/guest/src/worker/view-global.ts → packages/guest/src/protocol.ts {GuestAnswer, GuestDomEvent, GuestPressed, GuestProps, HostMessage}
+  packages/guest/src/worker/view-global.ts → packages/guest/src/protocol.ts {navigateRequest}
+  packages/guest/src/worker/view-global.ts → packages/guest/src/protocol.ts {GuestAnswer, GuestDomEvent, GuestNavigateTo, GuestPressed, GuestProps, HostMessage}
   packages/guest/src/worker/view-global.ts → packages/guest/src/worker/harden.ts {Hardening}
   packages/guest/src/worker/view-global.ts → packages/guest/src/worker/listeners.ts {createListenerLedger}
   packages/guest/src/worker/view.ts → packages/guest/src/channel.ts {openGuest}
@@ -263,15 +299,17 @@ Internal:
   packages/guest/src/worker/view.ts → packages/guest/src/worker/view-global.ts {VIEW_ROOT}
   packages/guest/src/worker/view.ts → packages/guest/src/worker/view-global.ts {createViewRuntime}
   packages/guest/src/worker/view.ts → packages/guest/src/worker/view-global.ts {Drawable, GraviewView, Html, ViewEvent}
+  packages/skills/src/cli.ts → packages/skills/src/index.ts {readSkills, SKILLS_DIR, SKILL_DESTINATIONS, withSkillsListed}
 
 Incoming (other zones → this zone):
-  ← tests-guest-unit: packages/guest/tests/unit/a-frame-guest-follows-the-apps-theme.test.ts → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-frame-guest-follows-the-apps-theme.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-frame-guest-follows-the-apps-theme.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-bundle-is-one-classic-script.test.ts → packages/guest/src/build.ts; packages/guest/tests/unit/a-guest-is-shown-only-what-the-viewer-may-see.test.ts → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-guest-is-shown-only-what-the-viewer-may-see.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts → packages/guest/src/index.ts; packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-view-follows-the-providers-brand.test.tsx → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-guest-view-follows-the-providers-brand.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-view-follows-the-providers-brand.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guests-act-is-the-viewers-click.test.tsx → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-guests-act-is-the-viewers-click.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guests-worker-keeps-only-the-allowlist.test.ts → packages/guest/src/worker/harden.ts; packages/guest/tests/unit/a-hostile-guest-changes-nothing.test.ts → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-hostile-guest-changes-nothing.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-titled-guest-view-is-a-place.test.tsx → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-view-draws-only-the-open-kit.test.ts → packages/guest/src/host/open-render.ts; packages/guest/tests/unit/a-view-draws-only-the-open-kit.test.ts → packages/guest/src/open-kit.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/host/theme.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/host/theme.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-view-needs-no-build.test.ts → packages/guest/src/build.ts; packages/guest/tests/unit/a-view-needs-no-build.test.ts → packages/guest/src/host/view-script.ts; packages/guest/tests/unit/a-view-needs-no-build.test.ts → packages/guest/src/host/view-source.ts; packages/guest/tests/unit/a-views-css-keeps-nothing-that-fetches.test.ts → packages/guest/src/host/css.ts; packages/guest/tests/unit/a-views-css-keeps-nothing-that-fetches.test.ts → packages/guest/src/open-kit.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/worker/index.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/worker/index.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/worker/listeners.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → packages/guest/src/host/view.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → packages/guest/src/host/worker.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-that-stops-answering-is-stopped.test.ts → packages/guest/src/channel.ts; packages/guest/tests/unit/a-worker-that-stops-answering-is-stopped.test.ts → packages/guest/src/host/worker.ts; packages/guest/tests/unit/a-worker-that-stops-answering-is-stopped.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-that-stops-answering-is-stopped.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/worker/view.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/host/worker-react.tsx; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → packages/guest/src/host/view.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → packages/guest/src/host/view.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/cli.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/headless/node.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → packages/guest/src/host/links.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → packages/guest/src/host/links.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/press.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/writes.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/one-declaration-makes-both-sides-of-the-kit.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/one-declaration-makes-both-sides-of-the-kit.test.ts → packages/guest/src/kit.ts; packages/guest/tests/unit/one-declaration-makes-both-sides-of-the-kit.test.ts → packages/guest/src/kit.ts; packages/guest/tests/unit/one-declaration-makes-both-sides-of-the-kit.test.ts → packages/guest/src/worker/elements.ts; packages/guest/tests/unit/one-guest-client-served-not-copied.test.ts → packages/guest/src/client.ts; packages/guest/tests/unit/one-guest-client-served-not-copied.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/one-guest-client-served-not-copied.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/showroom.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/the-frame-is-sandboxed-and-answers-only-its-own.test.ts → packages/guest/src/host/index.ts; packages/guest/tests/unit/the-frame-is-sandboxed-and-answers-only-its-own.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/the-frame-is-sandboxed-and-answers-only-its-own.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/the-host-draws-only-the-kit.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/the-host-draws-only-the-kit.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/the-host-draws-only-the-kit.test.ts → packages/guest/src/kit.ts; packages/guest/tests/unit/the-host-draws-only-the-kit.test.ts → packages/guest/src/kit.ts; packages/guest/tests/unit/the-worker-is-classic-and-answers-only-its-own-ready.test.ts → packages/guest/src/host/worker.ts; packages/guest/tests/unit/the-worker-is-classic-and-answers-only-its-own-ready.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/the-worker-is-classic-and-answers-only-its-own-ready.test.ts → packages/guest/src/protocol.ts
+  ← tests-guest-unit: packages/guest/tests/unit/a-filter-asked-in-code-is-held-to-the-kind.test.ts → packages/guest/src/host/where.ts; packages/guest/tests/unit/a-frame-guest-follows-the-apps-theme.test.ts → packages/guest/src/host/frame.ts; packages/guest/tests/unit/a-frame-guest-follows-the-apps-theme.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-frame-guest-follows-the-apps-theme.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/host/frame.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-bundle-is-one-classic-script.test.ts → packages/guest/src/build.ts; packages/guest/tests/unit/a-guest-is-shown-only-what-the-viewer-may-see.test.ts → packages/guest/src/host/frame.ts; packages/guest/tests/unit/a-guest-is-shown-only-what-the-viewer-may-see.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts → packages/guest/src/host/frame.ts; packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts → packages/guest/src/index.ts; packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-talks-only-over-its-port.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-view-follows-the-providers-brand.test.tsx → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-guest-view-follows-the-providers-brand.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-view-follows-the-providers-brand.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/headless/node.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/host/frame.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/host/pictures.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/host/pictures.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guests-act-is-the-viewers-click.test.tsx → packages/guest/src/host/frame.ts; packages/guest/tests/unit/a-guests-act-is-the-viewers-click.test.tsx → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-guests-worker-keeps-only-the-allowlist.test.ts → packages/guest/src/worker/harden.ts; packages/guest/tests/unit/a-hostile-guest-changes-nothing.test.ts → packages/guest/src/host/frame.ts; packages/guest/tests/unit/a-hostile-guest-changes-nothing.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-script-view-is-drawn-as-the-host-kept-it-then.test.tsx → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-script-view-is-drawn-as-the-host-kept-it-then.test.tsx → packages/guest/src/host/worker-react.tsx; packages/guest/tests/unit/a-titled-guest-view-is-a-place.test.tsx → packages/guest/src/host/index.ts; packages/guest/tests/unit/a-view-draws-an-image-the-app-holds.test.ts → packages/guest/src/host/open-render.ts; packages/guest/tests/unit/a-view-draws-only-the-open-kit.test.ts → packages/guest/src/host/open-render.ts; packages/guest/tests/unit/a-view-draws-only-the-open-kit.test.ts → packages/guest/src/open-kit.ts; packages/guest/tests/unit/a-view-goes-to-a-list-narrowed.test.ts → packages/guest/src/host/links.ts; packages/guest/tests/unit/a-view-goes-to-a-list-narrowed.test.ts → packages/guest/src/host/links.ts; packages/guest/tests/unit/a-view-goes-to-a-list-narrowed.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-view-goes-to-a-list-narrowed.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/host/frame.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/host/theme.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/host/theme.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-view-is-handed-the-whole-brand.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-view-needs-no-build.test.ts → packages/guest/src/build.ts; packages/guest/tests/unit/a-view-needs-no-build.test.ts → packages/guest/src/host/view-script.ts; packages/guest/tests/unit/a-view-needs-no-build.test.ts → packages/guest/src/host/view-source.ts; packages/guest/tests/unit/a-view-of-one-sits-beside-the-records-own-fields.test.tsx → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-view-of-one-sits-beside-the-records-own-fields.test.tsx → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-view-of-one-sits-beside-the-records-own-fields.test.tsx → packages/guest/src/host/worker-react.tsx; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → packages/guest/src/host/press.ts; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → packages/guest/src/host/writes.ts; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-view-shows-an-https-image-from-an-origin-its-host-lists.test.ts → packages/guest/src/headless/judge.ts; packages/guest/tests/unit/a-view-shows-an-https-image-from-an-origin-its-host-lists.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-view-shows-an-https-image-from-an-origin-its-host-lists.test.ts → packages/guest/src/host/open-judge.ts; packages/guest/tests/unit/a-view-shows-an-https-image-from-an-origin-its-host-lists.test.ts → packages/guest/src/host/open-judge.ts; packages/guest/tests/unit/a-view-shows-an-https-image-from-an-origin-its-host-lists.test.ts → packages/guest/src/host/open-render.ts; packages/guest/tests/unit/a-views-css-keeps-nothing-that-fetches.test.ts → packages/guest/src/host/css.ts; packages/guest/tests/unit/a-views-css-keeps-nothing-that-fetches.test.ts → packages/guest/src/open-kit.ts; packages/guest/tests/unit/a-views-event-names-the-element-it-matched.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-views-event-names-the-element-it-matched.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-views-event-names-the-element-it-matched.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-views-event-names-the-element-it-matched.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-views-event-names-the-element-it-matched.test.ts → packages/guest/src/worker/view.ts; packages/guest/tests/unit/a-views-navigate-takes-only-a-string.test.ts → packages/guest/src/headless/judge.ts; packages/guest/tests/unit/a-views-navigate-takes-only-a-string.test.ts → packages/guest/src/host/view.ts; packages/guest/tests/unit/a-views-navigate-takes-only-a-string.test.ts → packages/guest/src/host/view.ts; packages/guest/tests/unit/a-views-navigate-takes-only-a-string.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-views-navigate-takes-only-a-string.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-views-places-are-known-by-slug-and-title.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/a-views-places-are-known-by-slug-and-title.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/a-views-places-are-known-by-slug-and-title.test.ts → packages/guest/src/headless/node.ts; packages/guest/tests/unit/a-views-places-are-known-by-slug-and-title.test.ts → packages/guest/src/host/links-words.ts; packages/guest/tests/unit/a-views-places-are-known-by-slug-and-title.test.ts → packages/guest/src/host/links.ts; packages/guest/tests/unit/a-views-style-may-hold-a-header-in-place-and-reset-a-button.test.ts → packages/guest/src/host/css.ts; packages/guest/tests/unit/a-views-style-may-hold-a-header-in-place-and-reset-a-button.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-guest-draws-the-kit-and-asks-as-the-viewer.test.ts → packages/guest/src/worker/index.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/worker/index.ts; packages/guest/tests/unit/a-worker-guest-lets-go-of-what-it-removed.test.ts → packages/guest/src/worker/listeners.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → packages/guest/src/host/view.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → packages/guest/src/host/worker.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-that-stops-answering-is-stopped.test.ts → packages/guest/src/channel.ts; packages/guest/tests/unit/a-worker-that-stops-answering-is-stopped.test.ts → packages/guest/src/host/worker.ts; packages/guest/tests/unit/a-worker-that-stops-answering-is-stopped.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-that-stops-answering-is-stopped.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-draws-html-svg-and-css.test.ts → packages/guest/src/worker/view.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/host/worker-react.tsx; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → packages/guest/src/host/view.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → packages/guest/src/host/view.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/cli.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/headless/node.ts; packages/guest/tests/unit/a-worker-view-runs-headless-and-says-what-it-drew.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → packages/guest/src/host/links.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → packages/guest/src/host/links.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/open-draw.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/press.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/session.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/host/writes.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/one-declaration-makes-both-sides-of-the-kit.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/one-declaration-makes-both-sides-of-the-kit.test.ts → packages/guest/src/kit.ts; packages/guest/tests/unit/one-declaration-makes-both-sides-of-the-kit.test.ts → packages/guest/src/kit.ts; packages/guest/tests/unit/one-declaration-makes-both-sides-of-the-kit.test.ts → packages/guest/src/worker/elements.ts; packages/guest/tests/unit/one-guest-client-served-not-copied.test.ts → packages/guest/src/client.ts; packages/guest/tests/unit/one-guest-client-served-not-copied.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/one-guest-client-served-not-copied.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/showroom.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/the-frame-is-sandboxed-and-answers-only-its-own.test.ts → packages/guest/src/host/frame.ts; packages/guest/tests/unit/the-frame-is-sandboxed-and-answers-only-its-own.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/the-frame-is-sandboxed-and-answers-only-its-own.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/the-host-draws-only-the-kit.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/the-host-draws-only-the-kit.test.ts → packages/guest/src/host/kit.ts; packages/guest/tests/unit/the-host-draws-only-the-kit.test.ts → packages/guest/src/kit.ts; packages/guest/tests/unit/the-host-draws-only-the-kit.test.ts → packages/guest/src/kit.ts; packages/guest/tests/unit/the-views-guide-says-what-a-view-is-handed.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/the-views-guide-says-what-a-view-is-handed.test.ts → packages/guest/src/headless/index.ts; packages/guest/tests/unit/the-views-guide-says-what-a-view-is-handed.test.ts → packages/guest/src/headless/node.ts; packages/guest/tests/unit/the-views-guide-says-what-a-view-is-handed.test.ts → packages/guest/src/host/manifest.ts; packages/guest/tests/unit/the-worker-is-classic-and-answers-only-its-own-ready.test.ts → packages/guest/src/host/worker.ts; packages/guest/tests/unit/the-worker-is-classic-and-answers-only-its-own-ready.test.ts → packages/guest/src/protocol.ts; packages/guest/tests/unit/the-worker-is-classic-and-answers-only-its-own-ready.test.ts → packages/guest/src/protocol.ts
+  ← tests-packages: packages/skills/tests/unit/skills.test.ts → packages/skills/src/index.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] 31 entry points — wide API surface, consider consolidating exports
+[observation] [info] 38 entry points — wide API surface, consider consolidating exports
 [observation] [info] High cohesion (1) — files are tightly interconnected
 [suggestion] [info] Zone "guest" has files across 5 directories — consider consolidating under a dedicated directory
 
@@ -280,9 +318,9 @@ Incoming (other zones → this zone):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- 31 entry points — wide API surface, consider consolidating exports
+- 38 entry points — wide API surface, consider consolidating exports
 - Zone "guest" has files across 5 directories — consider consolidating under a dedicated directory
-- [call graph] 761 internal calls, 0 outgoing, 160 incoming (cohesion: 1, coupling: 0)
+- [call graph] 888 internal calls, 0 outgoing, 255 incoming (cohesion: 1, coupling: 0)
 
 </insights>
 
@@ -291,10 +329,11 @@ Incoming (other zones → this zone):
 Cross-dependencies between sub-zones:
   guest/guest → guest/headless: 2
   guest/guest → guest/host: 1
-  guest/headless → guest/guest: 4
-  guest/headless → guest/host: 12
+  guest/headless → guest/guest: 5
+  guest/headless → guest/host: 14
   guest/headless → guest/worker: 2
-  guest/host → guest/guest: 6
+  guest/host → guest/guest: 7
+  guest/host → guest/headless: 8
   guest/host → guest/worker: 2
   guest/src → guest/host: 6
   guest/worker → guest/host: 12
@@ -305,10 +344,11 @@ Cross-dependencies between sub-zones:
 
 This zone has 5 sub-zone(s):
 
-- **Guest** (`guest/guest`): 6 files, cohesion 0.69, coupling 0.31
-- **Headless** (`guest/headless`): 8 files, cohesion 0.62, coupling 0.38
-- **Host** (`guest/host`): 26 files, cohesion 0.82, coupling 0.18
-- **Src** (`guest/src`): 6 files, cohesion 0.6, coupling 0.4
+- **Guest** (`guest/guest`): 6 files, cohesion 0.65, coupling 0.35
+- **Headless** (`guest/headless`): 11 files, cohesion 0.61, coupling 0.39
+- **Host** (`guest/host`): 30 files, cohesion 0.8, coupling 0.2
+  - Has 4 nested sub-zone(s)
+- **Src** (`guest/src`): 4 files, cohesion 0.6, coupling 0.4
 - **Worker** (`guest/worker`): 5 files, cohesion 0.5, coupling 0.5
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`

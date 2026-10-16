@@ -5,11 +5,11 @@
 <zone>
 
 Zone: Apps (`apps`)
-Files: 99, Cohesion: 1.00, Coupling: 0.00
+Files: 138, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 99 files, mostly components and schemas; entry points app.ts, survey.ts, app.ts; imported by Apps and Apps.
-Entry points: apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts, apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx, apps/rota/src/ui/views.tsx, apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx, apps/todo/src/domain/app.ts, apps/todo/src/domain/policy.ts, apps/todo/src/domain/schema.ts, apps/todo/src/ui/app.tsx, apps/todo/src/ui/views.tsx
-Lines: 16244
+Description: 138 files, primarily TypeScript, Python, Shell
+Entry points: apps/discography/src/domain/app.ts, apps/discography/src/ui/seats.ts, apps/discography/src/ui/tracklist.tsx, apps/gauntlet/src/domain/app.ts, apps/gauntlet/src/domain/schema.ts, apps/gauntlet/src/ui/seats.ts, apps/launcher/src/domain/app.ts, apps/launcher/src/domain/survey.ts, apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx, apps/rota/src/ui/views.tsx, apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/example.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/open.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx, apps/todo/src/domain/app.ts, apps/todo/src/domain/policy.ts, apps/todo/src/domain/schema.ts, apps/todo/src/ui/app.tsx, apps/todo/src/ui/views.tsx, apps/todo/src/ui/what-is-left.ts
+Lines: 22196
 
 </zone>
 
@@ -19,20 +19,44 @@ apps/discography/scripts/musicbrainz/build.py (Python, 110 lines, build)
 apps/discography/scripts/musicbrainz/fetch_guest.py (Python, 24 lines, build)
 apps/discography/scripts/musicbrainz/fetch_own.py (Python, 21 lines, build)
 apps/discography/scripts/musicbrainz/mb.py (Python, 13 lines, build)
-apps/gauntlet/scripts/generate-seed.mjs (JavaScript, 411 lines, build)
+apps/discography/src/domain/app.ts (TypeScript, 89 lines, source)
+apps/discography/src/domain/brand.ts (TypeScript, 41 lines, source)
+apps/discography/src/domain/invariants.ts (TypeScript, 126 lines, source)
+apps/discography/src/domain/mutations.ts (TypeScript, 285 lines, source)
+apps/discography/src/domain/policy.ts (TypeScript, 22 lines, source)
+apps/discography/src/domain/schema.ts (TypeScript, 117 lines, source)
+apps/discography/src/main.tsx (TypeScript, 137 lines, source)
+apps/discography/src/ui/app.tsx (TypeScript, 124 lines, source)
+apps/discography/src/ui/design.tsx (TypeScript, 380 lines, source)
+apps/discography/src/ui/pages.tsx (TypeScript, 189 lines, source)
+apps/discography/src/ui/seats.ts (TypeScript, 19 lines, source)
+apps/discography/src/ui/tracklist.tsx (TypeScript, 131 lines, source)
+apps/discography/src/ui/views.tsx (TypeScript, 29 lines, source)
+apps/gauntlet/src/domain/app.ts (TypeScript, 62 lines, source)
+apps/gauntlet/src/domain/brand.ts (TypeScript, 26 lines, source)
+apps/gauntlet/src/domain/invariants.ts (TypeScript, 56 lines, source)
+apps/gauntlet/src/domain/mutations.ts (TypeScript, 380 lines, source)
+apps/gauntlet/src/domain/policy.ts (TypeScript, 64 lines, source)
+apps/gauntlet/src/domain/schema.ts (TypeScript, 227 lines, source)
+apps/gauntlet/src/main.tsx (TypeScript, 94 lines, source)
+apps/gauntlet/src/ui/app.tsx (TypeScript, 75 lines, source)
+apps/gauntlet/src/ui/seats.ts (TypeScript, 27 lines, source)
+apps/gauntlet/src/ui/views.tsx (TypeScript, 14 lines, source)
 apps/launcher/src/domain/app.ts (TypeScript, 47 lines, source)
 apps/launcher/src/domain/invariants.ts (TypeScript, 161 lines, source)
 apps/launcher/src/domain/mutations.ts (TypeScript, 126 lines, source)
 apps/launcher/src/domain/schema.ts (TypeScript, 128 lines, source)
 apps/launcher/src/domain/survey.ts (TypeScript, 461 lines, source)
 apps/launcher/src/index.ts (TypeScript, 5 lines, source)
-apps/launcher/src/main.tsx (TypeScript, 558 lines, source)
+apps/launcher/src/main.tsx (TypeScript, 581 lines, source)
 apps/launcher/src/ui/liveness.tsx (TypeScript, 56 lines, source)
 apps/launcher/src/ui/views.tsx (TypeScript, 257 lines, source)
+apps/promo/out/ProposalV2.v2.bak.tsx (TypeScript, 382 lines, source)
 apps/promo/remotion.config.ts (TypeScript, 56 lines, config)
+apps/promo/render-style.sh (Shell, 3 lines, source)
 apps/promo/src/Composition.tsx (TypeScript, 170 lines, source)
 apps/promo/src/FeedComposition.tsx (TypeScript, 68 lines, source)
-apps/promo/src/Root.tsx (TypeScript, 34 lines, source)
+apps/promo/src/Root.tsx (TypeScript, 33 lines, source)
 apps/promo/src/camera.ts (TypeScript, 266 lines, source)
 apps/promo/src/components/BigTitle.tsx (TypeScript, 94 lines, source)
 apps/promo/src/components/BrandPresence.tsx (TypeScript, 65 lines, source)
@@ -52,6 +76,15 @@ apps/promo/src/feed/StoryMontage.tsx (TypeScript, 246 lines, source)
 apps/promo/src/feed/TaglinePayoff.tsx (TypeScript, 138 lines, source)
 apps/promo/src/feedTheme.ts (TypeScript, 29 lines, source)
 apps/promo/src/index.ts (TypeScript, 4 lines, source)
+apps/promo/src/kit/AppFrame.tsx (TypeScript, 60 lines, source)
+apps/promo/src/kit/Backdrop.tsx (TypeScript, 62 lines, source)
+apps/promo/src/kit/ChatBubble.tsx (TypeScript, 60 lines, source)
+apps/promo/src/kit/Chip.tsx (TypeScript, 75 lines, source)
+apps/promo/src/kit/Kinetic.tsx (TypeScript, 72 lines, source)
+apps/promo/src/kit/Outro.tsx (TypeScript, 73 lines, source)
+apps/promo/src/kit/design.ts (TypeScript, 58 lines, source)
+apps/promo/src/kit/motion.ts (TypeScript, 21 lines, source)
+apps/promo/src/kit/views.tsx (TypeScript, 270 lines, source)
 apps/promo/src/motion.ts (TypeScript, 96 lines, source)
 apps/promo/src/scenes/BrandMorph.tsx (TypeScript, 83 lines, source)
 apps/promo/src/scenes/CityAltitude.tsx (TypeScript, 122 lines, source)
@@ -61,9 +94,20 @@ apps/promo/src/scenes/OpenBrand.tsx (TypeScript, 79 lines, source)
 apps/promo/src/scenes/OutroBumper.tsx (TypeScript, 21 lines, source)
 apps/promo/src/scenes/RelationsDemo.tsx (TypeScript, 763 lines, source)
 apps/promo/src/scenes/SettleLockup.tsx (TypeScript, 99 lines, source)
+apps/promo/src/style/StyleFrames.tsx (TypeScript, 267 lines, source)
 apps/promo/src/theme.ts (TypeScript, 80 lines, source)
-apps/rota/src/domain/app.ts (TypeScript, 162 lines, source)
-apps/rota/src/domain/brand.ts (TypeScript, 68 lines, source)
+apps/promo/src/videos/Cooking.tsx (TypeScript, 313 lines, source)
+apps/promo/src/videos/Thread.tsx (TypeScript, 201 lines, source)
+apps/promo/src/videos/ThreadV2.tsx (TypeScript, 367 lines, source)
+apps/promo/src/videos/Ticker.tsx (TypeScript, 149 lines, source)
+apps/promo/src/videos/scuba/ProposalCloud.tsx (TypeScript, 446 lines, source)
+apps/promo/src/videos/scuba/ProposalV2.tsx (TypeScript, 446 lines, source)
+apps/promo/src/videos/scuba/Template.tsx (TypeScript, 387 lines, source)
+apps/promo/src/videos/scuba/index.tsx (TypeScript, 7 lines, source)
+apps/promo/src/videos/scuba/kit.tsx (TypeScript, 82 lines, source)
+apps/promo/src/videos/scuba/stories.tsx (TypeScript, 147 lines, source)
+apps/rota/src/domain/app.ts (TypeScript, 168 lines, source)
+apps/rota/src/domain/brand.ts (TypeScript, 74 lines, source)
 apps/rota/src/domain/installation.ts (TypeScript, 21 lines, source)
 apps/rota/src/domain/invariants.ts (TypeScript, 119 lines, source)
 apps/rota/src/domain/mutations.ts (TypeScript, 236 lines, source)
@@ -71,48 +115,43 @@ apps/rota/src/domain/policy.ts (TypeScript, 37 lines, source)
 apps/rota/src/domain/schema.ts (TypeScript, 137 lines, source)
 apps/rota/src/embed.ts (TypeScript, 38 lines, source)
 apps/rota/src/index.ts (TypeScript, 7 lines, source)
-apps/rota/src/main.tsx (TypeScript, 111 lines, source)
+apps/rota/src/main.tsx (TypeScript, 123 lines, source)
 apps/rota/src/open.ts (TypeScript, 88 lines, source)
-apps/rota/src/ui/app.tsx (TypeScript, 181 lines, source)
-apps/rota/src/ui/design.tsx (TypeScript, 1001 lines, source)
+apps/rota/src/ui/app.tsx (TypeScript, 188 lines, source)
+apps/rota/src/ui/design.tsx (TypeScript, 920 lines, source)
 apps/rota/src/ui/views.tsx (TypeScript, 27 lines, source)
-apps/rota/src/ui/when.ts (TypeScript, 16 lines, source)
-apps/seedbed/src/domain/app.ts (TypeScript, 88 lines, source)
+apps/rota/src/ui/when.ts (TypeScript, 21 lines, source)
+apps/rota/vite.config.ts.timestamp-1791598470980-3067f655ee83a.mjs (JavaScript, 97 lines, source)
+apps/seedbed/src/domain/app.ts (TypeScript, 90 lines, source)
 apps/seedbed/src/domain/brand.ts (TypeScript, 39 lines, source)
 apps/seedbed/src/domain/chapters.ts (TypeScript, 764 lines, source)
+apps/seedbed/src/domain/example.ts (TypeScript, 23 lines, source)
 apps/seedbed/src/domain/invariants.ts (TypeScript, 58 lines, source)
 apps/seedbed/src/domain/mutations.ts (TypeScript, 193 lines, source)
 apps/seedbed/src/domain/schema.ts (TypeScript, 141 lines, source)
 apps/seedbed/src/index.ts (TypeScript, 6 lines, source)
-apps/seedbed/src/main.tsx (TypeScript, 151 lines, source)
-apps/seedbed/src/open.ts (TypeScript, 39 lines, source)
-apps/seedbed/src/site-embed.ts (TypeScript, 159 lines, source)
-apps/seedbed/src/ui/app.tsx (TypeScript, 183 lines, source)
-apps/seedbed/src/ui/design.tsx (TypeScript, 779 lines, source)
+apps/seedbed/src/main.tsx (TypeScript, 174 lines, source)
+apps/seedbed/src/open.ts (TypeScript, 125 lines, source)
+apps/seedbed/src/site-embed.ts (TypeScript, 268 lines, source)
+apps/seedbed/src/ui/app.tsx (TypeScript, 219 lines, source)
+apps/seedbed/src/ui/design.tsx (TypeScript, 795 lines, source)
 apps/seedbed/src/ui/garden-map.tsx (TypeScript, 414 lines, source)
-apps/seedbed/src/ui/pages.tsx (TypeScript, 96 lines, source)
+apps/seedbed/src/ui/pages.tsx (TypeScript, 107 lines, source)
 apps/seedbed/src/ui/views.tsx (TypeScript, 183 lines, source)
-apps/seedbed/vite.site.config.ts (TypeScript, 69 lines, config)
-apps/spike/scripts/introspect4.mjs (JavaScript, 55 lines, build)
-apps/spike/scripts/run-probe.mjs (JavaScript, 94 lines, build)
-apps/spike/scripts/run-restrictions.mjs (JavaScript, 151 lines, build)
-apps/spike/scripts/run-spike.mjs (JavaScript, 346 lines, build)
-apps/spike/src/main.ts (TypeScript, 20 lines, source)
-apps/spike/src/three-planes.ts (TypeScript, 162 lines, source)
-apps/spike/vite.config.ts (TypeScript, 21 lines, config)
-apps/todo/src/domain/app.ts (TypeScript, 109 lines, source)
+apps/todo/src/domain/app.ts (TypeScript, 115 lines, source)
 apps/todo/src/domain/brand.ts (TypeScript, 41 lines, source)
 apps/todo/src/domain/installation.ts (TypeScript, 29 lines, source)
 apps/todo/src/domain/invariants.ts (TypeScript, 166 lines, source)
 apps/todo/src/domain/mutations.ts (TypeScript, 231 lines, source)
-apps/todo/src/domain/policy.ts (TypeScript, 31 lines, source)
-apps/todo/src/domain/schema.ts (TypeScript, 188 lines, source)
+apps/todo/src/domain/policy.ts (TypeScript, 50 lines, source)
+apps/todo/src/domain/schema.ts (TypeScript, 195 lines, source)
 apps/todo/src/index.ts (TypeScript, 5 lines, source)
-apps/todo/src/main.tsx (TypeScript, 128 lines, source)
+apps/todo/src/main.tsx (TypeScript, 159 lines, source)
 apps/todo/src/open.ts (TypeScript, 61 lines, source)
-apps/todo/src/ui/app.tsx (TypeScript, 264 lines, source)
-apps/todo/src/ui/design.tsx (TypeScript, 1138 lines, source)
-apps/todo/src/ui/views.tsx (TypeScript, 472 lines, source)
+apps/todo/src/ui/app.tsx (TypeScript, 281 lines, source)
+apps/todo/src/ui/design.tsx (TypeScript, 1126 lines, source)
+apps/todo/src/ui/views.tsx (TypeScript, 571 lines, source)
+apps/todo/src/ui/what-is-left.ts (TypeScript, 72 lines, source)
 apps/todo/src/ui/when.ts (TypeScript, 28 lines, source)
 
 </files>
@@ -120,6 +159,55 @@ apps/todo/src/ui/when.ts (TypeScript, 28 lines, source)
 <imports>
 
 Internal:
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/brand.ts {discographyBrand}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/invariants.ts {invariants}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/mutations.ts {mutations}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/policy.ts {policy}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/domain/invariants.ts → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/domain/mutations.ts → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/main.tsx → apps/discography/src/domain/app.ts {discographyApp}
+  apps/discography/src/main.tsx → apps/discography/src/domain/brand.ts {discographyBrand}
+  apps/discography/src/main.tsx → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/main.tsx → apps/discography/src/ui/app.tsx {DiscographyApp}
+  apps/discography/src/main.tsx → apps/discography/src/ui/design.tsx {linerNotes}
+  apps/discography/src/main.tsx → apps/discography/src/ui/seats.ts {openingSeat, SEATS}
+  apps/discography/src/main.tsx → apps/discography/src/ui/views.tsx {views}
+  apps/discography/src/ui/app.tsx → apps/discography/src/domain/app.ts {discographyApp, createStore}
+  apps/discography/src/ui/app.tsx → apps/discography/src/domain/app.ts {DiscographyStore}
+  apps/discography/src/ui/app.tsx → apps/discography/src/domain/brand.ts {discographyBrand}
+  apps/discography/src/ui/app.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/app.tsx → apps/discography/src/ui/seats.ts {openingSeat, SEATS}
+  apps/discography/src/ui/app.tsx → apps/discography/src/ui/views.tsx {views}
+  apps/discography/src/ui/design.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/pages.tsx → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/ui/pages.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/views.tsx → apps/discography/src/domain/app.ts {discographyApp}
+  apps/discography/src/ui/views.tsx → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/ui/views.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/views.tsx → apps/discography/src/ui/tracklist.tsx {createTracklistLens}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/brand.ts {gauntletBrand}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/invariants.ts {invariants}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/mutations.ts {mutations}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/policy.ts {policy}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/schema.ts {gauntletSchema}
+  apps/gauntlet/src/domain/app.ts → apps/gauntlet/src/domain/schema.ts {GauntletSchema}
+  apps/gauntlet/src/domain/invariants.ts → apps/gauntlet/src/domain/schema.ts {gauntletSchema}
+  apps/gauntlet/src/domain/mutations.ts → apps/gauntlet/src/domain/schema.ts {gauntletSchema, speakerKind, roomKind}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/domain/app.ts {gauntletApp}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/domain/brand.ts {gauntletBrand}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/ui/app.tsx {GauntletApp}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/ui/seats.ts {openingSeat, SEATS}
+  apps/gauntlet/src/main.tsx → apps/gauntlet/src/ui/views.tsx {views}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/app.ts {gauntletApp, createStore}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/app.ts {GauntletStore}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/brand.ts {gauntletBrand}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/domain/schema.ts {GauntletSchema}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/ui/seats.ts {openingSeat, SEATS}
+  apps/gauntlet/src/ui/app.tsx → apps/gauntlet/src/ui/views.tsx {views}
+  apps/gauntlet/src/ui/views.tsx → apps/gauntlet/src/domain/app.ts {gauntletApp}
+  apps/gauntlet/src/ui/views.tsx → apps/gauntlet/src/domain/schema.ts {gauntletSchema}
   apps/launcher/src/domain/app.ts → apps/launcher/src/domain/invariants.ts {launcherInvariants}
   apps/launcher/src/domain/app.ts → apps/launcher/src/domain/mutations.ts {launcherMutations}
   apps/launcher/src/domain/app.ts → apps/launcher/src/domain/schema.ts {launcherSchema}
@@ -170,7 +258,15 @@ Internal:
   apps/promo/src/Root.tsx → apps/promo/src/Composition.tsx {GraviewIntro}
   apps/promo/src/Root.tsx → apps/promo/src/FeedComposition.tsx {GraviewFeed}
   apps/promo/src/Root.tsx → apps/promo/src/feedTheme.ts {FEED_DURATION, FEED_FPS, FEED_HEIGHT, FEED_WIDTH}
+  apps/promo/src/Root.tsx → apps/promo/src/style/StyleFrames.tsx {GraviewStyleFrames}
   apps/promo/src/Root.tsx → apps/promo/src/theme.ts {DURATION_IN_FRAMES, FPS, HEIGHT, WIDTH}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/Cooking.tsx {GraviewCooking, COOKING_DURATION}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/Thread.tsx {GraviewThread, THREAD_DURATION}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/ThreadV2.tsx {GraviewThreadV2, THREAD_V2_DURATION}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/Ticker.tsx {GraviewTicker, TICKER_DURATION}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/scuba/ProposalCloud.tsx {GraviewCloudProposal, CLOUD_PROPOSAL_TOTAL}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/scuba/ProposalV2.tsx {GraviewScubaProposalV2, PROPOSAL_V2_TOTAL}
+  apps/promo/src/Root.tsx → apps/promo/src/videos/scuba/index.tsx {GraviewScuba, GraviewScubaPool, GraviewScubaProposal, SCUBA_TOTAL}
   apps/promo/src/camera.ts → apps/promo/src/motion.ts {clamp, easings}
   apps/promo/src/camera.ts → apps/promo/src/theme.ts {STORY_FRAMES}
   apps/promo/src/components/BigTitle.tsx → apps/promo/src/motion.ts {blurIn, clamp, easings, fadeWindow, maskWipe}
@@ -208,6 +304,18 @@ Internal:
   apps/promo/src/feed/TaglinePayoff.tsx → apps/promo/src/motion.ts {clamp, easings, springProgress}
   apps/promo/src/feedTheme.ts → apps/promo/src/theme.ts {colors, fonts}
   apps/promo/src/index.ts → apps/promo/src/Root.tsx {RemotionRoot}
+  apps/promo/src/kit/AppFrame.tsx → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/kit/Backdrop.tsx → apps/promo/src/theme.ts {colors}
+  apps/promo/src/kit/ChatBubble.tsx → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/kit/Chip.tsx → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/kit/Kinetic.tsx → apps/promo/src/kit/motion.ts {easeIn, ramp, settle}
+  apps/promo/src/kit/Kinetic.tsx → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/kit/Outro.tsx → apps/promo/src/kit/Kinetic.tsx {KineticLine}
+  apps/promo/src/kit/Outro.tsx → apps/promo/src/kit/motion.ts {mix, ramp}
+  apps/promo/src/kit/Outro.tsx → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/kit/views.tsx → apps/promo/src/kit/AppFrame.tsx {INK, LINE, SUB}
+  apps/promo/src/kit/views.tsx → apps/promo/src/kit/motion.ts {ramp}
+  apps/promo/src/kit/views.tsx → apps/promo/src/theme.ts {colors, fonts}
   apps/promo/src/scenes/BrandMorph.tsx → apps/promo/src/camera.ts {beatOpacity}
   apps/promo/src/scenes/BrandMorph.tsx → apps/promo/src/motion.ts {clamp, easings, springProgress}
   apps/promo/src/scenes/BrandMorph.tsx → apps/promo/src/theme.ts {beats, colors, fonts}
@@ -237,6 +345,40 @@ Internal:
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/camera.ts {beatOpacity}
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/motion.ts {fadeIn, springProgress}
   apps/promo/src/scenes/SettleLockup.tsx → apps/promo/src/theme.ts {beats, colors, fonts, tagline}
+  apps/promo/src/style/StyleFrames.tsx → apps/promo/src/kit/design.ts {c, font, t, radius, shadow, canvas}
+  apps/promo/src/videos/Cooking.tsx → apps/promo/src/kit/AppFrame.tsx {AppFrame, INK, LINE, SUB}
+  apps/promo/src/videos/Cooking.tsx → apps/promo/src/kit/Backdrop.tsx {Backdrop}
+  apps/promo/src/videos/Cooking.tsx → apps/promo/src/kit/ChatBubble.tsx {ChatBubble}
+  apps/promo/src/videos/Cooking.tsx → apps/promo/src/kit/Chip.tsx {Chip, Edge}
+  apps/promo/src/videos/Cooking.tsx → apps/promo/src/kit/Kinetic.tsx {KineticLine}
+  apps/promo/src/videos/Cooking.tsx → apps/promo/src/kit/Outro.tsx {Outro}
+  apps/promo/src/videos/Cooking.tsx → apps/promo/src/kit/motion.ts {easeIn, easeInOut, mix, ramp, settle}
+  apps/promo/src/videos/Cooking.tsx → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/kit/AppFrame.tsx {AppFrame}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/kit/Backdrop.tsx {Backdrop}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/kit/ChatBubble.tsx {ChatBubble}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/kit/Chip.tsx {Chip, Edge}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/kit/Kinetic.tsx {KineticLine}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/kit/Outro.tsx {Outro}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/kit/motion.ts {easeIn, easeInOut, mix, ramp, settle}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/kit/views.tsx {RosterView, SnackRota, SoccerSchedule}
+  apps/promo/src/videos/Thread.tsx → apps/promo/src/theme.ts {colors}
+  apps/promo/src/videos/ThreadV2.tsx → apps/promo/src/kit/design.ts {c, font, t, radius, shadow, canvas, ease}
+  apps/promo/src/videos/Ticker.tsx → apps/promo/src/kit/AppFrame.tsx {AppFrame}
+  apps/promo/src/videos/Ticker.tsx → apps/promo/src/kit/Backdrop.tsx {Backdrop}
+  apps/promo/src/videos/Ticker.tsx → apps/promo/src/kit/Kinetic.tsx {KineticLine}
+  apps/promo/src/videos/Ticker.tsx → apps/promo/src/kit/Outro.tsx {Outro}
+  apps/promo/src/videos/Ticker.tsx → apps/promo/src/kit/motion.ts {easeIn, easeInOut, mix, ramp, settle}
+  apps/promo/src/videos/Ticker.tsx → apps/promo/src/kit/views.tsx {DecisionsView, IdeasBoard, PoolCalendar, ProposalView, RosterView}
+  apps/promo/src/videos/Ticker.tsx → apps/promo/src/theme.ts {colors, fonts}
+  apps/promo/src/videos/scuba/ProposalCloud.tsx → apps/promo/src/videos/scuba/kit.tsx {c, W, H, F, cl, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon}
+  apps/promo/src/videos/scuba/ProposalV2.tsx → apps/promo/src/videos/scuba/kit.tsx {c, font, W, H, F, cl, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon}
+  apps/promo/src/videos/scuba/Template.tsx → apps/promo/src/videos/scuba/kit.tsx {c, font, W, H, F, cl, eo, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon, IconKey}
+  apps/promo/src/videos/scuba/index.tsx → apps/promo/src/videos/scuba/Template.tsx {ScubaFilm, SCUBA_TOTAL}
+  apps/promo/src/videos/scuba/index.tsx → apps/promo/src/videos/scuba/stories.tsx {soccer, pool, proposal}
+  apps/promo/src/videos/scuba/kit.tsx → apps/promo/src/kit/design.ts {c, font}
+  apps/promo/src/videos/scuba/stories.tsx → apps/promo/src/videos/scuba/Template.tsx {Story}
+  apps/promo/src/videos/scuba/stories.tsx → apps/promo/src/videos/scuba/kit.tsx {c, sans, HL, Ic, icon, Avatar, Label, Row, Banner, AppHeader, lerp, tw}
   apps/rota/src/domain/app.ts → apps/rota/src/domain/brand.ts {rotaBrand}
   apps/rota/src/domain/app.ts → apps/rota/src/domain/installation.ts {rotaInstallation}
   apps/rota/src/domain/app.ts → apps/rota/src/domain/invariants.ts {rotaInvariants}
@@ -291,6 +433,8 @@ Internal:
   apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/invariants.ts {everyPlotTended}
   apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/mutations.ts {addGardener, addPlot, adoptRule, harvest, rotate, sow, sowInTurn, tend}
   apps/seedbed/src/domain/chapters.ts → apps/seedbed/src/domain/schema.ts {gardener, planting, plot, rotation, rule}
+  apps/seedbed/src/domain/example.ts → apps/seedbed/src/domain/chapters.ts {CHAPTERS}
+  apps/seedbed/src/domain/example.ts → apps/seedbed/src/domain/schema.ts {seedbedSchema}
   apps/seedbed/src/domain/invariants.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
   apps/seedbed/src/domain/mutations.ts → apps/seedbed/src/domain/schema.ts {seedbedSchema}
   apps/seedbed/src/domain/mutations.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
@@ -304,12 +448,14 @@ Internal:
   apps/seedbed/src/main.tsx → apps/seedbed/src/domain/brand.ts {seedbedBrand}
   apps/seedbed/src/main.tsx → apps/seedbed/src/domain/chapters.ts {chapterFromSearch}
   apps/seedbed/src/main.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
+  apps/seedbed/src/main.tsx → apps/seedbed/src/open.ts {browserEmptyChoice, forgetEmptyParam, openGarden}
   apps/seedbed/src/main.tsx → apps/seedbed/src/ui/app.tsx {SeedbedApp}
   apps/seedbed/src/main.tsx → apps/seedbed/src/ui/design.tsx {seedbedDesign}
   apps/seedbed/src/main.tsx → apps/seedbed/src/ui/pages.tsx {seedbedPages}
   apps/seedbed/src/main.tsx → apps/seedbed/src/ui/views.tsx {seedbedViews}
   apps/seedbed/src/open.ts → apps/seedbed/src/domain/app.ts {seedbedApp}
   apps/seedbed/src/open.ts → apps/seedbed/src/domain/brand.ts {seedbedBrand}
+  apps/seedbed/src/open.ts → apps/seedbed/src/domain/example.ts {EXAMPLE_GARDEN}
   apps/seedbed/src/open.ts → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
   apps/seedbed/src/site-embed.ts → apps/seedbed/src/domain/brand.ts {SEEDBED_BRAND}
   apps/seedbed/src/site-embed.ts → apps/seedbed/src/domain/chapters.ts {CHAPTERS}
@@ -329,7 +475,6 @@ Internal:
   apps/seedbed/src/ui/views.tsx → apps/seedbed/src/domain/schema.ts {seedbedSchema}
   apps/seedbed/src/ui/views.tsx → apps/seedbed/src/domain/schema.ts {SeedbedSchema}
   apps/seedbed/src/ui/views.tsx → apps/seedbed/src/ui/garden-map.tsx {GardenMapView}
-  apps/spike/src/main.ts → apps/spike/src/three-planes.ts {mountThreePlanes}
   apps/todo/src/domain/app.ts → apps/todo/src/domain/brand.ts {thingsBrand}
   apps/todo/src/domain/app.ts → apps/todo/src/domain/installation.ts {todoInstallation}
   apps/todo/src/domain/app.ts → apps/todo/src/domain/invariants.ts {todoInvariants}
@@ -371,46 +516,77 @@ Internal:
   apps/todo/src/ui/views.tsx → apps/todo/src/domain/app.ts {todoApp}
   apps/todo/src/ui/views.tsx → apps/todo/src/domain/schema.ts {todoSchema}
   apps/todo/src/ui/views.tsx → apps/todo/src/domain/schema.ts {TodoSchema}
+  apps/todo/src/ui/views.tsx → apps/todo/src/ui/what-is-left.ts {labelsThatFit, whatIsLeft}
 
 Incoming (other zones → this zone):
-  ← tests: tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/ui/app.tsx; tests/the-desk-points-at-the-moved-ports.test.ts → apps/launcher/src/domain/survey.ts
-  ← tests-apps: apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/app.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/survey.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/app.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/policy.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/app.tsx; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/views.tsx; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/domain/app.ts; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/domain/schema.ts; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/ui/app.tsx; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/ui/views.tsx; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/domain/app.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/domain/policy.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/ui/app.tsx
-  ← tests-core-document: packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/rota/src/domain/app.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/seedbed/src/domain/app.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/todo/src/domain/app.ts
-  ← tests-seedbed-integration: apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/app.tsx; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/views.tsx
+  ← tests: tests/a-change-is-said-in-words-in-every-example.test.ts → apps/discography/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/rota/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/seedbed/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/seedbed/src/domain/example.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/todo/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/discography/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/ui/seats.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/ui/seats.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/ui/app.tsx; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/discography/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/launcher/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/rota/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/seedbed/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/todo/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/discography/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/gauntlet/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/rota/src/domain/app.ts; tests/the-desk-points-at-the-moved-ports.test.ts → apps/launcher/src/domain/survey.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/ui/seats.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/ui/seats.ts
+  ← tests-apps: apps/discography/tests/domain.test.ts → apps/discography/src/domain/app.ts; apps/discography/tests/lens-reuse.test.ts → apps/discography/src/ui/tracklist.tsx; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/domain/app.ts; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/domain/schema.ts; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/ui/seats.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/app.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/survey.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/app.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/policy.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/app.tsx; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/views.tsx
+  ← tests-core-document: packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/discography/src/domain/app.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/gauntlet/src/domain/app.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/rota/src/domain/app.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/seedbed/src/domain/app.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → apps/todo/src/domain/app.ts
+  ← tests-pages-unit: packages/pages/tests/unit/a-place-is-rendered-to-static-html.test.ts → apps/todo/src/domain/app.ts; packages/pages/tests/unit/a-static-page-wears-a-products-design.test.ts → apps/todo/src/domain/app.ts
+  ← tests-primitives-unit: packages/primitives/tests/unit/a-kind-opens-to-a-shape-its-data-chooses.test.ts → apps/gauntlet/src/domain/schema.ts; packages/primitives/tests/unit/a-kind-opens-to-a-shape-its-data-chooses.test.ts → apps/seedbed/src/domain/app.ts; packages/primitives/tests/unit/a-kind-opens-to-a-shape-its-data-chooses.test.ts → apps/todo/src/domain/app.ts
+  ← tests-seedbed-integration: apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/app.tsx; apps/seedbed/tests/integration/acceptance.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/chapters.test.ts → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/design-keyboard.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/design.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/pages.tsx; apps/seedbed/tests/integration/embed.test.tsx → apps/seedbed/src/ui/views.tsx; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/domain/app.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/domain/chapters.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/domain/example.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/domain/schema.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/open.ts; apps/seedbed/tests/integration/the-garden-opens-planted.test.ts → apps/seedbed/src/open.ts
   ← tests-studio-unit: packages/studio/tests/unit/rewrite-before-writing.test.tsx → apps/seedbed/src/domain/app.ts; packages/studio/tests/unit/written-in-place.test.ts → apps/seedbed/src/domain/app.ts
+  ← tests-todo-integration: apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/domain/app.ts; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/domain/schema.ts; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/ui/app.tsx; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/ui/views.tsx; apps/todo/tests/integration/what-is-left.test.tsx → apps/todo/src/ui/views.tsx; apps/todo/tests/integration/what-is-left.test.tsx → apps/todo/src/ui/what-is-left.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/domain/app.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/domain/policy.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/ui/app.tsx
+  ← tests-tools-unit: packages/tools/tests/unit/a-dev-server-may-lend-the-seat-a-model.test.ts → apps/todo/src/domain/app.ts; packages/tools/tests/unit/a-face-names-the-places-the-declaration-does.test.ts → apps/discography/src/domain/app.ts; packages/tools/tests/unit/a-face-names-the-places-the-declaration-does.test.ts → apps/gauntlet/src/domain/app.ts; packages/tools/tests/unit/a-face-names-the-places-the-declaration-does.test.ts → apps/launcher/src/domain/app.ts; packages/tools/tests/unit/a-face-names-the-places-the-declaration-does.test.ts → apps/rota/src/domain/app.ts; packages/tools/tests/unit/a-face-names-the-places-the-declaration-does.test.ts → apps/seedbed/src/domain/app.ts; packages/tools/tests/unit/a-face-names-the-places-the-declaration-does.test.ts → apps/todo/src/domain/app.ts; packages/tools/tests/unit/a-kind-s-derived-picture-is-a-draft.test.ts → apps/gauntlet/src/domain/app.ts; packages/tools/tests/unit/a-kind-s-derived-picture-is-a-draft.test.ts → apps/seedbed/src/domain/app.ts; packages/tools/tests/unit/several-records-are-one-change.test.ts → apps/todo/src/domain/app.ts; packages/tools/tests/unit/the-seat-answers-who-and-when-from-the-graph.test.ts → apps/rota/src/domain/app.ts; packages/tools/tests/unit/the-seat-answers-who-and-when-from-the-graph.test.ts → apps/seedbed/src/domain/app.ts; packages/tools/tests/unit/the-seat-answers-who-and-when-from-the-graph.test.ts → apps/todo/src/domain/app.ts; packages/tools/tests/unit/the-seat-draws-a-view.test.ts → apps/seedbed/src/domain/app.ts; packages/tools/tests/unit/the-seat-draws-a-view.test.ts → apps/todo/src/domain/app.ts; packages/tools/tests/unit/the-seat-offers-somewhere-to-go-and-something-to-draw.test.ts → apps/todo/src/domain/app.ts; packages/tools/tests/unit/the-seat-offers-somewhere-to-go-and-something-to-draw.test.ts → apps/todo/src/ui/app.tsx; packages/tools/tests/unit/the-seat-takes-you-where-you-ask.test.ts → apps/seedbed/src/domain/app.ts; packages/tools/tests/unit/the-seat-takes-you-where-you-ask.test.ts → apps/todo/src/domain/app.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] 18 entry points — wide API surface, consider consolidating exports
+[observation] [info] 27 entry points — wide API surface, consider consolidating exports
 [observation] [info] High cohesion (1) — files are tightly interconnected
-[suggestion] [info] Zone "apps" has files across 23 directories — consider consolidating under a dedicated directory
+[suggestion] [info] Zone "apps" has files across 30 directories — consider consolidating under a dedicated directory
+[anti-pattern] [warning] "apps/discography/scripts/musicbrainz/build.py" exports 4 declaration(s) (fold, split_credit, artist, uniq) that no file in the project imports
+[anti-pattern] [warning] "apps/discography/src/ui/pages.tsx" exports 1 declaration(s) (pages) that no file in the project imports
+[anti-pattern] [warning] "apps/promo/out/ProposalV2.v2.bak.tsx" exports 2 declaration(s) (PROPOSAL_V2_TOTAL, GraviewScubaProposalV2) that no file in the project imports
+[anti-pattern] [warning] "apps/promo/src/components/TypePlate.tsx" exports 1 declaration(s) (TypePlate) that no file in the project imports
+[anti-pattern] [warning] "apps/seedbed/src/domain/app.ts" is imported from 6 zones (tests, tests-core-document, tests-primitives-unit, tests-seedbed-integration, tests-studio-unit, tests-tools-unit) — a cross-cutting dependency every one of them is coupled to
+[anti-pattern] [warning] "apps/seedbed/src/site-embed.ts" exports 10 declaration(s) (handles, mountChapter, dress, kitFindings, mountRota, …) that no file in the project imports
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- 18 entry points — wide API surface, consider consolidating exports
-- Zone "apps" has files across 23 directories — consider consolidating under a dedicated directory
-- [call graph] 570 internal calls, 0 outgoing, 65 incoming (cohesion: 1, coupling: 0)
+- 27 entry points — wide API surface, consider consolidating exports
+- Zone "apps" has files across 30 directories — consider consolidating under a dedicated directory
+- "apps/todo/src/domain/app.ts" is imported from 6 zones (tests, tests-core-document, tests-pages-unit, tests-primitives-unit, tests-todo-integration, tests-tools-unit) — a cross-cutting dependency every one of them is coupled to
+- "apps/seedbed/src/domain/app.ts" is imported from 6 zones (tests, tests-core-document, tests-primitives-unit, tests-seedbed-integration, tests-studio-unit, tests-tools-unit) — a cross-cutting dependency every one of them is coupled to
+- "apps/discography/scripts/musicbrainz/build.py" exports 4 declaration(s) (fold, split_credit, artist, uniq) that no file in the project imports
+- "apps/discography/scripts/musicbrainz/fetch_own.py" exports 2 declaration(s) (pick, key) that no file in the project imports
+- "apps/discography/scripts/musicbrainz/mb.py" exports 1 declaration(s) (get) that no file in the project imports
+- "apps/discography/src/ui/pages.tsx" exports 1 declaration(s) (pages) that no file in the project imports
+- "apps/promo/out/ProposalV2.v2.bak.tsx" exports 2 declaration(s) (PROPOSAL_V2_TOTAL, GraviewScubaProposalV2) that no file in the project imports
+- "apps/promo/src/components/TypePlate.tsx" exports 1 declaration(s) (TypePlate) that no file in the project imports
+- "apps/rota/src/main.tsx" exports 1 declaration(s) (applyScheme) that no file in the project imports
+- "apps/seedbed/src/main.tsx" exports 1 declaration(s) (applyScheme) that no file in the project imports
+- "apps/seedbed/src/site-embed.ts" exports 10 declaration(s) (handles, mountChapter, dress, kitFindings, mountRota, …) that no file in the project imports
+- "apps/todo/src/main.tsx" exports 1 declaration(s) (applyScheme) that no file in the project imports
+- [call graph] 1300 internal calls, 0 outgoing, 128 incoming (cohesion: 1, coupling: 0)
 
 </insights>
+
+<sub-crossings>
+
+Cross-dependencies between sub-zones:
+  apps/promo → apps/seedbed: 4
+  apps/seedbed → apps/promo: 1
+
+</sub-crossings>
 
 <sub-zones>
 
 This zone has 8 sub-zone(s):
 
-- **Discography Build Scripts** (`apps/discography`): 6 files, cohesion 0, coupling 0
-- **App Launcher** (`apps/launcher`): 9 files, cohesion 1, coupling 0
-- **Promotional Interface** (`apps/promo`): 32 files, cohesion 1, coupling 0
+- **Discography** (`apps/discography`): 8 files, cohesion 0, coupling 0
+- **Discography Domain** (`apps/discography-domain`): 13 files, cohesion 1, coupling 0
+- **Gauntlet** (`apps/gauntlet`): 10 files, cohesion 1, coupling 0
+- **Launcher** (`apps/launcher`): 9 files, cohesion 1, coupling 0
+- **Promo** (`apps/promo`): 47 files, cohesion 0.98, coupling 0.02
   - Has 6 nested sub-zone(s)
 - **Rota** (`apps/rota`): 15 files, cohesion 1, coupling 0
-- **Seedbed** (`apps/seedbed`): 15 files, cohesion 1, coupling 0
-- **Feature Validation Spike** (`apps/spike`): 4 files, cohesion 1, coupling 0
-- **Spike Scripts** (`apps/spike-scripts`): 4 files, cohesion 0, coupling 0
-- **Todo** (`apps/todo`): 14 files, cohesion 1, coupling 0
+- **Seedbed** (`apps/seedbed`): 21 files, cohesion 0.95, coupling 0.05
+- **Todo** (`apps/todo`): 15 files, cohesion 1, coupling 0
 
 Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
 

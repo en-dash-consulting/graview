@@ -5,92 +5,104 @@
 <zone>
 
 Zone: Host (`guest/host`)
-Files: 26, Cohesion: 0.82, Coupling: 0.18
-Description: 26 files, primarily TypeScript, JavaScript
-Entry points: packages/guest/src/channel.ts, packages/guest/src/host/index.ts, packages/guest/src/host/kit.ts, packages/guest/src/host/links.ts, packages/guest/src/host/manifest.ts, packages/guest/src/host/press.ts, packages/guest/src/host/session.ts, packages/guest/src/host/theme.ts, packages/guest/src/host/view-script.ts, packages/guest/src/host/view-source.ts, packages/guest/src/host/view.ts, packages/guest/src/host/worker-react.tsx, packages/guest/src/host/worker.ts, packages/guest/src/host/writes.ts, packages/guest/src/kit.ts, packages/guest/src/protocol.ts, packages/guest/src/worker/elements.ts, packages/guest/src/worker/view-global.ts
-Lines: 3979
+Files: 30, Cohesion: 0.80, Coupling: 0.20
+Description: 30 files, primarily TypeScript
+Entry points: packages/guest/src/build.ts, packages/guest/src/channel.ts, packages/guest/src/client.ts, packages/guest/src/host/frame.ts, packages/guest/src/host/index.ts, packages/guest/src/host/kit.ts, packages/guest/src/host/manifest.ts, packages/guest/src/host/pictures.ts, packages/guest/src/host/press.ts, packages/guest/src/host/session.ts, packages/guest/src/host/theme.ts, packages/guest/src/host/view-script.ts, packages/guest/src/host/view-source.ts, packages/guest/src/host/view.ts, packages/guest/src/host/worker-react.tsx, packages/guest/src/host/worker.ts, packages/guest/src/host/writes.ts, packages/guest/src/kit.ts, packages/guest/src/protocol.ts, packages/guest/src/worker/elements.ts, packages/guest/src/worker/view-global.ts, packages/skills/src/index.ts
+Lines: 5079
 
 </zone>
 
 <files>
 
-packages/guest/client.js (JavaScript, 2 lines, source)
-packages/guest/src/channel.ts (TypeScript, 155 lines, source)
-packages/guest/src/host/arrive.ts (TypeScript, 35 lines, source)
+packages/guest/src/build.ts (TypeScript, 134 lines, source)
+packages/guest/src/channel.ts (TypeScript, 160 lines, source)
+packages/guest/src/client.ts (TypeScript, 11 lines, source)
+packages/guest/src/host/arrive-at.ts (TypeScript, 15 lines, source)
+packages/guest/src/host/arrive.ts (TypeScript, 42 lines, source)
 packages/guest/src/host/draw-budget.ts (TypeScript, 38 lines, source)
-packages/guest/src/host/frame.ts (TypeScript, 185 lines, source)
-packages/guest/src/host/index.ts (TypeScript, 23 lines, source)
+packages/guest/src/host/frame.ts (TypeScript, 251 lines, source)
+packages/guest/src/host/index.ts (TypeScript, 26 lines, source)
 packages/guest/src/host/kit.ts (TypeScript, 411 lines, source)
-packages/guest/src/host/links.ts (TypeScript, 62 lines, source)
-packages/guest/src/host/manifest.ts (TypeScript, 146 lines, source)
+packages/guest/src/host/manifest.ts (TypeScript, 186 lines, source)
 packages/guest/src/host/nonce.ts (TypeScript, 6 lines, source)
-packages/guest/src/host/press.ts (TypeScript, 147 lines, source)
-packages/guest/src/host/react.tsx (TypeScript, 128 lines, source)
-packages/guest/src/host/session.ts (TypeScript, 374 lines, source)
+packages/guest/src/host/pictures.ts (TypeScript, 280 lines, source)
+packages/guest/src/host/press.ts (TypeScript, 291 lines, source)
+packages/guest/src/host/react.tsx (TypeScript, 144 lines, source)
+packages/guest/src/host/session.ts (TypeScript, 407 lines, source)
 packages/guest/src/host/theme.ts (TypeScript, 167 lines, source)
 packages/guest/src/host/view-script.ts (TypeScript, 23 lines, source)
 packages/guest/src/host/view-source.ts (TypeScript, 29 lines, source)
-packages/guest/src/host/view.ts (TypeScript, 510 lines, source)
-packages/guest/src/host/views.ts (TypeScript, 21 lines, source)
-packages/guest/src/host/worker-react.tsx (TypeScript, 198 lines, source)
+packages/guest/src/host/view.ts (TypeScript, 606 lines, source)
+packages/guest/src/host/views.ts (TypeScript, 22 lines, source)
+packages/guest/src/host/worker-react.tsx (TypeScript, 253 lines, source)
 packages/guest/src/host/worker-start.ts (TypeScript, 241 lines, source)
 packages/guest/src/host/worker.ts (TypeScript, 230 lines, source)
-packages/guest/src/host/writes.ts (TypeScript, 106 lines, source)
+packages/guest/src/host/writes.ts (TypeScript, 119 lines, source)
 packages/guest/src/kit.ts (TypeScript, 113 lines, source)
-packages/guest/src/protocol.ts (TypeScript, 285 lines, source)
+packages/guest/src/protocol.ts (TypeScript, 361 lines, source)
 packages/guest/src/worker/elements.ts (TypeScript, 30 lines, source)
-packages/guest/src/worker/view-global.ts (TypeScript, 314 lines, source)
+packages/guest/src/worker/view-global.ts (TypeScript, 329 lines, source)
+packages/skills/src/cli.ts (TypeScript, 65 lines, source)
+packages/skills/src/index.ts (TypeScript, 89 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/guest/src/channel.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, isHostHello}
-  packages/guest/src/channel.ts → packages/guest/src/protocol.ts {GuestAnswer, GuestEvent, GuestProps, GuestRequest, HostMessage}
+  packages/guest/src/channel.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, isHostHello, navigateRequest}
+  packages/guest/src/channel.ts → packages/guest/src/protocol.ts {GuestAnswer, GuestEvent, GuestNavigateTo, GuestProps, GuestRequest, HostMessage}
+  packages/guest/src/host/arrive.ts → packages/guest/src/host/frame.ts {*}
   packages/guest/src/host/arrive.ts → packages/guest/src/host/worker.ts {*}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/arrive-at.ts {arriveAt}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/arrive.ts {untilItArrives}
   packages/guest/src/host/frame.ts → packages/guest/src/host/nonce.ts {mintNonce}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/pictures.ts {*}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/pictures.ts {GuestPictureHand, GuestPictures}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter, readAcross}
   packages/guest/src/host/frame.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter}
   packages/guest/src/host/frame.ts → packages/guest/src/host/session.ts {GuestHost, GuestLimits, GuestReads, GuestStats, GuestViewInput}
+  packages/guest/src/host/frame.ts → packages/guest/src/host/theme.ts {readTheme}
   packages/guest/src/host/frame.ts → packages/guest/src/host/theme.ts {createGuestLogo, readTheme, themeWithBrand, watchTheme}
   packages/guest/src/host/frame.ts → packages/guest/src/host/theme.ts {GuestBrand}
+  packages/guest/src/host/frame.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN}
   packages/guest/src/host/frame.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN, isGuestReady}
   packages/guest/src/host/frame.ts → packages/guest/src/protocol.ts {GuestPlace, GuestTheme, HostHello}
-  packages/guest/src/host/index.ts → packages/guest/src/host/frame.ts {mountGuestView}
   packages/guest/src/host/index.ts → packages/guest/src/host/frame.ts {GuestFrame, MountGuestViewOptions}
   packages/guest/src/host/index.ts → packages/guest/src/host/kit.ts {KitLinks, KitRefusal, KitRefusalReason, KitRenderer, KitRendererOptions}
+  packages/guest/src/host/index.ts → packages/guest/src/host/pictures.ts {GuestPictureLimits, GuestPictures}
   packages/guest/src/host/index.ts → packages/guest/src/host/react.tsx {guestView}
   packages/guest/src/host/index.ts → packages/guest/src/host/react.tsx {GuestViewOptions}
-  packages/guest/src/host/index.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter, readAcross}
   packages/guest/src/host/index.ts → packages/guest/src/host/session.ts {GuestHost, GuestHostOptions, GuestLimiter, GuestLimits, GuestReads, GuestStats, GuestViewInput}
-  packages/guest/src/host/index.ts → packages/guest/src/host/theme.ts {readTheme}
   packages/guest/src/host/index.ts → packages/guest/src/host/theme.ts {GuestBrand}
   packages/guest/src/host/index.ts → packages/guest/src/host/worker.ts {GuestWorker, GuestWorkerFailure, GuestWorkerSource, MountGuestWorkerOptions}
   packages/guest/src/host/index.ts → packages/guest/src/kit.ts {GuestKitElement, Kit, KitComponent, KitEvent, KitProperty, KitPropertyType, KitTone}
-  packages/guest/src/host/index.ts → packages/guest/src/protocol.ts {GUEST_PROTOCOL, GUEST_SANDBOX, OPAQUE_ORIGIN}
-  packages/guest/src/host/index.ts → packages/guest/src/protocol.ts {GuestPlace, GuestProps, GuestTheme}
+  packages/guest/src/host/index.ts → packages/guest/src/protocol.ts {GuestFile, GuestPlace, GuestProps, GuestTheme}
   packages/guest/src/host/kit.ts → packages/guest/src/kit.ts {GUEST_KIT, KIT_HOST_ATTRIBUTES, KIT_HOST_EVENTS, KIT_HOST_TAGS, KIT_LINK_TARGETS, KIT_MAX_TEXT}
   packages/guest/src/host/kit.ts → packages/guest/src/kit.ts {Kit, KitComponent, KitProperty}
-  packages/guest/src/host/links.ts → packages/guest/src/protocol.ts {GuestPlace}
+  packages/guest/src/host/manifest.ts → packages/guest/src/host/pictures.ts {GuestPictures}
   packages/guest/src/host/manifest.ts → packages/guest/src/host/session.ts {plainNode, readAcross}
   packages/guest/src/host/manifest.ts → packages/guest/src/host/session.ts {GuestViewInput}
   packages/guest/src/host/manifest.ts → packages/guest/src/protocol.ts {GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme}
-  packages/guest/src/host/press.ts → packages/guest/src/host/manifest.ts {WorkerViewManifest}
+  packages/guest/src/host/pictures.ts → packages/guest/src/protocol.ts {GuestFile, GuestNode, GuestProps}
+  packages/guest/src/host/press.ts → packages/guest/src/host/manifest.ts {ManifestAct, WorkerViewManifest}
   packages/guest/src/host/press.ts → packages/guest/src/host/writes.ts {declaredValues, entryFor, refuse}
-  packages/guest/src/host/press.ts → packages/guest/src/host/writes.ts {Judged, Press, PressedField}
-  packages/guest/src/host/react.tsx → packages/guest/src/host/arrive.ts {untilItArrives, workerChunk}
-  packages/guest/src/host/react.tsx → packages/guest/src/host/frame.ts {mountGuestView}
+  packages/guest/src/host/press.ts → packages/guest/src/host/writes.ts {Judged, Prefilled, Press, PressedField}
+  packages/guest/src/host/react.tsx → packages/guest/src/host/arrive.ts {frameChunk, untilItArrives, workerChunk}
   packages/guest/src/host/react.tsx → packages/guest/src/host/frame.ts {GuestFrame}
   packages/guest/src/host/react.tsx → packages/guest/src/host/kit.ts {KitLinks}
+  packages/guest/src/host/react.tsx → packages/guest/src/host/pictures.ts {GuestPictures}
   packages/guest/src/host/react.tsx → packages/guest/src/host/session.ts {GuestLimits, GuestReads, GuestViewInput}
   packages/guest/src/host/react.tsx → packages/guest/src/host/worker.ts {GuestWorkerSource}
+  packages/guest/src/host/session.ts → packages/guest/src/host/pictures.ts {GuestPictureLimits}
   packages/guest/src/host/session.ts → packages/guest/src/protocol.ts {GuestAct, GuestAnswer, GuestEdge, GuestNode, GuestPlace, GuestProps, GuestRefusal, GuestTheme, HostMessage}
   packages/guest/src/host/theme.ts → packages/guest/src/protocol.ts {GuestTheme}
+  packages/guest/src/host/view.ts → packages/guest/src/host/arrive-at.ts {arriveAt}
   packages/guest/src/host/view.ts → packages/guest/src/host/draw-budget.ts {createDrawBudget}
-  packages/guest/src/host/view.ts → packages/guest/src/host/links.ts {createLinks}
-  packages/guest/src/host/view.ts → packages/guest/src/host/links.ts {Destination}
   packages/guest/src/host/view.ts → packages/guest/src/host/manifest.ts {checkManifest, workerViewProps}
   packages/guest/src/host/view.ts → packages/guest/src/host/manifest.ts {WorkerViewManifest}
+  packages/guest/src/host/view.ts → packages/guest/src/host/pictures.ts {*}
+  packages/guest/src/host/view.ts → packages/guest/src/host/pictures.ts {GuestPictureHand}
   packages/guest/src/host/view.ts → packages/guest/src/host/press.ts {*}
   packages/guest/src/host/view.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter}
   packages/guest/src/host/view.ts → packages/guest/src/host/session.ts {GuestHost, GuestLimits, GuestStats, GuestViewInput}
@@ -104,6 +116,7 @@ Internal:
   packages/guest/src/host/view.ts → packages/guest/src/protocol.ts {GuestDomEvent, GuestPlace, GuestProps, GuestTheme}
   packages/guest/src/host/views.ts → packages/guest/src/host/manifest.ts {checkManifest, manifestActs, workerViewProps}
   packages/guest/src/host/views.ts → packages/guest/src/host/manifest.ts {ManifestAct, WorkerViewManifest, WorkerViewPropsInput}
+  packages/guest/src/host/views.ts → packages/guest/src/host/pictures.ts {GuestPictureLimits, GuestPictures}
   packages/guest/src/host/views.ts → packages/guest/src/host/theme.ts {GuestBrand}
   packages/guest/src/host/views.ts → packages/guest/src/host/view-script.ts {viewScript}
   packages/guest/src/host/views.ts → packages/guest/src/host/view-source.ts {checkViewSource}
@@ -111,8 +124,8 @@ Internal:
   packages/guest/src/host/views.ts → packages/guest/src/host/worker-react.tsx {registerWorkerView, workerHome, workerView}
   packages/guest/src/host/views.ts → packages/guest/src/host/worker-react.tsx {WorkerHomeContext, WorkerViewDefinition}
   packages/guest/src/host/views.ts → packages/guest/src/host/writes.ts {judgeCodeAct, sightIsTotal}
-  packages/guest/src/host/views.ts → packages/guest/src/host/writes.ts {Judged, Press, PressedField}
-  packages/guest/src/host/views.ts → packages/guest/src/protocol.ts {GuestPlace, GuestTheme}
+  packages/guest/src/host/views.ts → packages/guest/src/host/writes.ts {Judged, Prefilled, Press, PressedField}
+  packages/guest/src/host/views.ts → packages/guest/src/protocol.ts {GuestFile, GuestPlace, GuestTheme}
   packages/guest/src/host/worker-react.tsx → packages/guest/src/host/arrive.ts {untilItArrives, workerChunk}
   packages/guest/src/host/worker-react.tsx → packages/guest/src/host/manifest.ts {WorkerViewManifest}
   packages/guest/src/host/worker-react.tsx → packages/guest/src/host/session.ts {GuestViewInput}
@@ -127,7 +140,6 @@ Internal:
   packages/guest/src/host/worker.ts → packages/guest/src/host/kit.ts {createKitRenderer, GUEST_KIT_CSS, hostAttribute, kitValue}
   packages/guest/src/host/worker.ts → packages/guest/src/host/kit.ts {createKitRenderer, GUEST_KIT_CSS}
   packages/guest/src/host/worker.ts → packages/guest/src/host/kit.ts {KitLinks, KitRefusal, KitRenderer, KitRefusalReason, KitRendererOptions}
-  packages/guest/src/host/worker.ts → packages/guest/src/host/links.ts {Destination}
   packages/guest/src/host/worker.ts → packages/guest/src/host/session.ts {createGuestHost, createGuestLimiter}
   packages/guest/src/host/worker.ts → packages/guest/src/host/session.ts {GuestHost, GuestLimits, GuestStats, GuestViewInput}
   packages/guest/src/host/worker.ts → packages/guest/src/host/view.ts {mountWorkerView}
@@ -141,6 +153,34 @@ Internal:
   packages/guest/src/host/writes.ts → packages/guest/src/protocol.ts {GuestRefusal}
   packages/guest/src/worker/elements.ts → packages/guest/src/kit.ts {Kit, KitComponent, KitPropertyType}
   packages/guest/src/worker/view-global.ts → packages/guest/src/channel.ts {Unsent}
-  packages/guest/src/worker/view-global.ts → packages/guest/src/protocol.ts {GuestAnswer, GuestDomEvent, GuestPressed, GuestProps, HostMessage}
+  packages/guest/src/worker/view-global.ts → packages/guest/src/protocol.ts {navigateRequest}
+  packages/guest/src/worker/view-global.ts → packages/guest/src/protocol.ts {GuestAnswer, GuestDomEvent, GuestNavigateTo, GuestPressed, GuestProps, HostMessage}
+  packages/skills/src/cli.ts → packages/skills/src/index.ts {readSkills, SKILLS_DIR, SKILL_DESTINATIONS, withSkillsListed}
 
 </imports>
+
+<sub-crossings>
+
+Cross-dependencies between sub-zones:
+  guest/host/guest → guest/host/host: 9
+  guest/host/guest → guest/host/kit: 6
+  guest/host/host → guest/host/guest: 2
+  guest/host/host → guest/host/host-2: 6
+  guest/host/host → guest/host/kit: 2
+  guest/host/host-2 → guest/host/host: 12
+  guest/host/kit → guest/host/host: 9
+
+</sub-crossings>
+
+<sub-zones>
+
+This zone has 4 sub-zone(s):
+
+- **Guest** (`guest/host/guest`): 3 files, cohesion 0.2, coupling 0.8
+- **Host** (`guest/host/host`): 17 files, cohesion 0.61, coupling 0.39
+- **Host 2** (`guest/host/host-2`): 5 files, cohesion 0.44, coupling 0.56
+- **Kit** (`guest/host/kit`): 5 files, cohesion 0.43, coupling 0.57
+
+Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
+
+</sub-zones>

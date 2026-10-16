@@ -1,0 +1,28 @@
+{
+  "id": "core-schema",
+  "name": "Core Schema",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/document/field-spec.ts",
+    "packages/core/src/schema/file-field.ts",
+    "packages/core/src/schema/file-fields.ts",
+    "packages/core/src/schema/files.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/document/field-spec.ts",
+    "packages/core/src/schema/file-field.ts",
+    "packages/core/src/schema/file-fields.ts",
+    "packages/core/src/schema/files.ts"
+  ],
+  "cohesion": 0.19,
+  "coupling": 0.81,
+  "fileCount": 4,
+  "lineCount": 276,
+  "riskMetrics": {
+    "cohesion": 0.19,
+    "coupling": 0.81,
+    "riskScore": 0.81,
+    "riskLevel": "catastrophic",
+    "failsThreshold": true
+  }
+}

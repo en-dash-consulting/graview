@@ -8,14 +8,14 @@ Zone: Rota (`apps/rota`)
 Files: 15, Cohesion: 1.00, Coupling: 0.00
 Description: 15 files, primarily TypeScript
 Entry points: apps/rota/src/domain/app.ts, apps/rota/src/domain/policy.ts, apps/rota/src/ui/app.tsx, apps/rota/src/ui/views.tsx
-Lines: 2249
+Lines: 2204
 
 </zone>
 
 <files>
 
-apps/rota/src/domain/app.ts (TypeScript, 162 lines, source)
-apps/rota/src/domain/brand.ts (TypeScript, 68 lines, source)
+apps/rota/src/domain/app.ts (TypeScript, 168 lines, source)
+apps/rota/src/domain/brand.ts (TypeScript, 74 lines, source)
 apps/rota/src/domain/installation.ts (TypeScript, 21 lines, source)
 apps/rota/src/domain/invariants.ts (TypeScript, 119 lines, source)
 apps/rota/src/domain/mutations.ts (TypeScript, 236 lines, source)
@@ -23,12 +23,12 @@ apps/rota/src/domain/policy.ts (TypeScript, 37 lines, source)
 apps/rota/src/domain/schema.ts (TypeScript, 137 lines, source)
 apps/rota/src/embed.ts (TypeScript, 38 lines, source)
 apps/rota/src/index.ts (TypeScript, 7 lines, source)
-apps/rota/src/main.tsx (TypeScript, 111 lines, source)
+apps/rota/src/main.tsx (TypeScript, 123 lines, source)
 apps/rota/src/open.ts (TypeScript, 88 lines, source)
-apps/rota/src/ui/app.tsx (TypeScript, 181 lines, source)
-apps/rota/src/ui/design.tsx (TypeScript, 1001 lines, source)
+apps/rota/src/ui/app.tsx (TypeScript, 188 lines, source)
+apps/rota/src/ui/design.tsx (TypeScript, 920 lines, source)
 apps/rota/src/ui/views.tsx (TypeScript, 27 lines, source)
-apps/rota/src/ui/when.ts (TypeScript, 16 lines, source)
+apps/rota/src/ui/when.ts (TypeScript, 21 lines, source)
 
 </files>
 

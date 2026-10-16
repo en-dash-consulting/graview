@@ -1,0 +1,19 @@
+{
+  "id": "ship/src",
+  "name": "Src",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/ship/src/browser-adapter.ts",
+    "packages/ship/src/file-adapter.ts",
+    "packages/ship/src/meta.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/browser-adapter.ts",
+    "packages/ship/src/file-adapter.ts",
+    "packages/ship/src/meta.ts"
+  ],
+  "cohesion": 0.25,
+  "coupling": 0.75,
+  "fileCount": 3,
+  "lineCount": 318
+}

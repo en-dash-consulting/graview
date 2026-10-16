@@ -1,0 +1,27 @@
+{
+  "id": "apps-spike",
+  "name": "Apps Spike",
+  "description": "8 files, primarily TypeScript, JavaScript",
+  "files": [
+    "apps/seedbed/src/recipes.d.ts",
+    "apps/seedbed/vite.site.config.ts",
+    "apps/spike/scripts/introspect4.mjs",
+    "apps/spike/scripts/run-probe.mjs",
+    "apps/spike/scripts/run-restrictions.mjs",
+    "apps/spike/scripts/run-spike.mjs",
+    "apps/spike/src/main.ts",
+    "apps/spike/src/three-planes.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 8,
+  "lineCount": 940,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

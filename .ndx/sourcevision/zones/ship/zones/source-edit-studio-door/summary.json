@@ -1,0 +1,19 @@
+{
+  "id": "ship/source-edit-studio-door",
+  "name": "Source Edit Studio Door",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/ship/src/source-edit.ts",
+    "packages/ship/src/studio-door.ts",
+    "packages/ship/src/typecheck.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/source-edit.ts",
+    "packages/ship/src/studio-door.ts",
+    "packages/ship/src/typecheck.ts"
+  ],
+  "cohesion": 0.5,
+  "coupling": 0.5,
+  "fileCount": 3,
+  "lineCount": 743
+}

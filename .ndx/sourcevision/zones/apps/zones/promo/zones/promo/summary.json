@@ -1,31 +1,28 @@
 {
   "id": "apps/promo/promo",
-  "name": "Interactive Visuals",
-  "description": "9 files, primarily TypeScript",
+  "name": "Promo",
+  "description": "8 files, primarily TypeScript",
   "files": [
-    "apps/promo/src/camera.ts",
-    "apps/promo/src/components/BrandPresence.tsx",
-    "apps/promo/src/components/CodeGlyphs.tsx",
-    "apps/promo/src/components/Constellation.tsx",
-    "apps/promo/src/components/LightCharacter.tsx",
-    "apps/promo/src/components/SurveyInsert.tsx",
-    "apps/promo/src/motion.ts",
-    "apps/promo/src/scenes/CityAltitude.tsx",
-    "apps/promo/src/scenes/GraphInterface.tsx"
+    "apps/promo/src/kit/AppFrame.tsx",
+    "apps/promo/src/kit/Chip.tsx",
+    "apps/promo/src/kit/Kinetic.tsx",
+    "apps/promo/src/kit/Outro.tsx",
+    "apps/promo/src/kit/motion.ts",
+    "apps/promo/src/kit/views.tsx",
+    "apps/promo/src/videos/Thread.tsx",
+    "apps/promo/src/videos/Ticker.tsx"
   ],
   "entryPoints": [
-    "apps/promo/src/camera.ts",
-    "apps/promo/src/components/BrandPresence.tsx",
-    "apps/promo/src/components/CodeGlyphs.tsx",
-    "apps/promo/src/components/Constellation.tsx",
-    "apps/promo/src/components/LightCharacter.tsx",
-    "apps/promo/src/components/SurveyInsert.tsx",
-    "apps/promo/src/motion.ts",
-    "apps/promo/src/scenes/CityAltitude.tsx",
-    "apps/promo/src/scenes/GraphInterface.tsx"
+    "apps/promo/src/kit/AppFrame.tsx",
+    "apps/promo/src/kit/Chip.tsx",
+    "apps/promo/src/kit/Kinetic.tsx",
+    "apps/promo/src/kit/Outro.tsx",
+    "apps/promo/src/kit/motion.ts",
+    "apps/promo/src/videos/Thread.tsx",
+    "apps/promo/src/videos/Ticker.tsx"
   ],
-  "cohesion": 0.41,
-  "coupling": 0.59,
-  "fileCount": 9,
-  "lineCount": 1711
+  "cohesion": 0.65,
+  "coupling": 0.35,
+  "fileCount": 8,
+  "lineCount": 921
 }

@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Tests Apps (`tests-apps`)
-Files: 7, Cohesion: 1.00, Coupling: 0.00
+Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in apps: domain.test.ts, lens-reuse.test.ts, the-awkward-shapes.test.ts (+4 more)
-Lines: 951
+Description: 5 files, primarily TypeScript
+Lines: 611
 
 </zone>
 
@@ -19,8 +19,6 @@ apps/discography/tests/lens-reuse.test.ts (TypeScript, 19 lines, test)
 apps/gauntlet/tests/the-awkward-shapes.test.ts (TypeScript, 190 lines, test)
 apps/launcher/tests/integration/acceptance.test.ts (TypeScript, 126 lines, test)
 apps/rota/tests/integration/acceptance.test.ts (TypeScript, 229 lines, test)
-apps/todo/tests/integration/acceptance.test.tsx (TypeScript, 215 lines, test)
-apps/todo/tests/integration/who-is-here.test.tsx (TypeScript, 125 lines, test)
 
 </files>
 
@@ -28,23 +26,19 @@ apps/todo/tests/integration/who-is-here.test.tsx (TypeScript, 125 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → apps: apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/app.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/survey.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/app.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/policy.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/app.tsx; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/views.tsx; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/domain/app.ts; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/domain/schema.ts; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/ui/app.tsx; apps/todo/tests/integration/acceptance.test.tsx → apps/todo/src/ui/views.tsx; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/domain/app.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/domain/policy.ts; apps/todo/tests/integration/who-is-here.test.tsx → apps/todo/src/ui/app.tsx
-  → apps-discography: apps/discography/tests/domain.test.ts → apps/discography/src/domain/app.ts; apps/discography/tests/lens-reuse.test.ts → apps/discography/src/ui/tracklist.tsx
-  → apps-gauntlet: apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/domain/app.ts; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/domain/schema.ts; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/ui/seats.ts
+  → apps: apps/discography/tests/domain.test.ts → apps/discography/src/domain/app.ts; apps/discography/tests/lens-reuse.test.ts → apps/discography/src/ui/tracklist.tsx; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/domain/app.ts; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/domain/schema.ts; apps/gauntlet/tests/the-awkward-shapes.test.ts → apps/gauntlet/src/ui/seats.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/app.ts; apps/launcher/tests/integration/acceptance.test.ts → apps/launcher/src/domain/survey.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/app.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/domain/policy.ts; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/app.tsx; apps/rota/tests/integration/acceptance.test.ts → apps/rota/src/ui/views.tsx
 
 </imports>
 
 <findings>
 
 [observation] [info] High cohesion (1) — files are tightly interconnected
-[suggestion] [info] Zone "tests-apps" has files across 5 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- Zone "tests-apps" has files across 5 directories — consider consolidating under a dedicated directory
-- [call graph] 75 internal calls, 45 outgoing, 0 incoming (cohesion: 0.63, coupling: 0.38)
+- [call graph] 58 internal calls, 29 outgoing, 0 incoming (cohesion: 0.67, coupling: 0.33)
 
 </insights>

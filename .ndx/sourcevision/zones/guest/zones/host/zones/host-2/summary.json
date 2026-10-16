@@ -1,0 +1,22 @@
+{
+  "id": "guest/host/host-2",
+  "name": "Host 2",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/guest/src/host/manifest.ts",
+    "packages/guest/src/host/press.ts",
+    "packages/guest/src/host/view-source.ts",
+    "packages/guest/src/host/views.ts",
+    "packages/guest/src/host/writes.ts"
+  ],
+  "entryPoints": [
+    "packages/guest/src/host/manifest.ts",
+    "packages/guest/src/host/press.ts",
+    "packages/guest/src/host/view-source.ts",
+    "packages/guest/src/host/writes.ts"
+  ],
+  "cohesion": 0.44,
+  "coupling": 0.56,
+  "fileCount": 5,
+  "lineCount": 647
+}

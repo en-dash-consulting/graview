@@ -1,0 +1,20 @@
+{
+  "id": "core-ops/core-sync",
+  "name": "Core Sync",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/sync/conflict.ts",
+    "packages/core/src/sync/engine.ts",
+    "packages/core/src/sync/google-calendar.ts",
+    "packages/core/src/sync/index.ts",
+    "packages/core/src/sync/mcp.ts",
+    "packages/core/src/sync/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/sync/index.ts"
+  ],
+  "cohesion": 0.67,
+  "coupling": 0.33,
+  "fileCount": 6,
+  "lineCount": 1801
+}

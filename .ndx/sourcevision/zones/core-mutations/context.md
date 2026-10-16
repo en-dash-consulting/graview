@@ -5,61 +5,58 @@
 <zone>
 
 Zone: Core Mutations (`core-mutations`)
-Files: 4, Cohesion: 0.15, Coupling: 0.85
-Risk: catastrophic (score: 0.85)
-Description: 4 files, mostly utilities and types; entry points types.ts, derive-edits.ts, fields.ts; imports Core and Core; imported by Core and Core Cli.
-Entry points: packages/core/src/cli/check/fields.ts, packages/core/src/columns.ts, packages/core/src/mutations/derive-edits.ts, packages/core/src/mutations/types.ts
-Lines: 932
+Files: 3, Cohesion: 0.14, Coupling: 0.86
+Risk: catastrophic (score: 0.86)
+Description: 3 files, primarily TypeScript
+Entry points: packages/core/src/mutations/derive-repeats.ts, packages/core/src/repeat.ts, packages/core/src/schema/repeat-field.ts
+Lines: 319
 
 </zone>
 
 <files>
 
-packages/core/src/cli/check/fields.ts (TypeScript, 257 lines, source)
-packages/core/src/columns.ts (TypeScript, 182 lines, source)
-packages/core/src/mutations/derive-edits.ts (TypeScript, 315 lines, source)
-packages/core/src/mutations/types.ts (TypeScript, 178 lines, source)
+packages/core/src/mutations/derive-repeats.ts (TypeScript, 115 lines, source)
+packages/core/src/repeat.ts (TypeScript, 183 lines, source)
+packages/core/src/schema/repeat-field.ts (TypeScript, 21 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/core/src/cli/check/fields.ts → packages/core/src/mutations/derive-edits.ts {editVia, fieldWriters, subjectKindsOf, unwrittenFields}
-  packages/core/src/columns.ts → packages/core/src/mutations/derive-edits.ts {fieldsWrittenBy, subjectKindsOf}
-  packages/core/src/columns.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition, MutationCall}
-  packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition}
+  packages/core/src/mutations/derive-repeats.ts → packages/core/src/repeat.ts {isRepeat, isRepeatField, occurrences, repeatedBy, repeatKey}
+  packages/core/src/mutations/derive-repeats.ts → packages/core/src/repeat.ts {Repeat}
+  packages/core/src/schema/repeat-field.ts → packages/core/src/repeat.ts {markRepeat, validRepeat}
+  packages/core/src/schema/repeat-field.ts → packages/core/src/repeat.ts {Repeat}
 
 Outgoing (this zone → other zones):
-  → check: packages/core/src/cli/check/fields.ts → packages/core/src/cli/check/context.ts
-  → core: packages/core/src/cli/check/fields.ts → packages/core/src/schema/define-node.ts; packages/core/src/columns.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/types.ts
-  → core-document: packages/core/src/cli/check/fields.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/fields.ts → packages/core/src/permissions/policy.ts; packages/core/src/columns.ts → packages/core/src/permissions/types.ts; packages/core/src/columns.ts → packages/core/src/schema/zod.ts; packages/core/src/columns.ts → packages/core/src/store.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/refused.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/zod.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/primitives.ts
-  → core-graph: packages/core/src/columns.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/types.ts
-  → core-invariants: packages/core/src/cli/check/fields.ts → packages/core/src/schema/schema.ts; packages/core/src/columns.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/types.ts → packages/core/src/schema/schema.ts
+  → amount-input-days: packages/core/src/mutations/derive-repeats.ts → packages/core/src/days.ts
+  → core-document: packages/core/src/mutations/derive-repeats.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/types.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/zod.ts; packages/core/src/repeat.ts → packages/core/src/schema/zod.ts
+  → core-ops: packages/core/src/mutations/derive-repeats.ts → packages/core/src/mutations/types.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/refused.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/schema.ts
 
 Incoming (other zones → this zone):
-  ← check: packages/core/src/cli/check/context.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/columns.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/mutations/derive-edits.ts
-  ← core: packages/core/src/document/describe-place.ts → packages/core/src/columns.ts
-  ← core-cli: packages/core/src/cli/check.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/fields.ts
-  ← core-document: packages/core/src/app.ts → packages/core/src/mutations/types.ts; packages/core/src/beginning.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/beginning.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/policy.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/describe.ts → packages/core/src/columns.ts; packages/core/src/cli/describe.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/docs.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/conformance/index.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/describe.ts → packages/core/src/columns.ts; packages/core/src/describe.ts → packages/core/src/columns.ts; packages/core/src/extend.ts → packages/core/src/mutations/types.ts; packages/core/src/index.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/index.ts → packages/core/src/mutations/types.ts; packages/core/src/installation.ts → packages/core/src/mutations/types.ts; packages/core/src/ops/types.ts → packages/core/src/mutations/types.ts; packages/core/src/permissions/policy.ts → packages/core/src/mutations/types.ts; packages/core/src/store.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/store.ts → packages/core/src/mutations/types.ts
-  ← core-graph: packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/types.ts
-  ← core-invariants: packages/core/src/bind.ts → packages/core/src/mutations/types.ts
-  ← tests-core-document: packages/core/tests/document/a-rules-refusal-says-so.test.ts → packages/core/src/columns.ts
+  ← amount-input-days: packages/core/src/repeat-words.ts → packages/core/src/repeat.ts; packages/core/src/repeat-words.ts → packages/core/src/repeat.ts
+  ← core-document: packages/core/src/arrangement.ts → packages/core/src/repeat.ts; packages/core/src/arranging.ts → packages/core/src/repeat.ts; packages/core/src/cli/check.ts → packages/core/src/mutations/derive-repeats.ts; packages/core/src/document/to-document.ts → packages/core/src/repeat.ts; packages/core/src/index.ts → packages/core/src/repeat.ts; packages/core/src/index.ts → packages/core/src/repeat.ts; packages/core/src/index.ts → packages/core/src/schema/repeat-field.ts; packages/core/src/mutations/form.ts → packages/core/src/repeat.ts; packages/core/src/schema/reading.ts → packages/core/src/repeat.ts; packages/core/src/typed.ts → packages/core/src/repeat.ts
+  ← core-ops: packages/core/src/document/compiled.ts → packages/core/src/repeat.ts; packages/core/src/document/expr/evaluate.ts → packages/core/src/repeat.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/derive-repeats.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/repeat.ts
+  ← schema: packages/core/src/schema/json-schema.ts → packages/core/src/repeat.ts
+  ← tests-core-unit: packages/core/tests/unit/a-repeating-date-falls-on-its-days.test.ts → packages/core/src/repeat.ts; packages/core/tests/unit/a-repeating-date-falls-on-its-days.test.ts → packages/core/src/repeat.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] High coupling (0.85) — 9 imports target "core-document"
-[observation] [warning] Low cohesion (0.15) — files are loosely related, consider splitting this zone
-[suggestion] [info] Zone "Core Mutations" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.15, coupling: 0.85 (risk score: 0.85)
+[observation] [info] High coupling (0.86) — 5 imports target "core-document"
+[anti-pattern] [warning] "Core Mutations" imports "Core Document" on 5 edge(s) while the 10 edge(s) between them run the other way — the minority direction looks like a layering violation
+[anti-pattern] [warning] "packages/core/src/repeat.ts" is imported from 5 zones (amount-input-days, core-document, core-ops, schema, tests-core-unit) — a cross-cutting dependency every one of them is coupled to
+[suggestion] [info] Zone "Core Mutations" has an unreliable risk reading: only 3 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.14, coupling: 0.86 (risk score: 0.86)
 
 </findings>
 
 <insights>
 
-- Low cohesion (0.15) — files are loosely related, consider splitting this zone
-- High coupling (0.85) — 9 imports target "core-document"
-- [call graph] 31 internal calls, 21 outgoing, 17 incoming (cohesion: 0.6, coupling: 0.4)
+- High coupling (0.86) — 5 imports target "core-document"
+- "Core Mutations" imports "Core Document" on 5 edge(s) while the 10 edge(s) between them run the other way — the minority direction looks like a layering violation
+- "packages/core/src/repeat.ts" is imported from 5 zones (amount-input-days, core-document, core-ops, schema, tests-core-unit) — a cross-cutting dependency every one of them is coupled to
+- [call graph] 46 internal calls, 7 outgoing, 43 incoming (cohesion: 0.87, coupling: 0.13)
 
 </insights>

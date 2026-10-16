@@ -5,27 +5,32 @@
 <zone>
 
 Zone: Src (`primitives/src`)
-Files: 12, Cohesion: 0.57, Coupling: 0.43
-Description: 12 files, primarily TypeScript
-Entry points: packages/primitives/src/app-bar.tsx, packages/primitives/src/app-title.tsx, packages/primitives/src/figure.tsx, packages/primitives/src/frame.ts, packages/primitives/src/markup.ts, packages/primitives/src/pages.ts, packages/primitives/src/profile.tsx, packages/primitives/src/workbench/back-out.tsx, packages/primitives/src/workbench/standing.tsx
-Lines: 1667
+Files: 17, Cohesion: 0.39, Coupling: 0.61
+Description: 17 files, primarily TypeScript
+Entry points: packages/primitives/src/app-bar.tsx, packages/primitives/src/app-title.tsx, packages/primitives/src/first-look-door.tsx, packages/primitives/src/frame.ts, packages/primitives/src/resolve-app-context.ts, packages/primitives/src/scene-bar.tsx, packages/primitives/src/scene-places.ts, packages/primitives/src/seat-field.tsx, packages/primitives/src/seat-panel.tsx, packages/primitives/src/shell.tsx, packages/primitives/src/states-bar.tsx, packages/primitives/src/view-doors.tsx, packages/primitives/src/workbench/index.tsx
+Lines: 3147
 
 </zone>
 
 <files>
 
-packages/primitives/src/app-bar.tsx (TypeScript, 651 lines, source)
-packages/primitives/src/app-title.tsx (TypeScript, 87 lines, source)
-packages/primitives/src/bar-panes-door.ts (TypeScript, 10 lines, source)
-packages/primitives/src/figure.tsx (TypeScript, 108 lines, source)
-packages/primitives/src/frame.ts (TypeScript, 30 lines, source)
-packages/primitives/src/markup.ts (TypeScript, 24 lines, source)
-packages/primitives/src/pages.ts (TypeScript, 30 lines, source)
-packages/primitives/src/popover.ts (TypeScript, 26 lines, source)
-packages/primitives/src/profile.tsx (TypeScript, 294 lines, source)
-packages/primitives/src/workbench/back-out.tsx (TypeScript, 262 lines, source)
-packages/primitives/src/workbench/descent.ts (TypeScript, 24 lines, source)
-packages/primitives/src/workbench/standing.tsx (TypeScript, 121 lines, source)
+packages/primitives/src/app-bar.tsx (TypeScript, 959 lines, source)
+packages/primitives/src/app-title.tsx (TypeScript, 90 lines, source)
+packages/primitives/src/first-look-door.tsx (TypeScript, 141 lines, source)
+packages/primitives/src/first-look.tsx (TypeScript, 341 lines, source)
+packages/primitives/src/frame.ts (TypeScript, 52 lines, source)
+packages/primitives/src/framework-views.ts (TypeScript, 22 lines, source)
+packages/primitives/src/resolve-app-context.ts (TypeScript, 11 lines, source)
+packages/primitives/src/scene-bar.tsx (TypeScript, 114 lines, source)
+packages/primitives/src/scene-places.ts (TypeScript, 96 lines, source)
+packages/primitives/src/seat-field.tsx (TypeScript, 289 lines, source)
+packages/primitives/src/seat-panel.tsx (TypeScript, 343 lines, source)
+packages/primitives/src/shell.tsx (TypeScript, 299 lines, source)
+packages/primitives/src/states-bar.tsx (TypeScript, 43 lines, source)
+packages/primitives/src/view-doors.tsx (TypeScript, 82 lines, source)
+packages/primitives/src/workbench/agent-seat.tsx (TypeScript, 206 lines, source)
+packages/primitives/src/workbench/following.tsx (TypeScript, 36 lines, source)
+packages/primitives/src/workbench/index.tsx (TypeScript, 23 lines, source)
 
 </files>
 
@@ -33,26 +38,39 @@ packages/primitives/src/workbench/standing.tsx (TypeScript, 121 lines, source)
 
 Internal:
   packages/primitives/src/app-bar.tsx → packages/primitives/src/app-title.tsx {AppMark}
-  packages/primitives/src/app-title.tsx → packages/primitives/src/markup.ts {useMarkup}
-  packages/primitives/src/figure.tsx → packages/primitives/src/markup.ts {useMarkup}
-  packages/primitives/src/frame.ts → packages/primitives/src/app-bar.tsx {AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind}
+  packages/primitives/src/first-look-door.tsx → packages/primitives/src/first-look.tsx {*}
+  packages/primitives/src/first-look-door.tsx → packages/primitives/src/first-look.tsx {FirstLookHintsProps}
+  packages/primitives/src/first-look.tsx → packages/primitives/src/first-look-door.tsx {FirstLookAnchor, FirstLookEnd, FirstLookStep}
+  packages/primitives/src/frame.ts → packages/primitives/src/app-bar.tsx {AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, FEWEST_STANDING, HOME_KEY, HOME_PATH, PLACE_GAP, placesThatStand, TOOL, toolStyle, useBarFind}
   packages/primitives/src/frame.ts → packages/primitives/src/app-bar.tsx {BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch}
   packages/primitives/src/frame.ts → packages/primitives/src/app-title.tsx {AppMark, AppTitle, useFavicon}
-  packages/primitives/src/frame.ts → packages/primitives/src/profile.tsx {Profile}
-  packages/primitives/src/frame.ts → packages/primitives/src/profile.tsx {HostAction}
-  packages/primitives/src/frame.ts → packages/primitives/src/workbench/descent.ts {descentTarget}
-  packages/primitives/src/frame.ts → packages/primitives/src/workbench/standing.tsx {Standing, StandingDot, standingWords}
-  packages/primitives/src/pages.ts → packages/primitives/src/app-bar.tsx {AppBar, BarFindContext, barPlaceAt, barPlaces, BAR_HEIGHT, BAR_PHONE, HOME_KEY, HOME_PATH, TOOL, toolStyle, useBarFind}
-  packages/primitives/src/pages.ts → packages/primitives/src/app-bar.tsx {BarFace, BarFaces, BarFind, BarGo, BarPlace, BarPlaceGroup, BarSwitch}
-  packages/primitives/src/pages.ts → packages/primitives/src/app-title.tsx {AppMark, AppTitle, useFavicon}
-  packages/primitives/src/pages.ts → packages/primitives/src/figure.tsx {KindFigure}
-  packages/primitives/src/pages.ts → packages/primitives/src/markup.ts {useMarkup}
-  packages/primitives/src/pages.ts → packages/primitives/src/profile.tsx {Profile}
-  packages/primitives/src/pages.ts → packages/primitives/src/workbench/standing.tsx {StandingDot, standingWords}
-  packages/primitives/src/profile.tsx → packages/primitives/src/app-bar.tsx {TOOL, toolStyle}
-  packages/primitives/src/profile.tsx → packages/primitives/src/bar-panes-door.ts {panes}
-  packages/primitives/src/workbench/back-out.tsx → packages/primitives/src/workbench/descent.ts {descentTarget}
-  packages/primitives/src/workbench/standing.tsx → packages/primitives/src/app-bar.tsx {toolStyle}
-  packages/primitives/src/workbench/standing.tsx → packages/primitives/src/bar-panes-door.ts {barPanes}
+  packages/primitives/src/frame.ts → packages/primitives/src/first-look-door.tsx {FIRST_LOOK_ANCHORS, FirstLookDoor, firstLookKey}
+  packages/primitives/src/frame.ts → packages/primitives/src/first-look-door.tsx {FirstLook, FirstLookAnchor, FirstLookDoorProps, FirstLookEnd, FirstLookOptions, FirstLookStep}
+  packages/primitives/src/frame.ts → packages/primitives/src/scene-places.ts {scenePlacesOf, useScenePlaces, WHOLE_KEY, WHOLE_LABEL, ScenePlaces}
+  packages/primitives/src/frame.ts → packages/primitives/src/view-doors.tsx {fetchFrameworkViews, frameworkViewDoors, registerFrameworkViews}
+  packages/primitives/src/framework-views.ts → packages/primitives/src/frame.ts {*}
+  packages/primitives/src/scene-bar.tsx → packages/primitives/src/app-bar.tsx {BarFind}
+  packages/primitives/src/scene-bar.tsx → packages/primitives/src/workbench/following.tsx {FollowingLine}
+  packages/primitives/src/scene-places.ts → packages/primitives/src/app-bar.tsx {WHOLE_KEY}
+  packages/primitives/src/scene-places.ts → packages/primitives/src/app-bar.tsx {BarGo, BarPlace}
+  packages/primitives/src/seat-field.tsx → packages/primitives/src/seat-panel.tsx {*}
+  packages/primitives/src/seat-field.tsx → packages/primitives/src/seat-panel.tsx {SeatPanelProps}
+  packages/primitives/src/seat-panel.tsx → packages/primitives/src/frame.ts {*}
+  packages/primitives/src/seat-panel.tsx → packages/primitives/src/workbench/index.tsx {AnswerArgs}
+  packages/primitives/src/shell.tsx → packages/primitives/src/app-bar.tsx {AppBar}
+  packages/primitives/src/shell.tsx → packages/primitives/src/app-bar.tsx {BarFind}
+  packages/primitives/src/shell.tsx → packages/primitives/src/app-title.tsx {useFavicon}
+  packages/primitives/src/shell.tsx → packages/primitives/src/first-look-door.tsx {FirstLookDoor}
+  packages/primitives/src/shell.tsx → packages/primitives/src/first-look-door.tsx {FirstLook}
+  packages/primitives/src/shell.tsx → packages/primitives/src/resolve-app-context.ts {ResolveAppContext}
+  packages/primitives/src/shell.tsx → packages/primitives/src/scene-bar.tsx {SceneBarTools, SceneTrail, useCallLog}
+  packages/primitives/src/shell.tsx → packages/primitives/src/scene-places.ts {useScenePlaces}
+  packages/primitives/src/shell.tsx → packages/primitives/src/seat-field.tsx {SeatField}
+  packages/primitives/src/shell.tsx → packages/primitives/src/seat-field.tsx {SeatStart}
+  packages/primitives/src/shell.tsx → packages/primitives/src/workbench/index.tsx {BackOut, Inspector, OverviewButton, Standing}
+  packages/primitives/src/states-bar.tsx → packages/primitives/src/frame.ts {*}
+  packages/primitives/src/view-doors.tsx → packages/primitives/src/framework-views.ts {*}
+  packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/agent-seat.tsx {*}
+  packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/following.tsx {*}
 
 </imports>

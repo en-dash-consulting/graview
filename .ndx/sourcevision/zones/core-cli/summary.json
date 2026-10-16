@@ -1,25 +1,29 @@
 {
   "id": "core-cli",
   "name": "Core Cli",
-  "description": "5 files, mostly utilities and entry points; entry points check.ts; imports Core and Core Cli; imported by Packages and Core.",
+  "description": "5 files, primarily TypeScript",
   "files": [
-    "packages/core/src/cli/check.ts",
-    "packages/core/src/cli/check/index.ts",
-    "packages/core/src/cli/check/migrations.ts",
-    "packages/core/src/cli/check/routes.ts",
-    "packages/core/src/cli/check/views.ts"
+    "packages/core/src/app-places.ts",
+    "packages/core/src/cli/check/lenses.ts",
+    "packages/core/src/places.ts",
+    "packages/core/src/schema/path.ts",
+    "packages/core/src/views/types.ts"
   ],
   "entryPoints": [
-    "packages/core/src/cli/check.ts"
+    "packages/core/src/app-places.ts",
+    "packages/core/src/cli/check/lenses.ts",
+    "packages/core/src/places.ts",
+    "packages/core/src/schema/path.ts",
+    "packages/core/src/views/types.ts"
   ],
-  "cohesion": 0.22,
-  "coupling": 0.78,
+  "cohesion": 0.24,
+  "coupling": 0.76,
   "fileCount": 5,
-  "lineCount": 299,
+  "lineCount": 1493,
   "riskMetrics": {
-    "cohesion": 0.22,
-    "coupling": 0.78,
-    "riskScore": 0.78,
+    "cohesion": 0.24,
+    "coupling": 0.76,
+    "riskScore": 0.76,
     "riskLevel": "catastrophic",
     "failsThreshold": true
   }

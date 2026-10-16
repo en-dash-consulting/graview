@@ -7,7 +7,7 @@
 Zone: Tests Guest Fixtures (`tests-guest-fixtures`)
 Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: heard.js, offers.js, packages.js (+2 more)
+Description: 5 files, primarily JavaScript
 Lines: 158
 
 </zone>

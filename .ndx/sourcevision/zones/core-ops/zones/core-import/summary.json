@@ -1,0 +1,22 @@
+{
+  "id": "core-ops/core-import",
+  "name": "Core Import",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/core/src/import/coerce.ts",
+    "packages/core/src/import/csv.ts",
+    "packages/core/src/import/index.ts",
+    "packages/core/src/import/mapping.ts",
+    "packages/core/src/import/rows.ts",
+    "packages/core/src/labels.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/import/coerce.ts",
+    "packages/core/src/import/index.ts",
+    "packages/core/src/labels.ts"
+  ],
+  "cohesion": 0.5,
+  "coupling": 0.5,
+  "fileCount": 6,
+  "lineCount": 1480
+}

@@ -5,34 +5,34 @@
 <zone>
 
 Zone: Src (`tools/src`)
-Files: 5, Cohesion: 0.39, Coupling: 0.61
+Files: 5, Cohesion: 0.42, Coupling: 0.58
 Description: 5 files, primarily TypeScript
-Entry points: packages/tools/src/conversation.ts, packages/tools/src/intelligence.ts, packages/tools/src/plan.ts, packages/tools/src/questions.ts, packages/tools/src/run.ts
-Lines: 2877
+Entry points: packages/tools/src/ai.ts, packages/tools/src/dev-ai.ts, packages/tools/src/frame.ts, packages/tools/src/local.ts, packages/tools/src/turn.ts
+Lines: 650
 
 </zone>
 
 <files>
 
-packages/tools/src/conversation.ts (TypeScript, 849 lines, source)
-packages/tools/src/intelligence.ts (TypeScript, 516 lines, source)
-packages/tools/src/plan.ts (TypeScript, 433 lines, source)
-packages/tools/src/questions.ts (TypeScript, 439 lines, source)
-packages/tools/src/run.ts (TypeScript, 640 lines, source)
+packages/tools/src/ai.ts (TypeScript, 114 lines, source)
+packages/tools/src/dev-ai.ts (TypeScript, 61 lines, source)
+packages/tools/src/frame.ts (TypeScript, 19 lines, source)
+packages/tools/src/local.ts (TypeScript, 384 lines, source)
+packages/tools/src/turn.ts (TypeScript, 72 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/tools/src/conversation.ts → packages/tools/src/intelligence.ts {droppedProposals, firstJsonObject, resolveProposal, validateProposals}
-  packages/tools/src/conversation.ts → packages/tools/src/intelligence.ts {Completion, ProposedCall}
-  packages/tools/src/conversation.ts → packages/tools/src/questions.ts {OfferedQuestion}
-  packages/tools/src/plan.ts → packages/tools/src/intelligence.ts {ProposedCall}
-  packages/tools/src/run.ts → packages/tools/src/conversation.ts {ChatReply}
-  packages/tools/src/run.ts → packages/tools/src/plan.ts {applyPlan, planFrom}
-  packages/tools/src/run.ts → packages/tools/src/plan.ts {AppliedPlan, Plan, PlanOptions, PlannedCall}
-  packages/tools/src/run.ts → packages/tools/src/questions.ts {nodeState, pairQuestion, questionsForInvariant, questionsForKind, questionsForMutation, scoreToValue}
-  packages/tools/src/run.ts → packages/tools/src/questions.ts {DerivedQuestion, OfferedQuestion, Question}
+  packages/tools/src/dev-ai.ts → packages/tools/src/ai.ts {NO_AI}
+  packages/tools/src/dev-ai.ts → packages/tools/src/ai.ts {HostAi}
+  packages/tools/src/dev-ai.ts → packages/tools/src/turn.ts {turnThroughMessages}
+  packages/tools/src/dev-ai.ts → packages/tools/src/turn.ts {MessagesStepReply}
+  packages/tools/src/frame.ts → packages/tools/src/ai.ts {aiTalks, ANSWERED_WITH_AI, NO_AI, NO_AI_SAID}
+  packages/tools/src/frame.ts → packages/tools/src/ai.ts {HostAi, HostTurn, TurnMessage}
+  packages/tools/src/local.ts → packages/tools/src/ai.ts {NO_AI_SAID}
+  packages/tools/src/local.ts → packages/tools/src/ai.ts {HostAi}
+  packages/tools/src/turn.ts → packages/tools/src/ai.ts {HostAi, HostTurn}
 
 </imports>

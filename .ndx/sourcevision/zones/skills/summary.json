@@ -1,25 +1,25 @@
 {
   "id": "skills",
   "name": "Skills",
-  "description": "4 files, mostly entry points and pages; entry points index.ts; imported by Packages.",
+  "description": "6 files, primarily JavaScript, TypeScript",
   "files": [
+    "apps/discography/src/live.ts",
+    "apps/gauntlet/scripts/generate-seed.mjs",
+    "packages/skills/skills/graview-worker-view/examples/a-record.js",
     "packages/skills/skills/graview-worker-view/examples/front-page.js",
     "packages/skills/skills/graview-worker-view/examples/offers-list.js",
-    "packages/skills/src/cli.ts",
-    "packages/skills/src/index.ts"
+    "vitest.config.ts"
   ],
-  "entryPoints": [
-    "packages/skills/src/index.ts"
-  ],
-  "cohesion": 1,
+  "entryPoints": [],
+  "cohesion": 0,
   "coupling": 0,
-  "fileCount": 4,
-  "lineCount": 230,
+  "fileCount": 6,
+  "lineCount": 876,
   "riskMetrics": {
-    "cohesion": 1,
+    "cohesion": 0,
     "coupling": 0,
-    "riskScore": 0,
-    "riskLevel": "healthy",
+    "riskScore": 0.5,
+    "riskLevel": "at-risk",
     "failsThreshold": false
   }
 }

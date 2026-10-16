@@ -5,43 +5,39 @@
 <zone>
 
 Zone: Src Workbench (`primitives/src-workbench`)
-Files: 10, Cohesion: 0.44, Coupling: 0.56
-Description: 10 files, primarily TypeScript
-Entry points: packages/primitives/src/chat.tsx, packages/primitives/src/companion.tsx, packages/primitives/src/quick-relations.tsx, packages/primitives/src/relation-key.tsx, packages/primitives/src/seat.tsx, packages/primitives/src/shell.tsx, packages/primitives/src/subject.ts, packages/primitives/src/workbench/index.tsx
-Lines: 2961
+Files: 9, Cohesion: 0.48, Coupling: 0.52
+Description: 9 files, primarily TypeScript
+Entry points: packages/primitives/src/bar-activity.tsx, packages/primitives/src/bar-panes-door.ts, packages/primitives/src/bar-panes.tsx, packages/primitives/src/here.tsx, packages/primitives/src/profile.tsx, packages/primitives/src/rule-line.tsx, packages/primitives/src/seats.tsx, packages/primitives/src/workbench/standing.tsx
+Lines: 1303
 
 </zone>
 
 <files>
 
-packages/primitives/src/chat.tsx (TypeScript, 595 lines, source)
-packages/primitives/src/companion.tsx (TypeScript, 680 lines, source)
-packages/primitives/src/quick-relations.tsx (TypeScript, 227 lines, source)
-packages/primitives/src/relation-key.tsx (TypeScript, 268 lines, source)
-packages/primitives/src/seat.tsx (TypeScript, 414 lines, source)
-packages/primitives/src/shell.tsx (TypeScript, 352 lines, source)
-packages/primitives/src/subject.ts (TypeScript, 162 lines, source)
-packages/primitives/src/workbench/agent-seat.tsx (TypeScript, 204 lines, source)
-packages/primitives/src/workbench/following.tsx (TypeScript, 36 lines, source)
-packages/primitives/src/workbench/index.tsx (TypeScript, 23 lines, source)
+packages/primitives/src/bar-activity.tsx (TypeScript, 11 lines, source)
+packages/primitives/src/bar-panes-door.ts (TypeScript, 10 lines, source)
+packages/primitives/src/bar-panes.tsx (TypeScript, 337 lines, source)
+packages/primitives/src/choice.ts (TypeScript, 22 lines, source)
+packages/primitives/src/here.tsx (TypeScript, 241 lines, source)
+packages/primitives/src/profile.tsx (TypeScript, 301 lines, source)
+packages/primitives/src/rule-line.tsx (TypeScript, 178 lines, source)
+packages/primitives/src/seats.tsx (TypeScript, 78 lines, source)
+packages/primitives/src/workbench/standing.tsx (TypeScript, 125 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/primitives/src/chat.tsx → packages/primitives/src/seat.tsx {describeSource, proposalKey, SeatComposer, SeatHeader, SeatSettings, SeatThread, Settled, useSeatConversation}
-  packages/primitives/src/chat.tsx → packages/primitives/src/subject.ts {useSubject}
-  packages/primitives/src/chat.tsx → packages/primitives/src/workbench/index.tsx {AnswerArgs}
-  packages/primitives/src/companion.tsx → packages/primitives/src/chat.tsx {ChatPanel}
-  packages/primitives/src/companion.tsx → packages/primitives/src/quick-relations.tsx {QuickRelations}
-  packages/primitives/src/companion.tsx → packages/primitives/src/relation-key.tsx {RelationKey}
-  packages/primitives/src/companion.tsx → packages/primitives/src/subject.ts {useSubject}
-  packages/primitives/src/companion.tsx → packages/primitives/src/workbench/index.tsx {Inspector}
-  packages/primitives/src/shell.tsx → packages/primitives/src/companion.tsx {Companion}
-  packages/primitives/src/shell.tsx → packages/primitives/src/companion.tsx {CompanionMode}
-  packages/primitives/src/shell.tsx → packages/primitives/src/workbench/index.tsx {ActivityRail, BackOut, Backtrack, Inspector, OverviewButton, FollowingLine, Standing, Trail}
-  packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/agent-seat.tsx {*}
-  packages/primitives/src/workbench/index.tsx → packages/primitives/src/workbench/following.tsx {*}
+  packages/primitives/src/bar-activity.tsx → packages/primitives/src/bar-panes-door.ts {barPanes}
+  packages/primitives/src/bar-panes-door.ts → packages/primitives/src/bar-panes.tsx {*}
+  packages/primitives/src/bar-panes.tsx → packages/primitives/src/choice.ts {choiceStyle}
+  packages/primitives/src/bar-panes.tsx → packages/primitives/src/here.tsx {Here, sayTheirChange}
+  packages/primitives/src/bar-panes.tsx → packages/primitives/src/profile.tsx {HostAction}
+  packages/primitives/src/bar-panes.tsx → packages/primitives/src/rule-line.tsx {ownSentence, problemTitle, RuleLineView, useLined}
+  packages/primitives/src/bar-panes.tsx → packages/primitives/src/seats.tsx {Seats}
+  packages/primitives/src/profile.tsx → packages/primitives/src/bar-panes-door.ts {panes}
+  packages/primitives/src/seats.tsx → packages/primitives/src/choice.ts {choiceStyle}
+  packages/primitives/src/workbench/standing.tsx → packages/primitives/src/bar-panes-door.ts {barPanes}
 
 </imports>

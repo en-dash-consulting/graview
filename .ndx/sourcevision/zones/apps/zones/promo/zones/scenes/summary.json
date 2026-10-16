@@ -1,19 +1,23 @@
 {
   "id": "apps/promo/scenes",
-  "name": "Scenes Components",
-  "description": "3 files, primarily TypeScript",
+  "name": "Scenes",
+  "description": "8 files, primarily TypeScript",
   "files": [
+    "apps/promo/src/Composition.tsx",
     "apps/promo/src/components/BigTitle.tsx",
+    "apps/promo/src/components/CameraRig.tsx",
+    "apps/promo/src/components/Field.tsx",
+    "apps/promo/src/scenes/BrandMorph.tsx",
     "apps/promo/src/scenes/GlyphsBloom.tsx",
+    "apps/promo/src/scenes/OutroBumper.tsx",
     "apps/promo/src/scenes/RelationsDemo.tsx"
   ],
   "entryPoints": [
-    "apps/promo/src/components/BigTitle.tsx",
-    "apps/promo/src/scenes/GlyphsBloom.tsx",
-    "apps/promo/src/scenes/RelationsDemo.tsx"
+    "apps/promo/src/Composition.tsx",
+    "apps/promo/src/components/BigTitle.tsx"
   ],
-  "cohesion": 0.24,
-  "coupling": 0.76,
-  "fileCount": 3,
-  "lineCount": 894
+  "cohesion": 0.36,
+  "coupling": 0.64,
+  "fileCount": 8,
+  "lineCount": 1309
 }

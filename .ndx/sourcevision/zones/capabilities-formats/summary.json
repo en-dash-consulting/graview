@@ -12,14 +12,14 @@
     "packages/core/src/formats.ts",
     "packages/core/src/version.ts"
   ],
-  "cohesion": 0.55,
-  "coupling": 0.45,
+  "cohesion": 0.5,
+  "coupling": 0.5,
   "fileCount": 3,
   "lineCount": 137,
   "riskMetrics": {
-    "cohesion": 0.55,
-    "coupling": 0.45,
-    "riskScore": 0.44999999999999996,
+    "cohesion": 0.5,
+    "coupling": 0.5,
+    "riskScore": 0.5,
     "riskLevel": "healthy",
     "failsThreshold": false
   }

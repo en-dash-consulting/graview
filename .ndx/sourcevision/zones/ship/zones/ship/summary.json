@@ -1,0 +1,23 @@
+{
+  "id": "ship/ship",
+  "name": "Ship",
+  "description": "5 files, primarily TypeScript",
+  "files": [
+    "packages/ship/src/browser.ts",
+    "packages/ship/src/files-at.ts",
+    "packages/ship/src/migrations.ts",
+    "packages/ship/src/photos.ts",
+    "packages/ship/src/presence.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/browser.ts",
+    "packages/ship/src/files-at.ts",
+    "packages/ship/src/migrations.ts",
+    "packages/ship/src/photos.ts",
+    "packages/ship/src/presence.ts"
+  ],
+  "cohesion": 0.32,
+  "coupling": 0.68,
+  "fileCount": 5,
+  "lineCount": 441
+}

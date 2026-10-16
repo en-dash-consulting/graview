@@ -5,23 +5,26 @@
 <zone>
 
 Zone: Headless (`guest/headless`)
-Files: 8, Cohesion: 0.62, Coupling: 0.38
-Description: 8 files, primarily TypeScript
-Entry points: packages/guest/src/cli.ts, packages/guest/src/headless/index.ts, packages/guest/src/headless/node.ts, packages/guest/src/headless/tree.ts
-Lines: 1128
+Files: 11, Cohesion: 0.61, Coupling: 0.39
+Description: 11 files, primarily TypeScript
+Entry points: packages/guest/src/cli.ts, packages/guest/src/headless/index.ts, packages/guest/src/headless/judge.ts, packages/guest/src/headless/node.ts, packages/guest/src/headless/tree.ts, packages/guest/src/host/links-words.ts, packages/guest/src/host/links.ts, packages/guest/src/host/where.ts
+Lines: 1533
 
 </zone>
 
 <files>
 
-packages/guest/src/cli.ts (TypeScript, 80 lines, source)
-packages/guest/src/headless/describe.ts (TypeScript, 276 lines, source)
-packages/guest/src/headless/index.ts (TypeScript, 252 lines, source)
-packages/guest/src/headless/judge.ts (TypeScript, 63 lines, source)
+packages/guest/src/cli.ts (TypeScript, 83 lines, source)
+packages/guest/src/headless/describe.ts (TypeScript, 278 lines, source)
+packages/guest/src/headless/index.ts (TypeScript, 284 lines, source)
+packages/guest/src/headless/judge.ts (TypeScript, 68 lines, source)
 packages/guest/src/headless/node.ts (TypeScript, 85 lines, source)
-packages/guest/src/headless/protocol.ts (TypeScript, 78 lines, source)
-packages/guest/src/headless/runtime.ts (TypeScript, 165 lines, source)
+packages/guest/src/headless/protocol.ts (TypeScript, 83 lines, source)
+packages/guest/src/headless/runtime.ts (TypeScript, 168 lines, source)
 packages/guest/src/headless/tree.ts (TypeScript, 129 lines, source)
+packages/guest/src/host/links-words.ts (TypeScript, 72 lines, source)
+packages/guest/src/host/links.ts (TypeScript, 159 lines, source)
+packages/guest/src/host/where.ts (TypeScript, 124 lines, source)
 
 </files>
 
@@ -32,6 +35,8 @@ Internal:
   packages/guest/src/cli.ts → packages/guest/src/headless/node.ts {nodeIsolate}
   packages/guest/src/headless/describe.ts → packages/guest/src/headless/tree.ts {TreeElement, TreeText}
   packages/guest/src/headless/describe.ts → packages/guest/src/headless/tree.ts {TreeNode}
+  packages/guest/src/headless/describe.ts → packages/guest/src/host/links-words.ts {placeNamed, placesSaid}
+  packages/guest/src/headless/describe.ts → packages/guest/src/host/links-words.ts {NamedPlace}
   packages/guest/src/headless/index.ts → packages/guest/src/headless/describe.ts {describeDrawing}
   packages/guest/src/headless/index.ts → packages/guest/src/headless/describe.ts {DescribeDrawingContext, DescribedDrawing}
   packages/guest/src/headless/index.ts → packages/guest/src/headless/judge.ts {judgeTranscript, sayRefusal}
@@ -41,11 +46,19 @@ Internal:
   packages/guest/src/headless/index.ts → packages/guest/src/headless/protocol.ts {HEADLESS_ENTRY, HEADLESS_VIEW}
   packages/guest/src/headless/index.ts → packages/guest/src/headless/protocol.ts {HeadlessFailureReason, HeadlessInput, HeadlessTranscript, HeadlessOutcome}
   packages/guest/src/headless/index.ts → packages/guest/src/headless/tree.ts {createTree, TreeDocument, TreeElement, TreeText}
+  packages/guest/src/headless/index.ts → packages/guest/src/host/links-words.ts {guestPlacesOf, placeNamed}
+  packages/guest/src/headless/index.ts → packages/guest/src/host/links.ts {judgeDestination, listsOf}
   packages/guest/src/headless/judge.ts → packages/guest/src/headless/describe.ts {describeDrawing}
   packages/guest/src/headless/judge.ts → packages/guest/src/headless/protocol.ts {HeadlessFailureReason, HeadlessInput, HeadlessTranscript}
+  packages/guest/src/headless/judge.ts → packages/guest/src/host/links-words.ts {placeNamed, placesSaid, quoted}
   packages/guest/src/headless/node.ts → packages/guest/src/headless/index.ts {HeadlessPayload, HeadlessRun}
+  packages/guest/src/headless/protocol.ts → packages/guest/src/host/links-words.ts {NamedPlace}
   packages/guest/src/headless/runtime.ts → packages/guest/src/headless/judge.ts {judgeTranscript}
   packages/guest/src/headless/runtime.ts → packages/guest/src/headless/protocol.ts {HEADLESS_ENTRY, HEADLESS_VIEW}
   packages/guest/src/headless/runtime.ts → packages/guest/src/headless/protocol.ts {HeadlessFailureReason, HeadlessInput, HeadlessOutcome, HeadlessTranscript}
+  packages/guest/src/host/links.ts → packages/guest/src/host/links-words.ts {nowhere, placesSaid, quoted, whereOfWords}
+  packages/guest/src/host/links.ts → packages/guest/src/host/links-words.ts {nowhere, placeNamed, quoted, whereOfWords}
+  packages/guest/src/host/links.ts → packages/guest/src/host/links-words.ts {Destination}
+  packages/guest/src/host/links.ts → packages/guest/src/host/where.ts {filterOfWhere}
 
 </imports>

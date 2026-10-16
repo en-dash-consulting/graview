@@ -1,13 +1,14 @@
 {
   "id": "render",
   "name": "Render",
-  "description": "11 files, mostly utilities and entry points; entry points gpu.ts, index.ts, pointer-router.ts; imported by Packages.",
+  "description": "12 files, primarily TypeScript",
   "files": [
     "packages/render/src/gpu.ts",
     "packages/render/src/index.ts",
     "packages/render/src/interaction/pointer-router.ts",
     "packages/render/src/platform/html-in-canvas.ts",
     "packages/render/src/platform/matrix.ts",
+    "packages/render/src/scene/attach-gpu.ts",
     "packages/render/src/scene/compositor.ts",
     "packages/render/src/scene/compositor.wgsl.ts",
     "packages/render/src/scene/connectors.ts",
@@ -23,8 +24,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 11,
-  "lineCount": 1728,
+  "fileCount": 12,
+  "lineCount": 2277,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

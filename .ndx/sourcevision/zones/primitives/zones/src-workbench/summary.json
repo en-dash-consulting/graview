@@ -1,31 +1,30 @@
 {
   "id": "primitives/src-workbench",
   "name": "Src Workbench",
-  "description": "10 files, primarily TypeScript",
+  "description": "9 files, primarily TypeScript",
   "files": [
-    "packages/primitives/src/chat.tsx",
-    "packages/primitives/src/companion.tsx",
-    "packages/primitives/src/quick-relations.tsx",
-    "packages/primitives/src/relation-key.tsx",
-    "packages/primitives/src/seat.tsx",
-    "packages/primitives/src/shell.tsx",
-    "packages/primitives/src/subject.ts",
-    "packages/primitives/src/workbench/agent-seat.tsx",
-    "packages/primitives/src/workbench/following.tsx",
-    "packages/primitives/src/workbench/index.tsx"
+    "packages/primitives/src/bar-activity.tsx",
+    "packages/primitives/src/bar-panes-door.ts",
+    "packages/primitives/src/bar-panes.tsx",
+    "packages/primitives/src/choice.ts",
+    "packages/primitives/src/here.tsx",
+    "packages/primitives/src/profile.tsx",
+    "packages/primitives/src/rule-line.tsx",
+    "packages/primitives/src/seats.tsx",
+    "packages/primitives/src/workbench/standing.tsx"
   ],
   "entryPoints": [
-    "packages/primitives/src/chat.tsx",
-    "packages/primitives/src/companion.tsx",
-    "packages/primitives/src/quick-relations.tsx",
-    "packages/primitives/src/relation-key.tsx",
-    "packages/primitives/src/seat.tsx",
-    "packages/primitives/src/shell.tsx",
-    "packages/primitives/src/subject.ts",
-    "packages/primitives/src/workbench/index.tsx"
+    "packages/primitives/src/bar-activity.tsx",
+    "packages/primitives/src/bar-panes-door.ts",
+    "packages/primitives/src/bar-panes.tsx",
+    "packages/primitives/src/here.tsx",
+    "packages/primitives/src/profile.tsx",
+    "packages/primitives/src/rule-line.tsx",
+    "packages/primitives/src/seats.tsx",
+    "packages/primitives/src/workbench/standing.tsx"
   ],
-  "cohesion": 0.44,
-  "coupling": 0.56,
-  "fileCount": 10,
-  "lineCount": 2961
+  "cohesion": 0.48,
+  "coupling": 0.52,
+  "fileCount": 9,
+  "lineCount": 1303
 }

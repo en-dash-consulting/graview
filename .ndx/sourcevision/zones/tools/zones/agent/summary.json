@@ -1,21 +1,22 @@
 {
   "id": "tools/agent",
-  "name": "Tool Integration Layer",
-  "description": "4 files, primarily TypeScript",
+  "name": "Agent",
+  "description": "5 files, primarily TypeScript",
   "files": [
     "packages/tools/src/agent/adapters.ts",
+    "packages/tools/src/agent/bounds.ts",
+    "packages/tools/src/agent/reads.ts",
     "packages/tools/src/agent/tools.ts",
-    "packages/tools/src/agent/untrusted.ts",
-    "packages/tools/src/cli.ts"
+    "packages/tools/src/agent/untrusted.ts"
   ],
   "entryPoints": [
     "packages/tools/src/agent/adapters.ts",
+    "packages/tools/src/agent/bounds.ts",
     "packages/tools/src/agent/tools.ts",
-    "packages/tools/src/agent/untrusted.ts",
-    "packages/tools/src/cli.ts"
+    "packages/tools/src/agent/untrusted.ts"
   ],
-  "cohesion": 0.42,
-  "coupling": 0.58,
-  "fileCount": 4,
-  "lineCount": 1523
+  "cohesion": 0.43,
+  "coupling": 0.57,
+  "fileCount": 5,
+  "lineCount": 1661
 }

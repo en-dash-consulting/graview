@@ -5,40 +5,44 @@
 <zone>
 
 Zone: Scene (`react/scene`)
-Files: 10, Cohesion: 0.43, Coupling: 0.57
+Files: 10, Cohesion: 0.45, Coupling: 0.55
 Description: 10 files, primarily TypeScript
-Entry points: packages/react/src/drawn.ts, packages/react/src/picking.ts, packages/react/src/rails.ts, packages/react/src/scene-helpers.tsx, packages/react/src/scene-root.tsx, packages/react/src/seat-marks.tsx, packages/react/src/view-host.tsx
-Lines: 2970
+Entry points: packages/react/src/edge-signs.tsx, packages/react/src/picked.ts, packages/react/src/picking.ts, packages/react/src/scene-helpers.tsx, packages/react/src/scene-node.ts, packages/react/src/scene-root.tsx, packages/react/src/view-host.tsx
+Lines: 3077
 
 </zone>
 
 <files>
 
-packages/react/src/drawn.ts (TypeScript, 142 lines, source)
-packages/react/src/edge-signs.tsx (TypeScript, 102 lines, source)
+packages/react/src/edge-signs.tsx (TypeScript, 199 lines, source)
+packages/react/src/picked.ts (TypeScript, 13 lines, source)
 packages/react/src/picking.ts (TypeScript, 151 lines, source)
-packages/react/src/rails.ts (TypeScript, 18 lines, source)
-packages/react/src/scene-camera.ts (TypeScript, 147 lines, source)
-packages/react/src/scene-hand.ts (TypeScript, 381 lines, source)
-packages/react/src/scene-helpers.tsx (TypeScript, 117 lines, source)
-packages/react/src/scene-root.tsx (TypeScript, 1146 lines, source)
-packages/react/src/seat-marks.tsx (TypeScript, 108 lines, source)
-packages/react/src/view-host.tsx (TypeScript, 658 lines, source)
+packages/react/src/scene-camera.ts (TypeScript, 153 lines, source)
+packages/react/src/scene-covered.ts (TypeScript, 111 lines, source)
+packages/react/src/scene-hand.ts (TypeScript, 424 lines, source)
+packages/react/src/scene-helpers.tsx (TypeScript, 141 lines, source)
+packages/react/src/scene-node.ts (TypeScript, 10 lines, source)
+packages/react/src/scene-root.tsx (TypeScript, 1210 lines, source)
+packages/react/src/view-host.tsx (TypeScript, 665 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/scene-root.tsx → packages/react/src/drawn.ts {MarqueeRoomContext, useMarqueeNameWidth}
+  packages/react/src/picking.ts → packages/react/src/picked.ts {pickedFrom}
+  packages/react/src/scene-hand.ts → packages/react/src/scene-node.ts {SceneNode}
+  packages/react/src/scene-helpers.tsx → packages/react/src/scene-node.ts {SceneNode}
   packages/react/src/scene-root.tsx → packages/react/src/edge-signs.tsx {EdgeSigns}
-  packages/react/src/scene-root.tsx → packages/react/src/rails.ts {railInset}
   packages/react/src/scene-root.tsx → packages/react/src/scene-camera.ts {useCameraFlights}
-  packages/react/src/scene-root.tsx → packages/react/src/scene-hand.ts {useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-covered.ts {useKeyboardKeepsToWhatIsSeen}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-hand.ts {useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-hand.ts {Held}
   packages/react/src/scene-root.tsx → packages/react/src/scene-helpers.tsx {selectionFor, useElementSize, useRootUnit}
-  packages/react/src/scene-root.tsx → packages/react/src/seat-marks.tsx {SeatMarks}
+  packages/react/src/scene-root.tsx → packages/react/src/scene-node.ts {SceneNode}
   packages/react/src/scene-root.tsx → packages/react/src/view-host.tsx {SceneViewHost}
   packages/react/src/view-host.tsx → packages/react/src/picking.ts {joinedFrom, pickedFrom, usePickTargets}
   packages/react/src/view-host.tsx → packages/react/src/scene-helpers.tsx {cssTransform, planeShadow}
+  packages/react/src/view-host.tsx → packages/react/src/scene-node.ts {SceneNode}
 
 </imports>

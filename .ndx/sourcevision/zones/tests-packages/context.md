@@ -5,20 +5,24 @@
 <zone>
 
 Zone: Tests Packages (`tests-packages`)
-Files: 5, Cohesion: 1.00, Coupling: 0.00
+Files: 8, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: Non-source files in packages: door.test.ts, a-separator-is-not-a-command.test.ts, frame-plan.test.ts (+2 more)
-Lines: 737
+Description: 8 files, primarily TypeScript
+Entry points: packages/embed/tests/support/a-builder-in-the-studio.ts
+Lines: 1046
 
 </zone>
 
 <files>
 
+packages/core/tests/types/a-document-names-what-it-declares.ts (TypeScript, 110 lines, test)
+packages/core/tests/types/judges-past.ts (TypeScript, 22 lines, test)
 packages/create-graview/tests/unit/door.test.ts (TypeScript, 30 lines, test)
+packages/embed/tests/support/a-builder-in-the-studio.ts (TypeScript, 75 lines, test)
 packages/graview/tests/unit/a-separator-is-not-a-command.test.ts (TypeScript, 21 lines, test)
-packages/render/tests/unit/frame-plan.test.ts (TypeScript, 296 lines, test)
+packages/render/tests/unit/frame-plan.test.ts (TypeScript, 360 lines, test)
 packages/render/tests/unit/pointer-router.test.ts (TypeScript, 104 lines, test)
-packages/skills/tests/unit/skills.test.ts (TypeScript, 286 lines, test)
+packages/skills/tests/unit/skills.test.ts (TypeScript, 324 lines, test)
 
 </files>
 
@@ -26,21 +30,29 @@ packages/skills/tests/unit/skills.test.ts (TypeScript, 286 lines, test)
 
 
 Outgoing (this zone → other zones):
+  → core-document: packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/typed.ts; packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/typed.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts
+  → core-ops: packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/store.ts
+  → embed: packages/embed/tests/support/a-builder-in-the-studio.ts → packages/embed/src/index.ts; packages/embed/tests/support/a-builder-in-the-studio.ts → packages/embed/src/index.ts
   → graview: packages/graview/tests/unit/a-separator-is-not-a-command.test.ts → packages/graview/src/index.ts
+  → guest: packages/skills/tests/unit/skills.test.ts → packages/skills/src/index.ts
   → render: packages/render/tests/unit/frame-plan.test.ts → packages/render/src/gpu.ts; packages/render/tests/unit/frame-plan.test.ts → packages/render/src/index.ts; packages/render/tests/unit/frame-plan.test.ts → packages/render/src/index.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/index.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/interaction/pointer-router.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/interaction/pointer-router.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/scene/plane.ts
-  → skills: packages/skills/tests/unit/skills.test.ts → packages/skills/src/index.ts
+
+Incoming (other zones → this zone):
+  ← tests-embed-unit: packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx → packages/embed/tests/support/a-builder-in-the-studio.ts; packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx → packages/embed/tests/support/a-builder-in-the-studio.ts
 
 </imports>
 
 <findings>
 
 [observation] [info] High cohesion (1) — files are tightly interconnected
+[suggestion] [info] Zone "tests-packages" has files across 6 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 33 internal calls, 59 outgoing, 0 incoming (cohesion: 0.36, coupling: 0.64)
+- Zone "tests-packages" has files across 6 directories — consider consolidating under a dedicated directory
+- [call graph] 58 internal calls, 78 outgoing, 29 incoming (cohesion: 0.43, coupling: 0.57)
 
 </insights>

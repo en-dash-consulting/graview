@@ -1,7 +1,7 @@
 {
   "id": "tests-guest-fixtures",
   "name": "Tests Guest Fixtures",
-  "description": "Non-source files in packages: heard.js, offers.js, packages.js (+2 more)",
+  "description": "5 files, primarily JavaScript",
   "files": [
     "packages/guest/tests/fixtures/lifelogics/heard.js",
     "packages/guest/tests/fixtures/lifelogics/offers.js",
