@@ -732,7 +732,7 @@ Play an app back, link across apps, an actor that tidies, and graview.dev as a G
 - **Playback.** Open the app as it stood at any moment, and restore it to there.
 - **Linked records.** A relation can point at a kind in another app, read there as whoever is looking.
 - **An actor that tidies.** The app's own actor suggests fixes, which a person accepts or declines.
-- A first look for a new app, emoji marks for kinds, kind lists you can sort and group, navigation with filters and sections, a right-click menu on Pages and images by URL.
+- A first look for a new app, an emoji as the app's mark, kind lists you can sort and group, navigation with filters and sections, a right-click menu on Pages and images by URL.
 - Eighteen author requests and a run of scene and lens bugs fixed, a screen-reader pass, and the GPU path past 128 live views. graview.dev itself is now a Graview app.
 
 **Before you upgrade:** `Store.at` and `Store.seqAt` are replaced by `pastOf` and `seqAt` on the new `@graview/core/past`. A role that removed, archived or merged other people's records only through the act that makes the kind now needs those acts named in its grant.
