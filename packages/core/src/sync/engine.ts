@@ -459,6 +459,9 @@ export class SyncEngine<S extends AnySchema> {
         }
 
         if (!localId) {
+          // A deletion of a record we never had is not news: a first full
+          // pull lists every canceled event the remote remembers.
+          if (change.deleted) continue;
           const created = this.options.createInbound?.({
             resource: change.resource,
             id: change.id,

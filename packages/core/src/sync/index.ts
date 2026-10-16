@@ -8,7 +8,7 @@
  * transports are reached only by a host that runs one.
  */
 export { googleCalendar, googleCalendarMapping } from "./google-calendar.js";
-export type { Fetcher, GoogleCalendarOptions } from "./google-calendar.js";
+export type { Fetcher, GoogleCalendarOptions, GoogleTokenRequest } from "./google-calendar.js";
 export { syncConflictInvariant, SYNC_CONFLICTS } from "./conflict.js";
 export type { SyncConflictOptions } from "./conflict.js";
 export { SyncEngine } from "./engine.js";

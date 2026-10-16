@@ -12,7 +12,10 @@
  * It needs the test credentials in ~/.graview-google-test.env (see
  * scripts/google-calendar-once.mjs), and `pnpm build`.
  *
- *   node scripts/calendar-sync-demo.mjs [--port 5310] [--every 4]
+ *   node scripts/calendar-sync-demo.mjs [--port <port>] [--every 4]
+ *
+ * It serves on the port ports.mjs names "calendar-sync-demo", moved by
+ * GRAVIEW_PORT_BASE like every harness's.
  *
  * The app's data lives in memory: stopping and starting it again pulls the
  * calendar afresh, so nothing is sent twice.
@@ -23,23 +26,24 @@ import { fileURLToPath } from "node:url";
 import { SyncEngine, googleCalendar, googleCalendarMapping } from "../packages/core/dist/sync/index.js";
 import { previewPrincipal, servePreview } from "../packages/ship/dist/index.js";
 import { googleAccessToken, requireGoogleEnv } from "./lib/google-test-env.mjs";
+import { portFor } from "./lib/ports.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const flag = (name, fallback) => {
   const at = process.argv.indexOf(name);
   return at >= 0 ? process.argv[at + 1] : fallback;
 };
-const port = Number(flag("--port", "5310"));
+const port = Number(flag("--port", String(portFor("calendar-sync-demo"))));
 const everyMs = Number(flag("--every", "4")) * 1000;
 
 const env = requireGoogleEnv(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_TEST_CALENDAR_ID", "GOOGLE_REFRESH_TOKEN"]);
 const document = JSON.parse(readFileSync(resolve(here, "fixtures/calendar-sync/meetings.gdd.json"), "utf8"));
 const page = resolve(here, "../packages/graview/dist/preview/");
 
-/** An access token, asked again a minute before Google says it ends. */
+/** An access token, asked again a minute before Google says it ends, or when Google refused it. */
 let held = { token: "", until: 0 };
-async function token() {
-  if (Date.now() < held.until) return held.token;
+async function token(request) {
+  if (!request?.refresh && Date.now() < held.until) return held.token;
   const { token: fresh, expiresIn } = await googleAccessToken(env);
   held = { token: fresh, until: Date.now() + (expiresIn - 60) * 1000 };
   return fresh;
@@ -98,7 +102,7 @@ const engine = new SyncEngine({
   removeInbound: ({ localId }) => ({ name: "remove-meeting", args: { id: localId } }),
   createInbound: ({ id, fields }) => {
     const said = ours(fields);
-    // A cancelled event Google still lists, or an all-day one (no time to keep): nothing to make.
+    // A canceled event Google still lists, or an all-day one (no time to keep): nothing to make.
     if (!said.name || !said.starts) return null;
     made += 1;
     return { name: "add-meeting", args: { id: `meeting-g-${id.slice(0, 12)}-${made}`, ...said } };

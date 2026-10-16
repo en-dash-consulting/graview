@@ -78,6 +78,8 @@ export const OWN = {
   "long-text-host": 5271,
   /** The host's page `verify-seat-guide` mounts the todo app into, to switch faces in place under one conversation. */
   "seat-host": 5272,
+  /** `calendar-sync-demo`'s meetings app, kept in step with the Google test calendar for a person to try by hand. */
+  "calendar-sync-demo": 5267,
   /** The host's page `verify-seat-goes-and-draws` mounts Cloud's workshop document into, writing a kept lens into the document it holds. */
   "seat-draw-host": 5270,
   /** The host's page `verify-viewport` mounts the embed into at the screen's height, to turn a phone and back (FR-165). */
