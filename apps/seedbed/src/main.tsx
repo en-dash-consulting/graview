@@ -161,7 +161,7 @@ if (window.location.pathname.startsWith("/pages")) {
       garden={!chapter}
       {...(ai ? { ai } : {})}
       syncUrl
-      renderer="dom"
+      renderer="auto"
       initialScheme={scheme}
       onSchemeChange={applyScheme}
       // The seat the chapter puts at the keyboard: the strip narrows by it,
@@ -171,4 +171,4 @@ if (window.location.pathname.startsWith("/pages")) {
   );
 }
 
-(window as unknown as Record<string, unknown>)["__seedbedReady"] = { renderer: "dom", scheme };
+(window as unknown as Record<string, unknown>)["__seedbedReady"] = { renderer: "auto", scheme };

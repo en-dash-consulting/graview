@@ -123,6 +123,8 @@ const CHAIN = [
   ["first-load", "verify-first-load.mjs"],
   // A real catalog, built for production: what a person can read, at sixty frames a second.
   ["scale", "verify-scale.mjs"],
+  // The GPU path by default and the DOM path without it, held against each other: one tree, one picture, the blur within budget, and silence where there is no GPU.
+  ["renderer", "verify-renderer.mjs"],
   // The example built to be awkward, driven into every face, width, scheme and seat it has.
   ["survey", "survey-ui.mjs"],
   ["audit", "audit-ui.mjs"],
@@ -142,7 +144,7 @@ const CHAIN = [
  * hold no state of a harness's (each opens its own browser context), and
  * runs side by side.
  */
-const ALONE = new Set(["lines", "panning", "first-load", "scale", "who", "journeys", "create"]);
+const ALONE = new Set(["lines", "panning", "first-load", "scale", "renderer", "who", "journeys", "create"]);
 
 /** Where the last run's verdicts are kept, for `--failed`. */
 const LAST_RUN = resolve(repoRoot, "docs/watch/last-run.json");

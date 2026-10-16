@@ -34,10 +34,12 @@ export {
   PLANES,
   PLANE_STYLES,
   mixStyles,
+  recededOpacity,
   styleFor,
   transformFor,
+  treatmentOf,
 } from "./scene/plane.js";
-export type { PlaneIndex, PlaneStyle, Scheme } from "./scene/plane.js";
+export type { PlaneIndex, PlaneStyle, Scheme, TreatedView, Treatment } from "./scene/plane.js";
 
 // The frame, as data: what captures, what draws, and where it lands.
 export { CAPTURE_BUDGET, planFrame } from "./scene/frame-plan.js";
@@ -69,3 +71,14 @@ export type { ConnectorStyle, EndCap, StrokePattern } from "./scene/connectors.j
 // Pointer routing, until the platform redirects hit-testing itself.
 export { PointerRouter, hitTest, invertPlaneTransform, toLocal } from "./interaction/pointer-router.js";
 export type { LocalHit, Placement, PointerRouterOptions } from "./interaction/pointer-router.js";
+
+// Which path a scene draws on, and whether its receded planes are blurred.
+export {
+  FRAME_BUDGET_MS,
+  chooseRenderer,
+  framesHeld,
+  gpuCapturePresent,
+  planeBlurOn,
+  rendererAsked,
+} from "./scene/renderer-choice.js";
+export type { BlurPreferences, RendererChoice, RendererPath } from "./scene/renderer-choice.js";

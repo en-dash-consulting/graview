@@ -1255,7 +1255,9 @@ ${/* AND NOT FROM ALTITUDE, where a district is a village on a plot and its
   outline: none;
 }
 [data-graview-stage="dom"] [data-graview-view] > :not([data-graview-natural]),
-[data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] > * {
+[data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] > *,
+[data-graview-stage="gpu"][data-graview-hit="platform"] > [data-graview-view] > :not([data-graview-natural]),
+[data-graview-stage="gpu"][data-graview-hit="platform"] > [data-graview-view] > [data-graview-natural] > * {
   pointer-events: auto;
 }
 ${/* THE RECORD IN FOCUS KEEPS TO ITS BOX (FR-141). Whatever draws it — the

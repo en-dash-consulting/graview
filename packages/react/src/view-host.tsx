@@ -1,5 +1,5 @@
 import { counted, labelOf, nounOf, SCENE_LAYERS } from "@graview/core";
-import { mixStyles, styleFor, transformFor, hueFor } from "@graview/render";
+import { recededOpacity, transformFor, treatmentOf, hueFor } from "@graview/render";
 import {
   useEffect,
   useRef,
@@ -19,6 +19,8 @@ import type { SceneNode } from "./scene-node.js";
 interface HostProps {
   readonly node: SceneNode;
   readonly useDom: boolean;
+  /** Whether this host is blurred by its plane on the DOM path: the Scene's say, within its budget. */
+  readonly blur: boolean;
   readonly touched: boolean;
   /** From altitude: how far below this box's top the plot's front vertex lies, so the nameplate can stand there as a signpost. */
   readonly frontY?: number;
@@ -66,6 +68,7 @@ interface HostProps {
 export function SceneViewHost({
   node,
   useDom,
+  blur: blurs,
   touched,
   frontY,
   centerY,
@@ -188,21 +191,11 @@ export function SceneViewHost({
    * stands on its plot at its own size, unblurred, its name as crisp as the
    * ground under it — the far districts of a map are not further away.
    */
-  const at = frontY !== undefined ? 0 : node.plane - (1 - (node.depth ?? 1)) * 0.55;
-  const lower = Math.max(0, Math.min(2, Math.floor(at))) as 0 | 1 | 2;
-  const upper = Math.max(0, Math.min(2, Math.ceil(at))) as 0 | 1 | 2;
-  const style =
-    lower === upper
-      ? styleFor(lower, scheme)
-      : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), at - lower);
+  // The one treatment both paths draw (`treatmentOf`): the GPU packs the same numbers into its shader.
+  const treatment = treatmentOf({ plane: node.plane, ...(node.depth !== undefined ? { depth: node.depth } : {}), onPlot: frontY !== undefined }, scheme);
+  const style = treatment.style;
   const transform = transformFor(style, node.x, node.y, canvasWidth, canvasHeight);
-  /*
-   * The blur is the NEAREST plane's, not a mix. It is under half a pixel,
-   * nobody can see it tween, and a filter whose radius changes is a filter
-   * repainted — every host, every frame of every transition
-   * (docs/scale.md). Snapped, it changes once, halfway.
-   */
-  const blur = styleFor(Math.max(0, Math.min(2, Math.round(at))) as 0 | 1 | 2, scheme).blur;
+  const blur = blurs ? treatment.blur : 0;
   const ref = useRef<HTMLDivElement | null>(null);
   usePickTargets(ref);
 
@@ -285,7 +278,7 @@ export function SceneViewHost({
         filter: blur > 0 ? `blur(${blur}px)` : undefined,
         // Recession dims toward the ground; entering and leaving nodes carry
         // their own fade on top of it.
-        opacity: (1 - style.falloff * 0.55) * (node.opacity ?? 1),
+        opacity: recededOpacity(style) * (node.opacity ?? 1),
         /*
          * Depth is handed DOWN as the elevation token, not painted on the
          * host.
@@ -306,7 +299,8 @@ export function SceneViewHost({
       // opacity² — visibly faster and dimmer than the DOM path, so the two
       // renderers disagreed about the same transition. It also meant a view
       // captured mid-fade baked its own transparency into the texture.
-      {};
+      // The plane's shadow is the panel's own on both paths, so it is captured with it.
+      { ["--graview-lift-low" as string]: planeShadow(style.shadow, scheme) };
 
   return (
     <div

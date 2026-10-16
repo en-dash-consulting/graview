@@ -37,7 +37,8 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, seat, sc
     <div data-embed-content="" style={{ position: "relative", flex: auto ? `0 0 ${AUTO_SCENE_HEIGHT}px` : "1 1 auto", minHeight: 0, containerType: "size" }}>
       <style>{css}</style>
       {address ? <UrlSync /> : null}
-      <Scene renderer="dom" />
+      {/* The GPU where this browser can draw on it, the DOM path elsewhere, silently (see `Scene`). */}
+      <Scene />
       {/* What the picture is doing, with the way back from each, on the picture — as on the whole-page Shell. */}
       <SceneTrail />
       <OverviewButton />

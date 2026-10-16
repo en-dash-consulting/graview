@@ -148,7 +148,7 @@ if (window.location.pathname.startsWith("/pages")) {
       {...(ai ? { ai } : {})}
       {...(files ? { files } : {})}
       syncUrl
-      renderer="dom"
+      renderer="auto"
       initialScheme={scheme}
       onSchemeChange={applyScheme}
     />,
@@ -156,4 +156,4 @@ if (window.location.pathname.startsWith("/pages")) {
 }
 
 // A flag a harness can wait for, rather than a timer and a hope.
-(window as unknown as Record<string, unknown>)["__todoReady"] = { renderer: "dom", scheme };
+(window as unknown as Record<string, unknown>)["__todoReady"] = { renderer: "auto", scheme };

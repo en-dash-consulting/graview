@@ -33,7 +33,7 @@ Every page below is also a web page (drop the `.md` for the `.html`); [llms-full
 - [@graview/pages](https://graview.dev/docs/packages/pages.md): The traditional face: a routed webapp derived from the same declaration that drives the scene.
 - [@graview/primitives](https://graview.dev/docs/packages/primitives.md): The primitive set, the lenses, the workbench and the visual system.
 - [@graview/react](https://graview.dev/docs/packages/react.md): The React binding: a provider, a scene, and the hooks an app builds on.
-- [@graview/render](https://graview.dev/docs/packages/render.md): The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
+- [@graview/render](https://graview.dev/docs/packages/render.md): The spatial renderer: the GPU capture path where the browser can capture into WebGPU, the DOM path everywhere else, one picture and one accessibility tree on both.
 - [@graview/ship](https://graview.dev/docs/packages/ship.md): What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.
 - [@graview/skills](https://graview.dev/docs/packages/skills.md): Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.
 - [@graview/studio](https://graview.dev/docs/packages/studio.md): The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.

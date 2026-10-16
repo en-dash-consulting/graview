@@ -1,7 +1,7 @@
 import type { Placement } from "../interaction/pointer-router.js";
 import type { Matrix4 } from "../platform/matrix.js";
 import { connectorStyle, type ConnectorStyle } from "./connectors.js";
-import { mixStyles, styleFor, transformFor, type PlaneStyle } from "./plane.js";
+import { transformFor, treatmentOf, type PlaneStyle, type Scheme } from "./plane.js";
 
 /** One view drawn into the scene: a DOM subtree, and where it belongs. */
 export interface PlannedView {
@@ -21,6 +21,10 @@ export interface PlannedView {
    * press still finds it, but never captured, drawn or reported.
    */
   readonly dom?: boolean;
+  /** 0..1 along its plane's arc, as layout said; treated as nearer at the near end (`treatmentOf`). */
+  readonly depth?: number;
+  /** A district on its plot, from altitude: treated as the focus. */
+  readonly onPlot?: boolean;
 }
 
 export interface PlannedConnector {
@@ -41,6 +45,8 @@ export interface ViewDraw {
   readonly viewId: string;
   readonly transform: Matrix4;
   readonly style: PlaneStyle;
+  /** The blur this view is drawn with: the nearest plane's (`treatmentOf`). */
+  readonly blur: number;
   /** Drawn width and height, after the plane's scale. */
   readonly width: number;
   readonly height: number;
@@ -83,6 +89,12 @@ export interface FramePlan {
   readonly deferred: readonly string[];
   /** Views wholly outside the canvas: neither captured nor drawn. */
   readonly culled: readonly string[];
+  /**
+   * Where each culled view would be, off the canvas. Reported to the
+   * browser all the same: a view left at its last drawn place is found
+   * there by a hover or a press, invisible.
+   */
+  readonly offCanvas: readonly GeometryReport[];
 }
 
 export interface PlanOptions {
@@ -107,6 +119,8 @@ export interface PlanOptions {
    * no limit.
    */
   readonly captureBudget?: number;
+  /** The scheme the planes are treated in, as the DOM path treats them; dark when absent. */
+  readonly scheme?: Scheme;
 }
 
 /**
@@ -157,6 +171,7 @@ export function planFrame(
   const capturedAt = options.capturedAt ?? {};
   const wanted: (CaptureCommand & { plane: number })[] = [];
   const culled: string[] = [];
+  const offCanvas: GeometryReport[] = [];
   const draws: ViewDraw[] = [];
   const geometry: GeometryReport[] = [];
   const placements: (Omit<Placement, "element"> & { viewId: string })[] = [];
@@ -168,7 +183,7 @@ export function planFrame(
   const ordered = [...views].sort((a, b) => b.plane - a.plane);
 
   for (const view of ordered) {
-    const style = styleAt(view.plane);
+    const { style, blur } = treatmentOf(view, options.scheme);
     const transform = transformFor(
       style,
       view.x,
@@ -189,6 +204,7 @@ export function planFrame(
     const top = transform[13];
     if (left >= options.canvasWidth || top >= options.canvasHeight || left + width <= 0 || top + height <= 0) {
       culled.push(view.id);
+      if (!view.dom) offCanvas.push({ viewId: view.id, transform });
       continue;
     }
 
@@ -208,6 +224,7 @@ export function planFrame(
       viewId: view.id,
       transform,
       style,
+      blur,
       width,
       height,
       opacity: view.opacity ?? 1,
@@ -257,19 +274,8 @@ export function planFrame(
     captureCount: captures.length,
     deferred: deferred.map((capture) => capture.viewId),
     culled,
+    offCanvas,
   };
-}
-
-/**
- * The treatment for a possibly-fractional plane. Mid-transition a view is
- * between two planes, and mixing their treatments is what makes the move read
- * as travel rather than a cut.
- */
-function styleAt(plane: number): PlaneStyle {
-  const lower = Math.floor(plane);
-  const upper = Math.ceil(plane);
-  if (lower === upper) return styleFor(plane);
-  return mixStyles(styleFor(lower), styleFor(upper), plane - lower);
 }
 
 /**

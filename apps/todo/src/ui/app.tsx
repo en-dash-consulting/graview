@@ -108,7 +108,7 @@ export function TodoApp({
   store,
   initialView = INITIAL_VIEW,
   syncUrl = false,
-  renderer = "dom",
+  renderer = "auto",
   attachRenderer,
   initialScheme = "light",
   onSchemeChange,

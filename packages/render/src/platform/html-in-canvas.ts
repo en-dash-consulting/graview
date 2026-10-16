@@ -174,18 +174,30 @@ export function detectCapabilities(
   }
 
   let layoutSubtree = false;
+  let hitTestFollowsGeometry: PlatformCapabilities["hitTestFollowsGeometry"] = "unknown";
   if (typeof document !== "undefined") {
     const probe = document.createElement("canvas") as ElementCanvas;
     // 158 dropped the property along with the attribute's old name; the
     // paint record API is what says a canvas lays its children out now.
     layoutSubtree = "layoutSubtree" in probe || typeof probe.captureElementImage === "function";
+    /*
+     * WHERE HIT-TESTING LANDS. The spelling says which build this is: 154
+     * and 155 (`layoutSubtree`) lay every child out at the canvas origin and
+     * ignore the reported geometry, and their hit-test into a child is the
+     * one that brought the renderer down. 158 (`content="drawable"`, paint
+     * records) lays each child out in place, and a reported geometry moves
+     * its box — `getBoundingClientRect` and `elementsFromPoint` answer where
+     * the view was drawn — without a crash on hover or press.
+     */
+    if ("layoutSubtree" in probe) hitTestFollowsGeometry = "no";
+    else if (typeof probe.captureElementImage === "function") hitTestFollowsGeometry = "yes";
   }
 
   return {
     available: captureMethod !== null,
     captureMethod,
     geometrySync,
-    hitTestFollowsGeometry: "unknown",
+    hitTestFollowsGeometry: geometrySync ? hitTestFollowsGeometry : "no",
     layoutSubtree,
     paintEvents,
     webgpu,

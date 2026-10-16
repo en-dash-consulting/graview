@@ -66,8 +66,7 @@ In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
 
 ## Do this
 
-1. **Install.** The scaffold already did. Reach for `@graview/render/gpu`
-   only if you want the experimental capture path; the DOM path is what ships.
+1. **Install.** The scaffold already did.
 
 2. **Declare one kind, one mutation, one rule.** Not the whole domain. The
    loop you want on day one is: declare → `graview check` → look → declare
@@ -176,9 +175,10 @@ the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets`
 (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides
 `@property` and degrades to a clean cut where that is missing — write no
 fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without
-either the graph still answers and the seat says AI isn't available. The GPU
-capture path is Chromium-only, experimental and opt-in (`attachRenderer`
-set to `attachGpu()` from `@graview/render/gpu`) — never a requirement.
+either the graph still answers and the seat says AI isn't available. The scene
+draws on the GPU where the browser can capture into WebGPU and on the DOM
+path elsewhere, silently, with one accessibility tree (`renderer`, `blur`
+on the Shell) — never a requirement.
 
 ## Then find out whether it worked
 

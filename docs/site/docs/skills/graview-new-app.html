@@ -1462,7 +1462,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <p><strong>Or as one JSON document:</strong> <code>app.json</code> (<code>"format": "graview-document"</code>, <code>$schema</code> <code>node_modules/@graview/core/dist/document.schema.json</code>, which types lenses and view blocks), then <code>graview check --document app.json</code>, <code>graview describe --document app.json</code>, <code>graview preview app.json --seed seed.json</code>. Kinds, acts and rules are kebab-case (<code>tool-note</code>), fields and relations camelCase (<code>supersededBy</code>). <code>preview --data</code> holds its folder: stop it to <code>sync-seed --apply</code>. In a framework checkout, <code>pnpm graview:link</code> puts <code>graview</code> on PATH.</p>
 <h3>Do this</h3>
 <ol>
-<li><strong>Install.</strong> The scaffold already did. Reach for <code>@graview/render/gpu</code> only if you want the experimental capture path; the DOM path is what ships.</li>
+<li><strong>Install.</strong> The scaffold already did.</li>
 </ol>
 <ol>
 <li><strong>Declare one kind, one mutation, one rule.</strong> Not the whole domain. The loop you want on day one is: declare → <code>graview check</code> → look → declare more.</li>
@@ -1504,7 +1504,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 </ul>
 <p>Later: a browser harness, a JSON verdict per claim.</p>
 <h3>Supported browsers</h3>
-<p>Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and degrades to a clean cut where that is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (<code>attachRenderer</code> set to <code>attachGpu()</code> from <code>@graview/render/gpu</code>) — never a requirement.</p>
+<p>Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and degrades to a clean cut where that is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The scene draws on the GPU where the browser can capture into WebGPU and on the DOM path elsewhere, silently, with one accessibility tree (<code>renderer</code>, <code>blur</code> on the Shell) — never a requirement.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm verify        # typecheck, tests, build, graview check
 graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout</code></pre></div>

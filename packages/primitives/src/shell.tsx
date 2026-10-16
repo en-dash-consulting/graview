@@ -54,8 +54,11 @@ export interface ShellProps<S extends AnySchema> {
   readonly remembers?: boolean;
   /** Whether the view rides the URL. */
   readonly syncUrl?: boolean;
+  /** The path the scene draws on: `auto`, the default, is the GPU where this browser can and the DOM path elsewhere (see `Scene`). */
   readonly renderer?: "gpu" | "dom" | "auto";
   readonly attachRenderer?: SceneProps["attachRenderer"];
+  /** Whether the scene's receded planes are blurred; on unless turned off here or by the reader's reduced motion or transparency. */
+  readonly blur?: boolean;
   readonly scheme: Scheme;
   readonly onScheme: (scheme: Scheme) => void;
   /**
@@ -141,8 +144,9 @@ export function Shell<S extends AnySchema>({
   pagesHref = "/pages",
   remembers = false,
   syncUrl = false,
-  renderer = "dom",
+  renderer = "auto",
   attachRenderer,
+  blur = true,
   scheme,
   onScheme,
   chat = true,
@@ -261,7 +265,7 @@ export function Shell<S extends AnySchema>({
         tabIndex={-1}
         style={{ position: "relative", flex: "1 1 auto", minHeight: 0, containerType: "size", outline: "none" }}
       >
-        <Scene renderer={renderer} {...(attachRenderer ? { attachRenderer } : {})} />
+        <Scene renderer={renderer} blur={blur} {...(attachRenderer ? { attachRenderer } : {})} />
         {/* What the picture is doing — the past, a move, a raised relation — each with its way back, on the picture. */}
         <SceneTrail home={home} />
         {/* The altitude control, on the picture it controls. */}

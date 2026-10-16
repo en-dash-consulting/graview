@@ -3,9 +3,9 @@
  *
  * One textured quad per drawn view. The vertex stage places it from a plane
  * transform expressed in canvas pixels; the fragment stage applies the
- * atmospheric-depth treatment: a separable-ish box blur, contrast falloff
- * toward the ground color, and a soft drop shadow that separates one plane
- * from the one behind it.
+ * atmospheric-depth treatment the DOM path draws with CSS: the plane's blur
+ * (the focused plane's is zero), and its falloff as a fade toward the
+ * ground under it.
  *
  * Blur and falloff live here rather than in CSS because per-plane blur is
  * near-free on the GPU and expensive in the compositor — that difference is
@@ -15,8 +15,8 @@ export const COMPOSITOR_WGSL = /* wgsl */ `
 struct Plane {
   // x, y, width, height in canvas pixels, after the plane transform.
   rect: vec4f,
-  // blur radius in texels, contrast falloff 0..1, shadow strength, and the
-  // view's own opacity — which is how a node entering or leaving the scene
+  // blur radius in texels, contrast falloff 0..1, shadow strength (cast by
+  // the view's own panel, so unused here), and the view's own opacity — which is how a node entering or leaving the scene
   // fades rather than popping.
   style: vec4f,
   // canvas size in pixels, and the ground color's rgb packed as xyz.
@@ -79,27 +79,23 @@ fn blurred(uv: vec2f, radius: f32) -> vec4f {
 fn fs_main(in: VertexOut) -> @location(0) vec4f {
   let radius = plane.style.x;
   let falloff = plane.style.y;
-  let shadow = plane.style.z;
   let opacity = plane.style.w;
 
-  var color = blurred(in.uv, radius);
+  let color = blurred(in.uv, radius);
 
-  // Recede toward the GROUND color, not toward gray. On a dark ground that
-  // reads as dimming and on a light one as haze — which is what distance
-  // actually does to a surface, rather than a fixed "faded" look that only
-  // works in one scheme.
-  color = vec4f(mix(color.rgb, plane.ground.rgb, falloff), color.a);
+  // Recession dims the view toward whatever is under it — the ground — by
+  // the same share the DOM path's \`opacity\` does (\`recededOpacity\`), and
+  // the plane's shadow is the view's own panel, captured with it. Mixing
+  // toward a fixed ground color and darkening the quad's edges here drew a
+  // different picture from the DOM path's: gray bands down a light card,
+  // and haze of the wrong color in the other scheme.
+  let alpha = opacity * (1.0 - falloff * 0.55);
 
-  // Contact shadow around the quad's own border, drawn into its alpha so no
-  // second pass is needed. It is what separates one plane from the one
-  // behind it when both are dark.
-  let edge = min(min(in.uv.x, in.uv.y), min(1.0 - in.uv.x, 1.0 - in.uv.y));
-  let lift = 1.0 - smoothstep(0.0, 0.055, edge);
-  color = vec4f(color.rgb * (1.0 - lift * shadow), color.a);
-
-  // Premultiplied: the target blends with one-minus-src-alpha, so scaling
-  // color and alpha together is what keeps a half-faded view from darkening
-  // instead of dissolving.
-  return vec4f(color.rgb * opacity, color.a * opacity);
+  // A capture arrives with STRAIGHT alpha and the canvas composites
+  // premultiplied, so the color is multiplied by its own alpha here, once.
+  // Without it a panel's soft shadow — dark at a low alpha — came out
+  // lighter than the ground it fell on.
+  let a = color.a * alpha;
+  return vec4f(color.rgb * a, a);
 }
 `;

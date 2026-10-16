@@ -736,7 +736,7 @@ Graview, a TypeScript framework that derives an app’s interface, permissions a
 - [@graview/pages](https://graview.dev/docs/packages/pages.html): The traditional face: a routed webapp derived from the same declaration that drives the scene.
 - [@graview/primitives](https://graview.dev/docs/packages/primitives.html): The primitive set, the lenses, the workbench and the visual system.
 - [@graview/react](https://graview.dev/docs/packages/react.html): The React binding: a provider, a scene, and the hooks an app builds on.
-- [@graview/render](https://graview.dev/docs/packages/render.html): The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
+- [@graview/render](https://graview.dev/docs/packages/render.html): The spatial renderer: the GPU capture path where the browser can capture into WebGPU, the DOM path everywhere else, one picture and one accessibility tree on both.
 - [@graview/ship](https://graview.dev/docs/packages/ship.html): What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.
 - [@graview/skills](https://graview.dev/docs/packages/skills.html): Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.
 - [@graview/studio](https://graview.dev/docs/packages/studio.html): The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.
@@ -1637,7 +1637,7 @@ Source: https://graview.dev/docs/packages/render.html
 
 # @graview/render
 
-`@graview/render` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
+`@graview/render` is one of the 14 npm packages of Graview, a TypeScript framework that derives an app’s interface, permissions and agent tools from one declaration. The spatial renderer: the GPU capture path where the browser can capture into WebGPU, the DOM path everywhere else, one picture and one accessibility tree on both.
 
 ```sh
 pnpm add @graview/render
@@ -1649,19 +1649,19 @@ Entry points: `@graview/render`, `@graview/render/gpu`
 
 The spatial renderer: three planes, an affine transform per plane, and connectors drawn in SVG over the scene.
 
-### Two paths, and which one ships
+### Two paths, and which one draws
 
-**The DOM path is what ships.** Each view is an ordinary element with a CSS `matrix3d` — the same affine transform the GPU path uses, applied by the browser. It is fully interactive, fully accessible, and every claim this project makes about the interface is verified against it.
+**A scene draws on the GPU where the browser can, and on the DOM path everywhere else — silently, per page.** `Scene` and the `Shell` default to `renderer="auto"`: `gpuCapturePresent()` asks, without a device, whether the page has WebGPU, an element-capture call on its queue and a canvas `paint` event; where it does, `./gpu` is fetched and `attachGpu()` takes the canvas. Its first-frame check falls back for good if no adapter is given, no paint arrives within `FIRST_PAINT_WAIT_MS`, a frame is refused, the device is lost, or the middle of the first `FIRST_FRAMES` frames' work is over `FIRST_FRAME_BUDGET_MS`. A page without any of it — Firefox, Safari, Chromium before element capture — never fetches `./gpu` and says nothing. `?renderer=gpu|dom` on the address (or `graviewRenderer` set on the page before it loads) decides `auto` for an operator; `GRAVIEW_RENDERER` does the same for every page of a harness run.
 
-**The GPU capture path is EXPERIMENTAL.** It rasterizes each view's DOM subtree with `CanvasDrawElement` and composites the textures with per-plane blur, which is the part a shader is genuinely better at. It needs Chrome Canary with `--enable-blink-features=CanvasDrawElement`. Canary 158 respelled the API (`content="drawable"` on the canvas, `drawable` on each view, a plain `{ texture }` destination); both spellings are written.
+Element capture (`CanvasDrawElement`) is on by default in Chromium 158 and behind `--enable-blink-features=CanvasDrawElement` before it. Canary 158 respelled the API (`content="drawable"` on the canvas, `drawable` on each view, a plain `{ texture }` destination); both spellings are written.
 
-It used to bring the renderer process down on a click. That is fixed. The cause was not the click: a plain hover over a captured view killed it just as reliably, and a keyboard selection of the same node did not. What is fatal is the browser's own hit-test descending into a `layoutsubtree` canvas child, so on this path the hosts carry `pointer-events: none` and `PointerRouter` answers instead — which it had to anyway, because `updateElementGeometry` does not redirect hit-testing in this build. `scripts/verify-capture.mjs` holds the claim: the pointer survives, a click still reaches the node that was drawn, and the keyboard still reaches the views.
+**The two paths draw one picture.** Each view is an ordinary element on both: on the DOM path it carries a CSS `matrix3d`, opacity and filter; on the GPU path it is a child of the canvas, captured, and the shader draws the same treatment from the same numbers (`treatmentOf`, `recededOpacity`). The accessibility tree is the same on both, and `scripts/verify-renderer.mjs` holds that, the picture, and the silence.
 
-Capture costs about 0.22 ms a view on Chromium 158, so retaking every live view every frame holds sixty frames a second only below about 64 views (6 fps at 512). `attachGpu()` — the capture path as a Scene's `attachRenderer` — keeps a page under that: it retakes a view only when the browser's `paint` event says it changed, skips what is off the canvas, spends at most `CAPTURE_BUDGET` retakes a frame, and hands a view that keeps changing faster than that to the DOM path, drawn at the same transform under the canvas. The discography holds about 400 fps with 512 live views that way (`scripts/verify-scale.mjs`).
+**Blur.** Receded planes are blurred, the focused plane always sharp. On the GPU the shader draws it at no measurable cost; the DOM path's CSS `filter: blur()` is dropped for the rest of the page if its frames run over a frame and a half while the picture moves. `blur={false}` on the Scene or the Shell turns it off, and so do `prefers-reduced-motion`, `prefers-reduced-transparency` and the reader's Motion setting (`planeBlurOn`).
 
-It stays experimental because it needs Canary and a flag, and every other claim this project makes is verified against the DOM path.
+Capture costs about 0.22 ms a view on Chromium 158, so retaking every live view every frame holds sixty frames a second only below about 64 views (6 fps at 512). `attachGpu()` keeps a page under that: it retakes a view only when the browser's `paint` event says it changed, skips what is off the canvas, spends at most `CAPTURE_BUDGET` retakes a frame, and hands a view that keeps changing faster than that to the DOM path, drawn at the same transform under the canvas. The discography holds about 500 fps with 512 live views that way (`scripts/verify-scale.mjs`).
 
-It is published rather than withheld because `@graview/react` depends on this package for the plane model, the transforms and the frame planner, all of which both paths share. Opting into the capture path is an explicit `attachRenderer` — nothing reaches it by accident.
+**Hit-testing.** On Chromium 158 a view reported with `updateElementGeometry` is hit-tested where it was drawn — `elementsFromPoint`, hover and presses land on the drawn view — so the browser answers and the canvas says `data-graview-hit="platform"`, which lets the views' content take the pointer. Earlier builds (the `layoutSubtree` spelling) lay every child out at the canvas origin and brought the renderer down on a hit-test into one, so there the hosts stay out of hit-testing and `PointerRouter` answers presses (`data-graview-hit="router"`). A pan moves the canvas by a transform, as it moves the DOM path's stage, and redraws nothing until it lands.
 
 ### What is stable here
 
@@ -1671,15 +1671,15 @@ It is published rather than withheld because `@graview/react` depends on this pa
 
 The compositor, the WGSL and the `html-in-canvas` platform bindings move with the browser feature they are built on.
 
-## What it exports (26)
+## What it exports (34)
 
 Read off the package's own barrel, so this is what is there today.
 
-`CAPTURE_BUDGET`, `CONNECTOR_DASH`, `connectorStroke`, `connectorStyle`, `connectorWidth`, `distinguishable`, `fromLayout`, `hitTest`, `hueFor`, `IDENTITY`, `invertPlaneTransform`, `isAffine`, `LIGHT_PLANE_STYLES`, `mixStyles`, `perspectiveProbeMatrix`, `PLANE_STYLES`, `PLANES`, `planeTransform`, `planFrame`, `PointerRouter`, `PROVISIONAL_DASH`, `PROVISIONAL_OPACITY`, `styleFor`, `toDOMMatrix`, `toLocal`, `transformFor`
+`CAPTURE_BUDGET`, `chooseRenderer`, `CONNECTOR_DASH`, `connectorStroke`, `connectorStyle`, `connectorWidth`, `distinguishable`, `FRAME_BUDGET_MS`, `framesHeld`, `fromLayout`, `gpuCapturePresent`, `hitTest`, `hueFor`, `IDENTITY`, `invertPlaneTransform`, `isAffine`, `LIGHT_PLANE_STYLES`, `mixStyles`, `perspectiveProbeMatrix`, `PLANE_STYLES`, `planeBlurOn`, `PLANES`, `planeTransform`, `planFrame`, `PointerRouter`, `PROVISIONAL_DASH`, `PROVISIONAL_OPACITY`, `recededOpacity`, `rendererAsked`, `styleFor`, `toDOMMatrix`, `toLocal`, `transformFor`, `treatmentOf`
 
 ---
 
-The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.
+The spatial renderer: the GPU capture path where the browser can capture into WebGPU, the DOM path everywhere else, one picture and one accessibility tree on both.
 
 The page: https://graview.dev/docs/packages/render.html · Every Graview docs page, for a model: https://graview.dev/llms.txt
 
@@ -2899,7 +2899,7 @@ src/
 
 ### Do this
 
-1. **Install.** The scaffold already did. Reach for `@graview/render/gpu` only if you want the experimental capture path; the DOM path is what ships.
+1. **Install.** The scaffold already did.
 
 1. **Declare one kind, one mutation, one rule.** Not the whole domain. The loop you want on day one is: declare → `graview check` → look → declare more.
 
@@ -2942,7 +2942,7 @@ Later: a browser harness, a JSON verdict per claim.
 
 ### Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` set to `attachGpu()` from `@graview/render/gpu`) — never a requirement.
+Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The scene draws on the GPU where the browser can capture into WebGPU and on the DOM path elsewhere, silently, with one accessibility tree (`renderer`, `blur` on the Shell) — never a requirement.
 
 ### Then find out whether it worked
 

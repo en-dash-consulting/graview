@@ -196,12 +196,25 @@ const watchFrames = (page) =>
  * re-enabled the tween, and the whole city flew back to where it had
  * started and animated forward again over half a second.
  */
+/*
+ * AFTER THE FRAME THE LAST MOVE PRODUCED. On the GPU path a view's box is
+ * where the compositor last reported drawing it, which it does in the frame
+ * — read between a move and its frame, the box is a step behind the
+ * picture, and letting go looked like a jump of exactly one step.
+ */
 const whereIsIt = (page) =>
-  page.evaluate(() => {
-    const card = document.querySelector("[data-graview-view]");
-    const box = card?.getBoundingClientRect();
-    return box ? { x: Math.round(box.left), y: Math.round(box.top) } : null;
-  });
+  page.evaluate(
+    () =>
+      new Promise((done) =>
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            const card = document.querySelector("[data-graview-view]");
+            const box = card?.getBoundingClientRect();
+            done(box ? { x: Math.round(box.left), y: Math.round(box.top) } : null);
+          }),
+        ),
+      ),
+  );
 
 /** A transform left behind is a world stuck where nobody put it. */
 const stuckLayers = (page) =>

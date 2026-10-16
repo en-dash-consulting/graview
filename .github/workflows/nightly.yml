@@ -12,6 +12,14 @@
 # once a week, through `pnpm engines`, on a runner of their own. `shrunk`, `panning` and `scale` are left out: the GPU capture
 # path needs Chrome Canary, and the other two time frames against a GPU the
 # runner does not have.
+#
+# BOTH PATHS. The scene draws on the GPU where a browser can capture into
+# WebGPU and on the DOM path elsewhere, so every shard runs twice: once with
+# GRAVIEW_RENDERER=dom, once with GRAVIEW_RENDERER=gpu in Google Chrome with
+# element capture switched on and WebGPU on SwiftShader (engine.mjs's
+# GPU_ARGS). A runner whose Chrome cannot make an adapter draws the GPU
+# shard on the DOM path, and `renderer` says so in docs/renderer.json
+# (`gpu.unavailable`) rather than claiming the GPU held.
 
 name: Nightly
 
@@ -40,12 +48,20 @@ jobs:
   # Shards are balanced by the 2026-10-03 run's times (gauntlet 646s, site
   # 468s, journeys 1111s across its five apps); the slowest is ~11 minutes.
   harnesses:
-    name: ${{ matrix.shard }}
+    name: ${{ matrix.shard }} (${{ matrix.renderer }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
+        renderer: [dom, gpu]
+        shard:
+          - gauntlet, chat, menu
+          - site, audit
+          - survey, create, pages, seat-guide, navigation
+          - rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal, a11y, renderer
+          - journeys (gauntlet)
+          - journeys (todo, seedbed, rota, discography)
         include:
           - shard: gauntlet, chat, menu
             run: node scripts/verify-all.mjs --serial gauntlet chat menu
@@ -53,8 +69,8 @@ jobs:
             run: node scripts/verify-all.mjs --serial site audit
           - shard: survey, create, pages, seat-guide, navigation
             run: node scripts/verify-all.mjs --serial survey create pages seat-guide navigation
-          - shard: rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal
-            run: node scripts/verify-all.mjs --serial rota lines calendar desk remember studio watch who seat rehearsal
+          - shard: rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal, a11y, renderer
+            run: node scripts/verify-all.mjs --serial rota lines calendar desk remember studio watch who seat rehearsal a11y renderer
           - shard: journeys (gauntlet)
             run: node scripts/verify-journeys.mjs gauntlet
           - shard: journeys (todo, seedbed, rota, discography)
@@ -78,19 +94,28 @@ jobs:
       - name: The engines
         run: npx playwright install --with-deps chromium webkit firefox
 
+      # The GPU path's Chromium: Google Chrome as it ships, which has element
+      # capture behind its flag; engine.mjs switches it on with SwiftShader.
+      - name: Google Chrome, for the GPU path
+        if: matrix.renderer == 'gpu'
+        run: |
+          npx playwright install --with-deps chrome
+          echo "GRAVIEW_BROWSER=$(command -v google-chrome-stable || echo /opt/google/chrome/chrome)" >> "$GITHUB_ENV"
+
       # panning and scale time frames against a GPU this runner does not
       # have, and shrunk needs Chrome Canary — they hold on a real machine,
       # through `pnpm verify` there. Journeys two-wide on a two-core runner.
       - name: ${{ matrix.shard }}
         env:
           GRAVIEW_JOURNEYS_PARALLEL: "2"
+          GRAVIEW_RENDERER: ${{ matrix.renderer }}
         run: ${{ matrix.run }}
 
       - name: The verdicts, for reading
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: verdicts-${{ strategy.job-index }}
+          name: verdicts-${{ matrix.renderer }}-${{ strategy.job-index }}
           path: |
             docs/*.json
             docs/watch/

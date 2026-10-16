@@ -1801,8 +1801,9 @@ main.page > section.tour-intro { padding-top: 64px; }
     <p class="sm dim" style="margin-top: 18px; max-width: 70ch;">
       <strong>Where it stands.</strong> 0.1, and pre-1.0 on purpose: the public
       API is designed to be depended on, and it still moves between minor
-      versions while the shape settles. The GPU capture path is experimental,
-      the calendar sync has never run against Google, and no screen-reader
+      versions while the shape settles. The scene draws on the GPU only where a
+      browser can capture a page into WebGPU (Chromium 158 today), and on the
+      DOM path everywhere else; the calendar sync has never run against Google, and no screen-reader
       pass with real assistive technology has been done yet. The changelogs
       say what changed and why.
     </p>
