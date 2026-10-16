@@ -1262,6 +1262,32 @@ ${/* AND NOT FROM ALTITUDE, where a district is a village on a plot and its
 [data-graview-stage="gpu"][data-graview-hit="platform"] > [data-graview-view] > [data-graview-natural] > * {
   pointer-events: auto;
 }
+${/* A DISTRICT TAKES A PRESS ON ITS OWN GROUND, not on the box around it.
+   Its card is the plot's bounding box, and the box's four corners are bare
+   ground the next district's name may stand on (the layout keeps names off
+   a neighbor's diamond, not its box): a phone's "CATEGORIES 2 ⚠ 2" ended
+   over the corner of the vendors' box, and a press on "⚠ 2" landed on the
+   vendors. So the card itself takes no press; a diamond over its plot
+   does, and its name and its showings take theirs as before, unless a
+   rule above hides them (a name said "none", showings not come up yet).
+   After the rule above, which hands every view's content the press. */ ""}
+[data-graview-altitude] [data-graview-view][data-graview-plot] > .graview-kind-card {
+  pointer-events: none;
+}
+[data-graview-altitude] [data-graview-plot] > .graview-kind-card > .graview-kind-face:not([data-graview-nameplate="none"]),
+[data-graview-altitude] [data-graview-plot] > .graview-kind-card > .graview-drive-in {
+  pointer-events: auto;
+}
+[data-graview-altitude] [data-graview-plot] > .graview-kind-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(2 * var(--graview-center-y, 50%));
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  pointer-events: auto;
+}
 ${/* THE RECORD IN FOCUS KEEPS TO ITS BOX (FR-141). Whatever draws it — the
    framework's record, a declared page at its head, a worker view — is held
    to the box the layout gave it: no taller than the box, scrolling inside
