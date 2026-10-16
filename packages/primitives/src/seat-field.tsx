@@ -75,7 +75,7 @@ const Panel = panelModule.part(
  * on Pages a box the routed face lays over the window (or its embed).
  */
 export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start = "field", onMove, place, onDraft }: SeatFieldProps<S>) {
-  const { brand, seatTalk } = useGraview<S>();
+  const { brand, seatTalk, ai } = useGraview<S>();
   const talk = useSeatTalkState(seatTalk);
   const name = brand?.name?.trim() || "this app";
   const region = useRef<HTMLElement | null>(null);
@@ -86,7 +86,8 @@ export function SeatField<S extends AnySchema>({ respond, onCall, onPick, start 
   const cameFrom = useRef<HTMLElement | null>(null);
   /* While somebody looks back through the timeline, nothing is asked of the app: the past offers no act (Roadmap f-playback). */
   const lookingBack = usePlayback()?.open ?? false;
-  const hidden = start === "hidden" || lookingBack;
+  /* AI OFF, AS THE HOST SAID IT: the ask field is an AI part, and is not drawn at all. */
+  const hidden = start === "hidden" || lookingBack || ai.off === true;
   const open = talk.open && !hidden;
 
   /* Drawn: Find offers "Ask:" where a seat is. */

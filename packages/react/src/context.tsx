@@ -21,6 +21,7 @@ import { openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, type PagesArran
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
+import { createAiDesk, type AiDesk } from "./ai-desk.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout/view";
@@ -222,6 +223,11 @@ export interface GraviewContextValue<S extends AnySchema> {
    * once, in code — a reader is never asked which machine answers.
    */
   readonly ai: HostAi;
+  /**
+   * THE INLINE AI'S DESK: the interactions Activity draws and the ghost
+   * waiting to be accepted, held by the app so both faces read one.
+   */
+  readonly aiDesk: AiDesk;
   /** THE HOST'S WAY TO NAME ANOTHER APP (`resolveApp` on the provider, FR-171), where an app-link field asks it. */
   readonly resolveApp?: ResolveApp | undefined;
   /** THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (`linkedRecords` on the provider, FR-171), where a linked record is drawn or picked. */
@@ -542,6 +548,9 @@ export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S
   }, [store, principal, from]);
 }
 
+/** What a host that turned AI off is handed on: nothing but that it is off. */
+const AI_OFF: HostAi = { off: true };
+
 export function GraviewProvider<S extends AnySchema>({
   store: given,
   views,
@@ -561,7 +570,7 @@ export function GraviewProvider<S extends AnySchema>({
   locale: readerLocale,
   onKeepLens,
   providers,
-  ai = NO_AI,
+  ai: givenAi = NO_AI,
   files,
   resolveApp,
   history,
@@ -616,6 +625,15 @@ export function GraviewProvider<S extends AnySchema>({
   /* One conversation per app: an outer provider's when this one is drawn inside it (the routed face in an embed). */
   const outer = useContext(GraviewContext);
   const [seatTalk] = useState<SeatTalk>(() => outer?.seatTalk ?? createSeatTalk(brand?.name ?? given.schema.kinds.join(",")));
+  /*
+   * AI OFF IS NO AI AT ALL: a host that says `off` is handed nothing else to
+   * any surface, so no model is asked and every AI part reads it as hidden.
+   */
+  const ai = useMemo<HostAi>(() => (givenAi.off ? AI_OFF : givenAi), [givenAi]);
+  /* One desk per app, like the conversation: the host's store of entries read as it is now. */
+  const aiHost = useRef(ai.interactions);
+  aiHost.current = ai.interactions;
+  const [aiDesk] = useState<AiDesk>(() => outer?.aiDesk ?? createAiDesk(() => aiHost.current));
   /* The host that keeps a drawn lens: this provider's, else the one it is drawn inside. */
   const keepLens = onKeepLens ?? outer?.onKeepLens;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
@@ -971,6 +989,7 @@ export function GraviewProvider<S extends AnySchema>({
       actsDoor,
       registerActsDoor,
       seatTalk,
+      aiDesk,
       ...(memory ? { memory } : {}),
       who: others,
       following,
@@ -1023,6 +1042,7 @@ export function GraviewProvider<S extends AnySchema>({
       registerSeatWho,
       actsDoor,
       seatTalk,
+      aiDesk,
       memory,
       others,
       following,

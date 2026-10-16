@@ -48,6 +48,24 @@ menu was opened on — `{ face, on, about, field, place, href }` — and answers
 or nothing. It is drawn beside the acts the store would accept, never
 instead of them, and what it proposes goes through the same four seams.
 
+## The inline AI, already in the menu
+
+Hand the host's models and Graview draws an AI section in the context menu
+on both faces — no section to write. `ai={{ fast, thinking }}`: the Fast
+slot is Jev's shape (`jevFast()`, or any `{ model, decide }`), the Thinking
+slot `{ model, think({ system, prompt, state, catalog }) }`; each call
+reports tier, model and tokens to `ai.meter`. The model only PICKS from
+`catalogOf(store, target, { principal })` (`@graview/core/catalog`): acts the
+viewer may run, panels of the kind, places, neighbors, field values, never
+anything they cannot see or run; `aiContextOf` is the state it reads. A
+change waits as a ghost (Accept, Accept some, Dismiss) and is kept as one
+batch with lineage `interaction`; a panel is a draft "Keep as a lens"
+keeps. Each interaction is an `AiInteraction` in Activity (filter All /
+Changes / AI, "Just mine") and on its record's page; `ai.interactions`
+`{ load, keep }` stores them. `ai={{ off: true }}` hides every AI part.
+Prove it with stubs: `stubFast()`, `stubThinking()` from
+`@graview/tools/inline-ai` (`pnpm verify inline-ai`).
+
 ## Do this
 
 1. **Write the prompt from the graph.** What kinds exist, what acts exist and

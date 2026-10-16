@@ -30,6 +30,13 @@ export interface Lineage {
    * which change and the suggestion is no longer waiting.
    */
   readonly suggestion?: string;
+  /**
+   * THE AI INTERACTION THIS CHANGE CAME FROM (`ai:<interaction>`): the id of
+   * the entry Activity draws (`AiInteraction`, `@graview/core/catalog`), so
+   * a change a person accepted from the inline AI is read back to the ask,
+   * the offer and the model that made it, and taken back from that entry.
+   */
+  readonly interaction?: string;
 }
 
 /** The longest basis an op keeps: a reason, not a transcript. */
@@ -45,7 +52,7 @@ export const LINEAGE_MODEL_LIMIT = 120;
  */
 export function lineageOf(value: unknown): Lineage | undefined {
   if (value === undefined) return undefined;
-  const { basis, confidence, model, suggestion } = (value ?? {}) as Record<string, unknown>;
+  const { basis, confidence, model, suggestion, interaction } = (value ?? {}) as Record<string, unknown>;
   const said = typeof basis === "string" ? basis.trim() : "";
   const named = typeof model === "string" ? model.trim() : "";
   if (
@@ -53,9 +60,10 @@ export function lineageOf(value: unknown): Lineage | undefined {
     said.length > LINEAGE_BASIS_LIMIT ||
     (confidence !== undefined && !(typeof confidence === "number" && confidence >= 0 && confidence <= 1)) ||
     (model !== undefined && !(named && named.length <= LINEAGE_MODEL_LIMIT)) ||
-    (suggestion !== undefined && !(typeof suggestion === "string" && suggestion.length > 0 && suggestion.length <= LINEAGE_MODEL_LIMIT))
+    (suggestion !== undefined && !(typeof suggestion === "string" && suggestion.length > 0 && suggestion.length <= LINEAGE_MODEL_LIMIT)) ||
+    (interaction !== undefined && !(typeof interaction === "string" && interaction.length > 0 && interaction.length <= LINEAGE_MODEL_LIMIT))
   ) {
-    throw new GraphError("A lineage is { basis: 1–500 characters, confidence?: 0–1, model?: 1–120 characters, suggestion?: an op id }");
+    throw new GraphError("A lineage is { basis: 1–500 characters, confidence?: 0–1, model?: 1–120 characters, suggestion?: an op id, interaction?: an AI interaction's id }");
   }
-  return { basis: said, ...(confidence !== undefined ? { confidence } : {}), ...(named ? { model: named } : {}), ...(typeof suggestion === "string" ? { suggestion } : {}) } as Lineage;
+  return { basis: said, ...(confidence !== undefined ? { confidence } : {}), ...(named ? { model: named } : {}), ...(typeof suggestion === "string" ? { suggestion } : {}), ...(typeof interaction === "string" ? { interaction } : {}) } as Lineage;
 }

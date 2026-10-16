@@ -75,6 +75,8 @@ These are pinned by tests, not by convention:
   the matcher on `/search`, a record and an argument said in words on `/words`, what the seat and
   the seeding read (`answerSeenBy`, `placesOf`, `beginning`) on `/seat`, the app's
   own actor's suggestions (`suggest`, `suggestions`, `acceptSuggestion`, `declineSuggestion`, `declined`, `tidyingOf`, Activity's digest) on `/tidying`,
+  what the inline AI may pick from, the state a model reads and an AI
+  interaction's entry (`catalogOf`, `aiContextOf`, `AiInteraction`) on `/catalog`,
   and a kind's JSON Schema and an act's tool schema on `/json-schema`
   (`packages/core/tests/unit/the-main-entry-carries-only-what-a-page-draws-with.test.ts`).
   A page its host hands a compiled app imports `@graview/core/compiled`
@@ -150,10 +152,10 @@ pinned at 1.49.1 on purpose.
   deprecated aliases for a package nobody depends on yet; the changelog
   records the change.
 - **Public API is `src/index.ts` → `exports` in `package.json`**, with the
-  entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`,
+  entries listed there (core's `./document`, `./compiled`, `./retry`, `./check`, `./scene`, `./city`, `./provenance`, `./history`, `./past`, `./linked`, `./tidying`, `./catalog`,
   `./figures`, `./blocks`, `./describe`, `./arrange`, `./navigate`, `./forms`, `./json-schema`, `./search`, `./words`, `./markdown`, `./field-sight`, `./seat`, `./typed`, `./sync`, `./import`, `./snapshot`, `./conformance`, `./scaffold`,
   `./lines`, `./testing` and the `./document.schema.json` the build writes; layout's `./view`, `./sizes` and `./view-moves`; guest's `./host/frame`; react's `./provider` and `./drawing`;
-  tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn` and `./several`; embed's `./pages`; pages' `./static` (a place as static HTML, no React);
+  tools' `./frame`, `./edit`, `./suggest`, `./derive`, `./go`, `./draft`, `./keep`, `./turn`, `./several` and `./inline-ai`; embed's `./pages`; pages' `./static` (a place as static HTML, no React);
   `./cli`, `./browser`, `./dev`, `./gpu`, `./sqlite` and the rest). `files` is an allowlist and
   `scripts/inspect-pack.mjs` asserts against the real tarball.
 - **Node 22.** Top-level await in the scaffolded app, and the engines field

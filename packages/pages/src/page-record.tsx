@@ -1,7 +1,7 @@
 import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
-import { AppLink, LinkedRecordView, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
+import { AppLink, LinkedRecordView, DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -471,6 +471,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
+      {/* What AI was asked about it and what came of it (Roadmap f-activity-ai-entries): none where AI is off. */}
+      {inPlace ? <RecordInteractionsDoor id={id} style={rule} headingStyle={h2} /> : null}
       {history.length > 0 ? (
         <section style={{ ...rule, display: "grid", gap: 10 }} data-testid="record-history">
           <h2 style={h2}>What has happened</h2>

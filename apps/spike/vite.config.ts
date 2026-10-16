@@ -14,6 +14,7 @@ export default defineConfig({
       "@graview/core/past": fileURLToPath(new URL("../../packages/core/src/past.ts", import.meta.url)),
       "@graview/core/linked": fileURLToPath(new URL("../../packages/core/src/linked.ts", import.meta.url)),
       "@graview/core/tidying": fileURLToPath(new URL("../../packages/core/src/tidying.ts", import.meta.url)),
+      "@graview/core/catalog": fileURLToPath(new URL("../../packages/core/src/catalog.ts", import.meta.url)),
       "@graview/core/forms": fileURLToPath(new URL("../../packages/core/src/forms.ts", import.meta.url)),
       "@graview/core/lines": fileURLToPath(new URL("../../packages/core/src/lines.ts", import.meta.url)),
       "@graview/core/json-schema": fileURLToPath(new URL("../../packages/core/src/json-schema.ts", import.meta.url)),

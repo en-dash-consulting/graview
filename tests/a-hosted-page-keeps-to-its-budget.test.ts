@@ -99,7 +99,8 @@ describe("a hosted page", () => {
     // 910 KB since nothing came to stand over a control the watch found covered (W-224) and Pages came to honor the Ask box setting: the scene face measured 931_431 B, 1_966 more than before them (929_465).
     // 911 KB since the first load came to wait on less (Roadmap f-perf-first-load): the switch fetches the scene before it draws it, the other face is fetched when a desk's page is idle or a hand reaches for it, and a remote store opens on a handed state: the scene face measured 932_473 B, 1_042 more than before them (931_431).
     // 919 KB since the scene draws on the GPU by default where it can (Roadmap f-gpu-default, f-plane-blur): the choice of path, the blur's preferences and budget, the one treatment both paths draw, and the door to the capture path — whose modules shared with the scene (the plane model, the connectors) now sit in a chunk the scene fetches: the scene face measured 940_163 B, 7_690 more than before it (932_473). Nothing up front changed.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(919 * 1024);
+    // 922 KB since the inline AI came (Roadmap f-ai-candidate-catalog, f-activity-ai-entries): the scene draws the menu's AI section and the ghost through their doors, and Activity reads the AI's entries, whose rows are fetched with the first: the scene face measured 943_677 B, 3_514 more than before it (940_163).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(922 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

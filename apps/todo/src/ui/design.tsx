@@ -1,5 +1,5 @@
 import { dayAsRead, dayOfMonthAsRead, fieldWords, humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
-import { KindFigure, useMarkup } from "@graview/primitives";
+import { KindFigure, RecordInteractionsDoor, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
   ListPage,
@@ -556,6 +556,8 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
       ))}
 
       <Acts title="What can be done" actions={facts.actions} context={context} />
+      {/* What AI was asked about it and what came of it, the framework's own entries: none where AI is off. */}
+      <RecordInteractionsDoor id={id} className="th-section" />
     </>
   );
 }

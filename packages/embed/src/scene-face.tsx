@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { DraftDoor, Inspector, LinesKey, MapPanel, OverviewButton, PastBar, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, SeatField, ShowInstallation, useCallLog, viewsCss, type SeatStart } from "@graview/primitives/scene";
+import { DraftDoor, GhostDoor, InlineAiSections, Inspector, LinesKey, MapPanel, OverviewButton, PastBar, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, SeatField, ShowInstallation, useCallLog, viewsCss, type SeatStart } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
 import { BesideTheMap, Scene, UrlSync } from "@graview/react";
@@ -49,7 +49,12 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, seat, sc
       <SeatField<S> {...(seat ? { start: seat } : {})} onCall={onCall} />
       {/* What is chosen from altitude — a lens, a record's links, a district — beside the map, at a size a person reads. */}
       <MapPanel<S> />
-      <Inspector placement="menu" />
+      {/* The acts at the pointer, and the inline AI's part of the menu where the host gave a model, as on the whole-page Shell. */}
+      <InlineAiSections>
+        <Inspector placement="menu" />
+      </InlineAiSections>
+      {/* What the inline AI proposed and has not made. */}
+      <GhostDoor />
       {/* The scene's Find and its Activity, in the bar's places for them (FR-131), as the whole-page Shell puts them. */}
       <SceneBarTools<S> find={find} calls={calls} />
       {/* After an act, the way back on the board, and ⌘Z (FR-153): as on the pages, and the whole-page Shell. */}

@@ -1,6 +1,6 @@
 import { fieldWords, pluralLabel, type AnySchema, type Place } from "@graview/core";
 import { aggregateId } from "@graview/layout/view";
-import { Inspector } from "@graview/primitives/pages";
+import { GhostDoor, Inspector, useInlineAiSection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
@@ -241,7 +241,9 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     },
     [store, schema, root],
   );
-  const sections = useMemo(() => [change, own], [change, own]);
+  /* The inline AI's part of the menu, after the face's own, where the host gave a model and did not turn AI off. */
+  const inlineAi = useInlineAiSection();
+  const sections = useMemo(() => (inlineAi ? [change, own, inlineAi] : [change, own]), [change, own, inlineAi]);
 
   return (
     <MenuSections sections={sections}>
@@ -297,6 +299,8 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
         {children}
       </div>
       <MenuHome openAt={openAt} />
+      {/* What the inline AI proposed and has not made, over the page. */}
+      <GhostDoor placement="page" />
     </MenuSections>
   );
 }

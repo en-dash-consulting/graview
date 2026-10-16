@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as arrange from "../../src/arrange.js";
 import * as blocks from "../../src/blocks.js";
+import * as catalog from "../../src/catalog.js";
 import * as city from "../../src/city.js";
 import * as check from "../../src/check.js";
 import * as describePlaces from "../../src/describe.js";
@@ -61,6 +62,8 @@ const OFF_THE_PAGE = {
   // FR-180: Markdown read into blocks, fetched with the first a page draws.
   "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "beginning", "placesFrom", "placesOf"] },
+  // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
+  "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,

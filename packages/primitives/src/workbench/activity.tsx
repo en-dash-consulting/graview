@@ -2,12 +2,20 @@ import { humanizeField, isWithheld, labelOf, nameOfAuthor, type AnySchema, type 
 import { viaSaid } from "@graview/core/words";
 import { lineageWords } from "@graview/core/provenance";
 import { digestWords, foldDigests } from "@graview/core/tidying";
-import { POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayback, usePopover } from "@graview/react/provider";
+import { lazyModule, POPOVER_STYLE, useGoTo, useGraview, useLiveStore, usePlayback, usePopover } from "@graview/react/provider";
 import { prefetchTimeline } from "../past-bar.js";
 import type { ToolCall } from "@graview/tools";
-import { useMemo, useState, type ReactNode } from "react";
+import { Suspense, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import { Chip, VISUALLY_HIDDEN } from "../primitives/index.js";
 import { nameOf } from "./answer-args.js";
+import { useInteractions, type ActivityShows } from "./ai-feed.js";
+import type { AiInteraction } from "@graview/core/catalog";
+import { retryingImport } from "@graview/core/retry";
+
+/* The AI's rows and its filter, fetched with the first entry there is to draw (Roadmap f-activity-ai-entries). */
+const aiRows = /* @__PURE__ */ lazyModule(retryingImport(() => import("./ai-entries.js")));
+const InteractionRow = /* @__PURE__ */ aiRows.part((module, props: { readonly entry: AiInteraction; readonly undo: (batch: string) => ReactNode }) => <module.InteractionRow {...props} />, { quiet: true, as: "li" });
+const ActivityFilter = /* @__PURE__ */ aiRows.part((module, props: ComponentProps<typeof import("./ai-entries.js").ActivityFilter>) => <module.ActivityFilter {...props} />, { quiet: true, as: "div" });
 
 
 export interface Change {
@@ -25,6 +33,10 @@ export interface Change {
   /** What a record this change removed was called, read from the removal: it is no longer in the graph to ask. */
   readonly removed?: Readonly<Record<string, string>>;
   readonly batch: string;
+  /** When it was made. */
+  readonly at?: string;
+  /** The AI interaction it came from (lineage `interaction`), whose entry draws it. */
+  readonly interaction?: string;
   /** The moment just after it: `pastOf(store, seq)` shows the app as it was once it was made (Roadmap f-playback). */
   readonly seq: number;
   /**
@@ -53,6 +65,8 @@ const changeOf = (store: { readonly schema: AnySchema }, batch: Batch): Change =
   touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
   ...removedNames(store, batch.ops.filter((op) => !isWithheld(op))),
   batch: batch.id,
+  at: batch.at,
+  ...(batch.lineage?.interaction ? { interaction: batch.lineage.interaction } : {}),
   seq: batch.ops.at(-1)!.seq + 1,
   ...(batch.ops.every(isWithheld) ? { withheld: true as const } : {}),
 });
@@ -96,6 +110,7 @@ export function useRecentChanges(limit = 4): readonly Change[] {
             by: row.digest.author,
             touched: [...new Set(changes.flatMap((change) => change.touched))],
             batch: "",
+            ...(changes[0]?.at ? { at: changes[0].at } : {}),
             seq: changes[0]?.seq ?? 0,
             digest: changes,
           };
@@ -407,8 +422,25 @@ export function ActivityRail({
    */
   readonly seat?: ReactNode;
 }) {
-  const changes = useRecentChanges();
+  const recent = useRecentChanges();
   const { store: shown, principal, seats, people } = useGraview<AnySchema>();
+  /*
+   * AI INTERACTIONS ARE ENTRIES OF THE SAME FEED (Roadmap f-activity-ai-
+   * entries), newest first among the changes, and a change one of them
+   * made is drawn in its entry, not again beside it. All, the changes, or
+   * the AI's; everyone's, or only the reader's own.
+   */
+  const interactions = useInteractions();
+  const [shows, setShows] = useState<ActivityShows>("all");
+  const [mine, setMine] = useState(false);
+  const isMine = (by: Author | undefined) => by !== undefined && (by.id === principal.id || by.onBehalfOf?.id === principal.id) && principal.id !== undefined;
+  const drawnIn = new Set(interactions.map((entry) => entry.id));
+  const changes = recent.filter((change) => !(change.interaction !== undefined && drawnIn.has(change.interaction)) && (!mine || isMine(change.by)));
+  const entries = interactions.filter((entry) => !mine || isMine(entry.by)).slice(0, 4);
+  const feed: readonly ({ readonly at: string; readonly change: Change; readonly entry?: undefined } | { readonly at: string; readonly entry: (typeof entries)[number]; readonly change?: undefined })[] = [
+    ...(shows === "ai" ? [] : changes.map((change) => ({ at: change.at ?? "", change }))),
+    ...(shows === "changes" ? [] : entries.map((entry) => ({ at: entry.at, entry }))),
+  ].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
   /* Named from now's records, whichever moment the face draws (Roadmap f-playback). */
   const store = useLiveStore(shown, principal);
   const running = calls.some((call) => call.phase === "running");
@@ -430,7 +462,7 @@ export function ActivityRail({
   /* Only a record still in the graph goes anywhere; the popover closes behind the reader as they go, and going there is going to it now, not as it was. */
   const goes = (id: string) => (store.graph.has(id) ? (to: string) => { popover.setOpen(false); if (playback?.past) playback.show(null); goTo.record(to); } : null);
 
-  if (seat === undefined && calls.length === 0 && changes.length === 0 && !remembers) return null;
+  if (seat === undefined && calls.length === 0 && recent.length === 0 && interactions.length === 0 && !remembers) return null;
 
   return (
     <div style={{ position: "relative" }}>
@@ -457,7 +489,7 @@ export function ActivityRail({
         }}
       >
         {running ? <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: 999, background: "var(--graview-accent)" }} /> : null}
-        {changes.length > 0 ? changes.length : ""}
+        {recent.length > 0 ? recent.length : ""}
         {/* On a phone's bar the word gives its room and the mark stands for it; the word stays its name. */}
         <svg className="graview-activity-mark" width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style={{ display: "var(--graview-activity-mark, none)" }}>
           <circle cx="8" cy="8" r="5.75" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -507,8 +539,8 @@ export function ActivityRail({
               style={{
                 display: "grid",
                 gap: 5,
-                paddingBottom: calls.length > 0 || changes.length > 0 ? 9 : 0,
-                ...(calls.length > 0 || changes.length > 0
+                paddingBottom: calls.length > 0 || feed.length > 0 ? 9 : 0,
+                ...(calls.length > 0 || feed.length > 0
                   ? { borderBottom: "1px solid var(--graview-edge)" }
                   : {}),
               }}
@@ -601,7 +633,12 @@ export function ActivityRail({
             </ol>
           ) : null}
 
-          {changes.length > 0 ? (
+          {interactions.length > 0 ? (
+            <Suspense fallback={null}>
+              <ActivityFilter shows={shows} onShows={setShows} mine={mine} onMine={setMine} />
+            </Suspense>
+          ) : null}
+          {feed.length > 0 ? (
             <ol
               data-testid="diff-log"
               style={{
@@ -613,8 +650,12 @@ export function ActivityRail({
                 fontSize: "0.8125rem",
               }}
             >
-              {changes.map((change, index) =>
-                change.digest ? (
+              {feed.map(({ change, entry }, index) =>
+                entry !== undefined ? (
+                  <Suspense key={`ai:${entry.id}`} fallback={null}>
+                    <InteractionRow entry={entry} undo={(batch) => <UndoTurn batch={batch} />} />
+                  </Suspense>
+                ) : change.digest ? (
                   <DigestRow key={`digest:${change.digest[0]?.batch ?? index}`} change={change} goes={goes} />
                 ) : change.withheld ? (
                   /* SOMETHING YOU CANNOT SEE HAPPENED: said, and nothing more — not who, not what, no undo (FR-16). */
@@ -624,7 +665,7 @@ export function ActivityRail({
                     </span>
                   </li>
                 ) : (
-                <li key={`change:${index}`} style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
+                <li key={`change:${index}`} data-batch={change.batch} style={{ display: "grid", gap: 3, lineHeight: 1.45 }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
                     <span style={{ minWidth: 0 }}>
                       <strong style={{ fontWeight: 600 }}>

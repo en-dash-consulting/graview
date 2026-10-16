@@ -390,6 +390,8 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
       list: (kind, also) => {
         if (context.store.schema.tryDefinition(kind)) navigate(narrowedPath(`/${pluralSlug(context.store.schema, kind)}`, also));
       },
+      // A view drawn stands in the main column, at its own address, as the seat's does.
+      draft: () => navigate("/~draft"),
     }),
     [context, navigate],
   );

@@ -67,6 +67,8 @@ const CHAIN = [
   // A kind with no picture of its own opens to its stop: what it is, what is going on, its first act, a board or a table its data chooses — every example, a desk and a phone, light and dark.
   ["kind-stop", "verify-kind-stop.mjs"],
   ["menu", "verify-menu.mjs"],
+  // The inline AI: suggestions from the catalog in the context menu, a ghost accepted in part as one batch with its undo, a panel kept as a lens, each interaction once in Activity and on its record's page, a host's stored entries, and nothing of it with AI off — on both faces.
+  ["inline-ai", "verify-inline-ai.mjs"],
   // The seat as a guide: a quiet field that grows into a conversation, on both faces, in three engines.
   ["seat-guide", "verify-seat-guide.mjs"],
   // The seat takes you where you ask and draws a view kept as a lens, on both faces and Cloud's workshop, in three engines.

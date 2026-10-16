@@ -21,6 +21,9 @@ export { LinesKey } from "./lines-key.js";
 export { MapPanel, mapPanelShows } from "./map-panel-door.js";
 export type { MapPanelShowing } from "./map-panel-door.js";
 export { Inspector } from "./workbench/inspector-door.js";
+// The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.
+export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-door.js";
+export type { GhostDoorProps } from "./inline-ai-door.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";

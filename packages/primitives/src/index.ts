@@ -69,6 +69,11 @@ export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 // The seat: an ask field at the picture's foot that grows into the conversation when asked.
 export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";
 export { DraftDoor } from "./draft-door.js";
+// The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.
+export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-door.js";
+export type { GhostDoorProps } from "./inline-ai-door.js";
+// What AI did on a record, on its page (Roadmap f-activity-ai-entries), fetched with the first entry.
+export { RecordInteractionsDoor } from "./record-interactions-door.js";
 export type { DraftFrameProps } from "./draft-frame.js";
 export { appKeyOf, readerLenses, readerLensesKey, type KeptLens } from "./reader-lenses.js";
 export { registerLensPlaces, registerReaderLenses } from "./declared-lens-doors.js";

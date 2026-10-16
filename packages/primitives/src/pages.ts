@@ -58,6 +58,11 @@ export { registerReaderLenses } from "./declared-lens-doors.js";
 export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 // The context menu (FR-77's `acts`): the acts at the pointer, its pane and the tools fetched when it is first opened.
 export { Inspector } from "./workbench/inspector-door.js";
+// The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.
+export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-door.js";
+export type { GhostDoorProps } from "./inline-ai-door.js";
+// What AI did on a record, on its page (Roadmap f-activity-ai-entries), fetched with the first entry.
+export { RecordInteractionsDoor } from "./record-interactions-door.js";
 // Choosing several records on a list, and the bar that acts on them all at once — fetched with the first one chosen.
 export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
 export type { Choosing } from "./choosing.js";
