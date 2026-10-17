@@ -1,5 +1,27 @@
 # @graview/primitives
 
+## 0.1.32
+
+### Patch Changes
+
+- 283a49d: A lens is drawn in the room it has from its first frame. The width a lens chooses its shape by was read after the paint, of whatever box it held at mount, and a resize was rendered after the paint too: on graview.dev at 360 wide the coverage matrix in a 225-pixel card on the ground painted one frame laid out for a desk, its rotated column names 83 pixels past the screen, before it stacked. The width is now read before the first paint, of the box the lens draws now, and a resize the browser reports is drawn in the same paint.
+  
+  Compatibility: no surface changes.
+- 6c2284e: "Go to it" on a record's panel beside the map hands the keyboard to the record's card on the ground once the card is drawn. The press takes the map, the panel and the button away, and the keyboard fell to the page until the Shell's rescue found something, which on the nightly's runner was too late for the watch and was not always this record.
+  
+  Compatibility: no surface changes.
+- b70152f: "Go to it" on a record's panel beside the map never leaves the keyboard on the page. It went to the record's card once the card was drawn, but until then it stood on `<body>`, and in Chrome on the nightly's loaded runner the card came later than the watch waits. At the press the keyboard now moves to the scene's ground, the one thing the press does not take away, and waits there; the ground is a stop only while it holds the keyboard, and hands it on to the card as soon as the card is drawn.
+  
+  Compatibility: no surface changes.
+- Updated dependencies [7d1c3e1]
+- Updated dependencies [2292333]
+- Updated dependencies [cdbbebc]
+  - @graview/core@0.1.32
+  - @graview/render@0.1.32
+  - @graview/layout@0.1.32
+  - @graview/react@0.1.32
+  - @graview/tools@0.1.32
+
 ## 0.1.31
 
 ### Patch Changes
