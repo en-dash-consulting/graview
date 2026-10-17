@@ -27,8 +27,8 @@ export { health } from "./health.js";
 export type { HealthReport } from "./health.js";
 export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
 // Notify me (Roadmap f-notify-subscriptions): the asking seat's subscriptions on a served store.
-export { remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./subscriptions.js";
-export type { RemoteSubscriptionsOptions } from "./subscriptions.js";
+export { remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
+export type { RemoteSubscriptionsOptions } from "./remote-subscriptions.js";
 // The host's files at an address, for a page's `files` (FR-163): what the dev door answers.
 export { filesAt } from "./files-at.js";
 export { SEAT_HEADERS } from "./seat-headers.js";

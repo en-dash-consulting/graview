@@ -35,8 +35,10 @@ export { conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, liveSubprotoc
 export type { Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal } from "./live.js";
 export { createStoreHandler, presenceSeenBy } from "./handler.js";
 // Notify me (Roadmap f-notify-subscriptions): the wire's route, its client, and the file `graview serve` keeps them in.
-export { answerSubscriptions, remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./subscriptions.js";
-export type { RemoteSubscriptionsOptions, SubscriptionsAnswer, SubscriptionsPost } from "./subscriptions.js";
+export { answerSubscriptions } from "./subscriptions.js";
+export { remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
+export type { SubscriptionsAnswer, SubscriptionsPost } from "./subscriptions.js";
+export type { RemoteSubscriptionsOptions } from "./remote-subscriptions.js";
 export { fileSubscriptions } from "./file-subscriptions.js";
 export { GOOGLE_TOKEN_URL, runConnections, sayReport } from "./connections.js";
 export type { ConnectionStates, ConnectionStateStore, ConnectionTokenRequest, RunConnectionsOptions, RunningConnections } from "./connections.js";

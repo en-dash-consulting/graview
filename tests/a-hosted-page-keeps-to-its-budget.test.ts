@@ -10,6 +10,7 @@ import {
   HOSTED_PAGE_COMPILED_ENTRY,
   HOSTED_RAISES,
   hostedRaises,
+  keepingSubscriptions,
   measureHostedPage,
   packageOf,
   withHostedRaises,
@@ -307,6 +308,30 @@ describe("a hosted page handed a compiled app", () => {
 
   it("is at least 40 KB lighter up front than the page that compiles the document itself", () => {
     expect(measured.upFront.minified - handed.upFront.minified, `${((measured.upFront.minified - handed.upFront.minified) / 1024).toFixed(1)} KB`).toBeGreaterThanOrEqual(40 * 1024);
+  });
+});
+
+/**
+ * NOTIFY ME KEPT ON THE HOST'S STORE (FR-182): the compiled shell handing
+ * `mount` a `remoteSubscriptions` store. The route's client half is a module
+ * of its own, so the page carries none of the rule language its server half
+ * judges a subscription with.
+ */
+describe("a hosted page that keeps Notify me on its host's store", () => {
+  let subscribed: Measured;
+  beforeAll(async () => {
+    subscribed = (await measureHostedPage(repo, keepingSubscriptions(HOSTED_PAGE_COMPILED_ENTRY))) as Measured;
+  }, 120_000);
+
+  it("carries no rule parser up front: no expression or template parser, and none of @graview/core/subscriptions", () => {
+    const modules = Object.keys(subscribed.upFront.modules);
+    expect([...COMPILER_MODULES, "core/src/subscriptions.ts"].filter((module: string) => modules.includes(module))).toEqual([]);
+    expect(modules).toContain("ship/src/remote-subscriptions.ts");
+  });
+
+  it("weighs at most 1 KB more up front than the same page keeping them in its memory", () => {
+    const more = subscribed.upFront.minified - handed.upFront.minified;
+    expect(more, `${more} bytes`).toBeLessThanOrEqual(1024);
   });
 });
 

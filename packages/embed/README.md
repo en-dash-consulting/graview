@@ -398,11 +398,19 @@ const handle = mount(root, {
   pagesBelow: 560,              // narrower than this, the scene gives way to the pages
   hostContext: { theme },       // the chat's theme, over the page's own
   memory,                       // where the reader's settings are kept, if not the page's storage
+  subscriptions,                // where Notify me is kept, if not the page's memory
   onIntrinsicHeight: (height) => notify("ui/notifications/size-changed", { height }),
 });
 handle.setHostContext({ theme: "dark" });   // the chat changed theme
 handle.setPeople(next);                     // an agent who first acted after the page opened
 ```
+
+`subscriptions` is the store the sheet "Notify me…" adds to and Activity's
+list of what the reader is told of reads, on either face. A served store's is
+`remoteSubscriptions({ url, principal })` from `@graview/ship/browser`, a
+module of its own: asking the route brings none of the rule language its
+server judges a subscription with into the page's first chunk. Unsaid, a
+reader's subscriptions live in the page's memory and go when it closes.
 
 Nothing touches `localStorage` or `sessionStorage` without a fallback, so a
 frame that throws on either still mounts. `scheme: "auto"` (the default)

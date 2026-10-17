@@ -304,6 +304,22 @@ export const HOSTED_PAGE_COMPILED_ENTRY = HOSTED_PAGE_ENTRY.replace(
 if (!HOSTED_PAGE_COMPILED_ENTRY.includes("appFromOrCompile(opened)")) throw new Error("the hosted page's entry no longer compiles its document where the compiled variant expects");
 
 /*
+ * THE SAME SHELL, KEEPING "NOTIFY ME" ON ITS HOST'S STORE (FR-182): the
+ * sheet and Activity's list read and write `remoteSubscriptions` over the
+ * served route instead of the page's memory. The client half is a module of
+ * its own, so asking the route carries none of the rule language its answer
+ * judges a subscription with; before the split it brought the expression
+ * and template parsers into the first chunk, 10.1 KB up front.
+ */
+export function keepingSubscriptions(entry) {
+  const kept = entry
+    .replace(`import { openRemote } from "@graview/ship/browser";`, `import { openRemote, remoteSubscriptions } from "@graview/ship/browser";`)
+    .replace(`  presence: remote.presence,\n`, `  presence: remote.presence,\n  subscriptions: remoteSubscriptions({ url: location.origin, principal: me }),\n`);
+  if (!kept.includes("subscriptions: remoteSubscriptions(")) throw new Error("the hosted page's entry no longer mounts where the subscribed variant expects");
+  return kept;
+}
+
+/*
  * Bytes, minified, of the page handed a compiled app. It measured 525 197
  * bytes (512.9 KB) when it arrived, 44 KB under the page that compiles in
  * the browser; Cloud's shell built from the same sources measured 554.8 KB

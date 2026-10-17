@@ -72,13 +72,13 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
 10. **In a chat's widget, let the frame be sized from the embed.** `height:
     "auto"` with `onIntrinsicHeight` tells the host the height to give it;
     `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the
-    scene for the pages on a phone; `remote` takes an `openRemote` store. A
+    scene for the pages on a phone; `remote` takes an `openRemote` store,
+    `subscriptions` the host's Notify me (`remoteSubscriptions`). A
     hosted reader sits only as who signed in: name members through `people`
     (and `setPeople`), never as `seats`, which offer "sit as somebody else".
     Where readers cannot save a declaration, `studio: false` (or `studio:
     { onApply }` to keep what it applies: return `{ ok: false, sentence,
-    findings }` when you could not (the sentence heads the studio's panel;
-    findings may be empty; an Apply with nothing changed never asks),
+    findings }` when you could not (the sentence heads its panel),
     `offered: true` when you decided who builds, and `place: StudioPlace`,
     imported, when the page is the studio and should not wait for its
     chunk); where only the pages are shown,
