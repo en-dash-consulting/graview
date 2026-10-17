@@ -234,13 +234,33 @@ const travelTo = (view: ViewState, id: string): ViewState => ({ ...withFocus(wit
  * seconds, or a record that was not this one. It goes to the record's
  * card on the ground as soon as the card is drawn — unless a person put it
  * somewhere meanwhile, which ends the wait.
+ *
+ * AND IT IS NEVER ON NOTHING MEANWHILE. Waiting for the card left the
+ * keyboard on <body> for as long as the scene took to draw it, which on the
+ * nightly's loaded runner was longer than the watch waits. So at the press
+ * it moves to the scene's ground — the one thing the press does not take
+ * away — and waits there: a stop of its own only while it holds the
+ * keyboard, handed on to the card once the card is drawn.
  */
 function handTheKeyboardTo(id: string, pressed: HTMLElement | null): void {
   const wanted = `[data-graview-stage] [data-graview-view="${CSS.escape(id)}"][tabindex]`;
+  // The ground of this scene: the nearest one around the press, for a page with more than one app on it.
+  let ground: HTMLElement | null = null;
+  for (let at = pressed?.parentElement ?? null; at && !ground; at = at.parentElement) ground = at.querySelector<HTMLElement>(".graview-ground");
+  ground ??= document.querySelector<HTMLElement>(".graview-ground");
+  const holding = ground !== null && !ground.hasAttribute("tabindex");
+  if (ground && holding) {
+    ground.setAttribute("tabindex", "-1");
+    // Once the keyboard leaves it, by the card or by a person, the ground is not a stop.
+    ground.addEventListener("focusout", (event) => {
+      if (event.target === ground) ground.removeAttribute("tabindex");
+    }, { once: true });
+  }
+  ground?.focus({ preventScroll: true });
   const until = performance.now() + 5000;
   const land = () => {
     const at = document.activeElement;
-    const free = at === null || at === document.body || at === document.documentElement || at === pressed;
+    const free = at === null || at === document.body || at === document.documentElement || at === pressed || at === ground;
     if (!free) return;
     const card = document.querySelector<HTMLElement>(wanted);
     if (card && card.isConnected && !card.closest("[inert]")) return card.focus({ preventScroll: true });
