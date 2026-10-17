@@ -11,6 +11,9 @@
  * - a Chromium that can capture (Canary, or GRAVIEW_BROWSER with the
  *   switches in `GPU_ARGS`): `auto` draws on the GPU, `?renderer=dom` on
  *   the DOM path, and the two are compared — tree, pixels, frames;
+ * - a Chromium whose capture hit-tests where a view is laid out rather than
+ *   where it is drawn (Chrome 155's `layoutSubtree` build, flag on): it
+ *   draws on the DOM path, silently, since a press there would miss;
  * - Firefox, WebKit, the bundled Chromium (WebGPU, no capture) and a
  *   Chromium whose adapter is refused (Canary without the switches): each
  *   draws on the DOM path and says nothing on the console;
@@ -195,8 +198,13 @@ try {
     const gpuPath = await pathOf(gpu.page, "gpu");
     report.gpu.path = gpuPath;
     report.gpu.browser = executablePath ?? "the bundled Chromium";
+    // Chrome 155's capture build (`layoutSubtree`) ignores a reported geometry, so a press misses what was drawn: it is held to the DOM path.
+    report.gpu.hitsWhereLaidOut = await gpu.page.evaluate(() => "layoutSubtree" in HTMLCanvasElement.prototype);
     if (gpuPath.renderer !== "gpu") {
-      report.gpu.unavailable = `${report.gpu.browser} drew this page on the ${gpuPath.renderer} path: no Chromium here can capture onto WebGPU`;
+      report.gpu.said = gpu.said;
+      report.gpu.unavailable = report.gpu.hitsWhereLaidOut
+        ? `${report.gpu.browser} drew this page on the ${gpuPath.renderer} path: its element capture hit-tests where a view is laid out, not where it is drawn`
+        : `${report.gpu.browser} drew this page on the ${gpuPath.renderer} path: no Chromium here can capture onto WebGPU`;
     } else {
       report.gpu.said = gpu.said;
       const dom = await open(capturing, `${home}&renderer=dom`);
@@ -289,6 +297,9 @@ report.claims = {
         reducedTransparencyTurnsBlurOffOnBothPaths: !report.gpu.reducedTransparency.blur && !report.dom.reducedTransparency.blur,
         reducedMotionTurnsBlurOffOnBothPaths: !report.gpu.reducedMotion.blur && !report.dom.reducedMotion.blur,
       }
+    : {}),
+  ...(report.gpu.hitsWhereLaidOut
+    ? { aChromiumWhosePressesWouldMissTheDrawingDrawsOnTheDomPath: report.gpu.path.renderer === "dom" && report.gpu.said.length === 0 && report.gpu.path.notices.length === 0 }
     : {}),
   aPageWithoutTheGpuPathDrawsOnTheDomPathAndSaysNothing: Object.values(report.without).every((one) => one.renderer === "dom" && one.said.length === 0 && one.notices.length === 0),
 };

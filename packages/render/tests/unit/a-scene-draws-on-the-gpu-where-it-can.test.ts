@@ -4,7 +4,7 @@ import { chooseRenderer, framesHeld, gpuCapturePresent, planeBlurOn, rendererAsk
 const capturing = {
   navigator: { gpu: {} },
   GPUQueue: { prototype: { drawElementImageToTexture() {} } },
-  HTMLCanvasElement: { prototype: { requestPaint() {} } },
+  HTMLCanvasElement: { prototype: { requestPaint() {}, captureElementImage() {} } },
 };
 
 describe("a scene draws on the GPU where it can", () => {
@@ -16,6 +16,17 @@ describe("a scene draws on the GPU where it can", () => {
     // Chromium stable, Safari 26: WebGPU without element capture.
     expect(gpuCapturePresent({ ...capturing, GPUQueue: { prototype: {} } })).toBe(false);
     expect(gpuCapturePresent({ ...capturing, HTMLCanvasElement: { prototype: {} } })).toBe(false);
+  });
+
+  it("finds it absent where the browser's own hit-testing does not follow the drawn geometry", () => {
+    // Chrome 155 with capture switched on: it still spells `layoutSubtree`,
+    // ignores a reported geometry, and keeps every view's box — the one a
+    // press, a screen reader and an automation land on — where it was laid
+    // out rather than where it was drawn.
+    const hitsWhereLaidOut = { ...capturing, HTMLCanvasElement: { prototype: { requestPaint() {}, captureElementImage() {}, layoutSubtree: false } } };
+    expect(gpuCapturePresent(hitsWhereLaidOut)).toBe(false);
+    // A build with capture and paint events but no paint records says nothing of where it hit-tests.
+    expect(gpuCapturePresent({ ...capturing, HTMLCanvasElement: { prototype: { requestPaint() {} } } })).toBe(false);
   });
 
   it("starts auto on the GPU where it is present, and on the DOM path where it is not, whatever was asked", () => {

@@ -8,8 +8,9 @@ connectors drawn in SVG over the scene.
 **A scene draws on the GPU where the browser can, and on the DOM path
 everywhere else — silently, per page.** `Scene` and the `Shell` default to
 `renderer="auto"`: `gpuCapturePresent()` asks, without a device, whether the
-page has WebGPU, an element-capture call on its queue and a canvas `paint`
-event; where it does, `./gpu` is fetched and `attachGpu()` takes the canvas.
+page has WebGPU, an element-capture call on its queue, a canvas `paint`
+event, and hit-testing that follows the drawn geometry (below); where it
+does, `./gpu` is fetched and `attachGpu()` takes the canvas.
 Its first-frame check falls back for good if no adapter is given, no paint
 arrives within `FIRST_PAINT_WAIT_MS`, a frame is refused, the device is lost,
 or the middle of the first `FIRST_FRAMES` frames' work is over
@@ -52,10 +53,13 @@ the canvas. The discography holds about 500 fps with 512 live views that way
 is hit-tested where it was drawn — `elementsFromPoint`, hover and presses
 land on the drawn view — so the browser answers and the canvas says
 `data-graview-hit="platform"`, which lets the views' content take the
-pointer. Earlier builds (the `layoutSubtree` spelling) lay every child out
-at the canvas origin and brought the renderer down on a hit-test into one,
-so there the hosts stay out of hit-testing and `PointerRouter` answers
-presses (`data-graview-hit="router"`). A pan moves the canvas by a transform,
+pointer. Earlier builds (the `layoutSubtree` spelling, Chrome 155 with
+capture switched on among them) accept the geometry and ignore it: a view's
+box stays where it was laid out, so a press, a screen reader and an
+automation all land somewhere other than where the view was drawn.
+`gpuCapturePresent()` is false there and the page draws on the DOM path.
+`PointerRouter` (`data-graview-hit="router"`) remains for a host driving the
+`Compositor` itself on such a build. A pan moves the canvas by a transform,
 as it moves the DOM path's stage, and redraws nothing until it lands.
 
 ## What is stable here

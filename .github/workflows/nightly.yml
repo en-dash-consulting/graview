@@ -19,7 +19,11 @@
 # element capture switched on and WebGPU on SwiftShader (engine.mjs's
 # GPU_ARGS). A runner whose Chrome cannot make an adapter draws the GPU
 # shard on the DOM path, and `renderer` says so in docs/renderer.json
-# (`gpu.unavailable`) rather than claiming the GPU held.
+# (`gpu.unavailable`) rather than claiming the GPU held. So does a Chrome
+# whose hit-testing ignores the drawn geometry — Chrome 155's `layoutSubtree`
+# build, where a press on a drawn view missed it (`gpuCapturePresent`): until
+# stable Chrome ships the paint-record build, this leg holds that such a
+# browser falls back to the DOM path and still works.
 
 name: Nightly
 
@@ -96,6 +100,7 @@ jobs:
 
       # The GPU path's Chromium: Google Chrome as it ships, which has element
       # capture behind its flag; engine.mjs switches it on with SwiftShader.
+      # Chrome 155 draws on the DOM path all the same (see the top of this file).
       - name: Google Chrome, for the GPU path
         if: matrix.renderer == 'gpu'
         run: |
