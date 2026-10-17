@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.31`](https://graview.dev/docs/releases.html#v0-1-31)
 - [`0.1.30`](https://graview.dev/docs/releases.html#v0-1-30)
 - [`0.1.29`](https://graview.dev/docs/releases.html#v0-1-29)
 - [`0.1.28`](https://graview.dev/docs/releases.html#v0-1-28)
@@ -33,9 +34,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.31
+
+Published October 17, 2026 · the current version
+
+Ask with ⌘K and the right-click, be told when things happen, a faster first load, the GPU by default, and a Google calendar kept in step.
+
+- **The AI where you are working.** ⌘K opens a bar beside what you're on that completes its acts, places and records; anything else is asked, and the answer is a card beside the record or list. The right-click offers suggestions, fills, new records and panels, picked only from what you may see and do. Every proposed change is previewed first, accepted all or some, and undone in one step, and Activity keeps each AI interaction.
+- **Notify me.** Subscribe to an act, a kind or a record in two presses from a right-click, a record page or chat. A change by someone else that you may see tells the host once.
+- **Faster.** First load to interactive is 31–38% faster on a desk and on a slowed phone, held by a CI budget, and the scene draws on the GPU where the browser can, with unfocused planes blurred.
+- **Dates and calendars.** One date and date-time editor everywhere that reads "tomorrow 3pm" or "Fri 10:30" and shows times in your zone. A Google calendar can be declared in the app (a calendar, a color or #tag filter, read-only or both ways) and kept in step by `graview serve`, proven against Google itself.
+- Twelve controls covered by another were fixed, and graview.dev shows the inline AI and gains this page.
+
+**Before you upgrade:** The old seat's input, its panel and their settings are removed, along with the routed face's own copy: `quickAsk` replaces their setting on the Shell, the pages and the embed, and `quickAskOf` reads a stored one. The full list of removed names is in the changelog. The Shell's and the embed's `renderer` defaults to `auto`. A document's `datetime` is asked for with the date editor. The hosted page carries about 3.5 KB more up front (1.3 KB gzipped).
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.31) · [The full changelog for 0.1.31](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0131)
+
 ## 0.1.30
 
-Published October 15, 2026 · the current version
+Published October 15, 2026
 
 Play an app back, link across apps, an actor that tidies, and graview.dev as a Graview app.
 

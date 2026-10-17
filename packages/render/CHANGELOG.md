@@ -1,5 +1,30 @@
 # @graview/render
 
+## 0.1.31
+
+### Patch Changes
+
+- a2f741b: The scene draws on the GPU by default where the browser can, and on the DOM path everywhere else, silently and per page (Roadmap f-gpu-default). `Scene`, the `Shell` and the embed default to `renderer="auto"`: where a page has WebGPU, an element-capture call and a canvas `paint` event (`gpuCapturePresent`, asked without a device), `@graview/render/gpu` is fetched and `attachGpu()` takes the canvas; a page without them — Firefox, Safari, Chromium before element capture — never fetches it and says nothing. A first-frame check falls back to the DOM path for good when no adapter is given, no paint arrives within 1.5 s, a frame is refused, the device is lost, or the middle of the first four frames' work is over three quarters of a frame. A renderer is handed `fallBack()`, `blur` and `scheme` with each picture. `?renderer=gpu|dom` on the address, or `graviewRenderer` set on the page before it loads, decides `auto` for an operator (`rendererAsked`, `chooseRenderer`); `GRAVIEW_RENDERER` does it for every page of a harness run, and the nightly runs every shard on both paths.
+  
+  The two paths draw one picture: the treatment of a view — its plane style, blur, and fade — is worked out once (`treatmentOf`, `recededOpacity`) and drawn by CSS on one path and the shader on the other, in the page's scheme. The shader no longer mixes toward a fixed ground color or darkens a quad's edges, and it premultiplies the capture's straight alpha once: a light card on the GPU had gray bands down its sides and a pale fringe for a shadow. The accessibility tree is the same on both paths.
+  
+  On Chromium 158 the browser's own hit-test follows the geometry a view is reported at, without the crash 154 had, so there the canvas says `data-graview-hit="platform"`, the views' content takes the pointer, and hover — a record's ties drawn as the pointer reaches a chip — works on the GPU as on the DOM path; earlier builds keep `PointerRouter`. Geometry is reported a budget a frame until every view is, and a view gone off the canvas is reported there rather than left, invisible, where it was last drawn. A drag or a wheel moves the canvas by a transform, as it moves the DOM path's stage: at altitude the GPU path panned at 20 to 30 frames a second on a quartered processor, re-laying the picture for each notch.
+  
+  Receded planes are blurred, the focused plane sharp (Roadmap f-plane-blur). On the GPU the blur costs nothing measurable; the DOM path's CSS blur is dropped for the rest of the page if its frames run over a frame and a half while the picture moves. `blur={false}` on the Scene or the Shell turns it off, and so do `prefers-reduced-motion`, `prefers-reduced-transparency` and the reader's Motion setting (`planeBlurOn`). `pnpm verify renderer` holds all of it.
+  
+  Nothing up front changes on a hosted page; the scene face before it draws is 7.5 KB larger (940,163 bytes), and the embed's budgets are raised in `scripts/budget-raises/`, the capture path itself (about 23 KB) a chunk of its own fetched only where a page can capture.
+  
+  Compatibility: no surface changes; `Scene` and `Shell` take an optional `blur`, the Shell's `renderer` defaults to `auto` where it was `dom`, `attachRenderer`'s argument gains `blur`, `scheme` and `fallBack`, the frame plan's `PlannedView` takes `depth` and `onPlot`, `PlanOptions` a `scheme`, `ViewDraw` carries `blur` and `FramePlan` `offCanvas`, `PlatformCapabilities.hitTestFollowsGeometry` is now decided, and `@graview/render` gains `gpuCapturePresent`, `rendererAsked`, `chooseRenderer`, `planeBlurOn`, `framesHeld`, `FRAME_BUDGET_MS`, `treatmentOf` and `recededOpacity` (`./gpu`: `FIRST_FRAMES`, `FIRST_PAINT_WAIT_MS`, `FIRST_FRAME_BUDGET_MS`, `Compositor.setBlur`, `Compositor.setScheme`).
+- Updated dependencies [6009469]
+- Updated dependencies [4784ba8]
+- Updated dependencies [938721b]
+- Updated dependencies [ed1a54c]
+- Updated dependencies [ff88015]
+- Updated dependencies [294f181]
+- Updated dependencies [9a5e067]
+  - @graview/core@0.1.31
+  - @graview/layout@0.1.31
+
 ## 0.1.30
 
 ### Patch Changes
