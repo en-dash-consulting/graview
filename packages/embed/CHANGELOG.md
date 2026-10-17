@@ -1,5 +1,26 @@
 # @graview/embed
 
+## 0.1.32
+
+### Patch Changes
+
+- f838147: An embed draws nothing over its host's page. Its root made no stacking context, so the scene's corner control ("Close the map") carried its own `z-index` out onto the host: on graview.dev's live demos at 768 wide the docs' sticky rail scrolled over a demo and the demo's control stood over the rail's links, so a press on "With a model" landed on the demo. The root of both the scene and the pages embed now isolates, so every layer inside it is ordered inside it, and the host's own stacking decides where the embed stands as a whole. Popovers are unchanged: they stand in the browser's top layer.
+  
+  Compatibility: no surface changes.
+- Updated dependencies [283a49d]
+- Updated dependencies [7d1c3e1]
+- Updated dependencies [0a822b7]
+- Updated dependencies [cdbbebc]
+- Updated dependencies [6c2284e]
+- Updated dependencies [b70152f]
+  - @graview/primitives@0.1.32
+  - @graview/core@0.1.32
+  - @graview/pages@0.1.32
+  - @graview/layout@0.1.32
+  - @graview/react@0.1.32
+  - @graview/studio@0.1.32
+  - @graview/tools@0.1.32
+
 ## 0.1.31
 
 ### Patch Changes
