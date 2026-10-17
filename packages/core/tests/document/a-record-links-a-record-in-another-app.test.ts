@@ -290,7 +290,8 @@ describe("a far value's change is kept in the reading app's history", () => {
     expect(ops).toHaveLength(1);
     const [op] = ops;
     expect(op).toMatchObject({ author: { kind: "system", id: "app:@nick/house", name: "House" }, via: "app:@nick/house", reads: ["s1"], writes: [], primitives: [], intent: "Buy it outright: the linked record changed in House — list price" });
-    expect(JSON.stringify(op)).not.toMatch(/430|450/);
+    // The values themselves, however they are written; a batch id or a time can hold "430" by chance, and failed CI when it did.
+    expect(JSON.stringify(op)).not.toMatch(/4[35]0[,._ ]?000/);
     expect(scenarioStore.log.all().at(-1)).toBe(op);
     // A far record no record links, or nothing changed, keeps nothing.
     expect(recordLinkedChange(scenarioStore, { ref: { ...ref, id: "h2" }, fields: ["listPrice"] })).toEqual([]);

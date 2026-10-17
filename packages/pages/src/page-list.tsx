@@ -257,6 +257,22 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
       entry.mutation !== undefined,
     );
   const withheld = facts.actions.withheld;
+  /*
+   * WHICH BEGINNINGS STAND OPEN, per kind: every one where there is nothing
+   * yet, none otherwise, and a kind followed from another starts over.
+   */
+  const startingOpen = (): ReadonlySet<string> => new Set(members.length === 0 ? creators.map(({ mutation }) => mutation.name) : []);
+  const [begun, setBegun] = useState<{ readonly kind: string; readonly open: ReadonlySet<string> }>(() => ({ kind: kind as string, open: startingOpen() }));
+  if (begun.kind !== kind) setBegun({ kind: kind as string, open: startingOpen() });
+  const beginsOpen = (name: string): boolean => (begun.kind === kind ? begun.open : startingOpen()).has(name);
+  const setBegins = (name: string, open: boolean): void =>
+    setBegun((was) => {
+      const next = new Set(was.open);
+      if (open) next.add(name);
+      else next.delete(name);
+      return { kind: was.kind, open: next };
+    });
+  const beginId = `begin-${useId().replace(/:/g, "")}`;
   // Search-to-create: when the words found nothing, the beginnings start with them as the name.
   const startsWith: Record<string, string> =
     typed.words && members.length === 0
@@ -470,9 +486,31 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
     <Frame context={context}>
       <div style={{ display: "grid", gap: 12 }}>
         <header style={{ display: "grid", gap: 4 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", columnGap: 10, rowGap: 4, minWidth: 0 }}>
             <KindMark kind={kind} brand={brand} schema={store.schema} size={8} />
             <PageTitle context={context}>{plural}</PageTitle>
+            {creators.length > 0 ? (
+              /*
+               * ADDING ONE IS THE PRESS AFTER THE HEADING. Following a place
+               * puts the keyboard on the page's heading; the way to add one
+               * stood at the list's end, past the bar or past every row, and
+               * making a task from the keyboard cost six presses more than it
+               * had. Beside the heading it is the next press, and its form
+               * opens under the head, above the list.
+               */
+              <span style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", columnGap: 14 }} data-testid="beginnings-open">
+                {creators.map(({ affordance, mutation }) => (
+                  <BeginButton
+                    key={affordance.id}
+                    name={mutation.name}
+                    title={mutation.title ?? mutation.name}
+                    panel={`${beginId}-${mutation.name}`}
+                    open={beginsOpen(mutation.name)}
+                    onOpen={(open) => setBegins(mutation.name, open)}
+                  />
+                ))}
+              </span>
+            ) : null}
           </div>
           {description ?? definition?.description ? <p style={lede}>{description ?? definition?.description}</p> : null}
           {roads.length > 0 || pictures.length > 0 ? (
@@ -516,6 +554,42 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             </p>
           ) : null}
         </header>
+
+        {creators.length > 0 ? (
+          /*
+           * ADDING ONE IS ONE QUIET ACT, in the act's own words beside the
+           * heading; the form opens here, under the head, when it is asked
+           * for. A full form at the foot of every list took nearly the room
+           * of the list. It stands open where there is nothing yet, and when
+           * the words found nothing and the name is already in it.
+           */
+          <div style={{ display: "contents" }} data-testid="beginnings">
+            {creators.map(({ affordance, mutation }) => {
+              const prefilled = Boolean(startsWith[mutation.name] && members.length === 0);
+              return (
+                <BeginningForm
+                  key={affordance.id}
+                  name={mutation.name}
+                  id={`${beginId}-${mutation.name}`}
+                  description={mutation.description}
+                  open={beginsOpen(mutation.name)}
+                  onClose={() => setBegins(mutation.name, false)}
+                >
+                  {/* The candidates the derivation narrowed, not every node. */}
+                  <DerivedForm
+                    key={prefilled ? `${mutation.name}|${typed.words}` : mutation.name}
+                    store={store}
+                    mutation={mutation}
+                    prefilled={affordance.args}
+                    open={affordance.open}
+                    {...(prefilled ? { initial: { [startsWith[mutation.name]!]: typed.words } } : {})}
+                    {...(context.principal ? { principal: context.principal } : {})}
+                  />
+                </BeginningForm>
+              );
+            })}
+          </div>
+        ) : null}
 
         {asked.dropped.length > 0 ? (
           <p style={{ ...quiet, margin: 0 }} data-testid="list-dropped">
@@ -573,7 +647,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
           <p style={lede} data-testid="none-yet">
             {arrangement.filter?.length || arrangement.query ? "None of them." : "None yet"}
             {!arrangement.filter?.length && !arrangement.query && creators.length > 0
-              ? ` — the first one starts below, with “${creators[0]?.mutation.title ?? creators[0]?.mutation.name}”.`
+              ? ` — the first one starts above, with “${creators[0]?.mutation.title ?? creators[0]?.mutation.name}”.`
               : !arrangement.filter?.length && !arrangement.query
                 ? "."
                 : ""}
@@ -691,34 +765,6 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             +{store.graph.count(kind, { archived: true })} archived
           </Link>
         ) : null}
-        {creators.length > 0 ? (
-          /*
-           * ADDING ONE IS ONE QUIET ACT at the list's end, in the act's own
-           * words; the form opens in place when it is asked for. A full form
-           * at the foot of every list took nearly the room of the list. It
-           * stands open where there is nothing yet, and when the words found
-           * nothing and the name is already in it.
-           */
-          <div style={{ display: "grid", gap: 6 }} data-testid="beginnings">
-            {creators.map(({ affordance, mutation }) => {
-              const prefilled = Boolean(startsWith[mutation.name] && members.length === 0);
-              return (
-                <Beginning key={affordance.id} name={mutation.name} title={mutation.title ?? mutation.name} description={mutation.description} open={members.length === 0}>
-                  {/* The candidates the derivation narrowed, not every node. */}
-                  <DerivedForm
-                    key={prefilled ? `${mutation.name}|${typed.words}` : mutation.name}
-                    store={store}
-                    mutation={mutation}
-                    prefilled={affordance.args}
-                    open={affordance.open}
-                    {...(prefilled ? { initial: { [startsWith[mutation.name]!]: typed.words } } : {})}
-                    {...(context.principal ? { principal: context.principal } : {})}
-                  />
-                </Beginning>
-              );
-            })}
-          </div>
-        ) : null}
       </div>
 
       {withheld.length > 0 ? (
@@ -820,52 +866,53 @@ function withWord(search: URLSearchParams, key: string, value: string): string {
 
 /**
  * One way to begin a record: the act's title as a quiet press ("+ Add a
- * deliverable") that opens its form in place, the keyboard going to the
- * form's first field; Escape puts it away and gives the keyboard back.
- * The form is in the page either way — closed, it is hidden — so what it
- * asks is what it would ask open.
+ * deliverable") beside the list's heading, that opens its form under the
+ * head, the keyboard going to the form's first field; Escape puts it away
+ * and gives the keyboard back. The form is in the page either way — closed,
+ * it is hidden — so what it asks is what it would ask open.
  */
-function Beginning({ name, title, description, open: opening, children }: { readonly name: string; readonly title: string; readonly description?: string | undefined; readonly open: boolean; readonly children: ReactNode }) {
-  const [open, setOpen] = useState(opening);
-  const button = useRef<HTMLButtonElement>(null);
-  const panel = useRef<HTMLDivElement>(null);
-  const id = `begin-${useId().replace(/:/g, "")}`;
+function BeginButton({ name, title, panel, open, onOpen }: { readonly name: string; readonly title: string; readonly panel: string; readonly open: boolean; readonly onOpen: (open: boolean) => void }) {
   return (
-    <div data-testid={`act-${name}`} style={{ display: "grid", gap: 10 }}>
-      <button
-        ref={button}
-        type="button"
-        data-testid={`act-open-${name}`}
-        // The act it begins, so a right-click on it can offer "Notify me when someone does this" (Roadmap f-notify-subscriptions).
-        data-graview-act={name}
-        aria-expanded={open}
-        aria-controls={id}
-        onClick={() => {
-          setOpen(!open);
-          if (!open) requestAnimationFrame(() => panel.current?.querySelector<HTMLElement>("input, select, textarea, button")?.focus());
-        }}
-        style={{ ...plain, justifySelf: "start", minHeight: 32, padding: "0 2px", border: 0, background: "none", font: "inherit", fontWeight: 600, color: "var(--graview-ink)", cursor: "pointer" }}
-      >
-        <span aria-hidden="true" style={{ marginRight: 6 }}>
-          {open ? "−" : "+"}
-        </span>
-        {title}
-      </button>
-      <div
-        ref={panel}
-        id={id}
-        hidden={!open}
-        onKeyDown={(event) => {
-          if (event.key !== "Escape") return;
-          event.preventDefault();
-          setOpen(false);
-          button.current?.focus();
-        }}
-        style={open ? { display: "grid", gap: 12, padding: "4px 0 12px" } : undefined}
-      >
-        {description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{description}</p> : null}
-        {children}
-      </div>
+    <button
+      type="button"
+      data-testid={`act-open-${name}`}
+      // The act it begins, so a right-click on it can offer "Notify me when someone does this" (Roadmap f-notify-subscriptions).
+      data-graview-act={name}
+      aria-expanded={open}
+      aria-controls={panel}
+      onClick={() => {
+        onOpen(!open);
+        if (!open) requestAnimationFrame(() => document.getElementById(panel)?.querySelector<HTMLElement>("input, select, textarea, button")?.focus());
+      }}
+      // A target of 28 pixels that takes no more of the line than the title does, so the first record stands where it stood.
+      style={{ ...plain, minHeight: 28, margin: "-4px 0", padding: "0 2px", border: 0, background: "none", font: "inherit", fontWeight: 600, color: "var(--graview-ink)", cursor: "pointer" }}
+    >
+      <span aria-hidden="true" style={{ marginRight: 6 }}>
+        {open ? "−" : "+"}
+      </span>
+      {title}
+    </button>
+  );
+}
+
+/** The form a beginning opens, under the list's head; Escape gives the keyboard back to its press. */
+function BeginningForm({ name, id, description, open, onClose, children }: { readonly name: string; readonly id: string; readonly description?: string | undefined; readonly open: boolean; readonly onClose: () => void; readonly children: ReactNode }) {
+  return (
+    // Closed, it is no part of the page's grid, so the list stands where it stood without it.
+    <div
+      data-testid={`act-${name}`}
+      id={id}
+      hidden={!open}
+      onKeyDown={(event) => {
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        onClose();
+        document.querySelector<HTMLElement>(`[aria-controls="${id}"]`)?.focus();
+      }}
+      style={open ? { display: "grid", gap: 12, padding: "4px 0 12px" } : undefined}
+    >
+      {description ? <p style={{ ...quiet, margin: 0, maxWidth: "58ch" }}>{description}</p> : null}
+      {children}
     </div>
   );
 }
