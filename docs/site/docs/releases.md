@@ -36,7 +36,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.32
 
-Published October 17, 2026 · the current version
+Published October 17, 2026
 
 Ask with ⌘K and the right-click, be told when things happen, a faster first load, the GPU by default, and a Google calendar kept in step.
 
