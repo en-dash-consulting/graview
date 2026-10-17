@@ -284,13 +284,41 @@ export async function inStore(page, kinds, fn, arg) {
  * called it a regression. A control is given up on only after it has had
  * time to appear: immediate when it is there, ten seconds when it is not.
  */
-const appears = (locator, ms = Number(process.env["GRAVIEW_JOURNEYS_PATIENCE"] ?? 10_000)) =>
+const PATIENCE = Number(process.env["GRAVIEW_JOURNEYS_PATIENCE"] ?? 10_000);
+const appears = (locator, ms = PATIENCE) =>
   locator
     .waitFor({ state: "visible", timeout: ms })
     .then(() => true)
     .catch(() => false);
 
 export class DeadEnd extends Error {}
+
+/**
+ * A PRESS IS JUDGED BY WHAT IT DID, NOT BY THE PAGE ANSWERING QUICKLY.
+ * Playwright's click lands, then waits for any navigation the press
+ * scheduled — a wait on the page's main thread. On the nightly's GPU leg a
+ * press that changed three talks of two thousand kept that thread busy past
+ * the click's four seconds: the call log said "click action done", and the
+ * run was called a dead end for a press that had worked. A click that timed
+ * out after it was done has landed; every step after it waits for what it
+ * wanted, which is where a press that did nothing is found out.
+ */
+const click = (target, options = {}) =>
+  target.click({ timeout: 4_000, ...options }).catch((error) => {
+    if (/click action done/.test(String(error?.message ?? ""))) return;
+    throw error;
+  });
+
+/** Why a press could not land, in Playwright's last word on it: what covered it, or what it was still waiting for. */
+const whyNotPressed = (error) => {
+  const said = String(error?.message ?? error)
+    .split("\n")
+    .map((line) => line.replace(/\x1b\[[0-9;]*m/g, "").trim().replace(/^- /, ""))
+    .filter(Boolean);
+  const covered = said.findLast((line) => line.includes("intercepts pointer events"));
+  const last = said.findLast((line) => !line.startsWith("Call log") && !line.startsWith("locator") && !line.startsWith("waiting for locator"));
+  return `${said[0].slice(0, 90)}${covered ?? last ? ` — ${(covered ?? last).slice(0, 140)}` : ""}`;
+};
 
 const onMarked = (page) =>
   page.evaluate(() => {
@@ -414,8 +442,8 @@ export class Person {
     const target = locator.first();
     if (!(await appears(target))) throw new DeadEnd(`${what} is not on the screen`);
     if (this.input === "pointer") {
-      await target.click({ timeout: 4_000 }).catch((error) => {
-        throw new DeadEnd(`${what} cannot be pressed (${String(error.message).split("\n")[0].slice(0, 90)})`);
+      await click(target).catch((error) => {
+        throw new DeadEnd(`${what} cannot be pressed (${whyNotPressed(error)})`);
       });
       this.presses += 1;
     } else {
@@ -436,7 +464,7 @@ export class Person {
     const before = this.presses;
     const target = locator.first();
     if (this.input === "pointer") {
-      await target.click({ timeout: 4_000 });
+      await click(target);
       this.presses += 1;
     } else {
       await this.reach(target, what);
@@ -451,7 +479,7 @@ export class Person {
   async pick(entry, what) {
     const before = this.presses;
     if (this.input === "pointer") {
-      await entry.click({ timeout: 4_000 });
+      await click(entry);
       this.presses += 1;
     } else {
       const on = () => entry.evaluate((el) => el === document.activeElement).catch(() => false);
@@ -470,7 +498,7 @@ export class Person {
     if (index < 0) throw new DeadEnd(`${what} offers nothing to choose`);
     const before = this.presses;
     if (this.input === "pointer") {
-      await select.click({ timeout: 4_000 });
+      await click(select);
       await select.selectOption({ index });
       this.presses += 2;
     } else {
@@ -527,17 +555,28 @@ async function openActs(person) {
      * (W-195).
      */
     const sheet = page.locator('[data-graview-map-panel="sheet"] [data-testid="map-panel-acts"]').locator("visible=true").first();
+    // On the ground, a record chosen in a narrow scene says "Acts…" (the tenth walk), as the map's sheet does.
+    const says = page.locator('[data-testid="chosen-acts"]').locator("visible=true").first();
+    /*
+     * ON A PHONE, THE SHEET IS WHAT A PERSON WAITS FOR. It rises a moment
+     * after the press that chose the district — 700 ms on a throttled
+     * laptop, longer on the nightly's runner — and a look taken before it
+     * rose found no "Acts…", so the walk right-clicked the district's name
+     * as a laptop would, under the sheet as it came up, and no menu opened:
+     * "Submit a talk is not on the screen" (the nightly's GPU leg, and two walks in three on a throttled laptop). A
+     * finger has no right button; on a phone the walk waits for the door a
+     * finger has.
+     */
+    if ((page.viewportSize()?.width ?? 1440) < 600) await appears(sheet.or(says).first());
     if (await sheet.isVisible().catch(() => false)) {
-      await sheet.click({ timeout: 4_000 }).catch(() => {});
+      await click(sheet).catch(() => {});
       person.presses += 1;
       await person.settle(250);
       person.note("its acts", before);
       return;
     }
-    // On the ground, a record chosen in a narrow scene says "Acts…" (the tenth walk), as the map's sheet does.
-    const says = page.locator('[data-testid="chosen-acts"]').locator("visible=true").first();
     if (await says.isVisible().catch(() => false)) {
-      await says.click({ timeout: 4_000 }).catch(() => {});
+      await click(says).catch(() => {});
       person.presses += 1;
       await person.settle(250);
       person.note("its acts", before);
@@ -1081,7 +1120,7 @@ export const JOBS = {
           await person.pick(typed, `"${option}"`);
           await person.settle(300);
           const chip = page.locator('[data-testid$="-condition"]').filter({ hasText: job.label }).locator("visible=true").first();
-          if (!(await appears(chip, 3_000))) throw new DeadEnd(`choosing "${option}" did not narrow the ${job.plural.toLowerCase()}`);
+          if (!(await appears(chip))) throw new DeadEnd(`choosing "${option}" did not narrow the ${job.plural.toLowerCase()}`);
           return;
         }
       }
@@ -1101,8 +1140,14 @@ export const JOBS = {
       const option = (await entry.textContent())?.trim() ?? job.label;
       await person.pick(entry, `"${option}"`);
       await person.settle(300);
+      /*
+       * Narrowing two thousand talks is the list drawn again: on a throttled
+       * runner that took longer than the three seconds once given to it, and
+       * a narrowing that worked was called one that did not. It is given the
+       * patience every other step has.
+       */
       const chip = page.locator('[data-testid$="-condition"]').filter({ hasText: job.label }).locator("visible=true").first();
-      if (!(await appears(chip, 3_000))) throw new DeadEnd(`choosing "${option}" did not narrow the ${job.plural.toLowerCase()}`);
+      if (!(await appears(chip))) throw new DeadEnd(`choosing "${option}" did not narrow the ${job.plural.toLowerCase()}`);
     },
   },
 
@@ -1373,7 +1418,14 @@ export const JOBS = {
       const page = person.page;
       await openKindPage(person, job.plural);
       // Three of the list's own rows the act would change, in the order the list draws them.
-      const rows = await page.evaluate((ids) => [...document.querySelectorAll("[data-graview-choose]")].map((row) => row.getAttribute("data-graview-choose")).filter((id) => ids.includes(id)), prep.ids);
+      const drawn = (ids) => [...document.querySelectorAll("[data-graview-choose]")].map((row) => row.getAttribute("data-graview-choose")).filter((id) => ids.includes(id));
+      /*
+       * Once the list has drawn them: two thousand talks take a moment on a
+       * throttled runner, and a look taken as the page arrived found fewer
+       * than three of them.
+       */
+      await page.waitForFunction(({ ids, source }) => new Function(`return (${source})`)()(ids).length >= 3, { ids: prep.ids, source: drawn.toString() }, { timeout: PATIENCE }).catch(() => undefined);
+      const rows = await page.evaluate(drawn, prep.ids);
       if (rows.length === 0 && (await page.locator("[data-graview-choose]").count()) === 0) throw new DeadEnd(`the ${job.plural} page offers no way to choose several`);
       if (rows.length < 3) throw new DeadEnd(`the ${job.plural} page shows fewer than three that "${job.title}" would change`);
       const chosen = rows.slice(0, 3);
