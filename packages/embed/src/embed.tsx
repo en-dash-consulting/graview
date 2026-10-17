@@ -545,7 +545,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
       data-graview-embed={shown}
       data-graview-scheme={scheme}
       {...(narrow ? { "data-graview-embed-narrow": "" } : {})}
-      style={{ position: "relative", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
+      // Its own stacking context: every layer inside it (the scene's corner control, a panel) is ordered inside it, never over the host's page.
+      style={{ position: "relative", isolation: "isolate", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>

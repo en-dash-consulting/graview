@@ -61,7 +61,8 @@ export function PagesEmbed<S extends AnySchema>(props: PagesEmbedProps<S>) {
       aria-label={props.label ?? app.name}
       data-graview-embed="pages"
       data-graview-scheme={scheme}
-      style={{ position: "relative", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
+      // Its own stacking context: every layer inside it (the scene's corner control, a panel) is ordered inside it, never over the host's page.
+      style={{ position: "relative", isolation: "isolate", height, minHeight: auto ? 0 : 320, display: "flex", flexDirection: "column", overflow: "hidden", borderRadius: "var(--graview-radius, 12px)" }}
     >
       <style>{css}</style>
       <ErrorReportContext.Provider value={report}>
