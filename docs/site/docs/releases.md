@@ -4,7 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
-- [`0.1.31`](https://graview.dev/docs/releases.html#v0-1-31)
+- [`0.1.32`](https://graview.dev/docs/releases.html#v0-1-32)
 - [`0.1.30`](https://graview.dev/docs/releases.html#v0-1-30)
 - [`0.1.29`](https://graview.dev/docs/releases.html#v0-1-29)
 - [`0.1.28`](https://graview.dev/docs/releases.html#v0-1-28)
@@ -34,9 +34,9 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.31
+## 0.1.32
 
-Published October 17, 2026
+Published October 17, 2026 · the current version
 
 Ask with ⌘K and the right-click, be told when things happen, a faster first load, the GPU by default, and a Google calendar kept in step.
 
@@ -45,10 +45,15 @@ Ask with ⌘K and the right-click, be told when things happen, a faster first lo
 - **Faster.** First load to interactive is 31–38% faster on a desk and on a slowed phone, held by a CI budget, and the scene draws on the GPU where the browser can, with unfocused planes blurred.
 - **Dates and calendars.** One date and date-time editor everywhere that reads "tomorrow 3pm" or "Fri 10:30" and shows times in your zone. A Google calendar can be declared in the app (a calendar, a color or #tag filter, read-only or both ways) and kept in step by `graview serve`, proven against Google itself.
 - Twelve controls covered by another were fixed, and graview.dev shows the inline AI and gains this page.
+- **Fewer presses to add a record.** A list's Add button now stands beside its heading, so making a record from the keyboard on the pages takes 10–14 presses where it took 17–22.
+- **The GPU only where clicks land.** A Chrome whose capture build would hit-test where a view was laid out rather than where it was drawn now draws on the DOM path, so a press, a screen reader and a focused field always meet what is on screen.
+- **Signs, panels and embeds that stay out of the way.** A sign at the map's edge steps past a district's name, "Go to it" hands the keyboard straight on to the record it went to, a lens is drawn in the room it has from its first frame, and an embedded app draws nothing over its host page.
+
+**Also in it: 0.1.31**, which was versioned and never published, so its changes shipped here. Ask with ⌘K and the right-click, be told when things happen, a faster first load, the GPU by default, and a Google calendar kept in step. The quick ask and the right-click AI, notify me, a faster first load, the GPU by default, one date editor and a Google calendar kept in step, all described under 0.1.32.
 
 **Before you upgrade:** The old seat's input, its panel and their settings are removed, along with the routed face's own copy: `quickAsk` replaces their setting on the Shell, the pages and the embed, and `quickAskOf` reads a stored one. The full list of removed names is in the changelog. The Shell's and the embed's `renderer` defaults to `auto`. A document's `datetime` is asked for with the date editor. The hosted page carries about 3.5 KB more up front (1.3 KB gzipped).
 
-[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.31) · [The full changelog for 0.1.31](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0131)
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.32) · [The full changelog for 0.1.32](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0132)
 
 ## 0.1.30
 
