@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { Store, type AnySchema, type GraviewApp } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import type { Fetcher } from "@graview/core/sync";
-import { fileConnectionState, readEnvFile, runConnections } from "../../src/index.js";
+import { fileConnectionState, readEnvFile, runConnections, sayReport } from "../../src/index.js";
 
 /**
  * THE DECLARED CONNECTIONS, RUN BESIDE A SERVED STORE: credentials from the
@@ -149,5 +149,16 @@ describe("a served store's declared connections", () => {
     await new Promise((settled) => setTimeout(settled, 80));
     await running.stop();
     expect([...remote.events.values()].map((event) => event["summary"])).toEqual(["Planning"]);
+  });
+});
+
+describe("a pass's line (FR-181)", () => {
+  it("says a change from the calendar this store refused by the calendar's event, and not as a calendar it could not reach", () => {
+    const report = {
+      system: "google-calendar", applied: [], echoes: [], conflicts: [], resolved: [], pushed: [], queued: [], gone: [], offline: false,
+      refused: [{ localId: "", resource: "events", id: "g1", error: "Nothing lands while the host is read only." }],
+      state: { links: {}, outbox: [] },
+    };
+    expect(sayReport(report)).toBe("refused: the calendar's g1 (Nothing lands while the host is read only.)");
   });
 });

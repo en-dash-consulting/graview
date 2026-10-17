@@ -51,14 +51,30 @@ export interface SyncReport {
   readonly queued: readonly string[];
   /**
    * The remote refused these, or the engine did for it (a record the remote
-   * owns, deleted here), and the local state is unchanged. A refused delete
-   * is said once: the link goes with it, so the next pass does not ask again.
+   * owns, deleted here), or this store refused a change coming in, and the
+   * local state is unchanged. A refused delete is said once: the link goes
+   * with it, so the next pass does not ask again.
    */
-  readonly refused: readonly { readonly localId: string; readonly error: string }[];
+  readonly refused: readonly SyncRefusal[];
   /** Records the remote deleted: removed here through `removeInbound`, or, without one, kept here and no longer synced. */
   readonly gone: readonly string[];
   readonly offline: boolean;
   readonly state: SyncState;
+}
+
+/**
+ * One change that did not land, and why. A change coming IN that this
+ * store refused (a policy, an invariant, a host's own `admit`) also names
+ * the remote record it was, since one new to us has no record here yet:
+ * its `localId` is the id it would have had, or empty when the act names
+ * none.
+ */
+export interface SyncRefusal {
+  readonly localId: string;
+  readonly error: string;
+  /** For a change coming in: the remote resource and the record's id there. */
+  readonly resource?: string;
+  readonly id?: string;
 }
 
 export type { SyncConflict } from "./types.js";
@@ -398,7 +414,7 @@ export class SyncEngine<S extends AnySchema> {
     const echoes: string[] = [];
     const resolved: SettledConflict[] = [];
     const pushed: string[] = [];
-    const refused: { localId: string; error: string }[] = [];
+    const refused: SyncRefusal[] = [];
     const gone: string[] = [];
     this.release();
     const held = this.held();
@@ -425,10 +441,8 @@ export class SyncEngine<S extends AnySchema> {
     }
     for (const [localId, fields] of landing) {
       const link = links[localId]!;
-      this.options.store.apply(this.options.applyInbound({ localId, kind: this.mappingFor(link.resource)!.kind, fields }), {
-        author: systemAuthor(this.options.mapping.system),
-        intent: `${this.options.mapping.system}: ${Object.keys(fields).join(", ")}`,
-      });
+      const call = this.options.applyInbound({ localId, kind: this.mappingFor(link.resource)!.kind, fields });
+      if (!this.land(call, `${this.options.mapping.system}: ${Object.keys(fields).join(", ")}`, { localId, resource: link.resource, id: link.id }, refused)) continue;
       links[localId] = { ...link, fields: { ...link.fields, ...fields } };
       applied.push(localId);
     }
@@ -468,10 +482,8 @@ export class SyncEngine<S extends AnySchema> {
             fields: change.fields ?? {},
           });
           if (!created) continue;
-          const result2 = this.options.store.apply(created, {
-            author: systemAuthor(this.options.mapping.system),
-            intent: `${this.options.mapping.system}: new ${change.resource}`,
-          });
+          const result2 = this.land(created, `${this.options.mapping.system}: new ${change.resource}`, { localId: String(created.args["id"] ?? ""), resource: change.resource, id: change.id }, refused);
+          if (!result2) continue;
           const madeId = String(created.args["id"] ?? result2.writes[0] ?? "");
           if (madeId) {
             applied.push(madeId);
@@ -498,12 +510,7 @@ export class SyncEngine<S extends AnySchema> {
          */
         if (change.deleted) {
           const removal = node ? this.options.removeInbound?.({ localId, kind: mapping.kind }) : null;
-          if (removal) {
-            this.options.store.apply(removal, {
-              author: systemAuthor(this.options.mapping.system),
-              intent: `${this.options.mapping.system}: deleted ${change.resource}`,
-            });
-          }
+          if (removal && !this.land(removal, `${this.options.mapping.system}: deleted ${change.resource}`, { localId, resource: change.resource, id: change.id }, refused)) continue;
           if (node) gone.push(localId);
           for (const key of [...held.keys()]) if (held.get(key)!.localId === localId) held.delete(key);
           const { [localId]: _deleted, ...rest } = links;
@@ -529,7 +536,7 @@ export class SyncEngine<S extends AnySchema> {
           }
           resolved.push({ ...conflict, took: policy });
           if (policy === "theirs") {
-            const made = this.restore(links, localId, record);
+            const made = this.restore(links, localId, record, refused);
             links = made.links;
             if (made.id) applied.push(made.id);
           }
@@ -579,13 +586,9 @@ export class SyncEngine<S extends AnySchema> {
         }
 
         if (Object.keys(lands).length > 0) {
-          this.options.store.apply(
-            this.options.applyInbound({ localId, kind: mapping.kind, fields: lands }),
-            {
-              author: systemAuthor(this.options.mapping.system),
-              intent: `${this.options.mapping.system}: ${Object.keys(lands).join(", ")}`,
-            },
-          );
+          const call = this.options.applyInbound({ localId, kind: mapping.kind, fields: lands });
+          // Refused here, the link keeps what was last agreed, so the field is still news on the next change there.
+          if (!this.land(call, `${this.options.mapping.system}: ${Object.keys(lands).join(", ")}`, { localId, resource: change.resource, id: change.id }, refused)) continue;
           applied.push(localId);
         }
         links[localId] = {
@@ -598,7 +601,9 @@ export class SyncEngine<S extends AnySchema> {
       }
     } catch {
       /*
-       * OFFLINE degrades to local-only.
+       * OFFLINE degrades to local-only. Only the remote throws this far: a
+       * change this store refused is caught where it lands, and said in
+       * `refused`.
        *
        * Not an error: a household week that stops working on a train is worse
        * than one that syncs later. The cursor is untouched, so the next run
@@ -723,6 +728,27 @@ export class SyncEngine<S extends AnySchema> {
   }
 
   /**
+   * LANDS ONE CHANGE COMING IN, authored by the remote's system, or says
+   * why this store refused it: a refused change is the store's answer, not
+   * a remote that could not be reached, so it is said in `refused` and the
+   * pass goes on.
+   */
+  private land(
+    call: MutationCall,
+    intent: string,
+    about: { readonly localId: string; readonly resource: string; readonly id: string },
+    refused?: SyncRefusal[],
+  ): ReturnType<Store<S>["apply"]> | undefined {
+    try {
+      return this.options.store.apply(call, { author: systemAuthor(this.options.mapping.system), intent });
+    } catch (error) {
+      if (!refused) throw error;
+      refused.push({ ...about, error: error instanceof Error ? error.message : String(error) });
+      return undefined;
+    }
+  }
+
+  /**
    * MAKES A RECORD DELETED HERE AGAIN with the remote's values, through
    * `createInbound` as any record new to us lands, and links what it made
    * where the old one was. Without `createInbound` the remote keeps its
@@ -732,16 +758,16 @@ export class SyncEngine<S extends AnySchema> {
     links: Record<string, RemoteLink>,
     localId: string,
     record: Readonly<Record<string, unknown>>,
+    /** Where a pass says a refusal; without it (somebody choosing, in `resolve`), the refusal is thrown to them. */
+    refused?: SyncRefusal[],
   ): { links: Record<string, RemoteLink>; id?: string } {
     const { [localId]: link, ...rest } = links;
     const mapping = link ? this.mappingFor(link.resource) : undefined;
     if (!link || !mapping) return { links: rest };
     const created = this.options.createInbound?.({ resource: link.resource, id: link.id, fields: remoteFields(record, mapping) });
     if (!created) return { links: rest };
-    const result = this.options.store.apply(created, {
-      author: systemAuthor(this.options.mapping.system),
-      intent: `${this.options.mapping.system}: restored ${link.resource}`,
-    });
+    const result = this.land(created, `${this.options.mapping.system}: restored ${link.resource}`, { localId, resource: link.resource, id: link.id }, refused);
+    if (!result) return { links };
     const id = String(created.args["id"] ?? result.writes[0] ?? "");
     return id ? { links: { ...rest, [id]: { ...link, fields: record } }, id } : { links: rest };
   }
@@ -868,7 +894,8 @@ export class SyncEngine<S extends AnySchema> {
      */
     store.permits = (call, principal) => {
       const verdict = permits.call(store, call, principal);
-      const message = verdict.ok ? this.owned(call, principal) : undefined;
+      // The remote's own system writes its records here, as `admit` lets it.
+      const message = verdict.ok && !this.isOwnSystem(principal) ? this.owned(call, principal) : undefined;
       return message === undefined ? verdict : ({ ok: false, refusal: { mutation: call.name, message, wouldNeed: [] } } as typeof verdict);
     };
     store.permittedMutations = (principal) =>
@@ -879,6 +906,11 @@ export class SyncEngine<S extends AnySchema> {
         else delete held[name];
       }
     };
+  }
+
+  /** Whether the asker is the remote's own system: the author every inbound change is applied as. */
+  private isOwnSystem(principal?: Principal): boolean {
+    return principal?.kind === "system" && principal.id === this.options.mapping.system;
   }
 
   /** The read-only mapping every record of this kind falls under, whatever its fields: one with no `match`. */
