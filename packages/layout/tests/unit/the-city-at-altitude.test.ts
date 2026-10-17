@@ -188,6 +188,22 @@ describe("the city at altitude", () => {
     expect(past(kept)).toBe(false);
   });
 
+  it("says where each district's name stands, under its own district, so a sign at the edge can step past it", () => {
+    const plate = { width: 150, height: 30, short: { width: 90, height: 20 } };
+    const cards = ["week", "duty", "person", "note"].map((kind) => ({ id: kindCardId(kind), kind, count: 3, opened: 0, nameplate: plate }));
+    const { placed, frame } = placeCity(cards, schema, { width: 1280, height: 800 });
+    const said = placed.filter((card) => card.nameplate !== "none");
+    expect(frame.nameplates?.map((one) => one.id).sort()).toEqual(said.map((card) => card.id).sort());
+    for (const one of frame.nameplates ?? []) {
+      const card = placed.find((each) => each.id === one.id)!;
+      const size = card.nameplate.startsWith("full") ? plate : plate.short;
+      expect({ width: one.width, height: one.height }).toEqual({ width: size.width, height: size.height });
+      // Under the plot's front corner, centered on it.
+      expect(one.y).toBeGreaterThanOrEqual(card.height / 2);
+      expect(one.x + one.width / 2).toBeCloseTo(card.width / 2, 5);
+    }
+  });
+
   it("is a pure placer: the same cards, the same schema, the same picture", () => {
     const cards = [
       { id: "kind:week", kind: "week", count: 1, opened: 0 },

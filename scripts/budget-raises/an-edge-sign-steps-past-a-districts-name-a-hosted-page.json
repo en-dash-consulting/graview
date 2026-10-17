@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 100,
+  "gzipped": 60,
+  "changeset": "an-edge-sign-steps-past-a-districts-name.md",
+  "note": "Raised when a sign at the edge of the ground learned to step past a district's name: the city's frame carries where each name stands (`CityFrame.nameplates`) and a sign walks past each box it would stand on, both on what a page draws with. Measured at 570_048 minified against 570_037."
+}

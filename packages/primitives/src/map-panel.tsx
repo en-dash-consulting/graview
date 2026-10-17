@@ -227,6 +227,28 @@ function ActsButton({ on, about }: { readonly on: string; readonly about: string
 /** Going to a record from the panel: the same stop a double-click on it in the scene makes, on the ground. */
 const travelTo = (view: ViewState, id: string): ViewState => ({ ...withFocus(withOverview(view, false), id), relation: null });
 
+/**
+ * THE KEYBOARD GOES WHERE "GO TO IT" WENT. The press takes the panel, and
+ * the button in it, away with the map; the keyboard fell to <body> until
+ * the Shell's rescue found something, and on a slow machine that was
+ * seconds, or a record that was not this one. It goes to the record's
+ * card on the ground as soon as the card is drawn — unless a person put it
+ * somewhere meanwhile, which ends the wait.
+ */
+function handTheKeyboardTo(id: string, pressed: HTMLElement | null): void {
+  const wanted = `[data-graview-stage] [data-graview-view="${CSS.escape(id)}"][tabindex]`;
+  const until = performance.now() + 5000;
+  const land = () => {
+    const at = document.activeElement;
+    const free = at === null || at === document.body || at === document.documentElement || at === pressed;
+    if (!free) return;
+    const card = document.querySelector<HTMLElement>(wanted);
+    if (card && card.isConnected && !card.closest("[inert]")) return card.focus({ preventScroll: true });
+    if (performance.now() < until) requestAnimationFrame(land);
+  };
+  requestAnimationFrame(land);
+}
+
 /* -------------------------------------------------------------- the lens */
 
 /**
@@ -403,7 +425,12 @@ function RecordPanel<S extends AnySchema>({ id }: { readonly id: string }) {
           <div style={eyebrow}>{noun}</div>
           <h2 style={title} data-testid="record-panel-title">{name(id)}</h2>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-            <button type="button" data-testid="record-panel-go" style={pressStyle} onClick={() => go(travelTo(view, id))}>
+            <button type="button" data-testid="record-panel-go"               style={pressStyle}
+              onClick={(event) => {
+                go(travelTo(view, id));
+                handTheKeyboardTo(id, event.currentTarget);
+              }}
+            >
               Go to it
             </button>
             <ActsButton on={id} about={name(id)} />

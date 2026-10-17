@@ -261,6 +261,13 @@ export interface CityFrame {
    * of that district's card: ground no name and no sign at the edge stands on.
    */
   readonly showings?: readonly { readonly id: string; readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
+  /**
+   * Where each district's name stands — its plural, its count and its
+   * problems, a control among them — as boxes from the top left of that
+   * district's card: ground a sign at the edge steps past, as it does the
+   * showings. A district whose name is not said has none.
+   */
+  readonly nameplates?: readonly { readonly id: string; readonly x: number; readonly y: number; readonly width: number; readonly height: number }[];
 }
 
 export interface Layout {

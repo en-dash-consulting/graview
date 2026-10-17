@@ -394,6 +394,25 @@ function watchInPage() {
     return false;
   };
   /*
+   * WHICH EDGE A PINNED BAR IS STUCK TO, where its own `top` or `bottom`
+   * says so: graview.dev's rail at 900 wide is sticky at the top, and at the
+   * foot of the long version, scrolled as far as it goes, "Chapter
+   * fourteen" stood under the rail's lower half. Judged by their middles
+   * the rail stood below the link, so the link was told to scroll up the
+   * page where there was no room, and was said to be covered for good —
+   * when scrolling back toward the top brings it out at once.
+   */
+  const stuckTo = (cover) => {
+    for (let at = cover; at && at !== document.body; at = at.parentElement) {
+      const style = getComputedStyle(at);
+      if (style.position !== "sticky" && style.position !== "fixed") continue;
+      if (style.top !== "auto" && style.bottom === "auto") return "top";
+      if (style.bottom !== "auto" && style.top === "auto") return "bottom";
+      return null;
+    }
+    return null;
+  };
+  /*
    * A bar that stays put while what is under it scrolls — a sticky heading,
    * the ask field at the foot — covers nothing a person can scroll out from
    * under it, by any box it scrolls in; it does cover what is already as far
@@ -410,7 +429,7 @@ function watchInPage() {
      * where there was no room, and a page that scrolls on was said to end
      * under the field.
      */
-    const below = cover.closest("[data-graview-foot]") !== null || theirs.top + theirs.bottom > mine.top + mine.bottom;
+    const below = cover.closest("[data-graview-foot]") !== null || (stuckTo(cover) ?? (theirs.top + theirs.bottom > mine.top + mine.bottom ? "bottom" : "top")) === "bottom";
     const needed = below ? mine.bottom - theirs.top : theirs.bottom - mine.top;
     return scrollersOf(el).some((scroller) => {
       const page = scroller === document.scrollingElement || scroller === document.documentElement;

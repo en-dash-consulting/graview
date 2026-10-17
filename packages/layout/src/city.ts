@@ -402,6 +402,7 @@ export function placeCity(
    */
   const said: Box[] = [];
   const sayOf = new Map<string, Nameplate>();
+  const plateAt = new Map<string, Box>();
   const order = [...drawn].sort((a, b) => (b.card.weight ?? b.card.count) - (a.card.weight ?? a.card.count) || cards.indexOf(a.card) - cards.indexOf(b.card));
   for (const one of order) {
     // Under its own district, whole or short: never over it or beside it, where it would read as a neighbor's.
@@ -436,6 +437,7 @@ export function placeCity(
       if (clear) {
         chosen = name;
         said.push(box);
+        plateAt.set(one.card.id, box);
         break;
       }
     }
@@ -461,6 +463,14 @@ export function placeCity(
     extent: { x: where.originX + e.minX, y: where.originY + e.minY, width: e.maxX - e.minX, height: e.maxY - e.minY },
     openedShare: 1,
     ...(tilt !== 0.5 ? { tilt } : {}),
+    ...(plateAt.size > 0
+      ? {
+          nameplates: drawn.flatMap((one) => {
+            const box = plateAt.get(one.card.id);
+            return box ? [{ id: one.card.id, x: box.x - (one.x - one.halfW), y: box.y - (one.y - one.halfH), width: box.width, height: box.height }] : [];
+          }),
+        }
+      : {}),
     ...(drawn.some((one) => one.card.marquee)
       ? {
           showings: drawn.flatMap((one) => {

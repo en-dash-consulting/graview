@@ -141,7 +141,24 @@ await show(`<main style="position:relative;padding:40px"><button style="width:80
 await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
 await settle();
 const openedOver = takeViolations().filter((v) => v.rule === "control-covered");
-checks.aControlCoveredByAnotherIsCaught = standsOver.length > 0 && standsOver[0].detail.includes("Sort") && standsClear.length === 0 && openedOver.length === 0;
+/*
+ * And nothing under a bar stuck to the top of the page, at the page's foot:
+ * graview.dev's long version at 900 wide, scrolled to its end, with
+ * "Chapter fourteen" under the lower half of the sticky rail. Scrolling
+ * back up brings it out; it was said to be covered because the link in
+ * the rail had its middle lower than the chapter's.
+ */
+await show(`<div style="position:sticky;top:0;height:150px;background:#fff;z-index:1"><a href="#a" style="position:absolute;left:20px;top:110px;display:block;width:200px;height:30px">The garden, grown</a></div>
+<main style="margin:0"><div style="height:2400px"></div><p style="margin:0;padding-left:20px"><a href="#b" style="display:inline-block;height:24px;width:140px">Chapter fourteen</a></p><div style="height:676px"></div></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+// Scrolled to its end, and then the page changes there, as a chapter mounting at the foot does.
+await page.evaluate(() => {
+  window.scrollTo({ top: 1e6, behavior: "instant" });
+  document.querySelector("main").setAttribute("title", "The long version");
+});
+await settle();
+const stuckAtTheTop = takeViolations().filter((v) => v.rule === "control-covered");
+checks.aControlCoveredByAnotherIsCaught = standsOver.length > 0 && standsOver[0].detail.includes("Sort") && standsClear.length === 0 && openedOver.length === 0 && stuckAtTheTop.length === 0;
 
 /*
  * card-wider-than-screen: seedbed's plot card on a phone, two columns of 200

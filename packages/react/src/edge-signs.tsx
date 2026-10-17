@@ -1,5 +1,5 @@
 import { pluralLabel, SCENE_LAYERS, type AnySchema } from "@graview/core";
-import { districtsPastTheEdge, type Layout, type PastTheEdge } from "@graview/layout";
+import { districtsPastTheEdge, type CityFrame, type Layout, type PastTheEdge } from "@graview/layout";
 import { useLayoutEffect, useState, type CSSProperties, type ReactElement, type RefObject } from "react";
 
 /**
@@ -46,17 +46,26 @@ export function EdgeSigns({
    * its edge would cover them steps past them, down (or right) if there is
    * room and else up (or left).
    */
-  const showings = (result.city?.showings ?? []).flatMap((hung) => {
-    const card = result.nodes.find((node) => node.id === hung.id);
-    return card ? [{ left: card.x + hung.x, top: card.y + hung.y, right: card.x + hung.x + hung.width, bottom: card.y + hung.y + hung.height }] : [];
-  });
+  const onCards = (boxes: CityFrame["showings"]) =>
+    (boxes ?? []).flatMap((hung) => {
+      const card = result.nodes.find((node) => node.id === hung.id);
+      return card ? [{ left: card.x + hung.x, top: card.y + hung.y, right: card.x + hung.x + hung.width, bottom: card.y + hung.y + hung.height }] : [];
+    });
+  const showings = onCards(result.city?.showings);
+  /*
+   * AND CLEAR OF THE NAMES. A district's name holds its count and its
+   * problems, and "⚠ 10" is a control: on the landing page's live demo at
+   * 600 wide the sign for Decision records, stepped down past Up and the
+   * key, stood on "MODULES 16 ⚠ 10" and took the press meant for it.
+   */
+  const names = onCards(result.city?.nameplates);
   /*
    * AND CLEAR OF THE CORNER. On a phone the city runs past the right edge
    * near the top, and the sign for the district there stood under "Close
    * the map", its name read through the control. The corner the altitude
    * control and the key stand in is ground a sign steps past too.
    */
-  const taken = [...showings, ...chrome.map((box) => ({ left: box.x, top: box.y, right: box.x + box.width, bottom: box.y + box.height }))];
+  const taken = [...showings, ...names, ...chrome.map((box) => ({ left: box.x, top: box.y, right: box.x + box.width, bottom: box.y + box.height }))];
   const signs: ReactElement[] = [];
   for (const side of ["left", "right", "top", "bottom"] as const) {
     // The reader's window: a panel over the scene is not part of it (`Layout.visible`).
@@ -168,10 +177,24 @@ function clearOf(
   const hung = covers(at);
   if (!hung) return { at, inset: EDGE_INSET };
   const half = across ? HALF_TALL : length / 2;
-  const after = (across ? hung.bottom : hung.right) + half + 4;
-  const before = (across ? hung.top : hung.left) - half - 4;
-  if (after <= span - MARGIN && !covers(after)) return { at: after, inset: EDGE_INSET };
-  if (before >= MARGIN && !covers(before)) return { at: before, inset: EDGE_INSET };
+  /*
+   * Past each in turn, one way and then the other: stepped past the corner,
+   * a sign can land on a district's name, and is stepped past that too.
+   */
+  const walk = (way: 1 | -1): number | null => {
+    let along = at;
+    for (let step = 0; step < 12; step++) {
+      const on = covers(along);
+      if (!on) return along;
+      along = way > 0 ? (across ? on.bottom : on.right) + half + 4 : (across ? on.top : on.left) - half - 4;
+      if (along > span - MARGIN || along < MARGIN) return null;
+    }
+    return null;
+  };
+  const after = walk(1);
+  if (after !== null) return { at: after, inset: EDGE_INSET };
+  const before = walk(-1);
+  if (before !== null) return { at: before, inset: EDGE_INSET };
   // Beside them: in from its edge past where they reach.
   const reach = side === "left" ? hung.right : side === "right" ? seen.width - hung.left : side === "top" ? hung.bottom : seen.height - hung.top;
   return { at, inset: Math.max(EDGE_INSET, reach + 4) };
