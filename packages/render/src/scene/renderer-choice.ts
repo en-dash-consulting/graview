@@ -44,9 +44,20 @@ export function rendererAsked(page: PageLike = globalThis as PageLike): Renderer
 
 /**
  * Whether this browser could draw the scene on the GPU at all: WebGPU, an
- * element-capture call on its queue, and a canvas that says when capture is
- * legal. Synchronous and without a device — an adapter may still be refused,
- * which the capture path's own first-frame check finds.
+ * element-capture call on its queue, a canvas that says when capture is
+ * legal, and a browser whose own hit-testing follows the drawn geometry.
+ * Synchronous and without a device — an adapter may still be refused, which
+ * the capture path's own first-frame check finds.
+ *
+ * THE LAST OF THESE IS WHAT MAKES THE GPU PATH THE SAME PAGE. A press, a
+ * screen reader's box, an automation's click and a focused field's scroll
+ * all land on where the browser thinks a view is. Chromium 158 (paint
+ * records, no `layoutSubtree`) moves a view's box to where it was drawn
+ * when told; Chrome 155 with capture switched on still spells
+ * `layoutSubtree`, accepts the geometry and ignores it, so every box stays
+ * where it was laid out and a press on a drawn district misses it. The
+ * pointer router covered a mouse there and nothing else, so such a browser
+ * draws on the DOM path, which it draws exactly.
  */
 export function gpuCapturePresent(page: PageLike = globalThis as PageLike): boolean {
   if (!page.navigator || !("gpu" in page.navigator)) return false;
@@ -54,7 +65,13 @@ export function gpuCapturePresent(page: PageLike = globalThis as PageLike): bool
   if (!queue) return false;
   const captures = typeof queue["drawElementImageToTexture"] === "function" || typeof queue["copyElementImageToTexture"] === "function";
   const canvas = page.HTMLCanvasElement?.prototype as Record<string, unknown> | undefined;
-  return captures && typeof canvas?.["requestPaint"] === "function";
+  if (!captures || !canvas || typeof canvas["requestPaint"] !== "function") return false;
+  return hitTestingFollowsDrawing(canvas);
+}
+
+/** The paint-record build, which places a view's box where it was drawn, and not the `layoutSubtree` one, which does not. */
+function hitTestingFollowsDrawing(canvas: Record<string, unknown>): boolean {
+  return typeof canvas["captureElementImage"] === "function" && !("layoutSubtree" in canvas);
 }
 
 /**

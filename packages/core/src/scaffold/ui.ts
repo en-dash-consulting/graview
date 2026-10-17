@@ -11,6 +11,8 @@ export function indexHtml(ids: Ids): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${escapeHtml(ids.name)}</title>
+<!-- No icon of its own until the Shell draws the brand's mark: Chrome asks for /favicon.ico before any script runs, and a 404 there is an error on the console. -->
+<link rel="icon" href="data:," />
 <style>
   /* The theme is injected by src/main.tsx from the declared brand; this is
      only the pre-paint ground so the page never flashes white. */
@@ -33,6 +35,7 @@ export function embedHtml(ids: Ids): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${escapeHtml(ids.name)}, on somebody else's page</title>
+<link rel="icon" href="data:," />
 <style>
   /* THE HOST PAGE'S OWN LOOK. Nothing here is ${escapeHtml(ids.name)}'s, and
      nothing ${escapeHtml(ids.name)} draws may reach out and change it: the
