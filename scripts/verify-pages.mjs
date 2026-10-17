@@ -558,7 +558,7 @@ async function aDerivedFormApplies(phone) {
   const before = await phone.evaluate(
     () => document.querySelectorAll('[data-testid="records"] a').length,
   );
-  // Adding one is a press at the list's end: its form opens there.
+  // Adding one is a press beside the list's heading: its form opens under the head.
   if (!(await phone.locator('[data-testid="form-add-task"]').isVisible().catch(() => false))) await phone.click('[data-testid="act-open-add-task"]');
   await phone.fill('[data-testid="form-add-task"] input[name="label"]', "Buy compost");
   await phone.selectOption('[data-testid="form-add-task"] select[name="listId"]', { index: 1 });
