@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.33`](https://graview.dev/docs/releases.html#v0-1-33)
 - [`0.1.32`](https://graview.dev/docs/releases.html#v0-1-32)
 - [`0.1.30`](https://graview.dev/docs/releases.html#v0-1-30)
 - [`0.1.29`](https://graview.dev/docs/releases.html#v0-1-29)
@@ -33,6 +34,19 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.33
+
+Published October 17, 2026 · the current version
+
+A read-only calendar takes its own changes under a policy, and a host keeps Notify me in its own store.
+
+- **A read-only connection works under a policy.** A calendar the app only reads now brings its own changes in when the app declares who may do what, and a change the app refuses is reported as refused rather than as the calendar being unreachable.
+- **Notify me on a hosted page.** `mount` takes the host's subscription store, so subscriptions made from the right-click or a record page are kept by the host on both faces; keeping them that way adds no parser to the first load, about 9.4 KB less than before.
+
+**Before you upgrade:** `SyncReport.refused` may now name an inbound change (`SyncRefusal`, with the remote `resource` and `id`), and `offline` is true only when the remote itself fails. `mount` and `<Embed>` take `subscriptions`.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.33) · [The full changelog for 0.1.33](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0133)
 
 ## 0.1.32
 
