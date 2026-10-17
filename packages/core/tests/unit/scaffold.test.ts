@@ -280,6 +280,16 @@ describe("the first kind", () => {
   });
 });
 
+describe("a new project's pages", () => {
+  it("name an icon before any script runs, so Chrome does not ask for a /favicon.ico the project does not have", () => {
+    const files = scaffoldProject({ name: "Field Notes" }).files;
+    for (const page of files.filter((f) => f.path.endsWith(".html"))) {
+      expect(page.contents, page.path).toMatch(/<link rel="icon" href="[^"]+" \/>/);
+      expect(page.contents.indexOf('rel="icon"'), page.path).toBeLessThan(page.contents.indexOf("<script"));
+    }
+  });
+});
+
 describe("link mode", () => {
   it("consumes the framework by path, aliases its sources, and pins nothing", () => {
     const s = scaffoldProject({ name: "Linked", link: "../graview" });
