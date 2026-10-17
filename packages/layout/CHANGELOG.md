@@ -1,5 +1,31 @@
 # @graview/layout
 
+## 0.1.31
+
+### Patch Changes
+
+- ed1a54c: Nothing stands over a control the watch found covered on its first run (W-224). From altitude a district's showings hang from the foot of its name as drawn, measured rather than guessed, so they no longer cover its problem count. The sign to a person somewhere else stands down the right edge below Up and the key, clear of a panel docked over the map. On a phone the app's name gives its room before the faces switch stands over it. The city keeps the zoom's corner clear as it keeps Up's, and where a sheet stands over the ask field the foot is the taller of the two rather than both. The timeline over the scene says its height as a sheet does, so the city is fitted above it. A sign at the top edge steps past the picture's trail ("Reset view"). A focused card ends above the row of districts under it at every text size, so "+3 more" is pressable. A row or card stretched over by its record's link stops that link where a list of its own records begins, so a package's offers and the offers answering what was heard no longer stand over it. And a view the seat drew over the scene puts the picture under it away (inert) while it stands, so Up, the key and the zoom are not pressed through it.
+  
+  It adds 0.2 KB more up front to a hosted page (178 bytes, 63 gzipped), and its raises are filed in `scripts/budget-raises/`.
+  
+  Compatibility: no surface changes; `useEndsAboveItsList` is new on `@graview/primitives` and its `/pages` entry.
+- 9a5e067: The quick ask replaces the Ask box (Roadmap f-quick-ask-framework). No face draws a field at its foot that grows into a chat thread any more: `SeatField`, its panel and Pages' `PageAsk` are gone, and so are their settings, the Shell's `ask` and `chat`, a routed face's `context.ask`, the embed's `seat` option and `handle.setAskField`. In their place, where the host's `ai` gives a model and does not say `off`, ⌘K (Ctrl+K) opens a command bar beside what the reader is on — the selected card on the scene, the record or list a page is about — that completes the acts on it, "Show …" for a panel the catalog can draw of it, its places and its records. Words that complete nothing are asked, and the answer is a card beside the record or the list: a few sentences, the places, records and panels that act on it, and the changes it proposes as a ghost on the card, accepted all or some as one batch with its one undo. A follow-up is asked on the card and replaces its answer; it is not a thread. The context menu's "Ask about this…", Find's last row and the search page's "Ask: ‘…’" open the same card, Activity keeps each ask as an AI interaction (`ask.kind` `"ask"`, with its `answer`) and "Ask again" asks it on the card again. Where the quick ask is drawn ⌘K is its and `/` stays Find's — Pages' Find hears `/` too, and the bar says `/` over its box; where it is not, both are Find's.
+  
+  `quickAsk` (a boolean, on by default) on `Shell`, a routed face's context and `mount`/`<Embed>`, and `handle.setQuickAsk(on)`, say whether it is drawn; `quickAskOf(setting)` reads a setting a host kept from the Ask box — `"field"` is on, `"hidden"` is off — and the embed reads a kept string the same way. The answer is the host's: `HostAi.answer` (`{ model, answer({ said, target, targetLabel, state, catalog, follows }) → { text, pick?, usage? } }`) answers it, else the Thinking slot, else the Fast slot's pick among the candidates; `answerHere` on `@graview/tools/inline-ai` is the engine, and `stubThinking` answers it for a test. A provider drawn inside another now takes the outer one's `ai` unless given its own, so an embed's routed face draws the inline AI and the quick ask too.
+  
+  The conversation stays the app's (`seatTalk`, the responders, `ai.turn`): no face draws it, and `ChatPanel` is there for a product that places one in its own layout. The strip the scene kept clear at its foot for the field stays, always, as the foot's (where the zoom, the way back, a notice and a proposal stand), so the city keeps its fit; `useSeatDrawn` and the conversation's `open`, `side`, `drawn`, `setOpen` and `setSide` went with the field. The four harnesses that existed for the box (`chat`, `phone-seat`, `seat-guide`, `seat-goes-and-draws`) are retired, and `quick-ask` holds the new surface on both faces in three engines.
+  
+  It adds 0.1 KB more up front to a hosted page (100 bytes, 60 gzipped, about the 19 its first load grew by and a margin), and its raises are filed in `scripts/budget-raises/`.
+  
+  Compatibility: no surface changes. Removed: `SeatField`, `SeatFieldProps`, `SeatStart`, `SEAT_WIDTH`, `SEAT_PHONE_BELOW`, `PageAsk`, `useSeatDrawn`, `SeatSide`, the Shell's `ask` and `chat`, `PageContext.ask`, `EmbedOptions.seat` and `EmbedHandle.setAskField`. New: `QuickAskDoor`, `openQuickAsk`, `useQuickAskDrawn`, `quickAskOf`, `QuickAskOpening` on `@graview/primitives`, `PageQuickAsk` on `@graview/pages`, `quickAsk` on `ShellProps`, `PageContext` and `EmbedOptions`, `EmbedHandle.setQuickAsk`, `HostAi.answer` with `AnswerProvider`, `AnswerRequest` and `AnswerReply`, `answerHere`, `answerOf` and `QuickAsk` on `@graview/tools/inline-ai`, `AiInteraction.answer`, and `HeldGhost.onCard`.
+- Updated dependencies [6009469]
+- Updated dependencies [4784ba8]
+- Updated dependencies [938721b]
+- Updated dependencies [ff88015]
+- Updated dependencies [294f181]
+- Updated dependencies [9a5e067]
+  - @graview/core@0.1.31
+
 ## 0.1.30
 
 ### Patch Changes

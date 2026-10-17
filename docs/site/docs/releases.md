@@ -35,7 +35,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.30
 
-Published October 15, 2026 · the current version
+Published October 15, 2026
 
 Play an app back, link across apps, an actor that tidies, and graview.dev as a Graview app.
 
