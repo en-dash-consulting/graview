@@ -178,10 +178,39 @@ try {
   await page.click('[data-testid="overview"]');
   await page.waitForTimeout(900);
   report.control.altitude = await control();
+  /*
+   * MIDWAY IS A FRAME CAUGHT ON THE WAY, not whatever stood 300 ms after
+   * the press. On the nightly's runner, three harnesses side by side, the
+   * reading at 300 ms came before the morph began (0 on the GPU leg) or
+   * after it was nearly done (0.72 on the DOM leg), and the reading at a
+   * second was still on its way (0.36): the same morph, read at moments a
+   * starved machine had moved. Every frame from the press until the mark
+   * settles is read, and the one nearest halfway is midway; ground again
+   * is the mark once it has stopped moving, or after four seconds.
+   */
+  const frames = page.evaluate(
+    () =>
+      new Promise((done) => {
+        const wing = () => document.querySelector('[data-testid="overview"] .graview-altitude-mark-wing');
+        const seen = [];
+        const began = performance.now();
+        const tick = () => {
+          const el = wing();
+          seen.push(el ? Number(getComputedStyle(el).opacity) : null);
+          const last = seen.slice(-6);
+          const still = last.length === 6 && last.every((one) => one === last[0]) && last[0] !== 0;
+          if (still || performance.now() - began > 4000) return done(seen);
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+  );
   await page.click('[data-testid="overview"]');
-  await page.waitForTimeout(300);
-  report.control.midway = await control();
-  await page.waitForTimeout(700);
+  const read = (await frames).filter((one) => typeof one === "number");
+  // From the first frame that moved: a cut is then its end alone, a morph every step on the way.
+  const wings = read.slice(Math.max(0, read.findIndex((one) => one !== read[0])));
+  const halfway = wings.reduce((best, one) => (best === null || Math.abs(one - 0.375) < Math.abs(best - 0.375) ? one : best), null);
+  report.control.midway = { ...(await control()), wingOpacity: halfway, frames: wings.length };
   report.control.groundAgain = await control();
 
   /*
@@ -621,9 +650,14 @@ try {
       });
       if (at.where === "panel") break;
       if (at.where !== "district") continue;
-      // A district partly under the panel is brought into the part that is seen once the camera has moved.
-      await covering.waitForTimeout(500);
-      const after = await covering.evaluate((id) => {
+      /*
+       * A district partly under the panel is brought into the part that is
+       * seen once the camera has moved: asked until it is, for up to three
+       * seconds, not once at half a second. On the nightly's runner the
+       * camera was still on its way at 500 ms, and the district was said to
+       * be under the panel it was leaving.
+       */
+      const afterwards = (id) => covering.evaluate((id) => {
         const panel = document.querySelector("[data-graview-map-panel]")?.getBoundingClientRect();
         const ground = document.querySelector(".graview-ground")?.getBoundingClientRect();
         const r = document.querySelector(`.graview-ground [data-graview-view="${CSS.escape(id)}"]`)?.getBoundingClientRect();
@@ -635,7 +669,13 @@ try {
         const across = r.width <= seen.right - seen.left ? r.left >= seen.left - 1 && r.right <= seen.right + 1 : r.left >= seen.left - 1 && r.left < seen.right;
         const down = r.height <= seen.bottom - seen.top ? r.top >= seen.top - 1 && r.bottom <= seen.bottom + 1 : r.top >= seen.top - 1 && r.top < seen.bottom;
         return across && down ? "clear" : "under";
-      }, at.id);
+      }, id);
+      let after = null;
+      for (const until = Date.now() + 3000; ; ) {
+        await covering.waitForTimeout(250);
+        after = await afterwards(at.id);
+        if (after === "clear" || Date.now() > until) break;
+      }
       landed.push({ id: at.id, was: before[at.id] ?? null, coveredWhenLanded: at.inside, afterwards: after });
     }
     report.coveredTab[width] = { before, landed };
@@ -1068,15 +1108,29 @@ try {
         t: performance.now(),
       };
     };
+    /*
+     * READ UNTIL IT STANDS STILL, not for forty frames or 900 ms. The
+     * nightly's runner, three harnesses side by side, drew so few frames in
+     * that window that the ground was read four times on its way and not
+     * yet where it was going (-59 of -66): an easing cut short by the
+     * reading, not a leap. Every frame is read until the ground has not
+     * moved for six frames after moving, or for four seconds.
+     */
     const seen = [];
-    let frames = 0;
-    const tick = () => {
-      seen.push(read());
-      if (++frames < 40) requestAnimationFrame(tick);
-    };
+    const began = performance.now();
+    const settled = new Promise((done) => {
+      const tick = () => {
+        seen.push(read());
+        const last = seen.slice(-6);
+        const moved = seen.some((one) => one.cell !== seen[0].cell || one.x !== seen[0].x);
+        const still = moved && last.length === 6 && last.every((one) => one.cell === last[0].cell && one.x === last[0].x);
+        if (still || performance.now() - began > 4000) return done();
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
     document.querySelector('[data-testid="showing-the-week"]')?.click();
-    requestAnimationFrame(tick);
-    await new Promise((done) => setTimeout(done, 900));
+    await settled;
     const cells = [...new Set(seen.map((one) => one.cell))];
     /*
      * A LEAP IS MOST OF THE WAY IN ONE STEP, not more than twenty pixels in
@@ -1102,8 +1156,21 @@ try {
     const xs = [...new Set(seen.map((one) => one.x))];
     const shift = Math.abs((seen[seen.length - 1]?.x ?? 0) - (seen[0]?.x ?? 0));
     const xJumps = seen.filter((one, at) => at > 0 && Math.abs(one.x - seen[at - 1].x) > Math.max(20, shift * 0.6) && one.t - seen[at - 1].t < 50).length;
-    return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x };
+    /*
+     * AND HOW LONG IT TOOK: from the first frame that moved to the last. A
+     * cut is over in one frame; an easing on a runner that drew five frames
+     * in it is still most of a second long, with a step or two on the way.
+     */
+    const changed = seen.map((one, at) => (at > 0 && (one.cell !== seen[at - 1].cell || one.x !== seen[at - 1].x) ? one.t : null)).filter((t) => t !== null);
+    const movingMs = changed.length > 0 ? Math.round(changed[changed.length - 1] - (seen[seen.findIndex((one) => one.t === changed[0]) - 1]?.t ?? changed[0])) : 0;
+    return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x, frames: seen.length, movingMs };
   });
+  /*
+   * Eased: five steps or more, or — where a starved runner drew only a few
+   * frames on the way — a step between the ends and a move that took a
+   * third of a second, which a cut never does.
+   */
+  const eased = (steps, ms) => steps >= 5 || (steps >= 3 && ms >= 300);
   report.checks = {
     ...(report.checks ?? {}),
     theCityPansBesideAnOpenPicture: onThePicture,
@@ -1115,8 +1182,8 @@ try {
         travel.jumps === 0 &&
         travel.xJumps === 0 &&
         (travel.last !== travel.first || travel.xLast !== travel.xFirst) &&
-        (travel.last === travel.first || travel.steps >= 5) &&
-        (travel.xLast === travel.xFirst || travel.xSteps >= 5),
+        (travel.last === travel.first || eased(travel.steps, travel.movingMs)) &&
+        (travel.xLast === travel.xFirst || eased(travel.xSteps, travel.movingMs)),
     },
   };
   report.camera = { start, zoomedIn, wheelAt: open, wheeled, buttonOut, buttonIn, dragged, onThePicture };
