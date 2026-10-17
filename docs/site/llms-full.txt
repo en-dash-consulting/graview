@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.32)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.33)
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -696,6 +696,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.33`](https://graview.dev/docs/releases.html#v0-1-33)
 - [`0.1.32`](https://graview.dev/docs/releases.html#v0-1-32)
 - [`0.1.30`](https://graview.dev/docs/releases.html#v0-1-30)
 - [`0.1.29`](https://graview.dev/docs/releases.html#v0-1-29)
@@ -726,9 +727,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.32
+## 0.1.33
 
 Published October 17, 2026 · the current version
+
+A read-only calendar takes its own changes under a policy, and a host keeps Notify me in its own store.
+
+- **A read-only connection works under a policy.** A calendar the app only reads now brings its own changes in when the app declares who may do what, and a change the app refuses is reported as refused rather than as the calendar being unreachable.
+- **Notify me on a hosted page.** `mount` takes the host's subscription store, so subscriptions made from the right-click or a record page are kept by the host on both faces; keeping them that way adds no parser to the first load, about 9.4 KB less than before.
+
+**Before you upgrade:** `SyncReport.refused` may now name an inbound change (`SyncRefusal`, with the remote `resource` and `id`), and `offline` is true only when the remote itself fails. `mount` and `<Embed>` take `subscriptions`.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.33) · [The full changelog for 0.1.33](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0133)
+
+## 0.1.32
+
+Published October 17, 2026
 
 Ask with ⌘K and the right-click, be told when things happen, a faster first load, the GPU by default, and a Google calendar kept in step.
 
@@ -5294,7 +5308,7 @@ Source: https://graview.dev/docs/site.html
 
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 374 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 375 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -5319,7 +5333,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 34 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 35 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made

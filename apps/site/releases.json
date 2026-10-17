@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.33",
+      "date": "2026-10-17",
+      "headline": "A read-only calendar takes its own changes under a policy, and a host keeps Notify me in its own store.",
+      "summary": "- **A read-only connection works under a policy.** A calendar the app only reads now brings its own changes in when the app declares who may do what, and a change the app refuses is reported as refused rather than as the calendar being unreachable.\n- **Notify me on a hosted page.** `mount` takes the host's subscription store, so subscriptions made from the right-click or a record page are kept by the host on both faces; keeping them that way adds no parser to the first load, about 9.4 KB less than before.",
+      "compatibility": "`SyncReport.refused` may now name an inbound change (`SyncRefusal`, with the remote `resource` and `id`), and `offline` is true only when the remote itself fails. `mount` and `<Embed>` take `subscriptions`.",
+      "published": true
+    },
+    {
       "version": "0.1.32",
       "date": "2026-10-17",
       "headline": "Ask with ⌘K and the right-click, be told when things happen, a faster first load, the GPU by default, and a Google calendar kept in step.",
