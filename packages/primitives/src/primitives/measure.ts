@@ -1,4 +1,5 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
+import { flushSync } from "react-dom";
 
 /*
  * WHAT THE FRAME OF EVERY FACE MEASURES WITH (FR-104): the room a view has,
@@ -16,18 +17,36 @@ import { useEffect, useState, type CSSProperties } from "react";
  * themselves out for a desk (a 316px label column, seven day columns) were
  * unreadable in half of them. The width is the fact they need to choose a
  * shape by; this is the one place it is read.
+ *
+ * DRAWN IN THE ROOM IT HAS, FROM ITS FIRST FRAME. The width was read after
+ * the paint, and a change to it was rendered after the paint too: a card
+ * on the ground is given its size by the scene after the lens inside it
+ * first measured, and the coverage matrix in a 225-pixel card on
+ * graview.dev at 360 wide painted one frame laid out for a desk — its
+ * rotated column names 83 pixels past the screen — before it stacked, and
+ * the watch saw that frame. It is read before the first paint, of the box
+ * the ref holds now, and a change the browser reports before a paint is
+ * drawn in that paint.
  */
 export function useWidth(ref: { current: HTMLElement | null }): number | null {
   const [width, setWidth] = useState<number | null>(null);
-  useEffect(() => {
-    const element = ref.current;
+  const [element, setElement] = useState<HTMLElement | null>(null);
+  // After every render, before the paint: the box the ref holds now.
+  useLayoutEffect(() => {
+    if (ref.current !== element) setElement(ref.current);
+  });
+  useLayoutEffect(() => {
     if (!element || typeof ResizeObserver === "undefined") return;
-    const read = () => setWidth(Math.round(element.getBoundingClientRect().width));
-    read();
-    const observer = new ResizeObserver(read);
+    const measured = () => Math.round(element.getBoundingClientRect().width);
+    setWidth(measured());
+    // The browser reports a resize after layout and before the paint; rendered then, the paint has it.
+    const observer = new ResizeObserver(() => {
+      const next = measured();
+      flushSync(() => setWidth(next));
+    });
     observer.observe(element);
     return () => observer.disconnect();
-  }, [ref]);
+  }, [element]);
   return width;
 }
 
