@@ -103,7 +103,8 @@ async function axe(page) {
   await page.addScriptTag({ content: axeSource });
   return page.evaluate(async () => {
     const result = await window.axe.run(document, { resultTypes: ["violations"] });
-    return result.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length }));
+    // Where, too: a violation seen once on a runner and never again is fixed only if the verdict says what it stood on.
+    return result.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.length, on: v.nodes.slice(0, 3).map((node) => ({ target: node.target.join(" "), html: node.html.slice(0, 160), said: node.failureSummary?.split("\n").slice(0, 3).join(" ") ?? null })) }));
   });
 }
 
@@ -720,5 +721,12 @@ report.passed = Object.values(report.verdict).every(Boolean) && !report.error;
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/create.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
 process.stdout.write(`${JSON.stringify(report.verdict, null, 2)}\n`);
+/*
+ * WHAT AXE FOUND, said where CI shows it. The verdict above is a yes or a
+ * no, and docs/create.json stays on the runner: on a Version PR, axe failed
+ * once and passed on the re-run, and nothing said which rule it was.
+ */
+const axeSaid = Object.fromEntries(Object.entries(b ?? {}).filter(([key, violations]) => key.startsWith("axe") && !clean(violations)));
+if (Object.keys(axeSaid).length > 0) process.stdout.write(`\naxe found, by pass:\n${JSON.stringify(axeSaid, null, 2)}\n`);
 if (report.error) process.stdout.write(`\n${report.error}\n`);
 process.exit(report.passed ? 0 : 1);
