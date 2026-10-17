@@ -8,9 +8,10 @@ import { useSyncExternalStore } from "react";
  * The seat's turns lived in the panel that drew them, so a person who asked
  * on the scene and switched to Pages met an empty seat: the panel on the
  * other face was a second one, and the first had taken what was said with
- * it when it went. The turns, what became of each proposal, whether the
- * seat is open and which foot it stands at are held here, by the provider,
- * so every face that draws the seat draws the same one.
+ * it when it went. The turns, what became of each proposal and the view
+ * it drew are held here, by the provider, so every face that draws a
+ * conversation (`ChatPanel`, where a product places one) draws the same
+ * one, and a panel the inline AI drew stands on both faces.
  *
  * A face that is a page of its own (the whole-page Shell at `/`, the routed
  * face at `/pages`) is a second provider in a second document, so the same
@@ -73,19 +74,12 @@ export type SeatOutcome =
   | { readonly state: "declined"; readonly said: string }
   | { readonly state: "refused"; readonly error: string };
 
-/** Which foot of the picture the seat stands at on a desk. */
-export type SeatSide = "left" | "right";
-
 export interface SeatTalkState {
   readonly turns: readonly SeatTurn[];
   readonly outcomes: ReadonlyMap<string, SeatOutcome>;
   readonly busy: boolean;
-  readonly open: boolean;
-  readonly side: SeatSide;
-  /** A question asked from somewhere else (Find's "Ask:" row), waiting for the seat to send it. */
+  /** A question asked from somewhere else (a suggestion, a conversation's own composer), waiting for it to be sent. */
   readonly pending: string | null;
-  /** How many seats are drawn: Find offers "Ask:" only where one is. */
-  readonly drawn: number;
   /** The view the seat drew, shown in place of the picture until it is kept or put away. */
   readonly draft: SeatDraft | null;
   /** Why the last ask could not be drawn, said over the last good draft. */
@@ -98,19 +92,15 @@ export interface SeatTalk {
   setTurns(next: (current: readonly SeatTurn[]) => readonly SeatTurn[]): void;
   settle(key: string, outcome: SeatOutcome): void;
   setBusy(busy: boolean): void;
-  setOpen(open: boolean): void;
-  setSide(side: SeatSide): void;
-  /** Opens the seat with this question, to be sent by whichever seat is drawn. */
+  /** This question, to be sent by the conversation that is drawn. */
   ask(question: string): void;
   /** The waiting question, taken once. */
   takePending(): string | null;
-  /** A seat is drawn; the returned function says it is gone. */
-  drawn(): () => void;
   /** Shows a drawn view (or puts it away, with null), and what to say over it. */
   setDraft(draft: SeatDraft | null, note?: string | null): void;
 }
 
-const EMPTY: SeatTalkState = { turns: [], outcomes: new Map(), busy: false, open: false, side: "left", pending: null, drawn: 0, draft: null, draftNote: null };
+const EMPTY: SeatTalkState = { turns: [], outcomes: new Map(), busy: false, pending: null, draft: null, draftNote: null };
 
 /** The key the tab keeps an app's conversation under. */
 export const seatTalkKey = (app: string): string => `graview:seat:${app}`;
@@ -120,12 +110,10 @@ function read(key: string | null): Partial<SeatTalkState> {
   try {
     const kept = sessionStorage.getItem(key);
     if (!kept) return {};
-    const parsed = JSON.parse(kept) as { turns?: SeatTurn[]; outcomes?: [string, SeatOutcome][]; open?: boolean; side?: SeatSide; draft?: SeatDraft | null };
+    const parsed = JSON.parse(kept) as { turns?: SeatTurn[]; outcomes?: [string, SeatOutcome][]; draft?: SeatDraft | null };
     return {
       ...(Array.isArray(parsed.turns) ? { turns: parsed.turns } : {}),
       ...(Array.isArray(parsed.outcomes) ? { outcomes: new Map(parsed.outcomes) } : {}),
-      ...(typeof parsed.open === "boolean" ? { open: parsed.open } : {}),
-      ...(parsed.side === "left" || parsed.side === "right" ? { side: parsed.side } : {}),
       ...(parsed.draft?.drawn ? { draft: parsed.draft } : {}),
     };
   } catch {
@@ -137,7 +125,7 @@ function read(key: string | null): Partial<SeatTalkState> {
 function write(key: string | null, state: SeatTalkState): void {
   if (!key) return;
   try {
-    sessionStorage.setItem(key, JSON.stringify({ turns: state.turns.slice(-40), outcomes: [...state.outcomes], open: state.open, side: state.side, draft: state.draft }));
+    sessionStorage.setItem(key, JSON.stringify({ turns: state.turns.slice(-40), outcomes: [...state.outcomes], draft: state.draft }));
   } catch {
     // Kept for this page only.
   }
@@ -162,30 +150,14 @@ export function createSeatTalk(app: string | null): SeatTalk {
     setTurns: (next) => set({ ...state, turns: next(state.turns) }),
     settle: (at, outcome) => set({ ...state, outcomes: new Map(state.outcomes).set(at, outcome) }),
     setBusy: (busy) => set({ ...state, busy }, false),
-    setOpen: (open) => {
-      if (state.open !== open) set({ ...state, open });
-    },
-    setSide: (side) => {
-      if (state.side !== side) set({ ...state, side });
-    },
-    ask: (question) => set({ ...state, open: true, pending: question.trim() || null }),
+    ask: (question) => set({ ...state, pending: question.trim() || null }),
     takePending() {
       const pending = state.pending;
       if (pending !== null) set({ ...state, pending: null }, false);
       return pending;
     },
-    drawn() {
-      set({ ...state, drawn: state.drawn + 1 }, false);
-      return () => set({ ...state, drawn: Math.max(0, state.drawn - 1) }, false);
-    },
     setDraft: (draft, note = null) => set({ ...state, draft, draftNote: note }),
   };
-}
-
-/** Whether a seat is drawn, re-rendering only when that changes: the scene keeps its foot clear for it. */
-export function useSeatDrawn(talk: SeatTalk): boolean {
-  const drawn = () => talk.get().drawn > 0;
-  return useSyncExternalStore(talk.subscribe, drawn, drawn);
 }
 
 /** The conversation as it is now, re-rendering when it changes. */

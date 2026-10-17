@@ -17,10 +17,11 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, type PagesArrangement } from "@graview/core";
+import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
+import { createAiDesk, type AiDesk } from "./ai-desk.js";
 import { PRESENCE_SETTINGS, tabSession, usePresenceState } from "./presence.js";
 import { useActivityState, type ActivityMark, type Attention } from "./activity.js";
 import type { ViewState } from "@graview/layout/view";
@@ -105,6 +106,8 @@ export interface PointerMenu {
   readonly place?: string | undefined;
   /** The address it was opened on, when that was a link. */
   readonly href?: string | undefined;
+  /** The act it was opened on, by its declared name: a record's act, a list's way to begin one. */
+  readonly act?: string | undefined;
   /** What the menu is headed with, when not the name of what it is about: a place's title. */
   readonly title?: string | undefined;
   /** Where the keyboard goes back to when it closes; the card it was opened on when unsaid. */
@@ -222,12 +225,24 @@ export interface GraviewContextValue<S extends AnySchema> {
    * once, in code — a reader is never asked which machine answers.
    */
   readonly ai: HostAi;
+  /**
+   * THE INLINE AI'S DESK: the interactions Activity draws and the ghost
+   * waiting to be accepted, held by the app so both faces read one.
+   */
+  readonly aiDesk: AiDesk;
   /** THE HOST'S WAY TO NAME ANOTHER APP (`resolveApp` on the provider, FR-171), where an app-link field asks it. */
   readonly resolveApp?: ResolveApp | undefined;
   /** THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (`linkedRecords` on the provider, FR-171), where a linked record is drawn or picked. */
   readonly linkedRecords?: LinkedRecords | undefined;
   /** THE HOST'S SECTIONS OF THE CONTEXT MENU (`menuSections` on the provider, else the provider's around it). */
   readonly menuSections?: readonly MenuSectionSource[] | undefined;
+  /**
+   * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): the host's
+   * `subscriptions`, else the provider's around it, else this page's own,
+   * in memory. The menu's sheet, Activity's list and the chat's tools all
+   * keep the reader's subscriptions here.
+   */
+  readonly subscriptions: SubscriptionStore;
   /** The far records this viewer has been told, read at once: what a linked record draws from, as the rule language reads them (`@graview/core/linked`). */
   readonly linkedReads?: LinkedReads | undefined;
   /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
@@ -502,6 +517,18 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * answers a section (rows, or what it draws) or nothing.
    */
   readonly menuSections?: readonly MenuSectionSource[] | undefined;
+  /**
+   * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): a person's
+   * subscriptions — made from the context menu, a record's page, after an
+   * act, or by the chat — are kept here: `{ list, add, remove, onChange? }`
+   * over the host's own storage (`remoteSubscriptions` from
+   * `@graview/ship/browser` for a served store). Unsaid, the provider
+   * around this one's, else this page's memory, gone with the page. Who is
+   * told of a match is the host's to decide where commits land: its server
+   * (`createStoreHandler`'s `onSubscriptionMatch`), or, for a store that
+   * lives in the page, `watchSubscriptions` from `@graview/core/subscriptions`.
+   */
+  readonly subscriptions?: SubscriptionStore | undefined;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -542,6 +569,9 @@ export function useTheWatchKnowsWhatIsUnseen<S extends AnySchema>(store: Store<S
   }, [store, principal, from]);
 }
 
+/** What a host that turned AI off is handed on: nothing but that it is off. */
+const AI_OFF: HostAi = { off: true };
+
 export function GraviewProvider<S extends AnySchema>({
   store: given,
   views,
@@ -561,12 +591,13 @@ export function GraviewProvider<S extends AnySchema>({
   locale: readerLocale,
   onKeepLens,
   providers,
-  ai = NO_AI,
+  ai: handedAi,
   files,
   resolveApp,
   history,
   linkedRecords,
   menuSections,
+  subscriptions: hostSubscriptions,
   view,
   onViewChange,
   children,
@@ -616,6 +647,20 @@ export function GraviewProvider<S extends AnySchema>({
   /* One conversation per app: an outer provider's when this one is drawn inside it (the routed face in an embed). */
   const outer = useContext(GraviewContext);
   const [seatTalk] = useState<SeatTalk>(() => outer?.seatTalk ?? createSeatTalk(brand?.name ?? given.schema.kinds.join(",")));
+  /*
+   * AI OFF IS NO AI AT ALL: a host that says `off` is handed nothing else to
+   * any surface, so no model is asked and every AI part reads it as hidden.
+   */
+  /* A provider drawn inside another (the routed face in an embed) is handed the outer one's AI unless given its own: one app, one host's say. */
+  const givenAi = handedAi ?? outer?.ai ?? NO_AI;
+  const ai = useMemo<HostAi>(() => (givenAi.off ? AI_OFF : givenAi), [givenAi]);
+  /* One desk per app, like the conversation: the host's store of entries read as it is now. */
+  const aiHost = useRef(ai.interactions);
+  aiHost.current = ai.interactions;
+  const [aiDesk] = useState<AiDesk>(() => outer?.aiDesk ?? createAiDesk(() => aiHost.current));
+  /* Where "Notify me" is kept: the host's, else the provider's around this one, else this page's own memory. */
+  const [ownSubscriptions] = useState<SubscriptionStore>(() => outer?.subscriptions ?? memorySubscriptions());
+  const subscriptions = hostSubscriptions ?? outer?.subscriptions ?? ownSubscriptions;
   /* The host that keeps a drawn lens: this provider's, else the one it is drawn inside. */
   const keepLens = onKeepLens ?? outer?.onKeepLens;
   const app = mountedApp ?? (outer?.app as GraviewApp<S> | undefined);
@@ -971,6 +1016,7 @@ export function GraviewProvider<S extends AnySchema>({
       actsDoor,
       registerActsDoor,
       seatTalk,
+      aiDesk,
       ...(memory ? { memory } : {}),
       who: others,
       following,
@@ -982,6 +1028,7 @@ export function GraviewProvider<S extends AnySchema>({
       resolveApp,
       linkedRecords,
       menuSections: hostSections,
+      subscriptions,
       linkedReads,
       movedByHand,
       noteMoved,
@@ -1023,6 +1070,7 @@ export function GraviewProvider<S extends AnySchema>({
       registerSeatWho,
       actsDoor,
       seatTalk,
+      aiDesk,
       memory,
       others,
       following,
@@ -1033,6 +1081,7 @@ export function GraviewProvider<S extends AnySchema>({
       resolveApp,
       linkedRecords,
       hostSections,
+      subscriptions,
       linkedReads,
       movedByHand,
       noteMoved,

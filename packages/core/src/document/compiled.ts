@@ -704,6 +704,8 @@ export function build(plan: CompiledApp, options: AppFromOptions = {}): Compiled
     // The arrangement is the app's (FR-80): every face reads it beside the places.
     ...(document.pages ? { pages: document.pages as never } : {}),
     ...(document.settings ? { settings: document.settings as never } : {}),
+    // The calendars and other systems it is kept in step with: data a host runs (`runConnections`).
+    ...(document.connections ? { connections: document.connections as never } : {}),
     // The document's views are the declaration's view specs (FR-03): data the framework draws.
     ...(plan.viewSpecs ? { viewSpecs: plan.viewSpecs as never } : {}),
     // And its home view, about no one record, is the app's home (FR-81).

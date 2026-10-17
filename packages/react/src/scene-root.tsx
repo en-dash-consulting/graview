@@ -37,6 +37,8 @@ import {
   type RefObject,
 } from "react";
 import { retryingImport } from "@graview/core/retry";
+import { chooseRenderer, gpuCapturePresent, rendererAsked, type RendererPath } from "@graview/render";
+import { useDomBlurWithinBudget, usePlaneBlur } from "./scene-blur.js";
 import type { ActivityMark } from "./activity.js";
 import { lazyModule } from "./lazy-part.js";
 import { BesideTheMap } from "./beside-the-map.js";
@@ -53,7 +55,7 @@ matchWith({ search, touchWeights });
 import type { PointerStore } from "./pointer.js";
 import type { PlotsProps } from "./plots.js";
 import { Occupants } from "./occupants.js";
-import { EdgeSigns } from "./edge-signs.js";
+import { EdgeSigns, useTrailBox } from "./edge-signs.js";
 import { useCameraFlights } from "./scene-camera.js";
 import { useKeyboardKeepsToWhatIsSeen } from "./scene-covered.js";
 import { useDock, useHeldDistrict, useSceneDrag, useWheelAndPinch, useWorldShift, type Held } from "./scene-hand.js";
@@ -62,7 +64,6 @@ import { BandCard, BeyondCard, SettledView } from "./resolved-view.js";
 import { selectionFor, useElementSize, useRootUnit } from "./scene-helpers.js";
 import { Lines, provisionalLines, RelationCaptions } from "./scene-lines.js";
 import { railInset } from "./rails.js";
-import { useSeatDrawn } from "./seat-talk.js";
 import { useLayoutOptions } from "./scene-options.js";
 
 export { railInset };
@@ -73,15 +74,25 @@ import { SceneViewHost } from "./view-host.js";
 export interface SceneProps {
   readonly options?: LayoutOptions;
   /**
-   * `gpu` composites through @graview/render; `dom` positions views with CSS
-   * transforms. `auto` picks gpu when the platform supports it.
+   * `gpu` composites through @graview/render's capture path; `dom` positions
+   * views with CSS transforms. `auto`, the default, is the GPU where this
+   * browser has WebGPU and element capture and its first frames hold the
+   * budget, and the DOM path everywhere else — silently, per page. The
+   * capture path is fetched only where it can draw. An operator decides
+   * `auto` with `?renderer=gpu|dom` (`rendererAsked`).
    *
    * The DOM path is not a toy: the plane model is affine by design, so a CSS
-   * transform reproduces the geometry exactly. What it cannot do is per-plane
-   * blur and falloff — which is precisely the thing that justified the GPU
-   * pipeline, and precisely what is safe to lose when it is unavailable.
+   * transform reproduces the geometry exactly, and the accessibility tree is
+   * the same on both. What it cannot do cheaply is per-plane blur, so it
+   * blurs only while its frames keep to the budget.
    */
   readonly renderer?: "gpu" | "dom" | "auto";
+  /**
+   * Whether receded planes are blurred, the focused plane always sharp. On
+   * by default; off here, or by the reader's reduced motion or reduced
+   * transparency, on either path.
+   */
+  readonly blur?: boolean;
   /**
    * Wires a renderer to the canvas. Called whenever the layout changes, with
    * the canvas and the current picture; return a cleanup.
@@ -112,6 +123,15 @@ export interface SceneProps {
      * the DOM path, under the canvas, at the same transform.
      */
     drawOnDom(ids: ReadonlySet<string>): void;
+    /** Whether receded planes are blurred this picture: the `blur` prop and the reader's preferences. */
+    blur: boolean;
+    /** The scheme the page is drawn in, so the renderer treats the planes as the DOM path does. */
+    scheme: "light" | "dark";
+    /**
+     * The renderer cannot draw this page after all; the Scene draws it on
+     * the DOM path from here on, as it would without a GPU.
+     */
+    fallBack(): void;
   }) => (() => void) | void;
   readonly className?: string;
   readonly style?: CSSProperties;
@@ -416,15 +436,16 @@ function usePointerReport(pointer: PointerStore, stage: RefObject<HTMLDivElement
  * is a summary of them.
  */
 function useAttachedRenderer(
-  renderer: SceneProps["renderer"],
-  attachRenderer: SceneProps["attachRenderer"],
+  attachRenderer: SceneProps["attachRenderer"] | null,
   canvasRef: RefObject<HTMLCanvasElement | null>,
   frame: InterpolatedLayout,
   touched: ReadonlySet<string>,
   drawOnDom: (ids: ReadonlySet<string>) => void,
+  blur: boolean,
+  scheme: "light" | "dark",
+  fallBack: () => void,
 ) {
   useEffect(() => {
-    if (renderer === "dom") return;
     const canvas = canvasRef.current;
     if (!canvas || !attachRenderer) return;
     const dirty = new Set<string>();
@@ -441,11 +462,55 @@ function useAttachedRenderer(
       hostOf: (id) =>
         (canvas.parentElement ?? canvas).querySelector<HTMLElement>(`[data-graview-view="${CSS.escape(id)}"]`),
       drawOnDom,
+      blur,
+      scheme,
+      fallBack,
     });
     return () => {
       detach?.();
     };
-  }, [renderer, attachRenderer, frame, touched, drawOnDom]);
+  }, [attachRenderer, frame, touched, drawOnDom, blur, scheme, fallBack]);
+}
+
+/** The capture path, fetched only once a page is to draw on it. */
+const gpuPath = retryingImport(() => import("@graview/render/gpu"));
+
+/**
+ * WHICH PATH THIS PAGE DRAWS ON. Decided once, before anything is fetched:
+ * the host's ask, an operator's `?renderer=`, and whether the browser can
+ * capture at all. A page that can is drawn on the DOM path while the
+ * capture path arrives, and moves onto the canvas when it has; a page whose
+ * GPU then fails its first frames falls back for good. Nothing is said
+ * either way — the picture is the same.
+ */
+function useRendererPath(renderer: NonNullable<SceneProps["renderer"]>, attachRenderer: SceneProps["attachRenderer"]) {
+  const [startsOn] = useState<RendererPath>(() => {
+    const operator = rendererAsked();
+    // A host's own renderer is the capture path it chose, attached as it is.
+    if (attachRenderer) return renderer === "dom" || (renderer === "auto" && operator === "dom") ? "dom" : "gpu";
+    return chooseRenderer(renderer, { operator, present: gpuCapturePresent() });
+  });
+  const [fellBack, setFellBack] = useState(false);
+  const fallBack = useCallback(() => setFellBack(true), []);
+  const [own, setOwn] = useState<SceneProps["attachRenderer"] | null>(null);
+  const fetches = startsOn === "gpu" && !attachRenderer && !fellBack && own === null;
+  useEffect(() => {
+    if (!fetches) return;
+    let live = true;
+    gpuPath().then(
+      (gpu) => {
+        if (live) setOwn(() => gpu.attachGpu());
+      },
+      () => {
+        if (live) setFellBack(true);
+      },
+    );
+    return () => {
+      live = false;
+    };
+  }, [fetches]);
+  const attach = startsOn === "gpu" && !fellBack ? (attachRenderer ?? own) : null;
+  return { attach: attach ?? null, fallBack };
 }
 
 /**
@@ -754,17 +819,16 @@ export function Scene<S extends AnySchema>({
   options,
   renderer = "auto",
   attachRenderer,
+  blur = true,
   className,
   style,
   animate = true,
   children,
 }: SceneProps) {
   const context = useGraview<S>();
-  const { store, scheme, views, view, setView, selection, setSelection, setMenuAt, emphasis, brand, noteMoved, robots, seatTalk, motion } = context;
+  const { store, scheme, views, view, setView, selection, setSelection, setMenuAt, emphasis, brand, noteMoved, robots, motion } = context;
   // A panel beside the map shows what is chosen from altitude, a record in focus among it (`mapChoice`).
   const besideTheMap = useContext(BesideTheMap);
-  /* Whether an ask field stands at the picture's foot: the layout keeps that strip clear of cards. */
-  const seated = useSeatDrawn(seatTalk);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const size = useElementSize(wrapperRef);
@@ -800,7 +864,10 @@ export function Scene<S extends AnySchema>({
    * a chip of the reader's text size (the tenth walk: "Shifts ×" over "Sort").
    */
   const headroom = !view.overview && (view.zoom || view.past || view.relation) ? Math.ceil(14 + (34 * unit) / 16 + 6) : 0;
-  const sized = useLayoutOptions<S>(seenFrom, size, unit, seated, closer * zoom, dock, nodes, headroom);
+  // On the ground what stands over the foot (the timeline) is the layout's to keep clear; from altitude the city is fitted above it itself.
+  const sized = useLayoutOptions<S>(seenFrom, size, unit, closer * zoom, dock, nodes, headroom, view.overview ? 0 : dock.bottom);
+  // What the picture's trail covers, for the signs at the top edge to step past.
+  const trailBox = useTrailBox(wrapperRef);
   const [panned, seen, panWithin, cameraLive, setCamera] = useCamera(view);
   // A district cannot be placed by hand from altitude, so no plot wears the pinned curb for one (a pin in an old bookmark is ignored).
   const pinnedIds = useMemo(() => new Set(Object.keys(view.pins).filter((id) => kindOfCard(id) === null)), [view.pins]);
@@ -824,9 +891,13 @@ export function Scene<S extends AnySchema>({
   useLentWhereIs(context, frame, wrapperRef);
   usePointerReport(context.pointer, wrapperRef);
   const [onDom, drawOnDom] = useDrawnOnDom();
-  useAttachedRenderer(renderer, attachRenderer, canvasRef, frame, touched, drawOnDom);
+  const { attach, fallBack } = useRendererPath(renderer, attachRenderer);
+  const blurred = usePlaneBlur(blur);
+  useAttachedRenderer(attach, canvasRef, frame, touched, drawOnDom, blurred, scheme, fallBack);
 
-  const useDom = renderer === "dom" || (renderer === "auto" && !attachRenderer);
+  const useDom = attach === null;
+  // The DOM path's blur, only while its frames keep to the budget (scene-blur.ts).
+  const domBlur = useDomBlurWithinBudget(blurred && useDom, dragging || steering || frame.t < 1);
 
   const activityOf = useActivityOf<S>();
 
@@ -844,7 +915,8 @@ export function Scene<S extends AnySchema>({
     panned,
     limit: () => cameraLimit(result),
     panWithin,
-    moveByTransform: useDom,
+    // Both paths: on the GPU the canvas is one of the layers the hand moves, its pixels with it.
+    moveByTransform: true,
     setView,
     setDragging,
     noteMoved,
@@ -884,17 +956,15 @@ export function Scene<S extends AnySchema>({
     steer();
     const limit = cameraLimit(result);
     const pan = view.pan ?? { x: 0, y: 0 };
-    if (useDom) {
-      /*
-       * THE WHEEL IS A HAND TOO — so it moves the picture, and only the
-       * wheel coming to rest moves the world. It was left on the old road
-       * when the drag came off it: a `setView` per tick, which is a layout,
-       * a render of every context consumer and a DOM re-measure for each
-       * notch of a wheel.
-       */
-      const live = shift.offset();
-      shift.shiftTo(panWithin(limit, { x: pan.x + live.x + dx, y: pan.y + live.y + dy }), pan);
-    } else nudge(dx, dy, limit);
+    /*
+     * THE WHEEL IS A HAND TOO — so it moves the picture, and only the
+     * wheel coming to rest moves the world. It was left on the old road
+     * when the drag came off it: a `setView` per tick, which is a layout,
+     * a render of every context consumer and a DOM re-measure for each
+     * notch of a wheel.
+     */
+    const live = shift.offset();
+    shift.shiftTo(panWithin(limit, { x: pan.x + live.x + dx, y: pan.y + live.y + dy }), pan);
     noteMoved();
   };
 
@@ -926,6 +996,7 @@ export function Scene<S extends AnySchema>({
       node={node}
       crowded={crowded(node)}
       useDom={hostedOnDom(node.id)}
+      blur={domBlur || (!useDom && blurred)}
       {...(node.plot && frame.city && Math.round(node.plane) === 2
         ? { frontY: plotY(frame.city, node, node.plot, 1), centerY: plotY(frame.city, node, node.plot, 2) }
         : {})}
@@ -977,6 +1048,9 @@ export function Scene<S extends AnySchema>({
       data-graview-settled={frame.t >= 1 && !flights.gliding() ? "" : undefined}
       // The box the scene laid itself out for, so a harness can tell a box followed from one kept (FR-165).
       data-graview-box={size ? `${size.width}x${size.height}` : undefined}
+      // Which path draws this page, and whether its receded planes are blurred — for a harness, never shown.
+      data-graview-renderer={useDom ? "dom" : "gpu"}
+      data-graview-blur={(useDom ? domBlur : blurred) ? "" : undefined}
       onPointerDown={onGroundDown}
       onPointerMove={onDragMove}
       onPointerUp={onDragUp}
@@ -1099,7 +1173,12 @@ export function Scene<S extends AnySchema>({
           {hosts}
         </div>
       ) : (
-        <div style={stage}>
+        /*
+         * One of the layers the hand moves as a unit (`liveShift`): a pan
+         * moves the canvas and what is under it by a transform, as it moves
+         * the DOM path's stage, and the GPU redraws nothing until it lands.
+         */
+        <div data-graview-world="" style={stage}>
           {/*
            * THE DOM PATH UNDER THE CANVAS: the views the renderer handed
            * on, drawn at the same transform. The canvas clears to
@@ -1130,7 +1209,7 @@ export function Scene<S extends AnySchema>({
         <EdgeSigns
           result={result}
           schema={store.schema as AnySchema}
-          {...(sized.chrome ? { chrome: sized.chrome } : {})}
+          chrome={trailBox ? [...(sized.chrome ?? []), trailBox] : (sized.chrome ?? [])}
           onGo={(by) => {
             nudge(by.x, by.y);
             noteMoved();

@@ -317,6 +317,14 @@ a:hover { color: var(--pine-2); }
   min-width: 0;
 }
 
+/* A docs page's footer stands in the text's column, with the text's gutter,
+   and ends above the window's edge rather than on it. */
+.docfoot {
+  grid-column: 2;
+  margin: 0 var(--pad);
+  padding-bottom: 40px;
+}
+
 /* ── rail contents ─────────────────────────────────────────────────── */
 
 .brand { display: grid; gap: 6px; justify-items: start; }
@@ -671,6 +679,7 @@ footer {
 
 @media (max-width: 900px) {
   .wrap { grid-template-columns: minmax(0, 1fr); }
+  .docfoot { grid-column: 1; }
   .rail {
     position: sticky;
     top: 0;
@@ -1414,6 +1423,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../releases.html">Releases</a>
       <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
@@ -1462,7 +1472,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <p><strong>Or as one JSON document:</strong> <code>app.json</code> (<code>"format": "graview-document"</code>, <code>$schema</code> <code>node_modules/@graview/core/dist/document.schema.json</code>, which types lenses and view blocks), then <code>graview check --document app.json</code>, <code>graview describe --document app.json</code>, <code>graview preview app.json --seed seed.json</code>. Kinds, acts and rules are kebab-case (<code>tool-note</code>), fields and relations camelCase (<code>supersededBy</code>). <code>preview --data</code> holds its folder: stop it to <code>sync-seed --apply</code>. In a framework checkout, <code>pnpm graview:link</code> puts <code>graview</code> on PATH.</p>
 <h3>Do this</h3>
 <ol>
-<li><strong>Install.</strong> The scaffold already did. Reach for <code>@graview/render/gpu</code> only if you want the experimental capture path; the DOM path is what ships.</li>
+<li><strong>Install.</strong> The scaffold already did.</li>
 </ol>
 <ol>
 <li><strong>Declare one kind, one mutation, one rule.</strong> Not the whole domain. The loop you want on day one is: declare → <code>graview check</code> → look → declare more.</li>
@@ -1474,7 +1484,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 <li><strong>Declare the seams that make the interface smart.</strong> These are one-line declarations on mutations and kinds, and every derived surface reads them: - <code>creates: ["&lt;kind&gt;"]</code> on every mutation that adds a kind — the chain <code>Begin</code> and <code>graview describe</code> read, and the empty card's own way in. - <code>connects: [...]</code> / <code>severs: [...]</code> naming the edge kinds a mutation makes or breaks — what makes drawn LINES selectable, offers the act from either end, and hides a severing act with nothing to sever. - <code>lifecycle: { field, retired }</code> on kinds whose members expire — counts say "+N past". - <code>subject: { kinds, arg }</code> on every mutation that acts on a thing.</li>
 </ol>
 <ol>
-<li><strong>Take the shell.</strong> <code>Shell</code> from <code>@graview/primitives</code> is everything not about your domain: the one app bar an embed wears too (the name, the Scene and Pages switch, the scene's pictures, Find, Activity, the standing, the person), the scene, its key, the ask field — a seat that answers from the graph with no API key — and the acts at the pointer. Its parts (<code>AppBar</code>, <code>Inspector</code>, <code>Standing</code>, <code>ActivityRail</code>, <code>Trail</code>, <code>OverviewButton</code>) are exported for a shell of your own; one is about eighty lines, and a longer one is probably rebuilding something derived. <code>firstLook</code> on <code>Shell</code> and <code>PagesApp</code> (<code>true</code> or `{ seen, onDone, steps }`) points a newcomer at the app's own controls once; write no tour.</li>
+<li><strong>Take the shell.</strong> <code>Shell</code> from <code>@graview/primitives</code> is everything not about your domain: the one app bar an embed wears too (the name, the Scene and Pages switch, the scene's pictures, Find, Activity, the standing, the person), the scene, its key, the quick ask (⌘K, where the host gives a model) and the acts at the pointer. Its parts (<code>AppBar</code>, <code>Inspector</code>, <code>Standing</code>, <code>ActivityRail</code>, <code>Trail</code>, <code>OverviewButton</code>) are exported for a shell of your own; one is about eighty lines, and a longer one is probably rebuilding something derived. <code>firstLook</code> on <code>Shell</code> and <code>PagesApp</code> (<code>true</code> or `{ seen, onDone, steps }`) points a newcomer at the app's own controls once; write no tour.</li>
 </ol>
 <p>Search comes with <code>Shell</code>: Find answers <code>/</code> or ⌘K from anywhere, lights    what the words find in whatever picture is open and dims the rest, and    <code>#q=</code> makes a search a stop Back returns to. Nothing is declared per kind.</p>
 <p>The routed face is one branch in <code>main.tsx</code>: when the path starts with    <code>/pages</code>, render <code>&lt;PagesApp basename="/pages" context={{ store, brand,    views: views(), settings }} /&gt;</code> from <code>@graview/pages</code>. It lands on a    gallery of the app's pictures — every kind drawn as a card until you title    a lens, then the lens by its name — with a list, a record and a form per    kind, the problems and the map, at phone widths. Hand it the same <code>views</code>    the scene draws from, or it has no pictures to land on.</p>
@@ -1504,7 +1514,7 @@ npm create graview@latest my-app        # or: pnpm create graview my-app</code><
 </ul>
 <p>Later: a browser harness, a JSON verdict per claim.</p>
 <h3>Supported browsers</h3>
-<p>Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and degrades to a clean cut where that is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (<code>attachRenderer</code> set to <code>attachGpu()</code> from <code>@graview/render/gpu</code>) — never a requirement.</p>
+<p>Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (<code>pnpm engines</code>). The floor is <code>document.adoptedStyleSheets</code> (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides <code>@property</code> and degrades to a clean cut where that is missing — write no fallback. A host's <code>ai.onDevice</code> needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The scene draws on the GPU where the browser can capture into WebGPU and on the DOM path elsewhere, silently, with one accessibility tree (<code>renderer</code>, <code>blur</code> on the Shell) — never a requirement.</p>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm verify        # typecheck, tests, build, graview check
 graview doctor     # one Graview release everywhere; React's pair; PATH from a checkout</code></pre></div>
@@ -1519,18 +1529,18 @@ graview doctor     # one Graview release everywhere; React's pair; PATH from a c
     </section>
 
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="../site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="../site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.

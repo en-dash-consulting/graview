@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1434,
+  "gzipped": 550,
+  "note": "Raised when the first load came to wait on less (Roadmap f-perf-first-load): the other face fetched when idle at a desk or reached for, the scene fetched before a switch draws it, a picture on the home drawn as it nears the window, and a remote store opened on a handed state. Measured at 2119134 / 699054 against 2117700 / 698504 before it."
+}

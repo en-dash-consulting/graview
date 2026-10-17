@@ -84,6 +84,8 @@ const ALLOWED_IN: Readonly<Record<string, readonly RegExp[]>> = {
   // Google Calendar's own status for a deleted event.
   "packages/core/src/sync/google-calendar.ts": [/"cancelled"/g],
   "packages/core/tests/integration/sync.test.ts": [/"cancelled"/g],
+  "packages/core/tests/integration/google-calendar-meets-what-google-does.test.ts": [/"cancelled"/g],
+  "packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts": [/"cancelled"/g],
   // The key older builds wrote in a document, read as its new name (FR-134).
   "packages/core/src/document/respell.ts": [/honoured/g],
   "packages/core/src/conformance/fixtures.ts": [/"honoured"/g],

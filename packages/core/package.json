@@ -73,6 +73,14 @@
       "types": "./dist/tidying.d.ts",
       "default": "./dist/tidying.js"
     },
+    "./catalog": {
+      "types": "./dist/catalog.d.ts",
+      "default": "./dist/catalog.js"
+    },
+    "./subscriptions": {
+      "types": "./dist/subscriptions.d.ts",
+      "default": "./dist/subscriptions.js"
+    },
     "./markdown": {
       "types": "./dist/markdown.d.ts",
       "default": "./dist/markdown.js"

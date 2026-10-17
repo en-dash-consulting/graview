@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 100,
+  "gzipped": 60,
+  "changeset": "the-quick-ask-replaces-the-ask-box.md",
+  "note": "Raised when the quick ask replaced the Ask box (Roadmap f-quick-ask-framework), for the reasons the hosted page's raise of the same name says. Measured at 522_863 minified against 522_813."
+}

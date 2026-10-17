@@ -21,6 +21,7 @@ export function PagesContent<S extends AnySchema>({
   overview,
   scope,
   titleLevel = 2,
+  quickAsk,
   props,
 }: {
   readonly store: Store<S>;
@@ -37,6 +38,8 @@ export function PagesContent<S extends AnySchema>({
   readonly scope: string;
   /** The level a page's own title is said at: one below the app's name on the bar (FR-131). */
   readonly titleLevel?: 2 | 3 | 4 | 5 | 6;
+  /** The quick ask, as the app set it for the scene too. */
+  readonly quickAsk?: boolean | undefined;
   readonly props: FrameOptions<S>;
 }) {
   const css = useMemo(() => viewsCss({ scope: `.${scope}` }), [scope]);
@@ -65,6 +68,8 @@ export function PagesContent<S extends AnySchema>({
             ...(props.principal ? { principal: props.principal } : {}),
             ...(props.seats ? { seats: props.seats } : {}),
             ...(props.people ? { people: props.people } : {}),
+            /* The quick ask as the app set it, on this face as on the scene. */
+            ...(quickAsk !== undefined ? { quickAsk } : {}),
           }}
           {...(props.pages ? { registry: props.pages } : {})}
           {...(steering ? { steering } : {})}

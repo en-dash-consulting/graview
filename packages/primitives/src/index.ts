@@ -65,15 +65,29 @@ export type { LinkedPickerProps, LinkedRecordViewProps } from "./linked-record-d
 // How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.
 export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
 export type { RepeatPickerProps } from "./repeat-picker-door.js";
+// A day or a moment, typed as people say it ("tomorrow 3pm") or picked from a month: every date a person gives, fetched when first asked for (Roadmap f-date-inputs).
+export { prefetchWhenInput, WhenInput } from "./when-input-door.js";
+export type { WhenInputProps } from "./when-input-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
-// The seat: an ask field at the picture's foot that grows into the conversation when asked.
-export { SEAT_PHONE_BELOW, SEAT_WIDTH, SeatField } from "./seat-field.js";
+// The quick ask (Roadmap f-quick-ask-framework): ⌘K's bar beside what is selected, and its answer cards, fetched when first opened.
+export { QuickAskDoor } from "./quick-ask-door.js";
+export { openQuickAsk, useQuickAskDrawn } from "./quick-ask-desk.js";
+export type { QuickAskDoorProps } from "./quick-ask-door.js";
+export type { QuickAskOpening } from "./quick-ask-desk.js";
+export { quickAskOf } from "./quick-ask-setting.js";
 export { DraftDoor } from "./draft-door.js";
+// The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.
+export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-door.js";
+export type { GhostDoorProps } from "./inline-ai-door.js";
+// Notify me (Roadmap f-notify-subscriptions): its part of the context menu, the sheet, a face's own press and Activity's list, the sheet and list fetched when first drawn.
+export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
+export type { NotifyAsk } from "./notify-door.js";
+// What AI did on a record, on its page (Roadmap f-activity-ai-entries), fetched with the first entry.
+export { RecordInteractionsDoor } from "./record-interactions-door.js";
 export type { DraftFrameProps } from "./draft-frame.js";
 export { appKeyOf, readerLenses, readerLensesKey, type KeptLens } from "./reader-lenses.js";
 export { registerLensPlaces, registerReaderLenses } from "./declared-lens-doors.js";
 export { NoticeBoardContext } from "./notices.js";
-export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 export { LinesKey } from "./lines-key.js";
 export { MapPanel, mapPanelShows } from "./map-panel-door.js";
 export type { MapPanelShowing } from "./map-panel-door.js";
@@ -156,6 +170,7 @@ export { hueFor, registerDefaultViews } from "./default-views.js";
 // Views as data (FR-03), and the default for a cell drawn inside a view of your own (FR-36).
 export { BlockSlots, compileBlocks, HeadingsUnder, HomeLine, MAX_LIST_DEPTH, pageSays, registerViewSpecs, safeHref, sayNumber, SpecBlocks, SpecLinks, SpecPlace, SpecView, SPEC_VIEW_CSS, useSpecContext } from "./spec-views.js";
 export type { BlockSlotComponent, BlockSlotProps, ClaimedSlots, SpecLinkTo } from "./spec-views.js";
+export { useEndsAboveItsList } from "./stretched-link.js";
 export type { SpecBlock, SpecContext } from "./spec-views.js";
 export { DefaultView, DefaultViewElsewhere, defaultViewsOf, useDefaultElsewhere } from "./default-view.js";
 export { RecordHeadContext } from "./record-head.js";

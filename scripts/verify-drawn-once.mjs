@@ -618,6 +618,12 @@ report.checks.aCardsEdgeSaysThereIsMoreWithoutCoveringARow = {
   ok: all(seen.cardEdge, (one) => {
     const states = [one.top, one.middle, one.end];
     if (states.some((state) => state === null)) return false;
+    const clean = states.every((state) => !state.paintedOverRows && !state.paintedInGround && !state.headOverScroller && Math.abs(state.edgeGap) <= 1);
+    /*
+     * A card tall enough for every row (on a tall desk the module's card can
+     * hold all its findings) says nothing is above or below.
+     */
+    if (one.top.lastChipWhole === true && !one.top.below) return clean && !one.top.above;
     return (
       one.top.overflows &&
       one.top.below &&

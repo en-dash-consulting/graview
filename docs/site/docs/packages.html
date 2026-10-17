@@ -311,6 +311,14 @@ a:hover { color: var(--pine-2); }
   min-width: 0;
 }
 
+/* A docs page's footer stands in the text's column, with the text's gutter,
+   and ends above the window's edge rather than on it. */
+.docfoot {
+  grid-column: 2;
+  margin: 0 var(--pad);
+  padding-bottom: 40px;
+}
+
 /* ── rail contents ─────────────────────────────────────────────────── */
 
 .brand { display: grid; gap: 6px; justify-items: start; }
@@ -665,6 +673,7 @@ footer {
 
 @media (max-width: 900px) {
   .wrap { grid-template-columns: minmax(0, 1fr); }
+  .docfoot { grid-column: 1; }
   .rail {
     position: sticky;
     top: 0;
@@ -1408,6 +1417,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="checks.html">What check says</a>
       <a href="demos.html">Live demos</a>
       <a href="stability.html">Stability</a>
+      <a href="releases.html">Releases</a>
       <a href="site.html">This site, as an app</a>
       <a href="../tour.html">The tour</a>
       <a href="../progression.html">The garden, grown</a>
@@ -1438,7 +1448,7 @@ main.page > section.tour-intro { padding-top: 64px; }
         <li><a href="packages/pages.html"><strong>@graview/pages</strong><span>The traditional face: a routed webapp derived from the same declaration that drives the scene.</span></a></li>
         <li><a href="packages/primitives.html"><strong>@graview/primitives</strong><span>The primitive set, the lenses, the workbench and the visual system.</span></a></li>
         <li><a href="packages/react.html"><strong>@graview/react</strong><span>The React binding: a provider, a scene, and the hooks an app builds on.</span></a></li>
-        <li><a href="packages/render.html"><strong>@graview/render</strong><span>The spatial renderer. The DOM path is what ships; the GPU capture path is EXPERIMENTAL — see README.</span></a></li>
+        <li><a href="packages/render.html"><strong>@graview/render</strong><span>The spatial renderer: the GPU capture path where the browser can capture into WebGPU, the DOM path everywhere else, one picture and one accessibility tree on both.</span></a></li>
         <li><a href="packages/ship.html"><strong>@graview/ship</strong><span>What every deployment needs, hosted or self-hosted: persistence wiring, op-log-native migrations, export, health.</span></a></li>
         <li><a href="packages/skills.html"><strong>@graview/skills</strong><span>Skills that teach an assistant the authoring moves, each ending in a real graview check verdict.</span></a></li>
         <li><a href="packages/studio.html"><strong>@graview/studio</strong><span>The declaration itself as a graph: kinds, fields, edges, acts, rules, roles and grants as nodes, edited with ordinary mutations in Graview's own interface, checked before they are applied, migrated, and written back as the files graview create writes.</span></a></li>
@@ -1447,18 +1457,18 @@ main.page > section.tour-intro { padding-top: 64px; }
     </section>
 
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.

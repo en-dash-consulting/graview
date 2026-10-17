@@ -2,7 +2,8 @@ import { labelOf, type AnyGraphNode, type AnySchema, type GraphReader } from "@g
 import { blockContextFor, compileBlocks, isTallBlock, resolveBlocks, whatBlocksSay, type BlockContext, type BlocksSaid, type ResolvedBlock, type ResolvedList, type SpecBlock } from "@graview/core/blocks";
 import type { ViewSlot, ViewSpecsByKind } from "@graview/core/document";
 import { isDefaultView, useGraph, useGraview, ViewModeProvider, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
-import { createContext, Suspense, useContext, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
+import { createContext, Suspense, useContext, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
+import { useEndsAboveItsList } from "./stretched-link.js";
 import { DefaultView, useDefaultElsewhere } from "./default-view.js";
 import { RecordHeadContext } from "./record-head.js";
 import { KindFigure } from "./figure.js";
@@ -382,9 +383,12 @@ function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode;
  */
 export function ListedLink({ node, label }: { readonly node: AnyGraphNode; readonly label: string }) {
   const links = useContext(SpecLinks);
+  const stretched = useRef<HTMLAnchorElement & HTMLButtonElement>(null);
+  useEndsAboveItsList(stretched);
   if (links) {
     return (
       <a
+        ref={stretched}
         className="graview-spec-item-link"
         href={links.href(node)}
         aria-label={label}
@@ -397,7 +401,7 @@ export function ListedLink({ node, label }: { readonly node: AnyGraphNode; reado
       />
     );
   }
-  return <button type="button" className="graview-spec-item-link" data-graview-pick={node.id} aria-label={label} />;
+  return <button ref={stretched} type="button" className="graview-spec-item-link" data-graview-pick={node.id} aria-label={label} />;
 }
 
 /**

@@ -101,9 +101,9 @@ function render(ui: React.ReactElement, view = EMPTY_VIEW) {
 
 describe("the scene", () => {
   it("renders views as immediate children of a layoutsubtree canvas", () => {
-    // The capture path only. `renderer="gpu"` selects it without needing a
+    // The capture path only. A host's own renderer selects it without a
     // real GPU: the canvas is a rendering decision, not a device one.
-    const html = render(<Scene renderer="gpu" />, {
+    const html = render(<Scene renderer="gpu" attachRenderer={() => undefined} />, {
       ...EMPTY_VIEW,
       focusId: "week-1",
       relation: "person",

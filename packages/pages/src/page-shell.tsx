@@ -66,7 +66,7 @@ export function DefaultShell<S extends AnySchema>({
             borderTop: "1px solid var(--graview-edge)",
             /*
              * The page's very end, so it clears what stands over the foot as
-             * the main does: on a phone the ask field stood over "Start
+             * the main does: on a phone the old ask field stood over "Start
              * fresh" however far the page scrolled (the watch's
              * `control-covered`, the tenth walk's carried pass).
              */
@@ -240,11 +240,17 @@ export function PageFind<S extends AnySchema>({
     return () => watch.disconnect();
   }, [narrowing]);
   const [typed, setTyped] = useState(addressed);
-  /* ⌘K or Ctrl+K, from the keyboard anywhere in the app or on nothing at all: this box (FR-131). The scene's own Find hears its own. */
+  /* ⌘K or Ctrl+K (and `/`), from the keyboard anywhere in the app or on nothing at all: this box (FR-131), unless the quick ask took ⌘K first. The scene's own Find hears its own. */
   const box = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.altKey || event.shiftKey || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k") return;
+      if (event.defaultPrevented || event.altKey) return;
+      const chord = !event.shiftKey && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k";
+      /* `/` too, as the scene's Find hears it, unless the keys are writing somewhere: where the quick ask holds ⌘K, it is the way to Find. */
+      const at = document.activeElement;
+      const writing = at instanceof HTMLInputElement || at instanceof HTMLTextAreaElement || at instanceof HTMLSelectElement || (at instanceof HTMLElement && at.isContentEditable);
+      const slash = event.key === "/" && !event.metaKey && !event.ctrlKey && !writing;
+      if (!chord && !slash) return;
       const input = box.current;
       const root = input?.closest("[data-graview-embed]");
       const target = event.target;
@@ -306,7 +312,7 @@ export function PageFind<S extends AnySchema>({
         value={typed}
         onChange={(event) => go(event.target.value)}
         placeholder={onList ? (named ? narrowing : "Narrow…") : "Find…"}
-        aria-keyshortcuts="Meta+K Control+K"
+        aria-keyshortcuts="/ Meta+K Control+K"
         aria-label={onList ? "Narrow this list" : "Find anything"}
         style={{
           width: "100%",

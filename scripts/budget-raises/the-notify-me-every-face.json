@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 15607,
+  "gzipped": 6507,
+  "note": "Raised when Notify me came (Roadmap f-notify-subscriptions): the matcher and a subscription's words (`@graview/core/subscriptions`), the sheet and Activity's list, the chat's three tools and what they run \u2014 each in a chunk fetched when first wanted. Measured at 2_198_782 / 730_686 against 2_183_175 / 724_179 before."
+}

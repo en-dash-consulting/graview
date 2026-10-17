@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { PagesApp } from "@graview/pages";
 import { aiThroughDevServer, type HostAi } from "@graview/tools";
 import { filesAt } from "@graview/ship/browser";
+import { memorySubscriptions, type SubscriptionMatch } from "@graview/core";
 import { open } from "./open.js";
 import { todoApp } from "./domain/app.js";
 import { thingsBrand } from "./domain/brand.js";
@@ -84,7 +85,23 @@ const { opened, principal, remembers, presence } = await open();
  * the key itself; without a key the seat says how to turn it on. Only in a
  * dev build: a built page asks no door and says what any product says.
  */
-const ai = (window as unknown as { __todoAi?: HostAi }).__todoAi ?? ((import.meta as { env?: { DEV?: boolean } }).env?.DEV ? await aiThroughDevServer() : undefined);
+/*
+ * THE INLINE AI, BY STUB (Roadmap f-ai-candidate-catalog). `?ai=stub` in a
+ * dev build fills the Fast and Thinking slots with stubs that answer from
+ * the catalog alone, with no network and no key, so the context menu's
+ * suggestions, a ghost and a drawn panel can be seen and driven
+ * (`verify-inline-ai`). `?ai=off` is a host saying AI is off: every AI
+ * part, on both faces, is not drawn.
+ */
+const askedAi = new URLSearchParams(window.location.search).get("ai");
+async function stubbedAi(): Promise<HostAi> {
+  const { stubFast, stubThinking } = await import("@graview/tools/inline-ai");
+  return { name: "stub", fast: stubFast({ model: "stub-fast", prefer: [/Finish it/, /second quote/, /Book the van/] }), thinking: stubThinking({ model: "stub-thinking" }) };
+}
+const dev = (import.meta as { env?: { DEV?: boolean } }).env?.DEV === true;
+const ai =
+  (window as unknown as { __todoAi?: HostAi }).__todoAi ??
+  (askedAi === "off" ? { off: true } : dev && askedAi === "stub" ? await stubbedAi() : dev ? await aiThroughDevServer() : undefined);
 
 /*
  * WHERE A TASK'S ATTACHMENTS GO (FR-163). In development, the dev server's
@@ -93,6 +110,28 @@ const ai = (window as unknown as { __todoAi?: HostAi }).__todoAi ?? ((import.met
  * none.
  */
 const files = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? filesAt("/__graview/files", { maxBytes: 10_000_000, kinds: ["image/*", "application/pdf", "text/plain"] }) : undefined;
+
+/*
+ * NOTIFY ME (Roadmap f-notify-subscriptions). Things keeps a reader's
+ * subscriptions in this page and is its own host's hook: each batch
+ * somebody else commits that a subscription asked about — judged as its
+ * subscriber may see it — is said once, here in the console, where Graview
+ * Cloud sends an email or a push. A served app gives the hook to its server
+ * instead (`createStoreHandler`'s `onSubscriptionMatch`). The matcher is
+ * fetched once the page is up; a harness reads what it was told as
+ * `__notified`.
+ */
+const subscriptions = memorySubscriptions();
+void import("@graview/core/subscriptions").then(({ watchSubscriptions }) =>
+  watchSubscriptions(opened.store, {
+    subscriptions,
+    app: todoApp.name,
+    onSubscriptionMatch: (match) => {
+      ((window as unknown as { __notified?: SubscriptionMatch[] }).__notified ??= []).push(match);
+      console.info(`Notify ${match.subscription.who.name ?? match.subscription.who.id}: ${match.said}`);
+    },
+  }),
+);
 
 /*
  * TWO FACES, ONE DECLARATION. The scene owns "/" (and the hash, which is
@@ -128,6 +167,7 @@ if (window.location.pathname.startsWith("/pages")) {
         ...(presence ? { presence } : {}),
         ...(ai ? { ai } : {}),
         ...(files ? { files } : {}),
+        subscriptions,
       }}
       /*
        * THE APP'S OWN FACE, over the same derivations. Every surface is
@@ -147,8 +187,9 @@ if (window.location.pathname.startsWith("/pages")) {
       presence={presence}
       {...(ai ? { ai } : {})}
       {...(files ? { files } : {})}
+      subscriptions={subscriptions}
       syncUrl
-      renderer="dom"
+      renderer="auto"
       initialScheme={scheme}
       onSchemeChange={applyScheme}
     />,
@@ -156,4 +197,4 @@ if (window.location.pathname.startsWith("/pages")) {
 }
 
 // A flag a harness can wait for, rather than a timer and a hope.
-(window as unknown as Record<string, unknown>)["__todoReady"] = { renderer: "dom", scheme };
+(window as unknown as Record<string, unknown>)["__todoReady"] = { renderer: "auto", scheme };

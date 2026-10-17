@@ -8,7 +8,7 @@ import {
 } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
-import type { HostFiles, PresenceChannel, Principal } from "@graview/core";
+import type { HostFiles, PresenceChannel, Principal, SubscriptionStore } from "@graview/core";
 import type { HostAi, ToolCall } from "@graview/tools";
 import { useEffect, useMemo, useState } from "react";
 import example from "../data/example.json";
@@ -102,13 +102,15 @@ export interface TodoAppProps {
   readonly ai?: HostAi;
   /** Where a task's attachments are sent (FR-163): the dev server's door in development, a host's own in a deployment. */
   readonly files?: HostFiles;
+  /** Where "Notify me" is kept: the host's store (`subscriptions` on the provider). */
+  readonly subscriptions?: SubscriptionStore;
 }
 
 export function TodoApp({
   store,
   initialView = INITIAL_VIEW,
   syncUrl = false,
-  renderer = "dom",
+  renderer = "auto",
   attachRenderer,
   initialScheme = "light",
   onSchemeChange,
@@ -118,6 +120,7 @@ export function TodoApp({
   presence,
   ai,
   files,
+  subscriptions,
 }: TodoAppProps) {
   const created = useMemo(() => store ?? createTodoUiStore(), [store]);
   const views = useMemo(() => todoViews(), []);
@@ -137,6 +140,7 @@ export function TodoApp({
       {...(onSeat ? { onSeat } : {})}
       {...(presence ? { presence } : {})}
       {...(ai ? { ai } : {})}
+      {...(subscriptions ? { subscriptions } : {})}
     >
       <TodoShell
         remembers={remembers}

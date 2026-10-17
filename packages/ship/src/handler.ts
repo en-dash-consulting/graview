@@ -1,5 +1,6 @@
 import {
   foldPresence,
+  memorySubscriptions,
   nextExpiry,
   PRESENCE_TTL_MS,
   VISITOR_PRESENCE_TTL_MS,
@@ -13,8 +14,13 @@ import {
   type Store,
   type MutationCall,
   type WireRefusal,
+  type OnSubscriptionMatch,
+  type Subscription,
+  type SubscriptionMatch,
+  type SubscriptionStore,
 } from "@graview/core";
 import { judgeWithLines } from "@graview/core/lines";
+import { matchSubscriptions } from "@graview/core/subscriptions";
 import { exportBundle } from "./export.js";
 import { health } from "./health.js";
 import { LIVE_PATH, type Limit, type LimitAnswer, type LimitAsked, type LiveConnection, type LiveSocket } from "./live.js";
@@ -36,6 +42,7 @@ import {
 } from "./live-protocol.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
+import { answerSubscriptions, SUBSCRIPTIONS_PATH } from "./subscriptions.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -97,6 +104,7 @@ export const WIRE = [
   { method: "POST", path: "/graview/here", says: "say where you are; answers with who else is, the ops since `seq`, and the `participant` key you are held under" },
   { method: "GET", path: "/graview/who", says: "who is here right now" },
   { method: "POST", path: "/graview/leave", says: "say you have gone — only ever yourself" },
+  { method: "GET", path: SUBSCRIPTIONS_PATH, says: "the asking seat's own subscriptions (Notify me); POST `{ add: { when, alsoMine? } }` keeps one for the seat's person, `{ remove: id }` takes one of theirs away; 400 with a sentence when it could never be told anything, 403 for a seat with no id" },
   { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request" },
 ] as const;
 
@@ -208,6 +216,21 @@ interface HandlerOptions<S extends AnySchema> {
    * answered `reload`, as below `minProtocol`.
    */
   readonly minHostProtocol?: number;
+  /**
+   * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): the host's
+   * `SubscriptionStore`, served to each seat at `/graview/subscriptions`
+   * and judged against every commit. Unsaid, the handler keeps them in
+   * memory for as long as it runs; `graview serve` keeps them in a file
+   * beside the store (`fileSubscriptions`).
+   */
+  readonly subscriptions?: SubscriptionStore;
+  /**
+   * THE HOST'S HOOK: told once per committed batch per subscription it
+   * matches, judged as the subscriber may see — what Graview Cloud turns
+   * into an email or a push. Never told of a change to a record the
+   * subscriber cannot see, nor, unless they asked, of their own.
+   */
+  readonly onSubscriptionMatch?: OnSubscriptionMatch;
 }
 
 /**
@@ -510,6 +533,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   });
   /** The sentence the app is held in (FR-66), or nothing: it takes changes. Read by every protocol made over it. */
   let holding: string | undefined;
+  /** Where "Notify me" is kept: the host's, else this handler's memory for as long as it runs. */
+  const subscriptions = options.subscriptions ?? memorySubscriptions();
   let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
   /** Set while the declaration is being changed: every request and message waits for it. */
   let changing: Promise<void> | undefined;
@@ -684,6 +709,11 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
       return send(200, exportBundle(app, wire.seenFor(asking), { log: wire.seenLog(asking) }));
     }
 
+    if (url.pathname === SUBSCRIPTIONS_PATH) {
+      const answer = await answerSubscriptions(request.method, request.method === "POST" ? await read(request) : undefined, await seat(), { store, app: app.name, subscriptions });
+      return send(answer.status, answer.body);
+    }
+
     if (url.pathname === "/graview/ops" && request.method === "POST") {
       const text = await request.text();
       // What the calls came through is the host's to say, never the body's (FR-52).
@@ -718,7 +748,37 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
         [...sockets].filter((live) => !live.answering),
       );
       if (agentsFor > 0) agentsWereHere(ops);
+      if (options.onSubscriptionMatch && ops.length > 0) notify(store, ops);
     });
+  /*
+   * NOTIFY ME (Roadmap f-notify-subscriptions): every commit judged against
+   * the subscriptions to this app, each as its subscriber may see it, and
+   * each match handed to the host's hook. A store that lists at once is
+   * judged at once; one that answers a promise, when it answers — each
+   * record as it stood just after the batch.
+   */
+  function notify(store: Store<AnySchema>, ops: readonly Operation[]): void {
+    const hook = options.onSubscriptionMatch!;
+    const app = serving.app.name;
+    const report = (error: unknown) => console.error(`A subscription to ${app} could not be told:`, error);
+    const tell = (all: readonly Subscription[]) => {
+      let matches: SubscriptionMatch[];
+      try {
+        matches = matchSubscriptions(store, ops, all, { app });
+      } catch (error) {
+        report(error);
+        return;
+      }
+      for (const match of matches) void Promise.resolve().then(() => hook(match)).catch(report);
+    };
+    try {
+      const listed = subscriptions.list();
+      if (Array.isArray(listed)) tell(listed as readonly Subscription[]);
+      else void (listed as Promise<readonly Subscription[]>).then(tell, report);
+    } catch (error) {
+      report(error);
+    }
+  }
   let unsubscribe = watch(serving.store);
   /*
    * Every op is pushed as it lands — but one whose flush failed is held

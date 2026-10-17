@@ -317,6 +317,14 @@ a:hover { color: var(--pine-2); }
   min-width: 0;
 }
 
+/* A docs page's footer stands in the text's column, with the text's gutter,
+   and ends above the window's edge rather than on it. */
+.docfoot {
+  grid-column: 2;
+  margin: 0 var(--pad);
+  padding-bottom: 40px;
+}
+
 /* ── rail contents ─────────────────────────────────────────────────── */
 
 .brand { display: grid; gap: 6px; justify-items: start; }
@@ -671,6 +679,7 @@ footer {
 
 @media (max-width: 900px) {
   .wrap { grid-template-columns: minmax(0, 1fr); }
+  .docfoot { grid-column: 1; }
   .rail {
     position: sticky;
     top: 0;
@@ -1414,6 +1423,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../releases.html">Releases</a>
       <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
@@ -1457,22 +1467,22 @@ main.page > section.tour-intro { padding-top: 64px; }
     <section id="api" aria-labelledby="h-api">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (47)</h2></div>
       <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
-      <ul class="names"><li><code>ARRANGE_FROM</code></li><li><code>beginningsFor</code></li><li><code>beginningsFrom</code></li><li><code>createPageRegistry</code></li><li><code>DefaultHomePage</code></li><li><code>DefaultListPage</code></li><li><code>DefaultMapPage</code></li><li><code>DefaultPlacePage</code></li><li><code>DefaultPlacesPage</code></li><li><code>DefaultProblemsPage</code></li><li><code>DefaultRecordPage</code></li><li><code>DefaultSearchPage</code></li><li><code>DefaultShell</code></li><li><code>DerivedForm</code></li><li><code>Gallery</code></li><li><code>GalleryCard</code></li><li><code>galleryOf</code></li><li><code>kindFacts</code></li><li><code>kindMap</code></li><li><code>KindMapSection</code></li><li><code>kindOfSlug</code></li><li><code>LARGE_LIST</code></li><li><code>lastChangeOf</code></li><li><code>ListPage</code></li><li><code>PageAsk</code></li><li><code>PageFind</code></li><li><code>PageMain</code></li><li><code>PagesApp</code></li><li><code>PagesRoutes</code></li><li><code>pageStyles</code></li><li><code>PageUndo</code></li><li><code>pathOfPlace</code></li><li><code>PlaceCard</code></li><li><code>placeHref</code></li><li><code>placePath</code></li><li><code>PlacePicture</code></li><li><code>pluralSlug</code></li><li><code>rankedRepairs</code></li><li><code>recordFacts</code></li><li><code>recordPath</code></li><li><code>Repairs</code></li><li><code>SceneLink</code></li><li><code>SearchToCreate</code></li><li><code>spatialHref</code></li><li><code>StartFreshLink</code></li><li><code>useStoreTick</code></li><li><code>WhyLine</code></li></ul>
+      <ul class="names"><li><code>ARRANGE_FROM</code></li><li><code>beginningsFor</code></li><li><code>beginningsFrom</code></li><li><code>createPageRegistry</code></li><li><code>DefaultHomePage</code></li><li><code>DefaultListPage</code></li><li><code>DefaultMapPage</code></li><li><code>DefaultPlacePage</code></li><li><code>DefaultPlacesPage</code></li><li><code>DefaultProblemsPage</code></li><li><code>DefaultRecordPage</code></li><li><code>DefaultSearchPage</code></li><li><code>DefaultShell</code></li><li><code>DerivedForm</code></li><li><code>Gallery</code></li><li><code>GalleryCard</code></li><li><code>galleryOf</code></li><li><code>kindFacts</code></li><li><code>kindMap</code></li><li><code>KindMapSection</code></li><li><code>kindOfSlug</code></li><li><code>LARGE_LIST</code></li><li><code>lastChangeOf</code></li><li><code>ListPage</code></li><li><code>PageFind</code></li><li><code>PageMain</code></li><li><code>PageQuickAsk</code></li><li><code>PagesApp</code></li><li><code>PagesRoutes</code></li><li><code>pageStyles</code></li><li><code>PageUndo</code></li><li><code>pathOfPlace</code></li><li><code>PlaceCard</code></li><li><code>placeHref</code></li><li><code>placePath</code></li><li><code>PlacePicture</code></li><li><code>pluralSlug</code></li><li><code>rankedRepairs</code></li><li><code>recordFacts</code></li><li><code>recordPath</code></li><li><code>Repairs</code></li><li><code>SceneLink</code></li><li><code>SearchToCreate</code></li><li><code>spatialHref</code></li><li><code>StartFreshLink</code></li><li><code>useStoreTick</code></li><li><code>WhyLine</code></li></ul>
     </section>
 
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="../site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="../site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.

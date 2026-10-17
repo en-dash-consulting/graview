@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 38956,
+  "gzipped": 15247,
+  "note": "Raised when the inline AI came (Roadmap f-ai-candidate-catalog, f-activity-ai-entries): the candidate catalog and the context assembler (`@graview/core/catalog`), the engine with its Fast and Thinking slots, the ghost and the stubs (`@graview/tools/inline-ai`), the menu's section, the tray, Activity's entries and filter, and a record's entries — each in a chunk fetched when it is first drawn. Measured at 2_183_175 / 724_179 against 2_144_219 / 708_932 before."
+}

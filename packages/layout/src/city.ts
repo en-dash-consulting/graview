@@ -15,7 +15,7 @@ import type { CityFrame, Layout } from "./types.js";
  * THE WHOLE CITY OPENS IN THE WINDOW. The cell is the largest at which
  * every plot, and the name under it, stands inside the room the canvas
  * leaves once its chrome is paid for — the bar's corner controls at the
- * top, the ask field and the zoom at the foot. The names are a fixed size
+ * top, the zoom at the foot. The names are a fixed size
  * on the screen, so the city never grows past the window to make room for
  * them: where two would collide at this scale, the less pressing one says
  * less — its name and count without the bar, then nothing until the camera

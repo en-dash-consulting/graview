@@ -1,0 +1,42 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Meetings",
+  "description": "A few meetings kept in step with a Google calendar: add or move one here and it moves there, and the other way round.",
+  "roles": ["owner"],
+  "policy": { "grants": [{ "roles": ["owner"], "mutations": "*" }] },
+  "kinds": {
+    "meeting": {
+      "noun": "meeting",
+      "plural": "meetings",
+      "fields": {
+        "name": { "type": "string", "required": true },
+        "starts": { "type": "datetime", "label": "Starts" },
+        "ends": { "type": "datetime", "label": "Ends" },
+        "where": { "type": "string", "label": "Where" },
+        "notes": { "type": "text", "label": "Notes" }
+      }
+    }
+  },
+  "acts": {
+    "add-meeting": { "title": "Add a meeting", "creates": "meeting", "description": "Put a meeting on the calendar; it reaches Google within a few seconds." }
+  },
+  "views": {
+    "meeting": {
+      "card": [{ "title": "{name}" }, { "field": "starts" }, { "field": "ends" }, { "field": "where" }]
+    }
+  },
+  "connections": {
+    "calendar": {
+      "system": "google-calendar",
+      "description": "The Google test calendar, kept in step both ways.",
+      "calendar": { "env": "GOOGLE_TEST_CALENDAR_ID" },
+      "auth": { "env": "GOOGLE", "file": "~/.graview-google-test.env" },
+      "kind": "meeting",
+      "fields": { "summary": "name", "start": "starts", "end": "ends", "location": "where", "description": "notes" },
+      "direction": "both",
+      "conflicts": "theirs",
+      "every": 4
+    }
+  }
+}

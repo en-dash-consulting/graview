@@ -18,6 +18,7 @@
  *   GRAVIEW_ENGINE=firefox pnpm audit
  *   GRAVIEW_BROWSER=/path/to/chrome pnpm audit
  */
+import { existsSync } from "node:fs";
 import { chromium, firefox, webkit } from "playwright";
 import { watched } from "./watch.mjs";
 
@@ -47,17 +48,90 @@ export function engineName(argv = process.argv) {
  */
 export async function launchEngine(name, options = {}) {
   // Every page every harness opens is held to the rules that hold everywhere (watch.mjs).
-  return watched(await launch(name, options), name);
+  return watched(forcedRenderer(await launch(name, options)), name);
+}
+
+/**
+ * THE PATH EVERY PAGE DRAWS ON, forced: GRAVIEW_RENDERER=gpu or =dom. The
+ * framework draws `auto` on the GPU where the browser can capture and on
+ * the DOM path elsewhere; a run that must hold on one path says so here,
+ * and every page of every harness is told before its scripts run
+ * (`graviewRenderer`, which `rendererAsked` reads) — no address changes.
+ * A page told `gpu` in a browser that cannot draw on it still draws on the
+ * DOM path, and says so on its ground (`data-graview-renderer`).
+ */
+export const RENDERER = (() => {
+  const asked = process.env["GRAVIEW_RENDERER"];
+  if (asked === undefined || asked === "") return null;
+  if (asked !== "gpu" && asked !== "dom") throw new Error(`GRAVIEW_RENDERER is "${asked}" — use gpu or dom.`);
+  return asked;
+})();
+
+/**
+ * The switches a Chromium needs to hand a headless page a WebGPU adapter and
+ * element capture: Metal through ANGLE on a Mac, SwiftShader's Vulkan where
+ * there is no GPU (a CI runner). Capture itself is on by default from
+ * Chromium 158 and behind the flag before it.
+ */
+export const GPU_ARGS = [
+  "--enable-blink-features=CanvasDrawElement",
+  "--enable-unsafe-webgpu",
+  "--enable-gpu",
+  "--ignore-gpu-blocklist",
+  ...(process.platform === "darwin"
+    ? ["--use-angle=metal"]
+    : ["--enable-features=Vulkan", "--use-vulkan=swiftshader", "--use-webgpu-adapter=swiftshader", "--use-angle=swiftshader"]),
+];
+
+/** The Chromium that can draw on the GPU path: the operator's, else Canary where it is installed, else the bundled build. */
+export function gpuChromium() {
+  return process.env["GRAVIEW_BROWSER"] ?? (existsSync(CANARY) ? CANARY : undefined);
+}
+
+function forcedRenderer(browser) {
+  if (!RENDERER) return browser;
+  const told = new WeakSet();
+  const tell = async (context) => {
+    if (told.has(context)) return;
+    told.add(context);
+    await context.addInitScript({ content: `globalThis.graviewRenderer = ${JSON.stringify(RENDERER)};` });
+  };
+  return new Proxy(browser, {
+    get(target, prop) {
+      if (prop === "newContext") {
+        return async (...args) => {
+          const context = await target.newContext(...args);
+          await tell(context);
+          return context;
+        };
+      }
+      if (prop === "newPage") {
+        return async (...args) => {
+          // A page of its own context, told before it is navigated.
+          const context = await target.newContext(...args);
+          await tell(context);
+          const page = await context.newPage();
+          page.on("close", () => void context.close().catch(() => {}));
+          return page;
+        };
+      }
+      const value = Reflect.get(target, prop);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  });
 }
 
 async function launch(name, { headless = true, firefoxUserPrefs, args } = {}) {
   switch (name) {
     case "chromium": {
       // The operator's Chromium, when named — same override the harnesses
-      // always honored — else Playwright's bundled build.
-      const executablePath = process.env["GRAVIEW_BROWSER"];
+      // always honored — else Playwright's bundled build. Forced onto the
+      // GPU path, the Chromium that can capture, with the switches it needs.
+      const onGpu = RENDERER === "gpu";
+      const executablePath = onGpu ? gpuChromium() : process.env["GRAVIEW_BROWSER"];
       // `args`: flags only a Chromium understands — the scale harness turns vsync off to time work, not the display.
-      return chromium.launch({ ...(executablePath ? { executablePath } : {}), headless, ...(args ? { args } : {}) });
+      const all = [...(onGpu ? GPU_ARGS : []), ...(args ?? [])];
+      return chromium.launch({ ...(executablePath ? { executablePath } : {}), headless, ...(all.length > 0 ? { args: all } : {}) });
     }
     case "canary":
       // The plain Canary binary without the capture flag — for a harness
@@ -81,9 +155,9 @@ async function launch(name, { headless = true, firefoxUserPrefs, args } = {}) {
  * the harnesses that also need WebGPU switches.
  */
 export async function launchCanaryGpu({ headless = true, extraArgs = [] } = {}) {
-  return watched(await chromium.launch({
+  return watched(forcedRenderer(await chromium.launch({
     executablePath: CANARY,
     headless,
     args: ["--enable-blink-features=CanvasDrawElement", ...extraArgs],
-  }), "chromium");
+  })), "chromium");
 }

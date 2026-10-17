@@ -11,10 +11,12 @@
  * bundles this once at build time into `packages/graview/dist/preview/`.
  */
 import { appFromOrCompile, sayFindings } from "@graview/core/compiled";
-import { mount } from "@graview/embed";
+import { mount, preload } from "@graview/embed";
 import { openRemote } from "@graview/ship/browser";
 
 const root = document.getElementById("graview-app");
+// The face this page opens on, fetched now beside the document and the store, as Graview Cloud's shell fetches it (FR-57).
+const facing = preload("pages");
 try {
   const response = await fetch("/graview/document");
   if (!response.ok) throw new Error(`The preview server did not hand over the document (${response.status}).`);
@@ -23,8 +25,15 @@ try {
   if (!compiled.ok) throw new Error(sayFindings(compiled.findings));
   const app = compiled.app;
   const principal = handed.principal;
-  const remote = await openRemote({ app, url: location.origin, principal, live: true, subprotocol: true, pollMs: 1200, openTimeoutMs: 3000 });
+  /*
+   * The store's state came with the document: the store opens on it without
+   * asking again, and without waiting for its socket's welcome (no
+   * `openTimeoutMs`): the page draws what it was handed, and the socket
+   * connects behind it, polling covering the moment until it has.
+   */
+  const remote = await openRemote({ app, url: location.origin, principal, live: true, subprotocol: true, pollMs: 1200, ...(handed.state ? { state: handed.state, openTimeoutMs: 0 } : { openTimeoutMs: 3000 }) });
   document.title = app.name;
+  await facing;
   const handle = mount(root, {
     app,
     remote,

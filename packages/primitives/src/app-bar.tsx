@@ -1,5 +1,6 @@
 import { allLabel, hueFor, kindPath, MOST_STANDING, onePerPicture, orderKinds, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
+import { useQuickAskDrawn } from "./quick-ask-desk.js";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
 import { barPanes } from "./bar-panes-door.js";
@@ -197,6 +198,8 @@ export interface BarFace {
   readonly label: string;
   readonly current: boolean;
   readonly go: () => void;
+  /** A hand or the keyboard reaching for it (the pointer over it, or on it, or the keyboard on it): fetch what drawing it needs before the press. */
+  readonly reach?: () => void;
 }
 
 /** THE SWITCH (FR-137): the scene and the pages, the app's two faces. */
@@ -345,6 +348,7 @@ const BAR_CSS = `
 @container graview-bar (max-width: ${BAR_PHONE - 1}px){
 .graview-bar-row{gap:10px;padding:0 12px}
 .graview-bar-app,.graview-bar-home{max-width:none;flex:1 1 auto;min-width:0}
+.graview-bar-name,.graview-bar-app-name{min-width:0}
 .graview-bar-mid,.graview-bar-find{display:none}
 .graview-bar-find-open{display:inline-flex}
 .graview-bar-own{--graview-activity-mark:inline}
@@ -609,9 +613,7 @@ export function AppBar({
                   <div ref={setSlot} className="graview-bar-find-slot">
                     {findBox}
                   </div>
-                  <span className="graview-bar-find-keys" data-testid="app-find-keys" aria-hidden="true">
-                    {findKeys()}
-                  </span>
+                  <FindKeys />
                 </div>
               </>
             ) : null}
@@ -653,6 +655,7 @@ function FaceSwitch({ faces, form, drawn }: { readonly faces: BarFaces; readonly
         data-testid={`app-face-${which}`}
         aria-pressed={one.current}
         title={one.label}
+        {...(one.reach && !one.current ? { onPointerEnter: one.reach, onPointerDown: one.reach, onFocus: one.reach } : {})}
         onClick={() => {
           if (!one.current) one.go();
         }}
@@ -717,6 +720,16 @@ const plain = (event: MouseEvent): boolean => event.button === 0 && !(event.meta
 function findKeys(): string {
   const platform = globalThis.navigator?.platform ?? "";
   return /Mac|iPhone|iPad|iPod/.test(platform) ? "⌘K" : "Ctrl K";
+}
+
+/** Find's shortcut said over its box's end: `/` where the quick ask holds ⌘K (Roadmap f-quick-ask-framework), else ⌘K. */
+function FindKeys() {
+  const asks = useQuickAskDrawn(useGraviewIfAny()?.aiDesk);
+  return (
+    <span className="graview-bar-find-keys" data-testid="app-find-keys" aria-hidden="true">
+      {asks ? "/" : findKeys()}
+    </span>
+  );
 }
 
 /** A mark of the bar's, drawn in the ink it stands in, hidden from whoever reads its words. */

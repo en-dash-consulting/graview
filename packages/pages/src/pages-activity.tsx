@@ -1,5 +1,5 @@
 import type { AnySchema, Store } from "@graview/core";
-import { BarActivity, BarSuggested } from "@graview/primitives/pages";
+import { BarActivity, BarSuggested, useNotifiedCount } from "@graview/primitives/pages";
 import { useGraviewIfAny, usePlayback } from "@graview/react/provider";
 import { Suspense } from "react";
 import { createPortal } from "react-dom";
@@ -22,7 +22,9 @@ export function PagesActivity<S extends AnySchema>({ context, own }: { readonly 
   // What has happened is now's, whichever moment the face draws (Roadmap f-playback).
   const live = (usePlayback()?.live ?? context.store) as unknown as Store<AnySchema>;
   useStoreTick(live as Store<AnySchema>);
-  if (!here || live.batches().length === 0) return null;
+  // Somebody told of changes (Roadmap f-notify-subscriptions) has Activity to open, though nothing has changed yet.
+  const notified = useNotifiedCount();
+  if (!here || (live.batches().length === 0 && notified === 0)) return null;
   // What tidying suggests waits beside it, quietly, only while something does.
   const drawn = (
     <>

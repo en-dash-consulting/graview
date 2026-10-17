@@ -1,6 +1,6 @@
 import { fieldWords, pluralLabel, type AnySchema, type Place } from "@graview/core";
 import { aggregateId } from "@graview/layout/view";
-import { Inspector } from "@graview/primitives/pages";
+import { GhostDoor, Inspector, NotifyDoor, useInlineAiSection, useNotifySection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
@@ -124,6 +124,9 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       // A value on the record's page: changed where it stands, beside the record's acts.
       const field = element.closest("[data-graview-field]")?.getAttribute("data-graview-field");
       if (field && page.on !== undefined && element.closest("[data-graview-pick], a[href]") === null) return { ...page, field };
+      // An act — one of a record's, a list's way to begin one: about what the page is about, and the act (Roadmap f-notify-subscriptions).
+      const act = element.closest("[data-graview-act]")?.getAttribute("data-graview-act");
+      if (act) return { ...page, act };
       // A record drawn in a lens, a home's list, a card.
       const picked = element.closest("[data-graview-pick]")?.getAttribute("data-graview-pick");
       if (picked && store.graph.getNode(picked)) return { face: "pages", on: picked, about: [picked], href: `${base}${recordPath(schema, store.graph.getNode(picked)!.kind, picked)}` };
@@ -241,7 +244,11 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     },
     [store, schema, root],
   );
-  const sections = useMemo(() => [change, own], [change, own]);
+  /* The inline AI's part of the menu, after the face's own, where the host gave a model and did not turn AI off. */
+  const inlineAi = useInlineAiSection();
+  /* "Notify me…" (Roadmap f-notify-subscriptions), where the reader is somebody the app can tell. */
+  const notify = useNotifySection();
+  const sections = useMemo(() => [change, own, ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, own, notify, inlineAi]);
 
   return (
     <MenuSections sections={sections}>
@@ -297,6 +304,10 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
         {children}
       </div>
       <MenuHome openAt={openAt} />
+      {/* What the inline AI proposed and has not made, over the page. */}
+      <GhostDoor placement="page" />
+      {/* The sheet "Notify me…" opens, already filled in. */}
+      <NotifyDoor />
     </MenuSections>
   );
 }

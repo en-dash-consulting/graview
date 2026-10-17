@@ -1,12 +1,13 @@
 import { humanizeField, isRepeatField, labelOf, linkedRelationOf, nounOf, repeatedBy, type AnySchema, type Store } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
-import { amountBox, amountInBox, argumentWords, parseDuration, readAmount, tellApart } from "@graview/core/words";
+import { amountBox, amountInBox, argumentWords, endAfterStartMoved, parseDuration, readAmount, startAndEndOf, tellApart } from "@graview/core/words";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
 import { useGraviewIfAny } from "@graview/react/provider";
 import type { Affordance, OpenParameter } from "@graview/tools";
 import { Files } from "../files-door.js";
 import { LinkedPicker } from "../linked-record-door.js";
 import { RepeatPicker } from "../repeat-picker-door.js";
+import { WhenInput } from "../when-input-door.js";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 
@@ -58,8 +59,22 @@ export function AnswerArgs({
   const start = useMemo(() => editStartOf(act, store, affordance.args ?? {}), [act, store, affordance.args]);
   const now = parameter ? start[parameter.name] : undefined;
 
+  /*
+   * AN END MOVES WITH ITS START (Roadmap f-date-inputs): asked for after its
+   * start, an end opens as far on as the start moved — or an hour after a
+   * first start — rather than where it was.
+   */
+  const pair = startAndEndOf(affordance.open.filter((one) => one.shape?.type === "date").map((one) => one.name));
+  const followed = (() => {
+    if (!pair || parameter?.name !== pair.end || parameter.shape?.type !== "date") return undefined;
+    const moved = answers[pair.start];
+    if (typeof moved !== "string") return undefined;
+    const was = start[pair.start];
+    return endAfterStartMoved(typeof was === "string" ? was : undefined, moved, typeof now === "string" ? now : undefined, { time: parameter.shape.time === true, instant: parameter.shape.instant === true });
+  })();
+
   useEffect(() => {
-    setDraft(typedOf(now, parameter?.shape));
+    setDraft(followed ?? typedOf(now, parameter?.shape));
     setPicked(Array.isArray(now) ? (now as string[]) : NOTHING_PICKED);
     setRepeat(now);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -431,10 +446,23 @@ export function AnswerArgs({
                 maxHeight: "40vh",
               } as CSSProperties}
             />
+          ) : shape.type === "date" ? (
+            // A day or a moment, typed as people say it or picked from a month (Roadmap f-date-inputs).
+            <WhenInput
+              autoFocus
+              name={parameter.name}
+              label={words.label}
+              value={draft === "" ? undefined : draft}
+              time={shape.time === true}
+              instant={shape.instant === true}
+              onChange={(next) => setDraft(next ?? "")}
+              onCancel={onCancel}
+              boxStyle={{ fontSize: "0.875rem", padding: "5px 8px", borderRadius: 7, border: "1px solid var(--graview-edge)", background: "var(--graview-panel)", color: "var(--graview-ink)" }}
+            />
           ) : (
           <input
             autoFocus
-            type={shape.type === "date" ? (shape.time ? "datetime-local" : "date") : shape.type === "number" && !shape.duration && !amount ? "number" : shape.type === "text" && shape.holds === "phone" ? "tel" : "text"}
+            type={shape.type === "number" && !shape.duration && !amount ? "number" : shape.type === "text" && shape.holds === "phone" ? "tel" : "text"}
             {...(amount ? { inputMode: "decimal" as const, "data-graview-amount": amount.format ?? "unit" } : {})}
             /*
              * A FIELD IS ASKED FOR IN WORDS. `dependsOn` and `label` are the
@@ -490,12 +518,12 @@ function editStartOf(act: { readonly derived?: { readonly act: string }; readonl
   return node ? Object.fromEntries((act!.writes ?? []).filter((field) => node[field] !== undefined && node[field] !== null).map((field) => [field, node[field]])) : {};
 }
 
-/** A record's value as its ask's box holds it: "1,250.50" beside its "$", "2026-10-20", "Heated seats, CarPlay". */
+/** A record's value as its ask's box holds it: "1,250.50" beside its "$", "Heated seats, CarPlay"; a date as the record keeps it, which its editor says in words. */
 function typedOf(value: unknown, shape: OpenParameter["shape"]): string {
   if (typeof value === "number") return shape?.type === "number" && shape.amount ? amountInBox(value, shape.amount) : String(value);
   if (Array.isArray(value)) return value.every((one) => typeof one === "string") ? value.join(", ") : "";
   if (typeof value !== "string") return "";
-  return shape?.type === "date" ? (shape.time ? value.slice(0, 16).replace(" ", "T") : value.slice(0, 10)) : value;
+  return value;
 }
 
 /** How many choices an ask shows at once. Past this it offers a filter. */

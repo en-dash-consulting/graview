@@ -55,6 +55,10 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   PhotoField: "a browser's quota",
   // Node: the filesystem, node:http and the CLI.
   createFileAdapter: "node:fs",
+  fileSubscriptions: "node:fs",
+  fileConnectionState: "node:fs",
+  readEnvFile: "node:fs",
+  connectionsFileOf: "the CLI",
   FileAdapter: "node:fs",
   serveStore: "node:http",
   ServeOptions: "node:http",
@@ -62,6 +66,7 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   serve: "the CLI",
   SERVE_USAGE: "the CLI",
   backendFrom: "the CLI",
+  subscriptionsFileOf: "the CLI",
   syncSeed: "the CLI",
   StoreBackend: "the CLI",
   holdBackend: "the CLI",

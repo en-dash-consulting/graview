@@ -317,6 +317,14 @@ a:hover { color: var(--pine-2); }
   min-width: 0;
 }
 
+/* A docs page's footer stands in the text's column, with the text's gutter,
+   and ends above the window's edge rather than on it. */
+.docfoot {
+  grid-column: 2;
+  margin: 0 var(--pad);
+  padding-bottom: 40px;
+}
+
 /* ── rail contents ─────────────────────────────────────────────────── */
 
 .brand { display: grid; gap: 6px; justify-items: start; }
@@ -671,6 +679,7 @@ footer {
 
 @media (max-width: 900px) {
   .wrap { grid-template-columns: minmax(0, 1fr); }
+  .docfoot { grid-column: 1; }
   .rail {
     position: sticky;
     top: 0;
@@ -1414,6 +1423,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../releases.html">Releases</a>
       <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
@@ -1457,7 +1467,7 @@ if (location.pathname.startsWith("/pages")) {
 <li><code>/places</code>, <code>/places/&lt;as&gt;</code> — every named lens as a page (fullscreen, over the kind's members, the beginning acts beneath unless the lens says <code>create: false</code>). A kind's page lists its pictures; a pick in a lens travels to the record. A kind's own row (one × glyph) is each line of its list, and its own page view (one × full) heads its record.</li>
 <li><code>/map</code> — <code>kindMap(store)</code>: every declared relation in its words with its live count, also a section on the home page. A kind's list says what it relates to, arranged in the shared words (<code>?sort=due:desc</code>, <code>?filter=done:false</code>, <code>?group=due:month</code>, <code>?q=tape</code>) a lens carries in its fragment, so an arrangement is a link; <code>?by=</code>, <code>?&lt;edge&gt;=&lt;id&gt;</code>, <code>?with=</code> and <code>?past=1</code> still land. A record links back.</li>
 <li><code>/search?q=</code> — the Find box's matcher: hits by kind, each with why; a nav box narrows a list, else lands here. Find and the way back ("Take back “…”", ⌘Z) are on every face: a shell places <code>&lt;PageFind&gt;</code> or <code>&lt;PageUndo&gt;</code> where it wants them, else they are drawn around it (<code>without: ["find"]</code> goes without).</li>
-<li><strong>The assistant</strong>, on every route: the scene's ask field, the ROUTE what "this" means. Proposals apply through the same runtime, attributed and undoable, withheld ones struck through; open questions are on <code>/problems</code>; the model is the host's <code>ai</code>.</li>
+<li><strong>The quick ask</strong> (⌘K, where <code>ai</code> gives a model): a bar and answer card by the page's heading, the ROUTE what "this" means. <code>context.quickAsk: false</code> draws none.</li>
 </ul>
 <p>Everything a page shows is a derivation the scene uses too: <code>recordFacts</code>, <code>deriveAffordances</code>, <code>store.permits</code>. <strong>A page never decides what an act is or who may take it</strong> — it strikes through what the seat may not, and says why. A record's facts, <code>computed</code> ones too, read in declared order or as the kind's <code>display.page</code> groups them; prose keeps its paragraphs, full width.</p>
 <p><strong>On a phone this face is the answer.</strong> <code>Shell</code> carries <code>pagesHref</code>.</p>
@@ -1525,18 +1535,18 @@ pnpm test                                               # render every page you 
     </section>
 
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="../site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="../site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.

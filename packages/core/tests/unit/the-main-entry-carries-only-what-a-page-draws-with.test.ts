@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as arrange from "../../src/arrange.js";
 import * as blocks from "../../src/blocks.js";
+import * as catalog from "../../src/catalog.js";
 import * as city from "../../src/city.js";
 import * as check from "../../src/check.js";
 import * as describePlaces from "../../src/describe.js";
@@ -18,6 +19,7 @@ import * as linked from "../../src/linked.js";
 import * as scene from "../../src/scene.js";
 import * as search from "../../src/search.js";
 import * as seat from "../../src/seat.js";
+import * as subscriptions from "../../src/subscriptions.js";
 import * as words from "../../src/words.js";
 import * as markdown from "../../src/markdown.js";
 import * as navigate from "../../src/navigate.js";
@@ -57,10 +59,14 @@ const OFF_THE_PAGE = {
   "@graview/core/json-schema": { from: jsonSchema, names: ["argumentsNeverShown", "mutationToolSchema", "nodeJsonSchema", "schemaJson", "toJsonSchema"] },
   // FR-179: the matcher, a record and an argument said in words, and what the seat and the seeding read.
   "@graview/core/search": { from: search, names: ["MATCHED_MOST", "NEAR_BELOW", "actsOn", "describeSearched", "fold", "fragmentOf", "matchNode", "parseQuery", "search", "searchableFields", "slipsBetween", "squeeze", "stemOf", "strengthOf", "touchWeights"] },
-  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "excerptOf", "failureWords", "isLongText", "isMarkdownField", "pageSections", "readableFields", "repeatAsRead", "repeatingDateAsRead", "tellApart", "viaSaid", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf", "edgeWords", "valueWords", "amountBox", "amountInBox", "readAmount"] },
+  "@graview/core/words": { from: words, names: ["argShape", "argumentWords", "describeArg", "describeNode", "excerptOf", "failureWords", "isLongText", "isMarkdownField", "pageSections", "readableFields", "repeatAsRead", "repeatingDateAsRead", "tellApart", "viaSaid", "fieldSays", "mapsHref", "parseDuration", "sayDuration", "sayPhone", "telHref", "typedHref", "typedWords", "typedFieldOf", "edgeWords", "valueWords", "amountBox", "amountInBox", "readAmount", "endAfterStartMoved", "namesInstant", "readWhenTyped", "startAndEndOf", "storedOfWall", "wallNow", "wallOfStored", "zoneSaid"] },
   // FR-180: Markdown read into blocks, fetched with the first a page draws.
   "@graview/core/markdown": { from: markdown, names: ["escapeHtml", "headingLevel", "inlineOf", "markdownBlocks", "markdownHtml", "safeHref"] },
   "@graview/core/seat": { from: seat, names: ["answerSeenBy", "beginning", "placesFrom", "placesOf"] },
+  // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
+  // Roadmap f-notify-subscriptions: what a person asked to be told of, matched against a commit under their sight — the host's and a sheet's, fetched when somebody first subscribes.
+  "@graview/core/subscriptions": { from: subscriptions, names: ["matchSubscriptions", "subscriptionProblem", "subscriptionWords", "watchSubscriptions"] },
+  "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,

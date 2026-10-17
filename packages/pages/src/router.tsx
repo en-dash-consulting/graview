@@ -7,7 +7,7 @@ import { pluralSlug } from "./registry.js";
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { aggregateId } from "@graview/layout/view";
 import { GoToContext, GraviewProvider, hasLanded, HostFilesContext, markLanded, PlaybackContext, useGraviewIfAny, useOwnPlayback, useTheKeyboardLandsSomewhere, useTheWatchKnowsWhatIsUnseen, type GoTo, type GraviewContextValue, type Playback } from "@graview/react/provider";
-import { PageAsk } from "./ask.js";
+import { PageQuickAsk } from "./quick-ask.js";
 /* A view the seat drew, as a page: fetched when one is first shown here. */
 const DraftPage = lazy(() => import("./page-draft.js").then((module) => ({ default: module.DraftPage })));
 import { FaceControlsRoot } from "./face-controls.js";
@@ -390,6 +390,8 @@ function GoesByAddress<S extends AnySchema>({ context, children }: { readonly co
       list: (kind, also) => {
         if (context.store.schema.tryDefinition(kind)) navigate(narrowedPath(`/${pluralSlug(context.store.schema, kind)}`, also));
       },
+      // A view drawn stands in the main column, at its own address, as the seat's does.
+      draft: () => navigate("/~draft"),
     }),
     [context, navigate],
   );
@@ -635,13 +637,14 @@ export function PagesApp<S extends AnySchema>({
       onSeat={(seat) => (outer ? outer.takeSeat(seat) : setTaken({ from: handed.principal, seat }))}
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
+      {...(context.subscriptions ? { subscriptions: context.subscriptions } : {})}
       resolveApp={context.resolveApp ?? outer?.resolveApp /* The host's way to name another app (FR-171): the face's own, else the provider's it is drawn inside. */}
       linkedRecords={context.linkedRecords ?? outer?.linkedRecords /* And to read its records, as this viewer (FR-171). */}
       {...(context.app ? { app: context.app } : {})}
       {...(context.menuSections ? { menuSections: context.menuSections } : {})}
     >
       {routed}
-      <PageAsk context={context} />
+      <PageQuickAsk context={context} />
     </GraviewProvider>
   ) : (
     routed

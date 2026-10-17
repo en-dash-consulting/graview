@@ -28,6 +28,9 @@ export function fromLayout(
     // view will settle at.
     dirty: dirty.has(node.id) || ("opacity" in node && node.opacity < 1),
     opacity: "opacity" in node ? node.opacity : 1,
+    // Treated as the DOM path treats its host: nearer at the near end of a row, a district on its plot as the focus.
+    ...(node.depth !== undefined ? { depth: node.depth } : {}),
+    ...(node.plot && result.city && Math.round(node.plane) === 2 ? { onPlot: true } : {}),
   }));
 
   const connectors: PlannedConnector[] = result.connectors.map((connector) => ({

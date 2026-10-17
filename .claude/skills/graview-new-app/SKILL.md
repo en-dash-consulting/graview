@@ -66,8 +66,7 @@ In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
 
 ## Do this
 
-1. **Install.** The scaffold already did. Reach for `@graview/render/gpu`
-   only if you want the experimental capture path; the DOM path is what ships.
+1. **Install.** The scaffold already did.
 
 2. **Declare one kind, one mutation, one rule.** Not the whole domain. The
    loop you want on day one is: declare → `graview check` → look → declare
@@ -91,8 +90,8 @@ In a framework checkout, `pnpm graview:link` puts `graview` on PATH.
 5. **Take the shell.** `Shell` from `@graview/primitives` is everything
    not about your domain: the one app bar an embed wears too (the name, the
    Scene and Pages switch, the scene's pictures, Find, Activity, the
-   standing, the person), the scene, its key, the ask field — a seat that
-   answers from the graph with no API key — and the acts at the pointer.
+   standing, the person), the scene, its key, the quick ask (⌘K, where
+   the host gives a model) and the acts at the pointer.
    Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`,
    `OverviewButton`) are exported for a shell of your own; one is about
    eighty lines, and a longer one is probably rebuilding something derived.
@@ -176,9 +175,10 @@ the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets`
 (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides
 `@property` and degrades to a clean cut where that is missing — write no
 fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without
-either the graph still answers and the seat says AI isn't available. The GPU
-capture path is Chromium-only, experimental and opt-in (`attachRenderer`
-set to `attachGpu()` from `@graview/render/gpu`) — never a requirement.
+either the graph still answers and the seat says AI isn't available. The scene
+draws on the GPU where the browser can capture into WebGPU and on the DOM
+path elsewhere, silently, with one accessibility tree (`renderer`, `blur`
+on the Shell) — never a requirement.
 
 ## Then find out whether it worked
 

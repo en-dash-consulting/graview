@@ -1,0 +1,247 @@
+{
+  "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
+  "releases": [
+    {
+      "version": "0.1.30",
+      "date": "2026-10-15",
+      "headline": "Play an app back, link across apps, an actor that tidies, and graview.dev as a Graview app.",
+      "summary": "- **Playback.** Open the app as it stood at any moment, and restore it to there.\n- **Linked records.** A relation can point at a kind in another app, read there as whoever is looking.\n- **An actor that tidies.** The app's own actor suggests fixes, which a person accepts or declines.\n- A first look for a new app, an emoji as the app's mark, kind lists you can sort and group, navigation with filters and sections, a right-click menu on Pages and images by URL.\n- Eighteen author requests and a run of scene and lens bugs fixed, a screen-reader pass, and the GPU path past 128 live views. graview.dev itself is now a Graview app.",
+      "compatibility": "`Store.at` and `Store.seqAt` are replaced by `pastOf` and `seqAt` on the new `@graview/core/past`. A role that removed, archived or merged other people's records only through the act that makes the kind now needs those acts named in its grant.",
+      "published": true
+    },
+    {
+      "version": "0.1.29",
+      "date": "2026-10-14",
+      "headline": "A large release of field types, list tools and data features, on a lighter page.",
+      "summary": "- **New field types:** links to another app, Markdown text, phone, place and duration, and money, percent and unit formats; dates and numbers said the US way.\n- **Records:** archive and merge records, lineage and provisional links, repeating dates, field-level sight, acting on several records at once, and `importRows` for bringing data in.\n- **Lists:** fuzzy search, filters that scale to large lists, and cards you can read at a glance.\n- `renderPlace` writes a place as static HTML, guest views can show pictures, and `store.tick` reports what changed.\n- The map is laid out along the ground, and the hosted page is lighter up front than 0.1.28 despite everything added.",
+      "compatibility": "Breaking for imports: `edgeWords` and `valueWords` move to `@graview/core/words`, and the address helpers (`withShown`, `withQuery` and the rest) move out of `@graview/layout`; nothing is aliased. The scene's map is laid out anew, so a `sceneThumbnail` draws a different picture. Ops, stored formats, the wire and tool schemas are unchanged.",
+      "published": true
+    },
+    {
+      "version": "0.1.28",
+      "date": "2026-10-13",
+      "headline": "The people kind, grants and sights are named edits.",
+      "summary": "`editDocument` gains `set-people`, `add-grant`, `remove-grant`, `add-sight` and `remove-sight`, so who may do and see what can be changed as a named, previewed edit instead of a raw patch. Each is previewed in words and refused with the checker's own codes.",
+      "compatibility": "Ops, stored formats, the wire, the document format and check codes are unchanged. The edit vocabulary gains five ops, and an edit's refusal can now carry a specific code where every refusal was `edit`.",
+      "published": true
+    },
+    {
+      "version": "0.1.27",
+      "date": "2026-10-12",
+      "headline": "People in a document, bounded seat reads, and links that say why they did not go.",
+      "summary": "- A document can name the kind that stands for its people, and its acts can say `$me` for the person acting.\n- A grant can hold to your own end of a link, and a sight can reach the records that link to you.\n- A seat's reads are bounded, and a worker view's link or navigate says why it did not go.",
+      "compatibility": "Breaking: `answerSeenBy` moved to its own entry, the read tools' answer shapes changed, `useSeatConversation` requires `said`, and `$me` is reserved as an argument name.",
+      "published": true
+    },
+    {
+      "version": "0.1.26",
+      "date": "2026-10-12",
+      "headline": "Pictures and files on records, and a failed AI turn says why.",
+      "summary": "A kind can carry pictures and documents: `imageField()`, `fileField()`, the image block, and uploads through the host's files seam. When a host's AI turn fails, the seat shows the host's own explanation.",
+      "compatibility": "Breaking for imports only: the form helpers (`formFields` and its neighbors) moved to their own entry. Ops, stored formats, the wire, the document format and tool schemas are unchanged.",
+      "published": true
+    },
+    {
+      "version": "0.1.25",
+      "date": "2026-10-12",
+      "headline": "The app on a phone: the seat closes and the screen fills.",
+      "summary": "On a phone, the open seat is put away by its close button, a tap on its grab line or a pull down, and the keyboard goes with it. An app fills the phone after it rotates.",
+      "compatibility": "Tool schemas move to `@graview/core/json-schema`.",
+      "published": true
+    },
+    {
+      "version": "0.1.24",
+      "date": "2026-10-12",
+      "headline": "Every seat judged over what it sees, problems that open on their fix, and a fit on the smallest phone.",
+      "summary": "- What a seat is told is worked out over what that seat can see.\n- Pressing a problem opens its repairs, wherever the record sits, and a record is renamed by pressing its name.\n- The bar and the home's counts fit a 320-pixel phone at the largest text size.\n- Names, yes-or-no fields and facts read in plain words. Also sync fixes.",
+      "compatibility": "Ops, stored formats, the wire, the declaration, check codes and tool schemas are unchanged; only where some types are declared moved.",
+      "published": true
+    },
+    {
+      "version": "0.1.23",
+      "date": "2026-10-11",
+      "headline": "The seat's turn, without the weight.",
+      "summary": "`turnThroughMessages` has its own entry, `@graview/tools/turn`, under 2 KB, so a host can wire the seat's turn up front without loading the whole tools package on first paint.",
+      "published": true
+    },
+    {
+      "version": "0.1.22",
+      "date": "2026-10-11",
+      "headline": "Preview and doctor, typed documents, and a seat that reads before it answers.",
+      "summary": "- `graview preview` serves a document and a seed with Graview's own faces over them, no product needed, and `graview shots` photographs places headless.\n- `graview doctor` says whether a product is on one Graview release.\n- Documents are typed from the editor to the face, can declare facts about the whole graph, and give kinds a natural time and author field. Declared blocks have stable keys.\n- The seat reads records with tools before it answers, the sync engine resolves conflicts as it is told, and kinds with no records fold into More.\n- A security and correctness review of 0.1.21.",
+      "published": true
+    },
+    {
+      "version": "0.1.21",
+      "date": "2026-10-11",
+      "headline": "Who's here on every bar, axe-clean markup, and a way back in the scene.",
+      "summary": "- Who else is here shows on the bar on both faces and on a phone.\n- The framework's own markup passes axe-core for WCAG 2.0 to 2.2 A and AA, at desktop and phone widths, light and dark.\n- The scene gets its own way back, and the overview has an address that survives a server round trip.\n- A broken rule states its values to a host that reads only its message, and a read-only role is no longer warned for doing nothing.",
+      "compatibility": "Ops, stored formats, the wire, the document and compiled formats, check codes and tool schemas are unchanged; some presence and test-id behavior a harness reads moved.",
+      "published": true
+    },
+    {
+      "version": "0.1.20",
+      "date": "2026-10-10",
+      "headline": "List pages lead with their records, and rules read like sentences.",
+      "summary": "- A list page puts its records first instead of a tall header of title and related links.\n- A rule written in the rule language says its shape in plain words.\n- An agent opening a new product finds what to read at the root.\n- Fixed: a connect that replaces now replaces the right link, one mistake gives one check finding, and the scene from an empty address lands where the scene opens.",
+      "compatibility": "Additive: the document format gains an optional `pages.primary`, and check gains two warnings about it. Which places stand on the bar changed.",
+      "published": true
+    },
+    {
+      "version": "0.1.19",
+      "date": "2026-10-09",
+      "headline": "The seat floats, takes you where you ask, and draws views you can keep.",
+      "summary": "- The seat is no longer a rail down the scene's edge: it floats, quietly, on both faces.\n- Ask it to go somewhere and it goes, matching the request against what the declaration and the graph already name, without a model.\n- Ask it for a way of seeing and it drafts a view that can be kept as a lens. Who-and-when questions are answered from the graph with no model.\n- The host chooses the AI once, instead of the reader picking from a menu. The whole-page shell wears the one app bar, and the hosted page carries 9.5 KB less before the app draws.",
+      "compatibility": "Breaking for the components and API a host's seat reaches: the `Companion` family is removed for the floating seat and `HostAi`. Ops, stored formats, the wire, the document format and tool schemas are unchanged.",
+      "published": true
+    },
+    {
+      "version": "0.1.18",
+      "date": "2026-10-08",
+      "headline": "A lens picker in the scene, and prose that reads like prose.",
+      "summary": "The scene gets its own place control. A selected record is drawn once. Long text keeps its paragraphs. Parts that fail to load retry safely (`@graview/core/retry`), and no import cycles run at load time.",
+      "published": true
+    },
+    {
+      "version": "0.1.17",
+      "date": "2026-10-08",
+      "headline": "Graview's identity, and Scene and Pages side by side.",
+      "summary": "The framework's own look follows the third revision of its design kit and is exported as data. The scene and the pages read as two things on the bar.",
+      "published": true
+    },
+    {
+      "version": "0.1.16",
+      "date": "2026-10-08",
+      "headline": "One app bar, and brands you can edit by name.",
+      "summary": "One bar on every face, with the scene as a place beside the others. Named acts for an app's name and brand, contrast refusals that name the failing pair of colors, icon-sized app pictures, and search results that carry their address. The framework now spells in American English.",
+      "compatibility": "Breaking: names spelled the British way are renamed with no aliases (`normalize`, `summarize`, `humanizeField`, `colorsIn` and others). The undo dock is a fixed popover rather than a box in the page's flow.",
+      "published": true
+    },
+    {
+      "version": "0.1.15",
+      "date": "2026-10-07",
+      "headline": "Clearer refusals, one problem count.",
+      "summary": "Refusals that come from a rule now say so. The number of problems appears in one place. A host can hand the page an already compiled app.",
+      "compatibility": "Breaking for a caller that sent an act an argument it does not declare: it was dropped and the act ran; now it is refused as `invalid`, naming what the act takes.",
+      "published": true
+    },
+    {
+      "version": "0.1.14",
+      "date": "2026-10-07",
+      "headline": "Ranges, derived edits and fewer pills.",
+      "summary": "Number fields declare their ranges. A derived edit per kind covers every field nothing else sets, and refuses what it cannot take. A design pass, from building a real product, took words out of capsules.",
+      "compatibility": "The arrangement functions moved from `@graview/core` to `@graview/core/arrange`. From 0.1.13: `@graview/react/provider` no longer exports `UrlSync`, `useUrlSync` or `adjustment` (`@graview/react` still does).",
+      "published": true
+    },
+    {
+      "version": "0.1.13",
+      "headline": "Status-board moves and an address bar for the routed face.",
+      "summary": "A status board's columns say which lens they are in, and an act that sets the board's field is offered as a move. Scene thumbnails can be fitted to what stands. A host whose page is the app can give the routed face the browser's address bar.",
+      "published": false,
+      "shippedIn": "0.1.14"
+    },
+    {
+      "version": "0.1.12",
+      "date": "2026-10-06",
+      "headline": "A lighter hosted page: the checker and the seat's tools leave the main entry.",
+      "summary": "What only a fetched face, an agent's seat or the checker uses moved out of `@graview/core`'s main entry into subpaths named for what they hold, so a hosted page loads less up front.",
+      "compatibility": "Breaking for imports, with no aliases: `checkApp`, `formatFindings`, `describeApp` and the docs generators move to `@graview/core/check`, and other names to their own subpaths. From 0.1.11: `@graview/primitives/frame` exports `themeBaseCss` in place of `themeCss`, and a worker view's failure reads `start` where it read `refused`.",
+      "published": true
+    },
+    {
+      "version": "0.1.11",
+      "headline": "A status board lens, currencies, and set walks in the rule language.",
+      "summary": "A shipped `columns` lens draws a kind's records as a status board. Money fields take a currency, and the app has a default one. Figure labels are templates. The rule language walks a relation from every member of a set. The checker warns when an act reads a kind a role may not see.",
+      "published": false,
+      "shippedIn": "0.1.12"
+    },
+    {
+      "version": "0.1.10",
+      "date": "2026-10-06",
+      "headline": "Declared lenses and homes, and worker views you can trust with HTML.",
+      "summary": "- A lens, a home view and the arrangement of pages declared in a document now draw, and a view can list related records.\n- The rule language computes what pages need (sums over expressions, sorting), and kinds can declare computed fields.\n- A worker view can draw HTML, SVG and CSS with nothing able to fetch or leave its region; it needs no build, is a named place with a manifest the host enforces, stops past its limits, and can be run once headless to say what it drew.\n- `describePlace` says what one place shows one seat, without a browser. Every new document feature has an edit.",
+      "compatibility": "Additive within the document format and check codes. The guest-view protocol gains messages; derived tools gain one read tool, `describe_place`.",
+      "published": true
+    },
+    {
+      "version": "0.1.9",
+      "date": "2026-10-05",
+      "headline": "A host speaks in the app's own notices, menus and pictures.",
+      "summary": "A host can show its notices in the app's own voice, put its own actions in the profile menu, and draw a picture of an app without a browser. Every popover opens above everything else and behaves the same way, and the seat's rail can be put away.",
+      "published": true
+    },
+    {
+      "version": "0.1.8",
+      "date": "2026-10-05",
+      "headline": "Guest views run in a worker, for chats that cannot nest a frame.",
+      "summary": "A guest view can run in a worker as well as a frame, hardened before guest code runs and built as one classic script. The component kit it draws with is declared once and the host draws nothing else. A host says where its links may go, and a guest that stops answering is stopped.",
+      "published": true
+    },
+    {
+      "version": "0.1.7",
+      "date": "2026-10-05",
+      "headline": "A read-only app says so.",
+      "summary": "An open page is told that the app takes no changes for now, and why. An op that names a missing record is served as it is.",
+      "published": true
+    },
+    {
+      "version": "0.1.6",
+      "date": "2026-10-04",
+      "headline": "A host's refusals in its own words, and an embed that keeps to its box.",
+      "summary": "A host can refuse a change in its own words, an Apply with nothing changed asks the host nothing, and the embed's stylesheet stays inside its element.",
+      "published": true
+    },
+    {
+      "version": "0.1.5",
+      "date": "2026-10-04",
+      "headline": "The studio in a host's page, and half the weight.",
+      "summary": "A field changes in place in the studio, the host decides who is offered the studio and can refuse a change, and what the studio will not change is said up front. A hosted page carries 536 KB up front instead of 1,075 KB, with each face fetched as it is first drawn, and the framework builds its schemas in zod/mini.",
+      "published": true
+    },
+    {
+      "version": "0.1.4",
+      "date": "2026-10-04",
+      "headline": "Security: a seat learns nothing about records it may not see.",
+      "summary": "- A seat is never served the id of a hidden record, and no refusal, sentence or checkpoint reveals whether one exists.\n- A change is acknowledged only once it is durable, a busy host's wait is read correctly, and a hibernating host can resume its sockets.\n- Refusals on the wire are written for people, and the studio hands a host back a document.",
+      "compatibility": "The wire and live protocols narrow what a seat with sights is sent; no field is added or removed. `remove-kind` removes more of what depended on the kind.",
+      "published": true
+    },
+    {
+      "version": "0.1.3",
+      "date": "2026-10-04",
+      "headline": "A live store a host can run, observe and deploy.",
+      "summary": "Refusals carry a code a program can branch on, a busy host is told apart from a refusal, presence can include agents, the declaration can change under open tabs, a remote client can be observed and can catch up, and the wire says when the client and server are on different builds.",
+      "compatibility": "Breaking for a client that named its own channel: `via` in a call is ignored, and a client sends `x-graview-via` to a server that trusts seat headers.",
+      "published": true
+    },
+    {
+      "version": "0.1.2",
+      "date": "2026-10-03",
+      "headline": "The declaration as a document, a live wire, and guest views.",
+      "summary": "- **The declaration is a document:** one JSON object that compiles into the same app `defineApp` declares, with an edit vocabulary of twenty-one operations, rules written as expressions, and templates as data.\n- **A live wire:** `openRemote({ live: true })` pushes every op to every browser as it lands, MCP is served over HTTP, and logs can be folded and compacted.\n- **Guest views:** `@graview/guest`, a view somebody else wrote, in a sandboxed frame that can only ask.\n- A SQL adapter, stored formats that carry their version, a conformance kit, and `docs/stability.md`, the promise a version keeps.",
+      "compatibility": "Breaking: a store served without `seatOf` answers 401 until it passes `trustSeatHeaders: true`, `graview serve` binds 127.0.0.1, a host's `seatOf` receives a web `Request`, a full palette needs the `good` and `bad` tokens, and a kind no sight names is seen only by the system.",
+      "published": true
+    },
+    {
+      "version": "0.1.1",
+      "headline": "A record read whole, in its own words.",
+      "summary": "A kind declares what a glance at one says, forms and lists say values in the record's words, lists narrow by numbers and words, and a policy says who may see what as well as who may do it.",
+      "published": false,
+      "shippedIn": "0.1.2"
+    },
+    {
+      "version": "0.1.0",
+      "date": "2026-10-02",
+      "headline": "The first public release of the framework on npm.",
+      "summary": "Graview's first release to npm: a framework where a typed context graph is the interface rather than the backing store. One declaration per kind drives the layout, the legal actions, the agent tools and the accessibility labels. `graview` is the tool and `@graview/*` the framework, all at one version, under the Elastic License 2.0.",
+      "published": true
+    },
+    {
+      "version": "0.0.1",
+      "headline": "The work before the first public release.",
+      "summary": "It was numbered once in the repository and never published.",
+      "published": false,
+      "shippedIn": "0.1.0"
+    }
+  ]
+}

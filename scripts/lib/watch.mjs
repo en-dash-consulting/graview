@@ -295,8 +295,14 @@ function watchInPage() {
    * inside a sentence or the browser's own box.
    */
   const CONTROL = "a[href],button,select,input:not([type=hidden]):not([type=checkbox]):not([type=radio]),[role=button],[role=link],[role=menuitem],[role=tab],[role=option]";
-  const small = () => {
+  /*
+   * Asked again before it is said, as a covered control is: in Firefox the
+   * rota's Find box measured the browser's own 19 pixels for a beat before
+   * its line's stylesheet held it to 28.
+   */
+  const small = (again = null) => {
     const boxes = [];
+    const found = new Set();
     for (const el of document.querySelectorAll(CONTROL)) {
       if (el.closest("[hidden],[aria-hidden='true'],[inert]") || !visible(el)) continue;
       const style = getComputedStyle(el);
@@ -334,8 +340,14 @@ function watchInPage() {
         return Math.max(near.left - x, 0, x - near.right) ** 2 + Math.max(near.top - y, 0, y - near.bottom) ** 2 < 144;
       });
       if (!crowded) continue;
+      if (!again) {
+        found.add(el);
+        continue;
+      }
+      if (!again.has(el)) continue;
       report("target-too-small", `${describe(el)} is ${Math.round(own.width)}×${Math.round(own.height)} pixels at ${document.documentElement.clientWidth} wide, within 12 pixels of ${describe(crowded.el)}`, `${location.pathname}|${describe(el)}|${document.documentElement.clientWidth}`);
     }
+    if (!again && found.size > 0) setTimeout(() => small(found), 700);
   };
   /*
    * NOTHING STANDS OVER A CONTROL (layout-collision-or-overflow). The class
@@ -348,8 +360,8 @@ function watchInPage() {
    * scene is still moving; and asked again before it is said.
    */
   let unsettled = 0;
-  /* Laid over the page on purpose: a menu, a dialog, a popover, a panel or sheet laid on the map, the seat opened to talk. */
-  const OPENED_OVER = "[popover],dialog,[role=dialog],[role=alertdialog],[role=menu],[role=listbox],[role=tooltip],[data-graview-popover],[data-graview-overlay],[data-graview-seat=open]";
+  /* Laid over the page on purpose: a menu, a dialog, a popover, a panel or sheet laid on the map, the quick ask's card. */
+  const OPENED_OVER = "[popover],dialog,[role=dialog],[role=alertdialog],[role=menu],[role=listbox],[role=tooltip],[data-graview-popover],[data-graview-overlay]";
   const clips = (style) => style.overflowX !== "visible" || style.overflowY !== "visible";
   /** What of a control can be seen through the boxes that clip it: a point outside is scrolled or cut away, not covered. */
   const seenOf = (el) => {
@@ -390,8 +402,15 @@ function watchInPage() {
   const scrollsClear = (el, cover) => {
     const mine = el.getBoundingClientRect();
     const theirs = cover.getBoundingClientRect();
-    // Which way it scrolls clear: away from the side the bar stands on.
-    const below = theirs.top + theirs.bottom > mine.top + mine.bottom;
+    /*
+     * Which way it scrolls clear: away from the side the bar stands on. A
+     * bar at the foot (the ask field) stands below whatever it covers, even
+     * a row cut by the window's own foot whose middle is lower than the
+     * field's: judged by their middles, that row was told to scroll up,
+     * where there was no room, and a page that scrolls on was said to end
+     * under the field.
+     */
+    const below = cover.closest("[data-graview-foot]") !== null || theirs.top + theirs.bottom > mine.top + mine.bottom;
     const needed = below ? mine.bottom - theirs.top : theirs.bottom - mine.top;
     return scrollersOf(el).some((scroller) => {
       const page = scroller === document.scrollingElement || scroller === document.documentElement;
@@ -487,7 +506,14 @@ function watchInPage() {
   const scan = () => {
     queued = false;
     sideways();
-    small();
+    /*
+     * SIZES ARE JUDGED ON THE PAGE AS LAID OUT. While the document is still
+     * loading, a stylesheet it waits on (a web font's) can hold back the
+     * rest: WebKit drew the todo example's rows unstyled, a 16-pixel tick
+     * beside the ask field, until its fonts arrived. Judged once it has.
+     */
+    if (document.readyState === "complete") small();
+    else addEventListener("load", schedule, { once: true });
     /*
      * A scene still moving draws its cards over each other on the way: what
      * stands over what is judged where it settles, looked at again until it

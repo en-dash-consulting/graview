@@ -4,8 +4,8 @@
  *
  * On a phone turned to landscape and back, the app was drawn in the top
  * half of the screen and stayed so, on both faces: the embed took the
- * height it was mounted with once, the Shell was `100vh`, the pages' seat
- * a fixed `100dvh`, and the scene passed over a box reported as nothing.
+ * height it was mounted with once, the Shell was `100vh`, and the scene
+ * passed over a box reported as nothing.
  * This mounts the embed on a page that is the app, the way Cloud's shell
  * does, on a phone, with each height a host may say — `"viewport"`,
  * `100dvh`, a `var()` whose fallback is one — on the scene and the pages;
@@ -14,7 +14,6 @@
  *
  *   the embed's box is the screen's height, its content reaches the
  *   screen's foot, and the scene laid itself out for the box it has;
- *   the pages' seat stands in the screen's height, not the first one;
  *   the Shell is the screen's height and its scene follows its box;
  *   a scene whose box went to nothing while the phone turned lays itself
  *   out for the box it has once it comes back.
@@ -125,15 +124,12 @@ function measure(page, root) {
     // The embed's content box; the Shell's is its scene.
     const content = box.querySelector("[data-embed-content]") ?? ground;
     const groundRect = ground?.getBoundingClientRect();
-    const seat = document.querySelector('[data-testid="page-seat"]');
-    const seatRect = seat?.getBoundingClientRect();
     return {
       screen: innerHeight,
       height: Math.round(rect.height),
       top: Math.round(rect.top),
       contentFoot: content ? Math.round(content.getBoundingClientRect().bottom) : null,
       scene: ground ? { laidOutFor: ground.getAttribute("data-graview-box"), has: `${Math.round(groundRect.width)}x${Math.round(groundRect.height)}` } : null,
-      seatFoot: seatRect ? Math.round(seatRect.bottom) : null,
     };
   }, root);
 }
@@ -163,7 +159,7 @@ async function turnAndMeasure(page, root) {
 
 const report = { at: new Date().toISOString(), engines, portrait: PORTRAIT, landscape: LANDSCAPE, checks: {} };
 const errors = [];
-const seen = { embed: [], seat: [], shell: [], zero: [] };
+const seen = { embed: [], shell: [], zero: [] };
 let browser;
 const host = await buildHost();
 const todo = await serving("todo", portFor("todo"), repoRoot);
@@ -180,9 +176,6 @@ try {
         await page.waitForTimeout(SETTLE);
         const said = await turnAndMeasure(page, "embed");
         seen.embed.push({ engine, face, height, ...said, ok: Object.values(said).every(fills) });
-        if (face === "pages") {
-          seen.seat.push({ engine, height, feet: Object.fromEntries(Object.entries(said).map(([turn, m]) => [turn, m && { seatFoot: m.seatFoot, contentFoot: m.contentFoot }])), ok: Object.values(said).every((m) => m && near(m.seatFoot, m.contentFoot)) });
-        }
         /*
          * A BOX THAT WENT TO NOTHING: the host hides the app, the phone turns,
          * the app comes back. The scene passed over the zero and must lay
@@ -216,7 +209,6 @@ try {
 
   const every = (list) => list.length > 0 && list.every((one) => one.ok);
   report.checks.theEmbedFillsThePhoneAfterEachTurnOnBothFaces = { held: seen.embed, ok: every(seen.embed) };
-  report.checks.thePagesSeatStandsInTheScreensHeight = { held: seen.seat, ok: every(seen.seat) };
   report.checks.theShellFillsThePhoneAfterEachTurn = { held: seen.shell, ok: every(seen.shell) };
   report.checks.aSceneWhoseBoxWentToNothingFollowsItBack = { held: seen.zero, ok: every(seen.zero) };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };

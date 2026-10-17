@@ -311,6 +311,14 @@ a:hover { color: var(--pine-2); }
   min-width: 0;
 }
 
+/* A docs page's footer stands in the text's column, with the text's gutter,
+   and ends above the window's edge rather than on it. */
+.docfoot {
+  grid-column: 2;
+  margin: 0 var(--pad);
+  padding-bottom: 40px;
+}
+
 /* ── rail contents ─────────────────────────────────────────────────── */
 
 .brand { display: grid; gap: 6px; justify-items: start; }
@@ -665,6 +673,7 @@ footer {
 
 @media (max-width: 900px) {
   .wrap { grid-template-columns: minmax(0, 1fr); }
+  .docfoot { grid-column: 1; }
   .rail {
     position: sticky;
     top: 0;
@@ -1408,6 +1417,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="checks.html">What check says</a>
       <a href="demos.html">Live demos</a>
       <a href="stability.html">Stability</a>
+      <a href="releases.html">Releases</a>
       <a href="site.html">This site, as an app</a>
       <a href="../tour.html">The tour</a>
       <a href="../progression.html">The garden, grown</a>
@@ -1429,6 +1439,8 @@ main.page > section.tour-intro { padding-top: 64px; }
     <section id="seat" aria-labelledby="h-seat">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-seat">The seat</h2></div>
       <p>An intelligence provider in the declaration says what a model may do and how words and pictures reach it. The seat gets the same acts a person has, narrowed by the same policy, and its turns land in the same operation log with an author and an intent — watchable from altitude, and undoable out of order. What comes back from a model is a plan before it is a change: one row per thing, what it was sure about, what goes with what if you decline something, then one batch with one undo.</p>
+      <p>In the app, a person meets the model where the thing is. Right-click a record for what it picks from the acts, places and panels the app already has; press ⌘K to ask about what is selected, and the answer stands on a card beside it, a change it proposes waiting as a ghost until it is accepted. The host lends the model (<code>ai</code>), and with AI off none of it is drawn.</p>
+      <figure class="shot"><img class="light" src="../img/quick-ask-light.png" width="1280" height="760" loading="lazy" alt="The todo example's scene with the task Pay the deposit selected and, beside it, an answer card proposing to mark it done, with Accept and Dismiss."><img class="dark" src="../img/quick-ask-dark.png" width="1280" height="760" loading="lazy" alt="The same answer card beside the selected task, in the dark scheme."><figcaption>The todo example, asked with ⌘K.</figcaption></figure>
       <ul class="cards">
         <li><a href="skills/graview-agent-seat.html"><strong>graview-agent-seat</strong><span>Wire an agent seat into a Graview app that shares the interface's own actions rather than shadowing them, and verify the diffs are identical rather than assuming they are.</span></a></li>
         <li><a href="skills/graview-permissions.html"><strong>graview-permissions</strong><span>Declare who may do what in a Graview app once, so the store enforces it, the actions strip narrows and an agent seat narrows with it — verified by graview check and by trying it.</span></a></li>
@@ -1486,18 +1498,18 @@ main.page > section.tour-intro { padding-top: 64px; }
     </section>
 
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.

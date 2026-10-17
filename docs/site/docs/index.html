@@ -305,6 +305,14 @@ a:hover { color: var(--pine-2); }
   min-width: 0;
 }
 
+/* A docs page's footer stands in the text's column, with the text's gutter,
+   and ends above the window's edge rather than on it. */
+.docfoot {
+  grid-column: 2;
+  margin: 0 var(--pad);
+  padding-bottom: 40px;
+}
+
 /* ── rail contents ─────────────────────────────────────────────────── */
 
 .brand { display: grid; gap: 6px; justify-items: start; }
@@ -659,6 +667,7 @@ footer {
 
 @media (max-width: 900px) {
   .wrap { grid-template-columns: minmax(0, 1fr); }
+  .docfoot { grid-column: 1; }
   .rail {
     position: sticky;
     top: 0;
@@ -1402,6 +1411,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="checks.html">What check says</a>
       <a href="demos.html">Live demos</a>
       <a href="stability.html">Stability</a>
+      <a href="releases.html">Releases</a>
       <a href="site.html">This site, as an app</a>
       <a href="../tour.html">The tour</a>
       <a href="../progression.html">The garden, grown</a>
@@ -1436,24 +1446,25 @@ main.page > section.tour-intro { padding-top: 64px; }
         <li><a href="cli.html"><strong>The CLI</strong><span>create, check, types, docs, describe, lens, figure, serve, skills.</span></a></li>
         <li><a href="checks.html"><strong>What check says (105)</strong><span>Every finding, and how loudly.</span></a></li>
         <li><a href="stability.html"><strong>Stability</strong><span>What a version may change, and what a host can hold it to.</span></a></li>
+        <li><a href="releases.html"><strong>Releases</strong><span>What came in each version, and what to know before upgrading.</span></a></li>
         <li><a href="../progression.html"><strong>The garden, grown</strong><span>Sixteen live chapters, from one kind to a product.</span></a></li>
         <li><a href="site.html"><strong>This site, as an app</strong><span>graview.dev is a Graview app: its pages are records, and its city is one click away.</span></a></li>
       </ul>
     </section>
 
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.

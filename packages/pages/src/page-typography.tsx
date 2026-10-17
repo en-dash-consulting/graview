@@ -32,7 +32,7 @@ export const DISPLAY = "var(--graview-font-display, var(--graview-font-body, sys
 export const column: React.CSSProperties = {
   maxWidth: 760,
   margin: "0 auto",
-  // The end clears what stands over the foot: the seat's field says its measured height (`--graview-foot-room`), a phone its home bar.
+  // The end clears what stands over the foot: what stands there says its measured height (`--graview-foot-room`), a phone its home bar.
   padding: "40px 20px max(96px, calc(var(--graview-foot-room, 0px) + env(safe-area-inset-bottom, 0px)))",
   display: "grid",
   /*

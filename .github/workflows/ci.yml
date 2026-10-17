@@ -160,13 +160,46 @@ jobs:
       - name: Photograph the progression
         run: node scripts/progression.mjs
 
+  # HOW LONG A PERSON WAITS. Graview Cloud's shell, as `graview preview`
+  # builds it, timed headless over a roadmap the Graview Roadmap's size and a
+  # small team's tasks: the first load to its first useful paint and until it
+  # is interactive, a list to a record and the pages to the scene, at a desk
+  # and on a slow phone. Each median is held to `TIMING_BUDGET` in the
+  # harness, with room for a shared runner; the bytes are held by the hosted
+  # page's budget in the tests. docs/first-load.md has the numbers.
+  first-load:
+    name: time the first load and a page switch
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: A browser to time
+        run: npx playwright install --with-deps chromium
+      - name: Time the first load and a page switch
+        run: node scripts/verify-first-load.mjs
+      - name: Keep what it measured
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: first-load
+          path: docs/first-load.json
+          if-no-files-found: ignore
+
   # THE CHECK MAIN'S RULES ASK FOR, by the name they ask for it. It runs
   # whatever happened above (`always()`), so a job that failed or was
   # called off makes this fail rather than leave the check skipped, which
   # the rules would count as passing.
   verify:
     if: always()
-    needs: [test, packages, scaffold, progression]
+    needs: [test, packages, scaffold, progression, first-load]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

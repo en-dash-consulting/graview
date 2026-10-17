@@ -13,14 +13,24 @@
  */
 /* The scene's own rules, drawn by the scene face after the frame's sheet (FR-104). */
 export { sceneCss } from "./scene-css.js";
-export { SeatField } from "./seat-field.js";
 export { DraftDoor } from "./draft-door.js";
-export type { SeatFieldProps, SeatStart } from "./seat-field.js";
+// The quick ask (Roadmap f-quick-ask-framework): ⌘K's bar beside what is selected, and its answer cards, fetched when first opened.
+export { QuickAskDoor } from "./quick-ask-door.js";
+export { openQuickAsk, useQuickAskDrawn } from "./quick-ask-desk.js";
+export type { QuickAskDoorProps } from "./quick-ask-door.js";
+export type { QuickAskOpening } from "./quick-ask-desk.js";
+export { quickAskOf } from "./quick-ask-setting.js";
 export { LinesKey } from "./lines-key.js";
 /* What is chosen from altitude, beside the map at a size a person reads: a lens, a record's links, a district. */
 export { MapPanel, mapPanelShows } from "./map-panel-door.js";
 export type { MapPanelShowing } from "./map-panel-door.js";
 export { Inspector } from "./workbench/inspector-door.js";
+// The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.
+export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-door.js";
+export type { GhostDoorProps } from "./inline-ai-door.js";
+// Notify me (Roadmap f-notify-subscriptions): its part of the context menu, the sheet, a face's own press and Activity's list, the sheet and list fetched when first drawn.
+export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
+export type { NotifyAsk } from "./notify-door.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";

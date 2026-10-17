@@ -304,6 +304,9 @@ export { FIELD_SIGHT, recordsOf, sees, sightedKinds } from "./permissions/sight.
 export { writersOf, type Writers } from "./ops/writers.js";
 export type { FieldsKept, RecordedLog, Records } from "./permissions/sight.js";
 export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
+// Notify me (Roadmap f-notify-subscriptions): what a subscription is, and the store a page keeps them in; the matcher and their words are `@graview/core/subscriptions`.
+export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";
+export type { MatchedRecord, OnSubscriptionMatch, Subscription, SubscriptionDraft, SubscriptionMatch, SubscriptionStore, SubscriptionWhen } from "./subscription-shape.js";
 export { walkKinds } from "./schema/path.js";
 export { tellTheWatchWhatIsUnseen } from "./watched.js";
 

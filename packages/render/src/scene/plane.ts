@@ -129,3 +129,50 @@ export function transformFor(
 ): Matrix4 {
   return planeTransform(style.scale, x, y);
 }
+
+/** What both paths need of a view to treat it: its plane, how far back in it, and whether it stands on a plot. */
+export interface TreatedView {
+  readonly plane: number;
+  /** 0..1 along the plane's arc; a card at the near end of a row recedes less. */
+  readonly depth?: number;
+  /** From altitude a district stands on its plot: the subject, never atmosphere. */
+  readonly onPlot?: boolean;
+}
+
+/** A view's treatment: the plane style it is drawn at, and its blur. */
+export interface Treatment {
+  /** Mixed between the two planes it is between, so a move reads as travel. */
+  readonly style: PlaneStyle;
+  /**
+   * The NEAREST plane's blur, not a mix: under half a pixel, nobody sees it
+   * tween, and a filter whose radius changes is a filter repainted every
+   * frame of every transition (docs/scale.md). Snapped, it changes once.
+   */
+  readonly blur: number;
+}
+
+/**
+ * THE ONE TREATMENT BOTH PATHS DRAW. The DOM path writes it as a CSS
+ * transform, opacity and filter; the GPU path packs it into the shader's
+ * uniform. Worked out in one place, so the two cannot drift: a page
+ * without WebGPU looks like the page with it.
+ *
+ * A card at the near end of its row is treated as up to 0.55 of a plane
+ * nearer than its plane, which is what makes the row curve away instead of
+ * lying flat; a district on its plot is treated as the focus.
+ */
+export function treatmentOf(view: TreatedView, scheme: Scheme = "dark"): Treatment {
+  const at = view.onPlot ? 0 : view.plane - (1 - (view.depth ?? 1)) * 0.55;
+  const lower = Math.max(0, Math.min(2, Math.floor(at))) as PlaneIndex;
+  const upper = Math.max(0, Math.min(2, Math.ceil(at))) as PlaneIndex;
+  const style = lower === upper ? styleFor(lower, scheme) : mixStyles(styleFor(lower, scheme), styleFor(upper, scheme), at - lower);
+  return { style, blur: styleFor(Math.max(0, Math.min(2, Math.round(at))), scheme).blur };
+}
+
+/**
+ * How much a receded plane dims, as an opacity: falloff toward the ground,
+ * drawn the same on both paths — the GPU's alpha and the DOM's `opacity`.
+ */
+export function recededOpacity(style: PlaneStyle): number {
+  return 1 - style.falloff * 0.55;
+}

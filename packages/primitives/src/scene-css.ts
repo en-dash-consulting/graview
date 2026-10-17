@@ -185,8 +185,7 @@ ${/* The press: the whole name, laid over it. */ ""}
 ${/* THE OTHERS: people and their agents in the city, each a small figure in
    the scene's own line vocabulary with a name under it. They move by a
    transition on transform — one number, the layout tween's curve — so a
-   quiet city runs nothing. This tab's own seat is not drawn here: the
-   ask field is where it speaks. */ ""}
+   quiet city runs nothing. This tab's own seat is not drawn here. */ ""}
 .graview-occupants {
   position: absolute;
   inset: 0;
@@ -249,16 +248,18 @@ ${/* THE OTHERS: people and their agents in the city, each a small figure in
 ${/* ANOTHER PERSON, on your map: a head and shoulders in their own hue, at
    the plot their stop names or in the audience row of the showing they are
    watching. Press to follow them; their name is under them like a robot's. */ ""}
+${/* A fingertip wide, the head and shoulders drawn 22 wide inside it: at 22 a press beside the next person's was a press too small to tell them apart. */ ""}
 .graview-figure[data-graview-person] .graview-figure-body {
-  left: -11px;
+  left: -12px;
   top: -24px;
-  width: 22px;
+  width: 24px;
   height: 24px;
   min-height: 0;
 }
 .graview-figure[data-graview-person] .graview-figure-body svg {
   width: 22px;
   height: 24px;
+  margin: 0 auto;
 }
 .graview-figure[data-graview-person][data-graview-followed] .graview-figure-body {
   color: var(--graview-accent);
@@ -1114,8 +1115,12 @@ ${/* Over the plot and its blocks, or beside it, where the ground under it is th
   opacity: 1;
   pointer-events: auto;
 }
+${/* And a district whose showings stand open under its name: they hang over
+   the ground beside it, and a neighbor later in the city's order stood over
+   them, so a press on "The fortnight" landed on the volunteers' district. */ ""}
 [data-graview-altitude] [data-graview-plot]:hover,
-[data-graview-altitude] [data-graview-plot]:focus-within {
+[data-graview-altitude] [data-graview-plot]:focus-within,
+[data-graview-altitude] [data-graview-plot]:has(.graview-drive-in[data-graview-showing]) {
   z-index: ${SCENE_LAYERS.opened} !important;
 }
 ${/* A landmark WITHOUT a plot — a nested card — keeps its plate floating
@@ -1128,7 +1133,8 @@ ${/* THE SHOWINGS COME UP WHEN THE DISTRICT IS REACHED FOR: under its name,
    on a backing of their own, and in the bar's place list always. */ ""}
 [data-graview-altitude] .graview-drive-in {
   ${/* Straight under the name, touching it, so the hand that reached for the name reaches the showings without crossing a gap. */ ""}
-  top: calc(var(--graview-front-y, 42px) + var(--graview-plate-h, 26px));
+  ${/* The name stands 4 pixels below the front (above); its height is as drawn, measured into --graview-plate-h. */ ""}
+  top: calc(var(--graview-front-y, 42px) + 4px + var(--graview-plate-h, 28px));
   padding: 4px 6px;
   border-radius: 5px;
   background: var(--graview-panel);
@@ -1154,10 +1160,9 @@ ${/* THE LANDMARK STANDS IN THE SQUARE: its feet at the plot's center, among
 }
 ${/* ZOOM, in the ground's corner: the way a map carries its own. Two
    fingertip-sized buttons and the level between them, shown from altitude. */ ""}
-${/* THE SCENE'S FOOT: a sheet over it, and on a phone the ask field across
-   it. On a desk the field stands at the foot's other end; on a phone it is
-   the foot's whole width, and the zoom stood under it, every control of it
-   covered (the watch's "control-covered", the tenth walk's carried pass). */ ""}
+${/* THE SCENE'S FOOT: a sheet over it. A control at the foot stood under
+   what was laid over it once, every control of it covered (the watch's
+   "control-covered", the tenth walk's carried pass). */ ""}
 .graview-zoom,
 .graview-edge-sign {
   --graview-scene-foot: var(--graview-sheet, 0px);
@@ -1165,12 +1170,13 @@ ${/* THE SCENE'S FOOT: a sheet over it, and on a phone the ask field across
 @container (max-width: 639px) {
   .graview-zoom,
   .graview-edge-sign {
-    --graview-scene-foot: calc(var(--graview-sheet, 0px) + var(--graview-foot-room, 0px));
+    ${/* A sheet stands over the field, so the foot is the taller of the two, not both. */ ""}
+    --graview-scene-foot: max(var(--graview-sheet, 0px), var(--graview-foot-room, 0px));
   }
 }
 .graview-zoom {
   position: absolute;
-  ${/* Clear of a panel floating over the scene's right edge, or a sheet over its foot, or the ask field across it. */ ""}
+  ${/* Clear of a panel floating over the scene's right edge, or a sheet over its foot. */ ""}
   right: calc(16px + var(--graview-dock, 0px));
   bottom: calc(16px + var(--graview-scene-foot, var(--graview-sheet, 0px)));
   ${/* Above the occupants: a robot walking past a control must not cover it. */ ""}
@@ -1251,7 +1257,35 @@ ${/* AND NOT FROM ALTITUDE, where a district is a village on a plot and its
   outline: none;
 }
 [data-graview-stage="dom"] [data-graview-view] > :not([data-graview-natural]),
-[data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] > * {
+[data-graview-stage="dom"] [data-graview-view] > [data-graview-natural] > *,
+[data-graview-stage="gpu"][data-graview-hit="platform"] > [data-graview-view] > :not([data-graview-natural]),
+[data-graview-stage="gpu"][data-graview-hit="platform"] > [data-graview-view] > [data-graview-natural] > * {
+  pointer-events: auto;
+}
+${/* A DISTRICT TAKES A PRESS ON ITS OWN GROUND, not on the box around it.
+   Its card is the plot's bounding box, and the box's four corners are bare
+   ground the next district's name may stand on (the layout keeps names off
+   a neighbor's diamond, not its box): a phone's "CATEGORIES 2 ⚠ 2" ended
+   over the corner of the vendors' box, and a press on "⚠ 2" landed on the
+   vendors. So the card itself takes no press; a diamond over its plot
+   does, and its name and its showings take theirs as before, unless a
+   rule above hides them (a name said "none", showings not come up yet).
+   After the rule above, which hands every view's content the press. */ ""}
+[data-graview-altitude] [data-graview-view][data-graview-plot] > .graview-kind-card {
+  pointer-events: none;
+}
+[data-graview-altitude] [data-graview-plot] > .graview-kind-card > .graview-kind-face:not([data-graview-nameplate="none"]),
+[data-graview-altitude] [data-graview-plot] > .graview-kind-card > .graview-drive-in {
+  pointer-events: auto;
+}
+[data-graview-altitude] [data-graview-plot] > .graview-kind-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(2 * var(--graview-center-y, 50%));
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   pointer-events: auto;
 }
 ${/* THE RECORD IN FOCUS KEEPS TO ITS BOX (FR-141). Whatever draws it — the

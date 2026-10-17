@@ -104,7 +104,7 @@ if (window.location.pathname.startsWith("/pages")) {
       principal={principal}
       remembers={remembers}
       syncUrl
-      renderer="dom"
+      renderer="auto"
       initialScheme={scheme}
       onSchemeChange={applyScheme}
     />,
@@ -113,7 +113,7 @@ if (window.location.pathname.startsWith("/pages")) {
 
 // A flag a harness can wait for, rather than a timer and a hope.
 (window as unknown as Record<string, unknown>)["__rotaReady"] = {
-  renderer: "dom",
+  renderer: "auto",
   scheme,
   // What the opening had to run to get here: empty on an ordinary visit, one
   // operation on a browser that was holding a roster from before the rule.

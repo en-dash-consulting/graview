@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 100,
+  "gzipped": 60,
+  "changeset": "the-quick-ask-replaces-the-ask-box.md",
+  "note": "Raised when the quick ask replaced the Ask box (Roadmap f-quick-ask-framework): the field and its region left the first load, and in their place Find, the bar's shortcut and the search page read whether a quick ask is drawn (`quick-ask-desk.ts`), the bar says `/` where it holds ⌘K, Pages' Find hears `/`, and a nested provider takes its host's AI; the bar and its card are behind their door. Measured at 569_856 minified against 569_837."
+}

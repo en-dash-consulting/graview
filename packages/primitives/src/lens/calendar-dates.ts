@@ -1,6 +1,7 @@
 
 
 import { minutesAsRead, weekdayAsRead, weekdayName } from "@graview/core";
+import { namesInstant, wallOfStored } from "@graview/core/words";
 
 /*
  * DATE ARITHMETIC ON STRINGS, in UTC, and nowhere near a local `Date`.
@@ -13,9 +14,18 @@ import { minutesAsRead, weekdayAsRead, weekdayName } from "@graview/core";
 
 export const DAY = 86_400_000;
 
+/*
+ * AN INSTANT IS ON THE READER'S CLOCK. A moment kept with its zone
+ * ("2026-10-17T19:00:00Z") is a meeting at 3 PM in New York: its day and
+ * time are where the reader is, not the day and hour of UTC, which put an
+ * evening's meeting on the next day (Roadmap f-date-inputs). This is the one
+ * place here a local clock is read, and only for such a moment.
+ */
+
 /** The ISO day a value names, or null when it names no date at all. */
 export function dayOf(value: unknown): string | null {
   if (typeof value !== "string") return null;
+  if (namesInstant(value)) return wallOfStored(value)?.day ?? null;
   const match = /^(\d{4}-\d{2}-\d{2})/.exec(value);
   return match ? match[1]! : null;
 }
@@ -23,6 +33,7 @@ export function dayOf(value: unknown): string | null {
 /** Minutes from midnight where a value names a time, else null. */
 export function minutesOf(value: unknown): number | null {
   if (typeof value !== "string") return null;
+  if (namesInstant(value)) return wallOfStored(value)?.minutes ?? null;
   const match = /^\d{4}-\d{2}-\d{2}[T ](\d{2}):(\d{2})/.exec(value);
   return match ? Number(match[1]) * 60 + Number(match[2]) : null;
 }

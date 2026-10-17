@@ -101,12 +101,6 @@ const STOPS = [
   } },
   { name: "columns", title: "Roadmap: a columns lens", url: roadmap("/places/roadmap") },
   { name: "blocks", title: "Roadmap: a blocks lens", url: roadmap("/places/up-next") },
-  { name: "ask", title: "Roadmap: the Ask box", url: roadmap("/"), act: async (page) => {
-    const box = page.getByRole("region", { name: /Ask A Roadmap$/ }).getByRole("textbox").first();
-    await box.focus();
-    await box.fill("How many features are being built?");
-    await box.press("Enter");
-  } },
   { name: "others", title: "Roadmap: a change from someone else", url: roadmap("/features/feature-0"), other: roadmap("/features/feature-0", "ben"), act: async (_page, other) => {
     await other.locator('dd button[data-graview-field="stage"]').first().click();
     const choice = other.locator("select").first();
@@ -117,6 +111,12 @@ const STOPS = [
   } },
   { name: "todo-list", title: "Things (todo): a list", url: todo("/pages/tasks") },
   { name: "todo-record", title: "Things (todo): a record page", url: todo("/pages/tasks/t-deposit") },
+  { name: "ask", title: "Things (todo): the quick ask", url: `${todo("/pages/tasks/t-deposit")}&ai=stub`, act: async (page) => {
+    await page.keyboard.press("Meta+K");
+    const box = page.getByRole("region", { name: /^Ask about / }).getByRole("combobox").first();
+    await box.fill("What is left?");
+    await box.press("Enter");
+  } },
 ].filter((stop) => !ONLY || ONLY.includes(stop.name));
 
 const { voiceOver } = await guidepup();

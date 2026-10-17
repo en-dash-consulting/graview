@@ -1,4 +1,5 @@
 import type { SearchRanker } from "@graview/core";
+import type { AiCatalog, AiContextState, AiInteraction, AiTarget, AiUsage } from "@graview/core/catalog";
 import type { ToolDefinition } from "./agent/tools.js";
 import type { Completion } from "./intelligence.js";
 import type { Decide } from "./providers/jev.js";
@@ -82,6 +83,121 @@ export interface HostAi {
    * else: a product's readers are never told about keys.
    */
   readonly withoutModel?: string;
+  /**
+   * THE HOST SAYS AI IS OFF. Every AI part is HIDDEN, not disabled, on
+   * both faces: the inline AI in the context menu, a proposal waiting to
+   * be accepted, a panel it drew, the quick ask (the command bar and its
+   * answer cards), Activity's AI entries and its AI filter. No model is asked, whatever else is given here.
+   */
+  readonly off?: boolean;
+  /**
+   * THE FAST SLOT: a typed-decision model — Jev (`jevDecide`), or another
+   * behind the same shape. The inline AI asks it to pick among the
+   * catalog's candidates and to fill fields, as typed questions over the
+   * context state. Unsaid, `decide` serves it.
+   */
+  readonly fast?: FastProvider;
+  /**
+   * THE THINKING SLOT: a language model, for what a pick among candidates
+   * cannot say — a panel drawn for an ask. Unsaid, `complete` serves it.
+   */
+  readonly thinking?: ThinkingProvider;
+  /**
+   * THE QUICK ASK'S ANSWERS (Roadmap f-quick-ask-framework): what answers
+   * words asked from the command bar (⌘K) or on an answer card, about the
+   * target they were asked on. Handed the words, the target, the state
+   * the viewer may see and the catalog; answers prose and, optionally,
+   * candidate ids from the catalog — a change among them is proposed as a
+   * ghost, never made. Unsaid, the Thinking slot answers (else the Fast
+   * slot picks among the candidates), so a host that filled those slots
+   * need not fill this one.
+   */
+  readonly answer?: AnswerProvider;
+  /**
+   * WHERE AI INTERACTIONS ARE KEPT (Roadmap f-ai-interaction-history): the
+   * entries Activity draws, handed back by `load` when Activity first
+   * opens, and each one made or changed handed to `keep`, by id. Unsaid,
+   * the entries live as long as the page.
+   */
+  readonly interactions?: AiInteractionHost;
+  /** Told of every call to a model, with the interaction it served: tier, model, tokens and cost, for a host that meters. */
+  readonly meter?: (usage: AiUsage & { readonly interaction: string }) => void;
+}
+
+/** What a model of either slot costs, per million tokens, in US dollars: the interaction's cost is read from it when the provider does not say. */
+export interface AiPrice {
+  readonly inputPerMillion?: number;
+  readonly outputPerMillion?: number;
+}
+
+/**
+ * THE FAST SLOT (a System One model): Jev's own shape — one state and a map
+ * of typed questions (`Choice`, `Noul`, `Score`) in, typed answers with a
+ * confidence and the call's usage out (`Decide`). The state is the
+ * catalog's (`AiContextState`), with the candidates it may pick among.
+ */
+export interface FastProvider {
+  /** The model, as metering and lineage name it: "jev-latest". */
+  readonly model: string;
+  readonly decide: Decide;
+  readonly price?: AiPrice;
+}
+
+/** What the thinking slot is asked: its framing, the ask, and the state and catalog it was built from. */
+export interface ThinkingRequest {
+  readonly system: string;
+  readonly prompt: string;
+  readonly state: AiContextState;
+  readonly catalog: AiCatalog;
+}
+
+/** What it answers: its text (the inline AI reads JSON from it) and the call's usage, when known. */
+export interface ThinkingReply {
+  readonly text: string;
+  readonly usage?: { readonly inputTokens: number; readonly outputTokens: number; readonly costUsd?: number };
+}
+
+/** THE THINKING SLOT: a language model, one request in and its text out. */
+export interface ThinkingProvider {
+  readonly model: string;
+  think(request: ThinkingRequest): Promise<ThinkingReply>;
+  readonly price?: AiPrice;
+}
+
+/** What a quick ask hands the answer provider: the words, what they are about, and the state and catalog it may answer from. */
+export interface AnswerRequest {
+  readonly said: string;
+  readonly target: AiTarget;
+  /** The target in words: a record's name, a kind's plural, a place's title. */
+  readonly targetLabel: string;
+  readonly state: AiContextState;
+  readonly catalog: AiCatalog;
+  /** The ask this one follows on the same card, and what it was answered: one step back, never a thread. */
+  readonly follows?: { readonly said: string; readonly answer: string };
+}
+
+/** What the answer provider says: the answer in words, and the catalog's candidates that act on it, best first. */
+export interface AnswerReply {
+  readonly text: string;
+  /** Candidate ids from the request's catalog; any other id is dropped. A change among them waits as a ghost. */
+  readonly pick?: readonly string[];
+  readonly usage?: { readonly inputTokens?: number; readonly outputTokens?: number; readonly costUsd?: number };
+}
+
+/** THE ANSWER SLOT: the host's own way to answer a quick ask, in place of the Thinking and Fast slots. */
+export interface AnswerProvider {
+  /** The model, as metering and lineage name it. */
+  readonly model: string;
+  answer(request: AnswerRequest): Promise<AnswerReply>;
+  readonly price?: AiPrice;
+}
+
+/** A host's store of AI interactions (`AiInteraction`, `@graview/core/catalog`). */
+export interface AiInteractionHost {
+  /** The entries this host keeps for the app, newest first or in any order: asked once, when Activity first draws them. */
+  readonly load?: () => readonly AiInteraction[] | Promise<readonly AiInteraction[]>;
+  /** An entry made or changed, kept by its id. */
+  readonly keep?: (entry: AiInteraction) => void | Promise<void>;
 }
 
 /** One message of a turn's conversation: the person's words (`user`) or the seat's (`assistant`). */
@@ -101,11 +217,18 @@ export interface HostTurn {
   call(name: string, args: Record<string, unknown>): Promise<unknown>;
 }
 
+/** Whether the host said AI is off: every AI part is hidden. */
+export const aiOff = (ai: HostAi | undefined): boolean => ai?.off === true;
+
+/** Whether the inline AI is drawn: AI is not off, and a fast or thinking model (or the `decide`, `complete` or `turn` that serve them) was given. */
+export const inlineAiOn = (ai: HostAi | undefined): boolean =>
+  ai !== undefined && !aiOff(ai) && (ai.fast !== undefined || ai.thinking !== undefined || ai.answer !== undefined || ai.decide !== undefined || ai.complete !== undefined || ai.turn !== undefined);
+
 /** No AI: the graph answers alone. */
 export const NO_AI: HostAi = {};
 
 /** Whether the host gave the seat any model that talks. */
-export const aiTalks = (ai: HostAi): boolean => ai.complete !== undefined || ai.turn !== undefined || Boolean(ai.onDevice);
+export const aiTalks = (ai: HostAi): boolean => !aiOff(ai) && (ai.complete !== undefined || ai.turn !== undefined || Boolean(ai.onDevice));
 
 /** Said, once, when an ask needs a model and the host gave none. */
 export const NO_AI_SAID = "I can answer about what's in this app. Open questions need AI, which isn't on here.";

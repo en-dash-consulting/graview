@@ -1,3 +1,4 @@
+import type { ConnectionSpec } from "./document/connection-spec.js";
 import type { ArrangementWords } from "./arrangement.js";
 import type { InvariantDefinition } from "./invariants/types.js";
 import type { AnyMutationDefinition } from "./mutations/types.js";
@@ -243,6 +244,13 @@ export interface GraviewApp<S extends AnySchema = AnySchema> {
    * ever honor, which is a control that does nothing.
    */
   readonly settings?: readonly SettingDeclaration[];
+  /**
+   * OTHER SYSTEMS THIS APP IS KEPT IN STEP WITH, by name — today, Google
+   * calendars (`connections.<name>` in a document). Data: `graview serve`
+   * and the preview run them (`@graview/ship`'s `runConnections`), and a
+   * host hands them its own tokens.
+   */
+  readonly connections?: Readonly<Record<string, ConnectionSpec>>;
 }
 
 /**

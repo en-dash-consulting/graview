@@ -40,6 +40,11 @@ export function anchorOf(stop: string): { readonly at: string; readonly audience
   return { at: focus, audience: false };
 }
 
+/** Where the signs to people elsewhere begin down the right edge: under Up (14 to 52) and the key (60 to 90). */
+export const EDGE_TOP = 102;
+/** A sign's height and the gap after it. */
+export const EDGE_STEP = 32;
+
 /**
  * THE OTHERS, PLACED. Pure — a test can ask what a viewer would draw from
  * a list of presences and a `whereIs`. People at one anchor stand in a
@@ -62,7 +67,8 @@ export function placeOthers(
     const box = anchor ? whereIs(anchor.at) : null;
     if (!anchor || !box) {
       if (presence.name) {
-        placed.push({ kind: "edge", presence, point: { x: width - 8, y: 40 + edges++ * 28 } });
+        // Down the right edge, below the corner's own controls (Up, then the key): at 40 the first stood under "Close the map" (W-224).
+        placed.push({ kind: "edge", presence, point: { x: width - 8, y: EDGE_TOP + edges++ * EDGE_STEP } });
       }
       continue;
     }
@@ -80,7 +86,7 @@ export function placeOthers(
     // A row in front of the screen; a huddle at a plot's foot, a little left of its robot.
     const point = anchor.audience
       ? { x: anchorBox.x + anchorBox.width * 0.5 + (index - 1) * 26, y: anchorBox.y + Math.min(anchorBox.height, 24) }
-      : { x: anchorBox.x + anchorBox.width * 0.5 - 26 - index * 22, y: anchorBox.y + anchorBox.height - 4 };
+      : { x: anchorBox.x + anchorBox.width * 0.5 - 26 - index * 26, y: anchorBox.y + anchorBox.height - 4 };
     placed.push({ kind: "person", presence, point, at: anchor.at, index, of: row.length, audience: anchor.audience });
   }
   for (const [at, row] of rows) {

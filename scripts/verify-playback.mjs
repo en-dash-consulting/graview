@@ -125,7 +125,7 @@ const drawn = (page, scope) =>
         acts: [...document.querySelectorAll("button, a")].filter((el) => !el.closest('[data-testid="timeline"]') && /^(Add a task|Mark it done|Rename|Wait for|Drop|Take back)\b/.test((el.textContent ?? "").trim())).length,
         // A control of the app's own design that would change something: the routed face's tick beside each task.
         pressable: document.querySelectorAll("button.th-tick:not([disabled])").length,
-        seat: document.querySelector('[data-testid="seat-field"], [data-graview-seat-field]') !== null,
+        seat: document.querySelector('[data-graview-quick-ask], [data-testid="quick-ask"], [data-testid="seat-field"]') !== null,
       };
     },
     [ADDED, scope ?? null],

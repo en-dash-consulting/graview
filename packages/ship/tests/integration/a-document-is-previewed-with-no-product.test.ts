@@ -4,7 +4,8 @@ import { request } from "node:http";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { previewPrincipal, servePreview, type Preview } from "../../src/serve-preview.js";
-import { seatHeaders } from "../../src/remote.js";
+import { gunzipSync } from "node:zlib";
+import { openRemote, seatHeaders, type RemoteState } from "../../src/remote.js";
 import { findPlaywright, NO_PLAYWRIGHT, shotsOf } from "../../src/shots.js";
 
 /**
@@ -37,6 +38,42 @@ describe("a document previewed with no product", () => {
     expect(handed.document.name).toBe(ORG.name);
     expect(handed.compiled.document).toBeDefined();
     expect(handed.principal.roles).toEqual(ORG.roles);
+  });
+
+  it("hands the store's state with the document, as this seat would be answered it, and a store opened on it asks for no state of its own", async () => {
+    const handed = (await (await fetch(`${preview.url}/graview/document`)).json()) as { state: RemoteState; compiled: unknown };
+    const asked = (await (await fetch(`${preview.url}/graview/state`, { headers: seatHeaders(preview.principal) })).json()) as RemoteState;
+    expect(handed.state.snapshot.nodes.length).toBe(ORG_SEED.nodes.length);
+    expect(handed.state.version).toBe(asked.version);
+    const paths: string[] = [];
+    const counting: typeof fetch = (input, init) => {
+      paths.push(new URL(String(input)).pathname);
+      return fetch(input, init);
+    };
+    const remote = await openRemote({ app: preview.app, url: preview.url, principal: preview.principal, pollMs: 0, fetch: counting, state: handed.state });
+    expect(paths).not.toContain("/graview/state");
+    expect(remote.store.graph.allNodes().length).toBe(ORG_SEED.nodes.length);
+    remote.close();
+  });
+
+  it("sends its answers gzipped to a browser that takes them, and as written to one that does not", async () => {
+    const asked = (headers: Record<string, string>) =>
+      new Promise<{ encoding: string | undefined; length: number; body: Buffer }>((resolve, reject) => {
+        const one = request(`${preview.url}/graview/document`, { headers }, (answer) => {
+          const chunks: Buffer[] = [];
+          answer.on("data", (chunk: Buffer) => chunks.push(chunk));
+          answer.on("end", () => resolve({ encoding: answer.headers["content-encoding"], length: Number(answer.headers["content-length"]), body: Buffer.concat(chunks) }));
+        });
+        one.on("error", reject);
+        one.end();
+      });
+    const zipped = await asked({ "accept-encoding": "gzip, deflate, br" });
+    const plain = await asked({});
+    expect(zipped.encoding).toBe("gzip");
+    expect(plain.encoding).toBeUndefined();
+    expect(zipped.length).toBe(zipped.body.length);
+    expect(zipped.length).toBeLessThan(plain.length / 2);
+    expect(JSON.parse(gunzipSync(zipped.body).toString("utf8")).document.name).toBe(ORG.name);
   });
 
   it("serves the page at any address that is not a file, so a place can be linked and reloaded, and its files as themselves", async () => {

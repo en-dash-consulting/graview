@@ -714,7 +714,7 @@ const audit = () => {
      * carries the same name both times. Likewise the acts' menu and the
      * seat, which exist to name the selection the way a crumb names the focus.
      */
-    if (el.closest('[data-graview-plane="1"], [data-testid="inspector-strip"], [data-testid="context-menu"], [data-testid="seat"], .graview-kind-open')) continue;
+    if (el.closest('[data-graview-plane="1"], [data-testid="inspector-strip"], [data-testid="context-menu"], [data-testid="quick-ask"], .graview-kind-open')) continue;
     const t = (el.textContent ?? "").trim();
     if (t.length < 6) continue;
     seen.set(t, (seen.get(t) ?? 0) + 1);
@@ -772,14 +772,14 @@ const audit = () => {
   /*
    * Chrome sitting on the CONTENT.
    *
-   * The seat is an ask field at the picture's foot, in a strip the layout
-   * keeps clear, and grows over the picture only when asked. What would be
+   * The quick ask's card stands BESIDE what it is about, opened only when
+   * asked (⌘K); there is no ask field at the foot any more. What would be
    * wrong is it sitting on the thing you are actually working with — the
    * focus or a raised card — so that is what this counts. (The strip a
    * selection used to draw was the surface measured here; the scene draws
    * none now.)
    */
-  const strip = document.querySelector('[data-testid="seat"]');
+  const strip = document.querySelector('[data-testid="quick-ask"]');
   const covered = [];
   if (strip && !document.querySelector('[role="dialog"]')) {
     const s = box(strip);

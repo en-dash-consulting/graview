@@ -1,4 +1,4 @@
-import { AppLink, ArrangeBar, CHOOSING_CSS, Files, pageSays, prefetchSeveral, SeveralBarDoor, useChoosing } from "@graview/primitives/pages";
+import { AppLink, ArrangeBar, CHOOSING_CSS, Files, pageSays, prefetchSeveral, SeveralBarDoor, useChoosing, useEndsAboveItsList } from "@graview/primitives/pages";
 import { admitArrangement, arrange, arrangeable, formatArrangement, asksForThePast, listGroup, listOpening, orderListGroups, parseArrangement, throughEdges, withWorkedOut } from "@graview/core/arrange";
 import {
   archivedFrom,
@@ -320,7 +320,7 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
             </span>
           ) : null}
           {/* The line is the link: stretched over the row, named by the record, under any link the row itself draws. */}
-          <Link to={recordPath(store.schema, kind, node.id)} aria-label={flagged.has(node.id) ? `${label} — implicated in a problem` : label} style={{ position: "absolute", inset: 0, borderRadius: 6 }} />
+          <StretchedRowLink to={recordPath(store.schema, kind, node.id)} label={flagged.has(node.id) ? `${label} — implicated in a problem` : label} />
         </li>
       );
     }
@@ -836,6 +836,8 @@ function Beginning({ name, title, description, open: opening, children }: { read
         ref={button}
         type="button"
         data-testid={`act-open-${name}`}
+        // The act it begins, so a right-click on it can offer "Notify me when someone does this" (Roadmap f-notify-subscriptions).
+        data-graview-act={name}
         aria-expanded={open}
         aria-controls={id}
         onClick={() => {
@@ -866,4 +868,11 @@ function Beginning({ name, title, description, open: opening, children }: { read
       </div>
     </div>
   );
+}
+
+/** A declared row's way to its record: stretched over the row, down to where a list the row draws begins (`useEndsAboveItsList`). */
+function StretchedRowLink({ to, label }: { readonly to: string; readonly label: string }) {
+  const link = useRef<HTMLAnchorElement>(null);
+  useEndsAboveItsList(link);
+  return <Link ref={link} to={to} aria-label={label} style={{ position: "absolute", inset: 0, borderRadius: 6 }} />;
 }

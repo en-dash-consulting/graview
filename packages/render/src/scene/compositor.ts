@@ -27,6 +27,7 @@ import {
 } from "../platform/html-in-canvas.js";
 import { COMPOSITOR_WGSL } from "./compositor.wgsl.js";
 import type { ConnectorStyle } from "./connectors.js";
+import type { Scheme } from "./plane.js";
 import {
   CAPTURE_BUDGET,
   planFrame,
@@ -80,6 +81,13 @@ export interface CompositorOptions {
    * where no view is drawn.
    */
   readonly transparent?: boolean;
+  /**
+   * Whether receded planes are blurred; on unless turned off. The focused
+   * plane is never blurred — every other plane is judged against it.
+   */
+  readonly blur?: boolean;
+  /** The scheme the planes are treated in, as the DOM path treats them; dark when absent. */
+  readonly scheme?: Scheme;
 }
 
 interface ViewResources {
@@ -101,10 +109,9 @@ const UNIFORM_BYTES = 64; // 4 x vec4f
 const SLOT_BYTES = 256;
 const SLOT_FLOATS = SLOT_BYTES / 4;
 /**
- * Geometry reports a frame before they wait for the motion to stop. Each one
+ * Geometry reports a frame; the rest wait for the frames after. Each one
  * crosses into the browser, and a pan moves every view: 512 reports a frame
- * were the largest single cost of a 512-view frame. The pointer router
- * answers presses meanwhile, as it always has.
+ * were the largest single cost of a 512-view frame.
  */
 const GEOMETRY_BUDGET = 64;
 
@@ -149,6 +156,8 @@ export class Compositor {
   private connectors: readonly PlannedConnector[] = [];
   private lastPlan: FramePlan | null = null;
   private lastPlacements: readonly Placement[] = [];
+  private blur: boolean;
+  private scheme: Scheme;
 
   readonly capabilities: PlatformCapabilities;
 
@@ -158,12 +167,14 @@ export class Compositor {
     private readonly options: CompositorOptions = {},
   ) {
     setLayoutSubtree(canvas, true);
+    this.blur = options.blur ?? true;
+    this.scheme = options.scheme ?? "dark";
     this.capabilities = detectCapabilities(deps.gpu.device.gpu.queue, canvas);
-    this.router = new PointerRouter(canvas, {
-      ...(options.platformHandlesHitTesting === undefined
-        ? {}
-        : { platformHandlesHitTesting: options.platformHandlesHitTesting }),
-    });
+    // Where the browser's own hit-test follows the drawn geometry, it answers; elsewhere the router does.
+    const platformHits = options.platformHandlesHitTesting ?? this.capabilities.hitTestFollowsGeometry === "yes";
+    this.router = new PointerRouter(canvas, { platformHandlesHitTesting: platformHits });
+    // Said on the canvas, so a stylesheet lets the views' content take the pointer (`data-graview-hit`).
+    canvas.setAttribute("data-graview-hit", platformHits ? "platform" : "router");
   }
 
   attach(): () => void {
@@ -244,6 +255,20 @@ export class Compositor {
     this.reported.delete(id);
     this.views.delete(id);
     delete this.capturedAt[id];
+  }
+
+  /**
+   * Turns the receded planes' blur on or off from the next frame. Only the
+   * uniform changes: the same shader draws a radius of zero as the texture
+   * itself, so a frame costs what it did.
+   */
+  setBlur(on: boolean): void {
+    this.blur = on;
+  }
+
+  /** Treats the planes in this scheme from the next frame, as the DOM path does. */
+  setScheme(scheme: Scheme): void {
+    this.scheme = scheme;
   }
 
   /** Replaces the connector set, e.g. after a layout change. */
@@ -329,6 +354,7 @@ export class Compositor {
       canvasHeight,
       capturedAt: this.capturedAt,
       captureBudget: this.options.captureBudget ?? CAPTURE_BUDGET,
+      scheme: this.scheme,
       ...(changedIds ? { changed: changedIds } : {}),
       ...(this.options.connectorOverrides
         ? { connectorOverrides: this.options.connectorOverrides }
@@ -383,7 +409,7 @@ export class Compositor {
       if (missed.includes(draw.viewId)) continue;
       const resource = this.resources.get(draw.viewId);
       if (!resource || !this.views.has(draw.viewId)) continue;
-      packUniformInto(this.staging, resource.slot * SLOT_FLOATS, draw, canvasWidth, canvasHeight, ground);
+      packUniformInto(this.staging, resource.slot * SLOT_FLOATS, draw, canvasWidth, canvasHeight, ground, this.blur);
       if (resource.slot > highest) highest = resource.slot;
       drawn.push(resource);
     }
@@ -416,18 +442,22 @@ export class Compositor {
     // last report, and while a crowd is moving, once it stops.
     if (this.capabilities.geometrySync) {
       const moved: { element: HTMLElement; id: string; key: string; transform: Matrix4 }[] = [];
-      for (const report of plan.geometry) {
+      // Off the canvas too: a view left at its last drawn place would be found there, invisible.
+      for (const report of [...plan.geometry, ...plan.offCanvas]) {
         const view = this.views.get(report.viewId);
         if (!view) continue;
         const key = report.transform.join(",");
         if (this.reported.get(report.viewId) !== key) moved.push({ element: view.element, id: report.viewId, key, transform: report.transform });
       }
-      if (moved.length <= GEOMETRY_BUDGET) {
-        for (const { element, id, key, transform } of moved) {
-          updateElementGeometry(this.canvas, element, { canvasTransform: toDOMMatrix(transform) });
-          this.reported.set(id, key);
-        }
+      // At most a budget's worth a frame, and the rest the frames after:
+      // the browser hit-tests where a view was last reported, so a crowd
+      // left unreported would answer a press where it was laid out.
+      for (const { element, id, key, transform } of moved.slice(0, GEOMETRY_BUDGET)) {
+        updateElementGeometry(this.canvas, element, { canvasTransform: toDOMMatrix(transform) });
+        this.reported.set(id, key);
       }
+      if (moved.length > GEOMETRY_BUDGET) requestPaint(this.canvas);
+
     }
 
     this.lastPlacements = placements;
@@ -457,8 +487,11 @@ export class Compositor {
         targets: [
           {
             format: navigator.gpu.getPreferredCanvasFormat(),
+            // PREMULTIPLIED, as the shader writes it: "src-alpha" here
+            // multiplied by alpha a second time, so every receded or fading
+            // view came out darker than the DOM path drew it.
             blend: {
-              color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha" },
+              color: { srcFactor: "one", dstFactor: "one-minus-src-alpha" },
               alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha" },
             },
           },
@@ -546,6 +579,7 @@ export class Compositor {
 
   dispose(): void {
     this.detach();
+    this.canvas.removeAttribute("data-graview-hit");
     for (const id of [...this.resources.keys()]) this.remove(id);
     this.uniforms?.destroy();
     this.uniforms = null;
@@ -561,9 +595,10 @@ export function packUniform(
   canvasWidth: number,
   canvasHeight: number,
   ground: readonly [number, number, number],
+  blur = true,
 ): Float32Array<ArrayBuffer> {
   const packed = new Float32Array(UNIFORM_BYTES / 4);
-  packUniformInto(packed, 0, draw, canvasWidth, canvasHeight, ground);
+  packUniformInto(packed, 0, draw, canvasWidth, canvasHeight, ground, blur);
   return packed;
 }
 
@@ -575,12 +610,13 @@ function packUniformInto(
   canvasWidth: number,
   canvasHeight: number,
   ground: readonly [number, number, number],
+  blur: boolean,
 ): void {
   target[at] = draw.transform[12];
   target[at + 1] = draw.transform[13];
   target[at + 2] = draw.width;
   target[at + 3] = draw.height;
-  target[at + 4] = draw.style.blur;
+  target[at + 4] = blur ? draw.blur : 0;
   target[at + 5] = draw.style.falloff;
   target[at + 6] = draw.style.shadow;
   target[at + 7] = draw.opacity;

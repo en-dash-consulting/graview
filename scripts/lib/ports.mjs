@@ -32,6 +32,8 @@ export const OWN = {
   /** `graview preview` of a Cloud document and its seed, for `verify-preview`; and the `graview shots` it runs after. */
   preview: 5200,
   "preview-shots": 5201,
+  /** `graview preview` of the meetings document, for `verify-date-inputs` to type and pick a meeting's start and end on both faces. */
+  "date-inputs": 5254,
   /** The discography's production build, `vite preview`, for `verify-scale`. */
   "discography-preview": 5198,
   /** The app `smoke-create` scaffolds, and the linked one after it. */
@@ -76,16 +78,17 @@ export const OWN = {
   "repeats-host": 5262,
   /** The host's page `verify-long-text` mounts a workshop whose deliverable holds an email drafted in full into (FR-146–FR-148). */
   "long-text-host": 5271,
-  /** The host's page `verify-seat-guide` mounts the todo app into, to switch faces in place under one conversation. */
-  "seat-host": 5272,
-  /** The host's page `verify-seat-goes-and-draws` mounts Cloud's workshop document into, writing a kept lens into the document it holds. */
-  "seat-draw-host": 5270,
+  /** `calendar-sync-demo`'s meetings app, kept in step with the Google test calendar for a person to try by hand. */
+  "calendar-sync-demo": 5267,
   /** The host's page `verify-viewport` mounts the embed into at the screen's height, to turn a phone and back (FR-165). */
   "viewport-host": 5266,
   /** The host's page `verify-a11y` mounts Cloud's two shapes of app into, inside `#graview-app`, for axe. */
   "a11y-host": 5269,
   /** `pnpm site:serve`: docs/site served as graview.dev serves it, so the site's own font loads (a file:// page cannot load one). */
   "site-preview": 5275,
+  /** `verify-first-load`'s two previews of Cloud's shell: the roadmap at the Roadmap's size, and a small team's tasks. */
+  "first-load-roadmap": 5250,
+  "first-load-tasks": 5251,
   /** The OpenAI-shaped stand-in `verify-studio` points the studio's remote model at. */
   "studio-model": 5289,
 };

@@ -1,7 +1,7 @@
 import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
-import { AppLink, LinkedRecordView, DefaultViewElsewhere, EditableValue, FieldLink, Files, LongValue, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
+import { AppLink, LinkedRecordView, DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, FieldLink, Files, LongValue, NotifyButton, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -57,6 +57,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
   const lined = useLined(store, facts?.violations ?? NO_PROBLEMS);
   const [open, setOpen] = useState<string | null>(null);
   const [more, setMore] = useState(false);
+  /** The act whose form was just done here: "Notify me when someone else does this" stands under the acts (Roadmap f-notify-subscriptions). */
+  const [doneAct, setDoneAct] = useState<string | null>(null);
   const actsHeading = useRef<HTMLHeadingElement | null>(null);
   const actForm = useRef<HTMLDivElement | null>(null);
   /** The act that opened the form, given the keyboard back. */
@@ -151,6 +153,15 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
           </p>
         ) : null}
         <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} style={{ ...link, ...quiet }} data-testid="spatial-link" />
+        {/* NOTIFY ME (Roadmap f-notify-subscriptions): told when somebody else changes it, or does something to it. */}
+        {inPlace && node ? (
+          <NotifyButton
+            choices={[{ on: "changed", record: id }, { on: "act", record: id }, { on: "reaches", kind: facts.kind, condition: "", record: id }]}
+            label="Notify me when this changes"
+            testId="record-notify"
+            style={{ ...button, ...quiet, justifySelf: "start" }}
+          />
+        ) : null}
         {placesOf(context).some((place) => place.kind === facts.kind || place.across === facts.kind) ? (
           /* WHERE IT IS SEEN: the pictures this kind of thing appears in, each as a page and as a stop in the scene. */
           <p style={{ ...quiet, margin: 0 }} data-testid="seen-in">
@@ -379,6 +390,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                    */
                   data-affordance={affordance.id}
                   data-rank={affordance.rank}
+                  // The act it runs, so a right-click on it can offer "Notify me when someone does this" (Roadmap f-notify-subscriptions).
+                  data-graview-act={affordance.mutation}
                   // Shown by "Show N more", the first of them takes the keyboard, never <body>.
                   autoFocus={more && affordance === aside[0]}
                   aria-expanded={opened}
@@ -445,6 +458,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   label={affordance.label}
                   onDone={() => {
                     setOpen(null);
+                    setDoneAct(affordance.mutation);
                     /*
                      * THE KEYBOARD GOES BACK TO THE ACT THAT ASKED. The form
                      * unmounts on done and took the keyboard to <body>; the
@@ -459,6 +473,15 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               </div>
             );
           })}
+          {/* After an act's form is done: told the next time somebody else does it here. */}
+          {inPlace && doneAct !== null && open === null ? (
+            <NotifyButton
+              choices={[{ on: "act", act: doneAct, record: id }, { on: "act", act: doneAct }]}
+              label="Notify me when someone else does this"
+              testId="notify-after-act"
+              style={{ ...button, ...quiet, justifySelf: "start" }}
+            />
+          ) : null}
           {facts.actions.withheld.length > 0 ? (
             <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
               {facts.actions.withheld.map((withheld) => (
@@ -471,6 +494,8 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
         </section>
       ) : null}
 
+      {/* What AI was asked about it and what came of it (Roadmap f-activity-ai-entries): none where AI is off. */}
+      {inPlace ? <RecordInteractionsDoor id={id} style={rule} headingStyle={h2} /> : null}
       {history.length > 0 ? (
         <section style={{ ...rule, display: "grid", gap: 10 }} data-testid="record-history">
           <h2 style={h2}>What has happened</h2>

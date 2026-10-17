@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
 import { readSnapshot } from "@graview/core/snapshot";
 import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter } from "./file-adapter.js";
+import { fileSubscriptions } from "./file-subscriptions.js";
 import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
@@ -12,6 +13,8 @@ import { sayStep } from "./steps.js";
 import { LOOPBACK, previewPrincipal, servePreview } from "./serve-preview.js";
 import { findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf } from "./shots.js";
 import { applySteps, seedSteps } from "./sync-seed.js";
+import { runConnections } from "./connections.js";
+import { fileConnectionState, readEnvFile } from "./connections-file.js";
 import { heldBy, holdFileOf, holdStore, sayHeld, type StoreHold } from "./store-hold.js";
 import type { StoredMeta } from "./meta.js";
 
@@ -26,7 +29,7 @@ import type { StoredMeta } from "./meta.js";
  * changes nothing else, which is the actual claim about adapters.
  */
 export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] [--seed <file>] [--sqlite <file>]
-                       [--host <address>] [--trust-seat-headers]
+                       [--host <address>] [--trust-seat-headers] [--no-sync]
       Serves the app's store over HTTP, and live over a WebSocket at
       /graview/live. The op log is the wire: a client sends calls, the
       store judges them under the caller's own seat, and the ops come back,
@@ -35,6 +38,9 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       believes the seat a request names in its headers, because only this
       machine can reach it; on any other --host it will not start unless
       --trust-seat-headers says the network in front of it can be trusted.
+      The app's declared connections (a Google calendar) run beside it, with
+      credentials from the environment and their cursors beside the data;
+      --no-sync leaves them off.
 
   graview sync-seed <entry> --seed <file> [--data <dir> | --sqlite <file>]
                             [--apply] [--prune] [--json]
@@ -47,13 +53,14 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
       deleting the store.
 
   graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
-                  [--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b]
+                  [--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync]
       Serves the store and Graview's own faces over it — the scene and
       Pages, with the bar — so a document and a snapshot can be looked at
       with no product. Nothing to build or install: the page ships with
       graview. The store is in memory unless --data or --sqlite name where
       to keep it; the page sits as a person holding every role the document
-      declares, unless --as or --roles say who.
+      declares, unless --as or --roles say who. Its connections run as
+      serve's do, unless --no-sync.
 
   graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
                 [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
@@ -118,6 +125,23 @@ export async function backendFrom(argv: readonly string[], cwd = process.cwd()):
   return { adapter: createFileAdapter(data), where: data, holdFile: holdFileOf(data, "folder"), ...(seed ? { seed } : {}) };
 }
 
+/**
+ * WHERE "NOTIFY ME" IS KEPT FOR A STORE ON DISK (Roadmap
+ * f-notify-subscriptions): `subscriptions.json` in the app's own folder of
+ * a data directory, or beside a SQLite file — the one file `graview serve`
+ * and `graview mcp` on the same store both read.
+ */
+/** Where `graview serve` and `graview preview --data` keep the connections' cursors and links: beside the store, as the subscriptions are. */
+export function connectionsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
+  const root = (backend.adapter as { root?: string }).root;
+  return root !== undefined ? join(root, scope, "connections.json") : `${backend.where}.connections.json`;
+}
+
+export function subscriptionsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
+  const root = (backend.adapter as { root?: string }).root;
+  return root !== undefined ? join(root, scope, "subscriptions.json") : `${backend.where}.subscriptions.json`;
+}
+
 /** A seed file in either snapshot format: the line format with its header, or an old `{ nodes, edges }`. */
 function readSeed(file: string): GraphSnapshot {
   try {
@@ -176,8 +200,22 @@ export async function serve(argv: readonly string[]): Promise<number> {
     host,
     trustSeatHeaders: trust.trust,
     where: backend.where,
+    // Notify me: kept beside the store, and each match said here, where a host would deliver it.
+    subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
+    onSubscriptionMatch: (match) => {
+      process.stdout.write(`graview serve: notify ${match.subscription.who.name ?? match.subscription.who.id}: ${match.said}\n`);
+    },
   });
   hold.serving(served.url);
+  // The declared connections, kept in step beside the store: credentials from the environment, cursors beside the data.
+  const connections = runConnections({
+    app: app as never,
+    store: served.store as never,
+    state: fileConnectionState(connectionsFileOf(backend, app.name)),
+    readFile: readEnvFile,
+    paused: argv.includes("--no-sync"),
+    say: (line) => process.stdout.write(`graview serve: connection ${line}\n`),
+  });
 
   process.stdout.write(
     `graview serve: ${app.name} on ${served.url}\n` +
@@ -188,10 +226,13 @@ export async function serve(argv: readonly string[]): Promise<number> {
       `${served.opened.migrated.length > 0 ? `, migrated: ${served.opened.migrated.map((op) => op.intent).join("; ")}` : ""}\n`,
   );
   const stop = () => {
-    void served.close().then(() => {
-      hold.release();
-      process.exit(0);
-    });
+    void connections
+      .stop()
+      .then(() => served.close())
+      .then(() => {
+        hold.release();
+        process.exit(0);
+      });
   };
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
@@ -341,6 +382,12 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
       host,
       trustSeatHeaders: trust.trust,
       principal: previewPrincipal(input.document, { ...(as ? { as } : {}), ...(roles !== undefined ? { roles: listOf(roles) } : {}) }),
+      // The document's connections: credentials from the environment, cursors beside the data when it is kept, else in memory.
+      connections: {
+        ...(keeps ? { state: fileConnectionState(connectionsFileOf(backend, (input.document as { name?: string }).name ?? "app")) } : {}),
+        paused: argv.includes("--no-sync"),
+        say: (line) => process.stdout.write(`graview preview: connection ${line}\n`),
+      },
     });
   } catch (error) {
     hold?.release();

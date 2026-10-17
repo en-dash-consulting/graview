@@ -4,10 +4,10 @@
  *
  * Everything here is also exported from `@graview/primitives`. It is its
  * own entry because a bundler splits a page by which files a chunk can
- * reach, and `@graview/primitives` reaches the seat's panel, the inspector
+ * reach, and `@graview/primitives` reaches the workbench, the inspector
  * and the scene they stand on: the pages face, importing a mark from it,
  * fetched the whole map to draw a list. `@graview/pages` imports from here,
- * and the seat's panel when its ask field is first opened. Nothing in this
+ * and the quick ask's bar when it is first opened. Nothing in this
  * module's files may import a barrel.
  */
 export { ArrangeBar, arrangementCaption, arrangementOf, withArrangement } from "./arrange-bar.js";
@@ -26,6 +26,9 @@ export type { LinkedPickerProps, LinkedRecordViewProps } from "./linked-record-d
 // How a date repeats: asked for in a form and changed beside a record's date, fetched with the first one drawn.
 export { RepeatEditor, RepeatPicker } from "./repeat-picker-door.js";
 export type { RepeatPickerProps } from "./repeat-picker-door.js";
+// A day or a moment, typed as people say it ("tomorrow 3pm") or picked from a month: every date a person gives, fetched when first asked for (Roadmap f-date-inputs).
+export { prefetchWhenInput, WhenInput } from "./when-input-door.js";
+export type { WhenInputProps } from "./when-input-door.js";
 export { hasShape, TextBody, textBlocks, type TextBlock } from "./text-body.js";
 export { KindFigure } from "./figure.js";
 export { ownSentence, problemLine, problemTitle, RuleLineView, RuleParts, useLined, useRuleLines } from "./rule-line.js";
@@ -40,6 +43,7 @@ export { RelationMark } from "./relation-key.js";
 // The framework's own views and the declaration's specs, for a routed face that registers them outright (`@graview/embed/pages`) without reaching every lens through the package's main entry.
 export { registerDefaultViews } from "./default-views.js";
 export { HeadingsUnder, HomeLine, pageSays, registerViewSpecs, SpecLinks } from "./spec-views.js";
+export { useEndsAboveItsList } from "./stretched-link.js";
 export { StandingDot, standingWords } from "./workbench/standing.js";
 export { useViewportHeight } from "./primitives/measure.js";
 export { Profile } from "./profile.js";
@@ -49,14 +53,25 @@ export { FOOT_MOVED, FOOT_OBSTACLES, NARROW_PICTURE, placeAtTheFoot, placeAtTheT
 // The way back after an act, judged and timed alike on both faces (FR-152).
 export { freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, takeBackWords, WAY_BACK_MS } from "./way-back.js";
 export type { LastChange } from "./way-back.js";
-// The seat: the ask field at the foot of the face, its panel fetched when it is first opened.
-export { SeatField } from "./seat-field.js";
+// The quick ask (Roadmap f-quick-ask-framework): ⌘K's bar beside what the page is about, and its answer cards, fetched when first opened.
+export { QuickAskDoor } from "./quick-ask-door.js";
+export { openQuickAsk, useQuickAskDrawn } from "./quick-ask-desk.js";
+export type { QuickAskDoorProps } from "./quick-ask-door.js";
+export type { QuickAskOpening } from "./quick-ask-desk.js";
+export { quickAskOf } from "./quick-ask-setting.js";
 export { DraftDoor } from "./draft-door.js";
 export { appKeyOf } from "./reader-lenses.js";
 export { registerReaderLenses } from "./declared-lens-doors.js";
-export type { SeatFieldProps, SeatStart } from "./seat-field.js";
 // The context menu (FR-77's `acts`): the acts at the pointer, its pane and the tools fetched when it is first opened.
 export { Inspector } from "./workbench/inspector-door.js";
+// The inline AI (Roadmap f-ai-candidate-catalog): its part of the context menu and the ghost of what it proposed, fetched when first drawn.
+export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-door.js";
+export type { GhostDoorProps } from "./inline-ai-door.js";
+// Notify me (Roadmap f-notify-subscriptions): its part of the context menu, the sheet, a face's own press and Activity's list, the sheet and list fetched when first drawn.
+export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
+export type { NotifyAsk } from "./notify-door.js";
+// What AI did on a record, on its page (Roadmap f-activity-ai-entries), fetched with the first entry.
+export { RecordInteractionsDoor } from "./record-interactions-door.js";
 // Choosing several records on a list, and the bar that acts on them all at once — fetched with the first one chosen.
 export { CHOOSING_CSS, LONG_PRESS_MS, useChoosing } from "./choosing.js";
 export type { Choosing } from "./choosing.js";

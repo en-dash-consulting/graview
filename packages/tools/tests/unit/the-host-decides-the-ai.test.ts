@@ -60,7 +60,8 @@ describe("nothing for a reader to choose", () => {
       expect(frame, gone).not.toHaveProperty(gone);
     }
     // aiVia is the seat's, asked only once a model answered: @graview/tools' alone, never in the frame a page carries up front.
-    expect(Object.keys(frame).sort()).toEqual(["ANSWERED_WITH_AI", "NO_AI", "NO_AI_SAID", "aiTalks"]);
+    // aiOff and inlineAiOn are what a face asks before it draws an AI part at all (Roadmap f-ai-candidate-catalog): the host's, never a reader's.
+    expect(Object.keys(frame).sort()).toEqual(["ANSWERED_WITH_AI", "NO_AI", "NO_AI_SAID", "aiOff", "aiTalks", "inlineAiOn"]);
     for (const words of [NO_AI_SAID, ANSWERED_WITH_AI]) expect(words).not.toMatch(/graph-native|Graph only|Onboard|Jev|LLM|rung/);
   });
 });

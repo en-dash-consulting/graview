@@ -7,8 +7,10 @@
  * main entry up front and draws without ever syncing, so the engine and its
  * transports are reached only by a host that runs one.
  */
+export { CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, connection, connectionMapping, creatingAct, inConnectionFilter, isDayField } from "./connection.js";
+export type { Connection, ConnectionDeclaration, ConnectionRun } from "./connection.js";
 export { googleCalendar, googleCalendarMapping } from "./google-calendar.js";
-export type { Fetcher, GoogleCalendarOptions } from "./google-calendar.js";
+export type { Fetcher, GoogleCalendarOptions, GoogleTokenRequest } from "./google-calendar.js";
 export { syncConflictInvariant, SYNC_CONFLICTS } from "./conflict.js";
 export type { SyncConflictOptions } from "./conflict.js";
 export { SyncEngine } from "./engine.js";

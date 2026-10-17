@@ -1,9 +1,15 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve, sep } from "node:path";
-import { createMemoryAdapter, type AnySchema, type GraviewApp, type PersistenceAdapter, type Principal } from "@graview/core";
+import { createMemoryAdapter, type AnySchema, type GraviewApp, type PersistenceAdapter, type Principal, type Store } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { sayFindings, serializeCompiled } from "@graview/core/compiled";
+import { runConnections, type RunConnectionsOptions, type RunningConnections } from "./connections.js";
+import { readEnvFile } from "./connections-file.js";
+import { seatHeaders } from "./remote.js";
 import { serveStore, type ServedStore } from "./serve.js";
+
+/** Where the store answers a seat its state. */
+const STATE_PATH = "/graview/state";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -42,6 +48,12 @@ export interface PreviewOptions {
    * without it: anyone who could reach the preview could sit in any seat.
    */
   readonly trustSeatHeaders?: boolean;
+  /**
+   * The document's connections (`connections.<name>`), run beside the store
+   * with these options — where their state is kept, a host's token — or not
+   * at all (`false`). Run with credentials from the environment by default.
+   */
+  readonly connections?: false | Omit<RunConnectionsOptions<AnySchema>, "app" | "store">;
 }
 
 export interface Preview {
@@ -49,6 +61,8 @@ export interface Preview {
   readonly served: ServedStore<AnySchema>;
   readonly url: string;
   readonly principal: Principal;
+  /** The connections running beside the store; none when the document declares none or they were turned off. */
+  readonly connections: RunningConnections;
   close(): Promise<void>;
 }
 
@@ -93,10 +107,28 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
   const handed = JSON.stringify({ document: options.document, compiled: serializeCompiled(compiled), principal });
   const root = resolve(options.page);
 
-  const answer = (request: Request): Response | undefined => {
+  /*
+   * THE STORE'S STATE, HANDED WITH THE DOCUMENT. The page asked for the
+   * document, built the app, and only then asked the store for its state:
+   * two round trips before it could draw, where one carries both. The
+   * state is the one this seat would be answered at `/graview/state`, read
+   * as the document is asked for; the page opens the store on it
+   * (`openRemote`'s `state`).
+   */
+  let opened: ServedStore<AnySchema> | undefined;
+  const stateNow = async (): Promise<string | undefined> => {
+    if (!opened) return undefined;
+    const answered = await opened.handle(new Request(`http://localhost${STATE_PATH}`, { headers: seatHeaders(principal) }));
+    return answered.ok ? answered.text() : undefined;
+  };
+
+  const answer = async (request: Request): Promise<Response | undefined> => {
     if (request.method !== "GET" && request.method !== "HEAD") return undefined;
     const path = decodeURIComponent(new URL(request.url).pathname);
-    if (path === "/graview/document") return new Response(handed, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+    if (path === "/graview/document") {
+      const state = await stateNow();
+      return new Response(state === undefined ? handed : `${handed.slice(0, -1)},"state":${state}}`, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+    }
     if (path.startsWith("/graview/")) return undefined;
     const file = normalize(join(root, path));
     const served = file.startsWith(root + sep) && extname(file) !== "" && existsSync(file) && statSync(file).isFile() ? file : index;
@@ -118,6 +150,18 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     where: options.where ?? "memory (gone when the preview stops)",
     answer,
   });
+  opened = served as unknown as ServedStore<AnySchema>;
   const url = `http://${host === "::1" ? "[::1]" : host === "0.0.0.0" ? "localhost" : host}:${served.port}`;
-  return { app, served: served as unknown as ServedStore<AnySchema>, url, principal, close: () => served.close() };
+  const connections = runConnections({ readFile: readEnvFile, ...(options.connections === false ? { paused: true } : options.connections), app, store: served.store as unknown as Store<AnySchema> });
+  return {
+    app,
+    served: served as unknown as ServedStore<AnySchema>,
+    url,
+    principal,
+    connections,
+    close: async () => {
+      await connections.stop();
+      await served.close();
+    },
+  };
 }

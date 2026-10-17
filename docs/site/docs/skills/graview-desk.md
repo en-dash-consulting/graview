@@ -21,6 +21,10 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 A desk can be a section of the menu a right-click opens on either face (on the pages Shift+F10 and a long press too): `menuSections` on the provider, `embed()` or the pages' context. Each source is told what the menu was opened on — `{ face, on, about, field, place, href }` — and answers `{ id, heading?, items?: [{ id, label, run }], render?: (close) => node }` or nothing. It is drawn beside the acts the store would accept, never instead of them, and what it proposes goes through the same four seams.
 
+### The inline AI, already in the menu
+
+Hand the host's models and Graview draws an AI section in the context menu on both faces — no section to write. `ai={{ fast, thinking }}`: the Fast slot is Jev's shape (`jevFast()`, or any `{ model, decide }`), the Thinking slot `{ model, think({ system, prompt, state, catalog }) }`; each call reports tier, model and tokens to `ai.meter`. The model only PICKS from `catalogOf(store, target, { principal })` (`@graview/core/catalog`): acts the viewer may run, panels of the kind, places, neighbors, field values, never anything they cannot see or run; `aiContextOf` is the state it reads. A change waits as a ghost (Accept, Accept some, Dismiss) and is kept as one batch with lineage `interaction`; a panel is a draft "Keep as a lens" keeps. Each interaction is an `AiInteraction` in Activity (filter All / Changes / AI, "Just mine") and on its record's page; `ai.interactions` `{ load, keep }` stores them. `ai={{ off: true }}` hides every AI part. Prove it with stubs: `stubFast()`, `stubThinking()` from `@graview/tools/inline-ai` (`pnpm verify inline-ai`).
+
 ### Do this
 
 1. **Write the prompt from the graph.** What kinds exist, what acts exist and what they take — `generateLlmsTxt(app)` from `@graview/core/check` writes that — plus what is already there. A model that cannot see the graph invents a second Back Lawn.

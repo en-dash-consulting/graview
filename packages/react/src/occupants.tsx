@@ -14,7 +14,7 @@ import type { RobotState } from "./robot.js";
  * This tab's own seat is not here. It used to stand on a pad, walk to what
  * it wrote and follow the pointer — a thing in the middle of the picture
  * that moved on its own, and nothing at all inside a full-screen lens. The
- * seat's ask field says who it is and what it is doing, at every height;
+ * quick ask's card says what it is about, beside it, at every height;
  * what it wrote is marked on the things themselves. Somebody
  * else's agent keeps its body: that is how you see them at work.
  */
@@ -146,7 +146,8 @@ export function Occupants({ width, whereIs }: OccupantsProps): ReactElement | nu
               className="graview-figure-edge"
               data-testid="presence-edge"
               data-graview-person={one.presence.participant}
-              style={{ left: Math.max(8, one.point.x - 120), top: one.point.y }}
+              /* Its end at the edge, clear of a panel docked over the map's right side, however long the name. */
+              style={{ right: `calc(${Math.max(8, width - one.point.x)}px + var(--graview-dock, 0px))`, top: one.point.y }}
               onClick={() => follow(one.presence.participant)}
               aria-label={`${name} is somewhere else — press to go where they are`}
             >

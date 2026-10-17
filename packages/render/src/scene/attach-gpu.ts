@@ -5,6 +5,8 @@
 
 import type { InterpolatedLayout, Layout } from "@graview/layout";
 import { detectCapabilities, requestPaint } from "../platform/html-in-canvas.js";
+import type { Scheme } from "./plane.js";
+import { FRAME_BUDGET_MS } from "./renderer-choice.js";
 import { Compositor, type CompositedFrame, type CompositorOptions, type SceneView, type VgpuLike } from "./compositor.js";
 import { fromLayout } from "./from-layout.js";
 
@@ -28,6 +30,20 @@ export interface GpuScene {
    * and what it looks like does not.
    */
   drawOnDom?(ids: ReadonlySet<string>): void;
+  /**
+   * Whether receded planes are blurred this picture — the host's switch and
+   * the reader's preferences, worked out by the host. On when absent.
+   */
+  readonly blur?: boolean;
+  /** The scheme the page is drawn in, so the planes are treated as the DOM path treats them. */
+  readonly scheme?: Scheme;
+  /**
+   * This page cannot draw on the GPU after all: no adapter, no capture, no
+   * paint within the first-frame check, or first frames over the budget.
+   * The host draws the whole scene on the DOM path from here on, and says
+   * nothing. Absent, every view is handed to `drawOnDom` instead.
+   */
+  fallBack?(): void;
 }
 
 export interface AttachGpuOptions extends CompositorOptions {
@@ -46,6 +62,19 @@ export interface AttachGpuOptions extends CompositorOptions {
 const DEFERRALS_BEFORE_HANDING_ON = 3;
 
 /**
+ * THE FIRST-FRAME CHECK. A browser that offers WebGPU and element capture
+ * may still not draw: an adapter refused, a GPU process that never paints,
+ * a software device too slow to keep up. The first frames say which — a
+ * paint must arrive within `FIRST_PAINT_WAIT_MS`, and the middle of the
+ * first `FIRST_FRAMES` frames' work must fit `FIRST_FRAME_BUDGET_MS`, the
+ * share of a frame left once the browser has done its own. Otherwise the
+ * page falls back to the DOM path, once and for good.
+ */
+export const FIRST_FRAMES = 4;
+export const FIRST_PAINT_WAIT_MS = 1500;
+export const FIRST_FRAME_BUDGET_MS = FRAME_BUDGET_MS * 0.75;
+
+/**
  * The capture path as an `attachRenderer`: a canvas becomes a compositor
  * the first time it is handed over, and stays one across every later call.
  *
@@ -61,8 +90,9 @@ const DEFERRALS_BEFORE_HANDING_ON = 3;
  * stays there while it is in the picture, because the way back has one —
  * an element just returned to a canvas has no paint record for a frame.
  *
- * Where the platform cannot capture at all, every view goes to the DOM path
- * and the canvas stays empty.
+ * Where the platform cannot capture at all — or the first-frame check
+ * fails — the host's `fallBack` draws the scene on the DOM path; a host
+ * without one is handed every view and the canvas stays empty.
  */
 export function attachGpu(options: AttachGpuOptions = {}): (scene: GpuScene) => () => void {
   const sessions = new WeakMap<HTMLCanvasElement, Session>();
@@ -87,6 +117,10 @@ class Session {
   private readonly onDom = new Set<string>();
   private readonly lateFor = new Map<string, number>();
   private releasing: ReturnType<typeof setTimeout> | null = null;
+  private waiting: ReturnType<typeof setTimeout> | null = null;
+  /** The first frames' work, in milliseconds, until the check is passed. */
+  private firstFrames: number[] | null = [];
+  private gone = false;
   private readonly observer: MutationObserver | null;
   private readonly onPaint = (event: Event) => this.paint(event);
 
@@ -112,6 +146,12 @@ class Session {
     this.releasing = null;
     this.scene = scene;
     this.stale = true;
+    this.compositor?.setBlur(scene.blur ?? true);
+    if (scene.scheme) this.compositor?.setScheme(scene.scheme);
+    if (this.gone) {
+      scene.fallBack?.();
+      return;
+    }
     requestPaint(this.canvas);
   }
 
@@ -125,10 +165,6 @@ class Session {
   }
 
   private async start(): Promise<void> {
-    const everyView = () => {
-      const ids = new Set(this.scene?.layout.nodes.map((node) => node.id) ?? []);
-      this.scene?.drawOnDom?.(ids);
-    };
     try {
       let gpu = this.options.gpu;
       if (!gpu) {
@@ -136,6 +172,10 @@ class Session {
         if (!adapter) throw new Error("No WebGPU adapter.");
         const device = await adapter.requestDevice();
         this.ownDevice = device;
+        // A device lost later — a GPU process gone, a driver reset — is this page's GPU gone too.
+        void device.lost.then(() => {
+          if (!this.disposed) this.fallBack();
+        });
         gpu = { device: { gpu: device } };
       }
       if (this.disposed) return;
@@ -144,26 +184,74 @@ class Session {
       const context = this.canvas.getContext("webgpu");
       if (!context) throw new Error("No WebGPU context on the scene canvas.");
       context.configure({ device, format: navigator.gpu.getPreferredCanvasFormat(), alphaMode: "premultiplied" });
-      this.compositor = new Compositor(this.canvas, { gpu, surface: { context } }, { transparent: true, ...this.options });
+      this.compositor = new Compositor(this.canvas, { gpu, surface: { context } }, {
+        transparent: true,
+        ...this.options,
+        blur: this.scene?.blur ?? this.options.blur ?? true,
+        ...(this.scene?.scheme ? { scheme: this.scene.scheme } : {}),
+      });
       this.compositor.attach();
       this.canvas.addEventListener("paint", this.onPaint);
       this.stale = true;
+      this.waiting = setTimeout(() => this.fallBack(), FIRST_PAINT_WAIT_MS);
       requestPaint(this.canvas);
     } catch {
-      // Nothing to capture with: every view is drawn the way it is without a GPU.
-      everyView();
+      // Nothing to capture with: the scene is drawn the way it is without a GPU.
+      this.fallBack();
     }
+  }
+
+  /**
+   * The GPU cannot draw this page. A host that can redraws the scene on the
+   * DOM path; one that cannot is handed every view. Silent either way: the
+   * picture is the same, and a reader has nothing to do about it.
+   */
+  private fallBack(): void {
+    if (this.gone) return;
+    this.gone = true;
+    if (this.waiting) clearTimeout(this.waiting);
+    this.waiting = null;
+    this.canvas.removeEventListener("paint", this.onPaint);
+    this.compositor?.dispose();
+    this.compositor = null;
+    const scene = this.scene;
+    if (!scene) return;
+    if (scene.fallBack) scene.fallBack();
+    else scene.drawOnDom?.(new Set(scene.layout.nodes.map((node) => node.id)));
+  }
+
+  /** One frame's work counted against the first-frame check, until it is passed. */
+  private checkFirstFrame(took: number): void {
+    const first = this.firstFrames;
+    if (!first) return;
+    if (this.waiting) clearTimeout(this.waiting);
+    this.waiting = null;
+    first.push(took);
+    if (first.length < FIRST_FRAMES) return;
+    const middle = [...first].sort((a, b) => a - b)[Math.floor(first.length / 2)]!;
+    this.firstFrames = null;
+    if (middle > FIRST_FRAME_BUDGET_MS) this.fallBack();
   }
 
   private paint(event: Event): void {
     const compositor = this.compositor;
     const scene = this.scene;
     if (!compositor || !scene) return;
-    if (this.stale) {
-      this.stale = false;
-      compositor.reconcile(this.views(scene));
+    const began = performance.now();
+    let frame: CompositedFrame;
+    try {
+      if (this.stale) {
+        this.stale = false;
+        compositor.reconcile(this.views(scene));
+      }
+      frame = compositor.paint(event);
+    } catch {
+      // A frame the platform refused is a page this GPU cannot draw.
+      this.fallBack();
+      return;
     }
-    const frame = compositor.paint(event);
+    this.checkFirstFrame(performance.now() - began);
+    if (this.gone) return;
     this.options.onFrame?.(frame, compositor);
 
     // A view left late that keeps changing is changing faster than the budget follows.
@@ -214,6 +302,8 @@ class Session {
 
   private dispose(): void {
     this.disposed = true;
+    if (this.waiting) clearTimeout(this.waiting);
+    this.waiting = null;
     this.observer?.disconnect();
     this.canvas.removeEventListener("paint", this.onPaint);
     this.compositor?.dispose();

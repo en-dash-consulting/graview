@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 1042,
+  "gzipped": 405,
+  "changeset": "the-first-load-waits-on-less.md",
+  "note": "Raised when the first load and a page switch came to be timed and made faster (Roadmap f-perf-first-load): the embed fetches the scene before it switches to it, for at most 150 ms, rather than suspending into a placeholder React holds for 300 ms; it fetches the other face when a desk's page is idle and the switch's face when a hand reaches for it; and openRemote opens on a state handed with the document. Measured at 567_527 / 196_884 against 566_485 / 196_479 before."
+}

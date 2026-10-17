@@ -1,5 +1,5 @@
 import { dayAsRead, dayOfMonthAsRead, fieldWords, humanizeField, labelOf, type Arrangement, type Principal, type Violation } from "@graview/core";
-import { KindFigure, useMarkup } from "@graview/primitives";
+import { KindFigure, NotifyButton, RecordInteractionsDoor, useMarkup } from "@graview/primitives";
 import {
   DerivedForm,
   ListPage,
@@ -505,6 +505,15 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         <p className="th-lede">
           <SceneLink context={context} stop={`#focus=${encodeURIComponent(id)}`} data-testid="spatial-link" style={{ display: "inline-flex", alignItems: "center", minHeight: 24, color: "inherit", fontSize: "0.9rem", textDecoration: "underline", textUnderlineOffset: "0.2em", textDecorationColor: "var(--th-line)" }} />
         </p>
+        {/* NOTIFY ME (Roadmap f-notify-subscriptions): told when somebody else changes it — the framework's own press, in Things' clothes. */}
+        <p className="th-lede">
+          <NotifyButton
+            choices={[{ on: "changed", record: id }, { on: "act", record: id }, { on: "reaches", kind, condition: "", record: id }]}
+            label="Notify me when this changes"
+            testId="record-notify"
+            className="th-btn th-quiet"
+          />
+        </p>
       </header>
 
       {facts.violations.length > 0 ? (
@@ -555,7 +564,9 @@ function KindRecord({ context, kind }: { context: Ctx; kind: string }) {
         </section>
       ))}
 
-      <Acts title="What can be done" actions={facts.actions} context={context} />
+      <Acts title="What can be done" actions={facts.actions} context={context} about={id} />
+      {/* What AI was asked about it and what came of it, the framework's own entries: none where AI is off. */}
+      <RecordInteractionsDoor id={id} className="th-section" />
     </>
   );
 }
@@ -862,9 +873,12 @@ function Acts({
   actions,
   context,
   openFirst = false,
+  about,
 }: {
   /** The section's heading; a list page says none — its acts are named by their own buttons. */
   title?: string;
+  /** The record these are the acts of, on its page: "Notify me when someone else does this" is about it. */
+  readonly about?: string;
   actions: AffordanceSet;
   context: Ctx;
   /**
@@ -882,6 +896,8 @@ function Acts({
   );
   const [failed, setFailed] = useState<string | null>(null);
   const [more, setMore] = useState(false);
+  /** The act just done here, so its "Notify me" stands beside the acts (Roadmap f-notify-subscriptions). */
+  const [did, setDid] = useState<string | null>(null);
   const controls = useRef<HTMLDivElement | null>(null);
   const form = useRef<HTMLDivElement | null>(null);
   /*
@@ -912,6 +928,8 @@ function Acts({
             className={`th-btn${open === affordance.id ? " on" : ""}`}
             data-affordance={affordance.id}
             data-rank={affordance.rank}
+            // The act it runs, so a right-click on it offers "Notify me when someone does this".
+            data-graview-act={affordance.mutation}
             autoFocus={more && affordance === aside[0]}
             aria-expanded={open === affordance.id}
             onClick={() => {
@@ -926,6 +944,7 @@ function Acts({
                   { name: affordance.mutation, args: affordance.args },
                   principal ? { author: principal } : {},
                 );
+                setDid(affordance.mutation);
               } catch (error) {
                 setFailed(error instanceof Error ? error.message : String(error));
               }
@@ -957,12 +976,22 @@ function Acts({
               context={context}
               onDone={() => {
                 setOpen(null);
+                setDid(affordance.mutation);
                 backTo(affordance.id);
               }}
             />
           </div>
         ) : null,
       )}
+      {/* After an act is done: told the next time somebody else does it. */}
+      {did !== null && open === null ? (
+        <NotifyButton
+          choices={about !== undefined ? [{ on: "act", act: did, record: about }, { on: "act", act: did }] : [{ on: "act", act: did }]}
+          label="Notify me when someone else does this"
+          testId="notify-after-act"
+          className="th-btn th-quiet"
+        />
+      ) : null}
       {failed ? <p className="th-warn th-quiet">{failed}</p> : null}
       {actions.withheld.length > 0 ? (
         <ul className="th-list" style={{ gap: "0.2rem" }}>

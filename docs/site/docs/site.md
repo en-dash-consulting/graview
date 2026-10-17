@@ -1,6 +1,6 @@
 # This site is a Graview app
 
-graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 368 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
+graview.dev is a Graview app: one declaration, [`apps/site/app.json`](https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json), and 372 records written out of the repository by `node scripts/site-docs.mjs`. Every page the site serves is one of those records, rendered as static HTML by `renderPlace` from `@graview/pages/static` in the site's own design, so a search engine and a model read plain pages, and none of them can say what the records do not.
 
 ## The site, running
 
@@ -14,9 +14,9 @@ This is that declaration, compiled in your browser by the same compiler `graview
 
 | Kind | What it is | Records |
 | --- | --- | --- |
-| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 57 |
+| `page` | An address graview.dev serves: a web page, the Markdown twin beside it, or a file for crawlers and models. | 58 |
 | `package` | An npm package Graview ships, read off its package.json, its README.md and its barrel. | 14 |
-| `entry` | One subpath a package exports, as a product imports it. | 89 |
+| `entry` | One subpath a package exports, as a product imports it. | 92 |
 | `skill` | An authoring skill an assistant reads before it changes a Graview app, read off its SKILL.md. | 19 |
 | `check` | A thing graview check can say, read out of the checker's source. | 105 |
 | `command` | A graview subcommand, read off the help the CLI prints. | 13 |
@@ -25,7 +25,7 @@ This is that declaration, compiled in your browser by the same compiler `graview
 | `chapter` | A step of the garden, grown: a declaration that passes its own check, opened in a browser on every push. | 16 |
 | `example` | An example app in the repository, described by its own package.json. | 5 |
 | `question` | A question the front page answers plainly, read off its FAQ. | 7 |
-| `release` | A version every package shares, read off @graview/core's changelog and the CLI's package.json. | 32 |
+| `release` | A version every package shares, as the releases page says it: when npm published it, what came in it in a few plain lines, and what a host must know before upgrading. Written by hand with the Version packages pull request (apps/site/releases.json). | 32 |
 | `scaffold` | What graview create writes, read from the generator itself. | 1 |
 
 ## How a page is made

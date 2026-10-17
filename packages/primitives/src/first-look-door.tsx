@@ -8,7 +8,7 @@ import type { FirstLookHintsProps } from "./first-look.js";
  *
  * A brand-new app is a bar of controls nobody has met: the switch between
  * the scene and the pages, the dot that counts what is wrong, Activity, the
- * Ask box. A host could point at them — but their selectors are not a
+ * quick ask. A host could point at them — but their selectors are not a
  * surface a host may hold the framework to (docs/stability.md), so a host's
  * tour broke the first time the bar was redrawn. The framework points at
  * its own controls instead, by name: a short run of hints, one at a time,
@@ -29,7 +29,7 @@ import type { FirstLookHintsProps } from "./first-look.js";
  * - `faces` — the switch between the scene and the pages
  * - `problems` — the dot that says whether everything is in order, and counts what is not
  * - `activity` — what has happened, and the way to take it back
- * - `ask` — the Ask box, where the app is asked in words
+ * - `ask` — the quick ask (⌘K), where the app is asked in words; pointed at beside Find, and only where a quick ask is drawn
  * - `find` — Find
  * - `profile` — who you are, and your own settings
  * - `home` — the app's name, the way home

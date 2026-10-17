@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 1042,
+  "gzipped": 439,
+  "changeset": "the-first-load-waits-on-less.md",
+  "note": "Raised by the same change as the page that compiles (the first load and a page switch timed and made faster, Roadmap f-perf-first-load): the scene fetched before the switch, the other face fetched when idle at a desk or reached for, and a remote store opened on a handed state. Measured at 520_534 / 180_305 against 519_492 / 179_866 before."
+}

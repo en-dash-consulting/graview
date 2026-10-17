@@ -48,6 +48,10 @@
     "./several": {
       "types": "./dist/several.d.ts",
       "default": "./dist/several.js"
+    },
+    "./inline-ai": {
+      "types": "./dist/inline-ai.d.ts",
+      "default": "./dist/inline-ai.js"
     }
   },
   "scripts": {

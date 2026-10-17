@@ -8,7 +8,9 @@
  * `failureWords`), the channel a change came through (`viaSaid`), a
  * field's value and a relation in the declaration's words (`valueWords`,
  * `edgeWords`), and an amount asked for as it is said (`amountBox`,
- * `amountInBox`, `readAmount`).
+ * `amountInBox`, `readAmount`), and a date typed as
+ * people say it (`readWhenTyped`, `storedOfWall`, `wallOfStored`, `zoneSaid`,
+ * `endAfterStartMoved`, `startAndEndOf`).
  *
  * Apart from `@graview/core` because a bundler places a whole file in a
  * page's first chunk when the first chunk can reach it and any chunk uses
@@ -34,3 +36,7 @@ export { fieldSays, mapsHref, parseDuration, sayDuration, sayPhone, telHref, typ
 export { typedFieldOf } from "./schema/typed-field-of.js";
 export { amountBox, amountInBox, readAmount } from "./amount-input.js";
 export type { AmountBox } from "./amount-input.js";
+// A day or a moment typed as people say it — "tomorrow 3pm", "Fri 10:30", "17 Oct" — kept as the field keeps it (Roadmap f-date-inputs).
+export { readWhenTyped } from "./when-typed.js";
+export { endAfterStartMoved, namesInstant, startAndEndOf, storedOfWall, wallNow, wallOfStored, zoneSaid } from "./wall-time.js";
+export type { WallTime } from "./wall-time.js";

@@ -3,8 +3,8 @@ import { resolve } from "node:path";
 import { entryArg, loadApp } from "@graview/core/cli";
 import { instantiateTemplate } from "@graview/core/check";
 import { sayFindings, templateSeedPrimitives } from "@graview/core/document";
-import { Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal } from "@graview/core";
-import { backendFrom, holdStore, openRemote, openStore, sayHeld, type RemoteRefusal, type RemoteStore } from "@graview/ship";
+import { memorySubscriptions, Store, type AnySchema, type GraviewApp, type MutationCall, type Operation, type Principal, type SubscriptionStore } from "@graview/core";
+import { backendFrom, fileSubscriptions, holdStore, openRemote, openStore, remoteSubscriptions, sayHeld, subscriptionsFileOf, type RemoteRefusal, type RemoteStore } from "@graview/ship";
 import { createMcpAdapter } from "./agent/adapters.js";
 import { createToolRuntime } from "./agent/tools.js";
 import { serveMcpStdio } from "./mcp-stdio.js";
@@ -95,6 +95,8 @@ export interface Host<S extends AnySchema> {
   refresh(): Promise<void>;
   /** The server's refusals since the last look: each sentence in the policy's words, and its reason (FR-119). */
   refusals(): RemoteRefusal[];
+  /** Where "Notify me" is kept for this store: the server's, or the file beside it that `graview serve` reads (Roadmap f-notify-subscriptions). */
+  readonly subscriptions: SubscriptionStore;
   close(): Promise<void>;
 }
 
@@ -113,6 +115,7 @@ export async function openHost<S extends AnySchema>(
     return {
       store: remote.store,
       where: url,
+      subscriptions: remoteSubscriptions({ url, principal, headers: headersFrom(argv) }),
       settled: () => remote.settled(),
       refresh: async () => {
         await remote.pull();
@@ -146,6 +149,7 @@ export async function openHost<S extends AnySchema>(
   return {
     store: opened.store,
     where: backend.where,
+    subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
     settled: () => opened.flush(),
     refresh: async () => {},
     refusals: () => [],
@@ -195,13 +199,14 @@ export async function mcp(argv: readonly string[]): Promise<number> {
      * exist yet.
      */
     const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.intelligence ? { intelligence: app.intelligence } : {}) });
-    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [] }));
+    // A served seat keeps subscriptions wherever its store is, so the catalog lists the tools that keep them.
+    const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: memorySubscriptions() }));
     process.stdout.write(`${JSON.stringify({ tools: adapter.listTools() }, null, 2)}\n`);
     return 0;
   }
 
   const host = await openHost(app, argv, principal, "mcp");
-  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [] });
+  const runtime = createToolRuntime(host.store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: host.subscriptions });
   const inner = createMcpAdapter(runtime);
   say(`graview mcp: ${app.name} as ${principal.id} on ${host.where} — ${inner.listTools().length} tools\n`);
 

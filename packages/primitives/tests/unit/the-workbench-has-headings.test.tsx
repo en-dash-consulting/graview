@@ -8,13 +8,12 @@ import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { ActivityRail, registerDefaultViews, SeatField, Shell } from "../../src/index.js";
+import { ActivityRail, registerDefaultViews, Shell } from "../../src/index.js";
 
 /**
  * FR-25: a screen-reader user moving by headings finds the workbench. The
- * bar's h1 names the app; each region a person goes to — the seat that
- * you ask in, the activity, the places — opens with a heading of
- * its own, named as its landmark is.
+ * bar's h1 names the app; each region a person goes to — the activity,
+ * the places — opens with a heading of its own, named as its landmark is.
  */
 const note = defineNode("note", { fields: z.object({ label: z.string() }), plural: "Notes" });
 const schema = createSchema([note]);
@@ -25,7 +24,7 @@ const views = () => registerDefaultViews(schema, createViews(schema)).register("
 const headings = (html: string) => [...html.matchAll(/<h([1-6])[^>]*>(.*?)<\/h\1>/g)].map((m) => `h${m[1]} ${m[2]!.replace(/<[^>]+>/g, "")}`);
 
 describe("the workbench has headings", () => {
-  it("names the app in an h1 on the bar, names the scene's places, and gives the seat a heading", () => {
+  it("names the app in an h1 on the bar and names the scene's places, with no Ask box under them", () => {
     const html = renderToStaticMarkup(
       <GraviewProvider store={store()} views={views()} initialView={EMPTY_VIEW} brand={{ name: "Field Notes" } as never}>
         <Shell<typeof schema> scheme="light" onScheme={() => {}} />
@@ -35,16 +34,10 @@ describe("the workbench has headings", () => {
     expect(said).toContain("h1 Field Notes");
     // The scene's places are the bar's, a navigation named for what it holds.
     expect(html).toContain('aria-label="What the scene shows"');
-    expect(said).toContain("h2 Ask Field Notes");
-  });
-
-  it("gives the seat its heading wherever it is mounted, in the app's name and never the word seat", () => {
-    const html = renderToStaticMarkup(
-      <GraviewProvider store={store()} views={views()} initialView={EMPTY_VIEW} brand={{ name: "Field Notes" } as never}>
-        <SeatField<typeof schema> />
-      </GraviewProvider>,
-    );
-    expect(headings(html)).toEqual(["h2 Ask Field Notes"]);
+    // The Ask box is retired: no region, heading or field of it (Roadmap f-quick-ask-framework).
+    expect(said).not.toContain("h2 Ask Field Notes");
+    expect(html).not.toContain('data-testid="seat-field"');
+    expect(html).not.toContain('data-testid="seat"');
   });
 
   it("gives the activity a heading when it is open", async () => {

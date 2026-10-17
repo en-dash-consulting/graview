@@ -29,6 +29,12 @@ export interface GoTo {
   place(as: string, also?: GoToAlso): void;
   /** Go to a kind's list, by the kind's name, narrowed and to a section, given them. */
   list(kind: string, also?: GoToAlso): void;
+  /**
+   * Show the view the seat (or the inline AI) just drew: the routed face
+   * goes to its own address for it (`/~draft`); the scene draws it in place
+   * of the picture already, and says nothing.
+   */
+  draft?(): void;
 }
 
 /** Where on the page a destination is, and what it is narrowed to. */

@@ -64,12 +64,38 @@ export type Fetcher = (
   init?: { method?: string; headers?: Record<string, string>; body?: string },
 ) => Promise<{ ok: boolean; status: number; json(): Promise<unknown> }>;
 
+/** What the adapter asks of a token source: `refresh` when Google just refused the last one. */
+export interface GoogleTokenRequest {
+  /**
+   * Google answered 401 to the token this returned last: whatever it holds
+   * is no good, expired or revoked, so mint a new one rather than hand the
+   * cached one back.
+   */
+  readonly refresh?: boolean;
+}
+
 export interface GoogleCalendarOptions {
   readonly calendarId: string;
-  /** Called before every request, so a refreshed token is picked up. */
-  token(): Promise<string> | string;
+  /**
+   * Called before every request, so a refreshed token is picked up. When
+   * Google refuses a token (401) it is called once more with
+   * `{ refresh: true }` and the request is made again; a second refusal
+   * throws a sentence naming the token.
+   */
+  token(request?: GoogleTokenRequest): Promise<string> | string;
   readonly fetch?: Fetcher;
   readonly baseUrl?: string;
+  /** Events per page of a pull (Google's `maxResults`; it allows up to 2500). Every page is followed. */
+  readonly pageSize?: number;
+  /**
+   * Which of the calendar's events are this sync's, judged as they arrive
+   * (Google refuses a sync token beside a search). One that is not is
+   * reported deleted: never made here, and gone here if it was linked —
+   * an event that leaves the filter has left the sync.
+   */
+  readonly keep?: (event: Readonly<Record<string, unknown>>) => boolean;
+  /** Google event fields every event made from here carries (a `colorId`, `extendedProperties`), beside the mapped ones. */
+  readonly madeHere?: Readonly<Record<string, unknown>>;
 }
 
 const BASE = "https://www.googleapis.com/calendar/v3";
@@ -102,15 +128,30 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
   const events = `${base}/calendars/${encodeURIComponent(options.calendarId)}/events`;
 
   const call = async (url: string, init?: Parameters<Fetcher>[1]) => {
-    const token = await options.token();
-    const response = await doFetch(url, {
-      ...init,
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-        ...(init?.headers ?? {}),
-      },
-    });
+    const send = async (token: string) =>
+      doFetch(url, {
+        ...init,
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+          ...(init?.headers ?? {}),
+        },
+      });
+    let response = await send(await options.token());
+    /*
+     * A 401 is an access token Google no longer takes — an hour old, or
+     * revoked. Asked again with `refresh`, the token source mints a new one
+     * and the request goes once more; refused again, it is the token, not
+     * the network, and saying "offline" would hide that.
+     */
+    if (response.status === 401) {
+      response = await send(await options.token({ refresh: true }));
+      if (response.status === 401) {
+        throw new Error(
+          "google-calendar: Google refused the access token twice (HTTP 401), the second one asked for with token({ refresh: true })",
+        );
+      }
+    }
     /*
      * A 410 means the sync token expired and Google wants a full resync. It
      * is the one error here that is not an error: throwing would look like
@@ -119,38 +160,60 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
      */
     if (response.status === 410) return { expired: true } as const;
     if (!response.ok) throw new Error(`google-calendar: HTTP ${response.status}`);
+    // A deletion is answered 204, with no body to read.
+    if (response.status === 204) return { expired: false, body: {} as Record<string, unknown> } as const;
     return { expired: false, body: (await response.json()) as Record<string, unknown> } as const;
+  };
+
+  /**
+   * Every page of one listing, from `cursor` or (without one) from nothing.
+   * The sync token Google hands back is on the LAST page only; a pull that
+   * stopped at the first would miss the rest and keep no cursor.
+   */
+  const list = async (cursor: string | undefined) => {
+    const items: Record<string, unknown>[] = [];
+    let pageToken: string | undefined;
+    for (;;) {
+      const url = new URL(events);
+      if (cursor) url.searchParams.set("syncToken", cursor);
+      // Without this a deleted event simply stops appearing, and an event
+      // that stops appearing is indistinguishable from one we never had.
+      else url.searchParams.set("showDeleted", "true");
+      if (options.pageSize) url.searchParams.set("maxResults", String(options.pageSize));
+      if (pageToken) url.searchParams.set("pageToken", pageToken);
+      const result = await call(url.toString());
+      if (result.expired) return { expired: true } as const;
+      items.push(...((result.body["items"] as Record<string, unknown>[] | undefined) ?? []));
+      const next = result.body["nextPageToken"];
+      if (typeof next === "string" && next) {
+        pageToken = next;
+        continue;
+      }
+      return { expired: false, items, syncToken: result.body["nextSyncToken"] } as const;
+    }
   };
 
   return {
     name: "google-calendar",
 
     async pull(cursor) {
-      const url = new URL(events);
-      if (cursor) url.searchParams.set("syncToken", cursor);
-      // Without this a deleted event simply stops appearing, and an event
-      // that stops appearing is indistinguishable from one we never had.
-      else url.searchParams.set("showDeleted", "true");
-
-      let result = await call(url.toString());
+      let result = await list(cursor);
       if (result.expired) {
         // Start again from nothing rather than silently missing a window.
-        result = await call(`${events}?showDeleted=true`);
+        result = await list(undefined);
         if (result.expired) throw new Error("google-calendar: sync token rejected twice");
       }
-      const body = result.body;
-      const items = (body["items"] as Record<string, unknown>[] | undefined) ?? [];
-      const changes: RemoteChange[] = items.map((item) => ({
+      const changes: RemoteChange[] = result.items.map((item) => ({
         resource: "events",
         id: String(item["id"]),
         // The etag is Google's own version of the record, and the reason an
         // echo of our own write is recognizable at all.
         version: String(item["etag"] ?? ""),
-        ...(item["status"] === "cancelled"
+        ...(item["status"] === "cancelled" || (options.keep && !options.keep(item))
           ? { deleted: true }
           : { fields: flatten(item) }),
       }));
-      return { changes, cursor: String(body["nextSyncToken"] ?? cursor ?? "") };
+      return { changes, cursor: String(result.syncToken ?? cursor ?? "") };
     },
 
     async push(writes) {
@@ -178,7 +241,7 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
       await call(`${events}/${encodeURIComponent(write.id)}`, { method: "DELETE" });
       return { localId: write.localId, id: write.id, version: "" };
     }
-    const body: Record<string, unknown> = {};
+    const body: Record<string, unknown> = write.id ? {} : { ...options.madeHere };
     for (const [path, value] of Object.entries(write.fields ?? {})) put(body, path, value);
 
     const result = await call(write.id ? `${events}/${encodeURIComponent(write.id)}` : events, {
@@ -203,7 +266,10 @@ export function googleCalendar(options: GoogleCalendarOptions): RemoteSystem {
  */
 function flatten(item: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const path of ["summary", "location", "description", "start.dateTime", "end.dateTime"]) {
+  // An all-day event has a `date` and no `dateTime`: it arrives as its day, and
+  // no time is made up for it. A mapping that names only the timed paths sees
+  // no start, and `createInbound` decides whether such a record is one of its.
+  for (const path of ["summary", "location", "description", "start.dateTime", "end.dateTime", "start.date", "end.date"]) {
     const value = at(item, path);
     if (value !== undefined) out[path] = value;
   }

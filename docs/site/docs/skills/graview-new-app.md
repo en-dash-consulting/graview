@@ -47,7 +47,7 @@ src/
 
 ### Do this
 
-1. **Install.** The scaffold already did. Reach for `@graview/render/gpu` only if you want the experimental capture path; the DOM path is what ships.
+1. **Install.** The scaffold already did.
 
 1. **Declare one kind, one mutation, one rule.** Not the whole domain. The loop you want on day one is: declare → `graview check` → look → declare more.
 
@@ -55,7 +55,7 @@ src/
 
 1. **Declare the seams that make the interface smart.** These are one-line declarations on mutations and kinds, and every derived surface reads them: - `creates: ["<kind>"]` on every mutation that adds a kind — the chain `Begin` and `graview describe` read, and the empty card's own way in. - `connects: [...]` / `severs: [...]` naming the edge kinds a mutation makes or breaks — what makes drawn LINES selectable, offers the act from either end, and hides a severing act with nothing to sever. - `lifecycle: { field, retired }` on kinds whose members expire — counts say "+N past". - `subject: { kinds, arg }` on every mutation that acts on a thing.
 
-1. **Take the shell.** `Shell` from `@graview/primitives` is everything not about your domain: the one app bar an embed wears too (the name, the Scene and Pages switch, the scene's pictures, Find, Activity, the standing, the person), the scene, its key, the ask field — a seat that answers from the graph with no API key — and the acts at the pointer. Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`, `OverviewButton`) are exported for a shell of your own; one is about eighty lines, and a longer one is probably rebuilding something derived. `firstLook` on `Shell` and `PagesApp` (`true` or `{ seen, onDone, steps }`) points a newcomer at the app's own controls once; write no tour.
+1. **Take the shell.** `Shell` from `@graview/primitives` is everything not about your domain: the one app bar an embed wears too (the name, the Scene and Pages switch, the scene's pictures, Find, Activity, the standing, the person), the scene, its key, the quick ask (⌘K, where the host gives a model) and the acts at the pointer. Its parts (`AppBar`, `Inspector`, `Standing`, `ActivityRail`, `Trail`, `OverviewButton`) are exported for a shell of your own; one is about eighty lines, and a longer one is probably rebuilding something derived. `firstLook` on `Shell` and `PagesApp` (`true` or `{ seen, onDone, steps }`) points a newcomer at the app's own controls once; write no tour.
 
 Search comes with `Shell`: Find answers `/` or ⌘K from anywhere, lights what the words find in whatever picture is open and dims the rest, and `#q=` makes a search a stop Back returns to. Nothing is declared per kind.
 
@@ -90,7 +90,7 @@ Later: a browser harness, a JSON verdict per claim.
 
 ### Supported browsers
 
-Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The GPU capture path is Chromium-only, experimental and opt-in (`attachRenderer` set to `attachGpu()` from `@graview/render/gpu`) — never a requirement.
+Build for the DOM path: Chromium, WebKit and Firefox, all three verified by the framework (`pnpm engines`). The floor is `document.adoptedStyleSheets` (Safari 16.4+, Firefox 101+, Chromium 99+). The altitude morph rides `@property` and degrades to a clean cut where that is missing — write no fallback. A host's `ai.onDevice` needs WebGPU or Chrome's Prompt API; without either the graph still answers and the seat says AI isn't available. The scene draws on the GPU where the browser can capture into WebGPU and on the DOM path elsewhere, silently, with one accessibility tree (`renderer`, `blur` on the Shell) — never a requirement.
 
 ### Then find out whether it worked
 

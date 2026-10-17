@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 1434,
+  "gzipped": 577,
+  "note": "Raised by the same change as every face (the first load waiting on less, Roadmap f-perf-first-load): the other face fetched when idle or reached for, the scene fetched before a switch draws it, and a picture on the home drawn as it nears the window. Measured at 1802220 / 572440 against 1800786 / 571863 before it."
+}

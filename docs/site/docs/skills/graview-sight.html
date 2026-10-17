@@ -317,6 +317,14 @@ a:hover { color: var(--pine-2); }
   min-width: 0;
 }
 
+/* A docs page's footer stands in the text's column, with the text's gutter,
+   and ends above the window's edge rather than on it. */
+.docfoot {
+  grid-column: 2;
+  margin: 0 var(--pad);
+  padding-bottom: 40px;
+}
+
 /* ── rail contents ─────────────────────────────────────────────────── */
 
 .brand { display: grid; gap: 6px; justify-items: start; }
@@ -671,6 +679,7 @@ footer {
 
 @media (max-width: 900px) {
   .wrap { grid-template-columns: minmax(0, 1fr); }
+  .docfoot { grid-column: 1; }
   .rail {
     position: sticky;
     top: 0;
@@ -1414,6 +1423,7 @@ main.page > section.tour-intro { padding-top: 64px; }
       <a href="../checks.html">What check says</a>
       <a href="../demos.html">Live demos</a>
       <a href="../stability.html">Stability</a>
+      <a href="../releases.html">Releases</a>
       <a href="../site.html">This site, as an app</a>
       <a href="../../tour.html">The tour</a>
       <a href="../../progression.html">The garden, grown</a>
@@ -1454,6 +1464,9 @@ main.page > section.tour-intro { padding-top: 64px; }
 <ol>
 <li><strong>Edit it as a document.</strong> <code>add-sight</code> and <code>remove-sight</code> take <code>hide</code> and <code>fields</code> like any other key; a field none of the sight's kinds has is refused (<code>sight-field</code>).</li>
 </ol>
+<ol>
+<li><strong>A notification is a read too.</strong> "Notify me" (<code>@graview/core/subscriptions</code>) judges each commit as the subscriber's seat: a change to a record they cannot see never matches, a field kept from them is neither said in the match nor read by its condition, and a change withheld from them says "Someone". Prove it as above: <code>matchSubscriptions(store, ops, [sub])</code> for a world with the hidden record answers <code>[]</code> (<code>packages/core/tests/unit/a-subscription-is-told-what-its-subscriber-may-see.test.ts</code>).</li>
+</ol>
 <h3>Then find out whether it worked</h3>
 <div class="code" data-scroller><pre><code class="language-sh">pnpm build &amp;&amp; npx graview check ./dist/domain/app.js</code></pre></div>
 <ul>
@@ -1486,18 +1499,18 @@ expect(told(world("555 0101"))).toBe(told(world(undefined)));</code></pre></div>
     </section>
 
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="../site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="https://github.com/en-dash-consulting/graview/blob/main/apps/site/app.json">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="../site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.

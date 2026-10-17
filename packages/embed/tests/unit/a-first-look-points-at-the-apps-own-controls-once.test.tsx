@@ -4,6 +4,7 @@ import { bindSchema, createSchema, defineApp, defineNode, Store, z } from "@grav
 import { EMPTY_VIEW } from "@graview/layout";
 import { registerDefaultViews, Shell, type FirstLook } from "@graview/primitives";
 import { createViews, GraviewProvider } from "@graview/react";
+import { stubFast } from "@graview/tools/inline-ai";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -88,7 +89,7 @@ async function shell(firstLook: FirstLook) {
   const root = createRoot(host);
   await act(async () =>
     root.render(
-      <GraviewProvider store={store()} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }} brand={{ name: "Field notes" } as never}>
+      <GraviewProvider store={store()} views={registerDefaultViews(schema, createViews(schema))} initialView={{ ...EMPTY_VIEW, overview: true }} brand={{ name: "Field notes" } as never} ai={{ fast: stubFast() }}>
         <Shell<typeof schema> scheme="light" onScheme={() => {}} firstLook={firstLook} />
       </GraviewProvider>,
     ),
@@ -103,7 +104,7 @@ async function walk(host: Element): Promise<{ anchor: string; title: string; cov
     const shown = await hintArrives(host);
     if (!shown) break;
     const anchor = shown.getAttribute("data-first-look-anchor")!;
-    const control = host.querySelector<HTMLElement>(`[data-testid="${anchor === "faces" ? "app-faces" : anchor === "problems" ? "standing" : anchor === "activity" ? "activity-button" : anchor === "ask" ? "seat-field" : "profile-button"}"], [data-testid="standing-link"]`);
+    const control = host.querySelector<HTMLElement>(`[data-testid="${anchor === "faces" ? "app-faces" : anchor === "problems" ? "standing" : anchor === "activity" ? "activity-button" : anchor === "ask" ? "app-find" : "profile-button"}"], [data-testid="standing-link"]`);
     const box = control?.getBoundingClientRect();
     const top = parseFloat(shown.style.top);
     // Under its control, or over it: never on it.
@@ -156,11 +157,12 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
   });
 
   it("anchors each hint to its control on the scene, on the pages, and under the whole-page Shell — beside it, never over it", async () => {
-    const scene = await embed({ firstLook: { seen: false } });
+    // The quick ask's hint stands by Find, where the host gave a model and a quick ask is drawn.
+    const scene = await embed({ firstLook: { seen: false }, ai: { fast: stubFast() } });
     const onScene = await walk(scene.host);
     expect(onScene.map((one) => one.anchor)).toEqual(["faces", "problems", "ask"]);
     expect(onScene[0]!.title).toBe("Scene or Pages");
-    expect(onScene[2]!.title).toMatch(/^Ask /);
+    expect(onScene[2]!.title).toBe("Ask");
     for (const one of onScene) expect(one.covers, one.anchor).toBe(false);
     await scene.done();
 
@@ -177,8 +179,8 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
   });
 
   it("skips the hint of a control that is not drawn, and shows Activity's once there is any", async () => {
-    // No Ask box, and nothing has happened: no Activity.
-    const quiet = await embed({ seat: "hidden", firstLook: { seen: false } });
+    // No quick ask (no model was given), and nothing has happened: no Activity.
+    const quiet = await embed({ firstLook: { seen: false } });
     const first = await hintArrives(quiet.host);
     expect(first?.querySelector('[data-testid="first-look-count"]')?.textContent).toBe("1 of 2");
     const said = await walk(quiet.host);
@@ -187,7 +189,7 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
 
     const busy = store();
     busy.apply({ name: "add-note", args: { label: "Second" } });
-    const lively = await embed({ store: busy, seat: "hidden", firstLook: { seen: false } } as never);
+    const lively = await embed({ store: busy, quickAsk: false, ai: { fast: stubFast() }, firstLook: { seen: false } } as never);
     expect((await walk(lively.host)).map((one) => one.anchor)).toEqual(["faces", "problems", "activity"]);
     await lively.done();
   });
@@ -216,7 +218,7 @@ describe("a first look points at the app's own controls, once", { timeout: 60_00
   });
 
   it("shows the host's own hint, naming a framework control, after the framework's", async () => {
-    const shown = await embed({ firstLook: { seen: false, steps: [{ anchor: "profile", title: "You", words: "Your name, your seat and your own settings are here." }] } });
+    const shown = await embed({ ai: { fast: stubFast() }, firstLook: { seen: false, steps: [{ anchor: "profile", title: "You", words: "Your name, your seat and your own settings are here." }] } });
     const said = await walk(shown.host);
     expect(said.at(-1)).toMatchObject({ anchor: "profile", title: "You", covers: false });
     expect(said.map((one) => one.anchor)).toEqual(["faces", "problems", "ask", "profile"]);

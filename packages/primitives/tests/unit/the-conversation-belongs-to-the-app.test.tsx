@@ -8,16 +8,16 @@ import { act, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { FindBox, registerDefaultViews, SeatField } from "../../src/index.js";
+import { ChatPanel, registerDefaultViews } from "../../src/index.js";
 
 /**
  * THE CONVERSATION BELONGS TO THE APP, NOT TO ONE FACE.
  *
  * A question asked on the scene was gone on Pages: each face drew a seat of
  * its own, and the turns went with the one that was put away. The provider
- * holds them now, so a seat drawn again — on the other face, or inside a
- * provider of its own — is the same conversation. And Find, whose words
- * are sometimes a question, hands them to the seat from its last row.
+ * holds them now, so a conversation drawn again (`ChatPanel shared`, where
+ * a product places one) — on the other face, or inside a provider of its
+ * own — is the same conversation.
  */
 const task = defineNode("task", { fields: z.object({ label: z.string() }), plural: "Tasks", label: (node: { label: string }) => node.label });
 const schema = createSchema([task]);
@@ -50,7 +50,7 @@ async function mount(tree: ReactNode) {
 }
 
 const settle = () => act(async () => new Promise<void>((done) => setTimeout(done, 80)));
-const said = (host: HTMLElement) => [...host.querySelectorAll('[data-testid="seat-panel"] ol li')].map((li) => li.textContent);
+const said = (host: HTMLElement) => [...host.querySelectorAll('[data-testid="talk"] ol li')].map((li) => li.textContent);
 
 let held: SeatTalk | undefined;
 function Hold() {
@@ -59,12 +59,12 @@ function Hold() {
 }
 
 describe("the conversation belongs to the app", () => {
-  it("is still there when the seat is drawn again, as a face switch draws it", async () => {
+  it("is still there when the conversation is drawn again, as a face switch draws it", async () => {
     const kept = store();
     const app = (seat: boolean) => (
       <GraviewProvider store={kept} views={views()} initialView={EMPTY_VIEW} initialSelection={["t1"]}>
         <Hold />
-        {seat ? <SeatField<typeof schema> /> : <p>the other face</p>}
+        {seat ? <div data-testid="talk"><ChatPanel<typeof schema> shared /></div> : <p>the other face</p>}
       </GraviewProvider>
     );
     const { host, root } = await mount(app(true));
@@ -73,7 +73,7 @@ describe("the conversation belongs to the app", () => {
     expect(said(host)[0]).toBe("tell me about this");
     // Put away with the face, and drawn again with the next one.
     await act(async () => root.render(app(false)));
-    expect(host.querySelector('[data-testid="seat"]')).toBeNull();
+    expect(host.querySelector('[data-testid="talk"]')).toBeNull();
     await act(async () => root.render(app(true)));
     for (let tries = 0; tries < 20 && said(host).length < 2; tries++) await settle();
     expect(said(host)[0]).toBe("tell me about this");
@@ -95,26 +95,5 @@ describe("the conversation belongs to the app", () => {
       </GraviewProvider>,
     );
     expect(inner).toBe(held);
-  });
-
-  it("is asked from Find's last row, with what was typed, where a seat is drawn", async () => {
-    const tree = (seat: boolean) => (
-      <GraviewProvider store={store()} views={views()} initialView={{ ...EMPTY_VIEW, q: "what is late" }}>
-        <Hold />
-        <FindBox />
-        {seat ? <SeatField<typeof schema> /> : null}
-      </GraviewProvider>
-    );
-    const without = await mount(tree(false));
-    expect(without.host.querySelector('[data-testid="find-ask"]')).toBeNull();
-    await cleanup!();
-    const { host } = await mount(tree(true));
-    const ask = host.querySelector<HTMLElement>('[data-testid="find-ask"]');
-    expect(ask?.textContent).toBe("Ask: ‘what is late’");
-    expect(ask?.getAttribute("role")).toBe("option");
-    await act(async () => ask!.click());
-    expect(host.querySelector('[data-testid="seat"]')!.getAttribute("data-graview-seat")).toBe("open");
-    for (let tries = 0; tries < 20 && said(host).length < 1; tries++) await settle();
-    expect(said(host)[0]).toBe("what is late");
   });
 });

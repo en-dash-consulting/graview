@@ -17,6 +17,7 @@
  * design's own prose, the reason the repository is shaped the way it is.
  */
 import { createHash } from "node:crypto";
+import { releasesBody } from "./releases.mjs";
 
 /** The address the site is served at, and the one every canonical, card and twin names. */
 export const SITE = "https://graview.dev";
@@ -416,6 +417,7 @@ const RAIL = [
   ["checks.html", "What check says"],
   ["demos.html", "Live demos"],
   ["stability.html", "Stability"],
+  ["releases.html", "Releases"],
   ["site.html", "This site, as an app"],
 ];
 
@@ -480,18 +482,18 @@ ${RAIL.map(([href, label]) => `      <a href="${docsRoot}${href}"${href === here
   <main class="col" id="main" tabindex="-1">
 ${body}
   </main>
-</div>
 
-<footer>
-  <p class="sm dim">
-    Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
-    <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
-    itself a Graview app: every page is a record of <a href="${DECLARATION}">its declaration</a>,
-    written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
-    <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
-    <a href="${docsRoot}site.html">Open it as an app</a>.
-  </p>
-</footer>
+  <footer class="docfoot">
+    <p class="sm dim">
+      Graview is built by <a href="https://endash.us">En&nbsp;Dash</a>, which also runs
+      <a href="https://graview.cloud">Graview Cloud</a>, the hosted product built on it. This site is
+      itself a Graview app: every page is a record of <a href="${DECLARATION}">its declaration</a>,
+      written out of the repository by <code>node scripts/site-docs.mjs</code> and rendered by
+      <code>renderPlace</code>, so nothing on it can disagree with the code it describes.
+      <a href="${docsRoot}site.html">Open it as an app</a>.
+    </p>
+  </footer>
+</div>
 <script>
 /*
  * A REGION THAT SCROLLS NEEDS A WAY INTO IT.
@@ -553,7 +555,7 @@ ${data}${scripts.map((src) => `<script src="${src}"></script>`).join("\n")}
 `;
 }
 
-const section = (id, heading, inner) =>
+export const section = (id, heading, inner) =>
   `    <section id="${id}" aria-labelledby="h-${id}">\n      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-${id}">${escape(heading)}</h2></div>\n${inner}\n    </section>\n`;
 
 const slug = (text) => text.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
@@ -761,6 +763,8 @@ const DOCS = {
       `    </section>\n` +
       section("seat", "The seat",
         `      <p>An intelligence provider in the declaration says what a model may do and how words and pictures reach it. The seat gets the same acts a person has, narrowed by the same policy, and its turns land in the same operation log with an author and an intent — watchable from altitude, and undoable out of order. What comes back from a model is a plan before it is a change: one row per thing, what it was sure about, what goes with what if you decline something, then one batch with one undo.</p>\n` +
+        `      <p>In the app, a person meets the model where the thing is. Right-click a record for what it picks from the acts, places and panels the app already has; press ⌘K to ask about what is selected, and the answer stands on a card beside it, a change it proposes waiting as a ghost until it is accepted. The host lends the model (<code>ai</code>), and with AI off none of it is drawn.</p>\n` +
+        `      <figure class="shot"><img class="light" src="../img/quick-ask-light.png" width="1280" height="760" loading="lazy" alt="The todo example's scene with the task Pay the deposit selected and, beside it, an answer card proposing to mark it done, with Accept and Dismiss."><img class="dark" src="../img/quick-ask-dark.png" width="1280" height="760" loading="lazy" alt="The same answer card beside the selected task, in the dark scheme."><figcaption>The todo example, asked with ⌘K.</figcaption></figure>\n` +
         `      <ul class="cards">\n${skillCard("graview-agent-seat")}${skillCard("graview-permissions")}${skillCard("graview-desk")}      </ul>`) +
       section("tools", "Typed tools, derived",
         `      <p>${escape(toolsPkg?.fields.description ?? "")} Every act is a tool with a schema and a sentence attached; the tool surface is generated from the declaration and narrowed by the seat's role, so a model is never offered an act it may not take.</p>\n` +
@@ -799,7 +803,7 @@ const DOCS = {
       section("apps", "The example apps",
         `      <p>Each was built to prove a claim the others could not, and each is opened in a real browser on every push. They live under <code>apps/</code> in the repository; <code>pnpm apps</code> opens the desk, which opens the rest.</p>\n` +
         `      <ul class="cards">\n` + examplesOf(site).map((app) => `        <li><a href="${REPOSITORY}/tree/main/apps/${app.fields.dir}"><strong>${escape(app.fields.dir)}</strong><span>${escape(app.fields.description ?? "")}</span></a></li>`).join("\n") + `\n      </ul>`) +
-      /* The city and the lens settle the way the landing page's do: the seat closed, the city stepped back once, through the product's own controls. */
+      /* The city and the lens settle the way the landing page's do: the city stepped back once, through the product's own controls. */
       SETTLE
     );
   },
@@ -819,6 +823,9 @@ const DOCS = {
       section("promise", "The promise", render(stability.replace(/^#\s+.*\n+/, "")))
     );
   },
+
+  /* What came in each version, newest first, from the release records: apps/site/releases.mjs. */
+  releases: (page, site) => releasesBody(site),
 
   /*
    * A RECIPE: the prompt on the front page with a different task, and what
@@ -900,6 +907,7 @@ const DOCS = {
         `        <li><a href="cli.html"><strong>The CLI</strong><span>create, check, types, docs, describe, lens, figure, serve, skills.</span></a></li>\n` +
         `        <li><a href="checks.html"><strong>What check says (${codesOf(site).length})</strong><span>Every finding, and how loudly.</span></a></li>\n` +
         `        <li><a href="stability.html"><strong>Stability</strong><span>What a version may change, and what a host can hold it to.</span></a></li>\n` +
+        `        <li><a href="releases.html"><strong>Releases</strong><span>What came in each version, and what to know before upgrading.</span></a></li>\n` +
         `        <li><a href="../progression.html"><strong>The garden, grown</strong><span>${CHAPTERS[0].toUpperCase() + CHAPTERS.slice(1)} live chapters, from one kind to a product.</span></a></li>\n` +
         `        <li><a href="site.html"><strong>This site, as an app</strong><span>graview.dev is a Graview app: its pages are records, and its city is one click away.</span></a></li>\n` +
         `      </ul>`)
@@ -943,8 +951,6 @@ const SETTLE = `    <script>
       if (!(host instanceof Element) || !host.hasAttribute("data-settle")) return;
       var presses = Number(host.getAttribute("data-settle")) || 0;
       setTimeout(function () {
-        var seat = host.querySelector('[data-graview-seat="open"] [data-testid="seat-close"]');
-        if (seat) seat.click();
         for (var i = 0; i < presses; i += 1) { var out = host.querySelector('[data-testid="zoom-out"]'); if (out) out.click(); }
       }, 250);
     });
@@ -989,7 +995,7 @@ function recipeRows(rcps) {
 
 /* ── for the crawlers and the models ──────────────────────────────────── */
 
-const START_HERE = ["getting-started.html", "concepts.html", "agents.html", "cli.html", "checks.html", "stability.html", "index.html"];
+const START_HERE = ["getting-started.html", "concepts.html", "agents.html", "cli.html", "checks.html", "stability.html", "releases.html", "index.html"];
 const docsPath = (page) => page.fields.path.slice("docs/".length);
 const twinOf = (path) => `${SITE}/docs/${path.replace(/\.html$/, ".md")}`;
 

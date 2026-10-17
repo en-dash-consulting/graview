@@ -601,4 +601,74 @@ export async function measureHostedPage(repo, entry = HOSTED_PAGE_ENTRY, { minif
   };
 }
 
+/*
+ * WHAT A PAGE ASKS FOR AT ONCE. A page split into chunks is fetched a level
+ * at a time: the browser reads the entry before it learns the chunks it
+ * imports, and a face's chunk before the ones the face imports — four round
+ * trips before the face can draw, each half a second on a phone's network.
+ * Named in the page's head as `modulepreload`, the entry's chunks and the
+ * opening face's are all asked for as the head is read; and the document a
+ * shell fetches first (`fetch`), beside them.
+ */
+/** Fetched with every face, beside it (`preload` in `@graview/embed`): what draws a notice. */
+const WITH_EVERY_FACE = ["primitives/src/notice-stacks.tsx"];
+
+export function preloadLinks(metafile, { entry, faces = [], fetches = [] }) {
+  const outputs = metafile.outputs;
+  const closure = (from) => {
+    const found = new Set([from]);
+    for (const file of found) for (const one of outputs[file].imports) if (one.kind === "import-statement" && outputs[one.path]) found.add(one.path);
+    return found;
+  };
+  const named = (file) => file.split("/").pop();
+  const entryFile = Object.keys(outputs).find((file) => named(file) === entry);
+  if (!entryFile) throw new Error(`no output is called ${entry}`);
+  const doorFiles = [...faces.flatMap((face) => FACE_DOORS[face]), ...(faces.length > 0 ? WITH_EVERY_FACE : [])]
+    .map((module) => Object.keys(outputs).find((file) => outputs[file].entryPoint && byModuleName(outputs[file].entryPoint) === module))
+    .filter(Boolean);
+  const files = new Set([...closure(entryFile), ...doorFiles.flatMap((file) => [...closure(file)])]);
+  files.delete(entryFile);
+  return [
+    ...fetches.map((path) => `<link rel="preload" href="${path}" as="fetch" crossorigin="anonymous">`),
+    ...[...files].map((file) => `<link rel="modulepreload" href="/${named(file)}">`),
+  ].join("\n");
+}
+
+/*
+ * A DOOR OPENS ALL AT ONCE. `import("./chunk.X.js")` fetches X, and only
+ * once X is read does the browser learn the chunks X imports, and ask for
+ * them, and then for theirs: a lens on a phone's home arrived three round
+ * trips after it was asked for. Each `import()` of the built page is
+ * rewritten to name, as it is asked for, every chunk the door will need
+ * (`modulepreload`, once each), so they are fetched side by side. What it
+ * does is the same; when it does it is one round trip.
+ */
+const DOOR_PRELOAD = `var __graviewPreload=(base,files)=>{if(typeof document>"u")return;const asked=globalThis.__graviewPreloaded??=new Set;for(const file of files){const href=new URL(file,base).href;if(asked.has(href))continue;asked.add(href);const link=document.createElement("link");link.rel="modulepreload";link.href=href;document.head.append(link)}};`;
+
+/** The built files with every `import()` naming the chunks its door needs. `files` are esbuild's `outputFiles` (`write: false`); returns `{ path, text }` for each. */
+export function doorsOpenAtOnce(files, metafile) {
+  const outputs = metafile.outputs;
+  const named = (file) => file.split("/").pop();
+  const byName = new Map(Object.keys(outputs).map((file) => [named(file), file]));
+  const closure = (from) => {
+    const found = new Set([from]);
+    for (const file of found) for (const one of outputs[file].imports) if (one.kind === "import-statement" && outputs[one.path]) found.add(one.path);
+    return found;
+  };
+  return files.map((file) => {
+    const text = new TextDecoder().decode(file.contents);
+    if (!file.path.endsWith(".js")) return { path: file.path, text };
+    let rewritten = false;
+    const out = text.replace(/import\("\.\/([\w.-]+\.js)"\)/g, (call, name) => {
+      const door = byName.get(name);
+      if (!door) return call;
+      const needs = [...closure(door)].filter((one) => one !== door).map((one) => `./${named(one)}`);
+      if (needs.length === 0) return call;
+      rewritten = true;
+      return `(__graviewPreload(import.meta.url,${JSON.stringify(needs)}),${call})`;
+    });
+    return { path: file.path, text: rewritten ? `${DOOR_PRELOAD}${out}` : out };
+  });
+}
+
 const byModuleName = (input) => input.replace(/^.*node_modules\//, "").replace(/^.*packages\//, "");

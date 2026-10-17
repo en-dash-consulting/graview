@@ -96,7 +96,13 @@ describe("a hosted page", () => {
     // 906 KB since the Beatles' discography's fixes (2026-10-15, fix/lenses-and-views): a list that shows its next page and groups by a linked record, a coverage that says it has nothing to cross and orders its rows, a career calendar spanning its records, a place known by its title and an image from an origin the host lists: the scene face measured 926_488 B, 6_044 more than main (920_444).
     // 889 KB since the tenth walk's carried dead ends (W-217 to W-225): Find going into a kind whole and landing the keys on its line, a raised kind's way in, the past on the arranging line, the trail's headroom and the scene's foot clear of the ask field: the scene face measured 909_930 B, 1_642 over 887.
     // 908 KB with the tenth walk's carried dead ends over the Beatles' fixes and the rest of the 0.1.30 wave.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(908 * 1024);
+    // 910 KB since nothing came to stand over a control the watch found covered (W-224) and Pages came to honor the Ask box setting: the scene face measured 931_431 B, 1_966 more than before them (929_465).
+    // 911 KB since the first load came to wait on less (Roadmap f-perf-first-load): the switch fetches the scene before it draws it, the other face is fetched when a desk's page is idle or a hand reaches for it, and a remote store opens on a handed state: the scene face measured 932_473 B, 1_042 more than before them (931_431).
+    // 919 KB since the scene draws on the GPU by default where it can (Roadmap f-gpu-default, f-plane-blur): the choice of path, the blur's preferences and budget, the one treatment both paths draw, and the door to the capture path — whose modules shared with the scene (the plane model, the connectors) now sit in a chunk the scene fetches: the scene face measured 940_163 B, 7_690 more than before it (932_473). Nothing up front changed.
+    // 922 KB since the inline AI came (Roadmap f-ai-candidate-catalog, f-activity-ai-entries): the scene draws the menu's AI section and the ghost through their doors, and Activity reads the AI's entries, whose rows are fetched with the first: the scene face measured 943_677 B, 3_514 more than before it (940_163).
+    // 926 KB since Notify me came (Roadmap f-notify-subscriptions): the menu's row on both faces, a record's and an act's press, and Activity's count, the sheet and the list behind their doors: the scene face measured 947_611 B, 3_934 more than before it (943_677).
+    // 933 KB since dates came to be typed as people say them (Roadmap f-date-inputs): a record's date changed in place with its end moved alongside, a calendar placing an instant on the reader's clock, the door to the editor (the editor, its month and the reader of what is typed are fetched when first asked for), and the wall-time helpers on @graview/core/words, whose barrel also places the reader in a chunk the scene fetches: the scene face measured 954_856 B, 7_245 more than before it (947_611). Up front, 42 bytes more (569_696 to 569_738): the instant check `describeArg` reads.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(933 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {
@@ -306,15 +312,15 @@ describe("a hosted page handed a compiled app", () => {
 
 /**
  * WHAT A FACE DRAWS IS FETCHED WITH THE FACE (FR-179). The studio's door,
- * the seat's panel, the lenses, a frame guest's host and the matcher are
+ * the quick ask's card, the lenses, a frame guest's host and the matcher are
  * each a door of their own, fetched when the face that draws them is first
  * drawn or asked — never before — and what only they use stays off the
  * barrels a page imports up front.
  */
 describe("a hosted page's faces", () => {
-  it("fetch the seat's panel, the declared lenses and a frame guest's host when they are first drawn or asked, and the matcher with the scene that searches, never up front", () => {
+  it("fetch the quick ask's card, the declared lenses and a frame guest's host when they are first drawn or asked, and the matcher with the scene that searches, never up front", () => {
     const doors = measured.whenAsked.doors.map((door) => door.module);
-    for (const module of ["primitives/src/seat-panel.tsx", "primitives/src/declared-lenses.tsx", "guest/src/host/frame.ts"]) {
+    for (const module of ["primitives/src/quick-ask.tsx", "primitives/src/declared-lenses.tsx", "guest/src/host/frame.ts"]) {
       expect(Object.keys(measured.upFront.modules), module).not.toContain(module);
       expect(Object.keys(handed.upFront.modules), module).not.toContain(module);
       expect(doors, module).toContain(module);
