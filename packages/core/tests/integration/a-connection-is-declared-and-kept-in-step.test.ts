@@ -153,11 +153,11 @@ function google() {
   };
 }
 
-function opened(declared: Record<string, unknown>) {
-  const compiled = compileDocument(meetings({ team: declared }));
+function opened(declared: Record<string, unknown>, more: Record<string, unknown> = {}) {
+  const compiled = compileDocument(meetings({ team: declared }, more));
   if (!compiled.ok) throw new Error(JSON.stringify(compiled.findings));
   const app = compiled.app as GraviewApp<AnySchema>;
-  const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], snapshot: { nodes: [], edges: [] } });
+  const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: { nodes: [], edges: [] } });
   const remote = google();
   const made = connection({ name: "team", declaration: app.connections!["team"]!, app, store, calendarId: "team@example.com", token: () => "t", fetch: remote.fetch });
   const nodes = () => store.graph.allNodes().filter((node) => node.kind === declared["kind"]) as unknown as Record<string, unknown>[];
@@ -247,6 +247,43 @@ describe("read only", () => {
     const report = await engine.run();
     expect(report.pushed).toEqual([]);
     expect(remote.live().map((event) => event["summary"])).toEqual(["Board"]);
+  });
+});
+
+describe("read only, under a declared policy (FR-181)", () => {
+  const policed = { roles: ["member"], policy: { grants: [{ roles: ["member"], mutations: "*" }] } };
+
+  it("lands the calendar's new event and its edit, authored by the calendar, while a person's act on one is still refused", async () => {
+    const { remote, engine, nodes, store, as } = opened(calendar({ direction: "read" }), policed);
+    const board = remote.add({ summary: "Board", start: { dateTime: at(9) }, end: { dateTime: at(10) } });
+    const first = await engine.run();
+    expect([first.offline, first.refused]).toEqual([false, []]);
+    expect(nodes().map((node) => node["name"])).toEqual(["Board"]);
+    expect(store.log.all().at(-1)!.author).toEqual({ kind: "system", id: "google-calendar" });
+
+    remote.change(board.id, { summary: "Board meeting" });
+    const second = await engine.run();
+    expect([second.offline, second.refused, second.applied]).toEqual([false, [], [nodes()[0]!["id"]]]);
+    expect(nodes().map((node) => node["name"])).toEqual(["Board meeting"]);
+
+    const member = { author: { kind: "human" as const, id: "nick", roles: ["member"] }, intent: "by hand" };
+    expect(() => store.apply({ name: "edit-meeting", args: { id: nodes()[0]!["id"], name: "Bored" } }, member)).toThrow(/only reads/);
+    expect(store.permits({ name: "add-meeting", args: { id: "x", name: "Mine" } }, member.author).ok).toBe(false);
+    expect(store.permits({ name: "add-meeting", args: { id: "x", name: "Mine" } }, { kind: "system", id: "google-calendar" }).ok).toBe(true);
+    void as;
+  });
+
+  it("says an inbound change the store refused as refused, not as a calendar it could not reach", async () => {
+    const { remote, engine, nodes, store } = opened(calendar({ direction: "read" }), policed);
+    remote.add({ summary: "Board", start: { dateTime: at(9) }, end: { dateTime: at(10) } });
+    // Something other than the connection's own guard says no: here, a host's own admit on every change.
+    const applyAll = store.applyAll.bind(store);
+    store.applyAll = (calls, options = {}) =>
+      applyAll(calls, { ...options, admit: () => { throw new Error("Nothing lands while the host is read only."); } });
+    const report = await engine.run();
+    expect(report.offline).toBe(false);
+    expect(report.refused).toEqual([{ localId: expect.stringMatching(/^meeting-team-/), resource: "events", id: expect.any(String), error: "Nothing lands while the host is read only." }]);
+    expect(nodes()).toEqual([]);
   });
 });
 

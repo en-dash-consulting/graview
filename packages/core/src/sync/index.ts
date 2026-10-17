@@ -14,7 +14,7 @@ export type { Fetcher, GoogleCalendarOptions, GoogleTokenRequest } from "./googl
 export { syncConflictInvariant, SYNC_CONFLICTS } from "./conflict.js";
 export type { SyncConflictOptions } from "./conflict.js";
 export { SyncEngine } from "./engine.js";
-export type { SettledConflict, SyncOptions, SyncReport } from "./engine.js";
+export type { SettledConflict, SyncOptions, SyncRefusal, SyncReport } from "./engine.js";
 export { allowTools, doorClient, mcpClient, mcpDoor, mcpRemote, ownHost, sameOrigin } from "./mcp.js";
 export type { DoorHeaders, DoorRequest, DoorResponse, McpClientOptions, McpDoorOptions, McpRemoteOptions, ToolCall } from "./mcp.js";
 export { EMPTY_SYNC_STATE, systemAuthor } from "./types.js";

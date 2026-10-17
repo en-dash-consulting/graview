@@ -105,7 +105,8 @@ export function sayReport(report: SyncReport): string | undefined {
   if (report.applied.length) said.push(`took ${report.applied.length} from the calendar`);
   if (report.pushed.length) said.push(`sent ${report.pushed.length} to it`);
   if (report.gone.length) said.push(`${report.gone.length} gone there`);
-  if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.localId} (${one.error})`).join(", ")}`);
+  // A change coming in that this store refused names the calendar's event, which may have no record here.
+  if (report.refused.length) said.push(`refused: ${report.refused.map((one) => `${one.resource ? `the calendar's ${one.id}` : one.localId} (${one.error})`).join(", ")}`);
   if (report.resolved.length) said.push(`${report.resolved.length} conflict${report.resolved.length === 1 ? "" : "s"} settled`);
   if (report.conflicts.length) said.push(`${report.conflicts.length} conflict${report.conflicts.length === 1 ? "" : "s"} held`);
   if (report.offline) said.push("could not reach the calendar; will try again");

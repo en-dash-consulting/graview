@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal } from "@graview/core";
+import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SubscriptionStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
@@ -289,6 +289,14 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * value or a rule that walks the link reads it as the viewer.
    */
   readonly linkedRecords?: LinkedRecords;
+  /**
+   * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions), on either
+   * face: the sheet "Notify me…" opens adds to it, Activity's list of what
+   * the reader is told of reads it. A hosted page passes the store its host
+   * keeps (`remoteSubscriptions` from `@graview/ship/browser/subscriptions`);
+   * unsaid, a reader's subscriptions live in the page's memory.
+   */
+  readonly subscriptions?: SubscriptionStore;
   /**
    * SECTIONS OF THE CONTEXT MENU beside its acts, on either face: each is
    * told what the menu was opened on (`MenuTarget`) and answers rows or what
@@ -580,6 +588,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     resolveApp: props.resolveApp,
     history: props.history,
     linkedRecords: props.linkedRecords,
+    subscriptions: props.subscriptions,
     menuSections: props.menuSections,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */

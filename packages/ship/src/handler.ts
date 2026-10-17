@@ -42,7 +42,8 @@ import {
 } from "./live-protocol.js";
 import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
-import { answerSubscriptions, SUBSCRIPTIONS_PATH } from "./subscriptions.js";
+import { answerSubscriptions } from "./subscriptions.js";
+import { SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**

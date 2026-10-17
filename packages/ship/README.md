@@ -110,7 +110,8 @@ a change to a record the subscriber cannot see, nor, unless they asked, for thei
 (an email, a push) is the host's. `graview serve` keeps them in `subscriptions.json` beside the
 store (`fileSubscriptions`), which `graview mcp` on the same store writes too, and says each
 match on its output. A page reaches a served store's with `remoteSubscriptions({ url, principal })`
-from `@graview/ship/browser`, handed to the provider as `subscriptions`.
+from `@graview/ship/browser`, handed to the provider, or to the embed's `mount`, as
+`subscriptions`; it is a module of its own, so a page that imports it carries no rule parser.
 
 ```ts
 createStoreHandler({
