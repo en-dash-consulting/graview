@@ -631,6 +631,16 @@ try {
     await covering.evaluate(() => document.querySelector('[data-testid="profile-button"]')?.focus());
     const landed = [];
     for (let i = 0; i < 80; i++) {
+      /*
+       * WHERE EACH DISTRICT STOOD AT THE PRESS is what Tab chose by. A
+       * district off the screen is not under the panel, and the camera
+       * glides the one Tab lands on into the part that is seen — from
+       * below the window, past the panel's side, on the way. Read 120 ms
+       * after the press, a starved runner's glide was still in flight and
+       * the district crossing under the panel was said to be one Tab
+       * landed on there (the nightly's GPU leg, kind:rule at 1440).
+       */
+      const atThePress = await standing();
       await covering.keyboard.press("Tab");
       await covering.waitForTimeout(120);
       const at = await covering.evaluate(() => {
@@ -676,7 +686,8 @@ try {
         after = await afterwards(at.id);
         if (after === "clear" || Date.now() > until) break;
       }
-      landed.push({ id: at.id, was: before[at.id] ?? null, coveredWhenLanded: at.inside, afterwards: after });
+      // Covered when Tab landed: wholly under the panel as the key went down. Where the glide had it 120 ms on is kept, said, not judged.
+      landed.push({ id: at.id, was: before[at.id] ?? null, atThePress: atThePress[at.id] ?? null, coveredWhenLanded: atThePress[at.id] === "covered", underInFlight: at.inside, afterwards: after });
     }
     report.coveredTab[width] = { before, landed };
     await covering.close();
