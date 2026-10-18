@@ -140,12 +140,50 @@ const QUIET: CSSProperties = { color: "var(--graview-ink-muted)", fontSize: "0.8
  * A FILE REMOVED SINCE THE MOMENT DRAWN (Roadmap f-playback): the host says
  * it no longer keeps the bytes (`HostFiles.kept`), or — while somebody
  * looks back — the picture did not load. Said, never a broken picture.
+ *
+ * A host that answers later (a promise, Roadmap f-files-kept-async) is
+ * asked once per href for as long as the page holds that `files`: until
+ * it settles the picture is drawn as kept, and a picture drawn again (a
+ * scrub, another card) reads the answer it already gave.
  */
 function useRemovedLater(file: FileValue): readonly [boolean, () => void] {
   const host = useHostFiles();
   const lookingBack = usePlayback()?.past != null;
   const [failed, setFailed] = useState(false);
-  return [host?.kept?.(file.href) === false || (lookingBack && failed), () => setFailed(true)] as const;
+  const said = host?.kept ? keptAnswer(host, file.href) : true;
+  const [, settled] = useState(0);
+  useEffect(() => {
+    if (typeof said !== "object") return;
+    let live = true;
+    void said.then(() => live && settled((n) => n + 1));
+    return () => void (live = false);
+  }, [said]);
+  return [said === false || (lookingBack && failed), () => setFailed(true)] as const;
+}
+
+/** What each host answered later, per href: the promise while it is out, then what it settled to (a rejection is kept). */
+const ANSWERED = new WeakMap<HostFiles, Map<string, boolean | Promise<boolean>>>();
+
+/** The host's answer for `href`: a synchronous one asked each time, as before; a promise asked once and remembered. */
+function keptAnswer(host: HostFiles, href: string): boolean | Promise<boolean> {
+  const held = ANSWERED.get(host)?.get(href);
+  if (held !== undefined) return held;
+  let said: boolean | Promise<boolean>;
+  try {
+    said = host.kept!(href);
+  } catch {
+    return true;
+  }
+  if (typeof said === "boolean") return said;
+  const answers = ANSWERED.get(host) ?? new Map<string, boolean | Promise<boolean>>();
+  ANSWERED.set(host, answers);
+  const asking = Promise.resolve(said).then(
+    (kept) => kept !== false,
+    () => true,
+  );
+  answers.set(href, asking);
+  void asking.then((kept) => answers.set(href, kept));
+  return asking;
 }
 
 function RemovedLater({ file, style }: { readonly file: FileValue; readonly style?: CSSProperties }) {

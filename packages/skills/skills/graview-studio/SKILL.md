@@ -37,7 +37,9 @@ any other.
    The acts: `add-kind`, `rename-kind`, `remove-kind`, `add-field`,
    `rename-field`, `remove-field`, `retype-field`, `set-required`,
    `set-options`, `describe-field` (a field changed in place: `{ id:
-   "field:vendor.notes", type: "string" }`), `add-edge`, `remove-edge`,
+   "field:vendor.notes", type: "string" }`), `add-edge`, and
+   to another app's kind `{ name: "add-edge-to-another-app", args: { kind,
+   label, to: "@nick/house/house" } }`, `remove-edge`,
    `add-act`, `remove-act`, `add-rule`, `remove-rule`, `name-repair`,
    `forget-repair`, `add-role`, `grant`, `revoke-grant`, and the derived
    `edit-<kind>` for what no act names (an inverse, a title, a lifecycle).

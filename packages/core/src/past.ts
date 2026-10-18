@@ -33,6 +33,49 @@ export function declarationAt(marks: readonly DeclarationMark[] | undefined, seq
   return found;
 }
 
+/** What a host says of the declaration at a moment: the one it was made under (absent, the store's own), or that it is still being asked for. */
+export type DeclarationAnswer = { readonly declaration: PastDeclaration | undefined } | { readonly waiting: Promise<void> };
+
+/** A mark's declaration as the host answered it, kept per `declarationAt` function and per mark seq. */
+type Asked = { settled: boolean; declaration: PastDeclaration | undefined; waiting: Promise<void> };
+const ASKED = new WeakMap<NonNullable<HistoryHost["declarationAt"]>, Map<number, Asked>>();
+
+/**
+ * THE DECLARATION A MOMENT WAS MADE UNDER, ASKING THE HOST WHEN IT MUST
+ * (Roadmap f-declaration-at-lazy): under the last mark at or before `seq`.
+ * A mark handed with its declaration is that one, at once. One handed
+ * without it is asked of the host (`declarationAt(mark.seq)`) the first
+ * time, and `waiting` until the answer comes; an answer of `undefined`,
+ * or a failure, is as if it had none — the last declaration handed before
+ * it, else the store's own.
+ */
+export function askDeclaration(host: HistoryHost | undefined, seq: number): DeclarationAnswer {
+  const handed = declarationAt(host?.declarations, seq);
+  const ask = host?.declarationAt;
+  const mark = [...(host?.declarations ?? [])].filter((one) => one.seq <= seq).sort((a, b) => a.seq - b.seq).at(-1);
+  if (!ask || !mark || mark.declaration) return { declaration: handed };
+  let asks = ASKED.get(ask);
+  if (!asks) ASKED.set(ask, (asks = new Map()));
+  let asked = asks.get(mark.seq);
+  if (!asked) {
+    const one: Asked = { settled: true, declaration: undefined, waiting: Promise.resolve() };
+    try {
+      const answer = ask(mark.seq);
+      if (answer instanceof Promise) {
+        one.settled = false;
+        one.waiting = answer.then(
+          (declaration) => void Object.assign(one, { settled: true, declaration }),
+          () => void (one.settled = true),
+        );
+      } else one.declaration = answer;
+    } catch {
+      // A host that throws asking is a host that did not say.
+    }
+    asks.set(mark.seq, (asked = one));
+  }
+  return asked.settled ? { declaration: asked.declaration ?? handed } : { waiting: asked.waiting };
+}
+
 /*
  * WHAT THE PAST IS FOLDED WITH: the store's own declaration and options,
  * which it keeps to itself. Read here, apart from the store, so a page that
@@ -187,10 +230,16 @@ function rewound<S extends AnySchema>(store: Store<S>): GraphSnapshot {
   return base;
 }
 
-/** The app as it stood at `when`, under the declaration the host says it was made under: `pastOf` with the host's marks read. */
+/**
+ * The app as it stood at `when`, under the declaration the host says it was
+ * made under: `pastOf` with the host's marks read (`askDeclaration`). While
+ * the host is still asked for it, the last declaration handed, else the
+ * store's own.
+ */
 export function pastAt<S extends AnySchema>(store: Store<S>, when: number | string | Date, host: HistoryHost = {}): Store<S> {
   const seq = typeof when === "number" ? when : seqAt(store, when);
-  return pastOf(store, seq, { declaration: declarationAt(host.declarations, seq) });
+  const answer = askDeclaration(host, seq);
+  return pastOf(store, seq, { declaration: "declaration" in answer ? answer.declaration : declarationAt(host.declarations, seq) });
 }
 
 /** One op folded onto a graph as `OperationLog.fold` lands each (`foldOp`): an undo puts back what was there, and a write an older declaration accepted and this one does not is held as written. */

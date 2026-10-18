@@ -8,6 +8,7 @@ import { filesOf, isFileValue, isImage, type FileValue } from "../schema/files.j
 import { isAppAddress } from "../schema/app-link.js";
 import { PHONE } from "../schema/typed-fields.js";
 import { parseDuration } from "../schema/field-words.js";
+import { linkedEdges } from "../schema/linked.js";
 
 /*
  * A CHANGE TO AN APP THAT KEEPS ITS DATA (docs/operations.md §4).
@@ -24,6 +25,10 @@ import { parseDuration } from "../schema/field-words.js";
  *   cleared   what cannot survive — a dropped field, a value that does not
  *             coerce, an enum option no longer offered — is cleared, counted.
  *   removed   records of a removed kind, links of a removed relation.
+ *
+ * A relation to another app's kind (FR-171) is kept on the record that links
+ * it rather than as a link: its value stays, moves with its rename, and goes
+ * with the relation.
  *
  * Pure: no store, no clock.
  */
@@ -245,6 +250,26 @@ export function planMigration(before: GraviewDocument, after: GraviewDocument, g
         counts.cleared++;
         note(`${newKind}'s ${field} no longer repeats: how it repeated is removed`);
       }
+    }
+    const farBefore = linkedEdges(before.kinds[oldKind]!.edges);
+    const farNow = linkedEdges(after.kinds[newKind]!.edges);
+    const farKept = new Set<string>();
+    for (const name of farNow.keys()) {
+      const from = (after.kinds[newKind]!.edges![name] as { renamedFrom?: string }).renamedFrom;
+      const src = farBefore.has(name) ? name : from && farBefore.has(from) ? from : undefined;
+      if (!src) continue;
+      farKept.add(src);
+      if (node[src] === undefined || node[src] === null) continue;
+      next[name] = node[src];
+      if (src !== name) {
+        counts.moved++;
+        note(`"${src}" renamed to "${name}", links kept`);
+      }
+    }
+    for (const name of farBefore.keys()) {
+      if (farKept.has(name) || node[name] === undefined || node[name] === null) continue;
+      counts.removedEdges++;
+      note(`"${name}" link(s) removed with their relation`);
     }
     for (const fill of fills) {
       const spec = now[fill.field];

@@ -225,13 +225,20 @@ export function kindLines(
     }
     return zodSource(field.type, field.required, field.options, uses, field.markdown);
   };
-  const edges = read.in(kind.id, "from-kind");
+  // A relation to another app's kind (FR-171) is kept on the record that links: a field, written as a declaration writes one.
+  const far = read.in(kind.id, "from-kind").filter((edge) => (list(edge, "toAnotherApp") ?? []).length > 0);
+  const edges = read.in(kind.id, "from-kind").filter((edge) => !far.includes(edge));
   const lifecycleField = str(kind, "lifecycleField");
   const retired = list(kind, "retired");
   const lines = [`export const ${camel(label(kind))} = defineNode(${q(label(kind))}, {`];
   if (str(kind, "description")) lines.push(`  description: ${q(str(kind, "description")!)},`);
   lines.push(`  fields: z.object({`);
   for (const field of fields) lines.push(`    ${/^[a-z_$][\w$]*$/i.test(field.name) ? field.name : q(field.name)}: ${fieldSource(field)},`);
+  for (const edge of far) {
+    uses.linkedRecordField = true;
+    const options = [...(str(edge, "cardinality") === "one" ? [] : [`cardinality: "many"`]), ...(str(edge, "description") ? [`description: ${q(str(edge, "description")!)}`] : [])];
+    lines.push(`    ${/^[a-z_$][\w$]*$/i.test(label(edge)) ? label(edge) : q(label(edge))}: linkedRecordField([${list(edge, "toAnotherApp")!.map(q).join(", ")}]${options.length ? `, { ${options.join(", ")} }` : ""}).optional(),`);
+  }
   // A date that repeats keeps how beside it: the framework's own field, `<date>Repeat`.
   for (const field of fields) {
     if (!field.repeats || (field.type !== "date" && field.type !== "datetime")) continue;

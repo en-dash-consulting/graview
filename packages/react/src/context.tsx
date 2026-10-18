@@ -504,8 +504,9 @@ export interface GraviewProviderProps<S extends AnySchema> {
   readonly resolveApp?: ResolveApp | undefined;
   /**
    * WHAT THE HOST KEEPS OUTSIDE THE LOG, for playback (Roadmap f-playback):
-   * the declaration changes it knows, each with the declaration it began,
-   * and `viewAt(name, seq)`, a script view's code as it stood then. Unsaid,
+   * the declaration changes it knows, each with the declaration it began
+   * or `declarationAt(seq)` to ask for it when playback reaches it, and
+   * `viewAt(name, seq)`, a script view's code as it stood then. Unsaid,
    * the past is drawn under this declaration and with today's views.
    */
   readonly history?: HistoryHost | undefined;
