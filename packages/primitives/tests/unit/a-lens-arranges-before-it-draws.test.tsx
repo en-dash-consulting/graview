@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createBoardLens, createCalendarLens, createCoverageLens, createTimelineLens } from "../../src/index.js";
+import { createColumnsLens } from "../../src/lens/columns.js";
 
 /**
  * A lens arranges before it draws. The arrangement travels in the stop
@@ -145,5 +146,47 @@ describe("the coverage grid", () => {
     const vip = grid({ filter: "vip:true" });
     expect(guests(vip).sort()).toEqual(["g-ada", "g-cleo"]);
     expect(vip).toContain("The south table");
+  });
+});
+
+describe("the status board", () => {
+  /*
+   * The eleventh walk's animals stop at a status board, "The floor", and it
+   * took no arrangement: narrowing the animals by weight had no Filter on
+   * the scene at all. Its cards are filtered and sorted; the columns stay
+   * the field's choices, and there is no grouping — the columns are the groups.
+   */
+  const animal = defineNode("animal", { fields: z.object({ label: z.string(), weightKg: z.number(), status: z.enum(["in-care", "on-hold"]) }) });
+  const shelter = createSchema([animal]);
+  const animals = [
+    { id: "a-biscuit", kind: "animal", label: "Biscuit", weightKg: 22, status: "in-care" },
+    { id: "a-mochi", kind: "animal", label: "Mochi", weightKg: 4, status: "in-care" },
+    { id: "a-otis", kind: "animal", label: "Otis", weightKg: 31, status: "on-hold" },
+  ];
+  const lens = createColumnsLens<typeof shelter>({ bindings: { animal: { column: "status" } } });
+  const floor = (within: Record<string, string>, fidelity: "full" | "summary" = "full") =>
+    renderToStaticMarkup(
+      <GraviewProvider
+        store={new Store({ schema: shelter, mutations: [], invariants: [], snapshot: { nodes: animals, edges: [] } as never })}
+        views={createViews(shelter)}
+        initialView={{ ...EMPTY_VIEW, focusId: aggregateId("animal"), within }}
+      >
+        <lens.View nodes={animals as never} fidelity={fidelity} cardinality="many" mode="scene" selected={false} />
+      </GraviewProvider>,
+    );
+
+  it("draws the row over its cards, filtering and sorting and never grouping", () => {
+    const html = floor({});
+    expect(html).toContain('data-testid="arrange-bar"');
+    expect(html).toContain('data-testid="arrange-sort"');
+    expect(html).not.toContain('data-testid="arrange-group"');
+    expect(floor({}, "summary")).not.toContain('data-testid="arrange-bar"');
+  });
+
+  it("keeps the cards the filter keeps, in every column", () => {
+    const heavy = floor({ filter: "weightKg:at-least:20" });
+    expect(heavy).toContain("Biscuit");
+    expect(heavy).toContain("Otis");
+    expect(heavy).not.toContain("Mochi");
   });
 });
