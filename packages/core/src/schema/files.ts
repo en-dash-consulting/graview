@@ -54,9 +54,13 @@ export interface HostFiles {
    * past holds every file a record ever held, and the bytes are the host's:
    * one removed since is drawn as "removed later" rather than a broken
    * picture. Unsaid, a file is drawn as kept, and one that does not load
-   * while somebody looks back is said to be removed later.
+   * while somebody looks back is said to be removed later. A host that
+   * cannot say at once (its bytes are elsewhere) answers a promise
+   * (Roadmap f-files-kept-async): the picture is drawn as kept until it
+   * settles, the page asks once per href for as long as it holds this
+   * `files`, and a promise that rejects is taken as kept.
    */
-  kept?(href: string): boolean;
+  kept?(href: string): boolean | Promise<boolean>;
 }
 
 /** Whether `href` is a path on the host: no scheme, no other host, no backslash, nothing that climbs. */
