@@ -730,7 +730,7 @@ export const addEdge = act("add-edge", {
 export const addEdgeToAnotherApp = act("add-edge-to-another-app", {
   title: "Link another app's records",
   description: 'Declare a relation from one kind to a kind of another app, named like "@nick/house/house". Linking picks a record there; the other app is never changed.',
-  subject: { kinds: ["kind"], arg: "kind" },
+  // No subject: offered with the studio's own acts, not on every kind's strip, where it outranked Add a field (two answers open to its three) and pushed it past the fold.
   creates: ["edge"],
   connects: ["from-kind"],
   input: z.object({
@@ -1089,7 +1089,6 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   removeSight,
   removeLens,
   setLensHidden,
-  // Last: a kind offers it after what most changes to a kind are, past the strip's fold.
   addEdgeToAnotherApp,
 ];
 
