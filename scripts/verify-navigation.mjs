@@ -1181,14 +1181,21 @@ try {
      */
     const changed = seen.map((one, at) => (at > 0 && (one.cell !== seen[at - 1].cell || one.x !== seen[at - 1].x) ? one.t : null)).filter((t) => t !== null);
     const movingMs = changed.length > 0 ? Math.round(changed[changed.length - 1] - (seen[seen.findIndex((one) => one.t === changed[0]) - 1]?.t ?? changed[0])) : 0;
-    return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x, frames: seen.length, movingMs };
+    /*
+     * AND THE LARGEST SHARE OF THE MOVE ANY ONE STEP CARRIED, whatever the
+     * frame rate: a cut puts all of it in one step; an easing caught in three
+     * frames on a starved runner puts no more than about half in one.
+     */
+    const share = (key, whole) => (whole === 0 ? 0 : Math.max(0, ...seen.map((one, at) => (at > 0 ? Math.abs(one[key] - seen[at - 1][key]) / whole : 0))));
+    return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x, frames: seen.length, movingMs, share: share("cell", travel), xShare: share("x", shift) };
   });
   /*
    * Eased: five steps or more, or — where a starved runner drew only a few
    * frames on the way — a step between the ends and a move that took a
    * third of a second, which a cut never does.
    */
-  const eased = (steps, ms) => steps >= 5 || (steps >= 3 && ms >= 300);
+  // Or a step between the ends and no step carrying most of the move: 2026-10-18's GPU leg drew nine frames and eased 366 px in three steps over 286 ms.
+  const eased = (steps, ms, share) => steps >= 5 || (steps >= 3 && (ms >= 300 || share < 0.6));
   report.checks = {
     ...(report.checks ?? {}),
     theCityPansBesideAnOpenPicture: onThePicture,
@@ -1200,8 +1207,8 @@ try {
         travel.jumps === 0 &&
         travel.xJumps === 0 &&
         (travel.last !== travel.first || travel.xLast !== travel.xFirst) &&
-        (travel.last === travel.first || eased(travel.steps, travel.movingMs)) &&
-        (travel.xLast === travel.xFirst || eased(travel.xSteps, travel.movingMs)),
+        (travel.last === travel.first || eased(travel.steps, travel.movingMs, travel.share)) &&
+        (travel.xLast === travel.xFirst || eased(travel.xSteps, travel.movingMs, travel.xShare)),
     },
   };
   report.camera = { start, zoomedIn, wheelAt: open, wheeled, buttonOut, buttonIn, dragged, onThePicture };
