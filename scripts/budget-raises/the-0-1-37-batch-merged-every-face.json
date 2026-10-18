@@ -1,0 +1,7 @@
+{
+  "budget": "every face",
+  "minified": 300,
+  "gzipped": 0,
+  "changeset": "the-0-1-37-batch-merged.md",
+  "note": "Raised when the 0.1.37 batch was merged: five branches measured alone against their bases fit their own raises; together every face measured 2_236_269 against 2_236_095 minified (gzipped within)."
+}
