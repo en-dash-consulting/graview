@@ -1,5 +1,5 @@
 import type { AnySchema } from "@graview/core";
-import { useGoTo, useGraview, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { useGoTo, useGraview, useHostFiles, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useEffect, useRef } from "react";
 import { frameChunk, untilItArrives, workerChunk } from "./arrive.js";
 import type { GuestFrame } from "./frame.js";
@@ -33,6 +33,8 @@ export interface GuestViewOptions {
   readonly reads?: GuestReads;
   /** The pictures on the records a frame guest is handed, as `data:` images the host made (FR-175, `MountGuestViewOptions.pictures`). */
   readonly pictures?: GuestPictures;
+  /** Where a record's file is fetched for those pictures, under the app's base (`MountGuestViewOptions.file`). The page's host's files say where by default (`HostFiles.src`). */
+  readonly file?: (href: string) => string | undefined;
   /** Where the frame first stands before the guest asks for a height. 160px by default. */
   readonly height?: number;
   readonly limits?: GuestLimits;
@@ -68,6 +70,9 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
   if ((options.url === undefined) === (options.worker === undefined)) throw new Error(`guestView "${options.name}" takes a url or a worker, one of the two`);
   function GuestView(props: ViewProps<AnySchema>) {
     const { store, principal, setSelection, views, brand } = useGraview<AnySchema>();
+    const filesNow = useHostFiles();
+    const hostFiles = useRef(filesNow);
+    hostFiles.current = filesNow;
     const branded = useRef(brand);
     branded.current = brand;
     const goTo = useGoTo();
@@ -108,6 +113,8 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
        * when it arrives.
        */
       element.style.minHeight = `${options.height ?? 160}px`;
+      /* Where a record's file is fetched: the view's word, else where the page's host serves its files (0.1.36). */
+      const file = options.file ?? (hostFiles.current?.src ? (href: string) => hostFiles.current?.src?.(href) ?? href : undefined);
       let mounted: GuestFrame | undefined;
       const stop = untilItArrives(frameChunk, ({ mountGuestView }) => {
         element.style.minHeight = "";
@@ -120,6 +127,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
           input: () => inputOf(latest.current),
           ...(options.reads ? { reads: options.reads } : {}),
           ...(options.pictures ? { pictures: options.pictures } : {}),
+          ...(file ? { file } : {}),
           places: () => views.places(),
           brand: () => branded.current,
           /* A record, a place or a kind's list — narrowed and to a section — where the face goes; what goes nowhere is said in the console. */

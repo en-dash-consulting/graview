@@ -1,4 +1,4 @@
-import { fieldWords, filesOf, isFileValue, isImage, LOCAL_LAYERS, type FileValue, type HostFiles } from "@graview/core";
+import { fieldWords, fileSrc, filesOf, isFileValue, isImage, LOCAL_LAYERS, type FileValue, type HostFiles } from "@graview/core";
 import { fileFieldsOf, fileWords } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider";
@@ -201,12 +201,13 @@ function RemovedLater({ file, style }: { readonly file: FileValue; readonly styl
 
 /** One picture, small: on a card, a row, an `image` block's `thumb`. */
 function FileThumb({ file, size = 56, style }: { readonly file: FileValue; readonly size?: number; readonly style?: CSSProperties }) {
+  const host = useHostFiles();
   const [gone, failed] = useRemovedLater(file);
   if (gone) return <RemovedLater file={file} style={{ width: size, height: size, flex: "none", ...style }} />;
   return (
     <img
       onError={failed}
-      src={file.href}
+      src={fileSrc(host, file.href)}
       alt={fileWords(file)}
       width={size}
       height={size}
@@ -220,6 +221,7 @@ function FileThumb({ file, size = 56, style }: { readonly file: FileValue; reado
 
 /** One picture of a gallery, opening full size; one removed since the moment drawn is said so, and opens nothing. */
 function GalleryPicture({ file, onOpen }: { readonly file: FileValue; readonly onOpen: (button: HTMLButtonElement) => void }) {
+  const host = useHostFiles();
   const [gone, failed] = useRemovedLater(file);
   if (gone) return <RemovedLater file={file} style={{ width: "100%", aspectRatio: "1" }} />;
   return (
@@ -229,7 +231,7 @@ function GalleryPicture({ file, onOpen }: { readonly file: FileValue; readonly o
       onClick={(event) => onOpen(event.currentTarget)}
       style={{ padding: 0, border: 0, background: "none", cursor: "zoom-in", display: "block", width: "100%", borderRadius: ROUND }}
     >
-      <img src={file.href} alt={fileWords(file)} loading="lazy" decoding="async" onError={failed} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: ROUND, display: "block", background: "var(--graview-edge)" }} />
+      <img src={fileSrc(host, file.href)} alt={fileWords(file)} loading="lazy" decoding="async" onError={failed} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: ROUND, display: "block", background: "var(--graview-edge)" }} />
     </button>
   );
 }
@@ -240,6 +242,9 @@ function GalleryPicture({ file, onOpen }: { readonly file: FileValue; readonly o
  * documents by name, type and size — a PDF inline, the rest a download.
  */
 function FilesShown({ files, label }: { readonly files: readonly FileValue[]; readonly label: string }) {
+  /* Each file drawn, linked and downloaded where the host serves it (`HostFiles.src`, 0.1.36); said and keyed by the href the record keeps. */
+  const host = useHostFiles();
+  const at = (file: FileValue) => fileSrc(host, file.href);
   const pictures = files.filter(isImage);
   const documents = files.filter((file) => !isImage(file));
   const [open, setOpen] = useState<number | null>(null);
@@ -273,14 +278,14 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
           {documents.map((file) => (
             <li key={file.href} data-graview-document={file.type} style={{ display: "grid", gap: 6, minWidth: 0 }}>
               {file.type === "application/pdf" ? (
-                <object data={file.href} type="application/pdf" aria-label={fileWords(file)} style={{ width: "100%", height: 420, border: "1px solid var(--graview-edge)", borderRadius: ROUND }}>
+                <object data={at(file)} type="application/pdf" aria-label={fileWords(file)} style={{ width: "100%", height: 420, border: "1px solid var(--graview-edge)", borderRadius: ROUND }}>
                   <p style={{ margin: 0, padding: 12 }}>
-                    This browser shows no PDF here: <a href={file.href} download={file.name}>download {file.name}</a>.
+                    This browser shows no PDF here: <a href={at(file)} download={file.name}>download {file.name}</a>.
                   </p>
                 </object>
               ) : null}
               <span style={{ display: "flex", flexWrap: "wrap", gap: "2px 10px", alignItems: "baseline", minWidth: 0, overflowWrap: "anywhere" }}>
-                <a href={file.href} download={file.name} {...(file.type === "application/pdf" ? { target: "_blank", rel: "noopener" } : {})}>
+                <a href={at(file)} download={file.name} {...(file.type === "application/pdf" ? { target: "_blank", rel: "noopener" } : {})}>
                   {file.name}
                 </a>
                 <span style={QUIET}>
@@ -308,7 +313,7 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
           style={{ padding: 0, border: 0, borderRadius: ROUND, maxWidth: "min(96vw, 1600px)", maxHeight: "94vh", background: "var(--graview-panel)", color: "var(--graview-ink)" }}
         >
           <figure style={{ margin: 0, display: "grid", gap: 8, padding: 10 }}>
-            <img src={shown.href} alt={fileWords(shown)} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", display: "block", margin: "0 auto" }} />
+            <img src={at(shown)} alt={fileWords(shown)} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", display: "block", margin: "0 auto" }} />
             <figcaption style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
               <span>{shown.caption ?? shown.name}</span>
               <form method="dialog" style={{ margin: 0 }}>

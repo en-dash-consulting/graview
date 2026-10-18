@@ -34,6 +34,8 @@ export interface GuestPictureLimits {
 
 /** The widest a picture is drawn, by default, in CSS pixels. */
 export const PICTURE_WIDTH = 1_200;
+/** The `src` a headless run hands a picture in place of the address the page's host makes: a blank GIF, one pixel. */
+export const PICTURE_STAND_IN = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 /** A file larger than this, as the record says it, is not fetched for a guest at all. */
 export const PICTURE_FETCH_BYTES = 40_000_000;
 
@@ -91,6 +93,12 @@ export interface GuestPicturesOptions {
   readonly moved: () => void;
   /** A picture was left out, and why, said once. */
   readonly onLeft?: (said: string) => void;
+  /**
+   * Where the page fetches a record's file (`FileValue.href`): a host that
+   * serves the app under a base answers `base + href`; undefined leaves the
+   * file out. The href, resolved against the page, by default.
+   */
+  readonly file?: (href: string) => string | undefined;
   /** How the bytes are made smaller: to at most `width` pixels across, and `bytes` bytes. The canvas, by default. */
   readonly shrink?: (blob: Blob, width: number, bytes: number) => Promise<Blob | undefined>;
 }
@@ -170,14 +178,28 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
     return dataOf(blob);
   };
 
+  /*
+   * WHERE THE HOST'S ANSWER WAS NOT A PICTURE, said with what it answered —
+   * never the path, which the view is not to learn — and, where the host
+   * did not say where its files are, what a host under a base passes: the
+   * record's path resolved against the page is not the app's when the app
+   * is served under a base (Graview Cloud's `/a/<app>`, 2026-10-18).
+   */
+  const unanswered = (file: FileValue, on: GuestNode, answered?: string): Entry => ({
+    state: "left",
+    said: `${named(file, on)} could not be loaded for the view ${options.view}${answered ? `: the host answered ${answered}.` : "."}${answered && !options.file ? " A host that serves the app under a base says where a record's files are (file, on the view's definition)." : ""}`,
+  });
   const make = async (file: FileValue, on: GuestNode): Promise<Entry> => {
-    const failed: Entry = { state: "left", said: `${named(file, on)} could not be loaded for the view ${options.view}.` };
-    /* A path on the host, as a record keeps one (FR-162), on this page's own origin: never another's. */
-    const url = new window.URL(file.href, window.document.baseURI);
+    const failed = unanswered(file, on);
+    /* A path on the host, as a record keeps one (FR-162), where the host says it is, on this page's own origin: never another's. */
+    const at = options.file ? options.file(file.href) : file.href;
+    if (at === undefined) return failed;
+    const url = new window.URL(at, window.document.baseURI);
     if (url.origin !== window.location.origin || !/^https?:$/.test(url.protocol)) return failed;
     const response = await window.fetch(url.href, { credentials: "same-origin" });
     const type = (response.headers.get("content-type") ?? "").split(";")[0]!.trim();
-    if (!response.ok || !isGuestPicture({ type })) return failed;
+    if (!response.ok) return unanswered(file, on, String(response.status));
+    if (!isGuestPicture({ type })) return unanswered(file, on, `${type || "no type"}, not a picture`);
     let blob: Blob = new window.Blob([await response.arrayBuffer()], { type });
     if (blob.size > PICTURE_FETCH_BYTES) return failed;
     /* Made smaller where it is wider than the view draws a picture, or heavier than one may be; a picture that fits is handed as it is, animation and all. */

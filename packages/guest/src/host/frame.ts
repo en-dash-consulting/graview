@@ -64,6 +64,8 @@ export interface MountGuestViewOptions<S extends AnySchema> {
    * handed as the record keeps it.
    */
   readonly pictures?: GuestPictures;
+  /** Where a record's file (`FileValue.href`) is fetched for those pictures: a host serving the app under a base answers `base + href`. The href resolved against the page by default. */
+  readonly file?: (href: string) => string | undefined;
   /** The app's named places: what the guest is told of (`props.places`), and may ask to go to by slug. None by default. */
   readonly places?: () => readonly GuestPlace[];
   readonly onNavigate?: (id: string) => void;
@@ -156,7 +158,7 @@ export function mountGuestView<S extends AnySchema>(element: HTMLElement, option
   let waiting = false;
   const stopPictures = options.pictures
     ? untilItArrives(picturesChunk, ({ createGuestPictures }) => {
-        pictures = createGuestPictures(window as Window & typeof globalThis, { as: "data", view: `"${options.title ?? options.view}"`, pictures: options.pictures!, ...(options.limits ? { limits: options.limits } : {}), moved: () => session?.push() });
+        pictures = createGuestPictures(window as Window & typeof globalThis, { as: "data", view: `"${options.title ?? options.view}"`, pictures: options.pictures!, ...(options.limits ? { limits: options.limits } : {}), ...(options.file ? { file: options.file } : {}), moved: () => session?.push() });
         if (waiting) greet();
       })
     : () => {};

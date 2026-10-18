@@ -57,11 +57,11 @@ describe("an https image", () => {
   });
 
   it("says why, naming the origins the host lists, and what a view may show instead", () => {
-    const said = imageRefusedWords("https://collector.example/c.png", WIKIMEDIA);
+    const said = imageRefusedWords("https://collector.example/c.png", { origins: WIKIMEDIA });
     expect(said).toContain('"https://collector.example/c.png" was not drawn');
     expect(said).toContain("(https://upload.wikimedia.org)");
-    expect(said).toContain("images.origins");
-    expect(imageRefusedWords(COVER)).toContain("The host lists no origin a view's images may come from.");
+    expect(said).toContain("an https: image from https://upload.wikimedia.org");
+    expect(imageRefusedWords(COVER)).toContain("The host lists no origin a view's images may come from (images.origins, on the view's definition).");
     expect(sayRefusal({ reason: "url", element: "img", name: "src", address: COVER }).says).toContain(COVER);
   });
 

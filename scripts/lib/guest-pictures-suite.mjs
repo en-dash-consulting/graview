@@ -17,6 +17,17 @@
  * them; nothing the view drew or was handed names a path on the host; the
  * host fetched each picture once, with the reader's cookie, and never the
  * roof's photograph (a record Ana may not see), the SVG or the PDF.
+ *
+ * Then the same app served under a base, `/a/jobs/`, as Graview Cloud
+ * serves an app at `/a/<app>/` while its records keep `/graview/files/…`
+ * (2026-10-18: "pictures: true never delivers src"). The host says where a
+ * record's files are (`file` on the view's definition); the view draws the
+ * porch's pictures, fetched under the base and never at the host's root.
+ *
+ * Then a host that says it once for the whole page, as Graview Cloud does
+ * (0.1.36): `files: filesAt("/a/jobs/graview/files", …)` and no `file` on
+ * the view. The view's pictures are fetched under the base all the same,
+ * and the porch's own page draws its pictures, and links its quote, there.
  */
 import { createServer } from "node:http";
 import { deflateSync } from "node:zlib";
@@ -92,16 +103,23 @@ export async function picturesSuite({ repoRoot, build, browser, claim, report, H
         contents: `
 import { mount } from "@graview/embed";
 import { registerWorkerView } from "@graview/guest/host/views";
+import { recordPath } from "@graview/pages";
+import { filesAt } from "@graview/ship/browser";
 import { ana, jobsApp, jobsSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/jobs-app.ts"))};
 window.__failures = [];
 window.__problems = [];
-const definition = { manifest: ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: ${JSON.stringify(PHOTOS_JS)} }, onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
+/* Served under a base (Graview Cloud's /a/<app>/), the host says where a record's files are: on the view ("file"), or once for the page ("?files", filesAt under the base, as Cloud hands it). */
+const base = location.pathname.startsWith("/a/jobs/") ? "/a/jobs" : "";
+const asked = new URLSearchParams(location.search);
+const once = asked.has("files");
+const definition = { manifest: ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: ${JSON.stringify(PHOTOS_JS)} }, ...(base && !once ? { file: (href) => base + href } : {}), onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 window.__handle = mount(document.getElementById("app"), {
   app: jobsApp,
   seed: jobsSeed,
   principal: ana,
   face: "pages",
-  path: "/places/job-photos",
+  path: asked.has("record") ? recordPath(jobsApp.schema, "job", asked.get("record")) : "/places/job-photos",
+  ...(once ? { files: filesAt(base + "/graview/files", { maxBytes: 1000000, kinds: ["image/*", "application/pdf"] }) } : {}),
   scheme: "light",
   label: "Jobs",
   heading: false,
@@ -128,11 +146,13 @@ window.__handle = mount(document.getElementById("app"), {
   /* What reached the files route: the path, and whether it carried the reader's session. */
   const asked = [];
   const server = createServer((req, res) => {
-    if (req.url === "/") {
+    const page = req.url.split("?")[0];
+    if (page === "/" || page === "/a/jobs/") {
       res.writeHead(200, { "content-type": "text/html", "cache-control": "no-store", "set-cookie": `${SESSION}; Path=/; SameSite=Lax; HttpOnly` });
       return res.end(html);
     }
-    const file = served[req.url];
+    /* Under the base as at the root: the bytes are the app's, wherever its page is served. */
+    const file = served[req.url.startsWith("/a/jobs/graview/files/") ? req.url.slice("/a/jobs".length) : req.url];
     if (file) {
       const signed = (req.headers.cookie ?? "").split(/;\s*/).includes(SESSION);
       asked.push({ path: req.url, signed });
@@ -201,6 +221,55 @@ window.__handle = mount(document.getElementById("app"), {
     claim("nothing else was requested", elsewhere.length === 0, elsewhere);
     claim("no view failed, and nothing was left out", seen.failures.length === 0 && seen.problems.length === 0, { failures: seen.failures, problems: seen.problems });
     claim("the page throws nothing", report.pageErrors.length === 0, report.pageErrors);
+
+    /* THE SAME APP UNDER A BASE: the records keep /graview/files/…, and the host says the files are under /a/jobs. */
+    asked.length = 0;
+    requests.length = 0;
+    await tab.goto(`${HOST}/a/jobs/`, { waitUntil: "load" });
+    await until(() => {
+      const root = document.querySelector('[data-worker-view="job-photos"]')?.shadowRoot;
+      const images = [...(root?.querySelectorAll("img") ?? [])];
+      return images.length === 2 && images.every((image) => image.complete && image.naturalWidth > 0);
+    }, "the porch's two pictures, drawn under the base");
+    await tab.waitForTimeout(300);
+    const based = await tab.evaluate(() => {
+      const root = document.querySelector('[data-worker-view="job-photos"]').shadowRoot;
+      return { images: [...root.querySelectorAll("img")].map((image) => ({ name: image.getAttribute("data-name"), blob: image.getAttribute("src").startsWith(`blob:${location.origin}/`), natural: [image.naturalWidth, image.naturalHeight] })), failures: window.__failures, problems: window.__problems };
+    });
+    claim("under a base, the view draws the porch's two pictures from blob: URLs the host made", based.images.length === 2 && based.images.every((one) => one.blob && one.natural[0] > 0), based.images);
+    const underBase = asked.map((one) => one.path).sort();
+    claim("under a base, the host fetched each picture where it said a record's files are, under /a/jobs, with the reader's session", underBase.length === 2 && underBase.every((path) => path.startsWith("/a/jobs/graview/files/")) && asked.every((one) => one.signed), asked);
+    claim("under a base, nothing was asked of /graview/files/ at the host's root", !requests.some((one) => new URL(one.url).pathname.startsWith("/graview/files/")), requests.filter((one) => one.url.includes("/graview/files/")));
+    claim("under a base, no view failed, and nothing was left out", based.failures.length === 0 && based.problems.length === 0, { failures: based.failures, problems: based.problems });
+
+    /* THE SAME APP UNDER A BASE, THE HOST SAYING IT ONCE: filesAt under the base, as Cloud hands it, and no file on the view (0.1.36). */
+    asked.length = 0;
+    requests.length = 0;
+    await tab.goto(`${HOST}/a/jobs/?files`, { waitUntil: "load" });
+    await until(() => {
+      const root = document.querySelector('[data-worker-view="job-photos"]')?.shadowRoot;
+      const images = [...(root?.querySelectorAll("img") ?? [])];
+      return images.length === 2 && images.every((image) => image.complete && image.naturalWidth > 0);
+    }, "the porch's two pictures, drawn under the base from the page's files");
+    const once = asked.map((one) => one.path).sort();
+    claim("under a base, a host that hands filesAt under it and no file on the view has the view's pictures fetched under /a/jobs", once.length === 2 && once.every((path) => path.startsWith("/a/jobs/graview/files/")) && !requests.some((one) => new URL(one.url).pathname.startsWith("/graview/files/")), { asked, requests: requests.filter((one) => one.url.includes("/graview/files/")) });
+    asked.length = 0;
+    requests.length = 0;
+    await tab.goto(`${HOST}/a/jobs/?files&record=job:porch`, { waitUntil: "load" });
+    await until(() => {
+      const images = [...document.querySelectorAll("[data-graview-gallery] img")];
+      return images.length === 3 && images.every((image) => image.complete && image.naturalWidth > 0);
+    }, "the porch's own page, its three pictures loaded under the base");
+    const record = await tab.evaluate(() => ({
+      pictures: [...document.querySelectorAll("[data-graview-gallery] img")].map((image) => ({ src: image.getAttribute("src"), natural: image.naturalWidth })),
+      papers: [...document.querySelectorAll("[data-graview-documents] a[download]")].map((link) => link.getAttribute("href")),
+    }));
+    claim(
+      "under a base, the record's own page draws each of its pictures, and links its quote, at the host's address under /a/jobs, from filesAt alone",
+      record.pictures.length === 3 && record.pictures.every((one) => one.src.startsWith("/a/jobs/graview/files/") && one.natural > 0) && record.papers.length > 0 && record.papers.every((href) => href.startsWith("/a/jobs/graview/files/")) && !requests.some((one) => new URL(one.url).pathname.startsWith("/graview/files/")),
+      { record, requests: requests.filter((one) => one.url.includes("/graview/files/")).map((one) => one.url) },
+    );
+    claim("under a base, saying it once, no view failed, and nothing was left out", (await tab.evaluate(() => [...window.__failures, ...window.__problems])).length === 0, await tab.evaluate(() => ({ failures: window.__failures, problems: window.__problems })));
     await context.close();
   } finally {
     server.close();

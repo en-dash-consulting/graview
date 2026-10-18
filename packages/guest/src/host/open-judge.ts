@@ -74,6 +74,35 @@ const FRAGMENT = /^#[A-Za-z_][A-Za-z0-9_.:-]*$/;
 const DATA_IMAGE = /^data:image\/(png|gif|jpeg|webp|avif|bmp|svg\+xml)(;[A-Za-z0-9=._+-]+)*,/i;
 /* An image the app itself holds, by content address: what `add_image` answers, and nothing else under the app. */
 const APP_IMAGE = /^\/graview\/assets\/[0-9a-f]{64}\.(png|gif|jpe?g|webp|avif|svg|ico)$/;
+/* The same, at the end of a longer path: the app's base in front of it (`/a/<app>`), as a view that read the page's address writes it. */
+const APP_IMAGE_AT_END = /\/graview\/assets\/[0-9a-f]{64}\.(png|gif|jpe?g|webp|avif|svg|ico)$/;
+/* A path on the page's own host that names only itself: a slash, no second slash, nothing that climbs or hides a slash, no query or fragment. */
+const PLAIN_PATH = /^\/(?!\/)(?!(?:.*\/)?\.\.?(?:\/|$))(?!.*%(?:2e|2f|5c))[^\\\s?#"'<>]*$/i;
+
+/**
+ * THE APP'S OWN IMAGE, IN THE FORMS A VIEW WRITES IT (2026-10-18): the path
+ * `add_image` answered (`/graview/assets/<sha256>.<ext>`), that path under
+ * the app's base (`/a/<app>/graview/assets/…`), or the page's own address
+ * for it (`https://<the page's origin>/a/<app>/graview/assets/…`). Each is
+ * the one image, said as the path the host's `asset` resolves; nothing
+ * where it is none of these — another origin, a path that climbs, a query.
+ */
+export function appImagePath(value: string, origin: string): string | undefined {
+  if (APP_IMAGE.test(value)) return value;
+  let path = value;
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const parsed = new URL(value);
+      if (origin === "null" || parsed.origin !== origin || parsed.username !== "" || parsed.password !== "" || parsed.search !== "" || parsed.hash !== "") return undefined;
+      /* The parser has already folded what climbed; the path as written must not have climbed at all. */
+      path = value.slice(parsed.origin.length);
+    } catch {
+      return undefined;
+    }
+  }
+  if (!PLAIN_PATH.test(path)) return undefined;
+  return APP_IMAGE_AT_END.exec(path)?.[0];
+}
 
 export interface JudgeContext {
   /** The host page's origin, for a `blob:` image of its own. "null" in an opaque origin. */
@@ -81,7 +110,9 @@ export interface JudgeContext {
   /**
    * Where an image the app holds is loaded from (`/graview/assets/<sha256>.<ext>`):
    * the host's address for it, or undefined to refuse it. Without it, a view
-   * draws only `data:` images and the page's own `blob:`.
+   * draws only `data:` images and the page's own `blob:`. The same image
+   * under the app's base, or by the page's own address for it, is handed
+   * to it as that path (`appImagePath`).
    */
   readonly asset?: (path: string) => string | undefined;
   /**
@@ -92,21 +123,39 @@ export interface JudgeContext {
   readonly imageOrigins?: readonly string[];
 }
 
+/** What a host draws besides `data:` images, as a refusal says it: the origins it lists, and whether it says where the app's own images live. */
+export interface ImageHost {
+  readonly origins?: readonly string[];
+  /** The host passes `asset`: the app's own images are drawn by their path. */
+  readonly assets?: boolean;
+}
+
 /**
  * WHY AN IMAGE'S ADDRESS WAS NOT DRAWN, in a sentence for its author: the
- * address, and the ways a view may show an image — where an `https:` one
- * is on an origin the host does not list, which origins it does.
+ * address, why, and the ways a view may show an image on THIS host — the
+ * app's own images only where it says where they live, `https:` ones only
+ * from the origins it lists. It never offers what the host refuses.
  */
-export function imageRefusedWords(address: string, origins: readonly string[] = []): string {
+export function imageRefusedWords(address: string, host: ImageHost = {}): string {
   const shown = address.length > 120 ? `${address.slice(0, 119)}…` : address;
-  const web = /^https:\/\//i.test(address);
-  const listed = imageOriginsOf(origins);
-  const why = web
-    ? listed.length > 0
-      ? ` Its origin is not one the host lists for images (${listed.join(", ")}).`
-      : " The host lists no origin a view's images may come from."
-    : "";
-  return `The image "${shown}" was not drawn.${why} A view shows a data: image, the app's own image (/graview/assets/…), a picture on a record (pictures in its manifest), or an https: image on an origin the host lists (images.origins).`;
+  const listed = imageOriginsOf(host.origins);
+  const own = APP_IMAGE_AT_END.exec(address.split(/[?#]/)[0]!)?.[0];
+  const why = own
+    ? host.assets
+      ? ` It is the app's own image only by its path, or under the app's base on this page's origin: write it as its path, ${own}.`
+      : " This host has not said where the app's own images live (asset, on the view's definition), so a view here cannot draw one by its path."
+    : /^https:\/\//i.test(address)
+      ? listed.length > 0
+        ? ` Its origin is not one the host lists for images (${listed.join(", ")}).`
+        : " The host lists no origin a view's images may come from (images.origins, on the view's definition)."
+      : "";
+  const ways = [
+    "a data: image",
+    ...(host.assets ? ["the app's own image by the path add_image answered (/graview/assets/<sha256>.<ext>)"] : []),
+    "a picture on a record (pictures in its manifest)",
+    ...(listed.length > 0 ? [`an https: image from ${listed.join(", ")}`] : []),
+  ];
+  return `The image "${shown}" was not drawn.${why} A view here shows ${ways.slice(0, -1).join(", ")} or ${ways[ways.length - 1]}.`;
 }
 
 /** The origins of a host's list that are `https:` origins, as the URL parser says them; anything else in it is no origin. */
@@ -169,9 +218,10 @@ function judgeValue(name: string, kind: OpenAttribute, value: string, context: J
     if (DATA_IMAGE.test(value)) return { value };
     /* A blob: of the host's own page: it is in the page's memory already, and loading it asks nobody. */
     if (value.startsWith(`blob:${context.origin}/`) && /^blob:[^\s"'<>]+$/.test(value)) return { value };
-    /* An image the app holds, where the host says it lives: its own host, by content address, so loading it asks nobody new. */
-    if (APP_IMAGE.test(value) && context.asset) {
-      const address = context.asset(value);
+    /* An image the app holds, where the host says it lives: its own host, by content address, so loading it asks nobody new — by its path, under the app's base or by the page's own address for it, each the one path. */
+    const own = context.asset ? appImagePath(value, context.origin) : undefined;
+    if (own !== undefined) {
+      const address = context.asset!(own);
       if (address) return { value: address };
     }
     /* An https: address on an origin the host lists for images (2026-10-15): the host chose to let the page ask it, and asks with no referrer. */
