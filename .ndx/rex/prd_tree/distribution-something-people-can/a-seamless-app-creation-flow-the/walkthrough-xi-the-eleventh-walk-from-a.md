@@ -15,12 +15,16 @@ blockedBy:
   - "e493f990-e60a-44ca-b399-d6f6dae7188f"
   - "b6ecaff4-09fc-40ca-9470-5b1677459493"
   - "610d8397-c4cd-427a-bdd4-43dddd8a79d8"
+  - "9363b216-bad2-49e9-b2d4-598aa1a40c25"
+  - "3fc72b36-85b5-4006-a7d9-d52d10e25700"
+  - "2b16bb49-5218-4f2c-92ab-c8ad3ce5382c"
+  - "5f0ea620-4187-472a-b44e-c366f50e998c"
 source: "The tenth walk, 2026-10-15: thirteen findings and nine carried dead ends fixed, no new class, so the log did not stay still."
 acceptanceCriteria:
   - "a fresh checkout, pnpm install && pnpm build && pnpm test, then graview create of a new app beside it"
   - "all nine stages walked by an agent that did not do the previous walks"
   - "docs/walkthrough-findings.md gains nothing; if it does, the fixes land with criteria and the walk repeats"
-description: "The tenth walk (task 07a4132b, a mountain rescue team) added W-204 to W-225, all fixed in 0.1.30. This is the next run: a fresh checkout, a new app beside it with graview create (../walk11, in a domain of its own, seeded at real size through its own acts), all nine stages of docs/walkthrough.md by an agent that did not do the previous walks, and every finding fixed in a package with a criterion verified to fail without it. Walk 0.1.30's new surfaces too: playback, a relation to another app, the tidying tray, the first look, the right-click menu on pages, navigate with filters, and graview.dev's start.md as an agent would follow it. Carried open: the twelve collisions the watch's control-covered rule acknowledged (W-224, the Roadmap's f-watch-collisions-w224); fix them or show each is not a collision. Run the browser harnesses one at a time on a port block no other checkout holds; a walker that adds or widens a watch rule runs the harnesses it touches without --quick."
-lastModified: "2026-10-15T14:45:00.000Z"
+description: "The tenth walk (task 07a4132b, a mountain rescue team) added W-204 to W-225, all fixed in 0.1.30. This is the next run: a fresh checkout, a new app beside it with graview create (../walk11, in a domain of its own, seeded at real size through its own acts), all nine stages of docs/walkthrough.md by an agent that did not do the previous walks, and every finding fixed in a package with a criterion verified to fail without it. Walk 0.1.30's new surfaces too: playback, a relation to another app, the tidying tray, the first look, the right-click menu on pages, navigate with filters, and graview.dev's start.md as an agent would follow it. Since 0.1.31 and 0.1.34 (Roadmap f-walk-xi): the quick ask (Cmd+K), the right-click AI and its ghost, Notify me, the date editor, a declared connection, GPU drawing with blur, the Releases page, and the 0.1.34 menu (a visitor told how to get in, a panel drawn on Pages, suggestions on request, prefetched menus). Carried open: the twelve collisions the watch's control-covered rule acknowledged (W-224, the Roadmap's f-watch-collisions-w224); fix them or show each is not a collision. Run the browser harnesses one at a time on a port block no other checkout holds; a walker that adds or widens a watch rule runs the harnesses it touches without --quick."
+lastModified: "2026-10-18T03:00:00.000Z"
 lastModifiedBy: "Nick Daniel <nick@endash.us>"
 ---
