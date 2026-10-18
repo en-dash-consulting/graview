@@ -1,5 +1,8 @@
 import type { FileValue, HostFiles } from "@graview/core";
 
+/** Where a record keeps a host's file: the path every host's upload answers, without its base. */
+const HOST_FILES = "/graview/files/";
+
 /**
  * A HOST'S FILES AT AN ADDRESS (FR-163): the `files` a page hands `mount`,
  * `<Embed>` or the Shell, sending each file to `url` with POST — the bytes
@@ -10,12 +13,21 @@ import type { FileValue, HostFiles } from "@graview/core";
  *
  * It is what the dev door (`devFiles` in `@graview/ship/dev`) answers, and
  * a host whose route answers the same may use it as it is.
+ *
+ * WHERE A RECORD'S FILE IS SERVED (`src`, 0.1.36): a record keeps the path
+ * the host answered, `/graview/files/<sha>.<ext>`, without the base the app
+ * is served under; such a path is drawn under `url` — `filesAt("/a/jobs/
+ * graview/files")` draws `/graview/files/x.webp` at `/a/jobs/graview/files/
+ * x.webp`. Any other href (the dev door's `/__graview/files/…`, already
+ * where it is served) is drawn as the record keeps it.
  */
 export function filesAt(url: string, options: { readonly maxBytes: number; readonly kinds: readonly string[]; readonly fetch?: typeof fetch }): HostFiles {
   const send = options.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
+  const served = url.replace(/\/+$/, "");
   return {
     maxBytes: options.maxBytes,
     kinds: options.kinds,
+    src: (href: string) => (href.startsWith(HOST_FILES) ? served + href.slice(HOST_FILES.length - 1) : href),
     async upload(file: Blob, name: string): Promise<FileValue> {
       const response = await send(url, {
         method: "POST",

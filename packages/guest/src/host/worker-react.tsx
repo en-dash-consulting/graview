@@ -1,5 +1,5 @@
 import type { AnySchema, KindOfSchema, Principal, Store } from "@graview/core";
-import { DefaultDrawnElsewhere, isDefaultView, markReplacesPage, useGoTo, useGraviewIfAny, usePlayback, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
+import { DefaultDrawnElsewhere, isDefaultView, markReplacesPage, useGoTo, useGraviewIfAny, useHostFiles, usePlayback, type GoTo, type ReactViewRegistry, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useContext, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { GuestPlace } from "../protocol.js";
 import type { WorkerViewManifest } from "./manifest.js";
@@ -26,7 +26,7 @@ export interface WorkerViewDefinition {
   readonly onProblem?: (said: string) => void;
   /** Where an image the app holds (`/graview/assets/<sha256>.<ext>`) is loaded from, so the view may draw it by that path (WorkerViewOptions.asset). */
   readonly asset?: (path: string) => string | undefined;
-  /** Where a record's file (`FileValue.href`) is fetched for the pictures the view is handed, so a host serving the app under a base answers `base + href` (WorkerViewOptions.file). */
+  /** Where a record's file (`FileValue.href`) is fetched for the pictures the view is handed, so a host serving the app under a base answers `base + href` (WorkerViewOptions.file). The page's host's files say where by default (`HostFiles.src`). */
   readonly file?: (href: string) => string | undefined;
   /** The `https:` origins its images may come from by address (WorkerViewOptions.images): none by default. */
   readonly images?: { readonly origins: readonly string[] };
@@ -83,11 +83,14 @@ function useDefinitionThen(definition: WorkerViewDefinition): WorkerViewDefiniti
 function WorkerViewMount({ definition, store, principal, input, goTo, places, scheme, brand, onFailure, drawsItsOwn, tick }: MountProps) {
   const holder = useRef<HTMLDivElement>(null);
   const mounted = useRef<WorkerView | null>(null);
-  const latest = useRef({ input, goTo, places, onFailure, brand });
-  latest.current = { input, goTo, places, onFailure, brand };
+  const hostFiles = useHostFiles();
+  const latest = useRef({ input, goTo, places, onFailure, brand, hostFiles });
+  latest.current = { input, goTo, places, onFailure, brand, hostFiles };
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
+    /* Where a record's file is fetched: the definition's word, else where the page's host serves its files (0.1.36). */
+    const file = definition.file ?? (latest.current.hostFiles?.src ? (href: string) => latest.current.hostFiles?.src?.(href) ?? href : undefined);
     const stop = untilItArrives(workerChunk, ({ mountWorkerView }) => {
       mounted.current = mountWorkerView(element, {
         manifest: definition.manifest,
@@ -105,7 +108,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(definition.author ? { author: definition.author } : {}),
         ...(definition.onProblem ? { onProblem: definition.onProblem } : {}),
         ...(definition.asset ? { asset: definition.asset } : {}),
-        ...(definition.file ? { file: definition.file } : {}),
+        ...(file ? { file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
       });
     });

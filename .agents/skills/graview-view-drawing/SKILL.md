@@ -83,7 +83,8 @@ said once in the view's console and the host's problems, with the address:
   follows when it is ready. `left` says why a picture will never come: past
   one picture's byte budget or the view's, or what the host answered when
   it was not loaded. A host that serves the app under a base says where a
-  record's files are (`file` on the view's definition). A document, and an
+  record's files are (`file` on the view's definition, else the page's
+  `files.src`, which `filesAt` under the base derives). A document, and an
   SVG, has no `src`: show its name, type and size.
 
 ```js

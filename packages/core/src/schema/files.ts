@@ -61,7 +61,19 @@ export interface HostFiles {
    * `files`, and a promise that rejects is taken as kept.
    */
   kept?(href: string): boolean | Promise<boolean>;
+  /**
+   * WHERE THE HOST SERVES A FILE A RECORD HOLDS (0.1.36): the address the
+   * page draws, links and downloads `href` at. A host that serves the app
+   * under a base (Graview Cloud's `/a/<app>`) answers `base + href`, since
+   * a record keeps the path its upload answered, without the base.
+   * `filesAt(url)` derives it from its own url. Unsaid, the href itself.
+   * `kept` and what the page says of a file still name it by `href`.
+   */
+  src?(href: string): string;
 }
+
+/** Where the page draws, links or downloads a record's file: where its host says it serves it (`HostFiles.src`), else the href as the record keeps it. */
+export const fileSrc = (files: HostFiles | undefined, href: string): string => files?.src?.(href) ?? href;
 
 /** Whether `href` is a path on the host: no scheme, no other host, no backslash, nothing that climbs. */
 export const safeFileHref = (href: unknown): href is string =>
