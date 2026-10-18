@@ -330,7 +330,7 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
           */}
         <p style={pageStyles.eyebrow}>{withArticle(nounOf(store.schema.tryDefinition(node.kind), node.kind)).replace(/^./, (first) => first.toUpperCase())} in ${escapeTemplate(ids.name)}</p>
         {/* The name, pressed, is the field that changes it — as on the derived page. */}
-        <h1 style={pageStyles.h1}>{inPlace && node["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} /> : facts.label}</h1>
+        <h1 style={pageStyles.h1}>{inPlace && node["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} said={facts.label} /> : facts.label}</h1>
         {/*
           * WHERE IT IS ON THE HORIZON, asked of the declaration's own
           * lifecycle rather than of a status word written here: rename the

@@ -5056,3 +5056,143 @@ main before any of these changes, and are not theirs. Still open from the
 tenth walk: W-201 (Nick's), a repair from the in-app seat needing a model,
 "Stand the team down" to three callouts (the data's shape), and the coverage
 grid that counts only the callout on the horizon.
+
+## The eleventh walk — an animal shelter (2026-10-17)
+
+The eleventh walk took a county animal shelter: the animals that come
+through the door (dogs, cats, rabbits, small animals), the kennels, condos
+and hutches they sleep in, and the people who apply to adopt them — with a
+manager, a member of staff, a volunteer and somebody browsing as seats, a
+policy that keeps adopters from the volunteer and the visitor altogether, a
+rule that reads the clock (an animal in care past its shots) and one that
+does not (a kennel sleeping more than it was built for, whose repairs move
+each animal out), and two titled lenses over the animals: a calendar,
+"Intake diary", and a status board, "The floor". Scaffolded with
+`graview create ../walk11 --link . --name "Hollow Creek Animal Shelter"
+--kind animal --plural animals --port 5680` from a worktree of
+`feat/0-1-34-additions` at 88ad1ec6 that installed and built, beside a
+checkout whose pnpm workspace encloses it (W-204's fix held: the app made
+itself a workspace and installed), then seeded through its own acts at real
+size: 84 kennels (two closed), 1,400 adopters, 3,076 animals over eight
+years (2,818 adopted, 196 transferred, 62 here) and 5,900 links, 16,860
+acts in 18 seconds (W-205's fix held), 25 problems on the day.
+
+The journeys' first run on walk11 finished 72 of 88 runs: Find blocked
+every way, narrowing blocked on the scene every way (the four "several" on
+the scene are skips by design). graview.dev's `start.md`, followed as an
+agent would with this checkout's CLI in place of the registry (a document
+for the shelter's foster carers, two kinds, two rules, a seed), went through
+`check --document` ("✓ the document compiles and checks clean"), `describe`
+and `mcp`'s `get_violations` (one problem, its repair's `"missing": ["to"]`)
+as the page says; `npm create graview@latest` itself was not run, since it
+reaches the registry rather than this checkout.
+
+### W-226 · "Find anything" for an animal's number finds an adopter's phone, and never the animal
+- stage: A (finding a record by part of its name, at real size) · face: scene and pages · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Finding an animal by part of its name", every way: "Find does not offer "Moose #1539" for "1539" among 1"; the search page the same
+- class: data-shape-not-in-fixtures (also: says-something-untrue)
+- expected: the record the words name is in the answer, said as past where it is past
+- actual: W-211 reaches behind the horizon only when no current record answers at all; the adopter whose phone ends 1539 answered by a field, so the horizon held and Moose, adopted in 2022, was not offered
+- where it belongs: `packages/core/src/search.ts`
+- harness that should have caught it: the journeys' "find", which did; W-211's criterion had one kind and no field that carries numbers
+- status: fixed in "walkthrough: A · Find offers a past record the words name over a current one that only mentions them" · where no current record is named by the words and a past one is, the past ones named join the answer, said as past, ranked by how they matched. Criterion: `packages/core/tests/unit/a-past-record-named-outranks-a-current-one-that-only-mentions-it.test.ts` (verified failing without the fix); the journeys' walk11 "find" done 8 of 8 (the pointer in 3 presses)
+
+### W-227 · Narrowing the animals has no Filter on the scene: their stop is a status board
+- stage: D (two titled lenses over the animals) · face: scene · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Narrowing the animals by weight" on the scene, at both widths and with either hand: "there is no "Filter" to narrow the animals with"
+- class: no-way-to-do-a-job (also: faces-disagree)
+- expected: a lens arranges before it draws (the board, the timeline, the calendar since "a lens arranges before it draws", the coverage grid since W-210)
+- actual: the `columns` lens read its cards from the graph and took no arrangement; W-210 closed the coverage grid and left the status board, the fifth shipped lens, open
+- where it belongs: `packages/primitives/src/lens/columns.tsx`
+- harness that should have caught it: the journeys' "narrow", which did; `a-lens-arranges-before-it-draws.test.tsx` held four lenses of five
+- status: fixed in "walkthrough: D · a status board arranges its cards" · the line is drawn over the columns at full fidelity, filtering and sorting the first bound kind's cards, never grouping (the columns are the groups). Criterion: "the status board" in `packages/primitives/tests/unit/a-lens-arranges-before-it-draws.test.tsx` (both verified failing without the fix); the journeys' walk11 "narrow" on the scene done at both widths and with either hand (the pointer 6, the keyboard 9)
+
+### W-228 · A kennel and the animals in it are told to "align the status" with each other, and the kennel is offered an animal's status
+- stage: C (from "Room in the kennel" to its repair) · face: scene · width: 1440 and 390 · scheme: light
+- impact: costs a job — "Getting from a problem to its repair" on the scene: the menu over the problem's records led with "Align the status of "Run E05" with the other 2", the kennel's edit told `status: "in-care"`, which its input refuses, and said "2 share the status in-care" — the stored value raw, which is how the watch caught it (`machine-words-shown`, every run on the scene)
+- class: offered-then-refused (also: machine-words-shown, data-shape-not-in-fixtures)
+- expected: agreement is read among records of one kind; an act offered with every argument filled is one its input accepts
+- actual: the structure provider read a kennel and two animals as one set agreeing on `status`, a field of one name on two kinds, worded the value with the first record's kind, and offered the alignment without asking the act's input; it also said "all but "Run E05" share "Run E05"" of a neighbor that was one of the chosen
+- where it belongs: `packages/tools/src/providers/structure.ts`
+- harness that should have caught it: the watch's `offered-then-refused` hears refusals by the policy only, and the refusal here is the act's input's, so it caught the words and not the act; no example has two kinds with a field of one name chosen together
+- status: fixed in "walkthrough: C · agreement is read among records of one kind, and an act offered whole is one its input accepts" · agreement and the odd one out are read within each kind, an alignment is offered only where `mutation.input` accepts its arguments, and a chosen neighbor is not "shared by all but" itself. Criterion: `packages/tools/tests/unit/a-field-of-one-name-on-two-kinds-is-not-one-fact.test.ts` (both verified failing without the fix), and `tests/an-act-offered-whole-is-one-its-input-accepts.test.ts` over every example's problems and mixed selections (it passed before the fix too: the examples do not have the shape — the gauntlet should, below); the journeys' walk11 "repair" with no watch violation on the way
+
+### W-229 · On the pages the scaffold writes, the record's name is a button called "Name: Daisy #0071"
+- stage: E (the record page the scaffold writes) · face: pages · width: 1440 and 390 · scheme: light
+- impact: costs a job — "Renaming an animal on its record works only the long way round — the name is not something to press; it takes "Change the animal"", on the pages at both widths and with either hand (5 presses where the name takes 4); the discography's song page, copied from the scaffold, carried the same line in main's verdict
+- class: faces-disagree (also: what-a-project-copies-is-wrong, accessibility-tree-wrong)
+- expected: the heading's name is said as the derived record page says it, "Daisy #0071" — the heading already says what it is
+- actual: W-206 put `EditableValue` in the scaffold's heading without the `said` the derived page passes, so the button's name was "Name: Daisy #0071" and the heading's with it
+- where it belongs: `packages/core/src/scaffold/ui.ts` (`pagesTsx`); `apps/discography/src/ui/pages.tsx`, copied from it
+- harness that should have caught it: the journeys' "change" on the pages, which did; W-206's criterion in `scaffold.test.ts` pinned the line without `said`
+- status: fixed in "walkthrough: E and F · the record page a project starts from names its heading as the derived page does, and its own test survives a policy" · criterion: `scaffold.test.ts` "names the record in its heading as the derived record page does" — the scaffold's heading editor is held to the derived page's own line (verified failing without the fix); the journeys' walk11 "change" on the pages done by the name
+
+### W-230 · Choosing three animals from the keyboard takes 85 presses, 49 of them Tabs to the bar
+- stage: I (the keyboard pass) · face: pages · width: 1440 and 390 · scheme: light
+- impact: costs a job — "Doing "Put on hold" to three animals at once on the pages from the keyboard takes 85 presses; with the pointer, 5" (80 on a phone); the gauntlet's talks 121 and 108 in main's verdict, never logged
+- class: keyboard-lands-nowhere (also: data-shape-not-in-fixtures)
+- expected: what is done with the chosen is a key away from where they were chosen
+- actual: the bar is a notice in the top layer, after the list in the document; the boxes are one Tab stop, and from it Tab walked every row's link after it
+- where it belongs: `packages/primitives/src/choosing.ts`
+- harness that should have caught it: the journeys' "several" from the keyboard, which did, on the gauntlet first
+- status: fixed in "walkthrough: I · Tab from a chosen box goes to the bar" · while anything is chosen, Tab from a box lands on the bar's first act; with nothing chosen it goes where it did. Criterion: `packages/primitives/tests/unit/a-list-chooses-several.test.tsx` "goes from a box to the bar's first act with Tab while something is chosen" (verified failing without the fix); the journeys' walk11 "several" from the keyboard, 85 → 38 presses at 1440 and 80 → 41 at 390, "Put on hold" 49 → 2 (25 Tabs to the first row's box remain, carried below)
+
+### W-231 · Following graview-permissions turns the scaffold's own test red, and nothing says why
+- stage: F (who may do what) · face: — · width: — · scheme: —
+- impact: costs a job — "make the app say who may do what": with the policy declared, `pnpm test` in the app said "expected [] to include 'add-animal'" of the scaffold's `tests/domain.test.ts`; the derivation was asked for nobody, and every act in the test was applied with no author, which a store under a policy refuses
+- class: what-a-project-copies-is-wrong
+- expected: what a project starts from still holds once it follows the skills
+- actual: the scaffold's test called `deriveAffordances` with no principal and `store.apply` with no author
+- where it belongs: `packages/core/src/scaffold/domain.ts` (`domainTest`)
+- harness that should have caught it: `scaffold.test.ts` and `pnpm smoke:create`, which run the test only on an app with no policy
+- status: fixed in "walkthrough: E and F · the record page a project starts from names its heading as the derived page does, and its own test survives a policy" · every act and the derivation are taken by somebody holding every role the app declares (`app.policy?.roles`). Criterion: `scaffold.test.ts` "takes every act in its own test as somebody holding every declared role" (verified failing without the fix), and a project made by this checkout's `graview create`, given a policy, passing its own five tests and its typecheck
+
+Six findings, W-226 to W-231, each fixed with a criterion verified failing
+without its fix; no new class. Two were holes left by the tenth walk's own
+fixes (W-226 by W-211, W-227 by W-210 — each closed the instance's shape and
+not the next one), one was in main's verdict already (W-230, the gauntlet's
+121 presses), and one was a copy of a line the derived face had right
+(W-229). After the fixes the journeys on walk11 finish every run they do not
+skip (84 of 84 ran: find, narrow, change and relate 8 of 8; "several" on the
+scene is a skip by design). W-224's twelve collisions are not open: the
+watch's acknowledged list is empty since 0.1.31, and the watch held through
+every harness run here.
+
+The 0.1.30 to 0.1.34 surfaces, as walked: `menu`, `inline-ai` (the
+"Suggest…" row, the ghost, "Draw a panel" landing on `/~draft`), `notify`,
+`quick-ask`, `date-inputs`, `app-links` (a relation to another app),
+`kind-stop`, `pages`, `gauntlet` and `declared` hold with `--quick` on this
+branch; `hosted` holds its budget (557 KB up front, 193 KB gzipped).
+`playback` fails `scrubbingFromTheStartShowsTheAppGrow` and
+`everyStopShowsTheAppExactlyAsItWas` — and fails them the same with this
+walk's package changes taken out, so it is not theirs (the stop before any
+change shows the first task, in a run near local midnight).
+On walk11 itself, a right-click on the pages' list says
+"Nothing you may do with an animal — 1 action withheld" to the visitor and
+the volunteer with the policy's sentence, as it should with no `signIn` from
+a host (the scaffold has none to give); the visitor is still offered
+"Notify me when an animal is added…", which FR-183 withdraws only when a
+host says how to sign in.
+
+Open, carried to the twelfth walk:
+
+- `playback`'s two failing claims above, not this walk's;
+- the gauntlet has no two kinds with a field of one name (W-228): give it
+  one, chosen together through a problem, so the class check over every
+  example fails on the next instance instead of passing by absence;
+- the watch hears a refusal by the policy and not one by an act's own
+  input (W-228): a press that reaches the store and is refused by its input
+  is offered-then-refused too, but a form a person filled wrongly is not,
+  and telling them apart needs the press's origin;
+- the keyboard's way into a long list on the pages: after W-230 "several"
+  costs 38 presses where the pointer takes 5, 25 of them Tabs to the first row's box;
+- the scaffold's record page draws its fields as text where the derived
+  page edits each in place, so the date editor (Roadmap f-date-inputs) is
+  reached on walk11's own pages only through "Change the animal";
+- the keyboard's cost of "Tying an animal to another with "Put in a
+  kennel"" on the scene, 41 presses where the pointer takes 4: the menu over
+  a flagged animal lists the kennel's seven repairs before the animal's own
+  acts;
+- `graview create --link` run by npm (`node …/cli.js create`, which takes
+  npm as the package manager) writes `link:` dependencies npm cannot
+  install; with pnpm it is fine. `start.md` does not pass `--link`.
