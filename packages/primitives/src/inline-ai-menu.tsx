@@ -55,11 +55,18 @@ export function askOf(env: InlineEnv, target: AiTarget, said?: string): InlineAs
   };
 }
 
-/** DRAWN WHERE THE SEAT DRAWS A VIEW, from its recipe: "Keep as a lens" there makes it a real lens. Answers a sentence when it cannot be drawn. */
-export async function drawPanel(env: InlineEnv, panel: AiPanel): Promise<string | undefined> {
+/**
+ * DRAWN WHERE THE SEAT DRAWS A VIEW, from its recipe: "Keep as a lens" there
+ * makes it a real lens — on Pages at `/~draft`, the face's own `goTo.draft`,
+ * over the scene in place of the picture. Answers a sentence when it cannot
+ * be drawn; `landing` is told just before it is, so the menu that asked
+ * stays open to say a failure and is put away for a panel.
+ */
+export async function drawPanel(env: InlineEnv, panel: AiPanel, landing?: () => void): Promise<string | undefined> {
   const engine = await import("@graview/tools/draft");
   const drafted = engine.recipeDraft(panel.recipe as never, { app: env.app, sight: engine.draftSight(env.app, env.principal) });
   if (engine.isDraftFailure(drafted)) return drafted.failed;
+  landing?.();
   env.seatTalk.setDraft(drafted, null);
   env.goTo.draft?.();
   keyboardToTheDraft();
@@ -86,38 +93,46 @@ function keyboardToTheDraft(tries = 180): void {
   if (tries > 0) requestAnimationFrame(() => keyboardToTheDraft(tries - 1));
 }
 
-/** A ghost of these proposals, waiting on the tray, its entry kept. */
-function holdGhost(env: InlineEnv, entry: AiInteraction, result: InlineResult): void {
-  if (!result.ghost || result.ghost.proposals.length === 0) return;
-  env.desk.setGhost({ ghost: result.ghost });
-  env.desk.record(entry);
-}
-
 /**
  * ASK THE INLINE AI: a suggestion (answered, not yet kept — the menu shows
  * it), fills (a ghost on the tray, its entry kept), or a panel (drawn, its
- * entry kept). A failure is kept too, said in its entry.
+ * entry kept). A failure is kept too, said in its entry — and answered, so
+ * the menu that asked says it where it was asked. `landing` is told just
+ * before what was asked for lands: the ghost held, the panel drawn.
  */
-export async function askInline(env: InlineEnv, kind: "suggest" | "fill" | "record" | "panel", target: AiTarget, said?: string): Promise<InlineResult> {
+export async function askInline(env: InlineEnv, kind: "suggest" | "fill" | "record" | "panel", target: AiTarget, said?: string, landing?: () => void): Promise<InlineResult> {
   const ask = askOf(env, target, said);
   const result = kind === "suggest" ? await suggestHere(env.ai, ask) : kind === "fill" ? await fillHere(env.ai, ask) : kind === "record" ? await recordHere(env.ai, ask) : await panelHere(env.ai, ask);
   if (result.interaction.outcome === "failed") {
     if (kind !== "suggest") env.desk.record(result.interaction);
     return result;
   }
+  const failing = (failed: string): InlineResult => {
+    const interaction: AiInteraction = { ...result.interaction, outcome: "failed", failed };
+    env.desk.record(interaction);
+    return { ...result, interaction };
+  };
   if (kind === "fill" || kind === "record") {
-    if (result.ghost) holdGhost(env, result.interaction, result);
-    else env.desk.record({ ...result.interaction, outcome: "failed", failed: "Nothing here could be filled in." });
+    if (!result.ghost || result.ghost.proposals.length === 0) return failing("Nothing here could be filled in.");
+    landing?.();
+    env.desk.setGhost({ ghost: result.ghost });
+    env.desk.record(result.interaction);
   }
   if (kind === "panel" && result.panel) {
-    const failed = await drawPanel(env, result.panel);
-    env.desk.record(failed ? { ...result.interaction, outcome: "failed", failed } : result.interaction);
+    const failed = await drawPanel(env, result.panel, landing);
+    if (failed) return failing(failed);
+    env.desk.record(result.interaction);
   }
   return result;
 }
 
-/** TAKE ONE OF A SUGGESTION'S OFFERS: a change waits as a ghost; a panel is drawn; a place or a record is gone to. Its entry is kept. */
-export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiCandidate): Promise<void> {
+/**
+ * TAKE ONE OF A SUGGESTION'S OFFERS: a change waits as a ghost; a panel is
+ * drawn; a place or a record is gone to — each the way the face it was
+ * asked on goes. Its entry is kept; a failure is answered in a sentence,
+ * `landing` told before anything lands.
+ */
+export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiCandidate, landing?: () => void): Promise<string | undefined> {
   const entry = result.interaction;
   const proposal = proposalOf(offer);
   if (proposal) {
@@ -125,23 +140,27 @@ export async function takeOffer(env: InlineEnv, result: InlineResult, offer: AiC
     const confidence = entry.offered.find((one) => one.id === offer.id)?.confidence;
     const ghost = ghostOf(env.store, { interaction: entry.id, target: entry.target, basis: `${entry.ask.said}: ${offer.label}`, ...(model ? { model } : {}), proposals: [{ ...proposal, ...(confidence !== undefined ? { confidence } : {}) }] }, env.principal);
     if (ghost.proposals.length === 0) {
-      env.desk.record({ ...entry, outcome: "failed", failed: "That can't be done now." });
-      return;
+      const failed = "That can't be done now.";
+      env.desk.record({ ...entry, outcome: "failed", failed });
+      return failed;
     }
+    landing?.();
     env.desk.setGhost({ ghost });
     env.desk.record(entry);
-    return;
+    return undefined;
   }
   if (offer.type === "panel") {
     const title = offer.label;
     const panel: AiPanel = { title, recipe: { ...offer.panel, title } };
-    const failed = await drawPanel(env, panel);
+    const failed = await drawPanel(env, panel, landing);
     env.desk.record(failed ? { ...entry, outcome: "failed", failed } : { ...entry, outcome: "drawn", accepted: [offer.id], panel });
-    return;
+    return failed;
   }
+  landing?.();
   if (offer.type === "place") env.goTo.place(offer.place);
   else if (offer.type === "record") env.goTo.record(offer.record);
   env.desk.record({ ...entry, outcome: "accepted", accepted: [offer.id] });
+  return undefined;
 }
 
 /**
@@ -198,15 +217,60 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
     // Asked once per target: the menu is drawn again as the graph moves, and the suggestion stands.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
-  const run = (work: () => Promise<unknown>) => {
-    close();
-    void work();
+  /*
+   * ASKED HERE, ANSWERED HERE (FR-184). The menu stays open while the ask
+   * is on its way and is put away just before what was asked for lands —
+   * the ghost on the tray, the panel where this face draws one, the page
+   * gone to. An ask that fails is said in the menu, where the person who
+   * asked is looking, as well as in Activity; the row they pressed keeps
+   * the keyboard.
+   */
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
+  const [asking, setAsking] = useState(false);
+  const [refused, setRefused] = useState<string | null>(null);
+  const run = (work: (landing: () => void) => Promise<string | undefined>) => {
+    if (asking) return;
+    setAsking(true);
+    setRefused(null);
+    let landed = false;
+    const landing = () => {
+      landed = true;
+      close();
+    };
+    void work(landing).then(
+      (failure) => {
+        if (!mounted.current) return;
+        setAsking(false);
+        if (failure) setRefused(failure);
+        else if (!landed) close();
+      },
+      (error: unknown) => {
+        if (!mounted.current) return;
+        setAsking(false);
+        setRefused(error instanceof Error ? error.message : String(error));
+      },
+    );
   };
+  const failureOf = (result: InlineResult) => (result.interaction.outcome === "failed" ? (result.interaction.failed ?? "The AI could not do that here.") : undefined);
   return (
     <div data-testid="inline-ai" style={{ display: "grid", gap: 2 }}>
       {busy ? (
         <p role="status" data-testid="inline-ai-thinking" style={QUIET}>
           Thinking…
+        </p>
+      ) : asking ? (
+        <p role="status" data-testid="inline-ai-asking" style={QUIET}>
+          Asking…
+        </p>
+      ) : refused ? (
+        <p role="alert" data-testid="inline-ai-failed" style={{ ...QUIET, color: "var(--graview-warn)" }}>
+          {refused}
         </p>
       ) : failed ? (
         <p role="status" style={QUIET}>
@@ -216,7 +280,7 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
       <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
         {(suggested?.offers ?? []).map((offer) => (
           <li key={offer.id}>
-            <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} onClick={() => run(() => takeOffer(env, suggested!, offer))} style={ROW}>
+            <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} onClick={() => run((landing) => takeOffer(env, suggested!, offer, landing))} style={ROW}>
               {offer.label}
               <span style={{ color: "var(--graview-ink-faint)" }}> · {offer.type === "panel" ? "a panel" : offer.type === "place" ? "go there" : offer.type === "record" ? "open it" : "suggested"}</span>
             </button>
@@ -224,21 +288,21 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
         ))}
         {fills ? (
           <li>
-            <button type="button" data-menu-item="ai-fill" onClick={() => run(() => askInline(env, "fill", target, "Fill in"))} style={ROW}>
+            <button type="button" data-menu-item="ai-fill" onClick={() => run(async (landing) => failureOf(await askInline(env, "fill", target, "Fill in", landing)))} style={ROW}>
               Fill in with AI
             </button>
           </li>
         ) : null}
         {records ? (
           <li>
-            <button type="button" data-menu-item="ai-record" onClick={() => run(() => askInline(env, "record", target, "Add one"))} style={ROW}>
+            <button type="button" data-menu-item="ai-record" onClick={() => run(async (landing) => failureOf(await askInline(env, "record", target, "Add one", landing)))} style={ROW}>
               Add one with AI
             </button>
           </li>
         ) : null}
         {panels ? (
           <li>
-            <button type="button" data-menu-item="ai-panel" onClick={() => run(() => askInline(env, "panel", target, "Draw a panel"))} style={ROW}>
+            <button type="button" data-menu-item="ai-panel" onClick={() => run(async (landing) => failureOf(await askInline(env, "panel", target, "Draw a panel", landing)))} style={ROW}>
               Draw a panel
             </button>
           </li>
