@@ -118,6 +118,24 @@ export function useChoosing(order: readonly string[]): Choosing {
       if (typing(event.target)) return;
       // The arrows move between the rows' boxes; with Shift, the rows passed are chosen.
       const on = boxOf(event.target);
+      /*
+       * TAB FROM A BOX GOES TO WHAT IS DONE WITH THE CHOSEN (the eleventh
+       * walk). The bar is a notice in the top layer, after the list in the
+       * document, so three animals chosen from the keyboard took 49 Tabs
+       * through every row after them to reach "Put on hold" (the gauntlet's
+       * talks, 64) where the pointer took one press. The boxes are one Tab
+       * stop; while something is chosen, the next stop is the bar's first act.
+       */
+      if (event.key === "Tab" && !event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey && on !== undefined && choosing) {
+        const bar = document.querySelector<HTMLElement>('[data-testid="several-bar"]');
+        const first = bar?.querySelector<HTMLElement>("[data-mutation]:not([disabled])") ?? bar?.querySelector<HTMLElement>("button:not([disabled])");
+        if (first) {
+          event.preventDefault();
+          event.stopPropagation();
+          first.focus();
+          return;
+        }
+      }
       const step = STEPS[event.key];
       if (on !== undefined && step !== undefined && !event.metaKey && !event.ctrlKey && !event.altKey) {
         const from = order.indexOf(on);
