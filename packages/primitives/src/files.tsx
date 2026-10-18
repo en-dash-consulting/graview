@@ -1,5 +1,5 @@
-import { fieldWords, fileSrc, filesOf, isFileValue, isImage, isVideo, LOCAL_LAYERS, videoClock, videoWords, type FileValue, type HostFiles } from "@graview/core";
-import { fileFieldsOf, fileWords } from "@graview/core/blocks";
+import { fieldWords, fileSrc, filesOf, isFileValue, isImage, isVideo, LOCAL_LAYERS, videoWords, type FileValue, type HostFiles } from "@graview/core";
+import { fileFieldsOf, fileWords, videoClock } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider";
 import { useEffect, useId, useRef, useState, type ClipboardEvent, type CSSProperties, type DragEvent, type ReactNode } from "react";

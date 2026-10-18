@@ -20,6 +20,13 @@ Everything a Graview app declares, and the checker that verifies it.
   question rather than a stack.
 - **Permissions** — a `Principal` is an `Author` with roles, so what the log
   blames is what the policy judged.
+- **Files** — a record holds a picture, a video or a document the host
+  stored (`imageField`, `videoField`, `fileField`; `"image"`, `"video"` and
+  `"file"` in a document, and a list of any): a `FileValue`, its `href` a
+  path on the host, uploaded through the page's `HostFiles` and drawn where
+  the host serves it (`fileSrc`). A video's value may say its `poster`, its
+  `duration` in seconds and its `captions` (a WebVTT file on the host), and
+  is said "a 45-second video" (`videoWords`).
 - **Theme** — the token contract, the two shipped palettes, and a contrast
   checker that measures a brand's palette before it ships. The rest of the
   look is data beside them — `SHAPE`, `TYPOGRAPHY` and `isoShade(scheme)`,

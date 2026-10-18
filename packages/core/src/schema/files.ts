@@ -133,15 +133,6 @@ export function videoWords(file: { readonly duration?: number }): string {
   return `a ${hours}-hour${minutes % 60 > 0 ? ` ${minutes % 60}-minute` : ""} video`;
 }
 
-/** A video's length as a player's clock says it: "0:45", "2:05", "1:02:05". */
-export function videoClock(duration: number): string {
-  const total = Math.max(0, Math.round(duration));
-  const two = (n: number) => String(n).padStart(2, "0");
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  return hours > 0 ? `${hours}:${two(minutes)}:${two(total % 60)}` : `${minutes}:${two(total % 60)}`;
-}
-
 /** What a file field holds: a picture, a video, or a file of any type. */
 export type FileKind = "image" | "video" | "file";
 

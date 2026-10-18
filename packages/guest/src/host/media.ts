@@ -1,4 +1,5 @@
-import { isFileValue, isImage, isVideo, videoClock, videoWords, type FileValue } from "@graview/core";
+import { isFileValue, isImage, isVideo, videoWords, type FileValue } from "@graview/core";
+import { videoClock } from "@graview/core/blocks";
 import type { GuestNode, GuestProps } from "../protocol.js";
 
 /*

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 618,
+  "gzipped": 210,
+  "changeset": "a-record-holds-a-video.md",
+  "note": "Raised when a record came to hold a video (0.1.37): a video field's schema is built with the document's fields up front — the value's poster, length and captions checked as a path on the host and a length above 0 — and the player, the card's poster and the view's player are behind the files' door and the guest host's. Measured at 524_531 against 523_913 minified."
+}

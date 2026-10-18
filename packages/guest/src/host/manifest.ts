@@ -19,7 +19,9 @@ import { plainNode, readAcross, type GuestViewInput } from "./session.js";
  *                them and they stay editable
  *   pictures     true, or { width }: each file on a record it is handed
  *                comes as a `GuestFile`, a picture with an address the
- *                host made from the bytes (FR-175, pictures.ts)
+ *                host made from the bytes (FR-175, pictures.ts); and it
+ *                may place a record's video (`<graview-video>`) and open
+ *                the host's full-screen viewer (`data-lightbox`, media.ts)
  *
  * What it is handed is the viewer's sight — never more — cut down to the
  * kind it is attached to and what it reads. A record the viewer may not see

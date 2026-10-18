@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker",
+  "minified": 974,
+  "gzipped": 481,
+  "note": "Raised when a record came to hold a video (0.1.37): the host's half of a view's `<graview-video>` and `data-lightbox`, as above. 974 / 481 more. Measured at 20_169 / 8_301 against 19_195 / 7_820."
+}

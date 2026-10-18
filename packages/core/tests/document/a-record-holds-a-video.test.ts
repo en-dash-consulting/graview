@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { compileDocument } from "../../src/check.js";
-import { fieldSpecOf, fileFieldsOf, firstPicture, resolveBlocks, compileBlocks, blockContextFor } from "../../src/blocks.js";
+import { fieldSpecOf, fileFieldsOf, firstPicture, resolveBlocks, compileBlocks, blockContextFor, videoClock } from "../../src/blocks.js";
 import { documentTypes } from "../../src/cli/types.js";
 import { toDocument, type GraviewDocument } from "../../src/document/index.js";
 import { formFields } from "../../src/forms.js";
-import { createSchema, defineApp, defineNode, fileKindOf, isFileValue, isVideo, refusalOf, Store, videoClock, videoField, videoWords, z, type AnySchema, type FileValue, type GraviewApp } from "../../src/index.js";
+import { createSchema, defineApp, defineNode, fileKindOf, isFileValue, isVideo, refusalOf, Store, videoField, videoWords, z, type AnySchema, type FileValue, type GraviewApp } from "../../src/index.js";
 import { readableFields } from "../../src/words.js";
 import { argShape } from "../../src/mutations/arg-shape.js";
 import { mutationToolSchema } from "../../src/json-schema.js";

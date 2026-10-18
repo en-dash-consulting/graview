@@ -15,6 +15,15 @@ export const fileWords = (file: FileValue): string => file.caption?.trim() || fi
 /** What a file is said as to somebody listening: its words, and for a video how long it is (0.1.37): "beach.mov, a 45-second video". */
 export const fileSaid = (file: FileValue): string => (isVideo(file) ? `${fileWords(file)}, ${videoWords(file)}` : fileWords(file));
 
+/** A video's length as a player's clock says it (0.1.37): "0:45", "2:05", "1:02:05". */
+export function videoClock(duration: number): string {
+  const total = Math.max(0, Math.round(duration));
+  const two = (n: number) => String(n).padStart(2, "0");
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  return hours > 0 ? `${hours}:${two(minutes)}:${two(total % 60)}` : `${minutes}:${two(total % 60)}`;
+}
+
 /** The fields of a kind that hold files — one, or a list of them — in declared order. */
 export function fileFieldsOf(definition: { readonly fields?: unknown } | undefined): readonly string[] {
   const shape = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {};
