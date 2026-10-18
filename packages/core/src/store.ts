@@ -763,7 +763,13 @@ export class Store<S extends AnySchema> {
 
   /** The declared acts a derived act resolves its permission through; keeping a link, those that make or break its relation. */
   private viaOf(mutation: AnyMutationDefinition<S> | undefined, call?: MutationCall): readonly string[] | undefined {
-    if (mutation !== undefined && mutation === this.keeper) return keepLinkVia(this.mutations.values(), call?.args["kind"]);
+    if (mutation !== undefined && mutation === this.keeper) {
+      const declared = keepLinkVia(this.mutations.values(), call?.args["kind"]);
+      if (declared.length > 0) return declared;
+      // A relation only its derived connect and disconnect make or break: kept by whoever those are permitted to.
+      const all = [...this.mutations.values()];
+      return [...new Set(all.filter((one) => one.derived?.relation === call?.args["kind"]).flatMap((one) => derivedVia(this.schema, all, one) ?? []))];
+    }
     if (!mutation?.derived) return undefined;
     return derivedVia(this.schema, [...this.mutations.values()], mutation);
   }

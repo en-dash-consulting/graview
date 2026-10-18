@@ -55,7 +55,9 @@ export function keepLinkMutation<S extends AnySchema>(schema: S): AnyMutationDef
  * makes or breaks links of THAT relation — the policy's own grants, read
  * again. A seat that may link a lease to its property may keep such a link,
  * and is not thereby the judge of a link between two people; a link of a
- * relation no act makes or breaks is kept by nobody a policy names.
+ * relation no declared act makes or breaks is kept through its derived
+ * connect and disconnect, by whoever may make or write the kind it leaves
+ * (the store's `viaOf`).
  */
 export const keepLinkVia = <S extends AnySchema>(mutations: Iterable<AnyMutationDefinition<S>>, relation: unknown): readonly string[] =>
   [...mutations].filter((one) => !one.derived && one.name !== KEEP_LINK && typeof relation === "string" && (one.connects?.includes(relation) || one.severs?.includes(relation))).map((one) => one.name);

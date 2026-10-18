@@ -115,3 +115,35 @@ describe("keeping a link", () => {
     expect(may(storeOf(), "anyone", knows)).toBe(true);
   });
 });
+
+/*
+ * AND A RELATION NO DECLARED ACT MAKES OR BREAKS (0.1.37): it comes with its
+ * derived connect and disconnect, permitted to whoever may make or write the
+ * kind it leaves — so a link the tidying actor drew of it is kept by that
+ * same seat, not by nobody a policy names.
+ */
+describe("keeping a link of a relation only its derived acts make", () => {
+  const managed = defineNode("property", { fields: z.object({ label: z.string() }), edges: { managedBy: { to: ["person"], cardinality: "one" } } });
+  const plain = createSchema([lease, managed, person]);
+  const link = { kind: "managedBy", from: "property:harbor", to: "person:ann" };
+  const store = new Store<AnySchema>({
+    schema: plain,
+    mutations: [linkLease, unlinkLease, introduce, addProperty] as never,
+    policy,
+    snapshot: {
+      nodes: [
+        { id: "property:harbor", kind: "property", label: "12 Harbor Street" },
+        { id: "person:ann", kind: "person", label: "Ann" },
+      ] as never,
+      edges: [],
+    },
+  });
+  store.append([{ primitives: [{ op: "add-edge", edge: link }], author: tidying, intent: "Tidy", lineage: { basis: "the listing names her", confidence: 0.6 } }]);
+
+  it("is permitted to a seat that may make the kind the relation leaves, as its derived connect is, and to no other", () => {
+    expect(may(store, "clerk", link as never)).toBe(true);
+    expect(may(store, "host", link as never)).toBe(false);
+    store.apply({ name: KEEP_LINK, args: link }, { author: seat("clerk") });
+    expect(isProvisional(store, link)).toBe(false);
+  });
+});
