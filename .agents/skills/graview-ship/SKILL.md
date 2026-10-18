@@ -95,9 +95,10 @@ here requires a service.
 
    **Files are yours to store.** An `image`/`file` field keeps a `FileValue`;
    its `href` is your path. Hand `mount` `files: { upload, maxBytes, kinds }`
-   (dev: `devFiles()`, `filesAt(…)`). Serve each as its bytes' type,
-   `nosniff`, a `sandbox` CSP on all but a PDF (an SVG runs script
-   otherwise), only to a seat that `seesId` a record holding it.
+   (dev: `devFiles()`; under a base, `filesAt(base + "/graview/files")`).
+   Serve each as its bytes' type, `nosniff`, a `sandbox` CSP on all but a
+   PDF (an SVG runs script otherwise), only to a seat that `seesId` a record
+   holding it.
 
 5. **The machine under the dev server is a door.** A locally-run product
    very often has a coding agent installed, logged in and paid for; the

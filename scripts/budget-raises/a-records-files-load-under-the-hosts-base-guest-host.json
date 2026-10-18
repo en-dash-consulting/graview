@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 170,
+  "gzipped": 70,
+  "note": "Raised when a frame view the framework mounts came to fetch a record's files where the page's host serves them (0.1.36): `guestView` reads the page's files and hands their `src` as the view's `file` unless the view gives one. 19_165 / 9_049 before it, 19_331 / 9_118 with it: 166 / 69 more."
+}
