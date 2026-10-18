@@ -82,6 +82,18 @@ describe("a date and time is kept as an instant and read on the reader's clock",
     expect(wallOfStored("not a day")).toBeUndefined();
   });
 
+  it("reads an instant as a record keeps one, pasted with its seconds and its zone, on the reader's clock (the twelfth walk)", () => {
+    // A festival's screening kept as "…-05:00" was refused by its own editor: "Not a date this reads".
+    const stored = storedOfWall({ day: "2026-10-20", minutes: 15 * 60 }, { time: true, instant: true });
+    expect(read(stored)).toEqual({ day: "2026-10-20", minutes: 15 * 60 });
+    expect(read(new Date(stored).toISOString())).toEqual({ day: "2026-10-20", minutes: 15 * 60 });
+    expect(read("2026-10-20T15:00:00")).toEqual({ day: "2026-10-20", minutes: 15 * 60 });
+    const offset = -new Date(stored).getTimezoneOffset();
+    const sign = offset >= 0 ? "+" : "-";
+    const pad = (n: number) => String(Math.abs(n)).padStart(2, "0");
+    expect(read(`2026-10-20T15:00:00${sign}${pad(Math.trunc(offset / 60))}:${pad(offset % 60)}`)).toEqual({ day: "2026-10-20", minutes: 15 * 60 });
+  });
+
   it("names the reader's zone", () => {
     const zone = zoneSaid();
     expect(zone.zone.length).toBeGreaterThan(0);
