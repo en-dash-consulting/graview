@@ -2,7 +2,8 @@
 id: "279e66f8-b9a9-4fa7-afa9-a330db414498"
 level: "epic"
 title: "What the roadmap asks for 0.1.37: times in the app's zone, acts for every relation, video on records, and what was left open"
-status: "pending"
+status: "completed"
+completedAt: "2026-10-19T02:00:00.000Z"
 priority: "high"
 tags:
   - "roadmap"
@@ -26,3 +27,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [0.1.37 · Video on records: the framework half](./0-1-37-video-on-records-the-framework.md) | completed |
 | [0.1.37 · The week's lines are drawn under a throttled CPU](./0-1-37-the-weeks-lines-are-drawn-under.md) | completed |
 | [0.1.37 · A rule's today() is the app's day, not UTC's](./0-1-37-a-rules-today-is-the-apps-day.md) | completed |
+
+## Notes
+
+2026-10-19: every task completed on feat/0-1-37-additions. Beyond the five tasks: the structural findings feature is finished (no import cycle left in any package, core's zones pinned, analysis re-run), keep-link is permitted through a relation's derived acts, a served app with no zone hears its day turn, a relation can say acts: "none" (the studio's meta relations do, after the derived acts pushed Add a field off a kind's strip), and Walkthrough XII (a film festival) found W-232 to W-238, all fixed; its task stands failing by its own rule and Walkthrough XIII carries its open list. Merging five branches and a walk took raises for what each measured apart (scripts/budget-raises/the-0-1-37-batch-*).
