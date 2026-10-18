@@ -221,7 +221,7 @@ describe("graview check", () => {
     const found = result.findings.filter((f) => f.code === "field-without-writer");
     expect(found.map((f) => f.where)).toEqual(['defineNode("requirement").fields.priority']);
     expect(found[0]?.fix).toContain('fixed: { priority: "why it never changes" }');
-    expect(result.ok).toBe(true); // a warning, symmetric with edge-without-severer
+    expect(result.ok).toBe(true); // a warning, not an error
   });
 
   it("warns when an app's own edit act leaves derived fields stranded", () => {

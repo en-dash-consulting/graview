@@ -35,7 +35,7 @@ export const SURFACES = [
     paths: [
       /^packages\/tools\/src\/agent\/(tools|adapters)\.ts$/,
       /^packages\/tools\/src\/(mcp-stdio|derive)\.ts$/,
-      /^packages\/core\/src\/mutations\/(derive-edits|form|node-ref)\.ts$/,
+      /^packages\/core\/src\/mutations\/(derive-edits|derive-relations|form|node-ref)\.ts$/,
     ],
   },
 ];

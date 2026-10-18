@@ -1,6 +1,7 @@
 import type { GraviewApp } from "../app.js";
 import { deriveArchiveMutations, deriveEditMutations, deriveRemoveMutations } from "../mutations/derive-edits.js";
 import { deriveRepeatMutations } from "../mutations/derive-repeats.js";
+import { deriveRelationMutations } from "../mutations/derive-relations.js";
 import type { AnySchema } from "../schema/schema.js";
 
 /**
@@ -36,7 +37,6 @@ import {
   checkRoutes,
   checkSettings,
   checkShippedLenses,
-  checkUnmakeable,
   checkArrangement,
   checkViewSpecs,
   checkComputed,
@@ -78,8 +78,8 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   const declaredMutations = app.mutations ?? [];
   const derivedEdits = deriveEditMutations(app.schema, declaredMutations);
   const derivedRemoves = deriveRemoveMutations(app.schema, declaredMutations);
-  // Declared and derived: a grant may name `edit-<kind>`, `remove-<kind>`, `archive-<kind>`, `unarchive-<kind>` or `merge-<kind>`, and a repair may too.
-  const mutations = new Map([...declaredMutations, ...derivedEdits, ...derivedRemoves, ...deriveArchiveMutations(app.schema, declaredMutations), ...deriveRepeatMutations(app.schema, declaredMutations)].map((m) => [m.name, m]));
+  // Declared and derived: a grant may name `edit-<kind>`, `remove-<kind>`, `archive-<kind>`, `unarchive-<kind>`, `merge-<kind>` or a relation's `connect-<kind>-<relation>` and `disconnect-<kind>-<relation>`, and a repair may too.
+  const mutations = new Map([...declaredMutations, ...derivedEdits, ...derivedRemoves, ...deriveArchiveMutations(app.schema, declaredMutations), ...deriveRepeatMutations(app.schema, declaredMutations), ...deriveRelationMutations(app.schema, declaredMutations)].map((m) => [m.name, m]));
   const invariants = new Map((app.invariants ?? []).map((i) => [i.name, i]));
 
   const add = (f: Finding) => findings.push(f);
@@ -98,7 +98,6 @@ export function checkApp<S extends AnySchema>(app: GraviewApp<S>): CheckResult {
   checkModules(ctx);
   checkReadings(ctx);
   checkActsFromEnds(ctx, writtenByAModel);
-  checkUnmakeable(ctx);
   checkEditableFields(ctx);
   checkPolicy(ctx);
   checkPeople(ctx);

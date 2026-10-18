@@ -26,7 +26,7 @@ const tracker = {
   acts: {
     "add-task": { title: "Add a task", creates: "task" },
     "add-module": { title: "Add a module", creates: "module" },
-    // Connects and nothing severs: the checker warns of a relation that can never be unmade.
+    // Connects from a task with no words for the module end: the checker warns of the far-end reading.
     file: { title: "File it", on: "task", connects: "in" },
     finish: { title: "Finish", on: "task", sets: { done: true } },
     "rename-module": { title: "Rename", on: "module", writes: ["name"] },
@@ -41,11 +41,11 @@ describe("a document's findings are located by their JSON path", () => {
   const fromTheChecker = findings.filter((f) => f.code.startsWith("check:"));
 
   it("finds what it should, so the rest of the test is asked of something", () => {
-    expect(fromTheChecker.map((f) => f.code)).toEqual(expect.arrayContaining(["check:repair-wrong-kind", "check:edge-without-severer"]));
+    expect(fromTheChecker.map((f) => f.code)).toEqual(expect.arrayContaining(["check:repair-wrong-kind", "check:act-without-far-end-reading"]));
   });
 
   it("locates an act's finding at acts.<act>, and a rule's repair at rules.<rule>.repairs.<n>", () => {
-    expect(fromTheChecker.find((f) => f.code === "check:edge-without-severer")?.path).toBe("acts.file.connects");
+    expect(fromTheChecker.find((f) => f.code === "check:act-without-far-end-reading")?.path).toBe("acts.file");
     expect(fromTheChecker.find((f) => f.code === "check:repair-wrong-kind")?.path).toBe("rules.no-orphan-task.repairs.1");
   });
 

@@ -94,7 +94,9 @@ describe("a ghost", () => {
   it("proposes a value per field, previewed in the act's own words, and accepted in part as one batch with its lineage", async () => {
     const store = make();
     const result = await fillHere({ fast: stubFast({ prefer: [/done/, /large/] }) }, { store, target, principal: me, interaction: "ai-2" });
-    expect(result.ghost?.proposals.map((proposal) => proposal.id)).toEqual(["fill:t-1:status:done", "fill:t-1:size:large"]);
+    // And the owner, through the connect its relation is given (Roadmap f-relation-acts-derived).
+    expect(result.ghost?.proposals.map((proposal) => proposal.id)).toEqual(["fill:t-1:status:done", "fill:t-1:size:large", "fill:t-1:owner:p-ann"]);
+    expect(result.ghost?.proposals[2]?.call).toEqual({ name: "connect-task-owner", args: { id: "t-1", to: "p-ann" } });
     expect(store.graph.getNode("t-1")).not.toHaveProperty("status");
     const kept = acceptGhost(store, result.ghost!, { author: me, ids: ["fill:t-1:status:done"] });
     expect(kept.ok).toBe(true);

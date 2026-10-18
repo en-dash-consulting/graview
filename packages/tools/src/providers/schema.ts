@@ -66,6 +66,8 @@ export function schemaProvider<S extends AnySchema>(): AffordanceProvider<S> {
             const makes = (mutation.connects ?? []).includes(edge.kind);
             const breaks = (mutation.severs ?? []).includes(edge.kind);
             if (!makes && !breaks) continue;
+            // A relation's derived connect or disconnect is its own kind's: a line another kind's shared relation drew is not its to offer.
+            if (mutation.derived?.relation !== undefined && mutation.derived.kind !== fromNode.kind) continue;
             const args: Record<string, unknown> = {};
             const open: OpenParameter[] = [];
             const refs = nodeRefArgs(mutation.input);
