@@ -1,0 +1,41 @@
+{
+  "id": "react/react/src-2",
+  "name": "Src 2",
+  "description": "15 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/context.tsx",
+    "packages/react/src/hooks.ts",
+    "packages/react/src/linked-reads.ts",
+    "packages/react/src/menu-sections.tsx",
+    "packages/react/src/menu-types.ts",
+    "packages/react/src/motion-store.ts",
+    "packages/react/src/motion.ts",
+    "packages/react/src/occupants.tsx",
+    "packages/react/src/past.ts",
+    "packages/react/src/pointer.ts",
+    "packages/react/src/resolved-view.tsx",
+    "packages/react/src/robot.ts",
+    "packages/react/src/seat-talk.ts",
+    "packages/react/src/url-sync.ts",
+    "packages/react/src/view-registry.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/context.tsx",
+    "packages/react/src/hooks.ts",
+    "packages/react/src/menu-sections.tsx",
+    "packages/react/src/menu-types.ts",
+    "packages/react/src/motion.ts",
+    "packages/react/src/occupants.tsx",
+    "packages/react/src/past.ts",
+    "packages/react/src/pointer.ts",
+    "packages/react/src/resolved-view.tsx",
+    "packages/react/src/robot.ts",
+    "packages/react/src/seat-talk.ts",
+    "packages/react/src/url-sync.ts",
+    "packages/react/src/view-registry.ts"
+  ],
+  "cohesion": 0.55,
+  "coupling": 0.45,
+  "fileCount": 15,
+  "lineCount": 3457
+}

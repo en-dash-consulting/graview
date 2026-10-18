@@ -1,0 +1,25 @@
+{
+  "id": "react/layer",
+  "name": "Layer",
+  "description": "6 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/map-choice.ts",
+    "packages/react/src/record-links-layer.tsx",
+    "packages/react/src/record-links.ts",
+    "packages/react/src/ribbon-width.ts",
+    "packages/react/src/ribbons-layer.tsx",
+    "packages/react/src/ribbons.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/map-choice.ts",
+    "packages/react/src/record-links-layer.tsx",
+    "packages/react/src/record-links.ts",
+    "packages/react/src/ribbon-width.ts",
+    "packages/react/src/ribbons-layer.tsx",
+    "packages/react/src/ribbons.ts"
+  ],
+  "cohesion": 0.6,
+  "coupling": 0.4,
+  "fileCount": 6,
+  "lineCount": 1100
+}

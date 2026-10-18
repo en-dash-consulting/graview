@@ -4,8 +4,7 @@
   "languages": [
     "typescript",
     "javascript",
-    "python",
-    "shell"
+    "python"
   ],
   "frameworks": [
     "react",

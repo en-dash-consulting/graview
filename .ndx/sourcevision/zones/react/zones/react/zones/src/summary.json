@@ -1,0 +1,28 @@
+{
+  "id": "react/react/src",
+  "name": "Src",
+  "description": "8 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/affordances.ts",
+    "packages/react/src/error-report.ts",
+    "packages/react/src/index.ts",
+    "packages/react/src/lazy-part.tsx",
+    "packages/react/src/scene.tsx",
+    "packages/react/src/seat-marks.tsx",
+    "packages/react/src/view-boundary.tsx",
+    "packages/react/src/view-marks.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/error-report.ts",
+    "packages/react/src/index.ts",
+    "packages/react/src/lazy-part.tsx",
+    "packages/react/src/scene.tsx",
+    "packages/react/src/seat-marks.tsx",
+    "packages/react/src/view-boundary.tsx",
+    "packages/react/src/view-marks.ts"
+  ],
+  "cohesion": 0.35,
+  "coupling": 0.65,
+  "fileCount": 8,
+  "lineCount": 744
+}

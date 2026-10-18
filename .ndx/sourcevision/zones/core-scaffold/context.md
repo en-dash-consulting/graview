@@ -5,33 +5,30 @@
 <zone>
 
 Zone: Core Scaffold (`core-scaffold`)
-Files: 9, Cohesion: 0.78, Coupling: 0.22
-Risk: healthy (score: 0.22)
-Description: 9 files, primarily TypeScript
-Entry points: packages/core/src/cli/create.ts, packages/core/src/scaffold/agents.ts, packages/core/src/scaffold/index.ts, packages/core/src/scaffold/lens.ts
-Lines: 2964
+Files: 8, Cohesion: 0.86, Coupling: 0.14
+Risk: healthy (score: 0.14)
+Description: 9 files, mostly utilities and entry points; entry points agents.ts, create.ts, lens.ts; imports Core Document; imported by Packages and Core Document.
+Entry points: packages/core/src/scaffold/agents.ts, packages/core/src/scaffold/index.ts, packages/core/src/scaffold/lens.ts
+Lines: 2555
 
 </zone>
 
 <files>
 
-packages/core/src/cli/create.ts (TypeScript, 422 lines, source)
 packages/core/src/scaffold/agents.ts (TypeScript, 96 lines, source)
-packages/core/src/scaffold/domain.ts (TypeScript, 339 lines, source)
+packages/core/src/scaffold/domain.ts (TypeScript, 346 lines, source)
 packages/core/src/scaffold/from-template.ts (TypeScript, 166 lines, source)
 packages/core/src/scaffold/index.ts (TypeScript, 273 lines, source)
 packages/core/src/scaffold/lens.ts (TypeScript, 224 lines, source)
 packages/core/src/scaffold/names.ts (TypeScript, 120 lines, source)
-packages/core/src/scaffold/project.ts (TypeScript, 746 lines, source)
-packages/core/src/scaffold/ui.ts (TypeScript, 578 lines, source)
+packages/core/src/scaffold/project.ts (TypeScript, 749 lines, source)
+packages/core/src/scaffold/ui.ts (TypeScript, 581 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts {LINKED_PACKAGES, scaffoldProject, validateScaffoldOptions}
-  packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts {ScaffoldOptions}
   packages/core/src/scaffold/agents.ts → packages/core/src/scaffold/names.ts {Ids}
   packages/core/src/scaffold/domain.ts → packages/core/src/scaffold/names.ts {escapeString, escapeTemplate}
   packages/core/src/scaffold/domain.ts → packages/core/src/scaffold/names.ts {Ids}
@@ -53,16 +50,24 @@ Internal:
   packages/core/src/scaffold/ui.ts → packages/core/src/scaffold/names.ts {Ids}
 
 Outgoing (this zone → other zones):
-  → core-document: packages/core/src/cli/create.ts → packages/core/src/document/graview-template.ts; packages/core/src/cli/create.ts → packages/core/src/document/instantiate-template.ts; packages/core/src/scaffold/from-template.ts → packages/core/src/document/graview-template.ts; packages/core/src/scaffold/index.ts → packages/core/src/document/graview-template.ts; packages/core/src/scaffold/index.ts → packages/core/src/schema/define-node.ts
+  → core-document: packages/core/src/scaffold/from-template.ts → packages/core/src/document/graview-template.ts; packages/core/src/scaffold/index.ts → packages/core/src/document/graview-template.ts
+  → core-schema: packages/core/src/scaffold/index.ts → packages/core/src/schema/define-node.ts
 
 Incoming (other zones → this zone):
-  ← core-document: packages/core/src/cli/docs.ts → packages/core/src/scaffold/agents.ts; packages/core/src/cli/index.ts → packages/core/src/cli/create.ts; packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts; packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts
-  ← tests-core-unit: packages/core/tests/unit/a-lens-started.test.ts → packages/core/src/scaffold/lens.ts; packages/core/tests/unit/a-project-made-from-a-template.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/a-project-made-from-a-template.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/a-project-made-from-a-template.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/an-app-made-inside-another-workspace-installs-itself.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/an-app-made-inside-another-workspace-installs-itself.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/scaffold/agents.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/the-scaffold-and-the-skills-teach-the-document-path.test.ts → packages/core/src/scaffold/index.ts
+  ← core-cli: packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts; packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts; packages/core/src/cli/docs.ts → packages/core/src/scaffold/agents.ts; packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts; packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts
+  ← tests-core-unit: packages/core/tests/unit/a-lens-started.test.ts → packages/core/src/scaffold/lens.ts; packages/core/tests/unit/a-project-made-from-a-template.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/scaffold/agents.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/scaffold/index.ts; packages/core/tests/unit/the-scaffold-and-the-skills-teach-the-document-path.test.ts → packages/core/src/scaffold/index.ts
 
 </imports>
 
+<findings>
+
+[observation] [info] High cohesion (0.86) — files are tightly interconnected
+
+</findings>
+
 <insights>
 
-- [call graph] 117 internal calls, 2 outgoing, 76 incoming (cohesion: 0.98, coupling: 0.02)
+- High cohesion (0.86) — files are tightly interconnected
+- [call graph] 92 internal calls, 1 outgoing, 52 incoming (cohesion: 0.99, coupling: 0.01)
 
 </insights>

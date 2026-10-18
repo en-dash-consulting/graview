@@ -7,7 +7,7 @@
 Zone: Tests Apps (`tests-apps`)
 Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 5 files, primarily TypeScript
+Description: Non-source files in apps: domain.test.ts, lens-reuse.test.ts, the-awkward-shapes.test.ts (+2 more)
 Lines: 611
 
 </zone>

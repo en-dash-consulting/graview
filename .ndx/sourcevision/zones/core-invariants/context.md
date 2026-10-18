@@ -5,64 +5,62 @@
 <zone>
 
 Zone: Core Invariants (`core-invariants`)
-Files: 4, Cohesion: 0.13, Coupling: 0.87
-Risk: catastrophic (score: 0.87)
-Description: 4 files, mostly utilities and types; entry points types.ts, schema.ts, bind.ts; imports Core and Core Graph; imported by Core and Core Graph.
-Entry points: packages/core/src/bind.ts, packages/core/src/invariants/engine.ts, packages/core/src/invariants/types.ts, packages/core/src/schema/schema.ts
-Lines: 530
+Files: 4, Cohesion: 0.18, Coupling: 0.82
+Risk: catastrophic (score: 0.82)
+Description: Declared zone anchor (4 files).
+Entry points: packages/core/src/invariants/broken.ts, packages/core/src/invariants/engine.ts, packages/core/src/invariants/line.ts, packages/core/src/invariants/types.ts
+Lines: 507
 
 </zone>
 
 <files>
 
-packages/core/src/bind.ts (TypeScript, 69 lines, source)
-packages/core/src/invariants/engine.ts (TypeScript, 189 lines, source)
-packages/core/src/invariants/types.ts (TypeScript, 97 lines, source)
-packages/core/src/schema/schema.ts (TypeScript, 175 lines, source)
+packages/core/src/invariants/broken.ts (TypeScript, 13 lines, source)
+packages/core/src/invariants/engine.ts (TypeScript, 228 lines, source)
+packages/core/src/invariants/line.ts (TypeScript, 107 lines, source)
+packages/core/src/invariants/types.ts (TypeScript, 159 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/core/src/bind.ts → packages/core/src/invariants/engine.ts {defineInvariant}
-  packages/core/src/bind.ts → packages/core/src/invariants/types.ts {InvariantDefinition, InvariantEvalArgs, Violation}
-  packages/core/src/bind.ts → packages/core/src/schema/schema.ts {AnySchema, KindOfSchema, NodeOfKind}
   packages/core/src/invariants/engine.ts → packages/core/src/invariants/types.ts {EvaluateOptions, InvariantContext, InvariantDefinition, InvariantEvalArgs, Violation}
-  packages/core/src/invariants/engine.ts → packages/core/src/schema/schema.ts {AnySchema, KindOfSchema, NodeOfKind, NodeOfSchema}
-  packages/core/src/invariants/types.ts → packages/core/src/schema/schema.ts {AnySchema, KindOfSchema, NodeOfKind, NodeOfSchema}
+  packages/core/src/invariants/types.ts → packages/core/src/invariants/line.ts {RuleLine}
 
 Outgoing (this zone → other zones):
-  → core: packages/core/src/invariants/engine.ts → packages/core/src/schema/define-node.ts; packages/core/src/schema/schema.ts → packages/core/src/schema/types.ts
-  → core-document: packages/core/src/bind.ts → packages/core/src/views/types.ts; packages/core/src/bind.ts → packages/core/src/views/types.ts; packages/core/src/schema/schema.ts → packages/core/src/schema/zod.ts
+  → core: packages/core/src/invariants/engine.ts → packages/core/src/days.ts
+  → core-document: packages/core/src/invariants/types.ts → packages/core/src/document/expr/evaluate.ts; packages/core/src/invariants/types.ts → packages/core/src/document/expr/parse.ts; packages/core/src/invariants/types.ts → packages/core/src/document/template.ts
   → core-graph: packages/core/src/invariants/engine.ts → packages/core/src/graph/graph.ts; packages/core/src/invariants/types.ts → packages/core/src/graph/types.ts
-  → core-mutations: packages/core/src/bind.ts → packages/core/src/mutations/types.ts
+  → core-schema: packages/core/src/invariants/engine.ts → packages/core/src/schema/define-node.ts; packages/core/src/invariants/engine.ts → packages/core/src/schema/schema.ts; packages/core/src/invariants/types.ts → packages/core/src/schema/schema.ts
 
 Incoming (other zones → this zone):
-  ← check: packages/core/src/cli/check/context.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/intelligence.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/modules.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/settings.ts → packages/core/src/schema/schema.ts; packages/core/src/schema/path.ts → packages/core/src/schema/schema.ts
-  ← core: packages/core/src/cli/check/relations.ts → packages/core/src/schema/schema.ts; packages/core/src/document/describe-coverage.ts → packages/core/src/schema/schema.ts; packages/core/src/document/describe-place.ts → packages/core/src/schema/schema.ts; packages/core/src/labels.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/words.ts → packages/core/src/schema/schema.ts; packages/core/src/search.ts → packages/core/src/schema/schema.ts
-  ← core-cli: packages/core/src/cli/check.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/routes.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/views.ts → packages/core/src/schema/schema.ts
-  ← core-document: packages/core/src/app.ts → packages/core/src/invariants/types.ts; packages/core/src/app.ts → packages/core/src/schema/schema.ts; packages/core/src/arrangement.ts → packages/core/src/schema/schema.ts; packages/core/src/beginning.ts → packages/core/src/schema/schema.ts; packages/core/src/city.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/arrangement.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/beginnings.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/brand.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/city.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/computed.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/policy.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/describe.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/docs.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/index.ts → packages/core/src/schema/schema.ts; packages/core/src/conformance/index.ts → packages/core/src/schema/schema.ts; packages/core/src/extend.ts → packages/core/src/invariants/types.ts; packages/core/src/extend.ts → packages/core/src/schema/schema.ts; packages/core/src/extend.ts → packages/core/src/schema/schema.ts; packages/core/src/index.ts → packages/core/src/bind.ts; packages/core/src/index.ts → packages/core/src/bind.ts; packages/core/src/index.ts → packages/core/src/invariants/engine.ts; packages/core/src/index.ts → packages/core/src/invariants/types.ts; packages/core/src/index.ts → packages/core/src/schema/schema.ts; packages/core/src/index.ts → packages/core/src/schema/schema.ts; packages/core/src/ops/log.ts → packages/core/src/schema/schema.ts; packages/core/src/permissions/policy.ts → packages/core/src/schema/schema.ts; packages/core/src/places.ts → packages/core/src/schema/schema.ts; packages/core/src/scene-districts.ts → packages/core/src/schema/schema.ts; packages/core/src/schema/json-schema.ts → packages/core/src/schema/schema.ts; packages/core/src/seen.ts → packages/core/src/invariants/types.ts; packages/core/src/seen.ts → packages/core/src/schema/schema.ts; packages/core/src/store.ts → packages/core/src/invariants/engine.ts; packages/core/src/store.ts → packages/core/src/invariants/types.ts; packages/core/src/store.ts → packages/core/src/schema/schema.ts; packages/core/src/testing.ts → packages/core/src/bind.ts; packages/core/src/testing.ts → packages/core/src/schema/schema.ts; packages/core/src/views/types.ts → packages/core/src/schema/schema.ts; packages/core/src/watched.ts → packages/core/src/schema/schema.ts; packages/core/src/who.ts → packages/core/src/schema/schema.ts
-  ← core-graph: packages/core/src/graph/graph.ts → packages/core/src/schema/schema.ts; packages/core/src/graph/graph.ts → packages/core/src/schema/schema.ts; packages/core/src/integrity.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/schema/schema.ts; packages/core/src/validate-graph.ts → packages/core/src/invariants/engine.ts; packages/core/src/validate-graph.ts → packages/core/src/invariants/types.ts; packages/core/src/validate-graph.ts → packages/core/src/schema/schema.ts
-  ← core-mutations: packages/core/src/cli/check/fields.ts → packages/core/src/schema/schema.ts; packages/core/src/columns.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/types.ts → packages/core/src/schema/schema.ts
-  ← core-sync: packages/core/src/sync/conflict.ts → packages/core/src/invariants/engine.ts; packages/core/src/sync/conflict.ts → packages/core/src/invariants/types.ts; packages/core/src/sync/conflict.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/engine.ts → packages/core/src/schema/schema.ts
-  ← document: packages/core/src/document/blocks.ts → packages/core/src/schema/schema.ts; packages/core/src/document/computed-values.ts → packages/core/src/schema/schema.ts; packages/core/src/document/views.ts → packages/core/src/schema/schema.ts
-  ← tests-core-document: packages/core/tests/document/a-contrast-refusal-names-the-pair.test.ts → packages/core/src/schema/schema.ts
+  ← core: packages/core/src/answer-seen.ts → packages/core/src/invariants/types.ts; packages/core/src/app.ts → packages/core/src/invariants/types.ts; packages/core/src/bind.ts → packages/core/src/invariants/engine.ts; packages/core/src/bind.ts → packages/core/src/invariants/types.ts; packages/core/src/clock-readers.ts → packages/core/src/invariants/types.ts; packages/core/src/clock.ts → packages/core/src/invariants/types.ts; packages/core/src/extend.ts → packages/core/src/invariants/types.ts; packages/core/src/import/rows.ts → packages/core/src/invariants/types.ts; packages/core/src/index.ts → packages/core/src/invariants/broken.ts; packages/core/src/index.ts → packages/core/src/invariants/engine.ts; packages/core/src/index.ts → packages/core/src/invariants/line.ts; packages/core/src/index.ts → packages/core/src/invariants/types.ts; packages/core/src/lines.ts → packages/core/src/invariants/engine.ts; packages/core/src/lines.ts → packages/core/src/invariants/line.ts; packages/core/src/lines.ts → packages/core/src/invariants/line.ts; packages/core/src/lines.ts → packages/core/src/invariants/types.ts; packages/core/src/past.ts → packages/core/src/invariants/types.ts; packages/core/src/seen.ts → packages/core/src/invariants/types.ts; packages/core/src/store.ts → packages/core/src/invariants/engine.ts; packages/core/src/store.ts → packages/core/src/invariants/types.ts; packages/core/src/validate-graph.ts → packages/core/src/invariants/engine.ts; packages/core/src/validate-graph.ts → packages/core/src/invariants/types.ts
+  ← core-cli: packages/core/src/cli/check/clock-rules.ts → packages/core/src/invariants/types.ts; packages/core/src/cli/describe.ts → packages/core/src/invariants/line.ts
+  ← core-document: packages/core/src/document/rule-line.ts → packages/core/src/invariants/line.ts; packages/core/src/document/rule-reads.ts → packages/core/src/invariants/types.ts; packages/core/src/document/to-document.ts → packages/core/src/invariants/types.ts
+  ← core-sync: packages/core/src/sync/conflict.ts → packages/core/src/invariants/engine.ts; packages/core/src/sync/conflict.ts → packages/core/src/invariants/types.ts
+  ← tests-core-document: packages/core/tests/document/a-rule-says-its-shape.test.ts → packages/core/src/invariants/engine.ts
+  ← tests-tools-unit: packages/tools/tests/unit/a-seat-reads-a-broken-rule-s-values.test.ts → packages/core/src/invariants/engine.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] High coupling (0.87) — 3 imports target "core-document"
-[observation] [warning] Low cohesion (0.13) — files are loosely related, consider splitting this zone
-[suggestion] [info] Zone "Core Invariants" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.13, coupling: 0.87 (risk score: 0.87)
+[observation] [info] High coupling (0.82) — 3 imports target "core-document"
+[observation] [info] Low cohesion (0.18) — files are loosely related, consider splitting this zone
+[anti-pattern] [warning] "Core Invariants" imports "Core" on 1 edge(s) while the 22 edge(s) between them run the other way — the minority direction looks like a layering violation
+[pattern] [warning] core-invariants and core-document import each other (3 edges each way), a zone-level cycle; extract the shared rule shape types into invariants/types.ts (which document would import) so that invariants stays below document.
+[suggestion] [info] Zone "Core Invariants" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.18, coupling: 0.82 (risk score: 0.82)
 
 </findings>
 
 <insights>
 
-- Low cohesion (0.13) — files are loosely related, consider splitting this zone
-- High coupling (0.87) — 3 imports target "core-document"
-- [call graph] 4 internal calls, 2 outgoing, 8 incoming (cohesion: 0.67, coupling: 0.33)
+- Low cohesion (0.18) — files are loosely related, consider splitting this zone
+- High coupling (0.82) — 3 imports target "core-document"
+- "Core Invariants" imports "Core" on 1 edge(s) while the 22 edge(s) between them run the other way — the minority direction looks like a layering violation
+- [call graph] 13 internal calls, 2 outgoing, 13 incoming (cohesion: 0.87, coupling: 0.13)
+- The 4 files are the rule engine plus its presentation helpers (broken.ts, line.ts) deliberately split into separate modules so a page draws the standing without loading the line renderer; low cohesion here is by design (bundle partitioning) not a sign of disorder.
+- The line.ts header says the rule's structure is worked out in core/document beside the evaluator, so line.ts depends on document output types; this is the source of the invariants to document edges, forming a two-way link (3 each direction).
 
 </insights>

@@ -1,7 +1,7 @@
 {
   "id": "tests-apps",
   "name": "Tests Apps",
-  "description": "5 files, primarily TypeScript",
+  "description": "Non-source files in apps: domain.test.ts, lens-reuse.test.ts, the-awkward-shapes.test.ts (+2 more)",
   "files": [
     "apps/discography/tests/domain.test.ts",
     "apps/discography/tests/lens-reuse.test.ts",

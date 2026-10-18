@@ -1,0 +1,32 @@
+{
+  "id": "core-graph",
+  "name": "Core Graph",
+  "description": "Declared zone anchor (6 files).",
+  "files": [
+    "packages/core/src/graph/archived.ts",
+    "packages/core/src/graph/diff.ts",
+    "packages/core/src/graph/graph.ts",
+    "packages/core/src/graph/primitives.ts",
+    "packages/core/src/graph/tracked.ts",
+    "packages/core/src/graph/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/graph/archived.ts",
+    "packages/core/src/graph/diff.ts",
+    "packages/core/src/graph/graph.ts",
+    "packages/core/src/graph/primitives.ts",
+    "packages/core/src/graph/tracked.ts",
+    "packages/core/src/graph/types.ts"
+  ],
+  "cohesion": 0.83,
+  "coupling": 0.17,
+  "fileCount": 6,
+  "lineCount": 900,
+  "riskMetrics": {
+    "cohesion": 0.83,
+    "coupling": 0.17,
+    "riskScore": 0.17000000000000004,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

@@ -1,11 +1,14 @@
 {
   "id": "tools",
-  "name": "Tools",
-  "description": "43 files, primarily TypeScript",
+  "name": "Agent Tool Surface",
+  "description": "47 files, mostly utilities and services; entry points index.ts, go.ts, edit.ts; imported by Packages.",
   "files": [
     "packages/tools/src/agent/adapters.ts",
     "packages/tools/src/agent/bounds.ts",
     "packages/tools/src/agent/reads.ts",
+    "packages/tools/src/agent/subscribe-run.ts",
+    "packages/tools/src/agent/subscription-tools.ts",
+    "packages/tools/src/agent/tool-definition.ts",
     "packages/tools/src/agent/tools.ts",
     "packages/tools/src/agent/untrusted.ts",
     "packages/tools/src/ai.ts",
@@ -21,6 +24,7 @@
     "packages/tools/src/frame.ts",
     "packages/tools/src/go.ts",
     "packages/tools/src/index.ts",
+    "packages/tools/src/inline-ai.ts",
     "packages/tools/src/intelligence.ts",
     "packages/tools/src/keep.ts",
     "packages/tools/src/local.ts",
@@ -48,6 +52,7 @@
     "packages/tools/src/usage.ts"
   ],
   "entryPoints": [
+    "packages/tools/src/ai.ts",
     "packages/tools/src/cli.ts",
     "packages/tools/src/derive.ts",
     "packages/tools/src/draft.ts",
@@ -55,6 +60,7 @@
     "packages/tools/src/frame.ts",
     "packages/tools/src/go.ts",
     "packages/tools/src/index.ts",
+    "packages/tools/src/inline-ai.ts",
     "packages/tools/src/keep.ts",
     "packages/tools/src/local.ts",
     "packages/tools/src/mcp-stdio.ts",
@@ -66,8 +72,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 43,
-  "lineCount": 12121,
+  "fileCount": 47,
+  "lineCount": 13129,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

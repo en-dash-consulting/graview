@@ -5,15 +5,17 @@
 <zone>
 
 Zone: Tests Core Integration (`tests-core-integration`)
-Files: 3, Cohesion: 1.00, Coupling: 0.00
+Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 3 files, primarily TypeScript
-Lines: 1425
+Description: Non-source files in packages: a-connection-is-declared-and-kept-in-step.test.ts, google-calendar-meets-what-google-does.test.ts, persistence.test.ts (+2 more)
+Lines: 1942
 
 </zone>
 
 <files>
 
+packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts (TypeScript, 304 lines, test)
+packages/core/tests/integration/google-calendar-meets-what-google-does.test.ts (TypeScript, 213 lines, test)
 packages/core/tests/integration/persistence.test.ts (TypeScript, 105 lines, test)
 packages/core/tests/integration/sync-holds-to-its-policy.test.ts (TypeScript, 758 lines, test)
 packages/core/tests/integration/sync.test.ts (TypeScript, 562 lines, test)
@@ -24,8 +26,8 @@ packages/core/tests/integration/sync.test.ts (TypeScript, 562 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → core-document: packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts; packages/core/tests/integration/sync-holds-to-its-policy.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts
-  → core-ops: packages/core/tests/integration/sync-holds-to-its-policy.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync-holds-to-its-policy.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/sync/index.ts
+  → core: packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts → packages/core/src/check.ts; packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts → packages/core/src/index.ts; packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts → packages/core/src/index.ts; packages/core/tests/integration/google-calendar-meets-what-google-does.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/index.ts; packages/core/tests/integration/persistence.test.ts → packages/core/src/persistence/sqlite.ts; packages/core/tests/integration/sync-holds-to-its-policy.test.ts → packages/core/src/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/index.ts
+  → core-sync: packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/google-calendar-meets-what-google-does.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/google-calendar-meets-what-google-does.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync-holds-to-its-policy.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync-holds-to-its-policy.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/sync/index.ts
   → tests-core-support: packages/core/tests/integration/persistence.test.ts → packages/core/tests/support/adapter-contract.ts
 
 </imports>
@@ -39,6 +41,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 180 internal calls, 43 outgoing, 0 incoming (cohesion: 0.81, coupling: 0.19)
+- [call graph] 349 internal calls, 61 outgoing, 0 incoming (cohesion: 0.85, coupling: 0.15)
 
 </insights>

@@ -1,0 +1,32 @@
+{
+  "id": "primitives/src-lens/src-3",
+  "name": "Src 3",
+  "description": "10 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/default-view.tsx",
+    "packages/primitives/src/default-views.tsx",
+    "packages/primitives/src/figure.tsx",
+    "packages/primitives/src/home-view.tsx",
+    "packages/primitives/src/markup.ts",
+    "packages/primitives/src/problem-count.tsx",
+    "packages/primitives/src/quick-relations.tsx",
+    "packages/primitives/src/record-head.ts",
+    "packages/primitives/src/spec-views.tsx",
+    "packages/primitives/src/states-bar.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/default-view.tsx",
+    "packages/primitives/src/default-views.tsx",
+    "packages/primitives/src/figure.tsx",
+    "packages/primitives/src/home-view.tsx",
+    "packages/primitives/src/markup.ts",
+    "packages/primitives/src/problem-count.tsx",
+    "packages/primitives/src/quick-relations.tsx",
+    "packages/primitives/src/record-head.ts",
+    "packages/primitives/src/spec-views.tsx"
+  ],
+  "cohesion": 0.41,
+  "coupling": 0.59,
+  "fileCount": 10,
+  "lineCount": 2564
+}

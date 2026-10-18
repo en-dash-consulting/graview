@@ -1,7 +1,7 @@
 {
   "id": "render",
-  "name": "Render",
-  "description": "12 files, primarily TypeScript",
+  "name": "@graview/render",
+  "description": "13 files, mostly utilities and entry points; entry points index.ts, gpu.ts, pointer-router.ts; imported by Packages.",
   "files": [
     "packages/render/src/gpu.ts",
     "packages/render/src/index.ts",
@@ -14,7 +14,8 @@
     "packages/render/src/scene/connectors.ts",
     "packages/render/src/scene/frame-plan.ts",
     "packages/render/src/scene/from-layout.ts",
-    "packages/render/src/scene/plane.ts"
+    "packages/render/src/scene/plane.ts",
+    "packages/render/src/scene/renderer-choice.ts"
   ],
   "entryPoints": [
     "packages/render/src/gpu.ts",
@@ -24,8 +25,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 12,
-  "lineCount": 2277,
+  "fileCount": 13,
+  "lineCount": 2606,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

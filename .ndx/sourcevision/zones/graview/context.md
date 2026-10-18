@@ -7,15 +7,15 @@
 Zone: Graview (`graview`)
 Files: 4, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 4 files, primarily JavaScript, TypeScript
+Description: 4 files, mostly entry points and pages; entry points index.ts; imported by Packages.
 Entry points: packages/graview/src/index.ts
-Lines: 131
+Lines: 140
 
 </zone>
 
 <files>
 
-packages/graview/preview/page.js (JavaScript, 51 lines, source)
+packages/graview/preview/page.js (JavaScript, 60 lines, source)
 packages/graview/src/cli.ts (TypeScript, 11 lines, source)
 packages/graview/src/index.ts (TypeScript, 67 lines, source)
 packages/guest/client.js (JavaScript, 2 lines, source)

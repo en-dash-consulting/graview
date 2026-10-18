@@ -5,19 +5,19 @@
 <zone>
 
 Zone: Guest (`guest/guest`)
-Files: 6, Cohesion: 0.65, Coupling: 0.35
+Files: 6, Cohesion: 0.63, Coupling: 0.37
 Description: 6 files, primarily TypeScript
 Entry points: packages/guest/src/headless/draw.ts, packages/guest/src/host/css.ts, packages/guest/src/host/open-draw.ts, packages/guest/src/host/open-judge.ts, packages/guest/src/host/open-render.ts, packages/guest/src/open-kit.ts
-Lines: 2045
+Lines: 2096
 
 </zone>
 
 <files>
 
-packages/guest/src/headless/draw.ts (TypeScript, 44 lines, source)
+packages/guest/src/headless/draw.ts (TypeScript, 45 lines, source)
 packages/guest/src/host/css.ts (TypeScript, 994 lines, source)
 packages/guest/src/host/open-draw.ts (TypeScript, 150 lines, source)
-packages/guest/src/host/open-judge.ts (TypeScript, 207 lines, source)
+packages/guest/src/host/open-judge.ts (TypeScript, 257 lines, source)
 packages/guest/src/host/open-render.ts (TypeScript, 280 lines, source)
 packages/guest/src/open-kit.ts (TypeScript, 370 lines, source)
 

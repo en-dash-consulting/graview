@@ -1,27 +1,22 @@
 {
   "id": "tools/src-providers",
   "name": "Src Providers",
-  "description": "7 files, primarily TypeScript",
+  "description": "6 files, primarily TypeScript",
   "files": [
-    "packages/tools/src/cli.ts",
-    "packages/tools/src/decide.ts",
-    "packages/tools/src/loop.ts",
-    "packages/tools/src/plan.ts",
-    "packages/tools/src/providers/jev.ts",
-    "packages/tools/src/questions.ts",
-    "packages/tools/src/run.ts"
+    "packages/tools/src/edit.ts",
+    "packages/tools/src/figure.ts",
+    "packages/tools/src/index.ts",
+    "packages/tools/src/pins.ts",
+    "packages/tools/src/providers/lens.ts",
+    "packages/tools/src/space.ts"
   ],
   "entryPoints": [
-    "packages/tools/src/cli.ts",
-    "packages/tools/src/decide.ts",
-    "packages/tools/src/loop.ts",
-    "packages/tools/src/plan.ts",
-    "packages/tools/src/providers/jev.ts",
-    "packages/tools/src/questions.ts",
-    "packages/tools/src/run.ts"
+    "packages/tools/src/edit.ts",
+    "packages/tools/src/index.ts",
+    "packages/tools/src/pins.ts"
   ],
-  "cohesion": 0.54,
-  "coupling": 0.46,
-  "fileCount": 7,
-  "lineCount": 2596
+  "cohesion": 0.24,
+  "coupling": 0.76,
+  "fileCount": 6,
+  "lineCount": 587
 }

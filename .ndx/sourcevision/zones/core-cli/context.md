@@ -5,64 +5,142 @@
 <zone>
 
 Zone: Core Cli (`core-cli`)
-Files: 5, Cohesion: 0.24, Coupling: 0.76
-Risk: catastrophic (score: 0.76)
-Description: 5 files, primarily TypeScript
-Entry points: packages/core/src/app-places.ts, packages/core/src/cli/check/lenses.ts, packages/core/src/places.ts, packages/core/src/schema/path.ts, packages/core/src/views/types.ts
-Lines: 1493
+Files: 30, Cohesion: 0.28, Coupling: 0.72
+Risk: catastrophic (score: 0.72)
+Description: 5 files, mostly utilities and types; entry points types.ts, app-places.ts, places.ts; imports Core Document and Arrangement; imported by Core Document and @graview/core.
+Entry points: packages/core/src/cli/check.ts, packages/core/src/cli/create.ts, packages/core/src/cli/describe.ts, packages/core/src/cli/docs.ts, packages/core/src/cli/doctor.ts, packages/core/src/cli/document-schema.ts, packages/core/src/cli/index.ts, packages/core/src/cli/types.ts
+Lines: 5231
 
 </zone>
 
 <files>
 
-packages/core/src/app-places.ts (TypeScript, 236 lines, source)
+packages/core/src/cli/check.ts (TypeScript, 140 lines, source)
+packages/core/src/cli/check/arrangement.ts (TypeScript, 60 lines, source)
+packages/core/src/cli/check/beginnings.ts (TypeScript, 66 lines, source)
+packages/core/src/cli/check/brand.ts (TypeScript, 225 lines, source)
+packages/core/src/cli/check/city.ts (TypeScript, 72 lines, source)
+packages/core/src/cli/check/clock-rules.ts (TypeScript, 28 lines, source)
+packages/core/src/cli/check/computed.ts (TypeScript, 37 lines, source)
+packages/core/src/cli/check/context.ts (TypeScript, 82 lines, source)
+packages/core/src/cli/check/fact-rules.ts (TypeScript, 58 lines, source)
+packages/core/src/cli/check/field-sight.ts (TypeScript, 115 lines, source)
+packages/core/src/cli/check/fields.ts (TypeScript, 257 lines, source)
+packages/core/src/cli/check/hidden-reads.ts (TypeScript, 196 lines, source)
+packages/core/src/cli/check/index.ts (TypeScript, 20 lines, source)
+packages/core/src/cli/check/intelligence.ts (TypeScript, 149 lines, source)
 packages/core/src/cli/check/lenses.ts (TypeScript, 377 lines, source)
-packages/core/src/places.ts (TypeScript, 420 lines, source)
-packages/core/src/schema/path.ts (TypeScript, 33 lines, source)
-packages/core/src/views/types.ts (TypeScript, 427 lines, source)
+packages/core/src/cli/check/migrations.ts (TypeScript, 57 lines, source)
+packages/core/src/cli/check/modules.ts (TypeScript, 136 lines, source)
+packages/core/src/cli/check/people.ts (TypeScript, 78 lines, source)
+packages/core/src/cli/check/policy.ts (TypeScript, 195 lines, source)
+packages/core/src/cli/check/relations.ts (TypeScript, 394 lines, source)
+packages/core/src/cli/check/routes.ts (TypeScript, 46 lines, source)
+packages/core/src/cli/check/settings.ts (TypeScript, 95 lines, source)
+packages/core/src/cli/check/views.ts (TypeScript, 39 lines, source)
+packages/core/src/cli/create.ts (TypeScript, 422 lines, source)
+packages/core/src/cli/describe.ts (TypeScript, 488 lines, source)
+packages/core/src/cli/docs.ts (TypeScript, 230 lines, source)
+packages/core/src/cli/doctor.ts (TypeScript, 393 lines, source)
+packages/core/src/cli/document-schema.ts (TypeScript, 223 lines, source)
+packages/core/src/cli/index.ts (TypeScript, 429 lines, source)
+packages/core/src/cli/types.ts (TypeScript, 124 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/core/src/app-places.ts → packages/core/src/places.ts {declaredLenses, MOST_STANDING, openingOf, orderKinds, OVERVIEW_PATH, OVERVIEW_SLUG, pagesTitle, sceneTitle}
-  packages/core/src/app-places.ts → packages/core/src/places.ts {PlaceFinding, ShippedLensName}
-  packages/core/src/app-places.ts → packages/core/src/views/types.ts {kindPath, onePerPicture, placePath, sharesItsName}
-  packages/core/src/app-places.ts → packages/core/src/views/types.ts {PagesArrangement, Place}
-  packages/core/src/cli/check/lenses.ts → packages/core/src/app-places.ts {arrangementFindings}
-  packages/core/src/cli/check/lenses.ts → packages/core/src/places.ts {bindsOf, declaredLenses, isShippedLens, requiredRolesOf}
-  packages/core/src/cli/check/lenses.ts → packages/core/src/schema/path.ts {walkKinds}
-  packages/core/src/places.ts → packages/core/src/views/types.ts {kindPath, placeSlug}
-  packages/core/src/places.ts → packages/core/src/views/types.ts {PagesArrangement, Place}
+  packages/core/src/cli/check.ts → packages/core/src/cli/check/context.ts {CheckContext, Finding, Severity}
+  packages/core/src/cli/check.ts → packages/core/src/cli/check/index.ts {checkAccents, checkActsFromEnds, checkBlankInstallation, checkEditableFields, checkFigures, checkLensBindings, checkDeclaredLenses, checkPagesArrangement, checkMigrations, checkModelWritten, checkModules, checkPalette, checkPlots, checkPeople, checkPolicy, checkProviders, checkReadings, checkRoutes, checkSettings, checkShippedLenses, checkUnmakeable, checkArrangement, checkViewSpecs, checkComputed, checkHiddenReads, checkFactRules, checkClockRules, checkFieldSight}
+  packages/core/src/cli/check/arrangement.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/beginnings.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/brand.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/city.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/clock-rules.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/computed.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/fact-rules.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/fact-rules.ts → packages/core/src/cli/check/hidden-reads.ts {kindsRead}
+  packages/core/src/cli/check/field-sight.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/fields.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/hidden-reads.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/hidden-reads.ts → packages/core/src/cli/check/people.ts {THEMSELVES}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/arrangement.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/beginnings.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/brand.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/city.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/clock-rules.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/computed.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/fact-rules.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/field-sight.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/fields.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/hidden-reads.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/intelligence.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/lenses.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/migrations.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/modules.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/people.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/policy.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/relations.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/routes.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/settings.ts {*}
+  packages/core/src/cli/check/index.ts → packages/core/src/cli/check/views.ts {*}
+  packages/core/src/cli/check/intelligence.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/lenses.ts → packages/core/src/cli/check/context.ts {fieldOf}
+  packages/core/src/cli/check/lenses.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/migrations.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/modules.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/people.ts → packages/core/src/cli/check/context.ts {CheckContext, Finding}
+  packages/core/src/cli/check/policy.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/policy.ts → packages/core/src/cli/check/people.ts {THEMSELVES}
+  packages/core/src/cli/check/relations.ts → packages/core/src/cli/check/context.ts {bounded}
+  packages/core/src/cli/check/relations.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/routes.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/settings.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/check/views.ts → packages/core/src/cli/check/context.ts {CheckContext}
+  packages/core/src/cli/index.ts → packages/core/src/cli/check.ts {checkApp, formatFindings}
+  packages/core/src/cli/index.ts → packages/core/src/cli/create.ts {create, CREATE_USAGE}
+  packages/core/src/cli/index.ts → packages/core/src/cli/describe.ts {describeApp}
+  packages/core/src/cli/index.ts → packages/core/src/cli/docs.ts {generateAgentsMd, generateLlmsTxt}
+  packages/core/src/cli/index.ts → packages/core/src/cli/doctor.ts {diagnose, doctor, DOCTOR_USAGE}
+  packages/core/src/cli/index.ts → packages/core/src/cli/doctor.ts {doctor, DOCTOR_USAGE}
+  packages/core/src/cli/index.ts → packages/core/src/cli/doctor.ts {DoctorFinding, DoctorLevel}
+  packages/core/src/cli/index.ts → packages/core/src/cli/types.ts {documentTypes}
 
 Outgoing (this zone → other zones):
-  → core-document: packages/core/src/app-places.ts → packages/core/src/app.ts; packages/core/src/app-places.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/arrangement.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/cli/check/context.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/kind-list.ts; packages/core/src/places.ts → packages/core/src/app.ts; packages/core/src/places.ts → packages/core/src/arrangement-words.ts; packages/core/src/places.ts → packages/core/src/grid-sort.ts; packages/core/src/places.ts → packages/core/src/schema/zod.ts
-  → core-ops: packages/core/src/app-places.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/columns.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/schema/schema.ts; packages/core/src/places.ts → packages/core/src/schema/schema.ts; packages/core/src/schema/path.ts → packages/core/src/schema/schema.ts; packages/core/src/views/types.ts → packages/core/src/schema/schema.ts
+  → core: packages/core/src/cli/check.ts → packages/core/src/app.ts; packages/core/src/cli/check/arrangement.ts → packages/core/src/arrange.ts; packages/core/src/cli/check/arrangement.ts → packages/core/src/places.ts; packages/core/src/cli/check/beginnings.ts → packages/core/src/beginning.ts; packages/core/src/cli/check/brand.ts → packages/core/src/capital.ts; packages/core/src/cli/check/city.ts → packages/core/src/city.ts; packages/core/src/cli/check/clock-rules.ts → packages/core/src/clock-readers.ts; packages/core/src/cli/check/context.ts → packages/core/src/app.ts; packages/core/src/cli/check/fact-rules.ts → packages/core/src/permissions/policy.ts; packages/core/src/cli/check/field-sight.ts → packages/core/src/permissions/policy.ts; packages/core/src/cli/check/field-sight.ts → packages/core/src/permissions/types.ts; packages/core/src/cli/check/fields.ts → packages/core/src/permissions/policy.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/permissions/policy.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/app-places.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/arrangement.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/columns.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/kind-list.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/places.ts; packages/core/src/cli/check/policy.ts → packages/core/src/permissions/policy.ts; packages/core/src/cli/describe.ts → packages/core/src/app-places.ts; packages/core/src/cli/describe.ts → packages/core/src/app.ts; packages/core/src/cli/describe.ts → packages/core/src/app.ts; packages/core/src/cli/describe.ts → packages/core/src/arrangement.ts; packages/core/src/cli/describe.ts → packages/core/src/beginning.ts; packages/core/src/cli/describe.ts → packages/core/src/capital.ts; packages/core/src/cli/describe.ts → packages/core/src/city.ts; packages/core/src/cli/describe.ts → packages/core/src/columns.ts; packages/core/src/cli/describe.ts → packages/core/src/days.ts; packages/core/src/cli/describe.ts → packages/core/src/kind-list.ts; packages/core/src/cli/describe.ts → packages/core/src/lines.ts; packages/core/src/cli/describe.ts → packages/core/src/linked.ts; packages/core/src/cli/describe.ts → packages/core/src/places.ts; packages/core/src/cli/describe.ts → packages/core/src/search.ts; packages/core/src/cli/describe.ts → packages/core/src/views/types.ts; packages/core/src/cli/describe.ts → packages/core/src/village.ts; packages/core/src/cli/docs.ts → packages/core/src/app.ts; packages/core/src/cli/docs.ts → packages/core/src/arrangement.ts; packages/core/src/cli/docs.ts → packages/core/src/search.ts; packages/core/src/cli/doctor.ts → packages/core/src/version.ts; packages/core/src/cli/document-schema.ts → packages/core/src/places.ts; packages/core/src/cli/index.ts → packages/core/src/app.ts; packages/core/src/cli/index.ts → packages/core/src/snapshot.ts; packages/core/src/cli/index.ts → packages/core/src/store.ts
+  → core-document: packages/core/src/cli/check/brand.ts → packages/core/src/document/brand-check.ts; packages/core/src/cli/check/computed.ts → packages/core/src/document/computed.ts; packages/core/src/cli/check/computed.ts → packages/core/src/document/computed.ts; packages/core/src/cli/check/computed.ts → packages/core/src/document/to-document.ts; packages/core/src/cli/check/fact-rules.ts → packages/core/src/document/computed.ts; packages/core/src/cli/check/fact-rules.ts → packages/core/src/document/rule-reads.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/document/expr/analyze.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/document/expr/parse.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/document/expr/parse.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/document/far-end.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/document/template-parse.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/document/to-document.ts; packages/core/src/cli/check/relations.ts → packages/core/src/document/facts-and-roles.ts; packages/core/src/cli/check/relations.ts → packages/core/src/document/to-document.ts; packages/core/src/cli/check/views.ts → packages/core/src/document/to-document.ts; packages/core/src/cli/check/views.ts → packages/core/src/document/view-specs.ts; packages/core/src/cli/check/views.ts → packages/core/src/document/views.ts; packages/core/src/cli/create.ts → packages/core/src/document/graview-template.ts; packages/core/src/cli/create.ts → packages/core/src/document/instantiate-template.ts; packages/core/src/cli/describe.ts → packages/core/src/document/amount.ts; packages/core/src/cli/describe.ts → packages/core/src/document/computed.ts; packages/core/src/cli/describe.ts → packages/core/src/document/template.ts; packages/core/src/cli/doctor.ts → packages/core/src/document/schema.ts; packages/core/src/cli/document-schema.ts → packages/core/src/document/connection-spec.ts; packages/core/src/cli/document-schema.ts → packages/core/src/document/schema.ts; packages/core/src/cli/document-schema.ts → packages/core/src/document/views.ts; packages/core/src/cli/index.ts → packages/core/src/document/compile-checked.ts; packages/core/src/cli/index.ts → packages/core/src/document/compile.ts; packages/core/src/cli/index.ts → packages/core/src/document/describe-place.ts; packages/core/src/cli/index.ts → packages/core/src/document/findings.ts; packages/core/src/cli/index.ts → packages/core/src/document/graview-template.ts; packages/core/src/cli/types.ts → packages/core/src/document/schema.ts
+  → core-invariants: packages/core/src/cli/check/clock-rules.ts → packages/core/src/invariants/types.ts; packages/core/src/cli/describe.ts → packages/core/src/invariants/line.ts
+  → core-mutations: packages/core/src/cli/check.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check.ts → packages/core/src/mutations/derive-repeats.ts; packages/core/src/cli/check/context.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/fields.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/fields.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/intelligence.ts → packages/core/src/mutations/decidable.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/people.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/policy.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/policy.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/relations.ts → packages/core/src/mutations/arg-shape.ts; packages/core/src/cli/check/relations.ts → packages/core/src/mutations/arg-shape.ts; packages/core/src/cli/check/relations.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/describe.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/docs.ts → packages/core/src/mutations/derive-edits.ts
+  → core-scaffold: packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts; packages/core/src/cli/create.ts → packages/core/src/scaffold/index.ts; packages/core/src/cli/docs.ts → packages/core/src/scaffold/agents.ts; packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts; packages/core/src/cli/index.ts → packages/core/src/scaffold/lens.ts
+  → core-schema: packages/core/src/cli/check.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/arrangement.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/beginnings.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/brand.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/city.ts → packages/core/src/schema/figures.ts; packages/core/src/cli/check/city.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/clock-rules.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/computed.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/context.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/fact-rules.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/field-sight.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/field-sight.ts → packages/core/src/schema/types.ts; packages/core/src/cli/check/fields.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/check/fields.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/intelligence.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/schema/path.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/migrations.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/modules.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/people.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/policy.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/relations.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/check/relations.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/routes.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/settings.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/check/views.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/describe.ts → packages/core/src/schema/amount-mark.ts; packages/core/src/cli/describe.ts → packages/core/src/schema/amount-words.ts; packages/core/src/cli/describe.ts → packages/core/src/schema/define-node.ts; packages/core/src/cli/describe.ts → packages/core/src/schema/linked.ts; packages/core/src/cli/describe.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/docs.ts → packages/core/src/schema/json-schema.ts; packages/core/src/cli/docs.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/document-schema.ts → packages/core/src/schema/zod.ts; packages/core/src/cli/index.ts → packages/core/src/schema/figures.ts; packages/core/src/cli/index.ts → packages/core/src/schema/schema.ts; packages/core/src/cli/types.ts → packages/core/src/schema/linked.ts
+  → core-theme: packages/core/src/cli/check/brand.ts → packages/core/src/theme/accent.ts; packages/core/src/cli/check/brand.ts → packages/core/src/theme/derive.ts; packages/core/src/cli/check/brand.ts → packages/core/src/theme/kit.ts; packages/core/src/cli/check/brand.ts → packages/core/src/theme/marks.ts; packages/core/src/cli/check/brand.ts → packages/core/src/theme/types.ts; packages/core/src/cli/check/brand.ts → packages/core/src/theme/types.ts; packages/core/src/cli/describe.ts → packages/core/src/theme/derive.ts
 
 Incoming (other zones → this zone):
-  ← beginning-beginnings: packages/core/src/seat.ts → packages/core/src/app-places.ts
-  ← cli: packages/core/src/cli/document-schema.ts → packages/core/src/places.ts
-  ← core-document: packages/core/src/app.ts → packages/core/src/views/types.ts; packages/core/src/check.ts → packages/core/src/app-places.ts; packages/core/src/cli/check/arrangement.ts → packages/core/src/places.ts; packages/core/src/cli/check/index.ts → packages/core/src/cli/check/lenses.ts; packages/core/src/cli/describe.ts → packages/core/src/app-places.ts; packages/core/src/cli/describe.ts → packages/core/src/places.ts; packages/core/src/cli/describe.ts → packages/core/src/views/types.ts; packages/core/src/document/describe-coverage.ts → packages/core/src/schema/path.ts; packages/core/src/document/describe-place.ts → packages/core/src/app-places.ts; packages/core/src/document/describe-place.ts → packages/core/src/app-places.ts; packages/core/src/document/describe-place.ts → packages/core/src/places.ts; packages/core/src/document/describe-place.ts → packages/core/src/views/types.ts; packages/core/src/document/diff.ts → packages/core/src/views/types.ts; packages/core/src/document/edit.ts → packages/core/src/places.ts; packages/core/src/document/edit.ts → packages/core/src/views/types.ts; packages/core/src/document/edit.ts → packages/core/src/views/types.ts; packages/core/src/index.ts → packages/core/src/app-places.ts; packages/core/src/index.ts → packages/core/src/places.ts; packages/core/src/index.ts → packages/core/src/places.ts; packages/core/src/index.ts → packages/core/src/schema/path.ts; packages/core/src/index.ts → packages/core/src/views/types.ts; packages/core/src/index.ts → packages/core/src/views/types.ts; packages/core/src/kind-list.ts → packages/core/src/views/types.ts; packages/core/src/search.ts → packages/core/src/views/types.ts; packages/core/src/search.ts → packages/core/src/views/types.ts
-  ← core-ops: packages/core/src/bind.ts → packages/core/src/views/types.ts; packages/core/src/bind.ts → packages/core/src/views/types.ts
-  ← tests-core-document: packages/core/tests/document/edits-for-all-of-it.test.ts → packages/core/src/app-places.ts; packages/core/tests/document/the-document-schema-types-lenses-and-blocks.test.ts → packages/core/src/places.ts
+  ← core: packages/core/src/check.ts → packages/core/src/cli/check.ts; packages/core/src/check.ts → packages/core/src/cli/check.ts; packages/core/src/check.ts → packages/core/src/cli/describe.ts; packages/core/src/check.ts → packages/core/src/cli/describe.ts; packages/core/src/check.ts → packages/core/src/cli/docs.ts; packages/core/src/conformance/index.ts → packages/core/src/cli/check.ts
+  ← core-document: packages/core/src/document/compile-checked.ts → packages/core/src/cli/check.ts
+  ← tests-core-document: packages/core/tests/document/a-date-repeats.test.ts → packages/core/src/cli/types.ts; packages/core/tests/document/a-declared-lens-is-a-place.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/a-declared-lens-is-a-place.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/document/a-home-view-and-lists-of-related-records.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/a-home-view-and-lists-of-related-records.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/document/a-lens-over-two-kinds-is-one-place.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/a-lens-over-two-kinds-is-one-place.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/document/a-misnamed-kind-or-field-is-told-both-conventions-and-its-right-name.test.ts → packages/core/src/cli/document-schema.ts; packages/core/tests/document/a-money-field-is-said-as-money-on-every-face.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/document/a-named-step-is-a-move.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/a-named-step-is-a-move.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/document/a-page-is-handed-a-compiled-app.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/a-phone-a-place-and-a-duration.test.ts → packages/core/src/cli/types.ts; packages/core/tests/document/a-place-may-leave-off-its-create-form.test.ts → packages/core/src/cli/document-schema.ts; packages/core/tests/document/a-record-holds-a-picture-or-a-document.test.ts → packages/core/src/cli/types.ts; packages/core/tests/document/a-record-links-another-app.test.ts → packages/core/src/cli/types.ts; packages/core/tests/document/a-status-board-moves-by-acts.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/a-status-board-moves-by-acts.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/document/an-act-that-reads-what-its-runner-may-not-see.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/an-emoji-is-the-apps-icon-and-mark.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/money-is-said-in-the-apps-currency.test.ts → packages/core/src/cli/check.ts; packages/core/tests/document/the-document-schema-is-the-compilers.test.ts → packages/core/src/cli/document-schema.ts; packages/core/tests/document/the-document-schema-types-lenses-and-blocks.test.ts → packages/core/src/cli/document-schema.ts; packages/core/tests/document/types-flow-from-a-document-to-a-face.test.ts → packages/core/src/cli/index.ts; packages/core/tests/document/types-flow-from-a-document-to-a-face.test.ts → packages/core/src/cli/types.ts
+  ← tests-core-unit: packages/core/tests/unit/a-project-made-from-a-template.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/a-project-made-from-a-template.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/a-project-made-from-a-template.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/unit/a-project-made-from-a-template.test.ts → packages/core/src/cli/index.ts; packages/core/tests/unit/an-app-made-inside-another-workspace-installs-itself.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/an-app-made-inside-another-workspace-installs-itself.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/cli/describe.ts; packages/core/tests/unit/arranged-from-the-declaration.test.ts → packages/core/src/cli/docs.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/create-command.test.ts → packages/core/src/cli/create.ts; packages/core/tests/unit/graview-doctor-says-how-to-put-a-checkouts-graview-on-path.test.ts → packages/core/src/cli/doctor.ts; packages/core/tests/unit/graview-doctor-says-when-one-release-is-not-one.test.ts → packages/core/src/cli/doctor.ts; packages/core/tests/unit/scaffold.test.ts → packages/core/src/cli/docs.ts; packages/core/tests/unit/the-pictures-from-where-they-live.test.ts → packages/core/src/cli/index.ts
 
 </imports>
 
 <findings>
 
-[observation] [info] High coupling (0.76) — 10 imports target "core-document"
-[observation] [info] Low cohesion (0.24) — files are loosely related, consider splitting this zone
-[anti-pattern] [warning] "Core Cli" imports "Core Document" on 10 edge(s) while the 25 edge(s) between them run the other way — the minority direction looks like a layering violation
-[suggestion] [critical] Zone "Core Cli" is severely fragile and needs immediate architectural intervention — cohesion: 0.24, coupling: 0.76 (risk score: 0.76)
+[observation] [info] High coupling (0.72) — 43 imports target "core"
+[observation] [info] Low cohesion (0.28) — files are loosely related, consider splitting this zone
+[observation] [info] Zones "Core Cli" and "Beginning Beginnings" may be one architectural concept; the import graph links them but the judgment was undecided.
+[anti-pattern] [warning] The CLI reaches into 7 sibling zones (schema, document, mutations, theme, scaffold, invariants, core) with no facade; check/*.ts imports internals directly, so a refactor in any of them breaks CLI rules. Route through core/check or a small checker-facing interface.
+[suggestion] [critical] Zone "Core Cli" is severely fragile and needs immediate architectural intervention — cohesion: 0.28, coupling: 0.72 (risk score: 0.72)
 
 </findings>
 
 <insights>
 
-- Low cohesion (0.24) — files are loosely related, consider splitting this zone
-- High coupling (0.76) — 10 imports target "core-document"
-- "Core Cli" imports "Core Document" on 10 edge(s) while the 25 edge(s) between them run the other way — the minority direction looks like a layering violation
-- [call graph] 100 internal calls, 18 outgoing, 37 incoming (cohesion: 0.85, coupling: 0.15)
+- Low cohesion (0.28) — files are loosely related, consider splitting this zone
+- High coupling (0.72) — 43 imports target "core"
+- Zones "Core Cli" and "Beginning Beginnings" may be one architectural concept; the import graph links them but the judgment was undecided.
+- [call graph] 292 internal calls, 174 outgoing, 86 incoming (cohesion: 0.63, coupling: 0.37)
+- check/ is a clean rule-per-file plugin layout (one module per concern behind check/index.ts and a shared context.ts), which is the intended extension point; adding a check means adding a file there, not editing check.ts.
+- The core to core-cli edges (6) likely come from shared helpers or types that live in the CLI folder but are used by the library; moving them to a neutral module would make the CLI a strict leaf.
 
 </insights>

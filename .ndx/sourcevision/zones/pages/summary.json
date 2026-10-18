@@ -1,10 +1,8 @@
 {
   "id": "pages",
-  "name": "Pages",
-  "description": "26 files, primarily TypeScript",
+  "name": "Routed Pages",
+  "description": "26 files, mostly pages and entry points; entry points index.ts, page-shell.tsx, facts.ts; imported by Packages.",
   "files": [
-    "packages/pages/src/ask-place.ts",
-    "packages/pages/src/ask.tsx",
     "packages/pages/src/context-menu.tsx",
     "packages/pages/src/face-controls.tsx",
     "packages/pages/src/face-placed.ts",
@@ -25,13 +23,14 @@
     "packages/pages/src/page-typography.tsx",
     "packages/pages/src/pages-activity.tsx",
     "packages/pages/src/pages.tsx",
+    "packages/pages/src/quick-ask.tsx",
     "packages/pages/src/registry.ts",
     "packages/pages/src/router.tsx",
     "packages/pages/src/section.ts",
-    "packages/pages/src/take-back.tsx"
+    "packages/pages/src/take-back.tsx",
+    "packages/pages/src/withheld-acts.tsx"
   ],
   "entryPoints": [
-    "packages/pages/src/ask-place.ts",
     "packages/pages/src/facts.ts",
     "packages/pages/src/index.ts",
     "packages/pages/src/page-list.tsx",
@@ -41,7 +40,7 @@
   "cohesion": 1,
   "coupling": 0,
   "fileCount": 26,
-  "lineCount": 7120,
+  "lineCount": 7205,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

@@ -1,20 +1,29 @@
 {
   "id": "apps/discography",
   "name": "Discography",
-  "description": "8 files, primarily Python, TypeScript, Shell",
+  "description": "13 files, primarily TypeScript",
   "files": [
-    "apps/discography/scripts/musicbrainz/build.py",
-    "apps/discography/scripts/musicbrainz/fetch_guest.py",
-    "apps/discography/scripts/musicbrainz/fetch_own.py",
-    "apps/discography/scripts/musicbrainz/mb.py",
-    "apps/promo/out/ProposalV2.v2.bak.tsx",
-    "apps/promo/remotion.config.ts",
-    "apps/promo/render-style.sh",
-    "apps/rota/vite.config.ts.timestamp-1791598470980-3067f655ee83a.mjs"
+    "apps/discography/src/domain/app.ts",
+    "apps/discography/src/domain/brand.ts",
+    "apps/discography/src/domain/invariants.ts",
+    "apps/discography/src/domain/mutations.ts",
+    "apps/discography/src/domain/policy.ts",
+    "apps/discography/src/domain/schema.ts",
+    "apps/discography/src/main.tsx",
+    "apps/discography/src/ui/app.tsx",
+    "apps/discography/src/ui/design.tsx",
+    "apps/discography/src/ui/pages.tsx",
+    "apps/discography/src/ui/seats.ts",
+    "apps/discography/src/ui/tracklist.tsx",
+    "apps/discography/src/ui/views.tsx"
   ],
-  "entryPoints": [],
-  "cohesion": 0,
+  "entryPoints": [
+    "apps/discography/src/domain/app.ts",
+    "apps/discography/src/ui/seats.ts",
+    "apps/discography/src/ui/tracklist.tsx"
+  ],
+  "cohesion": 1,
   "coupling": 0,
-  "fileCount": 8,
-  "lineCount": 706
+  "fileCount": 13,
+  "lineCount": 1689
 }

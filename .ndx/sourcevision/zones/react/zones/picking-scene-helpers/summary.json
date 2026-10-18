@@ -1,0 +1,19 @@
+{
+  "id": "react/picking-scene-helpers",
+  "name": "Picking Scene Helpers",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/picking.ts",
+    "packages/react/src/scene-helpers.tsx",
+    "packages/react/src/view-host.tsx"
+  ],
+  "entryPoints": [
+    "packages/react/src/picking.ts",
+    "packages/react/src/scene-helpers.tsx",
+    "packages/react/src/view-host.tsx"
+  ],
+  "cohesion": 0.29,
+  "coupling": 0.71,
+  "fileCount": 3,
+  "lineCount": 951
+}

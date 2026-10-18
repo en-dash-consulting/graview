@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Dev (`ship/dev`)
-Files: 3, Cohesion: 0.60, Coupling: 0.40
-Description: 3 files, primarily TypeScript
-Entry points: packages/ship/src/dev.ts, packages/ship/src/door.ts
-Lines: 809
+Files: 6, Cohesion: 1.00, Coupling: 0.00
+Description: 6 files, primarily TypeScript
+Entry points: packages/ship/src/dev.ts, packages/ship/src/source-edit.ts
+Lines: 1552
 
 </zone>
 
@@ -17,6 +17,9 @@ Lines: 809
 packages/ship/src/dev-files.ts (TypeScript, 132 lines, source)
 packages/ship/src/dev.ts (TypeScript, 625 lines, source)
 packages/ship/src/door.ts (TypeScript, 52 lines, source)
+packages/ship/src/source-edit.ts (TypeScript, 528 lines, source)
+packages/ship/src/studio-door.ts (TypeScript, 149 lines, source)
+packages/ship/src/typecheck.ts (TypeScript, 66 lines, source)
 
 </files>
 
@@ -30,5 +33,14 @@ Internal:
   packages/ship/src/dev.ts → packages/ship/src/door.ts {sameOrigin}
   packages/ship/src/dev.ts → packages/ship/src/door.ts {fromThisApp, readBody, sendJson}
   packages/ship/src/dev.ts → packages/ship/src/door.ts {DevServerPlugin}
+  packages/ship/src/dev.ts → packages/ship/src/source-edit.ts {declaredCode, editDeclaration}
+  packages/ship/src/dev.ts → packages/ship/src/source-edit.ts {SourceEdit, SourceText}
+  packages/ship/src/dev.ts → packages/ship/src/studio-door.ts {studioDoor, studioDoorHandler}
+  packages/ship/src/dev.ts → packages/ship/src/studio-door.ts {StudioDoorOptions}
+  packages/ship/src/dev.ts → packages/ship/src/typecheck.ts {typecheckWith}
+  packages/ship/src/studio-door.ts → packages/ship/src/door.ts {fromThisApp, readBody, sendJson}
+  packages/ship/src/studio-door.ts → packages/ship/src/door.ts {DevServerPlugin}
+  packages/ship/src/studio-door.ts → packages/ship/src/source-edit.ts {declaredCode, editDeclaration}
+  packages/ship/src/studio-door.ts → packages/ship/src/typecheck.ts {typecheckWith}
 
 </imports>

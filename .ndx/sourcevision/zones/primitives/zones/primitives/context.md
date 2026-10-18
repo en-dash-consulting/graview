@@ -5,68 +5,82 @@
 <zone>
 
 Zone: Primitives (`primitives/primitives`)
-Files: 19, Cohesion: 0.44, Coupling: 0.56
-Description: 19 files, primarily TypeScript
-Entry points: packages/primitives/src/arrangement.ts, packages/primitives/src/declared-lens-doors.tsx, packages/primitives/src/declared-views.ts, packages/primitives/src/draft-door.tsx, packages/primitives/src/draft-frame.tsx, packages/primitives/src/kind-shape.ts, packages/primitives/src/kind-stop.tsx, packages/primitives/src/lens-keeping.ts, packages/primitives/src/notice-place.ts, packages/primitives/src/notices.tsx, packages/primitives/src/primitives/measure.ts, packages/primitives/src/reader-lenses.ts, packages/primitives/src/scene-way-back.tsx, packages/primitives/src/seat-move.ts, packages/primitives/src/several-door.tsx, packages/primitives/src/way-back.ts
-Lines: 2886
+Files: 21, Cohesion: 0.51, Coupling: 0.49
+Description: 21 files, primarily TypeScript
+Entry points: packages/primitives/src/find.tsx, packages/primitives/src/inline-ai-door.tsx, packages/primitives/src/inline-ai-env.ts, packages/primitives/src/inline-ai-menu.tsx, packages/primitives/src/installation.tsx, packages/primitives/src/past-bar.tsx, packages/primitives/src/places.tsx, packages/primitives/src/quick-ask-desk.ts, packages/primitives/src/quick-ask-door.tsx, packages/primitives/src/workbench/activity.tsx, packages/primitives/src/workbench/ai-entries.tsx, packages/primitives/src/workbench/answer-args.tsx, packages/primitives/src/workbench/back-out.tsx, packages/primitives/src/workbench/descent.ts, packages/primitives/src/workbench/inspector-door.tsx, packages/primitives/src/workbench/trail.tsx
+Lines: 6061
 
 </zone>
 
 <files>
 
-packages/primitives/src/arrangement.ts (TypeScript, 29 lines, source)
-packages/primitives/src/declared-lens-doors.tsx (TypeScript, 147 lines, source)
-packages/primitives/src/declared-views.ts (TypeScript, 16 lines, source)
-packages/primitives/src/draft-door.tsx (TypeScript, 29 lines, source)
-packages/primitives/src/draft-frame.tsx (TypeScript, 139 lines, source)
-packages/primitives/src/kind-shape.ts (TypeScript, 341 lines, source)
-packages/primitives/src/kind-stop.tsx (TypeScript, 789 lines, source)
-packages/primitives/src/lens-keeping.ts (TypeScript, 138 lines, source)
-packages/primitives/src/notice-place.ts (TypeScript, 102 lines, source)
-packages/primitives/src/notice-stacks.tsx (TypeScript, 202 lines, source)
-packages/primitives/src/notices.tsx (TypeScript, 220 lines, source)
-packages/primitives/src/primitives/measure.ts (TypeScript, 90 lines, source)
-packages/primitives/src/reader-lenses.ts (TypeScript, 39 lines, source)
-packages/primitives/src/scene-way-back-door.ts (TypeScript, 88 lines, source)
-packages/primitives/src/scene-way-back.tsx (TypeScript, 36 lines, source)
-packages/primitives/src/seat-move.ts (TypeScript, 75 lines, source)
-packages/primitives/src/several-bar.tsx (TypeScript, 283 lines, source)
-packages/primitives/src/several-door.tsx (TypeScript, 27 lines, source)
-packages/primitives/src/way-back.ts (TypeScript, 96 lines, source)
+packages/primitives/src/find.tsx (TypeScript, 571 lines, source)
+packages/primitives/src/inline-ai-door.tsx (TypeScript, 79 lines, source)
+packages/primitives/src/inline-ai-env.ts (TypeScript, 51 lines, source)
+packages/primitives/src/inline-ai-menu.tsx (TypeScript, 570 lines, source)
+packages/primitives/src/installation.tsx (TypeScript, 54 lines, source)
+packages/primitives/src/past-bar.tsx (TypeScript, 34 lines, source)
+packages/primitives/src/places.tsx (TypeScript, 178 lines, source)
+packages/primitives/src/quick-ask-desk.ts (TypeScript, 64 lines, source)
+packages/primitives/src/quick-ask-door.tsx (TypeScript, 114 lines, source)
+packages/primitives/src/quick-ask.tsx (TypeScript, 471 lines, source)
+packages/primitives/src/scene.ts (TypeScript, 45 lines, source)
+packages/primitives/src/timeline.tsx (TypeScript, 257 lines, source)
+packages/primitives/src/workbench/activity.tsx (TypeScript, 732 lines, source)
+packages/primitives/src/workbench/ai-entries.tsx (TypeScript, 134 lines, source)
+packages/primitives/src/workbench/ai-feed.ts (TypeScript, 25 lines, source)
+packages/primitives/src/workbench/answer-args.tsx (TypeScript, 595 lines, source)
+packages/primitives/src/workbench/back-out.tsx (TypeScript, 275 lines, source)
+packages/primitives/src/workbench/descent.ts (TypeScript, 24 lines, source)
+packages/primitives/src/workbench/inspector-door.tsx (TypeScript, 230 lines, source)
+packages/primitives/src/workbench/inspector.tsx (TypeScript, 1278 lines, source)
+packages/primitives/src/workbench/trail.tsx (TypeScript, 280 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/primitives/src/declared-lens-doors.tsx → packages/primitives/src/reader-lenses.ts {readerLenses}
-  packages/primitives/src/declared-lens-doors.tsx → packages/primitives/src/reader-lenses.ts {KeptLens}
-  packages/primitives/src/declared-views.ts → packages/primitives/src/declared-lens-doors.tsx {registerDeclaredLenses}
-  packages/primitives/src/draft-door.tsx → packages/primitives/src/draft-frame.tsx {*}
-  packages/primitives/src/draft-door.tsx → packages/primitives/src/draft-frame.tsx {DraftFrameProps}
-  packages/primitives/src/draft-frame.tsx → packages/primitives/src/lens-keeping.ts {useLensKeeping}
-  packages/primitives/src/draft-frame.tsx → packages/primitives/src/seat-move.ts {problemsShown, useSceneGo}
-  packages/primitives/src/kind-stop.tsx → packages/primitives/src/arrangement.ts {arrangementOf, withArrangement}
-  packages/primitives/src/kind-stop.tsx → packages/primitives/src/kind-shape.ts {cellOf, changedSince, dateFacts, dateFilter, kindShape, problemsByRule, shapeRecipe, tableColumns, tableOrder, TABLE_PAGE}
-  packages/primitives/src/kind-stop.tsx → packages/primitives/src/kind-shape.ts {KindShape, ProblemGroup, TableColumn}
-  packages/primitives/src/kind-stop.tsx → packages/primitives/src/lens-keeping.ts {useLensKeeping}
-  packages/primitives/src/kind-stop.tsx → packages/primitives/src/reader-lenses.ts {appKeyOf}
-  packages/primitives/src/kind-stop.tsx → packages/primitives/src/seat-move.ts {useSceneGo}
-  packages/primitives/src/kind-stop.tsx → packages/primitives/src/several-door.tsx {prefetchSeveral, SeveralBarDoor}
-  packages/primitives/src/lens-keeping.ts → packages/primitives/src/declared-lens-doors.tsx {registerLensPlaces}
-  packages/primitives/src/lens-keeping.ts → packages/primitives/src/notices.tsx {NoticeBoardContext}
-  packages/primitives/src/lens-keeping.ts → packages/primitives/src/reader-lenses.ts {appKeyOf, readerLenses, readerLensesKey}
-  packages/primitives/src/lens-keeping.ts → packages/primitives/src/reader-lenses.ts {KeptLens}
-  packages/primitives/src/notice-stacks.tsx → packages/primitives/src/notice-place.ts {FOOT_MOVED, placeAtTheFoot, placeAtTheTop}
-  packages/primitives/src/notice-stacks.tsx → packages/primitives/src/notices.tsx {HeldNotice, NoticeBoard, NoticeTone}
-  packages/primitives/src/notices.tsx → packages/primitives/src/notice-stacks.tsx {*}
-  packages/primitives/src/notices.tsx → packages/primitives/src/primitives/measure.ts {VISUALLY_HIDDEN}
-  packages/primitives/src/scene-way-back-door.ts → packages/primitives/src/notices.tsx {NoticeBoard}
-  packages/primitives/src/scene-way-back-door.ts → packages/primitives/src/way-back.ts {freshChangeOf, isTakeBackKey, lastChangeOf, takeBackLast, WAY_BACK_MS}
-  packages/primitives/src/scene-way-back.tsx → packages/primitives/src/notices.tsx {NoticeBoardContext}
-  packages/primitives/src/scene-way-back.tsx → packages/primitives/src/scene-way-back-door.ts {*}
-  packages/primitives/src/several-bar.tsx → packages/primitives/src/notice-place.ts {FOOT_MOVED, placeAtTheFoot}
-  packages/primitives/src/several-door.tsx → packages/primitives/src/several-bar.tsx {*}
-  packages/primitives/src/several-door.tsx → packages/primitives/src/several-bar.tsx {SeveralBarProps}
+  packages/primitives/src/find.tsx → packages/primitives/src/quick-ask-desk.ts {openQuickAsk, useQuickAskDrawn}
+  packages/primitives/src/inline-ai-door.tsx → packages/primitives/src/inline-ai-menu.tsx {*}
+  packages/primitives/src/inline-ai-door.tsx → packages/primitives/src/inline-ai-menu.tsx {InlineAiMenuProps}
+  packages/primitives/src/inline-ai-menu.tsx → packages/primitives/src/inline-ai-env.ts {useInlineEnv}
+  packages/primitives/src/inline-ai-menu.tsx → packages/primitives/src/inline-ai-env.ts {InlineEnv}
+  packages/primitives/src/inline-ai-menu.tsx → packages/primitives/src/quick-ask-desk.ts {openQuickAsk}
+  packages/primitives/src/past-bar.tsx → packages/primitives/src/timeline.tsx {*}
+  packages/primitives/src/quick-ask-door.tsx → packages/primitives/src/quick-ask-desk.ts {heldOf, openQuickAsk, tell, useOpening}
+  packages/primitives/src/quick-ask-door.tsx → packages/primitives/src/quick-ask-desk.ts {QuickAskOpening}
+  packages/primitives/src/quick-ask-door.tsx → packages/primitives/src/quick-ask.tsx {*}
+  packages/primitives/src/quick-ask-door.tsx → packages/primitives/src/quick-ask.tsx {QuickAskCardProps}
+  packages/primitives/src/quick-ask.tsx → packages/primitives/src/inline-ai-env.ts {useInlineEnv}
+  packages/primitives/src/quick-ask.tsx → packages/primitives/src/inline-ai-menu.tsx {askOf, drawPanel, GhostTray, takeOffer}
+  packages/primitives/src/quick-ask.tsx → packages/primitives/src/quick-ask-desk.ts {QuickAskOpening}
+  packages/primitives/src/scene.ts → packages/primitives/src/find.tsx {FindBox}
+  packages/primitives/src/scene.ts → packages/primitives/src/inline-ai-door.tsx {GhostDoor, InlineAiSections, useInlineAiSection}
+  packages/primitives/src/scene.ts → packages/primitives/src/inline-ai-door.tsx {GhostDoorProps}
+  packages/primitives/src/scene.ts → packages/primitives/src/installation.tsx {ShowInstallation}
+  packages/primitives/src/scene.ts → packages/primitives/src/past-bar.tsx {PastBar, prefetchTimeline}
+  packages/primitives/src/scene.ts → packages/primitives/src/past-bar.tsx {TimelineFace}
+  packages/primitives/src/scene.ts → packages/primitives/src/places.tsx {Places}
+  packages/primitives/src/scene.ts → packages/primitives/src/quick-ask-desk.ts {openQuickAsk, useQuickAskDrawn}
+  packages/primitives/src/scene.ts → packages/primitives/src/quick-ask-desk.ts {QuickAskOpening}
+  packages/primitives/src/scene.ts → packages/primitives/src/quick-ask-door.tsx {QuickAskDoor}
+  packages/primitives/src/scene.ts → packages/primitives/src/quick-ask-door.tsx {QuickAskDoorProps}
+  packages/primitives/src/scene.ts → packages/primitives/src/workbench/back-out.tsx {OverviewButton}
+  packages/primitives/src/scene.ts → packages/primitives/src/workbench/inspector-door.tsx {Inspector}
+  packages/primitives/src/timeline.tsx → packages/primitives/src/past-bar.tsx {TimelineFace}
+  packages/primitives/src/workbench/activity.tsx → packages/primitives/src/past-bar.tsx {prefetchTimeline}
+  packages/primitives/src/workbench/activity.tsx → packages/primitives/src/workbench/ai-entries.tsx {*}
+  packages/primitives/src/workbench/activity.tsx → packages/primitives/src/workbench/ai-feed.ts {useInteractions}
+  packages/primitives/src/workbench/activity.tsx → packages/primitives/src/workbench/ai-feed.ts {ActivityShows}
+  packages/primitives/src/workbench/activity.tsx → packages/primitives/src/workbench/answer-args.tsx {nameOf}
+  packages/primitives/src/workbench/ai-entries.tsx → packages/primitives/src/inline-ai-env.ts {useInlineEnv}
+  packages/primitives/src/workbench/ai-entries.tsx → packages/primitives/src/inline-ai-menu.tsx {*}
+  packages/primitives/src/workbench/ai-entries.tsx → packages/primitives/src/workbench/ai-feed.ts {ActivityShows}
+  packages/primitives/src/workbench/back-out.tsx → packages/primitives/src/workbench/descent.ts {descentTarget}
+  packages/primitives/src/workbench/inspector-door.tsx → packages/primitives/src/workbench/inspector.tsx {*}
+  packages/primitives/src/workbench/inspector.tsx → packages/primitives/src/workbench/answer-args.tsx {AnswerArgs, nameOf}
+  packages/primitives/src/workbench/inspector.tsx → packages/primitives/src/workbench/inspector-door.tsx {InspectorPlacement}
+  packages/primitives/src/workbench/trail.tsx → packages/primitives/src/workbench/answer-args.tsx {nameOf}
 
 </imports>

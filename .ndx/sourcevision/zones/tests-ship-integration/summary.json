@@ -1,7 +1,7 @@
 {
   "id": "tests-ship-integration",
   "name": "Tests Ship Integration",
-  "description": "18 files, primarily TypeScript",
+  "description": "Non-source files in packages: a-client-that-falls-behind-adopts-the-servers-state.test.ts, a-declaration-swap-carries-the-hosts-wiring.test.ts, a-document-is-previewed-with-no-product.test.ts (+16 more)",
   "files": [
     "packages/ship/tests/integration/a-client-that-falls-behind-adopts-the-servers-state.test.ts",
     "packages/ship/tests/integration/a-declaration-swap-carries-the-hosts-wiring.test.ts",
@@ -16,6 +16,7 @@
     "packages/ship/tests/integration/an-act-on-the-wire-runs-under-its-seats-sight.test.ts",
     "packages/ship/tests/integration/an-app-held-read-only-says-so.test.ts",
     "packages/ship/tests/integration/busy-is-not-refused.test.ts",
+    "packages/ship/tests/integration/declared-connections-run-beside-the-store.test.ts",
     "packages/ship/tests/integration/serve.test.ts",
     "packages/ship/tests/integration/the-declaration-changes-under-open-tabs.test.ts",
     "packages/ship/tests/integration/the-local-store-takes-the-hosts-policy.test.ts",
@@ -25,8 +26,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 18,
-  "lineCount": 3670,
+  "fileCount": 19,
+  "lineCount": 3871,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

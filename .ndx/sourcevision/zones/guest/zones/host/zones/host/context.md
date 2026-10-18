@@ -8,7 +8,7 @@ Zone: Host (`guest/host/host`)
 Files: 17, Cohesion: 0.61, Coupling: 0.39
 Description: 17 files, primarily TypeScript
 Entry points: packages/guest/src/build.ts, packages/guest/src/channel.ts, packages/guest/src/client.ts, packages/guest/src/host/draw-budget.ts, packages/guest/src/host/frame.ts, packages/guest/src/host/nonce.ts, packages/guest/src/host/pictures.ts, packages/guest/src/host/session.ts, packages/guest/src/host/theme.ts, packages/guest/src/host/view-script.ts, packages/guest/src/host/view.ts, packages/guest/src/host/worker-react.tsx, packages/guest/src/protocol.ts, packages/guest/src/worker/view-global.ts, packages/skills/src/index.ts
-Lines: 3195
+Lines: 3235
 
 </zone>
 
@@ -19,14 +19,14 @@ packages/guest/src/channel.ts (TypeScript, 160 lines, source)
 packages/guest/src/client.ts (TypeScript, 11 lines, source)
 packages/guest/src/host/arrive-at.ts (TypeScript, 15 lines, source)
 packages/guest/src/host/draw-budget.ts (TypeScript, 38 lines, source)
-packages/guest/src/host/frame.ts (TypeScript, 251 lines, source)
+packages/guest/src/host/frame.ts (TypeScript, 253 lines, source)
 packages/guest/src/host/nonce.ts (TypeScript, 6 lines, source)
-packages/guest/src/host/pictures.ts (TypeScript, 280 lines, source)
+packages/guest/src/host/pictures.ts (TypeScript, 302 lines, source)
 packages/guest/src/host/session.ts (TypeScript, 407 lines, source)
 packages/guest/src/host/theme.ts (TypeScript, 167 lines, source)
 packages/guest/src/host/view-script.ts (TypeScript, 23 lines, source)
-packages/guest/src/host/view.ts (TypeScript, 606 lines, source)
-packages/guest/src/host/worker-react.tsx (TypeScript, 253 lines, source)
+packages/guest/src/host/view.ts (TypeScript, 616 lines, source)
+packages/guest/src/host/worker-react.tsx (TypeScript, 259 lines, source)
 packages/guest/src/protocol.ts (TypeScript, 361 lines, source)
 packages/guest/src/worker/view-global.ts (TypeScript, 329 lines, source)
 packages/skills/src/cli.ts (TypeScript, 65 lines, source)

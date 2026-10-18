@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Providers (`tools/providers`)
-Files: 9, Cohesion: 0.62, Coupling: 0.38
-Description: 9 files, primarily TypeScript
-Entry points: packages/tools/src/derive.ts, packages/tools/src/providers/insight.ts, packages/tools/src/providers/invariant.ts, packages/tools/src/providers/llm.ts, packages/tools/src/providers/schema.ts, packages/tools/src/providers/structure.ts, packages/tools/src/several.ts, packages/tools/src/suggest.ts, packages/tools/src/types.ts
-Lines: 2334
+Files: 10, Cohesion: 0.64, Coupling: 0.36
+Description: 10 files, primarily TypeScript
+Entry points: packages/tools/src/derive.ts, packages/tools/src/providers/insight.ts, packages/tools/src/providers/invariant.ts, packages/tools/src/providers/llm.ts, packages/tools/src/providers/schema.ts, packages/tools/src/providers/structure.ts, packages/tools/src/several.ts, packages/tools/src/suggest.ts, packages/tools/src/types.ts, packages/tools/src/usage.ts
+Lines: 2409
 
 </zone>
 
@@ -19,10 +19,11 @@ packages/tools/src/providers/insight.ts (TypeScript, 117 lines, source)
 packages/tools/src/providers/invariant.ts (TypeScript, 136 lines, source)
 packages/tools/src/providers/llm.ts (TypeScript, 62 lines, source)
 packages/tools/src/providers/schema.ts (TypeScript, 580 lines, source)
-packages/tools/src/providers/structure.ts (TypeScript, 231 lines, source)
+packages/tools/src/providers/structure.ts (TypeScript, 248 lines, source)
 packages/tools/src/several.ts (TypeScript, 336 lines, source)
 packages/tools/src/suggest.ts (TypeScript, 278 lines, source)
 packages/tools/src/types.ts (TypeScript, 139 lines, source)
+packages/tools/src/usage.ts (TypeScript, 58 lines, source)
 
 </files>
 
@@ -34,6 +35,7 @@ Internal:
   packages/tools/src/derive.ts → packages/tools/src/providers/schema.ts {schemaProvider}
   packages/tools/src/derive.ts → packages/tools/src/providers/structure.ts {structureProvider}
   packages/tools/src/derive.ts → packages/tools/src/types.ts {Affordance, AffordanceProvider, AffordanceSet, DeriveContext, Observation, WithheldAffordance}
+  packages/tools/src/derive.ts → packages/tools/src/usage.ts {usageBoost, usageWeights}
   packages/tools/src/providers/insight.ts → packages/tools/src/types.ts {AffordanceProvider, Observation}
   packages/tools/src/providers/invariant.ts → packages/tools/src/types.ts {Affordance, AffordanceProvider, Observation}
   packages/tools/src/providers/llm.ts → packages/tools/src/types.ts {Affordance, DeriveContext}

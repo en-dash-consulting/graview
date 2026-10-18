@@ -1,7 +1,7 @@
 {
   "id": "guest",
-  "name": "Guest",
-  "description": "56 files, primarily TypeScript",
+  "name": "@graview/guest",
+  "description": "56 files, mostly utilities and entry points; entry points where.ts, frame.ts, protocol.ts; imported by Packages and Packages.",
   "files": [
     "packages/guest/src/build.ts",
     "packages/guest/src/channel.ts",
@@ -80,6 +80,7 @@
     "packages/guest/src/host/open-render.ts",
     "packages/guest/src/host/pictures.ts",
     "packages/guest/src/host/press.ts",
+    "packages/guest/src/host/react.tsx",
     "packages/guest/src/host/session.ts",
     "packages/guest/src/host/theme.ts",
     "packages/guest/src/host/view-script.ts",
@@ -103,7 +104,7 @@
   "cohesion": 1,
   "coupling": 0,
   "fileCount": 56,
-  "lineCount": 9354,
+  "lineCount": 9477,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

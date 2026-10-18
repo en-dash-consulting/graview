@@ -1,7 +1,7 @@
 {
   "id": "embed",
-  "name": "Embed",
-  "description": "10 files, primarily TypeScript",
+  "name": "@graview/embed",
+  "description": "10 files, mostly components and utilities; entry points index.ts, frame.tsx, pages.tsx; imported by Packages and Packages.",
   "files": [
     "packages/embed/src/address.tsx",
     "packages/embed/src/embed.tsx",
@@ -15,13 +15,14 @@
     "packages/embed/src/where.ts"
   ],
   "entryPoints": [
+    "packages/embed/src/frame.tsx",
     "packages/embed/src/index.ts",
     "packages/embed/src/pages.tsx"
   ],
   "cohesion": 1,
   "coupling": 0,
   "fileCount": 10,
-  "lineCount": 2473,
+  "lineCount": 2584,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

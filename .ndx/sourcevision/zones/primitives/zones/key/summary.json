@@ -1,0 +1,18 @@
+{
+  "id": "primitives/key",
+  "name": "Key",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/lines-key.tsx",
+    "packages/primitives/src/map-key.tsx",
+    "packages/primitives/src/relation-key.tsx"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/lines-key.tsx",
+    "packages/primitives/src/relation-key.tsx"
+  ],
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 3,
+  "lineCount": 489
+}

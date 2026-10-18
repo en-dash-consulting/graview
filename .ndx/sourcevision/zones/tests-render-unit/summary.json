@@ -1,0 +1,22 @@
+{
+  "id": "tests-render-unit",
+  "name": "Tests Render Unit",
+  "description": "Non-source files in packages: a-scene-draws-on-the-gpu-where-it-can.test.ts, frame-plan.test.ts, pointer-router.test.ts",
+  "files": [
+    "packages/render/tests/unit/a-scene-draws-on-the-gpu-where-it-can.test.ts",
+    "packages/render/tests/unit/frame-plan.test.ts",
+    "packages/render/tests/unit/pointer-router.test.ts"
+  ],
+  "entryPoints": [],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 3,
+  "lineCount": 533,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

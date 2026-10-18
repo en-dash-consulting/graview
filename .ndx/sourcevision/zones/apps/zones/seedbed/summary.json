@@ -1,13 +1,8 @@
 {
   "id": "apps/seedbed",
   "name": "Seedbed",
-  "description": "21 files, primarily TypeScript",
+  "description": "16 files, primarily TypeScript",
   "files": [
-    "apps/promo/src/videos/scuba/ProposalCloud.tsx",
-    "apps/promo/src/videos/scuba/ProposalV2.tsx",
-    "apps/promo/src/videos/scuba/Template.tsx",
-    "apps/promo/src/videos/scuba/kit.tsx",
-    "apps/promo/src/videos/scuba/stories.tsx",
     "apps/seedbed/src/domain/app.ts",
     "apps/seedbed/src/domain/brand.ts",
     "apps/seedbed/src/domain/chapters.ts",
@@ -26,10 +21,6 @@
     "apps/seedbed/src/ui/views.tsx"
   ],
   "entryPoints": [
-    "apps/promo/src/videos/scuba/ProposalCloud.tsx",
-    "apps/promo/src/videos/scuba/ProposalV2.tsx",
-    "apps/promo/src/videos/scuba/Template.tsx",
-    "apps/promo/src/videos/scuba/stories.tsx",
     "apps/seedbed/src/domain/app.ts",
     "apps/seedbed/src/domain/chapters.ts",
     "apps/seedbed/src/domain/example.ts",
@@ -40,8 +31,8 @@
     "apps/seedbed/src/ui/pages.tsx",
     "apps/seedbed/src/ui/views.tsx"
   ],
-  "cohesion": 0.95,
-  "coupling": 0.05,
-  "fileCount": 21,
-  "lineCount": 5107
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 16,
+  "lineCount": 3599
 }

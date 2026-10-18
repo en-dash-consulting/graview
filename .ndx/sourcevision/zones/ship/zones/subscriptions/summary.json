@@ -1,0 +1,21 @@
+{
+  "id": "ship/subscriptions",
+  "name": "Event Subscription System",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/ship/src/export.ts",
+    "packages/ship/src/remote-subscriptions.ts",
+    "packages/ship/src/runtime.ts",
+    "packages/ship/src/subscriptions.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/export.ts",
+    "packages/ship/src/remote-subscriptions.ts",
+    "packages/ship/src/runtime.ts",
+    "packages/ship/src/subscriptions.ts"
+  ],
+  "cohesion": 0.26,
+  "coupling": 0.74,
+  "fileCount": 4,
+  "lineCount": 279
+}
