@@ -19,6 +19,7 @@
  *   node scripts/verify-all.mjs --failed     only what failed last time
  *   node scripts/verify-all.mjs --quick      fewer widths where a harness sweeps them (iteration)
  *   node scripts/verify-all.mjs --jobs=1     one at a time, as it used to be
+ *   node scripts/verify-all.mjs --strict     one look: a harness that fails is not run again alone (lib/second-look.mjs)
  *
  * Run in series on purpose: they drive the same dev servers on the same
  * ports, and a parallel run is a harness measuring another harness's app.
@@ -34,6 +35,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync, writeSync } from "n
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { updateLedger } from "./lib/ledger.mjs";
+import { judge, recordFlakes } from "./lib/second-look.mjs";
 import { serving } from "./lib/serve.mjs";
 import { watchFile } from "./lib/watch.mjs";
 import { portFor } from "./lib/ports.mjs";
@@ -181,6 +183,7 @@ const lastFailed = process.argv.includes("--failed") && existsSync(LAST_RUN)
 const chain = (asked.length > 0 ? CHAIN.filter(([name]) => asked.includes(name)) : lastFailed ? CHAIN.filter(([name]) => lastFailed.includes(name)) : CHAIN).filter(([name]) => !except.includes(name));
 const jobs = process.argv.includes("--serial") ? 1 : Number(process.argv.find((arg) => arg.startsWith("--jobs="))?.slice("--jobs=".length) ?? 3);
 const quick = process.argv.includes("--quick");
+const strict = process.argv.includes("--strict") || process.env.GRAVIEW_STRICT === "1";
 const unknown = [...asked, ...except].filter((name) => !CHAIN.some(([known]) => known === name));
 if (unknown.length > 0) {
   say(`No harness called ${unknown.join(", ")}. Known: ${CHAIN.map(([n]) => n).join(", ")}\n`);
@@ -272,7 +275,7 @@ const HARNESS_MINUTES = Number(process.env.GRAVIEW_HARNESS_MINUTES ?? 25);
 const LONGER = { quiet: 60 };
 const minutesFor = (name) => Math.max(HARNESS_MINUTES, process.env.GRAVIEW_HARNESS_MINUTES ? 0 : (LONGER[name] ?? 0));
 const results = [];
-const runOne = async ([name, file]) => {
+const runOne = async ([name, file], again = false) => {
   const began = Date.now();
   const { code, output } = await new Promise((done) => {
     const child = spawn("node", [resolve(repoRoot, "scripts", file), ...(TAKES_AN_APP.has(name) ? appPaths : [])], {
@@ -313,11 +316,12 @@ const runOne = async ([name, file]) => {
   const open = seen && Date.parse(seen.at) >= began ? seen.open : 0;
   const failed = code !== 0 ? code : open > 0 ? 1 : 0;
   const said = open > 0 ? `watch: ${open} open — docs/watch/${watch.split("/").pop()}` : gist(output);
-  results.push({ name, file, code: failed, took, gist: said, output });
-  say(`${failed === 0 ? "ok  " : "FAIL"} ${name.padEnd(12)} ${String(took).padStart(4)}s  ${said}\n`);
+  say(`${failed === 0 ? "ok  " : again ? "FAIL" : strict ? "FAIL" : "miss"} ${name.padEnd(12)} ${String(took).padStart(4)}s  ${said}\n`);
+  return { name, file, code: failed, took, gist: said, output };
 };
 
 const started = Date.now();
+const firsts = [];
 const together = chain.filter(([name]) => !ALONE.has(name));
 const alone = chain.filter(([name]) => ALONE.has(name));
 say(`${together.length} side by side (${jobs} at a time), then ${alone.length} alone${quick ? ", quick" : ""}\n`);
@@ -325,14 +329,31 @@ say(`${together.length} side by side (${jobs} at a time), then ${alone.length} a
 const queue = [...together];
 await Promise.all(
   Array.from({ length: Math.min(jobs, queue.length) }, async () => {
-    for (let next = queue.shift(); next; next = queue.shift()) await runOne(next);
+    for (let next = queue.shift(); next; next = queue.shift()) firsts.push(await runOne(next));
   }),
 );
-for (const one of alone) await runOne(one);
+for (const one of alone) firsts.push(await runOne(one));
+/*
+ * THE SECOND LOOK (lib/second-look.mjs): what failed is run again, one at a
+ * time, with nothing beside it. Failing twice fails the run; holding the
+ * second time is a flake — the run holds, and the flake is written down by
+ * name in docs/flakes.json and raised as a warning where CI shows one.
+ */
+const missed = strict ? [] : firsts.filter((one) => one.code !== 0);
+if (missed.length > 0) say(`\nsecond look, alone: ${missed.map((one) => one.name).join(", ")}\n`);
+const seconds = new Map();
+for (const one of missed) seconds.set(one.name, await runOne([one.name, one.file], true));
+for (const one of firsts) results.push(judge(one, seconds.get(one.name)));
 for (const server of servers) server.stop();
 const wall = Math.round((Date.now() - started) / 1000);
 
-const broken = results.filter((one) => one.code !== 0);
+const broken = results.filter((one) => one.verdict === "failed");
+const flakes = recordFlakes(repoRoot, results.filter((one) => one.verdict === "flaky"));
+for (const flake of flakes) {
+  const claims = flake.missed.length > 0 ? flake.missed.join(", ") : "no claim named";
+  say(`flaky ${flake.harness.padEnd(12)} failed beside the others (${claims}) and held alone — docs/flakes.json\n`);
+  if (process.env.GITHUB_ACTIONS) say(`::warning title=Flaky harness: ${flake.harness}::failed once (${claims}) and held when run again alone; fix its wait (docs/flakes.json)\n`);
+}
 if (broken.length > 0) {
   say(`\n${"—".repeat(60)}\n`);
   for (const one of broken) {
@@ -368,9 +389,9 @@ if (ledger.fresh.length + ledger.still.length + ledger.fixed.length + ledger.fla
   if (ledger.flapping.length) say(`back after a fix — the check or its timing, before the product\n${ledger.flapping.map(line).join("")}`);
 }
 mkdirSync(resolve(repoRoot, "docs/watch"), { recursive: true });
-writeFileSync(LAST_RUN, `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took }) => ({ name, code, took })) }, null, 2)}\n`);
+writeFileSync(LAST_RUN, `${JSON.stringify({ at: new Date().toISOString(), results: results.map(({ name, code, took, verdict }) => ({ name, code, took, verdict })) }, null, 2)}\n`);
 const spent = results.reduce((sum, one) => sum + one.took, 0);
 say(
-  `\n${results.length - broken.length} of ${results.length} harnesses hold (${Math.round(wall / 60)}m, ${Math.round(spent / 60)}m of harness time)\n`,
+  `\n${results.length - broken.length} of ${results.length} harnesses hold${flakes.length > 0 ? `, ${flakes.length} on a second look` : ""} (${Math.round(wall / 60)}m, ${Math.round(spent / 60)}m of harness time)\n`,
 );
 process.exit(broken.length > 0 ? 1 : 0);

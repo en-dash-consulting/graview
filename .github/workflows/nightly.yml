@@ -8,22 +8,26 @@
 # nobody heard until a walk's review a day later. This is the run nobody has
 # to remember, and the release workflow will not publish while it is red.
 #
-# Chromium every night, across six runners at once; WebKit and Firefox
+# Chromium every night, across nine runners at once; WebKit and Firefox
 # once a week, through `pnpm engines`, on a runner of their own. `shrunk`, `panning` and `scale` are left out: the GPU capture
 # path needs Chrome Canary, and the other two time frames against a GPU the
 # runner does not have.
 #
-# BOTH PATHS. The scene draws on the GPU where a browser can capture into
-# WebGPU and on the DOM path elsewhere, so every shard runs twice: once with
-# GRAVIEW_RENDERER=dom, once with GRAVIEW_RENDERER=gpu in Google Chrome with
-# element capture switched on and WebGPU on SwiftShader (engine.mjs's
-# GPU_ARGS). A runner whose Chrome cannot make an adapter draws the GPU
-# shard on the DOM path, and `renderer` says so in docs/renderer.json
-# (`gpu.unavailable`) rather than claiming the GPU held. So does a Chrome
-# whose hit-testing ignores the drawn geometry — Chrome 155's `layoutSubtree`
-# build, where a press on a drawn view missed it (`gpuCapturePresent`): until
-# stable Chrome ships the paint-record build, this leg holds that such a
-# browser falls back to the DOM path and still works.
+# BOTH PATHS, where they differ. The scene draws on the GPU where a browser
+# can capture into WebGPU and on the DOM path elsewhere. Eight shards run
+# with GRAVIEW_RENDERER=dom; one runs with GRAVIEW_RENDERER=gpu in
+# Google Chrome with element capture switched on and WebGPU on SwiftShader
+# (engine.mjs's GPU_ARGS). A runner whose Chrome cannot make an adapter, or
+# whose hit-testing ignores the drawn geometry (Chrome 155's
+# `layoutSubtree` build, where a press on a drawn view missed it:
+# `gpuCapturePresent`), draws on the DOM path, and `renderer` says so in
+# docs/renderer.json (`gpu.unavailable`) rather than claiming the GPU held.
+# Until stable Chrome ships the paint-record build, that leg holds that
+# such a browser falls back to the DOM path and still works.
+#
+# A harness that fails is looked at again alone before the shard goes red
+# (scripts/lib/second-look.mjs); one that held the second time is written
+# to docs/flakes.json, uploaded with the verdicts, and raised as a warning.
 
 name: Nightly
 
@@ -44,41 +48,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # SIX RUNNERS SIDE BY SIDE, not one: one two-core runner taking every
-  # harness in turn was 54 minutes of harness after setup, and a nightly
-  # nobody can wait for is one nobody kicks off before a release. Each shard
-  # is its own machine, so its ports and its CPU are its own and nothing
-  # starves a frame; within a shard the harnesses still run one at a time.
-  # Shards are balanced by the 2026-10-03 run's times (gauntlet 646s, site
-  # 468s, journeys 1111s across its five apps); the slowest is ~11 minutes.
+  # SHARDS SIDE BY SIDE, balanced by the harness times of 2026-10-18's run
+  # on main (site 823s, gauntlet 721s, journeys on todo, seedbed, rota and
+  # discography 808s together, a11y 261s, audit 221s, pages 198s, lines
+  # 179s): the slowest shard is ~14 minutes of harness, not 26. Each shard
+  # is its own machine, so its ports and its CPU are its own; within a
+  # shard the harnesses run one at a time.
+  #
+  # THE GPU LEG IS ONE SHARD. On the runner's Chrome stable the scene draws
+  # on the DOM path (docs/renderer.json says so: its capture hit-tests where
+  # a view was laid out), so running every shard again there ran the same
+  # DOM checks in a slower Chrome on a busier machine: twice the runners,
+  # 26 minutes on its slowest shard, and every flake of 0.1.34's merge. What
+  # only that leg can hold is that such a browser falls back and still
+  # works: `renderer` holds it, and the scene's own harnesses (navigation,
+  # menu, quick-ask) prove the fallback draws and answers. When stable
+  # Chrome draws on the GPU, widen this shard again.
   harnesses:
     name: ${{ matrix.shard }} (${{ matrix.renderer }})
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        renderer: [dom, gpu]
-        shard:
-          - gauntlet, quick-ask, menu
-          - site, audit
-          - survey, create, pages, navigation
-          - rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal, a11y, renderer
-          - journeys (gauntlet)
-          - journeys (todo, seedbed, rota, discography)
         include:
-          - shard: gauntlet, quick-ask, menu
-            run: node scripts/verify-all.mjs --serial gauntlet quick-ask menu
-          - shard: site, audit
-            run: node scripts/verify-all.mjs --serial site audit
-          - shard: survey, create, pages, navigation
-            run: node scripts/verify-all.mjs --serial survey create pages navigation
-          - shard: rota, lines, calendar, desk, remember, studio, watch, who, seat, rehearsal, a11y, renderer
-            run: node scripts/verify-all.mjs --serial rota lines calendar desk remember studio watch who seat rehearsal a11y renderer
-          - shard: journeys (gauntlet)
-            run: node scripts/verify-journeys.mjs gauntlet
-          - shard: journeys (todo, seedbed, rota, discography)
-            run: node scripts/verify-journeys.mjs todo seedbed rota discography
+          - { renderer: dom, shard: "site", run: "node scripts/verify-all.mjs --serial site" }
+          - { renderer: dom, shard: "gauntlet", run: "node scripts/verify-all.mjs --serial gauntlet" }
+          - { renderer: dom, shard: "audit, survey, create, quick-ask, menu", run: "node scripts/verify-all.mjs --serial audit survey create quick-ask menu" }
+          - { renderer: dom, shard: "a11y, lines, pages, navigation", run: "node scripts/verify-all.mjs --serial a11y lines pages navigation" }
+          - { renderer: dom, shard: "rota, calendar, desk, remember, studio, watch, who, seat, rehearsal, renderer", run: "node scripts/verify-all.mjs --serial rota calendar desk remember studio watch who seat rehearsal renderer" }
+          - { renderer: dom, shard: "journeys (gauntlet)", run: "node scripts/verify-journeys.mjs gauntlet" }
+          - { renderer: dom, shard: "journeys (todo, seedbed)", run: "node scripts/verify-journeys.mjs todo seedbed" }
+          - { renderer: dom, shard: "journeys (rota, discography)", run: "node scripts/verify-journeys.mjs rota discography" }
+          - { renderer: gpu, shard: "renderer, navigation, menu, quick-ask", run: "node scripts/verify-all.mjs --serial renderer navigation menu quick-ask" }
     steps:
       - uses: actions/checkout@v4
 
