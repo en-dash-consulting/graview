@@ -15,6 +15,8 @@ const refusedFormat = (format: string, type: string): string => {
   return `${sentence}; ${fix}`;
 };
 import { farEnd } from "./far-end.js";
+import { linkedRelationFindings } from "./linked-relation-findings.js";
+import { linkedRelationOfSpec, reachesAnotherApp, type LinkedRelation } from "../schema/linked.js";
 import {
   ActSpec,
   EDGE_NAME,
@@ -277,6 +279,9 @@ const clone = <T>(v: T): T => structuredClone(v);
 const asArray = (v: unknown): string[] => [v ?? []].flat() as string[];
 const kebab = (camel: string) => camel.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 const words = (name: string) => kebab(name).replace(/-/g, " ");
+/** Another app's kinds as people say them: "one house in the app @nick/house", "houses or flats in the app @nick/house". Their plural is that app's to say; this one says the plain one. */
+const farKindsWords = (far: LinkedRelation) =>
+  `${far.cardinality === "one" ? `one ${far.kinds.map(words).join(" or ")}` : far.kinds.map((k) => `${words(k)}s`).join(" or ")} in the app ${far.address}, another app, read there as whoever is looking`;
 
 function hasKind(kinds: Kinds, kind: string): boolean {
   return kinds === "*" || kinds.has(kind);
@@ -1936,10 +1941,15 @@ class Editor {
     }
     const edge = { ...parsed.data } as Doc;
     delete edge.renamedFrom;
-    if (edge.to !== "*") for (const t of edge.to) if (!this.doc.kinds[t]) return this.fail(i, "to", `"${t}" is not a kind this app has`);
+    // One to another app's kind (`@nick/house/house`) is judged as `graview check` judges it in a whole document, and refused in its words.
+    if (reachesAnotherApp(parsed.data)) {
+      const [finding] = linkedRelationFindings(`edits.${i}`, relation, kind, parsed.data);
+      if (finding) return void this.findings.push(finding);
+    } else if (edge.to !== "*") for (const t of edge.to) if (!this.doc.kinds[t]) return this.fail(i, "to", `"${t}" is not a kind this app has`);
+    const far = linkedRelationOfSpec(parsed.data);
     (spec.edges ??= {})[relation] = edge;
     this.edgeOrigin.set(`${kind}.${relation}`, undefined);
-    this.said.push(`${kind} gains a relation, "${relation}", to ${edge.to === "*" ? "any record" : edge.to.join(" or ")}.`);
+    this.said.push(`${kind} gains a relation, "${relation}", to ${edge.to === "*" ? "any record" : far ? farKindsWords(far) : edge.to.join(" or ")}.`);
   }
 
   private renameRelation(i: number, kind: string, relation: string, to: string) {

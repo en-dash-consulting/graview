@@ -21,6 +21,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [0.1.35 · An add-relation edit can name another app's kind](./0-1-35-an-add-relation-edit-can-name.md) | pending |
+| [0.1.35 · An add-relation edit can name another app's kind](./0-1-35-an-add-relation-edit-can-name.md) | completed |
 | [0.1.35 · A host says whether a file is still kept asynchronously](./0-1-35-a-host-says-whether-a-file-is.md) | pending |
 | [0.1.35 · Playback asks the host for a past declaration lazily](./0-1-35-playback-asks-the-host-for-a.md) | pending |

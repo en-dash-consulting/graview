@@ -48,7 +48,7 @@ const unsaid = (path: string, message: string): Finding => error("studio-unsaid"
 
 const KIND_PROPERTIES = ["plural", "noun", "description", "lifecycleField", "retired", "figure"] as const;
 const KIND_WORDS: Record<(typeof KIND_PROPERTIES)[number], string> = { plural: "plural", noun: "noun", description: "description", lifecycleField: "lifecycle", retired: "lifecycle", figure: "figure" };
-const EDGE_PROPERTIES = ["description", "inverse", "cardinality", "appendOnly", "toAny"] as const;
+const EDGE_PROPERTIES = ["description", "inverse", "cardinality", "appendOnly", "toAny", "toAnotherApp"] as const;
 const ACT_PROPERTIES = ["title", "description", "fromTheOtherEnd", "destructive", "writes", "onAny"] as const;
 const OTHER_SORTS = ["role", "lens", "brand"] as const;
 
@@ -193,7 +193,8 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
       op: "add-relation",
       kind: label(kind),
       relation: label(edge),
-      to: edge["toAny"] === true ? "*" : now.out(id, "to-kind").map(label),
+      // Another app's kinds (FR-171) are named, not tied.
+      to: edge["toAny"] === true ? "*" : (strings(edge, "toAnotherApp") ?? now.out(id, "to-kind").map(label)),
       ...(edge["cardinality"] === "one" ? { cardinality: "one" } : {}),
       ...(str(edge, "description") ? { description: str(edge, "description") } : {}),
       ...(str(edge, "inverse") ? { inverse: str(edge, "inverse") } : {}),
@@ -227,7 +228,7 @@ export function documentEdits(document: GraviewDocument, before: Reading, after:
     if (!old) continue;
     const changed = EDGE_PROPERTIES.filter((key) => !same(old[key], edge[key]));
     if (!same(stillThere(was, id, "to-kind"), stillThere(now, id, "to-kind"))) changed.push("toAny");
-    if (changed.length > 0) findings.push(unsaid(`kinds.${label(declaredOn(now, edge) ?? edge)}.edges.${label(edge)}`, `the ${label(edge)} relation's ${changed.map((key) => (key === "toAny" ? "far end" : key)).join(" and ")} changed; an edit adds, renames and removes a relation, it does not change one`));
+    if (changed.length > 0) findings.push(unsaid(`kinds.${label(declaredOn(now, edge) ?? edge)}.edges.${label(edge)}`, `the ${label(edge)} relation's ${[...new Set(changed.map((key) => (key === "toAny" || key === "toAnotherApp" ? "far end" : key)))].join(" and ")} changed; an edit adds, renames and removes a relation, it does not change one`));
   }
 
   // ── acts and rules, against the document the edits so far make ──

@@ -30,7 +30,11 @@ host's to say, every time, as the viewer.
    `appendOnly`, and the check refuses it in a sentence. In TypeScript the
    link is a field it is kept in: `forHouse:
    linkedRecordField("@nick/house/house").optional()`
-   (`{ cardinality: "many" }` for several).
+   (`{ cardinality: "many" }` for several). A host that changes a
+   document by edits sends `{"op": "add-relation", "kind": "scenario",
+   "relation": "forHouse", "to": ["@nick/house/house"], "cardinality":
+   "one"}`, refused by the same finding codes; the studio makes one
+   with its act for linking another app's records.
 
 2. **Let the record's own edit link one.** The link is kept on the record
    that links, as the far kind and its id — `"house:h1"`, or a list — so the
