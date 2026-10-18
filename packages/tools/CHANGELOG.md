@@ -1,5 +1,25 @@
 # @graview/tools
 
+## 0.1.34
+
+### Patch Changes
+
+- 5fc86f5: Opening a context menu spends no thinking-model call (FR-185). The menu's AI section asked for suggestions every time it opened, and `suggestHere` goes to the Thinking slot when there is no Fast one, so a host that gave only `ai.thinking` paid one language-model call per right-click, and opening and closing a menu cost as much as asking. Now a menu asks as it opens only with a Fast slot; with only a Thinking slot (or `complete`, or `turn`) it offers a "Suggest…" row (`[data-menu-item="ai-suggest"]`) that asks when pressed, keeps the menu open, and draws what was suggested in it, with the keyboard on the first row that arrived. `HostAi.suggestOnOpen` lets a host say it: `false` makes it the row with a Fast slot too; unsaid, a menu with a Fast slot asks on opening as before. `suggestsOnOpen(ai)` from `@graview/tools/inline-ai` answers whether a menu would. A menu drawn again while open no longer asks again: it asked once per drawing of its target object, which the menu makes anew on every draw, so a Fast slot was asked twice for one right-click. `capabilities().shipped` gains FR-185.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` lists FR-185. What Graview Cloud does: nothing to stop paying for a right-click with only a Thinking slot; to give its readers suggestions as a menu opens, fill `ai.fast` (Jev, `jevFast`), and pass `suggestOnOpen: false` where a Fast call per menu is still too many.
+- 2324ad3: What a selection agrees on is read among records of one kind, and an act offered whole is one its input accepts (the eleventh walk). A shelter's "Room in the kennel" chose a kennel and the animals in it; the structure provider read the three as one set agreeing on `status`, said "2 share the status in-care; "Run E05" does not" with the animals' stored value raw, and offered "Align the status of "Run E05" with the other 2" — the kennel's edit told a status only an animal can have, refused on press. A field of one name on two kinds is now two facts: agreement and the odd one out are read within each kind, an alignment is offered only where the act's input accepts its arguments as they stand, and a neighbor that is itself one of the chosen is no longer "shared by all but" itself.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged.
+- Updated dependencies [5fc86f5]
+- Updated dependencies [f48b7d1]
+- Updated dependencies [8f09e52]
+- Updated dependencies [b320b36]
+- Updated dependencies [9c79c96]
+- Updated dependencies [55ab33c]
+- Updated dependencies [9c79c96]
+  - @graview/core@0.1.34
+  - @graview/ship@0.1.34
+
 ## 0.1.33
 
 ### Patch Changes

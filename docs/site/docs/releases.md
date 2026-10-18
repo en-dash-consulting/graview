@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.34`](https://graview.dev/docs/releases.html#v0-1-34)
 - [`0.1.33`](https://graview.dev/docs/releases.html#v0-1-33)
 - [`0.1.32`](https://graview.dev/docs/releases.html#v0-1-32)
 - [`0.1.30`](https://graview.dev/docs/releases.html#v0-1-30)
@@ -35,9 +36,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.34
+
+Published October 18, 2026 · the current version
+
+The right-click menu tells a visitor how to get in, draws a panel where it was asked, spends no thinking-model call on opening, and is ready before the click.
+
+- **A visitor is told how to get in.** A host passes `signIn` while nobody is signed in; a reader who may do nothing sees one sign-in row in the menu and at a list's foot instead of every act struck through, and is not offered Notify me.
+- **A panel drawn from the menu stays on its face.** On Pages, "Draw a panel" opens the draft page with Keep as a lens and Discard; over the scene the draft is framed as a panel; a failed ask is said in the menu.
+- **Opening a menu costs nothing.** With only a thinking model, suggestions wait for a "Suggest…" press; with a Fast slot they are asked once per record until it changes.
+- **The menu is ready before the click.** Resting on a record, focusing it or touching it prepares its menu, so it opens complete.
+- **The eleventh walk** (an animal shelter at real size) found six problems, all fixed: finding a past record by name, filtering a status board, offered repairs that were refused, a misnamed heading, Tab from a chosen box, and the scaffold's own test under a policy.
+
+**Before you upgrade:** `mount`, `<Embed>`, `GraviewProvider` and `PageContext` take `signIn` (`SignIn` from `@graview/core`). `HostAi.suggestOnOpen` is new; with only a thinking slot the menu no longer suggests as it opens. The hosted page carries about 0.2 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.34) · [The full changelog for 0.1.34](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0134)
+
 ## 0.1.33
 
-Published October 17, 2026 · the current version
+Published October 17, 2026
 
 A read-only calendar takes its own changes under a policy, and a host keeps Notify me in its own store.
 
