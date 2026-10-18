@@ -195,6 +195,19 @@ try {
    * settles is read, and the one nearest halfway is midway; ground again
    * is the mark once it has stopped moving, or after four seconds.
    */
+  /*
+   * AND THE TRANSITION ITSELF, heard rather than sampled. A runner that drew
+   * no frame between the two states (docs/flakes.json, 0.1.35's branch
+   * Nightly) read a morph as a cut; the browser says a transition of the
+   * altitude began however few frames it then draws.
+   */
+  await page.evaluate(() => {
+    const control = document.querySelector('[data-testid="overview"]');
+    globalThis.__altitudeTransition = false;
+    control?.addEventListener("transitionrun", (event) => {
+      if (event.propertyName === "--graview-altitude") globalThis.__altitudeTransition = true;
+    });
+  });
   const frames = page.evaluate(
     () =>
       new Promise((done) => {
@@ -217,7 +230,8 @@ try {
   // From the first frame that moved: a cut is then its end alone, a morph every step on the way.
   const wings = read.slice(Math.max(0, read.findIndex((one) => one !== read[0])));
   const halfway = wings.reduce((best, one) => (best === null || Math.abs(one - 0.375) < Math.abs(best - 0.375) ? one : best), null);
-  report.control.midway = { ...(await control()), wingOpacity: halfway, frames: wings.length };
+  const transitioned = await page.evaluate(() => globalThis.__altitudeTransition === true);
+  report.control.midway = { ...(await control()), wingOpacity: halfway, frames: wings.length, transitioned };
   report.control.groundAgain = await control();
 
   /*
@@ -1467,9 +1481,10 @@ report.verdict = {
   theMarkHasTwoStates:
     near(report.control?.ground?.wingOpacity, 0.75) && near(report.control?.altitude?.wingOpacity, 0),
   // Morphing where the scene morphs; cutting where it cuts.
+  // Morphing where the property registers (a transition of it ran, or a frame stood between the states); cutting where it cannot.
   theMarkMovesAsTheSceneDoes: report.control?.midway?.registered
-    ? between(report.control?.midway?.wingOpacity, 0.04, 0.71)
-    : near(report.control?.midway?.wingOpacity, 0.75),
+    ? report.control?.midway?.transitioned === true || between(report.control?.midway?.wingOpacity, 0.04, 0.71)
+    : report.control?.midway?.transitioned !== true && near(report.control?.midway?.wingOpacity, 0.75),
   theControlComesBackDown:
     report.control?.groundAgain?.label === "Up" &&
     near(report.control?.groundAgain?.wingOpacity, 0.75),
