@@ -10,7 +10,7 @@
  * that carried it to npm. The changelogs themselves stay where changesets
  * writes them, linked rather than copied.
  */
-import { escape, inline, render, section, REPOSITORY } from "./design.mjs";
+import { escape, inline, render, REPOSITORY, section } from "./prose.mjs";
 
 const anchorOf = (version) => `v${version.replace(/[^0-9a-z]+/gi, "-")}`;
 const tagOf = (version) => `graview@${version}`;

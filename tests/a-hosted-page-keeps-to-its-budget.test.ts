@@ -106,7 +106,8 @@ describe("a hosted page", () => {
     // 935 KB since datetimes came to be said in the app's time zone (Roadmap f-app-time-zone): the page's zone beside its locale, an instant read on a named clock and back, the `time` and `datetime` formatters and `timeZone` on the provider: the scene face measured 957_342 B, 2_064 more than before it (955_278).
     // 938 KB since every relation came with its connect and disconnect (Roadmap f-relation-acts-derived): the store registers each relation's derived pair, its titles and its name read back against the kinds: 2_675 more on its own (955_278 to 957_953), with the time zone 937.5 KB together.
     // 939 KB since a record came to hold a video (0.1.37): a video field's schema up front, and the guest host's half of a view's `<graview-video>` and `data-lightbox` beside the faces' views: the scene face measured 956_303 B, 1_025 more than before it (955_278).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(939 * 1024);
+    // 940 KB since a view that draws its members late still gets its lines (0.1.37): the scene's lines watch the views a measurement found short of a member and measure again once one is drawn (`watchDrawnLate`): the scene face measured 956_303 B, 1_032 more than before it (955_271). Nothing up front changed.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(940 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -9,7 +9,8 @@ import type { ActivityMark } from "./activity.js";
 import { kitConnector, useKit } from "./kit.js";
 import { orthogonalPoints, polylineD, roundedPolylineD, routePoint, routedQuadratic } from "./routes.js";
 import { channelRoute } from "./channels.js";
-import { clipQuadratic, Connectors, connectorStrands, movedBy, tieRoute } from "./connectors.js";
+import { clipQuadratic, Connectors, connectorStrands, movedBy, tieRoute, type Owed } from "./connectors.js";
+import { watchDrawnLate } from "./drawn-late.js";
 import { drawnBox, measureVisible, visibleRect } from "./where-drawn.js";
 import type { SceneNode } from "./scene-node.js";
 import { captionRuns, type CaptionEntry, type CaptionRun } from "./captions.js";
@@ -119,14 +120,30 @@ export function Lines<S extends AnySchema>({
   const captionsAt = useRef("");
   /* Where the layout had every card when the lines were measured: a held card's lines move by what it has moved since. */
   const measuredAt = useRef<readonly SceneNode[]>([]);
+  /* What the last measurement looked for inside a view and found no drawing of (`watchDrawnLate`, below). */
+  const owed = useRef<Owed>(new Map());
   const captionsNow = () => [...(stageRef.current?.querySelectorAll("[data-graview-relation] > span") ?? [])].map((el) => { const r = el.getBoundingClientRect(); return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)}`; }).join(" ");
   useLayoutEffect(() => {
     if (moving || holding) return;
     captionsAt.current = captionsNow();
     measuredAt.current = frame.nodes;
-    setMeasured(connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme));
+    const owing: Owed = new Map();
+    setMeasured(connectorStrands(frame.nodes, frame.connectors, stageRef.current, overview, scheme, owing));
+    owed.current = owing;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frame, moving, holding, selection, overview, graphNodes, scheme, asked, stageRef]);
+  /*
+   * A VIEW THAT DRAWS LATE (`watchDrawnLate`): a lens fetched as it is first
+   * drawn puts its members down after the frame landed, at the same size,
+   * and nothing above measures again for it. The members this measurement
+   * looked for and found no drawing of are watched for, and the lines are
+   * measured again when one is drawn.
+   */
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (moving || holding || stage === null) return;
+    return watchDrawnLate(stage, owed.current, () => remeasure((n) => n + 1));
+  }, [measured, moving, holding, stageRef]);
   useEffect(() => {
     if (moving || holding || overview || typeof requestAnimationFrame === "undefined") return;
     const later = requestAnimationFrame(() => {
