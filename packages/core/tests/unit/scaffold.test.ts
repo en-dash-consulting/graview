@@ -100,6 +100,18 @@ describe("what a project starts with passes its own checks", () => {
     expect(file("Field Notes", "src/ui/pages.tsx").match(heading)?.[1]?.trim()).toBe(theirs);
   });
 
+  it("draws each fact as the derived record page does, by the same component (the twelfth walk)", () => {
+    // A festival's film page, as the scaffold wrote it, drew a trailer as its
+    // file name and a screening's time as text, the date editor reached only
+    // through "Change the screening"; the derived page plays one and edits the other.
+    const derived = readFileSync(fileURLToPath(new URL("../../../pages/src/page-record.tsx", import.meta.url)), "utf8");
+    const drawn = /\.fields\.map\(\(field\) => \(\s*<RecordField<S> key=\{field\.key\} nodeId=\{id\}/;
+    expect(derived).toMatch(drawn);
+    const pages = file("Field Notes", "src/ui/pages.tsx");
+    expect(pages).toMatch(drawn);
+    expect(pages).not.toContain("{field.value}");
+  });
+
   it("frames only Begin's own door, so the derived home comes back as the whole page it is", () => {
     const pages = file("Field Notes", "src/ui/pages.tsx");
     expect(pages).toContain("frame={(door) => (");
@@ -317,6 +329,17 @@ describe("a new project's pages", () => {
 });
 
 describe("link mode", () => {
+  it("writes the path in the words npm installs when npm makes the project (the twelfth walk)", () => {
+    // npm refuses `link:` ("Unsupported URL Type"); `file:` to a directory it links.
+    const manifest = JSON.parse(scaffoldProject({ name: "Linked", link: "../graview", packageManager: "npm" }).files.find((f) => f.path === "package.json")!.contents) as {
+      dependencies: Record<string, string>;
+      devDependencies: Record<string, string>;
+    };
+    expect(manifest.dependencies["@graview/core"]).toBe("file:../graview/packages/core");
+    expect(manifest.devDependencies["graview"]).toBe("file:../graview/packages/graview");
+    expect(JSON.stringify(manifest)).not.toContain("link:");
+  });
+
   it("consumes the framework by path, aliases its sources, and pins nothing", () => {
     const s = scaffoldProject({ name: "Linked", link: "../graview" });
     const manifest = JSON.parse(s.files.find((f) => f.path === "package.json")!.contents) as {

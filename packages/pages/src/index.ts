@@ -4,6 +4,8 @@ export type { PageRegistry, PageRegistration, PageType, ShellComponent, ShellOpt
 export { kindFacts, kindMap, rankedRepairs, recordFacts } from "./facts.js";
 export type { KindFacts, KindMap, KindRelation, RecordFacts, RecordLinkGroup, FactsOptions } from "./facts.js";
 export { DerivedForm } from "./form.js";
+export { RecordField } from "./record-field.js";
+export type { RecordFieldProps } from "./record-field.js";
 export type { DerivedFormProps } from "./form.js";
 export {
   DefaultHomePage,
