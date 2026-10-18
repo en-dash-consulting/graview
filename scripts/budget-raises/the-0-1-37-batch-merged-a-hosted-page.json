@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 100,
+  "gzipped": 60,
+  "changeset": "the-0-1-37-batch-merged.md",
+  "note": "Raised when the 0.1.37 batch was merged: the time zone, the relation acts and the video field were each measured alone against the same base and fit their own raises; together they share less than each assumed. Measured at 576_409 against 576_346 minified once all three were in."
+}
