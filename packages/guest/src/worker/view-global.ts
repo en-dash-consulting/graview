@@ -13,7 +13,7 @@
  * key (`data-key` or `id`) — and changes only what moved, so a field the
  * viewer is typing in keeps its text and its focus across a push.
  */
-import { RemoteRootElement, remoteId } from "@remote-dom/core/elements";
+import { RemoteRootElement, remoteId, updateRemoteElementAttribute } from "@remote-dom/core/elements";
 import type { Unsent } from "../channel.js";
 import { HTML_ELEMENTS, UNNAMED_ELEMENTS, openAttribute, svgElementName } from "../open-kit.js";
 import { navigateRequest, type GuestAnswer, type GuestDomEvent, type GuestNavigateTo, type GuestPressed, type GuestProps, type HostMessage } from "../protocol.js";
@@ -241,12 +241,34 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     }
     const from = have as Element;
     const to = want as Element;
-    for (const name of from.getAttributeNames()) if (!to.hasAttribute(name)) from.removeAttribute(name);
+    const custom = isCustom(from);
+    for (const name of from.getAttributeNames()) {
+      if (to.hasAttribute(name)) continue;
+      from.removeAttribute(name);
+      if (custom) updateRemoteElementAttribute(from, name, undefined);
+    }
     for (const name of to.getAttributeNames()) {
       const value = to.getAttribute(name)!;
       if (from.getAttribute(name) !== value) from.setAttribute(name, value);
+      if (custom) updateRemoteElementAttribute(from, name, value);
     }
     morph(from, to);
+  }
+
+  /*
+   * AN ELEMENT THE HOST DRAWS FOR THE VIEW (`<graview-video>`, 0.1.37). Remote
+   * DOM sends no attribute of an element whose name has a hyphen unless it is
+   * told it as the element's own: each is told, so the host hears what the
+   * view named.
+   */
+  const isCustom = (element: Element) => element.localName.includes("-");
+  function tellCustom(node: Node): void {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType !== 1) continue;
+      const element = child as Element;
+      if (isCustom(element)) for (const name of element.getAttributeNames()) updateRemoteElementAttribute(element, name, element.getAttribute(name) ?? undefined);
+      tellCustom(element);
+    }
   }
 
   /** What the host will not draw, by the open kit's tables: said at once, for the author. */
@@ -283,6 +305,7 @@ export function createViewRuntime(io: ViewIo): ViewRuntime {
     precheck(next, false, said);
     refusedLast = [...said];
     if (refusedLast.length > 0) io.warn(`The host will not draw: ${refusedLast.join(", ")}`);
+    tellCustom(next);
     morph(root as unknown as Node, next);
   }
 

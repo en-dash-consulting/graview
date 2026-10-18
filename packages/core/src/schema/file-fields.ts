@@ -1,4 +1,4 @@
-import { filesOf, fileKindOf, isImage, type FileValue } from "./files.js";
+import { filesOf, fileKindOf, isImage, isVideo, videoWords, type FileValue } from "./files.js";
 import { defOf } from "./zod.js";
 
 /*
@@ -12,6 +12,9 @@ import { defOf } from "./zod.js";
 /** What a file is said as where it cannot be seen: its caption, else its name. */
 export const fileWords = (file: FileValue): string => file.caption?.trim() || file.name;
 
+/** What a file is said as to somebody listening: its words, and for a video how long it is (0.1.37): "beach.mov, a 45-second video". */
+export const fileSaid = (file: FileValue): string => (isVideo(file) ? `${fileWords(file)}, ${videoWords(file)}` : fileWords(file));
+
 /** The fields of a kind that hold files — one, or a list of them — in declared order. */
 export function fileFieldsOf(definition: { readonly fields?: unknown } | undefined): readonly string[] {
   const shape = (definition?.fields as { shape?: Record<string, unknown> } | undefined)?.shape ?? {};
@@ -22,10 +25,10 @@ export function fileFieldsOf(definition: { readonly fields?: unknown } | undefin
   });
 }
 
-/** A record's first picture, in its kind's declared order: what a card or a row shows small. */
+/** A record's first picture — or video, drawn by its poster (0.1.37) — in its kind's declared order: what a card or a row shows small. */
 export function firstPicture(node: Readonly<Record<string, unknown>>, definition: { readonly fields?: unknown } | undefined): FileValue | undefined {
   for (const key of fileFieldsOf(definition)) {
-    const found = filesOf(node[key]).find(isImage);
+    const found = filesOf(node[key]).find((file) => isImage(file) || isVideo(file));
     if (found) return found;
   }
   return undefined;

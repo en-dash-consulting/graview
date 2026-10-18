@@ -1,7 +1,7 @@
 import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead } from "../days.js";
 import { fieldWords, labelOf, nounOf, type ReadableField } from "./define-node.js";
 import { valueWords } from "./value-words.js";
-import { filesOf } from "./files.js";
+import { filesOf, isVideo, videoWords } from "./files.js";
 import { isAppLinkField } from "./app-link.js";
 import { linkedRefsOf, linkedRelationOf } from "./linked.js";
 import { repeatingDateAsRead } from "../repeat-words.js";
@@ -211,7 +211,7 @@ export function readableFields(
     if (nested && format === undefined) continue;
     // A date that repeats says how, and the next one: "Every Tuesday, next Oct 27".
     const repeated = typeof value === "string" && !format ? repeatingDateAsRead(value, node[`${key}Repeat`], { locale: options.locale }) : undefined;
-    const stored = files[0] ? files.map((file) => (file.caption ? `${file.name} — ${file.caption}` : file.name)).join(", ") : Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
+    const stored = files[0] ? files.map((file) => `${file.caption ? `${file.name} — ${file.caption}` : file.name}${isVideo(file) ? ` (${videoWords(file)})` : ""}`).join(", ") : Array.isArray(value) ? value.join(", ") : typeof value === "boolean" ? (value ? "Yes" : "No") : String(value);
     // A phone, a place or a duration, said as one: "(555) 123-4567", "1 h 30 min".
     const typed = format ? undefined : fieldSays(definition, key);
     const href = typedHref(typed, value);

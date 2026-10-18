@@ -43,6 +43,22 @@ const INLINE = new Set(["a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "d
 const SKIPPED = new Set(["style", "template", "datalist", "option"]);
 
 const squash = (text: string) => text.replace(/\s+/g, " ").trim();
+
+/**
+ * A video's length as a person reads it, as `@graview/core`'s `videoWords`
+ * says it ("a 45-second video"): written here because this module goes into
+ * the headless runtime, which carries nothing of the framework, and held to
+ * core's by `a-view-places-a-records-video`.
+ */
+export function videoWords(file: { readonly duration?: number }): string {
+  const seconds = file.duration === undefined ? 0 : Math.round(file.duration);
+  if (seconds < 1) return "a video";
+  if (seconds < 60) return `a ${seconds}-second video`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `a ${minutes}-minute video`;
+  const hours = Math.floor(minutes / 60);
+  return `a ${hours}-hour${minutes % 60 > 0 ? ` ${minutes % 60}-minute` : ""} video`;
+}
 const isElement = (node: TreeNode): node is TreeElement => node instanceof TreeElement;
 const hidden = (element: TreeElement) => element.hasAttribute("hidden") || element.getAttribute("aria-hidden") === "true";
 
@@ -89,6 +105,8 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
 
   /** The record an element stands for: its own `data-record`, a `data-key` that is a shown record's id, or the one record linked inside it. */
   const recordOf = (element: TreeElement): string | undefined => {
+    /* A placed video names the record its file is on: a picture of it, not a row (0.1.37). */
+    if (element.localName === "graview-video") return undefined;
     const own = element.getAttribute("data-record");
     if (own !== null) return own;
     const key = element.getAttribute("data-key") ?? element.getAttribute("id");
@@ -96,7 +114,7 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
     const linked = new Set<string>();
     for (const inner of elementsUnder(element)) {
       const id = inner.getAttribute("data-record");
-      if (id !== null) linked.add(id);
+      if (id !== null && inner.localName !== "graview-video") linked.add(id);
     }
     return linked.size === 1 ? [...linked][0] : undefined;
   };
@@ -255,6 +273,19 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
       case "img": {
         const alt = squash(element.getAttribute("alt") ?? "");
         return alt ? [{ t: "text", text: alt, tone: "picture" }] : [];
+      }
+      /* A record's video the host plays (0.1.37): said by what it shows and how long it is, from the record the view was shown. */
+      case "graview-video": {
+        const field = element.getAttribute("data-field") ?? "";
+        const node = shown.get(element.getAttribute("data-record") ?? "") as Record<string, unknown> | undefined;
+        const held = node && field && Object.hasOwn(node, field) ? node[field] : undefined;
+        const file = (Array.isArray(held) ? held : [held])[Number(element.getAttribute("data-index") ?? "0")] as { readonly name?: unknown; readonly type?: unknown; readonly caption?: unknown; readonly duration?: unknown } | undefined;
+        if (!file || typeof file.name !== "string" || typeof file.type !== "string" || !file.type.startsWith("video/")) {
+          problems.push({ at: `drawing <graview-video data-field="${field}">`, says: `It names no video on a record this seat was shown: the host draws no player there. A <graview-video> names a record the view was shown (data-record) and its video field (data-field).` });
+          return [];
+        }
+        const words = typeof file.caption === "string" && file.caption.trim() ? file.caption.trim() : file.name;
+        return [{ t: "text", text: `${words}, ${videoWords(typeof file.duration === "number" ? { duration: file.duration } : {})}`, tone: "picture" }];
       }
       case "button": {
         const text = squash(textOf(element));

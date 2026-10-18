@@ -1,4 +1,4 @@
-import { fieldWords, fileSrc, filesOf, isFileValue, isImage, LOCAL_LAYERS, type FileValue, type HostFiles } from "@graview/core";
+import { fieldWords, fileSrc, filesOf, isFileValue, isImage, isVideo, LOCAL_LAYERS, videoClock, videoWords, type FileValue, type HostFiles } from "@graview/core";
 import { fileFieldsOf, fileWords } from "@graview/core/blocks";
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraview, useHostFiles, useNode, usePlayback } from "@graview/react/provider";
@@ -49,7 +49,7 @@ export function typeWords(file: { readonly type: string; readonly name?: string 
 
 /** The kinds a host takes, in words: "pictures and PDF files". */
 export function kindsWords(kinds: readonly string[]): string {
-  const said = [...new Set(kinds.map((kind) => (kind === "image/*" ? "pictures" : kind === "*/*" || kind === "*" ? "any file" : `${typeWords({ type: kind })} files`)))];
+  const said = [...new Set(kinds.map((kind) => (kind === "image/*" ? "pictures" : kind === "video/*" ? "videos" : kind === "*/*" || kind === "*" ? "any file" : `${typeWords({ type: kind })} files`)))];
   return said.length <= 1 ? (said[0] ?? "no files") : `${said.slice(0, -1).join(", ")} and ${said[said.length - 1]}`;
 }
 
@@ -62,6 +62,10 @@ export function takes(kinds: readonly string[], type: string): boolean {
 
 const HEIC = /^image\/hei[cf]$|\.hei[cf]$/i;
 const isHeic = (file: { readonly type: string; readonly name: string }) => HEIC.test(file.type) || HEIC.test(file.name);
+
+/** A video's type from its name's ending, where the browser said none (a phone's `.MOV` often comes untyped). */
+const VIDEO_ENDINGS: Readonly<Record<string, string>> = { mov: "video/quicktime", mp4: "video/mp4", m4v: "video/mp4", webm: "video/webm", ogv: "video/ogg" };
+const videoTypeOf = (name: string): string | undefined => VIDEO_ENDINGS[/\.([a-z0-9]{2,4})$/i.exec(name)?.[1]?.toLowerCase() ?? ""];
 
 /** What is sent: the file, or a smaller JPEG of it, with its size in pixels where it was read. */
 interface Prepared {
@@ -80,12 +84,14 @@ interface Prepared {
  * cannot read goes as it is when the host takes HEIC, and is refused in
  * words when it does not.
  */
-export async function prepare(file: File, host: HostFiles, options: { readonly image: boolean; readonly camera?: boolean }): Promise<Prepared | { readonly refused: string }> {
+export async function prepare(file: File, host: HostFiles, options: { readonly image: boolean; readonly video?: boolean; readonly camera?: boolean }): Promise<Prepared | { readonly refused: string }> {
   const name = file.name || (options.camera ? "photo.jpg" : "file");
-  const type = file.type || (isHeic({ type: "", name }) ? "image/heic" : "application/octet-stream");
+  const type = file.type || (isHeic({ type: "", name }) ? "image/heic" : (videoTypeOf(name) ?? "application/octet-stream"));
   const heic = isHeic({ type, name });
   const picture = type.startsWith("image/") || heic;
   if (options.image && !picture) return { refused: `“${name}” isn’t a picture.` };
+  /* A video goes as it was picked (0.1.37): what a browser plays, its poster and its length are the host's to make. */
+  if (options.video) return type.startsWith("video/") ? check({ blob: file, name, type }, host) : { refused: `“${name}” isn’t a video.` };
   const redraw = heic || (picture && /^image\/(jpeg|webp)$/.test(type) && (options.camera || file.size > host.maxBytes || file.size > 1_500_000));
   if (redraw) {
     try {
@@ -117,7 +123,7 @@ function check(prepared: Prepared, host: HostFiles): Prepared | { readonly refus
 }
 
 /** Send one prepared file and read what the host answered: the value, or why it was not kept. */
-export async function send(prepared: Prepared, host: HostFiles, image: boolean): Promise<FileValue | { readonly refused: string }> {
+export async function send(prepared: Prepared, host: HostFiles, image: boolean, video = false): Promise<FileValue | { readonly refused: string }> {
   let answered: unknown;
   try {
     answered = await host.upload(prepared.blob, prepared.name);
@@ -127,6 +133,7 @@ export async function send(prepared: Prepared, host: HostFiles, image: boolean):
   }
   if (!isFileValue(answered)) return { refused: `The host’s answer for “${prepared.name}” isn’t a file a record can keep.` };
   if (image && !isImage(answered)) return { refused: `“${prepared.name}” isn’t a picture.` };
+  if (video && !isVideo(answered)) return { refused: `The host kept “${prepared.name}” as ${typeWords(answered)}, not as a video.` };
   const value: FileValue = { ...answered, ...(answered.width === undefined && prepared.width ? { width: prepared.width } : {}), ...(answered.height === undefined && prepared.height ? { height: prepared.height } : {}) };
   return value;
 }
@@ -204,6 +211,7 @@ function FileThumb({ file, size = 56, style }: { readonly file: FileValue; reado
   const host = useHostFiles();
   const [gone, failed] = useRemovedLater(file);
   if (gone) return <RemovedLater file={file} style={{ width: size, height: size, flex: "none", ...style }} />;
+  if (isVideo(file)) return <VideoThumb file={file} size={size} {...(style ? { style } : {})} onError={failed} />;
   return (
     <img
       onError={failed}
@@ -216,6 +224,114 @@ function FileThumb({ file, size = 56, style }: { readonly file: FileValue; reado
       data-graview-thumb={file.href}
       style={{ width: size, height: size, objectFit: "cover", borderRadius: ROUND, display: "block", flex: "none", background: "var(--graview-edge)", ...style }}
     />
+  );
+}
+
+/*
+ * A VIDEO ON A RECORD (0.1.37). Its length and size are the value's where
+ * the host's upload said them, and otherwise what the player read once it
+ * loaded the little it fetches before it plays (`preload="metadata"`): said
+ * on the page, never written back to the record.
+ */
+function useVideoFacts(file: FileValue) {
+  const [read, setRead] = useState<{ readonly duration?: number; readonly width?: number; readonly height?: number }>({});
+  const duration = file.duration ?? read.duration;
+  const facts = { ...(duration !== undefined ? { duration } : {}), width: file.width ?? read.width, height: file.height ?? read.height };
+  const onLoadedMetadata = (event: { readonly currentTarget: HTMLVideoElement }) => {
+    const video = event.currentTarget;
+    setRead({
+      ...(Number.isFinite(video.duration) && video.duration > 0 ? { duration: video.duration } : {}),
+      ...(video.videoWidth > 0 && video.videoHeight > 0 ? { width: video.videoWidth, height: video.videoHeight } : {}),
+    });
+  };
+  return [facts, onLoadedMetadata] as const;
+}
+
+/** The narrowest a player is drawn where there is room: a small video is made larger, so its controls fit. */
+const MIN_PLAYER = 320;
+
+/** A video said to somebody who cannot see it: what it shows, and how long it is. */
+const videoLabel = (file: FileValue, duration: number | undefined) => `${fileWords(file)}, ${videoWords({ ...(duration !== undefined ? { duration } : {}) })}`;
+
+const PLAY_GLYPH = (
+  <span data-graview-play-glyph="" aria-hidden="true" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none" }}>
+    <svg viewBox="0 0 24 24" width="40%" height="40%" style={{ maxWidth: 40, maxHeight: 40, filter: "drop-shadow(0 1px 2px rgb(0 0 0 / 0.5))" }}>
+      <circle cx="12" cy="12" r="11" fill="rgb(0 0 0 / 0.55)" />
+      <path d="M9.5 7.5v9l7-4.5z" fill="#fff" />
+    </svg>
+  </span>
+);
+
+/**
+ * A VIDEO, SMALL: on a card, a row, an `image` block's `thumb` — its poster
+ * with a play glyph and how long it is. Without a poster, its first frame:
+ * a muted player with no controls, out of the keyboard's way, fetching no
+ * more than it needs to say its length.
+ */
+function VideoThumb({ file, size, style, onError }: { readonly file: FileValue; readonly size: number; readonly style?: CSSProperties; readonly onError: () => void }) {
+  const host = useHostFiles();
+  const [facts, onLoadedMetadata] = useVideoFacts(file);
+  const box: CSSProperties = { width: size, height: size, objectFit: "cover", display: "block", borderRadius: ROUND, background: "var(--graview-edge)" };
+  return (
+    <span
+      role="img"
+      aria-label={videoLabel(file, facts.duration)}
+      data-graview-thumb={file.href}
+      data-graview-video-thumb=""
+      style={{ position: "relative", display: "block", width: size, height: size, flex: "none", ...style }}
+    >
+      {file.poster ? (
+        <img src={fileSrc(host, file.poster)} alt="" width={size} height={size} loading="lazy" decoding="async" onError={onError} style={box} />
+      ) : (
+        <video src={fileSrc(host, file.href)} preload="metadata" muted playsInline aria-hidden="true" tabIndex={-1} width={size} height={size} onLoadedMetadata={onLoadedMetadata} onError={onError} style={box} />
+      )}
+      {PLAY_GLYPH}
+      {facts.duration !== undefined ? (
+        <span
+          data-graview-video-clock=""
+          aria-hidden="true"
+          style={{ position: "absolute", right: 3, bottom: 3, padding: "0 4px", borderRadius: 4, background: "rgb(0 0 0 / 0.65)", color: "#fff", fontSize: "0.6875rem", lineHeight: "16px", fontVariantNumeric: "tabular-nums" }}
+        >
+          {videoClock(facts.duration)}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/**
+ * A VIDEO, PLAYED: its poster first, the browser's own controls — the
+ * keyboard reaches them, and they open it full screen — the little it needs
+ * fetched before it is played, its captions where the value carries them,
+ * and sized from the value so the page does not jump when it loads.
+ */
+function VideoPlayer({ file }: { readonly file: FileValue }) {
+  const host = useHostFiles();
+  const [gone, failed] = useRemovedLater(file);
+  const [facts, onLoadedMetadata] = useVideoFacts(file);
+  if (gone) return <RemovedLater file={file} style={{ width: "100%", aspectRatio: "16 / 9" }} />;
+  const sized = facts.width !== undefined && facts.height !== undefined;
+  return (
+    <figure data-graview-video-figure={file.href} style={{ margin: 0, display: "grid", gap: 4, minWidth: 0 }}>
+      <video
+        data-graview-video={file.href}
+        src={fileSrc(host, file.href)}
+        {...(file.poster ? { poster: fileSrc(host, file.poster) } : {})}
+        controls
+        preload="metadata"
+        playsInline
+        {...(sized ? { width: facts.width, height: facts.height } : {})}
+        aria-label={videoLabel(file, facts.duration)}
+        onLoadedMetadata={onLoadedMetadata}
+        onError={failed}
+        style={{ display: "block", width: "100%", maxWidth: sized ? Math.max(facts.width!, MIN_PLAYER) : "100%", height: "auto", maxHeight: "80vh", aspectRatio: sized ? `${facts.width} / ${facts.height}` : "16 / 9", borderRadius: ROUND, background: "#000" }}
+      >
+        {file.captions ? <track kind="captions" src={fileSrc(host, file.captions)} srcLang="en" label="Captions" default /> : null}
+      </video>
+      <figcaption data-graview-video-said="" style={QUIET}>
+        {[file.caption ?? file.name, ...(facts.duration !== undefined ? [videoClock(facts.duration)] : [])].join(" · ")}
+      </figcaption>
+    </figure>
   );
 }
 
@@ -246,7 +362,8 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
   const host = useHostFiles();
   const at = (file: FileValue) => fileSrc(host, file.href);
   const pictures = files.filter(isImage);
-  const documents = files.filter((file) => !isImage(file));
+  const videos = files.filter(isVideo);
+  const documents = files.filter((file) => !isImage(file) && !isVideo(file));
   const [open, setOpen] = useState<number | null>(null);
   const dialog = useRef<HTMLDialogElement | null>(null);
   // The picture it opened from: the keyboard goes back there, in an engine that focuses no button on a press (WebKit) too.
@@ -269,6 +386,15 @@ function FilesShown({ files, label }: { readonly files: readonly FileValue[]; re
                   setOpen(index);
                 }}
               />
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {videos.length > 0 ? (
+        <ul data-graview-videos="" aria-label={label} style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 12 }}>
+          {videos.map((file) => (
+            <li key={file.href} style={{ minWidth: 0 }}>
+              <VideoPlayer file={file} />
             </li>
           ))}
         </ul>
@@ -340,6 +466,8 @@ export interface FilesEditorProps {
   readonly several: boolean;
   /** Only pictures will do. */
   readonly image: boolean;
+  /** Only videos will do (0.1.37). */
+  readonly video?: boolean;
   /** The field, in the declaration's words. */
   readonly label: string;
   /** Each file small beside its name: where nothing else draws them (a form). Not under a gallery that already does. */
@@ -352,7 +480,7 @@ export interface FilesEditorProps {
  * the host takes, what it refused and why; without a host's files it says
  * this host takes none, and offers no way to add one.
  */
-export function FilesEditor({ value, onChange, several, image, label, thumbs = true }: FilesEditorProps) {
+export function FilesEditor({ value, onChange, several, image, video = false, label, thumbs = true }: FilesEditorProps) {
   const host = useHostFiles();
   const id = useId();
   const picker = useRef<HTMLInputElement | null>(null);
@@ -361,11 +489,15 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
   const [said, setSaid] = useState<string | null>(null);
   const [refused, setRefused] = useState<readonly string[]>([]);
   const [over, setOver] = useState(false);
-  const kinds = host ? (image ? host.kinds.filter((kind) => kind.startsWith("image/") || kind === "*" || kind === "*/*") : host.kinds) : [];
-  const pictureKinds = host ? host.kinds.length === 0 || kinds.some((kind) => kind.startsWith("image/") || kind.startsWith("*")) : false;
-  const open = Boolean(host) && (!image || pictureKinds);
-  const noun = image ? (several ? "pictures" : "a picture") : several ? "files" : "a file";
-  const accept = image ? (kinds.length > 0 ? kinds.join(",") : "image/*") : host?.kinds.join(",") || undefined;
+  /* What only pictures, or only videos, will do with: the host's kinds of that family. */
+  const family = image ? "image/" : video ? "video/" : undefined;
+  const kinds = host ? (family ? host.kinds.filter((kind) => kind.startsWith(family) || kind === "*" || kind === "*/*") : host.kinds) : [];
+  const familyKinds = host ? host.kinds.length === 0 || kinds.length > 0 : false;
+  const pictureKinds = !video && (host ? host.kinds.length === 0 || (image ? kinds : host.kinds).some((kind) => kind.startsWith("image/") || kind.startsWith("*")) : false);
+  const open = Boolean(host) && (!family || familyKinds);
+  const sort = image ? "picture" : video ? "video" : "file";
+  const noun = several ? `${sort}s` : `a ${sort}`;
+  const accept = family ? (kinds.length > 0 ? kinds.join(",") : `${family}*`) : host?.kinds.join(",") || undefined;
   const coarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
   // What the field holds as the upload answers, which somebody else may have changed while it was sent.
   const latest = useRef(value);
@@ -389,17 +521,17 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
     const chosen = several ? given : given.slice(0, 1);
     const kept: FileValue[] = [];
     const problems: string[] = [];
-    if (chosen.length < given.length) problems.push(`${label} holds one ${image ? "picture" : "file"}, so ${given.slice(1).map((file) => `“${file.name || "the photo"}”`).join(", ")} ${given.length > 2 ? "were" : "was"} left out.`);
+    if (chosen.length < given.length) problems.push(`${label} holds one ${sort}, so ${given.slice(1).map((file) => `“${file.name || "the photo"}”`).join(", ")} ${given.length > 2 ? "were" : "was"} left out.`);
     setRefused([]);
     setSaid(null);
     for (const file of chosen) {
       setBusy(`Sending ${file.name || "the photo"}…`);
-      const prepared = await prepare(file, host, { image, camera: from === "camera" });
+      const prepared = await prepare(file, host, { image, video, camera: from === "camera" });
       if ("refused" in prepared) {
         problems.push(prepared.refused);
         continue;
       }
-      const sent = await send(prepared, host, image);
+      const sent = await send(prepared, host, image, video);
       if ("refused" in sent) problems.push(sent.refused);
       // The same bytes answer the same address: a file already here is said, not held twice.
       else if ([...(several ? latest.current : []), ...kept].some((held) => held.href === sent.href)) problems.push(`“${sent.name}” is already here.`);
@@ -462,7 +594,7 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
         <ul ref={list} style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
           {value.map((file, index) => (
             <li key={`${index}:${file.href}`} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", minWidth: 0 }}>
-              {thumbs && isImage(file) ? <FileThumb file={file} size={40} /> : null}
+              {thumbs && (isImage(file) || isVideo(file)) ? <FileThumb file={file} size={40} /> : null}
               <span style={{ flex: "1 1 8rem", minWidth: 0, overflowWrap: "anywhere" }}>{file.name}</span>
               <CaptionInput file={file} onCaption={(caption) => change(value.map((one, at) => (at === index ? withCaption(one, caption) : one)), caption ? `${file.name} now says “${caption}”.` : `${file.name} says its name again.`)} />
               {several && index > 0 ? (
@@ -498,7 +630,7 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
             }}
           />
           <button type="button" disabled={busy !== null} onClick={() => picker.current?.click()} data-graview-file-choose="">
-            {value.length > 0 && !several ? `Replace ${image ? "the picture" : "the file"}` : `Choose ${noun}`}
+            {value.length > 0 && !several ? `Replace the ${sort}` : `Choose ${noun}`}
           </button>
           {pictureKinds ? (
             <>
@@ -529,7 +661,7 @@ export function FilesEditor({ value, onChange, several, image, label, thumbs = t
         </div>
       ) : (
         <p style={{ ...QUIET, margin: 0 }} data-graview-file-none="">
-          {host ? "This host doesn’t take pictures, so none can be added here." : "This host doesn’t take files, so none can be added here."}
+          {host ? `This host doesn’t take ${video ? "videos" : "pictures"}, so none can be added here.` : "This host doesn’t take files, so none can be added here."}
         </p>
       )}
       <p aria-live="polite" style={{ ...QUIET, margin: 0, minHeight: busy || said ? undefined : 0 }} data-graview-file-status="">
@@ -565,8 +697,8 @@ function CaptionInput({ file, onCaption }: { readonly file: FileValue; readonly 
     <input
       type="text"
       value={draft}
-      placeholder={isImage(file) ? "What it shows" : "What it is"}
-      aria-label={`What ${file.name} ${isImage(file) ? "shows" : "is"}`}
+      placeholder={isImage(file) || isVideo(file) ? "What it shows" : "What it is"}
+      aria-label={`What ${file.name} ${isImage(file) || isVideo(file) ? "shows" : "is"}`}
       data-graview-file-caption={file.href}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={keep}
@@ -625,6 +757,7 @@ function FileField(props: FileRowProps): ReactNode {
           thumbs={false}
           several={several}
           image={one.image === true}
+          video={one.video === true}
           label={label}
           onChange={(next) => {
             // One file: what was added replaces it; an edit cannot leave a field with nothing.
@@ -649,7 +782,7 @@ export type FilesProps =
   | { readonly as: "unfilled"; readonly nodeId: string; readonly skip: readonly string[]; readonly labels?: Readonly<Record<string, string>>; readonly labelStyle?: CSSProperties; readonly style?: CSSProperties }
   | { readonly as: "thumb"; readonly file: FileValue; readonly size?: number; readonly style?: CSSProperties }
   | { readonly as: "block"; readonly field: string; readonly files: readonly FileValue[]; readonly label: string; readonly view: "thumb" | "gallery" }
-  | { readonly as: "control"; readonly value: unknown; readonly onChange: (next: unknown) => void; readonly several: boolean; readonly image: boolean; readonly label: string; readonly title?: string };
+  | { readonly as: "control"; readonly value: unknown; readonly onChange: (next: unknown) => void; readonly several: boolean; readonly image: boolean; readonly video?: boolean; readonly label: string; readonly title?: string };
 
 export function drawFiles(props: FilesProps): ReactNode {
   switch (props.as) {
@@ -667,7 +800,7 @@ export function drawFiles(props: FilesProps): ReactNode {
         </span>
       ) : null;
     case "control": {
-      const editor = <FilesEditor value={filesOf(props.value)} several={props.several} image={props.image} label={props.label} onChange={(next) => props.onChange(props.several ? next : next[next.length - 1])} />;
+      const editor = <FilesEditor value={filesOf(props.value)} several={props.several} image={props.image} video={props.video === true} label={props.label} onChange={(next) => props.onChange(props.several ? next : next[next.length - 1])} />;
       return props.title === undefined ? (
         editor
       ) : (

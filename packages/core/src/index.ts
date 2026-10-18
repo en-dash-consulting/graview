@@ -27,9 +27,9 @@ export type { ZodDef } from "./schema/zod.js";
 // Schema — the single declaration everything else derives from.
 export { defineNode, isCurrent, labelOf } from "./schema/define-node.js";
 // A picture or a document on a record (FR-162), and the host that stores them (FR-163).
-export { fileKindOf, fileSrc, filesOf, isFileValue, isImage, safeFileHref } from "./schema/files.js";
-export type { FileValue, HostFiles } from "./schema/files.js";
-export { fileField, imageField } from "./schema/file-field.js";
+export { fileKindOf, fileSrc, filesOf, isFileValue, isImage, isVideo, safeFileHref, videoClock, videoWords } from "./schema/files.js";
+export type { FileKind, FileValue, HostFiles } from "./schema/files.js";
+export { fileField, imageField, videoField } from "./schema/file-field.js";
 // A link to another app (FR-171): its address on a record, and the host that says what it is called.
 export { isAppAddress, isAppLinkField } from "./schema/app-link.js";
 export type { AppResolution, LinkedApp, ResolveApp } from "./schema/app-link.js";

@@ -140,7 +140,7 @@ const SHAPES =
   '{"title": "{name}"}, {"headline": "{count(all(\'offer\'))} offers"}, {"figure": expr, "as"?: "number"|"money"|"percent", "currency"?, "label"?, "emphasis"?: "large"}, {"list": expr, "sort"?, "limit"?, "group"?, "empty"?, "as"?: "card"|"row"}, {"text": "…", "tone"?}, {"badge": "{status}", "tone"?}, {"field": "quote", "as"?, "currency"?, "label"?}, {"image": "photos", "as"?: "thumb"|"gallery"}, {"progress": {"value": expr, "max": expr}, "label"?}, {"group": [blocks], "direction"?: "row"|"column"}, {"when": expr, "show": [blocks]}, {"divider": true}, {"figure": true}';
 
 /** Whether a field holds pictures or documents: an `image` or `file`, or a list of them (FR-162). */
-export const holdsFiles = (spec: { readonly type: string; readonly of?: string } | undefined): boolean => /^(image|file)$/.test(spec?.of ?? spec?.type ?? "");
+export const holdsFiles = (spec: { readonly type: string; readonly of?: string } | undefined): boolean => /^(image|video|file)$/.test(spec?.of ?? spec?.type ?? "");
 
 /** The view specs of a document that has been read, by kind; empty when it has none. The home view is no kind's: see `homeOf`. */
 export function viewsOf(document: GraviewDocument): Readonly<Record<string, ViewSpecs>> {
@@ -319,7 +319,7 @@ function oneBlock(raw: unknown, path: string, depth: number, scope: Scope): void
       const image = type === "image";
       if (typeof value !== "string" || !(image ? scope.spec.files?.(value) : scope.spec.field(value))) {
         const edge = typeof value === "string" && scope.spec.relation(value);
-        scope.findings.push(error(`view-${type}`, `${path}.${type}`, `${scope.kind} has no ${image ? "image or file " : ""}field ${typeof value === "string" ? `"${value}"` : "by that name"}`, edge ? `"${value}" is a relation; show it with {"text": "{${value}.name}"}` : undefined));
+        scope.findings.push(error(`view-${type}`, `${path}.${type}`, `${scope.kind} has no ${image ? "image, video or file " : ""}field ${typeof value === "string" ? `"${value}"` : "by that name"}`, edge ? `"${value}" is a relation; show it with {"text": "{${value}.name}"}` : undefined));
       }
       const ways: readonly unknown[] = image ? ["thumb", "gallery"] : VIEW_FIELD_FORMATS;
       if ("as" in raw && !ways.includes(raw["as"])) scope.findings.push(error("view-format", `${path}.as`, `"${String(raw["as"])}" is not a way to show ${image ? "pictures" : "a field"}`, `use one of ${ways.join(", ")}`));

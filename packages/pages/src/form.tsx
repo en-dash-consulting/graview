@@ -490,7 +490,7 @@ function Control<S extends AnySchema>({
     case "list": {
       // A picture or a document, or a list of them put there several at once, through the host's upload (FR-163).
       const file = spec.control === "file" ? spec : spec.item.control === "file" ? spec.item : undefined;
-      if (file || spec.control === "file") return <Files as="control" title={asked ? `${named} *` : named} value={value} onChange={onChange} several={file !== spec} image={file?.image === true} label={named} />;
+      if (file || spec.control === "file") return <Files as="control" title={asked ? `${named} *` : named} value={value} onChange={onChange} several={file !== spec} image={file?.image === true} video={file?.video === true} label={named} />;
       const items = Array.isArray(value) ? (value as unknown[]) : [];
       return (
         <fieldset data-graview-part="group" data-graview-field="list">

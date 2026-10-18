@@ -223,6 +223,7 @@ export function coerceCell(spec: FieldSpec, input: unknown, said: string, option
       return { ok: true, value: out };
     }
     case "image":
+    case "video":
     case "file":
       return { ok: false, why: `${said} holds a file, which a cell cannot carry` };
     case "app-link": {

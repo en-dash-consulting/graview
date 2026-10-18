@@ -35,10 +35,11 @@ export function fieldType(spec: FieldSpec): string {
     case "boolean":
       return "boolean";
     case "image":
+    case "video":
     case "file":
       return "FileValue";
     case "list":
-      return spec.of === "number" ? "readonly number[]" : spec.of === "image" || spec.of === "file" ? "readonly FileValue[]" : "readonly string[]";
+      return spec.of === "number" ? "readonly number[]" : spec.of === "image" || spec.of === "video" || spec.of === "file" ? "readonly FileValue[]" : "readonly string[]";
     default:
       return "string";
   }
@@ -90,7 +91,7 @@ export function documentTypes(document: GraviewDocument, from = "the document"):
     `/*\n * The types of "${document.name.replace(/\*\//g, "*\\/")}"${document.version === undefined ? "" : ` (version ${document.version})`}, written by \`graview types ${from}\`.\n` +
       ` * Do not edit: change the document and run it again. Read a store through\n` +
       ` * them with \`typedReader<Types>(store)\` from "@graview/core/typed".\n */\n` +
-      (Object.values(document.kinds).some((spec) => Object.values(spec.fields).some((f) => /^(image|file)$/.test(f.of ?? f.type))) ? `import type { FileValue } from "@graview/core";\n` : "") +
+      (Object.values(document.kinds).some((spec) => Object.values(spec.fields).some((f) => /^(image|video|file)$/.test(f.of ?? f.type))) ? `import type { FileValue } from "@graview/core";\n` : "") +
       (Object.values(document.kinds).some((spec) => Object.values(spec.fields).some((f) => f.repeats)) ? `import type { Repeat } from "@graview/core";\n` : "") +
       `import type { TypedReader } from "@graview/core/typed";\n`,
   );

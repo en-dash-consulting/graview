@@ -62,7 +62,7 @@ const template = str(1, 300);
  * `href` a path on the host. `phone` and `place` are words drawn as a link to
  * call and to a map; `duration` is a whole number of minutes, said "1 h 30 min".
  */
-export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "file", "app-link", "phone", "place", "duration"] as const;
+export const FIELD_TYPES = ["string", "text", "number", "integer", "boolean", "date", "datetime", "enum", "list", "url", "email", "image", "video", "file", "app-link", "phone", "place", "duration"] as const;
 export type FieldType = (typeof FIELD_TYPES)[number];
 
 export const FieldSpec = z
@@ -73,7 +73,7 @@ export const FieldSpec = z
     /** What the field is called on screen, where its name does not say it. */
     label: z.optional(str(1, 60)),
     options: z.optional(some(str(1, 80), 1, 100)),
-    of: z.optional(z.enum(["string", "number", "date", "image", "file"])),
+    of: z.optional(z.enum(["string", "number", "date", "image", "video", "file"])),
     default: z.optional(z.unknown()),
     unit: z.optional(str(undefined, 12)),
     /** How a number is shown (`money`, `percent`, `duration`), or that a `text` field is written in Markdown (FR-180; the checker's `field-format` says which goes where). */

@@ -45,6 +45,16 @@ export const isGuestPicture = (file: { readonly type: string }): boolean => /^im
 /** A file as a guest is handed it, before the host has its bytes: no path, and for a picture its facts. */
 export function guestFileOf(file: FileValue, more: { readonly src?: string; readonly left?: string } = {}): GuestFile {
   const base = { name: file.name, type: file.type, bytes: file.bytes };
+  /* A video (0.1.37) is handed its facts, never an address: the host plays it where the view places `<graview-video>` (media.ts). */
+  if (/^video\//i.test(file.type)) {
+    return {
+      ...base,
+      ...(file.width !== undefined ? { width: file.width } : {}),
+      ...(file.height !== undefined ? { height: file.height } : {}),
+      ...(file.caption !== undefined ? { caption: file.caption } : {}),
+      ...(file.duration !== undefined ? { duration: file.duration } : {}),
+    };
+  }
   if (!isGuestPicture(file)) return base;
   return {
     ...base,
