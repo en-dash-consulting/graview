@@ -10,10 +10,12 @@
  * arranging. The types stay on `@graview/core`, where a declaration names
  * them.
  */
-export { arrangeable, asksForThePast, conditionHolds, edgesOf, NO_ARRANGEMENT, parseArrangement, throughEdges, withWorkedOut, listFieldsOf } from "./arrangement.js";
+export { arrangeable, asksForThePast, conditionHolds, edgesOf, NO_ARRANGEMENT, throughEdges, withWorkedOut, listFieldsOf } from "./arrangement.js";
+export { parseArrangement } from "./arrangement-words.js";
 // A kind's list as its declaration opens it (`pages.lists.<kind>.sort` and `.group`).
 export { kindListFindings, listGroup, listOpening, listSort, orderListGroups } from "./kind-list.js";
-export type { ListFields, ListFinding } from "./kind-list.js";
+export type { ListFields } from "./arrangement.js";
+export type { ListFinding } from "./kind-list.js";
 export {
   admitArrangement,
   arrange,

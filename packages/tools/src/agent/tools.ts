@@ -32,6 +32,7 @@ import { answerSeenBy } from "@graview/core/seat";
 import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
 import { search, type SearchRanker } from "@graview/core/search";
 import { argumentsNeverShown, mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
+import type { ToolAnnotations, ToolDefinition } from "./tool-definition.js";
 import { authorship, markHits } from "./untrusted.js";
 import { SUBSCRIPTION_TOOLS } from "./subscription-tools.js";
 import { READ_HITS } from "./bounds.js";
@@ -100,39 +101,6 @@ const several = lazily(() => import("../several.js"));
 
 /* Notify me (Roadmap f-notify-subscriptions), fetched with a seat's first subscribe, unsubscribe or list. A literal specifier, as above. */
 const subscribing = lazily(() => import("./subscribe-run.js"));
-
-/**
- * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).
- *
- * Derived from the declaration, never written per tool: a read is
- * read-only; an act that removes or severs loses something; an act whose
- * second run changes nothing the first did not is idempotent. Nothing a
- * Graview tool does reaches outside the graph it was derived from.
- */
-export interface ToolAnnotations {
-  readonly title: string;
-  readonly readOnlyHint: boolean;
-  readonly destructiveHint: boolean;
-  readonly idempotentHint: boolean;
-  readonly openWorldHint: false;
-}
-
-export interface ToolDefinition {
-  /**
-   * The name a model calls. MCP-safe — letters, digits, `_` and `-`, at
-   * most 64, starting with a letter or `_` — so every client's tool layer
-   * takes it. An act whose own name is already safe keeps it.
-   */
-  readonly name: string;
-  readonly title: string;
-  readonly description: string;
-  readonly inputSchema: JsonSchema;
-  /** False for the read tools, true for anything that changes the graph. */
-  readonly mutating: boolean;
-  readonly annotations: ToolAnnotations;
-  /** The declared name of the act this tool runs; absent on the read tools. */
-  readonly act?: string;
-}
 
 /** What a name given for a node argument was taken to mean (FR-33). */
 export interface Resolved {

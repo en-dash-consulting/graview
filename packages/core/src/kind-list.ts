@@ -1,4 +1,4 @@
-import type { ArrangedGroup, ArrangeNode, Grouping, Sort } from "./arrangement.js";
+import type { ArrangedGroup, ArrangeNode, Grouping, ListFields, Sort } from "./arrangement.js";
 import type { KindList, KindListGroup } from "./views/types.js";
 
 /**
@@ -13,14 +13,6 @@ import type { KindList, KindListGroup } from "./views/types.js";
  * with it (`kindListFindings`), and a list page reads its opening
  * (`listOpening`) and orders its groups (`orderListGroups`) with it.
  */
-
-/** What a kind's fields are, as a list's order and grouping are judged against them. */
-export interface ListFields {
-  /** Each stored field: a choice (with its options), a yes or no, a value a list sorts by, or something it cannot. */
-  readonly fields: Readonly<Record<string, { readonly type: "choice" | "boolean" | "scalar" | "other"; readonly options?: readonly string[] }>>;
-  /** The kind's computed fields, by name. */
-  readonly computed: readonly string[];
-}
 
 /** A document's kind's fields, as `ListFields` says them: what the edit judges before anything is compiled. */
 export function documentListFields(spec: { readonly fields?: Readonly<Record<string, { readonly type?: string; readonly options?: readonly string[] }>>; readonly computed?: Readonly<Record<string, unknown>> } | undefined): ListFields {

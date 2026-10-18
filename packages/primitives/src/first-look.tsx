@@ -1,6 +1,6 @@
 import { POPOVER_STYLE, useTopLayer } from "@graview/react/provider";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import type { FirstLookAnchor, FirstLookEnd, FirstLookStep } from "./first-look-door.js";
+import type { FirstLookAnchor, FirstLookEnd, FirstLookHintsProps, FirstLookStep } from "./first-look-door.js";
 
 /**
  * THE FIRST LOOK'S HINTS (`first-look-door.tsx`), fetched as they are
@@ -60,14 +60,6 @@ function frameworkSteps(root: Element): FirstLookStep[] {
 const QUIET_MS = 300;
 const SETTLE_MS = 1200;
 const GIVE_UP_MS = 15000;
-
-export interface FirstLookHintsProps {
-  readonly root: () => Element | null;
-  /** The host's own hints, after the framework's. */
-  readonly steps: readonly FirstLookStep[];
-  /** Told how it ended, or null when there was nothing drawn to point at. */
-  readonly onEnd: (how: FirstLookEnd | null) => void;
-}
 
 export function FirstLookHints({ root, steps, onEnd }: FirstLookHintsProps) {
   const [run, setRun] = useState<{ readonly list: readonly FirstLookStep[]; readonly at: number } | null>(null);

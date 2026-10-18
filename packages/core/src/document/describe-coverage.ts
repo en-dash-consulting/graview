@@ -5,7 +5,7 @@ import { readableFields } from "../schema/reading.js";
 import { walkKinds } from "../schema/path.js";
 import { coverageUnlinkedWords } from "../coverage-words.js";
 import { sortForGrid } from "../grid-sort.js";
-import type { DescribedItem, DescribedPart } from "./describe-place.js";
+import type { DescribedItem, DescribedPart } from "./described.js";
 
 /*
  * A COVERAGE GRID IN WORDS (FR-112).

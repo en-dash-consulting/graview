@@ -37,7 +37,7 @@ import { FIELD_SIGHT, partialSight, recordsOf, type FieldsKept, type Records } f
 import type { Policy, Principal, Sight } from "./permissions/types.js";
 import { labelOf } from "./schema/define-node.js";
 import type { AnySchema } from "./schema/schema.js";
-import type { Judged } from "./seen.js";
+import type { Judged } from "./permissions/sight.js";
 import { Store } from "./store.js";
 
 /** The edges a graph can be asked about, to say what is joined to whom. */

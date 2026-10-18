@@ -1,34 +1,14 @@
-import type { AnyGraphNode, GraphEdge, GraphNodeBase, GraphSnapshot } from "./graph/types.js";
+import type { AnyGraphNode, GraphEdge, GraphNodeBase, GraphReader, GraphSnapshot } from "./graph/types.js";
 import type { Violation } from "./invariants/types.js";
-import { batchesOf, undoneIn, type LogReading } from "./ops/log.js";
+import { batchesOf, undoneIn, type Epoch, type LogReading, type OperationLog } from "./ops/log.js";
 import { checkUndo } from "./ops/undo.js";
 import type { Batch, Operation } from "./ops/types.js";
 import type { FieldWriter, Timeline } from "./ops/served.js";
 import { writersOf, type Writers } from "./ops/writers.js";
 import { namesUnseen, redact, type SeatLens } from "./ops/withheld.js";
 import { actingAs, grantsTo, isSystem } from "./permissions/policy.js";
-import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees } from "./permissions/sight.js";
-import type { Policy, Principal } from "./permissions/types.js";
-import type { AnySchema } from "./schema/schema.js";
-import type { Store } from "./store.js";
-
-/** What a store reads to judge a seat's sight: its policy, its graph and its log. */
-export interface Judged {
-  readonly policy: Policy | undefined;
-  readonly graph: {
-    getNode(id: string): { readonly id: string; readonly kind: string } | undefined;
-    out(id: string): readonly { readonly id: string }[];
-    in(id: string): readonly { readonly id: string }[];
-    /** A store's own graph says its links, so an op can be judged where it stood (FR-55). */
-    outEdges?(id: string): readonly GraphEdge[];
-    inEdges?(id: string): readonly GraphEdge[];
-  };
-  readonly log: LogReading;
-  /** The kinds of the modules this workspace has off (FR-12), kept from every seat as a sight keeps a record. */
-  readonly modules?: { readonly disabledKinds: ReadonlySet<string> };
-  /** The declaration, to say which of a kind's fields a record may be served without (FR-55). */
-  readonly schema?: { tryDefinition(kind: string): { readonly fields: unknown } | undefined };
-}
+import { FIELD_SIGHT, fieldsJudged, partialSight, recordsOf, sees, type Judged } from "./permissions/sight.js";
+import type { Principal } from "./permissions/types.js";
 
 const NOTHING: ReadonlySet<string> = new Set();
 
@@ -439,14 +419,31 @@ const bound = (target: object, prop: PropertyKey): unknown => {
 /** The key a seat's view answers with the store it is of and the seat (`seatOf`, `@graview/core/seat-of`'s reading of it). */
 const SEAT = Symbol.for("@graview/core:seat");
 
-export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principal): Store<S> {
+/**
+ * WHAT A SEAT'S VIEW IS A VIEW OF: a store as `seenBy` reads it — beyond
+ * what judges its sight, its graph and its log whole, which the view serves
+ * through, and the reads the view answers again over what the seat sees.
+ * Asked by its shape, so this module needs nothing of the store's, which
+ * hands every seat its view through this one; the view has the store's type.
+ */
+export interface Viewed extends Judged {
+  readonly graph: Omit<GraphReader<GraphNodeBase>, "nodesOfKind"> & { nodesOfKind(kind: never, options?: never): readonly GraphNodeBase[]; snapshot(): GraphSnapshot<GraphNodeBase>; outEdges(id: string): readonly GraphEdge[]; inEdges(id: string): readonly GraphEdge[] };
+  readonly log: OperationLog;
+  violations(context: never, over: never): readonly Pick<Violation, "subjectId" | "nodeIds">[];
+  findings(): readonly { readonly id: string }[];
+  wouldChange(call: never, author: Principal): unknown;
+  preview(call: never, context: never, options: { readonly author: Principal }): unknown;
+  checkpoint(options?: never): Epoch | undefined;
+}
+
+export function seenBy<T extends Viewed>(store: T, principal: Principal): T {
   // A module off keeps its kinds from every seat as a sight would (FR-12); the view reads which are off as it goes. The system is kept from nothing.
   if (!hidesFrom(store, principal)) return store;
   const key = seatKey(principal);
   let views = VIEWS.get(store);
   if (!views) VIEWS.set(store, (views = new Map()));
   const held = views.get(key);
-  if (held) return held as Store<S>;
+  if (held) return held as T;
 
   const full = store.graph;
   /*
@@ -608,7 +605,7 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
          * may not see never makes, mends or words one of its problems.
          */
         case "violations":
-          return (context?: Parameters<Store<S>["violations"]>[0]) => target.violations(context, graph).filter((violation) => violationShown(lens, (id) => full.has(id), violation));
+          return (context?: never) => target.violations(context as never, graph as never).filter((violation) => violationShown(lens, (id) => full.has(id), violation));
         // What no longer fits, about records this seat is served and naming none it may not see (FR-55).
         case "findings":
           return () =>
@@ -618,21 +615,21 @@ export function seenBy<S extends AnySchema>(store: Store<S>, principal: Principa
             });
         // An act asked about through the view runs under its sight, as it would when applied.
         case "wouldChange":
-          return (call: Parameters<Store<S>["wouldChange"]>[0]) => target.wouldChange(call, principal);
+          return (call: never) => target.wouldChange(call, principal);
         case "preview":
-          return (call: Parameters<Store<S>["preview"]>[0], context?: Parameters<Store<S>["preview"]>[1], options?: Parameters<Store<S>["preview"]>[2]) => target.preview(call, context, { author: principal, ...options });
+          return (call: never, context?: never, options?: object) => target.preview(call, context as never, { author: principal, ...options });
         case "seenBy":
           return (other: Principal) => seenBy(target, other);
         case "seenFor":
           return principal;
         // A checkpoint taken through the seat's view is the one it is served.
         case "checkpoint":
-          return (...args: Parameters<Store<S>["checkpoint"]>) => servedIf(target.checkpoint(...args));
+          return (options?: never) => servedIf(target.checkpoint(options));
         default:
           return bound(target, prop);
       }
     },
-  }) as Store<S>;
+  });
   views.set(key, view);
   return view;
 }

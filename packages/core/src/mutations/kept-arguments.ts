@@ -4,7 +4,7 @@ import type { Policy, Principal } from "../permissions/types.js";
 import type { AnySchema } from "../schema/schema.js";
 import type { AnyNodeDefinition } from "../schema/types.js";
 import { FIELD_SIGHT, partialSight } from "../permissions/sight.js";
-import type { Judged } from "../seen.js";
+import type { Judged } from "../permissions/sight.js";
 import { fieldsWrittenBy, subjectKindsOf } from "./derive-edits.js";
 import type { AnyMutationDefinition } from "./types.js";
 

@@ -2,7 +2,6 @@ import { subscriberOf, type AnyGraphNode, type AnySchema, type Subscription, typ
 import { subscriptionProblem, subscriptionWords } from "@graview/core/subscriptions";
 import { useGraview } from "@graview/react/provider";
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
-import type { NotifyAsk } from "./notify-door.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /**
@@ -19,6 +18,14 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * THE LIST is Activity's: what the reader is told of, each with one press
  * to stop.
  */
+
+/** What the sheet is asked to offer: the subscription it opens on, and the others beside it. */
+export interface NotifyAsk {
+  /** The choices, the first chosen: "when it changes", "when someone runs …". */
+  readonly choices: readonly SubscriptionWhen[];
+  /** Where the keyboard goes back to when the sheet closes. */
+  readonly returnTo?: HTMLElement | null | undefined;
+}
 
 export interface NotifySheetProps {
   readonly ask: NotifyAsk;

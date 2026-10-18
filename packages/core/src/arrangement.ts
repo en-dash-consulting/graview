@@ -5,7 +5,6 @@ import type { AnySchema } from "./schema/schema.js";
 import type { AnyNodeDefinition } from "./schema/types.js";
 import { capitalize } from "./capital.js";
 import { dateOn } from "./repeat.js";
-import type { ListFields } from "./kind-list.js";
 import { isoToday } from "./days.js";
 
 /**
@@ -283,6 +282,14 @@ export function withWorkedOut(schema: AnySchema, offers: Arrangeable): Arrangeab
   return { ...offers, sorts: [...offers.sorts, ...worked] };
 }
 
+/** What a kind's fields are, as a list's order and grouping are judged against them. */
+export interface ListFields {
+  /** Each stored field: a choice (with its options), a yes or no, a value a list sorts by, or something it cannot. */
+  readonly fields: Readonly<Record<string, { readonly type: "choice" | "boolean" | "scalar" | "other"; readonly options?: readonly string[] }>>;
+  /** The kind's computed fields, by name. */
+  readonly computed: readonly string[];
+}
+
 /** A declared kind's fields, as a list's declared order and grouping are judged against them (`kindListFindings`). */
 export function listFieldsOf(schema: AnySchema, kind: string): ListFields {
   const definition = schema.tryDefinition(kind);
@@ -310,8 +317,6 @@ export interface ArrangementWords {
   /** `true` or `all` (FR-173); anything else is the live records. */
   readonly archived?: string;
 }
-
-export { parseArrangement } from "./arrangement-words.js";
 
 /*
  * ARRANGING. Pure over the nodes it is handed and the graph it may read.

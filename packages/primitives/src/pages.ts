@@ -69,7 +69,7 @@ export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-doo
 export type { GhostDoorProps } from "./inline-ai-door.js";
 // Notify me (Roadmap f-notify-subscriptions): its part of the context menu, the sheet, a face's own press and Activity's list, the sheet and list fetched when first drawn.
 export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
-export type { NotifyAsk } from "./notify-door.js";
+export type { NotifyAsk } from "./notify-sheet.js";
 // What AI did on a record, on its page (Roadmap f-activity-ai-entries), fetched with the first entry.
 export { RecordInteractionsDoor } from "./record-interactions-door.js";
 // Choosing several records on a list, and the bar that acts on them all at once — fetched with the first one chosen.

@@ -11,7 +11,8 @@ import { actingAs } from "./permissions/policy.js";
 import { recordsOf } from "./permissions/sight.js";
 import type { Principal } from "./permissions/types.js";
 import type { AnySchema } from "./schema/schema.js";
-import { hidesFrom, seatLens, seenBy, type Judged } from "./seen.js";
+import type { Judged } from "./permissions/sight.js";
+import { hidesFrom, seatLens, seenBy } from "./seen.js";
 import type { Store } from "./store.js";
 
 /*

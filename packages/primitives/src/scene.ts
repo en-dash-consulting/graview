@@ -30,7 +30,7 @@ export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-doo
 export type { GhostDoorProps } from "./inline-ai-door.js";
 // Notify me (Roadmap f-notify-subscriptions): its part of the context menu, the sheet, a face's own press and Activity's list, the sheet and list fetched when first drawn.
 export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
-export type { NotifyAsk } from "./notify-door.js";
+export type { NotifyAsk } from "./notify-sheet.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";
 export { ShowInstallation } from "./installation.js";
