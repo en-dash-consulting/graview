@@ -33,6 +33,23 @@ describe("a store opened by a host that says no day", () => {
     opened.close();
   });
 
+  it("turns at the host's midnight, and its subscribers hear it", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    const midnight = new Date(2026, 9, 17); // the host's own midnight, wherever it runs
+    vi.setSystemTime(new Date(midnight.getTime() - 60_000));
+    const opened = await openStore({ app, adapter: createMemoryAdapter(), seed: { nodes: [{ id: "l1", kind: "loan", label: "Loan 0001", due: "2026-10-16" }], edges: [] } as never });
+    expect(opened.store.today()).toBe("2026-10-16");
+    expect(opened.store.violations()).toEqual([]);
+    const heard: unknown[] = [];
+    opened.store.subscribe(() => heard.push(1));
+    vi.advanceTimersByTime(2 * 60_000);
+    expect(heard).toHaveLength(1);
+    expect(opened.store.today()).toBe("2026-10-17");
+    expect(opened.store.violations().map((violation) => violation.message)).toEqual(["Loan 0001 is overdue"]);
+    opened.close();
+    vi.useRealTimers();
+  });
+
   it("keeps the day a host pins", async () => {
     const opened = await openStore({ app, adapter: createMemoryAdapter(), seed: seed as never, storeOptions: { invariantOptions: { context: { today: "2019-06-01" } } } });
     expect(opened.store.today()).toBe("2019-06-01");
