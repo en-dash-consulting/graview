@@ -122,7 +122,7 @@ export const computedNode = defineNode("computed", {
     description: z.string().optional(),
   }),
   edges: {
-    "computed-on": { to: ["kind"], cardinality: "one", description: "the kind that works it out", inverse: "what it works out" },
+    "computed-on": { to: ["kind"], cardinality: "one", description: "the kind that works it out", inverse: "what it works out", acts: "none" },
   },
   label: (node) => node.label,
   display: { labels: { label: "name", expr: "worked out as", shownAs: "shown as" } },
@@ -185,9 +185,9 @@ export const actNode = defineNode("act", {
   }),
   edges: {
     on: { to: ["kind"], description: "the kinds it acts on", inverse: "the acts on it" },
-    creates: { to: ["kind"], description: "the kind it brings into being", inverse: "how one comes to be" },
-    connects: { to: ["edge"], description: "the relation it makes", inverse: "the acts that make it" },
-    severs: { to: ["edge"], description: "the relation it breaks", inverse: "the acts that break it" },
+    creates: { to: ["kind"], description: "the kind it brings into being", inverse: "how one comes to be", acts: "none" },
+    connects: { to: ["edge"], description: "the relation it makes", inverse: "the acts that make it", acts: "none" },
+    severs: { to: ["edge"], description: "the relation it breaks", inverse: "the acts that break it", acts: "none" },
   },
   label: (node) => node.title ?? node.label,
   display: { labels: { label: "name", subjectArg: "subject argument", targetArg: "far-end argument", fromTheOtherEnd: "from the other end", onAny: "on any kind" } },

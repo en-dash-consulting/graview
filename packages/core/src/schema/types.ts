@@ -48,6 +48,14 @@ export interface EdgeDeclaration<TargetKind extends string = string> {
    * the relation is tidied like any other.
    */
   readonly tidying?: "never";
+  /**
+   * `"none"`: NO ACT MAKES OR BREAKS THIS RELATION — it is read from what
+   * was declared or imported, as the studio reads an act's `creates` from
+   * the declaration it opened. Every other relation no act connects or
+   * severs is given a derived `connect-<kind>-<relation>` and
+   * `disconnect-<kind>-<relation>`; this one is given neither.
+   */
+  readonly acts?: "none";
 }
 
 export type EdgeMap = Readonly<Record<string, EdgeDeclaration>>;

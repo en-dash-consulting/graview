@@ -27,6 +27,8 @@ import type { AnyMutationDefinition } from "./types.js";
  * - Replaced by what the app declares: any act that `connects` the
  *   relation replaces the derived connect, any that `severs` it the
  *   derived disconnect, and an act of the same name keeps its name.
+ * - A relation declared `acts: "none"` is read from what was declared, and
+ *   given neither.
  * - An `appendOnly` relation is never unmade, so it is given no
  *   disconnect.
  * - A relation to another app's kind (FR-171) is a field, which the
@@ -65,7 +67,7 @@ export function deriveRelationMutations<S extends AnySchema>(
       const noun = words.from;
       for (const act of RELATION_ACTS) {
         const name = relationActName(act, kind, relation);
-        if (taken.has(name) || (act === "connect" ? connected.has(relation) : severed.has(relation) || edge.appendOnly)) continue;
+        if (taken.has(name) || edge.acts === "none" || (act === "connect" ? connected.has(relation) : severed.has(relation) || edge.appendOnly)) continue;
         const { title, fromTheOtherEnd } = relationActTitles(act, words);
         const reading = edge.description ? `: ${edge.description.replace(/\.$/, "")}` : "";
         derived.push({
