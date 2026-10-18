@@ -21,8 +21,8 @@ export interface RuleShapeSource {
   readonly says?: readonly TemplatePart[] | undefined;
   /** The document's kinds, where the rule is a document's: each field's declared format and unit. */
   readonly declared?: Readonly<Record<string, { readonly fields?: Readonly<Record<string, FieldFormat & { readonly type?: string }>> }>>;
-  /** The app's currency and locale. */
-  readonly money?: { readonly currency?: string; readonly locale?: string };
+  /** The app's currency, locale and time zone. */
+  readonly money?: { readonly currency?: string; readonly locale?: string; readonly timeZone?: string };
   /** What each kind holds, as the rule is judged with; read from the schema when absent. */
   readonly kinds?: ReadonlyMap<string, KindShape>;
   /** The day the rule is judged on. */

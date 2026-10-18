@@ -36,6 +36,7 @@ export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
     schemes: derived?.ok ? derived.schemes : (SCHEMES as Brand["schemes"]),
     ...(spec.currency ? { currency: spec.currency } : {}),
     ...(spec.locale ? { locale: spec.locale } : {}),
+    ...(spec.timeZone ? { timeZone: spec.timeZone } : {}),
     ...(logo ? { logo: logo.src, logoAlt: logo.alt ?? name } : {}),
     ...(spec.favicon ? { favicon: spec.favicon } : {}),
     ...(document.description ? { subtitle: document.description } : {}),
@@ -46,8 +47,9 @@ export function brandOf(document: GraviewDocument, findings: Finding[]): Brand {
   };
 }
 
-/** The app's money (FR-100): what `{x | money}` says, from the brand's currency and locale alone. */
-export function moneyOf(document: GraviewDocument): { currency?: string; locale?: string } {
-  const { currency, locale } = document.brand ?? {};
-  return { ...(currency ? { currency } : {}), ...(locale ? { locale } : {}) };
+/** The app's money (FR-100): what `{x | money}` says, from the brand's currency and locale alone — and its zone, the clock an instant is said on. */
+export function moneyOf(document: GraviewDocument): { currency?: string; locale?: string; timeZone?: string } {
+  const { currency, locale, timeZone } = document.brand ?? {};
+  return { ...(currency ? { currency } : {}), ...(locale ? { locale } : {}), ...(timeZone ? { timeZone } : {}) };
 }
+

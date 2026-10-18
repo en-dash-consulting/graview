@@ -18,6 +18,14 @@
  * The framework's own words are English whatever the locale: what changes
  * is the order and the punctuation of days, times and figures, not the
  * sentences around them.
+ *
+ * WHICH ZONE (Roadmap f-app-time-zone). A moment kept as an instant
+ * ("…Z", "…-04:00") is said on a clock: the person's, when the host that
+ * mounted the app passed their zone (`timeZone` on the provider, the embed,
+ * the pages face); else the app's, `brand.timeZone`, so a practice in New
+ * York says "10:47 AM" to its staff and from a server on UTC alike; else
+ * the runtime's own clock. A wall time kept without a zone is said as it
+ * was written, whatever the zone.
  */
 
 /** What days, times and numbers are said in when neither the reader nor the app says. */
@@ -50,20 +58,91 @@ export const isoToday = (): string => new Date().toISOString().slice(0, 10);
  */
 let readers: string | undefined;
 let drawn: string | undefined;
+let readersZone: string | undefined;
+let drawnZone: string | undefined;
+
+/** What a page says days, times and numbers in: a reader's locale and zone, and an app's. */
+export interface Saying {
+  readonly reader?: string | undefined;
+  readonly app?: string | undefined;
+  /** The person's time zone, which a host passed: wins over the app's. */
+  readonly readerTimeZone?: string | undefined;
+  /** The app's time zone, `brand.timeZone`. */
+  readonly appTimeZone?: string | undefined;
+}
 
 /**
- * Say days, times and numbers on this page in a reader's locale and an
- * app's (FR-178). Either may be left out. Every provider says it as it
- * draws, before anything under it does, so the page says what the app
- * drawn last says.
+ * Say days, times and numbers on this page in a reader's locale and zone
+ * and an app's (FR-178, Roadmap f-app-time-zone). Any may be left out.
+ * Every provider says it as it draws, before anything under it does, so
+ * the page says what the app drawn last says.
  */
-export function sayIn(locales: { readonly reader?: string | undefined; readonly app?: string | undefined }): void {
-  readers = usable(locales.reader);
-  drawn = usable(locales.app);
+export function sayIn(saying: Saying): void {
+  readers = usable(saying.reader);
+  drawn = usable(saying.app);
+  readersZone = usableZone(saying.readerTimeZone);
+  drawnZone = usableZone(saying.appTimeZone);
+}
+
+/**
+ * Say what `run` says in an app's locale and zone, and give the page's back
+ * after: for a host that answers for an app away from any page — an agent's
+ * act, a server's reply — where no provider drew. What the call leaves out
+ * stays as the page had it, and a reader's a host passed still wins.
+ */
+export function sayingIn<T>(saying: Saying, run: () => T): T {
+  const was = [readers, drawn, readersZone, drawnZone] as const;
+  if (saying.reader !== undefined) readers = usable(saying.reader);
+  if (saying.app !== undefined) drawn = usable(saying.app);
+  if (saying.readerTimeZone !== undefined) readersZone = usableZone(saying.readerTimeZone);
+  if (saying.appTimeZone !== undefined) drawnZone = usableZone(saying.appTimeZone);
+  try {
+    return run();
+  } finally {
+    [readers, drawn, readersZone, drawnZone] = was;
+  }
 }
 
 /** The locale a value is said in: the reader's when a host passed one, else the app's (`app`, else the page's), else en-US. */
 export const localeFor = (app?: string): string => readers ?? usable(app) ?? drawn ?? DEFAULT_LOCALE;
+
+/** The zone an instant is said in, when somebody said one: the person's, else the app's (`app`, else the page's). Undefined is the runtime's clock. */
+export const zoneFor = (app?: string): string | undefined => readersZone ?? usableZone(app) ?? drawnZone;
+
+/** The zone an instant is said in, by name: as `zoneFor`, else the runtime's own ("America/New_York"). What a view is handed. */
+export const timeZoneFor = (app?: string): string => zoneFor(app) ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+
+/** An offset written where a zone was asked for: "+05:00", "-4". */
+const OFFSET = /^\s*([+\-−]|\d)/;
+
+/**
+ * Why a time zone cannot be said in, as a sentence, or undefined when it
+ * can: an IANA name the runtime knows ("America/New_York", "Europe/London",
+ * "UTC"). An offset ("+05:00") is refused too, since it keeps no summer
+ * time. What `graview check`, a document's checker and `set-brand` say.
+ */
+export function timeZoneProblem(zone: string): string | undefined {
+  if (OFFSET.test(zone)) return `"${zone}" is an offset, not a time zone, so its clock would not change for summer time.`;
+  return usableZone(zone) ? undefined : `"${zone}" is not a time zone, so its times could not be said on its clock.`;
+}
+
+/** The fix said beside a time zone refused. */
+export const TIME_ZONE_FIX = 'Use an IANA time zone, like "America/New_York", "Europe/London" or "UTC".';
+
+const zones = new Map<string, boolean>();
+
+/* A zone `Intl` refuses, or an offset, is said on the runtime's clock: never a thrown page. */
+function usableZone(zone: string | undefined): string | undefined {
+  if (zone && !zones.has(zone)) {
+    let ok = false;
+    try {
+      new Intl.DateTimeFormat(DEFAULT_LOCALE, { timeZone: zone });
+      ok = !OFFSET.test(zone);
+    } catch {}
+    zones.set(zone, ok);
+  }
+  return zone && zones.get(zone) ? zone : undefined;
+}
 
 /*
  * A formatter is costly to make and cheap to use, and a page says thousands
@@ -104,29 +183,70 @@ export function dayAsRead(day: string, locale?: string): string {
   return ISO_DAY.test(day) ? said(stampOf(day), { year: "numeric", month: "short", day: "numeric", timeZone: UTC }, locale) : day;
 }
 
+/**
+ * An instant as a wall time in a zone (the runtime's clock when none): its
+ * day and the minutes after midnight there. What the date editor, the day
+ * of an instant and the calendar read an instant as.
+ */
+export function wallIn(stamp: number, zone?: string): { readonly day: string; readonly minutes: number } {
+  const key = `wall@${zone ?? ""}`;
+  let format = made.get(key) as Intl.DateTimeFormat | undefined;
+  if (!format) made.set(key, (format = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23", ...(zone ? { timeZone: zone } : {}) })));
+  const part = Object.fromEntries(format.formatToParts(stamp).map((one) => [one.type, one.value]));
+  return { day: `${part["year"]}-${part["month"]}-${part["day"]}`, minutes: (Number(part["hour"]) % 24) * 60 + Number(part["minute"]) };
+}
+
+/** The instant a wall time in a zone names (the runtime's clock when none), `wallIn` backwards. */
+export function instantIn(day: string, minutes: number, zone?: string): number {
+  const wall = Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10), 0, minutes);
+  // How far the zone's clock is ahead of UTC at an instant; asked twice, so a wall time beside a change of the clock lands on the right side of it.
+  const ahead = (stamp: number) => {
+    const there = wallIn(stamp, zone);
+    return utcStampOf(there.day, there.minutes) - Math.floor(stamp / 60_000) * 60_000;
+  };
+  return wall - ahead(wall - ahead(wall));
+}
+
+const utcStampOf = (day: string, minutes: number): number => Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10), 0, minutes);
+
 /*
  * A moment written with a zone ("…Z", "…+02:00") names an instant, said on
- * the reader's clock; written without one, it is the time on the wall it
- * was written for, said as written.
+ * the person's clock, else the app's, else the runtime's (`zoneFor`);
+ * written without one, it is the time on the wall it was written for, said
+ * as written.
  */
-function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string | undefined, zone = false): string {
+const namesZone = (at: string): boolean => /[Z+-][\d:]*$/.test(at.slice(16));
+
+function moment(at: string, options: Intl.DateTimeFormatOptions, locale: string | undefined, timeZone: string | undefined, named = false): string {
   if (!ISO_MOMENT.test(at)) return at;
-  const zoned = /[Z+-][\d:]*$/.test(at.slice(16));
+  const zoned = namesZone(at);
   const stamp = Date.parse(at.replace(" ", "T") + (zoned ? "" : "Z"));
-  return Number.isNaN(stamp) ? at : said(stamp, { ...options, hour: "numeric", minute: "2-digit", ...(zoned ? (zone ? { timeZoneName: "short" } : {}) : { timeZone: UTC }) }, locale);
+  if (Number.isNaN(stamp)) return at;
+  const zone = zoned ? zoneFor(timeZone) : UTC;
+  return said(stamp, { ...options, hour: "numeric", minute: "2-digit", ...(zoned && named ? { timeZoneName: "short" } : {}), ...(zone ? { timeZone: zone } : {}) }, locale);
 }
 
 /**
  * A moment as a person reads it: "Sep 10, 2023, 3:30 PM" (en-US), "10 Sep
- * 2023, 15:30" (en-GB). An instant is said on the reader's clock with the
- * zone it is said in — "Oct 17, 2026, 3:00 PM EDT" — since the same words
- * name another moment to a reader elsewhere (Roadmap f-date-inputs).
- * Anything else is said as it is.
+ * 2023, 15:30" (en-GB). An instant is said on the person's clock, else the
+ * app's (`timeZone`, else the page's), with the zone it is said in — "Oct
+ * 17, 2026, 3:00 PM EDT" — since the same words name another moment to a
+ * reader elsewhere (Roadmap f-date-inputs, f-app-time-zone). Anything else
+ * is said as it is.
  */
-export const momentAsRead = (at: string, locale?: string): string => moment(at, { year: "numeric", month: "short", day: "numeric" }, locale, true);
+export const momentAsRead = (at: string, locale?: string, timeZone?: string): string => moment(at, { year: "numeric", month: "short", day: "numeric" }, locale, timeZone, true);
 
-/** A moment's time of day: "3:30 PM" (en-US), "15:30" (en-GB). Anything that is not a moment is said as it is. */
-export const timeAsRead = (at: string, locale?: string): string => moment(at, {}, locale);
+/** A moment's time of day: "3:30 PM" (en-US), "15:30" (en-GB), an instant on the clock `momentAsRead` says it on. Anything that is not a moment is said as it is. */
+export const timeAsRead = (at: string, locale?: string, timeZone?: string): string => moment(at, {}, locale, timeZone);
+
+/** The day a moment falls on: an instant's on the clock it is said on, a wall time's as written; a day is itself. Undefined for anything else. */
+export function dayOfMoment(at: string, timeZone?: string): string | undefined {
+  if (ISO_DAY.test(at)) return at;
+  if (!ISO_MOMENT.test(at)) return undefined;
+  if (!namesZone(at)) return at.slice(0, 10);
+  const stamp = Date.parse(at.replace(" ", "T"));
+  return Number.isNaN(stamp) ? undefined : wallIn(stamp, zoneFor(timeZone)).day;
+}
 
 /** A number as a person reads it: "1,250" (en-US), "1.250" (de-DE), at most two places after the point unless told. */
 export function numberAsRead(value: number, locale?: string, options: Intl.NumberFormatOptions = { maximumFractionDigits: 2 }): string {
@@ -134,7 +254,7 @@ export function numberAsRead(value: number, locale?: string, options: Intl.Numbe
 }
 
 /** A day or a moment as it is read; anything else as it is. */
-export const whenAsRead = (value: string, locale?: string): string => (ISO_DAY.test(value) ? dayAsRead(value, locale) : momentAsRead(value, locale));
+export const whenAsRead = (value: string, locale?: string, timeZone?: string): string => (ISO_DAY.test(value) ? dayAsRead(value, locale) : momentAsRead(value, locale, timeZone));
 
 /**
  * A day with its weekday: "Thursday, Sep 17" (en-US), "Thursday 17 Sep"

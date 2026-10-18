@@ -136,6 +136,13 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    * neither says. The framework's own words stay English.
    */
   readonly locale?: string;
+  /**
+   * The person's time zone (Roadmap f-app-time-zone): the IANA zone every
+   * instant is said in — "America/New_York" says a time kept as
+   * `2026-10-16T14:47:00Z` as "10:47 AM". Wins over the app's
+   * `brand.timeZone`; the browser's clock when neither says.
+   */
+  readonly timeZone?: string;
   /** A store to share; otherwise one is made from the app and the seed. */
   readonly store?: Store<S>;
   /**
@@ -588,7 +595,9 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
   return {
     brand,
     locale: props.locale,
+    timeZone: props.timeZone,
     principal: props.principal,
+
     /* The seats, so every surface under the provider names a seat as it was offered (W-114). */
     seats: props.seats,
     presence,

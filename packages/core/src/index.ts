@@ -274,10 +274,11 @@ export { excerpt } from "./excerpt.js";
 export { gridSortOf, gridSortProblem, sortForGrid, type GridSort } from "./grid-sort.js";
 export { coverageUnlinkedWords } from "./coverage-words.js";
 export { actTitle, allLabel, article, counted, pluralLabel, pluralOf, fieldWords, humanizeField, nounOf, summarize, withArticle } from "./schema/define-node.js";
-// Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178).
+// Days, times and numbers as a person reads them, in the reader's or the app's locale (FR-178), and instants on the person's or the app's clock (Roadmap f-app-time-zone).
 export {
   DEFAULT_LOCALE,
   dayAsRead,
+  dayOfMoment,
   dayOfMonthAsRead,
   daysAsRead,
   localeFor,
@@ -286,11 +287,16 @@ export {
   monthAsRead,
   numberAsRead,
   sayIn,
+  sayingIn,
   timeAsRead,
+  timeZoneFor,
+  timeZoneProblem,
   weekdayAsRead,
   weekdayName,
   whenAsRead,
+  zoneFor,
 } from "./days.js";
+export type { Saying } from "./days.js";
 export type { FieldSection } from "./schema/reading.js";
 export type { ReadableField } from "./schema/define-node.js";
 export { TEXT_PAIRS } from "./theme/types.js";

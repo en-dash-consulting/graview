@@ -216,7 +216,7 @@ export interface BlockContext {
   /** How the declaration says a field and its values (`display.labels`, `display.format`). */
   readonly definition?: Parameters<typeof valueWords>[0] | undefined;
   readonly today: string;
-  /** The app's currency and locale (`brand.currency`, `brand.locale`): what money is said in where a block names no currency (FR-100). */
+  /** The app's currency, locale and zone (`brand.currency`, `brand.locale`, `brand.timeZone`): what money is said in where a block names no currency (FR-100), and the clock an instant is said on. */
   readonly money?: Money | undefined;
   /** A card or a row: a Markdown field is said by its start, the syntax taken out (FR-180). */
   readonly glance?: boolean;
@@ -363,7 +363,7 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
   const typed = typedWords(typedOf(ctx, key), value, ctx.money?.locale);
   if (typed !== undefined) return typed;
   if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today, [], ctx.money);
-  if (spec?.type === "datetime" && typeof value === "string") return momentAsRead(value, ctx.money?.locale);
+  if (spec?.type === "datetime" && typeof value === "string") return momentAsRead(value, ctx.money?.locale, ctx.money?.timeZone);
   if (spec?.type === "enum" && typeof value === "string") return valueWords(ctx.definition, key, value);
   // A number said as its field declares it: money in the app's currency, a fraction as a percent.
   const amount = typeof value === "number" ? amountAt(ctx, key) : undefined;

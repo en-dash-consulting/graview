@@ -28,7 +28,7 @@ export const VIEW_SLOTS = ["card", "row", "page"] as const;
 export type ViewSlot = (typeof VIEW_SLOTS)[number];
 export const VIEW_TONES = ["good", "warn", "bad", "neutral", "accent"] as const;
 export type ViewTone = (typeof VIEW_TONES)[number];
-export const VIEW_FIELD_FORMATS = ["money", "percent", "date", "relative", "count"] as const;
+export const VIEW_FIELD_FORMATS = ["money", "percent", "date", "time", "datetime", "relative", "count"] as const;
 export type ViewFieldFormat = (typeof VIEW_FIELD_FORMATS)[number];
 /** Groups and conditions nest; four deep is more than any card needs. */
 export const MAX_VIEW_DEPTH = 4;

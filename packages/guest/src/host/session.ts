@@ -1,4 +1,4 @@
-import { PermissionDeniedError, type AnySchema, type Principal, type Store } from "@graview/core";
+import { localeFor, PermissionDeniedError, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestPictureLimits } from "./pictures.js";
 import type { Arrival, Destination } from "./links.js";
 /* The links' judging — a filter held to the kind's fields — fetched with the first navigate, so a frame's host carries none of it before. */
@@ -265,6 +265,9 @@ export function createGuestHost<S extends AnySchema>(options: GuestHostOptions<S
       ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
       acts,
       ...(options.theme ? { theme: options.theme() } : {}),
+      // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
+      locale: localeFor(),
+      timeZone: timeZoneFor(),
       ...(options.placesShown ? { places: options.placesShown().map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
     };
   };
