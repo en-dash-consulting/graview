@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SubscriptionStore } from "@graview/core";
+import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
 import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
@@ -298,6 +298,17 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly subscriptions?: SubscriptionStore;
   /**
+   * WHAT A SIGNED-OUT READER COULD GAIN (FR-183), on either face: `{ label,
+   * run, roles? }`, handed only while the reader is a visitor. Where every
+   * act withheld from them is one a member could take (one of `roles`, the
+   * roles signing in gives, when said), the context menu, the Inspector and
+   * the pages' acts say `label` as one press that calls `run`, in place of
+   * the struck acts — the face's own rows (Open, Show in the scene) stay —
+   * and "Notify me" is not offered. Unsaid, a seat is told each act it may
+   * not take and why (FR-16).
+   */
+  readonly signIn?: SignIn;
+  /**
    * SECTIONS OF THE CONTEXT MENU beside its acts, on either face: each is
    * told what the menu was opened on (`MenuTarget`) and answers rows or what
    * it draws (`MenuSection`), or nothing.
@@ -589,6 +600,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     history: props.history,
     linkedRecords: props.linkedRecords,
     subscriptions: props.subscriptions,
+    signIn: props.signIn,
     menuSections: props.menuSections,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its
        reader settings: the reader's own text size and motion, on somebody else's page too. */

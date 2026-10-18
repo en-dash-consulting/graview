@@ -1,5 +1,5 @@
 import { retryingImport } from "@graview/core/retry";
-import type { AnySchema, Principal, SubscriptionStore, SubscriptionWhen } from "@graview/core";
+import type { AnySchema, Principal, SignIn, SubscriptionStore, SubscriptionWhen } from "@graview/core";
 import { isAggregateId, kindOfCard, kindsOfAggregate } from "@graview/layout/view";
 import { MenuSections } from "@graview/react/drawing";
 import { lazyModule, useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
@@ -63,8 +63,8 @@ const List = /* @__PURE__ */ sheetModule.part((module, props: { readonly style?:
   return <Drawn {...props} />;
 }, { quiet: true });
 
-/** Whether a reader is somebody the app can tell: one it knows by id. */
-export const canBeTold = (principal: Principal): boolean => (principal.onBehalfOf ?? principal).id !== undefined;
+/** Whether a reader is somebody the app can tell: one it knows by id, and not a visitor the host offers a way in (FR-183). */
+export const canBeTold = (principal: Principal, signIn?: SignIn): boolean => signIn === undefined && (principal.onBehalfOf ?? principal).id !== undefined;
 
 /** The choices a menu opened on this offers, or none. */
 export function choicesAt(target: Pick<MenuTarget, "on" | "about" | "act">, kindOf: (id: string) => string | undefined, schema: AnySchema): { readonly label: string; readonly choices: readonly SubscriptionWhen[] } | null {
@@ -86,8 +86,8 @@ export function choicesAt(target: Pick<MenuTarget, "on" | "about" | "act">, kind
 
 /** "Notify me…" on the context menu, or nothing where there is nobody to tell or nothing to be told of. */
 export function useNotifySection(): MenuSectionSource | null {
-  const { store, principal, subscriptions } = useGraview<AnySchema>();
-  const able = canBeTold(principal);
+  const { store, principal, subscriptions, signIn } = useGraview<AnySchema>();
+  const able = canBeTold(principal, signIn);
   return useMemo<MenuSectionSource | null>(
     () =>
       able
@@ -143,8 +143,8 @@ export function NotifyDoor() {
 
 /** A "Notify me" press of a face's own — on a record's page, after an act — opening the sheet on these choices. */
 export function NotifyButton({ choices, label = "Notify me", style, className, testId = "notify-me" }: { readonly choices: readonly SubscriptionWhen[]; readonly label?: string; readonly style?: CSSProperties; readonly className?: string; readonly testId?: string }) {
-  const { principal, subscriptions } = useGraview<AnySchema>();
-  if (!canBeTold(principal)) return null;
+  const { principal, subscriptions, signIn } = useGraview<AnySchema>();
+  if (!canBeTold(principal, signIn)) return null;
   return (
     <button type="button" data-testid={testId} className={className} onClick={(event) => askToNotify(subscriptions, { choices, returnTo: event.currentTarget })} style={style}>
       {label}

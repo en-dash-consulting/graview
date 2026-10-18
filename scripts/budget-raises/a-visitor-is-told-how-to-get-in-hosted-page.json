@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 300,
+  "gzipped": 150,
+  "changeset": "a-visitor-is-told-how-to-get-in.md",
+  "note": "Raised when a visitor was told how to get in (FR-183): the host's signIn on the provider, the Inspector's one row in place of the struck acts and Notify me reading it add about 0.2 KB up front, which did not fit beside what 0.1.33 left. Measured at 570_339 / 523_310 minified against 570_137 / 523_113."
+}

@@ -114,7 +114,7 @@ export function ChatPanel<S extends AnySchema>({
   place,
   onDraft,
 }: ChatPanelProps<S>) {
-  const { store, views, view, principal, setView, seatWho, noteSeat, session, ai, seatTalk, brand, app, subscriptions } = useGraview<S>();
+  const { store, views, view, principal, setView, seatWho, noteSeat, session, ai, seatTalk, brand, app, subscriptions, signIn } = useGraview<S>();
   const sceneGo = useSceneGo();
   const go = onMove ?? sceneGo;
   const { takeBack } = useLensKeeping(go);
@@ -144,11 +144,10 @@ export function ChatPanel<S extends AnySchema>({
         ...(app ? { app } : {}),
         // The host's ranker, so the seat's search_graph finds near words as Find does.
         near: ai.near,
-        // Notify me (Roadmap f-notify-subscriptions): the reader's own subscriptions, kept where the menu's sheet keeps them.
-        subscriptions,
-        subscriber: principal,
+        // Notify me (Roadmap f-notify-subscriptions): the reader's own subscriptions, kept where the menu's sheet keeps them — none for a visitor, nobody to tell (FR-183).
+        ...(signIn ? {} : { subscriptions, subscriber: principal }),
       }),
-    [store, principal, author, views, app, ai.near, subscriptions],
+    [store, principal, author, views, app, ai.near, subscriptions, signIn],
   );
   /* THE GRAPH FIRST, THE HOST'S MODEL AFTER IT: a host that passes `respond` answers in its place. */
   const answer = useMemo<Responder<S>>(() => respond ?? seatResponder<S>(ai), [respond, ai]);
