@@ -1,5 +1,5 @@
-import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, isoDate, type Violation } from "@graview/core";
-import { describe, expect, it } from "vitest";
+import { bindSchema, createMemoryAdapter, createSchema, defineApp, defineNode, isoDate, SCHEMES, type Violation } from "@graview/core";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { openStore } from "../../src/index.js";
 
@@ -37,6 +37,36 @@ describe("a store opened by a host that says no day", () => {
     const opened = await openStore({ app, adapter: createMemoryAdapter(), seed: seed as never, storeOptions: { invariantOptions: { context: { today: "2019-06-01" } } } });
     expect(opened.store.today()).toBe("2019-06-01");
     expect(opened.store.violations()).toEqual([]);
+    opened.close();
+  });
+});
+
+/**
+ * AN APP THAT SAYS ITS ZONE IS JUDGED ON ITS OWN DAY (Roadmap
+ * f-app-time-zone). The host's clock is wherever the server runs: a
+ * library in New York served from UTC turned its day at 8 PM. With
+ * `brand.timeZone` declared, the store `openStore` opens reads the date
+ * there, hands it to a rule's context, and ticks at that midnight.
+ */
+describe("a store opened for an app that declares its time zone", () => {
+  const zoned = defineApp({ name: "library", schema, mutations: [], invariants: [backOnTime], brand: { name: "Library", schemes: SCHEMES, timeZone: "America/New_York" } });
+  const dueToday = { nodes: [{ id: "l1", kind: "loan", label: "Loan 0001", due: "2026-10-16" }], edges: [] };
+
+  afterEach(() => vi.useRealTimers());
+
+  it("is judged on the app's day, not the host's, and turns at the app's midnight", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+    vi.setSystemTime(new Date("2026-10-17T01:30:00Z"));
+    const opened = await openStore({ app: zoned, adapter: createMemoryAdapter(), seed: dueToday as never });
+    expect(opened.store.timeZone).toBe("America/New_York");
+    expect(opened.store.today()).toBe("2026-10-16");
+    expect(opened.store.violations()).toEqual([]);
+    const heard: unknown[] = [];
+    opened.store.subscribe(() => heard.push(1));
+    vi.advanceTimersByTime(2.5 * 60 * 60 * 1000 + 1000);
+    expect(heard).toHaveLength(1);
+    expect(opened.store.today()).toBe("2026-10-17");
+    expect(opened.store.violations().map((violation) => violation.message)).toEqual(["Loan 0001 is overdue"]);
     opened.close();
   });
 });

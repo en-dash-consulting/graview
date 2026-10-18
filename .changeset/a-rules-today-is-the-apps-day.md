@@ -1,0 +1,12 @@
+---
+"@graview/core": patch
+"@graview/ship": patch
+"@graview/tools": patch
+"@graview/embed": patch
+"@graview/primitives": patch
+"@graview/skills": patch
+---
+
+A rule's today() is the app's day, not UTC's. Datetimes were said in the app's zone, and `today()` — what a rule, a computed field, a template and a label read — was still the UTC date, so an app in New York turned its day at 8 PM: at 01:30 UTC on Oct 17 a chore due Oct 16 was already overdue over dinner. With `brand.timeZone` declared, today() is the date there, and the day turns at the app's midnight: a document's rules, computed fields, guards and labels read it from the document's own brand, and a store told the zone (`new Store({ timeZone })`, which `openStore`, `openRemote`, the embed and `graview mcp` pass from the app's brand) is judged on that day, hands it to a rule written as a function in its context, as `openStore` already did, and ticks to it: `tick(now)` takes `now`'s day in that zone, and `tickEachDay` fires at that midnight, 23 hours after the last on the day clocks spring forward and 25 on the day they fall back, at the day's first moment where midnight never happens. A page reads the day of the app it draws, never the reader's zone and never the runtime's, so a server and a page agree on the day for the same app. Without a declared zone, today() is the UTC date, as before, and `openStore` still judges on the host's own date. A host that keeps a store on its own alarm (a Durable Object) passes `timeZone: brand.timeZone` to its store and sets the alarm `untilTheDayTurns(now, store.timeZone)` ahead; a tick at the turn of the day now says what the turn moved, judging what stood on the day the store was last ticked to. `isoToday(timeZone?, at?)` and `dayZoneFor` are exported, `dayOf` and `untilTheDayTurns` take a zone, and `rules-read-the-clock`'s fix says which midnight. The `graview-invariant` skill says so. A hosted page carries 0.7 KB more up front for it (the compiled page too); their budgets are raised by that.
+
+Compatibility: ops, stored records and the declaration are unchanged. An app that declares `brand.timeZone` reads today() as the date in that zone, where it read the UTC date, on every surface and in `graview serve`. `StoreOptions` takes `timeZone` and `Store` has `timeZone`; `dayOf(now, timeZone?)` and `untilTheDayTurns(now, timeZone?)` take a zone; `tickEachDay` reads the store's `timeZone`. A store told its zone hands its day to its rules' context as `today` where neither the call nor its options carry one.

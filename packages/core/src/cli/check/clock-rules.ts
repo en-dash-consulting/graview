@@ -23,6 +23,6 @@ export function checkClockRules<S extends AnySchema>(ctx: CheckContext<S>): void
     code: "rules-read-the-clock",
     where: rules.join(", "),
     message: `${rules.length === 1 ? `Rule ${named} reads` : `Rules ${named} read`} the clock (today(), now(), a computed field that does, or a kind whose records retire on a date), so the day turning breaks or mends ${rules.length === 1 ? "it" : "them"} with nothing changed. A store judges ${rules.length === 1 ? "it" : "them"} again only when its host ticks it.`,
-    fix: "Host it with @graview/ship (openStore, serve and openRemote tick at each midnight, UTC), or call store.tick(now) when the day turns — once a day from a host's own alarm — and its subscribers hear what appeared and cleared.",
+    fix: "Host it with @graview/ship (openStore, serve and openRemote tick at each midnight: the app's, in brand.timeZone, else UTC's), or call store.tick(now) when the day turns — once a day from a host's own alarm, untilTheDayTurns(now, brand.timeZone) ahead — and its subscribers hear what appeared and cleared.",
   });
 }

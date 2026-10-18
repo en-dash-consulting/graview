@@ -281,6 +281,8 @@ export {
   dayOfMoment,
   dayOfMonthAsRead,
   daysAsRead,
+  dayZoneFor,
+  isoToday,
   localeFor,
   minutesAsRead,
   momentAsRead,

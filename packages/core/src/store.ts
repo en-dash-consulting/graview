@@ -98,6 +98,14 @@ export interface StoreOptions<S extends AnySchema> {
   readonly validate?: boolean;
   readonly invariantOptions?: EvaluateOptions<S>;
   /**
+   * THE APP'S TIME ZONE, `brand.timeZone` (Roadmap f-app-time-zone): the
+   * day its rules, computed fields and templates read as today() is the
+   * date there, and the day turns at its midnight (`tick`, `tickEachDay`).
+   * Absent, the zone of the app the page draws (`sayIn`), else UTC.
+   * `@graview/ship`'s `openStore` and `openRemote` pass the app's own.
+   */
+  readonly timeZone?: string;
+  /**
    * Who may run what. Absent means permission is not a concern here.
    *
    * It lives on the STORE and nowhere else. The tool runtime calls the same
@@ -548,6 +556,8 @@ export class Store<S extends AnySchema> {
    * that slept through midnight never leaves the store on yesterday.
    */
   private ticked: { readonly day: string; readonly on: string } | undefined;
+  /** The app's time zone (`StoreOptions.timeZone`): the day today() reads is the date there. */
+  readonly timeZone: string | undefined;
   /** Where this store stands in the past, when it is one (`pastOf`): read, never changed. */
   readonly past: PastPoint | undefined;
   /** How often `pastOf` keeps a point to fold from, in ops (`StoreOptions.pastEvery`). */
@@ -560,6 +570,9 @@ export class Store<S extends AnySchema> {
     this.schema = options.schema;
     this.invariants = options.invariants ?? [];
     this.invariantOptions = options.invariantOptions ?? {};
+    this.timeZone = options.timeZone;
+    // A store that knows its app's zone begins on the day there, so the first turn of the day says what it moved.
+    if (this.timeZone) this.ticked = { day: isoToday(this.timeZone), on: isoToday(this.timeZone) };
     this.policy = options.policy;
     this.by = options.principal ?? HUMAN;
     this.intelligence = options.intelligence ?? [];
@@ -1103,12 +1116,14 @@ export class Store<S extends AnySchema> {
 
   /**
    * THE DAY THIS STORE'S RULES ARE JUDGED ON (YYYY-MM-DD): `invariantOptions`'
-   * `today`, else its context's `today`, else undefined — the real clock.
-   * What a seat reads "this week" and "overdue" against, so an app pinned to
-   * a day (a test, a demo, a replay) is asked about that day.
+   * `today`, else its context's `today`, else the day a host ticked it to,
+   * else the date in its `timeZone` when it knows the app's, else undefined
+   * — the real clock. What a seat reads "this week" and "overdue" against,
+   * so an app pinned to a day (a test, a demo, a replay) is asked about
+   * that day, and an app in New York about New York's.
    */
   today(): string | undefined {
-    return this.pinned() ?? (this.ticked && this.ticked.on === isoToday() ? this.ticked.day : undefined);
+    return this.pinned() ?? (this.ticked && this.ticked.on === isoToday(this.timeZone) ? this.ticked.day : undefined) ?? (this.timeZone ? isoToday(this.timeZone) : undefined);
   }
 
   /** The day `invariantOptions` pins, if it pins one: a tick does not move it. */
@@ -1124,7 +1139,10 @@ export class Store<S extends AnySchema> {
     // A rule that walks a link to another app reads it as the viewer this graph is read for (FR-171), unless the call hands its own reader.
     const linked = linkedReaderOf(this.graph);
     const given = context ?? this.invariantOptions.context;
-    const judged = linked && !(given && "linked" in given) ? { ...given, linked } : context;
+    const linking = linked && !(given && "linked" in given) ? { ...given, linked } : context;
+    // A rule written as a function reads the day from its context too, as `openStore` handed it (W-186): the app's, where the store knows its zone and the call hands no context of its own.
+    const base = linking ?? given;
+    const judged = this.timeZone && today !== undefined && context === undefined && !(base && "today" in base) ? { ...base, today } : linking;
     return { ...this.invariantOptions, ...(judged === undefined ? {} : { context: judged }), ...(today === undefined ? {} : { today }) };
   }
 
@@ -1136,7 +1154,8 @@ export class Store<S extends AnySchema> {
    * calls this when the day turns (`tickEachDay` does, just after each
    * midnight by the clock `today()` reads; `@graview/ship`'s `openStore`
    * and `openRemote` start it): from now on the store's rules are judged on
-   * `now`'s day (UTC, as `today()` reads the clock; or a day given as
+   * `now`'s day (in the store's `timeZone`, else UTC, as `today()` reads
+   * the clock; or a day given as
    * `YYYY-MM-DD`), and the answer is the problems that appeared and cleared
    * with it. Which rules those can be is the declaration's to say
    * (`clockReaders` on `@graview/core/check`, which `graview check` reads);
@@ -1150,10 +1169,13 @@ export class Store<S extends AnySchema> {
   tick(now: Date | string | number = new Date()): Tick {
     const pinned = this.pinned();
     if (pinned !== undefined) return { day: pinned, was: pinned, appeared: [], cleared: [] };
-    const day = dayOf(now);
+    const day = dayOf(now, this.timeZone);
+    const on = isoToday(this.timeZone);
+    // What stood is judged on the day the store was last ticked to, even when the clock has just left it: the turn at midnight says what it moved.
+    if (this.ticked) this.ticked = { day: this.ticked.day, on };
     const was = this.today();
     const before = this.violations();
-    this.ticked = { day, on: isoToday() };
+    this.ticked = { day, on };
     const moved = this.moved(before, this.violations());
     if (day !== was && !this.rehearsing && this.quiet === 0) for (const listener of this.listeners) listener(EMPTY_DIFF as GraphDiff<NodeOfSchema<S>>, []);
     return { day, ...(was === undefined ? {} : { was }), appeared: moved.introduces, cleared: moved.resolves };
