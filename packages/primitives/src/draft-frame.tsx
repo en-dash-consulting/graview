@@ -86,11 +86,17 @@ export function DraftFrame({ page = false, go, onPick, onDiscard }: DraftFramePr
     <section
       ref={frame}
       data-testid="draft-frame"
+      data-graview-draft-frame={page ? "page" : "scene"}
       aria-label={`Draft: ${draft.title}`}
       style={
         page
           ? { display: "grid", gap: 12, minWidth: 0 }
-          : { position: "absolute", inset: 0, zIndex: layer("rail"), display: "grid", gridTemplateRows: "auto auto minmax(0, 1fr)", background: "var(--graview-ground, var(--graview-panel))", minHeight: 0 }
+          : /*
+             * A PANEL ON THE SCENE'S SURFACE (FR-184), not a bare list on its
+             * ground: framed, on the panel's own color, standing a little in
+             * from the picture's edges, which stay visible (and inert) around it.
+             */
+            { position: "absolute", inset: 12, zIndex: layer("rail"), display: "grid", gridTemplateRows: "auto auto minmax(0, 1fr)", background: "var(--graview-panel)", border: "1px solid var(--graview-edge)", borderRadius: 12, boxShadow: "var(--graview-lift-high)", overflow: "hidden", minHeight: 0 }
       }
     >
       <p data-testid="draft-line" style={{ ...LINE, ...(page ? {} : { padding: "10px 16px" }) }}>

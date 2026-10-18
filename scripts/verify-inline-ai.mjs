@@ -344,6 +344,29 @@ try {
     pagesActivity: { filter: pagesActivity.filter, interactions: pagesActivity.interactions.length },
     ok: onPage.drawn && onPage.rows.includes("ai-fill") && record !== null && record.length === 1 && record[0].outcome === "accepted" && record[0].undo && pagesActivity.filter && pagesActivity.interactions.length === 1,
   };
+
+  /* ------------------------------------------- a panel from the menu, on the face it was asked on (FR-184) */
+  reach("aPanelDrawnFromTheMenuOnPagesLandsOnTheDraftPage");
+  if (await page.$('[data-testid="activity-panel"], [data-graview-popover]')) await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  await page.click(HEADING, { button: "right" });
+  const panelRows = await aiSection(page);
+  await page.click(`${AI} [data-menu-item="ai-panel"]`);
+  await page.waitForSelector('[data-testid="draft-keep"]', { timeout: 15_000 }).catch(() => undefined);
+  const drafted = await page.evaluate(() => ({
+    path: location.pathname,
+    page: document.querySelector('[data-testid="draft-page"]') !== null,
+    keep: document.querySelector('[data-testid="draft-keep"]')?.textContent?.trim() ?? null,
+    discard: document.querySelector('[data-testid="draft-discard"]')?.textContent?.trim() ?? null,
+    face: document.querySelector("[data-graview-face]")?.getAttribute("data-graview-face") ?? null,
+    menu: document.querySelector('[data-testid="context-menu"]') !== null,
+    keyboard: document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null,
+  }));
+  report.checks.aPanelDrawnFromTheMenuOnPagesLandsOnTheDraftPage = {
+    rows: panelRows.rows,
+    drafted,
+    ok: panelRows.rows.includes("ai-panel") && drafted.path.endsWith("/~draft") && drafted.page && drafted.keep === "Keep as a lens" && drafted.discard === "Discard" && drafted.face === "pages" && !drafted.menu,
+  };
   await context.close();
 
   /* ------------------------------------------- a host's stored entries */
