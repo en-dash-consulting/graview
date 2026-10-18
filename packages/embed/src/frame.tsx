@@ -273,9 +273,11 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
   /**
    * WHAT THE HOST KEEPS OUTSIDE THE LOG, FOR PLAYBACK (Roadmap f-playback):
    * `declarations`, each change to the declaration with the seq it took
-   * effect at, its sentence and the declaration it began; and `viewAt(name,
-   * seq)`, a script view's code as it stood at a moment (`null`: it did not
-   * exist then). Unsaid, the past is drawn under today's declaration and views.
+   * effect at, its sentence and the declaration it began; `declarationAt(seq)`,
+   * that declaration fetched when playback first reaches a mark handed
+   * without it; and `viewAt(name, seq)`, a script view's code as it stood
+   * at a moment (`null`: it did not exist then). Unsaid, the past is drawn
+   * under today's declaration and views.
    */
   readonly history?: HistoryHost;
   /**

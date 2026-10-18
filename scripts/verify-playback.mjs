@@ -101,9 +101,9 @@ const drawn = (page, scope) =>
   page.evaluate(
     ([added, scope]) => {
       const root = scope ? document.querySelector(scope) ?? document.body : document.body;
-      // The timeline and Activity say what changed; the app is what is drawn outside them.
+      // The timeline, Activity and what is announced (the bar's and the notices' status lines, which still say the last change made now) say what changed; the app is what is drawn outside them.
       const text = [...root.querySelectorAll("main, [data-graview-pick], [data-testid='record-row'], li, a, h1, h2, h3, p, span")]
-        .filter((el) => !el.closest('[data-testid="timeline"], [data-testid="activity"], [data-graview-offstage]'))
+        .filter((el) => !el.closest('[data-testid="timeline"], [data-testid="activity"], [data-graview-offstage], [role="status"]'))
         .map((el) => el.textContent ?? "")
         .join(" \n ");
       const timeline = document.querySelector('[data-testid="timeline"]');

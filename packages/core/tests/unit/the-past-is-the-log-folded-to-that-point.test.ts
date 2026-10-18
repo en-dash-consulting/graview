@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { compileDocument } from "../../src/check.js";
 import { bindSchema, createSchema, defineNode, nodeRef, PastError, Store, type AnySchema, type Principal } from "../../src/index.js";
-import { declarationSentence, makerOf, restoreBatches, ticksOf } from "../../src/history.js";
-import { declarationAt, pastAt, pastOf, seqAt } from "../../src/past.js";
+import { declarationSentence, makerOf, restoreBatches, ticksOf, type HistoryHost } from "../../src/history.js";
+import { askDeclaration, declarationAt, pastAt, pastOf, seqAt } from "../../src/past.js";
 
 /**
  * THE PAST IS THE LOG FOLDED TO THAT POINT (Roadmap f-playback). A person
@@ -141,6 +141,43 @@ describe("pastOf", () => {
     expect(pastAt(store, 5, { declarations: marks }).schema.kinds).toEqual(["task"]);
     expect(pastAt(store, 7, { declarations: marks }).schema.kinds).toEqual(["task", "note"]);
     expect(declarationSentence(createSchema([note]), createSchema([defineNode("note", { fields: z.object({ body: z.string(), due: z.string() }) })]))).toBe("Added due to Note");
+  });
+
+  it("asks the host for the declaration a mark came without, by the mark's seq and once, and is drawn under its answer", async () => {
+    const store = built(9);
+    const note = defineNode("note", { fields: z.object({ body: z.string() }) });
+    const after = createSchema([task, note]);
+    const asked: number[] = [];
+    let answer!: (declaration: { schema: AnySchema }) => void;
+    const coming = new Promise<{ schema: AnySchema }>((resolve) => (answer = resolve));
+    const host: HistoryHost = { declarations: [{ seq: 6, sentence: "Added a Note kind" }], declarationAt: (seq) => (asked.push(seq), coming) };
+    // Before the mark nothing is asked; a page that never reaches it asks nothing.
+    expect(askDeclaration(host, 5)).toEqual({ declaration: undefined });
+    expect(asked).toEqual([]);
+    const waiting = askDeclaration(host, 7);
+    expect("waiting" in waiting).toBe(true);
+    // While it is coming, the moment is today's.
+    expect(pastAt(store, 7, host).schema.kinds).toEqual(["task"]);
+    answer({ schema: after });
+    await (waiting as { waiting: Promise<unknown> }).waiting;
+    expect(askDeclaration(host, 8)).toEqual({ declaration: { schema: after } });
+    expect(pastAt(store, 7, host).schema.kinds).toEqual(["task", "note"]);
+    expect(pastAt(store, 5, host).schema.kinds).toEqual(["task"]);
+    expect(asked).toEqual([6]);
+  });
+
+  it("is today's declaration where the host's answer is undefined or fails, and a mark handed with its declaration is never asked about", async () => {
+    const store = built(9);
+    const note = defineNode("note", { fields: z.object({ body: z.string() }) });
+    const asked: number[] = [];
+    const failing: HistoryHost = { declarations: [{ seq: 3, sentence: "Changed" }, { seq: 6, sentence: "Changed again" }], declarationAt: (seq) => (asked.push(seq), seq === 3 ? Promise.resolve(undefined) : Promise.reject(new Error("offline"))) };
+    for (const seq of [4, 7]) await (askDeclaration(failing, seq) as { waiting: Promise<unknown> }).waiting;
+    expect(pastAt(store, 4, failing).schema.kinds).toEqual(["task"]);
+    expect(pastAt(store, 7, failing).schema.kinds).toEqual(["task"]);
+    expect(asked).toEqual([3, 6]);
+    const handed: HistoryHost = { declarations: [{ seq: 6, sentence: "Added a Note kind", declaration: { schema: createSchema([task, note]) } }], declarationAt: (seq) => (asked.push(seq), undefined) };
+    expect(pastAt(store, 7, handed).schema.kinds).toEqual(["task", "note"]);
+    expect(asked).toEqual([3, 6]);
   });
 
   it("begins where the log began, though a store reopened without the epoch its seed began cannot say so", () => {

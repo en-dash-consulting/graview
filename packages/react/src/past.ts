@@ -77,6 +77,8 @@ type History = typeof import("@graview/core/past");
 const history = /* @__PURE__ */ retryingImport(() => import("@graview/core/past"));
 /** The module once it is here, so a face drawn after it arrived shows the past at once. */
 let arrived: History | undefined;
+/** How long a moment holds the picture it had while the host is asked for its declaration, before it is drawn under today's until the answer comes. */
+const ANSWER_HELD_MS = 400;
 
 /**
  * A FACE'S OWN PLAYBACK over `live`, or the one it is drawn inside when
@@ -104,15 +106,37 @@ export function useOwnPlayback<S extends AnySchema>(live: Store<S>, principal: P
       live = false;
     };
   }, [folds, inherited, seq]);
-  const past = useMemo<PastShown<S> | null>(() => {
-    if (inherited || seq === null || seq >= live.log.length || !folds) return null;
+  // A mark the host handed without its declaration is asked for (`history.declarationAt`); the moment waits on the answer.
+  const [answered, setAnswered] = useState(0);
+  const asked = useMemo(() => (inherited || seq === null || seq >= live.log.length || !folds ? undefined : folds.askDeclaration(host, seq)), [inherited, live, seq, host, folds, answered]);
+  const waiting = asked && "waiting" in asked ? asked.waiting : undefined;
+  const [late, setLate] = useState<Promise<void> | undefined>(undefined);
+  useEffect(() => {
+    if (!waiting) return;
+    let on = true;
+    const slow = setTimeout(() => on && setLate(waiting), ANSWER_HELD_MS);
+    void waiting.then(() => on && setAnswered((n) => n + 1));
+    return () => {
+      on = false;
+      clearTimeout(slow);
+    };
+  }, [waiting]);
+  const held = waiting !== undefined && late !== waiting;
+  const drawn = useMemo<PastShown<S> | null>(() => {
+    if (inherited || seq === null || seq >= live.log.length || !folds || held) return null;
     try {
       const store = folds.pastAt(live, seq, host);
       return { seq, at: store.past?.at, store };
     } catch {
       return null;
     }
-  }, [inherited, live, seq, host, folds]);
+  }, [inherited, live, seq, host, folds, held, answered]);
+  // While the answer is on its way the picture it had stays, rather than flash the moment under today's declaration.
+  const last = useRef<PastShown<S> | null>(null);
+  const past = held ? last.current : drawn;
+  useEffect(() => {
+    last.current = past;
+  }, [past]);
   const show = useCallback((next: number | null) => setSeq(next === null ? null : next >= live.log.length ? Number.POSITIVE_INFINITY : next), [live]);
   const owns = useCallback(
     (store: Store<AnySchema>, seat: Principal) => [live as unknown as Store<AnySchema>, past?.store as unknown as Store<AnySchema> | undefined].some((one) => one !== undefined && (one === store || one.seenBy(seat) === store)),

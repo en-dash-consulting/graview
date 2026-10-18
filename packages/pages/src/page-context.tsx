@@ -156,7 +156,7 @@ export interface PageContext<S extends AnySchema> {
    * it, and its address plainly where there is none.
    */
   readonly resolveApp?: ResolveApp;
-  /** What the host keeps outside the log, for playback (Roadmap f-playback): its declaration changes, and a script view's code at a moment. */
+  /** What the host keeps outside the log, for playback (Roadmap f-playback): its declaration changes (each declaration handed, or asked for by `declarationAt`), and a script view's code at a moment. */
   readonly history?: HistoryHost;
   /**
    * THE HOST'S WAY TO READ ANOTHER APP'S RECORDS (FR-171): a linked record
