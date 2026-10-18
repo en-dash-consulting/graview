@@ -9,6 +9,7 @@ import { useRef, useState } from "react";
 import { rankedRepairs, recordFacts } from "./facts.js";
 import { fileFieldsOf } from "@graview/core/blocks";
 import { DerivedForm } from "./form.js";
+import { WithheldActs } from "./withheld-acts.js";
 import { pluralSlug, recordPath } from "./registry.js";
 import { SceneLink, type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
@@ -482,15 +483,7 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
               style={{ ...button, ...quiet, justifySelf: "start" }}
             />
           ) : null}
-          {facts.actions.withheld.length > 0 ? (
-            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }}>
-              {facts.actions.withheld.map((withheld) => (
-                <li key={withheld.id} style={quiet}>
-                  <s>{withheld.label}</s> — {withheld.refusal.message}
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <WithheldActs context={context} withheld={facts.actions.withheld} />
         </section>
       ) : null}
 

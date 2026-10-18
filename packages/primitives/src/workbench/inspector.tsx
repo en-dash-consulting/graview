@@ -1,4 +1,4 @@
-import { InvalidArguments, isLeftAlone, layer, nounOf, withArticle, type AnySchema } from "@graview/core";
+import { InvalidArguments, isLeftAlone, layer, nounOf, signInInstead, withArticle, type AnySchema } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { failureWords } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
@@ -70,7 +70,7 @@ function ChosenActs() {
 const RAIL_NEEDS = 14 + 236 + 14 + 300;
 
 function Pane({ placement }: { readonly placement: InspectorPlacement }) {
-  const { store, menuAt, setMenuAt, view } = useGraview<AnySchema>();
+  const { store, menuAt, setMenuAt, view, signIn } = useGraview<AnySchema>();
   /*
    * The pane is positioned within the SCENE'S BOX, not the window. It was
    * fixed to the viewport, which put it at the page's edge when the scene
@@ -208,7 +208,17 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     () => new Set(store.allMutations().filter((mutation) => mutation.pinned).map((mutation) => mutation.name)),
     [store],
   );
-  const { affordances, withheld, observations } = useAffordances(deriveOptions);
+  const { affordances, withheld: struck, observations } = useAffordances(deriveOptions);
+  /*
+   * A VISITOR IS TOLD HOW TO GET IN (FR-183). Where the host offers a
+   * signed-out reader a way in and every act withheld from them is one a
+   * member could take, its one line stands in for the struck list — seven
+   * dead buttons told a visitor seven times what they could not do and
+   * never how to get the right. A member lacking one role is still told
+   * who could (FR-16).
+   */
+  const gain = signInInstead(struck, signIn);
+  const withheld = gain ? NOTHING_WITHHELD : struck;
   /*
    * THE MENU'S OTHER SECTIONS, beside the acts: the face's own (the routed
    * face's "Open", "Change the date") and the host's (`menuSections`), each
@@ -862,7 +872,7 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
           Nothing offered here matches “{query.trim()}”.
         </p>
       ) : null}
-      {affordances.length === 0 && !waiting && selection.length === 0 ? null : affordances.length === 0 && !waiting ? (
+      {gain && affordances.length === 0 ? null : affordances.length === 0 && !waiting && selection.length === 0 ? null : affordances.length === 0 && !waiting ? (
         /*
          * An empty action list is a RESULT, not a blank space. Saying which
          * kind has no mutations declaring it as a subject is the same honesty
@@ -1103,6 +1113,19 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
         * The framework already treats an empty action list as a result and
         * explains it; this is the same honesty pointed at a different cause.
         */}
+      {gain ? (
+        <button
+          type="button"
+          data-testid="sign-in"
+          onClick={() => {
+            setMenuAt(null);
+            gain.run();
+          }}
+          style={{ padding: "5px 10px", fontSize: "0.875rem", borderRadius: 8, width: "100%", textAlign: "left" }}
+        >
+          {gain.label}
+        </button>
+      ) : null}
       {withheld.length > 0 ? (
         <ul
           data-testid="withheld"
@@ -1197,6 +1220,9 @@ function Pane({ placement }: { readonly placement: InspectorPlacement }) {
     </section>
   );
 }
+
+/** One shared empty, for a visitor told the way in instead. */
+const NOTHING_WITHHELD: readonly never[] = [];
 
 /**
  * A SECTION BESIDE THE ACTS (`menuSections`, or a face's own): its rows,

@@ -70,6 +70,8 @@ export function PagesContent<S extends AnySchema>({
             ...(props.people ? { people: props.people } : {}),
             /* Where "Notify me" is kept: the host's store, on this face as on the scene. */
             ...(props.subscriptions ? { subscriptions: props.subscriptions } : {}),
+            /* What a visitor could gain (FR-183): the host's way in, on this face as on the scene. */
+            ...(props.signIn ? { signIn: props.signIn } : {}),
             /* The quick ask as the app set it, on this face as on the scene. */
             ...(quickAsk !== undefined ? { quickAsk } : {}),
           }}

@@ -1,0 +1,12 @@
+---
+"@graview/core": patch
+"@graview/react": patch
+"@graview/primitives": patch
+"@graview/pages": patch
+"@graview/embed": patch
+"@graview/skills": patch
+---
+
+A reader who may do nothing is told how to get in, not shown every act struck through (FR-183). A signed-out visitor on a public app right-clicked an era and the menu said "Nothing you may do with an era — 7 actions withheld" over seven disabled buttons, each with the policy's sentence; the list's foot said "~~Add an era~~ — Not permitted: …"; nothing said how to get the right, and "Notify me…" was offered to `anonymous` and kept a subscription for nobody. A host now says what a signed-out reader could gain: `signIn: { label, run, roles? }`, handed only while the reader is a visitor, on `mount` from `@graview/embed` and `@graview/embed/pages`, on `GraviewProvider` (which the Shell draws under, and a provider inside another takes from the one around it) and on the pages' context. Where every act withheld from the reader is one a member could take — one some role could, or one of `roles`, the roles signing in gives, when the host names them — the context menu and the Inspector on either face, the list's foot and a record's acts say `label` as one press that calls `run` (`data-testid="sign-in"`), in place of the struck acts; the face's own rows (Open, Show in the scene) stay. With `signIn` given, "Notify me" is not offered on the menu, a record's page or after an act, and the seat's chat keeps no subscription. A member lacking one role is still told each act they may not take and who could (FR-16), and so is a visitor where one act is one no role can take. `signInInstead(withheld, signIn)` and the `SignIn` type are exported from `@graview/core`, the same judgment for a page of an app's own. A hosted page, compiled or not, carries 0.2 KB more up front for it, under a raise of 0.3 KB more up front on each of the two budgets. The embed's README and the graview-embed skill say the option. `capabilities().shipped` gains FR-183.
+
+Compatibility: ops, stored formats, the declaration and derived tools are unchanged. The wire is unchanged; `capabilities().shipped` lists FR-183. What Graview Cloud does: pass `signIn: { label: "Sign in to make changes", run }` to `mount` while nobody is signed in, and drop its interim `visitorMenuSections` row and the CSS hiding `[data-testid=withheld]`, `[data-testid=no-affordances]` and `[data-menu-section=notify]`.

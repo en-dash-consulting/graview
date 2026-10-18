@@ -1,5 +1,5 @@
 import type { HistoryHost } from "@graview/core/history";
-import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SubscriptionStore } from "@graview/core";
+import { sceneTitle, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type Principal, type Store, type PresenceChannel, type SettingDeclaration, type SignIn, type SubscriptionStore } from "@graview/core";
 import { useCallback, useRef, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import type { KeepLensHost, MenuSectionSource, ReactViewRegistry } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
@@ -127,6 +127,15 @@ export interface PageContext<S extends AnySchema> {
    * the provider's around the face, else the page's own memory.
    */
   readonly subscriptions?: SubscriptionStore;
+  /**
+   * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): `{ label, run, roles? }`,
+   * handed only while the reader is a visitor. Where every act withheld
+   * from them is one a member could take, a list's foot, a record's acts
+   * and the context menu say `label` as one press that calls `run`, in
+   * place of the struck acts, and "Notify me" is not offered. Unsaid, the
+   * provider's around the face.
+   */
+  readonly signIn?: SignIn;
   /**
    * THE QUICK ASK on every page (Roadmap f-quick-ask-framework): ⌘K's bar
    * beside what the page is about, and its answer cards. On by default

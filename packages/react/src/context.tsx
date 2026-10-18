@@ -14,6 +14,7 @@ import type {
   SearchRanker,
   SearchResult,
   SettingDeclaration,
+  SignIn,
   Store,
   ViewRegistry,
 } from "@graview/core";
@@ -243,6 +244,13 @@ export interface GraviewContextValue<S extends AnySchema> {
    * keep the reader's subscriptions here.
    */
   readonly subscriptions: SubscriptionStore;
+  /**
+   * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): the host's `signIn`, else
+   * the provider's around it. Given, the reader is a visitor: the menu and
+   * the Inspector say its line where every withheld act is a member's, and
+   * "Notify me" is not offered.
+   */
+  readonly signIn?: SignIn | undefined;
   /** The far records this viewer has been told, read at once: what a linked record draws from, as the rule language reads them (`@graview/core/linked`). */
   readonly linkedReads?: LinkedReads | undefined;
   /** Whether a hand has panned or dragged in this tab, so "moved" on the bar means a move somebody made. */
@@ -529,6 +537,16 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * lives in the page, `watchSubscriptions` from `@graview/core/subscriptions`.
    */
   readonly subscriptions?: SubscriptionStore | undefined;
+  /**
+   * WHAT A SIGNED-OUT READER COULD GAIN (FR-183): `{ label, run, roles? }`,
+   * handed only while the reader is a visitor. Where every act withheld
+   * from them is one a member could take (one of `roles`, the roles signing
+   * in gives, when said), the context menu, the Inspector and a list's foot
+   * say `label` as one row that calls `run`, in place of the struck acts;
+   * the face's own rows stay. "Notify me" is not offered to a visitor.
+   * Unsaid, the provider around this one's, else the struck list (FR-16).
+   */
+  readonly signIn?: SignIn | undefined;
   /** Controlled mode: pass both to own navigation yourself (e.g. from a router). */
   readonly view?: ViewState;
   readonly onViewChange?: (next: ViewState) => void;
@@ -598,6 +616,7 @@ export function GraviewProvider<S extends AnySchema>({
   linkedRecords,
   menuSections,
   subscriptions: hostSubscriptions,
+  signIn: hostSignIn,
   view,
   onViewChange,
   children,
@@ -605,6 +624,7 @@ export function GraviewProvider<S extends AnySchema>({
   // A provider inside another (the pages under an embed) keeps the host's menu sections when it was given none.
   const around = useContext(GraviewContext);
   const hostSections = menuSections ?? around?.menuSections;
+  const signIn = hostSignIn ?? around?.signIn;
   /* Who is at the keyboard: see "WHO IS AT THE KEYBOARD" below. */
   const [seated, setSeated] = useState<Principal | null>(null);
   const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
@@ -1029,6 +1049,7 @@ export function GraviewProvider<S extends AnySchema>({
       linkedRecords,
       menuSections: hostSections,
       subscriptions,
+      signIn,
       linkedReads,
       movedByHand,
       noteMoved,
@@ -1082,6 +1103,7 @@ export function GraviewProvider<S extends AnySchema>({
       linkedRecords,
       hostSections,
       subscriptions,
+      signIn,
       linkedReads,
       movedByHand,
       noteMoved,

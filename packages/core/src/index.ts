@@ -224,6 +224,7 @@ export {
 } from "./permissions/policy.js";
 export type { PolicyWords } from "./permissions/policy.js";
 export { PermissionDeniedError } from "./permissions/types.js";
+export { signInInstead, type SignIn } from "./permissions/sign-in.js";
 export {
   brandFromAccent,
   checkBrandContrast,

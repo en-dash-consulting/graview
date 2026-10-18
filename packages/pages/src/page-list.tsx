@@ -23,6 +23,7 @@ import { useCallback, useId, useMemo, useRef, useState, type ComponentType, type
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { kindFacts, kindMap } from "./facts.js";
 import { DerivedForm } from "./form.js";
+import { WithheldActs } from "./withheld-acts.js";
 import { kindOfSlug, pluralSlug, recordPath } from "./registry.js";
 import { type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
@@ -767,15 +768,8 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
         ) : null}
       </div>
 
-      {withheld.length > 0 ? (
-        <ul style={{ ...rule, margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 4 }} data-testid="withheld">
-          {withheld.map((entry) => (
-            <li key={entry.id} style={quiet}>
-              <s>{entry.label}</s> — {entry.refusal.message}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {/* What this seat may not begin, struck with the reason — or, for a visitor, the host's way in (FR-183). */}
+      <WithheldActs context={context} withheld={withheld} style={rule} testId="withheld" />
     </Frame>
   );
 }
