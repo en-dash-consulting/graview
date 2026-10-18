@@ -1,0 +1,29 @@
+{
+  "id": "react/react/react",
+  "name": "Core Feature Providers",
+  "description": "8 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/ai-desk.ts",
+    "packages/react/src/default-elsewhere.ts",
+    "packages/react/src/files.ts",
+    "packages/react/src/go.ts",
+    "packages/react/src/keyboard.ts",
+    "packages/react/src/local-intelligence.ts",
+    "packages/react/src/popover.ts",
+    "packages/react/src/provider.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/ai-desk.ts",
+    "packages/react/src/default-elsewhere.ts",
+    "packages/react/src/files.ts",
+    "packages/react/src/go.ts",
+    "packages/react/src/keyboard.ts",
+    "packages/react/src/local-intelligence.ts",
+    "packages/react/src/popover.ts",
+    "packages/react/src/provider.ts"
+  ],
+  "cohesion": 0.36,
+  "coupling": 0.64,
+  "fileCount": 8,
+  "lineCount": 1016
+}

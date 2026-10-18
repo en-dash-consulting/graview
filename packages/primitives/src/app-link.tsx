@@ -2,6 +2,7 @@ import { fieldWords, LOCAL_LAYERS, safeFileHref, type AppResolution, type Linked
 import { useEditableFields } from "@graview/react/drawing";
 import { useGraviewIfAny } from "@graview/react/provider";
 import { useContext, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import type { AppLinkProps } from "./app-link-door.js";
 import { EditableValue } from "./editable.js";
 import { ResolveAppContext } from "./resolve-app-context.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -17,21 +18,6 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * app, the address plainly — a link only when it is an absolute http(s)
  * address. Fetched with the first app-link drawn, never in the first paint.
  */
-
-export interface AppLinkProps {
-  /** The address the record keeps. */
-  readonly address: string;
-  /** `record`: the name and the home's headline under it; `chip`: the name alone, on a row or a card. */
-  readonly as?: "record" | "chip";
-  /**
-   * The record and field it is the value of, where it may be changed in
-   * place: the control that changes it stands beside the link, never
-   * around it, and only where an act may write it.
-   */
-  readonly nodeId?: string;
-  readonly field?: string;
-  readonly style?: CSSProperties;
-}
 
 type Viewer = Parameters<ResolveApp>[1];
 type Answer = AppResolution | "asking";

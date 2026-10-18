@@ -1,25 +1,32 @@
 {
   "id": "primitives/src-lens/primitives",
-  "name": "Lens",
-  "description": "6 files, primarily TypeScript",
+  "name": "Primitives",
+  "description": "10 files, primarily TypeScript",
   "files": [
-    "packages/primitives/src/lens/calendar-dates.ts",
-    "packages/primitives/src/lens/calendar-drawing.tsx",
-    "packages/primitives/src/lens/calendar-options.ts",
-    "packages/primitives/src/lens/calendar-placing.ts",
-    "packages/primitives/src/lens/calendar-spans.ts",
-    "packages/primitives/src/lens/calendar-view.tsx"
+    "packages/primitives/src/arrangement.ts",
+    "packages/primitives/src/choosing.ts",
+    "packages/primitives/src/kind-shape.ts",
+    "packages/primitives/src/kind-stop.tsx",
+    "packages/primitives/src/lens/columns.tsx",
+    "packages/primitives/src/pages.ts",
+    "packages/primitives/src/quick-ask-setting.ts",
+    "packages/primitives/src/several-bar.tsx",
+    "packages/primitives/src/several-door.tsx",
+    "packages/primitives/src/stretched-link.ts"
   ],
   "entryPoints": [
-    "packages/primitives/src/lens/calendar-dates.ts",
-    "packages/primitives/src/lens/calendar-drawing.tsx",
-    "packages/primitives/src/lens/calendar-options.ts",
-    "packages/primitives/src/lens/calendar-placing.ts",
-    "packages/primitives/src/lens/calendar-spans.ts",
-    "packages/primitives/src/lens/calendar-view.tsx"
+    "packages/primitives/src/arrangement.ts",
+    "packages/primitives/src/choosing.ts",
+    "packages/primitives/src/kind-shape.ts",
+    "packages/primitives/src/kind-stop.tsx",
+    "packages/primitives/src/lens/columns.tsx",
+    "packages/primitives/src/pages.ts",
+    "packages/primitives/src/quick-ask-setting.ts",
+    "packages/primitives/src/several-door.tsx",
+    "packages/primitives/src/stretched-link.ts"
   ],
-  "cohesion": 0.67,
-  "coupling": 0.33,
-  "fileCount": 6,
-  "lineCount": 1394
+  "cohesion": 0.39,
+  "coupling": 0.61,
+  "fileCount": 10,
+  "lineCount": 2364
 }

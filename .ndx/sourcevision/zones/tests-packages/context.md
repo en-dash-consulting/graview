@@ -5,11 +5,11 @@
 <zone>
 
 Zone: Tests Packages (`tests-packages`)
-Files: 8, Cohesion: 1.00, Coupling: 0.00
+Files: 6, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 8 files, primarily TypeScript
+Description: Non-source files in packages: a-document-names-what-it-declares.ts, judges-past.ts, door.test.ts (+3 more)
 Entry points: packages/embed/tests/support/a-builder-in-the-studio.ts
-Lines: 1046
+Lines: 584
 
 </zone>
 
@@ -20,9 +20,7 @@ packages/core/tests/types/judges-past.ts (TypeScript, 22 lines, test)
 packages/create-graview/tests/unit/door.test.ts (TypeScript, 30 lines, test)
 packages/embed/tests/support/a-builder-in-the-studio.ts (TypeScript, 75 lines, test)
 packages/graview/tests/unit/a-separator-is-not-a-command.test.ts (TypeScript, 21 lines, test)
-packages/render/tests/unit/frame-plan.test.ts (TypeScript, 360 lines, test)
-packages/render/tests/unit/pointer-router.test.ts (TypeScript, 104 lines, test)
-packages/skills/tests/unit/skills.test.ts (TypeScript, 324 lines, test)
+packages/skills/tests/unit/skills.test.ts (TypeScript, 326 lines, test)
 
 </files>
 
@@ -30,12 +28,10 @@ packages/skills/tests/unit/skills.test.ts (TypeScript, 324 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → core-document: packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/typed.ts; packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/typed.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts
-  → core-ops: packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/store.ts
+  → core: packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/store.ts; packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/typed.ts; packages/core/tests/types/a-document-names-what-it-declares.ts → packages/core/src/typed.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts; packages/core/tests/types/judges-past.ts → packages/core/src/index.ts
   → embed: packages/embed/tests/support/a-builder-in-the-studio.ts → packages/embed/src/index.ts; packages/embed/tests/support/a-builder-in-the-studio.ts → packages/embed/src/index.ts
   → graview: packages/graview/tests/unit/a-separator-is-not-a-command.test.ts → packages/graview/src/index.ts
   → guest: packages/skills/tests/unit/skills.test.ts → packages/skills/src/index.ts
-  → render: packages/render/tests/unit/frame-plan.test.ts → packages/render/src/gpu.ts; packages/render/tests/unit/frame-plan.test.ts → packages/render/src/index.ts; packages/render/tests/unit/frame-plan.test.ts → packages/render/src/index.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/index.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/interaction/pointer-router.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/interaction/pointer-router.ts; packages/render/tests/unit/pointer-router.test.ts → packages/render/src/scene/plane.ts
 
 Incoming (other zones → this zone):
   ← tests-embed-unit: packages/embed/tests/unit/a-host-refuses-in-its-own-words.test.tsx → packages/embed/tests/support/a-builder-in-the-studio.ts; packages/embed/tests/unit/a-host-that-refuses-is-heard.test.tsx → packages/embed/tests/support/a-builder-in-the-studio.ts
@@ -45,14 +41,14 @@ Incoming (other zones → this zone):
 <findings>
 
 [observation] [info] High cohesion (1) — files are tightly interconnected
-[suggestion] [info] Zone "tests-packages" has files across 6 directories — consider consolidating under a dedicated directory
+[suggestion] [info] Zone "tests-packages" has files across 5 directories — consider consolidating under a dedicated directory
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- Zone "tests-packages" has files across 6 directories — consider consolidating under a dedicated directory
-- [call graph] 58 internal calls, 78 outgoing, 29 incoming (cohesion: 0.43, coupling: 0.57)
+- Zone "tests-packages" has files across 5 directories — consider consolidating under a dedicated directory
+- [call graph] 10 internal calls, 14 outgoing, 29 incoming (cohesion: 0.42, coupling: 0.58)
 
 </insights>

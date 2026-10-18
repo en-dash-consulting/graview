@@ -17,7 +17,8 @@ export { describePlace, placeText } from "./document/describe-place.js";
  */
 export { columnActs, columnMoves, columnOf, columnReach, columnSteps, statusColumns } from "./columns.js";
 export type { ColumnMove, ColumnReach, StatusColumn } from "./columns.js";
-export type { DescribedFact, DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceOptions, DescribePlaceResult, PlaceDescription } from "./document/describe-place.js";
+export type { DescribePlaceOptions } from "./document/describe-place.js";
+export type { DescribedFact, DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceResult, PlaceDescription } from "./document/described.js";
 /*
  * A record's declared blocks — or the home's — resolved over what a seat
  * may see exactly as the faces and the describer resolve them: one call for

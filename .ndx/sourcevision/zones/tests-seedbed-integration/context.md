@@ -7,7 +7,7 @@
 Zone: Tests Seedbed Integration (`tests-seedbed-integration`)
 Files: 5, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 5 files, primarily TypeScript
+Description: Non-source files in apps: acceptance.test.tsx, chapters.test.ts, design-keyboard.test.tsx (+2 more)
 Lines: 970
 
 </zone>

@@ -5,31 +5,74 @@
 <zone>
 
 Zone: Primitives (`primitives/src-lens/src`)
-Files: 6, Cohesion: 0.34, Coupling: 0.66
-Description: 6 files, primarily TypeScript
-Entry points: packages/primitives/src/arrangement.ts, packages/primitives/src/default-views.tsx, packages/primitives/src/editable.tsx, packages/primitives/src/record-head.ts, packages/primitives/src/view-doors.tsx
-Lines: 1585
+Files: 19, Cohesion: 0.49, Coupling: 0.51
+Description: 19 files, primarily TypeScript
+Entry points: packages/primitives/src/app-link-door.tsx, packages/primitives/src/chat.tsx, packages/primitives/src/connections.tsx, packages/primitives/src/index.ts, packages/primitives/src/lens/reach.tsx, packages/primitives/src/linked-record-door.tsx, packages/primitives/src/record-interactions-door.tsx, packages/primitives/src/repeat-picker-door.tsx, packages/primitives/src/when-input-door.tsx
+Lines: 3058
 
 </zone>
 
 <files>
 
-packages/primitives/src/arrangement.ts (TypeScript, 27 lines, source)
-packages/primitives/src/default-views.tsx (TypeScript, 1064 lines, source)
-packages/primitives/src/editable.tsx (TypeScript, 369 lines, source)
-packages/primitives/src/framework-views.ts (TypeScript, 21 lines, source)
-packages/primitives/src/record-head.ts (TypeScript, 29 lines, source)
-packages/primitives/src/view-doors.tsx (TypeScript, 75 lines, source)
+packages/primitives/src/app-link-door.tsx (TypeScript, 30 lines, source)
+packages/primitives/src/app-link.tsx (TypeScript, 196 lines, source)
+packages/primitives/src/chat.tsx (TypeScript, 555 lines, source)
+packages/primitives/src/connections.tsx (TypeScript, 246 lines, source)
+packages/primitives/src/graview-mark.tsx (TypeScript, 29 lines, source)
+packages/primitives/src/index.ts (TypeScript, 269 lines, source)
+packages/primitives/src/lens/reach.tsx (TypeScript, 159 lines, source)
+packages/primitives/src/linked-record-door.tsx (TypeScript, 14 lines, source)
+packages/primitives/src/linked-record.tsx (TypeScript, 309 lines, source)
+packages/primitives/src/record-interactions-door.tsx (TypeScript, 50 lines, source)
+packages/primitives/src/record-interactions.tsx (TypeScript, 27 lines, source)
+packages/primitives/src/repeat-picker-door.tsx (TypeScript, 14 lines, source)
+packages/primitives/src/repeat-picker.tsx (TypeScript, 182 lines, source)
+packages/primitives/src/seat.tsx (TypeScript, 350 lines, source)
+packages/primitives/src/subject.ts (TypeScript, 164 lines, source)
+packages/primitives/src/when-input-door.tsx (TypeScript, 29 lines, source)
+packages/primitives/src/when-input.tsx (TypeScript, 231 lines, source)
+packages/primitives/src/when-picker-door.tsx (TypeScript, 16 lines, source)
+packages/primitives/src/when-picker.tsx (TypeScript, 188 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/primitives/src/default-views.tsx → packages/primitives/src/arrangement.ts {arrangementOf, withArrangement}
-  packages/primitives/src/default-views.tsx → packages/primitives/src/editable.tsx {EditableTitle, Fields}
-  packages/primitives/src/default-views.tsx → packages/primitives/src/record-head.ts {RecordHeadContext}
-  packages/primitives/src/framework-views.ts → packages/primitives/src/default-views.tsx {registerDefaultViews}
-  packages/primitives/src/view-doors.tsx → packages/primitives/src/framework-views.ts {*}
+  packages/primitives/src/app-link-door.tsx → packages/primitives/src/app-link.tsx {*}
+  packages/primitives/src/app-link.tsx → packages/primitives/src/app-link-door.tsx {AppLinkProps}
+  packages/primitives/src/chat.tsx → packages/primitives/src/seat.tsx {proposalKey, SeatComposer, SeatThread, Settled, useSeatConversation}
+  packages/primitives/src/chat.tsx → packages/primitives/src/subject.ts {useSubject}
+  packages/primitives/src/index.ts → packages/primitives/src/app-link-door.tsx {AppLink}
+  packages/primitives/src/index.ts → packages/primitives/src/app-link-door.tsx {AppLinkProps}
+  packages/primitives/src/index.ts → packages/primitives/src/chat.tsx {ChatPanel}
+  packages/primitives/src/index.ts → packages/primitives/src/chat.tsx {ChatPanelProps}
+  packages/primitives/src/index.ts → packages/primitives/src/connections.tsx {Connections}
+  packages/primitives/src/index.ts → packages/primitives/src/connections.tsx {ConnectionsProps}
+  packages/primitives/src/index.ts → packages/primitives/src/graview-mark.tsx {GraviewMark}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/reach.tsx {buildReach, ReachView, reachLens}
+  packages/primitives/src/index.ts → packages/primitives/src/lens/reach.tsx {Reach, ReachCell}
+  packages/primitives/src/index.ts → packages/primitives/src/linked-record-door.tsx {LinkedPicker, LinkedRecordView}
+  packages/primitives/src/index.ts → packages/primitives/src/linked-record-door.tsx {LinkedPickerProps, LinkedRecordViewProps}
+  packages/primitives/src/index.ts → packages/primitives/src/record-interactions-door.tsx {RecordInteractionsDoor}
+  packages/primitives/src/index.ts → packages/primitives/src/repeat-picker-door.tsx {RepeatEditor, RepeatPicker}
+  packages/primitives/src/index.ts → packages/primitives/src/repeat-picker-door.tsx {RepeatPickerProps}
+  packages/primitives/src/index.ts → packages/primitives/src/seat.tsx {proposalKey, SeatComposer, SeatHeader, SeatThread, Settled, splitAside, useSeatConversation}
+  packages/primitives/src/index.ts → packages/primitives/src/seat.tsx {SeatAnswer, SeatOutcome, SeatTurn}
+  packages/primitives/src/index.ts → packages/primitives/src/subject.ts {useSubject}
+  packages/primitives/src/index.ts → packages/primitives/src/subject.ts {Subject}
+  packages/primitives/src/index.ts → packages/primitives/src/when-input-door.tsx {prefetchWhenInput, WhenInput}
+  packages/primitives/src/index.ts → packages/primitives/src/when-input-door.tsx {WhenInputProps}
+  packages/primitives/src/linked-record-door.tsx → packages/primitives/src/linked-record.tsx {*}
+  packages/primitives/src/linked-record-door.tsx → packages/primitives/src/linked-record.tsx {LinkedPickerProps, LinkedRecordViewProps}
+  packages/primitives/src/record-interactions-door.tsx → packages/primitives/src/record-interactions.tsx {*}
+  packages/primitives/src/record-interactions-door.tsx → packages/primitives/src/record-interactions.tsx {RecordInteractionsProps}
+  packages/primitives/src/repeat-picker-door.tsx → packages/primitives/src/repeat-picker.tsx {*}
+  packages/primitives/src/repeat-picker-door.tsx → packages/primitives/src/repeat-picker.tsx {RepeatPickerProps}
+  packages/primitives/src/when-input-door.tsx → packages/primitives/src/when-input.tsx {*}
+  packages/primitives/src/when-input-door.tsx → packages/primitives/src/when-input.tsx {WhenInputProps}
+  packages/primitives/src/when-input.tsx → packages/primitives/src/when-picker-door.tsx {WhenPicker}
+  packages/primitives/src/when-picker-door.tsx → packages/primitives/src/when-picker.tsx {*}
+  packages/primitives/src/when-picker-door.tsx → packages/primitives/src/when-picker.tsx {WhenMonthProps}
 
 </imports>

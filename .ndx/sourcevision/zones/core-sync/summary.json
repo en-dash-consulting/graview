@@ -1,27 +1,30 @@
 {
   "id": "core-sync",
   "name": "Core Sync",
-  "description": "4 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core Invariants and Core; imported by Core.",
+  "description": "Declared zone anchor (8 files).",
   "files": [
     "packages/core/src/sync/conflict.ts",
+    "packages/core/src/sync/connection-filter.ts",
+    "packages/core/src/sync/connection.ts",
     "packages/core/src/sync/engine.ts",
     "packages/core/src/sync/google-calendar.ts",
+    "packages/core/src/sync/index.ts",
+    "packages/core/src/sync/mcp.ts",
     "packages/core/src/sync/types.ts"
   ],
   "entryPoints": [
-    "packages/core/src/sync/engine.ts",
-    "packages/core/src/sync/google-calendar.ts",
-    "packages/core/src/sync/types.ts"
+    "packages/core/src/sync/connection-filter.ts",
+    "packages/core/src/sync/index.ts"
   ],
-  "cohesion": 0.33,
-  "coupling": 0.67,
-  "fileCount": 4,
-  "lineCount": 883,
+  "cohesion": 0.57,
+  "coupling": 0.43,
+  "fileCount": 8,
+  "lineCount": 2124,
   "riskMetrics": {
-    "cohesion": 0.33,
-    "coupling": 0.67,
-    "riskScore": 0.6699999999999999,
-    "riskLevel": "critical",
-    "failsThreshold": true
+    "cohesion": 0.57,
+    "coupling": 0.43,
+    "riskScore": 0.43000000000000005,
+    "riskLevel": "healthy",
+    "failsThreshold": false
   }
 }

@@ -7,8 +7,8 @@
 Zone: Host (`guest/host`)
 Files: 30, Cohesion: 0.80, Coupling: 0.20
 Description: 30 files, primarily TypeScript
-Entry points: packages/guest/src/build.ts, packages/guest/src/channel.ts, packages/guest/src/client.ts, packages/guest/src/host/frame.ts, packages/guest/src/host/index.ts, packages/guest/src/host/kit.ts, packages/guest/src/host/manifest.ts, packages/guest/src/host/pictures.ts, packages/guest/src/host/press.ts, packages/guest/src/host/session.ts, packages/guest/src/host/theme.ts, packages/guest/src/host/view-script.ts, packages/guest/src/host/view-source.ts, packages/guest/src/host/view.ts, packages/guest/src/host/worker-react.tsx, packages/guest/src/host/worker.ts, packages/guest/src/host/writes.ts, packages/guest/src/kit.ts, packages/guest/src/protocol.ts, packages/guest/src/worker/elements.ts, packages/guest/src/worker/view-global.ts, packages/skills/src/index.ts
-Lines: 5079
+Entry points: packages/guest/src/build.ts, packages/guest/src/channel.ts, packages/guest/src/client.ts, packages/guest/src/host/frame.ts, packages/guest/src/host/index.ts, packages/guest/src/host/kit.ts, packages/guest/src/host/manifest.ts, packages/guest/src/host/pictures.ts, packages/guest/src/host/press.ts, packages/guest/src/host/react.tsx, packages/guest/src/host/session.ts, packages/guest/src/host/theme.ts, packages/guest/src/host/view-script.ts, packages/guest/src/host/view-source.ts, packages/guest/src/host/view.ts, packages/guest/src/host/worker-react.tsx, packages/guest/src/host/worker.ts, packages/guest/src/host/writes.ts, packages/guest/src/kit.ts, packages/guest/src/protocol.ts, packages/guest/src/worker/elements.ts, packages/guest/src/worker/view-global.ts, packages/skills/src/index.ts
+Lines: 5127
 
 </zone>
 
@@ -20,21 +20,21 @@ packages/guest/src/client.ts (TypeScript, 11 lines, source)
 packages/guest/src/host/arrive-at.ts (TypeScript, 15 lines, source)
 packages/guest/src/host/arrive.ts (TypeScript, 42 lines, source)
 packages/guest/src/host/draw-budget.ts (TypeScript, 38 lines, source)
-packages/guest/src/host/frame.ts (TypeScript, 251 lines, source)
+packages/guest/src/host/frame.ts (TypeScript, 253 lines, source)
 packages/guest/src/host/index.ts (TypeScript, 26 lines, source)
 packages/guest/src/host/kit.ts (TypeScript, 411 lines, source)
 packages/guest/src/host/manifest.ts (TypeScript, 186 lines, source)
 packages/guest/src/host/nonce.ts (TypeScript, 6 lines, source)
-packages/guest/src/host/pictures.ts (TypeScript, 280 lines, source)
+packages/guest/src/host/pictures.ts (TypeScript, 302 lines, source)
 packages/guest/src/host/press.ts (TypeScript, 291 lines, source)
-packages/guest/src/host/react.tsx (TypeScript, 144 lines, source)
+packages/guest/src/host/react.tsx (TypeScript, 152 lines, source)
 packages/guest/src/host/session.ts (TypeScript, 407 lines, source)
 packages/guest/src/host/theme.ts (TypeScript, 167 lines, source)
 packages/guest/src/host/view-script.ts (TypeScript, 23 lines, source)
 packages/guest/src/host/view-source.ts (TypeScript, 29 lines, source)
-packages/guest/src/host/view.ts (TypeScript, 606 lines, source)
+packages/guest/src/host/view.ts (TypeScript, 616 lines, source)
 packages/guest/src/host/views.ts (TypeScript, 22 lines, source)
-packages/guest/src/host/worker-react.tsx (TypeScript, 253 lines, source)
+packages/guest/src/host/worker-react.tsx (TypeScript, 259 lines, source)
 packages/guest/src/host/worker-start.ts (TypeScript, 241 lines, source)
 packages/guest/src/host/worker.ts (TypeScript, 230 lines, source)
 packages/guest/src/host/writes.ts (TypeScript, 119 lines, source)

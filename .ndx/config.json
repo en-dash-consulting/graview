@@ -16,7 +16,86 @@
     "zones": {
       "pins": {
         "packages/core/src/sync/conflict.ts": "core-sync"
-      }
+      },
+      "anchors": [
+        {
+          "id": "core-cli",
+          "name": "Core Cli",
+          "include": [
+            "packages/core/src/cli/**"
+          ]
+        },
+        {
+          "id": "core-document",
+          "name": "Core Document",
+          "include": [
+            "packages/core/src/document/**"
+          ]
+        },
+        {
+          "id": "core-schema",
+          "name": "Core Schema",
+          "include": [
+            "packages/core/src/schema/**"
+          ]
+        },
+        {
+          "id": "core-mutations",
+          "name": "Core Mutations",
+          "include": [
+            "packages/core/src/mutations/**"
+          ]
+        },
+        {
+          "id": "core-ops",
+          "name": "Core Ops",
+          "include": [
+            "packages/core/src/ops/**"
+          ]
+        },
+        {
+          "id": "core-graph",
+          "name": "Core Graph",
+          "include": [
+            "packages/core/src/graph/**"
+          ]
+        },
+        {
+          "id": "core-invariants",
+          "name": "Core Invariants",
+          "include": [
+            "packages/core/src/invariants/**"
+          ]
+        },
+        {
+          "id": "core-scaffold",
+          "name": "Core Scaffold",
+          "include": [
+            "packages/core/src/scaffold/**"
+          ]
+        },
+        {
+          "id": "core-sync",
+          "name": "Core Sync",
+          "include": [
+            "packages/core/src/sync/**"
+          ]
+        },
+        {
+          "id": "core-theme",
+          "name": "Core Theme",
+          "include": [
+            "packages/core/src/theme/**"
+          ]
+        },
+        {
+          "id": "core",
+          "name": "Core",
+          "include": [
+            "packages/core/src/**"
+          ]
+        }
+      ]
     }
   }
 }

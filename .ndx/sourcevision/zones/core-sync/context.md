@@ -5,53 +5,79 @@
 <zone>
 
 Zone: Core Sync (`core-sync`)
-Files: 4, Cohesion: 0.33, Coupling: 0.67
-Risk: critical (score: 0.67)
-Description: 4 files, mostly utilities and types; entry points engine.ts, google-calendar.ts, types.ts; imports Core Invariants and Core; imported by Core.
-Entry points: packages/core/src/sync/engine.ts, packages/core/src/sync/google-calendar.ts, packages/core/src/sync/types.ts
-Lines: 883
+Files: 8, Cohesion: 0.57, Coupling: 0.43
+Risk: healthy (score: 0.43)
+Description: Declared zone anchor (8 files).
+Entry points: packages/core/src/sync/connection-filter.ts, packages/core/src/sync/index.ts
+Lines: 2124
 
 </zone>
 
 <files>
 
-packages/core/src/sync/conflict.ts (TypeScript, 79 lines, source)
-packages/core/src/sync/engine.ts (TypeScript, 445 lines, source)
-packages/core/src/sync/google-calendar.ts (TypeScript, 211 lines, source)
-packages/core/src/sync/types.ts (TypeScript, 148 lines, source)
+packages/core/src/sync/conflict.ts (TypeScript, 80 lines, source)
+packages/core/src/sync/connection-filter.ts (TypeScript, 39 lines, source)
+packages/core/src/sync/connection.ts (TypeScript, 181 lines, source)
+packages/core/src/sync/engine.ts (TypeScript, 956 lines, source)
+packages/core/src/sync/google-calendar.ts (TypeScript, 277 lines, source)
+packages/core/src/sync/index.ts (TypeScript, 34 lines, source)
+packages/core/src/sync/mcp.ts (TypeScript, 352 lines, source)
+packages/core/src/sync/types.ts (TypeScript, 205 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/core/src/sync/conflict.ts → packages/core/src/sync/types.ts {SyncConflict}
+  packages/core/src/sync/conflict.ts → packages/core/src/sync/types.ts {FieldConflict, SyncConflict}
+  packages/core/src/sync/connection.ts → packages/core/src/sync/connection-filter.ts {CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter}
+  packages/core/src/sync/connection.ts → packages/core/src/sync/connection-filter.ts {GOOGLE_COLORS, MADE_BY_GRAVIEW, inConnectionFilter, tagPattern}
+  packages/core/src/sync/connection.ts → packages/core/src/sync/engine.ts {SyncEngine}
+  packages/core/src/sync/connection.ts → packages/core/src/sync/google-calendar.ts {googleCalendar}
+  packages/core/src/sync/connection.ts → packages/core/src/sync/google-calendar.ts {Fetcher, GoogleTokenRequest}
+  packages/core/src/sync/connection.ts → packages/core/src/sync/types.ts {RemoteSystem, ResourceMapping, SyncMapping, SyncState}
   packages/core/src/sync/engine.ts → packages/core/src/sync/types.ts {EMPTY_SYNC_STATE, systemAuthor}
-  packages/core/src/sync/engine.ts → packages/core/src/sync/types.ts {RemoteAck, RemoteLink, RemoteSystem, RemoteWrite, ResourceMapping, SyncConflict, SyncMapping, SyncState}
+  packages/core/src/sync/engine.ts → packages/core/src/sync/types.ts {ConflictPolicy, DeletedConflict, RemoteAck, RemoteLink, RemoteSystem, RemoteWrite, ResourceMapping, SyncConflict, SyncMapping, SyncState}
   packages/core/src/sync/google-calendar.ts → packages/core/src/sync/types.ts {RemoteAck, RemoteChange, RemoteSystem, RemoteWrite, SyncMapping}
+  packages/core/src/sync/index.ts → packages/core/src/sync/conflict.ts {syncConflictInvariant, SYNC_CONFLICTS}
+  packages/core/src/sync/index.ts → packages/core/src/sync/conflict.ts {SyncConflictOptions}
+  packages/core/src/sync/index.ts → packages/core/src/sync/connection.ts {CONNECTION_TAG, GOOGLE_COLORS, MADE_BY_GRAVIEW, connection, connectionMapping, creatingAct, inConnectionFilter, isDayField}
+  packages/core/src/sync/index.ts → packages/core/src/sync/connection.ts {Connection, ConnectionDeclaration, ConnectionRun}
+  packages/core/src/sync/index.ts → packages/core/src/sync/engine.ts {SyncEngine}
+  packages/core/src/sync/index.ts → packages/core/src/sync/engine.ts {SettledConflict, SyncOptions, SyncRefusal, SyncReport}
+  packages/core/src/sync/index.ts → packages/core/src/sync/google-calendar.ts {googleCalendar, googleCalendarMapping}
+  packages/core/src/sync/index.ts → packages/core/src/sync/google-calendar.ts {Fetcher, GoogleCalendarOptions, GoogleTokenRequest}
+  packages/core/src/sync/index.ts → packages/core/src/sync/mcp.ts {allowTools, doorClient, mcpClient, mcpDoor, mcpRemote, ownHost, sameOrigin}
+  packages/core/src/sync/index.ts → packages/core/src/sync/mcp.ts {DoorHeaders, DoorRequest, DoorResponse, McpClientOptions, McpDoorOptions, McpRemoteOptions, ToolCall}
+  packages/core/src/sync/index.ts → packages/core/src/sync/types.ts {EMPTY_SYNC_STATE, systemAuthor}
+  packages/core/src/sync/index.ts → packages/core/src/sync/types.ts {ConflictPolicy, DeletedConflict, FieldConflict, RemoteAck, RemoteChange, RemoteLink, RemoteSystem, RemoteWrite, ResourceMapping, SyncConflict, SyncMapping, SyncState}
+  packages/core/src/sync/mcp.ts → packages/core/src/sync/types.ts {RemoteAck, RemoteChange, RemoteSystem, RemoteWrite}
 
 Outgoing (this zone → other zones):
-  → core-document: packages/core/src/sync/engine.ts → packages/core/src/store.ts; packages/core/src/sync/types.ts → packages/core/src/ops/types.ts
+  → core: packages/core/src/sync/connection.ts → packages/core/src/app.ts; packages/core/src/sync/connection.ts → packages/core/src/store.ts; packages/core/src/sync/engine.ts → packages/core/src/permissions/types.ts; packages/core/src/sync/engine.ts → packages/core/src/permissions/types.ts; packages/core/src/sync/engine.ts → packages/core/src/seen.ts; packages/core/src/sync/engine.ts → packages/core/src/store.ts
+  → core-document: packages/core/src/sync/connection-filter.ts → packages/core/src/document/connection-spec.ts; packages/core/src/sync/connection.ts → packages/core/src/document/connection-spec.ts; packages/core/src/sync/connection.ts → packages/core/src/document/field-spec.ts
   → core-graph: packages/core/src/sync/engine.ts → packages/core/src/graph/types.ts
-  → core-invariants: packages/core/src/sync/conflict.ts → packages/core/src/invariants/engine.ts; packages/core/src/sync/conflict.ts → packages/core/src/invariants/types.ts; packages/core/src/sync/conflict.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/engine.ts → packages/core/src/schema/schema.ts
+  → core-invariants: packages/core/src/sync/conflict.ts → packages/core/src/invariants/engine.ts; packages/core/src/sync/conflict.ts → packages/core/src/invariants/types.ts
+  → core-mutations: packages/core/src/sync/engine.ts → packages/core/src/mutations/types.ts
+  → core-ops: packages/core/src/sync/types.ts → packages/core/src/ops/types.ts
+  → core-schema: packages/core/src/sync/conflict.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/connection.ts → packages/core/src/schema/schema.ts; packages/core/src/sync/engine.ts → packages/core/src/schema/schema.ts
 
 Incoming (other zones → this zone):
-  ← core-document: packages/core/src/index.ts → packages/core/src/sync/conflict.ts; packages/core/src/index.ts → packages/core/src/sync/conflict.ts; packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/engine.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/google-calendar.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts; packages/core/src/index.ts → packages/core/src/sync/types.ts
+  ← core-document: packages/core/src/document/connection-findings.ts → packages/core/src/sync/connection-filter.ts
+  ← tests-core-integration: packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/google-calendar-meets-what-google-does.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/google-calendar-meets-what-google-does.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync-holds-to-its-policy.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync-holds-to-its-policy.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/sync/index.ts; packages/core/tests/integration/sync.test.ts → packages/core/src/sync/index.ts
 
 </imports>
 
 <findings>
 
-[observation] [warning] High coupling (0.67) — 4 imports target "core-invariants"
-[observation] [warning] Low cohesion (0.33) — files are loosely related, consider splitting this zone
-[suggestion] [info] Zone "Core Sync" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.33, coupling: 0.67 (risk score: 0.67)
+[anti-pattern] [warning] The single document to sync import undermines the 'hosted page never loads sync' design; move the shared piece (likely the conflict invariant type) to a neutral module so sync stays reachable only from its own entry.
 
 </findings>
 
 <insights>
 
-- Low cohesion (0.33) — files are loosely related, consider splitting this zone
-- High coupling (0.67) — 4 imports target "core-invariants"
-- [call graph] 21 internal calls, 1 outgoing, 0 incoming (cohesion: 0.95, coupling: 0.05)
+- [call graph] 79 internal calls, 3 outgoing, 31 incoming (cohesion: 0.96, coupling: 0.04)
+- sync/ is an opt-in entry (@graview/core/sync) with 0.96 call cohesion and only 3 outgoing calls; it is the cleanest vertical slice, with transports (google-calendar, mcp) behind a types/engine contract.
+- core-document imports core-sync once, the only inbound production edge; it likely pulls the conflict invariant, which pulls the engine into the document path.
 
 </insights>

@@ -5,27 +5,29 @@
 <zone>
 
 Zone: Scripts (`scripts`)
-Files: 116, Cohesion: 1.00, Coupling: 0.00
+Files: 126, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 116 files, primarily JavaScript, TypeScript
-Entry points: packages/pages/src/static.ts, scripts/fixtures/jobs-app.ts, scripts/fixtures/offers-app.ts, scripts/fixtures/workshop-app.ts, scripts/guest-view-runtime.mjs, scripts/lib/bundle-budget.mjs, scripts/lib/graview-sources.mjs, scripts/lib/hosted-page-notes.mjs, scripts/lib/hosted-page.mjs, scripts/lib/journeys.mjs, scripts/lib/ports.mjs, scripts/lib/readme-exports.mjs, scripts/lib/surfaces.mjs, scripts/lib/watch.mjs
-Lines: 41760
+Description: 126 files, mostly utilities and pages; entry points offers-app.ts, jobs-app.ts, workshop-app.ts; imported by Packages and Tests.
+Entry points: packages/pages/src/static.ts, scripts/fixtures/jobs-app.ts, scripts/fixtures/offers-app.ts, scripts/fixtures/workshop-app.ts, scripts/guest-view-runtime.mjs, scripts/lib/bundle-budget.mjs, scripts/lib/graview-sources.mjs, scripts/lib/hosted-page-notes.mjs, scripts/lib/hosted-page.mjs, scripts/lib/journeys.mjs, scripts/lib/ports.mjs, scripts/lib/readme-exports.mjs, scripts/lib/second-look.mjs, scripts/lib/surfaces.mjs, scripts/lib/watch.mjs
+Lines: 43472
 
 </zone>
 
 <files>
 
-apps/discography/vite.config.ts (TypeScript, 87 lines, config)
-apps/gauntlet/vite.config.ts (TypeScript, 81 lines, config)
-apps/launcher/vite.config.ts (TypeScript, 114 lines, config)
-apps/rota/vite.config.ts (TypeScript, 95 lines, config)
-apps/seedbed/vite.config.ts (TypeScript, 85 lines, config)
-apps/site/design.mjs (JavaScript, 1194 lines, source)
+apps/discography/vite.config.ts (TypeScript, 91 lines, config)
+apps/gauntlet/vite.config.ts (TypeScript, 85 lines, config)
+apps/launcher/vite.config.ts (TypeScript, 118 lines, config)
+apps/rota/vite.config.ts (TypeScript, 99 lines, config)
+apps/seedbed/vite.config.ts (TypeScript, 89 lines, config)
+apps/site/design.mjs (JavaScript, 1200 lines, source)
+apps/site/releases.mjs (JavaScript, 83 lines, source)
 apps/todo/scripts/run-a11y.mjs (JavaScript, 0 lines, build)
-apps/todo/vite.config.ts (TypeScript, 86 lines, config)
+apps/todo/vite.config.ts (TypeScript, 90 lines, config)
 packages/pages/src/static.ts (TypeScript, 597 lines, source)
 scripts/audit-ui.mjs (JavaScript, 992 lines, build)
-scripts/build-preview-page.mjs (JavaScript, 63 lines, build)
+scripts/build-preview-page.mjs (JavaScript, 67 lines, build)
+scripts/calendar-sync-demo.mjs (JavaScript, 67 lines, build)
 scripts/conformance-fixtures.mjs (JavaScript, 136 lines, build)
 scripts/eval-elm.mjs (JavaScript, 225 lines, build)
 scripts/fixtures/jobs-app.ts (TypeScript, 71 lines, build)
@@ -36,36 +38,40 @@ scripts/fixtures/scene-cards/make.mjs (JavaScript, 95 lines, build)
 scripts/fixtures/views/notes.js (JavaScript, 29 lines, build)
 scripts/fixtures/views/packages.js (JavaScript, 44 lines, build)
 scripts/fixtures/workshop-app.ts (TypeScript, 91 lines, build)
+scripts/google-calendar-once.mjs (JavaScript, 93 lines, build)
 scripts/guest-sandbox.mjs (JavaScript, 958 lines, build)
 scripts/guest-view-runtime.mjs (JavaScript, 118 lines, build)
 scripts/inspect-pack.mjs (JavaScript, 194 lines, build)
-scripts/lib/arranging-line.mjs (JavaScript, 171 lines, build)
+scripts/lib/arranging-line.mjs (JavaScript, 167 lines, build)
 scripts/lib/bundle-budget.mjs (JavaScript, 1065 lines, build)
 scripts/lib/deadline.mjs (JavaScript, 53 lines, build)
-scripts/lib/engine.mjs (JavaScript, 89 lines, build)
+scripts/lib/engine.mjs (JavaScript, 163 lines, build)
+scripts/lib/google-test-env.mjs (JavaScript, 72 lines, build)
 scripts/lib/graview-sources.mjs (JavaScript, 26 lines, build)
 scripts/lib/guest-brand-suite.mjs (JavaScript, 293 lines, build)
 scripts/lib/guest-client-suite.mjs (JavaScript, 318 lines, build)
 scripts/lib/guest-limits-suite.mjs (JavaScript, 254 lines, build)
 scripts/lib/guest-open-suite.mjs (JavaScript, 436 lines, build)
-scripts/lib/guest-pictures-suite.mjs (JavaScript, 208 lines, build)
+scripts/lib/guest-pictures-suite.mjs (JavaScript, 277 lines, build)
 scripts/lib/guest-place-suite.mjs (JavaScript, 247 lines, build)
 scripts/lib/guest-plain-suite.mjs (JavaScript, 124 lines, build)
 scripts/lib/guest-record-suite.mjs (JavaScript, 217 lines, build)
 scripts/lib/guest-writes-suite.mjs (JavaScript, 193 lines, build)
 scripts/lib/hosted-page-notes.mjs (JavaScript, 49 lines, build)
-scripts/lib/hosted-page.mjs (JavaScript, 604 lines, build)
-scripts/lib/journeys.mjs (JavaScript, 1663 lines, build)
+scripts/lib/hosted-page.mjs (JavaScript, 690 lines, build)
+scripts/lib/journeys.mjs (JavaScript, 1724 lines, build)
 scripts/lib/ledger.mjs (JavaScript, 88 lines, build)
 scripts/lib/places.mjs (JavaScript, 33 lines, build)
-scripts/lib/ports.mjs (JavaScript, 150 lines, build)
-scripts/lib/readme-exports.mjs (JavaScript, 105 lines, build)
+scripts/lib/ports.mjs (JavaScript, 153 lines, build)
+scripts/lib/readme-exports.mjs (JavaScript, 110 lines, build)
 scripts/lib/screen-reader-host.mjs (JavaScript, 111 lines, build)
+scripts/lib/second-look.mjs (JavaScript, 47 lines, build)
+scripts/lib/secure-front.mjs (JavaScript, 89 lines, build)
 scripts/lib/serve.mjs (JavaScript, 103 lines, build)
 scripts/lib/surfaces.mjs (JavaScript, 51 lines, build)
 scripts/lib/tarballs.mjs (JavaScript, 53 lines, build)
-scripts/lib/watch-acknowledged.mjs (JavaScript, 97 lines, build)
-scripts/lib/watch.mjs (JavaScript, 765 lines, build)
+scripts/lib/watch-acknowledged.mjs (JavaScript, 26 lines, build)
+scripts/lib/watch.mjs (JavaScript, 810 lines, build)
 scripts/lib/widget-policies.mjs (JavaScript, 123 lines, build)
 scripts/progression.mjs (JavaScript, 401 lines, build)
 scripts/rehearse-studio.mjs (JavaScript, 340 lines, build)
@@ -78,56 +84,60 @@ scripts/site-docs.mjs (JavaScript, 478 lines, build)
 scripts/site-numbers.mjs (JavaScript, 192 lines, build)
 scripts/site-poster.mjs (JavaScript, 110 lines, build)
 scripts/site-progression.mjs (JavaScript, 105 lines, build)
+scripts/site-quick-ask-shots.mjs (JavaScript, 76 lines, build)
 scripts/site-serve.mjs (JavaScript, 43 lines, build)
 scripts/site-shots.mjs (JavaScript, 40 lines, build)
-scripts/smoke-create.mjs (JavaScript, 757 lines, build)
+scripts/smoke-create.mjs (JavaScript, 732 lines, build)
 scripts/smoke-install.mjs (JavaScript, 404 lines, build)
 scripts/survey-ui.mjs (JavaScript, 475 lines, build)
 scripts/verify-a11y.mjs (JavaScript, 413 lines, build)
 scripts/verify-address.mjs (JavaScript, 774 lines, build)
-scripts/verify-all.mjs (JavaScript, 371 lines, build)
+scripts/verify-all.mjs (JavaScript, 397 lines, build)
 scripts/verify-app-links.mjs (JavaScript, 468 lines, build)
 scripts/verify-brand.mjs (JavaScript, 201 lines, build)
 scripts/verify-calendar.mjs (JavaScript, 656 lines, build)
-scripts/verify-chat.mjs (JavaScript, 423 lines, build)
 scripts/verify-chrome-quiet.mjs (JavaScript, 2249 lines, build)
-scripts/verify-chrome.mjs (JavaScript, 845 lines, build)
+scripts/verify-chrome.mjs (JavaScript, 801 lines, build)
+scripts/verify-date-inputs.mjs (JavaScript, 328 lines, build)
 scripts/verify-declared.mjs (JavaScript, 973 lines, build)
 scripts/verify-desk.mjs (JavaScript, 290 lines, build)
-scripts/verify-drawn-once.mjs (JavaScript, 691 lines, build)
-scripts/verify-engines.mjs (JavaScript, 368 lines, build)
+scripts/verify-drawn-once.mjs (JavaScript, 697 lines, build)
+scripts/verify-engines.mjs (JavaScript, 366 lines, build)
 scripts/verify-field-types.mjs (JavaScript, 316 lines, build)
 scripts/verify-files.mjs (JavaScript, 436 lines, build)
+scripts/verify-first-load.mjs (JavaScript, 327 lines, build)
 scripts/verify-gauntlet.mjs (JavaScript, 679 lines, build)
+scripts/verify-google-calendar.mjs (JavaScript, 466 lines, build)
 scripts/verify-growing.mjs (JavaScript, 757 lines, build)
 scripts/verify-hosted-page.mjs (JavaScript, 84 lines, build)
+scripts/verify-inline-ai.mjs (JavaScript, 565 lines, build)
 scripts/verify-journeys.mjs (JavaScript, 434 lines, build)
 scripts/verify-kind-stop.mjs (JavaScript, 431 lines, build)
-scripts/verify-lines.mjs (JavaScript, 658 lines, build)
+scripts/verify-lines.mjs (JavaScript, 659 lines, build)
 scripts/verify-long-text.mjs (JavaScript, 529 lines, build)
 scripts/verify-menu.mjs (JavaScript, 621 lines, build)
-scripts/verify-navigation.mjs (JavaScript, 1517 lines, build)
+scripts/verify-navigation.mjs (JavaScript, 1624 lines, build)
+scripts/verify-notify.mjs (JavaScript, 229 lines, build)
 scripts/verify-offline.mjs (JavaScript, 271 lines, build)
-scripts/verify-pages.mjs (JavaScript, 1354 lines, build)
-scripts/verify-panning.mjs (JavaScript, 440 lines, build)
-scripts/verify-phone-seat.mjs (JavaScript, 270 lines, build)
+scripts/verify-pages.mjs (JavaScript, 1350 lines, build)
+scripts/verify-panning.mjs (JavaScript, 453 lines, build)
 scripts/verify-playback.mjs (JavaScript, 277 lines, build)
 scripts/verify-preview.mjs (JavaScript, 164 lines, build)
 scripts/verify-products.mjs (JavaScript, 111 lines, build)
+scripts/verify-quick-ask.mjs (JavaScript, 347 lines, build)
 scripts/verify-remember.mjs (JavaScript, 400 lines, build)
+scripts/verify-renderer.mjs (JavaScript, 312 lines, build)
 scripts/verify-repeats.mjs (JavaScript, 239 lines, build)
 scripts/verify-rota.mjs (JavaScript, 418 lines, build)
 scripts/verify-scale.mjs (JavaScript, 469 lines, build)
-scripts/verify-screen-reader.mjs (JavaScript, 792 lines, build)
-scripts/verify-seat-goes-and-draws.mjs (JavaScript, 551 lines, build)
-scripts/verify-seat-guide.mjs (JavaScript, 536 lines, build)
+scripts/verify-screen-reader.mjs (JavaScript, 790 lines, build)
 scripts/verify-seat.mjs (JavaScript, 394 lines, build)
 scripts/verify-served.mjs (JavaScript, 198 lines, build)
 scripts/verify-shrunk.mjs (JavaScript, 212 lines, build)
 scripts/verify-site.mjs (JavaScript, 503 lines, build)
-scripts/verify-studio.mjs (JavaScript, 810 lines, build)
-scripts/verify-viewport.mjs (JavaScript, 238 lines, build)
-scripts/verify-watch.mjs (JavaScript, 189 lines, build)
+scripts/verify-studio.mjs (JavaScript, 814 lines, build)
+scripts/verify-viewport.mjs (JavaScript, 230 lines, build)
+scripts/verify-watch.mjs (JavaScript, 206 lines, build)
 scripts/verify-who.mjs (JavaScript, 304 lines, build)
 scripts/voiceover-walk.mjs (JavaScript, 174 lines, build)
 scripts/write-framework-version.mjs (JavaScript, 21 lines, build)
@@ -142,13 +152,17 @@ Internal:
   apps/launcher/vite.config.ts → scripts/lib/ports.mjs {DESK_SERVES, moved, portsFor}
   apps/rota/vite.config.ts → scripts/lib/ports.mjs {moved}
   apps/seedbed/vite.config.ts → scripts/lib/ports.mjs {moved}
+  apps/site/design.mjs → apps/site/releases.mjs {releasesBody}
+  apps/site/releases.mjs → apps/site/design.mjs {escape, inline, render, section, REPOSITORY}
   apps/todo/scripts/run-a11y.mjs → scripts/lib/serve.mjs {serving}
   apps/todo/vite.config.ts → scripts/lib/ports.mjs {moved}
   scripts/audit-ui.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/audit-ui.mjs → scripts/lib/places.mjs {pressPlace}
   scripts/audit-ui.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/audit-ui.mjs → scripts/lib/serve.mjs {serving}
-  scripts/build-preview-page.mjs → scripts/lib/hosted-page.mjs {englishOnly, noStudio, workspaceSources}
+  scripts/build-preview-page.mjs → scripts/lib/hosted-page.mjs {doorsOpenAtOnce, englishOnly, noStudio, preloadLinks, workspaceSources}
+  scripts/calendar-sync-demo.mjs → scripts/lib/ports.mjs {portFor}
+  scripts/google-calendar-once.mjs → scripts/lib/google-test-env.mjs {GOOGLE_ENV_FILE, requireGoogleEnv, writeGoogleEnvKey}
   scripts/guest-sandbox.mjs → scripts/lib/guest-brand-suite.mjs {brandSuite}
   scripts/guest-sandbox.mjs → scripts/lib/guest-client-suite.mjs {clientSuite}
   scripts/guest-sandbox.mjs → scripts/lib/guest-limits-suite.mjs {limitsSuite}
@@ -190,6 +204,9 @@ Internal:
   scripts/require-changeset.mjs → scripts/lib/hosted-page.mjs {raiseSaid}
   scripts/require-changeset.mjs → scripts/lib/surfaces.mjs {saysCompatibility, surfacesTouched}
   scripts/site-docs.mjs → apps/site/design.mjs {faqs, inlineMd, metaOf, SITE, siteDesign}
+  scripts/site-quick-ask-shots.mjs → scripts/lib/engine.mjs {launchEngine}
+  scripts/site-quick-ask-shots.mjs → scripts/lib/ports.mjs {at, portFor}
+  scripts/site-quick-ask-shots.mjs → scripts/lib/serve.mjs {serving}
   scripts/site-serve.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/site-shots.mjs → scripts/lib/engine.mjs {launchEngine}
   scripts/smoke-create.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
@@ -208,6 +225,7 @@ Internal:
   scripts/verify-address.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-all.mjs → scripts/lib/ledger.mjs {updateLedger}
   scripts/verify-all.mjs → scripts/lib/ports.mjs {portFor}
+  scripts/verify-all.mjs → scripts/lib/second-look.mjs {judge, recordFlakes}
   scripts/verify-all.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-all.mjs → scripts/lib/watch.mjs {watchFile}
   scripts/verify-app-links.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
@@ -220,9 +238,6 @@ Internal:
   scripts/verify-calendar.mjs → scripts/lib/places.mjs {placesNamed, pressPlace}
   scripts/verify-calendar.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-calendar.mjs → scripts/lib/serve.mjs {serving}
-  scripts/verify-chat.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
-  scripts/verify-chat.mjs → scripts/lib/ports.mjs {at, portFor}
-  scripts/verify-chat.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-chrome-quiet.mjs → scripts/lib/arranging-line.mjs {arrangeByKeyboard, endClearsTheFoot, FIRST_RECORD_WITHIN, listHead}
   scripts/verify-chrome-quiet.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
   scripts/verify-chrome-quiet.mjs → scripts/lib/graview-sources.mjs {graviewSources}
@@ -231,6 +246,8 @@ Internal:
   scripts/verify-chrome.mjs → scripts/lib/graview-sources.mjs {graviewSources}
   scripts/verify-chrome.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-chrome.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-date-inputs.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-date-inputs.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-declared.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-declared.mjs → scripts/lib/graview-sources.mjs {graviewSources}
   scripts/verify-declared.mjs → scripts/lib/ports.mjs {at, portFor}
@@ -249,14 +266,21 @@ Internal:
   scripts/verify-files.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
   scripts/verify-files.mjs → scripts/lib/graview-sources.mjs {graviewSources}
   scripts/verify-files.mjs → scripts/lib/ports.mjs {at, portFor}
+  scripts/verify-first-load.mjs → scripts/lib/ports.mjs {portFor}
+  scripts/verify-first-load.mjs → scripts/lib/secure-front.mjs {secureFront}
   scripts/verify-gauntlet.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-gauntlet.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-gauntlet.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-google-calendar.mjs → scripts/lib/google-test-env.mjs {googleAccessToken, requireGoogleEnv}
   scripts/verify-growing.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
   scripts/verify-growing.mjs → scripts/lib/graview-sources.mjs {graviewSources}
   scripts/verify-growing.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-hosted-page.mjs → scripts/lib/hosted-page-notes.mjs {hostedPageMarkdown}
   scripts/verify-hosted-page.mjs → scripts/lib/hosted-page.mjs {COMPILER_MODULES, HOSTED_PAGE_BUDGET, HOSTED_PAGE_COMPILED_BUDGET, HOSTED_PAGE_COMPILED_ENTRY, measureHostedPage}
+  scripts/verify-inline-ai.mjs → scripts/lib/deadline.mjs {deadline}
+  scripts/verify-inline-ai.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-inline-ai.mjs → scripts/lib/ports.mjs {at, portFor}
+  scripts/verify-inline-ai.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-journeys.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-journeys.mjs → scripts/lib/journeys.mjs {appsNamed, DeadEnd, frictionOf, inStore, JOBS, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey}
   scripts/verify-journeys.mjs → scripts/lib/ports.mjs {portFor}
@@ -278,6 +302,10 @@ Internal:
   scripts/verify-navigation.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-navigation.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-navigation.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-notify.mjs → scripts/lib/deadline.mjs {deadline}
+  scripts/verify-notify.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
+  scripts/verify-notify.mjs → scripts/lib/ports.mjs {at, portFor}
+  scripts/verify-notify.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-offline.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
   scripts/verify-offline.mjs → scripts/lib/graview-sources.mjs {graviewSources}
   scripts/verify-offline.mjs → scripts/lib/ports.mjs {at, portFor}
@@ -288,17 +316,22 @@ Internal:
   scripts/verify-panning.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-panning.mjs → scripts/lib/ports.mjs {portFor}
   scripts/verify-panning.mjs → scripts/lib/serve.mjs {serving}
-  scripts/verify-phone-seat.mjs → scripts/lib/engine.mjs {launchEngine}
-  scripts/verify-phone-seat.mjs → scripts/lib/ports.mjs {at, portFor}
-  scripts/verify-phone-seat.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-playback.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
   scripts/verify-playback.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-playback.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-preview.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-preview.mjs → scripts/lib/ports.mjs {at, portFor}
+  scripts/verify-quick-ask.mjs → scripts/lib/deadline.mjs {deadline}
+  scripts/verify-quick-ask.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
+  scripts/verify-quick-ask.mjs → scripts/lib/ports.mjs {at, portFor}
+  scripts/verify-quick-ask.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-remember.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-remember.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-remember.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-renderer.mjs → scripts/lib/engine.mjs {GPU_ARGS, gpuChromium, launchEngine}
+  scripts/verify-renderer.mjs → scripts/lib/ports.mjs {portFor}
+  scripts/verify-renderer.mjs → scripts/lib/serve.mjs {serving}
+  scripts/verify-renderer.mjs → scripts/lib/watch.mjs {watched}
   scripts/verify-repeats.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
   scripts/verify-repeats.mjs → scripts/lib/graview-sources.mjs {graviewSources}
   scripts/verify-repeats.mjs → scripts/lib/ports.mjs {at, portFor}
@@ -314,14 +347,6 @@ Internal:
   scripts/verify-screen-reader.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-screen-reader.mjs → scripts/lib/screen-reader-host.mjs {buildRoadmapHost}
   scripts/verify-screen-reader.mjs → scripts/lib/serve.mjs {serving}
-  scripts/verify-seat-goes-and-draws.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
-  scripts/verify-seat-goes-and-draws.mjs → scripts/lib/graview-sources.mjs {graviewSources}
-  scripts/verify-seat-goes-and-draws.mjs → scripts/lib/ports.mjs {at, portFor}
-  scripts/verify-seat-goes-and-draws.mjs → scripts/lib/serve.mjs {serving}
-  scripts/verify-seat-guide.mjs → scripts/lib/engine.mjs {ENGINES, launchEngine}
-  scripts/verify-seat-guide.mjs → scripts/lib/graview-sources.mjs {graviewSources}
-  scripts/verify-seat-guide.mjs → scripts/lib/ports.mjs {at, portFor}
-  scripts/verify-seat-guide.mjs → scripts/lib/serve.mjs {serving}
   scripts/verify-seat.mjs → scripts/lib/engine.mjs {engineName, launchEngine}
   scripts/verify-seat.mjs → scripts/lib/ports.mjs {at, portFor}
   scripts/verify-seat.mjs → scripts/lib/serve.mjs {serving}
@@ -351,28 +376,30 @@ Internal:
   scripts/voiceover-walk.mjs → scripts/lib/serve.mjs {serving}
 
 Incoming (other zones → this zone):
-  ← tests: tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page-notes.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page.mjs; tests/changesets.test.ts → scripts/lib/surfaces.mjs; tests/every-harness-honors-the-port-base.test.ts → scripts/lib/ports.mjs; tests/journeys.test.ts → scripts/lib/journeys.mjs; tests/journeys.test.ts → scripts/lib/ports.mjs; tests/readme-exports.test.ts → scripts/lib/readme-exports.mjs; tests/the-desk-points-at-the-moved-ports.test.ts → scripts/lib/ports.mjs; tests/the-embed-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs; tests/the-watch-reads-a-stores-names.test.ts → scripts/lib/watch.mjs
-  ← tests-guest-unit: packages/guest/tests/unit/a-filter-asked-in-code-is-held-to-the-kind.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → scripts/fixtures/jobs-app.ts; packages/guest/tests/unit/a-script-view-is-drawn-as-the-host-kept-it-then.test.tsx → scripts/fixtures/workshop-app.ts; packages/guest/tests/unit/a-titled-guest-view-is-a-place.test.tsx → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-view-goes-to-a-list-narrowed.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-view-needs-no-build.test.ts → scripts/guest-view-runtime.mjs; packages/guest/tests/unit/a-view-of-one-sits-beside-the-records-own-fields.test.tsx → scripts/fixtures/workshop-app.ts; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → scripts/fixtures/workshop-app.ts; packages/guest/tests/unit/a-views-navigate-takes-only-a-string.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/one-guest-client-served-not-copied.test.ts → scripts/guest-view-runtime.mjs; packages/guest/tests/unit/the-views-guide-says-what-a-view-is-handed.test.ts → scripts/fixtures/workshop-app.ts
-  ← tests-pages-unit: packages/pages/tests/unit/a-place-is-rendered-to-static-html.test.ts → scripts/lib/graview-sources.mjs; packages/pages/tests/unit/a-static-page-keeps-a-hidden-field.test.ts → packages/pages/src/static.ts
+  ← tests: tests/a-door-opens-all-at-once.test.ts → scripts/lib/hosted-page.mjs; tests/a-harness-that-fails-is-looked-at-again-alone.test.ts → scripts/lib/second-look.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page-notes.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page.mjs; tests/changesets.test.ts → scripts/lib/surfaces.mjs; tests/every-harness-honors-the-port-base.test.ts → scripts/lib/ports.mjs; tests/journeys.test.ts → scripts/lib/journeys.mjs; tests/journeys.test.ts → scripts/lib/ports.mjs; tests/readme-exports.test.ts → scripts/lib/readme-exports.mjs; tests/the-desk-points-at-the-moved-ports.test.ts → scripts/lib/ports.mjs; tests/the-embed-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs; tests/the-watch-reads-a-stores-names.test.ts → scripts/lib/watch.mjs
+  ← tests-guest-unit: packages/guest/tests/unit/a-filter-asked-in-code-is-held-to-the-kind.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-frame-guest-reads-across-kinds.test.tsx → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-guest-view-is-handed-the-pictures-it-may-show.test.ts → scripts/fixtures/jobs-app.ts; packages/guest/tests/unit/a-script-view-is-drawn-as-the-host-kept-it-then.test.tsx → scripts/fixtures/workshop-app.ts; packages/guest/tests/unit/a-titled-guest-view-is-a-place.test.tsx → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-view-draws-an-image-the-app-holds.test.ts → scripts/fixtures/jobs-app.ts; packages/guest/tests/unit/a-view-goes-to-a-list-narrowed.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-view-needs-no-build.test.ts → scripts/guest-view-runtime.mjs; packages/guest/tests/unit/a-view-of-one-sits-beside-the-records-own-fields.test.tsx → scripts/fixtures/workshop-app.ts; packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts → scripts/fixtures/workshop-app.ts; packages/guest/tests/unit/a-view-the-framework-mounts-fetches-files-where-the-host-serves-them.test.tsx → scripts/fixtures/jobs-app.ts; packages/guest/tests/unit/a-view-with-pictures-gets-each-image-fields-src.test.ts → scripts/fixtures/jobs-app.ts; packages/guest/tests/unit/a-views-navigate-takes-only-a-string.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-that-cannot-start-says-start.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-view-is-a-place-shown-only-what-it-reads.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-view-past-its-limits-is-stopped.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-views-links-stay-in-the-app.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/a-worker-views-writes-cannot-leak.test.ts → scripts/fixtures/offers-app.ts; packages/guest/tests/unit/one-guest-client-served-not-copied.test.ts → scripts/guest-view-runtime.mjs; packages/guest/tests/unit/the-views-guide-says-what-a-view-is-handed.test.ts → scripts/fixtures/workshop-app.ts
+  ← tests-pages-unit: packages/pages/tests/unit/a-place-is-rendered-to-static-html.test.ts → scripts/lib/graview-sources.mjs; packages/pages/tests/unit/a-records-picture-loads-under-the-hosts-base.test.tsx → scripts/fixtures/jobs-app.ts; packages/pages/tests/unit/a-static-page-keeps-a-hidden-field.test.ts → packages/pages/src/static.ts
 
 </imports>
 
 <findings>
 
-[observation] [info] 14 entry points — wide API surface, consider consolidating exports
+[observation] [info] 15 entry points — wide API surface, consider consolidating exports
 [observation] [info] High cohesion (1) — files are tightly interconnected
 [suggestion] [info] Zone "scripts" has files across 16 directories — consider consolidating under a dedicated directory
 [anti-pattern] [warning] "scripts/site-css.mjs" exports 1 declaration(s) (PAGES) that no file in the project imports
+[anti-pattern] [warning] "scripts/site-numbers.mjs" exports 6 declaration(s) (countOf, spelled, VOLATILE, countsFor, PAGES, …) that no file in the project imports
 
 </findings>
 
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- 14 entry points — wide API surface, consider consolidating exports
+- 15 entry points — wide API surface, consider consolidating exports
 - Zone "scripts" has files across 16 directories — consider consolidating under a dedicated directory
 - "scripts/site-css.mjs" exports 1 declaration(s) (PAGES) that no file in the project imports
 - "scripts/site-docs.mjs" exports 3 declaration(s) (DECLARATION, siteRecords, renderSite) that no file in the project imports
-- [call graph] 4157 internal calls, 0 outgoing, 91 incoming (cohesion: 1, coupling: 0)
+- "scripts/site-numbers.mjs" exports 6 declaration(s) (countOf, spelled, VOLATILE, countsFor, PAGES, …) that no file in the project imports
+- [call graph] 4342 internal calls, 0 outgoing, 103 incoming (cohesion: 1, coupling: 0)
 
 </insights>

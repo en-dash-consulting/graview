@@ -7,8 +7,8 @@
 Zone: Skills (`skills`)
 Files: 6, Cohesion: 0.00, Coupling: 0.00
 Risk: at-risk (score: 0.50)
-Description: 6 files, primarily JavaScript, TypeScript
-Lines: 876
+Description: 6 files, mostly entry points and pages.
+Lines: 879
 
 </zone>
 
@@ -19,13 +19,14 @@ apps/gauntlet/scripts/generate-seed.mjs (JavaScript, 411 lines, build)
 packages/skills/skills/graview-worker-view/examples/a-record.js (JavaScript, 54 lines, source)
 packages/skills/skills/graview-worker-view/examples/front-page.js (JavaScript, 56 lines, source)
 packages/skills/skills/graview-worker-view/examples/offers-list.js (JavaScript, 54 lines, source)
-vitest.config.ts (TypeScript, 130 lines, config)
+vitest.config.ts (TypeScript, 133 lines, config)
 
 </files>
 
 <findings>
 
 [observation] [info] Isolated files — no import edges between 6 files, cohesion is unmeasurable (reported as 0)
+[observation] [info] Files in zone "Skills" appear to serve unrelated purposes; a maintainer would expect them in separate modules.
 [suggestion] [info] Zone "Skills" is showing early signs of fragility, approaching architectural risk thresholds — cohesion: 0.00, coupling: 0.00 (risk score: 0.50)
 
 </findings>
@@ -33,6 +34,7 @@ vitest.config.ts (TypeScript, 130 lines, config)
 <insights>
 
 - Isolated files — no import edges between 6 files, cohesion is unmeasurable (reported as 0)
+- Files in zone "Skills" appear to serve unrelated purposes; a maintainer would expect them in separate modules.
 - [call graph] 133 internal calls, 0 outgoing, 0 incoming (cohesion: 1, coupling: 0)
 
 </insights>

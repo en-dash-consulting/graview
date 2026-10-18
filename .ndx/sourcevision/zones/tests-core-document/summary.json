@@ -1,7 +1,7 @@
 {
   "id": "tests-core-document",
   "name": "Tests Core Document",
-  "description": "98 files, primarily TypeScript",
+  "description": "Non-source files in packages: a-compiled-app-handed-wrong-is-compiled-instead.test.ts, a-compiled-document-is-read-like-a-declared-one.test.ts, a-connect-that-replaces-replaces.test.ts (+96 more)",
   "files": [
     "packages/core/tests/document/a-compiled-app-handed-wrong-is-compiled-instead.test.ts",
     "packages/core/tests/document/a-compiled-document-is-read-like-a-declared-one.test.ts",
@@ -70,6 +70,7 @@
     "packages/core/tests/document/a-view-counts-the-blocks-at-its-top.test.ts",
     "packages/core/tests/document/a-walk-from-every-member-of-a-set.test.ts",
     "packages/core/tests/document/an-act-that-reads-what-its-runner-may-not-see.test.ts",
+    "packages/core/tests/document/an-add-relation-edit-can-name-another-apps-kind.test.ts",
     "packages/core/tests/document/an-edit-offers-what-nothing-else-sets.test.ts",
     "packages/core/tests/document/an-emoji-is-the-apps-icon-and-mark.test.ts",
     "packages/core/tests/document/an-icon-sized-thumbnail.test.ts",
@@ -105,8 +106,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 98,
-  "lineCount": 12508,
+  "fileCount": 99,
+  "lineCount": 12619,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

@@ -1,0 +1,21 @@
+{
+  "id": "ship/src-4",
+  "name": "Src 4",
+  "description": "4 files, primarily TypeScript",
+  "files": [
+    "packages/ship/src/migrations.ts",
+    "packages/ship/src/snapshot.ts",
+    "packages/ship/src/steps.ts",
+    "packages/ship/src/sync-seed.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/migrations.ts",
+    "packages/ship/src/snapshot.ts",
+    "packages/ship/src/steps.ts",
+    "packages/ship/src/sync-seed.ts"
+  ],
+  "cohesion": 0.26,
+  "coupling": 0.74,
+  "fileCount": 4,
+  "lineCount": 614
+}

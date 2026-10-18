@@ -99,34 +99,6 @@
       "evidence": [
         {
           "kind": "manifest-script",
-          "path": "apps/promo/package.json",
-          "confidence": "certain",
-          "excerpt": "\"build\": \"remotion bundle\""
-        }
-      ],
-      "kind": "build",
-      "command": "npm run build",
-      "cwd": "apps/promo",
-      "runner": "npm"
-    },
-    {
-      "evidence": [
-        {
-          "kind": "manifest-script",
-          "path": "apps/promo/package.json",
-          "confidence": "certain",
-          "excerpt": "\"typecheck\": \"tsc --noEmit\""
-        }
-      ],
-      "kind": "typecheck",
-      "command": "npm run typecheck",
-      "cwd": "apps/promo",
-      "runner": "npm"
-    },
-    {
-      "evidence": [
-        {
-          "kind": "manifest-script",
           "path": "apps/rota/package.json",
           "confidence": "certain",
           "excerpt": "\"build\": \"tsc -b\""
@@ -400,7 +372,7 @@
           }
         ],
         "kind": "integration",
-        "fileCount": 31
+        "fileCount": 34
       },
       {
         "evidence": [
@@ -411,7 +383,7 @@
           }
         ],
         "kind": "unit",
-        "fileCount": 808
+        "fileCount": 853
       }
     ]
   },
@@ -597,6 +569,47 @@
           ]
         },
         {
+          "name": "first-load",
+          "steps": [
+            {
+              "kind": "checkout",
+              "uses": "actions/checkout@v4"
+            },
+            {
+              "kind": "other",
+              "uses": "pnpm/action-setup@v4"
+            },
+            {
+              "kind": "setup",
+              "uses": "actions/setup-node@v4"
+            },
+            {
+              "kind": "install",
+              "run": "pnpm install --frozen-lockfile"
+            },
+            {
+              "kind": "build",
+              "name": "Build",
+              "run": "pnpm build"
+            },
+            {
+              "kind": "other",
+              "name": "A browser to time",
+              "run": "npx playwright install --with-deps chromium"
+            },
+            {
+              "kind": "other",
+              "name": "Time the first load and a page switch",
+              "run": "node scripts/verify-first-load.mjs"
+            },
+            {
+              "kind": "other",
+              "name": "Keep what it measured",
+              "uses": "actions/upload-artifact@v4"
+            }
+          ]
+        },
+        {
           "name": "verify",
           "steps": [
             {
@@ -609,7 +622,8 @@
             "test",
             "packages",
             "scaffold",
-            "progression"
+            "progression",
+            "first-load"
           ],
           "condition": "always()"
         },
@@ -684,6 +698,11 @@
               "kind": "other",
               "name": "The engines",
               "run": "npx playwright install --with-deps chromium webkit firefox"
+            },
+            {
+              "kind": "other",
+              "name": "Google Chrome, for the GPU path",
+              "run": "npx playwright install --with-deps chrome\necho \"GRAVIEW_BROWSER=$(command -v google-chrome-stable || echo /opt/google/chrome/chrome)\" >> \"$GITHUB_ENV\""
             },
             {
               "kind": "other",

@@ -7,7 +7,7 @@
 Zone: Tests Core Support (`tests-core-support`)
 Files: 4, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 4 files, primarily TypeScript
+Description: Non-source files in packages: adapter-contract.ts, hidden-holds.ts, hidden-phones.ts (+1 more)
 Entry points: packages/core/tests/support/adapter-contract.ts, packages/core/tests/support/hidden-holds.ts, packages/core/tests/support/hidden-phones.ts, packages/core/tests/support/unseen-worlds.ts
 Lines: 814
 
@@ -26,7 +26,7 @@ packages/core/tests/support/unseen-worlds.ts (TypeScript, 308 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → core-document: packages/core/tests/support/hidden-holds.ts → packages/core/src/index.ts; packages/core/tests/support/hidden-holds.ts → packages/core/src/index.ts; packages/core/tests/support/hidden-phones.ts → packages/core/src/index.ts; packages/core/tests/support/hidden-phones.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts
+  → core: packages/core/tests/support/hidden-holds.ts → packages/core/src/index.ts; packages/core/tests/support/hidden-holds.ts → packages/core/src/index.ts; packages/core/tests/support/hidden-phones.ts → packages/core/src/index.ts; packages/core/tests/support/hidden-phones.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts; packages/core/tests/support/unseen-worlds.ts → packages/core/src/index.ts
 
 Incoming (other zones → this zone):
   ← tests: tests/workerd/worker.ts → packages/core/tests/support/adapter-contract.ts; tests/workerd/worker.ts → packages/core/tests/support/adapter-contract.ts

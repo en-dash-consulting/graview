@@ -5,31 +5,47 @@
 <zone>
 
 Zone: Agent (`tools/agent`)
-Files: 5, Cohesion: 0.43, Coupling: 0.57
-Description: 5 files, primarily TypeScript
-Entry points: packages/tools/src/agent/adapters.ts, packages/tools/src/agent/bounds.ts, packages/tools/src/agent/tools.ts, packages/tools/src/agent/untrusted.ts
-Lines: 1661
+Files: 9, Cohesion: 0.64, Coupling: 0.36
+Description: 9 files, primarily TypeScript
+Entry points: packages/tools/src/agent/adapters.ts, packages/tools/src/agent/tool-definition.ts, packages/tools/src/agent/tools.ts, packages/tools/src/cli.ts, packages/tools/src/mcp-http.ts, packages/tools/src/mcp-protocol.ts, packages/tools/src/mcp-stdio.ts
+Lines: 2230
 
 </zone>
 
 <files>
 
-packages/tools/src/agent/adapters.ts (TypeScript, 97 lines, source)
-packages/tools/src/agent/bounds.ts (TypeScript, 23 lines, source)
-packages/tools/src/agent/reads.ts (TypeScript, 200 lines, source)
-packages/tools/src/agent/tools.ts (TypeScript, 1201 lines, source)
-packages/tools/src/agent/untrusted.ts (TypeScript, 140 lines, source)
+packages/tools/src/agent/adapters.ts (TypeScript, 98 lines, source)
+packages/tools/src/agent/subscribe-run.ts (TypeScript, 62 lines, source)
+packages/tools/src/agent/subscription-tools.ts (TypeScript, 59 lines, source)
+packages/tools/src/agent/tool-definition.ts (TypeScript, 41 lines, source)
+packages/tools/src/agent/tools.ts (TypeScript, 1205 lines, source)
+packages/tools/src/cli.ts (TypeScript, 472 lines, source)
+packages/tools/src/mcp-http.ts (TypeScript, 140 lines, source)
+packages/tools/src/mcp-protocol.ts (TypeScript, 88 lines, source)
+packages/tools/src/mcp-stdio.ts (TypeScript, 65 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/tools/src/agent/adapters.ts → packages/tools/src/agent/tools.ts {ToolAnnotations, ToolRuntime}
-  packages/tools/src/agent/reads.ts → packages/tools/src/agent/bounds.ts {READ_CHARS, READ_LINKS, READ_PAGE, READ_PROBLEMS, READ_TEXT}
-  packages/tools/src/agent/reads.ts → packages/tools/src/agent/untrusted.ts {Authorship, UntrustedText}
-  packages/tools/src/agent/tools.ts → packages/tools/src/agent/bounds.ts {READ_HITS}
-  packages/tools/src/agent/tools.ts → packages/tools/src/agent/reads.ts {*}
-  packages/tools/src/agent/tools.ts → packages/tools/src/agent/untrusted.ts {authorship, markHits}
+  packages/tools/src/agent/adapters.ts → packages/tools/src/agent/tool-definition.ts {ToolAnnotations}
+  packages/tools/src/agent/adapters.ts → packages/tools/src/agent/tools.ts {ToolRuntime}
+  packages/tools/src/agent/subscription-tools.ts → packages/tools/src/agent/tool-definition.ts {ToolAnnotations, ToolDefinition}
+  packages/tools/src/agent/tools.ts → packages/tools/src/agent/subscribe-run.ts {*}
+  packages/tools/src/agent/tools.ts → packages/tools/src/agent/subscription-tools.ts {SUBSCRIPTION_TOOLS}
+  packages/tools/src/agent/tools.ts → packages/tools/src/agent/tool-definition.ts {ToolAnnotations, ToolDefinition}
+  packages/tools/src/cli.ts → packages/tools/src/agent/adapters.ts {createMcpAdapter}
+  packages/tools/src/cli.ts → packages/tools/src/agent/tools.ts {createToolRuntime}
+  packages/tools/src/cli.ts → packages/tools/src/mcp-stdio.ts {serveMcpStdio}
+  packages/tools/src/mcp-http.ts → packages/tools/src/agent/adapters.ts {createMcpAdapter}
+  packages/tools/src/mcp-http.ts → packages/tools/src/agent/tools.ts {createToolRuntime}
+  packages/tools/src/mcp-http.ts → packages/tools/src/agent/tools.ts {ToolRuntimeOptions}
+  packages/tools/src/mcp-http.ts → packages/tools/src/mcp-protocol.ts {answerMcp, INVALID_REQUEST, MCP_PROTOCOL_VERSION, PARSE_ERROR}
+  packages/tools/src/mcp-http.ts → packages/tools/src/mcp-protocol.ts {JsonRpcRequest}
+  packages/tools/src/mcp-protocol.ts → packages/tools/src/agent/adapters.ts {McpTool, McpToolResult}
+  packages/tools/src/mcp-stdio.ts → packages/tools/src/mcp-protocol.ts {MCP_PROTOCOL_VERSION}
+  packages/tools/src/mcp-stdio.ts → packages/tools/src/mcp-protocol.ts {answerMcp, PARSE_ERROR}
+  packages/tools/src/mcp-stdio.ts → packages/tools/src/mcp-protocol.ts {JsonRpcRequest, McpAdapterLike}
 
 </imports>

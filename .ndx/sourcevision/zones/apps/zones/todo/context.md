@@ -8,7 +8,7 @@ Zone: Todo (`apps/todo`)
 Files: 15, Cohesion: 1.00, Coupling: 0.00
 Description: 15 files, primarily TypeScript
 Entry points: apps/todo/src/domain/app.ts, apps/todo/src/domain/policy.ts, apps/todo/src/domain/schema.ts, apps/todo/src/ui/app.tsx, apps/todo/src/ui/views.tsx, apps/todo/src/ui/what-is-left.ts
-Lines: 3130
+Lines: 3204
 
 </zone>
 
@@ -22,10 +22,10 @@ apps/todo/src/domain/mutations.ts (TypeScript, 231 lines, source)
 apps/todo/src/domain/policy.ts (TypeScript, 50 lines, source)
 apps/todo/src/domain/schema.ts (TypeScript, 195 lines, source)
 apps/todo/src/index.ts (TypeScript, 5 lines, source)
-apps/todo/src/main.tsx (TypeScript, 159 lines, source)
+apps/todo/src/main.tsx (TypeScript, 200 lines, source)
 apps/todo/src/open.ts (TypeScript, 61 lines, source)
-apps/todo/src/ui/app.tsx (TypeScript, 281 lines, source)
-apps/todo/src/ui/design.tsx (TypeScript, 1126 lines, source)
+apps/todo/src/ui/app.tsx (TypeScript, 285 lines, source)
+apps/todo/src/ui/design.tsx (TypeScript, 1155 lines, source)
 apps/todo/src/ui/views.tsx (TypeScript, 571 lines, source)
 apps/todo/src/ui/what-is-left.ts (TypeScript, 72 lines, source)
 apps/todo/src/ui/when.ts (TypeScript, 28 lines, source)

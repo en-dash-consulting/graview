@@ -1,15 +1,13 @@
 {
   "id": "tests-packages",
   "name": "Tests Packages",
-  "description": "8 files, primarily TypeScript",
+  "description": "Non-source files in packages: a-document-names-what-it-declares.ts, judges-past.ts, door.test.ts (+3 more)",
   "files": [
     "packages/core/tests/types/a-document-names-what-it-declares.ts",
     "packages/core/tests/types/judges-past.ts",
     "packages/create-graview/tests/unit/door.test.ts",
     "packages/embed/tests/support/a-builder-in-the-studio.ts",
     "packages/graview/tests/unit/a-separator-is-not-a-command.test.ts",
-    "packages/render/tests/unit/frame-plan.test.ts",
-    "packages/render/tests/unit/pointer-router.test.ts",
     "packages/skills/tests/unit/skills.test.ts"
   ],
   "entryPoints": [
@@ -17,8 +15,8 @@
   ],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 8,
-  "lineCount": 1046,
+  "fileCount": 6,
+  "lineCount": 584,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

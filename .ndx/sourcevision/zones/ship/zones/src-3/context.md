@@ -5,25 +5,23 @@
 <zone>
 
 Zone: Src 3 (`ship/src-3`)
-Files: 11, Cohesion: 0.58, Coupling: 0.42
-Description: 11 files, primarily TypeScript
-Entry points: packages/ship/src/export.ts, packages/ship/src/handler.ts, packages/ship/src/health.ts, packages/ship/src/live-protocol.ts, packages/ship/src/live.ts, packages/ship/src/open-store.ts, packages/ship/src/remote.ts, packages/ship/src/runtime.ts, packages/ship/src/seat-headers.ts, packages/ship/src/serve.ts
-Lines: 5443
+Files: 9, Cohesion: 0.42, Coupling: 0.58
+Description: 9 files, primarily TypeScript
+Entry points: packages/ship/src/handler.ts, packages/ship/src/live-protocol.ts, packages/ship/src/live.ts, packages/ship/src/open-store.ts, packages/ship/src/remote.ts, packages/ship/src/seat-headers.ts, packages/ship/src/serve-preview.ts, packages/ship/src/serve.ts
+Lines: 5501
 
 </zone>
 
 <files>
 
-packages/ship/src/export.ts (TypeScript, 115 lines, source)
-packages/ship/src/handler.ts (TypeScript, 951 lines, source)
-packages/ship/src/health.ts (TypeScript, 58 lines, source)
+packages/ship/src/handler.ts (TypeScript, 1012 lines, source)
 packages/ship/src/live-protocol.ts (TypeScript, 1424 lines, source)
 packages/ship/src/live.ts (TypeScript, 279 lines, source)
 packages/ship/src/open-store.ts (TypeScript, 397 lines, source)
-packages/ship/src/remote.ts (TypeScript, 1819 lines, source)
-packages/ship/src/runtime.ts (TypeScript, 33 lines, source)
+packages/ship/src/remote.ts (TypeScript, 1832 lines, source)
 packages/ship/src/seat-headers.ts (TypeScript, 25 lines, source)
-packages/ship/src/serve.ts (TypeScript, 177 lines, source)
+packages/ship/src/serve-preview.ts (TypeScript, 167 lines, source)
+packages/ship/src/serve.ts (TypeScript, 200 lines, source)
 packages/ship/src/websocket.ts (TypeScript, 165 lines, source)
 
 </files>
@@ -31,8 +29,6 @@ packages/ship/src/websocket.ts (TypeScript, 165 lines, source)
 <imports>
 
 Internal:
-  packages/ship/src/handler.ts → packages/ship/src/export.ts {exportBundle}
-  packages/ship/src/handler.ts → packages/ship/src/health.ts {health}
   packages/ship/src/handler.ts → packages/ship/src/live-protocol.ts {announcePresence, liveProtocol, presenceFrom, presenceSeenBy, seatOfTab, serverBatchIds, visitorPresence, wireOf}
   packages/ship/src/handler.ts → packages/ship/src/live-protocol.ts {LivePeer, LiveProtocol, LiveSocketState, ServedSocket, Wire, WireAnswer}
   packages/ship/src/handler.ts → packages/ship/src/live.ts {LIVE_PATH}
@@ -42,24 +38,12 @@ Internal:
   packages/ship/src/handler.ts → packages/ship/src/seat-headers.ts {SEAT_HEADERS}
   packages/ship/src/live-protocol.ts → packages/ship/src/live.ts {bytesOf, conflictSentence, LIVE_WIRE}
   packages/ship/src/live-protocol.ts → packages/ship/src/live.ts {Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveServerMessage}
-  packages/ship/src/open-store.ts → packages/ship/src/export.ts {rememberArchive}
   packages/ship/src/remote.ts → packages/ship/src/live.ts {LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE}
   packages/ship/src/remote.ts → packages/ship/src/live.ts {LiveClientMessage, LiveServerMessage}
   packages/ship/src/remote.ts → packages/ship/src/seat-headers.ts {SEAT_HEADERS}
-  packages/ship/src/runtime.ts → packages/ship/src/export.ts {assertBundle, exportBundle}
-  packages/ship/src/runtime.ts → packages/ship/src/export.ts {AppBundle, ExportOptions}
-  packages/ship/src/runtime.ts → packages/ship/src/handler.ts {createStoreHandler, presenceSeenBy, SEAT_HEADERS, seatFromHeaders, WIRE}
-  packages/ship/src/runtime.ts → packages/ship/src/handler.ts {AdapterStoreHandlerOptions, DeclarationChange, HeldStoreHandlerOptions, StoreHandler, StoreHandlerOptions}
-  packages/ship/src/runtime.ts → packages/ship/src/health.ts {health}
-  packages/ship/src/runtime.ts → packages/ship/src/health.ts {HealthReport}
-  packages/ship/src/runtime.ts → packages/ship/src/live-protocol.ts {announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, wireRefusalOf}
-  packages/ship/src/runtime.ts → packages/ship/src/live-protocol.ts {BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked}
-  packages/ship/src/runtime.ts → packages/ship/src/live.ts {conflictSentence, LIVE_PATH, LIVE_SUBPROTOCOL, LIVE_WIRE, liveSubprotocol, REFUSAL_REASONS}
-  packages/ship/src/runtime.ts → packages/ship/src/live.ts {Limit, LimitAnswer, LimitAsked, LiveClientMessage, LiveConnection, LiveServerMessage, LiveSocket, RefusalReason, WireRefusal}
-  packages/ship/src/runtime.ts → packages/ship/src/open-store.ts {openStore}
-  packages/ship/src/runtime.ts → packages/ship/src/open-store.ts {Compaction, OpenStoreOptions, OpenedStore}
-  packages/ship/src/runtime.ts → packages/ship/src/remote.ts {openRemote, RemoteRefusedError, seatHeaders}
-  packages/ship/src/runtime.ts → packages/ship/src/remote.ts {LiveSocketLike, RemoteBackoff, RemoteConflict, RemoteCounters, RemoteOptions, RemoteRefusal, RemoteStatus, RemoteStore}
+  packages/ship/src/serve-preview.ts → packages/ship/src/remote.ts {seatHeaders}
+  packages/ship/src/serve-preview.ts → packages/ship/src/serve.ts {serveStore}
+  packages/ship/src/serve-preview.ts → packages/ship/src/serve.ts {ServedStore}
   packages/ship/src/serve.ts → packages/ship/src/handler.ts {createStoreHandler, SEAT_HEADERS, seatFromHeaders, WIRE}
   packages/ship/src/serve.ts → packages/ship/src/handler.ts {AdapterStoreHandlerOptions, StoreHandler}
   packages/ship/src/serve.ts → packages/ship/src/live.ts {LIVE_PATH, LIVE_SUBPROTOCOL}

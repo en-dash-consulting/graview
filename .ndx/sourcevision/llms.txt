@@ -5,270 +5,226 @@
 
 ## Project Overview
 
-- **Files**: 1801
-- **Lines of code**: 319,170
-- **Languages**: TypeScript (1673), JavaScript (123), Python (4), Shell (1)
-- **Zones**: 50 (50 with descriptions)
-- **Avg cohesion**: 0.95, **avg coupling**: 0.05 (weighted by file count, 37 zones with ≥5 files)
-- **Small zones**: 13 excluded from averages (<5 files)
-- **Git**: main @ 2e7f1cb
-- **Analyzed**: 2026-10-16T04:16:30.038Z
+- **Files**: 1844
+- **Lines of code**: 325,180
+- **Languages**: TypeScript (1708), JavaScript (132), Python (4)
+- **Zones**: 46 (46 with descriptions)
+- **Avg cohesion**: 0.92, **avg coupling**: 0.07 (weighted by file count, 41 zones with ≥5 files)
+- **Small zones**: 5 excluded from averages (<5 files)
+- **Git**: chore/structural-findings-finish @ 34fa7b9
+- **Analyzed**: 2026-10-18T21:36:18.525Z
 
 ## Architecture Zones
 
-### Amount Input Days (`amount-input-days`)
-
-3 files, primarily TypeScript
-
-- Files: 3
-- Cohesion: 0.13, Coupling: 0.88
-- Entry points: packages/core/src/amount-input.ts, packages/core/src/days.ts, packages/core/src/repeat-words.ts
-- Detail: `.sourcevision/zones/amount-input-days/context.md`
-
 ### Apps (`apps`)
 
-138 files, primarily TypeScript, Python, Shell
+90 files, mostly components and schemas; entry points app.ts, tracklist.tsx, app.ts; imported by Tests and Apps.
 
-- Files: 138
+- Files: 90
 - Cohesion: 1.00, Coupling: 0.00
 - Entry points: apps/discography/src/domain/app.ts, apps/discography/src/ui/seats.ts, apps/discography/src/ui/tracklist.tsx, apps/gauntlet/src/domain/app.ts, apps/gauntlet/src/domain/schema.ts (+22 more)
 - Detail: `.sourcevision/zones/apps/context.md`
 
-### Apps Spike (`apps-spike`)
+### @graview/core (`core`)
 
-8 files, primarily TypeScript, JavaScript
+8 files, mostly utilities and entry points; entry points retry.ts, navigate.ts, markdown.ts; imported by Packages.
 
-- Files: 8
-- Cohesion: 1.00, Coupling: 0.00
-- Detail: `.sourcevision/zones/apps-spike/context.md`
-
-### Beginning Beginnings (`beginning-beginnings`)
-
-3 files, primarily TypeScript
-
-- Files: 3
-- Cohesion: 0.24, Coupling: 0.76
-- Entry points: packages/core/src/beginning.ts, packages/core/src/cli/check/beginnings.ts, packages/core/src/seat.ts
-- Detail: `.sourcevision/zones/beginning-beginnings/context.md`
-
-### Capabilities And Formats (`capabilities-formats`)
-
-3 files, mostly utilities; entry points capabilities.ts, formats.ts, version.ts; imports Core Graph and Core; imported by Core.
-
-- Files: 3
-- Cohesion: 0.50, Coupling: 0.50
-- Entry points: packages/core/src/capabilities.ts, packages/core/src/formats.ts, packages/core/src/version.ts
-- Detail: `.sourcevision/zones/capabilities-formats/context.md`
-
-### Cli (`cli`)
-
-4 files, primarily TypeScript
-
-- Files: 4
-- Cohesion: 0.22, Coupling: 0.78
-- Entry points: packages/core/src/cli/check/views.ts, packages/core/src/cli/document-schema.ts, packages/core/src/document/view-specs.ts, packages/core/src/document/views.ts
-- Detail: `.sourcevision/zones/cli/context.md`
-
-### Core (`core`)
-
-8 files, primarily TypeScript, JavaScript
-
-- Files: 8
-- Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/core/src/markdown.ts, packages/core/src/navigate.ts, packages/core/src/retry.ts
+- Files: 100
+- Cohesion: 0.40, Coupling: 0.60
+- Entry points: packages/core/src/app-places.ts, packages/core/src/app.ts, packages/core/src/arrange.ts, packages/core/src/arrangement.ts, packages/core/src/beginning.ts (+58 more)
 - Detail: `.sourcevision/zones/core/context.md`
 
 ### Core Cli (`core-cli`)
 
-5 files, primarily TypeScript
+5 files, mostly utilities and types; entry points types.ts, app-places.ts, places.ts; imports Core Document and Arrangement; imported by Core Document and @graview/core.
 
-- Files: 5
-- Cohesion: 0.24, Coupling: 0.76
-- Entry points: packages/core/src/app-places.ts, packages/core/src/cli/check/lenses.ts, packages/core/src/places.ts, packages/core/src/schema/path.ts, packages/core/src/views/types.ts
+- Files: 30
+- Cohesion: 0.28, Coupling: 0.72
+- Entry points: packages/core/src/cli/check.ts, packages/core/src/cli/create.ts, packages/core/src/cli/describe.ts, packages/core/src/cli/docs.ts, packages/core/src/cli/doctor.ts (+3 more)
 - Detail: `.sourcevision/zones/core-cli/context.md`
 
 ### Core Document (`core-document`)
 
-143 files, primarily TypeScript
+142 files, mostly utilities and types; entry points amount-mark.ts, diff.ts, types.ts; imports @graview/core and Expr; imported by @graview/core and Packages.
 
-- Files: 143
-- Cohesion: 0.67, Coupling: 0.33
-- Entry points: packages/core/src/app.ts, packages/core/src/arrange.ts, packages/core/src/arrangement-words.ts, packages/core/src/arrangement.ts, packages/core/src/blocks.ts (+71 more)
+- Files: 61
+- Cohesion: 0.61, Coupling: 0.39
+- Entry points: packages/core/src/document/amount.ts, packages/core/src/document/block-context.ts, packages/core/src/document/blocks.ts, packages/core/src/document/brand-check.ts, packages/core/src/document/canonical.ts (+33 more)
 - Detail: `.sourcevision/zones/core-document/context.md`
+
+### Core Graph (`core-graph`)
+
+Declared zone anchor (6 files).
+
+- Files: 6
+- Cohesion: 0.83, Coupling: 0.17
+- Entry points: packages/core/src/graph/archived.ts, packages/core/src/graph/diff.ts, packages/core/src/graph/graph.ts, packages/core/src/graph/primitives.ts, packages/core/src/graph/tracked.ts (+1 more)
+- Detail: `.sourcevision/zones/core-graph/context.md`
+
+### Core Invariants (`core-invariants`)
+
+Declared zone anchor (4 files).
+
+- Files: 4
+- Cohesion: 0.18, Coupling: 0.82
+- Entry points: packages/core/src/invariants/broken.ts, packages/core/src/invariants/engine.ts, packages/core/src/invariants/line.ts, packages/core/src/invariants/types.ts
+- Detail: `.sourcevision/zones/core-invariants/context.md`
 
 ### Core Mutations (`core-mutations`)
 
-3 files, primarily TypeScript
+3 files, mostly utilities; entry points repeat.ts, derive-repeats.ts, repeat-field.ts; imports Core Document and @graview/core; imported by @graview/core and Core Document.
 
-- Files: 3
-- Cohesion: 0.14, Coupling: 0.86
-- Entry points: packages/core/src/mutations/derive-repeats.ts, packages/core/src/repeat.ts, packages/core/src/schema/repeat-field.ts
+- Files: 14
+- Cohesion: 0.19, Coupling: 0.81
+- Entry points: packages/core/src/mutations/arg-shape.ts, packages/core/src/mutations/decidable.ts, packages/core/src/mutations/define-mutation.ts, packages/core/src/mutations/derive-edits.ts, packages/core/src/mutations/derive-repeats.ts (+9 more)
 - Detail: `.sourcevision/zones/core-mutations/context.md`
 
 ### Core Ops (`core-ops`)
 
-72 files, primarily TypeScript
+77 files, mostly utilities and entry points; entry points connection-spec.ts, primitives.ts, modules.ts; imports Core Document and Repeat; imported by Packages and Packages.
 
-- Files: 72
-- Cohesion: 0.61, Coupling: 0.39
-- Entry points: packages/core/src/answer-seen.ts, packages/core/src/bind.ts, packages/core/src/cli/check/clock-rules.ts, packages/core/src/cli/check/field-sight.ts, packages/core/src/cli/check/fields.ts (+55 more)
+- Files: 13
+- Cohesion: 0.42, Coupling: 0.58
+- Entry points: packages/core/src/ops/digest.ts, packages/core/src/ops/kept-fields.ts, packages/core/src/ops/lineage.ts, packages/core/src/ops/log.ts, packages/core/src/ops/provenance.ts (+8 more)
 - Detail: `.sourcevision/zones/core-ops/context.md`
 
 ### Core Scaffold (`core-scaffold`)
 
-9 files, primarily TypeScript
+9 files, mostly utilities and entry points; entry points agents.ts, create.ts, lens.ts; imports Core Document; imported by Packages and Core Document.
 
-- Files: 9
-- Cohesion: 0.78, Coupling: 0.22
-- Entry points: packages/core/src/cli/create.ts, packages/core/src/scaffold/agents.ts, packages/core/src/scaffold/index.ts, packages/core/src/scaffold/lens.ts
+- Files: 8
+- Cohesion: 0.86, Coupling: 0.14
+- Entry points: packages/core/src/scaffold/agents.ts, packages/core/src/scaffold/index.ts, packages/core/src/scaffold/lens.ts
 - Detail: `.sourcevision/zones/core-scaffold/context.md`
 
 ### Core Schema (`core-schema`)
 
-4 files, primarily TypeScript
+4 files, mostly utilities; entry points field-spec.ts, file-fields.ts, files.ts; imports Core Document and @graview/core; imported by Core Document and @graview/core.
 
-- Files: 4
-- Cohesion: 0.19, Coupling: 0.81
-- Entry points: packages/core/src/document/field-spec.ts, packages/core/src/schema/file-field.ts, packages/core/src/schema/file-fields.ts, packages/core/src/schema/files.ts
+- Files: 29
+- Cohesion: 0.79, Coupling: 0.21
+- Entry points: packages/core/src/schema/amount-mark.ts, packages/core/src/schema/amount-words.ts, packages/core/src/schema/app-link-field.ts, packages/core/src/schema/app-link.ts, packages/core/src/schema/define-node.ts (+22 more)
 - Detail: `.sourcevision/zones/core-schema/context.md`
 
-### Embed (`embed`)
+### Core Sync (`core-sync`)
 
-10 files, primarily TypeScript
+Declared zone anchor (8 files).
+
+- Files: 8
+- Cohesion: 0.57, Coupling: 0.43
+- Entry points: packages/core/src/sync/connection-filter.ts, packages/core/src/sync/index.ts
+- Detail: `.sourcevision/zones/core-sync/context.md`
+
+### Core Theme (`core-theme`)
+
+Declared zone anchor (11 files).
+
+- Files: 11
+- Cohesion: 1.00, Coupling: 0.00
+- Entry points: packages/core/src/theme/accent.ts, packages/core/src/theme/contrast.ts, packages/core/src/theme/derive.ts, packages/core/src/theme/fonts.ts, packages/core/src/theme/identity.ts (+6 more)
+- Detail: `.sourcevision/zones/core-theme/context.md`
+
+### @graview/embed (`embed`)
+
+10 files, mostly components and utilities; entry points index.ts, frame.tsx, pages.tsx; imported by Packages and Packages.
 
 - Files: 10
 - Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/embed/src/index.ts, packages/embed/src/pages.tsx
+- Entry points: packages/embed/src/frame.tsx, packages/embed/src/index.ts, packages/embed/src/pages.tsx
 - Detail: `.sourcevision/zones/embed/context.md`
-
-### Field (`field`)
-
-4 files, primarily TypeScript
-
-- Files: 4
-- Cohesion: 0.28, Coupling: 0.72
-- Entry points: packages/core/src/schema/field-words.ts, packages/core/src/schema/typed-field-builders.ts, packages/core/src/schema/typed-field-of.ts, packages/core/src/schema/typed-fields.ts
-- Detail: `.sourcevision/zones/field/context.md`
 
 ### Graview (`graview`)
 
-4 files, primarily JavaScript, TypeScript
+4 files, mostly entry points and pages; entry points index.ts; imported by Packages.
 
 - Files: 4
 - Cohesion: 1.00, Coupling: 0.00
 - Entry points: packages/graview/src/index.ts
 - Detail: `.sourcevision/zones/graview/context.md`
 
-### Guest (`guest`)
+### @graview/guest (`guest`)
 
-56 files, primarily TypeScript
+56 files, mostly utilities and entry points; entry points where.ts, frame.ts, protocol.ts; imported by Packages and Packages.
 
 - Files: 56
 - Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/guest/src/build.ts, packages/guest/src/channel.ts, packages/guest/src/cli.ts, packages/guest/src/client.ts, packages/guest/src/headless/index.ts (+33 more)
+- Entry points: packages/guest/src/build.ts, packages/guest/src/channel.ts, packages/guest/src/cli.ts, packages/guest/src/client.ts, packages/guest/src/headless/index.ts (+34 more)
 - Detail: `.sourcevision/zones/guest/context.md`
 
-### Layout (`layout`)
+### @graview/layout (`layout`)
 
-15 files, primarily TypeScript
+15 files, mostly utilities and entry points; entry points index.ts, view-moves.ts, layout.ts; imported by Packages.
 
 - Files: 15
 - Cohesion: 1.00, Coupling: 0.00
 - Entry points: packages/layout/src/index.ts, packages/layout/src/layout.ts, packages/layout/src/view-moves.ts, packages/layout/src/view.ts
 - Detail: `.sourcevision/zones/layout/context.md`
 
-### Link (`link`)
+### Routed Pages (`pages`)
 
-3 files, primarily TypeScript
-
-- Files: 3
-- Cohesion: 0.27, Coupling: 0.73
-- Entry points: packages/core/src/schema/app-address.ts, packages/core/src/schema/app-link-field.ts, packages/core/src/schema/app-link.ts
-- Detail: `.sourcevision/zones/link/context.md`
-
-### Pages (`pages`)
-
-26 files, primarily TypeScript
+26 files, mostly pages and entry points; entry points index.ts, page-shell.tsx, facts.ts; imported by Packages.
 
 - Files: 26
 - Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/pages/src/ask-place.ts, packages/pages/src/facts.ts, packages/pages/src/index.ts, packages/pages/src/page-list.tsx, packages/pages/src/page-shell.tsx (+1 more)
+- Entry points: packages/pages/src/facts.ts, packages/pages/src/index.ts, packages/pages/src/page-list.tsx, packages/pages/src/page-shell.tsx, packages/pages/src/page-typography.tsx
 - Detail: `.sourcevision/zones/pages/context.md`
 
-### Primitives (`primitives`)
+### @graview/primitives (`primitives`)
 
-125 files, primarily TypeScript
+141 files, mostly components and utilities; entry points index.ts, declared-lenses.tsx, calendar-spans.ts; imported by Packages and Tests.
 
-- Files: 125
+- Files: 141
 - Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/primitives/src/arrange-lists.tsx, packages/primitives/src/bar-panes-door.ts, packages/primitives/src/bar-panes.tsx, packages/primitives/src/choosing.ts, packages/primitives/src/declared-lenses.tsx (+20 more)
+- Entry points: packages/primitives/src/arrange-lists.tsx, packages/primitives/src/bar-panes-door.ts, packages/primitives/src/bar-panes.tsx, packages/primitives/src/choosing.ts, packages/primitives/src/declared-lenses.tsx (+24 more)
 - Detail: `.sourcevision/zones/primitives/context.md`
 
-### React (`react`)
+### @graview/react (`react`)
 
-69 files, primarily TypeScript
+72 files, mostly components and utilities; entry points index.ts, record-links.ts, local-intelligence.ts; imported by Packages.
 
-- Files: 69
+- Files: 72
 - Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/react/src/activity.ts, packages/react/src/animation.ts, packages/react/src/captions.ts, packages/react/src/channels.ts, packages/react/src/connectors.tsx (+26 more)
+- Entry points: packages/react/src/activity.ts, packages/react/src/ai-desk.ts, packages/react/src/animation.ts, packages/react/src/captions.ts, packages/react/src/channels.ts (+28 more)
 - Detail: `.sourcevision/zones/react/context.md`
 
-### Render (`render`)
+### @graview/render (`render`)
 
-12 files, primarily TypeScript
+13 files, mostly utilities and entry points; entry points index.ts, gpu.ts, pointer-router.ts; imported by Packages.
 
-- Files: 12
+- Files: 13
 - Cohesion: 1.00, Coupling: 0.00
 - Entry points: packages/render/src/gpu.ts, packages/render/src/index.ts, packages/render/src/interaction/pointer-router.ts, packages/render/src/scene/plane.ts
 - Detail: `.sourcevision/zones/render/context.md`
 
-### Scene (`scene`)
-
-5 files, primarily TypeScript
-
-- Files: 5
-- Cohesion: 0.53, Coupling: 0.47
-- Entry points: packages/core/src/city.ts, packages/core/src/scene.ts, packages/core/src/village.ts
-- Detail: `.sourcevision/zones/scene/context.md`
-
-### Schema (`schema`)
-
-3 files, primarily TypeScript
-
-- Files: 3
-- Cohesion: 0.19, Coupling: 0.81
-- Entry points: packages/core/src/json-schema.ts, packages/core/src/schema/json-schema.ts
-- Detail: `.sourcevision/zones/schema/context.md`
-
 ### Scripts (`scripts`)
 
-116 files, primarily JavaScript, TypeScript
+126 files, mostly utilities and pages; entry points offers-app.ts, jobs-app.ts, workshop-app.ts; imported by Packages and Tests.
 
-- Files: 116
+- Files: 126
 - Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/pages/src/static.ts, scripts/fixtures/jobs-app.ts, scripts/fixtures/offers-app.ts, scripts/fixtures/workshop-app.ts, scripts/guest-view-runtime.mjs (+9 more)
+- Entry points: packages/pages/src/static.ts, scripts/fixtures/jobs-app.ts, scripts/fixtures/offers-app.ts, scripts/fixtures/workshop-app.ts, scripts/guest-view-runtime.mjs (+10 more)
 - Detail: `.sourcevision/zones/scripts/context.md`
 
-### Ship (`ship`)
+### @graview/ship (`ship`)
 
-33 files, primarily TypeScript
+38 files, mostly utilities and services; entry points files-at.ts, index.ts, remote.ts; imported by Packages and Packages.
 
-- Files: 33
+- Files: 38
 - Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/ship/src/browser.ts, packages/ship/src/cli.ts, packages/ship/src/dev.ts, packages/ship/src/export.ts, packages/ship/src/file-adapter.ts (+9 more)
+- Entry points: packages/ship/src/browser.ts, packages/ship/src/cli.ts, packages/ship/src/dev.ts, packages/ship/src/export.ts, packages/ship/src/file-adapter.ts (+10 more)
 - Detail: `.sourcevision/zones/ship/context.md`
 
 ### Skills (`skills`)
 
-6 files, primarily JavaScript, TypeScript
+6 files, mostly entry points and pages.
 
 - Files: 6
 - Cohesion: 0.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/skills/context.md`
 
-### Studio (`studio`)
+### Declaration Editor (`studio`)
 
-18 files, primarily TypeScript
+18 files, mostly utilities and components; entry points index.ts, place.tsx, meta.ts; imported by Packages.
 
 - Files: 18
 - Cohesion: 1.00, Coupling: 0.00
@@ -277,15 +233,15 @@
 
 ### Tests (`tests`)
 
-32 files, primarily TypeScript
+Non-source files in tests: a-change-is-said-in-words-in-every-example.test.ts, a-declaration-as-a-document.test.ts, a-document-runs-without-code.test.ts (+34 more)
 
-- Files: 32
+- Files: 37
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests/context.md`
 
 ### Tests Apps (`tests-apps`)
 
-5 files, primarily TypeScript
+Non-source files in apps: domain.test.ts, lens-reuse.test.ts, the-awkward-shapes.test.ts (+2 more)
 
 - Files: 5
 - Cohesion: 1.00, Coupling: 0.00
@@ -293,48 +249,48 @@
 
 ### Tests Core Document (`tests-core-document`)
 
-98 files, primarily TypeScript
+Non-source files in packages: a-compiled-app-handed-wrong-is-compiled-instead.test.ts, a-compiled-document-is-read-like-a-declared-one.test.ts, a-connect-that-replaces-replaces.test.ts (+96 more)
 
-- Files: 98
+- Files: 99
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-core-document/context.md`
 
 ### Tests Core Integration (`tests-core-integration`)
 
-3 files, primarily TypeScript
+Non-source files in packages: a-connection-is-declared-and-kept-in-step.test.ts, google-calendar-meets-what-google-does.test.ts, persistence.test.ts (+2 more)
 
-- Files: 3
+- Files: 5
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-core-integration/context.md`
 
 ### Tests Core Support (`tests-core-support`)
 
-4 files, primarily TypeScript
+Non-source files in packages: adapter-contract.ts, hidden-holds.ts, hidden-phones.ts (+1 more)
 
 - Files: 4
 - Cohesion: 1.00, Coupling: 0.00
 - Entry points: packages/core/tests/support/adapter-contract.ts, packages/core/tests/support/hidden-holds.ts, packages/core/tests/support/hidden-phones.ts, packages/core/tests/support/unseen-worlds.ts
 - Detail: `.sourcevision/zones/tests-core-support/context.md`
 
-### Tests Core Unit (`tests-core-unit`)
+### Packages (`tests-core-unit`)
 
-145 files, primarily TypeScript
+Non-source files in packages: a-change-costs-what-it-touches.test.ts, a-change-in-the-records-words.test.ts, a-change-refused-before-it-is-kept-leaves-nothing.test.ts (+147 more)
 
-- Files: 145
+- Files: 150
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-core-unit/context.md`
 
 ### Tests Embed Unit (`tests-embed-unit`)
 
-38 files, primarily TypeScript
+Non-source files in packages: a-coverage-cell-selects-what-it-joins.test.tsx, a-declared-lens-is-a-place-on-the-graview-face.test.tsx, a-face-is-fetched-as-it-is-drawn.test.tsx (+39 more)
 
-- Files: 38
+- Files: 42
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-embed-unit/context.md`
 
 ### Tests Guest Fixtures (`tests-guest-fixtures`)
 
-5 files, primarily JavaScript
+Non-source files in packages: heard.js, offers.js, packages.js (+2 more)
 
 - Files: 5
 - Cohesion: 1.00, Coupling: 0.00
@@ -342,56 +298,64 @@
 
 ### Tests Guest Unit (`tests-guest-unit`)
 
-43 files, primarily TypeScript
+Non-source files in packages: a-filter-asked-in-code-is-held-to-the-kind.test.ts, a-frame-guest-follows-the-apps-theme.test.ts, a-frame-guest-reads-across-kinds.test.tsx (+42 more)
 
-- Files: 43
+- Files: 45
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-guest-unit/context.md`
 
 ### Tests Layout Unit (`tests-layout-unit`)
 
-15 files, primarily TypeScript
+Non-source files in packages: a-band-is-named-in-words.test.ts, a-focused-card-begins-below-the-trail.test.ts, a-focused-card-ends-above-the-row-under-it.test.ts (+13 more)
 
-- Files: 15
+- Files: 16
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-layout-unit/context.md`
 
 ### Tests Packages (`tests-packages`)
 
-8 files, primarily TypeScript
+Non-source files in packages: a-document-names-what-it-declares.ts, judges-past.ts, door.test.ts (+3 more)
 
-- Files: 8
+- Files: 6
 - Cohesion: 1.00, Coupling: 0.00
 - Entry points: packages/embed/tests/support/a-builder-in-the-studio.ts
 - Detail: `.sourcevision/zones/tests-packages/context.md`
 
 ### Tests Pages Unit (`tests-pages-unit`)
 
-75 files, primarily TypeScript
+Non-source files in packages: a-box-left-unticked-is-sent-no.test.tsx, a-broken-rule-leads-with-what-it-says.test.tsx, a-day-is-said-in-the-readers-locale.test.tsx (+78 more)
 
-- Files: 75
+- Files: 81
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-pages-unit/context.md`
 
 ### Tests Primitives Unit (`tests-primitives-unit`)
 
-142 files, primarily TypeScript
+Non-source files in packages: a-calendar-draws-every-kind-it-is-bound-to.test.tsx, a-calendar-of-years-spans-its-records.test.tsx, a-calendar-opens-on-the-stores-day.test.tsx (+147 more)
 
-- Files: 142
+- Files: 150
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-primitives-unit/context.md`
 
 ### Tests React Unit (`tests-react-unit`)
 
-48 files, primarily TypeScript
+Non-source files in packages: a-chosen-member-is-not-its-district.test.ts, a-chosen-record-draws-its-own-links.test.ts, a-door-that-is-not-there.test.tsx (+50 more)
 
-- Files: 48
+- Files: 53
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-react-unit/context.md`
 
+### Tests Render Unit (`tests-render-unit`)
+
+Non-source files in packages: a-scene-draws-on-the-gpu-where-it-can.test.ts, frame-plan.test.ts, pointer-router.test.ts
+
+- Files: 3
+- Cohesion: 1.00, Coupling: 0.00
+- Detail: `.sourcevision/zones/tests-render-unit/context.md`
+
 ### Tests Seedbed Integration (`tests-seedbed-integration`)
 
-5 files, primarily TypeScript
+Non-source files in apps: acceptance.test.tsx, chapters.test.ts, design-keyboard.test.tsx (+2 more)
 
 - Files: 5
 - Cohesion: 1.00, Coupling: 0.00
@@ -399,31 +363,31 @@
 
 ### Tests Ship Integration (`tests-ship-integration`)
 
-18 files, primarily TypeScript
+Non-source files in packages: a-client-that-falls-behind-adopts-the-servers-state.test.ts, a-declaration-swap-carries-the-hosts-wiring.test.ts, a-document-is-previewed-with-no-product.test.ts (+16 more)
 
-- Files: 18
+- Files: 19
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-ship-integration/context.md`
 
 ### Tests Ship Unit (`tests-ship-unit`)
 
-48 files, primarily TypeScript
+Non-source files in packages: a-batch-is-answered-only-to-its-author.test.ts, a-batch-tag-belongs-to-its-first-seat.test.ts, a-build-per-socket-and-a-host-protocol.test.ts (+47 more)
 
-- Files: 48
+- Files: 50
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-ship-unit/context.md`
 
 ### Tests Studio Unit (`tests-studio-unit`)
 
-34 files, primarily TypeScript
+Non-source files in packages: a-computed-field-survives-the-round-trip.test.ts, a-document-is-judged-as-a-document.test.ts, a-field-changes-in-place.test.ts (+32 more)
 
-- Files: 34
+- Files: 35
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-studio-unit/context.md`
 
 ### Tests Todo Integration (`tests-todo-integration`)
 
-3 files, primarily TypeScript
+Non-source files in apps: acceptance.test.tsx, what-is-left.test.tsx, who-is-here.test.tsx
 
 - Files: 3
 - Cohesion: 1.00, Coupling: 0.00
@@ -431,107 +395,117 @@
 
 ### Tests Tools Unit (`tests-tools-unit`)
 
-81 files, primarily TypeScript
+Non-source files in packages: a-chat-subscribes-its-person.test.ts, a-concentration-is-said-in-the-declarations-words.test.ts, a-dev-server-may-lend-the-seat-a-model.test.ts (+82 more)
 
-- Files: 81
+- Files: 85
 - Cohesion: 1.00, Coupling: 0.00
 - Detail: `.sourcevision/zones/tests-tools-unit/context.md`
 
-### Tools (`tools`)
+### Agent Tool Surface (`tools`)
 
-43 files, primarily TypeScript
+47 files, mostly utilities and services; entry points index.ts, go.ts, edit.ts; imported by Packages.
 
-- Files: 43
+- Files: 47
 - Cohesion: 1.00, Coupling: 0.00
-- Entry points: packages/tools/src/cli.ts, packages/tools/src/derive.ts, packages/tools/src/draft.ts, packages/tools/src/edit.ts, packages/tools/src/frame.ts (+10 more)
+- Entry points: packages/tools/src/ai.ts, packages/tools/src/cli.ts, packages/tools/src/derive.ts, packages/tools/src/draft.ts, packages/tools/src/edit.ts (+12 more)
 - Detail: `.sourcevision/zones/tools/context.md`
 
 ## Key Dependencies
 
 ### Most-Imported Files
 
-- `packages/core/src/index.ts` (210 imports)
-- `packages/core/src/check.ts` (123 imports)
-- `packages/primitives/src/index.ts` (121 imports)
-- `packages/core/src/document/index.ts` (71 imports)
-- `packages/tools/src/index.ts` (70 imports)
-- `packages/pages/src/index.ts` (63 imports)
-- `scripts/lib/ports.mjs` (60 imports)
-- `scripts/lib/engine.mjs` (49 imports)
-- `packages/core/src/schema/define-node.ts` (44 imports)
-- `packages/ship/src/index.ts` (36 imports)
+- `packages/core/src/index.ts` (217 imports)
+- `packages/core/src/check.ts` (125 imports)
+- `packages/primitives/src/index.ts` (125 imports)
+- `packages/core/src/document/index.ts` (72 imports)
+- `packages/tools/src/index.ts` (72 imports)
+- `packages/pages/src/index.ts` (69 imports)
+- `scripts/lib/ports.mjs` (64 imports)
+- `scripts/lib/engine.mjs` (51 imports)
+- `packages/core/src/schema/define-node.ts` (47 imports)
+- `packages/embed/src/index.ts` (39 imports)
 
 ### External Packages
 
-- `vitest` (used by 836 files)
-- `@graview/core` (used by 815 files)
-- `react` (used by 398 files)
-- `zod` (used by 388 files)
-- `@graview/react` (used by 263 files)
-- `react-dom` (used by 237 files)
-- `@graview/layout` (used by 198 files)
-- `@graview/primitives` (used by 94 files)
-- `@graview/tools` (used by 72 files)
-- `remotion` (used by 45 files)
+- `vitest` (used by 884 files)
+- `@graview/core` (used by 872 files)
+- `zod` (used by 407 files)
+- `react` (used by 391 files)
+- `@graview/react` (used by 287 files)
+- `react-dom` (used by 256 files)
+- `@graview/layout` (used by 202 files)
+- `@graview/primitives` (used by 102 files)
+- `@graview/tools` (used by 86 files)
+- `@graview/pages` (used by 36 files)
 
 ### Circular Dependencies
 
-Found 51 circular dependency chain(s):
+Found 48 circular dependency chain(s):
 
-- `packages/core/src/arrangement.ts` → `packages/core/src/arrangement-words.ts`
-- `packages/core/src/arrangement.ts` → `packages/core/src/kind-list.ts`
-- `packages/core/src/document/describe-place.ts` → `packages/core/src/document/describe-coverage.ts`
-- `packages/core/src/permissions/sight.ts` → `packages/core/src/seen.ts`
-- `packages/core/src/permissions/sight.ts` → `packages/core/src/seen.ts` → `packages/core/src/store.ts`
-- ... and 46 more
+- `apps/site/design.mjs` → `apps/site/releases.mjs`
+- `packages/guest/src/host/arrive.ts` → `packages/guest/src/host/frame.ts`
+- `packages/primitives/src/app-bar.tsx` → `packages/primitives/src/bar-panes-door.ts` → `packages/primitives/src/bar-panes.tsx` → `packages/primitives/src/profile.tsx`
+- `packages/primitives/src/app-bar.tsx` → `packages/primitives/src/bar-panes-door.ts` → `packages/primitives/src/bar-panes.tsx` → `packages/primitives/src/workbench/activity.tsx` → `packages/primitives/src/past-bar.tsx` → `packages/primitives/src/timeline.tsx` → `packages/primitives/src/frame.ts`
+- `packages/primitives/src/app-bar.tsx` → `packages/primitives/src/bar-panes-door.ts` → `packages/primitives/src/bar-panes.tsx` → `packages/primitives/src/workbench/activity.tsx` → `packages/primitives/src/past-bar.tsx` → `packages/primitives/src/timeline.tsx` → `packages/primitives/src/frame.ts`
+- ... and 43 more
 
 ## Findings
 
 ### Anti-patterns
 
-- Zone pin target "core-sync" did not form this analysis run — 1 pin(s) skipped and those files fell back to their Louvain zone. Single-target consolidations to "core-sync" are non-deterministic until it is a stable anchor. Skipped: packages/core/src/sync/conflict.ts. [warning]
-- God function: <module> in scripts/verify-navigation.mjs calls 241 unique functions — consider decomposing into smaller, focused functions [critical]
-- "Amount Input Days" imports "Core Document" on 1 edge(s) while the 18 edge(s) between them run the other way — the minority direction looks like a layering violation [warning] (amount-input-days)
-- "packages/core/src/days.ts" is imported from 5 zones (core-document, core-mutations, core-ops, core-schema, field) — a cross-cutting dependency every one of them is coupled to [warning] (amount-input-days)
 - "apps/discography/scripts/musicbrainz/build.py" exports 4 declaration(s) (fold, split_credit, artist, uniq) that no file in the project imports [warning] (apps)
 - "apps/discography/src/ui/pages.tsx" exports 1 declaration(s) (pages) that no file in the project imports [warning] (apps)
-- "apps/promo/out/ProposalV2.v2.bak.tsx" exports 2 declaration(s) (PROPOSAL_V2_TOTAL, GraviewScubaProposalV2) that no file in the project imports [warning] (apps)
-- "apps/promo/src/components/TypePlate.tsx" exports 1 declaration(s) (TypePlate) that no file in the project imports [warning] (apps)
-- "apps/seedbed/src/domain/app.ts" is imported from 6 zones (tests, tests-core-document, tests-primitives-unit, tests-seedbed-integration, tests-studio-unit, tests-tools-unit) — a cross-cutting dependency every one of them is coupled to [warning] (apps)
+- "apps/rota/src/main.tsx" exports 1 declaration(s) (applyScheme) that no file in the project imports [warning] (apps)
 - "apps/seedbed/src/site-embed.ts" exports 10 declaration(s) (handles, mountChapter, dress, kitFindings, mountRota, …) that no file in the project imports [warning] (apps)
-- ... and 23 more
+- "Core" imports "Core Cli" on 6 edge(s) while the 43 edge(s) between them run the other way — the minority direction looks like a layering violation [warning] (core)
+- "packages/core/src/blocks.ts" is production code imported only by tests (25 importer(s), all test files) — either it is dead or its real caller is missing [warning] (core)
+- "packages/core/src/index.ts" is imported from 6 zones (core-document, tests-core-document, tests-core-integration, tests-core-support, tests-core-unit, tests-packages) — a cross-cutting dependency every one of them is coupled to [warning] (core)
+- "Core Document" imports "Core Cli" on 1 edge(s) while the 32 edge(s) between them run the other way — the minority direction looks like a layering violation [warning] (core-document)
+- "packages/core/src/document/index.ts" is production code imported only by tests (120 importer(s), all test files) — either it is dead or its real caller is missing [warning] (core-document)
+- "packages/core/src/graph/types.ts" is imported from 6 zones (core, core-document, core-invariants, core-mutations, core-ops, core-sync) — a cross-cutting dependency every one of them is coupled to [warning] (core-graph)
+- ... and 20 more
+
+### Patterns
+
+- The core package has a many-to-one dependency on core-schema (118 imports) and acts as the hub that every sub-folder imports back into (schema, ops, mutations, invariants, sync). Those back-imports to the top-level barrel are the real layering leak: sub-folders should import sibling modules directly, leaving top-level files as the only consumers of the barrel. [warning] (core)
+- The inbound edges from core-cli and core-sync (minority direction) suggest document code reaching for CLI/sync types; these should be moved to a neutral types module so the compiler stays free of CLI and sync concerns. [warning] (core-document)
+- Clean, high-cohesion foundation module with a small, stable API; the schema and graph mutual edges (3 and 2) are the only coupling to watch, and they form a small cycle at the zone level that should be broken by moving the shared types to one side. [warning] (core-graph)
+- core-invariants and core-document import each other (3 edges each way), a zone-level cycle; extract the shared rule shape types into invariants/types.ts (which document would import) so that invariants stays below document. [warning] (core-invariants)
+- mutations and schema depend on each other (36 one way, 2 back), and mutations imports from the core barrel; this is a layered-cycle risk. Keep node-ref and types in a leaf module and have schema import only from it. [warning] (core-mutations)
+- Well-layered mid-tier (graph below, core above) with high internal cohesion in the call graph (0.9); the only leak is the 6 back-imports to core, which should point at specific modules. [warning] (core-ops)
+- A model leaf zone: fully self-contained with a small, clear consumer set (core, document, cli). Contract-in-core, palettes-in-primitives is a clean, intentional interface. [info] (core-theme)
 
 ### Relationships
 
-- Tightly coupled modules: apps/promo/src/videos/scuba/ProposalCloud.tsx and apps/promo/src/videos/scuba/kit.tsx — 145 cross-file calls (unidirectional). Consider extracting shared interface or merging [info]
+- Tightly coupled modules: packages/studio/src/edits.ts and packages/studio/src/source.ts — 60 cross-file calls (unidirectional). Consider extracting shared interface or merging [info]
 
 ### Observations
 
-- High coupling (0.88) — 2 imports target "core-mutations" [info] (amount-input-days)
 - 27 entry points — wide API surface, consider consolidating exports [info] (apps)
 - High cohesion (1) — files are tightly interconnected [info] (apps)
-- High cohesion (1) — files are tightly interconnected [info] (apps-spike)
-- High coupling (0.76) — 5 imports target "core-ops" [info] (beginning-beginnings)
-- High coupling (0.78) — 14 imports target "core-document" [info] (cli)
-- Low cohesion (0.22) — files are loosely related, consider splitting this zone [info] (cli)
-- High cohesion (1) — files are tightly interconnected [info] (core)
-- High coupling (0.76) — 10 imports target "core-document" [info] (core-cli)
-- Low cohesion (0.24) — files are loosely related, consider splitting this zone [info] (core-cli)
-- ... and 54 more
+- 63 entry points — wide API surface, consider consolidating exports [info] (core)
+- High coupling (0.6) — 118 imports target "core-schema" [info] (core)
+- High coupling (0.72) — 43 imports target "core" [info] (core-cli)
+- Low cohesion (0.28) — files are loosely related, consider splitting this zone [info] (core-cli)
+- Zones "Core Cli" and "Beginning Beginnings" may be one architectural concept; the import graph links them but the judgment was undecided. [info] (core-cli)
+- 38 entry points — wide API surface, consider consolidating exports [info] (core-document)
+- Zones "Core Document" and "Core Ops" may be one architectural concept; the import graph links them but the judgment was undecided. [info] (core-document)
+- High cohesion (0.83) — files are tightly interconnected [info] (core-graph)
+- ... and 61 more
 
 ### Suggestions
 
-- Zone "apps" has files across 30 directories — consider consolidating under a dedicated directory [info] (apps)
-- Zone "core" has files across 5 directories — consider consolidating under a dedicated directory [info] (core)
-- Zone "core-document" has files across 13 directories — consider consolidating under a dedicated directory [info] (core-document)
-- Zone "core-ops" has files across 12 directories — consider consolidating under a dedicated directory [info] (core-ops)
-- Zone "field" was identified from filename patterns, not directory structure — consider creating packages/core/src/schema/field/ and moving related files there [info] (field)
-- Zone "Field" has an unreliable risk reading: only 4 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.28, coupling: 0.72 (risk score: 0.72) [info] (field)
-- packages/core/src/ contains files from 10 zones (amount-input-days, beginning-beginnings, capabilities-formats, core, core-cli, core-document, core-mutations, core-ops, scene, schema) — consider grouping into subdirectories to clarify architectural boundaries [info]
-- Hub function: portFor in scripts/lib/ports.mjs is called from 52 files (high fan-in expected for this module type) — changes here have wide impact, consider if responsibilities can be narrowed [info]
+- Zone "apps" has files across 22 directories — consider consolidating under a dedicated directory [info] (apps)
+- Zone "core" has files across 10 directories — consider consolidating under a dedicated directory [info] (core)
+- Zone "guest" has files across 5 directories — consider consolidating under a dedicated directory [info] (guest)
+- Zone "scripts" has files across 16 directories — consider consolidating under a dedicated directory [info] (scripts)
+- Zone "tests-packages" has files across 5 directories — consider consolidating under a dedicated directory [info] (tests-packages)
+- Hub function: portFor in scripts/lib/ports.mjs is called from 56 files (high fan-in expected for this module type) — changes here have wide impact, consider if responsibilities can be narrowed [info]
 - 5 potentially unused exports in packages/pages/src/page-places.tsx have no incoming calls: PlacePicture, GalleryCard, PlaceCard, DefaultPlacesPage, DefaultPlacePage [warning]
 - 5 potentially unused exports in packages/tools/src/agent/reads.ts have no incoming calls: withinReadChars, searchRead, graphRead, nodeRead, violationsRead [warning]
-- ... and 20 more
+- 4 potentially unused exports in packages/core/src/cli/check/lenses.ts have no incoming calls: checkShippedLenses, checkLensBindings, checkDeclaredLenses, checkPagesArrangement [info]
+- 4 potentially unused exports in packages/primitives/src/linked-record.tsx have no incoming calls: LinkedRecordView, LinkedPicker, drawLinkedRecord, drawLinkedPicker [info]
+- ... and 8 more
 
 ## Next Steps
 
@@ -539,95 +513,90 @@ Prioritized work items derived from analysis:
 
 ### High Priority
 
-1. **3 related findings: "Core Document" imports "Scene" on 3 edge(s) while the 13 e…**
-   Files: `packages/core/src/address.ts`, `packages/core/src/app.ts`, `packages/core/src/arrange.ts`
+1. **3 related findings: "Core Schema" imports "Core Document" on 1 edge(s) while th…**
+   Files: `packages/core/src/schema/amount-mark.ts`, `packages/core/src/schema/amount-words.ts`, `packages/core/src/schema/app-address.ts`
 
-1. **3 related findings: "Core Ops" imports "Cli" on 1 edge(s) while the 3 edge(s) b…**
-   Files: `packages/core/src/answer-seen.ts`, `packages/core/src/bind.ts`, `packages/core/src/cli/check/clock-rules.ts`
+1. **3 related findings: "Core" imports "Core Cli" on 6 edge(s) while the 43 edge(s)…**
+   Files: `apps/spike/vite.config.ts`, `packages/core/scripts/write-document-schema.mjs`, `packages/core/src/address.ts`
 
-1. **2 related findings: "Amount Input Days" imports "Core Document" on 1 edge(s) wh…**
-   Files: `packages/core/src/amount-input.ts`, `packages/core/src/days.ts`, `packages/core/src/repeat-words.ts`
+1. **2 related findings: "Core Mutations" imports "Core Document" on 1 edge(s) while…**
+   Files: `packages/core/src/mutations/arg-shape.ts`, `packages/core/src/mutations/decidable.ts`, `packages/core/src/mutations/define-mutation.ts`
 
-1. **2 related findings: "Core Mutations" imports "Core Document" on 5 edge(s) while…**
-   Files: `packages/core/src/mutations/derive-repeats.ts`, `packages/core/src/repeat.ts`, `packages/core/src/schema/repeat-field.ts`
+1. **"packages/core/src/graph/types.ts" is imported from 6 zones (core, core-documen…**
+   Files: `packages/core/src/graph/archived.ts`, `packages/core/src/graph/diff.ts`, `packages/core/src/graph/graph.ts`
 
-1. **6 related findings: "apps/discography/scripts/musicbrainz/build.py" exports 4 d…**
-   Files: `apps/discography/scripts/musicbrainz/build.py`, `apps/discography/scripts/musicbrainz/fetch_guest.py`, `apps/discography/scripts/musicbrainz/fetch_own.py`
+1. **"Core Invariants" imports "Core" on 1 edge(s) while the 22 edge(s) between them…**
+   Files: `packages/core/src/invariants/broken.ts`, `packages/core/src/invariants/engine.ts`, `packages/core/src/invariants/line.ts`
 
-1. **"packages/core/src/document/views.ts" is imported from 3 zones (core-document, …**
-   Files: `packages/core/src/cli/check/views.ts`, `packages/core/src/cli/document-schema.ts`, `packages/core/src/document/view-specs.ts`
+1. **core-invariants and core-document import each other (3 edges each way), a zone-…**
+   Files: `packages/core/src/invariants/broken.ts`, `packages/core/src/invariants/engine.ts`, `packages/core/src/invariants/line.ts`
 
-1. **"Core Schema" imports "Core Document" on 5 edge(s) while the 17 edge(s) between…**
-   Files: `packages/core/src/document/field-spec.ts`, `packages/core/src/schema/file-field.ts`, `packages/core/src/schema/file-fields.ts`
+1. **Zone "Core Mutations" is severely fragile and needs immediate architectural int…**
+   Files: `packages/core/src/mutations/arg-shape.ts`, `packages/core/src/mutations/decidable.ts`, `packages/core/src/mutations/define-mutation.ts`
 
-1. **"Core Cli" imports "Core Document" on 10 edge(s) while the 25 edge(s) between t…**
-   Files: `packages/core/src/app-places.ts`, `packages/core/src/cli/check/lenses.ts`, `packages/core/src/places.ts`
+1. **mutations and schema depend on each other (36 one way, 2 back), and mutations i…**
+   Files: `packages/core/src/mutations/arg-shape.ts`, `packages/core/src/mutations/decidable.ts`, `packages/core/src/mutations/define-mutation.ts`
 
-1. **"Link" imports "Core Document" on 1 edge(s) while the 6 edge(s) between them ru…**
-   Files: `packages/core/src/schema/app-address.ts`, `packages/core/src/schema/app-link-field.ts`, `packages/core/src/schema/app-link.ts`
+1. **Zone "Core Cli" is severely fragile and needs immediate architectural intervent…**
+   Files: `packages/core/src/cli/check.ts`, `packages/core/src/cli/check/arrangement.ts`, `packages/core/src/cli/check/beginnings.ts`
 
-1. **"Field" imports "Core Document" on 2 edge(s) while the 12 edge(s) between them …**
-   Files: `packages/core/src/schema/field-words.ts`, `packages/core/src/schema/typed-field-builders.ts`, `packages/core/src/schema/typed-field-of.ts`
+1. **The CLI reaches into 7 sibling zones (schema, document, mutations, theme, scaff…**
+   Files: `packages/core/src/cli/check.ts`, `packages/core/src/cli/check/arrangement.ts`, `packages/core/src/cli/check/beginnings.ts`
 
 ### Medium Priority
 
-1. **Zone pin target "core-sync" did not form this analysis run**
+1. **2 related findings: "Core Document" imports "Core Cli" on 1 edge(s) while the 3…**
+   Files: `packages/core/src/document/act-findings.ts`, `packages/core/src/document/amount.ts`, `packages/core/src/document/block-context.ts`
 
-1. **"Capabilities And Formats" imports "Core Document" on 1 edge(s) while the 6 edg…**
-   Files: `packages/core/src/capabilities.ts`, `packages/core/src/formats.ts`, `packages/core/src/version.ts`
+1. **"Core Ops" imports "Core" on 6 edge(s) while the 84 edge(s) between them run th…**
+   Files: `packages/core/src/ops/digest.ts`, `packages/core/src/ops/kept-fields.ts`, `packages/core/src/ops/lineage.ts`
+
+1. **2 zones are fragile: they hold loosely related files and depend heavily on othe…**
+
+1. **Well-layered mid-tier (graph below, core above) with high internal cohesion in …**
+   Files: `packages/core/src/ops/digest.ts`, `packages/core/src/ops/kept-fields.ts`, `packages/core/src/ops/lineage.ts`
 
 1. **5 potentially unused exports in packages/pages/src/page-places.tsx have no inco…**
 
 1. **5 potentially unused exports in packages/tools/src/agent/reads.ts have no incom…**
 
-1. **2 related findings: "packages/primitives/src/index.ts" is production code impor…**
-   Files: `packages/primitives/src/app-bar.tsx`, `packages/primitives/src/app-link-door.tsx`, `packages/primitives/src/app-link.tsx`
+1. **The single document to sync import undermines the 'hosted page never loads sync…**
+   Files: `packages/core/src/sync/conflict.ts`, `packages/core/src/sync/connection-filter.ts`, `packages/core/src/sync/connection.ts`
 
-1. **"packages/embed/src/index.ts" is production code imported only by tests (62 imp…**
-   Files: `packages/embed/src/address.tsx`, `packages/embed/src/embed.tsx`, `packages/embed/src/fonts.ts`
+1. **The inbound edges from core-cli and core-sync (minority direction) suggest docu…**
+   Files: `packages/core/src/document/act-findings.ts`, `packages/core/src/document/amount.ts`, `packages/core/src/document/block-context.ts`
 
-1. **"packages/pages/src/index.ts" is production code imported only by tests (90 imp…**
-   Files: `packages/pages/src/ask-place.ts`, `packages/pages/src/ask.tsx`, `packages/pages/src/context-menu.tsx`
+1. **Clean, high-cohesion foundation module with a small, stable API; the schema and…**
+   Files: `packages/core/src/graph/archived.ts`, `packages/core/src/graph/diff.ts`, `packages/core/src/graph/graph.ts`
 
-1. **"packages/react/src/index.ts" is production code imported only by tests (32 imp…**
-   Files: `packages/react/src/activity.ts`, `packages/react/src/affordances.ts`, `packages/react/src/animation.ts`
-
-1. **"scripts/site-css.mjs" exports 1 declaration(s) (PAGES) that no file in the pro…**
-   Files: `apps/discography/vite.config.ts`, `apps/gauntlet/vite.config.ts`, `apps/launcher/vite.config.ts`
-
-1. **"packages/ship/src/index.ts" is production code imported only by tests (60 impo…**
-   Files: `packages/ship/src/browser-adapter.ts`, `packages/ship/src/browser.ts`, `packages/ship/src/cli.ts`
+1. **4 related findings: "apps/discography/scripts/musicbrainz/build.py" exports 4 d…**
+   Files: `apps/discography/scripts/musicbrainz/build.py`, `apps/discography/scripts/musicbrainz/fetch_guest.py`, `apps/discography/scripts/musicbrainz/fetch_own.py`
 
 ### Low Priority
 
-1. **PortFor in scripts/lib/ports.mjs is called from 52 files (high fan-in expected …**
+1. **PortFor in scripts/lib/ports.mjs is called from 56 files (high fan-in expected …**
 
-1. **Zone "Amount Input Days" has an unreliable risk reading: only 3 files tracked (…**
-   Files: `packages/core/src/amount-input.ts`, `packages/core/src/days.ts`, `packages/core/src/repeat-words.ts`
+1. **Zone "Core Invariants" has an unreliable risk reading: only 4 files tracked (mi…**
+   Files: `packages/core/src/invariants/broken.ts`, `packages/core/src/invariants/engine.ts`, `packages/core/src/invariants/line.ts`
 
-1. **Zone "Core Mutations" has an unreliable risk reading: only 3 files tracked (min…**
-   Files: `packages/core/src/mutations/derive-repeats.ts`, `packages/core/src/repeat.ts`, `packages/core/src/schema/repeat-field.ts`
+1. **Zone "core" has files across 10 directories**
+   Files: `apps/spike/vite.config.ts`, `packages/core/scripts/write-document-schema.mjs`, `packages/core/src/address.ts`
 
-1. **Zone "Core Schema" has an unreliable risk reading: only 4 files tracked (minimu…**
-   Files: `packages/core/src/document/field-spec.ts`, `packages/core/src/schema/file-field.ts`, `packages/core/src/schema/file-fields.ts`
+1. **4 potentially unused exports in packages/core/src/cli/check/lenses.ts have no i…**
 
-1. **Zone "Schema" has an unreliable risk reading: only 3 files tracked (minimum 5 n…**
-   Files: `packages/core/src/json-schema.ts`, `packages/core/src/schema/json-schema.ts`, `packages/core/src/schema/to-json-schema.ts`
+1. **4 potentially unused exports in packages/primitives/src/linked-record.tsx have …**
 
-1. **Zone "Cli" has an unreliable risk reading: only 4 files tracked (minimum 5 need…**
-   Files: `packages/core/src/cli/check/views.ts`, `packages/core/src/cli/document-schema.ts`, `packages/core/src/document/view-specs.ts`
+1. **3 potentially unused exports in packages/core/src/cli/check/relations.ts have n…**
 
-1. **Zone "Beginning Beginnings" has an unreliable risk reading: only 3 files tracke…**
-   Files: `packages/core/src/beginning.ts`, `packages/core/src/cli/check/beginnings.ts`, `packages/core/src/seat.ts`
+1. **3 potentially unused exports in packages/tools/src/inline-ai.ts have no incomin…**
 
-1. **Zone "link" was identified from filename patterns, not directory structure**
-   Files: `packages/core/src/schema/app-address.ts`, `packages/core/src/schema/app-link-field.ts`, `packages/core/src/schema/app-link.ts`
+1. **2 potentially unused exports in packages/embed/src/scene-face.tsx have no incom…**
 
-1. **Zone "Link" has an unreliable risk reading: only 3 files tracked (minimum 5 nee…**
-   Files: `packages/core/src/schema/app-address.ts`, `packages/core/src/schema/app-link-field.ts`, `packages/core/src/schema/app-link.ts`
+1. **Zone "Skills" is showing early signs of fragility, approaching architectural ri…**
+   Files: `apps/discography/src/live.ts`, `apps/gauntlet/scripts/generate-seed.mjs`, `packages/skills/skills/graview-worker-view/examples/a-record.js`
 
-1. **Zone "field" was identified from filename patterns, not directory structure**
-   Files: `packages/core/src/schema/field-words.ts`, `packages/core/src/schema/typed-field-builders.ts`, `packages/core/src/schema/typed-field-of.ts`
+1. **Zone "apps" has files across 22 directories**
+   Files: `apps/discography/scripts/musicbrainz/build.py`, `apps/discography/scripts/musicbrainz/fetch_guest.py`, `apps/discography/scripts/musicbrainz/fetch_own.py`
 
 ## File Inventory
 
@@ -642,8 +611,8 @@ Prioritized work items derived from analysis:
 | `apps/discography/src/domain/invariants.ts` | source | schema | apps |
 | `apps/discography/src/domain/mutations.ts` | source | schema | apps |
 | `apps/discography/src/domain/policy.ts` | source | schema | apps |
-| `apps/discography/src/domain/schema.ts` | source |  | apps |
-| `apps/discography/src/live.ts` | source |  | skills |
+| `apps/discography/src/domain/schema.ts` | source | schema | apps |
+| `apps/discography/src/live.ts` | source | entrypoint | skills |
 | `apps/discography/src/main.tsx` | source | entrypoint | apps |
 | `apps/discography/src/ui/app.tsx` | source | component | apps |
 | `apps/discography/src/ui/design.tsx` | source | component | apps |
@@ -655,12 +624,12 @@ Prioritized work items derived from analysis:
 | `apps/discography/tests/lens-reuse.test.ts` | test |  | tests-apps |
 | `apps/discography/vite.config.ts` | config |  | scripts |
 | `apps/gauntlet/scripts/generate-seed.mjs` | build |  | skills |
-| `apps/gauntlet/src/domain/app.ts` | source |  | apps |
+| `apps/gauntlet/src/domain/app.ts` | source | model | apps |
 | `apps/gauntlet/src/domain/brand.ts` | source | config | apps |
 | `apps/gauntlet/src/domain/invariants.ts` | source | schema | apps |
 | `apps/gauntlet/src/domain/mutations.ts` | source |  | apps |
 | `apps/gauntlet/src/domain/policy.ts` | source |  | apps |
-| `apps/gauntlet/src/domain/schema.ts` | source |  | apps |
+| `apps/gauntlet/src/domain/schema.ts` | source | schema | apps |
 | `apps/gauntlet/src/main.tsx` | source | entrypoint | apps |
 | `apps/gauntlet/src/ui/app.tsx` | source | component | apps |
 | `apps/gauntlet/src/ui/seats.ts` | source | component | apps |
@@ -671,70 +640,15 @@ Prioritized work items derived from analysis:
 | `apps/launcher/src/domain/invariants.ts` | source | types | apps |
 | `apps/launcher/src/domain/mutations.ts` | source | schema | apps |
 | `apps/launcher/src/domain/schema.ts` | source | schema | apps |
-| `apps/launcher/src/domain/survey.ts` | source |  | apps |
+| `apps/launcher/src/domain/survey.ts` | source | model | apps |
 | `apps/launcher/src/index.ts` | source | entrypoint | apps |
 | `apps/launcher/src/main.tsx` | source | entrypoint | apps |
 | `apps/launcher/src/ui/liveness.tsx` | source | component | apps |
 | `apps/launcher/src/ui/views.tsx` | source | component | apps |
 | `apps/launcher/tests/integration/acceptance.test.ts` | test |  | tests-apps |
 | `apps/launcher/vite.config.ts` | config |  | scripts |
-| `apps/promo/out/ProposalV2.v2.bak.tsx` | source | component | apps |
-| `apps/promo/remotion.config.ts` | config |  | apps |
-| `apps/promo/render-style.sh` | source |  | apps |
-| `apps/promo/src/Composition.tsx` | source | component | apps |
-| `apps/promo/src/FeedComposition.tsx` | source | component | apps |
-| `apps/promo/src/Root.tsx` | source | component | apps |
-| `apps/promo/src/camera.ts` | source |  | apps |
-| `apps/promo/src/components/BigTitle.tsx` | source | component | apps |
-| `apps/promo/src/components/BrandPresence.tsx` | source | component | apps |
-| `apps/promo/src/components/CameraRig.tsx` | source | component | apps |
-| `apps/promo/src/components/CodeGlyphs.tsx` | source | component | apps |
-| `apps/promo/src/components/Constellation.tsx` | source | component | apps |
-| `apps/promo/src/components/Field.tsx` | source | component | apps |
-| `apps/promo/src/components/LightCharacter.tsx` | source | component | apps |
-| `apps/promo/src/components/SurveyInsert.tsx` | source | component | apps |
-| `apps/promo/src/components/TypePlate.tsx` | source | component | apps |
-| `apps/promo/src/feed/BeautyPlate.tsx` | source | component | apps |
-| `apps/promo/src/feed/Cta.tsx` | source | component | apps |
-| `apps/promo/src/feed/Lockup.tsx` | source | component | apps |
-| `apps/promo/src/feed/MagicHook.tsx` | source | component | apps |
-| `apps/promo/src/feed/StepsBeat.tsx` | source | component | apps |
-| `apps/promo/src/feed/StoryMontage.tsx` | source | component | apps |
-| `apps/promo/src/feed/TaglinePayoff.tsx` | source | component | apps |
-| `apps/promo/src/feedTheme.ts` | source | config | apps |
-| `apps/promo/src/index.ts` | source | entrypoint | apps |
-| `apps/promo/src/kit/AppFrame.tsx` | source | component | apps |
-| `apps/promo/src/kit/Backdrop.tsx` | source | component | apps |
-| `apps/promo/src/kit/ChatBubble.tsx` | source | component | apps |
-| `apps/promo/src/kit/Chip.tsx` | source | component | apps |
-| `apps/promo/src/kit/Kinetic.tsx` | source | component | apps |
-| `apps/promo/src/kit/Outro.tsx` | source | component | apps |
-| `apps/promo/src/kit/design.ts` | source |  | apps |
-| `apps/promo/src/kit/motion.ts` | source |  | apps |
-| `apps/promo/src/kit/views.tsx` | source | component | apps |
-| `apps/promo/src/motion.ts` | source | utility | apps |
-| `apps/promo/src/scenes/BrandMorph.tsx` | source | component | apps |
-| `apps/promo/src/scenes/CityAltitude.tsx` | source | component | apps |
-| `apps/promo/src/scenes/GlyphsBloom.tsx` | source | component | apps |
-| `apps/promo/src/scenes/GraphInterface.tsx` | source | component | apps |
-| `apps/promo/src/scenes/OpenBrand.tsx` | source | component | apps |
-| `apps/promo/src/scenes/OutroBumper.tsx` | source | component | apps |
-| `apps/promo/src/scenes/RelationsDemo.tsx` | source | component | apps |
-| `apps/promo/src/scenes/SettleLockup.tsx` | source | component | apps |
-| `apps/promo/src/style/StyleFrames.tsx` | source | component | apps |
-| `apps/promo/src/theme.ts` | source | config | apps |
-| `apps/promo/src/videos/Cooking.tsx` | source | component | apps |
-| `apps/promo/src/videos/Thread.tsx` | source | component | apps |
-| `apps/promo/src/videos/ThreadV2.tsx` | source | component | apps |
-| `apps/promo/src/videos/Ticker.tsx` | source | component | apps |
-| `apps/promo/src/videos/scuba/ProposalCloud.tsx` | source | component | apps |
-| `apps/promo/src/videos/scuba/ProposalV2.tsx` | source | component | apps |
-| `apps/promo/src/videos/scuba/Template.tsx` | source | component | apps |
-| `apps/promo/src/videos/scuba/index.tsx` | source | entrypoint | apps |
-| `apps/promo/src/videos/scuba/kit.tsx` | source | component | apps |
-| `apps/promo/src/videos/scuba/stories.tsx` | source | component | apps |
-| `apps/rota/src/domain/app.ts` | source |  | apps |
-| `apps/rota/src/domain/brand.ts` | source |  | apps |
+| `apps/rota/src/domain/app.ts` | source | model | apps |
+| `apps/rota/src/domain/brand.ts` | source | model | apps |
 | `apps/rota/src/domain/installation.ts` | source | model | apps |
 | `apps/rota/src/domain/invariants.ts` | source | schema | apps |
 | `apps/rota/src/domain/mutations.ts` | source | schema | apps |
@@ -750,19 +664,18 @@ Prioritized work items derived from analysis:
 | `apps/rota/src/ui/when.ts` | source | component | apps |
 | `apps/rota/tests/integration/acceptance.test.ts` | test |  | tests-apps |
 | `apps/rota/vite.config.ts` | config |  | scripts |
-| `apps/rota/vite.config.ts.timestamp-1791598470980-3067f655ee83a.mjs` | source |  | apps |
 | `apps/seedbed/src/domain/app.ts` | source |  | apps |
 | `apps/seedbed/src/domain/brand.ts` | source | model | apps |
 | `apps/seedbed/src/domain/chapters.ts` | source | model | apps |
-| `apps/seedbed/src/domain/example.ts` | source |  | apps |
+| `apps/seedbed/src/domain/example.ts` | source | model | apps |
 | `apps/seedbed/src/domain/invariants.ts` | source | schema | apps |
 | `apps/seedbed/src/domain/mutations.ts` | source | schema | apps |
 | `apps/seedbed/src/domain/schema.ts` | source | schema | apps |
 | `apps/seedbed/src/index.ts` | source | entrypoint | apps |
 | `apps/seedbed/src/main.tsx` | source | entrypoint | apps |
-| `apps/seedbed/src/open.ts` | source |  | apps |
-| `apps/seedbed/src/recipes.d.ts` | generated |  | apps-spike |
-| `apps/seedbed/src/site-embed.ts` | source |  | apps |
+| `apps/seedbed/src/open.ts` | source | entrypoint | apps |
+| `apps/seedbed/src/recipes.d.ts` | generated |  | apps |
+| `apps/seedbed/src/site-embed.ts` | source | entrypoint | apps |
 | `apps/seedbed/src/ui/app.tsx` | source | component | apps |
 | `apps/seedbed/src/ui/design.tsx` | source | component | apps |
 | `apps/seedbed/src/ui/garden-map.tsx` | source | component | apps |
@@ -774,14 +687,15 @@ Prioritized work items derived from analysis:
 | `apps/seedbed/tests/integration/embed.test.tsx` | test |  | tests-seedbed-integration |
 | `apps/seedbed/tests/integration/the-garden-opens-planted.test.ts` | test |  | tests-seedbed-integration |
 | `apps/seedbed/vite.config.ts` | config |  | scripts |
-| `apps/seedbed/vite.site.config.ts` | config |  | apps-spike |
+| `apps/seedbed/vite.site.config.ts` | config |  | apps |
 | `apps/site/design.mjs` | source |  | scripts |
-| `apps/spike/scripts/introspect4.mjs` | build |  | apps-spike |
-| `apps/spike/scripts/run-probe.mjs` | build |  | apps-spike |
-| `apps/spike/scripts/run-restrictions.mjs` | build |  | apps-spike |
-| `apps/spike/scripts/run-spike.mjs` | build |  | apps-spike |
-| `apps/spike/src/main.ts` | source | entrypoint | apps-spike |
-| `apps/spike/src/three-planes.ts` | source |  | apps-spike |
+| `apps/site/releases.mjs` | source | utility | scripts |
+| `apps/spike/scripts/introspect4.mjs` | build |  | apps |
+| `apps/spike/scripts/run-probe.mjs` | build |  | apps |
+| `apps/spike/scripts/run-restrictions.mjs` | build |  | apps |
+| `apps/spike/scripts/run-spike.mjs` | build |  | apps |
+| `apps/spike/src/main.ts` | source | entrypoint | apps |
+| `apps/spike/src/three-planes.ts` | source |  | apps |
 | `apps/spike/vite.config.ts` | config |  | core |
 | `apps/todo/scripts/run-a11y.mjs` | build |  | scripts |
 | `apps/todo/src/domain/app.ts` | source |  | apps |
@@ -790,7 +704,7 @@ Prioritized work items derived from analysis:
 | `apps/todo/src/domain/invariants.ts` | source | types | apps |
 | `apps/todo/src/domain/mutations.ts` | source | service | apps |
 | `apps/todo/src/domain/policy.ts` | source |  | apps |
-| `apps/todo/src/domain/schema.ts` | source |  | apps |
+| `apps/todo/src/domain/schema.ts` | source | schema | apps |
 | `apps/todo/src/index.ts` | source | entrypoint | apps |
 | `apps/todo/src/main.tsx` | source | entrypoint | apps |
 | `apps/todo/src/open.ts` | source | entrypoint | apps |
@@ -804,61 +718,62 @@ Prioritized work items derived from analysis:
 | `apps/todo/tests/integration/who-is-here.test.tsx` | test |  | tests-todo-integration |
 | `apps/todo/vite.config.ts` | config |  | scripts |
 | `packages/core/scripts/write-document-schema.mjs` | build |  | core |
-| `packages/core/src/address.ts` | source | utility | core-document |
-| `packages/core/src/amount-input.ts` | source | utility | amount-input-days |
-| `packages/core/src/answer-seen.ts` | source | utility | core-ops |
-| `packages/core/src/app-places.ts` | source | utility | core-cli |
-| `packages/core/src/app.ts` | source | utility | core-document |
-| `packages/core/src/arrange.ts` | source | utility | core-document |
-| `packages/core/src/arrangement-words.ts` | source | utility | core-document |
-| `packages/core/src/arrangement.ts` | source | utility | core-document |
-| `packages/core/src/arranging.ts` | source | utility | core-document |
-| `packages/core/src/beginning.ts` | source | utility | beginning-beginnings |
-| `packages/core/src/bind.ts` | source | utility | core-ops |
-| `packages/core/src/blocks.ts` | source | utility | core-document |
-| `packages/core/src/capabilities.ts` | source | utility | capabilities-formats |
-| `packages/core/src/capital.ts` | source | utility | core-document |
-| `packages/core/src/check.ts` | source | utility | core-document |
-| `packages/core/src/city.ts` | source | utility | scene |
-| `packages/core/src/cli/check.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/arrangement.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/beginnings.ts` | source | utility | beginning-beginnings |
-| `packages/core/src/cli/check/brand.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/city.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/clock-rules.ts` | source | utility | core-ops |
-| `packages/core/src/cli/check/computed.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/context.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/fact-rules.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/field-sight.ts` | source | utility | core-ops |
-| `packages/core/src/cli/check/fields.ts` | source | utility | core-ops |
-| `packages/core/src/cli/check/hidden-reads.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/index.ts` | source | entrypoint | core-document |
-| `packages/core/src/cli/check/intelligence.ts` | source | utility | core-document |
+| `packages/core/src/address.ts` | source | utility | core |
+| `packages/core/src/amount-input.ts` | source | utility | core |
+| `packages/core/src/answer-seen.ts` | source | utility | core |
+| `packages/core/src/app-places.ts` | source | utility | core |
+| `packages/core/src/app.ts` | source | utility | core |
+| `packages/core/src/arrange.ts` | source | utility | core |
+| `packages/core/src/arrangement-words.ts` | source | utility | core |
+| `packages/core/src/arrangement.ts` | source | utility | core |
+| `packages/core/src/arranging.ts` | source | utility | core |
+| `packages/core/src/beginning.ts` | source | utility | core |
+| `packages/core/src/bind.ts` | source | utility | core |
+| `packages/core/src/blocks.ts` | source | utility | core |
+| `packages/core/src/capabilities.ts` | source | utility | core |
+| `packages/core/src/capital.ts` | source | utility | core |
+| `packages/core/src/catalog.ts` | source | utility | core |
+| `packages/core/src/check.ts` | source | utility | core |
+| `packages/core/src/city.ts` | source | utility | core |
+| `packages/core/src/cli/check.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/arrangement.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/beginnings.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/brand.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/city.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/clock-rules.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/computed.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/context.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/fact-rules.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/field-sight.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/fields.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/hidden-reads.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/index.ts` | source | entrypoint | core-cli |
+| `packages/core/src/cli/check/intelligence.ts` | source | utility | core-cli |
 | `packages/core/src/cli/check/lenses.ts` | source | utility | core-cli |
-| `packages/core/src/cli/check/migrations.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/modules.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/people.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/policy.ts` | source | utility | core-ops |
-| `packages/core/src/cli/check/relations.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/routes.ts` | source | route-handler | core-document |
-| `packages/core/src/cli/check/settings.ts` | source | utility | core-document |
-| `packages/core/src/cli/check/views.ts` | source | utility | cli |
-| `packages/core/src/cli/create.ts` | source | utility | core-scaffold |
-| `packages/core/src/cli/describe.ts` | source | utility | core-document |
-| `packages/core/src/cli/docs.ts` | source | utility | core-document |
-| `packages/core/src/cli/doctor.ts` | source | utility | core-document |
-| `packages/core/src/cli/document-schema.ts` | source | utility | cli |
-| `packages/core/src/cli/index.ts` | source | entrypoint | core-document |
-| `packages/core/src/cli/types.ts` | source | types | core-document |
-| `packages/core/src/clock-readers.ts` | source | utility | core-document |
-| `packages/core/src/clock.ts` | source | utility | core-ops |
-| `packages/core/src/columns.ts` | source | utility | core-ops |
-| `packages/core/src/compiled.ts` | source | utility | core-ops |
-| `packages/core/src/conformance/fixtures.ts` | source | utility | core-document |
-| `packages/core/src/conformance/index.ts` | source | entrypoint | core-document |
-| `packages/core/src/coverage-words.ts` | source | utility | core-document |
-| `packages/core/src/days.ts` | source | utility | amount-input-days |
-| `packages/core/src/describe.ts` | source | utility | core-ops |
+| `packages/core/src/cli/check/migrations.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/modules.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/people.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/policy.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/relations.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/routes.ts` | source | route-handler | core-cli |
+| `packages/core/src/cli/check/settings.ts` | source | utility | core-cli |
+| `packages/core/src/cli/check/views.ts` | source | utility | core-cli |
+| `packages/core/src/cli/create.ts` | source | utility | core-cli |
+| `packages/core/src/cli/describe.ts` | source | utility | core-cli |
+| `packages/core/src/cli/docs.ts` | source | utility | core-cli |
+| `packages/core/src/cli/doctor.ts` | source | utility | core-cli |
+| `packages/core/src/cli/document-schema.ts` | source | utility | core-cli |
+| `packages/core/src/cli/index.ts` | source | entrypoint | core-cli |
+| `packages/core/src/cli/types.ts` | source | types | core-cli |
+| `packages/core/src/clock-readers.ts` | source | utility | core |
+| `packages/core/src/clock.ts` | source | utility | core |
+| `packages/core/src/columns.ts` | source | utility | core |
+| `packages/core/src/compiled.ts` | source | utility | core |
+| `packages/core/src/conformance/fixtures.ts` | source | utility | core |
+| `packages/core/src/conformance/index.ts` | source | entrypoint | core |
+| `packages/core/src/coverage-words.ts` | source | utility | core |
+| `packages/core/src/days.ts` | source | utility | core |
+| `packages/core/src/describe.ts` | source | utility | core |
 | `packages/core/src/document/act-findings.ts` | source | utility | core-document |
 | `packages/core/src/document/amount.ts` | source | utility | core-document |
 | `packages/core/src/document/block-context.ts` | source | utility | core-document |
@@ -868,23 +783,26 @@ Prioritized work items derived from analysis:
 | `packages/core/src/document/canonical.ts` | source | utility | core-document |
 | `packages/core/src/document/compile-checked.ts` | source | utility | core-document |
 | `packages/core/src/document/compile.ts` | source | utility | core-document |
-| `packages/core/src/document/compiled.ts` | source | utility | core-ops |
-| `packages/core/src/document/computed-values.ts` | source | utility | core-ops |
+| `packages/core/src/document/compiled.ts` | source | utility | core-document |
+| `packages/core/src/document/computed-values.ts` | source | utility | core-document |
 | `packages/core/src/document/computed.ts` | source | utility | core-document |
+| `packages/core/src/document/connection-findings.ts` | source | utility | core-document |
+| `packages/core/src/document/connection-spec.ts` | source | utility | core-document |
 | `packages/core/src/document/describe-coverage.ts` | source | utility | core-document |
 | `packages/core/src/document/describe-place.ts` | source | utility | core-document |
+| `packages/core/src/document/described.ts` | source | utility | core-document |
 | `packages/core/src/document/diff.ts` | source | utility | core-document |
 | `packages/core/src/document/durations.ts` | source | utility | core-document |
 | `packages/core/src/document/edit.ts` | source | utility | core-document |
 | `packages/core/src/document/expr/analyze.ts` | source | utility | core-document |
-| `packages/core/src/document/expr/evaluate.ts` | source | utility | core-ops |
+| `packages/core/src/document/expr/evaluate.ts` | source | utility | core-document |
 | `packages/core/src/document/expr/index.ts` | source | entrypoint | core-document |
 | `packages/core/src/document/expr/parse.ts` | source | utility | core-document |
 | `packages/core/src/document/expr/print.ts` | source | utility | core-document |
-| `packages/core/src/document/fact-values.ts` | source | utility | core-ops |
+| `packages/core/src/document/fact-values.ts` | source | utility | core-document |
 | `packages/core/src/document/facts-and-roles.ts` | source | utility | core-document |
 | `packages/core/src/document/far-end.ts` | source | utility | core-document |
-| `packages/core/src/document/field-spec.ts` | source | utility | core-schema |
+| `packages/core/src/document/field-spec.ts` | source | utility | core-document |
 | `packages/core/src/document/findings.ts` | source | utility | core-document |
 | `packages/core/src/document/format-findings.ts` | source | utility | core-document |
 | `packages/core/src/document/format-rules.ts` | source | utility | core-document |
@@ -894,6 +812,7 @@ Prioritized work items derived from analysis:
 | `packages/core/src/document/index.ts` | source | entrypoint | core-document |
 | `packages/core/src/document/instantiate-template.ts` | source | utility | core-document |
 | `packages/core/src/document/linked-findings.ts` | source | utility | core-document |
+| `packages/core/src/document/linked-relation-findings.ts` | source | utility | core-document |
 | `packages/core/src/document/migrate.ts` | source | utility | core-document |
 | `packages/core/src/document/money.ts` | source | utility | core-document |
 | `packages/core/src/document/page-fields.ts` | source | utility | core-document |
@@ -907,93 +826,94 @@ Prioritized work items derived from analysis:
 | `packages/core/src/document/right-names.ts` | source | utility | core-document |
 | `packages/core/src/document/rule-line.ts` | source | utility | core-document |
 | `packages/core/src/document/rule-reads.ts` | source | utility | core-document |
-| `packages/core/src/document/rules.ts` | source | utility | core-ops |
+| `packages/core/src/document/rules.ts` | source | utility | core-document |
 | `packages/core/src/document/schema.ts` | source | utility | core-document |
 | `packages/core/src/document/template-parse.ts` | source | utility | core-document |
 | `packages/core/src/document/template.ts` | source | utility | core-document |
-| `packages/core/src/document/thumbnail.ts` | source | utility | scene |
+| `packages/core/src/document/thumbnail.ts` | source | utility | core-document |
 | `packages/core/src/document/to-document.ts` | source | utility | core-document |
 | `packages/core/src/document/upgrade.ts` | source | utility | core-document |
-| `packages/core/src/document/view-specs.ts` | source | utility | cli |
-| `packages/core/src/document/views.ts` | source | utility | cli |
-| `packages/core/src/excerpt-of.ts` | source | utility | core-document |
-| `packages/core/src/excerpt.ts` | source | utility | core-document |
-| `packages/core/src/extend.ts` | source | utility | core-ops |
-| `packages/core/src/field-sight.ts` | source | utility | core-ops |
-| `packages/core/src/figures.ts` | source | utility | core-document |
-| `packages/core/src/formats.ts` | source | utility | capabilities-formats |
-| `packages/core/src/forms.ts` | source | utility | core-document |
-| `packages/core/src/graph/archived.ts` | source | utility | core-ops |
-| `packages/core/src/graph/diff.ts` | source | utility | core-ops |
-| `packages/core/src/graph/graph.ts` | source | utility | core-ops |
-| `packages/core/src/graph/primitives.ts` | source | utility | core-ops |
-| `packages/core/src/graph/tracked.ts` | source | utility | core-ops |
-| `packages/core/src/graph/types.ts` | source | types | core-ops |
-| `packages/core/src/grid-sort.ts` | source | utility | core-document |
-| `packages/core/src/history.ts` | source | utility | core-document |
-| `packages/core/src/import/coerce.ts` | source | utility | core-ops |
-| `packages/core/src/import/csv.ts` | source | utility | core-ops |
-| `packages/core/src/import/index.ts` | source | entrypoint | core-ops |
-| `packages/core/src/import/mapping.ts` | source | utility | core-ops |
-| `packages/core/src/import/rows.ts` | source | utility | core-ops |
-| `packages/core/src/index.ts` | source | entrypoint | core-document |
-| `packages/core/src/installation.ts` | source | utility | core-document |
-| `packages/core/src/integrity.ts` | source | utility | core-ops |
-| `packages/core/src/intelligence-bridge.ts` | source | utility | core-document |
-| `packages/core/src/invariants/broken.ts` | source | utility | core-document |
-| `packages/core/src/invariants/engine.ts` | source | utility | core-ops |
-| `packages/core/src/invariants/line.ts` | source | utility | core-document |
-| `packages/core/src/invariants/types.ts` | source | types | core-ops |
-| `packages/core/src/json-schema.ts` | source | utility | schema |
-| `packages/core/src/kind-list.ts` | source | utility | core-document |
-| `packages/core/src/labels.ts` | source | utility | core-ops |
-| `packages/core/src/lines.ts` | source | utility | core-document |
-| `packages/core/src/linked.ts` | source | utility | core-ops |
+| `packages/core/src/document/view-specs.ts` | source | utility | core-document |
+| `packages/core/src/document/views.ts` | source | utility | core-document |
+| `packages/core/src/excerpt-of.ts` | source | utility | core |
+| `packages/core/src/excerpt.ts` | source | utility | core |
+| `packages/core/src/extend.ts` | source | utility | core |
+| `packages/core/src/field-sight.ts` | source | utility | core |
+| `packages/core/src/figures.ts` | source | utility | core |
+| `packages/core/src/formats.ts` | source | utility | core |
+| `packages/core/src/forms.ts` | source | utility | core |
+| `packages/core/src/graph/archived.ts` | source | utility | core-graph |
+| `packages/core/src/graph/diff.ts` | source | utility | core-graph |
+| `packages/core/src/graph/graph.ts` | source | utility | core-graph |
+| `packages/core/src/graph/primitives.ts` | source | utility | core-graph |
+| `packages/core/src/graph/tracked.ts` | source | utility | core-graph |
+| `packages/core/src/graph/types.ts` | source | types | core-graph |
+| `packages/core/src/grid-sort.ts` | source | utility | core |
+| `packages/core/src/history.ts` | source | utility | core |
+| `packages/core/src/import/coerce.ts` | source | utility | core |
+| `packages/core/src/import/csv.ts` | source | utility | core |
+| `packages/core/src/import/index.ts` | source | entrypoint | core |
+| `packages/core/src/import/mapping.ts` | source | utility | core |
+| `packages/core/src/import/rows.ts` | source | utility | core |
+| `packages/core/src/index.ts` | source | entrypoint | core |
+| `packages/core/src/installation.ts` | source | utility | core |
+| `packages/core/src/integrity.ts` | source | utility | core |
+| `packages/core/src/intelligence-bridge.ts` | source | utility | core |
+| `packages/core/src/invariants/broken.ts` | source | utility | core-invariants |
+| `packages/core/src/invariants/engine.ts` | source | utility | core-invariants |
+| `packages/core/src/invariants/line.ts` | source | utility | core-invariants |
+| `packages/core/src/invariants/types.ts` | source | types | core-invariants |
+| `packages/core/src/json-schema.ts` | source | utility | core |
+| `packages/core/src/kind-list.ts` | source | utility | core |
+| `packages/core/src/labels.ts` | source | utility | core |
+| `packages/core/src/lines.ts` | source | utility | core |
+| `packages/core/src/linked.ts` | source | utility | core |
 | `packages/core/src/markdown.ts` | source | utility | core |
-| `packages/core/src/modules.ts` | source | utility | core-ops |
-| `packages/core/src/mutations/arg-shape.ts` | source | utility | core-document |
-| `packages/core/src/mutations/decidable.ts` | source | utility | core-document |
-| `packages/core/src/mutations/define-mutation.ts` | source | utility | core-ops |
-| `packages/core/src/mutations/derive-edits.ts` | source | utility | core-ops |
+| `packages/core/src/modules.ts` | source | utility | core |
+| `packages/core/src/mutations/arg-shape.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/decidable.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/define-mutation.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/derive-edits.ts` | source | utility | core-mutations |
 | `packages/core/src/mutations/derive-repeats.ts` | source | utility | core-mutations |
-| `packages/core/src/mutations/derived-names.ts` | source | utility | core-document |
-| `packages/core/src/mutations/edit-start.ts` | source | utility | core-document |
-| `packages/core/src/mutations/form.ts` | source | utility | core-document |
-| `packages/core/src/mutations/invalid-arguments.ts` | source | utility | core-ops |
-| `packages/core/src/mutations/keep-link.ts` | source | utility | core-ops |
-| `packages/core/src/mutations/kept-arguments.ts` | source | utility | core-ops |
-| `packages/core/src/mutations/node-ref.ts` | source | utility | core-document |
-| `packages/core/src/mutations/types.ts` | source | types | core-ops |
-| `packages/core/src/mutations/words.ts` | source | utility | core-document |
+| `packages/core/src/mutations/derived-names.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/edit-start.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/form.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/invalid-arguments.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/keep-link.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/kept-arguments.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/node-ref.ts` | source | utility | core-mutations |
+| `packages/core/src/mutations/types.ts` | source | types | core-mutations |
+| `packages/core/src/mutations/words.ts` | source | utility | core-mutations |
 | `packages/core/src/navigate.ts` | source | utility | core |
-| `packages/core/src/ops/digest.ts` | source | utility | core-document |
+| `packages/core/src/ops/digest.ts` | source | utility | core-ops |
 | `packages/core/src/ops/kept-fields.ts` | source | utility | core-ops |
 | `packages/core/src/ops/lineage.ts` | source | utility | core-ops |
-| `packages/core/src/ops/log.ts` | source | utility | core-document |
-| `packages/core/src/ops/provenance.ts` | source | utility | core-document |
-| `packages/core/src/ops/revisions.ts` | source | utility | core-document |
+| `packages/core/src/ops/log.ts` | source | utility | core-ops |
+| `packages/core/src/ops/provenance.ts` | source | utility | core-ops |
+| `packages/core/src/ops/revisions.ts` | source | utility | core-ops |
 | `packages/core/src/ops/served.ts` | source | utility | core-ops |
 | `packages/core/src/ops/suggestions.ts` | source | utility | core-ops |
 | `packages/core/src/ops/tidying.ts` | source | utility | core-ops |
-| `packages/core/src/ops/types.ts` | source | types | core-document |
+| `packages/core/src/ops/types.ts` | source | types | core-ops |
 | `packages/core/src/ops/undo.ts` | source | utility | core-ops |
 | `packages/core/src/ops/withheld.ts` | source | utility | core-ops |
 | `packages/core/src/ops/writers.ts` | source | utility | core-ops |
-| `packages/core/src/past.ts` | source | utility | core-ops |
-| `packages/core/src/permissions/policy.ts` | source | utility | core-ops |
-| `packages/core/src/permissions/sight.ts` | source | utility | core-ops |
-| `packages/core/src/permissions/types.ts` | source | types | core-ops |
-| `packages/core/src/persistence/memory.ts` | source | utility | core-document |
-| `packages/core/src/persistence/sql.ts` | source | utility | core-document |
-| `packages/core/src/persistence/sqlite.ts` | source | utility | core-document |
-| `packages/core/src/persistence/types.ts` | source | types | core-document |
-| `packages/core/src/places.ts` | source | utility | core-cli |
-| `packages/core/src/presence.ts` | source | utility | core-document |
-| `packages/core/src/provenance.ts` | source | utility | core-document |
-| `packages/core/src/refusal.ts` | source | utility | core-ops |
-| `packages/core/src/refused.ts` | source | utility | core-ops |
-| `packages/core/src/repeat-words.ts` | source | utility | amount-input-days |
-| `packages/core/src/repeat.ts` | source | utility | core-mutations |
+| `packages/core/src/past.ts` | source | utility | core |
+| `packages/core/src/permissions/policy.ts` | source | utility | core |
+| `packages/core/src/permissions/sight.ts` | source | utility | core |
+| `packages/core/src/permissions/sign-in.ts` | source | utility | core |
+| `packages/core/src/permissions/types.ts` | source | types | core |
+| `packages/core/src/persistence/memory.ts` | source | utility | core |
+| `packages/core/src/persistence/sql.ts` | source | utility | core |
+| `packages/core/src/persistence/sqlite.ts` | source | utility | core |
+| `packages/core/src/persistence/types.ts` | source | types | core |
+| `packages/core/src/places.ts` | source | utility | core |
+| `packages/core/src/presence.ts` | source | utility | core |
+| `packages/core/src/provenance.ts` | source | utility | core |
+| `packages/core/src/refusal.ts` | source | utility | core |
+| `packages/core/src/refused.ts` | source | utility | core |
+| `packages/core/src/repeat-words.ts` | source | utility | core |
+| `packages/core/src/repeat.ts` | source | utility | core |
 | `packages/core/src/retry.ts` | source | utility | core |
 | `packages/core/src/scaffold/agents.ts` | source | utility | core-scaffold |
 | `packages/core/src/scaffold/domain.ts` | source | utility | core-scaffold |
@@ -1003,35 +923,84 @@ Prioritized work items derived from analysis:
 | `packages/core/src/scaffold/names.ts` | source | utility | core-scaffold |
 | `packages/core/src/scaffold/project.ts` | source | utility | core-scaffold |
 | `packages/core/src/scaffold/ui.ts` | source | utility | core-scaffold |
-| `packages/core/src/scene-districts.ts` | source | utility | scene |
-| `packages/core/src/scene.ts` | source | utility | scene |
-| `packages/core/src/schema/amount-mark.ts` | source | utility | core-document |
-| `packages/core/src/schema/amount-words.ts` | source | utility | core-document |
-| `packages/core/src/schema/app-address.ts` | source | utility | link |
-| `packages/core/src/schema/app-link-field.ts` | source | utility | link |
-| `packages/core/src/schema/app-link.ts` | source | utility | link |
-| `packages/core/src/schema/define-node.ts` | source | utility | core-document |
-| `packages/core/src/schema/field-words.ts` | source | utility | field |
-| `packages/core/src/schema/figures.ts` | source | utility | core-document |
+| `packages/core/src/scene-districts.ts` | source | utility | core |
+| `packages/core/src/scene.ts` | source | utility | core |
+| `packages/core/src/schema/amount-mark.ts` | source | utility | core-schema |
+| `packages/core/src/schema/amount-words.ts` | source | utility | core-schema |
+| `packages/core/src/schema/app-address.ts` | source | utility | core-schema |
+| `packages/core/src/schema/app-link-field.ts` | source | utility | core-schema |
+| `packages/core/src/schema/app-link.ts` | source | utility | core-schema |
+| `packages/core/src/schema/define-node.ts` | source | utility | core-schema |
+| `packages/core/src/schema/field-words.ts` | source | utility | core-schema |
+| `packages/core/src/schema/figures.ts` | source | utility | core-schema |
 | `packages/core/src/schema/file-field.ts` | source | utility | core-schema |
 | `packages/core/src/schema/file-fields.ts` | source | utility | core-schema |
 | `packages/core/src/schema/files.ts` | source | utility | core-schema |
-| `packages/core/src/schema/json-schema.ts` | source | utility | schema |
-| `packages/core/src/schema/linked-field.ts` | source | utility | core-ops |
-| `packages/core/src/schema/linked-reads.ts` | source | utility | core-ops |
-| `packages/core/src/schema/linked-schema.ts` | source | utility | core-ops |
-| `packages/core/src/schema/linked.ts` | source | utility | core-ops |
-| `packages/core/src/schema/markdown-field.ts` | source | utility | core-document |
-| `packages/core/src/schema/markdown.ts` | source | utility | core-document |
-| `packages/core/src/schema/path.ts` | source | utility | core-cli |
-| `packages/core/src/schema/reading.ts` | source | utility | core-document |
-| `packages/core/src/schema/repeat-field.ts` | source | utility | core-mutations |
-| `packages/core/src/schema/schema.ts` | source | utility | core-ops |
-| `packages/core/src/schema/to-json-schema.ts` | source | utility | schema |
-| `packages/core/src/schema/typed-field-builders.ts` | source | utility | field |
-| `packages/core/src/schema/typed-field-of.ts` | source | utility | field |
-| `packages/core/src/schema/typed-fields.ts` | source | utility | field |
-| `packages/core/src/schema/types.ts` | source | types | core-document |
-| `packages/core/src/schema/value-words.ts` | source | utility | core-document |
+| `packages/core/src/schema/json-schema.ts` | source | utility | core-schema |
+| `packages/core/src/schema/linked-field.ts` | source | utility | core-schema |
+| `packages/core/src/schema/linked-reads.ts` | source | utility | core-schema |
+| `packages/core/src/schema/linked-schema.ts` | source | utility | core-schema |
+| `packages/core/src/schema/linked.ts` | source | utility | core-schema |
+| `packages/core/src/schema/markdown-field.ts` | source | utility | core-schema |
+| `packages/core/src/schema/markdown.ts` | source | utility | core-schema |
+| `packages/core/src/schema/path.ts` | source | utility | core-schema |
+| `packages/core/src/schema/reading.ts` | source | utility | core-schema |
+| `packages/core/src/schema/repeat-field.ts` | source | utility | core-schema |
+| `packages/core/src/schema/schema.ts` | source | utility | core-schema |
+| `packages/core/src/schema/to-json-schema.ts` | source | utility | core-schema |
+| `packages/core/src/schema/typed-field-builders.ts` | source | utility | core-schema |
+| `packages/core/src/schema/typed-field-of.ts` | source | utility | core-schema |
+| `packages/core/src/schema/typed-fields.ts` | source | utility | core-schema |
+| `packages/core/src/schema/types.ts` | source | types | core-schema |
+| `packages/core/src/schema/value-words.ts` | source | utility | core-schema |
+| `packages/core/src/schema/zod.ts` | source | utility | core-schema |
+| `packages/core/src/search.ts` | source | utility | core |
+| `packages/core/src/seat-of.ts` | source | utility | core |
+| `packages/core/src/seat.ts` | source | utility | core |
+| `packages/core/src/seen.ts` | source | utility | core |
+| `packages/core/src/settings.ts` | source | utility | core |
+| `packages/core/src/snapshot.ts` | source | utility | core |
+| `packages/core/src/store.ts` | source | utility | core |
+| `packages/core/src/studio-door.ts` | source | utility | core |
+| `packages/core/src/subscription-shape.ts` | source | utility | core |
+| `packages/core/src/subscriptions.ts` | source | utility | core |
+| `packages/core/src/sync/conflict.ts` | source | utility | core-sync |
+| `packages/core/src/sync/connection-filter.ts` | source | utility | core-sync |
+| `packages/core/src/sync/connection.ts` | source | utility | core-sync |
+| `packages/core/src/sync/engine.ts` | source | utility | core-sync |
+| `packages/core/src/sync/google-calendar.ts` | source | utility | core-sync |
+| `packages/core/src/sync/index.ts` | source | entrypoint | core-sync |
+| `packages/core/src/sync/mcp.ts` | source | utility | core-sync |
+| `packages/core/src/sync/types.ts` | source | types | core-sync |
+| `packages/core/src/temporal/effectivity.ts` | source | utility | core |
+| `packages/core/src/testing.ts` | source | utility | core |
+| `packages/core/src/theme/accent.ts` | source | utility | core-theme |
+| `packages/core/src/theme/contrast.ts` | source | utility | core-theme |
+| `packages/core/src/theme/derive.ts` | source | utility | core-theme |
+| `packages/core/src/theme/fonts.ts` | source | utility | core-theme |
+| `packages/core/src/theme/identity.ts` | source | utility | core-theme |
+| `packages/core/src/theme/kit.ts` | source | utility | core-theme |
+| `packages/core/src/theme/layers.ts` | source | utility | core-theme |
+| `packages/core/src/theme/look.ts` | source | utility | core-theme |
+| `packages/core/src/theme/marks.ts` | source | utility | core-theme |
+| `packages/core/src/theme/palettes.ts` | source | utility | core-theme |
+| `packages/core/src/theme/types.ts` | source | types | core-theme |
+| `packages/core/src/tidying.ts` | source | utility | core |
+| `packages/core/src/typed.ts` | source | utility | core |
+| `packages/core/src/validate-graph.ts` | source | utility | core |
+| `packages/core/src/version.ts` | source | utility | core |
+| `packages/core/src/via.ts` | source | utility | core |
+| `packages/core/src/views/address.ts` | source | utility | core |
+| `packages/core/src/views/types.ts` | source | types | core |
+| `packages/core/src/village.ts` | source | utility | core |
+| `packages/core/src/wall-time.ts` | source | utility | core |
+| `packages/core/src/watched.ts` | source | utility | core |
+| `packages/core/src/when-typed.ts` | source | utility | core |
+| `packages/core/src/who.ts` | source | utility | core |
+| `packages/core/src/words.ts` | source | utility | core |
+| `packages/core/tests/document/a-compiled-app-handed-wrong-is-compiled-instead.test.ts` | test |  | tests-core-document |
+| `packages/core/tests/document/a-compiled-document-is-read-like-a-declared-one.test.ts` | test |  | tests-core-document |
+| `packages/core/tests/document/a-connect-that-replaces-replaces.test.ts` | test |  | tests-core-document |
+| `packages/core/tests/document/a-contrast-refusal-names-the-pair.test.ts` | test |  | tests-core-document |
 
-_1401 of 1801 files not listed (table capped at 400 rows). Use the sourcevision `search_files` or `get_file_info` tools for the rest._
+_1444 of 1844 files not listed (table capped at 400 rows). Use the sourcevision `search_files` or `get_file_info` tools for the rest._

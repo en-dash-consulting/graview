@@ -1,7 +1,7 @@
 {
   "id": "tests-guest-unit",
   "name": "Tests Guest Unit",
-  "description": "43 files, primarily TypeScript",
+  "description": "Non-source files in packages: a-filter-asked-in-code-is-held-to-the-kind.test.ts, a-frame-guest-follows-the-apps-theme.test.ts, a-frame-guest-reads-across-kinds.test.tsx (+42 more)",
   "files": [
     "packages/guest/tests/unit/a-filter-asked-in-code-is-held-to-the-kind.test.ts",
     "packages/guest/tests/unit/a-frame-guest-follows-the-apps-theme.test.ts",
@@ -24,6 +24,8 @@
     "packages/guest/tests/unit/a-view-of-one-sits-beside-the-records-own-fields.test.tsx",
     "packages/guest/tests/unit/a-view-prefills-only-what-the-seat-may-write.test.ts",
     "packages/guest/tests/unit/a-view-shows-an-https-image-from-an-origin-its-host-lists.test.ts",
+    "packages/guest/tests/unit/a-view-the-framework-mounts-fetches-files-where-the-host-serves-them.test.tsx",
+    "packages/guest/tests/unit/a-view-with-pictures-gets-each-image-fields-src.test.ts",
     "packages/guest/tests/unit/a-views-css-keeps-nothing-that-fetches.test.ts",
     "packages/guest/tests/unit/a-views-event-names-the-element-it-matched.test.ts",
     "packages/guest/tests/unit/a-views-navigate-takes-only-a-string.test.ts",
@@ -50,8 +52,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 43,
-  "lineCount": 5668,
+  "fileCount": 45,
+  "lineCount": 5911,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

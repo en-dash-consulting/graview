@@ -1,0 +1,27 @@
+{
+  "id": "primitives/src-lens/src-2",
+  "name": "Src 2",
+  "description": "7 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/declared-lens-doors.tsx",
+    "packages/primitives/src/declared-views.ts",
+    "packages/primitives/src/draft-door.tsx",
+    "packages/primitives/src/draft-frame.tsx",
+    "packages/primitives/src/lens-keeping.ts",
+    "packages/primitives/src/reader-lenses.ts",
+    "packages/primitives/src/seat-move.ts"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/declared-lens-doors.tsx",
+    "packages/primitives/src/declared-views.ts",
+    "packages/primitives/src/draft-door.tsx",
+    "packages/primitives/src/draft-frame.tsx",
+    "packages/primitives/src/lens-keeping.ts",
+    "packages/primitives/src/reader-lenses.ts",
+    "packages/primitives/src/seat-move.ts"
+  ],
+  "cohesion": 0.41,
+  "coupling": 0.59,
+  "fileCount": 7,
+  "lineCount": 615
+}

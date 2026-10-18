@@ -1,23 +1,35 @@
 {
   "id": "tools/src",
   "name": "Src",
-  "description": "5 files, primarily TypeScript",
+  "description": "11 files, primarily TypeScript",
   "files": [
     "packages/tools/src/ai.ts",
+    "packages/tools/src/decide.ts",
     "packages/tools/src/dev-ai.ts",
     "packages/tools/src/frame.ts",
-    "packages/tools/src/local.ts",
+    "packages/tools/src/inline-ai.ts",
+    "packages/tools/src/loop.ts",
+    "packages/tools/src/plan.ts",
+    "packages/tools/src/providers/jev.ts",
+    "packages/tools/src/questions.ts",
+    "packages/tools/src/run.ts",
     "packages/tools/src/turn.ts"
   ],
   "entryPoints": [
     "packages/tools/src/ai.ts",
+    "packages/tools/src/decide.ts",
     "packages/tools/src/dev-ai.ts",
     "packages/tools/src/frame.ts",
-    "packages/tools/src/local.ts",
+    "packages/tools/src/inline-ai.ts",
+    "packages/tools/src/loop.ts",
+    "packages/tools/src/plan.ts",
+    "packages/tools/src/providers/jev.ts",
+    "packages/tools/src/questions.ts",
+    "packages/tools/src/run.ts",
     "packages/tools/src/turn.ts"
   ],
-  "cohesion": 0.42,
-  "coupling": 0.58,
-  "fileCount": 5,
-  "lineCount": 650
+  "cohesion": 0.58,
+  "coupling": 0.42,
+  "fileCount": 11,
+  "lineCount": 3212
 }

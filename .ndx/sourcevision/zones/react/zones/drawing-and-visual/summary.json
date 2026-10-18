@@ -1,0 +1,26 @@
+{
+  "id": "react/drawing-and-visual",
+  "name": "Drawing And Visual Emphasis",
+  "description": "7 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/drawing.ts",
+    "packages/react/src/drawn.ts",
+    "packages/react/src/editable-fields.ts",
+    "packages/react/src/emphasis.ts",
+    "packages/react/src/last-visit.ts",
+    "packages/react/src/placement.ts",
+    "packages/react/src/plots.tsx"
+  ],
+  "entryPoints": [
+    "packages/react/src/drawing.ts",
+    "packages/react/src/drawn.ts",
+    "packages/react/src/editable-fields.ts",
+    "packages/react/src/emphasis.ts",
+    "packages/react/src/placement.ts",
+    "packages/react/src/plots.tsx"
+  ],
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 7,
+  "lineCount": 928
+}

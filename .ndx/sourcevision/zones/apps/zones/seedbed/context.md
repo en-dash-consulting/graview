@@ -5,20 +5,15 @@
 <zone>
 
 Zone: Seedbed (`apps/seedbed`)
-Files: 21, Cohesion: 0.95, Coupling: 0.05
-Description: 21 files, primarily TypeScript
-Entry points: apps/promo/src/videos/scuba/ProposalCloud.tsx, apps/promo/src/videos/scuba/ProposalV2.tsx, apps/promo/src/videos/scuba/Template.tsx, apps/promo/src/videos/scuba/stories.tsx, apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/example.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/open.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx
-Lines: 5107
+Files: 16, Cohesion: 1.00, Coupling: 0.00
+Description: 16 files, primarily TypeScript
+Entry points: apps/seedbed/src/domain/app.ts, apps/seedbed/src/domain/chapters.ts, apps/seedbed/src/domain/example.ts, apps/seedbed/src/domain/schema.ts, apps/seedbed/src/open.ts, apps/seedbed/src/ui/app.tsx, apps/seedbed/src/ui/design.tsx, apps/seedbed/src/ui/pages.tsx, apps/seedbed/src/ui/views.tsx
+Lines: 3599
 
 </zone>
 
 <files>
 
-apps/promo/src/videos/scuba/ProposalCloud.tsx (TypeScript, 446 lines, source)
-apps/promo/src/videos/scuba/ProposalV2.tsx (TypeScript, 446 lines, source)
-apps/promo/src/videos/scuba/Template.tsx (TypeScript, 387 lines, source)
-apps/promo/src/videos/scuba/kit.tsx (TypeScript, 82 lines, source)
-apps/promo/src/videos/scuba/stories.tsx (TypeScript, 147 lines, source)
 apps/seedbed/src/domain/app.ts (TypeScript, 90 lines, source)
 apps/seedbed/src/domain/brand.ts (TypeScript, 39 lines, source)
 apps/seedbed/src/domain/chapters.ts (TypeScript, 764 lines, source)
@@ -41,11 +36,6 @@ apps/seedbed/src/ui/views.tsx (TypeScript, 183 lines, source)
 <imports>
 
 Internal:
-  apps/promo/src/videos/scuba/ProposalCloud.tsx → apps/promo/src/videos/scuba/kit.tsx {c, W, H, F, cl, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon}
-  apps/promo/src/videos/scuba/ProposalV2.tsx → apps/promo/src/videos/scuba/kit.tsx {c, font, W, H, F, cl, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon}
-  apps/promo/src/videos/scuba/Template.tsx → apps/promo/src/videos/scuba/kit.tsx {c, font, W, H, F, cl, eo, eio, tw, lerp, pop, shadow, serif, sans, mono, HL, HLWrap, Spark, Ic, icon, IconKey}
-  apps/promo/src/videos/scuba/stories.tsx → apps/promo/src/videos/scuba/Template.tsx {Story}
-  apps/promo/src/videos/scuba/stories.tsx → apps/promo/src/videos/scuba/kit.tsx {c, sans, HL, Ic, icon, Avatar, Label, Row, Banner, AppHeader, lerp, tw}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/brand.ts {seedbedBrand}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/invariants.ts {seedbedInvariants}
   apps/seedbed/src/domain/app.ts → apps/seedbed/src/domain/mutations.ts {seedbedMutations}

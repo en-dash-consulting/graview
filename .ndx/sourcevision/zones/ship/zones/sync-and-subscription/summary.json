@@ -1,0 +1,25 @@
+{
+  "id": "ship/sync-and-subscription",
+  "name": "Sync And Subscription Manager",
+  "description": "7 files, primarily TypeScript",
+  "files": [
+    "packages/ship/src/cli.ts",
+    "packages/ship/src/connections-file.ts",
+    "packages/ship/src/connections.ts",
+    "packages/ship/src/file-subscriptions.ts",
+    "packages/ship/src/index.ts",
+    "packages/ship/src/shots.ts",
+    "packages/ship/src/store-hold.ts"
+  ],
+  "entryPoints": [
+    "packages/ship/src/cli.ts",
+    "packages/ship/src/connections-file.ts",
+    "packages/ship/src/connections.ts",
+    "packages/ship/src/index.ts",
+    "packages/ship/src/shots.ts"
+  ],
+  "cohesion": 0.4,
+  "coupling": 0.6,
+  "fileCount": 7,
+  "lineCount": 1169
+}

@@ -1,9 +1,27 @@
-import type { Epoch } from "../ops/log.js";
+import type { GraphEdge } from "../graph/types.js";
+import type { Epoch, LogReading } from "../ops/log.js";
 import type { Operation } from "../ops/types.js";
 import { actingAs, grantsTo, isSystem } from "./policy.js";
 import type { SeatLens } from "../ops/withheld.js";
-import type { Judged } from "../seen.js";
 import type { Policy, Principal, Sight } from "./types.js";
+
+/** What a store reads to judge a seat's sight: its policy, its graph and its log. */
+export interface Judged {
+  readonly policy: Policy | undefined;
+  readonly graph: {
+    getNode(id: string): { readonly id: string; readonly kind: string } | undefined;
+    out(id: string): readonly { readonly id: string }[];
+    in(id: string): readonly { readonly id: string }[];
+    /** A store's own graph says its links, so an op can be judged where it stood (FR-55). */
+    outEdges?(id: string): readonly GraphEdge[];
+    inEdges?(id: string): readonly GraphEdge[];
+  };
+  readonly log: LogReading;
+  /** The kinds of the modules this workspace has off (FR-12), kept from every seat as a sight keeps a record. */
+  readonly modules?: { readonly disabledKinds: ReadonlySet<string> };
+  /** The declaration, to say which of a kind's fields a record may be served without (FR-55). */
+  readonly schema?: { tryDefinition(kind: string): { readonly fields: unknown } | undefined };
+}
 
 /** Which fields of a record a seat may not see: a test of a field, or undefined when it sees them all. */
 export type FieldsKept = (node: { readonly id: string; readonly kind: string }) => ((field: string) => boolean) | undefined;

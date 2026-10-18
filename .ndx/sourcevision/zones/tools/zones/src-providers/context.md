@@ -5,45 +5,36 @@
 <zone>
 
 Zone: Src Providers (`tools/src-providers`)
-Files: 7, Cohesion: 0.54, Coupling: 0.46
-Description: 7 files, primarily TypeScript
-Entry points: packages/tools/src/cli.ts, packages/tools/src/decide.ts, packages/tools/src/loop.ts, packages/tools/src/plan.ts, packages/tools/src/providers/jev.ts, packages/tools/src/questions.ts, packages/tools/src/run.ts
-Lines: 2596
+Files: 6, Cohesion: 0.24, Coupling: 0.76
+Description: 6 files, primarily TypeScript
+Entry points: packages/tools/src/edit.ts, packages/tools/src/index.ts, packages/tools/src/pins.ts
+Lines: 587
 
 </zone>
 
 <files>
 
-packages/tools/src/cli.ts (TypeScript, 467 lines, source)
-packages/tools/src/decide.ts (TypeScript, 144 lines, source)
-packages/tools/src/loop.ts (TypeScript, 256 lines, source)
-packages/tools/src/plan.ts (TypeScript, 433 lines, source)
-packages/tools/src/providers/jev.ts (TypeScript, 218 lines, source)
-packages/tools/src/questions.ts (TypeScript, 438 lines, source)
-packages/tools/src/run.ts (TypeScript, 640 lines, source)
+packages/tools/src/edit.ts (TypeScript, 166 lines, source)
+packages/tools/src/figure.ts (TypeScript, 116 lines, source)
+packages/tools/src/index.ts (TypeScript, 118 lines, source)
+packages/tools/src/pins.ts (TypeScript, 73 lines, source)
+packages/tools/src/providers/lens.ts (TypeScript, 49 lines, source)
+packages/tools/src/space.ts (TypeScript, 65 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/tools/src/cli.ts → packages/tools/src/plan.ts {applyPlan, planFrom}
-  packages/tools/src/cli.ts → packages/tools/src/plan.ts {PlannedCall}
-  packages/tools/src/decide.ts → packages/tools/src/providers/jev.ts {Answer, Decide, Decided}
-  packages/tools/src/decide.ts → packages/tools/src/questions.ts {Question}
-  packages/tools/src/loop.ts → packages/tools/src/plan.ts {applyPlan, planFrom}
-  packages/tools/src/loop.ts → packages/tools/src/plan.ts {PlanOptions, PlannedCall}
-  packages/tools/src/loop.ts → packages/tools/src/providers/jev.ts {jevCostUsd}
-  packages/tools/src/loop.ts → packages/tools/src/providers/jev.ts {Answer, Decide}
-  packages/tools/src/loop.ts → packages/tools/src/questions.ts {questionsForInvariant}
-  packages/tools/src/loop.ts → packages/tools/src/questions.ts {DerivedQuestion, OfferedQuestion}
-  packages/tools/src/loop.ts → packages/tools/src/run.ts {offerOf}
-  packages/tools/src/providers/jev.ts → packages/tools/src/questions.ts {Question}
-  packages/tools/src/run.ts → packages/tools/src/plan.ts {applyPlan, planFrom}
-  packages/tools/src/run.ts → packages/tools/src/plan.ts {AppliedPlan, Plan, PlanOptions, PlannedCall}
-  packages/tools/src/run.ts → packages/tools/src/providers/jev.ts {jevCostUsd}
-  packages/tools/src/run.ts → packages/tools/src/providers/jev.ts {Answer, Decide, Decided}
-  packages/tools/src/run.ts → packages/tools/src/questions.ts {nodeState, pairQuestion, questionsForInvariant, questionsForKind, questionsForMutation, scoreToValue}
-  packages/tools/src/run.ts → packages/tools/src/questions.ts {DerivedQuestion, OfferedQuestion, Question}
+  packages/tools/src/index.ts → packages/tools/src/edit.ts {editableFields}
+  packages/tools/src/index.ts → packages/tools/src/edit.ts {EditableField}
+  packages/tools/src/index.ts → packages/tools/src/figure.ts {drawFigure, FIGURE_STYLE, nearestFigure, onlyTheSvg}
+  packages/tools/src/index.ts → packages/tools/src/figure.ts {DrawnFigure}
+  packages/tools/src/index.ts → packages/tools/src/pins.ts {loadPins, savePins, togglePin, NO_PINS}
+  packages/tools/src/index.ts → packages/tools/src/pins.ts {PinOverrides}
+  packages/tools/src/index.ts → packages/tools/src/providers/lens.ts {lensProvider}
+  packages/tools/src/index.ts → packages/tools/src/providers/lens.ts {LensAction}
+  packages/tools/src/index.ts → packages/tools/src/space.ts {across, inside, within}
+  packages/tools/src/index.ts → packages/tools/src/space.ts {Ring, SpacePoint}
 
 </imports>
