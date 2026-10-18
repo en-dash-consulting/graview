@@ -1,4 +1,4 @@
-import { bindsOf, isRepeatField, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf, type LensDeclaration } from "@graview/core";
+import { bindsOf, isRepeatField, linkedRelationOf, nodeRefArgs, placeSlug, repeatedBy, repeatKey, requiredRolesOf, type LensDeclaration } from "@graview/core";
 import { computedOf, documentOf } from "@graview/core/document";
 import { fieldSpecOf } from "@graview/core/blocks";
 import { isMarkdownField } from "@graview/core/words";
@@ -108,6 +108,24 @@ export function declarationToGraph<S extends AnySchema>(app: GraviewApp<S>): Gra
       // How a date repeats is the date's `repeats`, not a field of its own.
       const repeated = isRepeatField(type) ? repeatedBy(name) : undefined;
       if (repeated && fields[repeated]) continue;
+      // A link to another app's record (FR-171) is kept in a field, and is a relation: its far end named, not tied.
+      const far = linkedRelationOf(type);
+      if (far) {
+        const id = `edge:${def.kind}.${name}`;
+        edgeIds.set(name, id);
+        nodes.push({
+          id,
+          kind: "edge",
+          label: name,
+          cardinality: far.cardinality,
+          appendOnly: false,
+          toAny: false,
+          toAnotherApp: far.kinds.map((kind) => `@${far.address.replace(/^@/, "")}/${kind}`),
+          ...(far.description ? { description: far.description } : {}),
+        });
+        edges.push({ kind: "from-kind", from: id, to: kindId(def.kind) });
+        continue;
+      }
       const id = `field:${def.kind}.${name}`;
       const read = fieldTypeOf(type);
       const said = document?.kinds[def.kind]?.fields[name]?.type;

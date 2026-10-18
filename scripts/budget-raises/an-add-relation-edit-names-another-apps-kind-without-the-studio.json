@@ -1,0 +1,6 @@
+{
+  "budget": "embed without the studio",
+  "minified": 770,
+  "gzipped": 317,
+  "note": "Raised when an add-relation edit came to name another app's kind: the edit judges such a relation in the checker's own words (linked-mixed, linked-apps, linked-target, linked-inverse, linked-append-only) and says the far kind as people say it, and a migration keeps a far relation's values, moves them with a rename and clears them with the relation. 707_228 / 186_626 before, 707_998 / 186_943 with it: 770 / 317 more."
+}

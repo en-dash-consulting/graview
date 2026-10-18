@@ -1,4 +1,4 @@
-import { createSchema, defineNode, nodeRef, type AnyMutationDefinition, type GraviewApp } from "@graview/core";
+import { createSchema, defineNode, isLinkedTarget, nodeRef, type AnyMutationDefinition, type GraviewApp } from "@graview/core";
 import { FIELD_TYPES as DOCUMENT_FIELD_TYPES, renameIn, type DeclaredKinds, type NameChange } from "@graview/core/document";
 import { z } from "zod";
 
@@ -143,13 +143,15 @@ export const edgeNode = defineNode("edge", {
     appendOnly: z.boolean(),
     /** Declared to any kind at all. */
     toAny: z.boolean(),
+    /** Declared to kinds of another app (FR-171), as a relation's `to` names them: `@nick/house/house`. Its links are kept on the record that links. */
+    toAnotherApp: z.array(z.string()).optional(),
   }),
   edges: {
     "from-kind": { to: ["kind"], cardinality: "one", description: "the kind it is declared on", inverse: "its edges" },
     "to-kind": { to: ["kind"], description: "the kinds it may reach", inverse: "the edges that reach it" },
   },
   label: (node) => node.label,
-  display: { labels: { label: "name", description: "reading from this end", inverse: "reading from the far end", appendOnly: "append only", toAny: "to any kind" } },
+  display: { labels: { label: "name", description: "reading from this end", inverse: "reading from the far end", appendOnly: "append only", toAny: "to any kind", toAnotherApp: "to another app's kind" } },
 });
 
 export const actNode = defineNode("act", {
@@ -720,6 +722,45 @@ export const addEdge = act("add-edge", {
   },
 });
 
+/*
+ * A RELATION TO ANOTHER APP'S KIND (FR-171): its far end is no kind of this
+ * declaration, so it is named rather than tied — `@` + the app's address +
+ * `/` + the kind — and a record that links one keeps it as a value.
+ */
+export const addEdgeToAnotherApp = act("add-edge-to-another-app", {
+  title: "Link another app's records",
+  description: 'Declare a relation from one kind to a kind of another app, named like "@nick/house/house". Linking picks a record there; the other app is never changed.',
+  subject: { kinds: ["kind"], arg: "kind" },
+  creates: ["edge"],
+  connects: ["from-kind"],
+  input: z.object({
+    kind: nodeRef(["kind"]),
+    label: z.string().min(1),
+    to: z.string().min(1),
+    description: z.string().optional(),
+    cardinality: z.enum(["one", "many"]).optional(),
+  }),
+  describe: (args, graph) => `Add the edge ${args.label} from ${(graph.getNode(args.kind) as { label?: string } | undefined)?.label ?? args.kind} to ${args.to}`,
+  apply(ctx, args) {
+    const to = args.to.trim();
+    if (!isLinkedTarget(to)) throw new Error(`"${to}" does not name a kind in another app: write "@", the app's address, "/" and the kind, like "@nick/house/house"`);
+    const kind = nameOf(ctx, args.kind);
+    const name = named(args.label, RELATION_NAME);
+    const id = `edge:${kind}.${name}`;
+    ctx.addNode({
+      id,
+      kind: "edge",
+      label: name,
+      cardinality: args.cardinality ?? "many",
+      appendOnly: false,
+      toAny: false,
+      toAnotherApp: [to],
+      ...(args.description ? { description: args.description } : {}),
+    });
+    ctx.addEdge({ kind: "from-kind", from: id, to: args.kind });
+  },
+});
+
 export const removeEdge = act("remove-edge", {
   title: "Remove the edge",
   description: "Take a relation out of the declaration. Records that hold it need a migration.",
@@ -1048,6 +1089,8 @@ export const STUDIO_MUTATIONS: readonly AnyMutationDefinition<StudioSchema>[] = 
   removeSight,
   removeLens,
   setLensHidden,
+  // Last: a kind offers it after what most changes to a kind are, past the strip's fold.
+  addEdgeToAnotherApp,
 ];
 
 /** The studio as an app: the meta-schema, its acts, and an agent seat that may propose any of them. */

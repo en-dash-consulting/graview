@@ -4,6 +4,7 @@ import {
   bindsOf,
   fileField,
   imageField,
+  linkedRecordField,
   createSchema,
   defineInvariant,
   defineNode,
@@ -306,6 +307,12 @@ export function graphToDeclaration(snapshot: GraphSnapshot | Reading, options: D
     }
     const edges: Record<string, EdgeDeclaration> = {};
     for (const edge of read.in(kind.id, "from-kind")) {
+      // One to another app's kind (FR-171) is kept on the record that links: a field, as a declaration writes it.
+      const far = list(edge, "toAnotherApp");
+      if (far && far.length > 0) {
+        shape[name(edge)] = linkedRecordField(far, { cardinality: str(edge, "cardinality") === "one" ? "one" : "many", ...(str(edge, "description") ? { description: str(edge, "description")! } : {}) }).optional();
+        continue;
+      }
       const targets = read.out(edge.id, "to-kind").map((target) => kindName.get(target.id) ?? name(target));
       edges[name(edge)] = {
         to: bool(edge, "toAny") ? "*" : targets,
