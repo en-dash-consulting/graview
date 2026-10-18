@@ -177,6 +177,13 @@ try {
   report.control = { ground: await control() };
   await page.click('[data-testid="overview"]');
   await page.waitForTimeout(900);
+  // A starved runner is still on the way at 900 ms (0.54 on the nightly's GPU leg): the state is read once the mark has arrived.
+  await page
+    .waitForFunction(() => {
+      const wing = document.querySelector('[data-testid="overview"] .graview-altitude-mark-wing');
+      return !wing || Number(getComputedStyle(wing).opacity) < 0.02;
+    }, null, { timeout: 5000 })
+    .catch(() => {});
   report.control.altitude = await control();
   /*
    * MIDWAY IS A FRAME CAUGHT ON THE WAY, not whatever stood 300 ms after
