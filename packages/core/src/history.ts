@@ -34,7 +34,12 @@ export interface DeclarationMark {
   readonly sentence: string;
   readonly at?: string;
   readonly author?: Author;
-  /** The declaration from this seq on; absent, the past is drawn under the next one the host does say, else the store's own. */
+  /**
+   * The declaration from this seq on. Absent, the host is asked for it
+   * (`HistoryHost.declarationAt`) when playback reaches it; with nothing
+   * to ask, or no answer, the past is drawn under the last one the host
+   * did hand, else the store's own.
+   */
   readonly declaration?: PastDeclaration;
 }
 
@@ -43,12 +48,23 @@ export type ViewVersion = { readonly source: string } | Readonly<Record<string, 
 
 /**
  * WHAT THE HOST KEEPS OUTSIDE THE LOG, handed to playback: the declaration
- * changes it knows (with the declaration each began), and a script view's
- * code as it stood at a seq — `null` when the view did not exist then,
- * `undefined` when the host does not know (the view is drawn as it is now).
+ * changes it knows (with the declaration each began, or a way to ask for
+ * it), and a script view's code as it stood at a seq — `null` when the
+ * view did not exist then, `undefined` when the host does not know (the
+ * view is drawn as it is now).
  */
 export interface HistoryHost {
   readonly declarations?: readonly DeclarationMark[];
+  /**
+   * THE DECLARATION A MARK BEGAN, ASKED FOR WHEN IT IS NEEDED: called with
+   * the `seq` of a mark handed without its `declaration`, the first time
+   * playback reaches a moment under it, and asked once per mark while it
+   * is the same function. Until it answers the moment is held, then drawn
+   * under today's declaration if the answer is slow; an answer of
+   * `undefined`, or one that fails, is as if the mark had none. A page
+   * that never opens the past asks nothing.
+   */
+  readonly declarationAt?: (seq: number) => Promise<PastDeclaration | undefined> | PastDeclaration | undefined;
   readonly viewAt?: (name: string, seq: number) => ViewVersion | null | undefined;
 }
 

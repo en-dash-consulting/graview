@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 512,
+  "gzipped": 200,
+  "changeset": "playback-asks-for-a-past-declaration.md",
+  "note": "Raised when playback learned to ask the host for a past declaration it was handed without (HistoryHost.declarationAt): the face's playback now holds the picture it had while the answer is on its way, draws under today's if it is slow, and draws again when it comes, which is a few hooks in the provider's playback that every face loads up front; the asking itself is on @graview/core/past, fetched when somebody first looks back. Measured at 523_752 / 181_339 against 523_310 / 181_192: 442 / 147 more."
+}

@@ -42,7 +42,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-playback: the timeline around the past, fetched with it when somebody opens the past.
   "@graview/core/history": { from: history, names: ["declarationSentence", "makerOf", "makerWords", "restoreBatches", "ticksOf"] },
   // Roadmap f-playback: the past itself — the fold, its kept points and the store it makes — fetched by the provider when somebody first asks to see it.
-  "@graview/core/past": { from: past, names: ["declarationAt", "pastAt", "pastOf", "seqAt"] },
+  "@graview/core/past": { from: past, names: ["askDeclaration", "declarationAt", "pastAt", "pastOf", "seqAt"] },
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },
   // FR-171: another app's records, read as the viewer — the in-memory host, a page's reads, a far change kept in the history.
   "@graview/core/linked": { from: linked, names: ["linkedChange", "linkedRecordsOver", "linkedRelationWords", "readLinkedRecord", "recordLinkedChange", "recordsLinking"] },
