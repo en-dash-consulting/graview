@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.35`](https://graview.dev/docs/releases.html#v0-1-35)
 - [`0.1.34`](https://graview.dev/docs/releases.html#v0-1-34)
 - [`0.1.33`](https://graview.dev/docs/releases.html#v0-1-33)
 - [`0.1.32`](https://graview.dev/docs/releases.html#v0-1-32)
@@ -36,9 +37,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.34
+## 0.1.35
 
 Published October 18, 2026 · the current version
+
+A relation to another app can be made by an edit, a host may say later whether it still keeps a file, and playback asks for a past declaration when it gets there.
+
+- **A cross-app relation from an edit.** The `add-relation` edit, the studio and anything that sends edits can now relate a kind to another app's kind (`"to": ["@nick/house/house"]`), refused with the checker's own words when it can't be. Migrations no longer drop such a relation's links.
+- **Files a host answers for later.** `HostFiles.kept` may return a promise: a picture is drawn as itself until the host answers, then as removed later if it was, and each file is asked once.
+- **Past declarations on demand.** Playback asks the host for a past version's declaration when it reaches it (`declarationAt`), so a page no longer carries every version up front.
+
+**Before you upgrade:** `add-relation` accepts a `to` of `"@<address>/<kind>"`. `HostFiles.kept` may return `Promise<boolean>`. `HistoryHost` takes `declarationAt`. Nothing breaks; the hosted page carries about 0.5 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.35) · [The full changelog for 0.1.35](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0135)
+
+## 0.1.34
+
+Published October 18, 2026
 
 The right-click menu tells a visitor how to get in, draws a panel where it was asked, spends no thinking-model call on opening, and is ready before the click.
 
