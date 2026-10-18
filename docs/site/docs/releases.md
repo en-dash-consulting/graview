@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.36`](https://graview.dev/docs/releases.html#v0-1-36)
 - [`0.1.35`](https://graview.dev/docs/releases.html#v0-1-35)
 - [`0.1.34`](https://graview.dev/docs/releases.html#v0-1-34)
 - [`0.1.33`](https://graview.dev/docs/releases.html#v0-1-33)
@@ -37,9 +38,23 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.35
+## 0.1.36
 
 Published October 18, 2026 · the current version
+
+A record's pictures load under the host's base on every face, and a view draws the pictures and app images it was promised.
+
+- **Pictures load where the host serves them.** An app served under a path (`/a/<app>/`) drew its records' pictures and documents from the site's root; `HostFiles.src` now says where, and `filesAt` works it out from its own address, so a host that already uses it needs no change.
+- **Views get their pictures.** A view that asks for pictures receives each image's `src`, live and in a preview, and a picture the host doesn't answer for is said with what the host answered.
+- **Views draw the app's own images in every form** they are written in, and a refusal only offers what the host actually draws.
+
+**Before you upgrade:** `HostFiles` takes `src`; `fileSrc` on `@graview/core`; views take `file`; `runWorkerViewHeadless` takes `asset` and `origin`; `sayRefusal` takes the host's `{ origins, assets }`. The guest host's first load is about 0.4 KB larger.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.36) · [The full changelog for 0.1.36](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0136)
+
+## 0.1.35
+
+Published October 18, 2026
 
 A relation to another app can be made by an edit, a host may say later whether it still keeps a file, and playback asks for a past declaration when it gets there.
 
