@@ -1,5 +1,5 @@
 import { arrange, arrangeable, throughEdges } from "@graview/core/arrange";
-import { counted, dayAsRead, fieldWords, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
+import { counted, dayAsRead, fieldWords, isoToday, labelOf, numberAsRead, pluralLabel, type AnySchema, type Arrangement, type GraviewApp, type NodeOfSchema } from "@graview/core";
 import { failureWords } from "@graview/core/words";
 import { kindCardId, withFocus, withOverview, withWithin, type ViewState } from "@graview/layout/view";
 import { withPast } from "@graview/layout/view-moves";
@@ -109,7 +109,7 @@ export function KindStop<S extends AnySchema>({ kind, members: given, flagged = 
   const schema = store.schema as AnySchema;
   const definition = schema.tryDefinition(kind);
   const plural = label ?? pluralLabel(schema, kind);
-  const today = store.today() ?? new Date().toISOString().slice(0, 10);
+  const today = store.today() ?? isoToday();
   const members = given as readonly Rec[];
   const headingId = useId();
 

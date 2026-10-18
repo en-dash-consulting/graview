@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 460,
+  "gzipped": 160,
+  "note": "Raised when a rule's today() came to be the app's day (Roadmap f-app-time-zone): today() read as the date in the app's zone (`isoToday`, `dayZoneFor`), a store told the zone judged and ticked on that day (`Store.timeZone`), and a document's rules reading its own brand's zone. 457 / 157 more than main (601_513 / 220_247). Measured at 601_970 / 220_404."
+}

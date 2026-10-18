@@ -180,7 +180,7 @@ export interface RefusedDocument {
 }
 
 export interface AppFromOptions {
-  /** The clock rules read as today(); injectable for tests. */
+  /** The clock rules read as today(); injectable for tests. Unsaid, the date in the document's `brand.timeZone`, else the UTC date. */
   readonly today?: () => string;
 }
 
@@ -344,7 +344,9 @@ export function appFrom(compiled: unknown, options: AppFromOptions = {}): Compil
 /** The app, from a compiled document: the second half of compiling one, and all of `appFrom`. */
 export function build(plan: CompiledApp, options: AppFromOptions = {}): CompiledDocument {
   const { document } = plan;
-  const today = options.today ?? isoToday;
+  // The day is the app's: the date in its `brand.timeZone`, never the server's or the reader's (Roadmap f-app-time-zone).
+  const zone = document.brand?.timeZone;
+  const today = options.today ?? (() => isoToday(zone));
   const edges = new Map<string, EdgePlan>(plan.edges.map(([name, edge]) => [name, edge]));
   const shapes = new Map<string, KindShape>();
   for (const [kind, spec] of Object.entries(document.kinds)) {

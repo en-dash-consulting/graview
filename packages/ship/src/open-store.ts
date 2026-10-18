@@ -78,7 +78,8 @@ export interface OpenStoreOptions<S extends AnySchema> {
   readonly enabledModules?: readonly string[];
   /**
    * THE DAY TURNING (FR-176). The opened store is ticked at each midnight
-   * by the clock the rule language's `today()` reads (UTC), so a rule that
+   * by the clock the rule language's `today()` reads (the app's
+   * `brand.timeZone`, else UTC), so a rule that
    * reads the clock — "overdue" — is judged again with nothing changed and
    * its subscribers hear it, until `close()`. `false` leaves the ticking to
    * the host (`store.tick(now)`): one whose process sleeps through timers.
@@ -258,7 +259,14 @@ export async function openStore<S extends AnySchema>(
    * Read when asked, so a store open past midnight is judged on the new day.
    */
   const judged = storeOptions.invariantOptions;
-  if (!judged?.today && !(judged?.context as { today?: unknown } | undefined)?.today) {
+  /*
+   * AN APP THAT SAYS ITS ZONE IS JUDGED ON ITS OWN DAY (Roadmap
+   * f-app-time-zone): the store reads the date in `brand.timeZone`, hands
+   * it to every rule, and ticks at that midnight, wherever the server runs.
+   */
+  const timeZone = storeOptions.timeZone ?? app.brand?.timeZone;
+  if (timeZone) (storeOptions as { timeZone?: string }).timeZone = timeZone;
+  else if (!judged?.today && !(judged?.context as { today?: unknown } | undefined)?.today) {
     const context = { ...judged?.context };
     Object.defineProperty(context, "today", { enumerable: true, get: () => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10) });
     (storeOptions as { invariantOptions?: unknown }).invariantOptions = { ...judged, context };

@@ -399,6 +399,8 @@ export function storeOf<S extends AnySchema>(app: GraviewApp<S>, seed: FrameOpti
     ...(seed ? { snapshot: seed as never } : {}),
     ...(app.policy ? { policy: app.policy } : {}),
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
+    // The app's day: today() is the date in its zone, as a server's store reads it (Roadmap f-app-time-zone).
+    ...(app.brand?.timeZone ? { timeZone: app.brand.timeZone } : {}),
   } as never);
 }
 

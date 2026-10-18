@@ -44,8 +44,23 @@ export const ISO_MOMENT = /^\d{4}(-\d\d){2}[T ]\d\d:\d\d(:[\d.]+)?(Z|[+-][\d:]+)
  */
 export const isMoment = (s: string): boolean => !Number.isNaN(Date.parse(s));
 
-/** Today as a record keeps a day, by the clock's UTC date: what a rule, a template and a label read as today(). */
-export const isoToday = (): string => new Date().toISOString().slice(0, 10);
+/**
+ * TODAY AS A RECORD KEEPS A DAY: what a rule, a computed field, a template
+ * and a label read as today() (Roadmap f-app-time-zone). The date in the
+ * app's zone — `timeZone`, the app's `brand.timeZone` where the caller
+ * holds it, else the zone of the app this page draws (`sayIn`'s
+ * `appTimeZone`) — else the UTC date, as before an app could say one.
+ * Never the reader's zone and never the runtime's: a server and a page
+ * read the same day for the same app, and it turns at the app's midnight.
+ * `at` is the instant asked about; now when unsaid.
+ */
+export const isoToday = (timeZone?: string, at: number = Date.now()): string => {
+  const zone = dayZoneFor(timeZone);
+  return zone ? wallIn(at, zone).day : new Date(at).toISOString().slice(0, 10);
+};
+
+/** The zone today() turns in: the app's (`app`, else the page's), never the reader's. Undefined is UTC. */
+export const dayZoneFor = (app?: string): string | undefined => usableZone(app) ?? drawnZone;
 
 /*
  * THE PAGE'S LOCALES. A label is a function of a node and nothing else, and

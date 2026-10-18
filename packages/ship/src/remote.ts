@@ -642,6 +642,8 @@ async function opening<S extends AnySchema>(
     ...(app.modules ? { modules: app.modules } : {}),
     ...(enabledModules ? { enabledModules } : {}),
     ...(app.intelligence ? { intelligence: app.intelligence } : {}),
+    // The app's day, as the server's store reads it (Roadmap f-app-time-zone): the browser and the server agree on today().
+    ...(app.brand?.timeZone ? { timeZone: app.brand.timeZone } : {}),
     /*
      * The snapshot AND the log: the snapshot is the graph, the log is the
      * history that led to it. Folding the log alone would lose whatever the
