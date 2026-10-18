@@ -1,5 +1,13 @@
 # @graview/skills
 
+## 0.1.35
+
+### Patch Changes
+
+- ac91d40: An `add-relation` edit can name another app's kind. Since 0.1.30 a whole document could declare `"forHouse": { "to": ["@nick/house/house"], "cardinality": "one" }`, but the edit refused the same relation (`"@nick/house/house" is not a kind this app has`), so a host that changes an app by edits — graview.cloud's builder, `propose_change`, the studio — could not link one app to another. `editDocument` now takes `{"op": "add-relation", "kind": "scenario", "relation": "forHouse", "to": ["@nick/house/house"], "cardinality": "one"}` and gives a document that checks clean, judged by the rules `graview check` applies: a `to` that mixes this app's kinds with another's, reaches two apps, says `inverse` or `appendOnly` is refused at `edits.<n>` with the checker's own finding (`linked-mixed`, `linked-apps`, `linked-target`, `linked-inverse`, `linked-append-only`). It says `scenario gains a relation, "forHouse", to one house in the app @nick/house, another app, read there as whoever is looking.` `rename-relation` and `remove-relation` work on one. `planMigration` dropped a far relation's values on every migration, since it carried only declared fields; it now keeps them, moves them with a rename and clears them with the relation, said like a relation's links. The studio read a far relation as a text field; it now reads it as a relation (`toAnotherApp` on the edge), makes one with `add-edge-to-another-app` (`to: "@nick/house/house"`), says it as `add-relation`, and writes it back to a checkout as `linkedRecordField([...]).optional()`.
+  
+  Compatibility: the declaration is unchanged — a document that compiled compiles the same — and the edits take what they refused, with the checker's finding codes at `edits.<n>`; a stored graph migrates keeping what it dropped; ops, stored formats, the wire and derived tools are unchanged. The studio's own tools gain `add-edge-to-another-app`.
+
 ## 0.1.34
 
 ### Patch Changes

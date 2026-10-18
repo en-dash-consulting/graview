@@ -38,7 +38,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.34
 
-Published October 18, 2026 · the current version
+Published October 18, 2026
 
 The right-click menu tells a visitor how to get in, draws a panel where it was asked, spends no thinking-model call on opening, and is ready before the click.
 
