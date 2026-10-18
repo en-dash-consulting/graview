@@ -23,7 +23,7 @@ export function documentListFields(spec: { readonly fields?: Readonly<Record<str
         ? { type: "choice", options: field.options ?? [] }
         : field.type === "boolean"
           ? { type: "boolean" }
-          : ["list", "image", "file", "app-link", "place"].includes(field.type ?? "")
+          : ["list", "image", "video", "file", "app-link", "place"].includes(field.type ?? "")
             ? { type: "other" }
             : { type: "scalar" };
   }

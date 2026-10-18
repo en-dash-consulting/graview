@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fileShape, isFileValue, isImage, markFile, type FileValue } from "./files.js";
+import { fileRefusal, fileShape, isFileValue, isImage, isVideo, markFile, type FileValue } from "./files.js";
 
 /*
  * A DECLARATION'S PICTURE AND DOCUMENT FIELDS (FR-162), in the classic zod a
@@ -11,14 +11,20 @@ import { fileShape, isFileValue, isImage, markFile, type FileValue } from "./fil
  *     papers: z.array(fileField()).max(20),
  *   })
  *
- * A document says the same as `{"type": "image"}`, `{"type": "file"}` and
- * `{"type": "list", "of": "image"}`. The value is a `FileValue` the host's
- * upload answered; its `href` is a path on the host (see `safeFileHref`).
+ * A document says the same as `{"type": "image"}`, `{"type": "video"}`,
+ * `{"type": "file"}` and `{"type": "list", "of": "image"}`. The value is a
+ * `FileValue` the host's upload answered; its `href` is a path on the host
+ * (see `safeFileHref`).
  */
 
 /** A field that holds one picture: a `FileValue` whose type is an image's. */
 export function imageField(): z.ZodType<FileValue> {
-  return markFile(z.object(fileShape()).refine((v) => isFileValue(v) && isImage(v), "an image the host stored, at a path on this host"), "image") as never;
+  return markFile(z.object(fileShape()).refine((v) => isFileValue(v) && isImage(v), fileRefusal("image")), "image") as never;
+}
+
+/** A field that holds one video (0.1.37): a `FileValue` whose type is a video's, with its poster, its length and its captions where the host said them. */
+export function videoField(): z.ZodType<FileValue> {
+  return markFile(z.object(fileShape()).refine((v) => isFileValue(v) && isVideo(v), fileRefusal("video")), "video") as never;
 }
 
 /** A field that holds one file of any type: a `FileValue`. */

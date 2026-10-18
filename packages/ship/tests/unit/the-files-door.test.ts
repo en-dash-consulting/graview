@@ -64,8 +64,35 @@ describe("the dev server's files", () => {
     expect(elsewhere.status).toBe(403);
   });
 
-  it("is a dev-server plugin and nothing else, taking pictures, PDFs and plain text by default", () => {
+  it("is a dev-server plugin and nothing else, taking pictures, videos, PDFs and plain text by default", () => {
     expect(devFiles()).toMatchObject({ name: "graview:dev-files", apply: "serve" });
-    expect(DEV_FILES_KINDS).toEqual(["image/*", "application/pdf", "text/plain"]);
+    expect(DEV_FILES_KINDS).toEqual(["image/*", "video/*", "application/pdf", "text/plain"]);
+  });
+});
+
+describe("the dev server's videos (0.1.37)", () => {
+  let videos: Server;
+  let at: string;
+  beforeAll(async () => {
+    const handler = devFilesHandler({ maxBytes: 1_000 });
+    videos = createServer((req, res) => void handler(req, res));
+    await new Promise<void>((ready) => videos.listen(0, "127.0.0.1", ready));
+    at = `http://localhost:${(videos.address() as AddressInfo).port}`;
+  });
+  afterAll(() => new Promise<void>((done) => videos.close(() => done())));
+
+  it("keeps a video by its ending and serves it inline, a range at a time, as a player asks for it", async () => {
+    const send = filesAt(`${at}/__graview/files`, { maxBytes: 1_000, kinds: DEV_FILES_KINDS, fetch: (url, init) => fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string>), origin: at } }) });
+    const value = await send.upload(new Blob(["0123456789"], { type: "video/quicktime" }), "IMG_4410.MOV");
+    expect(value).toMatchObject({ name: "IMG_4410.MOV", type: "video/quicktime", bytes: 10 });
+    expect(value.href).toMatch(/\.mov$/);
+    const whole = await fetch(`${at}${value.href}`);
+    expect([whole.status, whole.headers.get("accept-ranges"), whole.headers.get("content-disposition")?.split(";")[0]]).toEqual([200, "bytes", "inline"]);
+    const part = await fetch(`${at}${value.href}`, { headers: { range: "bytes=2-5" } });
+    expect([part.status, part.headers.get("content-range"), part.headers.get("content-length"), await part.text()]).toEqual([206, "bytes 2-5/10", "4", "2345"]);
+    const tail = await fetch(`${at}${value.href}`, { headers: { range: "bytes=7-" } });
+    expect([tail.status, await tail.text()]).toEqual([206, "789"]);
+    const past = await fetch(`${at}${value.href}`, { headers: { range: "bytes=20-30" } });
+    expect([past.status, past.headers.get("content-range")]).toEqual([416, "bytes */10"]);
   });
 });

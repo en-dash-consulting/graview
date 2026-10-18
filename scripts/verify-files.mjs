@@ -27,6 +27,12 @@
  *   the host's files the editor says this host takes none and offers no way
  *   to add one; and every picture drawn says what it is.
  *
+ *   A video (0.1.37, `clip`, a one-second WebM of 624 bytes) picked is kept
+ *   by its act and played on the record's page — native controls, the
+ *   keyboard on it, only its metadata fetched, its length read from that
+ *   and said — and the list's row draws it as its first frame with a play
+ *   glyph and its length.
+ *
  *   node scripts/verify-files.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>]
  */
 import { createServer } from "node:http";
@@ -90,6 +96,8 @@ const PORCH = { name: "porch.png", mimeType: "image/png", buffer: png(48, [200, 
 const GUTTER = { name: "gutter.png", mimeType: "image/png", buffer: png(32, [40, 120, 200]) };
 const NOISE = { name: "noise.png", mimeType: "image/png", buffer: png(260, [0, 0, 0], true) };
 const QUOTE = { name: "quote.pdf", mimeType: "application/pdf", buffer: PDF };
+/* A second of one color, 32 pixels square, as WebM (VP8): what every engine here plays, in 624 bytes. */
+const CLIP = { name: "clip.webm", mimeType: "video/webm", buffer: readFileSync(resolve(repoRoot, "scripts/fixtures/files/clip.webm")) };
 
 const report = { at: new Date().toISOString(), engines, schemes: SCHEMES, screens: SCREENS, serverTakes: SERVER_TAKES, noiseBytes: NOISE.buffer.length, checks: {} };
 
@@ -117,7 +125,7 @@ async function buildHost() {
           window.__ready = true;
         } else {
           /* "files=0": a host that takes no files. */
-          const files = asked.get("files") === "0" ? undefined : filesAt("/__graview/files", { maxBytes: 1000000, kinds: ["image/*", "application/pdf"] });
+          const files = asked.get("files") === "0" ? undefined : filesAt("/__graview/files", { maxBytes: 1000000, kinds: ["image/*", "video/*", "application/pdf"] });
           window.__handle = mount(document.getElementById("app"), {
             app: compiled.app,
             seed,
@@ -148,7 +156,7 @@ async function buildHost() {
   });
   writeFileSync(join(out, "index.html"), HOST_PAGE);
   const { devFilesHandler } = await import(pathToFileURL(resolve(repoRoot, "packages/ship/dist/dev.js")).href);
-  const door = devFilesHandler({ maxBytes: SERVER_TAKES, kinds: ["image/*", "application/pdf"] });
+  const door = devFilesHandler({ maxBytes: SERVER_TAKES, kinds: ["image/*", "video/*", "application/pdf"] });
   const host = createServer((request, response) => {
     if ((request.url ?? "").startsWith("/__graview/files")) return void door(request, response);
     const path = decodeURIComponent((request.url ?? "/").split("?")[0]).replace(/^\/+/, "") || "index.html";
@@ -181,16 +189,19 @@ async function until(page, check, timeout = 10_000) {
 
 /** Every picture drawn in a files' part, and whether each says what it is and has arrived. */
 function pictures() {
-  return [...document.querySelectorAll("[data-graview-files] img, [data-graview-gallery] img, [data-graview-thumb], .graview-spec-image img")].map((img) => ({
-    alt: img.getAttribute("alt"),
-    src: img.getAttribute("src"),
-    loaded: img.complete && img.naturalWidth > 0,
-  }));
+  /* A video's thumbnail is said as a whole (`role="img"`), its poster or first frame inside it saying nothing of its own. */
+  return [...document.querySelectorAll("[data-graview-files] img, [data-graview-gallery] img, [data-graview-thumb], .graview-spec-image img, video[data-graview-video]")]
+    .filter((img) => !img.closest("[data-graview-video-thumb]") || img.matches("[data-graview-video-thumb]"))
+    .map((img) => ({
+      alt: img.getAttribute("alt") ?? img.getAttribute("aria-label"),
+      src: img.getAttribute("src"),
+      loaded: img.localName === "img" ? img.complete && img.naturalWidth > 0 : true,
+    }));
 }
 
 const host = await buildHost();
 const errors = [];
-const seen = { picked: [], pasted: [], pdf: [], full: [], refused: [], undone: [], rows: [], cards: [], scene: [], none: [], said: [] };
+const seen = { picked: [], pasted: [], pdf: [], full: [], refused: [], undone: [], rows: [], cards: [], scene: [], none: [], said: [], played: [], videoRows: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -351,6 +362,52 @@ try {
           await close();
         }
         {
+          /* A VIDEO (0.1.37): picked, kept by its act, played on the record's page, and a thumbnail on the list's row. */
+          const { page, close } = await open("/jobs/gate", "face=pages", viewport);
+          const played = { ...where, kept: [], accept: null, player: null };
+          const row = { ...where, thumb: null };
+          try {
+            const input = page.locator('[data-graview-files="clip"] input[data-graview-file-input]').first();
+            await input.waitFor({ state: "attached", timeout: 15_000 });
+            played.accept = await input.getAttribute("accept");
+            await input.setInputFiles(CLIP);
+            await until(page, async () => (await page.evaluate(() => window.__handle.store.graph.getNode("gate")?.clip?.name ?? null)) === "clip.webm");
+            played.kept = await page.evaluate(() => window.__handle.store.graph.getNode("gate")?.clip?.name ?? null);
+            await until(page, () => page.evaluate(() => (document.querySelector('[data-graview-files="clip"] video[data-graview-video]')?.readyState ?? 0) >= 1));
+            await until(page, () => page.evaluate(() => /0:01$/.test(document.querySelector('[data-graview-files="clip"] [data-graview-video-said]')?.textContent ?? "")), 3_000);
+            played.player = await page.evaluate(() => {
+              const video = document.querySelector('[data-graview-files="clip"] video[data-graview-video]');
+              if (!video) return null;
+              video.focus();
+              return {
+                src: video.getAttribute("src"),
+                controls: video.controls,
+                preload: video.getAttribute("preload"),
+                metadata: video.readyState >= 1,
+                duration: Math.round(video.duration),
+                said: document.querySelector('[data-graview-files="clip"] [data-graview-video-said]')?.textContent ?? null,
+                label: video.getAttribute("aria-label"),
+                focused: document.activeElement === video,
+                wide: Math.round(video.getBoundingClientRect().width),
+              };
+            });
+            await shot(page, "video");
+            await page.evaluate(() => window.__handle.setPath("/jobs"));
+            await until(page, () => page.evaluate(() => /0:01/.test(document.querySelector('[data-graview-record="gate"] [data-graview-video-clock]')?.textContent ?? "")));
+            row.thumb = await page.evaluate(() => {
+              const thumb = document.querySelector('[data-graview-record="gate"] [data-graview-video-thumb]');
+              return thumb ? { label: thumb.getAttribute("aria-label"), role: thumb.getAttribute("role"), glyph: Boolean(thumb.querySelector("[data-graview-play-glyph]")), clock: thumb.querySelector("[data-graview-video-clock]")?.textContent ?? null } : null;
+            });
+            seen.said.push({ ...where, pictures: await page.evaluate(pictures) });
+            await shot(page, "video-row");
+          } catch (error) {
+            played.error = String(error.message ?? error).split("\n")[0];
+          }
+          seen.played.push(played);
+          seen.videoRows.push(row);
+          await close();
+        }
+        {
           /* A host that takes no files: said, and nothing offered. */
           const { page, close } = await open("/jobs/roof", "face=pages&files=0", viewport);
           const none = { ...where, said: null, inputs: -1 };
@@ -418,6 +475,29 @@ report.checks.theSceneTakesAPhotoWhereTheRecordsFactsAre = {
 report.checks.withoutTheHostsFilesTheEditorSaysSoAndOffersNothing = {
   seen: seen.none,
   ok: all(seen.none, pagesScreens, (one) => one.said === "This host doesn’t take files, so none can be added here." && one.inputs === 0),
+};
+report.checks.aVideoPickedIsKeptByItsActAndPlayedWithNativeControlsAndItsLength = {
+  seen: seen.played,
+  ok: all(
+    seen.played,
+    pagesScreens,
+    (one) =>
+      one.kept === "clip.webm" &&
+      one.accept === "video/*" &&
+      one.player?.src?.startsWith("/__graview/files/") &&
+      one.player.controls &&
+      one.player.preload === "metadata" &&
+      one.player.metadata &&
+      one.player.duration === 1 &&
+      one.player.said === "clip.webm · 0:01" &&
+      one.player.label === "clip.webm, a 1-second video" &&
+      one.player.focused &&
+      one.player.wide >= 200,
+  ),
+};
+report.checks.theListsRowDrawsAVideoAsItsFrameWithAPlayGlyphAndItsLength = {
+  seen: seen.videoRows,
+  ok: all(seen.videoRows, pagesScreens, (one) => one.thumb?.role === "img" && one.thumb.label === "clip.webm, a 1-second video" && one.thumb.glyph && one.thumb.clock === "0:01"),
 };
 report.checks.everyPictureSaysWhatItIs = {
   seen: seen.said.map((one) => ({ ...one, pictures: one.pictures.filter((picture) => !picture.alt) })),

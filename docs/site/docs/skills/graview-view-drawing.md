@@ -1,6 +1,6 @@
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -14,7 +14,7 @@ A worker view (`graview-worker-view`: its manifest, its global, its writes and i
 
 HTML's sectioning, headings, text, lists, tables, `details`/`summary`, `button`, `input`, `select`, `textarea`, `label`, `fieldset`, `meter`, `progress` and `img`. SVG's `svg`, `g`, shapes, `path`, `text`, gradients, `clipPath`, `mask`, `marker`, `pattern`, `symbol` and `use href="#id"`. Attributes: `id`, `class`, `style`, `title`, `role`, `aria-*`, `data-*`, and each element's own. CSS for layout, grid, flex, color, type, transitions, `@keyframes`, `@media`, `@supports` and `@container`.
 
-Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video`, `canvas`, SVG `image` and `foreignObject`; any `href`, `srcset` or `on*` attribute; `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`button.toggle { all: unset }` takes the browser's chrome off a toggle). What the host leaves out it lists in `refused`; `graview.refused` is the runtime's own early word on the last render.
+Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`, `style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image` and `foreignObject`; any `href`, `srcset` or `on*` attribute; `src` on anything but `img`, and on `img` any address but the ones below. In CSS: `url()` except `url(#id)` on `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`; `image-set()`, `attr()` and other unlisted functions; `position: fixed`; `:host`. `position: sticky` is kept — a header held in place sticks within the view, whose region is painted contained — and `all` takes its keywords (`button.toggle { all: unset }` takes the browser's chrome off a toggle). What the host leaves out it lists in `refused`; `graview.refused` is the runtime's own early word on the last render.
 
 A view never speaks as the app's chrome. `nav`, `header`, `footer`, `aside` and `search` are drawn as `div`, and `output` as `span`, each with what it holds. They lose their landmark or status role, and a selector for them in your stylesheet still matches. A `section` is never named (no `aria-label` or `title`), so it stays out of the landmarks. `role` takes no landmark or notice's role (`navigation`, `region`, `status`, `alert`, …).
 
@@ -40,6 +40,15 @@ const photos = (job.photos || []).map((photo) => photo.src
 
 Without `pictures`, a record's file comes as the record keeps it: its `href` draws only where it is the app's own image (`/graview/assets/…`).
 
+### A record's video, and the full-screen viewer
+
+A view never draws `<video>` or `position: fixed`; it names what it wants and **the host draws it**, from the records the view was shown, for a view whose manifest says `pictures`:
+
+- **`<graview-video data-record="${node.id}" data-field="clip">`** (and `data-index` in a list): the host plays that record's video in it — poster first, the browser's own controls, only its metadata fetched, captions where the value has them. Size the box in your stylesheet (`graview-video { width: 100% }`); nothing inside it is yours to style or hear. The video comes to the view as its facts — `{ name, type, bytes, width, height, caption, duration }` — so draw its length yourself if you like; never a `src`.
+- **`<button data-lightbox data-record="${node.id}" data-field="photos" data-index="0">`**: the viewer's press opens the host's full-screen viewer for that picture or video over the app; Escape closes it and the keyboard comes back to the button. Your code cannot open it.
+
+A record the view was not shown, a field with no video, or a view without `pictures` draws nothing, and says why in its console and the host's problems. A headless run says a placed video as "The waves at dusk, a 45-second video".
+
 **Keep a picture in an `image` field**, which holds the uploaded file (what `add_image` stores), never its bytes as words: a `data:` URI in a text field is cut at 20,000 characters, and in the view's source it counts against its size.
 
 ### Then find out whether it worked
@@ -56,6 +65,6 @@ Without `pictures`, a record's file comes as the record keeps it: its `href` dra
 
 ---
 
-Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
+Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.
 
 The page: https://graview.dev/docs/skills/graview-view-drawing.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

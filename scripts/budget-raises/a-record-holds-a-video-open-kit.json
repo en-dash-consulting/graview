@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 7500,
+  "gzipped": 3122,
+  "note": "Raised when a record came to hold a video (0.1.37): a view's `<graview-video>` in the open kit's tables, and the player and the full-screen viewer the host draws for it (`media.ts`, fetched with the first view that places one). 7_500 / 3_122 more. Measured at 154_353 / 57_922 against 146_853 / 54_800."
+}

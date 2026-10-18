@@ -245,9 +245,10 @@ export function fieldSchema(spec: FieldSpec, optional: boolean, money?: Money): 
       schema = z.enum(spec.options as [string, ...string[]]);
       break;
     case "list":
-      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(ISO_DAY)) : spec.of === "image" || spec.of === "file" ? fileSchema(spec.of) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
+      schema = z.array(spec.of === "number" ? z.number() : spec.of === "date" ? z.string().check(z.regex(ISO_DAY)) : spec.of === "image" || spec.of === "video" || spec.of === "file" ? fileSchema(spec.of) : z.string().check(z.maxLength(500))).check(z.maxLength(200));
       break;
     case "image":
+    case "video":
     case "file":
       schema = fileSchema(spec.type);
       break;

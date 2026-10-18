@@ -44,7 +44,7 @@ export type FormField =
     }
   | { readonly control: "list"; readonly name: string; readonly optional: boolean; readonly item: FormField }
   /** A picture or a document, put on the record by the host's upload (FR-162, FR-163); a list of them is a `list` of these. */
-  | { readonly control: "file"; readonly name: string; readonly optional: boolean; readonly image?: true }
+  | { readonly control: "file"; readonly name: string; readonly optional: boolean; readonly image?: true; readonly video?: true }
   /**
    * A RECORD IN ANOTHER APP (FR-171): picked from what the host's
    * `linkedRecords.find` lists for this viewer, and sent as `<kind>:<id>` —
@@ -122,7 +122,7 @@ export function formField(name: string, schema: unknown): FormField {
   if (type === "boolean") return { control: "boolean", name, optional };
 
   const file = fileKindOf(field);
-  if (file) return { control: "file", name, optional, ...(file === "image" ? { image: true as const } : {}) };
+  if (file) return { control: "file", name, optional, ...(file === "image" ? { image: true as const } : file === "video" ? { video: true as const } : {}) };
 
   if (type === "object") {
     const shape = field.shape ?? {};

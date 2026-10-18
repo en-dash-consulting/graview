@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 984,
+  "gzipped": 444,
+  "note": "Raised when a record came to hold a video (0.1.37): the host's half of a view's `<graview-video>` and `data-lightbox`, as above. 984 / 444 more. Measured at 22_238 / 10_258 against 21_254 / 9_814."
+}

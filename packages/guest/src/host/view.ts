@@ -15,6 +15,7 @@ import { createLinks, listsOf, type Arrival, type Destination } from "./links.js
 import { arriveAt } from "./arrive-at.js";
 import type { GoTo } from "@graview/react/provider";
 import type { GuestPictureHand } from "./pictures.js";
+import type { GuestMedia } from "./media.js";
 import { createGuestLogo, readTheme, themeWithBrand, watchTheme, type GuestBrand } from "./theme.js";
 
 /** A worker view's code: its own source, which the host makes a worker of, or a whole worker script. */
@@ -30,6 +31,8 @@ const openDrawChunk = retryingImport(() => import("./open-draw.js"));
 const pressChunk = retryingImport(() => import("./press.js"));
 /* The pictures' host (FR-175), fetched only for a view whose manifest asks for pictures. */
 const picturesChunk = retryingImport(() => import("./pictures.js"));
+/* A record's video placed by a view, and the full-screen viewer (0.1.37), fetched with the first view that places one. */
+const mediaChunk = retryingImport(() => import("./media.js"));
 
 export type WorkerViewFailure =
   /** Its manifest names a kind, an edge or an act the app does not declare (FR-91): it was never started. */
@@ -388,6 +391,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     unwatchTheme();
     logo.dispose();
     pictures?.dispose();
+    media?.dispose();
   };
 
   let port: MessagePort | undefined;
@@ -452,11 +456,50 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let shown: ReadonlySet<string> = new Set();
   /* The image addresses already said to be refused: each is said once. */
   const toldImages = new Set<string>();
+  /*
+   * A RECORD'S VIDEO AND THE FULL-SCREEN VIEWER (0.1.37, media.ts): fetched
+   * the first time the view places a `<graview-video>` or a `data-lightbox`,
+   * drawn from what the view was last shown, and drawn again after each
+   * batch it draws.
+   */
+  let media: GuestMedia | undefined;
+  let mediaAsked = false;
+  const wantMedia = () => {
+    if (mediaAsked) return;
+    mediaAsked = true;
+    void mediaChunk().then(
+      ({ createGuestMedia }) => {
+        if (failed) return;
+        media = createGuestMedia(window, {
+          view: `"${manifest.title ?? manifest.name}"`,
+          pictures: manifest.pictures !== undefined,
+          shown: () => lastProps,
+          ...(options.file ? { file: options.file } : {}),
+          onProblem: (said) => {
+            port?.postMessage({ type: "notice", text: said });
+            options.onProblem?.(said);
+          },
+        });
+        media.refresh(shadow);
+      },
+      () => options.onProblem?.(`The view "${manifest.title ?? manifest.name}" places a video or a full-screen viewer, and the host's player could not be loaded.`),
+    );
+  };
+  const marksMedia = (element: Element) => {
+    if (element.localName === "graview-video") return wantMedia();
+    if (!element.hasAttribute("data-lightbox")) return;
+    /* It opens the host's viewer: said so to assistive technology. */
+    element.setAttribute("aria-haspopup", "dialog");
+    wantMedia();
+  };
   void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, fillPrefills, judgePress, prefillOf }]) => {
     if (failed) return;
     const reader = createPressReader();
     const prefilled = new WeakSet<Element>();
-    refill = () => fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
+    refill = () => {
+      fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
+      media?.refresh(shadow);
+    };
     drawing = createOpenDrawing(shadow, {
       origin: options.origin ?? window.location.origin,
       ...(options.asset ? { asset: options.asset } : {}),
@@ -475,9 +518,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       onFieldSet: (field) => reader.filled(field),
       onAttribute: (element, name) => {
         if (element.localName === "a" && (name === "data-record" || name === "data-place")) links.link(element);
+        if (name === "data-lightbox") marksMedia(element);
       },
       decorate: (element) => {
         if (element.localName === "a") links.link(element);
+        marksMedia(element);
       },
       /*
        * THE VIEWER'S PRESS, IN ITS OWN HANDLER (FR-92). A trusted click on
@@ -493,6 +538,14 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           event.preventDefault();
           event.stopPropagation();
           links.follow(anchor);
+        }
+        /* The viewer's own press opens the host's full-screen viewer: a click, or Enter or Space on what is not a button (which clicks of itself). */
+        const lightbox = at.closest("[data-lightbox]");
+        const key = event.type === "keydown" ? (event as KeyboardEvent).key : undefined;
+        if (lightbox && root.contains(lightbox) && event.isTrusted && (event.type === "click" || ((key === "Enter" || key === " ") && lightbox.localName !== "button"))) {
+          event.preventDefault();
+          event.stopPropagation();
+          media?.open(lightbox);
         }
         const press = reader.press(event, at, root);
         if (!press || !session) return;

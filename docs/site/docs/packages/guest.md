@@ -207,6 +207,17 @@ After each batch the view draws, the host fills an empty `input` or `textarea` w
 
 A worker view links to a record or a named place of this app, and nowhere else. The open kit draws no `href`, so `<a href="https://…">` is text; `<a data-record="offer:coaching">` and `<a data-place="the-packages">` are made links by the host — focusable, a link to assistive technology — and followed by it on a press or Enter, to a record the viewer may see or a place the app has. `graview.navigate("offer:coaching")` and `graview.navigate({ place: "the-packages" })` are held to the same. A bare string is a record the viewer may see first, then a place by that slug, so `graview.navigate("the-packages")` goes to the place. A destination that is neither goes nowhere and says why — in the view's console, and to the host's problems (the onProblem option on `mountWorkerView` and on a registered view's definition) — naming the places there are. The props list the app's places (`places`, each with its slug and title). On the Graview face a record is focused and chosen and a place is drawn; on the pages face each goes to its own address — through `useGoTo` in `@graview/react`, which the routed face provides. The kit's `gv-link` keeps `links.origins`: it is the kit's one deliberate way out, to the origins a host lists, and an open-kit view has none.
 
+#### A record's video, and the full-screen viewer
+
+A worker view may not draw `<video>` (it fetches) or cover the app (`position: fixed`, the top layer), and is never handed the host's path to a file. So it names what it wants and the host draws it, from the records the view was last shown, for a view whose manifest says `pictures`:
+
+```html
+<graview-video data-record="moment:dusk" data-field="clip"></graview-video>
+<button data-lightbox data-record="moment:dusk" data-field="photos" data-index="1">See it full screen</button>
+```
+
+In a `<graview-video>` (the open kit's one element the host draws for a view: it names a file and holds nothing) the host plays that record's video in a shadow root of its own — the poster first, the browser's own controls, `preload="metadata"`, captions where the value carries them, sized from the value — fetched where the host serves files (`file`, else the page's `files.src`). The view's stylesheet sizes the box and reaches nothing inside it, and the view hears nothing pressed there. A viewer's own press (a click, or Enter or Space on what is not a button) on a `data-lightbox` element opens the host's full-screen viewer for that picture or video: a modal dialog over the app, closed by Escape or its Close button, with the keyboard given back to what opened it. The view's code cannot open it. A record the view was not shown, a field that holds no such file, or a view without `pictures` draws nothing and says why, in the view's console and to the host's problems. A video is handed to the view as its facts (`name`, `type`, `bytes`, `width`, `height`, `caption`, `duration`), never an address; a headless run says a placed video as "The waves at dusk, a 45-second video". A frame guest places none: its frame is another origin.
+
 #### What the host page allows
 
 A worker guest, on the kit or the open kit, starts from a `blob:` URL the host makes of its script. The page's Content-Security-Policy has to allow that, and an open-kit view's stylesheet:

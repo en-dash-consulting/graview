@@ -160,8 +160,14 @@ export interface GuestFile {
   /** A picture's size in pixels, where the record says it. */
   readonly width?: number;
   readonly height?: number;
-  /** What a picture shows, in words: its alt text. */
+  /** What a picture or a video shows, in words: its alt text. */
   readonly caption?: string;
+  /**
+   * A video's length in seconds, where the record says it (0.1.37). A video
+   * is handed its facts and never an address: the host plays it where the
+   * view places `<graview-video data-record data-field>`.
+   */
+  readonly duration?: number;
   /** A picture's address for `<img src>`, made by the host from the bytes. Smaller than the file where the view needs no more. */
   readonly src?: string;
   /** Why a picture was left out, in a sentence that names the view. */

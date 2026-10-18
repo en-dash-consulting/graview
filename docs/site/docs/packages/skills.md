@@ -42,7 +42,7 @@ A skill that cannot verify its own outcome says so. That is the rule, and the sk
 | `graview-port-app` | Port an existing application onto Graview, deciding what is a node and what is a field |
 | `graview-studio` | Open the declaration as a graph, change it with acts, check before applying, migrate, and write it back as the scaffold's files |
 | `graview-worker-view` | Write a worker view: one plain script with a manifest the host enforces, its writes, its limits, and a headless run |
-| `graview-view-drawing` | Draw in a worker view: what the host keeps, the app's tokens, and the images a view may show — the logo, the app's own images, the pictures on records |
+| `graview-view-drawing` | Draw in a worker view: what the host keeps, the app's tokens, the images a view may show — the logo, the app's own images, the pictures on records — and a record's video the host plays, with its full-screen viewer |
 
 The worked examples live in `apps/` in the framework repository. The skills point at them rather than restating them — a skill that copies an example goes stale the moment the example changes.
 

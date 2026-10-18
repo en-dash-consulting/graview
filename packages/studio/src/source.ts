@@ -80,8 +80,8 @@ export function zodSource(type: FieldType, required: boolean, options?: readonly
   }
   // Another app's address (FR-171), a picture, a document (FR-162): the framework's own field, imported beside `z`.
   // A phone, a place and a length of time likewise: a tel: link, a map, minutes said "1 h 30 min".
-  if (type === "app-link" || type === "image" || type === "file" || type === "phone" || type === "place" || type === "duration") {
-    const helper = type === "app-link" ? "appLinkField" : type === "image" ? "imageField" : type === "file" ? "fileField" : (`${type}Field` as const);
+  if (type === "app-link" || type === "image" || type === "video" || type === "file" || type === "phone" || type === "place" || type === "duration") {
+    const helper = type === "app-link" ? "appLinkField" : type === "image" ? "imageField" : type === "video" ? "videoField" : type === "file" ? "fileField" : (`${type}Field` as const);
     if (uses) uses[helper] = true;
     return required ? `${helper}()` : `${helper}().optional()`;
   }
