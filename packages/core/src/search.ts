@@ -816,10 +816,22 @@ export function search<S extends AnySchema>(store: Store<S>, query: string, opti
    * looked there; where any current record answers, the past waits for
    * is:any, as it did.
    */
+  /*
+   * A NAME BEHIND THE HORIZON, A FIELD IN FRONT OF IT (the eleventh walk).
+   * A shelter's "1539" found the adopter whose phone ends 1539 and so never
+   * offered "Moose #1539", adopted in 2022: a current record that only
+   * carries the words in a field does not answer the way a record named by
+   * them does. Where no current record is named and a past one is, the past
+   * ones named join the answer, said as past, ranked by how they matched.
+   */
+  const namesIt = (why: Why) => why.strength !== "field";
   let widened = false;
   if (behind.length > 0 && ranked.length === 0) {
     widened = true;
     for (const one of behind) add(one.node, one.kind, one.definition, false, one.why);
+  } else if (behind.some((one) => namesIt(one.why)) && !ranked.some((one) => namesIt(one.hit.why))) {
+    widened = true;
+    for (const one of behind) if (namesIt(one.why)) add(one.node, one.kind, one.definition, false, one.why);
   }
 
   /*
