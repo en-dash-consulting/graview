@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.36",
+      "date": "2026-10-18",
+      "headline": "A record's pictures load under the host's base on every face, and a view draws the pictures and app images it was promised.",
+      "summary": "- **Pictures load where the host serves them.** An app served under a path (`/a/<app>/`) drew its records' pictures and documents from the site's root; `HostFiles.src` now says where, and `filesAt` works it out from its own address, so a host that already uses it needs no change.\n- **Views get their pictures.** A view that asks for pictures receives each image's `src`, live and in a preview, and a picture the host doesn't answer for is said with what the host answered.\n- **Views draw the app's own images in every form** they are written in, and a refusal only offers what the host actually draws.",
+      "compatibility": "`HostFiles` takes `src`; `fileSrc` on `@graview/core`; views take `file`; `runWorkerViewHeadless` takes `asset` and `origin`; `sayRefusal` takes the host's `{ origins, assets }`. The guest host's first load is about 0.4 KB larger.",
+      "published": true
+    },
+    {
       "version": "0.1.35",
       "date": "2026-10-18",
       "headline": "A relation to another app can be made by an edit, a host may say later whether it still keeps a file, and playback asks for a past declaration when it gets there.",
