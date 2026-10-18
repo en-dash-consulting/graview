@@ -12,6 +12,7 @@ import {
   linkedRelations,
   linkedValue,
   nameOfAuthor,
+  sayingIn,
   sha256Hex,
   type LinkedRecord,
   type LinkedRecords,
@@ -855,6 +856,14 @@ export function createToolRuntime<S extends AnySchema>(
     options.subscriptions !== undefined,
   );
   const hash = surfaceHash(definitions);
+  /*
+   * WHAT AN ANSWER IS SAID IN: the app's locale and time zone, where the
+   * runtime is handed the app — a server answering an agent has drawn no
+   * provider, and would say a time on its own clock, UTC. On a page the
+   * provider has said them already; a person's zone a host passed still wins.
+   */
+  const saying = { app: options.app?.brand?.locale, appTimeZone: options.app?.brand?.timeZone };
+  const saidForTheApp = <T,>(run: () => T): T => sayingIn(saying, run);
   /** A tool's name, or an act's declared one, as the act it runs. */
   const actNamed = (name: string): string | undefined => {
     if (READ_NAMES.includes(name)) return undefined;
@@ -933,12 +942,16 @@ export function createToolRuntime<S extends AnySchema>(
         const named = resolve(definition.act, args);
         if ("ok" in named) return named;
         // What the act did, as this seat may be told it: an act may touch what its own seat may not see (FR-55).
-        const result = answerSeenBy(
-          store,
-          principal,
-          store.apply(
-            { name: definition.act, args: named.args },
-            { ...(options.author ? { author: options.author } : {}), ...viaNow(options.via) },
+        // Its sentence says a time on the app's clock, not the server's (Roadmap f-app-time-zone).
+        const act = definition.act;
+        const result = saidForTheApp(() =>
+          answerSeenBy(
+            store,
+            principal,
+            store.apply(
+              { name: act, args: named.args },
+              { ...(options.author ? { author: options.author } : {}), ...viaNow(options.via) },
+            ),
           ),
         );
         return {

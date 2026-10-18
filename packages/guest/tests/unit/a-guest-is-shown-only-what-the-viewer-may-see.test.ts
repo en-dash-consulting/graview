@@ -42,7 +42,7 @@ describe("what a guest is pushed", () => {
     expect(wire).not.toContain("sk-session-7f3a");
     expect(wire).not.toContain('"roles"');
     // What arrives is plain data: structured clone would have refused a store, a function or a proxy.
-    expect(Object.keys((said[0] as { props: GuestProps }).props).sort()).toEqual(["acts", "cardinality", "edges", "fidelity", "flagged", "implicated", "nodes", "view"]);
+    expect(Object.keys((said[0] as { props: GuestProps }).props).sort()).toEqual(["acts", "cardinality", "edges", "fidelity", "flagged", "implicated", "locale", "nodes", "timeZone", "view"]);
   });
 
   it("lists only the acts the viewer may run, as what the guest may ask for", () => {

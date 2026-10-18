@@ -588,8 +588,13 @@ export function PagesApp<S extends AnySchema>({
    * says nothing of its own, or one tab would say two places by turns.
    */
   const outer = useGraviewIfAny();
-  // Days, times and numbers in the reader's locale, else the app's (FR-178), whether or not a provider is drawn under the pages.
-  sayIn({ reader: given.locale ?? outer?.locale, app: given.brand?.locale ?? given.app?.brand?.locale });
+  // Days, times and numbers in the reader's locale, else the app's (FR-178), and instants on the person's clock, else the app's — whether or not a provider is drawn under the pages.
+  sayIn({
+    reader: given.locale ?? outer?.locale,
+    app: given.brand?.locale ?? given.app?.brand?.locale,
+    readerTimeZone: given.timeZone ?? outer?.timeZone,
+    appTimeZone: given.brand?.timeZone ?? given.app?.brand?.timeZone,
+  });
   /*
    * THE MOMENT DRAWN (Roadmap f-playback): now, or the app as it stood at
    * a moment somebody asked to see — the provider's this face is drawn
@@ -631,6 +636,8 @@ export function PagesApp<S extends AnySchema>({
       {...(context.principal ? { principal: context.principal } : {})}
       {...(context.brand ? { brand: context.brand } : {})}
       {...(context.locale ? { locale: context.locale } : {})}
+      {...(context.timeZone ? { timeZone: context.timeZone } : {})}
+
       {...(context.settings ? { settings: context.settings } : {})}
       {...(context.presence && !outer ? { presence: context.presence } : {})}
       {...(context.people ? { people: context.people } : {})}

@@ -37,6 +37,13 @@ export interface PageContext<S extends AnySchema> {
    * `locale`; en-US when neither says. The framework's words stay English.
    */
   readonly locale?: string;
+  /**
+   * The person's time zone (Roadmap f-app-time-zone): the IANA zone every
+   * instant is said in on every page. Wins over the brand's `timeZone`;
+   * the browser's clock when neither says.
+   */
+  readonly timeZone?: string;
+
   /** Where the spatial face lives, for the cross-links. Default "/". */
   readonly sceneHref?: string;
   readonly invariantContext?: Readonly<Record<string, unknown>>;

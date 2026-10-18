@@ -1,3 +1,4 @@
+import { TIME_ZONE_FIX, timeZoneProblem } from "../days.js";
 import { accentProblem, documentSchemes } from "../theme/accent.js";
 import { fontProblem } from "../theme/fonts.js";
 import { emojiProblem, markProblem } from "../theme/marks.js";
@@ -49,6 +50,9 @@ export function brandFindings(brand: Partial<BrandSpec> | undefined, options: Br
     const problem = typeof value === "string" ? fontProblem(value, options.fonts) : null;
     if (problem) out.push(error("brand-font", `${at}.typography.${role}`, `the ${role} face cannot be used: ${problem}`, 'say "system-serif", "system-sans" or "system-mono", or a face on the list'));
   }
+  // A zone its times could not be said on (Roadmap f-app-time-zone), refused by name.
+  const unzoned = typeof brand.timeZone === "string" ? timeZoneProblem(brand.timeZone) : undefined;
+  if (unzoned) out.push(error("brand-time-zone", `${at}.timeZone`, unzoned, TIME_ZONE_FIX));
   if (brand.accent) {
     const refused = accentProblem(brand.accent);
     if (refused) {

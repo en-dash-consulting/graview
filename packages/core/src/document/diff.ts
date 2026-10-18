@@ -45,6 +45,9 @@ const same = (a: unknown, b: unknown) => canonicalize(a) === canonicalize(b);
 export const localeSentence = (locale: string | undefined): string =>
   locale ? `Days, times, numbers and money are written for ${locale}.` : "Days, times, numbers and money are written for en-US, the default.";
 
+/** What a change of the app's time zone says (Roadmap f-app-time-zone). */
+export const timeZoneSentence = (timeZone: string | undefined): string => (timeZone ? `Times are said in ${timeZone}.` : "Times are said on each reader's own clock.");
+
 export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument): DocumentDiff {
   // A key renamed within the format is not a change (FR-134): both are read as this build spells them.
   const before = respellDocument(stored).document;
@@ -189,6 +192,8 @@ export function diffDocuments(stored: GraviewDocument, proposed: GraviewDocument
     sentences.push(currency ? `Money is said in ${currency}.` : "Money is said with no currency.");
   }
   if (!same(before.brand?.locale, after.brand?.locale)) sentences.push(localeSentence(after.brand?.locale));
+  if (!same(before.brand?.timeZone, after.brand?.timeZone)) sentences.push(timeZoneSentence(after.brand?.timeZone));
+
   sentences.push(...viewSentences(before, after));
   sentences.push(...lensSentences(before.lenses ?? [], after.lenses ?? []));
   sentences.push(...pagesSentences(before.pages, after.pages, after.kinds));

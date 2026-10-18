@@ -94,11 +94,11 @@ somebody with a bright office files a bug — so the framework measures it.
    table, form ("$" beside the box, "$1,250.50" taken as typed) — and its
    own `"unit": "EUR"` wins; `graview check` warns `money-currency` where
    neither names one. `set-format` changes only a field's format or unit.
-   The locale says every day, time and
-   number too, on every face: en-US unless it says ("Sep 10, 2023", "3:30
-   PM", "1,250"); "en-GB" keeps the day first. The reader's, a host's
-   `locale` on the embed or the provider, wins over it. `graview check` refuses a code or a locale it
-   cannot write (`brand-currency`, `brand-locale`).
+   The locale says every day, time and number on every face, en-US
+   unless it says ("Sep 10, 2023", "1,250"); `timeZone:
+   "America/New_York"` is the clock an instant is said on, acts and views
+   too. A host's `locale` and `timeZone` win. `graview check` refuses
+   what it cannot write (`brand-currency`, `brand-locale`, `brand-time-zone`).
 
 ## A document's brand
 

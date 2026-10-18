@@ -181,8 +181,8 @@ Every template, view spec, rule, sum and sort reads `net` like a field
 no act or edit form offers it, and an act that sets one is refused. It is
 worked out over the graph the reader holds, so a seat is served one from what
 it may see. A glance may name one; a `label` or `describe` only one worked out
-from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"),
-`{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three").
+from the record alone (no graph is in hand). Templates say `{n | words}` ("three"),
+`{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"), `{at | time}` ("10:47 AM").
 The check refuses a cycle (`computed-cycle`), a name that is already a field
 (`computed-clash`) and work that grows with the cube of the graph
 (`computed-cost`, a warning at the square). A document's top-level

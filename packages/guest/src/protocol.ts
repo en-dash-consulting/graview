@@ -195,7 +195,20 @@ export interface GuestProps {
   readonly theme?: GuestTheme;
   /** The app's named places, for a worker view to link to by slug (FR-93): never an address outside the app. */
   readonly places?: readonly GuestPlace[];
+  /**
+   * WHAT A VIEW SAYS A DAY AND A TIME IN (FR-178, Roadmap f-app-time-zone):
+   * the locale ("en-US") and the IANA time zone ("America/New_York") every
+   * other surface of the app says them in — the person's a host passed,
+   * else the app's `brand.locale` and `brand.timeZone`, else the runtime's.
+   * A record holds an instant as it is kept (`2026-10-16T14:47:00Z`); a
+   * view says it with `new Intl.DateTimeFormat(props.locale, { timeZone:
+   * props.timeZone, hour: "numeric", minute: "2-digit" })`, never a zone
+   * of its own.
+   */
+  readonly locale?: string;
+  readonly timeZone?: string;
 }
+
 
 /** What a list or a place is narrowed to: a field and the one value it keeps, `{ stage: "building" }`. */
 export type GuestWhere = Readonly<Record<string, string | number | boolean>>;

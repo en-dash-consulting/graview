@@ -2,6 +2,7 @@ import { checkBrandContrast, crowdedHues, HUE_CROWDING } from "../../theme/deriv
 import { emojiProblem } from "../../theme/marks.js";
 import { EMOJI_FIX, emojiSentence } from "../../document/brand-check.js";
 import { capitalize } from "../../capital.js";
+import { TIME_ZONE_FIX, timeZoneProblem } from "../../days.js";
 import { passingShade, ratioWords } from "../../theme/accent.js";
 import { TEXT_PAIRS } from "../../theme/types.js";
 import { checkKitContrast, resolveKit } from "../../theme/kit.js";
@@ -93,6 +94,11 @@ export function checkAccents<S extends AnySchema>(ctx: CheckContext<S>): void {
   if (locale !== undefined && !formats({}, locale)) {
     add({ severity: "error", code: "brand-locale", where: "brand.locale", message: `"${locale}" is not a locale, so its days, times, numbers and money could not be written for it.`, fix: 'Use a language tag, like "en-US" or "de-DE".' });
   }
+  // A zone the runtime cannot say a time in would be said on each reader's clock: the bug the zone is declared to end (Roadmap f-app-time-zone).
+  const timeZone = app.brand?.timeZone;
+  const unzoned = timeZone === undefined ? undefined : timeZoneProblem(timeZone);
+  if (unzoned) add({ severity: "error", code: "brand-time-zone", where: "brand.timeZone", message: unzoned, fix: TIME_ZONE_FIX });
+
 }
 
 export function checkPalette<S extends AnySchema>(ctx: CheckContext<S>): void {

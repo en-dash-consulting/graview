@@ -45,7 +45,7 @@ import { canonicalize } from "./canonical.js";
 import { quotedAtTheEnd } from "./quote.js";
 import { isRecord as isObject, respellDocument } from "./respell.js";
 import { refName } from "./compiled.js";
-import { localeSentence } from "./diff.js";
+import { localeSentence, timeZoneSentence } from "./diff.js";
 import { accentProblem } from "../theme/accent.js";
 import { pageFieldFindings, pageNames, renamedOnPage, withoutOnPage } from "./page-fields.js";
 import { capitalize, listed as listOf } from "../capital.js";
@@ -184,6 +184,8 @@ const SHAPES: Record<EditOp, z.ZodType> = {
       name: z.union([z.string().min(1).max(60), z.null()]).optional(),
       currency: z.union([z.string(), z.null()]).optional(),
       locale: z.union([z.string(), z.null()]).optional(),
+      // An IANA time zone its instants are said in (Roadmap f-app-time-zone).
+      timeZone: z.union([z.string().min(1).max(64), z.null()]).optional(),
       // The rest of the brand (FR-124, FR-125): each as the document holds it, null to clear it.
       logo: z.union([z.string().min(1), z.object({ src: z.string().min(1), alt: z.string().min(1).max(120).optional() }).strict(), z.null()]).optional(),
       favicon: z.union([z.string().min(1), z.object({ emoji: z.string() }).strict(), z.null()]).optional(),
@@ -586,7 +588,7 @@ class Editor {
     const emptyPart = (["typography", "shape", "accents"] as const).find((key) => isObject(e[key]) && Object.keys(e[key]).length === 0);
     if (emptyPart) return this.fail(i, emptyPart, `${emptyPart} names no part to set; name one, or give null to clear all of it`);
     const judged = brandFindings(
-      { ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
+      { ...(typeof e.timeZone === "string" ? { timeZone: e.timeZone } : {}), ...(typeof e.logo === "string" || isObject(e.logo) ? { logo: e.logo } : {}), ...(typeof e.favicon === "string" || isObject(e.favicon) ? { favicon: e.favicon } : {}), ...(isObject(e.typography) ? { typography: Object.fromEntries(Object.entries(e.typography).filter(([, v]) => typeof v === "string")) as Doc } : {}) },
       { at, ...(this.options.fonts ? { fonts: this.options.fonts } : {}) },
     );
     if (judged.length > 0) return void this.findings.push(...judged);
@@ -617,6 +619,14 @@ class Editor {
       // Its days, times and numbers as well as its money (FR-178).
       this.said.push(localeSentence(e.locale));
     }
+    if (e.timeZone === null) {
+      if (brand["timeZone"] !== undefined) this.said.push(timeZoneSentence(undefined));
+      delete brand["timeZone"];
+    } else if (e.timeZone !== undefined) {
+      brand["timeZone"] = e.timeZone;
+      this.said.push(timeZoneSentence(e.timeZone));
+    }
+
     if (e.name === null) {
       delete brand["name"];
       this.said.push("The wordmark says the app's name.");

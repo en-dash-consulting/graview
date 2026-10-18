@@ -1,4 +1,4 @@
-import type { AnySchema, Principal, Store } from "@graview/core";
+import { localeFor, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
 import { plainNode, readAcross, type GuestViewInput } from "./session.js";
@@ -180,6 +180,9 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
     acts,
     ...(given.theme ? { theme: given.theme } : {}),
+    // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
+    locale: localeFor(),
+    timeZone: timeZoneFor(),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
     ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
   };

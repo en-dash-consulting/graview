@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 2010,
+  "gzipped": 680,
+  "changeset": "datetimes-are-said-in-the-apps-time-zone.md",
+  "note": "Raised when datetimes came to be said in the app's time zone (Roadmap f-app-time-zone): the page's zone beside its locale (`sayIn`, `sayingIn`, `zoneFor`), an instant read as a wall time on a named clock and back (`wallIn`, `instantIn`, the date editor's), the day of an instant on it, the `time` and `datetime` formatters, and `timeZone` on the provider and the pages face. 2_003 / 676 more than main (523_913 / 181_389). Measured at 525_916 / 182_065."
+}

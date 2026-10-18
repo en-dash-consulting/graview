@@ -280,7 +280,9 @@ export type PolicySpec = z.infer<typeof PolicySpec>;
  * The installation's look and its money: an accent color the palette is
  * derived from, and the currency and locale a sum is said in wherever a
  * block names none (FR-100) — the locale its days, times and numbers are
- * said in too (FR-178), "en-US" when absent. Any of them may stand alone.
+ * said in too (FR-178), "en-US" when absent — and the time zone its
+ * instants are said in (Roadmap f-app-time-zone), each reader's own clock
+ * when absent. Any of them may stand alone.
  */
 export const BrandSpec = z.strictObject({
   accent: z.optional(z.string().check(z.regex(/^#[0-9a-fA-F]{6}$/, 'an accent is a color like "#c2577a"'))),
@@ -288,6 +290,9 @@ export const BrandSpec = z.strictObject({
   currency: z.optional(z.string().check(z.regex(/^[A-Z]{3}$/, 'a currency is its three-letter code, like "USD" or "EUR"'))),
   // A language tag ("en-US", "de-DE"); `graview check` says when it is none (`brand-locale`).
   locale: z.optional(str(2, 35)),
+  // An IANA time zone ("America/New_York"); `graview check` says when it is none (`brand-time-zone`).
+  timeZone: z.optional(str(1, 64)),
+
   /*
    * THE REST OF THE BRAND (FR-124), each optional and each checked by
    * `graview check` (`brand-mark`, `brand-font`): a logo and a page icon —

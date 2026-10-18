@@ -130,6 +130,8 @@ export function readableFields(
     readonly excerpt?: boolean;
     /** The app's locale its days are said in (FR-178): a reader's a host passed wins, and the page's when unsaid. */
     readonly locale?: string | undefined;
+    /** The app's time zone its instants are said in (Roadmap f-app-time-zone): a person's a host passed wins, and the page's when unsaid. */
+    readonly timeZone?: string | undefined;
   } = {},
 ): readonly ReadableField[] {
   const display = definition?.display;
@@ -239,7 +241,7 @@ export function readableFields(
           typeof value === "string" && ISO_DAY.test(value)
           ? dayAsRead(value, options.locale)
           : typeof value === "string" && ISO_MOMENT.test(value)
-          ? momentAsRead(value, options.locale)
+          ? momentAsRead(value, options.locale, options.timeZone)
           : typeof value === "string" && isChoice(definition, key)
             ? valueWords(definition, key, value)
             : stored);

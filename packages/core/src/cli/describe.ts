@@ -294,6 +294,13 @@ export function describeApp<S extends AnySchema>(
     `Days, times and numbers are written for ${locale ?? `${DEFAULT_LOCALE}, the default`}: ${dayAsRead("2023-09-10", locale)}, ${timeAsRead("2023-09-10T15:30", locale)}, ${numberAsRead(1250, locale)}; ` +
       (app.brand?.currency ? `money is said in ${app.brand.currency} (${formatMoney(1250, { currency: app.brand.currency, ...(locale ? { locale } : {}) })}).` : "money is said with no currency."),
   );
+  // THE APP'S TIME ZONE (Roadmap f-app-time-zone): what an instant reads as, on every reader's screen and in every act's sentence.
+  const timeZone = app.brand?.timeZone;
+  lines.push(
+    timeZone
+      ? `Times are said in ${timeZone}: 2023-09-10T19:30:00Z reads ${timeAsRead("2023-09-10T19:30:00Z", locale, timeZone)}, unless a host passes the person's own zone.`
+      : "Times are said on each reader's own clock: brand.timeZone names one zone for everybody.",
+  );
 
   /*
    * WHAT A SEAT CAN DO. A policy with roles and a principal holding none of
