@@ -26,7 +26,7 @@ agent tool that walks the graph.
        label: z.string().min(1).max(60),
        kickOff: z.string(),
        opponent: z.string(),
-       // Host-kept picture ("image"/"file"); appLinkField() another app
+       // Host-kept file ("image"/"video"/"file"); appLinkField() another app
        // (its records: graview-linked-records); phoneField(), placeField().
        crest: imageField().optional(),
      }),

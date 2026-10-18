@@ -1,6 +1,6 @@
 ---
 name: graview-view-drawing
-description: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, and the images a view may show (the app's logo, the app's own images, the pictures on records) — and find out what the host refused rather than assuming it drew.
+description: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.
 ---
 
 # Drawing in a worker view
@@ -22,7 +22,7 @@ each element's own. CSS for layout, grid, flex, color, type, transitions,
 `@keyframes`, `@media`, `@supports` and `@container`.
 
 Never drawn: `script`, `iframe`, `object`, `embed`, `link`, `meta`, `base`,
-`style`, `form`, `video`, `canvas`, SVG `image` and `foreignObject`; any
+`style`, `form`, `video` (place a `graview-video`, below), `canvas`, SVG `image` and `foreignObject`; any
 `href`, `srcset` or `on*` attribute; `src` on anything but `img`, and on
 `img` any address but the ones below. In CSS: `url()` except `url(#id)` on
 `fill`, `stroke`, `clip-path` or `marker`; `@import`; `@font-face`;
@@ -95,6 +95,30 @@ const photos = (job.photos || []).map((photo) => photo.src
 
 Without `pictures`, a record's file comes as the record keeps it: its
 `href` draws only where it is the app's own image (`/graview/assets/…`).
+
+## A record's video, and the full-screen viewer
+
+A view never draws `<video>` or `position: fixed`; it names what it wants
+and **the host draws it**, from the records the view was shown, for a view
+whose manifest says `pictures`:
+
+- **`<graview-video data-record="${node.id}" data-field="clip">`** (and
+  `data-index` in a list): the host plays that record's video in it —
+  poster first, the browser's own controls, only its metadata fetched,
+  captions where the value has them. Size the box in your stylesheet
+  (`graview-video { width: 100% }`); nothing inside it is yours to style
+  or hear. The video comes to the view as its facts — `{ name, type,
+  bytes, width, height, caption, duration }` — so draw its length
+  yourself if you like; never a `src`.
+- **`<button data-lightbox data-record="${node.id}" data-field="photos"
+  data-index="0">`**: the viewer's press opens the host's full-screen
+  viewer for that picture or video over the app; Escape closes it and the
+  keyboard comes back to the button. Your code cannot open it.
+
+A record the view was not shown, a field with no video, or a view without
+`pictures` draws nothing, and says why in its console and the host's
+problems. A headless run says a placed video as "The waves at dusk, a
+45-second video".
 
 **Keep a picture in an `image` field**, which holds the uploaded file
 (what `add_image` stores), never its bytes as words: a `data:` URI in a
