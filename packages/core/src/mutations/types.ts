@@ -185,11 +185,11 @@ export interface MutationDefinition<
    * bring a thing into being may take it out — so a policy needs no second
    * list for either.
    */
-  readonly derived?: { readonly kind: string; readonly act: DerivedAct };
+  readonly derived?: { readonly kind: string; readonly act: DerivedAct; readonly relation?: string };
 }
 
-/** The acts the framework gives every kind: edit and remove, and archive, unarchive and merge (FR-173). */
-export type DerivedAct = "edit" | "remove" | "archive" | "unarchive" | "merge" | "leave-alone" | "allow-tidying" | "skip" | "detach" | "split";
+/** The acts the framework gives every kind: edit and remove, and archive, unarchive and merge (FR-173); and every relation of a kind, connect and disconnect (`relation` names it). */
+export type DerivedAct = "edit" | "remove" | "archive" | "unarchive" | "merge" | "leave-alone" | "allow-tidying" | "skip" | "detach" | "split" | "connect" | "disconnect";
 
 export type AnyMutationDefinition<S extends AnySchema = AnySchema> =
   MutationDefinition<S, string, z.ZodType>;

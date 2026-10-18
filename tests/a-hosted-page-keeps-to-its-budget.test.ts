@@ -104,7 +104,8 @@ describe("a hosted page", () => {
     // 926 KB since Notify me came (Roadmap f-notify-subscriptions): the menu's row on both faces, a record's and an act's press, and Activity's count, the sheet and the list behind their doors: the scene face measured 947_611 B, 3_934 more than before it (943_677).
     // 933 KB since dates came to be typed as people say them (Roadmap f-date-inputs): a record's date changed in place with its end moved alongside, a calendar placing an instant on the reader's clock, the door to the editor (the editor, its month and the reader of what is typed are fetched when first asked for), and the wall-time helpers on @graview/core/words, whose barrel also places the reader in a chunk the scene fetches: the scene face measured 954_856 B, 7_245 more than before it (947_611). Up front, 42 bytes more (569_696 to 569_738): the instant check `describeArg` reads.
     // 935 KB since datetimes came to be said in the app's time zone (Roadmap f-app-time-zone): the page's zone beside its locale, an instant read on a named clock and back, the `time` and `datetime` formatters and `timeZone` on the provider: the scene face measured 957_342 B, 2_064 more than before it (955_278).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(935 * 1024);
+    // 938 KB since every relation came with its connect and disconnect (Roadmap f-relation-acts-derived): the store registers each relation's derived pair, its titles and its name read back against the kinds: 2_675 more on its own (955_278 to 957_953), with the time zone 937.5 KB together.
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(938 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

@@ -8,7 +8,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Add a node kind
 
-A kind is the unit of everything here. Declaring one gets you, without another line: a place in the layout, a card at three fidelities, an aggregate view, an accessibility label, a hue, and inclusion in every agent tool that walks the graph.
+A kind is the unit of everything here. Declaring one gets you a place in the layout, a card at three fidelities, an aggregate view, an accessibility label, a hue, and a place in every agent tool.
 
 ### Do this
 
@@ -24,7 +24,7 @@ A kind is the unit of everything here. Declaring one gets you, without another l
 
 1. **Say what a node of it is called.** `label` defaults to a `label` field and then to the id. An id in the interface is a bug you shipped, not a placeholder. And say what ONE of the kind is called where its id does not: `noun: "staff member"` on a kind called `staff`, or every sentence about one reads "Change the staff".
 
-An id is still a name a caller may choose: every act that declares `creates: ["fixture"]` takes an optional `id` argument the framework adds, so a seed being synced or an agent that will refer to the node next call gets exactly the id it asked for, or a refusal by name. Never hardcode a bootstrap id — `"today"`, `"u-nick"` — in a mutation body or an invariant; bind a role, a flag or an edge, so a store seeded differently still works. And every kind gets `remove-<kind>` derived, permitted through the acts that create it.
+An id is still a name a caller may choose: every act that declares `creates: ["fixture"]` takes an optional `id` argument the framework adds, so a seed being synced or an agent that will refer to the node next call gets exactly the id it asked for, or a refusal by name. Never hardcode a bootstrap id in a mutation or an invariant; bind a role, a flag or an edge, so a store seeded differently still works. And every kind gets `remove-<kind>` derived, permitted through the acts that create it; every relation `connect-<kind>-<relation>` and `disconnect-` unless your acts do.
 
 1. **Give it verbs.** A kind no mutation names as a subject can have nothing done to it, and the strip says so. Unless you meant that, add a mutation whose `subject.kinds` includes it.
 

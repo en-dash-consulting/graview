@@ -1,4 +1,5 @@
-import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied } from "../mutations/derived-names.js";
+import { DERIVED_ACTS, derivedActOf, derivedActsOf, givenWhenNeverArchived, givenWhenNeverTidied, RELATION_ACTS, relationActName, relationActsOf } from "../mutations/derived-names.js";
+import { documentRelations, givesRelationAct, renamedRelationAct } from "./relation-acts.js";
 import { z } from "zod";
 import type { Expr } from "./expr/parse.js";
 import { ExprSyntaxError, parseExpr } from "./expr/parse.js";
@@ -1459,8 +1460,9 @@ class Editor {
     if (!sight && part.mutations !== "*") {
       for (const [n, act] of part.mutations.entries()) {
         const derived = derivedActOf(act);
-        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)) && (this.doc.kinds[derived.kind].tidying !== "never" || givenWhenNeverTidied(derived.act)))) continue;
-        return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf)].join(", ")}`);
+        if (this.doc.acts?.[act] || (derived && this.doc.kinds[derived.kind] && (this.doc.kinds[derived.kind].archives !== false || givenWhenNeverArchived(derived.act)) && (this.doc.kinds[derived.kind].tidying !== "never" || givenWhenNeverTidied(derived.act))) || givesRelationAct(act, this.doc.kinds)) continue;
+        const relationActs = relationActsOf(documentRelations(this.doc.kinds)).filter((name) => givesRelationAct(name, this.doc.kinds));
+        return this.failAs("grant-act", i, `mutations.${n}`, `"${act}" is not an act this app has`, `one of ${[...Object.keys(this.doc.acts ?? {}), ...Object.keys(this.doc.kinds).flatMap(derivedActsOf), ...relationActs].join(", ")}`);
       }
     }
     const said: string[] = [];
@@ -1557,6 +1559,8 @@ class Editor {
     const touched = this.rewriteAll({ t: "kind", from, to });
     // The acts the framework derives for every kind are named for it, so they move with it.
     for (const act of DERIVED_ACTS) this.toolsMoved.add(`${act}-${from} is now ${act}-${to}`);
+    // And so are each of its relations' connect and disconnect.
+    for (const relation of documentRelations({ [from]: spec })[0]![1]) for (const act of RELATION_ACTS) this.toolsMoved.add(`${relationActName(act, from, relation)} is now ${relationActName(act, to, relation)}`);
     // The kind itself, in order, continuing its records.
     const kinds: Doc = {};
     for (const [k, v] of Object.entries(this.doc.kinds)) kinds[k === from ? to : k] = v;
@@ -1624,6 +1628,8 @@ class Editor {
       for (const what of went) if (!gone.includes(what)) gone.push(what);
     }
     const removedPlural: string = this.doc.kinds[kind].plural ?? `${words(kind)}s`;
+    // Its own relations' connect and disconnect go with it.
+    const ownRelationActs = relationActsOf(documentRelations({ [kind]: this.doc.kinds[kind] }));
     delete this.doc.kinds[kind];
     this.kindOrigin.delete(kind);
     // Relations that only led to it go with it.
@@ -1661,7 +1667,7 @@ class Editor {
      * whose last act is removed — kept, it read as a grant on every kind.
      */
     if (this.doc.policy) {
-      const derived = derivedActsOf(kind);
+      const derived = [...derivedActsOf(kind), ...ownRelationActs];
       this.doc.policy.grants = this.doc.policy.grants.flatMap((g: Doc) => {
         const kinds = Array.isArray(g.kinds) ? g.kinds.filter((k: string) => k !== kind) : g.kinds;
         const mutations = Array.isArray(g.mutations) ? g.mutations.filter((m: string) => !derived.includes(m) || this.doc.acts?.[m]) : g.mutations;
@@ -1971,6 +1977,8 @@ class Editor {
     for (const k of holders) if (!this.freeName(i, k, to, "relation")) return;
     if (Object.values(this.doc.kinds).some((s: Doc) => s.edges?.[to])) return this.fail(i, "to", `another kind already has a relation called "${to}"`);
     const touched = this.rewriteAll({ t: "edge", from: relation, to });
+    // Its connect and disconnect are named for it, so they move with it.
+    for (const [k, held] of documentRelations(this.doc.kinds)) if (held.includes(relation)) for (const act of RELATION_ACTS) this.toolsMoved.add(`${relationActName(act, k, relation)} is now ${relationActName(act, k, to)}`);
     // A sight via it names it too.
     for (const sight of this.doc.policy?.sees ?? []) if (sight.via === relation) sight.via = to;
     for (const k of holders) {
@@ -2004,6 +2012,15 @@ class Editor {
     const others = [...(sources(this.doc, relation) as Set<string>)].filter((k) => k !== kind);
     // Only when no other kind keeps a relation of the same name do its mentions go too.
     if (others.length === 0) gone.push(...this.dropMentions({ t: "edge", from: relation, to: "\u0000" }));
+    // Its connect and disconnect from this kind go with it, and a grant naming them no longer does; one left naming no act gives nothing, and goes.
+    const acts = RELATION_ACTS.map((act) => relationActName(act, kind, relation)).filter((name) => !this.doc.acts?.[name]);
+    if (this.doc.policy) {
+      this.doc.policy.grants = this.doc.policy.grants.flatMap((g: Doc) => {
+        if (!Array.isArray(g.mutations) || !g.mutations.some((m: string) => acts.includes(m))) return [g];
+        const mutations = g.mutations.filter((m: string) => !acts.includes(m));
+        return mutations.length === 0 ? [] : [{ ...g, mutations }];
+      });
+    }
     delete this.doc.kinds[kind].edges[relation];
     if (Object.keys(this.doc.kinds[kind].edges).length === 0) delete this.doc.kinds[kind].edges;
     this.edgeOrigin.delete(`${kind}.${relation}`);
@@ -2202,6 +2219,7 @@ class Editor {
       if (r.t === "kind" && rule.over === r.from) rule.over = r.to;
       for (const rep of rule.repairs ?? []) {
         if (r.t === "kind") rep.act = renamedAct(rep.act, r.from, r.to);
+        if (r.t === "kind" || r.t === "edge") rep.act = renamedRelationAct(rep.act, doc.kinds, r);
         const args = renamedArgs.get(rep.act);
         if (args && rep.args) for (const [a, b] of args) if (a in rep.args) {
           rep.args[b] = rep.args[a];
@@ -2227,6 +2245,12 @@ class Editor {
       }
       for (const s of doc.policy.sees ?? []) s.kinds = s.kinds.map(swap);
       if (JSON.stringify(doc.policy) !== before) touched.push("the policy");
+    }
+    // A relation's connect and disconnect are named for the kind and the relation: a grant naming one follows either rename.
+    if ((r.t === "kind" || r.t === "edge") && doc.policy) {
+      const before = JSON.stringify(doc.policy);
+      for (const g of doc.policy.grants) if (Array.isArray(g.mutations)) g.mutations = g.mutations.map((m: string) => renamedRelationAct(m, doc.kinds, r));
+      if (JSON.stringify(doc.policy) !== before && !touched.includes("the policy")) touched.push("the policy");
     }
 
     // Views: each kind's slots, and the home's blocks, which are about no one record (FR-81).

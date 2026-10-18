@@ -22,7 +22,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [0.1.37 · Datetimes in the app's time zone, with time and datetime formatters](./0-1-37-datetimes-in-the-apps-time-zone.md) | completed |
-| [0.1.37 · Every relation comes with its connect and disconnect acts](./0-1-37-every-relation-comes-with-its.md) | pending |
+| [0.1.37 · Every relation comes with its connect and disconnect acts](./0-1-37-every-relation-comes-with-its.md) | completed |
 | [0.1.37 · Video on records: the framework half](./0-1-37-video-on-records-the-framework.md) | pending |
 | [0.1.37 · The week's lines are drawn under a throttled CPU](./0-1-37-the-weeks-lines-are-drawn-under.md) | pending |
 | [0.1.37 · A rule's today() is the app's day, not UTC's](./0-1-37-a-rules-today-is-the-apps-day.md) | pending |

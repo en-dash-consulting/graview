@@ -316,6 +316,22 @@ export function describeApp<S extends AnySchema>(
   }
 
   /*
+   * HOW TWO RECORDS ARE LINKED (Roadmap f-relation-acts-derived): each
+   * relation and the acts that make and break it — the app's own, or the
+   * connect and disconnect every relation is given — so an agent reading
+   * this knows which tool links a moment to its day.
+   */
+  const relationLines = app.schema.definitions.flatMap((definition) =>
+    Object.entries(definition.edges as Readonly<Record<string, { readonly to: readonly string[] | "*"; readonly appendOnly?: boolean }>>).map(([relation, edge]) => {
+      const by = (key: "connects" | "severs") => acts.filter((act) => act[key]?.includes(relation) && (act.derived === undefined || act.derived.kind === definition.kind)).map((act) => `"${act.name}"`);
+      const made = by("connects");
+      const unmade = by("severs");
+      return `  ${capitalize(pluralOf(app.schema, definition.kind))} → ${edge.to === "*" ? "any record" : edge.to.join(" or ")} (${relation}): ${made.length > 0 ? `made by ${list(made)}` : "made by nothing"}, ${unmade.length > 0 ? `unmade by ${list(unmade)}` : edge.appendOnly ? "never unmade (append-only)" : "unmade by nothing"}.`;
+    }),
+  );
+  if (relationLines.length > 0) lines.push("", "## How records are linked", ...relationLines);
+
+  /*
    * WHAT IT LINKS IN OTHER APPS (FR-171): a relation to another app's kind is
    * read there as the viewer, and linked by picking a record there — say
    * where it goes and how, since nothing of it is in this graph to see.

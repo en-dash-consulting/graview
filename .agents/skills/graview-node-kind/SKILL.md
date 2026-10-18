@@ -5,10 +5,9 @@ description: Add a node kind to a Graview app — fields, edges, label, plural a
 
 # Add a node kind
 
-A kind is the unit of everything here. Declaring one gets you, without another
-line: a place in the layout, a card at three fidelities, an aggregate view, an
-accessibility label, a hue, and inclusion in every
-agent tool that walks the graph.
+A kind is the unit of everything here. Declaring one gets you a place in the
+layout, a card at three fidelities, an aggregate view, an accessibility label,
+a hue, and a place in every agent tool.
 
 ## Do this
 
@@ -68,10 +67,10 @@ agent tool that walks the graph.
    `creates: ["fixture"]` takes an optional `id` argument the framework adds,
    so a seed being synced or an agent that will refer to the node next call
    gets exactly the id it asked for, or a refusal by name. Never hardcode a
-   bootstrap id — `"today"`, `"u-nick"` — in a mutation body or an
-   invariant; bind a role, a flag or an edge, so a store seeded
-   differently still works. And every kind gets `remove-<kind>` derived,
-   permitted through the acts that create it.
+   bootstrap id in a mutation or an invariant; bind a role,
+   a flag or an edge, so a store seeded differently still works. And every kind gets `remove-<kind>` derived,
+   permitted through the acts that create it; every relation
+   `connect-<kind>-<relation>` and `disconnect-` unless your acts do.
 
 5. **Give it verbs.** A kind no mutation names as a subject can have nothing
    done to it, and the strip says so. Unless you meant that, add a mutation

@@ -1,4 +1,5 @@
 import { derivedActOf } from "../mutations/derived-names.js";
+import { documentRelationActOf } from "./relation-acts.js";
 import type { GraviewDocument } from "./schema.js";
 
 /*
@@ -53,6 +54,9 @@ function actPath(name: string, rest: string, document: GraviewDocument): string 
   if (document.acts?.[name]) return joined(`acts.${name}`, respelled(rest, ACT_KEYS));
   const derived = derivedActOf(name);
   if (derived && document.kinds[derived.kind]) return `kinds.${derived.kind}`;
+  // A relation's connect or disconnect lives with the relation it is derived from.
+  const relation = documentRelationActOf(name, document.kinds);
+  if (relation) return `kinds.${relation.kind}.edges.${relation.relation}`;
   return joined(`acts.${name}`, respelled(rest, ACT_KEYS));
 }
 

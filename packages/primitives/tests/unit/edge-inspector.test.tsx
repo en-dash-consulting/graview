@@ -93,7 +93,7 @@ describe("the inspector for a selected line", () => {
    * not there (see `a-stop-that-still-exists`). The question this asks is
    * about the MUTATIONS, so only those change.
    */
-  it("says plainly when no mutation claims the edge kind", () => {
+  it("offers the relation's own disconnect when no act of the app claims the edge kind", () => {
     const plain = new Store({
       schema,
       mutations: [],
@@ -116,7 +116,9 @@ describe("the inspector for a selected line", () => {
         <Inspector />
       </GraviewProvider>,
     );
-    expect(html).toContain("nothing this app declares");
+    // Every relation no act severs is given its disconnect (Roadmap f-relation-acts-derived), offered on its lines.
+    expect(html).toContain("Unlink a duty");
+    expect(html).not.toContain("nothing this app declares");
   });
 
   /*
@@ -268,12 +270,13 @@ describe("a line of a relation several kinds declare", () => {
   const song = defineNode("song", {
     fields: z.object({ label: z.string() }),
     plural: "Songs",
-    edges: { by: { to: ["artist"], description: "the artist whose song it is" } },
+    // Append-only, so a line is offered nothing when the app declares nothing: its derived connect would only make it again.
+    edges: { by: { to: ["artist"], description: "the artist whose song it is", appendOnly: true } },
   });
   const album = defineNode("album", {
     fields: z.object({ label: z.string() }),
     plural: "Albums",
-    edges: { by: { to: ["artist"], description: "the artist whose release it is" } },
+    edges: { by: { to: ["artist"], description: "the artist whose release it is", appendOnly: true } },
   });
   const shared = createSchema([artist, song, album]);
   const unlink = bindSchema(shared).defineMutation("unlink", {
@@ -326,6 +329,23 @@ describe("a line of a relation several kinds declare", () => {
     const album = open("cold", [unlink]);
     expect(album).toContain("this line is &quot;the artist whose release it is&quot;");
     expect(album).not.toContain("whose song it is");
+  });
+
+  it("offers on a line only the derived acts of the kind it leaves", () => {
+    const tied = (kind: string) => defineNode(kind, { fields: z.object({ label: z.string() }), plural: `${kind}s`, edges: { by: { to: ["artist"] } } });
+    const both = createSchema([artist, tied("song"), tied("album")]);
+    const html = renderToStaticMarkup(
+      <GraviewProvider
+        store={new Store({ schema: both, mutations: [], invariants: [], snapshot: { nodes: [{ id: "blue", kind: "artist", label: "Blue Hour" }, { id: "cold", kind: "album", label: "Cold Water" }] as never, edges: [{ kind: "by", from: "cold", to: "blue" }] } })}
+        views={registerDefaultViews(both, createViews(both))}
+        initialView={EMPTY_VIEW}
+        initialSelection={[edgeSelectionId("by", "cold", "blue")]}
+      >
+        <Inspector />
+      </GraviewProvider>,
+    );
+    expect(html).toContain('data-pin-for="disconnect-album-by"');
+    expect(html).not.toContain("-song-by");
   });
 
   it("is listed in the Key under every kind's own words", () => {

@@ -109,10 +109,16 @@ describe("an import makes only what its importer may", () => {
     expect(result.rows[1]!.refused).toEqual(["Not permitted: “Keep the vendor” on a vendor — only on your own end of the link."]);
   });
 
-  it("makes no link of a relation no act makes, where a policy is declared", () => {
-    const result = importRows(world(), "vendor", [["Name", "Tags"], ["Bloom & Co", "Local"]], { Name: "name", Tags: "tagged" }, { by: planner });
-    expect(result.made).toBe(0);
-    expect(result.rows[0]!.refused).toEqual(["nothing in this app links a vendor to a tag that way, so none can be imported"]);
+  it("links a relation no declared act makes through its derived connect, for whoever may make the record it leaves", () => {
+    const sheet = [["Name", "Tags"], ["Bloom & Co", "Local"]];
+    const mapping = { Name: "name", Tags: "tagged" };
+    const store = world();
+    const result = importRows(store, "vendor", sheet, mapping, { by: planner });
+    expect(result.made).toBe(1);
+    expect(store.graph.out(result.rows[0]!.id!, "tagged").map((one) => one.id)).toEqual(["tag:local"]);
+    const helped = importRows(world(), "vendor", sheet, mapping, { by: helper });
+    expect(helped.made).toBe(1);
+    expect(helped.rows[0]!.refused ?? []).toEqual([]);
   });
 
   it("gives a record the id the importer's own act would, the same whether a vendor it may not see is called the same", () => {

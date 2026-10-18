@@ -34,11 +34,11 @@ export interface EdgeDeclaration<TargetKind extends string = string> {
   readonly inverse?: string;
   /**
    * Declares that this relation, once made, is never unmade — an entry in a
-   * record, not a tie anyone severs. `graview check` warns about any edge
-   * kind some mutation can make and none can break (`edge-without-severer`),
-   * because a way in with no way out is usually an oversight; this is the
-   * declaration that says it is not. The suppression is the documentation:
-   * a reader of the schema learns the edge is append-only on purpose.
+   * record, not a tie anyone severs. Every relation no act severs is given
+   * a derived `disconnect-<kind>-<relation>`, because a way in with no way
+   * out is usually an oversight; this is the declaration that says it is
+   * not, and the relation is given no disconnect. A reader of the schema
+   * learns the edge is append-only on purpose.
    */
   readonly appendOnly?: boolean;
   /**
