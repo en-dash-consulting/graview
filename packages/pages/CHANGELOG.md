@@ -1,5 +1,34 @@
 # @graview/pages
 
+## 0.1.34
+
+### Patch Changes
+
+- f48b7d1: A panel drawn from the right-click menu opens in the face it was asked on (FR-184). On Pages, "Draw a panel" did nothing: the menu at the pointer was drawn outside the routed face's way of going (`GoToContext`, which Pages gives by address), so the inline AI went the scene's way, set the seat's draft with nowhere on the page to show it, and the draft waited for the scene. The routed face now gives its way of going to everything it draws, the menu and the quick ask's card included, so "Draw a panel", a panel the menu suggests and a panel or a place taken from the quick ask's card land at `/~draft` with "Keep as a lens" and "Discard", or at the place's page, and never switch face. Over the scene a drawn panel is framed on the scene's surface — the panel's color, an edge, rounded corners, a little in from the picture's edges — instead of a bare list on the ground, and the panel beside the map (a district's records, a record's links) is put away while it stands and comes back when it is kept or discarded. An ask the menu makes stays in the menu until what it asked for lands: "Asking…" while it is on its way, then the menu is put away as the ghost, the panel or the page arrives; an ask that fails is said in the menu, where the person who asked is looking, as well as in Activity, and the quick ask's card says a failed offer on the card. `capabilities().shipped` gains FR-184.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` lists FR-184. What Graview Cloud does: nothing — a host that mounts the pages face gets the panel at `/~draft` on the next version.
+- 8f09e52: A reader who may do nothing is told how to get in, not shown every act struck through (FR-183). A signed-out visitor on a public app right-clicked an era and the menu said "Nothing you may do with an era — 7 actions withheld" over seven disabled buttons, each with the policy's sentence; the list's foot said "~~Add an era~~ — Not permitted: …"; nothing said how to get the right, and "Notify me…" was offered to `anonymous` and kept a subscription for nobody. A host now says what a signed-out reader could gain: `signIn: { label, run, roles? }`, handed only while the reader is a visitor, on `mount` from `@graview/embed` and `@graview/embed/pages`, on `GraviewProvider` (which the Shell draws under, and a provider inside another takes from the one around it) and on the pages' context. Where every act withheld from the reader is one a member could take — one some role could, or one of `roles`, the roles signing in gives, when the host names them — the context menu and the Inspector on either face, the list's foot and a record's acts say `label` as one press that calls `run` (`data-testid="sign-in"`), in place of the struck acts; the face's own rows (Open, Show in the scene) stay. With `signIn` given, "Notify me" is not offered on the menu, a record's page or after an act, and the seat's chat keeps no subscription. A member lacking one role is still told each act they may not take and who could (FR-16), and so is a visitor where one act is one no role can take. `signInInstead(withheld, signIn)` and the `SignIn` type are exported from `@graview/core`, the same judgment for a page of an app's own. A hosted page, compiled or not, carries 0.2 KB more up front for it, under a raise of 0.3 KB more up front on each of the two budgets. The embed's README and the graview-embed skill say the option. `capabilities().shipped` gains FR-183.
+  
+  Compatibility: ops, stored formats, the declaration and derived tools are unchanged. The wire is unchanged; `capabilities().shipped` lists FR-183. What Graview Cloud does: pass `signIn: { label: "Sign in to make changes", run }` to `mount` while nobody is signed in, and drop its interim `visitorMenuSections` row and the CSS hiding `[data-testid=withheld]`, `[data-testid=no-affordances]` and `[data-menu-section=notify]`.
+- 55ab33c: The right-click menu is ready before the click (FR-186). The menu derived its acts and sections as it opened, fetched its AI section behind Suspense, and asked for suggestions afresh every time, so it filled in while the reader watched: "Thinking…", then rows arriving. Now when the pointer rests on a record, a card, a row or a kind for 150 ms — in the scene and on the routed face; a pass-over across a list does nothing — or the keyboard lands on one (so Shift+F10 opens at once), or a finger goes down on one (so a long press does), the menu that would open there is got ready: the pane and its act forms fetched, its acts derived and kept, and each section's new `prepare` called, which fetches the inline AI's chunk and the sheet "Notify me…" opens. Nothing is fetched before that, so a hosted page's first load is unchanged. The acts derived for a target are kept per store, by the selection, the seat, the providers, the pins and the focus, until the graph changes (`prepareAffordances` and `AffordancesAsked` from `@graview/react`; `useAffordances` reads the same kept derivation). Suggestions are kept per target, by the seat, the declaration and the host's `ai`, until the record changes (for a list, a lens or a place, until the graph does): a menu opened again draws what was suggested in its first frame and asks nothing, and a failure is not kept. Hovering asks no model, ever. A host's own menu section may give `prepare` too (`MenuSection.prepare`); `useMenuPrepare()` from `@graview/react/drawing` calls every section's for a target, and the routed face's `Inspector` takes `aimAt`, what a menu opened at an element would be about. `capabilities().shipped` gains FR-186.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and derived tools are unchanged; `capabilities().shipped` lists FR-186. What Graview Cloud does: nothing for its menus to be ready before the click; a section it adds through `menuSections` that fetches what it draws can say so in `prepare`.
+- Updated dependencies [5fc86f5]
+- Updated dependencies [f48b7d1]
+- Updated dependencies [5c22433]
+- Updated dependencies [8f09e52]
+- Updated dependencies [2324ad3]
+- Updated dependencies [b320b36]
+- Updated dependencies [f02e354]
+- Updated dependencies [9c79c96]
+- Updated dependencies [55ab33c]
+- Updated dependencies [9c79c96]
+  - @graview/tools@0.1.34
+  - @graview/primitives@0.1.34
+  - @graview/core@0.1.34
+  - @graview/react@0.1.34
+  - @graview/layout@0.1.34
+
 ## 0.1.33
 
 ### Patch Changes

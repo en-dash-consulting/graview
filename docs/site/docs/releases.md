@@ -37,7 +37,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.33
 
-Published October 17, 2026 · the current version
+Published October 17, 2026
 
 A read-only calendar takes its own changes under a policy, and a host keeps Notify me in its own store.
 
