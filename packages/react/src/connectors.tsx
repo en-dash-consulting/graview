@@ -211,8 +211,31 @@ interface Pass {
    * member walked the whole of a large picture for each of its lines.
    */
   readonly marks: Map<Element, Map<string, Element[]>>;
+  /** The members looked for inside a view and not found drawn there, by the view's id (`Owed`). */
+  readonly owed?: Owed;
 }
-const newPass = (): Pass => ({ clips: new Map(), members: new Map(), marks: new Map() });
+const newPass = (owed?: Owed): Pass => ({ clips: new Map(), members: new Map(), marks: new Map(), ...(owed ? { owed } : {}) });
+
+/**
+ * WHAT A MEASUREMENT IS STILL OWED: the members it looked for inside a view
+ * and found no drawing of, by the view's id. A view whose picture arrives
+ * in a commit of its own — fetched as it is first drawn — draws its members
+ * after the lines were measured, at the same size, and nothing else moves
+ * to say so; the lines watch for these (`watchDrawnLate`) and are measured
+ * again when one is drawn.
+ */
+export type Owed = Map<string, Set<string>>;
+
+/** Whether a view now draws any member a measurement was owed, by the same test the measurement makes. */
+export function drawnSince(stageEl: HTMLElement, owed: Owed): boolean {
+  const pass = newPass();
+  for (const [view, members] of owed) {
+    const host = stageEl.querySelector(`[data-graview-view="${CSS.escape(view)}"]`);
+    if (host === null) continue;
+    for (const member of members) if (memberBoxes(stageEl, host, member, pass).length > 0) return true;
+  }
+  return false;
+}
 
 function marksIn(host: Element, pass: Pass): Map<string, Element[]> {
   let marks = pass.marks.get(host);
@@ -306,6 +329,8 @@ function memberBoxes(
   }
   boxes.sort((a, b) => a.width * a.height - b.width * b.height);
   inHost.set(memberId, boxes);
+  const view = host.getAttribute("data-graview-view");
+  if (boxes.length === 0 && pass.owed && view !== null) pass.owed.set(view, (pass.owed.get(view) ?? new Set()).add(memberId));
   return boxes;
 }
 
@@ -324,9 +349,11 @@ export function connectorStrands(
   stageEl: HTMLElement | null,
   overview: boolean,
   scheme: "light" | "dark",
+  /** Filled with the members looked for inside a view and not found drawn there, for the lines to wait on (`Owed`). */
+  owed?: Owed,
 ): Strand[] {
   const byId = new Map(nodes.map((node) => [node.id, node]));
-  const pass = newPass();
+  const pass = newPass(owed);
   const hostEls = new Map<string, Element | null>();
   const hostOf = (id: string): Element | null => {
     if (!stageEl || typeof document === "undefined") return null;
