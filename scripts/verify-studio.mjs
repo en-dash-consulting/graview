@@ -294,6 +294,10 @@ async function inAHostsPage(browser, report) {
         await page.emulateMedia({ colorScheme });
         await plain.emulateMedia({ colorScheme });
         await plain.goto(`${at("studio-host")}/plain.html`, { waitUntil: "load" });
+        // The embed follows the scheme on its own beat: on a starved runner 300 ms read it before it had turned.
+        await page
+          .waitForFunction((scheme) => document.querySelector("#graview-builder [data-graview-scheme]")?.getAttribute("data-graview-scheme") === scheme, colorScheme, { timeout: 5000 })
+          .catch(() => {});
         await page.waitForTimeout(300);
         const beside = await looks(page);
         const alone = await looks(plain);
