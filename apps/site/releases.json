@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.35",
+      "date": "2026-10-18",
+      "headline": "A relation to another app can be made by an edit, a host may say later whether it still keeps a file, and playback asks for a past declaration when it gets there.",
+      "summary": "- **A cross-app relation from an edit.** The `add-relation` edit, the studio and anything that sends edits can now relate a kind to another app's kind (`\"to\": [\"@nick/house/house\"]`), refused with the checker's own words when it can't be. Migrations no longer drop such a relation's links.\n- **Files a host answers for later.** `HostFiles.kept` may return a promise: a picture is drawn as itself until the host answers, then as removed later if it was, and each file is asked once.\n- **Past declarations on demand.** Playback asks the host for a past version's declaration when it reaches it (`declarationAt`), so a page no longer carries every version up front.",
+      "compatibility": "`add-relation` accepts a `to` of `\"@<address>/<kind>\"`. `HostFiles.kept` may return `Promise<boolean>`. `HistoryHost` takes `declarationAt`. Nothing breaks; the hosted page carries about 0.5 KB more up front.",
+      "published": true
+    },
+    {
       "version": "0.1.34",
       "date": "2026-10-18",
       "headline": "The right-click menu tells a visitor how to get in, draws a panel where it was asked, spends no thinking-model call on opening, and is ready before the click.",
