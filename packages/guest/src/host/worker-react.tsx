@@ -26,6 +26,8 @@ export interface WorkerViewDefinition {
   readonly onProblem?: (said: string) => void;
   /** Where an image the app holds (`/graview/assets/<sha256>.<ext>`) is loaded from, so the view may draw it by that path (WorkerViewOptions.asset). */
   readonly asset?: (path: string) => string | undefined;
+  /** Where a record's file (`FileValue.href`) is fetched for the pictures the view is handed, so a host serving the app under a base answers `base + href` (WorkerViewOptions.file). */
+  readonly file?: (href: string) => string | undefined;
   /** The `https:` origins its images may come from by address (WorkerViewOptions.images): none by default. */
   readonly images?: { readonly origins: readonly string[] };
 }
@@ -103,6 +105,7 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(definition.author ? { author: definition.author } : {}),
         ...(definition.onProblem ? { onProblem: definition.onProblem } : {}),
         ...(definition.asset ? { asset: definition.asset } : {}),
+        ...(definition.file ? { file: definition.file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
       });
     });

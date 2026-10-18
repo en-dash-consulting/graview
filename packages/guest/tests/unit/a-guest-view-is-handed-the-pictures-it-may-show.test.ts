@@ -165,7 +165,7 @@ describe("a view that asks for pictures", () => {
       await settled();
       const step = job(last(), "job:porch")!.photos[1]!;
       expect(step.src).toBeUndefined();
-      expect(step.left).toBe('The picture "step.png" on "Porch repair" could not be loaded for the view "Job photos".');
+      expect(step.left).toBe('The picture "step.png" on "Porch repair" could not be loaded for the view "Job photos": the host answered text/html, not a picture. A host that serves the app under a base says where a record\'s files are (file, on the view\'s definition).');
       expect(said).toContain(step.left);
     } finally {
       SERVED[FILES.step] = { type: "image/png", bytes: 300 };

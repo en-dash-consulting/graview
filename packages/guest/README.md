@@ -530,6 +530,14 @@ isolate could not run it.
 Nothing is applied: an act the view asks for is written down in the
 transcript and answered with a refusal.
 
+Hand a run what the live page is handed, so it judges images as the page
+does: `images` (the `https:` origins listed), `asset` (where the app's own
+images live: the path `add_image` answers is drawn, and so is that path
+under the app's base or by `origin`'s address for it) and `origin` (the
+page's origin). Nothing is loaded in a run. A view whose manifest asks for
+`pictures` is handed each picture with a stand-in `src`, a blank image, so
+its `<img>` is drawn and judged as it will be once the page has the bytes.
+
 A view never runs in the host's own context. The host supplies the
 isolate: `run` is handed one script and one JSON string (`HeadlessPayload`),
 loads the script into an isolate of its choosing, calls the global it

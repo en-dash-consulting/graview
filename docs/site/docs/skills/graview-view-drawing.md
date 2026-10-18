@@ -28,9 +28,9 @@ An `img`'s `src` is drawn only when it is one of these; any other address — an
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or SVG. Keep it small; it is part of the view's source.
 - **The app's logo**: `<img src="${props.theme.logo}">`. The host made it from the brand's mark (a `blob:` URL of the page, or a `data:` image where the page's policy refuses `blob:`). Absent when the brand has none.
-- **An image the app holds**, by the content address it was stored at: `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image` answers). It is drawn only where the host says where those live — the `asset` resolver on the view's definition — and refused elsewhere.
+- **An image the app holds**, by the content address it was stored at: `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image` answers) — or that path under the app's base, or by the page's own address for it, each the same image. It is drawn only where the host says where those live — `asset` on the view's definition, and on a headless run — and refused elsewhere, with a sentence that says so.
 - **An `https:` image on an origin the host lists** — `images: { origins: ["https://upload.wikimedia.org"] }` on the view's definition (and on a headless run). The view never chooses an origin: an address is data it can write, so an open list would let it send what it reads anywhere. It is asked for with no referrer. Unlisted, a URL on a record is refused.
-- **A picture on a record.** Say `pictures: true` in the manifest, or `{ width: 400 }`, the widest the view draws one in CSS pixels. Each file on a record the view is handed is then `{ name, type, bytes, width, height, caption, src, left }` in its field, never the host's path to it. `src` is the address the host made from the bytes, fetched as the reader and made smaller to `width`; it is absent on the first push, and a push follows when it is ready. `left` says why a picture will never come: past one picture's byte budget or the view's, or not loaded. A document, and an SVG, has no `src`: show its name, type and size.
+- **A picture on a record.** Say `pictures: true` in the manifest, or `{ width: 400 }`, the widest the view draws one in CSS pixels. Each file on a record the view is handed is then `{ name, type, bytes, width, height, caption, src, left }` in its field, never the host's path to it. `src` is the address the host made from the bytes, fetched as the reader and made smaller to `width`; it is absent on the first push, and a push follows when it is ready. `left` says why a picture will never come: past one picture's byte budget or the view's, or what the host answered when it was not loaded. A host that serves the app under a base says where a record's files are (`file` on the view's definition). A document, and an SVG, has no `src`: show its name, type and size.
 
 ```js
 const photos = (job.photos || []).map((photo) => photo.src
@@ -45,7 +45,7 @@ Without `pictures`, a record's file comes as the record keeps it: its `href` dra
 ### Then find out whether it worked
 
 1. `graview check` the app, and `checkManifest(manifest, store)` from `@graview/guest/host/views`: it says what is wrong with `pictures`.
-2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes without `src`, so draw its name until it does.
+2. `graview view check view.js --app <app> --manifest manifest.json --seed <seed.json> --roles <role>` says what it drew. Headless, a picture comes with a stand-in `src` (a blank image), so its `<img>` is drawn and judged; only the page shows its pixels.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or `graview.refused` in its console): every element, attribute and address the host left out, and why.
 4. Toggle the app to dark, and change the brand where you can. Does the view follow, logo and all?
 5. As a member who may see fewer records, are the pictures on the records they may not see absent — not merely hidden?

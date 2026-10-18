@@ -168,6 +168,15 @@ export interface MountWorkerViewOptions<S extends AnySchema> {
    */
   readonly asset?: (path: string) => string | undefined;
   /**
+   * Where the page fetches a record's file (`FileValue.href`) for the
+   * pictures a view whose manifest asks for them is handed (FR-175): a host
+   * serving the app under a base answers `base + href`. The href resolved
+   * against the page by default — the page's own root for `/graview/files/…`.
+   * A picture its host did not answer for says what it answered, and names
+   * this option, in the view's console and to `onProblem`.
+   */
+  readonly file?: (href: string) => string | undefined;
+  /**
    * WHERE A VIEW'S IMAGES MAY COME FROM BY ADDRESS (2026-10-15): the
    * `https:` origins the host lists (`["https://upload.wikimedia.org"]`).
    * An image on one of them is drawn as the view gave it, asked for with no
@@ -366,6 +375,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
           view: `"${manifest.title ?? manifest.name}"`,
           pictures: manifest.pictures!,
           ...(options.limits ? { limits: options.limits } : {}),
+          ...(options.file ? { file: options.file } : {}),
           moved: () => session?.push(),
           onLeft: (said) => {
             port?.postMessage({ type: "notice", text: said });
@@ -455,7 +465,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       onRefused: (refusal) => {
         if (refusal.reason !== "url" || refusal.element !== "img" || refusal.address === undefined || toldImages.has(refusal.address)) return;
         toldImages.add(refusal.address);
-        const said = imageRefusedWords(refusal.address, options.images?.origins);
+        const said = imageRefusedWords(refusal.address, { ...(options.images ? { origins: options.images.origins } : {}), assets: options.asset !== undefined });
         port?.postMessage({ type: "notice", text: said });
         options.onProblem?.(said);
       },
