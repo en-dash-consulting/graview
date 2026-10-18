@@ -27,7 +27,7 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
-import { guestFileOf, handFiles } from "../host/pictures.js";
+import { guestFileOf, handFiles, isGuestPicture, PICTURE_STAND_IN } from "../host/pictures.js";
 import { judgeDestination, listsOf } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
 import type { GuestViewInput } from "../host/session.js";
@@ -44,6 +44,8 @@ export { drawTranscript } from "./draw.js";
 export type { DrawnTranscript } from "./draw.js";
 export { judgeTranscript, sayRefusal } from "./judge.js";
 export type { Judged } from "./judge.js";
+export { PICTURE_STAND_IN } from "../host/pictures.js";
+export type { ImageHost } from "../host/open-judge.js";
 export { HEADLESS_ENTRY, HEADLESS_VIEW } from "./protocol.js";
 export type { HeadlessFailureReason, HeadlessInput, HeadlessOutcome, HeadlessTranscript } from "./protocol.js";
 export { createTree, TreeDocument, TreeElement, TreeText } from "./tree.js";
@@ -102,6 +104,16 @@ export interface RunWorkerViewHeadlessOptions<S extends AnySchema> {
   readonly limits?: HeadlessLimits;
   /** The `https:` origins a view's images may come from by address, as the live host lists them (WorkerViewOptions.images). */
   readonly images?: { readonly origins: readonly string[] };
+  /**
+   * Where the app's own images live, as the live host says it
+   * (WorkerViewOptions.asset): given, an image by the path `add_image`
+   * answered — or under the app's base, or by `origin`'s address for it —
+   * is drawn, as the page draws it. Nothing is loaded in a run. Left out,
+   * such an image is refused, and the refusal names `asset`.
+   */
+  readonly asset?: (path: string) => string | undefined;
+  /** The origin the app's page is served on (`https://<workspace>.graview.app`): the page's own address for one of its images is that image. */
+  readonly origin?: string;
   /**
    * The width it is said at, in CSS pixels, as `describePlace` takes it:
    * 1440 by default. Nothing is laid out headless, so it changes the words
@@ -207,13 +219,20 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
   /* A guest's places or an app's as `placesOf` lists them: each by its slug and title, never "undefined" (2026-10-15). */
   const places = guestPlacesOf(options.places ?? []);
   const shown = workerViewProps(store, principal, { manifest, ...(options.input ? { input: options.input } : {}), theme: options.theme ?? HEADLESS_THEME, places });
-  /* A view that asks for pictures (FR-175) is handed each file without the host's path; headless, no bytes are fetched, so a picture comes without its address, as it does before the host has made it. */
-  const props = manifest.pictures ? handFiles(shown, (file) => guestFileOf(file)) : shown;
+  /*
+   * A view that asks for pictures (FR-175) is handed each file without the
+   * host's path. Headless, no bytes are fetched, so a picture comes with a
+   * stand-in `src` — a blank image — as it comes once the host has made it
+   * on the page: the view's `<img>` is drawn and judged as it will be there.
+   */
+  const props = manifest.pictures ? handFiles(shown, (file) => guestFileOf(file, isGuestPicture(file) ? { src: PICTURE_STAND_IN } : {})) : shown;
   const input: HeadlessInput = {
     props,
     acts: manifestActs(manifest).map((one) => one.as ?? one.act),
     places: places.map((place) => ({ as: place.as, title: place.title })),
     ...(options.images ? { imageOrigins: [...options.images.origins] } : {}),
+    ...(options.asset ? { assets: true } : {}),
+    ...(options.origin ? { origin: options.origin } : {}),
     lists: listsOf(store.schema, new Set([...store.kindsKeptFrom(principal), ...store.modules.disabledKinds])).flatMap((list) => [list.slug, list.kind]),
     limits: { maxNodes: limits.maxNodes, messages: limits.messages, pushMs: limits.pushMs },
   };

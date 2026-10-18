@@ -33,6 +33,8 @@ export interface GuestViewOptions {
   readonly reads?: GuestReads;
   /** The pictures on the records a frame guest is handed, as `data:` images the host made (FR-175, `MountGuestViewOptions.pictures`). */
   readonly pictures?: GuestPictures;
+  /** Where a record's file is fetched for those pictures, under the app's base (`MountGuestViewOptions.file`). */
+  readonly file?: (href: string) => string | undefined;
   /** Where the frame first stands before the guest asks for a height. 160px by default. */
   readonly height?: number;
   readonly limits?: GuestLimits;
@@ -120,6 +122,7 @@ export function guestView(options: GuestViewOptions): ViewComponent<AnySchema> {
           input: () => inputOf(latest.current),
           ...(options.reads ? { reads: options.reads } : {}),
           ...(options.pictures ? { pictures: options.pictures } : {}),
+          ...(options.file ? { file: options.file } : {}),
           places: () => views.places(),
           brand: () => branded.current,
           /* A record, a place or a kind's list — narrowed and to a section — where the face goes; what goes nowhere is said in the console. */

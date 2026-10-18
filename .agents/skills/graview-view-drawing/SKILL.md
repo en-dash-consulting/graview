@@ -65,8 +65,10 @@ said once in the view's console and the host's problems, with the address:
   where the page's policy refuses `blob:`). Absent when the brand has none.
 - **An image the app holds**, by the content address it was stored at:
   `/graview/assets/<sha256>.<ext>` (what Graview Cloud's `add_image`
-  answers). It is drawn only where the host says where those live — the
-  `asset` resolver on the view's definition — and refused elsewhere.
+  answers) — or that path under the app's base, or by the page's own
+  address for it, each the same image. It is drawn only where the host
+  says where those live — `asset` on the view's definition, and on a
+  headless run — and refused elsewhere, with a sentence that says so.
 - **An `https:` image on an origin the host lists** — `images: { origins:
   ["https://upload.wikimedia.org"] }` on the view's definition (and on a
   headless run). The view never chooses an origin: an address is data it
@@ -79,8 +81,10 @@ said once in the view's console and the host's problems, with the address:
   `src` is the address the host made from the bytes, fetched as the reader
   and made smaller to `width`; it is absent on the first push, and a push
   follows when it is ready. `left` says why a picture will never come: past
-  one picture's byte budget or the view's, or not loaded. A document, and
-  an SVG, has no `src`: show its name, type and size.
+  one picture's byte budget or the view's, or what the host answered when
+  it was not loaded. A host that serves the app under a base says where a
+  record's files are (`file` on the view's definition). A document, and an
+  SVG, has no `src`: show its name, type and size.
 
 ```js
 const photos = (job.photos || []).map((photo) => photo.src
@@ -102,7 +106,8 @@ against its size.
    `@graview/guest/host/views`: it says what is wrong with `pictures`.
 2. `graview view check view.js --app <app> --manifest manifest.json --seed
    <seed.json> --roles <role>` says what it drew. Headless, a picture comes
-   without `src`, so draw its name until it does.
+   with a stand-in `src` (a blank image), so its `<img>` is drawn and
+   judged; only the page shows its pixels.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or
    `graview.refused` in its console): every element, attribute and
    address the host left out, and why.

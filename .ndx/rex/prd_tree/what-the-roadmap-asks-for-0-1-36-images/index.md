@@ -20,6 +20,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [0.1.36 · A view with pictures: true gets each image field's src](./0-1-36-a-view-with-pictures-true-gets.md) | pending |
-| [0.1.36 · A view draws the app's own /graview/assets/ images](./0-1-36-a-view-draws-the-apps-own.md) | pending |
+| [0.1.36 · A view with pictures: true gets each image field's src](./0-1-36-a-view-with-pictures-true-gets.md) | completed |
+| [0.1.36 · A view draws the app's own /graview/assets/ images](./0-1-36-a-view-draws-the-apps-own.md) | completed |
 | [0.1.36 · navigation's theMarkMovesAsTheSceneDoes judged at any frame rate](./0-1-36-navigations-mark-judged-at-any.md) | completed |
