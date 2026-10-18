@@ -71,7 +71,33 @@ describe("what a project starts with passes its own checks", () => {
     expect(pages).not.toContain("affordance.ties === true");
     expect(pages).toContain('facts.actions.affordances.filter((affordance) => affordance.provider !== "invariant")');
     expect(pages).toContain("offered.map((affordance) =>");
-    expect(pages).toMatch(/<EditableValue<S> nodeId=\{id\} field="label" value=\{facts\.label\} \/>/);
+    expect(pages).toMatch(/<EditableValue<S> nodeId=\{id\} field="label" value=\{facts\.label\} said=\{facts\.label\} \/>/);
+  });
+
+  it("takes every act in its own test as somebody holding every declared role, so a policy does not turn it red (the eleventh walk)", () => {
+    // The shelter followed graview-permissions and `pnpm verify` went red on
+    // the scaffold's own test: "expected [] to include 'add-animal'" — the
+    // derivation asked for nobody, and every apply had no author, so a store
+    // under a policy refused them all with nothing saying why.
+    const test = file("Field Notes", "tests/domain.test.ts");
+    expect(test).toContain("roles: [...(fieldNotesApp.policy?.roles ?? [])]");
+    expect(test).toContain("principal: anyone,");
+    const applies = test.split("\n").filter((line) => line.includes("store.apply("));
+    expect(applies.length).toBeGreaterThan(0);
+    expect(applies.filter((line) => !line.trimEnd().endsWith("}, byAnyone);"))).toEqual([]);
+  });
+
+  it("names the record in its heading as the derived record page does (the eleventh walk)", () => {
+    // The shelter's animal page: the name in the heading was a button called
+    // "Name: Daisy #0071", where the derived page's is called "Daisy #0071"
+    // (its heading already says what it is), so a person looking for the name
+    // to press found "Change the animal" instead — one more press, and the
+    // discography's song page, copied from it, said the same.
+    const derived = readFileSync(fileURLToPath(new URL("../../../pages/src/page-record.tsx", import.meta.url)), "utf8");
+    const heading = /<EditableValue<S> nodeId=\{id\} field="label" value=\{facts\.label\}([^/]*)\/>/;
+    const theirs = derived.match(heading)?.[1]?.trim();
+    expect(theirs).toBe("said={facts.label}");
+    expect(file("Field Notes", "src/ui/pages.tsx").match(heading)?.[1]?.trim()).toBe(theirs);
   });
 
   it("frames only Begin's own door, so the derived home comes back as the whole page it is", () => {

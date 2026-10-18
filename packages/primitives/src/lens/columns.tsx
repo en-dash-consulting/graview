@@ -1,4 +1,4 @@
-import { pluralLabel, counted, isCurrent, labelOf, LOCAL_LAYERS, sortForGrid, type AnyGraphNode, type AnySchema, type GridSort } from "@graview/core";
+import { pluralLabel, counted, isCurrent, labelOf, LOCAL_LAYERS, sortForGrid, type AnyGraphNode, type AnySchema, type GridSort, type NodeOfSchema } from "@graview/core";
 import { columnMoves, columnOf, statusColumns, type ColumnMove, type StatusColumn } from "@graview/core/describe";
 import { useGraph, useGraview, ViewModeProvider, type ViewComponent, type ViewProps } from "@graview/react/provider";
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from "react";
@@ -7,6 +7,7 @@ import { prefetchSeveral, SeveralBarDoor } from "../several-door.js";
 import { hueFor } from "../default-views.js";
 import { Chip, NamedByItsLink, Panel } from "../primitives/index.js";
 import { ListedLink, SaidAround } from "../spec-views.js";
+import { useArranging } from "./arranging.js";
 import { withMore } from "./more.js";
 
 /**
@@ -95,13 +96,33 @@ export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions):
     const own = new Set(given.map((node) => String(node.kind)));
     const current = (kind: string) => (store.graph.nodesOfKind(kind as never) as unknown as Card[]).filter((node) => isCurrent(store.schema.tryDefinition(kind), node as never));
     const cut = props.total !== undefined && props.total > given.length;
+    const first = kinds[0];
+    /*
+     * IT ARRANGES ITS CARDS BEFORE IT DRAWS, as the board, the timeline, the
+     * calendar and the coverage grid do. A shelter whose animals' stop is
+     * "The floor" had no Filter on the scene at all (the eleventh walk): the
+     * first bound kind's cards are filtered and sorted, the columns stay its
+     * field's choices, and there is no grouping — the columns are the groups.
+     */
+    const subject = first === undefined ? [] : own.has(first) ? given.filter((node) => node.kind === first) : current(first);
+    const { arranged, arrangement, bar } = useArranging<S>(props, {
+      lensAllows: { group: false },
+      subject: subject as unknown as readonly NodeOfSchema<S>[],
+      ...(first === undefined ? {} : { kind: first }),
+    });
+    const kept = bar ? new Map(arranged.nodes.map((node, at) => [node.id, at])) : undefined;
+    const keep = (kind: string, cards: readonly Card[]): readonly Card[] => {
+      if (!kept || kind !== first) return cards;
+      const still = cards.filter((card) => kept.has(card.id));
+      return arrangement.sort === undefined ? still : [...still].sort((a, b) => kept.get(a.id)! - kept.get(b.id)!);
+    };
     const boards: Board[] = kinds.map((kind) => {
       const field = options.bindings[kind]!.column;
       const columns = statusColumns(store.schema, kind, field);
       const read = (node: Card, key: string) => (key === "label" ? labelOf(store.schema.tryDefinition(node.kind), node) : node[key]);
-      const drawn = sortForGrid(own.has(kind) ? given.filter((node) => node.kind === kind) : current(kind).slice(0, props.budget ?? Infinity), options.sort, read);
+      const drawn = keep(kind, sortForGrid(own.has(kind) ? given.filter((node) => node.kind === kind) : current(kind).slice(0, props.budget ?? Infinity), options.sort, read));
       // A count is how many this seat's board holds, not how many a thumbnail had room for.
-      const all = own.has(kind) && !cut ? drawn : current(kind);
+      const all = own.has(kind) && !cut ? drawn : keep(kind, current(kind));
       return {
         kind,
         field,
@@ -116,7 +137,6 @@ export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions):
     });
     const total = boards.reduce((sum, board) => sum + board.columns.reduce((n, entry) => n + entry.count, 0), 0);
     const title = props.label ?? "Board";
-    const first = kinds[0];
 
     if (props.fidelity === "glyph") return <Chip label={`${title} · ${total}`} hue={hueFor("columns")} />;
     if (props.fidelity === "summary") {
@@ -128,7 +148,15 @@ export function createColumnsLens<S extends AnySchema>(options: ColumnsOptions):
         </Panel>
       );
     }
-    const picture = <ColumnsBoard boards={boards} title={title} />;
+    const board = <ColumnsBoard boards={boards} title={title} />;
+    const picture = bar ? (
+      <div style={{ display: "grid", gap: 6 }}>
+        {bar}
+        {board}
+      </div>
+    ) : (
+      board
+    );
     // On a page the page's own heading already says what it is; in the scene it is a card, as every lens is.
     return withMore(
       props,

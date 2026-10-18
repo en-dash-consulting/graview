@@ -486,8 +486,9 @@ export function PagesRoutes<S extends AnySchema>({
   const told = useMemo(() => ({ onFind: setBarFind, find: !(registry?.without().has("find") ?? false), places: !(registry?.without().has("places") ?? false) }), [registry]);
   const routes = (
     // The routed face holds the keyboard the way the scene does, and offers Find and the way back, whichever shell an app draws.
-    <FaceRoot context={context} registry={registry}>
+    // Going somewhere is this face's own for all it draws, the menu at the pointer too (FR-184): its "Draw a panel" lands on `/~draft`.
     <GoesByAddress context={context}>
+    <FaceRoot context={context} registry={registry}>
     {frame(<>
     {/* The app as it was, and the way through it (Roadmap f-playback): at the head of the page, under the bar. */}
     <PastBar face="pages" />
@@ -538,8 +539,8 @@ export function PagesRoutes<S extends AnySchema>({
       </Routes>
     </RecordLinks>
     </>)}
-    </GoesByAddress>
     </FaceRoot>
+    </GoesByAddress>
   );
   // Only a design under the bar hands the bar its Find: the derived shell draws its own in the bar, and so says it before any script runs.
   if (context.embedded || !own || ownsTheWindow) return routes;
@@ -638,13 +639,17 @@ export function PagesApp<S extends AnySchema>({
       {...(context.onKeepLens ? { onKeepLens: context.onKeepLens } : {})}
       {...(context.ai ? { ai: context.ai } : {})}
       {...(context.subscriptions ? { subscriptions: context.subscriptions } : {})}
+      {...(context.signIn ? { signIn: context.signIn } : {})}
       resolveApp={context.resolveApp ?? outer?.resolveApp /* The host's way to name another app (FR-171): the face's own, else the provider's it is drawn inside. */}
       linkedRecords={context.linkedRecords ?? outer?.linkedRecords /* And to read its records, as this viewer (FR-171). */}
       {...(context.app ? { app: context.app } : {})}
       {...(context.menuSections ? { menuSections: context.menuSections } : {})}
     >
       {routed}
-      <PageQuickAsk context={context} />
+      {/* Its card goes the way this face goes: a panel to `/~draft`, a place to its page. */}
+      <GoesByAddress context={context}>
+        <PageQuickAsk context={context} />
+      </GoesByAddress>
     </GraviewProvider>
   ) : (
     routed

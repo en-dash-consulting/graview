@@ -1,7 +1,8 @@
 import { retryingImport } from "@graview/core/retry";
 import type { AnySchema } from "@graview/core";
-import { lazyModule, useGraview, useSelection } from "@graview/react/provider";
-import { Suspense, useEffect, useState } from "react";
+import { useMenuPrepare } from "@graview/react/drawing";
+import { lazyModule, useGraview, useSelection, type MenuTarget } from "@graview/react/provider";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 /**
  * What is selected, what is true about it, and what can legally be done —
@@ -64,16 +65,115 @@ function whenIdle(then: () => void): () => void {
   return () => clearTimeout(later);
 }
 
+/** How long the pointer rests on a thing before its menu is got ready: a pass-over, across a list, readies nothing. */
+const MENU_DWELL_MS = 150;
+
+/** What a menu can be opened on: a record, a card, a row, a kind, an act, a value, a link. */
+const READIED = "[data-graview-pick], [data-graview-view], [data-graview-record], [data-graview-act], [data-graview-field], a[href]";
+
+/** What the scene's menu would be about at an element: the pick or the card under it, as a right-click there says it. Nothing on a routed face, or in a menu. */
+function sceneAim(element: Element): MenuTarget | null {
+  if (element.closest("[data-graview-face='pages'], [data-graview-popover]")) return null;
+  const on = element.closest("[data-graview-pick]")?.getAttribute("data-graview-pick") ?? element.closest("[data-graview-view]")?.getAttribute("data-graview-view");
+  return on ? { face: "scene", on, about: [on] } : null;
+}
+
+/*
+ * THE MENU IS READY BEFORE THE CLICK (FR-186). When the pointer rests on a
+ * record, a card, a row or a kind for a moment (`MENU_DWELL_MS`), when the
+ * keyboard lands on one — so Shift+F10 opens at once — or when a finger goes
+ * down on one (a long press opens the menu), the menu that would open there
+ * is got ready: the pane and its act forms fetched, its acts derived and
+ * kept (`prepareActs`), and every section's own `prepare` — the inline AI's
+ * chunk, the sheet "Notify me…" opens. Nothing is fetched until then, so a
+ * page's first load carries none of it; a pass-over readies nothing; and no
+ * model is ever asked from here.
+ */
+function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
+  const { store, principal, providers } = useGraview<AnySchema>();
+  const prepareSections = useMenuPrepare();
+  const latest = useRef({ aimAt, store, principal, providers, prepareSections });
+  latest.current = { aimAt, store, principal, providers, prepareSections };
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    let resting: { readonly element: Element; readonly timer: ReturnType<typeof setTimeout> } | null = null;
+    let readied: string | null = null;
+    const cancel = () => {
+      if (resting) clearTimeout(resting.timer);
+      resting = null;
+    };
+    const ready = (element: Element) => {
+      const now = latest.current;
+      const target = now.aimAt(element);
+      if (!target) return;
+      // Readied once until the graph moves: resting again on the same thing does nothing more.
+      const key = JSON.stringify([target.face, target.on, target.about, target.field, target.place, target.act, now.store.log.length]);
+      if (key === readied) return;
+      readied = key;
+      now.prepareSections(target);
+      void pane.load().then(
+        (module) => module.prepareActs(now.store, target, { principal: now.principal, providers: now.providers }),
+        () => undefined,
+      );
+    };
+    const at = (event: Event): Element | null => (event.target instanceof Element ? event.target.closest(READIED) : null);
+    const over = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      const element = at(event);
+      if (element !== null && element === resting?.element) return;
+      cancel();
+      if (element === null) return;
+      resting = {
+        element,
+        timer: setTimeout(() => {
+          resting = null;
+          ready(element);
+        }, MENU_DWELL_MS),
+      };
+    };
+    const out = (event: PointerEvent) => {
+      if (resting === null) return;
+      const to = event.relatedTarget;
+      if (to instanceof Node && resting.element.contains(to)) return;
+      cancel();
+    };
+    const down = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") return;
+      const element = at(event);
+      if (element) ready(element);
+    };
+    const focused = (event: FocusEvent) => {
+      const element = at(event);
+      if (element) ready(element);
+    };
+    document.addEventListener("pointerover", over, { passive: true });
+    document.addEventListener("pointerout", out, { passive: true });
+    document.addEventListener("pointerdown", down, { capture: true, passive: true });
+    document.addEventListener("focusin", focused);
+    return () => {
+      cancel();
+      document.removeEventListener("pointerover", over);
+      document.removeEventListener("pointerout", out);
+      document.removeEventListener("pointerdown", down, { capture: true });
+      document.removeEventListener("focusin", focused);
+    };
+  }, []);
+}
+
 export function Inspector({
   placement = "float",
   openActs,
+  aimAt,
 }: {
   readonly placement?: InspectorPlacement;
   /** How the acts key on a card opens the menu, where the face says what a card is about (the routed face); at the card, about its pick, when unsaid. */
   readonly openActs?: (from: HTMLElement) => void;
+  /** What a menu opened at an element would be about, where the face says it (the routed face): the pointer resting there gets that menu ready. The scene's pick or card, when unsaid. */
+  readonly aimAt?: (element: Element) => MenuTarget | null;
 } = {}) {
   const { menuAt, setMenuAt, registerActsDoor } = useGraview<AnySchema>();
   const { selection } = useSelection();
+  useMenuReady(aimAt ?? sceneAim);
   /*
    * Fetched when the page is first idle — or, sooner, the moment somebody
    * first presses a pointer or a key on the page, since a selection or a

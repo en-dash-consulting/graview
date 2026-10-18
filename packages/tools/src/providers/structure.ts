@@ -60,7 +60,8 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
           }
         }
         for (const [neighborId, count] of counts) {
-          if (count !== nodes.length - 1 || nodes.length < 3) continue;
+          // A neighbor that is one of the chosen is not shared by "all but" itself: "all but "Run E05" share "Run E05"".
+          if (count !== nodes.length - 1 || nodes.length < 3 || ids.includes(neighborId)) continue;
           const neighbor = store.graph.getNode(neighborId);
           if (!neighbor) continue;
           const odd = nodes.find(
@@ -100,102 +101,118 @@ export function structureProvider<S extends AnySchema>(): AffordanceProvider<S> 
       }
 
       // ------------------------------------------------- agreement on a field
-      const fields = new Set<string>();
-      for (const node of nodes) {
-        for (const key of Object.keys(node)) {
-          if (!IGNORED_FIELDS.has(key)) fields.add(key);
-        }
-      }
-
-      // A field and its value in words: "all 3 share status open" read the key and the JSON.
-      const definitionOf = (kind: string) => store.schema.definitions.find((definition) => definition.kind === kind);
-      for (const field of [...fields].sort()) {
-        const definition = definitionOf(nodes[0]!.kind as string);
-        const words = fieldWords(definition, field).toLowerCase();
-        // The value as the card shows it: the declared format, else the stored value quoted.
-        const format = definition?.display?.format?.[field];
-        const said = (key: string): string => {
-          if (!format) return key;
-          try {
-            return String(format(JSON.parse(key)));
-          } catch {
-            return key;
+      /*
+       * AMONG RECORDS OF ONE KIND (the eleventh walk). A kennel's "status"
+       * and an animal's are two facts with one name: read as one, a kennel
+       * and the two animals in it "disagreed", the animals' stored value was
+       * said raw in the kennel's words, and the kennel was offered its edit
+       * told a value only an animal can hold — refused on press.
+       */
+      const byKind = new Map<string, NodeOfSchema<S>[]>();
+      for (const node of nodes) byKind.set(node.kind as string, [...(byKind.get(node.kind as string) ?? []), node]);
+      for (const [kindName, group] of byKind) {
+        if (group.length < 2) continue;
+        const nodes = group;
+        const ids = group.map((node) => node.id);
+        const scoped = byKind.size > 1 ? `${kindName}:` : "";
+        const fields = new Set<string>();
+        for (const node of nodes) {
+          for (const key of Object.keys(node)) {
+            if (!IGNORED_FIELDS.has(key)) fields.add(key);
           }
-        };
-        const values = nodes.map((node) => (node as Record<string, unknown>)[field]);
-        const groups = new Map<string, NodeOfSchema<S>[]>();
-        values.forEach((value, index) => {
-          const key = JSON.stringify(value ?? null);
-          const list = groups.get(key);
-          if (list) list.push(nodes[index]!);
-          else groups.set(key, [nodes[index]!]);
-        });
-
-        if (groups.size === 1) {
-          const key = [...groups.keys()][0]!;
-          if (key === "null") continue;
-          observations.push({
-            id: `agree:${field}`,
-            text: `all ${nodes.length} share the ${words} ${said(key)}`,
-            nodeIds: ids,
-          });
-          continue;
         }
 
-        // A majority and exactly one hold-out: that is an alignment.
-        if (nodes.length < 3 || groups.size !== 2) continue;
-        const sorted = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
-        const [majorityKey, majority] = sorted[0]!;
-        const [, minority] = sorted[1]!;
-        if (minority.length !== 1 || majorityKey === "null") continue;
-        const odd = minority[0]!;
-        const majorityValue = JSON.parse(majorityKey) as unknown;
+        // A field and its value in words: "all 3 share status open" read the key and the JSON.
+        const definitionOf = (kind: string) => store.schema.definitions.find((definition) => definition.kind === kind);
+        for (const field of [...fields].sort()) {
+          const definition = definitionOf(nodes[0]!.kind as string);
+          const words = fieldWords(definition, field).toLowerCase();
+          // The value as the card shows it: the declared format, else the stored value quoted.
+          const format = definition?.display?.format?.[field];
+          const said = (key: string): string => {
+            if (!format) return key;
+            try {
+              return String(format(JSON.parse(key)));
+            } catch {
+              return key;
+            }
+          };
+          const values = nodes.map((node) => (node as Record<string, unknown>)[field]);
+          const groups = new Map<string, NodeOfSchema<S>[]>();
+          values.forEach((value, index) => {
+            const key = JSON.stringify(value ?? null);
+            const list = groups.get(key);
+            if (list) list.push(nodes[index]!);
+            else groups.set(key, [nodes[index]!]);
+          });
 
-        observations.push({
-          id: `odd-one-out:${field}`,
-          text: `${majority.length} share the ${words} ${said(majorityKey)}; "${named(odd)}" does not`,
-          nodeIds: ids,
-        });
-
-        for (const mutation of store.allMutations()) {
-          const subject = mutation.subject;
-          if (!subject) continue;
-          if (subject.kinds !== "*" && !(subject.kinds as readonly string[]).includes(odd.kind)) {
+          if (groups.size === 1) {
+            const key = [...groups.keys()][0]!;
+            if (key === "null") continue;
+            observations.push({
+              id: `agree:${scoped}${field}`,
+              text: `all ${nodes.length} share the ${words} ${said(key)}`,
+              nodeIds: ids,
+            });
             continue;
           }
-          const shape = shapeOf(mutation.input);
-          if (!shape || !(field in shape)) continue;
 
-          // Fill every other argument this mutation needs from the node's own
-          // current values, so the aligned change is exactly the one field.
-          const args: Record<string, unknown> = {
-            [subject.arg]: odd.id,
-            [field]: majorityValue,
-          };
-          let satisfiable = true;
-          for (const [name, schema] of Object.entries(shape)) {
-            if (name in args) continue;
-            if (schema.safeParse(undefined).success) continue;
-            const current = (odd as Record<string, unknown>)[name];
-            if (current === undefined) {
-              satisfiable = false;
-              break;
-            }
-            args[name] = current;
-          }
-          if (!satisfiable) continue;
+          // A majority and exactly one hold-out: that is an alignment.
+          if (nodes.length < 3 || groups.size !== 2) continue;
+          const sorted = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
+          const [majorityKey, majority] = sorted[0]!;
+          const [, minority] = sorted[1]!;
+          if (minority.length !== 1 || majorityKey === "null") continue;
+          const odd = minority[0]!;
+          const majorityValue = JSON.parse(majorityKey) as unknown;
 
-          affordances.push({
-            id: `structure:align:${mutation.name}:${field}:${odd.id}`,
-            label: `Align the ${words} of "${named(odd)}" with the other ${majority.length}`,
-            provider: "structure",
-            mutation: mutation.name,
-            args,
-            open: [],
-            score: ALIGN_SCORE,
-            why: `${majority.length} of ${nodes.length} share the ${words} ${said(majorityKey)}`,
+          observations.push({
+            id: `odd-one-out:${scoped}${field}`,
+            text: `${majority.length} share the ${words} ${said(majorityKey)}; "${named(odd)}" does not`,
             nodeIds: ids,
           });
+
+          for (const mutation of store.allMutations()) {
+            const subject = mutation.subject;
+            if (!subject) continue;
+            if (subject.kinds !== "*" && !(subject.kinds as readonly string[]).includes(odd.kind)) {
+              continue;
+            }
+            const shape = shapeOf(mutation.input);
+            if (!shape || !(field in shape)) continue;
+
+            // Fill every other argument this mutation needs from the node's own
+            // current values, so the aligned change is exactly the one field.
+            const args: Record<string, unknown> = {
+              [subject.arg]: odd.id,
+              [field]: majorityValue,
+            };
+            let satisfiable = true;
+            for (const [name, schema] of Object.entries(shape)) {
+              if (name in args) continue;
+              if (schema.safeParse(undefined).success) continue;
+              const current = (odd as Record<string, unknown>)[name];
+              if (current === undefined) {
+                satisfiable = false;
+                break;
+              }
+              args[name] = current;
+            }
+            // Offered with every argument filled, so it must be one the act accepts: never refused on press.
+            if (!satisfiable || !(mutation.input as unknown as ZodLike).safeParse(args).success) continue;
+
+            affordances.push({
+              id: `structure:align:${mutation.name}:${field}:${odd.id}`,
+              label: `Align the ${words} of "${named(odd)}" with the other ${majority.length}`,
+              provider: "structure",
+              mutation: mutation.name,
+              args,
+              open: [],
+              score: ALIGN_SCORE,
+              why: `${majority.length} of ${nodes.length} share the ${words} ${said(majorityKey)}`,
+              nodeIds: ids,
+            });
+          }
         }
       }
 

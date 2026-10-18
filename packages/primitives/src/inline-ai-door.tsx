@@ -48,6 +48,8 @@ export function useInlineAiSection(): MenuSectionSource | null {
                 <Menu target={target} close={close} />
               </Suspense>
             ),
+            // Fetched while the pointer rests, so the section draws with the menu's first frame; nothing is asked of a model (FR-186).
+            prepare: () => menuModule.prefetch(),
           })
         : null,
     [on],

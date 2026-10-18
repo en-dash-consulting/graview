@@ -285,7 +285,13 @@ import { ${ids.appVar}, createStore } from "../src/domain/app.js";
  * The domain tier has no DOM in it, so these run headless. The test worth
  * having is the one that catches a real regression: the rule fires on a
  * graph that breaks it, and the repair it names resolves it.
+ *
+ * Every act here is taken by somebody holding every role the app declares,
+ * so the tests still say what they mean once a policy says who may do what
+ * (graview-permissions): with no author, a store under a policy refuses.
  */
+const anyone = { kind: "human" as const, id: "test", roles: [...(${ids.appVar}.policy?.roles ?? [])] };
+const byAnyone = { author: anyone };
 
 describe("the declaration", () => {
   it("passes its own check", () => {
@@ -298,6 +304,7 @@ describe("the declaration", () => {
     const store = createStore();
     const { affordances } = deriveAffordances(store, [kindCardId("${ids.kind}")], {
       kindSelection: ["${ids.kind}"],
+      principal: anyone,
     });
     expect(affordances.map((a) => a.mutation)).toContain("add-${ids.kind}");
   });
@@ -306,11 +313,11 @@ describe("the declaration", () => {
 describe("the rule", () => {
   const broken = () => {
     const store = createStore();
-    store.apply({ name: "add-${ids.kind}", args: { label: "First" } });
-    store.apply({ name: "add-${ids.kind}", args: { label: "Second" } });
+    store.apply({ name: "add-${ids.kind}", args: { label: "First" } }, byAnyone);
+    store.apply({ name: "add-${ids.kind}", args: { label: "Second" } }, byAnyone);
     const [first, second] = store.graph.nodesOfKind("${ids.kind}");
-    store.apply({ name: "link-${ids.kind}", args: { id: second!.id, dependsOn: first!.id } });
-    store.apply({ name: "close-${ids.kind}", args: { id: second!.id } });
+    store.apply({ name: "link-${ids.kind}", args: { id: second!.id, dependsOn: first!.id } }, byAnyone);
+    store.apply({ name: "close-${ids.kind}", args: { id: second!.id } }, byAnyone);
     return store;
   };
 
@@ -325,7 +332,7 @@ describe("the rule", () => {
   it("is resolved by the repair it names", () => {
     const store = broken();
     const repair = store.violations().find((v) => v.invariant === "closed-in-order")!.repairs[0]!;
-    store.apply({ name: repair.mutation, args: { ...repair.args } });
+    store.apply({ name: repair.mutation, args: { ...repair.args } }, byAnyone);
     expect(store.violations().filter((v) => v.invariant === "closed-in-order")).toEqual([]);
   });
 

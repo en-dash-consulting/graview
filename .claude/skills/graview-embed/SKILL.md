@@ -24,7 +24,7 @@ handle.setFace("pages"); handle.setStop("#focus=plot-2"); handle.unmount();
 ```
 
 `graview create` writes this as `src/embed.tsx` and an `embed.html` host, so
-the project's own `pnpm typecheck` covers the embed surface from day one.
+the project's `pnpm typecheck` covers the embed from day one.
 
 ## The moves
 
@@ -73,8 +73,8 @@ the project's own `pnpm typecheck` covers the embed surface from day one.
     "auto"` with `onIntrinsicHeight` tells the host the height to give it;
     `hostContext: { theme }` takes the chat's theme; `pagesBelow` swaps the
     scene for the pages on a phone; `remote` takes an `openRemote` store,
-    `subscriptions` the host's Notify me (`remoteSubscriptions`). A
-    hosted reader sits only as who signed in: name members through `people`
+    `subscriptions` the host's Notify me (`remoteSubscriptions`),
+    `signIn` a visitor's way in. A hosted reader sits only as who signed in: name members through `people`
     (and `setPeople`), never as `seats`, which offer "sit as somebody else".
     Where readers cannot save a declaration, `studio: false` (or `studio:
     { onApply }` to keep what it applies: return `{ ok: false, sentence,

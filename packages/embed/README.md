@@ -399,6 +399,7 @@ const handle = mount(root, {
   hostContext: { theme },       // the chat's theme, over the page's own
   memory,                       // where the reader's settings are kept, if not the page's storage
   subscriptions,                // where Notify me is kept, if not the page's memory
+  signIn,                       // while nobody is signed in: { label, run, roles? }, the way in
   onIntrinsicHeight: (height) => notify("ui/notifications/size-changed", { height }),
 });
 handle.setHostContext({ theme: "dark" });   // the chat changed theme
@@ -411,6 +412,16 @@ list of what the reader is told of reads, on either face. A served store's is
 module of its own: asking the route brings none of the rule language its
 server judges a subscription with into the page's first chunk. Unsaid, a
 reader's subscriptions live in the page's memory and go when it closes.
+
+`signIn` is handed only while the reader is a visitor: `{ label: "Sign in to
+make changes", run }`, with `roles`, the roles signing in gives, when the host
+knows them. Where every act withheld from the reader is one a member could
+take, the context menu, the Inspector and the pages' acts say `label` as one
+press that calls `run`, in place of each act struck through with the policy's
+sentence; the face's own rows (Open, Show in the scene) stay, and "Notify me"
+is not offered, there being nobody to tell. A member lacking one role is
+still told each act they may not take and who could. `signInInstead(withheld,
+signIn)` from `@graview/core` is the same judgment, for a page of your own.
 
 Nothing touches `localStorage` or `sessionStorage` without a fallback, so a
 frame that throws on either still mounts. `scheme: "auto"` (the default)

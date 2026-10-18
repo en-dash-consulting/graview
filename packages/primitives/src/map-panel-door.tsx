@@ -3,7 +3,7 @@ import { retryingImport } from "@graview/core/retry";
 // The door stands with the scene, whose face has fetched `@graview/react` already.
 import { mapChoice } from "@graview/react";
 import { lazyModule, useGraph, useGraview } from "@graview/react/provider";
-import { Suspense } from "react";
+import { Suspense, useSyncExternalStore } from "react";
 
 /** What the panel beside the map shows: a lens open, one record, one district — or nothing. */
 export type MapPanelShowing = { readonly what: "lens"; readonly kind: string } | { readonly what: "record"; readonly id: string } | { readonly what: "district"; readonly kind: string };
@@ -30,9 +30,11 @@ const Panel = /* @__PURE__ */ panelModule.part((module, props: { readonly showin
  * sheet from the foot on a phone. Nothing on the ground.
  */
 export function MapPanel<S extends AnySchema>() {
-  const { store, view, selection, hiddenKinds } = useGraview<S>();
+  const { store, view, selection, hiddenKinds, seatTalk } = useGraview<S>();
   useGraph<S>();
-  if (!view.overview) return null;
+  // A panel the AI drew stands in place of the picture: what was chosen on the map is not beside it, about something else (FR-184).
+  const drafted = useSyncExternalStore(seatTalk.subscribe, () => seatTalk.get().draft !== null, () => false);
+  if (!view.overview || drafted) return null;
   const showing = mapPanelShows(mapChoice(selection, { ...view, beside: true }, (id) => store.graph.getNode(id)?.kind as string | undefined));
   if (!showing) return null;
   // A district the declaration has not got — an address from another app, a kind since removed — has nothing to list.

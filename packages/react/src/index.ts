@@ -1,6 +1,6 @@
 export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
-export { MenuSections, useMenuSections } from "./menu-sections.js";
+export { MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
 export type { MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-sections.js";
 export { BesideTheMap } from "./beside-the-map.js";
 export { HostFilesContext, useHostFiles } from "./files.js";
@@ -92,7 +92,8 @@ export { createAiDesk, useAiDeskState } from "./ai-desk.js";
 export type { AiDesk, AiDeskState, HeldGhost } from "./ai-desk.js";
 export type { KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn } from "./seat-talk.js";
 export type { LazyModule, LazyPartOptions } from "./lazy-part.js";
-export { useAffordances, useApplyAffordance } from "./affordances.js";
+export { prepareAffordances, useAffordances, useApplyAffordance } from "./affordances.js";
+export type { AffordancesAsked } from "./affordances.js";
 // The app as it was (Roadmap f-playback): the moment a face draws instead of now, held by its outermost provider.
 export { PlaybackContext, useLiveStore, useOwnPlayback, usePlayback } from "./past.js";
 export type { PastShown, Playback } from "./past.js";

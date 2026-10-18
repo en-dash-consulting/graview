@@ -74,7 +74,7 @@ function SongPage({ context }: { context: PageContext<S> }) {
     <PageMain context={context} data-testid="song-page">
       <header style={{ display: "grid", gap: 10 }}>
         <p style={pageStyles.eyebrow}>A song in Discography</p>
-        <h1 style={pageStyles.h1}>{inPlace && node["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} /> : facts.label}</h1>
+        <h1 style={pageStyles.h1}>{inPlace && node["label"] === facts.label ? <EditableValue<S> nodeId={id} field="label" value={facts.label} said={facts.label} /> : facts.label}</h1>
         <p style={pageStyles.lede}>
           {isCurrent(store.schema.tryDefinition(node.kind), node) ? "Current." : "In the past: out of the picture, never out of the record."}{" "}
           {ties.length === 0 ? "Connected to nothing yet." : null}

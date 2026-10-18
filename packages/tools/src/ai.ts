@@ -103,6 +103,15 @@ export interface HostAi {
    */
   readonly thinking?: ThinkingProvider;
   /**
+   * WHETHER A CONTEXT MENU ASKS FOR SUGGESTIONS AS IT OPENS (FR-185). Only
+   * ever the Fast slot's: with no Fast slot a menu never asks on its own,
+   * and offers a "Suggest…" row that asks — the Thinking slot then — when
+   * pressed. `false` makes it that row with a Fast slot too, for a host
+   * that meters every call. Unsaid, a menu asks on opening where there is a
+   * Fast slot, once per record until the record changes (FR-186).
+   */
+  readonly suggestOnOpen?: boolean;
+  /**
    * THE QUICK ASK'S ANSWERS (Roadmap f-quick-ask-framework): what answers
    * words asked from the command bar (⌘K) or on an answer card, about the
    * target they were asked on. Handed the words, the target, the state

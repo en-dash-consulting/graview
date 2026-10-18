@@ -91,6 +91,25 @@ describe("a list chooses several", () => {
     expect(document.activeElement).toBe(box("e"));
   });
 
+  it("goes from a box to the bar's first act with Tab while something is chosen, and nowhere new while nothing is (the eleventh walk)", () => {
+    // Three animals chosen from the keyboard took 49 Tabs through every row after them to reach "Put on hold".
+    draw();
+    const bar = document.createElement("div");
+    bar.dataset["testid"] = "several-bar";
+    bar.innerHTML = '<span>3 chosen</span><button type="button" data-mutation="hold">Put on hold</button>';
+    document.body.append(bar);
+    try {
+      act(() => box("a").focus());
+      key(box("a"), { key: "Tab" });
+      expect(document.activeElement).toBe(box("a"));
+      press(box("a"));
+      key(box("a"), { key: "Tab" });
+      expect(document.activeElement).toBe(bar.querySelector("button"));
+    } finally {
+      bar.remove();
+    }
+  });
+
   it("chooses every row it passes with Shift and an arrow, from where the choosing began", () => {
     draw();
     act(() => box("b").focus());

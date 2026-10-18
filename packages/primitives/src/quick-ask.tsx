@@ -306,8 +306,10 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
                     data-ai-offer={offer.id}
                     data-ai-offer-type={offer.type}
                     onClick={() => {
-                      close();
-                      void takeOffer(env, result, offer);
+                      // Put away as it lands, the way this face goes; a failure is said on the card that offered it.
+                      void takeOffer(env, result, offer, close).then((failed) => {
+                        if (failed && live.current) setSaid(failed);
+                      });
                     }}
                     style={OFFER}
                   >

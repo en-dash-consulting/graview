@@ -1574,11 +1574,13 @@ const handle = mount(root, {
   hostContext: { theme },       // the chat's theme, over the page's own
   memory,                       // where the reader's settings are kept, if not the page's storage
   subscriptions,                // where Notify me is kept, if not the page's memory
+  signIn,                       // while nobody is signed in: { label, run, roles? }, the way in
   onIntrinsicHeight: (height) =&gt; notify("ui/notifications/size-changed", { height }),
 });
 handle.setHostContext({ theme: "dark" });   // the chat changed theme
 handle.setPeople(next);                     // an agent who first acted after the page opened</code></pre></div>
 <p><code>subscriptions</code> is the store the sheet "Notify me…" adds to and Activity's list of what the reader is told of reads, on either face. A served store's is <code>remoteSubscriptions({ url, principal })</code> from <code>@graview/ship/browser</code>, a module of its own: asking the route brings none of the rule language its server judges a subscription with into the page's first chunk. Unsaid, a reader's subscriptions live in the page's memory and go when it closes.</p>
+<p><code>signIn</code> is handed only while the reader is a visitor: <code>{ label: "Sign in to make changes", run }</code>, with <code>roles</code>, the roles signing in gives, when the host knows them. Where every act withheld from the reader is one a member could take, the context menu, the Inspector and the pages' acts say <code>label</code> as one press that calls <code>run</code>, in place of each act struck through with the policy's sentence; the face's own rows (Open, Show in the scene) stay, and "Notify me" is not offered, there being nobody to tell. A member lacking one role is still told each act they may not take and who could. <code>signInInstead(withheld, signIn)</code> from <code>@graview/core</code> is the same judgment, for a page of your own.</p>
 <p>Nothing touches <code>localStorage</code> or <code>sessionStorage</code> without a fallback, so a frame that throws on either still mounts. <code>scheme: "auto"</code> (the default) follows the host context, then the page's <code>data-theme</code> stamp, then the system's preference, each as it changes. Presence a channel reports is dropped once its last word is older than <code>REMOTE_PRESENCE_TTL_MS</code>, whether or not the channel says the person left. A host that builds presence itself keys each participant with <code>participantKey({ kind, id, session })</code> from <code>@graview/core</code>, the op log's own <code>kind:id:session</code>.</p>
     </section>
     <section id="api" aria-labelledby="h-api">
