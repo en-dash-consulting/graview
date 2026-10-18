@@ -1,7 +1,7 @@
 {
   "budget": "embed with the studio handed in",
   "minified": 700,
-  "gzipped": 0,
+  "gzipped": 10,
   "changeset": "the-0-1-37-batch-merged.md",
-  "note": "Raised when the twelfth walk was merged into the 0.1.37 batch: the walk measured against the batch before today() in the app's zone and the studio's relations landed, and together they share less than each assumed. Measured at 1_840_381 against 1_839_789 minified (gzipped within)."
+  "note": "Raised when the twelfth walk was merged into the 0.1.37 batch: the walk measured against the batch before today() in the app's zone and the studio's relations landed, and together they share less than each assumed. Measured at 1_840_381 against 1_839_789 minified."
 }

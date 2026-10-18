@@ -1,7 +1,7 @@
 {
   "budget": "every face",
   "minified": 400,
-  "gzipped": 0,
+  "gzipped": 10,
   "changeset": "the-0-1-37-batch-merged.md",
-  "note": "Raised when the twelfth walk was merged into the 0.1.37 batch: the walk measured against the batch before today() in the app's zone and the studio's relations landed, and together they share less than each assumed. Measured at 2_237_744 against 2_237_495 minified (gzipped within)."
+  "note": "Raised when the twelfth walk was merged into the 0.1.37 batch: the walk measured against the batch before today() in the app's zone and the studio's relations landed, and together they share less than each assumed. Measured at 2_237_744 against 2_237_495 minified."
 }
