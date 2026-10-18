@@ -63,6 +63,17 @@ describe("a store in a watched page", () => {
     expect(told.refused).toEqual([expect.objectContaining({ mutation: "close-deal", author: "user-priya" })]);
   });
 
+  it("tells the watch when an act's own input refuses a press, and who pressed (the twelfth walk)", () => {
+    const told: { mutation: string; message: string; author?: string }[] = [];
+    (globalThis as { __graviewWatch?: unknown }).__graviewWatch = { refusedInput: (refusal: { mutation: string; message: string; author?: string }) => told.push(refusal) };
+    const store = new Store({ schema, mutations: [close], policy, snapshot });
+    expect(() => store.apply({ name: "close-deal", args: {} }, { author: { kind: "human", id: "user-mona", roles: ["sales-manager"] } })).toThrow();
+    expect(told).toEqual([expect.objectContaining({ mutation: "close-deal", author: "user-mona", message: expect.stringContaining("id") })]);
+    // A rehearsal is nobody's press.
+    expect(() => store.preview({ name: "close-deal", args: {} })).toThrow();
+    expect(told).toHaveLength(1);
+  });
+
   it("learns a seat's id once it signs something", () => {
     const told = listen();
     const store = new Store({ schema, mutations: [close], policy, snapshot });

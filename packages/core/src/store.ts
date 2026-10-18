@@ -17,6 +17,7 @@ import type {
   Violation,
 } from "./invariants/types.js";
 import { compileMutation } from "./mutations/define-mutation.js";
+import { InvalidArguments } from "./mutations/invalid-arguments.js";
 import { deriveMutations, derivedVia } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import { OperationLog, type Epoch, type LogArchive } from "./ops/log.js";
@@ -33,7 +34,7 @@ import { PermissionDeniedError, type Policy, type Principal, type Refusal } from
 import { checkUndo, UndoBlockedError, undoPrimitives, type UndoCheck } from "./ops/undo.js";
 import type { AnySchema, NodeOfSchema } from "./schema/schema.js";
 import { validateGraph, type GraphFinding } from "./validate-graph.js";
-import { tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal } from "./watched.js";
+import { tellTheWatchOfAStore, tellTheWatchOfAnAuthor, tellTheWatchOfARefusal, tellTheWatchOfAnInputRefusal } from "./watched.js";
 import { capitalize } from "./capital.js";
 import { dayOf, type Tick } from "./clock.js";
 import { pluralOf } from "./schema/define-node.js";
@@ -1176,7 +1177,38 @@ export class Store<S extends AnySchema> {
    * judges them over another reading of this graph: a seat's (FR-55).
    */
   violations(context?: InvariantContext, over: Graph<S> = this.graph): Violation[] {
-    return evaluate(over, this.allInvariants(), this.judging(context));
+    return evaluate(over, this.allInvariants(), this.judging(context)).map((violation) => this.asking(violation));
+  }
+
+  /*
+   * A REPAIR SAYS WHAT IT STILL ASKS FOR (the twelfth walk). A rule written
+   * in code names an act and the arguments it knows, and need not list the
+   * rest: what the act's input requires and the repair does not give is
+   * `missing`, so no surface offers it as one press and meets the act's own
+   * refusal on it. What a rule did say is kept.
+   */
+  private readonly required = new Map<string, readonly string[]>();
+  private asking(violation: Violation): Violation {
+    if (!violation.repairs.some((repair) => repair.missing === undefined)) return violation;
+    let changed = false;
+    const repairs = violation.repairs.map((repair) => {
+      if (repair.missing !== undefined) return repair;
+      const missing = this.requiredOf(repair.mutation).filter((name) => repair.args?.[name] === undefined);
+      if (missing.length === 0) return repair;
+      changed = true;
+      return { ...repair, missing };
+    });
+    return changed ? { ...violation, repairs } : violation;
+  }
+  private requiredOf(name: string): readonly string[] {
+    const known = this.required.get(name);
+    if (known) return known;
+    const shape = (this.mutations.get(name)?.input as { shape?: Record<string, { safeParse?(value: unknown): { success: boolean } }> } | undefined)?.shape ?? {};
+    const required = Object.entries(shape)
+      .filter(([, field]) => typeof field?.safeParse === "function" && !field.safeParse(undefined).success)
+      .map(([key]) => key);
+    this.required.set(name, required);
+    return required;
   }
 
   /**
@@ -1368,7 +1400,14 @@ export class Store<S extends AnySchema> {
         const definition = this.mutation(call.name);
         const missing = this.missingFor(call, author as Principal);
         if (missing) throw missing;
-        const compiled = compileMutation(this.graph, definition, call.args, this.sighted(author as Principal));
+        let compiled: ReturnType<typeof compileMutation>;
+        try {
+          compiled = compileMutation(this.graph, definition, call.args, this.sighted(author as Principal));
+        } catch (error) {
+          // A press the act's own input refused: the watch tells a form filled wrongly from an act offered whole.
+          if (error instanceof InvalidArguments && !this.rehearsing) tellTheWatchOfAnInputRefusal({ mutation: error.mutation, message: error.issues.map((issue) => `${issue.path.map(String).join(".")}: ${issue.message}`).join("; ") }, author.id);
+          throw error;
+        }
         if (automated) {
           const refused = tidyingRefusal(this.schema, this.graph, compiled.primitives, this.authorName(author), { declaration: !this.suggesting });
           if (refused) this.refuse({ mutation: call.name, message: refused, wouldNeed: [] }, author.id);

@@ -163,7 +163,19 @@ export function namesOf(store) {
         }
     }
   }
-  return { ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)) };
+  return { ids, words: words.filter(Boolean), unsaid: [...new Set(unsaid)].filter((word) => !declared.has(word)), kinds: schema.definitions.map((definition) => definition.kind) };
+}
+
+/**
+ * A RECORD'S ID, AS MINTED: `film:small-harbor`, `screening:saltwater-2` —
+ * a declared kind, a colon and a slug. Its kind is a declared name the watch
+ * already knows, but the id is the store's and was never learned, so a film
+ * picker reading "Small Harbor · film:small-harbor" four thousand times
+ * passed every harness (the twelfth walk).
+ */
+export function mintedIds(kinds) {
+  const named = kinds.filter((kind) => kind.length > 0).sort((a, b) => b.length - a.length).map((kind) => kind.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  return named.length ? new RegExp(`(?<![\\w-])((?:${named.join("|")}):[\\p{Ll}\\p{N}][\\p{Ll}\\p{N}-]*)`, "u") : null;
 }
 
 /**
@@ -247,7 +259,10 @@ function watchInPage() {
   let unseen = null;
   const unseenBy = new Map();
   let pattern = null;
+  const kinds = new Set();
+  let minted = null;
   const rebuild = () => {
+    minted = mintedIds([...kinds]);
     const spoken = ` ${words.join(" | ").toLowerCase()} `;
     // A name is caught only where it is not also how the declaration says it.
     const caught = [...ids].filter(
@@ -269,6 +284,7 @@ function watchInPage() {
   const UNSHOWN = "script,style,code,pre,kbd,samp,textarea,template,[hidden],[data-graview-speaks-ids]";
   const visible = (el) => (typeof el.checkVisibility === "function" ? el.checkVisibility() : el.getClientRects().length > 0);
   let queued = false;
+  let lastPress = null;
   /*
    * NO SIDEWAYS SCROLL. A page wider than its window at a phone's width or
    * a reader's text size: the class's own check, judged on every state
@@ -545,7 +561,7 @@ function watchInPage() {
       covered();
       wide();
     }
-    if ((!pattern && unsaid.size === 0 && !unseen) || !document.body) return;
+    if ((!pattern && !minted && unsaid.size === 0 && !unseen) || !document.body) return;
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const work = (deadline) => {
       let node;
@@ -563,10 +579,11 @@ function watchInPage() {
             report("shown-what-is-not-theirs", `"${hit[1]}" — a record this seat may not see — is shown in ${describe(el)}`, `${hit[1]}|${describe(el)}`);
           }
         }
-        if (pattern && text && text.length > 2) {
-          const hit = pattern.exec(text);
+        if ((pattern || minted) && text && text.length > 2) {
+          const hit = (pattern && pattern.exec(text)) || (minted && minted.exec(text));
           const el = node.parentElement;
-          if (hit && el && !el.closest(UNSHOWN) && visible(el)) {
+          // An option of a closed picker is shown the moment it opens: judged whether or not it is drawn now.
+          if (hit && el && !el.closest(UNSHOWN) && (el.closest("option") || visible(el))) {
             report("machine-words-shown", `"${hit[1]}" is shown as text in ${describe(el)}`, `${hit[1]}|${describe(el)}`);
           }
         }
@@ -606,8 +623,9 @@ function watchInPage() {
   };
 
   window.__graviewWatch = {
-    learn({ ids: learned, words: said, unsaid: plain = [] }) {
+    learn({ ids: learned, words: said, unsaid: plain = [], kinds: declaredKinds = [] }) {
       for (const id of learned) ids.add(id);
+      for (const kind of declaredKinds) kinds.add(kind);
       for (const word of plain) unsaid.add(word);
       words.push(...said);
       for (const word of said) declaredWhole.add(word.trim());
@@ -642,6 +660,24 @@ function watchInPage() {
       const authors = authorsOf(store);
       if (authors.length > 0) watch.learn({ ids: authors, words: [] });
     },
+    /*
+     * AN ACT OFFERED WHOLE AND REFUSED BY ITS OWN INPUT (the twelfth walk).
+     * A repair offered as one press answered "Not yet: Venue id — invalid
+     * input"; the policy had not refused it, so nothing heard it. A form a
+     * person filled wrongly is refused the same way and is not a fault: the
+     * press's origin tells them apart — a submit from inside a form, or a
+     * key in a box being typed in, is a person's answer; any other press is
+     * the surface's offer.
+     */
+    refusedInput(refusal) {
+      const origin = lastPress && Date.now() - lastPress.at < 4000 ? lastPress.target : null;
+      if (origin && (origin.closest?.("form") || origin.matches?.(TEXT_ENTRY))) return;
+      report(
+        "offered-then-refused",
+        `${refusal.author ?? "a seat"} reached "${refusal.mutation}"${origin ? ` from ${describe(origin)}` : ""} and its own input refused it: ${refusal.message}`,
+        `input|${refusal.mutation}|${refusal.author ?? ""}`,
+      );
+    },
     refused(refusal) {
       report(
         "offered-then-refused",
@@ -666,6 +702,12 @@ function watchInPage() {
   });
   const TEXT_ENTRY = "input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=reset]),textarea,[contenteditable='true'],[contenteditable='']";
   const KEYS = { Enter: "Enter", " ": "Space", Escape: "Escape", Delete: "Delete", Backspace: "Backspace" };
+  /* Where the last press came from, for a refusal by an act's own input to be told apart (`refusedInput`). */
+  const pressed = (event) => {
+    if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+    lastPress = { target: event.type === "submit" ? event.target : event.target instanceof Element ? event.target : document.activeElement, at: Date.now() };
+  };
+  for (const type of ["click", "keydown", "submit"]) document.addEventListener(type, pressed, true);
   document.addEventListener(
     "keydown",
     (event) => {
@@ -766,7 +808,7 @@ export function watched(browser, engine) {
     attached.add(context);
     await context.exposeBinding("__graviewWatchReport", (_source, violation) => record(violation));
     // The page's watch, and what it reads a store with beside it.
-    await context.addInitScript({ content: `${spoken}\n${namesOf}\n${unseenOf}\n${authorsOf}\n(${watchInPage})();` });
+    await context.addInitScript({ content: `${spoken}\n${namesOf}\n${mintedIds}\n${unseenOf}\n${authorsOf}\n(${watchInPage})();` });
     context.on("page", (page) => listen(page));
     for (const page of context.pages()) listen(page);
   };
