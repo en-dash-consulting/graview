@@ -244,7 +244,7 @@ function Starter({ onCall }: { onCall: (call: ToolCall) => void }) {
 
 export function pagesTsx(ids: Ids): string {
   return `import { isCurrent, nounOf, withArticle } from "@graview/core";
-import { Begin, EditableValue, TextBody } from "@graview/primitives";
+import { Begin, EditableValue } from "@graview/primitives";
 import { useGraviewIfAny } from "@graview/react";
 import {
   createPageRegistry,
@@ -254,6 +254,7 @@ import {
   pageStyles,
   recordFacts,
   recordPath,
+  RecordField,
   Repairs,
   spatialHref,
   useStoreTick,
@@ -365,25 +366,16 @@ function ${ids.KindPascal}Page({ context }: { context: PageContext<S> }) {
         * the name, formatted as the declaration says. A page that dropped
         * them looked finished on the one-kind scaffold, where the only
         * field is the name, and hid the price of every vehicle a day later.
+        * Each is drawn as the derived record page draws it (\`RecordField\`):
+        * a picture or a video plays, prose keeps its paragraphs, a date is
+        * changed by the date editor where it stands. Drawn here as text, a
+        * trailer was a file name and a time took "Change" (the twelfth walk).
         */}
       {facts.fields.length > 0 ? (
-        <dl style={{ ...pageStyles.rule, margin: 0, display: "grid", gridTemplateColumns: "minmax(0, max-content) minmax(0, 1fr)", gap: "6px 18px" }} data-testid="record-fields">
-          {facts.fields.map((field) =>
-            /* Prose — a draft, a note — spans the page under its label, its paragraphs and lists kept; Markdown drawn as prose (FR-180). */
-            field.long ? (
-              <div key={field.key} style={{ gridColumn: "1 / -1", display: "grid", gap: 4, marginTop: 6 }}>
-                <dt style={pageStyles.quiet}>{field.label}</dt>
-                <dd style={{ margin: 0 }}>
-                  <TextBody text={field.value} markdown={field.markdown} />
-                </dd>
-              </div>
-            ) : (
-              <div key={field.key} style={{ display: "contents" }}>
-                <dt style={pageStyles.quiet}>{field.label}</dt>
-                <dd style={{ margin: 0, overflowWrap: "anywhere" }}>{field.value}</dd>
-              </div>
-            ),
-          )}
+        <dl style={{ ...pageStyles.rule, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "14px 24px" }} data-testid="record-fields">
+          {facts.fields.map((field) => (
+            <RecordField<S> key={field.key} nodeId={id} node={node} field={field} inPlace={inPlace} />
+          ))}
         </dl>
       ) : null}
       {ties.length > 0 ? (

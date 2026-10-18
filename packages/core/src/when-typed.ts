@@ -17,7 +17,7 @@
  */
 
 import { DEFAULT_LOCALE } from "./days.js";
-import { addDays, dayFrom, utcOf, weekdayOf, DAY_MS, type WallTime } from "./wall-time.js";
+import { addDays, dayFrom, namesInstant, utcOf, wallOfStored, weekdayOf, DAY_MS, type WallTime } from "./wall-time.js";
 
 const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
@@ -132,8 +132,18 @@ export function readWhenTyped(
   text: string,
   options: { readonly today: string; readonly time: boolean; readonly base?: WallTime; readonly locale?: string },
 ): WallTime | undefined {
-  // A moment as a record keeps one, pasted or typed: "2026-10-17T15:00" is a day and a time.
-  const typed = text.toLowerCase().replace(/,/g, " ").replace(/(\d{4}-\d{2}-\d{2})t(?=\d)/, "$1 ").replace(/\s+/g, " ").trim();
+  /*
+   * AN INSTANT AS A RECORD KEEPS ONE, pasted whole — "2026-10-20T15:00:00Z",
+   * "…-05:00" — is read on the reader's clock, as the record's value is said
+   * (the twelfth walk: a screening's own editor refused the value it kept).
+   */
+  const whole = text.trim();
+  if (namesInstant(whole)) {
+    const wall = wallOfStored(whole);
+    if (wall) return options.time ? wall : { day: wall.day };
+  }
+  // A moment as a record keeps one, pasted or typed: "2026-10-17T15:00" (its seconds, if any) is a day and a time.
+  const typed = text.toLowerCase().replace(/,/g, " ").replace(/(\d{4}-\d{2}-\d{2})t(\d\d:\d\d)(:\d\d(\.\d+)?)?/, "$1 $2").replace(/\s+/g, " ").trim();
   if (typed === "") return undefined;
   const time = timeIn(typed);
   if (time.bad) return undefined;

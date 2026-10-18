@@ -33,6 +33,28 @@ describe("two of one name", () => {
     expect(apart.has("album:paper-money")).toBe(false);
   });
 
+  it("never says a record's id: two facts together, else one of its own, else which of them it is (the twelfth walk)", () => {
+    // A festival's film picker read "Small Harbor · film:small-harbor": three films of one name, no one fact telling all three apart.
+    const film = defineNode("film", {
+      fields: z.object({ label: z.string(), director: z.string(), section: z.enum(["features", "shorts"]) }),
+      plural: "Films",
+      label: (node) => node.label,
+    });
+    const films = createSchema([film]);
+    const of = (kind: string) => films.tryDefinition(kind as never);
+    const three = [
+      { id: "film:small-harbor", kind: "film", label: "Small Harbor", director: "Ana Smith", section: "features" },
+      { id: "film:small-harbor-2", kind: "film", label: "Small Harbor", director: "Ana Smith", section: "shorts" },
+      { id: "film:small-harbor-3", kind: "film", label: "Small Harbor", director: "Bo Tanaka", section: "features" },
+    ];
+    const pairs = tellApart(three as never, of);
+    expect(new Set(pairs.values()).size).toBe(3);
+    for (const said of pairs.values()) expect(said).not.toMatch(/film:/);
+    const twins = [three[0], { ...three[0], id: "film:small-harbor-2" }];
+    const apart = tellApart(twins as never, of);
+    expect([...apart.values()]).toEqual(["1 of 2", "2 of 2"]);
+  });
+
   it("says the kind when the kinds are what differ", () => {
     const apart = tellApart([nodes[1], nodes[3]] as never, definitionOf);
     expect(apart.get("song:blue-hour")).toBe("song");

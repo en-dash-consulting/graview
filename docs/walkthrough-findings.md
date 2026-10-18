@@ -36,22 +36,22 @@ Counts are primary / also.
 | Class | What it is | The shared check that owns it | Count |
 |-------|------------|-------------------------------|-------|
 | `keyboard-lands-nowhere` | After a key or a press the keyboard is on `<body>`, stranded, or on something nobody pressed — or the key did nothing, or two things | the watch: focus is never on `<body>` after a key or a press; one Escape changes one rung | 14 / 2 |
-| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier as visible text or accessible name; the gauntlet's ids are not words | 20 / 5 |
+| `machine-words-shown` | A declared id, field key, edge or act name, role or user id, or a validator's raw output, is shown or announced where a person reads | the watch: no declared identifier, nor a record's minted id (since the twelfth walk), as visible text, a picker's option or accessible name; the gauntlet's ids are not words | 21 / 6 |
 | `prose-wrong-for-the-domain` | A sentence the framework writes fits the fixture's word and not the domain's: an article, a mass noun, a hyphen, a capital, a bare number or yes/no, a vocabulary hard-coded from one domain | the gauntlet (a vowel kind, a mass noun, hyphenated titles, numbers and booleans on cards, a label built from fields), with audit-ui `articles`; nothing reads the rest as prose — none yet | 11 / 5 |
 | `wrong-end-of-a-relation` | A relation, an act or a direction is read from the end it was declared at rather than the end it is seen from, or assumed to run one way | the gauntlet (every edge cross-kind with an `inverse`, declared from both sides, one name on two kinds, two relations on one pair) driven through both faces and the chat; `graview check`'s `edge-without-inverse` and `act-without-far-end-reading` hold the declaration only | 7 / 4 |
-| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something; every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 26 / 5 |
-| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 6 / 20 |
+| `offered-then-refused` | What a surface offers is not what the store does on press: offered and refused, thrown, or a no-op (often applied as nobody) — or withheld and hidden, or its reason unreachable | the watch: every offered act is permitted for the seat, askable and changes something, and a press on an offer is never refused by the act's own input (since the twelfth walk); every withheld act is drawn with its reason — run in the gauntlet under a policy with two seats and a declared agent | 27 / 5 |
+| `faces-disagree` | The scene, the routed face, the page the scaffold writes, the chat or a worked example answer one question two ways, because a fix landed on one of them | none yet — needs one: the same record, act, repair and history compared across every face over the gauntlet (`parity.test.tsx` compares the derived facts only) | 7 / 20 |
 | `breaks-at-width-zoom-or-engine` | A measured floor — a 24px target, no sideways scroll, every control on screen — holds at the default and fails at a phone width, a short scene, a reader's text size, in WebKit or Firefox, or on a surface the measure never stood on | the watch's no-sideways-scroll rule (`breaks-at-width`, since the seventh walk — until then the watch had no rule for this class at all), on every state of every harness at every width, root size and engine the matrix runs (`pnpm engines`); and its `target-too-small` rule (since the eighth walk), each control at its laid-out size with the standard's exceptions | 17 / 5 |
 | `layout-collision-or-overflow` | Something is drawn over something else or out of its box at an ordinary size: chrome over content, two cards or captions on one spot, a line through a chip, a value out of its cell, a member hidden with no name | `audit-ui` (`covered`, collisions, `asking`) and `survey`, on their fixed states only; the watch should measure it on every state — none yet there | 14 / 3 |
-| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 13 / 43 |
-| `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 13 / 1 |
-| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 18 / 12 |
+| `data-shape-not-in-fixtures` | Correct on tame data and wrong on real data: empty, accented, duplicate, case, long, sharing a prefix, minted ids, real size — where no visible rule names the symptom | the gauntlet's data | 14 / 45 |
+| `round-trip-loses-something` | Something true before a step is lost or stale after it: written as JSON, reloaded, written back by the studio, remounted, or removed from under the stop that named it | the gauntlet through the studio's round trip (`the-round-trip-keeps-the-checkouts-words.test.ts`) and `pnpm verify remember`, and the watch failing on a page error or an address that resolves to nothing — none yet on the gauntlet | 13 / 2 |
+| `what-a-project-copies-is-wrong` | What a project starts from or copies — the scaffold's output, a skill's code or prose, a worked example, a generic type — does not compile, does not run, needs a cast, or teaches the defect | `skills.test.ts`, `scaffold.test.ts` (every generated file parses) and `pnpm smoke:create`; nothing compiles and runs a skill's code blocks against the gauntlet — none yet | 19 / 13 |
 | `accessibility-tree-wrong` | What assistive technology reads is wrong: a heading skipped or missing, a landmark missing, doubled or named twice, invalid nesting, a group with no name — or emphasis or a problem that is only a color | the watch's axe pass, with audit-ui's `halfSaid` and "a problem painted but not said" | 14 / 1 |
 | `says-something-untrue` | A picture, count, caption, hint, search or sentence states what the graph and the declaration do not: a lens dropping or inventing members, "holds" above a violation, a promise with nothing under it, another seat's work called "you" | none yet — needs one: the gauntlet's lenses, counts and chat answers checked against the graph | 20 / 7 |
-| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 4 / 2 |
+| `no-way-to-do-a-job` | A job the declaration plainly implies has no control on any face, so it cannot be done at all — not refused, not hidden, simply never derived: a list narrowed by a number or by a word field's values | the journeys, one job per shape the declaration has (`narrow` since the seventh walk); a job they do not derive is the hole | 4 / 3 |
 | `shown-what-is-not-theirs` | A seat is shown a record the declaration does not let it see — another customer's name, email or question — on any surface: a page, a card, a count, a picker, Find, the history, a problem | the watch: no screen shows the name or address of a record the seat at the keyboard may not see (`shown-what-is-not-theirs`); the gauntlet keeps its staff from its visitor | 2 / 2 |
 | `permitted-what-was-never-granted` | The store lets a seat run an act no grant gives it — a derived act riding a guess about what another act writes, a grant read wider than it says — so a seat changes what the policy keeps from it | `tests/an-edit-in-place-makes-nothing.test.ts` over every example (the eighth walk), and `tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts` (the ninth): a seat with no role runs a derived act on a record it did not make only where everybody is granted the act; nothing yet asks it of every role | 2 / 0 |
-| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 13 / 6 |
+| `harness-or-setup-itself` | The criterion could not fail (one width, noise, a fixture that agrees with the bug) or the repository's own setup is broken | the gate: the browser harnesses run on main and the release, each criterion verified failing without its fix — none yet | 15 / 6 |
 
 Every class but two first appeared in the first walk (`faces-disagree` and
 `layout-collision-or-overflow` as an `also` there, W-004 and W-029). The
@@ -5196,3 +5196,155 @@ Open, carried to the twelfth walk:
 - `graview create --link` run by npm (`node …/cli.js create`, which takes
   npm as the package manager) writes `link:` dependencies npm cannot
   install; with pnpm it is fine. `start.md` does not pass `--link`.
+
+## The twelfth walk — a film festival (2026-10-18)
+
+The twelfth walk took a city film festival on the lake: the films submitted
+to it (features, documentaries, shorts, the midnight section and the Great
+Lakes strand), each with an optional trailer (`videoField()`) and still
+(`imageField()`); the screenings that show one film in one venue at one
+instant kept with its zone (`z.iso.datetime({ offset: true })`, said on the
+festival's clock, `brand.timeZone: "America/Chicago"`); the venues; and the
+guests the festival brings to town, tied to the screenings they introduce by
+a relation no act declares, so only its derived `connect-guest-introduces`
+and `disconnect-guest-introduces` make and break it. A director, a
+programmer, a box-office volunteer and somebody browsing sit at it under a
+policy that keeps guests from the box office and the visitor; two rules —
+two screenings less than two and a half hours apart in one room (repaired
+by moving the later one, which asks for a time, or canceling it), and a
+film selected with no screening (repaired by `schedule`, which asks for a
+venue and a time) — and two titled lenses, a week's calendar of screenings,
+"Program", and a status board of the films, "Selection". Scaffolded with
+`graview create <scratch>/walk12 --link . --name "Lakeshore Film Festival"
+--kind film --plural films --port 5780` from a worktree of
+`feat/0-1-37-additions` at 8d231845, outside the repository, then seeded
+through its own acts at real size: 9 venues (one closed), three editions of
+1,500 submissions (4,500 films, about 400 selected), 1,026 screenings over
+eleven days a year, 420 guests and 2,153 links, 13,241 acts in 18 seconds,
+3 problems on the day.
+
+The journeys' first run on walk12 finished 60 of 84 runs: making a
+screening blocked every way, the repair blocked every way, Find blocked
+every way, and nothing tied two records at all — the journeys planned no
+"relate" job, though every relation now comes with a connect. The watch
+saw nothing on any of them.
+
+### W-232 · "Schedule a screening" cannot be sent: the date editor refuses an instant as its field keeps it
+- stage: B (a second kind, made through its act) · face: both · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Making a screening", all eight ways: "no screening called "Journey screening p1440" was made"; "2026-10-20T15:00:00-05:00" in the Starts box said "Not a date this reads", so the form would not send ("tomorrow 3pm" was read, and kept as `2026-10-19T20:00:00Z`, which is right on Chicago's clock)
+- class: data-shape-not-in-fixtures (also: round-trip-loses-something)
+- expected: the editor reads back what its field keeps, as a person pasting a time from elsewhere would give it
+- actual: `readWhenTyped` read `2026-10-17T15:00` and no seconds, no `Z` and no offset, so an instant written as an instant was no day at all
+- where it belongs: `packages/core/src/when-typed.ts`
+- harness that should have caught it: the journeys' "make" on the gauntlet, whose talk's `startsAt` is optional and so never asked; `a-date-is-typed-as-people-say-it.test.ts` typed only words and wall times
+- status: fixed in "walkthrough: B · the date editor reads an instant as its field keeps it, so a screening can be scheduled from either face" · a stored instant pasted whole is read on the reader's clock, and a wall time with its seconds as the day and time it names. Criterion: "reads an instant as a record keeps one, pasted with its seconds and its zone, on the reader's clock" in `a-date-is-typed-as-people-say-it.test.ts` (verified failing without the fix); the journeys' walk12 "make-screening" done 8 of 8 (the pointer in 9, the keyboard 17 to 32)
+
+### W-233 · A repair whose rule leaves the rest to choose is offered as one press, and answers "Not yet: Venue id — invalid input"
+- stage: C (a rule and its repair) · face: both · width: 1440 and 390 · scheme: light
+- impact: blocks a job — "Getting from a problem to its repair", all eight ways: "no repair was applied"; on the problems page "Schedule Under Weather" was one press and its answer was the validator's own words, "Not yet: Venue id — invalid input: expected string, received undefined; Starts — invalid input: expected string, received undefined"
+- class: offered-then-refused (also: machine-words-shown)
+- expected: a repair that leaves an argument open is an ask (W-012), whoever wrote the rule
+- actual: every surface trusted the rule's own `missing`, which a document's rule is given by the compiler and a rule in code must write by hand; graview-invariant's rule named `schedule` with the film and wrote no `missing`, as most will. The watch heard a refusal by the policy, never one by an act's own input, so the refusal on press passed every harness — the shape the eleventh walk carried open (W-228)
+- where it belongs: `packages/core/src/store.ts` (`violations`), `packages/core/src/watched.ts`, `scripts/lib/watch.mjs`
+- harness that should have caught it: the watch's `offered-then-refused`, which now does: the store tells a watching harness when an act's own input refuses a press (`refusedInput`), and the watch reports it unless the press came from inside a form or a box being typed in — a person's answer, not the surface's offer
+- status: fixed in "walkthrough: C · a repair says what it still asks for, and the watch hears an offer its act's own input refuses" · a violation's repair whose rule did not say carries `missing`, the arguments its act's input requires and it does not give. Criterion: `packages/core/tests/unit/a-repair-says-what-it-still-asks-for.test.ts` and "tells the watch when an act's own input refuses a press" in `a-watching-harness-is-told.test.ts` (both verified failing without the fix); `pnpm verify watch`'s `anOfferItsInputRefusesIsCaught`; the journeys' walk12 "repair" done 8 of 8 (the pointer in 7). The scene's strip previews before it applies, so a refusal there is said in the strip and not yet told to the watch — carried below
+
+### W-234 · Three films of one name are told apart by their ids: "Small Harbor · film:small-harbor", four thousand times in one picker
+- stage: B (making a screening: the film picker) · face: both · width: 1440 and 390 · scheme: light
+- impact: costs a job — "Making a screening" and "Tying a guest to another": the Film picker, the ask on the scene and Find said a record's id beside every name some other film shared
+- class: machine-words-shown (also: data-shape-not-in-fixtures)
+- expected: namesakes told apart in words, or by which of them each is
+- actual: `tellApart` looked for one fact that told every namesake apart and, where none did, fell back to the record's id; the watch knew the declaration's names and never a record's minted id, and did not read a closed picker's options at all
+- where it belongs: `packages/core/src/schema/reading.ts`; `scripts/lib/watch.mjs`
+- harness that should have caught it: the watch's `machine-words-shown`, which now does: it learns the declared kinds and catches `<kind>:<slug>` as text, in an option of a closed picker as well as anywhere drawn
+- status: fixed in "walkthrough: B · two records of one name are never told apart by their id, and the watch knows a minted id when it is shown" · two facts together, else the fact a record holds alone, else "2 of 3". Criterion: "never says a record's id" in `two-of-one-name.test.ts`, "knows a record's minted id when it is shown" in `tests/the-watch-reads-a-stores-names.test.ts` (both verified failing without the fix), `pnpm verify watch`'s `aRecordsIdInAPickerIsCaught`; `pnpm verify pages gauntlet --quick` hold with the rule on
+
+### W-235 · The journeys tie nothing through a relation's derived connect, so an app whose relations no act declares has no "relate" job
+- stage: B (an edge and the acts that make and break it) · face: — · width: — · scheme: —
+- impact: blocks the measure, not a person: walk12's guests are tied to screenings only by `connect-guest-introduces`, and the journeys planned eleven jobs and no "relate"; with the job planned, it is done 8 of 8 — "Link a screening" in 4 presses with the pointer, 9 from the keyboard on the pages and 27 to 29 on the scene
+- class: harness-or-setup-itself (also: no-way-to-do-a-job)
+- expected: every relation the declaration has is a job, since 0.1.37 gives each one its connect
+- actual: `planJobs` read the tying acts from the declared mutations only
+- where it belongs: `scripts/lib/journeys.mjs` (`planJobs`)
+- harness that should have caught it: the journeys' own test, `tests/journeys.test.ts`, which had no app without a declared tying act
+- status: fixed in "walkthrough: A · the journeys tie two through a relation's derived connect, and find a record whose words are all shared by its whole name" · a declared tying act first, then a derived connect. Criterion: "is a job through a relation's derived connect where no act the app declares connects anything" in `tests/journeys.test.ts` (verified failing without the fix)
+
+### W-236 · The journeys look for "Hollow Daughters 7" by "daughters", a word two hundred films share
+- stage: A (finding a record by part of its name, at real size) · face: both · width: 1440 and 390 · scheme: light
+- impact: blocks the measure: "Finding a film by part of its name" dead-ended all eight ways ("Find does not offer "Hollow Daughters 7" for "daughters" among 51"); a person who knows the name types it
+- class: harness-or-setup-itself (also: data-shape-not-in-fixtures)
+- expected: with no word and no two words of its own, the whole name
+- actual: `partOf` fell back to the longest word
+- where it belongs: `scripts/lib/journeys.mjs` (`partOf`)
+- harness that should have caught it: `tests/journeys.test.ts`
+- status: fixed in the same commit as W-235 · criterion: "types the whole name where no word and no two words are its own" in `tests/journeys.test.ts` (verified failing without the fix); the journeys' walk12 "find" on the pages done 4 of 4 (the pointer in 4). On the scene it is still a dead end, and rightly: five films are called "Hollow Daughters 7" with every fact alike (an artifact of the walk's seed), Find says them "1 of 5" to "5 of 5", and which one a person meant is in no word
+
+### W-237 · `graview create --link` run by npm writes `link:` dependencies npm cannot install
+- stage: A (setup) · face: — · width: — · scheme: —
+- impact: blocks a job — "start a project beside a checkout" with npm: `npm install` answers "Unsupported URL Type "link:""; carried from the eleventh walk
+- class: what-a-project-copies-is-wrong
+- expected: the manifest in the words of the package manager that made it
+- actual: `packageJson` wrote `link:` whichever made it
+- where it belongs: `packages/core/src/scaffold/project.ts`
+- harness that should have caught it: `scaffold.test.ts` and `pnpm smoke:create`, which run pnpm only
+- status: fixed in "walkthrough: E · what a project starts from installs under npm, and its record page draws each fact as the derived page does" · `file:` under npm, which npm links for a directory (tried: `npm install` of two `file:` packages of this checkout linked both, their `workspace:*` dependencies untouched; `link:` was refused). Criterion: "writes the path in the words npm installs when npm makes the project" in `scaffold.test.ts` (verified failing without the fix)
+
+### W-238 · The record page a project starts from draws every fact as text: a trailer is a file name, a time takes "Change"
+- stage: E (the pages, customized) · face: pages · width: 1440 and 390 · scheme: light
+- impact: costs a job — changing a film's facts on the pages the scaffold writes took "Change the film" for every field the derived page edits in place, and a video or a picture was its file's name; carried from the eleventh walk (the date editor reached only through "Change the animal")
+- class: faces-disagree (also: what-a-project-copies-is-wrong)
+- expected: one fact drawn one way on the derived page and on the page a project starts from
+- actual: the derived record page drew each fact inline in its own map; the scaffold had a copy that kept only the text
+- where it belongs: `packages/pages/src/record-field.tsx` (new, `RecordField`), `packages/pages/src/page-record.tsx`, `packages/core/src/scaffold/ui.ts`
+- harness that should have caught it: `scaffold.test.ts`, which pinned the heading's editor (W-229) and not the facts under it
+- status: fixed in the same commit as W-237 · the derived page draws each fact with `RecordField`, and so does the scaffold's page. Criterion: "draws each fact as the derived record page does, by the same component" in `scaffold.test.ts` (verified failing without the fix); walk12's pages regenerated from the scaffold typecheck, and a screening's "Starts" on its page is the date editor in place, "Oct 24, 2026, 4:00 PM CDT"
+
+Seven findings, W-232 to W-238, each fixed with a criterion verified
+failing without its fix; no new class. Two were the watch's holes (W-233 a
+refusal by an act's own input, carried from W-228; W-234 a record's id,
+never learned, and a closed picker never read), two the journeys' own
+(W-235, W-236), two carried from the eleventh walk (W-237, W-238). After
+the fixes the journeys on walk12 finish 88 of 92 runs: make-screening,
+repair and relate 8 of 8, find 4 of 8 (the scene's four are the five
+identical films above); "several" on the scene is a skip by design. `pnpm
+verify watch` holds with its two new claims, and `pnpm verify pages
+gauntlet --quick` hold with the new rules on every state.
+
+One sentence of the walk's own app said `{startsAt | datetime}` raw: the
+template filters belong to a document's strings, and a describe written in
+code says a time with `momentAsRead(args.startsAt)`, which the runtime says
+on the app's zone — the watch caught it (`machine-words-shown`, "startsAt"),
+and the app was fixed. Nothing in `graview check` tells a code describe that
+returns a template it will not be filled in.
+
+The 0.1.37 surfaces, as walked: the app's time zone (instants said in CDT
+on records, lists and the act's sentence; typed "tomorrow 3pm" kept as the
+right instant); every relation's derived connect (walked as "relate", "Link
+a screening", from the pages and the scene, with the pointer and the keys).
+Declared and checked but not driven with a file: the video field (no host
+upload was made in this walk, so no `<graview-video>`, `data-lightbox`,
+`filesAt`, `pictures: true` view or `/graview/assets/` image was walked),
+cross-app `add-relation`, an async `HostFiles.kept`, lazy past declarations
+in playback and the 0.1.34 menu surfaces — the next walk's to take.
+
+Open, carried to the thirteenth walk:
+
+- the scene's strip previews an act before it applies, so a refusal by the
+  act's own input there is said in the strip and not told to the watch
+  (W-233's watch rule hears the pages' and the forms' presses);
+- the gauntlet has no two kinds with a field of one name chosen together
+  through a problem (W-228): its talk and workshop share `status` and
+  `startsAt`, but no rule names both, so the class check over every example
+  still passes by absence;
+- the keyboard's way into a long list on the pages: walk12's "several"
+  takes 36 presses where the pointer takes 6, 16 of them Tabs to the first
+  row's box (25 on walk11), and "narrow" 33 where the pointer takes 5, 17 of
+  them to "+4,078 past";
+- the keyboard's cost on the scene: "relate" 27 to 29 presses where the
+  pointer takes 5 ("its acts" 12, "Link a screening" 9), "repair" 31 to 34
+  where it takes 7 ("a choice" 20), "refused" 13 where it takes 2;
+- a code describe that returns a template (`{startsAt | datetime}`) is
+  shown raw; `graview check` could say so;
+- the video field, pictures views, `filesAt`, the app's own assets,
+  cross-app `add-relation`, `HostFiles.kept`, lazy past declarations and the
+  0.1.34 menu, unwalked here.

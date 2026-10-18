@@ -23,6 +23,7 @@ interface Watch {
   seat?(store: unknown, principal: Principal, from?: string): void;
   learn?(names: { readonly ids: readonly string[]; readonly words: readonly string[] }): void;
   refused?(refusal: Refusal & { readonly author?: string }): void;
+  refusedInput?(refusal: { readonly mutation: string; readonly message: string; readonly author?: string }): void;
 }
 
 const theWatch = (): Watch | undefined => (globalThis as { __graviewWatch?: Watch }).__graviewWatch;
@@ -46,6 +47,16 @@ export function tellTheWatchOfAnAuthor(id: string | undefined): void {
 /** A press reached the store and the policy refused it. */
 export function tellTheWatchOfARefusal(refusal: Refusal, author: string | undefined): void {
   theWatch()?.refused?.({ ...refusal, ...(author === undefined ? {} : { author }) });
+}
+
+/**
+ * A press reached the store and the act's own input refused it (the
+ * twelfth walk). Whether that is a surface offering an act it could not
+ * take, or a person who filled a form wrongly, is the press's origin, which
+ * the watch knows and the store does not.
+ */
+export function tellTheWatchOfAnInputRefusal(refusal: { readonly mutation: string; readonly message: string }, author: string | undefined): void {
+  theWatch()?.refusedInput?.({ mutation: refusal.mutation, message: refusal.message, ...(author === undefined ? {} : { author }) });
 }
 
 /**

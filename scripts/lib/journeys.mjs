@@ -134,13 +134,22 @@ export function planJobs({ app, core }) {
   }
 
   /* A relation an act declares: its subject, and one more node ref the act ties it to. */
-  const relating = declared
+  /*
+   * Declared first; then a relation's derived connect (the twelfth walk):
+   * since every relation comes with `connect-<kind>-<relation>`, an app that
+   * declares no tying act of its own still has the job, and a festival's
+   * guests were tied to screenings by nothing the journeys walked.
+   */
+  const relating = [...declared, ...derived.filter((mutation) => (mutation.connects ?? []).length > 0 && !(mutation.severs ?? []).length)]
     .filter((mutation) => mutation.subject && !(mutation.creates ?? []).length)
     .map((mutation) => ({ mutation, others: core.nodeRefArgs(mutation.input).filter((ref) => ref.name !== mutation.subject.arg && !ref.optional) }))
     .filter(({ others }) => others.length === 1)
     // Ties are adds; the act that takes one away is the other half, and an "un-" act needs a tie to exist.
     .filter(({ mutation }) => !/^(un|stop-|take-off|drop|remove)/.test(mutation.name));
-  const relate = relating.find(({ mutation }) => mutation.subject.kinds?.includes?.(primary)) ?? relating[0];
+  const declaredRelating = relating.filter(({ mutation }) => declared.includes(mutation));
+  const derivedRelating = relating.filter(({ mutation }) => !declared.includes(mutation));
+  const onPrimary = (list) => list.find(({ mutation }) => mutation.subject.kinds?.includes?.(primary)) ?? list[0];
+  const relate = onPrimary(declaredRelating) ?? onPrimary(derivedRelating);
   if (relate) {
     const subjectKind = relate.mutation.subject.kinds === "*" ? primary : relate.mutation.subject.kinds[0];
     const subjectDefinition = app.schema.definitions.find((definition) => definition.kind === subjectKind);
@@ -973,7 +982,7 @@ async function findAndOpen(person, face, target, query, more = null) {
 }
 
 /** A word of the record's name that is its own, to search by. */
-function partOf(label, others) {
+export function partOf(label, others) {
   const words = label.split(/[^\p{L}\p{N}']+/u).filter((word) => word.length >= 4);
   const own = words.filter((word) => others.filter((other) => other.toLowerCase().includes(word.toLowerCase())).length === 1);
   if (own.length > 0) return own.sort((a, b) => b.length - a.length)[0].toLowerCase();
@@ -989,7 +998,12 @@ function partOf(label, others) {
     const pair = [all[at], all[at + 1]];
     if (others.filter((other) => holds(other, pair)).length === 1) return pair.join(" ").toLowerCase();
   }
-  return (words.sort((a, b) => b.length - a.length)[0] ?? label).toLowerCase();
+  /*
+   * NOR TWO: the whole name, as a person who knows it types it. "Hollow
+   * Daughters 7" shares every word and every pair with a dozen other films;
+   * the longest word, "daughters", found two hundred (the twelfth walk).
+   */
+  return label.toLowerCase();
 }
 
 /**

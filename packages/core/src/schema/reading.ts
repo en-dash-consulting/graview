@@ -56,10 +56,23 @@ export function tellApart(
       // A word before a number: "single" and "album" say more than two dates.
       const wordy = (key: string) => facts.every((fact) => !/\d/.test(fact.get(key) ?? ""));
       const ordered = [...keys.filter(wordy), ...keys.filter((key) => !wordy(key))];
-      const telling = ordered.find((key) => new Set(facts.map((fact) => fact.get(key) ?? "")).size === alike.length);
+      const says = (at: number, chosen: readonly string[]) => chosen.map((key) => facts[at]!.get(key) ?? "").filter(Boolean).join(" · ");
+      const tells = (chosen: readonly string[]) => new Set(alike.map((_, at) => says(at, chosen))).size === alike.length && alike.every((_, at) => says(at, chosen) !== "");
+      const one = ordered.find((key) => tells([key]));
+      /*
+       * NEVER ITS ID (the twelfth walk): three films called "Small Harbor"
+       * with no one fact telling all three apart read "film:small-harbor"
+       * in every picker. Two facts together, else a fact of its own, else
+       * which of them it is, in the order they were made.
+       */
+      const two = one ? undefined : ordered.flatMap((first, at) => ordered.slice(at + 1).map((second) => [first, second])).find((pair) => tells(pair));
       alike.forEach((node, at) => {
-        const fact = telling ? facts[at]!.get(telling) : undefined;
-        apart.set(node.id, fact ?? node.id);
+        if (one || two) return void apart.set(node.id, says(at, one ? [one] : two!));
+        const own = ordered.find((key) => {
+          const value = facts[at]!.get(key);
+          return value !== undefined && value !== "" && facts.every((fact, other) => other === at || fact.get(key) !== value);
+        });
+        apart.set(node.id, own ? facts[at]!.get(own)! : `${at + 1} of ${alike.length}`);
       });
     }
   }

@@ -74,6 +74,25 @@ await settle();
 const tagged = takeViolations().filter((v) => v.rule === "machine-words-shown").map((v) => v.detail);
 checks.shownThoughNotSpokenIsCaught = tagged.some((d) => d.startsWith('"vehicle"')) && tagged.some((d) => d.startsWith('"close-deal"'));
 
+/* machine-words-shown, a record's minted id (the twelfth walk): in a closed picker's options too; a kind said in a sentence is not one. */
+await show(`<main><form><label><span>Film</span><select><option>—</option><option>Small Harbor · film:small-harbor</option></select></label></form><p>A film: something the festival keeps.</p></main>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [], kinds: ["film", "venue"] }));
+await settle();
+const minted = takeViolations().filter((v) => v.rule === "machine-words-shown").map((v) => v.detail);
+checks.aRecordsIdInAPickerIsCaught = minted.length === 1 && minted[0].startsWith('"film:small-harbor" is shown');
+
+/* offered-then-refused by the act's own input (the twelfth walk): a press on an offer is caught; a form a person filled wrongly is not. */
+await show(`<main><button id="offer">Schedule Under Weather</button><form><input id="typed"><button id="send">Schedule</button></form></main>
+<script>document.querySelector("form").addEventListener("submit", (e) => e.preventDefault());</script>`);
+await page.evaluate(() => window.__graviewWatch.learn({ ids: [], words: [] }));
+await page.click("#offer");
+await page.evaluate(() => window.__graviewWatch.refusedInput({ mutation: "schedule", message: "venueId: expected string", author: "staff:tomas" }));
+await page.click("#send");
+await page.evaluate(() => window.__graviewWatch.refusedInput({ mutation: "schedule", message: "startsAt: expected string", author: "staff:tomas" }));
+await settle();
+const refusedByInput = takeViolations().filter((v) => v.rule === "offered-then-refused").map((v) => v.detail);
+checks.anOfferItsInputRefusesIsCaught = refusedByInput.length === 1 && refusedByInput[0].includes("its own input refused it: venueId");
+
 /* shown-what-is-not-theirs: a customer the seat may not see, named on the page; a name it may see is not. */
 await show(`<main><h1>Cars</h1><p>Shortlisted by Freya Davies</p><p>Signed in as Bethan Okonkwo</p></main>`);
 await page.evaluate(() => window.__graviewWatch.unseen({ words: ["Freya Davies", "freya.davies1@mail.example"] }));
