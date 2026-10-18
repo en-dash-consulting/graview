@@ -27,6 +27,7 @@ const DRAWN_ONLY = [
   "useImplicated",
   "useKit",
   "useMarqueeRoom",
+  "useMenuPrepare",
   "useMenuSections",
   "useReached",
   "useTextMeasure",

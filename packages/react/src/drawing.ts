@@ -22,6 +22,6 @@ export { anchorOf, AUDIENCE_ROW, placeOthers } from "./placement.js";
 export type { Placed } from "./placement.js";
 export { ViewBoundary } from "./view-boundary.js";
 // A face's own sections of the context menu, beside the host's: drawn only once a menu is.
-export { MenuSections, useMenuSections } from "./menu-sections.js";
+export { MenuSections, useMenuPrepare, useMenuSections } from "./menu-sections.js";
 export type { MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-sections.js";
 export type { ViewBoundaryProps } from "./view-boundary.js";

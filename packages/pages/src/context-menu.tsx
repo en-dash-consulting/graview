@@ -140,6 +140,17 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     [aimAtPage, aimAtLink, store, schema, base],
   );
 
+  /** What resting on an element in this face gets ready (FR-186): the menu a right-click there would open, as the Inspector's sections are told it. */
+  const readyAt = useCallback(
+    (element: Element): MenuTarget | null => {
+      const face = root.current;
+      if (face === null || !face.contains(element) || typingIn(element) || element.closest("[data-graview-popover]")) return null;
+      const aimed = aimAt(element);
+      return { face: "pages", on: aimed.on, about: aimed.about ?? [], field: aimed.field, place: aimed.place, href: aimed.href, act: aimed.act, element: homeOf(element) };
+    },
+    [aimAt, root],
+  );
+
   /** Opens the menu about what is at `element`, at a point. */
   const open = useCallback(
     (element: Element, x: number, y: number) => {
@@ -303,7 +314,7 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       >
         {children}
       </div>
-      <MenuHome openAt={openAt} />
+      <MenuHome openAt={openAt} readyAt={readyAt} />
       {/* What the inline AI proposed and has not made, over the page. */}
       <GhostDoor placement="page" />
       {/* The sheet "Notify me…" opens, already filled in. */}
@@ -323,7 +334,7 @@ function kindOfAggregate(id: string): string | undefined {
  * and the element it was opened from went with it (a record set aside from
  * its row): the page's heading, never <body>.
  */
-function MenuHome({ openAt }: { readonly openAt: (element: HTMLElement) => void }) {
+function MenuHome({ openAt, readyAt }: { readonly openAt: (element: HTMLElement) => void; readonly readyAt: (element: Element) => MenuTarget | null }) {
   return (
     <span
       data-graview-menu-home=""
@@ -338,8 +349,8 @@ function MenuHome({ openAt }: { readonly openAt: (element: HTMLElement) => void 
       }}
       style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}
     >
-      {/* A card's acts key, on this face, opens the menu about the card's record. */}
-      <Inspector placement="menu" openActs={openAt} />
+      {/* A card's acts key, on this face, opens the menu about the card's record; resting on one gets that menu ready. */}
+      <Inspector placement="menu" openActs={openAt} aimAt={readyAt} />
     </span>
   );
 }

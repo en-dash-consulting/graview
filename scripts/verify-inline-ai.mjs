@@ -13,7 +13,10 @@
  * once — its outcome, its model, the batch it made with its undo — under the
  * AI filter and the reader's own; a record's page shows the ones about it;
  * a host's stored entries are drawn; and with AI off no AI part is drawn on
- * either face.
+ * either face. A menu opened on a card the pointer rested on draws complete
+ * in its first frame, hovering across the tasks asks no model, a menu opened
+ * again asks nothing until its record changes (FR-186), and a host with only
+ * a Thinking slot is asked only when "Suggest…" is pressed (FR-185).
  *
  *   node scripts/verify-inline-ai.mjs [--engine=chromium|webkit|firefox]
  */
@@ -383,6 +386,109 @@ try {
       storedShown.interactions.some((one) => one.id === "ai-stored-1" && one.outcome === "dismissed" && /jev-latest/.test(one.text)) &&
       keptByHost.some((entry) => entry.outcome === "dismissed" && entry.usage?.includes("fast:host-fast")),
   };
+
+  /* ------------------------------------------- the menu is ready before the click (FR-185, FR-186) */
+  reach("aRestedOnMenuDrawsCompleteInItsFirstFrame");
+  const counting = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+  await counting.addInitScript(KEEP_THE_STORE);
+  await counting.addInitScript(() => {
+    window.__calls = { fast: 0, thinking: 0 };
+    const decide = async (_state, questions) => {
+      window.__calls.fast += 1;
+      return {
+        answers: Object.fromEntries(Object.entries(questions).map(([key, question]) => {
+          const first = Object.keys(question.criteria)[0];
+          return [key, { type: "choice", choice: first, confidence: 0.7, probabilities: { [first]: 0.7 } }];
+        })),
+        usage: { inputTokens: 100, outputTokens: 0 },
+      };
+    };
+    const think = async ({ catalog }) => {
+      window.__calls.thinking += 1;
+      return { text: JSON.stringify({ pick: catalog.candidates.slice(0, 2).map((one) => one.id) }), usage: { inputTokens: 100, outputTokens: 10 } };
+    };
+    const thinkingOnly = new URLSearchParams(location.search).get("thinkingOnly") === "1";
+    window.__todoAi = thinkingOnly ? { thinking: { model: "host-thinking", think } } : { fast: { model: "host-fast", decide } };
+  });
+  const rested = await counting.newPage();
+  rested.on("pageerror", (error) => errors.push(error.message));
+  await rested.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
+  await ready(rested);
+  const calls = () => rested.evaluate(() => ({ ...window.__calls }));
+  /* A right-click dispatched on a card, and what the menu is one frame later. */
+  const firstFrame = (id) =>
+    rested.evaluate(async (id) => {
+      const card = document.querySelector(`[data-graview-pick="${id}"]`);
+      const box = card.getBoundingClientRect();
+      card.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2 }));
+      await new Promise((done) => requestAnimationFrame(() => done()));
+      const menu = document.querySelector('[data-testid="context-menu"]');
+      const section = menu?.querySelector('[data-menu-section="inline-ai"]');
+      return {
+        menu: menu !== null,
+        acts: menu?.querySelectorAll("[data-affordance]").length ?? 0,
+        section: Boolean(section),
+        ask: Boolean(section?.querySelector('[data-menu-item="ai-ask"]')),
+        offers: section?.querySelectorAll("[data-ai-offer]").length ?? 0,
+        thinking: Boolean(section?.querySelector('[data-testid="inline-ai-thinking"]')),
+        missing: Boolean(menu?.querySelector('[data-testid="lazy-part-missing"]')),
+      };
+    }, id);
+  // Across the list: the pointer resting a moment on each task asks no model.
+  const cards = await rested.evaluate(() => [...document.querySelectorAll('[data-graview-pick^="t-"]')].map((one) => one.getAttribute("data-graview-pick")).filter((id, at, all) => all.indexOf(id) === at).slice(0, 5));
+  for (const id of cards) {
+    await rested.hover(`[data-graview-pick="${id}"]`);
+    await rested.waitForTimeout(250);
+  }
+  const afterHover = await calls();
+  await rested.hover('[data-graview-pick="t-deposit"]');
+  await rested.waitForTimeout(500);
+  const restedFrame = await firstFrame("t-deposit");
+  await aiSection(rested);
+  const afterOpen = await calls();
+  await putAway(rested);
+  report.checks.aRestedOnMenuDrawsCompleteInItsFirstFrame = {
+    cards,
+    afterHover,
+    restedFrame,
+    ok: cards.length > 1 && afterHover.fast === 0 && afterHover.thinking === 0 && restedFrame.menu && restedFrame.acts > 0 && restedFrame.section && restedFrame.ask && !restedFrame.missing && afterOpen.fast === 1,
+  };
+
+  reach("aReopenedMenuAsksNothingUntilTheRecordChanges");
+  const reopened = await firstFrame("t-deposit");
+  await rested.waitForTimeout(600);
+  const afterReopen = await calls();
+  await putAway(rested);
+  report.checks.aReopenedMenuAsksNothingUntilTheRecordChanges = {
+    reopened,
+    afterReopen,
+    ok: reopened.menu && reopened.offers > 0 && !reopened.thinking && afterReopen.fast === 1,
+  };
+
+  reach("onlyAThinkingSlotAsksWhenSuggestIsPressed");
+  await rested.goto(`${at("todo")}/?${DAY}&thinkingOnly=1`, { waitUntil: "load", timeout: 90_000 });
+  await ready(rested);
+  await rested.click('[data-graview-pick="t-deposit"]', { button: "right" });
+  await rested.waitForSelector(`${AI} [data-menu-item="ai-suggest"]`, { timeout: 10_000 }).catch(() => undefined);
+  await rested.waitForTimeout(500);
+  const openedAndClosed = await calls();
+  const suggestRow = (await rested.$(`${AI} [data-menu-item="ai-suggest"]`)) !== null;
+  await putAway(rested);
+  await rested.click('[data-graview-pick="t-deposit"]', { button: "right" });
+  await rested.waitForSelector(`${AI} [data-menu-item="ai-suggest"]`, { timeout: 10_000 }).catch(() => undefined);
+  await rested.click(`${AI} [data-menu-item="ai-suggest"]`).catch(() => undefined);
+  await rested.waitForSelector(`${AI} [data-ai-offer]`, { timeout: 10_000 }).catch(() => undefined);
+  const pressed = await calls();
+  const offered = await rested.evaluate(() => document.querySelectorAll('[data-menu-section="inline-ai"] [data-ai-offer]').length);
+  await putAway(rested);
+  report.checks.onlyAThinkingSlotAsksWhenSuggestIsPressed = {
+    openedAndClosed,
+    suggestRow,
+    pressed,
+    offered,
+    ok: openedAndClosed.thinking === 0 && openedAndClosed.fast === 0 && suggestRow && pressed.thinking === 1 && offered > 0,
+  };
+  await counting.close();
 
   /* ------------------------------------------- AI off: no AI part, on either face */
   reach("aiOffHidesEveryAiPartOnBothFaces");

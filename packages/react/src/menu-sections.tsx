@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { useGraviewIfAny } from "./context.js";
 
 /**
@@ -53,6 +53,13 @@ export interface MenuSection {
   readonly items?: readonly MenuItem[];
   /** Drawn in place of rows, for a section that needs more than rows. */
   readonly render?: (close: () => void) => ReactNode;
+  /**
+   * GET READY: the menu may be about to open on this target — the pointer
+   * rested on it, the keyboard is on it, a finger is down on it (FR-186).
+   * Fetch what the section draws or opens, so the menu draws complete in
+   * its first frame. Never a model call, nor a change: nothing is shown.
+   */
+  readonly prepare?: () => void;
 }
 
 /** A host's or a face's contribution: told what the menu is opened on, it answers a section or nothing. */
@@ -71,12 +78,37 @@ export function MenuSections({ sections, children }: { readonly sections: readon
   return <MenuSectionsContext.Provider value={all}>{children}</MenuSectionsContext.Provider>;
 }
 
-/** The sections every source here gives for a target, the ones before the acts first. */
-export function useMenuSections(target: MenuTarget | null): { readonly start: readonly MenuSection[]; readonly end: readonly MenuSection[] } {
+/** Every source here: the faces', then the host's. The same source given twice — a face's and a host's — is drawn once. */
+function useSources(): readonly MenuSectionSource[] {
   const faces = useContext(MenuSectionsContext);
   const host = useGraviewIfAny()?.menuSections;
-  // The same source given twice — a face's and a host's — is drawn once.
-  const sources = host ? [...faces, ...host.filter((source) => !faces.includes(source))] : faces;
+  return useMemo(() => (host ? [...faces, ...host.filter((source) => !faces.includes(source))] : faces), [faces, host]);
+}
+
+/**
+ * GETTING EVERY SECTION READY FOR A TARGET (FR-186): what a face calls when
+ * the pointer rests on a record, a card, a row or a kind, the keyboard
+ * lands on one, or a finger goes down on one — each section's `prepare`.
+ */
+export function useMenuPrepare(): (target: MenuTarget) => void {
+  const sources = useSources();
+  return useCallback(
+    (target: MenuTarget) => {
+      for (const source of sources) {
+        try {
+          source(target)?.prepare?.();
+        } catch {
+          // A host's section that throws is left out, never the menu.
+        }
+      }
+    },
+    [sources],
+  );
+}
+
+/** The sections every source here gives for a target, the ones before the acts first. */
+export function useMenuSections(target: MenuTarget | null): { readonly start: readonly MenuSection[]; readonly end: readonly MenuSection[] } {
+  const sources = useSources();
   if (target === null || sources.length === 0) return { start: [], end: [] };
   const sections = sources.flatMap((source) => {
     try {
