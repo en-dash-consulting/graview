@@ -5211,7 +5211,7 @@ and `disconnect-guest-introduces` make and break it. A director, a
 programmer, a box-office volunteer and somebody browsing sit at it under a
 policy that keeps guests from the box office and the visitor; two rules —
 two screenings less than two and a half hours apart in one room (repaired
-by moving the later one, which asks for a time, or cancelling it), and a
+by moving the later one, which asks for a time, or canceling it), and a
 film selected with no screening (repaired by `schedule`, which asks for a
 venue and a time) — and two titled lenses, a week's calendar of screenings,
 "Program", and a status board of the films, "Selection". Scaffolded with
