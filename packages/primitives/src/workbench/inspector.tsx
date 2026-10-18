@@ -1,9 +1,9 @@
-import { InvalidArguments, isLeftAlone, layer, nounOf, signInInstead, withArticle, type AnySchema } from "@graview/core";
+import { InvalidArguments, isLeftAlone, layer, nounOf, signInInstead, withArticle, type AnySchema, type Store } from "@graview/core";
 import { edgeWords } from "@graview/core/words";
 import { failureWords } from "@graview/core/words";
 import { linkProvenance, provenanceWords } from "@graview/core/provenance";
 import { edgeOfSelection, kindsOf } from "@graview/layout/view";
-import { POPOVER_STYLE, useAffordances, useApplyAffordance, useGraview, useMenuSections, usePopover, useSelection, type MenuSection, type MenuTarget } from "@graview/react";
+import { POPOVER_STYLE, prepareAffordances, useAffordances, useApplyAffordance, useGraview, useMenuSections, usePopover, useSelection, type AffordancesAsked, type MenuSection, type MenuTarget } from "@graview/react";
 import { loadPins, togglePin, type Affordance, type PinOverrides } from "@graview/tools";
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnswerArgs, nameOf } from "./answer-args.js";
@@ -18,6 +18,17 @@ import "../frame.js"; // A door: tied to what the page drew first (TIED DOORS, p
  * derived by `@graview/tools`, which a scene drawn before anybody selects
  * or right-clicks does not need.
  */
+/**
+ * THE ACTS A MENU OPENED ON THIS WOULD OFFER, derived now and kept for it
+ * (FR-186): what the door calls when the pointer rests on a record, a card,
+ * a row or a kind, asked exactly as `Pane` asks — the same selection, focus,
+ * seat, providers and pins — so the menu opened next draws them at once.
+ */
+export function prepareActs(store: Store<AnySchema>, target: Pick<MenuTarget, "on" | "about">, asked: AffordancesAsked<AnySchema>): void {
+  const focus = target.on ?? target.about[target.about.length - 1];
+  prepareAffordances(store, target.about, { ...asked, pins: loadPins(), ...(focus === undefined ? {} : { focus }) });
+}
+
 export function InspectorPane({ placement = "float", chosen = true }: { readonly placement?: InspectorPlacement; readonly chosen?: boolean } = {}) {
   const { menuAt } = useGraview<AnySchema>();
   // A menu with nothing at the pointer derives nothing: at most the chosen record's "Acts…".

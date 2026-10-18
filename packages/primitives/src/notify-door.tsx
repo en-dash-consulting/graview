@@ -95,7 +95,8 @@ export function useNotifySection(): MenuSectionSource | null {
             const offered = choicesAt(target, (id) => store.graph.getNode(id)?.kind, store.schema);
             if (!offered) return null;
             const item: MenuItem = { id: "notify-me", label: offered.label, run: () => askToNotify(subscriptions, { choices: offered.choices, returnTo: target.element ?? null }) };
-            return { id: "notify", items: [item] };
+            // The sheet it opens, fetched while the pointer rests (FR-186).
+            return { id: "notify", items: [item], prepare: () => sheetModule.prefetch() };
           }
         : null,
     [able, store, subscriptions],

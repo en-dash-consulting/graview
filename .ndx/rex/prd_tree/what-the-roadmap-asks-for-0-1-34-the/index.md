@@ -23,5 +23,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 |-------|--------|
 | [0.1.34 · FR-184: A panel drawn from the right-click menu opens in the face it was asked on](./0-1-34-fr-184-a-panel-drawn-from.md) | completed |
 | [0.1.34 · FR-183: A reader who may do nothing is told how to get in](./0-1-34-fr-183-a-reader-who-may-do.md) | completed |
-| [0.1.34 · FR-185: Opening a context menu spends no thinking-model call](./0-1-34-fr-185-opening-a-context-menu.md) | pending |
-| [0.1.34 · FR-186: The right-click menu is ready before the click](./0-1-34-fr-186-the-right-click-menu-is.md) | pending |
+| [0.1.34 · FR-185: Opening a context menu spends no thinking-model call](./0-1-34-fr-185-opening-a-context-menu.md) | completed |
+| [0.1.34 · FR-186: The right-click menu is ready before the click](./0-1-34-fr-186-the-right-click-menu-is.md) | completed |

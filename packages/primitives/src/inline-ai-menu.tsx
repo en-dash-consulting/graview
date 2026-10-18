@@ -1,9 +1,9 @@
-import { layer, type AnySchema } from "@graview/core";
-import { aiTargetOf, catalogOf, type AiCandidate, type AiInteraction, type AiPanel, type AiTarget } from "@graview/core/catalog";
+import { layer, type AnySchema, type Store } from "@graview/core";
+import { aiTargetOf, catalogOf, recordsOfTarget, type AiCandidate, type AiInteraction, type AiPanel, type AiTarget } from "@graview/core/catalog";
 import { useAiDeskState, useGraview, useLiveStore, type MenuTarget } from "@graview/react/provider";
 import { deriveAffordances } from "@graview/tools/derive";
-import { acceptedEntry, acceptGhost, dismissedEntry, fillHere, ghostOf, interactionId, panelHere, proposalOf, recordHere, suggestHere, thinkingOf, type InlineAsk, type InlineResult } from "@graview/tools/inline-ai";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { acceptedEntry, acceptGhost, dismissedEntry, fillHere, ghostOf, interactionId, panelHere, proposalOf, recordHere, suggestHere, suggestsOnOpen, thinkingOf, type InlineAsk, type InlineResult } from "@graview/tools/inline-ai";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useInlineEnv, type InlineEnv } from "./inline-ai-env.js";
 import { openQuickAsk } from "./quick-ask-desk.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -126,6 +126,73 @@ export async function askInline(env: InlineEnv, kind: "suggest" | "fill" | "reco
   return result;
 }
 
+/*
+ * SUGGESTIONS ARE ASKED ONCE PER TARGET (FR-186): a menu opened again on
+ * the same record, by the same seat, under the same declaration and the
+ * same host AI, draws what was suggested before in its first frame and
+ * asks nothing. What an entry depends on is the record itself — a record
+ * is a new object whenever it changes — or, for a list, a lens or a place,
+ * any change to the graph; a change drops the entry. A failure is not
+ * kept, so the next opening asks again. Hovering never reaches here.
+ */
+interface Suggested {
+  readonly schema: unknown;
+  readonly ai: unknown;
+  readonly depends: readonly unknown[];
+  readonly asked: Promise<InlineResult>;
+  result?: InlineResult;
+}
+const SUGGESTED = new WeakMap<Store<AnySchema>, Map<string, Suggested>>();
+const KEPT = 64;
+const CHANGES = new WeakMap<Store<AnySchema>, { n: number }>();
+
+/** How many changes this store has told of since a menu first asked of it. */
+function changesOf(store: Store<AnySchema>): number {
+  let held = CHANGES.get(store);
+  if (!held) {
+    const counted = (held = { n: 0 });
+    CHANGES.set(store, counted);
+    store.subscribe(() => void (counted.n += 1));
+  }
+  return held.n;
+}
+
+const dependsOn = (store: Store<AnySchema>, target: AiTarget): readonly unknown[] => {
+  const records = recordsOfTarget(target);
+  return records.length > 0 ? records.map((id) => store.graph.getNode(id)) : [changesOf(store)];
+};
+const keyOf = (env: InlineEnv, target: AiTarget): string => JSON.stringify({ target, seat: env.principal });
+const standing = (env: InlineEnv, target: AiTarget, entry: Suggested): boolean => {
+  const now = dependsOn(env.store, target);
+  return entry.schema === env.store.schema && entry.ai === env.ai && now.length === entry.depends.length && now.every((one, at) => one === entry.depends[at]);
+};
+
+/** What was suggested here before, while nothing it depends on has changed. */
+export function heldSuggestion(env: InlineEnv, target: AiTarget): InlineResult | undefined {
+  const entry = SUGGESTED.get(env.store)?.get(keyOf(env, target));
+  return entry?.result !== undefined && standing(env, target, entry) ? entry.result : undefined;
+}
+
+/** The suggestions here: held, on their way, or asked now — once. */
+export function suggestOnce(env: InlineEnv, target: AiTarget): Promise<InlineResult> {
+  let kept = SUGGESTED.get(env.store);
+  if (!kept) SUGGESTED.set(env.store, (kept = new Map()));
+  const key = keyOf(env, target);
+  const was = kept.get(key);
+  if (was && standing(env, target, was)) return was.result ? Promise.resolve(was.result) : was.asked;
+  const asked = askInline(env, "suggest", target);
+  const entry: Suggested = { schema: env.store.schema, ai: env.ai, depends: dependsOn(env.store, target), asked };
+  kept.delete(key);
+  kept.set(key, entry);
+  if (kept.size > KEPT) kept.delete(kept.keys().next().value!);
+  const all = kept;
+  void asked.then((result) => {
+    if (result.interaction.outcome !== "failed") entry.result = result;
+    else if (all.get(key) === entry) all.delete(key);
+  });
+  return asked;
+}
+
 /**
  * TAKE ONE OF A SUGGESTION'S OFFERS: a change waits as a ghost; a panel is
  * drawn; a place or a record is gone to — each the way the face it was
@@ -199,24 +266,42 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
   // A record made by an act that asks for words, where a thinking model can write them.
   const makes = useMemo(() => new Set(env.store.allMutations().filter((mutation) => (mutation.creates ?? []).length > 0).map((mutation) => mutation.name)), [env.store]);
   const records = thinkingOf(env.ai) !== undefined && catalog.candidates.some((candidate) => candidate.type === "act" && candidate.asks.length > 0 && makes.has(candidate.mutation));
-  const [suggested, setSuggested] = useState<InlineResult | null>(null);
-  const [busy, setBusy] = useState(true);
-  const [failed, setFailed] = useState<string | null>(null);
+  /*
+   * ASKED AS IT OPENS ONLY WITH A FAST SLOT (FR-185); else "Suggest…" asks
+   * when pressed. Either way once per target until it changes (FR-186): a
+   * menu opened again draws what was suggested before, at once.
+   */
+  const onOpen = suggestsOnOpen(env.ai);
+  const held = heldSuggestion(env, target);
+  const askedOf = JSON.stringify(target);
+  const [pressed, setPressed] = useState(false);
+  const [answered, setAnswered] = useState<InlineResult | null>(null);
+  const [busy, setBusy] = useState(onOpen && held === undefined);
   useEffect(() => {
+    if (held !== undefined || !(onOpen || pressed)) return;
     let live = true;
     setBusy(true);
-    void askInline(env, "suggest", target).then((result) => {
+    void suggestOnce(env, target).then((result) => {
       if (!live) return;
-      setSuggested(result);
+      setAnswered(result);
       setBusy(false);
-      if (result.interaction.outcome === "failed") setFailed(result.interaction.failed ?? "The AI could not suggest anything here.");
     });
     return () => {
       live = false;
     };
-    // Asked once per target: the menu is drawn again as the graph moves, and the suggestion stands.
+    // Asked once per target, by its words: the menu is drawn again as the graph moves, and the suggestion stands.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target]);
+  }, [askedOf, pressed]);
+  const suggested = held ?? answered;
+  const failed = suggested?.interaction.outcome === "failed" ? (suggested.interaction.failed ?? "The AI could not suggest anything here.") : null;
+  /* "Suggest…" pressed from the keyboard and gone with the answer: the keyboard goes to the first row after it — never <body>. */
+  const keyboardOnSuggest = useRef(false);
+  const section = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    if (suggested === null || !keyboardOnSuggest.current) return;
+    keyboardOnSuggest.current = false;
+    section.current?.querySelector<HTMLElement>("button")?.focus();
+  }, [suggested]);
   /*
    * ASKED HERE, ANSWERED HERE (FR-184). The menu stays open while the ask
    * is on its way and is put away just before what was asked for lands —
@@ -259,8 +344,8 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
   };
   const failureOf = (result: InlineResult) => (result.interaction.outcome === "failed" ? (result.interaction.failed ?? "The AI could not do that here.") : undefined);
   return (
-    <div data-testid="inline-ai" style={{ display: "grid", gap: 2 }}>
-      {busy ? (
+    <div ref={section} data-testid="inline-ai" style={{ display: "grid", gap: 2 }}>
+      {busy && !pressed ? (
         <p role="status" data-testid="inline-ai-thinking" style={QUIET}>
           Thinking…
         </p>
@@ -286,6 +371,24 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
             </button>
           </li>
         ))}
+        {!onOpen && suggested === null ? (
+          <li>
+            {/* Asks once, here: the menu stays open and what is suggested arrives in it, where the keyboard goes. */}
+            <button
+              type="button"
+              data-menu-item="ai-suggest"
+              aria-disabled={pressed || undefined}
+              onClick={(event) => {
+                if (pressed) return;
+                keyboardOnSuggest.current = document.activeElement === event.currentTarget;
+                setPressed(true);
+              }}
+              style={ROW}
+            >
+              {pressed ? "Thinking…" : "Suggest…"}
+            </button>
+          </li>
+        ) : null}
         {fills ? (
           <li>
             <button type="button" data-menu-item="ai-fill" onClick={() => run(async (landing) => failureOf(await askInline(env, "fill", target, "Fill in", landing)))} style={ROW}>

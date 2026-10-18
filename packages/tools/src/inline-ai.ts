@@ -62,6 +62,15 @@ export function fastOf(ai: HostAi): FastProvider | undefined {
   return ai.fast ?? (ai.decide ? { model: ai.name ?? "decide", decide: ai.decide } : undefined);
 }
 
+/**
+ * WHETHER A MENU ASKS FOR SUGGESTIONS AS IT OPENS (FR-185): only with a Fast
+ * slot, and only when the host did not say `suggestOnOpen: false`. Else the
+ * menu offers "Suggest…", and asks when that is pressed.
+ */
+export function suggestsOnOpen(ai: HostAi): boolean {
+  return ai.suggestOnOpen !== false && fastOf(ai) !== undefined;
+}
+
 /** The Thinking slot as the host filled it, else its `complete` (or its `turn`, with no tools) behind it. */
 export function thinkingOf(ai: HostAi): ThinkingProvider | undefined {
   if (ai.off) return undefined;
