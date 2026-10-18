@@ -6,7 +6,7 @@
 - Start a product: `npm create graview@latest my-app` (Node 22 or later)
 - License: Elastic License 2.0 — source-available, free to build with and to ship products on
 - Source: https://github.com/en-dash-consulting/graview
-- npm: https://www.npmjs.com/package/graview — 14 packages, one version (0.1.35)
+- npm: https://www.npmjs.com/package/graview — 14 packages, one version ()
 - Hosted: Graview Cloud, https://graview.cloud (private alpha, invite-only)
 
 ## Questions, answered plainly
@@ -731,7 +731,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.35
 
-Published October 18, 2026 · the current version
+Published October 18, 2026
 
 A relation to another app can be made by an edit, a host may say later whether it still keeps a file, and playback asks for a past declaration when it gets there.
 

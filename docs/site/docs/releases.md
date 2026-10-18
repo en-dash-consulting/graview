@@ -39,7 +39,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.35
 
-Published October 18, 2026 · the current version
+Published October 18, 2026
 
 A relation to another app can be made by an edit, a host may say later whether it still keeps a file, and playback asks for a past declaration when it gets there.
 
