@@ -2,6 +2,14 @@
   "about": "The release records of graview.dev: one per version in packages/core/CHANGELOG.md, newest first, written with the Version packages pull request. A version npm never got says which version carried it (shippedIn) and is said inside that version's section. The date is the day npm published it (UTC). tests/the-releases-page-says-what-each-version-brought.test.ts fails while a version in the changelog has no record here.",
   "releases": [
     {
+      "version": "0.1.37",
+      "date": "2026-10-19",
+      "headline": "Times in the app's own time zone, acts for every relation, video on records, and lines that wait for a view that draws late.",
+      "summary": "- **Times in the app's zone.** An app says its time zone once; lists, record pages, act answers and views say times there, `{at | time}` and `{at | datetime}` read them out, and a rule's `today()` turns at the app's midnight.\n- **Every relation can be linked.** Each relation comes with its own connect and disconnect acts, so an app can link two records without writing an act for it.\n- **Video on records.** A video field plays on a record's page, and a view can place a host-drawn player and a full-screen viewer.\n- **Lines that wait.** A view that draws its members late, as on a slow phone, still gets its lines.\n- **The twelfth walk** (a film festival at real size) found seven problems, all fixed, among them a date editor that refused a stored time, a repair offered and then refused, and records of one name told apart by their ids.",
+      "compatibility": "`brand.timeZone`, `timeZone` on the provider, `mount` and `PageContext`; derived `connect-<kind>-<relation>` and `disconnect-<kind>-<relation>` acts appear in act lists and tool surfaces, and `edge-without-severer` is no longer reported; a `video` field type; `seenBy` is generic over the store. The hosted page carries about 7 KB more up front.",
+      "published": true
+    },
+    {
       "version": "0.1.36",
       "date": "2026-10-18",
       "headline": "A record's pictures load under the host's base on every face, and a view draws the pictures and app images it was promised.",

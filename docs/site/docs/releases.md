@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.37`](https://graview.dev/docs/releases.html#v0-1-37)
 - [`0.1.36`](https://graview.dev/docs/releases.html#v0-1-36)
 - [`0.1.35`](https://graview.dev/docs/releases.html#v0-1-35)
 - [`0.1.34`](https://graview.dev/docs/releases.html#v0-1-34)
@@ -37,6 +38,22 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.3`](https://graview.dev/docs/releases.html#v0-1-3)
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
+
+## 0.1.37
+
+Published October 19, 2026 · the current version
+
+Times in the app's own time zone, acts for every relation, video on records, and lines that wait for a view that draws late.
+
+- **Times in the app's zone.** An app says its time zone once; lists, record pages, act answers and views say times there, `{at | time}` and `{at | datetime}` read them out, and a rule's `today()` turns at the app's midnight.
+- **Every relation can be linked.** Each relation comes with its own connect and disconnect acts, so an app can link two records without writing an act for it.
+- **Video on records.** A video field plays on a record's page, and a view can place a host-drawn player and a full-screen viewer.
+- **Lines that wait.** A view that draws its members late, as on a slow phone, still gets its lines.
+- **The twelfth walk** (a film festival at real size) found seven problems, all fixed, among them a date editor that refused a stored time, a repair offered and then refused, and records of one name told apart by their ids.
+
+**Before you upgrade:** `brand.timeZone`, `timeZone` on the provider, `mount` and `PageContext`; derived `connect-<kind>-<relation>` and `disconnect-<kind>-<relation>` acts appear in act lists and tool surfaces, and `edge-without-severer` is no longer reported; a `video` field type; `seenBy` is generic over the store. The hosted page carries about 7 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.37) · [The full changelog for 0.1.37](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0137)
 
 ## 0.1.36
 
