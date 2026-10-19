@@ -413,6 +413,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const whereabouts = useContext(Whereabouts);
   if (whereabouts) whereabouts.pages = () => pagesAt.current.path;
   const toggled = useRef<((face: EmbedFace, path?: string, stop?: string) => void) | undefined>(undefined);
+  // A page Back or Forward landed on is where the routed face is, though its router reports no arrival (FR-137).
+  const landed = useCallback((path: string) => void (pagesAt.current.path = path), []);
   /*
    * NARROW, THE PAGES (FR-13). Below `pagesBelow` the scene and the Graview
    * give way to the routed face, and come back when there is room: the
@@ -559,7 +561,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
         <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} opens={opens} />
         {whereabouts ? <Watch into={whereabouts} /> : null}
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
-        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} /> : null}
+        {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} landed={landed} /> : null}
         {/*
           * THE ONE APP BAR (FR-131): the app's name, said once as the
           * heading — the workbench says its name to a reader moving by

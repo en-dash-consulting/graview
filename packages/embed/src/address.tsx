@@ -91,6 +91,7 @@ export function AddressBar({
   kinds,
   places,
   opens,
+  landed,
 }: {
   readonly basePath: string | undefined;
   /** The page the routed face had before a new declaration (FR-116), to go back to. */
@@ -103,10 +104,17 @@ export function AddressBar({
   readonly places: readonly Place[];
   /** Where the declaration says the app opens (FR-80), for a scene asked for while it holds nothing (FR-157). */
   readonly opens?: ViewState | undefined;
+  /**
+   * Told the page Back or Forward landed the routed face on. The router
+   * reports no arrival, and a page reached by Back is one, so without this
+   * the switch's Pages went to the page known before — the home, after a
+   * reload on the scene — rather than the page the reader was last on (FR-137).
+   */
+  readonly landed?: ((path: string) => void) | undefined;
 }) {
   const { view, go } = useNavigation();
-  const latest = useRef({ shown, view, onFace });
-  latest.current = { shown, view, onFace };
+  const latest = useRef({ shown, view, onFace, landed });
+  latest.current = { shown, view, onFace, landed };
   // The page the routed face was on when the overview was asked for, to go back to.
   const pagesAt = useRef(pagesWere ?? "/");
   const leaving = () => {
@@ -138,8 +146,10 @@ export function AddressBar({
       if (pathWithin(window.location.pathname, basePath) === null) return;
       // Past arrival, a bare home is the routed face's.
       const named = faceNamed(basePath) ?? "pages";
-      const { shown: from, onFace: tell } = latest.current;
+      const { shown: from, onFace: tell, landed: land } = latest.current;
       if (named === "pages") {
+        leaving();
+        land?.(pagesAt.current);
         if (from !== "pages") tell?.("pages");
         return;
       }
