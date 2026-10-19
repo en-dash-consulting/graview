@@ -106,6 +106,42 @@ describe("what has happened, on the routed face's bar", () => {
     await settled(() => expect([...document.querySelectorAll("main h1, main h2")].map((heading) => heading.textContent).join(" | ")).toMatch(/Pay the venue/));
   });
 
+  it("names a record a change added and a later change removed by its name in the adding row too, never by its id", async () => {
+    /* Cloud's vendors demo: a vendor added, then taken back, left its adding row saying "vendor:scene-way-one" — the removal named it, the add did not. */
+    const add = defineMutation("add-item", {
+      title: "Add",
+      input: z.object({ label: z.string().min(1) }),
+      describe: (args) => `Add "${args.label}"`,
+      apply(ctx, args) {
+        ctx.addNode({ id: "item:hire-the-caterer", kind: "item", label: args.label } as never);
+      },
+    });
+    const remove = defineMutation("remove-item", {
+      title: "Remove",
+      subject: { kinds: ["item"], arg: "id" },
+      input: z.object({ id: nodeRef(["item"]) }),
+      describe: () => "Remove it",
+      apply(ctx, args) {
+        ctx.removeNode(args.id);
+      },
+    });
+    const store = new Store({ schema, mutations: [add, remove], invariants: [], snapshot: { nodes: [{ id: "i1", kind: "item", label: "Pay the deposit" }] as never, edges: [] } });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => root.render(<PagesApp context={{ store, principal: nina, views: createViews(schema) }} initialPath="/items" />));
+    unmount = () => act(async () => root.unmount());
+    await act(async () => void store.apply({ name: "add-item", args: { label: "Hire the caterer" } }, { author: nina }));
+    await act(async () => void store.apply({ name: "remove-item", args: { id: "item:hire-the-caterer" } }, { author: nina }));
+    await settled(() => expect(host.querySelector('[data-testid="activity-button"]')).not.toBeNull());
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-testid="activity-button"]')!.click());
+    await settled(() => expect(document.querySelectorAll('[data-testid="diff-log"] > li').length).toBe(2));
+
+    const log = document.querySelector('[data-testid="diff-log"]')!;
+    expect(log.textContent).not.toContain("item:hire-the-caterer");
+    for (const row of log.querySelectorAll(":scope > li")) expect(row.textContent).toContain("Hire the caterer");
+  });
+
   it("is drawn once on the bar when a design under the bar replaces the shell", async () => {
     /* The derived bar drew Activity in its tools and handed its own slot to the design's face controls, which drew it there too: two "Activity" buttons on todo's routed face. */
     const store = new Store({ schema, mutations: [rename], invariants: [], snapshot: { nodes: [{ id: "i1", kind: "item", label: "Pay the deposit" }] as never, edges: [] } });
