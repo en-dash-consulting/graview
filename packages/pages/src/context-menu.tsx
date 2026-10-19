@@ -127,10 +127,19 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
       // An act — one of a record's, a list's way to begin one: about what the page is about, and the act (Roadmap f-notify-subscriptions).
       const act = element.closest("[data-graview-act]")?.getAttribute("data-graview-act");
       if (act) return { ...page, act };
-      // A record drawn in a lens, a home's list, a card.
-      const picked = element.closest("[data-graview-pick]")?.getAttribute("data-graview-pick");
-      if (picked && store.graph.getNode(picked)) return { face: "pages", on: picked, about: [picked], href: `${base}${recordPath(schema, store.graph.getNode(picked)!.kind, picked)}` };
+      /*
+       * A RECORD DRAWN IN A LENS, A HOME'S LIST, A CARD: the one it picks, or
+       * the one a list's item is listed as — a board's card, a blocks lens's
+       * card or row (FR-189) — wherever in it the press lands, its own
+       * stretched link included. A link the item draws to somewhere else
+       * stays that link, as does a link the whole list is drawn in.
+       */
       const link = element.closest<HTMLAnchorElement>("a[href]");
+      const listed = element.closest("[data-graview-listed]");
+      const record = [element.closest("[data-graview-pick]")?.getAttribute("data-graview-pick"), listed && (!link || (listed.contains(link) && link.classList.contains("graview-spec-item-link"))) ? listed.getAttribute("data-graview-listed") : null]
+        .map((id) => (id ? store.graph.getNode(id) : undefined))
+        .find(Boolean);
+      if (record) return { face: "pages", on: record.id, about: [record.id], href: `${base}${recordPath(schema, record.kind, record.id)}` };
       if (link) return aimAtLink(link);
       // A list's row, past its link: the record it is.
       const row = element.closest("[data-graview-record]")?.getAttribute("data-graview-record");
