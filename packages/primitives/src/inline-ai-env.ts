@@ -41,7 +41,8 @@ export function useInlineEnv(): InlineEnv {
       desk: aiDesk,
       seatTalk,
       goTo,
-      places: views.places().map((one) => ({ as: one.as, title: one.title, kind: one.kind })),
+      // What each place is and reads go too: the menu offers the view an app has before it draws a second (`existingViewsOf`).
+      places: [...views.places()],
       app: (app as GraviewApp<AnySchema> | undefined) ?? ({ name: brand?.name ?? "app", schema: store.schema, ...(store.policy ? { policy: store.policy } : {}) } as unknown as GraviewApp<AnySchema>),
       ...(place ? { place } : {}),
       selection,

@@ -80,6 +80,15 @@ export interface ViewMeta {
    * a person can find.
    */
   readonly hidden?: boolean;
+  /**
+   * WHAT THE PICTURE IS, for whoever matches an ask to the places: a
+   * shipped lens's name ("columns", "calendar"…), or "view" for a worker
+   * view. The menu reads it to offer the board an app has before drawing
+   * a second one.
+   */
+  readonly lens?: string;
+  /** The other kinds the picture reads beyond its own: a worker view's manifest `reads.kinds`. */
+  readonly reads?: readonly string[];
 }
 
 /** A named group view: somewhere to go, by name. */
@@ -105,6 +114,10 @@ export interface Place {
   readonly over?: readonly string[];
   /** Kept off the lists (`ViewMeta.hidden`): reached by its address, a link or `navigate`, never offered. */
   readonly hidden?: boolean;
+  /** What the picture is (`ViewMeta.lens`): a shipped lens's name, or "view" for a worker view. */
+  readonly lens?: string;
+  /** The other kinds it reads beyond its own (`ViewMeta.reads`). */
+  readonly reads?: readonly string[];
 }
 
 /** A place as the lists compare it: its name, its kind, and every kind when it is one picture over several. */
@@ -290,7 +303,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
         const as = placeSlug(meta.title);
         entries.set(key(kind, cell, as), registration);
         if (cell.cardinality === "many" && !named.some((place) => place.kind === kind && place.as === as)) {
-          named.push({ kind, title: meta.title, as, ...(meta.across ? { across: meta.across } : {}), ...over });
+          named.push({ kind, title: meta.title, as, ...(meta.across ? { across: meta.across } : {}), ...over, ...(meta.lens ? { lens: meta.lens } : {}), ...(meta.reads?.length ? { reads: meta.reads } : {}) });
         }
       }
       return registry;

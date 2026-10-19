@@ -167,6 +167,14 @@ export interface CatalogPlace {
   readonly as: string;
   readonly title: string;
   readonly kind?: string;
+  /** Every kind the one picture is over, when it is over several (`Place.over`). */
+  readonly over?: readonly string[];
+  /** What it is: a shipped lens's name ("columns", "calendar"…), or "view" for a worker view (`Place.lens`). */
+  readonly lens?: string;
+  /** The other kinds it reads beyond its own: a worker view's manifest `reads.kinds` (`Place.reads`). */
+  readonly reads?: readonly string[];
+  /** Kept off the lists (`Place.hidden`): never offered as a view to open. */
+  readonly hidden?: boolean;
 }
 
 export interface CatalogOptions {
@@ -426,6 +434,135 @@ export function catalogOf<S extends AnySchema>(given: Store<S>, target: AiTarget
 }
 
 const capitalized = (text: string): string => (text ? `${text[0]!.toUpperCase()}${text.slice(1)}` : text);
+
+// ── a view the app already has ──────────────────────────────────────────────
+
+/** An existing view that fits an ask: open it (`full`), or open it and adjust it (`partial`). */
+export interface ExistingView {
+  /** The place's slug, as `goTo.place` takes it. */
+  readonly place: string;
+  readonly title: string;
+  readonly kind?: string;
+  readonly fit: "full" | "partial";
+}
+
+export interface ExistingViewOptions {
+  readonly principal: Principal;
+  /** The app's places, each with what it is and what it reads where the registry knows (`views.places()`). */
+  readonly places: readonly CatalogPlace[];
+  /** The words asked, when there are any: "a searchable board". */
+  readonly said?: string;
+  /** The most offered. 3 when unsaid. */
+  readonly most?: number;
+}
+
+/** The words that ask for each shipped lens; a view somebody wrote is asked for by its title. */
+const LENS_WORDS: Readonly<Record<string, readonly string[]>> = {
+  columns: ["board", "kanban", "column", "lane", "pipeline", "stage", "funnel"],
+  board: ["board", "map", "floor", "layout", "seat", "slot"],
+  calendar: ["calendar", "schedule", "date", "due", "month", "week", "agenda", "deadline", "day"],
+  timeline: ["timeline", "gantt", "schedule", "roadmap", "span"],
+  coverage: ["coverage", "matrix", "grid", "gap"],
+  plan: ["plan", "floor", "map", "region", "area"],
+  blocks: ["list", "table", "summary", "overview", "dashboard", "card"],
+};
+/** Words that say a view is wanted, not which one. */
+const ASKING = new Set(["a", "an", "the", "of", "for", "my", "our", "me", "us", "to", "with", "and", "in", "on", "by", "that", "which", "i", "we", "want", "need", "show", "open", "go", "draw", "make", "new", "view", "views", "panel", "panels", "page", "lens", "please", "all", "every", "some", "see", "can", "could", "would", "like", "one", "what", "is", "are", "do", "does", "here", "there", "how", "it", "this", "these", "those"]);
+const stem = (word: string): string => (word.length > 3 && word.endsWith("ies") ? `${word.slice(0, -3)}y` : word.length > 3 && word.endsWith("s") && !word.endsWith("ss") ? word.slice(0, -1) : word);
+const wordsOf = (text: string): string[] =>
+  text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+
+/**
+ * THE VIEWS THE APP ALREADY HAS THAT FIT AN ASK (Roadmap
+ * f-menu-suggests-existing-views): where the menu would draw a view of the
+ * target, the places it could open instead — a declared lens, a lens a
+ * reader kept, a worker view a host registered with its manifest —
+ * matched by what each is attached to (the target's kind, or the kinds
+ * the words name), what it reads, its title and what it is (a board, a
+ * calendar). A view of the kind whose words say all that was asked fits
+ * whole and is opened; one that only reads the kind, or leaves a word
+ * unsaid ("searchable"), fits in part and is opened to be adjusted.
+ *
+ * Quiet: at most three, best first; none on the home unless words were
+ * asked; never the lens it was opened on, one kept off the lists, or a
+ * kind the viewer may not see. Pure, and no model is asked: the places
+ * and the declaration are all it reads.
+ */
+export function existingViewsOf<S extends AnySchema>(given: Store<S>, target: AiTarget, options: ExistingViewOptions): readonly ExistingView[] {
+  const store = given as unknown as Store<AnySchema>;
+  const whole = seatOf(store)?.store ?? store;
+  const schema = whole.schema;
+  const visible = kindsSeen(whole, options.principal);
+  const seen = whole.seenBy(options.principal);
+  const records = recordsOfTarget(target);
+  const targetKinds = new Set<string>();
+  for (const id of records) {
+    const kind = (seen.graph.getNode(id) as Node | undefined)?.kind;
+    if (kind !== undefined && visible.has(kind)) targetKinds.add(kind);
+  }
+  if (records.length > 0 && targetKinds.size === 0) return [];
+  if (target.on === "list") targetKinds.add(target.kind);
+  if (target.on === "lens") {
+    const kind = target.kind ?? options.places.find((place) => place.as === target.place)?.kind;
+    if (kind !== undefined) targetKinds.add(kind);
+  }
+  // The words that are not asking: the kinds they name, and the rest, each to be said by a view.
+  const kindWords = new Map<string, string>();
+  for (const kind of schema.kinds as readonly string[]) {
+    if (!visible.has(kind)) continue;
+    const definition = schema.tryDefinition(kind);
+    for (const said of [kind, nounOf(definition, kind), pluralOf(schema, kind)]) for (const word of wordsOf(said)) kindWords.set(stem(word), kind);
+  }
+  const asked = wordsOf(options.said ?? "").filter((word) => !ASKING.has(word));
+  const named = new Set<string>();
+  const wanted: string[] = [];
+  for (const word of asked) {
+    const kind = kindWords.get(stem(word));
+    if (kind !== undefined) named.add(kind);
+    else wanted.push(stem(word));
+  }
+  const kinds = named.size > 0 ? named : targetKinds;
+  // Words that only say a view is wanted ("show") name none; on the home with nothing asked, the home lists its places already.
+  if ((options.said ?? "").trim() !== "" && asked.length === 0) return [];
+  if (kinds.size === 0 && asked.length === 0) return [];
+  // The places that could be what was asked for: attached to the kinds, or reading them.
+  const eligible: { readonly place: CatalogPlace; readonly own: boolean; readonly reads: boolean; readonly at: number }[] = [];
+  options.places.forEach((place, at) => {
+    if (place.hidden || (target.on === "lens" && place.as === target.place)) return;
+    const over = place.over ?? (place.kind !== undefined ? [place.kind] : []);
+    if (over.length > 0 && !over.some((kind) => visible.has(kind))) return;
+    const own = over.some((kind) => kinds.has(kind));
+    const reads = !own && (place.reads ?? []).some((kind) => kinds.has(kind));
+    if (kinds.size > 0 && !own && !reads) return;
+    eligible.push({ place, own, reads, at });
+  });
+  const titleOf = (place: CatalogPlace): ReadonlySet<string> => new Set(wordsOf(place.title).map(stem));
+  // A word a view's title says is asked of that view: one that is only a calendar's word ("week") does not reach the month.
+  const titledByAny = new Set(wanted.filter((word) => eligible.some(({ place }) => titleOf(place).has(word))));
+  const scored: { readonly view: ExistingView; readonly score: number; readonly at: number }[] = [];
+  for (const { place, own, reads, at } of eligible) {
+    const titled = titleOf(place);
+    const shows = new Set((LENS_WORDS[place.lens ?? ""] ?? []).map(stem));
+    const said = wanted.filter((word) => titled.has(word) || (shows.has(word) && !titledByAny.has(word))).length;
+    const unsaid = wanted.length - said;
+    // Words were asked and this view says none of them: it is not what was asked for.
+    if (wanted.length > 0 && said === 0) continue;
+    const fit = !reads && unsaid === 0 ? "full" : "partial";
+    const score = (own ? 4 : reads ? 2 : 1) + said * 2 - unsaid + (fit === "full" ? 1 : 0);
+    scored.push({ view: { place: place.as, title: place.title, ...(place.kind !== undefined ? { kind: place.kind } : {}), fit }, score, at });
+  }
+  // A picture over several kinds is a place on each: offered once.
+  const once = scored.filter((one, at) => !scored.slice(0, at).some((held) => held.view.place === one.view.place && held.view.title === one.view.title));
+  return once
+    .sort((a, b) => b.score - a.score || a.at - b.at)
+    .slice(0, options.most ?? 3)
+    .map((one) => one.view);
+}
 
 // ── the state a model reads ─────────────────────────────────────────────────
 

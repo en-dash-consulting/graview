@@ -66,7 +66,7 @@ const OFF_THE_PAGE = {
   // Roadmap f-ai-candidate-catalog: what the inline AI may pick from, the state a model reads and what an interaction leaves behind, fetched when somebody first opens it.
   // Roadmap f-notify-subscriptions: what a person asked to be told of, matched against a commit under their sight — the host's and a sheet's, fetched when somebody first subscribes.
   "@graview/core/subscriptions": { from: subscriptions, names: ["matchSubscriptions", "subscriptionProblem", "subscriptionWords", "watchSubscriptions"] },
-  "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
+  "@graview/core/catalog": { from: catalog, names: ["aiContextOf", "aiTargetOf", "catalogOf", "existingViewsOf", "interactionBy", "interactionCost", "interactionTouches", "mergeInteractions", "recordsOfTarget", "schemaDigestOf"] },
   // The app's own actor's suggestions — made, accepted, declined — and what reads it back: the suggestions and declines in a store or a log, what the declaration lets it tidy, and Activity's digest.
   "@graview/core/tidying": {
     from: tidying,

@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 3714,
+  "gzipped": 1526,
+  "note": "Raised when the right-click menu came to offer a view the app already has before drawing a new one (the Roadmap's f-menu-suggests-existing-views): `existingViewsOf` on @graview/core/catalog with its table of the words that ask for each shipped lens, the menu's Open and Open and adjust rows, and the quick ask's, all fetched with the inline AI; and, up front, what a place is and reads (`Place.lens`, `Place.reads`) carried by the registry. Every face counts the lazy chunks too. 3_714 / 1_526 more than feat/0-1-38-additions at bbc820a4 (2_238_063 / 744_872), while a hosted page's first load is 77 / 25 bytes larger and stays under its budget. Measured at 2_241_777 / 746_398."
+}
