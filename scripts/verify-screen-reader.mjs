@@ -44,7 +44,7 @@ import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deadline } from "./lib/deadline.mjs";
-import { launchEngine } from "./lib/engine.mjs";
+import { launchEngine, WEBFONTS } from "./lib/engine.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { buildRoadmapHost } from "./lib/screen-reader-host.mjs";
 import { serving } from "./lib/serve.mjs";
@@ -355,6 +355,8 @@ try {
     browser = await launchEngine(engine);
     const chromium = engine === "chromium";
     const context = await browser.newContext({ viewport: DESK });
+    // What a screen reader is told reads names and roles, not letters: Google's webfonts are refused, so WebKit's stylesheet that never finishes here does not time a page out (as playback and viewport do).
+    await context.route(WEBFONTS, (route) => route.abort());
     await context.addInitScript(listenToLiveRegions);
     const cdpOf = async (page) => {
       if (!chromium) return null;
