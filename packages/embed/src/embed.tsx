@@ -8,6 +8,7 @@ import { ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingVie
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
+import { watchDrawn } from "./drawn.js";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import {
@@ -236,12 +237,16 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    */
   readonly studio?: false | EmbedStudio;
   /**
-   * TOLD WHEN A FACE IS ON THE PAGE (FR-57). Each face is fetched as it is
-   * first drawn, so the frame stands before the face does; this is called
-   * with the face asked for once it has drawn (below `pagesBelow`, drawn
-   * as the pages that stand in for it), each time the face changes.
+   * TOLD WHEN A PLACE HAS DRAWN AND SETTLED (FR-188): once the place the
+   * reader is on — its face here, every part drawn on it arrived, the fonts
+   * and images loaded, each worker view drawn (or failed, its plain face
+   * drawn instead) — has not moved for a moment. It is handed the place as
+   * `where()` says it. The embed's root wears `data-graview-drawn` (the
+   * place's path) from then until the reader moves: a move takes it off in
+   * the same commit, and the next place puts it back as it settles. A host
+   * picturing a place waits for the attribute rather than a guess.
    */
-  readonly onDrawn?: (face: EmbedFace) => void;
+  readonly onDrawn?: (place: EmbedWhere) => void;
   /**
    * THE QUICK ASK on both faces (Roadmap f-quick-ask-framework): ⌘K's
    * command bar beside what is selected, and the answer cards it leaves.
@@ -301,6 +306,14 @@ export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOption
   readonly onOpening?: (face: EmbedFace) => void;
   /** Called when a seat is taken in the person's menu; the host decides who sits. */
   readonly onSeat?: (principal: Principal) => void;
+  /**
+   * TOLD WHEN A FACE IS ON THE PAGE (FR-57). Each face is fetched as it is
+   * first drawn, so the frame stands before the face does; this is called
+   * with the face asked for once it has drawn (below `pagesBelow`, drawn
+   * as the pages that stand in for it), each time the face changes. What
+   * `handle.drawn()` waits for; `onDrawn` waits for the place to settle.
+   */
+  readonly onFaceDrawn?: (face: EmbedFace) => void;
 }
 
 /**
@@ -449,8 +462,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   useOtherFaceWhenIdle(shown, width);
   const report = useErrorReport(props.onError, shown);
   const ready = useReady(props.onReady, shown);
-  const drawnTold = useRef(props.onDrawn);
-  drawnTold.current = props.onDrawn;
+  const drawnTold = useRef(props.onFaceDrawn);
+  drawnTold.current = props.onFaceDrawn;
   const drawn = useCallback((asked: EmbedFace, drew: EmbedFace) => {
     ready(drew);
     drawnTold.current?.(asked);
@@ -560,6 +573,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
         <NoticeBoardContext.Provider value={notices}>
         <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} opens={opens} />
         {whereabouts ? <Watch into={whereabouts} /> : null}
+        <DrawnSignal rootRef={rootRef} face={face} shown={shown} path={pageAt} stop={stop} onDrawn={props.onDrawn} />
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
         {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} landed={landed} /> : null}
         {/*
@@ -639,6 +653,38 @@ const Whereabouts = createContext<Whereabouts | null>(null);
 /** Keeps the scene's view where `where()` can read it. */
 function Watch({ into }: { readonly into: Whereabouts }) {
   into.view = useNavigation().view;
+  return null;
+}
+
+/**
+ * SAYS WHEN THE PLACE HAS DRAWN AND SETTLED (FR-188), on the root, and to
+ * the host: watched again from nothing each time the reader moves — another
+ * page, another stop on the scene, another face — so the attribute comes
+ * off in the commit that moved and goes back on once the new place settles.
+ */
+function DrawnSignal({ rootRef, face, shown, path, stop, onDrawn }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly face: EmbedFace; readonly shown: EmbedFace; readonly path: string; readonly stop: string | undefined; readonly onDrawn: EmbedOptions["onDrawn"] }) {
+  const { view } = useNavigation();
+  const onScene = shown === "scene" || shown === "graview";
+  const sceneStop = toUrl(view);
+  // Where the reader is, as `where()` says it: the overview's path on the scene, with its stop.
+  const place: EmbedWhere = { face, path: onScene ? OVERVIEW_PATH : shown === "picture" ? (stop ?? "#") : path, stop: sceneStop };
+  const key = `${shown} ${onScene ? sceneStop : place.path}`;
+  const latest = useRef({ place, onDrawn });
+  latest.current = { place, onDrawn };
+  useLayoutEffect(() => {
+    const watch = (root: HTMLElement) => watchDrawn(root, latest.current.place.path, () => latest.current.onDrawn?.(latest.current.place));
+    if (rootRef.current) return watch(rootRef.current);
+    // First drawn, the root's ref is set after this child's effects run: watched once the commit is done (there is nothing to take off yet).
+    let stop: (() => void) | undefined;
+    let gone = false;
+    queueMicrotask(() => {
+      if (!gone && rootRef.current) stop = watch(rootRef.current);
+    });
+    return () => {
+      gone = true;
+      stop?.();
+    };
+  }, [key, rootRef]);
   return null;
 }
 
@@ -861,9 +907,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   let asked: EmbedFace = opening ?? faceOf(options.stop);
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
-  const onDrawn = (face: EmbedFace) => {
+  const onFaceDrawn = (face: EmbedFace) => {
     drawnFace = face;
-    options.onDrawn?.(face);
     if (face !== asked) return;
     const done = waiting;
     waiting = [];
@@ -917,7 +962,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
           setFace(next);
         }}
         onSeat={setSeat}
-        onDrawn={onDrawn}
+        onFaceDrawn={onFaceDrawn}
       />
       </Whereabouts.Provider>
     );

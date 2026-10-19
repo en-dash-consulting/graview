@@ -116,6 +116,8 @@ export interface GuestPicturesOptions {
 export interface GuestPictureHand {
   /** `props` with each file as the guest is handed it, starting what has not been fetched. */
   hand(props: GuestProps): GuestProps;
+  /** Whether a picture handed is still being fetched: the view is pushed again once it is (FR-188). */
+  waiting(): boolean;
   /** Let go of every address made. */
   dispose(): void;
 }
@@ -273,6 +275,7 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       }
       return handed;
     },
+    waiting: () => [...entries.values()].some((entry) => entry.state === "pending"),
     dispose() {
       disposed = true;
       for (const entry of entries.values()) release(entry);

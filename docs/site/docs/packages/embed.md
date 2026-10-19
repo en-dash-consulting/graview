@@ -47,6 +47,12 @@ A VIEW OF ONE RECORD SITS ABOVE ITS FIELDS (FR-149). A worker view registered th
 
 The frame — the element's region, its theme, the app bar, the provider — is on the page when `mount` returns. Each face is a chunk of its own, fetched the first time it is drawn: a page that opens on the pages never loads the scene, one that opens on the scene never loads the router, and the framework's own cards, rows and record pages come with whichever face draws them first. Until a face's chunk arrives its box stands empty (`aria-busy`), and `handle.drawn()` resolves once the face asked for is on the page — after `mount`, and after every change of face.
 
+A face on the page is not yet a place a person can read: its parts, the fonts, a worker view's drawing and its pictures may still be on their way. Once the place the reader is on has drawn and settled — every part drawn on it arrived, the fonts and images loaded, each worker view drawn (or stopped, what stands in its place drawn) and nothing moving for 200 ms — the embed's root wears `data-graview-drawn`, its value the place's path, and `onDrawn(place)` is told where it is as `where()` says it. A move to another place takes the attribute off in the same commit, and the next place puts it back as it settles. A place that never stops moving is said drawn after ten seconds all the same. A host picturing a place headless waits for the attribute rather than a timer:
+
+```ts
+await page.waitForSelector("[data-graview-drawn]");
+```
+
 A host that knows its face before it mounts starts that chunk at once, beside its own requests, and an embed mounted once it is here draws it in the first commit:
 
 ```ts
@@ -236,11 +242,11 @@ handle.setPeople(next);                     // an agent who first acted after th
 
 Nothing touches `localStorage` or `sessionStorage` without a fallback, so a frame that throws on either still mounts. `scheme: "auto"` (the default) follows the host context, then the page's `data-theme` stamp, then the system's preference, each as it changes. Presence a channel reports is dropped once its last word is older than `REMOTE_PRESENCE_TTL_MS`, whether or not the channel says the person left. A host that builds presence itself keys each participant with `participantKey({ kind, id, session })` from `@graview/core`, the op log's own `kind:id:session`.
 
-## What it exports (13)
+## What it exports (14)
 
 Read off the package's own barrel, so this is what is there today.
 
-`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `FIRST_LOOK_ANCHORS`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`, `quickAskOf`
+`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `DRAWN_ATTRIBUTE`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `FIRST_LOOK_ANCHORS`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`, `quickAskOf`
 
 ---
 

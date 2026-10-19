@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 2327,
+  "gzipped": 872,
+  "changeset": "the-page-says-when-a-place-has-drawn.md",
+  "note": "Raised when the page came to say when a place has drawn and settled (FR-188). Up front, what watches the place it is on — whether every part drawn on it has arrived (`partsArriving`), the fonts, the images and each worker view's region, and whether anything has moved for 200 ms — and the one component that watches it again from nothing on each move, so `data-graview-drawn` comes off in the commit that moves. It is needed before the face draws, so it is no door of its own. 2_327 / 872 more than before it (533_718 / 184_979): measured at 536_045 / 185_851 (2.3 KB)."
+}

@@ -108,6 +108,22 @@ draws them first. Until a face's chunk arrives its box stands empty
 (`aria-busy`), and `handle.drawn()` resolves once the face asked for is on
 the page — after `mount`, and after every change of face.
 
+A face on the page is not yet a place a person can read: its parts, the
+fonts, a worker view's drawing and its pictures may still be on their way.
+Once the place the reader is on has drawn and settled — every part drawn
+on it arrived, the fonts and images loaded, each worker view drawn (or
+stopped, what stands in its place drawn) and nothing moving for 200 ms —
+the embed's root wears `data-graview-drawn`, its value the place's path,
+and `onDrawn(place)` is told where it is as `where()` says it. A move to
+another place takes the attribute off in the same commit, and the next
+place puts it back as it settles. A place that never stops moving is said
+drawn after ten seconds all the same. A host picturing a place headless
+waits for the attribute rather than a timer:
+
+```ts
+await page.waitForSelector("[data-graview-drawn]");
+```
+
 A host that knows its face before it mounts starts that chunk at once,
 beside its own requests, and an embed mounted once it is here draws it in
 the first commit:
