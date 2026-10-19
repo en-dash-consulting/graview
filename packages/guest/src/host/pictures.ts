@@ -124,6 +124,8 @@ export interface GuestPictureHand {
    * as handed, never refused for its length.
    */
   drawn(src: string): string | undefined;
+  /** Whether a picture handed is still being fetched: the view is pushed again once it is (FR-188). */
+  waiting(): boolean;
   /** Let go of every address made. */
   dispose(): void;
 }
@@ -342,6 +344,7 @@ export function createGuestPictures(window: Window & typeof globalThis, options:
       return handed;
     },
     drawn: (src) => drawnFor.get(src),
+    waiting: () => [...entries.values()].some((entry) => entry.state === "pending"),
     dispose() {
       disposed = true;
       for (const entry of entries.values()) release(entry);

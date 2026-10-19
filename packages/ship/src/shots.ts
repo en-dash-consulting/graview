@@ -118,11 +118,10 @@ export async function shoot(options: ShootOptions): Promise<string[]> {
           const page = await browser.newPage({ viewport: { width, height: width < 600 ? 844 : 900 }, colorScheme: scheme, deviceScaleFactor: 1 });
           try {
             await page.goto(`${options.url}${shot.address}`, { waitUntil: "load" });
-            await page.waitForFunction("window.__graviewReady === true || typeof window.__graviewFailed === 'string'", undefined, { timeout: 60_000 });
+            // The place drawn and settled, as the page says it (FR-188): its parts, fonts, images and views here, the scene's camera still.
+            await page.waitForFunction("document.querySelector('[data-graview-drawn]') !== null || typeof window.__graviewFailed === 'string'", undefined, { timeout: 60_000 });
             const failed = await page.evaluate<string | undefined>("window.__graviewFailed");
             if (failed) throw new Error(failed);
-            // Let a lazy part arrive and the scene settle before the picture is taken.
-            await page.waitForTimeout(shot.scene ? 1800 : 700);
             const file = resolve(options.out, `${shot.name}-${scheme}-${width}.png`);
             await page.screenshot({ path: file, fullPage: !shot.scene });
             written.push(file);

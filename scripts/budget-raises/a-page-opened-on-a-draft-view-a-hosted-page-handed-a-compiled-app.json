@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 733,
+  "gzipped": 302,
+  "changeset": "a-page-opened-on-a-draft-view.md",
+  "note": "Raised when a page came to be opened on a draft view (FR-187). Up front, only what takes `draftView`: registering it over the app's views with the kept view of its name left out (`standingIn`), and the wait for the worker's host before the embed draws. The worker's host (`@graview/guest/host/views`) is a door, fetched only when a draft is handed. 733 / 302 more than before it (536_045 / 185_851): measured at 536_778 / 186_153 (0.7 KB)."
+}

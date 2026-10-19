@@ -56,6 +56,32 @@ export interface LazyPartOptions {
 
 /** Every module whose last attempt failed: asked for again together. */
 const failing = new Set<() => void>();
+
+/*
+ * WHAT IS DRAWN AND STILL ON ITS WAY (FR-188). A part drawn before its
+ * module is here suspends, and the page around it looks finished while the
+ * part's place stands empty; a host picturing the place needs to know there
+ * is more to come. Counted from the moment a drawn part asks for its module
+ * to the moment the module arrives or does not — never a fetch nobody drew
+ * (a prefetch, the other face fetched while idle).
+ */
+let onTheirWay = 0;
+
+/** The loader of something drawn as it is first needed, counted while it is on its way (`partsArriving`). */
+export function partArriving<T>(load: () => Promise<T>): () => Promise<T> {
+  return () => {
+    onTheirWay += 1;
+    const going = load();
+    going.then(
+      () => void (onTheirWay -= 1),
+      () => void (onTheirWay -= 1),
+    );
+    return going;
+  };
+}
+
+/** How many parts are drawn and still on their way: none once every drawn part has arrived, or said it did not. */
+export const partsArriving = (): number => onTheirWay;
 let listening = false;
 
 /** Ask again for every part that failed to arrive: what "Try again" and the browser's `online` do. */
@@ -165,10 +191,10 @@ export function lazyModule<M>(load: () => Promise<M>): LazyModule<M> {
         return options.quiet ? null : <PartMissing what={what} button={button} {...(options.as ? { as: options.as } : {})} />;
       }
       // The first attempt suspends; it never rejects into React, so nothing is thrown at the page.
-      const First = lazy(() => attempt().then(
+      const First = lazy(partArriving(() => attempt().then(
         () => ({ default: Settled }),
         () => ({ default: Settled }),
-      ));
+      )));
       function Part(props: P) {
         const [settled] = useState(() => arrived || failed);
         return createElement(settled ? Settled : (First as unknown as ComponentType<P>), props);

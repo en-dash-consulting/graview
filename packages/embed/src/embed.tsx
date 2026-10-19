@@ -3,11 +3,13 @@ import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnyS
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
+import type { WorkerViewDefinition } from "@graview/guest/host/views";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
 import { createContext, createElement, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import type { EmbedWhere } from "./where.js";
+import { watchDrawn } from "./drawn.js";
 import { createRoot, type Root } from "react-dom/client";
 import { flushSync } from "react-dom";
 import {
@@ -25,6 +27,7 @@ import {
   titleBelow,
   useSteering,
   useViews,
+  type DraftOver,
   type EmbedFace,
   type EmbedHostContext,
   type EmbedRemote,
@@ -236,12 +239,16 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    */
   readonly studio?: false | EmbedStudio;
   /**
-   * TOLD WHEN A FACE IS ON THE PAGE (FR-57). Each face is fetched as it is
-   * first drawn, so the frame stands before the face does; this is called
-   * with the face asked for once it has drawn (below `pagesBelow`, drawn
-   * as the pages that stand in for it), each time the face changes.
+   * TOLD WHEN A PLACE HAS DRAWN AND SETTLED (FR-188): once the place the
+   * reader is on — its face here, every part drawn on it arrived, the fonts
+   * and images loaded, each worker view drawn (or failed, its plain face
+   * drawn instead) — has not moved for a moment. It is handed the place as
+   * `where()` says it. The embed's root wears `data-graview-drawn` (the
+   * place's path) from then until the reader moves: a move takes it off in
+   * the same commit, and the next place puts it back as it settles. A host
+   * picturing a place waits for the attribute rather than a guess.
    */
-  readonly onDrawn?: (face: EmbedFace) => void;
+  readonly onDrawn?: (place: EmbedWhere) => void;
   /**
    * THE QUICK ASK on both faces (Roadmap f-quick-ask-framework): ⌘K's
    * command bar beside what is selected, and the answer cards it leaves.
@@ -257,7 +264,21 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    * host that must remount on a new declaration hands the old place back here.
    */
   readonly at?: EmbedWhere;
+  /**
+   * A VIEW PROPOSED AND NOT KEPT (FR-187): a worker view's manifest and its
+   * `source` (or `worker`), drawn for the seat at the keyboard where its
+   * manifest attaches — the home, a kind's list, a record — over the app's
+   * own views, and marked "Draft — <title> · Not kept". A kept view of the
+   * same name is the one it stands in for. Nothing of it is kept: it is in
+   * no store and no `keptViews`, the place menu offers it nothing, and it
+   * is gone when the page closes. The worker's host is fetched before the
+   * embed draws, only when a draft is handed.
+   */
+  readonly draftView?: EmbedDraftView;
 }
+
+/** A view proposed and not kept (FR-187): a worker view's definition, its code as `source` — a plain script against the `graview` global — or `worker`. */
+export type EmbedDraftView = Omit<WorkerViewDefinition, "worker" | "draft"> & ({ readonly source: string; readonly worker?: undefined } | { readonly worker: WorkerViewDefinition["worker"]; readonly source?: undefined });
 
 /** The studio an embed offers, for a host that keeps the declaration itself. */
 export interface EmbedStudio {
@@ -301,6 +322,14 @@ export interface EmbedProps<S extends AnySchema = AnySchema> extends EmbedOption
   readonly onOpening?: (face: EmbedFace) => void;
   /** Called when a seat is taken in the person's menu; the host decides who sits. */
   readonly onSeat?: (principal: Principal) => void;
+  /**
+   * TOLD WHEN A FACE IS ON THE PAGE (FR-57). Each face is fetched as it is
+   * first drawn, so the frame stands before the face does; this is called
+   * with the face asked for once it has drawn (below `pagesBelow`, drawn
+   * as the pages that stand in for it), each time the face changes. What
+   * `handle.drawn()` waits for; `onDrawn` waits for the place to settle.
+   */
+  readonly onFaceDrawn?: (face: EmbedFace) => void;
 }
 
 /**
@@ -338,13 +367,35 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const [, ready] = useState(false);
   const arrived = useCallback(() => ready(true), []);
   // A place handed back is settled before the embed draws: until the rules for it are here, nothing stands in the element.
-  return props.at && !settling ? <Settling onReady={arrived} /> : <Drawing<S> {...props} />;
+  if (props.at && !settling) return <Settling onReady={arrived} fetch={fetchSettling} />;
+  // A draft is drawn with the app's own views from the first frame (FR-187): until the worker's host is here, nothing stands in the element.
+  if (props.draftView && !draftHost) return <Settling onReady={arrived} fetch={fetchDraftHost} />;
+  return <Drawing<S> {...props} />;
+}
+
+/*
+ * THE WORKER'S HOST FOR A DRAFT, fetched only when one is handed (FR-187):
+ * a page that is handed none never loads it for this.
+ */
+let draftHost: typeof import("@graview/guest/host/views") | undefined;
+const draftChunk = retryingImport(() => import("@graview/guest/host/views"));
+const fetchDraftHost = (): Promise<void> => draftChunk().then((module) => void (draftHost = module), () => new Promise<void>((resolve) => setTimeout(resolve, 2_000)).then(fetchDraftHost));
+
+/** How the frame registers the draft over the app's views, kept while the same draft is handed. */
+function useDraft(draft: EmbedDraftView | undefined): DraftOver | undefined {
+  return useMemo(() => {
+    if (!draft || !draftHost) return undefined;
+    const host = draftHost;
+    const { source, worker, ...rest } = draft;
+    const definition: WorkerViewDefinition = { ...rest, worker: worker ?? { source: source! }, draft: true };
+    return { name: draft.manifest.name, home: draft.manifest.attach === "home", register: (views) => host.registerWorkerView(views, definition) };
+  }, [draft]);
 }
 
 function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const { app, stop, bar = true, standing = "Everything is in order", principal, heading = 2 } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
-  const views = useViews<S>(props, frameworkViewDoors) as never;
+  const views = useViews<S>(props, frameworkViewDoors, useDraft(props.draftView)) as never;
   /*
    * THE FACE IT OPENS ON (FR-136). When the host names none: the home, when
    * the app has a home view and the declaration names no other first place
@@ -449,8 +500,8 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   useOtherFaceWhenIdle(shown, width);
   const report = useErrorReport(props.onError, shown);
   const ready = useReady(props.onReady, shown);
-  const drawnTold = useRef(props.onDrawn);
-  drawnTold.current = props.onDrawn;
+  const drawnTold = useRef(props.onFaceDrawn);
+  drawnTold.current = props.onFaceDrawn;
   const drawn = useCallback((asked: EmbedFace, drew: EmbedFace) => {
     ready(drew);
     drawnTold.current?.(asked);
@@ -560,6 +611,7 @@ function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
         <NoticeBoardContext.Provider value={notices}>
         <Faces face={shown} stop={overviewStop ?? stop} kinds={kinds} places={places} opens={opens} />
         {whereabouts ? <Watch into={whereabouts} /> : null}
+        <DrawnSignal rootRef={rootRef} face={face} shown={shown} path={pageAt} stop={stop} onDrawn={props.onDrawn} />
         {/* THE ADDRESS BAR, when the host's page is the app (FR-106): the face follows it, and the scene, drawn, keeps its stop in the fragment. */}
         {address ? <AddressBar pagesWere={at?.path} basePath={props.basePath} shown={shown} onFace={props.onFace} toggle={toggled} kinds={kinds} places={places} opens={opens} landed={landed} /> : null}
         {/*
@@ -642,6 +694,38 @@ function Watch({ into }: { readonly into: Whereabouts }) {
   return null;
 }
 
+/**
+ * SAYS WHEN THE PLACE HAS DRAWN AND SETTLED (FR-188), on the root, and to
+ * the host: watched again from nothing each time the reader moves — another
+ * page, another stop on the scene, another face — so the attribute comes
+ * off in the commit that moved and goes back on once the new place settles.
+ */
+function DrawnSignal({ rootRef, face, shown, path, stop, onDrawn }: { readonly rootRef: { readonly current: HTMLElement | null }; readonly face: EmbedFace; readonly shown: EmbedFace; readonly path: string; readonly stop: string | undefined; readonly onDrawn: EmbedOptions["onDrawn"] }) {
+  const { view } = useNavigation();
+  const onScene = shown === "scene" || shown === "graview";
+  const sceneStop = toUrl(view);
+  // Where the reader is, as `where()` says it: the overview's path on the scene, with its stop.
+  const place: EmbedWhere = { face, path: onScene ? OVERVIEW_PATH : shown === "picture" ? (stop ?? "#") : path, stop: sceneStop };
+  const key = `${shown} ${onScene ? sceneStop : place.path}`;
+  const latest = useRef({ place, onDrawn });
+  latest.current = { place, onDrawn };
+  useLayoutEffect(() => {
+    const watch = (root: HTMLElement) => watchDrawn(root, latest.current.place.path, () => latest.current.onDrawn?.(latest.current.place));
+    if (rootRef.current) return watch(rootRef.current);
+    // First drawn, the root's ref is set after this child's effects run: watched once the commit is done (there is nothing to take off yet).
+    let stop: (() => void) | undefined;
+    let gone = false;
+    queueMicrotask(() => {
+      if (!gone && rootRef.current) stop = watch(rootRef.current);
+    });
+    return () => {
+      gone = true;
+      stop?.();
+    };
+  }, [key, rootRef]);
+  return null;
+}
+
 /*
  * SETTLING A PLACE IN A NEW APP, fetched when one is handed over (FR-116):
  * a declaration changes rarely, and a page that never swaps one never loads
@@ -664,9 +748,9 @@ const fetchSettling = (): Promise<void> =>
     }).then(fetchSettling),
   );
 
-/** Stands in for the embed while the rules for a handed-back place arrive, then draws it. */
-function Settling({ onReady }: { readonly onReady: () => void }) {
-  useLayoutEffect(() => void fetchSettling().then(onReady), [onReady]);
+/** Stands in for the embed while what it draws with arrives — the rules for a handed-back place, the worker's host for a draft — then draws it. */
+function Settling({ onReady, fetch }: { readonly onReady: () => void; readonly fetch: () => Promise<void> }) {
+  useLayoutEffect(() => void fetch().then(onReady), [onReady, fetch]);
   return null;
 }
 
@@ -861,9 +945,8 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
   let asked: EmbedFace = opening ?? faceOf(options.stop);
   let drawnFace: EmbedFace | null = null;
   let waiting: (() => void)[] = [];
-  const onDrawn = (face: EmbedFace) => {
+  const onFaceDrawn = (face: EmbedFace) => {
     drawnFace = face;
-    options.onDrawn?.(face);
     if (face !== asked) return;
     const done = waiting;
     waiting = [];
@@ -917,7 +1000,7 @@ export function mount<S extends AnySchema>(element: HTMLElement, options: EmbedO
           setFace(next);
         }}
         onSeat={setSeat}
-        onDrawn={onDrawn}
+        onFaceDrawn={onFaceDrawn}
       />
       </Whereabouts.Provider>
     );

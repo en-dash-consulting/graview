@@ -55,22 +55,26 @@ export const SERVE_USAGE = `  graview serve <entry> [--data <dir>] [--port <n>] 
 
   graview preview <document.json> [--seed <file>] [--port <n>] [--host <address>]
                   [--data <dir> | --sqlite <file>] [--as <id>] [--roles a,b] [--no-sync]
+                  [--view <view.js> --manifest <manifest.json>]
       Serves the store and Graview's own faces over it — the scene and
       Pages, with the bar — so a document and a snapshot can be looked at
       with no product. Nothing to build or install: the page ships with
       graview. The store is in memory unless --data or --sqlite name where
       to keep it; the page sits as a person holding every role the document
       declares, unless --as or --roles say who. Its connections run as
-      serve's do, unless --no-sync.
+      serve's do, unless --no-sync. --view and --manifest draw a worker view
+      proposed and not kept where it attaches, marked as a draft.
 
   graview shots <document.json> [--seed <file>] [--places a,b] [--out <dir>]
                 [--scheme light|dark|both] [--width <px>[,<px>]] [--faces pages,scene]
+                [--view <view.js> --manifest <manifest.json>]
       Photographs places headless to PNGs, <place>-<scheme>-<width>.png in
       <dir> (default ./shots): each place by its address word or title (the
       home, overview, a lens's name, a kind's plural) or a path such as
       /tasks/t1; every place when none is named. Needs Playwright, which you
       install beside the project (npm i -D playwright, then npx playwright
-      install chromium).
+      install chromium). --view and --manifest picture a proposed view
+      before it is kept: name its place's path (/places/<title>).
 `;
 
 /** The same store, whichever command asked: parsed from the flags every store command shares. */
@@ -342,6 +346,23 @@ function previewInput(argv: readonly string[], command: string): { readonly docu
   }
 }
 
+/** A view proposed and not kept (FR-187), from `--view <view.js> --manifest <manifest.json>`: nothing when neither is given, or the reason it cannot be read. */
+function draftOf(argv: readonly string[], command: string): { readonly draftView?: { readonly manifest: unknown; readonly source: string } } | number {
+  const view = flag(argv, "--view");
+  const manifest = flag(argv, "--manifest");
+  if (view === undefined && manifest === undefined) return {};
+  if (view === undefined || manifest === undefined) {
+    process.stderr.write(`graview ${command}: --view and --manifest go together: the view's source and its manifest\n`);
+    return 2;
+  }
+  try {
+    return { draftView: { manifest: JSON.parse(readFileSync(resolve(process.cwd(), manifest), "utf8")) as unknown, source: readFileSync(resolve(process.cwd(), view), "utf8") } };
+  } catch (error) {
+    process.stderr.write(`graview ${command}: cannot read the view: ${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+}
+
 const listOf = (said: string | undefined): string[] =>
   (said ?? "")
     .split(",")
@@ -365,6 +386,8 @@ async function said<T>(command: string, step: () => Promise<T>): Promise<T | und
 export async function preview(argv: readonly string[], { page }: PreviewPage): Promise<number> {
   const input = previewInput(argv, "preview");
   if (typeof input === "number") return input;
+  const draft = draftOf(argv, "preview");
+  if (typeof draft === "number") return draft;
   const host = flag(argv, "--host") ?? "127.0.0.1";
   const trust = seatTrust(host, argv.includes("--trust-seat-headers"));
   if ("refuse" in trust) {
@@ -384,6 +407,7 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
     opened = await servePreview({
       document: input.document,
       page,
+      ...draft,
       ...(backend.seed ? { seed: backend.seed } : {}),
       ...(keeps ? { adapter: backend.adapter, where: backend.where } : {}),
       // A free port unless told: `graview serve` holds 5196, and the two run side by side.
@@ -430,6 +454,8 @@ export async function preview(argv: readonly string[], { page }: PreviewPage): P
 export async function shots(argv: readonly string[], { page }: PreviewPage): Promise<number> {
   const input = previewInput(argv, "shots");
   if (typeof input === "number") return input;
+  const draft = draftOf(argv, "shots");
+  if (typeof draft === "number") return draft;
   const scheme = flag(argv, "--scheme") ?? "light";
   if (!["light", "dark", "both"].includes(scheme)) {
     process.stderr.write(`graview shots: --scheme is light, dark or both (got ${JSON.stringify(scheme)})\n`);
@@ -454,7 +480,7 @@ export async function shots(argv: readonly string[], { page }: PreviewPage): Pro
   if (backend === undefined) return 1;
   let opened;
   try {
-    opened = await servePreview({ document: input.document, page, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
+    opened = await servePreview({ document: input.document, page, ...draft, ...(backend.seed ? { seed: backend.seed } : {}), port: Number(flag(argv, "--port") ?? 0) });
   } catch (error) {
     process.stderr.write(`graview shots: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;

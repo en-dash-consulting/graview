@@ -30,6 +30,16 @@ export interface WorkerViewDefinition {
   readonly file?: (href: string) => string | undefined;
   /** The `https:` origins its images may come from by address (WorkerViewOptions.images): none by default. */
   readonly images?: { readonly origins: readonly string[] };
+  /**
+   * A VIEW PROPOSED AND NOT KEPT (FR-187): drawn where it attaches under
+   * one line, "Draft — <title> · not kept", as the seat's drawn panel is
+   * marked on `/~draft`. It is registered under no name, so the place menu
+   * offers no Hide or Delete for it and the host's tidying never touches
+   * it; where it fails it says why in its place rather than standing the
+   * kind's own face there; playback draws it as it is, never as a kept view
+   * of the same name stood. Nothing of it is kept anywhere.
+   */
+  readonly draft?: boolean;
 }
 
 const inputOf = (props: ViewProps<AnySchema>): GuestViewInput => ({
@@ -75,7 +85,8 @@ function useDefinitionThen(definition: WorkerViewDefinition): WorkerViewDefiniti
   const playback = usePlayback();
   const seq = playback?.past?.seq;
   const viewAt = playback?.host?.viewAt;
-  const then = useMemo(() => (seq === undefined || !viewAt ? undefined : viewAt(definition.manifest.name, seq)), [viewAt, seq, definition]);
+  // A draft is the code proposed, at any moment: a kept view of its name is not what it draws.
+  const then = useMemo(() => (seq === undefined || !viewAt || definition.draft ? undefined : viewAt(definition.manifest.name, seq)), [viewAt, seq, definition]);
   return useMemo(() => (then === null ? null : then === undefined ? definition : { ...definition, worker: then as WorkerViewCode }), [then, definition]);
 }
 
@@ -119,8 +130,26 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
     };
   }, [definition, store, principal]);
   useEffect(() => mounted.current?.update(), [scheme, brand, tick]);
-  return <div ref={holder} data-worker-view-place={definition.manifest.name} />;
+  const place = <div ref={holder} data-worker-view-place={definition.manifest.name} />;
+  if (!definition.draft) return place;
+  const title = definition.manifest.title ?? definition.manifest.name;
+  /* A view proposed and not kept says so, as the seat's drawn panel does on `/~draft` (FR-187). */
+  return (
+    <div role="group" aria-label={`Draft: ${title}`} data-graview-draft-view={definition.manifest.name} style={{ display: "grid", gap: 8, alignContent: "start", minWidth: 0 }}>
+      <p data-testid="draft-view-line" style={DRAFT_LINE}>
+        <span>
+          Draft — <span style={{ color: "var(--graview-ink)", fontWeight: 600 }}>{title}</span>
+        </span>
+        <span aria-hidden="true">·</span>
+        <span>Not kept</span>
+      </p>
+      {place}
+    </div>
+  );
 }
+
+/** The one line over a draft, as the seat's drawn panel wears it: a hairline under it, nothing more. */
+const DRAFT_LINE = { margin: 0, display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "4px 8px", fontSize: "0.875rem", color: "var(--graview-ink-muted)", borderBottom: "1px solid var(--graview-edge)", paddingBottom: 8 } as const;
 
 /**
  * A WORKER VIEW AS A VIEW OF A KIND (FR-91): what `registerWorkerView`
@@ -201,7 +230,8 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
      * in place of the home the app declared, which is drawn if the view fails.
      */
     if (!views.home) throw new Error(`The worker view "${manifest.name}" is the home's body: draw it with workerHome, on the home.`);
-    const declared = views.homeView?.() as ViewComponent<AnySchema> | undefined;
+    // A draft that fails says why in its place (FR-187): the app's own home standing there would picture the proposal as fine.
+    const declared = definition.draft ? undefined : (views.homeView?.() as ViewComponent<AnySchema> | undefined);
     views.home(workerView(definition, declared ? { fallback: declared } : {}) as unknown as ViewComponent<S>);
     return views;
   }
@@ -213,8 +243,10 @@ export function registerWorkerView<S extends AnySchema>(views: ReactViewRegistry
    * drawn alone, on the scene and as the whole of the record's page.
    */
   const one = manifest.cardinality === "one";
-  const view = workerView(definition, { ...(before ? { fallback: before } : {}), ...(one && manifest.replaces !== "page" && before ? { beside: before } : {}) });
-  views.register(manifest.attach as KindOfSchema<S>, cell, (one && manifest.replaces === "page" ? markReplacesPage(view) : view) as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, name: manifest.name, lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
+  /* A draft (FR-187): no fallback, so a failure is said in its place, and no name, so nothing tidies it and the place menu offers it nothing to keep. */
+  const draft = definition.draft === true;
+  const view = workerView(definition, { ...(before && !draft ? { fallback: before } : {}), ...(one && manifest.replaces !== "page" && before ? { beside: before } : {}) });
+  views.register(manifest.attach as KindOfSchema<S>, cell, (one && manifest.replaces === "page" ? markReplacesPage(view) : view) as unknown as ViewComponent<S>, manifest.title ? { title: manifest.title, ...(draft ? {} : { name: manifest.name }), lens: "view", ...(manifest.reads?.kinds?.length ? { reads: manifest.reads.kinds } : {}) } : undefined);
   return views;
 }
 

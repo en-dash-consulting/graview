@@ -97,6 +97,8 @@ const CHAIN = [
   ["date-inputs", "verify-date-inputs.mjs"],
   // A selected record drawn once, its relations said in their words, a district's name in its box, on a document shaped like Cloud's workshop, in three engines (FR-141–FR-143).
   ["drawn-once", "verify-drawn-once.mjs"],
+  // The page says when a place has drawn and settled: after a late font, a worker view's late image and a view that fails, nothing moving after it, off on a move and back as the next place settles (FR-188); and a view proposed and not kept, pictured where it attaches, marked, and kept nowhere (FR-187).
+  ["drawn", "verify-drawn.mjs"],
   // A record's long text keeps its paragraphs and lists, spans the record under its label, is edited in a text area, and its facts follow the declared or the page's order, in three engines (FR-146–FR-148).
   ["long-text", "verify-long-text.mjs"],
   // A roadmap grown large: status chips with counts, a Filter that opens short and finds a record by typing, whole badges, cards read at a glance, at a desk and a phone, in three engines.

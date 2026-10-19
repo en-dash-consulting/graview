@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 1355,
+  "gzipped": 825,
+  "note": "Raised when a page came to be opened on a draft view (FR-187): the embed takes draftView, registers it over the app's views with the kept view of its name left out (standingIn), and fetches the worker's host (@graview/guest/host/views) before it draws, only when a draft is handed; registerWorkerView draws a draft under its one line, Draft, its title, Not kept. Every chunk counted, the worker's host and the open kit are now a door of the embed's. 1_355 / 825 more than before it (1_859_168 / 594_190): measured at 1_860_523 / 595_015."
+}

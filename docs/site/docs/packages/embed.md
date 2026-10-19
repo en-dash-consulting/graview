@@ -47,6 +47,12 @@ A VIEW OF ONE RECORD SITS ABOVE ITS FIELDS (FR-149). A worker view registered th
 
 The frame — the element's region, its theme, the app bar, the provider — is on the page when `mount` returns. Each face is a chunk of its own, fetched the first time it is drawn: a page that opens on the pages never loads the scene, one that opens on the scene never loads the router, and the framework's own cards, rows and record pages come with whichever face draws them first. Until a face's chunk arrives its box stands empty (`aria-busy`), and `handle.drawn()` resolves once the face asked for is on the page — after `mount`, and after every change of face.
 
+A face on the page is not yet a place a person can read: its parts, the fonts, a worker view's drawing and its pictures may still be on their way. Once the place the reader is on has drawn and settled — every part drawn on it arrived, the fonts and images loaded, each worker view drawn (or stopped, what stands in its place drawn) and nothing moving for 200 ms — the embed's root wears `data-graview-drawn`, its value the place's path, and `onDrawn(place)` is told where it is as `where()` says it. A move to another place takes the attribute off in the same commit, and the next place puts it back as it settles. A place that never stops moving is said drawn after ten seconds all the same. A host picturing a place headless waits for the attribute rather than a timer:
+
+```ts
+await page.waitForSelector("[data-graview-drawn]");
+```
+
 A host that knows its face before it mounts starts that chunk at once, beside its own requests, and an embed mounted once it is here draws it in the first commit:
 
 ```ts
@@ -106,6 +112,16 @@ const at = handle.where();           // { face, path, stop, kind? }
 handle.unmount();
 handle = mount(root, { app, store, at });
 ```
+
+### A view proposed and not kept
+
+A chat that proposes a worker view can try it headless and be told what it drew in words; to see it at a phone's width in dark it had to keep it first. `draftView` draws one for the seat at the keyboard without keeping it: its manifest and its `source` (or `worker`, and anything else a `WorkerViewDefinition` takes but `draft`):
+
+```ts
+mount(root, { app, remote, routing: "address", draftView: { manifest, source, author: "Proposed by Claude" } });
+```
+
+It is drawn where its manifest attaches — the home, a kind's list at the place its title names (`/places/<title>`), each record's page — under one line, "Draft — <title> · Not kept", in a group named "Draft: <title>" (`[data-graview-draft-view="<name>"]`), as the seat's drawn panel is marked on `/~draft`. A kept view of the same name is the one it stands in for: the host's `views` may register it as ever, and it is drawn nowhere beside the draft. A draft that is stopped says why in its place rather than standing the kind's own face there. Nothing of it is kept: it is registered under no name, so the place menu offers no Hide or Delete and `keptViews` is asked nothing; the store is not written; the next page, handed no draft, has none. The worker's host is fetched before the embed draws, and only when a draft is handed. With `data-graview-drawn`, a host pictures the proposal once it has drawn. `graview preview` and `graview shots` take one as `--view <view.js> --manifest <manifest.json>`.
 
 ### What stands over what
 
@@ -236,11 +252,11 @@ handle.setPeople(next);                     // an agent who first acted after th
 
 Nothing touches `localStorage` or `sessionStorage` without a fallback, so a frame that throws on either still mounts. `scheme: "auto"` (the default) follows the host context, then the page's `data-theme` stamp, then the system's preference, each as it changes. Presence a channel reports is dropped once its last word is older than `REMOTE_PRESENCE_TTL_MS`, whether or not the channel says the person left. A host that builds presence itself keys each participant with `participantKey({ kind, id, session })` from `@graview/core`, the op log's own `kind:id:session`.
 
-## What it exports (13)
+## What it exports (14)
 
 Read off the package's own barrel, so this is what is there today.
 
-`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `FIRST_LOOK_ANCHORS`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`, `quickAskOf`
+`AUTO_SCENE_HEIGHT`, `createNoticeBoard`, `DRAWN_ATTRIBUTE`, `Embed`, `faceAtAddress`, `faceOf`, `familiesOf`, `FIRST_LOOK_ANCHORS`, `fontsLink`, `hostScheme`, `mount`, `mountWhenNear`, `preload`, `quickAskOf`
 
 ---
 

@@ -68,6 +68,8 @@ export const OWN = {
   "files-host": 5263,
   /** The host's page `verify-growing` mounts a roadmap grown large into: filters that stay usable, cards read at a glance. */
   "growing-host": 5258,
+  /** The host's page `verify-drawn` mounts a roadmap into with a late font, a late image and a view that fails, to hold `data-graview-drawn` to what a person sees (FR-188). */
+  "drawn-host": 5259,
   /** The host's page `verify-screen-reader` mounts a roadmap into, in two tabs sat down as two people, to hear what a screen reader is told. */
   "screen-reader-host": 5256,
   /** The host's page `verify-field-types` mounts a choir's rehearsals into: a phone to call, a place to map, a duration said and summed. */

@@ -1,0 +1,6 @@
+{
+  "budget": "embed with the studio handed in",
+  "minified": 2344,
+  "gzipped": 1006,
+  "note": "Raised when the page came to say when a place has drawn and settled (FR-188): the embed watches the place it is on (watchDrawn) and puts data-graview-drawn on its root once it settles, a part drawn before its module is here is counted while it is on its way (partsArriving), and a worker view's region says data-worker-view-drawn once it has drawn what it was last shown. 2_344 / 1_006 more than before it (1_856_824 / 593_184): measured at 1_859_168 / 594_190."
+}

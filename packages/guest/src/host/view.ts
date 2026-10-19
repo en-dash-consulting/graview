@@ -293,6 +293,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     stop();
     drawing?.dispose();
     const said = why(reason, limits, detail);
+    region.removeAttribute("data-worker-view-drawn");
     region.setAttribute("data-worker-view-failed", reason);
     if (options.fallback !== false) (options.fallback ?? plainFace)(region, reason, said);
     options.onFailure?.(reason, said);
@@ -402,6 +403,16 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   const send = (message: GuestDomEvent) => port?.postMessage(message);
   /* Anything drawn yet: a view that throws after it drew goes on; one that throws before has failed. */
   let drew = false;
+  /*
+   * DRAWN, AND NOTHING ON ITS WAY (FR-188): the region says
+   * `data-worker-view-drawn` once the view has answered what it was last
+   * shown, the host has drawn all it sent, and no picture it was handed is
+   * still being fetched — so a page that says it has drawn (the embed's
+   * `data-graview-drawn`) can wait for it. A view that fails says
+   * `data-worker-view-failed` instead, its plain face drawn.
+   */
+  let answered = false;
+  const mark = () => region.toggleAttribute("data-worker-view-drawn", !failed && answered && drawing !== undefined && waiting.length === 0 && pending.size === 0 && !pictures?.waiting());
 
   /*
    * TIME PER PUSH (FR-94). Each push of what the view is shown is timed
@@ -588,6 +599,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       },
     });
     for (const one of waiting.splice(0)) draw(one);
+    mark();
   },
   // The drawing did not arrive (the network away as it was drawn): the plain face says so, and it is asked for again as the view is drawn again (FR-139).
   () => fail("start", "the view's drawing could not be loaded"));
@@ -612,7 +624,10 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         view: manifest.name,
         nonce,
         send: (message) => {
-          if (message.type === "props" && typeof message.push === "number") pending.set(message.push, clock.now());
+          if (message.type === "props" && typeof message.push === "number") {
+            pending.set(message.push, clock.now());
+            mark();
+          }
           given.postMessage(message);
         },
         props: () => {
@@ -629,7 +644,9 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         },
         onPushed: (push, ms) => {
           pending.delete(push);
-          if (ms >= limits.pushMs) fail("slow");
+          if (ms >= limits.pushMs) return fail("slow");
+          answered = true;
+          mark();
         },
         /* Past the message allowance, a view is stopped, not read on (FR-94). */
         onFlood: () => fail("flood"),
