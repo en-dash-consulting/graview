@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 100,
+  "gzipped": 0,
+  "note": "Raised when the app's name on a phone's bar came to keep 28 pixels for its mark, and a bar under 300 pixels to put 4 pixels between its parts (the bar's stylesheet, two rules): 606_912 / 222_257 with them, 60 bytes minified over the budget before them."
+}
