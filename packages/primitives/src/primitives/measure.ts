@@ -38,10 +38,22 @@ export function useWidth(ref: { current: HTMLElement | null }): number | null {
   useLayoutEffect(() => {
     if (!element || typeof ResizeObserver === "undefined") return;
     const measured = () => Math.round(element.getBoundingClientRect().width);
-    setWidth(measured());
+    let drawn = measured();
+    setWidth(drawn);
     // The browser reports a resize after layout and before the paint; rendered then, the paint has it.
     const observer = new ResizeObserver(() => {
       const next = measured();
+      /*
+       * ONLY A WIDTH THAT CHANGED IS DRAWN AT ONCE. The observer reports
+       * every box it is given once, unchanged, and a flushSync renders
+       * everything waiting, not only this width: a board that had just
+       * measured its own room had its new shape drawn inside the browser's
+       * round of resize reports, the room it watches changed size there,
+       * and Firefox said "ResizeObserver loop completed with undelivered
+       * notifications" on the org app's Pages home.
+       */
+      if (next === drawn) return;
+      drawn = next;
       flushSync(() => setWidth(next));
     });
     observer.observe(element);
