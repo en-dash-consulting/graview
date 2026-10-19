@@ -23,8 +23,7 @@ Read one before writing your own:
   when the x and y are categories rather than coordinates)
 - `packages/primitives/src/lens/plan.tsx` — an outline, with points inside it
 
-(`reach.tsx` beside them is not one: no factory, no roles to rebind. A
-view that ships is still a view.)
+(`reach.tsx` beside them is a view, not a lens: no roles to rebind.)
 
 Read the plan if yours draws anything: a name is fitted to its shape at a
 height (`fitLabel`, `spanAt` from `@graview/layout`), names are painted
@@ -54,10 +53,9 @@ the reuse test beside it, red on purpose.
 
 3. **Fail loudly on a bad binding.** Throw a named error saying which role and
    what was missing. A lens that renders empty when misbound costs an hour.
-   Loud means THE PANEL SAYS SO, not the application is gone: every view host
-   sits behind an error boundary, so a throw draws the error's own message in
-   the view's place — named with the kind and the view — and leaves the bar,
-   the districts and every other view standing. Give the error a `hint`
+   Loud means THE PANEL SAYS SO: every view host sits behind an error
+   boundary, so a throw draws its message in the view's place, named with the
+   kind and the view, and the rest stands. Give the error a `hint`
    property and the panel prints it under the message, which is where a
    sentence about what to bind instead belongs.
 
@@ -70,15 +68,12 @@ the reuse test beside it, red on purpose.
    **Drawing in SVG? The framework sets the role; you set the `aria-label`.**
    A `<g>`, `<polygon>`, `<circle>`, `<rect>`, `<path>`, `<ellipse>`,
    `<polyline>`, `<line>` or `<use>` carrying the mark becomes a button like
-   any `<span>` — but a shape has no text inside it to be named by, so
-   without a label it is a stop that announces nothing, which is worse for a
-   keyboard than not being reachable at all. Name it after the thing it
-   stands for.
+   any `<span>`, but a shape has no text to be named by: unlabeled, it is a
+   stop that announces nothing. Name it after the thing it stands for.
 
 5. **Read `implicated` and `flagged`.** Empty means "no emphasis", NOT "nothing
    is related". Expose what you decide as `data-graview-emphasis` so it can be
-   checked — a claim about a picture that exists only as a color cannot be
-   checked by anything, not a test and not a person reading the tree.
+   checked — a claim that exists only as a color cannot be checked.
 
 6. **Render at three fidelities.** `glyph` is a chip; `summary` is denser
    content, not the same content scaled down; `full` is the picture.
@@ -89,8 +84,8 @@ the reuse test beside it, red on purpose.
    has slots and occupants, a matrix has rows and columns, a map has regions
    and markers), and every other kind comes from `store.graph`, narrowed back
    to `nodes` for the group's own kind so the scene's horizon still applies.
-   Built from `nodes` alone, a map drew its ground with nothing standing in
-   it: no error, a tidy, wrong picture — the worst failure a lens has.
+   Built from `nodes` alone, a map drew its ground with nothing on it: a
+   tidy, wrong picture.
 
    **`budget` is the most to draw.** A host may hand a lens a few
    members with `budget` and `total`: hold what you read from
@@ -127,7 +122,11 @@ the reuse test beside it, red on purpose.
    `{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }`.
    A status board: `{ name: "columns", title: "The board", bindings: { task:
    { column: "status" } } }`; a card moves only by an act setting `status`
-   (`book` where its `allowedWhen` holds).
+   (`book` where its `allowedWhen` holds): dragged, carried by the keyboard
+   (Space, arrows, Space) or from its menu's "Move to ›". Its options:
+   `search` (the fields Find looks in; past 20 cards Find shows unasked),
+   `filters` (chips; a calendar and a coverage take both), `collapsed` and
+   `hidden` columns, `cap` (newest per column), `move: true` for a button.
    `on` names the kind when the bindings do not (reach; a coverage over its
    columns), and `options` are data (`SHIPPED_LENSES[name].options`):
    - a calendar's `range: "years"` with `horizon: { years: 30, title: "The

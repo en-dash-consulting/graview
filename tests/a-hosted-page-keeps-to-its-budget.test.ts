@@ -109,7 +109,8 @@ describe("a hosted page", () => {
     // 940 KB since a view that draws its members late still gets its lines (0.1.37): the scene's lines watch the views a measurement found short of a member and measure again once one is drawn (`watchDrawnLate`): the scene face measured 956_303 B, 1_032 more than before it (955_271). Nothing up front changed.
     // 941 KB since a rule's today() came to be the app's day (Roadmap f-app-time-zone): today() read in the app's zone and a store told the zone judged and ticked on it: the scene face measured 958_071 B, 736 more than before it (957_335).
     // 942 KB since the twelfth walk (0.1.37): a repair says what it still asks for, a press its act's own input refused is told to a watching harness, and a record's facts are drawn by one `RecordField`: the scene face measured 963_478 B, 918 more than 940 KB.
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(942 * 1024);
+    // 944 KB since a status board came to move without buttons (Roadmap f-board-move-without-buttons, f-lens-search-filter): the menu's Move to › section on both faces and the options a declared lens is held to: the scene face measured 966_453 B, 1_889 more than before it (964_564).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(944 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

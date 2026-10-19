@@ -363,6 +363,7 @@ export { createViewRegistry, FIDELITIES, kindPath, onePerPicture, placeLabel, pl
 export {
   SHIPPED_LENSES,
   SHIPPED_LENS_NAMES,
+  SEARCH_UNASKED,
   bindsOf,
   declaredLenses,
   isShippedLens,

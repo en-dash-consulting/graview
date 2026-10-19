@@ -1,6 +1,6 @@
 import { fieldWords, pluralLabel, type AnySchema, type Place } from "@graview/core";
 import { aggregateId } from "@graview/layout/view";
-import { GhostDoor, Inspector, NotifyDoor, useInlineAiSection, useNotifySection } from "@graview/primitives/pages";
+import { GhostDoor, Inspector, NotifyDoor, useBoardMoveSection, useInlineAiSection, useNotifySection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
@@ -259,7 +259,9 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   const inlineAi = useInlineAiSection();
   /* "Notify me…" (Roadmap f-notify-subscriptions), where the reader is somebody the app can tell. */
   const notify = useNotifySection();
-  const sections = useMemo(() => [change, own, ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, own, notify, inlineAi]);
+  /* "Move to ›" on a card on a status board: the columns it may go to, and the ones withheld with the reason. */
+  const board = useBoardMoveSection();
+  const sections = useMemo(() => [change, board, own, ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, board, own, notify, inlineAi]);
 
   return (
     <MenuSections sections={sections}>

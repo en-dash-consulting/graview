@@ -84,6 +84,8 @@ export function createCalendarLens<S extends AnySchema>(options: CalendarOptions
         ...(options.arranging !== undefined ? { allow: options.arranging } : {}),
         lensAllows: { sort: false, group: range === "agenda" },
         ...(options.arrangedBy ? { arrangedBy: options.arrangedBy } : {}),
+        ...(options.search ? { search: options.search } : {}),
+        ...(options.filters ? { filters: options.filters } : {}),
         ...(kinds[0] ? { kind: ((props.nodes ?? []).find((node) => kinds.includes(String(node.kind)))?.kind as string | undefined) ?? kinds[0] } : {}),
       });
       const groups = range === "agenda" && arranged.grouped && arrangement.group ? arranged.groups.map((group) => ({ label: group.label, ids: new Set(group.nodes.map((node) => node.id)) })) : undefined;

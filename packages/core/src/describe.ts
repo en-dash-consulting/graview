@@ -15,8 +15,8 @@ export { describePlace, placeText } from "./document/describe-place.js";
  * the board's own drawing, fetched when it is first drawn, and the
  * describer reach it.
  */
-export { columnActs, columnMoves, columnOf, columnReach, columnSteps, statusColumns } from "./columns.js";
-export type { ColumnMove, ColumnReach, StatusColumn } from "./columns.js";
+export { columnActs, columnChoices, columnMoves, columnOf, columnReach, columnSteps, statusColumns } from "./columns.js";
+export type { ColumnChoice, ColumnMove, ColumnReach, StatusColumn } from "./columns.js";
 export type { DescribePlaceOptions } from "./document/describe-place.js";
 export type { DescribedFact, DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceResult, PlaceDescription } from "./document/described.js";
 /*
