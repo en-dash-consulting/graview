@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 1373,
+  "gzipped": 550,
+  "note": "Raised when a field came to save itself as the person types (FR-191): the saver in the press reader's chunk (`createSaver`, `saveDebounceOf`) runs a field's own `data-act` once the person pauses for its `data-debounce` and when they leave it, collecting the fields as a press does, and the region tells the view each act's outcome as `acted`. 1_373 / 550 more than main (154_901 / 58_181). Measured at 156_274 / 58_731."
+}

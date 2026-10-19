@@ -26,7 +26,7 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
-- `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
+- `pictures: true` (or `{ width }`) hands each file on a record as an address the host made, never its path, and lets the view place a video and open the full-screen viewer (`graview-view-drawing`).
 
 A manifest that names a kind, an edge or an act the app does not declare is refused before the view starts.
 
@@ -38,13 +38,13 @@ graview.onProps((props) => …)   // every push of what it is shown (and at once
 graview.props                   // the last push
 graview.render(markup)          // draw: a string, graview.html`…`, or nodes
 graview.html`<li>${x}</li>`     // markup; every value put in is escaped
-graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle
+graview.on("click", ".card", (event) => …)   // also input, change, keydown, toggle, acted
 graview.act(name, args)         // ask for an act: resolves { ok, intent } or { ok: false, reason, message }
 graview.navigate("offer:7")     // a record, else a place or a kind's list by slug
 graview.navigate({ place: "features", where: { stage: "building" }, section: "Shipping soon" })
 ```
 
-`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest of the app says it on, never a zone of your own. `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
+`props` holds `node`, the record a view of one is drawn for, and `nodes`, the records a view of many is drawn for and those it reads. A record is plain data: its `id`, `kind` and `label`, and each field on it by name, so a deliverable's draft is `props.node.draft`; there is no `fields` key. A view of one finds its record in `node`, never in `nodes`. Then `edges` (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name, title }`, those the viewer may run), `places` (`{ as, title }`), and `theme` (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's `name`, and its `logo` as a URL the host made), and `locale` and `timeZone`: say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone })`, the clock the rest of the app says it on, never a zone of your own. `render` keeps what it can, by element and by `data-key` or `id`, so give repeated rows a `data-key`: a field being typed in keeps its text across a push. An event carries `value`, `checked`, `key`, `pressed` for a bound press, and `element`, what the selector matched: read its `data-*`. Elements lack `closest`, `matches` and `dataset`.
 
 ```js
 graview.on("click", "[data-go]", (e) => graview.navigate(e.element.getAttribute("data-go")));
@@ -58,7 +58,7 @@ HTML, SVG and one stylesheet, drawn with the app's `--graview-*` tokens so light
 
 `<a data-record="offer:7">` and `<a data-place="the-packages">` are links the host follows, on both faces. `<a href="https://…">` is drawn as text. A destination is a record's id, else a place by its slug or its title (`data-place="songs-by-writer"` or `"Songs by writer"`), else a kind's list (`features` or `feature`); any other says why, naming the places.
 
-A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard (`#every-feature`). On the scene a list is the kind's stop narrowed (`in.filter`); a section is looked for there too. A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why (`Features have no field "stag" to filter by; they filter by …`), so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
+A list or a lens may be gone to **narrowed**: `where: { stage: "building" }` in navigate, `data-filter="stage:building"` on a link — the words the list's own arranging line writes, so the address is `/features?filter= stage%3Abuilding` and can be shared. A lens narrows the records it is handed; a blocks lens lists what its own `where` says. Any destination may take a **section**, a heading's words or an element's id (`section: "Every feature"`, `data-section`): the page scrolls there and gives it the keyboard. On the scene a list is the kind's stop narrowed (`in.filter`). A filter on a field the kind lacks, or a choice it lacks, goes nowhere and says why, so link to the list narrowed rather than to a lens per filter; a lens kept only as a link target can be hidden (set-lens-hidden, `graview-pages`).
 
 ### Writes
 
@@ -80,11 +80,19 @@ A field the view filled (`value="…"`) is the view's until the person empties i
 </fieldset>
 ```
 
-The host fills it with the record's whole value, line breaks kept, when an act in the fieldset writes that field of that record and the person may run it there; otherwise it stays empty. The person edits it in place, and it goes only back into that field. A view may empty a field after a press. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. The press is applied before the view hears it; read `event.pressed`.
+The host fills it with the record's whole value, line breaks kept, when an act in the fieldset writes that field of that record and the person may run it there; otherwise it stays empty. The person edits it in place, and it goes only back into that field. A view may empty a field after a press. A radio or a select is the person's pick, not their words: its value goes only if it is one the act declares (an enum's option) or a record the view was shown. The press applies before the view hears it: `event.pressed`, and `acted` after every act.
+
+In a `fieldset data-record`, a field saves as it is typed, no button:
+
+```html
+<textarea name="notes" data-prefill="notes" data-act="save-notes" data-save="input" data-debounce="1500"></textarea>
+```
+
+Saved when the person pauses (`data-debounce`, default 1 000 ms) or leaves it, by a press's rules. Say Saving… on `input`, Saved on `acted` (`examples/a-call-sheet.js`).
 
 ### Limits
 
-About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Draw summaries, not every row of a huge set. Work a view schedules with timers between pushes is not timed per push. It may keep its worker busy just under the heartbeat's 5 s; the page stays responsive, the person's CPU does not: never spin.
+About 256 kB of source, 5 000 drawn nodes, 120 messages a second, 1 000 ms per push, and 100 ms a second of the page's time drawing it. Past any of them the view is stopped and the plain face of its records is drawn instead, with why. Work a view schedules with timers between pushes is not timed per push. Never spin: the page stays responsive, the person.s CPU does not.
 
 ### Worked examples
 
@@ -98,7 +106,7 @@ views: (schema, registry) => registerWorkerView(registry, { manifest, worker: { 
 pages.surface("home", workerHome({ manifest: front, worker: { source: frontSource } }));
 ```
 
-A view with `attach: "home"` given to `registerWorkerView` is the home's own view: the routed home's body, the page the app opens on — full width under the bar on a desk too — and the app's declared home is drawn if it fails.
+A view with `attach: "home"` given to `registerWorkerView` is the home's own view: the routed home's body, the page the app opens on, and the app's declared home is drawn if it fails.
 
 ### Then find out whether it worked
 

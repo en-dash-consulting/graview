@@ -15,6 +15,12 @@
  * filled by the host, and a person's edit saves with its line breaks; and
  * a view that offers Rae the same field, or binds one to the memo she may
  * not see, gets nothing filled in, and her press changes nothing.
+ *
+ * And the workshop's call sheet (FR-191), the skill's `examples/a-call-sheet.js`
+ * registered for `call`: the notes, filled by the host, save as Nick types
+ * them — with no button, once he pauses and at once when he leaves the
+ * field — and the view says "Saving…" and then "Saved"; Rae, offered the
+ * same field, saves nothing and is told why.
  */
 import { createServer } from "node:http";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -23,6 +29,8 @@ import { join, resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
 
 export const RECORD_MANIFEST = { name: "deliverable", attach: "deliverable", cardinality: "one", acts: ["set-draft"] };
+export const CALL_MANIFEST = { name: "call", attach: "call", cardinality: "one", acts: ["save-notes"] };
+const TODD = "call:todd";
 const EMAIL = "deliverable:email";
 const ADDED = "P.S. The barn has parking for forty.";
 
@@ -33,6 +41,10 @@ export async function recordSuite({ repoRoot, build, browser, claim, report, HOS
     .replace(/const editable = [^;]+;/, "const editable = true;")
     .replace("<p role=\"note\">", '<fieldset data-record="memo:margin" class="memo"><textarea name="body" data-prefill="body" aria-label="The memo"></textarea><button data-act="quote-draft">Quote</button></fieldset><p role="note">');
   if (eager === example) throw new Error("the eager view is the example: the example changed shape");
+  const callSheet = readFileSync(resolve(repoRoot, "packages/skills/skills/graview-worker-view/examples/a-call-sheet.js"), "utf8");
+  /* The call sheet offering its notes field to every seat: what a careless author writes. */
+  const eagerCalls = callSheet.replace(/const mayWrite = [^;]+;/, "const mayWrite = true;");
+  if (eagerCalls === callSheet) throw new Error("the eager call sheet is the example: the example changed shape");
   const out = mkdtempSync(join(tmpdir(), "graview-guest-record-"));
   const shots = process.env.GRAVIEW_SHOTS;
   if (shots) mkdirSync(shots, { recursive: true });
@@ -47,6 +59,7 @@ window.__failures = [];
 window.__draft = EMAIL_DRAFT;
 const manifest = { ...${JSON.stringify(RECORD_MANIFEST)}, ...(asked.get("eager") ? { acts: ["set-draft", "quote-draft"] } : {}), ...(asked.get("replaces") ? { replaces: asked.get("replaces") } : {}) };
 const definition = { manifest, worker: { source: asked.get("eager") ? window.EAGER : window.EXAMPLE }, author: "Made by Claude, for nick", onFailure: (reason, detail) => window.__failures.push([reason, detail]) };
+const calls = { manifest: ${JSON.stringify(CALL_MANIFEST)}, worker: { source: asked.get("eager") ? window.EAGER_CALLS : window.CALLS }, onFailure: (reason, detail) => window.__failures.push([reason, detail]) };
 window.__handle = mount(document.getElementById("app"), {
   app: workshopApp,
   seed: workshopSeed,
@@ -59,7 +72,7 @@ window.__handle = mount(document.getElementById("app"), {
   height: "100%",
   fonts: false,
   studio: false,
-  views: (schema, registry) => registerWorkerView(registry, definition),
+  views: (schema, registry) => registerWorkerView(registerWorkerView(registry, definition), calls),
 });
 window.__handle.drawn().then(() => { window.__ready = true; });
 `,
@@ -78,7 +91,7 @@ window.__handle.drawn().then(() => { window.__ready = true; });
   });
   const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Workshop</title>
 <style>body{margin:0;font:16px/1.4 Georgia,serif}#app{position:relative;height:100vh}</style></head>
-<body><div id="app"></div><script>window.EXAMPLE = ${JSON.stringify(example).replace(/<\/script/gi, "<\\/script")}; window.EAGER = ${JSON.stringify(eager).replace(/<\/script/gi, "<\\/script")};</script><script type="module" src="/entry.js"></script></body></html>`;
+<body><div id="app"></div><script>window.EXAMPLE = ${JSON.stringify(example).replace(/<\/script/gi, "<\\/script")}; window.EAGER = ${JSON.stringify(eager).replace(/<\/script/gi, "<\\/script")}; window.CALLS = ${JSON.stringify(callSheet).replace(/<\/script/gi, "<\\/script")}; window.EAGER_CALLS = ${JSON.stringify(eagerCalls).replace(/<\/script/gi, "<\\/script")};</script><script type="module" src="/entry.js"></script></body></html>`;
   writeFileSync(join(out, "index.html"), page);
   const server = createServer((request, response) => {
     const path = decodeURIComponent((request.url ?? "/").split("?")[0]).replace(/^\/+/, "") || "index.html";
@@ -206,6 +219,58 @@ window.__handle.drawn().then(() => { window.__ready = true; });
     await region().locator('button[data-act="set-draft"]').click();
     await tab.waitForTimeout(400);
     claim("her press on the act changes nothing", (await draftNow()) === draft);
+
+    // ── the call sheet: notes saved as they are typed (FR-191) ──
+    const callPath = `/calls/${encodeURIComponent(TODD)}`;
+    const calls = () => tab.locator('[data-worker-view="call"]');
+    const notesNow = () => tab.evaluate((id) => window.__handle.store.graph.getNode(id).notes, TODD);
+    const callState = () => tab.evaluate(() => document.querySelector('[data-worker-view="call"]')?.shadowRoot?.querySelector(".state")?.textContent?.trim() ?? null);
+    const callOps = () => tab.evaluate(() => window.__handle.store.log.all().filter((op) => op.via === "view:call").map((op) => ({ via: op.via, author: op.author.id })));
+    const notesBefore = await (async () => {
+      await open(`face=pages&path=${encodeURIComponent(callPath)}`);
+      return tab.evaluate((id) => window.__handle.store.graph.getNode(id).notes, TODD);
+    })();
+    const notes = calls().locator('textarea[name="notes"]');
+    await notes.waitFor({ timeout: 20_000 });
+    await tab.waitForTimeout(200);
+    claim("the call sheet's notes field is filled by the host with the call's own notes", (await notes.inputValue()) === notesBefore, { filled: await notes.inputValue(), notes: notesBefore });
+    await notes.evaluate((field) => {
+      field.focus();
+      field.setSelectionRange(field.value.length, field.value.length);
+    });
+    const TYPED = " Will bring six from his board.";
+    await tab.keyboard.type(TYPED, { delay: 5 });
+    await tab.waitForTimeout(300);
+    const whileTyping = { notes: await notesNow(), state: await callState() };
+    await shot("call-saving");
+    claim('as the person types, nothing is saved yet and the view says "Saving…"', whileTyping.notes === notesBefore && whileTyping.state === "Saving…", whileTyping);
+    await tab.waitForFunction((id) => window.__handle.store.graph.getNode(id).notes.endsWith("his board."), TODD, { timeout: 5_000 }).catch(() => {});
+    await tab.waitForTimeout(200);
+    const paused = { notes: await notesNow(), state: await callState(), ops: await callOps() };
+    await shot("call-saved");
+    claim("once the person pauses, the notes are saved with no button, once, as Nick, through the view", paused.notes === `${notesBefore}${TYPED}` && paused.ops.length === 1 && paused.ops[0].author === "person:nick", paused);
+    claim('the view hears the save as acted and says "Saved"', paused.state === "Saved", paused.state);
+    const LEFT = " Call back Thursday.";
+    await notes.evaluate((field) => field.focus());
+    await tab.keyboard.press("End");
+    await tab.keyboard.type(LEFT, { delay: 5 });
+    await tab.keyboard.press("Tab");
+    await tab.waitForTimeout(250);
+    const left = { notes: await notesNow(), ops: (await callOps()).length };
+    claim("leaving the field saves at once what was still waiting, before the pause would have", left.notes === `${notesBefore}${TYPED}${LEFT}` && left.ops === 2, left);
+    await tab.waitForTimeout(2_000);
+    claim("and the pause after it saves nothing again", (await callOps()).length === 2, (await callOps()).length);
+
+    await open(`face=pages&seat=rae&eager=1&path=${encodeURIComponent(callPath)}`);
+    await notes.waitFor({ timeout: 20_000 });
+    await tab.waitForTimeout(200);
+    const raeFilled = await notes.inputValue();
+    await notes.click();
+    await tab.keyboard.type("Rae's guess.", { delay: 5 });
+    await tab.waitForFunction(() => /^Not saved/.test(document.querySelector('[data-worker-view="call"]')?.shadowRoot?.querySelector(".state")?.textContent ?? ""), null, { timeout: 5_000 }).catch(() => {});
+    const forRaeCall = { filled: raeFilled, notes: await notesNow(), state: await callState(), ops: (await callOps()).length };
+    await shot("call-rae");
+    claim("a seat that may not save the notes gets the field unfilled, her typing saves nothing, and the view says why", forRaeCall.filled === "" && forRaeCall.notes === notesBefore && /^Not saved: /.test(forRaeCall.state ?? "") && forRaeCall.ops === 0, forRaeCall);
 
     claim("no view failed", (await tab.evaluate(() => window.__failures)).length === 0, await tab.evaluate(() => window.__failures));
     claim("the page throws nothing", report.pageErrors.length === 0, report.pageErrors);

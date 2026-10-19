@@ -41,7 +41,13 @@ export interface ViewEvent {
   readonly checked?: boolean;
   /** A key's name, for `keydown`. */
   readonly key?: string;
-  /** What became of the act this press was bound to (`data-act`): the host applied it, or refused it, before the view heard (FR-92). */
+  /**
+   * What became of the act this press was bound to (`data-act`): the host
+   * applied it, or refused it, before the view heard (FR-92). On an
+   * `acted` event — heard after every act a press or a field saved as it
+   * is typed (`data-save`) asked for — `ok`, and `reason` and `message`
+   * when it was refused (FR-191).
+   */
   readonly pressed?: GuestPressed;
 }
 
