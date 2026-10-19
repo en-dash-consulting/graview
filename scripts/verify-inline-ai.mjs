@@ -16,7 +16,11 @@
  * either face. A menu opened on a card the pointer rested on draws complete
  * in its first frame, hovering across the tasks asks no model, a menu opened
  * again asks nothing until its record changes (FR-186), and a host with only
- * a Thinking slot is asked only when "Suggest…" is pressed (FR-185).
+ * a Thinking slot is asked only when "Suggest…" is pressed (FR-185). With a
+ * Fast slot that answers in 100 to 250 ms, the menu's AI section fills in
+ * under 400 ms at the 95th percentile of twenty opens; and where the host
+ * asks for hover chips there is at most one, never for a pointer passing
+ * over, and none with AI off or where the host did not ask.
  *
  *   node scripts/verify-inline-ai.mjs [--engine=chromium|webkit|firefox]
  */
@@ -512,6 +516,149 @@ try {
     ok: openedAndClosed.thinking === 0 && openedAndClosed.fast === 0 && suggestRow && pressed.thinking === 1 && offered > 0,
   };
   await counting.close();
+
+  /* ------------------------------------------- the menu's AI section fills in under 400 ms (Roadmap f-inline-ai-framework-finish) */
+  reach("theMenusAiSectionFillsInUnder400MsAtP95");
+  /*
+   * A Fast slot as slow as a real one: each decision answered after 100 to
+   * 250 ms, at random. Each open is on a task whose suggestion is not kept
+   * yet (the page is loaded again once every task has been asked about), the
+   * pointer resting on it first as a person's does before a right-click, and
+   * the time is from the right-click to the section's suggestions drawn.
+   */
+  const timed = await browser.newContext({ viewport: { width: 1560, height: 940 } });
+  await timed.addInitScript(KEEP_THE_STORE);
+  await timed.addInitScript(() => {
+    const params = new URLSearchParams(location.search);
+    window.__calls = { fast: 0, thinking: 0 };
+    const sure = Number(params.get("sure") ?? "0.9");
+    const decide = async (_state, questions) => {
+      window.__calls.fast += 1;
+      await new Promise((done) => setTimeout(done, 100 + Math.random() * 150));
+      return {
+        answers: Object.fromEntries(Object.entries(questions).map(([key, question]) => {
+          const names = Object.keys(question.criteria);
+          return [key, { type: "choice", choice: names[0], confidence: sure, probabilities: Object.fromEntries(names.map((name, at) => [name, at === 0 ? sure : 0.02])) }];
+        })),
+        usage: { inputTokens: 100, outputTokens: 0 },
+      };
+    };
+    window.__todoAi = { fast: { model: "host-fast", decide }, ...(params.get("chips") === "1" ? { hoverChips: true } : {}), ...(params.get("off") === "1" ? { off: true } : {}) };
+  });
+  const clock = await timed.newPage();
+  clock.on("pageerror", (error) => errors.push(error.message));
+  const OPENS = 20;
+  const samples = [];
+  let loads = 0;
+  while (samples.length < OPENS && loads < 8) {
+    loads += 1;
+    await clock.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
+    await ready(clock);
+    const tasks = await clock.evaluate(() => [...new Set([...document.querySelectorAll('[data-graview-pick^="t-"]')].map((one) => one.getAttribute("data-graview-pick")))]);
+    for (const id of tasks) {
+      if (samples.length >= OPENS) break;
+      const sample = await clock.evaluate(async (id) => {
+        const card = document.querySelector(`[data-graview-pick="${id}"]`);
+        if (!card) return null;
+        const box = card.getBoundingClientRect();
+        const at = { clientX: box.left + box.width / 2, clientY: box.top + Math.min(box.height / 2, 20) };
+        const before = window.__calls.fast;
+        // The pointer comes to rest on the card, as before any right-click.
+        card.dispatchEvent(new PointerEvent("pointerover", { bubbles: true, pointerType: "mouse", ...at }));
+        await new Promise((done) => setTimeout(done, 200));
+        const start = performance.now();
+        card.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2, ...at }));
+        const drawn = await new Promise((done) => {
+          const look = () => {
+            const section = document.querySelector('[data-testid="context-menu"] [data-menu-section="inline-ai"]');
+            if (section?.querySelector("[data-ai-offer]")) return done(performance.now() - start);
+            if (performance.now() - start > 5000) return done(null);
+            requestAnimationFrame(look);
+          };
+          look();
+        });
+        const asked = window.__calls.fast - before;
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        card.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: document.body }));
+        await new Promise((done) => setTimeout(done, 150));
+        return { id, ms: drawn === null ? null : Math.round(drawn), asked };
+      }, id);
+      // Only an open that asked the model is a measure of filling in; one already kept is drawn in its first frame.
+      if (sample && sample.asked > 0) samples.push(sample);
+    }
+  }
+  const times = samples.map((one) => (one.ms === null ? Infinity : one.ms)).sort((a, b) => a - b);
+  const p95 = times.length > 0 ? times[Math.min(times.length - 1, Math.ceil(times.length * 0.95) - 1)] : null;
+  report.checks.theMenusAiSectionFillsInUnder400MsAtP95 = {
+    opens: samples.length,
+    fastLatencyMs: "100–250",
+    p50: times[Math.floor(times.length / 2)] ?? null,
+    p95: p95 === Infinity ? "never drawn" : p95,
+    slowest: samples.slice().sort((a, b) => (b.ms ?? Infinity) - (a.ms ?? Infinity)).slice(0, 3),
+    ok: samples.length >= OPENS && p95 !== null && p95 < 400,
+  };
+
+  /* ------------------------------------------- one quiet hover chip */
+  reach("aHoverChipIsAtMostOneAndNeverOnAPassOver");
+  const chipsSaid = () => clock.evaluate(() => ({ chips: document.querySelectorAll('[data-testid="hover-chip"]').length, fast: window.__calls.fast, label: document.querySelector('[data-testid="hover-chip"]')?.getAttribute("aria-label") ?? null }));
+  await clock.goto(`${at("todo")}/?${DAY}&chips=1`, { waitUntil: "load", timeout: 90_000 });
+  await ready(clock);
+  const passing = await clock.evaluate(() => [...new Set([...document.querySelectorAll('[data-graview-pick^="t-"]')].map((one) => one.getAttribute("data-graview-pick")))].slice(0, 6));
+  // Across the tasks without stopping: each passed over in a few milliseconds, then the pointer away from them all.
+  for (const id of passing) {
+    const box = await clock.locator(`[data-graview-pick="${id}"]`).first().boundingBox();
+    if (box) await clock.mouse.move(box.x + box.width / 2, box.y + Math.min(box.height / 2, 16), { steps: 2 });
+  }
+  await clock.mouse.move(4, 470, { steps: 2 });
+  await clock.waitForTimeout(700);
+  const passedOver = await chipsSaid();
+  // Resting on one, then on another: one chip, moved.
+  await clock.hover('[data-graview-pick="t-deposit"]');
+  await clock.waitForTimeout(900);
+  const restedOnOne = await chipsSaid();
+  const other = passing.find((id) => id !== "t-deposit");
+  if (other) await clock.hover(`[data-graview-pick="${other}"]`);
+  await clock.waitForTimeout(900);
+  const restedOnAnother = await chipsSaid();
+  const mostAtOnce = await clock.evaluate(async () => {
+    let most = 0;
+    for (let frame = 0; frame < 30; frame += 1) {
+      most = Math.max(most, document.querySelectorAll('[data-testid="hover-chip"]').length);
+      await new Promise((done) => requestAnimationFrame(done));
+    }
+    return most;
+  });
+  await clock.mouse.move(4, 470);
+  await clock.waitForTimeout(700);
+  const leftIt = await chipsSaid();
+  report.checks.aHoverChipIsAtMostOneAndNeverOnAPassOver = {
+    passing,
+    passedOver,
+    restedOnOne,
+    restedOnAnother,
+    mostAtOnce,
+    leftIt,
+    ok: passing.length > 2 && passedOver.fast === 0 && passedOver.chips === 0 && restedOnOne.chips === 1 && restedOnOne.fast === 1 && restedOnAnother.chips === 1 && mostAtOnce === 1 && leftIt.chips === 0,
+  };
+
+  reach("aHoverChipVanishesWithAiOff");
+  await clock.goto(`${at("todo")}/?${DAY}&chips=1&off=1`, { waitUntil: "load", timeout: 90_000 });
+  await ready(clock);
+  await clock.hover('[data-graview-pick="t-deposit"]');
+  await clock.waitForTimeout(900);
+  const offChips = await chipsSaid();
+  // And off unless the host asks for chips: the same rest, a Fast slot, no chip and no call.
+  await clock.goto(`${at("todo")}/?${DAY}`, { waitUntil: "load", timeout: 90_000 });
+  await ready(clock);
+  await clock.hover('[data-graview-pick="t-deposit"]');
+  await clock.waitForTimeout(900);
+  const unasked = await chipsSaid();
+  report.checks.aHoverChipVanishesWithAiOff = {
+    offChips,
+    unasked,
+    ok: offChips.chips === 0 && offChips.fast === 0 && unasked.chips === 0 && unasked.fast === 0,
+  };
+  await timed.close();
 
   /* ------------------------------------------- AI off: no AI part, on either face */
   reach("aiOffHidesEveryAiPartOnBothFaces");

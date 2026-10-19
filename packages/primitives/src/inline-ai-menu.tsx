@@ -135,7 +135,8 @@ export async function askInline(env: InlineEnv, kind: "suggest" | "fill" | "reco
  * asks nothing. What an entry depends on is the record itself — a record
  * is a new object whenever it changes — or, for a list, a lens or a place,
  * any change to the graph; a change drops the entry. A failure is not
- * kept, so the next opening asks again. Hovering never reaches here.
+ * kept, so the next opening asks again. Hovering reaches here only where
+ * the host asked for hover chips (`hover-chip.tsx`), and shares the entry.
  */
 interface Suggested {
   readonly schema: unknown;
@@ -163,26 +164,36 @@ const dependsOn = (store: Store<AnySchema>, target: AiTarget): readonly unknown[
   const records = recordsOfTarget(target);
   return records.length > 0 ? records.map((id) => store.graph.getNode(id)) : [changesOf(store)];
 };
-const keyOf = (env: InlineEnv, target: AiTarget): string => JSON.stringify({ target, seat: env.principal });
+const keyOf = (env: InlineEnv, target: AiTarget, by: string): string => JSON.stringify({ target, seat: env.principal, by });
+
+/**
+ * WHO ASKS, AND HOW: the menu's own suggestion (`"menu"`) unless said — the
+ * selection bar asks its own question of the same records (`"several"`),
+ * kept apart, by the same rules.
+ */
+export interface SuggestAsker {
+  readonly by: string;
+  readonly ask: () => Promise<InlineResult>;
+}
 const standing = (env: InlineEnv, target: AiTarget, entry: Suggested): boolean => {
   const now = dependsOn(env.store, target);
   return entry.schema === env.store.schema && entry.ai === env.ai && now.length === entry.depends.length && now.every((one, at) => one === entry.depends[at]);
 };
 
 /** What was suggested here before, while nothing it depends on has changed. */
-export function heldSuggestion(env: InlineEnv, target: AiTarget): InlineResult | undefined {
-  const entry = SUGGESTED.get(env.store)?.get(keyOf(env, target));
+export function heldSuggestion(env: InlineEnv, target: AiTarget, by = "menu"): InlineResult | undefined {
+  const entry = SUGGESTED.get(env.store)?.get(keyOf(env, target, by));
   return entry?.result !== undefined && standing(env, target, entry) ? entry.result : undefined;
 }
 
 /** The suggestions here: held, on their way, or asked now — once. */
-export function suggestOnce(env: InlineEnv, target: AiTarget): Promise<InlineResult> {
+export function suggestOnce(env: InlineEnv, target: AiTarget, asker?: SuggestAsker): Promise<InlineResult> {
   let kept = SUGGESTED.get(env.store);
   if (!kept) SUGGESTED.set(env.store, (kept = new Map()));
-  const key = keyOf(env, target);
+  const key = keyOf(env, target, asker?.by ?? "menu");
   const was = kept.get(key);
   if (was && standing(env, target, was)) return was.result ? Promise.resolve(was.result) : was.asked;
-  const asked = askInline(env, "suggest", target);
+  const asked = asker ? asker.ask() : askInline(env, "suggest", target);
   const entry: Suggested = { schema: env.store.schema, ai: env.ai, depends: dependsOn(env.store, target), asked };
   kept.delete(key);
   kept.set(key, entry);

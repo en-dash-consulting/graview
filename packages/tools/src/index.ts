@@ -76,7 +76,7 @@ export type { AskAbout, AskAnswer, AskContext, SeatMove, SeatOffer } from "./go.
 export { completionFor, decideFor, localCompletion, openAiCompatibleCompletion, seatResponder, xaiCompletion } from "./local.js";
 export type { LocalStatus } from "./local.js";
 // The AI the host gave a seat: decided once, in code, never chosen by a reader.
-export { aiOff, aiTalks, ANSWERED_WITH_AI, inlineAiOn, NO_AI, NO_AI_SAID } from "./ai.js";
+export { aiOff, aiTalks, ANSWERED_WITH_AI, fastGiven, HOVER_CHIP_CONFIDENCE, hoverChipsOn, inlineAiOn, NO_AI, NO_AI_SAID, suggestsOnOpen } from "./ai.js";
 export { aiVia } from "./local.js";
 export type { AiInteractionHost, AiPrice, AnswerProvider, AnswerReply, AnswerRequest, FastProvider, HostAi, HostTurn, ThinkingProvider, ThinkingReply, ThinkingRequest, TurnMessage } from "./ai.js";
 // The tool loop a host's `turn` runs over one Messages API request at a time (FR-160).
