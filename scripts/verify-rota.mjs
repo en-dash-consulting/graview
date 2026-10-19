@@ -186,7 +186,8 @@ const openProfile = async (page) => {
         return [Math.abs(h.left + h.width / 2 - (c.left + c.width / 2))];
       });
       let scroller = heads[0]?.parentElement ?? null;
-      while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
+      // What clips the names: a panel that scrolls, or one whose content fits and so is hidden (a press past its edge reaches nothing of it).
+      while (scroller && !/(auto|scroll|hidden|clip)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
       return { columns: heads.length, worst: Math.round(Math.max(0, ...drifts)), scrolls: scroller ? scroller.scrollWidth > scroller.clientWidth : false };
     });
   const atRest = await headsOnColumns();
@@ -194,7 +195,8 @@ const openProfile = async (page) => {
   if (atRest.scrolls) {
     await page.evaluate(() => {
       let scroller = document.querySelector("[data-graview-column]")?.parentElement ?? null;
-      while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
+      // What clips the names: a panel that scrolls, or one whose content fits and so is hidden (a press past its edge reaches nothing of it).
+      while (scroller && !/(auto|scroll|hidden|clip)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
       scroller.scrollLeft = 60;
     });
     await page.waitForTimeout(300);
@@ -215,7 +217,8 @@ const openProfile = async (page) => {
    */
   const pressed = await page.evaluate(() => {
     let scroller = document.querySelector("[data-graview-column]")?.parentElement ?? null;
-    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
+    // What clips the names: a panel that scrolls, or one whose content fits and so is hidden (a press past its edge reaches nothing of it).
+    while (scroller && !/(auto|scroll|hidden|clip)/.test(getComputedStyle(scroller).overflowX)) scroller = scroller.parentElement;
     const view = scroller?.getBoundingClientRect();
     let points = 0;
     let right = 0;
