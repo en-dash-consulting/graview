@@ -40,7 +40,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.36
 
-Published October 18, 2026 · the current version
+Published October 18, 2026
 
 A record's pictures load under the host's base on every face, and a view draws the pictures and app images it was promised.
 

@@ -1,5 +1,45 @@
 # @graview/embed
 
+## 0.1.37
+
+### Patch Changes
+
+- f860e41: A rule's today() is the app's day, not UTC's. Datetimes were said in the app's zone, and `today()` — what a rule, a computed field, a template and a label read — was still the UTC date, so an app in New York turned its day at 8 PM: at 01:30 UTC on Oct 17 a chore due Oct 16 was already overdue over dinner. With `brand.timeZone` declared, today() is the date there, and the day turns at the app's midnight: a document's rules, computed fields, guards and labels read it from the document's own brand, and a store told the zone (`new Store({ timeZone })`, which `openStore`, `openRemote`, the embed and `graview mcp` pass from the app's brand) is judged on that day, hands it to a rule written as a function in its context, as `openStore` already did, and ticks to it: `tick(now)` takes `now`'s day in that zone, and `tickEachDay` fires at that midnight, 23 hours after the last on the day clocks spring forward and 25 on the day they fall back, at the day's first moment where midnight never happens. A page reads the day of the app it draws, never the reader's zone and never the runtime's, so a server and a page agree on the day for the same app. Without a declared zone, today() is the UTC date, as before, and `openStore` still judges on the host's own date. A host that keeps a store on its own alarm (a Durable Object) passes `timeZone: brand.timeZone` to its store and sets the alarm `untilTheDayTurns(now, store.timeZone)` ahead; a tick at the turn of the day now says what the turn moved, judging what stood on the day the store was last ticked to. `isoToday(timeZone?, at?)` and `dayZoneFor` are exported, `dayOf` and `untilTheDayTurns` take a zone, and `rules-read-the-clock`'s fix says which midnight. The `graview-invariant` skill says so. A hosted page carries 0.7 KB more up front for it (the compiled page too); their budgets are raised by that.
+  
+  Compatibility: ops, stored records and the declaration are unchanged. An app that declares `brand.timeZone` reads today() as the date in that zone, where it read the UTC date, on every surface and in `graview serve`. `StoreOptions` takes `timeZone` and `Store` has `timeZone`; `dayOf(now, timeZone?)` and `untilTheDayTurns(now, timeZone?)` take a zone; `tickEachDay` reads the store's `timeZone`. A store told its zone hands its day to its rules' context as `today` where neither the call nor its options carry one.
+- 7d6f521: Datetimes are said in the app's time zone, and a template can say a time of day. An app declares its zone once, `brand.timeZone` (an IANA name, "America/New_York") on `defineApp`'s brand or a document's `brand`, and every instant kept with a zone (`2026-10-16T14:47:00Z`, `…-04:00`) is said on that clock: in lists, cards, record pages, a rule's sentence, an act's sentence and its echo to an agent, Activity's digest, the static page and the date editor, which reads and keeps an instant on the same clock. A person's zone wins over it where a host passes one — `timeZone` on `GraviewProvider`, the embed and the pages face, beside `locale` — and each reader's own clock is said when neither says, as before. A moment kept without a zone is still the wall time written. Describe templates take `{at | time}` ("10:47 AM") and `{at | datetime}` ("Oct 16, 2026, 10:47 AM EDT"), and a field block takes `as: "time"` and `as: "datetime"`; `{at | date}` and `relative` count an instant's day on the app's clock. An agent's act given `2026-10-16T10:47:00-04:00` echoed "2:47 PM", the server's UTC; a tool runtime handed the app now says it in the app's zone, and a host answering away from any page says its own words in it with `sayingIn({ appTimeZone }, run)`. A view is handed the zone rather than formatted strings: every props push carries `locale` and `timeZone`, for `Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, … })`, so no view hard-codes a zone again. `graview check` and the document's checker refuse a zone the runtime does not know, or an offset, by name (`brand-time-zone`); `set-brand` sets one (`timeZone`, null clears it), and a diff says "Times are said in America/New_York." `describeApp` says the zone. The `graview-brand`, `graview-node-kind` and `graview-worker-view` skills say so. A hosted page carries 2.0 KB more up front for it (the compiled page too), and the guest host about 0.5 KB; their budgets are raised by that.
+  
+  Compatibility: ops and stored records are unchanged; the declaration takes an optional `brand.timeZone`, and a declaration without it says every time as before. The check finding `brand-time-zone` is new. The guest wire's props carry `locale` and `timeZone`. `Money` (a block's and a template's `money`) takes `timeZone`; `readableFields` takes `timeZone`; `momentAsRead`, `timeAsRead` and `whenAsRead` take a zone after the locale. `sayIn` takes `readerTimeZone` and `appTimeZone` beside `reader` and `app`. A derived edit's sentence and Activity's digest say an instant's day and time on the page's zone, where they said them on the runtime's clock.
+- 4c03643: The switch's Pages goes back to the page Back last landed on. Under address routing a page reached by Back or Forward is the routed face's arrival, which its router reports to nobody, so after a reload on the scene the embed knew no page: from the board, the scene, a reload, Back, Forward and Pages went to the home ("2 tasks and 1 person.") instead of the board. The address bar now hands the embed the page each Back or Forward lands on. With the other fixes of this round, a hosted page carries 0.2 KB more up front, the compiled page too.
+  
+  Compatibility: no surface changes.
+- Updated dependencies [9e00808]
+- Updated dependencies [a130326]
+- Updated dependencies [7fa2dbc]
+- Updated dependencies [cf691f4]
+- Updated dependencies [d689fbc]
+- Updated dependencies [7d137a8]
+- Updated dependencies [9121a9c]
+- Updated dependencies [862ab8c]
+- Updated dependencies [f860e41]
+- Updated dependencies [7441814]
+- Updated dependencies [909aad0]
+- Updated dependencies [7b50571]
+- Updated dependencies [7d6f521]
+- Updated dependencies [f97a149]
+- Updated dependencies [d689fbc]
+- Updated dependencies [34fa7b9]
+- Updated dependencies [0d440e2]
+- Updated dependencies [e56c351]
+- Updated dependencies [f9e81c1]
+  - @graview/primitives@0.1.37
+  - @graview/core@0.1.37
+  - @graview/pages@0.1.37
+  - @graview/studio@0.1.37
+  - @graview/tools@0.1.37
+  - @graview/react@0.1.37
+  - @graview/layout@0.1.37
+
 ## 0.1.36
 
 ### Patch Changes

@@ -1,5 +1,32 @@
 # @graview/guest
 
+## 0.1.37
+
+### Patch Changes
+
+- cf691f4: A record can hold a video. A photo gallery built on Graview Cloud with three iPhone clips could show only a play glyph over a still: no field took a video, the host's files took none, and a view may not draw `<video>`. A document now says `{"type": "video"}` (or `{"type": "list", "of": "video"}`), a declaration `videoField()`, and the value is the `FileValue` the host's upload answered — `{ href, name, type, bytes, width?, height?, caption? }` — with what a player wants before it loads a byte: `poster` (a picture on the host), `duration` in seconds and `captions` (a WebVTT file on the host), each a path on the host or a length above 0, or refused. A video field takes only `video/*`, a picture field no video. The editor asks for videos where the host's `kinds` take `video/*` (`accept="video/*"`, "Choose a video", "This host doesn't take videos" where they do not) and sends one as it was picked: making a phone's HEVC `.mov` an MP4 every browser plays, its poster and its length are the host's to answer. The face plays a record's video — its poster first, the browser's own controls, `preload="metadata"`, captions where the value has them, sized from the value — drawn and fetched where the host serves files (`fileSrc`), its length read from what the player loaded where the value does not say it; a card or a row shows its poster (or its first frame) with a play glyph and its length. A record's facts, an image block and a headless run say it as "a 45-second video" (`videoWords`); the act's form and its argument's shape say `video: true`. A worker view whose manifest says `pictures` places `<graview-video data-record data-field>` and the host plays that record's video in it, from the records the view was shown, never handing the view a path or drawing it a `<video>`; and a viewer's press on a `data-lightbox` element opens the host's full-screen viewer for a picture or a video. The dev server's files door takes videos and serves them a range at a time. The `graview-view-drawing`, `graview-worker-view` and `graview-node-kind` skills say so. A hosted page carries 0.6 KB more up front for a video field's schema; the player, the card and the view's player are behind the doors already there, and the guest host's first load grows by under 1 KB for the press and the door.
+  
+  Compatibility: ops and stored records are unchanged; a stored file value is read as before, and a value may now also carry `poster`, `duration` and `captions`. The declaration takes the field type `video` and `of: "video"`; a declaration that compiled still compiles. Derived tool input schemas for a file argument list the optional `poster`, `duration` and `captions`, and a video field's form control and argument shape say `video: true`. The guest wire is unchanged in shape: a video on a record is handed to a view that asks for `pictures` as its facts (`GuestFile.duration` beside `width`, `height` and `caption`) where it was handed its name, type and size. The open kit draws one element more, `graview-video`. `DEV_FILES_KINDS` takes `video/*`.
+- 7d6f521: Datetimes are said in the app's time zone, and a template can say a time of day. An app declares its zone once, `brand.timeZone` (an IANA name, "America/New_York") on `defineApp`'s brand or a document's `brand`, and every instant kept with a zone (`2026-10-16T14:47:00Z`, `…-04:00`) is said on that clock: in lists, cards, record pages, a rule's sentence, an act's sentence and its echo to an agent, Activity's digest, the static page and the date editor, which reads and keeps an instant on the same clock. A person's zone wins over it where a host passes one — `timeZone` on `GraviewProvider`, the embed and the pages face, beside `locale` — and each reader's own clock is said when neither says, as before. A moment kept without a zone is still the wall time written. Describe templates take `{at | time}` ("10:47 AM") and `{at | datetime}` ("Oct 16, 2026, 10:47 AM EDT"), and a field block takes `as: "time"` and `as: "datetime"`; `{at | date}` and `relative` count an instant's day on the app's clock. An agent's act given `2026-10-16T10:47:00-04:00` echoed "2:47 PM", the server's UTC; a tool runtime handed the app now says it in the app's zone, and a host answering away from any page says its own words in it with `sayingIn({ appTimeZone }, run)`. A view is handed the zone rather than formatted strings: every props push carries `locale` and `timeZone`, for `Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, … })`, so no view hard-codes a zone again. `graview check` and the document's checker refuse a zone the runtime does not know, or an offset, by name (`brand-time-zone`); `set-brand` sets one (`timeZone`, null clears it), and a diff says "Times are said in America/New_York." `describeApp` says the zone. The `graview-brand`, `graview-node-kind` and `graview-worker-view` skills say so. A hosted page carries 2.0 KB more up front for it (the compiled page too), and the guest host about 0.5 KB; their budgets are raised by that.
+  
+  Compatibility: ops and stored records are unchanged; the declaration takes an optional `brand.timeZone`, and a declaration without it says every time as before. The check finding `brand-time-zone` is new. The guest wire's props carry `locale` and `timeZone`. `Money` (a block's and a template's `money`) takes `timeZone`; `readableFields` takes `timeZone`; `momentAsRead`, `timeAsRead` and `whenAsRead` take a zone after the locale. `sayIn` takes `readerTimeZone` and `appTimeZone` beside `reader` and `app`. A derived edit's sentence and Activity's digest say an instant's day and time on the page's zone, where they said them on the runtime's clock.
+- Updated dependencies [a130326]
+- Updated dependencies [7fa2dbc]
+- Updated dependencies [cf691f4]
+- Updated dependencies [d689fbc]
+- Updated dependencies [9121a9c]
+- Updated dependencies [862ab8c]
+- Updated dependencies [f860e41]
+- Updated dependencies [7441814]
+- Updated dependencies [7d6f521]
+- Updated dependencies [f97a149]
+- Updated dependencies [d689fbc]
+- Updated dependencies [34fa7b9]
+- Updated dependencies [0d440e2]
+- Updated dependencies [e56c351]
+  - @graview/core@0.1.37
+  - @graview/react@0.1.37
+
 ## 0.1.36
 
 ### Patch Changes
