@@ -56,3 +56,38 @@ describe("a kind's list", () => {
     expect(html.indexOf('data-testid="form-add-task"')).toBeLessThan(html.indexOf("Book the van"));
   });
 });
+
+/*
+ * TWO WAYS TO ADD ONE, WRAPPED, NEVER STACKED ON EACH OTHER. Each press is a
+ * 28-pixel target that takes 4 pixels less of the line above and below it,
+ * so when the presses wrapped to a second row on a phone they overlapped by
+ * eight: Cloud's vendor list at 390 wide had "+Add a vendor to this category"
+ * over "+Add a vendor", and a press on one landed on the other. The rows
+ * stand apart by at least what the presses take back.
+ */
+describe("a kind's list with two ways to add one", () => {
+  it("keeps the rows of presses apart by at least what each press takes back from the line", () => {
+    const second = defineMutation("add-task-to-list", {
+      title: "Add a task to this list",
+      creates: ["task"],
+      input: z.object({ name: z.string().min(1) }),
+      describe: () => "Add a task to this list",
+      apply(ctx, args) {
+        ctx.addNode({ id: ctx.freshId("task", "task"), kind: "task", name: args.name } as never);
+      },
+    });
+    const html = renderToStaticMarkup(
+      <PagesApp
+        context={{ store: new Store({ schema, mutations: [add as never, second as never], snapshot: { nodes: nodes as never, edges: [] } }), views: registerDefaultViews(schema, createViews(schema)) }}
+        initialPath="/tasks"
+      />,
+    );
+    const holder = html.match(/<span style="([^"]*)" data-testid="beginnings-open">/)?.[1] ?? "";
+    const press = html.match(/<button[^>]*data-testid="act-open-add-task"[^>]*style="([^"]*)"/)?.[1] ?? "";
+    const rowGap = Number(holder.match(/row-gap:\s*(\d+)px/)?.[1] ?? 0);
+    const takenBack = -Number(press.match(/margin:\s*(-?\d+)px/)?.[1] ?? 0);
+    expect(html.match(/data-testid="act-open-/g) ?? []).toHaveLength(2);
+    expect(takenBack).toBeGreaterThan(0);
+    expect(rowGap).toBeGreaterThanOrEqual(2 * takenBack);
+  });
+});

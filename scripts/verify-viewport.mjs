@@ -28,7 +28,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { launchEngine } from "./lib/engine.mjs";
+import { arriveWithoutWebfonts, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
@@ -171,7 +171,7 @@ try {
         const context = await browser.newContext({ viewport: PORTRAIT, hasTouch: true });
         const page = await context.newPage();
         page.on("pageerror", (error) => errors.push(`${engine} ${face} ${height}: ${error.message}`));
-        await page.goto(`${at("viewport-host")}/?face=${face}&height=${encodeURIComponent(height)}`, { waitUntil: "load" });
+        await arriveWithoutWebfonts(page, `${at("viewport-host")}/?face=${face}&height=${encodeURIComponent(height)}`);
         await page.waitForFunction(() => window.__ready === true, null, { timeout: 60_000 });
         await page.waitForTimeout(SETTLE);
         const said = await turnAndMeasure(page, "embed");
@@ -197,7 +197,7 @@ try {
     const context = await browser.newContext({ viewport: PORTRAIT, hasTouch: true });
     const page = await context.newPage();
     page.on("pageerror", (error) => errors.push(`${engine} shell: ${error.message}`));
-    await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+    await arriveWithoutWebfonts(page, `${at("todo")}/?today=2026-09-01`);
     await page.waitForFunction(() => "__todoReady" in window, null, { timeout: 120_000 });
     await page.waitForTimeout(SETTLE);
     const said = await turnAndMeasure(page, "shell");

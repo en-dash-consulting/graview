@@ -100,4 +100,27 @@ describe("a panel whose content does not fit", () => {
     expect(scroller?.hasAttribute("tabindex")).toBe(false);
     expect(scroller?.hasAttribute("role")).toBe(false);
   });
+
+  /*
+   * A PIXEL OF ROUNDING IS NOT SOMETHING TO SCROLL TO. A picture scaled into
+   * a card measured 322.4 + 14 = 336.4px in a 336.4px scroller, and the
+   * browser reported 337 against 336 and let it scroll by one pixel: axe
+   * found a scroll region nobody could reach (`scrollable-region-focusable`
+   * on graview.dev at 414px), and a stop there would be a stop in front of
+   * nothing. Content that fits does not scroll at all.
+   */
+  it("does not scroll, and is no stop, when it is over by a pixel of rounding", async () => {
+    const restore = sized({ scrollHeight: 337, clientHeight: 336, scrollWidth: 338, clientWidth: 338 });
+    const scroller = await draw();
+    restore();
+    expect(scroller?.hasAttribute("tabindex")).toBe(false);
+    expect((scroller as HTMLElement | null)?.style.overflow).toBe("hidden");
+  });
+
+  it("scrolls when it overflows by more than rounding", async () => {
+    const restore = sized({ scrollHeight: 400, clientHeight: 200, scrollWidth: 300, clientWidth: 300 });
+    const scroller = await draw();
+    restore();
+    expect((scroller as HTMLElement | null)?.style.overflow).not.toBe("hidden");
+  });
 });
