@@ -1,9 +1,0 @@
----
-"@graview/core": patch
-"@graview/primitives": patch
-"@graview/guest": patch
----
-
-The right-click menu offers a view the app already has before it draws a new one. Asked for a board of tasks where the app has "Tasks by status", the inline AI drew a second board, because the menu offered "Draw a panel" and nothing else. Where it would draw one, the menu now offers "Open Tasks by status" above "Draw a new view": the best of the app's places for the target, matched by what each is attached to, what it reads, its title and what it is (a board, a calendar), in one of the three rows its suggestions had, so the menu is no taller. The quick ask, which has the words, offers up to three ahead of its "Show …" panels — "a searchable board" finds Recon's "Actions by status". A view that fits only in part (it reads the kind but pictures another, or a word asked is not said by it) is offered as "Open and adjust …", which opens it with the quick ask on it to say what to change (from the quick ask, with the words already asked of it). No model is asked: `existingViewsOf` on `@graview/core/catalog` reads the places alone, and none is offered, with no row or heading, when nothing fits, for a question, or on the home with nothing asked. A declared or kept lens says which shipped lens it is (`Place.lens`), and a worker view registered with `registerWorkerView` says it is a view and the kinds its manifest reads (`Place.reads`), so a view added from a chat is matched as a declared one is. A hosted page carries 77 bytes more up front, for what a place is and reads; the matching and its rows are fetched with the inline AI.
-
-Compatibility: no surface changes. `ViewMeta` and `Place` take the optional `lens` and `reads`, and `CatalogPlace` takes `over`, `lens`, `reads` and `hidden`; a registration that says none of them registers as before.

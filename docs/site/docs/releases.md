@@ -41,7 +41,7 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 
 ## 0.1.37
 
-Published October 19, 2026 · the current version
+Published October 19, 2026
 
 Times in the app's own time zone, acts for every relation, video on records, and lines that wait for a view that draws late.
 
