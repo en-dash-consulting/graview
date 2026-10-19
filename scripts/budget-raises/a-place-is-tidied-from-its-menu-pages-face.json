@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
-  "minified": 9154,
-  "gzipped": 3222,
-  "note": "Raised when the place menu's Hide and Delete for a view (Roadmap f-place-menu-views): the bar's places open the Pages menu by a right-click, Shift+F10, the menu key or a long press (`usePlaceMenu`), the frame's registry tidied as the host's `keptViews` say (`tidyViews`, `useTidiedViews`), and whether the places' foot has a Hidden or Recently deleted to list; the foot itself is fetched with the bar's panes, and the routed face's menu offers Hide and Delete for a place (`useViewTidyingSection`). 9_154 / 3_222 more than before it (606_823 / 222_223): measured at 615_977 / 225_445."
+  "minified": 8522,
+  "gzipped": 3360,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): the routed face's menu offers Hide and Delete for a place (`useViewTidyingSection`), and the bar's places open it; the foot, the gesture's reading and `tidyViews` are their own chunks. 8_522 / 3_360 more than before it (606_823 / 222_223): measured at 615_345 / 225_583."
 }

@@ -1,7 +1,8 @@
-import { REMOVED_VIEW_DAYS, removedLensName, type KeptViews, type KeptViewsState, type Place, type RemovedView } from "@graview/core";
-import { useGraview, useGraviewIfAny, useKeptViews, type MenuItem, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
-import { useContext, useMemo, type ReactNode } from "react";
+import { placePath, REMOVED_VIEW_DAYS, removedLensName, type KeptViews, type KeptViewsState, type Place, type RemovedView } from "@graview/core";
+import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
+import { useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { NoticeBoardContext, type NoticeBoard } from "./notices.js";
+import type { BarGo, BarPlace } from "./app-bar.js";
 
 /*
  * TIDYING THE VIEWS FROM THE PLACE MENU (Roadmap f-place-menu-views).
@@ -15,6 +16,24 @@ import { NoticeBoardContext, type NoticeBoard } from "./notices.js";
  * lists what is Hidden, with Show, and what was Recently deleted, with
  * Restore, for as long as the host keeps it.
  */
+
+const never = () => () => undefined;
+/** Nothing hidden, deleted or allowed: a host that keeps no views. */
+const NO_KEPT_VIEWS: KeptViewsState = { hidden: [], removed: [], may: { views: false, lenses: false } };
+
+/** What the host's kept views say now, followed as they change; nothing hidden, deleted or allowed without them. */
+export function useKeptViewsState(keeper: KeptViews | undefined): KeptViewsState {
+  const subscribe = useMemo(() => (keeper?.onChange ? (listener: () => void) => keeper.onChange!(listener) : never), [keeper]);
+  const read = () => keeper?.current() ?? NO_KEPT_VIEWS;
+  return useSyncExternalStore(subscribe, read, read);
+}
+
+/** The provider's kept views (`keptViews`) and what they say now: `null` where the host keeps none. */
+export function useKeptViews(): { readonly keeper: KeptViews; readonly state: KeptViewsState } | null {
+  const keeper = useGraviewIfAny()?.keptViews;
+  const state = useKeptViewsState(keeper);
+  return keeper ? { keeper, state } : null;
+}
 
 /** How a place is tidied: by the host, as a view it keeps; as a change to the declaration; or not by this viewer at all. */
 export function tidyingOf(place: Pick<Place, "name" | "declared">, state: KeptViewsState, keeper: KeptViews): "view" | "lens" | null {
@@ -137,12 +156,44 @@ function dayOf(iso: string, locale: string | undefined): string {
   return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString(locale ?? "en-US", { month: "short", day: "numeric" });
 }
 
+/** The foot's own rules, drawn with it. */
+const TIDY_CSS = `.graview-bar-list li.graview-bar-tidied{display:flex;align-items:flex-start;gap:8px;padding:0 0 0 2px}
+.graview-bar-tidied>.graview-bar-item,.graview-bar-gone{flex:1 1 auto;min-width:0}
+.graview-bar-gone{display:grid;gap:1px;padding:7px 8px;font-size:.875rem;line-height:1.3;overflow-wrap:anywhere;color:var(--graview-ink-muted)}
+.graview-bar-gone small{font-size:.75rem}
+.graview-bar-tidy{flex:0 0 auto;margin:3px 2px;padding:4px 10px;border:1px solid var(--graview-edge);border-radius:6px;background:none;font:inherit;font-size:.8125rem;color:var(--graview-ink);cursor:pointer}
+.graview-bar-tidy:hover{background:color-mix(in srgb,var(--graview-ink) 7%,transparent)}
+.graview-bar-tidy:focus-visible{outline:2px solid var(--graview-accent);outline-offset:1px}`;
+
+/** A hidden place's name in the foot: a link to it on Pages, where it is still at its address; its name alone on the scene. */
+function HiddenName({ place, scene, reach, done }: { readonly place: Place; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }): ReactNode {
+  if (scene) return <span className="graview-bar-gone">{place.title}</span>;
+  const entry: BarPlace = { key: `place:${place.kind}:${place.as}`, label: place.title, path: placePath(place.as), group: "pictures", kind: place.kind };
+  const href = reach.href?.(entry.path);
+  const Entry = (href !== undefined ? "a" : "button") as "a";
+  return (
+    <Entry
+      className="graview-bar-item"
+      data-testid="app-view-hidden-place"
+      {...(href !== undefined ? { href } : { type: "button" as const })}
+      onClick={(event: { button: number; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; preventDefault(): void }) => {
+        done();
+        if (!reach.go || (href !== undefined && (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey))) return;
+        event.preventDefault();
+        reach.go(entry);
+      }}
+    >
+      {place.title}
+    </Entry>
+  );
+}
+
 /**
  * THE DROP-DOWN'S FOOT: Hidden, each with Show, and Recently deleted, each
- * with Restore and the day it is gone for good. `name` draws a hidden
- * place's name — a link to it where the face has one.
+ * with Restore and the day it is gone for good. A hidden place's name is a
+ * link to it where the face has one. Fetched with the bar's panes.
  */
-export function TidyGroups({ id, name }: { readonly id: string; readonly name: (place: Place) => ReactNode }) {
+export function TidyGroups({ id, scene, reach, done }: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) {
   const tidied = useTidied();
   const { locale } = useGraview();
   const board = useContext(NoticeBoardContext);
@@ -150,13 +201,14 @@ export function TidyGroups({ id, name }: { readonly id: string; readonly name: (
   const { keeper, hidden, removed, how } = tidied;
   return (
     <>
+      <style>{TIDY_CSS}</style>
       {hidden.length > 0 ? (
         <div role="group" aria-labelledby={`${id}-hidden`} data-place-group="hidden">
           <p id={`${id}-hidden`}>Hidden</p>
           <ul>
             {hidden.map((place) => (
               <li key={`${place.kind}:${place.as}`} className="graview-bar-tidied">
-                {name(place)}
+                <HiddenName place={place} scene={scene} reach={reach} done={done} />
                 <button type="button" className="graview-bar-tidy" data-testid="app-view-show" data-view={place.name ?? place.title} aria-label={`Show “${place.title}”`} onClick={() => void setHidden(place, how(place)!, keeper, false, board)}>
                   Show
                 </button>

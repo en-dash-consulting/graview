@@ -1,7 +1,7 @@
 {
   "budget": "a hosted page",
-  "minified": 5177,
-  "gzipped": 1669,
+  "minified": 1401,
+  "gzipped": 505,
   "changeset": "a-place-is-tidied-from-its-menu.md",
-  "note": "Raised when the place menu's Hide and Delete for a view (Roadmap f-place-menu-views): the bar's places open the Pages menu by a right-click, Shift+F10, the menu key or a long press (`usePlaceMenu`), the frame's registry tidied as the host's `keptViews` say (`tidyViews`, `useTidiedViews`), and whether the places' foot has a Hidden or Recently deleted to list; the foot itself is fetched with the bar's panes. 5_177 / 1_669 more than before it (578_120 / 200_516): measured at 583_297 / 202_185."
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views). Up front only what hears the gesture and what says the places' foot has something to list, and the registry handed the tidied one once it arrives (`useTidiedViews`): which place, whether a finger rested, the menu's rows, the toast, the foot and `tidyViews` itself are fetched on first use. 1_401 / 505 more than before it (578_120 / 200_516): measured at 579_521 / 201_021."
 }

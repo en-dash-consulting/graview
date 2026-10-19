@@ -1,0 +1,38 @@
+import { retryingImport } from "@graview/core/retry";
+import type { AnySchema, KeptViews } from "@graview/core";
+import { useEffect, useState } from "react";
+import { lazyModule } from "./lazy-part.js";
+import type { ReactViewRegistry } from "./view-registry.js";
+
+/*
+ * THE FRAME'S HALF OF THE PLACE MENU'S TIDYING (Roadmap f-place-menu-views),
+ * all a page carries up front: what tidies the registry, and what follows
+ * the host as it changes, are fetched where a host keeps views at all.
+ */
+
+const tidying = /* @__PURE__ */ lazyModule(retryingImport(() => import("./tidy-views.js")));
+
+/** Follows the host's views with what tidies the registry, once it has arrived; the answer stops following. */
+function follow<S extends AnySchema>(views: ReactViewRegistry<S>, keeper: KeptViews, set: (tidied: ReactViewRegistry<S>) => void): () => void {
+  let stop: (() => void) | undefined;
+  let gone = false;
+  void tidying.load().then((module) => {
+    if (!gone) stop = module.watchTidied(views, keeper, set as never);
+  }, String);
+  return () => {
+    gone = true;
+    stop?.();
+  };
+}
+
+/**
+ * THE REGISTRY A FRAME HANDS ITS FACES, AS THE HOST'S TIDYING LEAVES IT
+ * (`tidyViews`): a view it lists as hidden kept off the lists, one it lists
+ * as deleted drawn nowhere. What tidies it is fetched where a host keeps
+ * views at all, and the registry is the frame's own until it has.
+ */
+export function useTidiedViews<S extends AnySchema>(views: ReactViewRegistry<S>, keeper: KeptViews | undefined): ReactViewRegistry<S> {
+  const [tidied, setTidied] = useState<readonly [ReactViewRegistry<S>, ReactViewRegistry<S>]>();
+  useEffect(() => (keeper ? follow(views, keeper, (next) => setTidied([views, next])) : undefined), [views, keeper]);
+  return tidied?.[0] === views ? tidied[1] : views;
+}

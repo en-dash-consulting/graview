@@ -18,7 +18,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, TIDIED_FROM, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
+import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
@@ -237,7 +237,7 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly linkedRecords?: LinkedRecords | undefined;
   /** THE HOST'S SECTIONS OF THE CONTEXT MENU (`menuSections` on the provider, else the provider's around it). */
   readonly menuSections?: readonly MenuSectionSource[] | undefined;
-  /** THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (`keptViews` on the provider, else the provider's around it): read with `useKeptViews`. */
+  /** THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (`keptViews` on the provider, else the provider's around it): read with `useKeptViews` from `@graview/primitives`. */
   readonly keptViews?: KeptViews | undefined;
   /**
    * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): the host's
@@ -1424,11 +1424,9 @@ export function useScenePointer(): ScenePoint | null {
  */
 const LANDED = new WeakSet<object>();
 /** Whether the visit drawn with these views has already landed where `pages.first` says. */
-export const hasLanded = (views: object): boolean => LANDED.has(untidied(views));
+export const hasLanded = (views: object): boolean => LANDED.has(views);
 /** The visit drawn with these views has landed: `pages.first` is not taken again. */
-export const markLanded = (views: object): void => void LANDED.add(untidied(views));
-/** The registry a tidied one is over (`tidyViews`): a view hidden or deleted is not a new visit. */
-const untidied = (views: object): object => (views as { readonly [TIDIED_FROM]?: object })[TIDIED_FROM] ?? views;
+export const markLanded = (views: object): void => void LANDED.add(views);
 
 /**
  * THE VIEW A DECLARATION OPENS ON (FR-80): `pages.first` as the registry

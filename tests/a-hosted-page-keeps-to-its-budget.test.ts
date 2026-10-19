@@ -109,7 +109,7 @@ describe("a hosted page", () => {
     // 940 KB since a view that draws its members late still gets its lines (0.1.37): the scene's lines watch the views a measurement found short of a member and measure again once one is drawn (`watchDrawnLate`): the scene face measured 956_303 B, 1_032 more than before it (955_271). Nothing up front changed.
     // 941 KB since a rule's today() came to be the app's day (Roadmap f-app-time-zone): today() read in the app's zone and a store told the zone judged and ticked on it: the scene face measured 958_071 B, 736 more than before it (957_335).
     // 942 KB since the twelfth walk (0.1.37): a repair says what it still asks for, a press its act's own input refused is told to a watching harness, and a record's facts are drawn by one `RecordField`: the scene face measured 963_478 B, 918 more than 940 KB.
-    // 952 KB since a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): the bar's places open the menu, the frame's registry tidied as the host keeps its views, and both faces' menus offer Hide and Delete: the scene face measured 974_091 B, about 10.5 KB more than 942 KB.
+    // 952 KB since a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): the bar's places open the menu, the frame's registry tidied as the host keeps its views, and both faces' menus offer Hide and Delete: the scene face measured 974_752 B, about 10.1 KB more than 942 KB.
     for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(952 * 1024);
   });
 

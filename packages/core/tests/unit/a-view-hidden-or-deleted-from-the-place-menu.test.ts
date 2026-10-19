@@ -1,48 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { createSchema, createViewRegistry, defineNode, memoryViews, removedLensName, tidyViews, z, type LensTidyEdit, type RemovedView } from "../../src/index.js";
+import { memoryViews, removedLensName, type LensTidyEdit, type RemovedView } from "../../src/index.js";
 
 /**
  * A VIEW HIDDEN OR DELETED FROM THE PLACE MENU (Roadmap f-place-menu-views).
  * The host keeps script views; `memoryViews` is the keeping a page, a test
- * or `graview serve` uses, and `tidyViews` the registry as it leaves it: a
- * hidden view off the lists and still at its address, a deleted one gone
- * from everywhere for thirty days and then for good.
+ * or `graview serve` uses: a deleted view kept thirty days, then gone for
+ * good (`tidyViews` on `@graview/react` is the registry as it leaves it).
  */
-const schema = createSchema([defineNode("task", { fields: z.object({ title: z.string() }) })]);
-const many = { cardinality: "many", fidelity: "full" } as const;
-
-function registry() {
-  const views = createViewRegistry<typeof schema, string>(schema);
-  views.register("task", many, "the app's own list");
-  views.register("task", many, "the board a chat drew", { title: "Board", name: "board" });
-  views.register("task", many, "the week a chat drew", { title: "The week", name: "week", beside: true });
-  return views;
-}
-
 describe("a view hidden or deleted from the place menu", () => {
-  it("is a place kept off the lists while hidden, still reached by its address and no longer its kind's default", () => {
-    const views = registry();
-    expect(views.places().map((place) => place.name)).toEqual(["board", "week"]);
-    const tidied = tidyViews(views, { hidden: ["board"], removed: [] });
-    expect(tidied.places().find((place) => place.as === "board")?.hidden).toBe(true);
-    expect(tidied.resolve("task", many, "board")?.view).toBe("the board a chat drew");
-    expect(tidied.resolve("task", many)?.view).toBe("the app's own list");
-    expect(tidied.lookup("task", many)).toBe("the app's own list");
-    // The registry itself is untouched.
-    expect(views.resolve("task", many)?.view).toBe("the board a chat drew");
-  });
-
-  it("is no place and never drawn while deleted, by its address either", () => {
-    const tidied = tidyViews(registry(), { hidden: [], removed: [{ name: "week", title: "The week", at: "2026-10-19T00:00:00.000Z", until: "2026-11-18T00:00:00.000Z" }] });
-    expect(tidied.places().map((place) => place.name)).toEqual(["board"]);
-    expect(tidied.resolve("task", many, "the-week")?.view).toBe("the board a chat drew");
-  });
-
-  it("is answered as the registry itself when nothing is tidied", () => {
-    const views = registry();
-    expect(tidyViews(views, { hidden: [], removed: [] })).toBe(views);
-  });
-
   it("keeps a deleted view thirty days under Recently deleted, restores it, and forgets it after", async () => {
     let now = Date.parse("2026-10-19T12:00:00.000Z");
     const kept = memoryViews({ now: () => now, by: () => "Nick" });

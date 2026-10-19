@@ -81,9 +81,9 @@ export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-doo
 export type { GhostDoorProps } from "./inline-ai-door.js";
 // Notify me (Roadmap f-notify-subscriptions): its part of the context menu, the sheet, a face's own press and Activity's list, the sheet and list fetched when first drawn.
 export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
-export { PLACE_MENU_EVENT, placeAim, usePlaceMenu } from "./place-menu.js";
-export type { PlaceAim, PlaceMenuHandlers } from "./place-menu.js";
-export { TidyGroups, tidyingOf, useTidied, useViewTidyingSection } from "./view-tidying.js";
+export { openPlaceMenu, PLACE_MENU_EVENT, placeAim, placeGesture } from "./place-menu.js";
+export type { PlaceAim } from "./place-menu.js";
+export { TidyGroups, tidyingOf, useKeptViews, useKeptViewsState, useTidied, useViewTidyingSection } from "./view-tidying.js";
 export { ViewTidyingSections } from "./view-tidying-sections.js";
 export type { NotifyAsk } from "./notify-sheet.js";
 // What AI did on a record, on its page (Roadmap f-activity-ai-entries), fetched with the first entry.

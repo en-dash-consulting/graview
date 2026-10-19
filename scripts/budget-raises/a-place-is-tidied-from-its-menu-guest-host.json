@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, before a worker is drawn",
+  "minified": 185,
+  "gzipped": 230,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): a place carries the name the host keeps it by and whether the declaration declares it (`ViewMeta.name`, `declared`), and the provider takes the host's `keptViews`. 185 / 230 more than before it (20_835 / 9_819): measured at 21_020 / 10_049."
+}

@@ -1,5 +1,3 @@
-import type { AnySchema } from "../schema/schema.js";
-import { FIDELITIES, placeSlug, type Fidelity, type Place, type ViewCell, type ViewRegistration, type ViewRegistry } from "./types.js";
 
 /*
  * THE VIEWS A PERSON TIDIES FROM THE PLACE MENU (Roadmap f-place-menu-views).
@@ -204,63 +202,3 @@ export function memoryViews(options: MemoryViewsOptions = {}): KeptViews {
   };
 }
 
-/** On a tidied registry, the registry it is over: one visit, however its views are tidied. */
-export const TIDIED_FROM: unique symbol = Symbol.for("graview.tidied-from") as never;
-
-const fallbacks = (fidelity: Fidelity): readonly Fidelity[] => [fidelity, ...FIDELITIES.filter((one) => one !== fidelity)];
-
-/**
- * A REGISTRY AS THE HOST'S TIDYING LEAVES IT: a script view it lists as
- * hidden is a place kept off the lists (`hidden: true`, reached by its
- * address and never its kind's default picture), and one it lists as
- * deleted is no place at all and never drawn — each falling back to what
- * the kind drew before. The registry itself is untouched, and is answered
- * as it is when nothing is tidied. Pure: every face reads the same answer.
- */
-export function tidyViews<S extends AnySchema, V>(registry: ViewRegistry<S, V>, state: Pick<KeptViewsState, "hidden" | "removed">): ViewRegistry<S, V> {
-  if (state.hidden.length === 0 && state.removed.length === 0) return registry;
-  const gone = new Set(state.removed.filter((one) => !one.lens).map((one) => one.name));
-  const hid = new Set(state.hidden);
-  const tidied = (registration: { readonly name?: string } | undefined): boolean => registration?.name !== undefined && (gone.has(registration.name) || hid.has(registration.name));
-  /* What a cell draws when nothing tidied may: the last registration that would have won it, as the registry decides. */
-  const exact = (kind: string, cardinality: ViewCell["cardinality"], fidelity: Fidelity): ViewRegistration<V> | undefined =>
-    [...registry.registrations()].reverse().find((one) => one.kind === kind && one.cardinality === cardinality && one.fidelity === fidelity && !one.beside && !one.hidden && !tidied(one));
-  const cellOf = (kind: string, cell: ViewCell): ViewRegistration<V> | undefined => {
-    for (const fidelity of fallbacks(cell.fidelity)) {
-      const found = exact(kind, cell.cardinality, fidelity);
-      if (found) return found;
-    }
-    if (cell.cardinality === "one") {
-      for (const fidelity of fallbacks(cell.fidelity)) {
-        const found = exact(kind, "many", fidelity);
-        if (found) return found;
-      }
-    }
-    return undefined;
-  };
-  const tidy: ViewRegistry<S, V> = {
-    ...registry,
-    register(kind, cell, view, meta) {
-      registry.register(kind, cell, view, meta);
-      return tidy;
-    },
-    lookup(kind, cell) {
-      return registry.lookup(kind, cell) === undefined ? undefined : exact(kind, cell.cardinality, cell.fidelity)?.view;
-    },
-    places: () =>
-      registry
-        .places()
-        .filter((place) => !(place.name !== undefined && gone.has(place.name)))
-        .map((place): Place => (place.name !== undefined && hid.has(place.name) && !place.hidden ? { ...place, hidden: true } : place)),
-    resolve(kind, cell, as) {
-      const found = registry.resolve(kind, cell, as);
-      if (!found || !tidied(found)) return found;
-      // A hidden view is still reached by its own name; a deleted one is not reached at all.
-      if (as !== undefined && found.name !== undefined && !gone.has(found.name) && found.title !== undefined && placeSlug(found.title) === as) return found;
-      return cellOf(kind, cell);
-    },
-    all: () => registry.all().filter((one) => !(one.name !== undefined && gone.has(one.name))),
-  };
-  Object.defineProperty(tidy, TIDIED_FROM, { value: (registry as { readonly [TIDIED_FROM]?: object })[TIDIED_FROM] ?? registry });
-  return tidy;
-}

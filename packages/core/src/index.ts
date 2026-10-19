@@ -358,8 +358,8 @@ export { dayOf, tickEachDay, untilTheDayTurns } from "./clock.js";
 export type { Tick } from "./clock.js";
 
 // Views — the cardinality x fidelity matrix.
-// The views a person tidies from the place menu (Roadmap f-place-menu-views): the host's seam, a memory keeper, and the registry as it leaves it.
-export { memoryViews, NO_KEPT_VIEWS, REMOVED_VIEW_DAYS, removedLensName, TIDIED_FROM, tidyViews } from "./views/kept.js";
+// The views a person tidies from the place menu (Roadmap f-place-menu-views): the host's seam and a memory keeper; the registry as it leaves it is `tidyViews` on `@graview/react`.
+export { memoryViews, NO_KEPT_VIEWS, REMOVED_VIEW_DAYS, removedLensName } from "./views/kept.js";
 export type { KeptViews, KeptViewsMay, KeptViewsState, LensTidyEdit, MemoryViewsOptions, RemovedView } from "./views/kept.js";
 export { createViewRegistry, FIDELITIES, kindPath, onePerPicture, placeLabel, placePath, placeSlug, recordPath, samePicture, sharesItsName } from "./views/types.js";
 // Declared lenses that draw (FR-79), the arrangement (FR-80) and every place an app has.

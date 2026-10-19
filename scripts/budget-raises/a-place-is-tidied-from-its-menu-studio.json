@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
-  "minified": 9532,
-  "gzipped": 3556,
-  "note": "Raised when the place menu's Hide and Delete for a view (Roadmap f-place-menu-views): the bar's places open the Pages menu by a right-click, Shift+F10, the menu key or a long press (`usePlaceMenu`), the frame's registry tidied as the host's `keptViews` say (`tidyViews`, `useTidiedViews`), and whether the places' foot has a Hidden or Recently deleted to list; the foot itself is fetched with the bar's panes, and both faces' menus offer Hide and Delete for a place. 9_532 / 3_556 more than before it (1_840_700 / 586_561): measured at 1_850_232 / 590_117."
+  "minified": 10213,
+  "gzipped": 4344,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): both faces' menus offer Hide and Delete for a place, the bar's places open them, and the foot, the gesture's reading and `tidyViews` are fetched on first use. 10_213 / 4_344 more than before it (1_840_700 / 586_561): measured at 1_850_913 / 590_905."
 }

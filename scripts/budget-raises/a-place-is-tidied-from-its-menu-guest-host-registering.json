@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 238,
+  "gzipped": 289,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): `registerWorkerView` registers a view under its manifest's name, a place carries it (`ViewMeta.name`, `declared`), and the provider takes the host's `keptViews`. 238 / 289 more than before it (22_824 / 10_558): measured at 23_062 / 10_847."
+}

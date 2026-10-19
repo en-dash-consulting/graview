@@ -11,6 +11,8 @@ export { Here, sayTheirChange } from "./here.js";
 export { ActivityRail } from "./workbench/activity.js";
 /* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): `TidyGroups`. */
 export { TidyGroups } from "./view-tidying.js";
+/* What opens the place menu, on the first right-click, key or resting finger on a place (Roadmap f-place-menu-views). */
+export { placeGesture } from "./place-menu.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
