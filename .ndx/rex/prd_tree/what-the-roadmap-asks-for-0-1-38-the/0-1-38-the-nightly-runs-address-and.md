@@ -2,7 +2,8 @@
 id: "4d8a4e56-eaca-4d4a-afb3-dbd80f04c197"
 level: "task"
 title: "0.1.38 · The Nightly runs address, and the flakes and the scale harness are settled"
-status: "pending"
+status: "completed"
+completedAt: "2026-10-19T07:00:00.000Z"
 priority: "high"
 tags:
   - "roadmap"
@@ -27,3 +28,5 @@ discography's chunks only made its first box read force a layout, taking a
 to their district and the layer indexes the stage once: rise worst frame
 71 ms → 37 ms, `aTransitionHolds60` holds (PRD task
 the-scale-harness-holds-60-fps-again).
+
+2026-10-19: address runs in the Nightly's rota shard (e1019bfc); navigation's theGroundTravelsWithTheCards measures the ground's travel again, up to three times, when a starved runner saw only its ends, and says how many tries it took (e1019bfc). With the scale fix above, all three criteria hold.
