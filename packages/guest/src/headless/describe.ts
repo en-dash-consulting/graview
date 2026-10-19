@@ -81,6 +81,32 @@ function* elementsUnder(element: TreeElement): Generator<TreeElement> {
   }
 }
 
+/** The words a field saved as it is typed asks for (FR-191, host/press.ts), said wrongly: what the host would never save, and why. */
+function saveProblems(element: TreeElement): DescribedProblem[] {
+  const save = element.getAttribute("data-save");
+  const debounce = element.getAttribute("data-debounce");
+  if (save === null && debounce === null) return [];
+  const at = `drawing <${element.localName}${save !== null ? ` data-save="${save}"` : ` data-debounce="${debounce}"`}>`;
+  const problems: DescribedProblem[] = [];
+  if (save === null) return [{ at, says: 'data-debounce is read only on a field that saves as it is typed (data-save="input").' }];
+  if (!["input", "textarea", "select"].includes(element.localName)) problems.push({ at, says: "Only a field saves as it is typed: an input, a textarea or a select. A button is pressed (data-act alone)." });
+  else if (save !== "input" && save !== "change") problems.push({ at, says: `data-save is "input" (saved as the person types, once they pause, and when they leave it) or "change" (saved when they leave it or pick), not "${save}".` });
+  else if (element.getAttribute("data-act") === null) problems.push({ at, says: 'It saves through no act: a field saved as it is typed names its act itself, data-act="…", one in the manifest.' });
+  else if (!element.getAttribute("name")) problems.push({ at, says: "It has no name: the host sends a field as the act's argument its name says." });
+  else {
+    let scoped = false;
+    let bound = false;
+    for (let up: TreeElement | null = element; up; up = up.parentElement) {
+      if (up.getAttribute("data-record") !== null) bound = true;
+      if (up !== element && (up.localName === "fieldset" || up.getAttribute("role") === "group")) scoped = true;
+    }
+    if (!scoped || !bound) problems.push({ at, says: 'It is in no fieldset bound to a record: the host saves a field inside <fieldset data-record="…">, with the fields beside it, to the record the fieldset names.' });
+  }
+  if (debounce !== null && save !== "input") problems.push({ at, says: 'data-debounce is read only with data-save="input": a "change" saves at once.' });
+  else if (debounce !== null && !(debounce.trim() !== "" && Number.isFinite(Number(debounce)) && Number(debounce) >= 250 && Number(debounce) <= 10_000)) problems.push({ at, says: `data-debounce is how long the host waits for the person to pause, in milliseconds from 250 to 10 000, not "${debounce}"; left out, it waits 1 000.` });
+  return problems;
+}
+
 export function describeDrawing(root: TreeElement, context: DescribeDrawingContext): DescribedDrawing {
   const problems: DescribedProblem[] = [];
   const acts = new Set<string>();
@@ -101,6 +127,7 @@ export function describeDrawing(root: TreeElement, context: DescribeDrawingConte
     }
     const place = element.getAttribute("data-place");
     if (place !== null && !known(place)) problems.push({ at: `drawing <${element.localName} data-place="${place}">`, says: `It names the place "${place}", which this app does not have.${placesSaid(context.places)}` });
+    problems.push(...saveProblems(element));
   }
 
   /** The record an element stands for: its own `data-record`, a `data-key` that is a shown record's id, or the one record linked inside it. */

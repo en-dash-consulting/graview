@@ -316,7 +316,7 @@ export interface GuestDomEvent {
   readonly type: "dom-event";
   /** The view's id for the node it happened on. */
   readonly target: string;
-  /** `click`, `input`, `change`, `keydown` or `toggle`. */
+  /** `click`, `input`, `change`, `keydown` or `toggle`; or `acted`, what became of an act a press or a field saved as it is typed asked for, on the element bound to it (FR-191). */
   readonly event: string;
   readonly value?: string;
   readonly checked?: boolean;
@@ -324,7 +324,8 @@ export interface GuestDomEvent {
   /**
    * What became of the act the press was bound to (`data-act`), when it
    * was: applied by the host in the press's own handler, before the view
-   * heard of it (FR-92).
+   * heard of it (FR-92). On `acted`, what became of the act a press or a
+   * field's save (`data-save`) asked for (FR-191).
    */
   readonly pressed?: GuestPressed;
 }

@@ -394,6 +394,33 @@ host filled it, is the view's, as ever. Nothing leaks by it: the value is
 a field of a record the view was already shown, and it can only be saved
 back where it came from, by an act the viewer may run there.
 
+A field can save itself as the viewer types, with no button (FR-191): it
+carries its act, and says when it saves.
+
+```html
+<fieldset data-record="call:todd">
+  <textarea name="notes" data-prefill="notes" data-act="save-notes"
+            data-save="input" data-debounce="1500"></textarea>
+</fieldset>
+```
+
+With `data-save="input"` the viewer's typing (a trusted `input`) saves it
+once they pause for `data-debounce` milliseconds — 1 000 when it is left
+out, held to 250–10 000 — and leaving the field (its trusted `change`)
+saves at once what was still waiting, as does the view going away;
+`data-save="change"` saves on the `change` alone. A save is a press in
+every way but the click: the act is the field's own `data-act`, its record
+and its `fieldset`'s fields are read as a press reads them, and it is held
+to the same rules. A click into the field is not a press. The view's code
+holds nothing and can start nothing; it hears what became of each act a
+press or a save asked for as an `acted` event on the bound element —
+`graview.on("acted", "textarea", (event) => …)`, with `event.pressed`
+holding `as`, `ok`, and `reason` and `message` when it was refused — so it
+can say "Saving…" on `input` and "Saved" on `acted`. A headless run says
+when a field's `data-save` would save nothing: no `data-act`, no `name`,
+outside a `fieldset` bound to a record, or a `data-debounce` it does not
+read.
+
 ### Links stay in the app
 
 A worker view links to a record or a named place of this app, and nowhere

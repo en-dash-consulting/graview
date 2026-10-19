@@ -275,7 +275,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
   let unwatch = () => {};
   /* The interval that times each push (FR-94), once the view is ready. */
   let timing = 0;
+  /* What the person typed into a field saved as it is typed and not yet saved (FR-191, press.ts): saved as the view goes. */
+  let flushSaves = () => {};
   const stop = () => {
+    flushSaves();
+    flushSaves = () => {};
     tally();
     session?.dispose();
     session = undefined;
@@ -492,9 +496,30 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
     element.setAttribute("aria-haspopup", "dialog");
     wantMedia();
   };
-  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, fillPrefills, judgePress, prefillOf }]) => {
+  void Promise.all([openDrawChunk(), pressChunk()]).then(([{ createOpenDrawing }, { createPressReader, createSaver, fillPrefills, judgePress, prefillOf }]) => {
     if (failed) return;
     const reader = createPressReader();
+    /* The view hears what became of an act a press or a save asked for as `acted` on the element bound to it (FR-191). */
+    const acted = (bound: Element, pressed: NonNullable<GuestDomEvent["pressed"]>) => {
+      const target = drawing?.renderer.idOf(bound);
+      if (target !== undefined) send({ type: "dom-event", target, event: "acted", pressed });
+    };
+    /* A field saved as the person types (FR-191): judged and applied as a press is. */
+    const saver = createSaver({
+      reader,
+      save: (press, field) => {
+        if (!session) return;
+        const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
+        tally();
+        acted(field, { as: press.as, ...outcome });
+      },
+    });
+    const leaving = () => saver.flush();
+    window.addEventListener("pagehide", leaving);
+    flushSaves = () => {
+      window.removeEventListener("pagehide", leaving);
+      saver.flush();
+    };
     const prefilled = new WeakSet<Element>();
     refill = () => {
       fillPrefills(shadow, reader, prefilled, (asked) => prefillOf(options.store, options.principal, manifest, shown, asked));
@@ -531,6 +556,7 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
        */
       before: (event, at, root) => {
         reader.heard(event, at);
+        saver.heard(event, at, root);
         /* A link the view drew goes where it says, if that is a record or a place of this app. */
         const anchor = at.closest("a[data-graview-link]");
         if (anchor && root.contains(anchor) && (event.type === "click" || (event.type === "keydown" && (event as KeyboardEvent).key === "Enter"))) {
@@ -552,7 +578,11 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
         event.stopPropagation();
         const outcome = session.pressed(judgePress(options.store, manifest, shown, press));
         tally();
-        return { pressed: { as: press.as, ...outcome } };
+        const pressed = { as: press.as, ...outcome };
+        /* Told with the click, and then as `acted`, the one event a view hears every act's outcome by. */
+        const bound = at.closest("[data-act]")!;
+        queueMicrotask(() => acted(bound, pressed));
+        return { pressed };
       },
     });
     for (const one of waiting.splice(0)) draw(one);

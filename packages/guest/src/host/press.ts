@@ -53,6 +53,8 @@ export interface PressReader {
   filled(field: Element): void;
   /** A trusted click on (or in) an element bound to an act: the press, with its record and the fields in its scope. */
   press(event: Event, element: Element, root: Element): Press | undefined;
+  /** What a press on `bound` (an element with `data-act`) would carry now: its record and the fields in its scope (FR-191: a field saved as it is typed). */
+  collect(bound: Element, root: Element): Press | undefined;
   /** The host filled a field from a record the view was shown (FR-150): the viewer's to edit, and to send only back where it came from. */
   prefilled(field: Element, from: Prefilled): void;
 }
@@ -63,7 +65,7 @@ export function createPressReader(trusted: (event: Event) => boolean = (event) =
   const written = new WeakSet<Element>();
   /* Fields the host filled from a record, until the viewer empties them or the view writes into them (FR-150). */
   const origins = new WeakMap<Element, Prefilled>();
-  return {
+  const reader: PressReader = {
     heard(event, element) {
       if (!isField(element) || !trusted(event)) return;
       if (event.type === "input" || (event.type === "change" && isChoice(element))) {
@@ -86,7 +88,12 @@ export function createPressReader(trusted: (event: Event) => boolean = (event) =
     press(event, element, root) {
       if (event.type !== "click" || !trusted(event)) return undefined;
       const bound = element.closest("[data-act]");
-      if (!bound || !root.contains(bound)) return undefined;
+      /* A field saved as it is typed (FR-191) is bound to its act, but a click into it to type is not a press. */
+      if (!bound || (isField(bound) && bound.hasAttribute("data-save"))) return undefined;
+      return reader.collect(bound, root);
+    },
+    collect(bound, root) {
+      if (!bound.hasAttribute("data-act") || !root.contains(bound)) return undefined;
       const record = bound.closest("[data-record]");
       const scope = bound.closest("fieldset, [role='group']") ?? root;
       const fields: PressedField[] = [];
@@ -117,6 +124,93 @@ export function createPressReader(trusted: (event: Event) => boolean = (event) =
       written.delete(field);
       origins.set(field, from);
       typed.set(field, shows(field as HTMLInputElement));
+    },
+  };
+  return reader;
+}
+
+/*
+ * A FIELD SAVED AS IT IS TYPED (FR-191).
+ *
+ * A view's code is never handed what the person types where sight is not
+ * total (writes.ts), so typed words reached an act only by a press on a
+ * button. A field may instead carry its act itself and say when it saves:
+ *
+ *   <fieldset data-record="call:todd">
+ *     <textarea name="notes" data-prefill="notes" data-act="save-notes"
+ *               data-save="input" data-debounce="1500"></textarea>
+ *   </fieldset>
+ *
+ *   · `data-save="input"`: the person's typing (a trusted `input`) saves it
+ *     once they pause for `data-debounce` milliseconds (1 000 by default,
+ *     held to 250–10 000), and leaving the field (its trusted `change`)
+ *     saves at once what was still waiting, so nothing typed is lost.
+ *   · `data-save="change"`: it saves on its trusted `change` alone — a pick,
+ *     or a text field left.
+ *
+ * A save is a press in every way but the click: the act is the field's
+ * `data-act`, its record and fields are read as a press reads them
+ * (`collect`), and `judgePress` holds it to the same rules — only what the
+ * person typed, a prefilled value only back where it came from, under the
+ * viewer's grants. The host saves; the view's code holds nothing, and can
+ * neither start a save (it cannot raise a trusted event) nor carry one
+ * anything the person did not type. The view hears the outcome as an
+ * `acted` event on the field.
+ */
+
+/** How long a field saved as it is typed waits for the person to pause, when `data-debounce` does not say. */
+export const SAVE_DEBOUNCE_MS = 1_000;
+
+/** How long a field waits before it saves: its `data-debounce`, in milliseconds, held to 250–10 000. */
+export function saveDebounceOf(field: Element): number {
+  const said = field.getAttribute("data-debounce")?.trim();
+  const ms = said ? Number(said) : Number.NaN;
+  return Number.isFinite(ms) ? Math.min(10_000, Math.max(250, Math.round(ms))) : SAVE_DEBOUNCE_MS;
+}
+
+export interface Saver {
+  /** An event on what the view drew, after the reader heard it: the person's typing in a field marked `data-save` saves it, now or once they pause. */
+  heard(event: Event, element: Element, root: Element): void;
+  /** Save now whatever is still waiting: the view is going. */
+  flush(): void;
+  /** How many fields are waiting to save. */
+  readonly waiting: number;
+}
+
+export interface SaverOptions {
+  readonly reader: PressReader;
+  /** Run the act a field's save asked for: judged by `judgePress`, as a press is. */
+  readonly save: (press: Press, field: Element) => void;
+  readonly trusted?: (event: Event) => boolean;
+  readonly timers?: { set(run: () => void, ms: number): unknown; clear(handle: unknown): void };
+}
+
+export function createSaver(options: SaverOptions): Saver {
+  const trusted = options.trusted ?? ((event: Event) => event.isTrusted);
+  const timers = options.timers ?? { set: (run: () => void, ms: number) => setTimeout(run, ms), clear: (handle: unknown) => clearTimeout(handle as ReturnType<typeof setTimeout>) };
+  const waiting = new Map<Element, { readonly root: Element; readonly handle: unknown }>();
+  const save = (field: Element, root: Element) => {
+    const one = waiting.get(field);
+    if (one) timers.clear(one.handle);
+    waiting.delete(field);
+    const press = options.reader.collect(field, root);
+    if (press) options.save(press, field);
+  };
+  return {
+    heard(event, element, root) {
+      if (!isField(element) || !trusted(event) || !element.hasAttribute("data-act")) return;
+      const when = element.getAttribute("data-save");
+      if (event.type === "input" && when === "input") {
+        const one = waiting.get(element);
+        if (one) timers.clear(one.handle);
+        waiting.set(element, { root, handle: timers.set(() => save(element, root), saveDebounceOf(element)) });
+      } else if (event.type === "change" && (when === "change" || (when === "input" && waiting.has(element)))) save(element, root);
+    },
+    flush() {
+      for (const [field, { root }] of [...waiting]) save(field, root);
+    },
+    get waiting() {
+      return waiting.size;
     },
   };
 }
