@@ -570,7 +570,7 @@ page's origin). Nothing is loaded in a run. A view whose manifest asks for
 its `<img>` is drawn and judged as it will be once the page has the bytes.
 The page draws a picture it handed at any size, as handed; one it would
 leave out before fetching it — heavier than the host fetches, or past the
-view's budget (`pictureBytes`, `picturesBytes` in `limits`) — comes with
+view's budget for its pictures, as `limits` says them — comes with
 no `src` and the page's sentence in `left`, said among the problems at
 `pictures` (FR-192).
 
