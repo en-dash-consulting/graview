@@ -49,6 +49,10 @@ export interface CoverageRoles {
 }
 
 export interface CoverageOptions extends CoverageRoles {
+  /** The fields its Find box looks in (`label` for the name); every readable field when unsaid. */
+  readonly search?: readonly string[];
+  /** What its line offers to filter by, its choice fields standing as chips. */
+  readonly filters?: readonly string[];
   /** Field on a row node carrying a short reference, shown before the label. */
   readonly rowRef?: string;
   /**
@@ -1235,7 +1239,7 @@ export function createCoverageLens<S extends AnySchema>(
      * there is no order or grouping a grid has a place for.
      */
     const subject = onTheHorizon(store.graph, store.schema, props.nodes).filter((node) => node.kind === options.rows);
-    const { arranged, bar } = useArranging<S>(props, { lensAllows: { sort: false, group: false }, subject, kind: options.rows });
+    const { arranged, bar } = useArranging<S>(props, { lensAllows: { sort: false, group: false }, subject, kind: options.rows, ...(options.search ? { search: options.search } : {}), ...(options.filters ? { filters: options.filters } : {}) });
     const view = <CoverageView<S> schema={store.schema} {...props} options={options} {...(bar ? { rowsKept: new Set(arranged.nodes.map((node) => node.id)) } : {})} />;
     return bar ? (
       <div style={{ display: "grid", gap: 6, height: "100%", minHeight: 0, gridTemplateRows: "auto 1fr" }}>

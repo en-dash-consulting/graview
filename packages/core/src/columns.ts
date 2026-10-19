@@ -2,7 +2,7 @@ import { compileMutation } from "./mutations/define-mutation.js";
 import { fieldsWrittenBy, subjectKindsOf } from "./mutations/derive-edits.js";
 import type { AnyMutationDefinition, MutationCall } from "./mutations/types.js";
 import type { Principal } from "./permissions/types.js";
-import { fieldWords } from "./schema/define-node.js";
+import { fieldWords, nounOf } from "./schema/define-node.js";
 import { valueWords } from "./schema/value-words.js";
 import type { AnySchema } from "./schema/schema.js";
 import type { Store } from "./store.js";
@@ -112,26 +112,60 @@ export interface ColumnMove {
  * the first act that passes.
  */
 export function columnMoves<S extends AnySchema>(store: Store<S>, principal: Principal, record: { readonly id: string; readonly kind: string } & Readonly<Record<string, unknown>>, field: string, columns: readonly StatusColumn[] = statusColumns(store.schema, record.kind, field)): readonly ColumnMove[] {
+  return columnChoices(store, principal, record, field, columns).flatMap((choice) => (choice.move ? [choice.move] : []));
+}
+
+/** A column a record could go to, as one seat finds it: the move, or why there is none — said, never left out. */
+export interface ColumnChoice {
+  readonly to: string;
+  readonly label: string;
+  readonly move?: ColumnMove;
+  /** Why this seat cannot move the record there: the policy's words, the act's refusal, or that nothing does. */
+  readonly why?: string;
+}
+
+/**
+ * EVERY OTHER COLUMN, AND WHETHER THIS SEAT MAY MOVE THE RECORD THERE — the
+ * card's "Move to ›": the columns it may go to, and the ones withheld, each
+ * with the reason a press would have met (the policy's refusal, the step's
+ * own `refusal` where its condition does not hold, or that no act reaches
+ * the column). `columnMoves` is the ones with a move, asked the same way.
+ */
+export function columnChoices<S extends AnySchema>(store: Store<S>, principal: Principal, record: { readonly id: string; readonly kind: string } & Readonly<Record<string, unknown>>, field: string, columns: readonly StatusColumn[] = statusColumns(store.schema, record.kind, field)): readonly ColumnChoice[] {
   const reach = columnReach(store.schema, store.allMutations(), record.kind, field, columns);
   const here = columnOf(record, field, columns);
-  const moves: ColumnMove[] = [];
-  for (const { value, by, acts } of reach) {
+  const noun = nounOf(store.schema.tryDefinition(record.kind), record.kind);
+  const choices: ColumnChoice[] = [];
+  for (const { value, label, by, acts } of reach) {
     if (value === here) continue;
+    let move: ColumnMove | undefined;
+    /** The first refusal a press would meet: the policy's or the act's own words outrank an act the board cannot call. */
+    let refused: string | undefined;
+    let asks: string | undefined;
     for (const act of acts) {
       const args: Record<string, unknown> = by === "step" ? { [act.subject!.arg]: record.id } : { [act.subject!.arg]: record.id, [field]: value };
       const call: MutationCall = { name: act.name, args };
-      if (!(act.input as unknown as { safeParse(value: unknown): { success: boolean } }).safeParse(args).success) continue;
-      if (!store.permits(call, principal).ok) continue;
-      try {
-        compileMutation(store.graph, act, args);
-      } catch {
+      if (!(act.input as unknown as { safeParse(value: unknown): { success: boolean } }).safeParse(args).success) {
+        asks ??= `${act.title ?? act.name} asks for more than the ${noun} itself.`;
         continue;
       }
-      moves.push({ to: value, call, title: act.title ?? act.name });
+      const permitted = store.permits(call, principal);
+      if (!permitted.ok) {
+        refused ??= permitted.refusal?.message ?? `You may not ${act.title ?? act.name}.`;
+        continue;
+      }
+      try {
+        compileMutation(store.graph, act, args);
+      } catch (error) {
+        refused ??= error instanceof Error ? error.message : String(error);
+        continue;
+      }
+      move = { to: value, call, title: act.title ?? act.name };
       break;
     }
+    choices.push(move ? { to: value, label, move } : { to: value, label, why: refused ?? asks ?? `Nothing in this app moves a ${noun} to ${label}.` });
   }
-  return moves;
+  return choices;
 }
 
 /** One column, and the acts that may move a record into it: its named steps, or else the free acts that take the value. */

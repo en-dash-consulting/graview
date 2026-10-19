@@ -381,7 +381,7 @@ function Listed({ node, as, depth, said = null }: { readonly node: AnyGraphNode;
  * name before the details; raised over the picture drawn after it, and
  * under what is raised after it (a link, a box to choose it).
  */
-export function ListedLink({ node, label }: { readonly node: AnyGraphNode; readonly label: string }) {
+export function ListedLink({ node, label, describedBy }: { readonly node: AnyGraphNode; readonly label: string; /** What else a reader hears on it: how a board's card moves. */ readonly describedBy?: string }) {
   const links = useContext(SpecLinks);
   const stretched = useRef<HTMLAnchorElement & HTMLButtonElement>(null);
   useEndsAboveItsList(stretched);
@@ -392,6 +392,7 @@ export function ListedLink({ node, label }: { readonly node: AnyGraphNode; reado
         className="graview-spec-item-link"
         href={links.href(node)}
         aria-label={label}
+        {...(describedBy ? { "aria-describedby": describedBy } : {})}
         onClick={(event: MouseEvent<HTMLAnchorElement>) => {
           if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
           event.preventDefault();
@@ -401,7 +402,7 @@ export function ListedLink({ node, label }: { readonly node: AnyGraphNode; reado
       />
     );
   }
-  return <button ref={stretched} type="button" className="graview-spec-item-link" data-graview-pick={node.id} aria-label={label} />;
+  return <button ref={stretched} type="button" className="graview-spec-item-link" data-graview-pick={node.id} aria-label={label} {...(describedBy ? { "aria-describedby": describedBy } : {})} />;
 }
 
 /**

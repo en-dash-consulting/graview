@@ -23,7 +23,7 @@
  *   the store, changes a record.
  *
  * The stops: the bar; the Pages and Scene switch; a list; a record page; a
- * columns lens; a blocks lens; an act's form; the quick ask (⌘K); and a change
+ * columns lens, a card on it moved by the keyboard, its menu and a drag; a blocks lens; an act's form; the quick ask (⌘K); and a change
  * from someone else, with the two shown to each other and with presence
  * off, as a served store's change arrives. Over two apps: the Roadmap (a document mounted as
  * Graview Cloud mounts one, in two tabs sat down as Ada and Ben, every op
@@ -544,7 +544,7 @@ try {
     /* ── 6. A COLUMNS LENS ── */
     reach("a columns lens");
     {
-      const here = stop("Roadmap", "A columns lens", "The Roadmap board: features in columns by stage, reached from the home by the keyboard; a card moved with its Move… menu.");
+      const here = stop("Roadmap", "A columns lens", "The Roadmap board: features in columns by stage, reached from the home by the keyboard; a card carried by the keyboard, moved from its menu's Move to ›, and dragged.");
       await press(ada.getByRole("navigation").getByRole("link", { name: "Home", exact: true }));
       await ada.waitForTimeout(800);
       await press(ada.getByRole("link", { name: /^Roadmap\b/ }).first());
@@ -561,22 +561,70 @@ try {
       const cards = order.said.filter((one) => one.role === "link").map((one) => one.name);
       const firstCard = cards.find((name) => order.said.some((one) => one.role === "StaticText" && one.name === name));
       check("a columns lens: a card's name is said once, as its link, before its details", firstCard === undefined, { saidTwice: firstCard ?? null });
-      const move = ada.getByRole("button", { name: /^Move “/ }).first();
-      const moving = ((await move.getAttribute("aria-label")) ?? "").replace(/^Move “|” to another column$/g, "");
-      await press(move);
-      await ada.waitForTimeout(400);
+      /*
+       * NO BUTTON UNDER EVERY CARD (Roadmap f-board-move-without-buttons): a
+       * card is one stop that says how it moves, and is moved three ways —
+       * carried by the keyboard, from its menu's "Move to ›", and dragged —
+       * each said aloud.
+       */
+      check("a columns lens: no Move… button stands under a card", (await ada.getByRole("button", { name: /^Move “/ }).count()) === 0, {});
+      const card = ada.locator("#app [data-testid='columns-lens'] [data-graview-listed][draggable='true'] .graview-spec-item-link").first();
+      const moving = (await card.getAttribute("aria-label")) ?? "";
+      const described = await card.evaluate((link) => document.getElementById(link.getAttribute("aria-describedby") ?? "")?.textContent ?? "");
+      check("a columns lens: a card says how it moves", /Space picks it up/.test(described), { described });
+      // Carried by the keyboard: Space, the next column it may go to, Space.
+      let since = Date.now();
+      await card.focus();
+      await ada.keyboard.press(" ");
+      await ada.waitForTimeout(300);
+      await ada.keyboard.press("ArrowRight");
+      await ada.waitForTimeout(300);
+      const carried = await heardSince(ada, since);
+      here.heard(`picking up “${moving}” and carrying it a column on`, carried);
+      check("a columns lens: a card picked up by the keyboard is said picked up, with its column and its place", carried.some((one) => one.text.includes(`${moving}, picked up.`) && / \d+ of \d+\./.test(one.text)), { carried, moving });
+      check("a columns lens: each step the keyboard carries a card is said", carried.length >= 2 && / \d+ of \d+\.$/.test(carried.at(-1)?.text ?? ""), { carried });
+      since = Date.now();
+      await ada.keyboard.press(" ");
+      await ada.waitForTimeout(1200);
+      const afterCarry = await focusSaid(ada, cdp);
+      here.focus("dropping it", afterCarry);
+      const dropped = await heardSince(ada, since);
+      here.heard("after the drop", dropped);
+      check("a columns lens: a card dropped by the keyboard is moved, said aloud, and keeps the keyboard", dropped.some((one) => one.text.includes(`${moving}, dropped in`)) && dropped.some((one) => one.text.includes(`Moved “${moving}”`)) && !afterCarry.lost && afterCarry.name === moving, { dropped, focus: afterCarry.line });
+      // From its menu: Shift+F10 on the card, "Move to ›", the first column it may go to.
+      since = Date.now();
+      await ada.keyboard.press("Shift+F10");
+      await ada.waitForTimeout(800);
+      const row = ada.locator('[data-testid="context-menu"] [data-menu-item="move-to"]');
+      const offered = (await row.count()) > 0;
+      if (offered) {
+        await press(row);
+        await ada.waitForTimeout(300);
+      }
       const inMenu = await focusSaid(ada, cdp);
-      here.focus(`opening “${moving}”'s Move… menu`, inMenu);
-      check("a columns lens: the Move… menu takes the keyboard to its first choice", !inMenu.lost && /menuitem|button/.test(inMenu.role ?? ""), { focus: inMenu.line });
-      const since = Date.now();
+      here.focus("opening its menu's Move to ›", inMenu);
+      check("a columns lens: a card's menu says Move to › and takes the keyboard to the first column it may go to", offered && !inMenu.lost && inMenu.role === "button", { focus: inMenu.line });
       await ada.keyboard.press("Enter");
       await ada.waitForTimeout(1200);
-      const afterMove = await focusSaid(ada, cdp);
-      here.focus("choosing a column", afterMove);
-      const heard = await heardSince(ada, since);
-      here.heard("after the move", heard);
-      check("a columns lens: after a move the keyboard is on the page, not lost", !afterMove.lost, { focus: afterMove.line });
-      check("a columns lens: the move is said aloud", heard.some((one) => one.text.includes(moving)), { heard, moving });
+      const afterMenu = await focusSaid(ada, cdp);
+      here.focus("choosing a column from the menu", afterMenu);
+      const fromMenu = await heardSince(ada, since);
+      here.heard("after the move from the menu", fromMenu);
+      check("a columns lens: after a move from the menu the keyboard is on the page, not lost", !afterMenu.lost, { focus: afterMenu.line });
+      check("a columns lens: a move from the menu is said aloud", fromMenu.some((one) => one.text.includes(`Moved “${moving}”`)), { heard: fromMenu, moving });
+      // Dragged, as a pointer does: onto the next column that takes it.
+      since = Date.now();
+      const dragged = await ada.evaluate(() => {
+        const first = document.querySelector("#app [data-testid='columns-lens'] [data-graview-listed][draggable='true']");
+        const from = first?.closest("[data-graview-column]")?.getAttribute("data-graview-column");
+        const to = [...document.querySelectorAll("#app [data-graview-column]")].map((column) => column.getAttribute("data-graview-column")).find((value) => value && value !== from);
+        return first && to ? { id: first.getAttribute("data-graview-listed"), to } : null;
+      });
+      if (dragged) await ada.dragAndDrop(`#app [data-graview-listed="${dragged.id}"]`, `#app [data-graview-column="${dragged.to}"]`).catch(() => {});
+      await ada.waitForTimeout(1200);
+      const byDrag = await heardSince(ada, since);
+      here.heard("after a drag", byDrag);
+      check("a columns lens: a card dragged onto a column is moved and said aloud", byDrag.some((one) => one.text.startsWith("Moved “")), { heard: byDrag, dragged });
     }
 
     /* ── 7. A BLOCKS LENS ── */

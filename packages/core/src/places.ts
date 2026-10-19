@@ -21,8 +21,8 @@ import { kindPath, placeSlug, type PagesArrangement, type Place } from "./views/
  */
 export const SHIPPED_LENSES = {
   timeline: { binds: "fields", requiredRoles: ["start", "end"], options: ["columns", "extent", "tick", "minWindow", "arranging"] },
-  calendar: { binds: "fields", requiredRoles: ["start"], options: ["today", "range", "weekStartsOn", "perCell", "horizon", "arranging"] },
-  coverage: { binds: "entities", requiredRoles: ["rows", "columns", "link"], options: ["rowRef", "rowGroup", "groupOrder", "requiredGroups", "requiredVia", "badge", "columnGroup", "sort", "columnSort"] },
+  calendar: { binds: "fields", requiredRoles: ["start"], options: ["today", "range", "weekStartsOn", "perCell", "horizon", "arranging", "search", "filters"] },
+  coverage: { binds: "entities", requiredRoles: ["rows", "columns", "link"], options: ["rowRef", "rowGroup", "groupOrder", "requiredGroups", "requiredVia", "badge", "columnGroup", "sort", "columnSort", "search", "filters"] },
   board: { binds: "entities", requiredRoles: ["slots", "x", "y", "fill"], options: ["fillFrom", "slotCode", "zones", "aspect", "emptyLabel", "pickTarget", "arranging", "arrange"] },
   plan: { binds: "entities", requiredRoles: ["regions", "outline"], options: ["hues", "aspect", "undrawnLabel", "strayLabel", "draw", "place", "help"] },
   reach: { binds: "nothing", requiredRoles: [], options: [] },
@@ -38,12 +38,22 @@ export const SHIPPED_LENSES = {
    * A STATUS BOARD (FR-97): a kind's records in columns by one choice field
    * — `bindings: { task: { column: "status" } }` — in the field's declared
    * order, each drawn by its card, and moved between columns only by an act
-   * the seat may run that sets the field (`columnMoves`).
+   * the seat may run that sets the field (`columnMoves`): dragged, carried
+   * by the keyboard, or chosen from the card's menu ("Move to ›").
+   *
+   * `search` names the fields the Find box looks in (it stands unasked on a
+   * board of more than `SEARCH_UNASKED` cards), `filters` the ones that stand
+   * as chips; `move` puts a Move button under each card; `collapsed` columns
+   * open shut, `hidden` ones are not drawn, and `cap` keeps each column to
+   * its newest cards, with the way to the rest.
    */
-  columns: { binds: "fields", requiredRoles: ["column"], options: ["sort"] },
+  columns: { binds: "fields", requiredRoles: ["column"], options: ["sort", "search", "filters", "move", "collapsed", "cap", "hidden"] },
 } as const satisfies Record<string, { binds: "fields" | "entities" | "nothing"; requiredRoles: readonly string[]; options: readonly string[] }>;
 
 export type ShippedLensName = keyof typeof SHIPPED_LENSES;
+
+/** From how many cards a status board shows its Find box without being asked (`options.search`). */
+export const SEARCH_UNASKED = 20;
 
 /** The shipped lenses' names, in the order the table gives them. */
 export const SHIPPED_LENS_NAMES = Object.keys(SHIPPED_LENSES) as readonly ShippedLensName[];
@@ -107,6 +117,14 @@ export interface DeclaredLenses {
   readonly drawn: readonly DrawnLens[];
   readonly undrawn: readonly UndrawnLens[];
   readonly findings: readonly PlaceFinding[];
+}
+
+/** Keeps the names of a listed option that hold, and drops the option where none does. */
+function keepListed(options: Record<string, unknown>, key: string, holds: (one: string) => boolean): void {
+  const given = options[key];
+  const kept = Array.isArray(given) ? given.filter((one): one is string => typeof one === "string" && holds(one)) : [];
+  if (kept.length > 0) options[key] = kept;
+  else delete options[key];
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -215,13 +233,20 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
           }
         }
         // A board's columns are a field's choices: a field of free text or numbers has no columns to stand in.
+        const values = new Set<string>();
         for (const kind of bound) {
           const field = (bindings[kind] as Record<string, unknown>)["column"];
           if (typeof field !== "string" || !fieldsOf(kind).includes(field)) return; // the binding check says so, as an error
-          if (enumValues(app.schema, kind, field).length === 0) {
+          const choices = enumValues(app.schema, kind, field);
+          if (choices.length === 0) {
             return bad(`${at}.bindings.${kind}.column`, `its column field "${field}" is not a choice`, `Bind "column" to a choice field of ${kind}, like a status.`);
           }
+          for (const value of choices) values.add(value);
         }
+        // What the board shows of itself, kept to what it can honor; the checker says what it left out (`checkDeclaredLenses`).
+        if (typeof options["move"] !== "boolean") delete options["move"];
+        if (!(Number.isInteger(options["cap"]) && (options["cap"] as number) >= 1 && (options["cap"] as number) <= 500)) delete options["cap"];
+        for (const key of ["collapsed", "hidden"]) keepListed(options, key, (one) => values.has(one));
       }
       if (lens.name === "calendar" && options["today"] !== undefined && !(typeof options["today"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(options["today"]))) {
         return bad(`${at}.options.today`, "its today is not a date", `Write it as "YYYY-MM-DD", or leave it out and the calendar opens on the day it is drawn.`);
@@ -314,6 +339,14 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
         const other = [options["rows"], options["columns"]].find((kind) => kind !== lens.on);
         across = typeof other === "string" ? other : undefined;
       }
+    }
+    // What Find looks in and what stands as chips (Roadmap f-lens-search-filter): the arranged kind's fields — `label` its name — and its relations for chips.
+    const arranges = typeof options["rows"] === "string" ? options["rows"] : stands[0];
+    if (arranges !== undefined) {
+      const fields = ["label", ...fieldsOf(arranges)];
+      const chips = new Set(["is", ...fields, ...Object.keys((app.schema.tryDefinition(arranges)?.edges as Record<string, unknown> | undefined) ?? {})]);
+      keepListed(options, "search", (one) => fields.includes(one));
+      keepListed(options, "filters", (one) => chips.has(one.split(".")[0]!));
     }
     const as = placeSlug(title);
     if (as.length === 0) return bad(`${at}.title`, "its title has no letters or digits to make an address of", "Give it a title a person would say.");

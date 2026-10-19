@@ -110,7 +110,8 @@ describe("a hosted page", () => {
     // 941 KB since a rule's today() came to be the app's day (Roadmap f-app-time-zone): today() read in the app's zone and a store told the zone judged and ticked on it: the scene face measured 958_071 B, 736 more than before it (957_335).
     // 942 KB since the twelfth walk (0.1.37): a repair says what it still asks for, a press its act's own input refused is told to a watching harness, and a record's facts are drawn by one `RecordField`: the scene face measured 963_478 B, 918 more than 940 KB.
     // 943 KB since the right-click menu came to offer a view the app already has before drawing a new one (Roadmap f-menu-suggests-existing-views): what a place is and reads, carried by the registry — the matching and its rows are fetched with the inline AI: the scene face measured 964_641 B, 77 more than before it (964_564).
-    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(943 * 1024);
+    // 945 KB since a status board came to move without buttons (Roadmap f-board-move-without-buttons, f-lens-search-filter): the menu's Move to › section on both faces and the options a declared lens is held to: the scene face measured 966_453 B, 1_889 more than before it (964_564).
+    for (const face of Object.values(measured.beforeDrawn)) expect(face.minified).toBeLessThan(945 * 1024);
   });
 
   it("fetches the inspector's pane, and the seat's tools behind it, when an act is first wanted or the page is idle, not with the scene", () => {

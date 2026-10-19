@@ -353,6 +353,11 @@ export interface ArrangeContext {
    * rank its kind works out hands this; unhanded, such a key sorts nothing.
    */
   readonly read?: (node: ArrangeNode, key: string) => unknown;
+  /**
+   * The fields the words are looked for in — `label` for the name — where a
+   * lens names them (`options.search`); every readable field when unsaid.
+   */
+  readonly searchIn?: readonly string[];
 }
 
 export interface ArrangedGroup<N extends ArrangeNode = ArrangeNode> {
