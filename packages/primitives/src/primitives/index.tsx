@@ -353,6 +353,16 @@ export function Panel({
            */
           ...(page ? { overflow: "visible" } : { marginBottom: "calc(-1 * var(--graview-pad, 15px))", paddingBottom: "var(--graview-pad, 15px)" }),
           /*
+           * CONTENT THAT FITS DOES NOT SCROLL. A picture scaled into a card
+           * filled its 336.4px scroller exactly, the browser rounded that to
+           * 337 against 336 and let it scroll one pixel — a scroll region
+           * with nothing to scroll to and no way in by keyboard (axe's
+           * `scrollable-region-focusable`, graview.dev at 414px). What the
+           * measure calls fitting is held still; what it calls overflowing
+           * scrolls, and is the stop above.
+           */
+          ...(!page && !overflowing ? { overflow: "hidden" } : {}),
+          /*
            * A CUT ROW AND A SCROLLED ROW LOOK THE SAME, and only one of them
            * is all right.
            *
