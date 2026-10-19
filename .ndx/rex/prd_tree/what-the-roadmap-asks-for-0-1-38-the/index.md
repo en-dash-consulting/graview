@@ -2,7 +2,8 @@
 id: "71f1618d-676e-4e66-b49e-c4288973afdf"
 level: "epic"
 title: "What the roadmap asks for 0.1.38: boards without buttons, searchable lenses, places that tidy their views, a menu that offers what exists, the last of inline AI, and graview.dev's generated UI"
-status: "pending"
+status: "completed"
+completedAt: "2026-10-19T09:00:00.000Z"
 priority: "high"
 tags:
   - "roadmap"
@@ -27,3 +28,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [0.1.38 · Inline AI, the framework's last part: a selection bar, one quiet hover chip, and the AI section under 400 ms](./0-1-38-inline-ai-the-frameworks-last.md) | completed |
 | [0.1.38 · graview.dev shows the UI is generated, then reshaped by asking](./0-1-38-graview-dev-shows-the-ui-is.md) | completed |
 | [0.1.38 · The Nightly runs address, and the flakes and the scale harness are settled](./0-1-38-the-nightly-runs-address-and.md) | completed |
+
+## Notes
+
+2026-10-19: every task completed on feat/0-1-38-additions. Boards move without buttons and the lenses take search, filter and column options; the menu offers the single best existing view (three in the quick ask, which has words) so the AI section is never taller; places hide, delete and restore views through `keptViews` (1.4 KB up front after review cut it from 5.1 KB: the gesture handler must refuse the browser's menu in the same event); inline AI's selection bar and opt-in hover chip, the AI section at 277 ms p95; graview.dev's hero ends on the departures board and a season section redraws one store three ways; address runs in the Nightly, the ground's travel is asked again, and the scale rise holds 60 fps after a real fix (a hub's lines measured the page a thousand times).
