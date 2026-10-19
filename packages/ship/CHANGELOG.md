@@ -1,5 +1,33 @@
 # @graview/ship
 
+## 0.1.37
+
+### Patch Changes
+
+- cf691f4: A record can hold a video. A photo gallery built on Graview Cloud with three iPhone clips could show only a play glyph over a still: no field took a video, the host's files took none, and a view may not draw `<video>`. A document now says `{"type": "video"}` (or `{"type": "list", "of": "video"}`), a declaration `videoField()`, and the value is the `FileValue` the host's upload answered — `{ href, name, type, bytes, width?, height?, caption? }` — with what a player wants before it loads a byte: `poster` (a picture on the host), `duration` in seconds and `captions` (a WebVTT file on the host), each a path on the host or a length above 0, or refused. A video field takes only `video/*`, a picture field no video. The editor asks for videos where the host's `kinds` take `video/*` (`accept="video/*"`, "Choose a video", "This host doesn't take videos" where they do not) and sends one as it was picked: making a phone's HEVC `.mov` an MP4 every browser plays, its poster and its length are the host's to answer. The face plays a record's video — its poster first, the browser's own controls, `preload="metadata"`, captions where the value has them, sized from the value — drawn and fetched where the host serves files (`fileSrc`), its length read from what the player loaded where the value does not say it; a card or a row shows its poster (or its first frame) with a play glyph and its length. A record's facts, an image block and a headless run say it as "a 45-second video" (`videoWords`); the act's form and its argument's shape say `video: true`. A worker view whose manifest says `pictures` places `<graview-video data-record data-field>` and the host plays that record's video in it, from the records the view was shown, never handing the view a path or drawing it a `<video>`; and a viewer's press on a `data-lightbox` element opens the host's full-screen viewer for a picture or a video. The dev server's files door takes videos and serves them a range at a time. The `graview-view-drawing`, `graview-worker-view` and `graview-node-kind` skills say so. A hosted page carries 0.6 KB more up front for a video field's schema; the player, the card and the view's player are behind the doors already there, and the guest host's first load grows by under 1 KB for the press and the door.
+  
+  Compatibility: ops and stored records are unchanged; a stored file value is read as before, and a value may now also carry `poster`, `duration` and `captions`. The declaration takes the field type `video` and `of: "video"`; a declaration that compiled still compiles. Derived tool input schemas for a file argument list the optional `poster`, `duration` and `captions`, and a video field's form control and argument shape say `video: true`. The guest wire is unchanged in shape: a video on a record is handed to a view that asks for `pictures` as its facts (`GuestFile.duration` beside `width`, `height` and `caption`) where it was handed its name, type and size. The open kit draws one element more, `graview-video`. `DEV_FILES_KINDS` takes `video/*`.
+- f860e41: A rule's today() is the app's day, not UTC's. Datetimes were said in the app's zone, and `today()` — what a rule, a computed field, a template and a label read — was still the UTC date, so an app in New York turned its day at 8 PM: at 01:30 UTC on Oct 17 a chore due Oct 16 was already overdue over dinner. With `brand.timeZone` declared, today() is the date there, and the day turns at the app's midnight: a document's rules, computed fields, guards and labels read it from the document's own brand, and a store told the zone (`new Store({ timeZone })`, which `openStore`, `openRemote`, the embed and `graview mcp` pass from the app's brand) is judged on that day, hands it to a rule written as a function in its context, as `openStore` already did, and ticks to it: `tick(now)` takes `now`'s day in that zone, and `tickEachDay` fires at that midnight, 23 hours after the last on the day clocks spring forward and 25 on the day they fall back, at the day's first moment where midnight never happens. A page reads the day of the app it draws, never the reader's zone and never the runtime's, so a server and a page agree on the day for the same app. Without a declared zone, today() is the UTC date, as before, and `openStore` still judges on the host's own date. A host that keeps a store on its own alarm (a Durable Object) passes `timeZone: brand.timeZone` to its store and sets the alarm `untilTheDayTurns(now, store.timeZone)` ahead; a tick at the turn of the day now says what the turn moved, judging what stood on the day the store was last ticked to. `isoToday(timeZone?, at?)` and `dayZoneFor` are exported, `dayOf` and `untilTheDayTurns` take a zone, and `rules-read-the-clock`'s fix says which midnight. The `graview-invariant` skill says so. A hosted page carries 0.7 KB more up front for it (the compiled page too); their budgets are raised by that.
+  
+  Compatibility: ops, stored records and the declaration are unchanged. An app that declares `brand.timeZone` reads today() as the date in that zone, where it read the UTC date, on every surface and in `graview serve`. `StoreOptions` takes `timeZone` and `Store` has `timeZone`; `dayOf(now, timeZone?)` and `untilTheDayTurns(now, timeZone?)` take a zone; `tickEachDay` reads the store's `timeZone`. A store told its zone hands its day to its rules' context as `today` where neither the call nor its options carry one.
+- 49d0ed8: A store `openStore` opens for an app that declares no time zone (so `graview serve`, `graview mcp` and `graview apply`) turns its day at the host's midnight and its subscribers hear it. It judged rules on the host's day through a pinned `today`, and a pinned day never turns: a served app's overdue loans waited for a restart. The store now holds the host's own zone instead, the same day as before, and ticks.
+  
+  Compatibility: no surface changes; `store.timeZone` on such a store now names the host's zone.
+- Updated dependencies [a130326]
+- Updated dependencies [7fa2dbc]
+- Updated dependencies [cf691f4]
+- Updated dependencies [d689fbc]
+- Updated dependencies [9121a9c]
+- Updated dependencies [862ab8c]
+- Updated dependencies [f860e41]
+- Updated dependencies [7d6f521]
+- Updated dependencies [f97a149]
+- Updated dependencies [d689fbc]
+- Updated dependencies [34fa7b9]
+- Updated dependencies [0d440e2]
+- Updated dependencies [e56c351]
+  - @graview/core@0.1.37
+
 ## 0.1.36
 
 ### Patch Changes

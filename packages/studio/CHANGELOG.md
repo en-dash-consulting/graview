@@ -1,5 +1,43 @@
 # @graview/studio
 
+## 0.1.37
+
+### Patch Changes
+
+- cf691f4: A record can hold a video. A photo gallery built on Graview Cloud with three iPhone clips could show only a play glyph over a still: no field took a video, the host's files took none, and a view may not draw `<video>`. A document now says `{"type": "video"}` (or `{"type": "list", "of": "video"}`), a declaration `videoField()`, and the value is the `FileValue` the host's upload answered — `{ href, name, type, bytes, width?, height?, caption? }` — with what a player wants before it loads a byte: `poster` (a picture on the host), `duration` in seconds and `captions` (a WebVTT file on the host), each a path on the host or a length above 0, or refused. A video field takes only `video/*`, a picture field no video. The editor asks for videos where the host's `kinds` take `video/*` (`accept="video/*"`, "Choose a video", "This host doesn't take videos" where they do not) and sends one as it was picked: making a phone's HEVC `.mov` an MP4 every browser plays, its poster and its length are the host's to answer. The face plays a record's video — its poster first, the browser's own controls, `preload="metadata"`, captions where the value has them, sized from the value — drawn and fetched where the host serves files (`fileSrc`), its length read from what the player loaded where the value does not say it; a card or a row shows its poster (or its first frame) with a play glyph and its length. A record's facts, an image block and a headless run say it as "a 45-second video" (`videoWords`); the act's form and its argument's shape say `video: true`. A worker view whose manifest says `pictures` places `<graview-video data-record data-field>` and the host plays that record's video in it, from the records the view was shown, never handing the view a path or drawing it a `<video>`; and a viewer's press on a `data-lightbox` element opens the host's full-screen viewer for a picture or a video. The dev server's files door takes videos and serves them a range at a time. The `graview-view-drawing`, `graview-worker-view` and `graview-node-kind` skills say so. A hosted page carries 0.6 KB more up front for a video field's schema; the player, the card and the view's player are behind the doors already there, and the guest host's first load grows by under 1 KB for the press and the door.
+  
+  Compatibility: ops and stored records are unchanged; a stored file value is read as before, and a value may now also carry `poster`, `duration` and `captions`. The declaration takes the field type `video` and `of: "video"`; a declaration that compiled still compiles. Derived tool input schemas for a file argument list the optional `poster`, `duration` and `captions`, and a video field's form control and argument shape say `video: true`. The guest wire is unchanged in shape: a video on a record is handed to a view that asks for `pictures` as its facts (`GuestFile.duration` beside `width`, `height` and `caption`) where it was handed its name, type and size. The open kit draws one element more, `graview-video`. `DEV_FILES_KINDS` takes `video/*`.
+- 9121a9c: A relation can say no act makes or breaks it (`acts: "none"` on an edge declaration), and is then given no derived connect or disconnect: it is read from what was declared. The studio's own meta-schema says it of what an act creates, connects and severs and of the kind a computed field is on, which its named acts and the opened declaration set; once every relation came with a derived pair, "Link a kind (creates)" had taken a kind's strip past "Add a field".
+  
+  Compatibility: `EdgeDeclaration` takes `acts?: "none"`; the studio's acts are as they were.
+- Updated dependencies [9e00808]
+- Updated dependencies [a130326]
+- Updated dependencies [7fa2dbc]
+- Updated dependencies [cf691f4]
+- Updated dependencies [d689fbc]
+- Updated dependencies [7d137a8]
+- Updated dependencies [9121a9c]
+- Updated dependencies [862ab8c]
+- Updated dependencies [f860e41]
+- Updated dependencies [49d0ed8]
+- Updated dependencies [7441814]
+- Updated dependencies [909aad0]
+- Updated dependencies [7b50571]
+- Updated dependencies [7d6f521]
+- Updated dependencies [f97a149]
+- Updated dependencies [d689fbc]
+- Updated dependencies [34fa7b9]
+- Updated dependencies [0d440e2]
+- Updated dependencies [e56c351]
+- Updated dependencies [f9e81c1]
+  - @graview/primitives@0.1.37
+  - @graview/core@0.1.37
+  - @graview/pages@0.1.37
+  - @graview/ship@0.1.37
+  - @graview/tools@0.1.37
+  - @graview/react@0.1.37
+  - @graview/layout@0.1.37
+
 ## 0.1.36
 
 ### Patch Changes

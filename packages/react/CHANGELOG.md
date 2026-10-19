@@ -1,5 +1,36 @@
 # @graview/react
 
+## 0.1.37
+
+### Patch Changes
+
+- 7441814: A view that draws its members late still gets its lines. The scene measures its lines when a frame lands and again on a scroll, a resize, a new selection or a caption that moved; a view whose picture is fetched as it is first drawn puts its members down in a commit of its own, after the frame landed and at the same size, so none of those came. On a CPU four times slower the week's lens arrived a few milliseconds after the last measurement, and with the lists raised its nine entries stood with no line to the lists holding them until something else moved the page. Nothing was shed for load: the measurement was older than the drawing. Now `connectorStrands` takes an optional map it fills with the members it looked for inside a view and found no drawing of, and the lines watch those views and are measured again once one of them is drawn.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and check finding codes, and tool names and input schemas are unchanged; `connectorStrands` gains an optional sixth argument. Nothing more is loaded up front; the scene face is 1 KB larger.
+- 7d6f521: Datetimes are said in the app's time zone, and a template can say a time of day. An app declares its zone once, `brand.timeZone` (an IANA name, "America/New_York") on `defineApp`'s brand or a document's `brand`, and every instant kept with a zone (`2026-10-16T14:47:00Z`, `…-04:00`) is said on that clock: in lists, cards, record pages, a rule's sentence, an act's sentence and its echo to an agent, Activity's digest, the static page and the date editor, which reads and keeps an instant on the same clock. A person's zone wins over it where a host passes one — `timeZone` on `GraviewProvider`, the embed and the pages face, beside `locale` — and each reader's own clock is said when neither says, as before. A moment kept without a zone is still the wall time written. Describe templates take `{at | time}` ("10:47 AM") and `{at | datetime}` ("Oct 16, 2026, 10:47 AM EDT"), and a field block takes `as: "time"` and `as: "datetime"`; `{at | date}` and `relative` count an instant's day on the app's clock. An agent's act given `2026-10-16T10:47:00-04:00` echoed "2:47 PM", the server's UTC; a tool runtime handed the app now says it in the app's zone, and a host answering away from any page says its own words in it with `sayingIn({ appTimeZone }, run)`. A view is handed the zone rather than formatted strings: every props push carries `locale` and `timeZone`, for `Intl.DateTimeFormat(props.locale, { timeZone: props.timeZone, … })`, so no view hard-codes a zone again. `graview check` and the document's checker refuse a zone the runtime does not know, or an offset, by name (`brand-time-zone`); `set-brand` sets one (`timeZone`, null clears it), and a diff says "Times are said in America/New_York." `describeApp` says the zone. The `graview-brand`, `graview-node-kind` and `graview-worker-view` skills say so. A hosted page carries 2.0 KB more up front for it (the compiled page too), and the guest host about 0.5 KB; their budgets are raised by that.
+  
+  Compatibility: ops and stored records are unchanged; the declaration takes an optional `brand.timeZone`, and a declaration without it says every time as before. The check finding `brand-time-zone` is new. The guest wire's props carry `locale` and `timeZone`. `Money` (a block's and a template's `money`) takes `timeZone`; `readableFields` takes `timeZone`; `momentAsRead`, `timeAsRead` and `whenAsRead` take a zone after the locale. `sayIn` takes `readerTimeZone` and `appTimeZone` beside `reader` and `app`. A derived edit's sentence and Activity's digest say an instant's day and time on the page's zone, where they said them on the runtime's clock.
+- 34fa7b9: No import cycle is left in any package's source, in types or otherwise. `seenBy` asks a store only for what a seat's view reads of it (`Viewed`) and hands back the store's own type, so the seat's module needs nothing of the store's; what judges a seat's sight (`Judged`) is the sight's; what `describePlace` says a place shows (`PlaceDescription`, `DescribedPart` and the rest) is a module of its own, which the coverage grid in words reads; `ListFields` is the arrangement's, beside `listFieldsOf`, and `parseArrangement` is reached from its own module; the context menu's shapes (`MenuTarget`, `MenuItem`, `MenuSection`, `MenuSectionSource`) are a module the provider names them from; `ToolDefinition` and `ToolAnnotations` are a module the subscription tools declare theirs with; and an app link's, a first look's and Notify me's props live on the side of the door that the drawn part reads them from. Every name is exported from the same entry as before.
+  
+  Compatibility: ops, stored formats, the wire, the declaration and check finding codes, and tool names and input schemas are unchanged — only where a type is declared moved, and every entry exports what it did. `seenBy` is generic over the store it is handed rather than its schema, so a call that named the schema (`seenBy<S>(…)`) names the store instead. The hosted page's first load is 7 bytes smaller.
+- Updated dependencies [a130326]
+- Updated dependencies [7fa2dbc]
+- Updated dependencies [cf691f4]
+- Updated dependencies [d689fbc]
+- Updated dependencies [9121a9c]
+- Updated dependencies [862ab8c]
+- Updated dependencies [f860e41]
+- Updated dependencies [7d6f521]
+- Updated dependencies [f97a149]
+- Updated dependencies [d689fbc]
+- Updated dependencies [34fa7b9]
+- Updated dependencies [0d440e2]
+- Updated dependencies [e56c351]
+  - @graview/core@0.1.37
+  - @graview/tools@0.1.37
+  - @graview/layout@0.1.37
+  - @graview/render@0.1.37
+
 ## 0.1.36
 
 ### Patch Changes
