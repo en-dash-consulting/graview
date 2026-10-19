@@ -102,7 +102,7 @@ describe("what the pages promise each other", () => {
     expect(read("tour.html")).toContain('id="surfaces"');
   });
 
-  it("opens the landing page on the prompt, then says what it builds and what you get before the recipes", () => {
+  it("opens the landing page on the prompt, then says the interface is asked for, then what it builds and what you get before the recipes", () => {
     const landing = read("index.html");
     const main = landing.slice(landing.indexOf("<main"));
     const prompt = main.indexOf('id="prompt-text"');
@@ -114,10 +114,10 @@ describe("what the pages promise each other", () => {
     const hero = /<section id="what"[\s\S]*?<\/section>/.exec(main)?.[0] ?? "";
     expect(hero).not.toMatch(/data-number=/);
     // The sections the page is cut to, in order.
-    const order = ["what", "builds", "gives", "recipes", "how", "cloud", "faq"].map((id) => main.indexOf(`<section id="${id}"`));
+    const order = ["what", "asks", "builds", "gives", "recipes", "how", "cloud", "faq"].map((id) => main.indexOf(`<section id="${id}"`));
     expect(order.every((at) => at > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(main.match(/<section id="/g)).toHaveLength(7);
+    expect(main.match(/<section id="/g)).toHaveLength(8);
     // Each feature card goes to its own section of the tour.
     for (const anchor of ["surfaces", "rules", "lenses", "agent", "acts", "studio"]) {
       expect(main).toContain(`href="tour.html#${anchor}"`);
