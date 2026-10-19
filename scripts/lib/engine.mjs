@@ -161,3 +161,26 @@ export async function launchCanaryGpu({ headless = true, extraArgs = [] } = {}) 
     args: ["--enable-blink-features=CanvasDrawElement", ...extraArgs],
   })), "chromium");
 }
+
+/** Google's webfont hosts, which the apps' pages ask for their faces. */
+const WEBFONTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com\//;
+
+/**
+ * ARRIVE WITHOUT ASKING SOMEBODY ELSE'S NETWORK, for a harness that measures
+ * boxes rather than letters.
+ *
+ * The apps ask Google for their webfonts in a render-blocking stylesheet. On
+ * this macOS WebKit that request now and then never finishes: `page.goto`
+ * waiting for `load` timed out at thirty seconds (playback and viewport,
+ * WebKit only, in three runs of four), and waiting for `domcontentloaded`
+ * instead only moved the failure — with the stylesheet still pending, WebKit
+ * held the todo shell's layout at the size it first had, and a phone turned
+ * sideways measured a box that never followed. Refused at once, the
+ * stylesheet fails, the page lays out in its fallback faces, and `load` comes
+ * when the page's own files are in — which is what these harnesses wait for.
+ * verify-site, which measures text, waits on the fonts a bounded moment instead.
+ */
+export async function arriveWithoutWebfonts(page, url) {
+  await page.route(WEBFONTS, (route) => route.abort());
+  await page.goto(url, { waitUntil: "load" });
+}
