@@ -1,6 +1,6 @@
 # graview-view-drawing
 
-`graview-view-drawing` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.
+`graview-view-drawing` is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 Installed into a project by `graview skills install .`, and read by whichever assistant is working beside you.
 
@@ -49,6 +49,20 @@ A view never draws `<video>` or `position: fixed`; it names what it wants and **
 
 A record the view was not shown, a field with no video, or a view without `pictures` draws nothing, and says why in its console and the host's problems. A headless run says a placed video as "The waves at dusk, a 45-second video".
 
+### Files a person drops on it
+
+Say which fields files become — `accepts: [{ kind: "moment", field: "photo" }, { kind: "moment", field: "clip" }]` in the manifest — and mark the element: `<section data-drop="moment" data-drop-connect="takenOn:${day.id}">`. **The host owns the drop**: it draws the target while files are dragged over it, says what dropping does, holds each file to the field its type fits and to the host's files, and stores it. On a phone the same element is a tap that opens the picker. It is a target only where this seat may make that kind and the host takes files. A view that does not hear `drop` gets a record of the kind per file, its file on its field, linked as `data-drop-connect` says, in one change one undo takes back. One that does is told once:
+
+```js
+graview.on("drop", "[data-drop]", (event) => {
+  const day = event.element.getAttribute("data-day");
+  // event.files: [{ href, name, type, bytes, width, height, poster, duration, at, field }], never bytes; event.refused: sentences.
+  graview.act("add-moment-to-day", event.files.map((file) => ({ id: day, [file.field]: file })));
+});
+```
+
+`graview.act(name, [args, …])` is several as one change. Hand an act a file only as you were handed it; any other `href` is refused. `data-drop-field` narrows a target to one field. Every event is `{ type, target, element }` and what it carries: `value`/`checked`, `key`, `pressed`, `files`/`refused`.
+
 **Keep a picture in an `image` field**, which holds the uploaded file (what `add_image` stores), never its bytes as words: a `data:` URI in a text field is cut at 20,000 characters, and in the view's source it counts against its size.
 
 ### Then find out whether it worked
@@ -65,6 +79,6 @@ A record the view was not shown, a field with no video, or a view without `pictu
 
 ---
 
-Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.
+Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.
 
 The page: https://graview.dev/docs/skills/graview-view-drawing.html · Every Graview docs page, for a model: https://graview.dev/llms.txt

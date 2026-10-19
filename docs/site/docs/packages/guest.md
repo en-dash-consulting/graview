@@ -229,6 +229,30 @@ A worker view may not draw `<video>` (it fetches) or cover the app (`position: f
 
 In a `<graview-video>` (the open kit's one element the host draws for a view: it names a file and holds nothing) the host plays that record's video in a shadow root of its own — the poster first, the browser's own controls, `preload="metadata"`, captions where the value carries them, sized from the value — fetched where the host serves files (`file`, else the page's `files.src`). The view's stylesheet sizes the box and reaches nothing inside it, and the view hears nothing pressed there. A viewer's own press (a click, or Enter or Space on what is not a button) on a `data-lightbox` element opens the host's full-screen viewer for that picture or video: a modal dialog over the app, closed by Escape or its Close button, with the keyboard given back to what opened it. The view's code cannot open it. A record the view was not shown, a field that holds no such file, or a view without `pictures` draws nothing and says why, in the view's console and to the host's problems. A video is handed to the view as its facts (`name`, `type`, `bytes`, `width`, `height`, `caption`, `duration`), never an address; a headless run says a placed video as "The waves at dusk, a 45-second video". A frame guest places none: its frame is another origin.
 
+#### Files a person drops on it
+
+A worker view takes files a person drops on what it drew (FR-193). Its manifest says which fields files become, and it marks the element:
+
+```html
+<!-- manifest: accepts: [{ kind: "moment", field: "photo" }, { kind: "moment", field: "clip" }] -->
+<section data-drop="moment" data-drop-connect="takenOn:day:saturday">Saturday</section>
+```
+
+The host owns the rest. The element is a drop target only where this seat may make that kind (and link it to the record `data-drop-connect` names, `<relation>:<record id>`, one the view was shown) and the page's host's `files` take what the fields hold; anywhere else it is no target, and a drop there is the browser's. While files are dragged over it the host draws it with an outline of its own and says what dropping does in a status of its own; on a coarse pointer the same element is a tap that opens the picker, asking for what the fields take, and Enter or Space on it does the same. Each file goes to the field its type fits (a picture to an image field, a video to a video field, else a file field), is held to the kinds and the size the host's files take, and is stored through `files.upload`; what was refused is said, a sentence a file. `data-drop-field` narrows a target to one of its kind's accepted fields.
+
+A view that does not hear `drop` gets a record of the kind per file, its file on its field, linked as `data-drop-connect` says — by an act on the dropped-on record that makes one linked, where the app has one, else the act that makes the kind and the relation's connect, naming the record just made with `{ $made: n }` — all in one change one undo takes back. A view that hears it is told once, and makes what it will:
+
+```js
+graview.on("drop", "[data-drop]", (event) => {
+  // event.files: [{ href, name, type, bytes, width, height, poster, duration, at, field }]; event.refused: sentences.
+  graview.act("add-moment-to-day", event.files.map((file) => ({ id: "day:saturday", [file.field]: file })));
+});
+```
+
+`graview.act(name, [args, …])` runs several of one act as one change. An act's argument takes a file only as the host handed it — in a drop, or on a record the view was shown — and it goes as the host kept it; any other `href` is refused `malformed`. Where sight is not total, an act from the view's code applies only from a press, as ever, except one whose every argument is a drop's file, a record the view was shown, a record the same change makes, or a value the app declares. A headless run says a `data-drop` its manifest does not accept, and a `data-drop-connect` that names no record the view was shown.
+
+Every event a view hears is `{ type, target, element }` and what that event carries: `value` and `checked` (`input`, `change`), `key` (`keydown`), `pressed` (a press on `data-act`, and `acted`), `files` and `refused` (`drop`).
+
 #### What the host page allows
 
 A worker guest, on the kit or the open kit, starts from a `blob:` URL the host makes of its script. The page's Content-Security-Policy has to allow that, and an open-kit view's stylesheet:

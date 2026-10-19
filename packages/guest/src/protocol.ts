@@ -43,6 +43,17 @@
  * path on the host: nothing new is said on the wire, and a guest that does
  * not ask is handed what it always was.
  *
+ * A WORKER VIEW THAT TAKES FILES (FR-193) — its manifest saying `accepts`,
+ * an element it drew saying `data-drop` — says one thing more, and hears
+ * one: what it listens for, so the host knows whether to leave a drop to
+ * it, and a drop the host has stored.
+ *
+ *   guest → host     { type: "hears", nonce, events }                (over the port: the events its `graview.on` listens for, each once)
+ *   host  → guest    { type: "dom-event", target, event: "drop", files, refused? } (over the port: files the person dropped, stored)
+ *
+ * And an act may be asked for several times as one change, one undo:
+ * `{ type: "act", …, name, args: [args, …] }`.
+ *
  * The host draws a stylesheet only as the open kit allows (host/css.ts),
  * and numbers each props push (`push`) so the runtime can say when it has
  * drawn it.
@@ -316,7 +327,13 @@ export interface GuestDomEvent {
   readonly type: "dom-event";
   /** The view's id for the node it happened on. */
   readonly target: string;
-  /** `click`, `input`, `change`, `keydown` or `toggle`; or `acted`, what became of an act a press or a field saved as it is typed asked for, on the element bound to it (FR-191). */
+  /**
+   * `click`, `input`, `change`, `keydown` or `toggle`; or `acted`, what
+   * became of an act a press or a field saved as it is typed asked for, on
+   * the element bound to it (FR-191); or `drop`, files the person dropped
+   * on (or picked for) an element marked `data-drop`, stored by the host
+   * (FR-193).
+   */
   readonly event: string;
   readonly value?: string;
   readonly checked?: boolean;
@@ -328,6 +345,36 @@ export interface GuestDomEvent {
    * field's save (`data-save`) asked for (FR-191).
    */
   readonly pressed?: GuestPressed;
+  /** On `drop`: each file the host stored, as it keeps it (FR-193). */
+  readonly files?: readonly GuestDroppedFile[];
+  /** On `drop`: each file the host would not take, and why, in a sentence. */
+  readonly refused?: readonly string[];
+}
+
+/**
+ * A FILE THE PERSON DROPPED, AS THE HOST STORED IT (FR-193): what a record
+ * keeps of it (`FileValue`) — where the host keeps it, never its bytes —
+ * and two things more. `field` is the field of the `data-drop` kind it is
+ * for, by its type (a picture to the image field, a video to the video
+ * field); `at` is when the file was last changed, as the person's device
+ * said it: for a photograph, about when it was taken. Handed back in an
+ * act's argument, it goes as the host kept it — `field` and `at` left off —
+ * and a file the host did not hand is refused.
+ */
+export interface GuestDroppedFile {
+  /** Where the host keeps it: a path on the host, as the record will. */
+  readonly href: string;
+  readonly name: string;
+  readonly type: string;
+  readonly bytes: number;
+  readonly width?: number;
+  readonly height?: number;
+  readonly poster?: string;
+  readonly duration?: number;
+  /** When it was last changed, as an ISO instant. */
+  readonly at?: string;
+  /** The field it is for: one of the manifest's `accepts` for the dropped-on kind. */
+  readonly field: string;
 }
 
 /** The answer to a press bound to an act: the act's name, and whether it applied or why not. */
@@ -351,7 +398,10 @@ export type HostMessage =
   | HostHeartbeat;
 
 export type GuestRequest =
-  | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> }
+  /** An act, or several of it as one change and one undo (`args` a list, FR-193). */
+  | { readonly type: "act"; readonly nonce: string; readonly id: string | number; readonly name: string; readonly args: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[] }
+  /** The events a worker view's `graview.on` listens for, each said once (FR-193): a view that hears `drop` is left the drop. */
+  | { readonly type: "hears"; readonly nonce: string; readonly events: readonly string[] }
   | { readonly type: "navigate"; readonly nonce: string; readonly to: string; readonly where?: GuestWhere; readonly section?: string }
   /**
    * Go to a named place or a kind's list of this app, by its slug (FR-93): a

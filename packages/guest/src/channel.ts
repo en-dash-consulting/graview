@@ -20,8 +20,8 @@ export interface Guest {
   readonly props: GuestProps | undefined;
   /** Called with every push. Returns the unsubscribe. */
   subscribe(listener: (props: GuestProps) => void): () => void;
-  /** Ask for an act by name. Resolves with the host's answer; never rejects for a refusal. */
-  act(name: string, args?: Readonly<Record<string, unknown>>): Promise<GuestAnswer>;
+  /** Ask for an act by name — or several of it, as one change and one undo, with a list of arguments (FR-193). Resolves with the host's answer; never rejects for a refusal. */
+  act(name: string, args?: Readonly<Record<string, unknown>> | readonly Readonly<Record<string, unknown>>[]): Promise<GuestAnswer>;
   /**
    * Ask the host to go to a record, by its id, or to one of the app's named
    * places or a kind's list (`{ place: slug }`, one `props.places` lists, or

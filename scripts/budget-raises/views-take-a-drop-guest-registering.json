@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, registering a worker view",
+  "minified": 3782,
+  "gzipped": 1628,
+  "note": "Raised when a view came to take files dropped on it (FR-193, Graview Cloud's family weekend): a manifest's `accepts` is checked (a kind, a field that holds a picture, a video or a file, an act that makes it), the marks of a file field and a record argument are read without zod (`host/marks.ts`), and an act from a view's code takes a file only as the host handed it, and the files of a drop where sight is not total. Measured at 27_640 / 12_844 against 23_858 / 11_216: 3_782 / 1_628 more."
+}

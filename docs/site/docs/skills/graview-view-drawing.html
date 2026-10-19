@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>graview-view-drawing — Graview docs</title>
-<meta name="description" content="Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.">
+<meta name="description" content="Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="graview-view-drawing — Graview docs">
-<meta property="og:description" content="Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.">
+<meta property="og:description" content="Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/skills/graview-view-drawing.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/skills/graview-view-drawing.html#article",
    "headline": "graview-view-drawing — Graview docs",
-   "description": "Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.",
+   "description": "Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.",
    "url": "https://graview.dev/docs/skills/graview-view-drawing.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1520,7 +1520,7 @@ main.page > section.tour-intro { padding-top: 64px; }
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">graview-view-drawing</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview-view-drawing</code> is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer — and find out what the host refused rather than assuming it drew.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview-view-drawing</code> is one of Graview's 19 authoring skills: instructions an AI coding assistant such as Claude Code or Codex reads before it changes a Graview app. What it teaches: Draw in a Graview worker view — the HTML, SVG and CSS the host keeps of it, the app's tokens and brand, the images a view may show (the app's logo, the app's own images, the pictures on records), a record's video the host plays and its full-screen viewer, files a person drops on it — and find out what the host refused rather than assuming it drew.</p>
       <p class="sm dim">Installed into a project by <code>graview skills install .</code>, and read by whichever assistant is working beside you.</p>
     </section>
     <section id="skill" aria-labelledby="h-skill">
@@ -1553,6 +1553,14 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li>**`&lt;button data-lightbox data-record="${node.id}" data-field="photos" data-index="0"&gt;`**: the viewer's press opens the host's full-screen viewer for that picture or video over the app; Escape closes it and the keyboard comes back to the button. Your code cannot open it.</li>
 </ul>
 <p>A record the view was not shown, a field with no video, or a view without <code>pictures</code> draws nothing, and says why in its console and the host's problems. A headless run says a placed video as "The waves at dusk, a 45-second video".</p>
+<h3>Files a person drops on it</h3>
+<p>Say which fields files become — <code>accepts: [{ kind: "moment", field: "photo" }, { kind: "moment", field: "clip" }]</code> in the manifest — and mark the element: <code>&lt;section data-drop="moment" data-drop-connect="takenOn:${day.id}"&gt;</code>. <strong>The host owns the drop</strong>: it draws the target while files are dragged over it, says what dropping does, holds each file to the field its type fits and to the host's files, and stores it. On a phone the same element is a tap that opens the picker. It is a target only where this seat may make that kind and the host takes files. A view that does not hear <code>drop</code> gets a record of the kind per file, its file on its field, linked as <code>data-drop-connect</code> says, in one change one undo takes back. One that does is told once:</p>
+<div class="code" data-scroller><pre><code class="language-js">graview.on("drop", "[data-drop]", (event) =&gt; {
+  const day = event.element.getAttribute("data-day");
+  // event.files: [{ href, name, type, bytes, width, height, poster, duration, at, field }], never bytes; event.refused: sentences.
+  graview.act("add-moment-to-day", event.files.map((file) =&gt; ({ id: day, [file.field]: file })));
+});</code></pre></div>
+<p><code>graview.act(name, [args, …])</code> is several as one change. Hand an act a file only as you were handed it; any other <code>href</code> is refused. <code>data-drop-field</code> narrows a target to one field. Every event is <code>{ type, target, element }</code> and what it carries: <code>value</code>/<code>checked</code>, <code>key</code>, <code>pressed</code>, <code>files</code>/<code>refused</code>.</p>
 <p><strong>Keep a picture in an <code>image</code> field</strong>, which holds the uploaded file (what <code>add_image</code> stores), never its bytes as words: a <code>data:</code> URI in a text field is cut at 20,000 characters, and in the view's source it counts against its size.</p>
 <h3>Then find out whether it worked</h3>
 <ol>

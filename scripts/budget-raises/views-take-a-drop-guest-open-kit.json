@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker view on the open kit",
+  "minified": 16463,
+  "gzipped": 6788,
+  "note": "Raised when a view came to take files dropped on it (FR-193, Graview Cloud's family weekend): the drop itself (`host/drop.ts`, `host/drop-plan.ts`) is fetched with the first `data-drop` a view whose manifest accepts files draws (11.3 KB of the raise), and the host's drawing marks it, keeps what it handed, and leaves a view that hears `drop` the drop. Measured at 174_062 / 66_071 against 157_599 / 59_283: 16_463 / 6_788 more."
+}

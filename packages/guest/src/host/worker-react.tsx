@@ -121,6 +121,8 @@ function WorkerViewMount({ definition, store, principal, input, goTo, places, sc
         ...(definition.asset ? { asset: definition.asset } : {}),
         ...(file ? { file } : {}),
         ...(definition.images ? { images: definition.images } : {}),
+        /* What a file dropped on what the view drew is stored through (FR-193): the page's host's files, as they are now. */
+        files: () => latest.current.hostFiles,
       });
     });
     return () => {

@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 742,
+  "gzipped": 324,
+  "changeset": "views-take-files-dropped-on-them.md",
+  "note": "Raised when a view came to take files dropped on it (FR-193): `applyAll` reads `{ $made: n }` as the record an earlier call of the same change made, and judges that call once it is there to name (`mutations/made.ts`), so a record made and linked to the one it was dropped on is one change. The store is on every page, so this is up front; the drop itself is fetched only with a view that draws a drop target. Measured at 537_550 / 186_496 against 536_808 / 186_172 minified and gzipped."
+}
