@@ -185,8 +185,10 @@ export function toDocument<S extends AnySchema>(app: GraviewApp<S>): ToDocumentR
     ...(app.connections ? { connections: app.connections as GraviewDocument["connections"] } : {}),
     // View specs are already data: they are the document's views (FR-03).
     ...((app.viewSpecs && Object.keys(app.viewSpecs).length > 0) || app.home ? { views: { ...(app.viewSpecs ?? {}), ...(app.home ? { home: app.home } : {}) } as unknown as GraviewDocument["views"] } : {}),
-    // The palette is code; the app's money is data, and goes across (FR-100).
-    ...(app.brand?.currency || app.brand?.locale ? { brand: { ...(app.brand.currency ? { currency: app.brand.currency } : {}), ...(app.brand.locale ? { locale: app.brand.locale } : {}) } } : {}),
+    // The palette is code; the app's money, locale and time zone are data, and go across (FR-100).
+    ...(app.brand?.currency || app.brand?.locale || app.brand?.timeZone
+      ? { brand: { ...(app.brand.currency ? { currency: app.brand.currency } : {}), ...(app.brand.locale ? { locale: app.brand.locale } : {}), ...(app.brand.timeZone ? { timeZone: app.brand.timeZone } : {}) } }
+      : {}),
   } as GraviewDocument;
   return { document, findings };
 }

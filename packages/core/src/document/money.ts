@@ -6,11 +6,16 @@ import { numberAsRead } from "../days.js";
  * `brand.currency` and `brand.locale`. Without a currency a sum is a
  * number in figures, as it always was. The locale is the app's for its
  * days, times and numbers too (FR-178); a reader's a host passed wins.
+ * The zone rides with them (`brand.timeZone`, Roadmap f-app-time-zone):
+ * what a template, a block and a rule's sentence say an instant on, where
+ * no person's zone was passed.
  */
 export interface Money {
   readonly currency?: string;
   readonly locale?: string;
+  readonly timeZone?: string;
 }
+
 
 /** A sum of money in words: "$21,000", "21.000 €" — whole sums without cents, others with two. */
 export function formatMoney(value: number, money: Money = {}): string {

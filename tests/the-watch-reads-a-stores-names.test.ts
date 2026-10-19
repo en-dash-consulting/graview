@@ -1,7 +1,7 @@
 import { bindSchema, createSchema, defineNode, nodeRef, Store, z } from "@graview/core";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain .mjs module, without types.
-import { authorsOf, namesOf, unseenOf } from "../scripts/lib/watch.mjs";
+import { authorsOf, mintedIds, namesOf, unseenOf } from "../scripts/lib/watch.mjs";
 
 /**
  * THE WATCH READS A STORE'S NAMES (scripts/lib/watch.mjs). A store hands
@@ -34,6 +34,15 @@ const policy = {
 const snapshot = { nodes: [{ id: "d1", kind: "deal", label: "Chloé · Highlander", stage: "open" }] as never, edges: [] };
 
 describe("the watch, handed a store", () => {
+  it("knows a record's minted id when it is shown, though the id was never declared (the twelfth walk)", () => {
+    const { kinds } = namesOf(new Store({ schema, mutations: [close], policy, snapshot })) as { kinds: string[] };
+    expect(kinds).toEqual(["deal"]);
+    const minted = mintedIds(kinds) as RegExp;
+    expect(minted.exec("Chloé · Highlander · deal:chloe-highlander-2")?.[1]).toBe("deal:chloe-highlander-2");
+    expect(minted.exec("Deal: Chloé, at 10:30")).toBeNull();
+    expect(minted.exec("the ideal:thing")).toBeNull();
+  });
+
   it("reads its kinds, field keys, edges, acts and roles, and the words it has for them", () => {
     const names = namesOf(new Store({ schema, mutations: [close], policy, snapshot }));
     for (const id of ["deal", "label", "stage", "closedAt", "sold-by", "close-deal", "sales-manager", "salesperson"]) expect(names.ids).toContain(id);

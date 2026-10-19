@@ -1,4 +1,5 @@
 import { derivedActOf } from "../mutations/derived-names.js";
+import { documentRelationActOf } from "./relation-acts.js";
 import { brandOf } from "./brand.js";
 import { ActRefusal } from "../refused.js";
 import { analyzeExpr } from "./expr/analyze.js";
@@ -355,7 +356,7 @@ function validate(document: GraviewDocument): Finding[] {
     }
     if (rule.says) tryTemplate(rule.says, `${at}.says`, findings);
     (rule.repairs ?? []).forEach((repair, i) => {
-      if (!acts[repair.act] && !derivedActOf(repair.act)) findings.push(error("repair-act", `${at}.repairs.${i}.act`, `"${repair.act}" is not an act this document declares`));
+      if (!acts[repair.act] && !derivedActOf(repair.act) && !documentRelationActOf(repair.act, document.kinds)) findings.push(error("repair-act", `${at}.repairs.${i}.act`, `"${repair.act}" is not an act this document declares`));
     });
   }
 
@@ -363,7 +364,7 @@ function validate(document: GraviewDocument): Finding[] {
   if (policy) {
     policy.grants.forEach((grant, i) => {
       if (grant.roles !== "*" && roles.size > 0) for (const r of grant.roles) if (!roles.has(r)) findings.push(error("grant-role", `policy.grants.${i}.roles`, `"${r}" is not one of the document's roles`));
-      if (grant.mutations !== "*") for (const m of grant.mutations) if (!acts[m] && !derivedActOf(m)) findings.push(error("grant-act", `policy.grants.${i}.mutations`, `"${m}" is not an act this document declares`));
+      if (grant.mutations !== "*") for (const m of grant.mutations) if (!acts[m] && !derivedActOf(m) && !documentRelationActOf(m, document.kinds)) findings.push(error("grant-act", `policy.grants.${i}.mutations`, `"${m}" is not an act this document declares`));
     });
     (policy.sees ?? []).forEach((sight, i) => {
       for (const k of sight.kinds) if (!kinds.has(k)) findings.push(error("sight-kind", `policy.sees.${i}.kinds`, `"${k}" is not a kind this document declares`));

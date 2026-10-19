@@ -1,0 +1,19 @@
+{
+  "id": "react/beside-the-map-rails",
+  "name": "Beside The Map Rails",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/beside-the-map.ts",
+    "packages/react/src/rails.ts",
+    "packages/react/src/scene-options.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/beside-the-map.ts",
+    "packages/react/src/rails.ts",
+    "packages/react/src/scene-options.ts"
+  ],
+  "cohesion": 0.31,
+  "coupling": 0.69,
+  "fileCount": 3,
+  "lineCount": 201
+}

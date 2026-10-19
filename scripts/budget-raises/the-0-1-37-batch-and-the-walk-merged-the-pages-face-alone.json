@@ -1,0 +1,7 @@
+{
+  "budget": "the pages face alone",
+  "minified": 10,
+  "gzipped": 100,
+  "changeset": "the-0-1-37-batch-merged.md",
+  "note": "Raised when the twelfth walk was merged into the 0.1.37 batch: the pages face alone measured 222_198 to 222_200 gzipped against 222_198, at its budget to the byte, so gzip's own variance between runs failed it."
+}

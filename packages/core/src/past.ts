@@ -189,6 +189,7 @@ export function pastOf<S extends AnySchema>(store: Store<S>, when: number | stri
     ...given("policy", declared ? declared.policy : store.policy),
     ...given("modules", declared?.modules ?? inside.declaredModules),
     ...given("enabledModules", inside.startingModules),
+    ...given("timeZone", store.timeZone),
     intelligence: store.intelligence,
     principal: inside.by,
     log: ops.slice(0, seq - first),

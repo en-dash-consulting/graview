@@ -16,7 +16,7 @@
  */
 import { fieldWords, humanizeField, labelOf, nounOf, pluralOf, type AnyGraphNode, type AnySchema, type FieldFormat, type RuleLine, type RulePart } from "../index.js";
 import { finishedLine } from "../invariants/line.js";
-import { dayAsRead, ISO_DAY, ISO_MOMENT, momentAsRead, numberAsRead } from "../days.js";
+import { dayAsRead, dayOfMoment, ISO_DAY, ISO_MOMENT, momentAsRead, numberAsRead } from "../days.js";
 import { evaluateExpr, NodeSet, type EvalContext, type Value } from "./expr/evaluate.js";
 import type { BinaryOp, Expr } from "./expr/parse.js";
 import { computedOf } from "./computed.js";
@@ -32,7 +32,7 @@ export interface LineWords {
   readonly schema: AnySchema;
   /** A field's format where the declaration says one. */
   readonly formatOf?: (kind: string, field: string) => FieldFormat | undefined;
-  /** The app's currency and locale. */
+  /** The app's currency, locale and time zone. */
   readonly money?: Money;
   /** The formats the rule's own sentence gives a name — `{margin|percent}` — for a value the declaration does not format. */
   readonly said?: ReadonlyMap<string, Formatter>;
@@ -135,8 +135,8 @@ function reader(words: LineWords) {
       // Said as every face says the field: money in its currency, a fraction as a percent, a measure with its unit.
       return value(format && format.format !== "date" ? sayAmount(v, { ...words.money, ...(format as AmountMark) }) : numberAsRead(v, locale));
     }
-    if (ISO_DAY.test(v) || format?.format === "date") return value(dayAsRead(v.slice(0, 10), locale));
-    if (ISO_MOMENT.test(v)) return value(momentAsRead(v, locale));
+    if (ISO_DAY.test(v) || format?.format === "date") return value(dayAsRead(dayOfMoment(v, words.money?.timeZone) ?? v.slice(0, 10), locale));
+    if (ISO_MOMENT.test(v)) return value(momentAsRead(v, locale, words.money?.timeZone));
     // A choice as the declaration says it, else spoken: 'to-order' is "to order".
     const shown = at && at.kind !== null ? definition(at.kind)?.display?.format?.[at.key] : undefined;
     if (shown) return value(shown(v));

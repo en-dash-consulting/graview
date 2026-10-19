@@ -1,7 +1,7 @@
 import type { AnyGraphNode, GraphReader } from "../graph/types.js";
 import { evaluateExpr, ExprEvalError, NodeSet, type KindShape, type Value } from "./expr/evaluate.js";
 import type { Expr } from "./expr/parse.js";
-import { dayAsRead, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, numberAsRead } from "../days.js";
+import { dayAsRead, dayOfMoment, ISO_DAY, ISO_MOMENT, isoToday, momentAsRead, numberAsRead, timeAsRead } from "../days.js";
 import { capitalize, listed } from "../capital.js";
 import { excerpt } from "../excerpt.js";
 import { formatMoney, type Money } from "./money.js";
@@ -25,6 +25,12 @@ import { formatMoney, type Money } from "./money.js";
  * sentence, or about 140 characters cut at a word (`excerpt: 80` for
  * fewer); the record's page says it whole.
  *
+ * `time` says a moment's time of day ("10:47 AM") and `datetime` its day
+ * and time ("Oct 16, 2026, 10:47 AM EDT"); `date` its day alone. A moment
+ * kept with a zone ("…-04:00", "…Z") is said on the app's clock
+ * (`brand.timeZone`), or a person's a host passed, never on the server's;
+ * one kept without a zone, as it was written.
+ *
  * `capital` may follow any of them, or stand alone: it upper-cases the first
  * letter of what was said, for a count in words that starts a headline —
  * "{count(all('finding')) | words | capital} findings" says "Fifty-seven findings".
@@ -34,7 +40,7 @@ import { formatMoney, type Money } from "./money.js";
  * name, title or label field, else its id.
  */
 
-export const FORMATTERS = ["money", "percent", "date", "relative", "upper", "lower", "count", "words", "and", "plural", "excerpt"] as const;
+export const FORMATTERS = ["money", "percent", "date", "time", "datetime", "relative", "upper", "lower", "count", "words", "and", "plural", "excerpt"] as const;
 export type Formatter = (typeof FORMATTERS)[number];
 
 export interface TemplatePart {
@@ -144,17 +150,24 @@ function show(value: Value, format: Formatter | undefined, today: string, args: 
     case "excerpt":
       return excerpt(String(value), Number(args[0]) || undefined);
     case "date":
-      // A day as a person reads it ("Aug 28, 2026" in en-US), as a card's glance says it.
-      return dayAsRead(String(value).slice(0, 10), money?.locale);
+      // A day as a person reads it ("Aug 28, 2026" in en-US), as a card's glance says it: an instant's, the day it is on the app's clock.
+      return dayAsRead(dayOfMoment(String(value), money?.timeZone) ?? String(value).slice(0, 10), money?.locale);
+    case "time":
+      // A time of day ("10:47 AM"); a day has none, and is said as a day.
+      return typeof value === "string" && ISO_DAY.test(value) ? dayAsRead(value, money?.locale) : timeAsRead(String(value), money?.locale, money?.timeZone);
+    case "datetime":
+      return typeof value === "string" && ISO_DAY.test(value) ? dayAsRead(value, money?.locale) : momentAsRead(String(value), money?.locale, money?.timeZone);
     case "relative": {
-      const t = Date.parse(String(value).length === 10 ? `${value}T00:00:00Z` : String(value));
+      // Counted in the app's days: an instant late in its evening is still today there.
+      const day = dayOfMoment(String(value), money?.timeZone);
+      const t = day === undefined ? Date.parse(String(value)) : Date.parse(`${day}T00:00:00Z`);
       if (Number.isNaN(t)) return String(value);
       const days = Math.round((t - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
       return days === 0 ? "today" : days === 1 ? "tomorrow" : days === -1 ? "yesterday" : days > 0 ? `in ${days} days` : `${-days} days ago`;
     }
     default:
       // A day or a moment said into a sentence — "was due {due}" — is said as a person reads it, never as it is kept.
-      return typeof value === "string" && ISO_DAY.test(value) ? dayAsRead(value, money?.locale) : typeof value === "string" && ISO_MOMENT.test(value) ? momentAsRead(value, money?.locale) : String(value);
+      return typeof value === "string" && ISO_DAY.test(value) ? dayAsRead(value, money?.locale) : typeof value === "string" && ISO_MOMENT.test(value) ? momentAsRead(value, money?.locale, money?.timeZone) : String(value);
   }
 }
 
@@ -166,7 +179,8 @@ export interface RenderContext {
   readonly today?: string;
   /** The steps each part may take; 500 unless the surface says (a home sweeps whole kinds). */
   readonly budget?: number;
-  /** The app's currency and locale, for `{x | money}` (FR-100). */
+  /** The app's currency, locale and time zone: for `{x | money}` (FR-100), and the clock an instant is said on. */
+
   readonly money?: Money;
   /** How a record is said; unsaid, by the labels of the schema the graph carries (`namerOf`). */
   readonly name?: Namer;

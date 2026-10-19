@@ -1,7 +1,6 @@
 import { retryingImport } from "@graview/core/retry";
 import { lazyModule } from "@graview/react/provider";
 import { Suspense, useCallback, useRef, useState, type ComponentType } from "react";
-import type { FirstLookHintsProps } from "./first-look.js";
 
 /**
  * A FIRST LOOK THAT POINTS AT THE APP'S OWN CONTROLS, ONCE.
@@ -93,6 +92,15 @@ function remember(options: FirstLookOptions, app: string): void {
   } catch {
     // Not remembered: the next visit shows it again.
   }
+}
+
+/** What the door hands the hints it fetches (`first-look.tsx`). */
+export interface FirstLookHintsProps {
+  readonly root: () => Element | null;
+  /** The host's own hints, after the framework's. */
+  readonly steps: readonly FirstLookStep[];
+  /** Told how it ended, or null when there was nothing drawn to point at. */
+  readonly onEnd: (how: FirstLookEnd | null) => void;
 }
 
 const hintsModule = /* @__PURE__ */ lazyModule(retryingImport(() => import("./first-look.js")));

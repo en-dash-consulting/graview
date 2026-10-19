@@ -1,27 +1,19 @@
 {
   "id": "tools/tools",
   "name": "Tools",
-  "description": "7 files, primarily TypeScript",
+  "description": "3 files, primarily TypeScript",
   "files": [
-    "packages/tools/src/capital.ts",
-    "packages/tools/src/conversation.ts",
-    "packages/tools/src/draft.ts",
-    "packages/tools/src/go.ts",
-    "packages/tools/src/intelligence.ts",
-    "packages/tools/src/keep.ts",
-    "packages/tools/src/seat-model.ts"
+    "packages/tools/src/agent/bounds.ts",
+    "packages/tools/src/agent/reads.ts",
+    "packages/tools/src/agent/untrusted.ts"
   ],
   "entryPoints": [
-    "packages/tools/src/capital.ts",
-    "packages/tools/src/conversation.ts",
-    "packages/tools/src/draft.ts",
-    "packages/tools/src/go.ts",
-    "packages/tools/src/intelligence.ts",
-    "packages/tools/src/keep.ts",
-    "packages/tools/src/seat-model.ts"
+    "packages/tools/src/agent/bounds.ts",
+    "packages/tools/src/agent/reads.ts",
+    "packages/tools/src/agent/untrusted.ts"
   ],
-  "cohesion": 0.53,
-  "coupling": 0.47,
-  "fileCount": 7,
-  "lineCount": 3944
+  "cohesion": 0.44,
+  "coupling": 0.56,
+  "fileCount": 3,
+  "lineCount": 363
 }

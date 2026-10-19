@@ -46,7 +46,7 @@ const OFF_THE_PAGE = {
   "@graview/core/provenance": { from: provenance, names: ["isProvisional", "lineageWords", "linkKey", "linkProvenance", "linkProvenances", "provenanceWords", "provisionalLinks"] },
   // FR-171: another app's records, read as the viewer — the in-memory host, a page's reads, a far change kept in the history.
   "@graview/core/linked": { from: linked, names: ["linkedChange", "linkedRecordsOver", "linkedRelationWords", "readLinkedRecord", "recordLinkedChange", "recordsLinking"] },
-  "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "whatBlocksSay", "computedNames", "computedValues", "withComputed", "factNames", "factValues", "blockContextFor", "CARD_BUDGET", "PAGE_BUDGET", "fieldSpecOf", "fileFieldsOf", "fileWords", "firstPicture"] },
+  "@graview/core/blocks": { from: blocks, names: ["compileBlocks", "fieldSpecsOf", "isTallBlock", "resolveBlocks", "safeHref", "sayNumber", "whatBlocksSay", "computedNames", "computedValues", "withComputed", "factNames", "factValues", "blockContextFor", "CARD_BUDGET", "PAGE_BUDGET", "fieldSpecOf", "fileFieldsOf", "fileWords", "firstPicture", "videoClock"] },
   "@graview/core/field-sight": { from: fieldSight, names: ["fieldsKept", "keptFrom", "partialKinds", "withoutKeptFields"] },
   "@graview/core/forms": { from: forms, names: ["changedArgs", "editStart", "formArgs", "formComplete", "formField", "formFields", "keptArguments", "undecidableArguments"] },
   "@graview/core/import": { from: importing, names: ["coerceCell", "ImportMappingError", "importRows", "parseCsv", "previewImport", "proposeMapping", "readBoolean", "readDateTime", "readDay", "readNumber", "readOption"] },

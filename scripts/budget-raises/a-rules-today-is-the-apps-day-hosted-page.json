@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 730,
+  "gzipped": 270,
+  "changeset": "a-rules-today-is-the-apps-day.md",
+  "note": "Raised when a rule's today() came to be the app's day (Roadmap f-app-time-zone): today() read as the date in the app's zone (`isoToday`, `dayZoneFor`), a store told the zone judged and ticked on that day (`Store.timeZone`), and a document's rules reading its own brand's zone. 725 / 260 more than main (572_979 / 198_654). Measured at 573_704 / 198_914."
+}

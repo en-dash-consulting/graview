@@ -47,7 +47,7 @@
     },
     {
       "file": "packages/graview/preview/page.js",
-      "line": 19,
+      "line": 21,
       "kind": "http",
       "target": "/graview/document",
       "targetSource": "literal",
@@ -56,7 +56,7 @@
     },
     {
       "file": "packages/guest/src/host/pictures.ts",
-      "line": 178,
+      "line": 199,
       "kind": "http",
       "target": "url.href",
       "targetSource": "config",
@@ -92,7 +92,7 @@
     },
     {
       "file": "packages/ship/src/files-at.ts",
-      "line": 15,
+      "line": 25,
       "kind": "http",
       "target": "",
       "targetSource": "unknown",
@@ -128,10 +128,28 @@
     },
     {
       "file": "packages/tools/src/cli.ts",
-      "line": 274,
+      "line": 279,
       "kind": "http",
       "target": "",
       "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/google-calendar-once.mjs",
+      "line": 75,
+      "kind": "http",
+      "target": "https://oauth2.googleapis.com/token",
+      "targetSource": "literal",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/lib/google-test-env.mjs",
+      "line": 57,
+      "kind": "http",
+      "target": "https://oauth2.googleapis.com/token",
+      "targetSource": "literal",
       "client": "fetch",
       "confidence": "certain"
     },
@@ -155,7 +173,7 @@
     },
     {
       "file": "scripts/lib/guest-pictures-suite.mjs",
-      "line": 176,
+      "line": 196,
       "kind": "http",
       "target": "",
       "targetSource": "unknown",
@@ -218,10 +236,55 @@
     },
     {
       "file": "scripts/verify-all.mjs",
-      "line": 221,
+      "line": 229,
       "kind": "http",
       "target": "http://localhost:",
       "targetSource": "literal",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-date-inputs.mjs",
+      "line": 52,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-date-inputs.mjs",
+      "line": 66,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-date-inputs.mjs",
+      "line": 68,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-google-calendar.mjs",
+      "line": 68,
+      "kind": "http",
+      "target": "https://www.googleapis.com/calendar/v3/calendars/",
+      "targetSource": "literal",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-google-calendar.mjs",
+      "line": 153,
+      "kind": "http",
+      "target": "",
+      "targetSource": "unknown",
       "client": "fetch",
       "confidence": "certain"
     },
@@ -258,6 +321,15 @@
       "kind": "http",
       "target": "",
       "targetSource": "unknown",
+      "client": "fetch",
+      "confidence": "certain"
+    },
+    {
+      "file": "scripts/verify-renderer.mjs",
+      "line": 131,
+      "kind": "http",
+      "target": "data:image/png;base64,",
+      "targetSource": "literal",
       "client": "fetch",
       "confidence": "certain"
     },
@@ -299,7 +371,7 @@
     },
     {
       "file": "scripts/verify-studio.mjs",
-      "line": 708,
+      "line": 712,
       "kind": "http",
       "target": "",
       "targetSource": "unknown",

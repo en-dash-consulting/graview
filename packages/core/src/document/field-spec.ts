@@ -78,7 +78,7 @@ export function fieldOf(schema: unknown): { readonly spec: FieldSpec } | { reado
     case "array": {
       const element = defOf(def["element"]);
       const of = fileKindOf(def["element"]) ?? (element?.["type"] === "number" ? "number" : element?.["type"] === "string" ? "string" : undefined);
-      return of ? { spec: { type: "list", of, ...base } } : { why: `it is a list of ${String(element?.["type"] ?? "something")}, and a document lists words, numbers, dates, images or files` };
+      return of ? { spec: { type: "list", of, ...base } } : { why: `it is a list of ${String(element?.["type"] ?? "something")}, and a document lists words, numbers, dates, images, videos or files` };
     }
     default:
       return { why: `it is a ${String(def["type"])}, which a document has no field type for` };

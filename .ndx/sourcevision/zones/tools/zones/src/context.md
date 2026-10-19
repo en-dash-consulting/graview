@@ -5,19 +5,25 @@
 <zone>
 
 Zone: Src (`tools/src`)
-Files: 5, Cohesion: 0.42, Coupling: 0.58
-Description: 5 files, primarily TypeScript
-Entry points: packages/tools/src/ai.ts, packages/tools/src/dev-ai.ts, packages/tools/src/frame.ts, packages/tools/src/local.ts, packages/tools/src/turn.ts
-Lines: 650
+Files: 11, Cohesion: 0.58, Coupling: 0.42
+Description: 11 files, primarily TypeScript
+Entry points: packages/tools/src/ai.ts, packages/tools/src/decide.ts, packages/tools/src/dev-ai.ts, packages/tools/src/frame.ts, packages/tools/src/inline-ai.ts, packages/tools/src/loop.ts, packages/tools/src/plan.ts, packages/tools/src/providers/jev.ts, packages/tools/src/questions.ts, packages/tools/src/run.ts, packages/tools/src/turn.ts
+Lines: 3212
 
 </zone>
 
 <files>
 
-packages/tools/src/ai.ts (TypeScript, 114 lines, source)
+packages/tools/src/ai.ts (TypeScript, 246 lines, source)
+packages/tools/src/decide.ts (TypeScript, 144 lines, source)
 packages/tools/src/dev-ai.ts (TypeScript, 61 lines, source)
 packages/tools/src/frame.ts (TypeScript, 19 lines, source)
-packages/tools/src/local.ts (TypeScript, 384 lines, source)
+packages/tools/src/inline-ai.ts (TypeScript, 685 lines, source)
+packages/tools/src/loop.ts (TypeScript, 256 lines, source)
+packages/tools/src/plan.ts (TypeScript, 433 lines, source)
+packages/tools/src/providers/jev.ts (TypeScript, 218 lines, source)
+packages/tools/src/questions.ts (TypeScript, 438 lines, source)
+packages/tools/src/run.ts (TypeScript, 640 lines, source)
 packages/tools/src/turn.ts (TypeScript, 72 lines, source)
 
 </files>
@@ -25,14 +31,33 @@ packages/tools/src/turn.ts (TypeScript, 72 lines, source)
 <imports>
 
 Internal:
+  packages/tools/src/ai.ts → packages/tools/src/providers/jev.ts {Decide}
+  packages/tools/src/decide.ts → packages/tools/src/providers/jev.ts {Answer, Decide, Decided}
+  packages/tools/src/decide.ts → packages/tools/src/questions.ts {Question}
   packages/tools/src/dev-ai.ts → packages/tools/src/ai.ts {NO_AI}
   packages/tools/src/dev-ai.ts → packages/tools/src/ai.ts {HostAi}
   packages/tools/src/dev-ai.ts → packages/tools/src/turn.ts {turnThroughMessages}
   packages/tools/src/dev-ai.ts → packages/tools/src/turn.ts {MessagesStepReply}
-  packages/tools/src/frame.ts → packages/tools/src/ai.ts {aiTalks, ANSWERED_WITH_AI, NO_AI, NO_AI_SAID}
-  packages/tools/src/frame.ts → packages/tools/src/ai.ts {HostAi, HostTurn, TurnMessage}
-  packages/tools/src/local.ts → packages/tools/src/ai.ts {NO_AI_SAID}
-  packages/tools/src/local.ts → packages/tools/src/ai.ts {HostAi}
+  packages/tools/src/frame.ts → packages/tools/src/ai.ts {aiOff, aiTalks, ANSWERED_WITH_AI, inlineAiOn, NO_AI, NO_AI_SAID}
+  packages/tools/src/frame.ts → packages/tools/src/ai.ts {AiInteractionHost, AiPrice, AnswerProvider, AnswerReply, AnswerRequest, FastProvider, HostAi, HostTurn, ThinkingProvider, ThinkingReply, ThinkingRequest, TurnMessage}
+  packages/tools/src/inline-ai.ts → packages/tools/src/ai.ts {AiPrice, AnswerProvider, AnswerReply, FastProvider, HostAi, ThinkingProvider}
+  packages/tools/src/inline-ai.ts → packages/tools/src/providers/jev.ts {JEV_INPUT_USD_PER_MILLION, JEV_MODEL, jevDecide}
+  packages/tools/src/inline-ai.ts → packages/tools/src/providers/jev.ts {Answer, ChoiceAnswer, JevOptions}
+  packages/tools/src/inline-ai.ts → packages/tools/src/questions.ts {ChoiceQuestion, Question}
+  packages/tools/src/loop.ts → packages/tools/src/plan.ts {applyPlan, planFrom}
+  packages/tools/src/loop.ts → packages/tools/src/plan.ts {PlanOptions, PlannedCall}
+  packages/tools/src/loop.ts → packages/tools/src/providers/jev.ts {jevCostUsd}
+  packages/tools/src/loop.ts → packages/tools/src/providers/jev.ts {Answer, Decide}
+  packages/tools/src/loop.ts → packages/tools/src/questions.ts {questionsForInvariant}
+  packages/tools/src/loop.ts → packages/tools/src/questions.ts {DerivedQuestion, OfferedQuestion}
+  packages/tools/src/loop.ts → packages/tools/src/run.ts {offerOf}
+  packages/tools/src/providers/jev.ts → packages/tools/src/questions.ts {Question}
+  packages/tools/src/run.ts → packages/tools/src/plan.ts {applyPlan, planFrom}
+  packages/tools/src/run.ts → packages/tools/src/plan.ts {AppliedPlan, Plan, PlanOptions, PlannedCall}
+  packages/tools/src/run.ts → packages/tools/src/providers/jev.ts {jevCostUsd}
+  packages/tools/src/run.ts → packages/tools/src/providers/jev.ts {Answer, Decide, Decided}
+  packages/tools/src/run.ts → packages/tools/src/questions.ts {nodeState, pairQuestion, questionsForInvariant, questionsForKind, questionsForMutation, scoreToValue}
+  packages/tools/src/run.ts → packages/tools/src/questions.ts {DerivedQuestion, OfferedQuestion, Question}
   packages/tools/src/turn.ts → packages/tools/src/ai.ts {HostAi, HostTurn}
 
 </imports>

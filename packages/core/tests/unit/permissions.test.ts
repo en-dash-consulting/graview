@@ -173,6 +173,9 @@ describe("who may do what", () => {
       "allow-tidying-person",
       "archive-duty",
       "archive-person",
+      // `reassign` makes the link without saying it `connects` it, so the relation is given its own pair.
+      "connect-person-assigned-to",
+      "disconnect-person-assigned-to",
       "leave-alone-duty",
       "leave-alone-person",
       "merge-duty",

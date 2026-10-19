@@ -38,7 +38,7 @@ Run on every push, against the committed file:
 
 ```sh
 npx graview check --document app.json
-· rules.proposal-not-left-open: Rule "proposal-not-left-open" reads the clock (today(), now(), a computed field that does, or a kind whose records retire on a date), so the day turning breaks or mends it with nothing changed. A store judges it again only when its host ticks it. — Host it with @graview/ship (openStore, serve and openRemote tick at each midnight, UTC), or call store.tick(now) when the day turns — once a day from a host's own alarm — and its subscribers hear what appeared and cleared.
+· rules.proposal-not-left-open: Rule "proposal-not-left-open" reads the clock (today(), now(), a computed field that does, or a kind whose records retire on a date), so the day turning breaks or mends it with nothing changed. A store judges it again only when its host ticks it. — Host it with @graview/ship (openStore, serve and openRemote tick at each midnight: the app's, in brand.timeZone, else UTC's), or call store.tick(now) when the day turns — once a day from a host's own alarm, untilTheDayTurns(now, brand.timeZone) ahead — and its subscribers hear what appeared and cleared.
 ```
 
 A line starting with a dot is a note, not a warning: advice the checker leaves for a person to weigh.

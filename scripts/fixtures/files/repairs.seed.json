@@ -1,7 +1,8 @@
 {
   "nodes": [
     { "id": "roof", "kind": "job", "name": "Fix the roof", "status": "open" },
-    { "id": "porch", "kind": "job", "name": "Paint the porch", "status": "open" }
+    { "id": "porch", "kind": "job", "name": "Paint the porch", "status": "open" },
+    { "id": "gate", "kind": "job", "name": "Oil the gate", "status": "open" }
   ],
   "edges": []
 }

@@ -4,7 +4,7 @@ import type { GraphEdge } from "../graph/types.js";
 import { canonicalize } from "./canonical.js";
 import { hasRange, outsideRange, rangeWords } from "./range.js";
 import type { FieldSpec, FieldType, GraviewDocument } from "./schema.js";
-import { filesOf, isFileValue, isImage, type FileValue } from "../schema/files.js";
+import { fileOfKind, filesOf, isFileValue, type FileValue } from "../schema/files.js";
 import { isAppAddress } from "../schema/app-link.js";
 import { PHONE } from "../schema/typed-fields.js";
 import { parseDuration } from "../schema/field-words.js";
@@ -138,8 +138,9 @@ export function coerce(value: unknown, from: FieldType, to: FieldSpec): unknown 
       return coerced.every((v) => v !== undefined) ? coerced : undefined;
     }
     case "image":
+    case "video":
     case "file":
-      return isFileValue(value) && (type === "file" || isImage(value)) ? value : undefined;
+      return isFileValue(value) && fileOfKind(value, type) ? value : undefined;
     case "app-link": {
       // Another app's address (FR-171): a word that is one is kept as it is.
       const t = asText(value)?.trim();

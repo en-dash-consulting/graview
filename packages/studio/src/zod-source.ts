@@ -74,6 +74,8 @@ export interface ZodUses {
   /** A picture or a document (FR-162), as the studio declared one. */
   imageField?: boolean;
   fileField?: boolean;
+  /** A video (0.1.37), as the studio declared one. */
+  videoField?: boolean;
   /** Prose written in Markdown (FR-180). */
   markdownField?: boolean;
   /** A phone, a place or a length of time, as the studio or the checkout declared one. */
@@ -88,7 +90,7 @@ export interface ZodUses {
 
 /** The framework helpers a printed schema calls beside `z`, as an import list's leading names. */
 export const helpersUsed = (uses: ZodUses): string =>
-  (["appLinkField", "durationField", "fileField", "imageField", "linkedRecordField", "markdownField", "phoneField", "placeField", "repeatField"] as const)
+  (["appLinkField", "durationField", "fileField", "imageField", "linkedRecordField", "markdownField", "phoneField", "placeField", "repeatField", "videoField"] as const)
     .filter((name) => uses[name])
     .map((name) => `${name}, `)
     .join("");

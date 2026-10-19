@@ -8,7 +8,7 @@ Installed into a project by `graview skills install .`, and read by whichever as
 
 ## Add a node kind
 
-A kind is the unit of everything here. Declaring one gets you, without another line: a place in the layout, a card at three fidelities, an aggregate view, an accessibility label, a hue, and inclusion in every agent tool that walks the graph.
+A kind is the unit of everything here. Declaring one gets you a place in the layout, a card at three fidelities, an aggregate view, an accessibility label, a hue, and a place in every agent tool.
 
 ### Do this
 
@@ -16,7 +16,7 @@ A kind is the unit of everything here. Declaring one gets you, without another l
 
 1. **Declare the kind.** Zod is the one place a field is described: validation, types and JSON Schema.
 
-```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), // Host-kept picture ("image"/"file"); appLinkField() another app // (its records: graview-linked-records); phoneField(), placeField(). crest: imageField().optional(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
+```ts export const fixture = defineNode("fixture", { fields: z.object({ // A NAME, and bounded: every surface draws `label`, and `min(1)` // alone permits a paragraph (`graview check`: `label-unbounded`). label: z.string().min(1).max(60), kickOff: z.string(), opponent: z.string(), // Host-kept file ("image"/"video"/"file"); appLinkField() another app // (its records: graview-linked-records); phoneField(), placeField(). crest: imageField().optional(), }), plural: "Fixtures", description: "A match, and the team you intend to put out for it.", edges: { // One edge, two readings: the fixture's page says who is in the // team; the player's page says which fixtures they are picked for. // Kinds sharing an edge name word their own end. "picked-for": { to: ["player"], description: "who is in the team", inverse: "the fixtures they are picked for", }, }, // Its time (`who`: its author): lists, glances, timelines read it. fieldRoles: { when: "kickOff" }, }); ```
 
 **In a document** (`app.json`, `"format": "graview-document"`) it is `kinds.fixture`: `{ "label": "{name}", "fields": { "name": { "type": "string", "required": true } }, "edges": { "pickedFor": { "to": ["player"] } } }`. Kinds are kebab-case (`tool-note`), fields and relations camelCase (`pickedFor`). Every key, lens and block is in `node_modules/@graview/core/dist/document.schema.json` (its `$schema`).
 
@@ -24,7 +24,7 @@ A kind is the unit of everything here. Declaring one gets you, without another l
 
 1. **Say what a node of it is called.** `label` defaults to a `label` field and then to the id. An id in the interface is a bug you shipped, not a placeholder. And say what ONE of the kind is called where its id does not: `noun: "staff member"` on a kind called `staff`, or every sentence about one reads "Change the staff".
 
-An id is still a name a caller may choose: every act that declares `creates: ["fixture"]` takes an optional `id` argument the framework adds, so a seed being synced or an agent that will refer to the node next call gets exactly the id it asked for, or a refusal by name. Never hardcode a bootstrap id — `"today"`, `"u-nick"` — in a mutation body or an invariant; bind a role, a flag or an edge, so a store seeded differently still works. And every kind gets `remove-<kind>` derived, permitted through the acts that create it.
+An id is still a name a caller may choose: every act that declares `creates: ["fixture"]` takes an optional `id` argument the framework adds, so a seed being synced or an agent that will refer to the node next call gets exactly the id it asked for, or a refusal by name. Never hardcode a bootstrap id in a mutation or an invariant; bind a role, a flag or an edge, so a store seeded otherwise still works. Every kind gets `remove-<kind>` derived, permitted through the acts that create it; every relation `connect-<kind>-<relation>` and `disconnect-` unless your acts do.
 
 1. **Give it verbs.** A kind no mutation names as a subject can have nothing done to it, and the strip says so. Unless you meant that, add a mutation whose `subject.kinds` includes it.
 
@@ -69,7 +69,7 @@ computed: {
 }
 ```
 
-Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused. It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). Templates say counts in words: `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"). The check refuses a cycle (`computed-cycle`), a name that is already a field (`computed-clash`) and work that grows with the cube of the graph (`computed-cost`, a warning at the square). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`.
+Every template, view spec, rule, sum and sort reads `net` like a field (`{ field: "net", as: "money" }`, `sort(all('package'), [standing, net], 'desc')`); no act or edit form offers it, and an act that sets one is refused. It is worked out over the graph the reader holds, so a seat is served one from what it may see. A glance may name one; a `label` or `describe` only one worked out from the record alone (no graph is in hand). Templates say `{n | words}` ("three"), `{n | plural: 'offer'}` ("offers"), `{out('includes') | and}` ("A, B and C"), `{n | words | capital}` ("Three"), `{at | time}` ("10:47 AM"). The check refuses a cycle (`computed-cycle`), a name that is already a field (`computed-clash`) and work that grows with the cube of the graph (`computed-cost`, a warning at the square). A document's top-level `computed` holds facts of the whole graph, read as `fact('name')`.
 
 ### Then find out whether it worked
 

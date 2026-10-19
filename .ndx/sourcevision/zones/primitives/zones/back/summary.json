@@ -1,0 +1,18 @@
+{
+  "id": "primitives/back",
+  "name": "History Navigation System",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/primitives/src/scene-way-back-door.ts",
+    "packages/primitives/src/scene-way-back.tsx",
+    "packages/primitives/src/way-back.ts"
+  ],
+  "entryPoints": [
+    "packages/primitives/src/scene-way-back.tsx",
+    "packages/primitives/src/way-back.ts"
+  ],
+  "cohesion": 0.33,
+  "coupling": 0.67,
+  "fileCount": 3,
+  "lineCount": 220
+}

@@ -307,7 +307,7 @@ export function AnswerArgs({
       ) : fileShape ? (
         /* A picture or a document is answered by putting it there: the host's upload, then the act (FR-163). */
         <div style={{ display: "grid", gap: 4 }}>
-          <Files as="control" value={now} onChange={answer} several={several} image={fileShape.image === true} label={words.label} />
+          <Files as="control" value={now} onChange={answer} several={several} image={fileShape.image === true} video={fileShape.video === true} label={words.label} />
           {skip}
         </div>
       ) : choices.length > 0 ? (

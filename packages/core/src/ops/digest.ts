@@ -1,3 +1,4 @@
+import { dayOfMoment, dayOfMonthAsRead, isoToday } from "../days.js";
 import { isAutomated } from "./tidying.js";
 import type { Author, Batch, Operation } from "./types.js";
 
@@ -58,9 +59,9 @@ export function foldDigests(batches: readonly Batch[], find: (id: string) => Ope
 
 const thingsIn = (batches: readonly Batch[]) => batches.reduce((sum, batch) => sum + (batch.undone ? 0 : batch.ops.length), 0);
 
-/** A digest said as Activity says a change: "Tidied 6 things today", "Tidied a thing on Oct 12". */
-export function digestWords(digest: { readonly things: number; readonly at: string }, today: string = new Date().toISOString().slice(0, 10)): string {
-  const day = digest.at.slice(0, 10);
-  const when = day === today ? "today" : `on ${new Date(`${day}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}`;
+/** A digest said as Activity says a change: "Tidied 6 things today", "Tidied a thing on Oct 12" — the day it fell on the app's clock (Roadmap f-app-time-zone). */
+export function digestWords(digest: { readonly things: number; readonly at: string }, today: string = dayOfMoment(new Date().toISOString()) ?? isoToday()): string {
+  const day = dayOfMoment(digest.at) ?? digest.at.slice(0, 10);
+  const when = day === today ? "today" : `on ${dayOfMonthAsRead(day)}`;
   return `Tidied ${digest.things === 1 ? "one thing" : `${digest.things} things`} ${when}`;
 }

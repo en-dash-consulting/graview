@@ -1,7 +1,7 @@
 {
   "id": "tests-core-support",
   "name": "Tests Core Support",
-  "description": "4 files, primarily TypeScript",
+  "description": "Non-source files in packages: adapter-contract.ts, hidden-holds.ts, hidden-phones.ts (+1 more)",
   "files": [
     "packages/core/tests/support/adapter-contract.ts",
     "packages/core/tests/support/hidden-holds.ts",

@@ -1,4 +1,5 @@
-import { derivedActOf } from "../mutations/derived-names.js";
+import { derivedActOf, relationActTitles } from "../mutations/derived-names.js";
+import { documentRelationActOf } from "./relation-acts.js";
 import { capitalize, listed } from "../capital.js";
 import { quoted, quotedAtTheEnd } from "./quote.js";
 import type { GraviewDocument } from "./schema.js";
@@ -42,6 +43,16 @@ export function actWords(document: GraviewDocument, act: string): string {
     const noun = nounWords(document.kinds, derived.kind);
     const words = { edit: `Change the ${noun}`, remove: `Remove the ${noun}`, archive: `Archive the ${noun}`, unarchive: `Bring back the ${noun}`, merge: `Merge the ${noun} into another`, "leave-alone": "Leave this one alone", "allow-tidying": "Allow tidying again", skip: "Skip this one", detach: "Change just this one", split: "Change from here" }[derived.act];
     return quoted(words);
+  }
+  // A relation's connect or disconnect, as its button says it: "Set the day", "Link a traveler".
+  const relation = documentRelationActOf(act, document.kinds);
+  if (relation) {
+    const edges = Object.entries(document.kinds[relation.kind]?.edges ?? {});
+    const reaches = (to: readonly string[] | "*") => (to === "*" ? "record" : to.map((target) => nounWords(document.kinds, target)).join(" or "));
+    const edge = document.kinds[relation.kind]!.edges![relation.relation]!;
+    const to = reaches(edge.to);
+    const shared = edges.some(([other, spec]) => other !== relation.relation && reaches(spec.to) === to);
+    return quoted(relationActTitles(relation.act, { to, from: nounWords(document.kinds, relation.kind), one: edge.cardinality === "one", also: shared ? spoken(relation.relation).trim() : undefined }).title);
   }
   return quoted(act);
 }

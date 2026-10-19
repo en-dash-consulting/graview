@@ -5,18 +5,20 @@
 <zone>
 
 Zone: Src 2 (`ship/src-2`)
-Files: 5, Cohesion: 0.30, Coupling: 0.70
-Description: 5 files, primarily TypeScript
-Entry points: packages/ship/src/cli.ts, packages/ship/src/index.ts, packages/ship/src/serve-preview.ts, packages/ship/src/shots.ts
-Lines: 914
+Files: 7, Cohesion: 0.40, Coupling: 0.60
+Description: 7 files, primarily TypeScript
+Entry points: packages/ship/src/cli.ts, packages/ship/src/connections-file.ts, packages/ship/src/connections.ts, packages/ship/src/index.ts, packages/ship/src/shots.ts
+Lines: 1169
 
 </zone>
 
 <files>
 
-packages/ship/src/cli.ts (TypeScript, 456 lines, source)
-packages/ship/src/index.ts (TypeScript, 57 lines, source)
-packages/ship/src/serve-preview.ts (TypeScript, 123 lines, source)
+packages/ship/src/cli.ts (TypeScript, 503 lines, source)
+packages/ship/src/connections-file.ts (TypeScript, 36 lines, source)
+packages/ship/src/connections.ts (TypeScript, 223 lines, source)
+packages/ship/src/file-subscriptions.ts (TypeScript, 63 lines, source)
+packages/ship/src/index.ts (TypeScript, 66 lines, source)
 packages/ship/src/shots.ts (TypeScript, 140 lines, source)
 packages/ship/src/store-hold.ts (TypeScript, 138 lines, source)
 
@@ -25,14 +27,19 @@ packages/ship/src/store-hold.ts (TypeScript, 138 lines, source)
 <imports>
 
 Internal:
-  packages/ship/src/cli.ts → packages/ship/src/serve-preview.ts {LOOPBACK, previewPrincipal, servePreview}
+  packages/ship/src/cli.ts → packages/ship/src/connections-file.ts {fileConnectionState, readEnvFile}
+  packages/ship/src/cli.ts → packages/ship/src/connections.ts {runConnections}
+  packages/ship/src/cli.ts → packages/ship/src/file-subscriptions.ts {fileSubscriptions}
   packages/ship/src/cli.ts → packages/ship/src/shots.ts {findPlaywright, NO_PLAYWRIGHT, shoot, shotsOf}
   packages/ship/src/cli.ts → packages/ship/src/store-hold.ts {heldBy, holdFileOf, holdStore, sayHeld}
   packages/ship/src/cli.ts → packages/ship/src/store-hold.ts {StoreHold}
-  packages/ship/src/index.ts → packages/ship/src/cli.ts {backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, syncSeed}
+  packages/ship/src/connections-file.ts → packages/ship/src/connections.ts {ConnectionStateStore, ConnectionStates}
+  packages/ship/src/index.ts → packages/ship/src/cli.ts {backendFrom, holdBackend, preview, serve, SERVE_USAGE, shots, connectionsFileOf, subscriptionsFileOf, syncSeed}
   packages/ship/src/index.ts → packages/ship/src/cli.ts {PreviewPage, StoreBackend}
-  packages/ship/src/index.ts → packages/ship/src/serve-preview.ts {previewPrincipal, servePreview}
-  packages/ship/src/index.ts → packages/ship/src/serve-preview.ts {Preview, PreviewOptions}
+  packages/ship/src/index.ts → packages/ship/src/connections-file.ts {fileConnectionState, readEnvFile}
+  packages/ship/src/index.ts → packages/ship/src/connections.ts {GOOGLE_TOKEN_URL, runConnections, sayReport}
+  packages/ship/src/index.ts → packages/ship/src/connections.ts {ConnectionStates, ConnectionStateStore, ConnectionTokenRequest, RunConnectionsOptions, RunningConnections}
+  packages/ship/src/index.ts → packages/ship/src/file-subscriptions.ts {fileSubscriptions}
   packages/ship/src/index.ts → packages/ship/src/store-hold.ts {heldBy, holdFileOf, holdStore, sayHeld}
   packages/ship/src/index.ts → packages/ship/src/store-hold.ts {StoreHold, StoreHolder}
 

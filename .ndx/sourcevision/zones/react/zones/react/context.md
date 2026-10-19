@@ -5,25 +5,215 @@
 <zone>
 
 Zone: React (`react/react`)
-Files: 3, Cohesion: 0.31, Coupling: 0.69
-Description: 3 files, primarily TypeScript
-Entry points: packages/react/src/beside-the-map.ts, packages/react/src/rails.ts, packages/react/src/scene-options.ts
-Lines: 180
+Files: 34, Cohesion: 0.76, Coupling: 0.24
+Description: 34 files, primarily TypeScript
+Entry points: packages/react/src/ai-desk.ts, packages/react/src/context.tsx, packages/react/src/hooks.ts, packages/react/src/index.ts, packages/react/src/lazy-part.tsx, packages/react/src/local-intelligence.ts, packages/react/src/menu-sections.tsx, packages/react/src/menu-types.ts, packages/react/src/occupants.tsx, packages/react/src/past.ts, packages/react/src/picked.ts, packages/react/src/pointer.ts, packages/react/src/popover.ts, packages/react/src/provider.ts, packages/react/src/resolved-view.tsx, packages/react/src/robot.ts, packages/react/src/scene.tsx, packages/react/src/seat-marks.tsx, packages/react/src/seat-talk.ts, packages/react/src/view-boundary.tsx, packages/react/src/view-registry.ts
+Lines: 5577
 
 </zone>
 
 <files>
 
-packages/react/src/beside-the-map.ts (TypeScript, 14 lines, source)
-packages/react/src/rails.ts (TypeScript, 19 lines, source)
-packages/react/src/scene-options.ts (TypeScript, 147 lines, source)
+packages/react/src/affordances.ts (TypeScript, 150 lines, source)
+packages/react/src/ai-desk.ts (TypeScript, 95 lines, source)
+packages/react/src/context.tsx (TypeScript, 1410 lines, source)
+packages/react/src/default-elsewhere.ts (TypeScript, 12 lines, source)
+packages/react/src/error-report.ts (TypeScript, 15 lines, source)
+packages/react/src/files.ts (TypeScript, 13 lines, source)
+packages/react/src/go.ts (TypeScript, 79 lines, source)
+packages/react/src/hooks.ts (TypeScript, 183 lines, source)
+packages/react/src/index.ts (TypeScript, 99 lines, source)
+packages/react/src/keyboard.ts (TypeScript, 211 lines, source)
+packages/react/src/lazy-part.tsx (TypeScript, 208 lines, source)
+packages/react/src/linked-reads.ts (TypeScript, 50 lines, source)
+packages/react/src/local-intelligence.ts (TypeScript, 90 lines, source)
+packages/react/src/menu-sections.tsx (TypeScript, 60 lines, source)
+packages/react/src/menu-types.ts (TypeScript, 72 lines, source)
+packages/react/src/motion-store.ts (TypeScript, 30 lines, source)
+packages/react/src/motion.ts (TypeScript, 11 lines, source)
+packages/react/src/occupants.tsx (TypeScript, 207 lines, source)
+packages/react/src/past.ts (TypeScript, 148 lines, source)
+packages/react/src/picked.ts (TypeScript, 13 lines, source)
+packages/react/src/pointer.ts (TypeScript, 61 lines, source)
+packages/react/src/popover.ts (TypeScript, 451 lines, source)
+packages/react/src/presence.ts (TypeScript, 260 lines, source)
+packages/react/src/provider.ts (TypeScript, 65 lines, source)
+packages/react/src/resolved-view.tsx (TypeScript, 480 lines, source)
+packages/react/src/robot.ts (TypeScript, 161 lines, source)
+packages/react/src/scene.tsx (TypeScript, 18 lines, source)
+packages/react/src/seat-marks.tsx (TypeScript, 108 lines, source)
+packages/react/src/seat-talk.ts (TypeScript, 166 lines, source)
+packages/react/src/settings.ts (TypeScript, 87 lines, source)
+packages/react/src/url-sync.ts (TypeScript, 247 lines, source)
+packages/react/src/view-boundary.tsx (TypeScript, 104 lines, source)
+packages/react/src/view-marks.ts (TypeScript, 42 lines, source)
+packages/react/src/view-registry.ts (TypeScript, 171 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/react/src/scene-options.ts → packages/react/src/beside-the-map.ts {BesideTheMap}
-  packages/react/src/scene-options.ts → packages/react/src/rails.ts {railInset, SEAT_FOOT}
+  packages/react/src/affordances.ts → packages/react/src/context.tsx {useGraph, useGraview}
+  packages/react/src/context.tsx → packages/react/src/ai-desk.ts {createAiDesk}
+  packages/react/src/context.tsx → packages/react/src/ai-desk.ts {AiDesk}
+  packages/react/src/context.tsx → packages/react/src/files.ts {HostFilesContext}
+  packages/react/src/context.tsx → packages/react/src/linked-reads.ts {useLinkedReads}
+  packages/react/src/context.tsx → packages/react/src/menu-types.ts {MenuSectionSource}
+  packages/react/src/context.tsx → packages/react/src/motion-store.ts {createMotionStore}
+  packages/react/src/context.tsx → packages/react/src/motion-store.ts {MotionStore}
+  packages/react/src/context.tsx → packages/react/src/past.ts {PlaybackContext, useOwnPlayback}
+  packages/react/src/context.tsx → packages/react/src/past.ts {Playback}
+  packages/react/src/context.tsx → packages/react/src/pointer.ts {createPointerStore}
+  packages/react/src/context.tsx → packages/react/src/pointer.ts {PointerStore, ScenePoint}
+  packages/react/src/context.tsx → packages/react/src/presence.ts {PRESENCE_SETTINGS, tabSession, usePresenceState}
+  packages/react/src/context.tsx → packages/react/src/robot.ts {foldRobots}
+  packages/react/src/context.tsx → packages/react/src/robot.ts {RobotEvent, RobotState, SeatNote}
+  packages/react/src/context.tsx → packages/react/src/seat-talk.ts {createSeatTalk}
+  packages/react/src/context.tsx → packages/react/src/seat-talk.ts {KeepLensHost, SeatTalk}
+  packages/react/src/context.tsx → packages/react/src/settings.ts {honorSetting, loadSetting, rememberSetting}
+  packages/react/src/context.tsx → packages/react/src/settings.ts {ReaderMemory}
+  packages/react/src/context.tsx → packages/react/src/view-registry.ts {ViewComponent, ViewMode}
+  packages/react/src/go.ts → packages/react/src/context.tsx {useGraviewIfAny}
+  packages/react/src/hooks.ts → packages/react/src/context.tsx {useGraph, useGraview}
+  packages/react/src/index.ts → packages/react/src/affordances.ts {prepareAffordances, useAffordances, useApplyAffordance}
+  packages/react/src/index.ts → packages/react/src/affordances.ts {AffordancesAsked}
+  packages/react/src/index.ts → packages/react/src/ai-desk.ts {createAiDesk, useAiDeskState}
+  packages/react/src/index.ts → packages/react/src/ai-desk.ts {AiDesk, AiDeskState, HeldGhost}
+  packages/react/src/index.ts → packages/react/src/context.tsx {GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider}
+  packages/react/src/index.ts → packages/react/src/context.tsx {ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode}
+  packages/react/src/index.ts → packages/react/src/default-elsewhere.ts {DefaultDrawnElsewhere}
+  packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReportContext}
+  packages/react/src/index.ts → packages/react/src/error-report.ts {ErrorReport}
+  packages/react/src/index.ts → packages/react/src/files.ts {HostFilesContext, useHostFiles}
+  packages/react/src/index.ts → packages/react/src/go.ts {GoToContext, useGoTo}
+  packages/react/src/index.ts → packages/react/src/go.ts {GoTo, GoToAlso}
+  packages/react/src/index.ts → packages/react/src/hooks.ts {useViolations, useBacktrack, useJackIn, useNavigation, useSelection}
+  packages/react/src/index.ts → packages/react/src/keyboard.ts {landingIn, useTheKeyboardLandsSomewhere}
+  packages/react/src/index.ts → packages/react/src/lazy-part.tsx {lazyModule, retryLazyParts}
+  packages/react/src/index.ts → packages/react/src/lazy-part.tsx {LazyModule, LazyPartOptions}
+  packages/react/src/index.ts → packages/react/src/local-intelligence.ts {useLocalIntelligence}
+  packages/react/src/index.ts → packages/react/src/local-intelligence.ts {Ask, LocalIntelligence}
+  packages/react/src/index.ts → packages/react/src/menu-sections.tsx {MenuSections, useMenuPrepare, useMenuSections}
+  packages/react/src/index.ts → packages/react/src/menu-types.ts {MenuItem, MenuSection, MenuSectionSource, MenuTarget}
+  packages/react/src/index.ts → packages/react/src/motion.ts {createMotionStore, useSceneStill}
+  packages/react/src/index.ts → packages/react/src/motion.ts {MotionStore}
+  packages/react/src/index.ts → packages/react/src/occupants.tsx {Figure, Occupants, PersonFigure}
+  packages/react/src/index.ts → packages/react/src/occupants.tsx {OccupantsProps}
+  packages/react/src/index.ts → packages/react/src/past.ts {PlaybackContext, useLiveStore, useOwnPlayback, usePlayback}
+  packages/react/src/index.ts → packages/react/src/past.ts {PastShown, Playback}
+  packages/react/src/index.ts → packages/react/src/picked.ts {pickedFrom}
+  packages/react/src/index.ts → packages/react/src/pointer.ts {createPointerStore}
+  packages/react/src/index.ts → packages/react/src/pointer.ts {PointerStore, ScenePoint}
+  packages/react/src/index.ts → packages/react/src/popover.ts {inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, usePopover, useTopLayer}
+  packages/react/src/index.ts → packages/react/src/popover.ts {PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions}
+  packages/react/src/index.ts → packages/react/src/presence.ts {HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState}
+  packages/react/src/index.ts → packages/react/src/presence.ts {PresenceInputs, PresenceState}
+  packages/react/src/index.ts → packages/react/src/robot.ts {foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO}
+  packages/react/src/index.ts → packages/react/src/robot.ts {RobotEvent, RobotMode, RobotState, SeatNote}
+  packages/react/src/index.ts → packages/react/src/scene.tsx {clipQuadratic, connectorStrands, altitudeOpacity, stackOpacity, onScreen, ResolvedView, Scene, selectionFor, tieRoute, whereIsIn}
+  packages/react/src/index.ts → packages/react/src/scene.tsx {SceneNode, Strand, ResolvedViewProps, SceneProps}
+  packages/react/src/index.ts → packages/react/src/seat-marks.tsx {SeatMarks}
+  packages/react/src/index.ts → packages/react/src/seat-talk.ts {createSeatTalk, seatTalkKey, useSeatTalkState}
+  packages/react/src/index.ts → packages/react/src/seat-talk.ts {KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn}
+  packages/react/src/index.ts → packages/react/src/settings.ts {applySettings, honorSetting, loadSetting, rememberSetting}
+  packages/react/src/index.ts → packages/react/src/settings.ts {ReaderMemory}
+  packages/react/src/index.ts → packages/react/src/url-sync.ts {adjustment, UrlSync, useUrlSync}
+  packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundary}
+  packages/react/src/index.ts → packages/react/src/view-boundary.tsx {ViewBoundaryProps}
+  packages/react/src/index.ts → packages/react/src/view-marks.ts {DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage}
+  packages/react/src/index.ts → packages/react/src/view-registry.ts {createViews, layerViews}
+  packages/react/src/index.ts → packages/react/src/view-registry.ts {Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps}
+  packages/react/src/menu-sections.tsx → packages/react/src/context.tsx {useGraviewIfAny}
+  packages/react/src/menu-sections.tsx → packages/react/src/menu-types.ts {MenuSection, MenuSectionSource, MenuTarget}
+  packages/react/src/motion.ts → packages/react/src/context.tsx {useGraview}
+  packages/react/src/motion.ts → packages/react/src/motion-store.ts {createMotionStore}
+  packages/react/src/motion.ts → packages/react/src/motion-store.ts {MotionStore}
+  packages/react/src/occupants.tsx → packages/react/src/context.tsx {useGraview}
+  packages/react/src/occupants.tsx → packages/react/src/context.tsx {DrawnBox}
+  packages/react/src/occupants.tsx → packages/react/src/robot.ts {RobotState}
+  packages/react/src/presence.ts → packages/react/src/picked.ts {pickedFrom}
+  packages/react/src/presence.ts → packages/react/src/robot.ts {keyOf}
+  packages/react/src/presence.ts → packages/react/src/robot.ts {RobotState}
+  packages/react/src/presence.ts → packages/react/src/settings.ts {ReaderMemory}
+  packages/react/src/provider.ts → packages/react/src/ai-desk.ts {createAiDesk, useAiDeskState}
+  packages/react/src/provider.ts → packages/react/src/ai-desk.ts {AiDesk, AiDeskState, HeldGhost}
+  packages/react/src/provider.ts → packages/react/src/context.tsx {GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider}
+  packages/react/src/provider.ts → packages/react/src/context.tsx {ActsDoor, AdministeredModule, DrawnBox, GraviewContextValue, GraviewProviderProps, PointerMenu, SceneHandle, Scheme, Seat, ViewMode}
+  packages/react/src/provider.ts → packages/react/src/default-elsewhere.ts {DefaultDrawnElsewhere}
+  packages/react/src/provider.ts → packages/react/src/error-report.ts {ErrorReportContext}
+  packages/react/src/provider.ts → packages/react/src/error-report.ts {ErrorReport}
+  packages/react/src/provider.ts → packages/react/src/files.ts {HostFilesContext, useHostFiles}
+  packages/react/src/provider.ts → packages/react/src/go.ts {GoToContext, useGoTo}
+  packages/react/src/provider.ts → packages/react/src/go.ts {GoTo, GoToAlso}
+  packages/react/src/provider.ts → packages/react/src/hooks.ts {useBacktrack, useJackIn, useNavigation, useSelection, useViolations}
+  packages/react/src/provider.ts → packages/react/src/keyboard.ts {landingIn, useTheKeyboardLandsSomewhere}
+  packages/react/src/provider.ts → packages/react/src/lazy-part.tsx {lazyModule, retryLazyParts}
+  packages/react/src/provider.ts → packages/react/src/lazy-part.tsx {LazyModule, LazyPartOptions}
+  packages/react/src/provider.ts → packages/react/src/local-intelligence.ts {useLocalIntelligence}
+  packages/react/src/provider.ts → packages/react/src/local-intelligence.ts {Ask, LocalIntelligence}
+  packages/react/src/provider.ts → packages/react/src/menu-types.ts {MenuItem, MenuSection, MenuSectionSource, MenuTarget}
+  packages/react/src/provider.ts → packages/react/src/motion.ts {createMotionStore, useSceneStill}
+  packages/react/src/provider.ts → packages/react/src/motion.ts {MotionStore}
+  packages/react/src/provider.ts → packages/react/src/past.ts {PlaybackContext, useLiveStore, useOwnPlayback, usePlayback}
+  packages/react/src/provider.ts → packages/react/src/past.ts {PastShown, Playback}
+  packages/react/src/provider.ts → packages/react/src/pointer.ts {createPointerStore}
+  packages/react/src/provider.ts → packages/react/src/pointer.ts {PointerStore, ScenePoint}
+  packages/react/src/provider.ts → packages/react/src/popover.ts {inTopLayer, placePane, POPOVER_STYLE, POPOVERS, raiseOverPopovers, usePopover, useTopLayer}
+  packages/react/src/provider.ts → packages/react/src/popover.ts {PlaceOptions, Popover, PopoverAnchor, PopoverName, PopoverOptions}
+  packages/react/src/provider.ts → packages/react/src/presence.ts {HEARTBEAT_MS, PRESENCE_SETTINGS, SHARE_OVER, SHARE_WHERE, tabSession, usePresenceState}
+  packages/react/src/provider.ts → packages/react/src/presence.ts {PresenceInputs, PresenceState}
+  packages/react/src/provider.ts → packages/react/src/robot.ts {foldRobots, participantOf, standingFor, VISIT_EACH_UP_TO}
+  packages/react/src/provider.ts → packages/react/src/robot.ts {RobotEvent, RobotMode, RobotState, SeatNote}
+  packages/react/src/provider.ts → packages/react/src/seat-talk.ts {createSeatTalk, seatTalkKey, useSeatTalkState}
+  packages/react/src/provider.ts → packages/react/src/seat-talk.ts {KeepLensAnswer, KeepLensHost, LensEdit, SeatKept, SeatOutcome, SeatTalk, SeatTalkState, SeatTurn}
+  packages/react/src/provider.ts → packages/react/src/settings.ts {applySettings, honorSetting, loadSetting, rememberSetting}
+  packages/react/src/provider.ts → packages/react/src/settings.ts {ReaderMemory}
+  packages/react/src/provider.ts → packages/react/src/view-marks.ts {DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage}
+  packages/react/src/provider.ts → packages/react/src/view-registry.ts {createViews, layerViews}
+  packages/react/src/provider.ts → packages/react/src/view-registry.ts {Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps}
+  packages/react/src/resolved-view.tsx → packages/react/src/context.tsx {foundIds, useFound, useGraph, useGraview, ViewModeProvider}
+  packages/react/src/resolved-view.tsx → packages/react/src/context.tsx {ViewMode}
+  packages/react/src/resolved-view.tsx → packages/react/src/hooks.ts {useNavigation}
+  packages/react/src/resolved-view.tsx → packages/react/src/popover.ts {POPOVER_STYLE, usePopover}
+  packages/react/src/resolved-view.tsx → packages/react/src/view-boundary.tsx {ViewBoundary}
+  packages/react/src/resolved-view.tsx → packages/react/src/view-registry.ts {ViewComponent, ViewProps}
+  packages/react/src/scene.tsx → packages/react/src/resolved-view.tsx {*}
+  packages/react/src/seat-marks.tsx → packages/react/src/context.tsx {DrawnBox}
+  packages/react/src/url-sync.ts → packages/react/src/context.tsx {useGraview}
+  packages/react/src/url-sync.ts → packages/react/src/hooks.ts {trail}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReportContext, ErrorReport}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReportContext}
+  packages/react/src/view-boundary.tsx → packages/react/src/error-report.ts {ErrorReport}
+  packages/react/src/view-registry.ts → packages/react/src/view-marks.ts {DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage}
 
 </imports>
+
+<sub-crossings>
+
+Cross-dependencies between sub-zones:
+  react/react/picked-presence → react/react/src-2: 2
+  react/react/react → react/react/picked-presence: 4
+  react/react/react → react/react/src: 5
+  react/react/react → react/react/src-2: 17
+  react/react/src → react/react/picked-presence: 5
+  react/react/src → react/react/react: 11
+  react/react/src → react/react/src-2: 23
+  react/react/src-2 → react/react/picked-presence: 3
+  react/react/src-2 → react/react/react: 4
+  react/react/src-2 → react/react/src: 2
+
+</sub-crossings>
+
+<sub-zones>
+
+This zone has 4 sub-zone(s):
+
+- **Picked Presence** (`react/react/picked-presence`): 3 files, cohesion 0.33, coupling 0.67
+- **Core Feature Providers** (`react/react/react`): 8 files, cohesion 0.36, coupling 0.64
+- **Src** (`react/react/src`): 8 files, cohesion 0.35, coupling 0.65
+- **State Management Layer** (`react/react/state-management-layer`): 15 files, cohesion 0.55, coupling 0.45
+
+Detailed sub-zone context available in `zones/{sub-zone-id}/context.md`
+
+</sub-zones>

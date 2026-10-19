@@ -1,7 +1,7 @@
 import { humanizeField, isArchived, isLeftAlone, isWithheld, labelOf, type AnySchema, type Violation } from "@graview/core";
 import { describeNode, pageSections } from "@graview/core/words";
 import { lineageWords, linkProvenance } from "@graview/core/provenance";
-import { AppLink, LinkedRecordView, DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, FieldLink, Files, LongValue, NotifyButton, pageSays, RepeatEditor, useLined } from "@graview/primitives/pages";
+import { DefaultViewElsewhere, RecordInteractionsDoor, EditableValue, Files, NotifyButton, pageSays, useLined } from "@graview/primitives/pages";
 import { isDefaultView, replacesPage, useGraviewIfAny, type ViewProps } from "@graview/react/provider";
 import type { ComponentType } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -15,6 +15,7 @@ import { SceneLink, type PageContext, useStoreTick } from "./page-context.js";
 import { pathOfPlace, placeKey, placesOf } from "./page-places.js";
 import { ProblemSaid, Repairs } from "./page-problems.js";
 import { ProvisionalMark } from "./page-provisional.js";
+import { RecordField } from "./record-field.js";
 import {
   KindMark,
   button,
@@ -245,47 +246,9 @@ export function DefaultRecordPage<S extends AnySchema>({ context }: { context: P
                   gap: "14px 24px",
                 }}
               >
-                {section.fields.map((field) =>
-                  field.files ? (
-                    <Files key={field.key} as="field" read={!inPlace} nodeId={id} field={field.key} label={field.label} files={field.files} labelStyle={eyebrow} style={{ gap: 4 }} />
-                  ) : field.long ? (
-                    <LongValue<S>
-                      key={field.key}
-                      nodeId={id}
-                      field={field.key}
-                      label={field.label}
-                      value={field.value}
-                      markdown={field.markdown}
-                      style={{ gridColumn: "1 / -1", gap: 4 }}
-                      labelStyle={eyebrow}
-                      valueStyle={{ lineHeight: 1.6 }}
-                    />
-                  ) : (
-                    <div key={field.key} style={{ display: "grid", gap: 2, minWidth: 0, alignContent: "start" }}>
-                      <dt style={eyebrow}>{field.label}</dt>
-                      <dd style={{ margin: 0, overflowWrap: "anywhere", minWidth: 0 }}>
-                        {field.linked ? (
-                          // A record in another app (FR-171), with its own card from its home app, picked again beside it where the face changes values in place.
-                          <LinkedRecordView relation={field.linked.relation} refs={field.linked.refs} {...(inPlace ? { nodeId: id, field: field.key } : {})} />
-                        ) : field.app ? (
-                          // Another app, as the host names it (FR-171), changed beside it where the face changes values in place.
-                          <AppLink address={field.app} as="record" {...(inPlace ? { nodeId: id, field: field.key } : {})} />
-                        ) : field.href ? (
-                          // A phone to call, a place to map: the value is the link, or the link stands beside where it is changed.
-                          <FieldLink<S> href={field.href} field={field.key} value={field.value} stored={field.stored} {...(inPlace ? { nodeId: id } : {})} />
-                        ) : inPlace ? (
-                          <>
-                            <EditableValue<S> nodeId={id} field={field.key} value={field.value} stored={field.stored} />
-                            {/* How a date repeats, changed beside it. */}
-                            {field.repeats ? <RepeatEditor nodeId={id} field={field.key} start={node?.[field.key]} value={node?.[`${field.key}Repeat`]} label={`${field.label} repeats`} /> : null}
-                          </>
-                        ) : (
-                          field.value
-                        )}
-                      </dd>
-                    </div>
-                  ),
-                )}
+                {section.fields.map((field) => (
+                  <RecordField<S> key={field.key} nodeId={id} node={node as Record<string, unknown> | undefined} field={field} inPlace={inPlace} />
+                ))}
               </dl>
             );
             return section.title ? (

@@ -1,7 +1,7 @@
 {
   "id": "layout",
-  "name": "Layout",
-  "description": "15 files, primarily TypeScript",
+  "name": "@graview/layout",
+  "description": "15 files, mostly utilities and entry points; entry points index.ts, view-moves.ts, layout.ts; imported by Packages.",
   "files": [
     "packages/layout/src/band.ts",
     "packages/layout/src/city.ts",
@@ -28,7 +28,7 @@
   "cohesion": 1,
   "coupling": 0,
   "fileCount": 15,
-  "lineCount": 4434,
+  "lineCount": 4459,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

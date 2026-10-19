@@ -16,6 +16,7 @@ import { ActRefusal } from "../refused.js";
 import { excerpt } from "../excerpt.js";
 import type { AnyMutationDefinition } from "./types.js";
 import { deriveRepeatMutations } from "./derive-repeats.js";
+import { deriveRelationMutations } from "./derive-relations.js";
 
 /**
  * A FIELD YOU COULD SET AT CREATION, YOU CAN CHANGE.
@@ -310,8 +311,9 @@ export function derivedVia<S extends AnySchema>(
   mutation: AnyMutationDefinition<S>,
 ): readonly string[] | undefined {
   if (!mutation.derived) return undefined;
-  // Acting on one occurrence of a repeating date changes the record, as its edit does.
-  return mutation.derived.act === "edit" || mutation.derived.act === "skip" || mutation.derived.act === "detach" || mutation.derived.act === "split"
+  // Acting on one occurrence of a repeating date changes the record, as its edit does; and so does linking it, or unlinking it.
+  const act = mutation.derived.act;
+  return act === "edit" || act === "skip" || act === "detach" || act === "split" || act === "connect" || act === "disconnect"
     ? editVia(schema, mutations, mutation.derived.kind)
     : removeVia(mutations, mutation.derived.kind);
 }
@@ -405,10 +407,10 @@ function perKind<S extends AnySchema>(schema: S, mutations: readonly AnyMutation
   return derived;
 }
 
-/** Every act the framework derives for a declaration: the edits, then each kind's remove, archive, unarchive and merge. */
+/** Every act the framework derives for a declaration: the edits, then each kind's remove, archive, unarchive and merge, its repeats, and each relation's connect and disconnect. */
 export function deriveMutations<S extends AnySchema>(
   schema: S,
   mutations: readonly AnyMutationDefinition<S>[],
 ): AnyMutationDefinition<S>[] {
-  return [...deriveEditMutations(schema, mutations), ...perKind(schema, mutations), ...deriveRepeatMutations(schema, mutations)];
+  return [...deriveEditMutations(schema, mutations), ...perKind(schema, mutations), ...deriveRepeatMutations(schema, mutations), ...deriveRelationMutations(schema, mutations)];
 }

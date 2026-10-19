@@ -1,7 +1,7 @@
 {
   "id": "tests-ship-unit",
   "name": "Tests Ship Unit",
-  "description": "48 files, primarily TypeScript",
+  "description": "Non-source files in packages: a-batch-is-answered-only-to-its-author.test.ts, a-batch-tag-belongs-to-its-first-seat.test.ts, a-build-per-socket-and-a-host-protocol.test.ts (+47 more)",
   "files": [
     "packages/ship/tests/unit/a-batch-is-answered-only-to-its-author.test.ts",
     "packages/ship/tests/unit/a-batch-tag-belongs-to-its-first-seat.test.ts",
@@ -23,6 +23,7 @@
     "packages/ship/tests/unit/a-seat-is-seen-once-and-a-withheld-batch-says-nobody.test.ts",
     "packages/ship/tests/unit/a-seat-is-served-its-view-at-about-the-cost-of-the-whole-store.test.ts",
     "packages/ship/tests/unit/a-seat-the-host-lost-is-opened-again.test.ts",
+    "packages/ship/tests/unit/a-served-app-tells-its-host-what-a-subscriber-asked-for.test.ts",
     "packages/ship/tests/unit/a-served-seat-and-its-page-judge-a-fact-alike.test.ts",
     "packages/ship/tests/unit/a-served-store-trusts-headers-on-request.test.ts",
     "packages/ship/tests/unit/a-socket-fits-its-attachment.test.ts",
@@ -33,6 +34,7 @@
     "packages/ship/tests/unit/browser-adapter.test.ts",
     "packages/ship/tests/unit/default-content-moves-without-a-wipe.test.ts",
     "packages/ship/tests/unit/each-declaration-version-begins-an-epoch.test.ts",
+    "packages/ship/tests/unit/files-at-says-where-a-records-file-is-served.test.ts",
     "packages/ship/tests/unit/migrations-that-keep-data.test.ts",
     "packages/ship/tests/unit/no-unseen-id-leaves-the-wire.test.ts",
     "packages/ship/tests/unit/presence-a-host-can-add-to.test.ts",
@@ -55,8 +57,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 48,
-  "lineCount": 6410,
+  "fileCount": 50,
+  "lineCount": 6559,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

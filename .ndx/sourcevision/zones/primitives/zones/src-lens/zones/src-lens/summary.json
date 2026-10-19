@@ -1,26 +1,19 @@
 {
   "id": "primitives/src-lens/src-lens",
-  "name": "Lens Declarations",
-  "description": "7 files, primarily TypeScript",
+  "name": "Arrangement System Framework",
+  "description": "3 files, primarily TypeScript",
   "files": [
-    "packages/primitives/src/declared-lens-doors.tsx",
-    "packages/primitives/src/declared-lenses.tsx",
-    "packages/primitives/src/declared-views.ts",
-    "packages/primitives/src/default-view.tsx",
-    "packages/primitives/src/home-view.tsx",
-    "packages/primitives/src/lens/columns.tsx",
-    "packages/primitives/src/spec-views.tsx"
+    "packages/primitives/src/arrange-bar.tsx",
+    "packages/primitives/src/arrange-lists.tsx",
+    "packages/primitives/src/lens/arranging.tsx"
   ],
   "entryPoints": [
-    "packages/primitives/src/declared-lens-doors.tsx",
-    "packages/primitives/src/declared-lenses.tsx",
-    "packages/primitives/src/declared-views.ts",
-    "packages/primitives/src/default-view.tsx",
-    "packages/primitives/src/home-view.tsx",
-    "packages/primitives/src/spec-views.tsx"
+    "packages/primitives/src/arrange-bar.tsx",
+    "packages/primitives/src/arrange-lists.tsx",
+    "packages/primitives/src/lens/arranging.tsx"
   ],
-  "cohesion": 0.45,
-  "coupling": 0.55,
-  "fileCount": 7,
-  "lineCount": 1229
+  "cohesion": 0.29,
+  "coupling": 0.71,
+  "fileCount": 3,
+  "lineCount": 1234
 }

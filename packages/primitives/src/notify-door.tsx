@@ -4,7 +4,7 @@ import { isAggregateId, kindOfCard, kindsOfAggregate } from "@graview/layout/vie
 import { MenuSections } from "@graview/react/drawing";
 import { lazyModule, useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
 import { Suspense, useEffect, useId, useMemo, useState, useSyncExternalStore, type ComponentType, type CSSProperties, type ReactNode } from "react";
-import type { NotifySheetProps } from "./notify-sheet.js";
+import type { NotifyAsk, NotifySheetProps } from "./notify-sheet.js";
 
 /**
  * THE DOOR TO "NOTIFY ME" (Roadmap f-notify-subscriptions): offered on the
@@ -18,14 +18,6 @@ import type { NotifySheetProps } from "./notify-sheet.js";
  * tell. Kept where the provider keeps subscriptions (`subscriptions` on it,
  * the host's; else the page's own).
  */
-
-/** What the sheet is asked to offer: the subscription it opens on, and the others beside it. */
-export interface NotifyAsk {
-  /** The choices, the first chosen: "when it changes", "when someone runs …". */
-  readonly choices: readonly SubscriptionWhen[];
-  /** Where the keyboard goes back to when the sheet closes. */
-  readonly returnTo?: HTMLElement | null | undefined;
-}
 
 /** The sheet asked, and the doors that could draw it, per store of subscriptions — one provider's. */
 interface Asked {

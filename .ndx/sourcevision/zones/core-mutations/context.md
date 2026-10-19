@@ -5,58 +5,92 @@
 <zone>
 
 Zone: Core Mutations (`core-mutations`)
-Files: 3, Cohesion: 0.14, Coupling: 0.86
-Risk: catastrophic (score: 0.86)
-Description: 3 files, primarily TypeScript
-Entry points: packages/core/src/mutations/derive-repeats.ts, packages/core/src/repeat.ts, packages/core/src/schema/repeat-field.ts
-Lines: 319
+Files: 14, Cohesion: 0.19, Coupling: 0.81
+Risk: catastrophic (score: 0.81)
+Description: 3 files, mostly utilities; entry points repeat.ts, derive-repeats.ts, repeat-field.ts; imports Core Document and @graview/core; imported by @graview/core and Core Document.
+Entry points: packages/core/src/mutations/arg-shape.ts, packages/core/src/mutations/decidable.ts, packages/core/src/mutations/define-mutation.ts, packages/core/src/mutations/derive-edits.ts, packages/core/src/mutations/derive-repeats.ts, packages/core/src/mutations/derived-names.ts, packages/core/src/mutations/edit-start.ts, packages/core/src/mutations/form.ts, packages/core/src/mutations/invalid-arguments.ts, packages/core/src/mutations/keep-link.ts, packages/core/src/mutations/kept-arguments.ts, packages/core/src/mutations/node-ref.ts, packages/core/src/mutations/types.ts, packages/core/src/mutations/words.ts
+Lines: 1958
 
 </zone>
 
 <files>
 
+packages/core/src/mutations/arg-shape.ts (TypeScript, 177 lines, source)
+packages/core/src/mutations/decidable.ts (TypeScript, 56 lines, source)
+packages/core/src/mutations/define-mutation.ts (TypeScript, 367 lines, source)
+packages/core/src/mutations/derive-edits.ts (TypeScript, 414 lines, source)
 packages/core/src/mutations/derive-repeats.ts (TypeScript, 115 lines, source)
-packages/core/src/repeat.ts (TypeScript, 183 lines, source)
-packages/core/src/schema/repeat-field.ts (TypeScript, 21 lines, source)
+packages/core/src/mutations/derived-names.ts (TypeScript, 27 lines, source)
+packages/core/src/mutations/edit-start.ts (TypeScript, 28 lines, source)
+packages/core/src/mutations/form.ts (TypeScript, 250 lines, source)
+packages/core/src/mutations/invalid-arguments.ts (TypeScript, 21 lines, source)
+packages/core/src/mutations/keep-link.ts (TypeScript, 61 lines, source)
+packages/core/src/mutations/kept-arguments.ts (TypeScript, 78 lines, source)
+packages/core/src/mutations/node-ref.ts (TypeScript, 97 lines, source)
+packages/core/src/mutations/types.ts (TypeScript, 201 lines, source)
+packages/core/src/mutations/words.ts (TypeScript, 66 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/core/src/mutations/derive-repeats.ts → packages/core/src/repeat.ts {isRepeat, isRepeatField, occurrences, repeatedBy, repeatKey}
-  packages/core/src/mutations/derive-repeats.ts → packages/core/src/repeat.ts {Repeat}
-  packages/core/src/schema/repeat-field.ts → packages/core/src/repeat.ts {markRepeat, validRepeat}
-  packages/core/src/schema/repeat-field.ts → packages/core/src/repeat.ts {Repeat}
+  packages/core/src/mutations/decidable.ts → packages/core/src/mutations/form.ts {formFields}
+  packages/core/src/mutations/decidable.ts → packages/core/src/mutations/form.ts {FormField}
+  packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/invalid-arguments.ts {InvalidArguments}
+  packages/core/src/mutations/define-mutation.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition, MutationContext, MutationDefinition, MutationDefinitionSpec}
+  packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/derive-repeats.ts {deriveRepeatMutations}
+  packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/node-ref.ts {nodeRefArgs, refTo}
+  packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition}
+  packages/core/src/mutations/derive-repeats.ts → packages/core/src/mutations/node-ref.ts {refTo}
+  packages/core/src/mutations/derive-repeats.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition, MutationContext}
+  packages/core/src/mutations/form.ts → packages/core/src/mutations/arg-shape.ts {describeArg, unwrap}
+  packages/core/src/mutations/form.ts → packages/core/src/mutations/node-ref.ts {nodeRefKinds}
+  packages/core/src/mutations/keep-link.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition}
+  packages/core/src/mutations/kept-arguments.ts → packages/core/src/mutations/derive-edits.ts {fieldsWrittenBy, subjectKindsOf}
+  packages/core/src/mutations/kept-arguments.ts → packages/core/src/mutations/types.ts {AnyMutationDefinition}
+  packages/core/src/mutations/words.ts → packages/core/src/mutations/invalid-arguments.ts {InvalidArguments}
 
 Outgoing (this zone → other zones):
-  → amount-input-days: packages/core/src/mutations/derive-repeats.ts → packages/core/src/days.ts
-  → core-document: packages/core/src/mutations/derive-repeats.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/types.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/zod.ts; packages/core/src/repeat.ts → packages/core/src/schema/zod.ts
-  → core-ops: packages/core/src/mutations/derive-repeats.ts → packages/core/src/mutations/types.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/refused.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/schema.ts
+  → core: packages/core/src/mutations/arg-shape.ts → packages/core/src/days.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/days.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/excerpt.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/refused.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/repeat.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/days.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/refused.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/repeat.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/repeat.ts; packages/core/src/mutations/form.ts → packages/core/src/repeat.ts; packages/core/src/mutations/kept-arguments.ts → packages/core/src/permissions/policy.ts; packages/core/src/mutations/kept-arguments.ts → packages/core/src/permissions/sight.ts; packages/core/src/mutations/kept-arguments.ts → packages/core/src/permissions/sight.ts; packages/core/src/mutations/kept-arguments.ts → packages/core/src/permissions/types.ts
+  → core-document: packages/core/src/mutations/derive-edits.ts → packages/core/src/document/amount.ts
+  → core-graph: packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/archived.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/graph.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/graph.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/primitives.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/primitives.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/tracked.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/types.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/graph/types.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/graph/archived.ts; packages/core/src/mutations/invalid-arguments.ts → packages/core/src/graph/graph.ts; packages/core/src/mutations/keep-link.ts → packages/core/src/graph/graph.ts; packages/core/src/mutations/keep-link.ts → packages/core/src/graph/types.ts; packages/core/src/mutations/kept-arguments.ts → packages/core/src/graph/archived.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/primitives.ts; packages/core/src/mutations/types.ts → packages/core/src/graph/types.ts
+  → core-schema: packages/core/src/mutations/arg-shape.ts → packages/core/src/schema/amount-mark.ts; packages/core/src/mutations/arg-shape.ts → packages/core/src/schema/amount-mark.ts; packages/core/src/mutations/arg-shape.ts → packages/core/src/schema/amount-words.ts; packages/core/src/mutations/arg-shape.ts → packages/core/src/schema/files.ts; packages/core/src/mutations/arg-shape.ts → packages/core/src/schema/typed-field-of.ts; packages/core/src/mutations/arg-shape.ts → packages/core/src/schema/zod.ts; packages/core/src/mutations/define-mutation.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/amount-mark.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/files.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/linked.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/typed-field-of.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/types.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/schema/zod.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/types.ts; packages/core/src/mutations/derive-repeats.ts → packages/core/src/schema/zod.ts; packages/core/src/mutations/form.ts → packages/core/src/schema/amount-mark.ts; packages/core/src/mutations/form.ts → packages/core/src/schema/app-link.ts; packages/core/src/mutations/form.ts → packages/core/src/schema/field-words.ts; packages/core/src/mutations/form.ts → packages/core/src/schema/files.ts; packages/core/src/mutations/form.ts → packages/core/src/schema/linked.ts; packages/core/src/mutations/form.ts → packages/core/src/schema/linked.ts; packages/core/src/mutations/form.ts → packages/core/src/schema/markdown.ts; packages/core/src/mutations/form.ts → packages/core/src/schema/zod.ts; packages/core/src/mutations/keep-link.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/keep-link.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/keep-link.ts → packages/core/src/schema/zod.ts; packages/core/src/mutations/kept-arguments.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/kept-arguments.ts → packages/core/src/schema/types.ts; packages/core/src/mutations/node-ref.ts → packages/core/src/schema/zod.ts; packages/core/src/mutations/types.ts → packages/core/src/schema/schema.ts; packages/core/src/mutations/words.ts → packages/core/src/schema/define-node.ts; packages/core/src/mutations/words.ts → packages/core/src/schema/schema.ts
 
 Incoming (other zones → this zone):
-  ← amount-input-days: packages/core/src/repeat-words.ts → packages/core/src/repeat.ts; packages/core/src/repeat-words.ts → packages/core/src/repeat.ts
-  ← core-document: packages/core/src/arrangement.ts → packages/core/src/repeat.ts; packages/core/src/arranging.ts → packages/core/src/repeat.ts; packages/core/src/cli/check.ts → packages/core/src/mutations/derive-repeats.ts; packages/core/src/document/to-document.ts → packages/core/src/repeat.ts; packages/core/src/index.ts → packages/core/src/repeat.ts; packages/core/src/index.ts → packages/core/src/repeat.ts; packages/core/src/index.ts → packages/core/src/schema/repeat-field.ts; packages/core/src/mutations/form.ts → packages/core/src/repeat.ts; packages/core/src/schema/reading.ts → packages/core/src/repeat.ts; packages/core/src/typed.ts → packages/core/src/repeat.ts
-  ← core-ops: packages/core/src/document/compiled.ts → packages/core/src/repeat.ts; packages/core/src/document/expr/evaluate.ts → packages/core/src/repeat.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/mutations/derive-repeats.ts; packages/core/src/mutations/derive-edits.ts → packages/core/src/repeat.ts
-  ← schema: packages/core/src/schema/json-schema.ts → packages/core/src/repeat.ts
-  ← tests-core-unit: packages/core/tests/unit/a-repeating-date-falls-on-its-days.test.ts → packages/core/src/repeat.ts; packages/core/tests/unit/a-repeating-date-falls-on-its-days.test.ts → packages/core/src/repeat.ts
+  ← core: packages/core/src/app.ts → packages/core/src/mutations/types.ts; packages/core/src/arrangement.ts → packages/core/src/mutations/arg-shape.ts; packages/core/src/beginning.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/beginning.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/beginning.ts → packages/core/src/mutations/types.ts; packages/core/src/bind.ts → packages/core/src/mutations/types.ts; packages/core/src/catalog.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/catalog.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/catalog.ts → packages/core/src/mutations/types.ts; packages/core/src/columns.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/columns.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/columns.ts → packages/core/src/mutations/types.ts; packages/core/src/conformance/index.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/extend.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/extend.ts → packages/core/src/mutations/types.ts; packages/core/src/field-sight.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/field-sight.ts → packages/core/src/mutations/invalid-arguments.ts; packages/core/src/field-sight.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/forms.ts → packages/core/src/mutations/decidable.ts; packages/core/src/forms.ts → packages/core/src/mutations/decidable.ts; packages/core/src/forms.ts → packages/core/src/mutations/edit-start.ts; packages/core/src/forms.ts → packages/core/src/mutations/form.ts; packages/core/src/forms.ts → packages/core/src/mutations/form.ts; packages/core/src/forms.ts → packages/core/src/mutations/kept-arguments.ts; packages/core/src/import/coerce.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/import/rows.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/import/rows.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/index.ts → packages/core/src/mutations/arg-shape.ts; packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/index.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/index.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/index.ts → packages/core/src/mutations/invalid-arguments.ts; packages/core/src/index.ts → packages/core/src/mutations/keep-link.ts; packages/core/src/index.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/index.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/index.ts → packages/core/src/mutations/types.ts; packages/core/src/installation.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/installation.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/installation.ts → packages/core/src/mutations/types.ts; packages/core/src/json-schema.ts → packages/core/src/mutations/kept-arguments.ts; packages/core/src/labels.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/permissions/policy.ts → packages/core/src/mutations/types.ts; packages/core/src/search.ts → packages/core/src/mutations/arg-shape.ts; packages/core/src/store.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/store.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/store.ts → packages/core/src/mutations/keep-link.ts; packages/core/src/store.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/store.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/store.ts → packages/core/src/mutations/types.ts; packages/core/src/testing.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/tidying.ts → packages/core/src/mutations/types.ts; packages/core/src/words.ts → packages/core/src/mutations/arg-shape.ts; packages/core/src/words.ts → packages/core/src/mutations/words.ts
+  ← core-cli: packages/core/src/cli/check.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check.ts → packages/core/src/mutations/derive-repeats.ts; packages/core/src/cli/check/context.ts → packages/core/src/mutations/types.ts; packages/core/src/cli/check/fields.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/fields.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/hidden-reads.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/intelligence.ts → packages/core/src/mutations/decidable.ts; packages/core/src/cli/check/lenses.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/people.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/policy.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/check/policy.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/check/relations.ts → packages/core/src/mutations/arg-shape.ts; packages/core/src/cli/check/relations.ts → packages/core/src/mutations/arg-shape.ts; packages/core/src/cli/check/relations.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/cli/describe.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/cli/docs.ts → packages/core/src/mutations/derive-edits.ts
+  ← core-document: packages/core/src/document/act-findings.ts → packages/core/src/mutations/derived-names.ts; packages/core/src/document/compile.ts → packages/core/src/mutations/derived-names.ts; packages/core/src/document/compiled.ts → packages/core/src/mutations/node-ref.ts; packages/core/src/document/connection-findings.ts → packages/core/src/mutations/derive-edits.ts; packages/core/src/document/edit.ts → packages/core/src/mutations/derived-names.ts; packages/core/src/document/framework-path.ts → packages/core/src/mutations/derived-names.ts; packages/core/src/document/policy-words.ts → packages/core/src/mutations/derived-names.ts
+  ← core-ops: packages/core/src/ops/suggestions.ts → packages/core/src/mutations/types.ts; packages/core/src/ops/tidying.ts → packages/core/src/mutations/types.ts; packages/core/src/ops/types.ts → packages/core/src/mutations/types.ts
+  ← core-schema: packages/core/src/schema/json-schema.ts → packages/core/src/mutations/define-mutation.ts; packages/core/src/schema/json-schema.ts → packages/core/src/mutations/node-ref.ts
+  ← core-sync: packages/core/src/sync/engine.ts → packages/core/src/mutations/types.ts
+  ← tests-core-document: packages/core/tests/document/a-number-says-its-range.test.ts → packages/core/src/mutations/arg-shape.ts; packages/core/tests/document/a-record-holds-a-picture-or-a-document.test.ts → packages/core/src/mutations/arg-shape.ts
+  ← tests-core-unit: packages/core/tests/unit/a-record-is-named-the-way-people-do.test.ts → packages/core/src/mutations/node-ref.ts; packages/core/tests/unit/an-id-is-the-name-folded.test.ts → packages/core/src/mutations/define-mutation.ts
 
 </imports>
 
 <findings>
 
-[observation] [info] High coupling (0.86) — 5 imports target "core-document"
-[anti-pattern] [warning] "Core Mutations" imports "Core Document" on 5 edge(s) while the 10 edge(s) between them run the other way — the minority direction looks like a layering violation
-[anti-pattern] [warning] "packages/core/src/repeat.ts" is imported from 5 zones (amount-input-days, core-document, core-ops, schema, tests-core-unit) — a cross-cutting dependency every one of them is coupled to
-[suggestion] [info] Zone "Core Mutations" has an unreliable risk reading: only 3 files tracked (minimum 5 needed for reliable metrics) — cohesion: 0.14, coupling: 0.86 (risk score: 0.86)
+[observation] [info] 14 entry points — wide API surface, consider consolidating exports
+[observation] [info] High coupling (0.81) — 36 imports target "core-schema"
+[observation] [info] Low cohesion (0.19) — files are loosely related, consider splitting this zone
+[anti-pattern] [warning] "Core Mutations" imports "Core Document" on 1 edge(s) while the 7 edge(s) between them run the other way — the minority direction looks like a layering violation
+[anti-pattern] [warning] "packages/core/src/mutations/node-ref.ts" is imported from 5 zones (core, core-cli, core-document, core-schema, tests-core-unit) — a cross-cutting dependency every one of them is coupled to
+[pattern] [warning] mutations and schema depend on each other (36 one way, 2 back), and mutations imports from the core barrel; this is a layered-cycle risk. Keep node-ref and types in a leaf module and have schema import only from it.
+[suggestion] [critical] Zone "Core Mutations" is severely fragile and needs immediate architectural intervention — cohesion: 0.19, coupling: 0.81 (risk score: 0.81)
 
 </findings>
 
 <insights>
 
-- High coupling (0.86) — 5 imports target "core-document"
-- "Core Mutations" imports "Core Document" on 5 edge(s) while the 10 edge(s) between them run the other way — the minority direction looks like a layering violation
-- "packages/core/src/repeat.ts" is imported from 5 zones (amount-input-days, core-document, core-ops, schema, tests-core-unit) — a cross-cutting dependency every one of them is coupled to
-- [call graph] 46 internal calls, 7 outgoing, 43 incoming (cohesion: 0.87, coupling: 0.13)
+- Low cohesion (0.19) — files are loosely related, consider splitting this zone
+- High coupling (0.81) — 36 imports target "core-schema"
+- 14 entry points — wide API surface, consider consolidating exports
+- "Core Mutations" imports "Core" on 14 edge(s) while the 53 edge(s) between them run the other way — the minority direction looks like a layering violation
+- "Core Mutations" imports "Core Document" on 1 edge(s) while the 7 edge(s) between them run the other way — the minority direction looks like a layering violation
+- "packages/core/src/mutations/node-ref.ts" is imported from 5 zones (core, core-cli, core-document, core-schema, tests-core-unit) — a cross-cutting dependency every one of them is coupled to
+- [call graph] 103 internal calls, 68 outgoing, 93 incoming (cohesion: 0.6, coupling: 0.4)
+- derived-names.ts is deliberately import-free so the document compiler can read it without dragging in the zone; it is the model for how to expose zone vocabulary cheaply to document.
+- mutations imports back into core (14) and document (1), while core, document, cli, ops and schema all import mutations; node-ref.ts is the widest-shared file, and is a candidate for a lower-level neutral module.
 
 </insights>

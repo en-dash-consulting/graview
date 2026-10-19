@@ -97,7 +97,7 @@ export function blockContextFor(source: BlockSource, principal: Principal | null
     kinds: shapesFor(schema),
     fields: node ? fieldsFor(schema, node.kind) : {},
     definition: (definition || undefined) as BlockContext["definition"],
-    today: options.today ?? seen.today?.() ?? isoToday(),
+    today: options.today ?? seen.today?.() ?? isoToday(money?.timeZone),
     money,
     heading: options.heading ?? (once ? 2 : 3),
     firstHeading,

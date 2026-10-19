@@ -28,7 +28,9 @@ import {
   isCurrent,
   labelOf,
   localeFor,
+  sayingIn,
   emojiMark,
+
   markHref,
   pluralOf,
   recordPath,
@@ -76,6 +78,12 @@ export interface RenderPlaceOptions {
    * runtime cannot say anything in is en-US.
    */
   readonly locale?: string;
+  /**
+   * THE READER'S TIME ZONE (Roadmap f-app-time-zone): the IANA zone an
+   * instant is said in. Unsaid, the brand's `timeZone`, else the runtime's
+   * clock — which, on a server, is seldom anybody's.
+   */
+  readonly timeZone?: string;
   /**
    * Put before every address a link on the page names (`/tasks/task-1`), so
    * a record's name leads to the app's own page for it — the routed face's
@@ -165,6 +173,7 @@ export interface RenderedPlace {
  * id, or a record's address (`/tasks/task-1`).
  *
  * Runs in Node and in a Worker: no DOM, no React, no global read at import.
+ * Every instant on it is said on the reader's clock, else the app's.
  */
 export function renderPlace<S extends AnySchema>(
   store: Store<S>,
@@ -172,6 +181,11 @@ export function renderPlace<S extends AnySchema>(
   place: string | AppPlace,
   options: RenderPlaceOptions = {},
 ): RenderedPlace {
+  const timeZone = options.look?.brand?.timeZone ?? declaration.brand?.timeZone;
+  return sayingIn({ readerTimeZone: options.timeZone, appTimeZone: timeZone }, () => placeRendered(store, declaration, place, options));
+}
+
+function placeRendered<S extends AnySchema>(store: Store<S>, declaration: GraviewApp<S>, place: string | AppPlace, options: RenderPlaceOptions): RenderedPlace {
   const viewer: Principal = options.viewer ?? { kind: "human" };
   const brand = options.look?.brand ?? declaration.brand ?? { name: declaration.name, schemes: SCHEMES };
   const scheme: Scheme = options.look?.scheme ?? (brand.scheme === "dark" || brand.scheme === "light" ? brand.scheme : "light");

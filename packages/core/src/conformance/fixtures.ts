@@ -95,6 +95,11 @@ export const ANNOUNCED: readonly Announcement[] = [
     "fixture": "document:shortlist-0.1.10",
     "version": "0.1.30",
     "what": "leave-alone-category, allow-tidying-category, leave-alone-vendor and allow-tidying-vendor are new tools."
+  },
+  {
+    "fixture": "document:shortlist-0.1.10",
+    "version": "0.1.37",
+    "what": "Every relation is given connect-<kind>-<relation> and disconnect-<kind>-<relation> ({ id, to }) unless an act of the app connects or severs it — the vendor's fills relation, which no act made or broke, gives connect-vendor-fills and disconnect-vendor-fills, new tools."
   }
 ];
 
@@ -1663,6 +1668,48 @@ export const FIXTURES: readonly ConformanceFixture[] = [
           },
           "required": [
             "id"
+          ],
+          "additionalProperties": false
+        },
+        "connect-vendor-fills": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            },
+            "to": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (category)."
+            }
+          },
+          "required": [
+            "id",
+            "to"
+          ],
+          "additionalProperties": false
+        },
+        "disconnect-vendor-fills": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (vendor)."
+            },
+            "to": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Id of a node (category)."
+            }
+          },
+          "required": [
+            "id",
+            "to"
           ],
           "additionalProperties": false
         }

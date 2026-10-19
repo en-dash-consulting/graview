@@ -11,8 +11,8 @@ import { fieldSpecOf } from "./field-spec.js";
 import { linkedRefsOf, type LinkedRecordRef, type LinkedRelation } from "../schema/linked.js";
 import { FIGURE_EMPHASES, FIGURE_FORMATS, groupRelationOf, LIST_AS, LIST_PAGE, MAX_LIST_LIMIT, VIEW_FIELD_FORMATS, VIEW_TONES, type FigureEmphasis, type FigureFormat, type ViewBlock, type ViewTone } from "./views.js";
 import { capitalize } from "../capital.js";
-import { filesOf, isImage, type FileValue } from "../schema/files.js";
-import { fileWords } from "../schema/file-fields.js";
+import { filesOf, isImage, isVideo, type FileValue } from "../schema/files.js";
+import { fileSaid } from "../schema/file-fields.js";
 import { momentAsRead, numberAsRead } from "../days.js";
 import { fieldSays, typedHref, typedWords } from "../schema/field-words.js";
 import type { TypedField } from "../schema/typed-fields.js";
@@ -216,7 +216,7 @@ export interface BlockContext {
   /** How the declaration says a field and its values (`display.labels`, `display.format`). */
   readonly definition?: Parameters<typeof valueWords>[0] | undefined;
   readonly today: string;
-  /** The app's currency and locale (`brand.currency`, `brand.locale`): what money is said in where a block names no currency (FR-100). */
+  /** The app's currency, locale and zone (`brand.currency`, `brand.locale`, `brand.timeZone`): what money is said in where a block names no currency (FR-100), and the clock an instant is said on. */
   readonly money?: Money | undefined;
   /** A card or a row: a Markdown field is said by its start, the syntax taken out (FR-180). */
   readonly glance?: boolean;
@@ -363,14 +363,14 @@ function fieldText(key: string, value: unknown, ctx: BlockContext, as: (typeof V
   const typed = typedWords(typedOf(ctx, key), value, ctx.money?.locale);
   if (typed !== undefined) return typed;
   if (spec?.type === "date") return formatValue(value as Value, "date", ctx.today, [], ctx.money);
-  if (spec?.type === "datetime" && typeof value === "string") return momentAsRead(value, ctx.money?.locale);
+  if (spec?.type === "datetime" && typeof value === "string") return momentAsRead(value, ctx.money?.locale, ctx.money?.timeZone);
   if (spec?.type === "enum" && typeof value === "string") return valueWords(ctx.definition, key, value);
   // A number said as its field declares it: money in the app's currency, a fraction as a percent.
   const amount = typeof value === "number" ? amountAt(ctx, key) : undefined;
   if (amount) return sayAmount(value as number, amount);
   if (typeof value === "number") return numberAsRead(value, ctx.money?.locale, {});
   const files = filesOf(value);
-  if (files[0]) return files.map(fileWords).join(", ");
+  if (files[0]) return files.map(fileSaid).join(", ");
   if (Array.isArray(value)) return value.map((one) => String(one)).join(", ");
   if (typeof value === "object") return NOTHING;
   return String(value);
@@ -445,8 +445,8 @@ function resolveOne(block: SpecBlock, ctx: BlockContext, first: boolean): Unkeye
     case "image": {
       // About no one record there are no files: the check says so of the home's blocks.
       const all = filesOf(ctx.node && Object.hasOwn(ctx.node, block.field) ? ctx.node[block.field] : null);
-      const files = block.as === "gallery" ? all : all.filter(isImage).slice(0, 1);
-      return { t: "image", field: block.field, label: block.label ?? fieldWords(ctx.definition, block.field), as: block.as, files, text: files.map(fileWords).join(", ") || NOTHING };
+      const files = block.as === "gallery" ? all : all.filter((file) => isImage(file) || isVideo(file)).slice(0, 1);
+      return { t: "image", field: block.field, label: block.label ?? fieldWords(ctx.definition, block.field), as: block.as, files, text: files.map(fileSaid).join(", ") || NOTHING };
     }
     case "progress": {
       const value = judge(block.value, ctx);

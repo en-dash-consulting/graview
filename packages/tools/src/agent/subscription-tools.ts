@@ -1,4 +1,4 @@
-import type { ToolAnnotations, ToolDefinition } from "./tools.js";
+import type { ToolAnnotations, ToolDefinition } from "./tool-definition.js";
 
 /**
  * NOTIFY ME, AS TOOLS (Roadmap f-notify-subscriptions): a chat subscribes

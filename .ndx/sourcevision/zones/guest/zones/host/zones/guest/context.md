@@ -7,8 +7,8 @@
 Zone: Guest (`guest/host/guest`)
 Files: 3, Cohesion: 0.20, Coupling: 0.80
 Description: 3 files, primarily TypeScript
-Entry points: packages/guest/src/host/arrive.ts, packages/guest/src/host/index.ts
-Lines: 212
+Entry points: packages/guest/src/host/arrive.ts, packages/guest/src/host/index.ts, packages/guest/src/host/react.tsx
+Lines: 220
 
 </zone>
 
@@ -16,7 +16,7 @@ Lines: 212
 
 packages/guest/src/host/arrive.ts (TypeScript, 42 lines, source)
 packages/guest/src/host/index.ts (TypeScript, 26 lines, source)
-packages/guest/src/host/react.tsx (TypeScript, 144 lines, source)
+packages/guest/src/host/react.tsx (TypeScript, 152 lines, source)
 
 </files>
 

@@ -5,10 +5,10 @@
 <zone>
 
 Zone: Tests (`tests`)
-Files: 32, Cohesion: 1.00, Coupling: 0.00
+Files: 37, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 32 files, primarily TypeScript
-Lines: 3662
+Description: Non-source files in tests: a-change-is-said-in-words-in-every-example.test.ts, a-declaration-as-a-document.test.ts, a-document-runs-without-code.test.ts (+34 more)
+Lines: 3992
 
 </zone>
 
@@ -17,13 +17,16 @@ Lines: 3662
 tests/a-change-is-said-in-words-in-every-example.test.ts (TypeScript, 130 lines, test)
 tests/a-declaration-as-a-document.test.ts (TypeScript, 41 lines, test)
 tests/a-document-runs-without-code.test.ts (TypeScript, 101 lines, test)
+tests/a-door-opens-all-at-once.test.ts (TypeScript, 62 lines, test)
 tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts (TypeScript, 53 lines, test)
-tests/a-hosted-page-keeps-to-its-budget.test.ts (TypeScript, 371 lines, test)
+tests/a-harness-that-fails-is-looked-at-again-alone.test.ts (TypeScript, 41 lines, test)
+tests/a-hosted-page-keeps-to-its-budget.test.ts (TypeScript, 402 lines, test)
 tests/a-kind-is-counted-by-its-noun.test.ts (TypeScript, 48 lines, test)
 tests/a-refusal-never-names-your-own-role.test.ts (TypeScript, 47 lines, test)
 tests/a-running-preview-holds-its-data-folder.test.ts (TypeScript, 119 lines, test)
 tests/a-tool-schema-is-written-as-zod-writes-it.test.ts (TypeScript, 189 lines, test)
 tests/a-worker-view-runs-headless-in-workerd.test.ts (TypeScript, 119 lines, test)
+tests/an-act-offered-whole-is-one-its-input-accepts.test.ts (TypeScript, 50 lines, test)
 tests/an-app-aliases-what-the-framework-imports.test.ts (TypeScript, 53 lines, test)
 tests/an-edit-in-place-makes-nothing.test.ts (TypeScript, 77 lines, test)
 tests/changesets.test.ts (TypeScript, 53 lines, test)
@@ -42,7 +45,9 @@ tests/site.test.ts (TypeScript, 236 lines, test)
 tests/the-desk-points-at-the-moved-ports.test.ts (TypeScript, 60 lines, test)
 tests/the-embed-keeps-to-its-budget.test.ts (TypeScript, 132 lines, test)
 tests/the-framework-runs-in-workerd.test.ts (TypeScript, 182 lines, test)
-tests/the-repo-spells-in-american-english.test.ts (TypeScript, 139 lines, test)
+tests/the-releases-page-says-what-each-version-brought.test.ts (TypeScript, 86 lines, test)
+tests/the-repo-spells-in-american-english.test.ts (TypeScript, 141 lines, test)
+tests/the-site-draws-no-chat-box.test.ts (TypeScript, 58 lines, test)
 tests/the-studio-is-not-for-everyone.test.ts (TypeScript, 38 lines, test)
 tests/the-watch-reads-a-stores-names.test.ts (TypeScript, 66 lines, test)
 tests/workerd/worker.ts (TypeScript, 182 lines, test)
@@ -53,11 +58,11 @@ tests/workerd/worker.ts (TypeScript, 182 lines, test)
 
 
 Outgoing (this zone → other zones):
-  → apps: tests/a-change-is-said-in-words-in-every-example.test.ts → apps/discography/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/rota/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/seedbed/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/seedbed/src/domain/example.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/todo/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/discography/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/ui/seats.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/ui/seats.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/ui/app.tsx; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/discography/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/launcher/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/rota/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/seedbed/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/todo/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/discography/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/gauntlet/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/rota/src/domain/app.ts; tests/the-desk-points-at-the-moved-ports.test.ts → apps/launcher/src/domain/survey.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/ui/seats.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/ui/seats.ts
-  → core-document: tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → packages/core/src/schema/zod.ts; tests/one-ladder-orders-every-surface.test.ts → packages/core/src/theme/layers.ts
+  → apps: tests/a-change-is-said-in-words-in-every-example.test.ts → apps/discography/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/rota/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/seedbed/src/domain/app.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/seedbed/src/domain/example.ts; tests/a-change-is-said-in-words-in-every-example.test.ts → apps/todo/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/discography/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-grant-to-make-is-not-a-grant-over-every-record.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/discography/src/ui/seats.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/gauntlet/src/ui/seats.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/domain/app.ts; tests/a-refusal-never-names-your-own-role.test.ts → apps/rota/src/ui/app.tsx; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/discography/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/gauntlet/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/launcher/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/rota/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/seedbed/src/domain/app.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → apps/todo/src/domain/app.ts; tests/an-act-offered-whole-is-one-its-input-accepts.test.ts → apps/discography/src/domain/app.ts; tests/an-act-offered-whole-is-one-its-input-accepts.test.ts → apps/gauntlet/src/domain/app.ts; tests/an-act-offered-whole-is-one-its-input-accepts.test.ts → apps/rota/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/discography/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/gauntlet/src/domain/app.ts; tests/an-edit-in-place-makes-nothing.test.ts → apps/rota/src/domain/app.ts; tests/the-desk-points-at-the-moved-ports.test.ts → apps/launcher/src/domain/survey.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/discography/src/ui/seats.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/domain/app.ts; tests/the-studio-is-not-for-everyone.test.ts → apps/gauntlet/src/ui/seats.ts
+  → core-schema: tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → packages/core/src/schema/json-schema.ts; tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → packages/core/src/schema/zod.ts
+  → core-theme: tests/one-ladder-orders-every-surface.test.ts → packages/core/src/theme/layers.ts
   → primitives: tests/one-ladder-orders-every-surface.test.ts → packages/primitives/src/scene-css.ts
-  → schema: tests/a-tool-schema-is-written-as-zod-writes-it.test.ts → packages/core/src/schema/json-schema.ts
-  → scripts: tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page-notes.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page.mjs; tests/changesets.test.ts → scripts/lib/surfaces.mjs; tests/every-harness-honors-the-port-base.test.ts → scripts/lib/ports.mjs; tests/journeys.test.ts → scripts/lib/journeys.mjs; tests/journeys.test.ts → scripts/lib/ports.mjs; tests/readme-exports.test.ts → scripts/lib/readme-exports.mjs; tests/the-desk-points-at-the-moved-ports.test.ts → scripts/lib/ports.mjs; tests/the-embed-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs; tests/the-watch-reads-a-stores-names.test.ts → scripts/lib/watch.mjs
+  → scripts: tests/a-door-opens-all-at-once.test.ts → scripts/lib/hosted-page.mjs; tests/a-harness-that-fails-is-looked-at-again-alone.test.ts → scripts/lib/second-look.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page-notes.mjs; tests/a-hosted-page-keeps-to-its-budget.test.ts → scripts/lib/hosted-page.mjs; tests/changesets.test.ts → scripts/lib/surfaces.mjs; tests/every-harness-honors-the-port-base.test.ts → scripts/lib/ports.mjs; tests/journeys.test.ts → scripts/lib/journeys.mjs; tests/journeys.test.ts → scripts/lib/ports.mjs; tests/readme-exports.test.ts → scripts/lib/readme-exports.mjs; tests/the-desk-points-at-the-moved-ports.test.ts → scripts/lib/ports.mjs; tests/the-embed-keeps-to-its-budget.test.ts → scripts/lib/bundle-budget.mjs; tests/the-watch-reads-a-stores-names.test.ts → scripts/lib/watch.mjs
   → tests-core-support: tests/workerd/worker.ts → packages/core/tests/support/adapter-contract.ts; tests/workerd/worker.ts → packages/core/tests/support/adapter-contract.ts
 
 </imports>
@@ -71,6 +76,6 @@ Outgoing (this zone → other zones):
 <insights>
 
 - High cohesion (1) — files are tightly interconnected
-- [call graph] 251 internal calls, 106 outgoing, 0 incoming (cohesion: 0.7, coupling: 0.3)
+- [call graph] 268 internal calls, 121 outgoing, 0 incoming (cohesion: 0.69, coupling: 0.31)
 
 </insights>

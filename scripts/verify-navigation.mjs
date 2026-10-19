@@ -57,17 +57,14 @@ const note = async (page, step) =>
     ),
   });
 
-try {
-  vite = await startVite("todo", portFor("todo"));
-  browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
-  const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-  /*
-   * A page that throws is not navigating, whatever the addresses say. The
-   * blank screen this file now drives into was an unhandled React error
-   * with a perfectly ordinary-looking hash behind it.
-   */
-  report.pageErrors = [];
-  page.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+/*
+ * THE STEPS, in the order the run takes them. Each writes its claims into
+ * `report`; the run below calls them in the order they always ran, on the
+ * one page where a step goes on from where the last one left it.
+ */
+
+/** Travel by double click, deeper through a pick target, back twice and forward once by the browser's own arrows, and Escape home: each stop noted as it is reached. */
+async function walkingThereAndBack(page) {
   await page.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(900);
@@ -120,13 +117,15 @@ try {
     await page.waitForTimeout(600);
   }
   await note(page, "home by escape");
+}
 
-  /*
-   * A VIEW THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. With the lists in
-   * focus and every task raised, each task is drawn inside its list; a line
-   * from the list column to the same task's chip says nothing the column
-   * does not. Twelve of them over the panel were the picture Nick sent.
-   */
+/*
+ * A VIEW THAT DRAWS BOTH ENDS HAS DRAWN THE RELATION. With the lists in
+ * focus and every task raised, each task is drawn inside its list; a line
+ * from the list column to the same task's chip says nothing the column
+ * does not. Twelve of them over the panel were the picture Nick sent.
+ */
+async function aViewThatDrawsBothEnds(page) {
   await page.goto(`${at("todo")}/?today=2026-09-01#focus=aggregate%3Alist&relation=task`, { waitUntil: "load" });
   await page.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
   await page.waitForTimeout(1200);
@@ -149,18 +148,20 @@ try {
     weekLines: await page.evaluate(() => document.querySelectorAll('[data-graview-connector="holds"]').length),
   };
   await note(page, "the week with the lists raised");
+}
 
-  /*
-   * The altitude control is a TOGGLE, and says which way it goes.
-   *
-   * "Graview" from the ground, "Focus" from altitude, aria state agreeing
-   * with the word — and the mark morphs between its two states on the
-   * scene's own curve rather than being swapped. Sampled mid-transition on
-   * the way back down: a mark caught between its states is morphing; one
-   * already at its end is cutting. Which of those is RIGHT depends on the
-   * engine: where the property registers, the scene morphs and so must the
-   * mark; where it cannot, the scene cuts and the mark must cut with it.
-   */
+/*
+ * The altitude control is a TOGGLE, and says which way it goes.
+ *
+ * "Graview" from the ground, "Focus" from altitude, aria state agreeing
+ * with the word — and the mark morphs between its two states on the
+ * scene's own curve rather than being swapped. Sampled mid-transition on
+ * the way back down: a mark caught between its states is morphing; one
+ * already at its end is cutting. Which of those is RIGHT depends on the
+ * engine: where the property registers, the scene morphs and so must the
+ * mark; where it cannot, the scene cuts and the mark must cut with it.
+ */
+async function theAltitudeControlIsAToggle(page) {
   const control = () =>
     page.evaluate(() => {
       const el = document.querySelector('[data-testid="overview"]');
@@ -233,21 +234,23 @@ try {
   const transitioned = await page.evaluate(() => globalThis.__altitudeTransition === true);
   report.control.midway = { ...(await control()), wingOpacity: halfway, frames: wings.length, transitioned };
   report.control.groundAgain = await control();
+}
 
-  /*
-   * WHAT YOU CAN PRESS IS WHAT YOU CAN SEE.
-   *
-   * A record read from altitude was drawn scaled inside a host the size of
-   * the layout's slot, its content filling only part of it, and the
-   * invisible rest had to be kept from taking presses meant for the
-   * districts under it. It stands in the panel beside the map now, at the
-   * size a person reads: nothing of it is stamped over the city, and its
-   * name in the panel is where a press on it lands.
-   */
-  /*
-   * Reached by its address: a district's records are listed beside the map
-   * now (the panel), not opened in place as chips to double-click.
-   */
+/*
+ * WHAT YOU CAN PRESS IS WHAT YOU CAN SEE.
+ *
+ * A record read from altitude was drawn scaled inside a host the size of
+ * the layout's slot, its content filling only part of it, and the
+ * invisible rest had to be kept from taking presses meant for the
+ * districts under it. It stands in the panel beside the map now, at the
+ * size a person reads: nothing of it is stamped over the city, and its
+ * name in the panel is where a press on it lands.
+ */
+/*
+ * Reached by its address: a district's records are listed beside the map
+ * now (the panel), not opened in place as chips to double-click.
+ */
+async function whatYouCanPressIsWhatYouCanSee(page) {
   await page.evaluate(() => {
     window.location.hash = "#overview=1&focus=t-deposit";
   });
@@ -263,14 +266,16 @@ try {
       return { stamped, title: title.textContent.trim(), pressedLandsOnIt: at !== null && title.contains(at) };
     })),
   };
+}
 
-  /*
-   * A MOVE BELONGS TO THE STOP IT WAS MADE AT.
-   *
-   * Drag the focus a little, then travel: the next stop starts where the
-   * layout puts things — no pin in its address, no pinned host on the
-   * scene — and Back returns to the arranged picture, pin and all.
-   */
+/*
+ * A MOVE BELONGS TO THE STOP IT WAS MADE AT.
+ *
+ * Drag the focus a little, then travel: the next stop starts where the
+ * layout puts things — no pin in its address, no pinned host on the
+ * scene — and Back returns to the arranged picture, pin and all.
+ */
+async function aMoveBelongsToTheStopItWasMadeAt(page) {
   await page.click('[data-testid="overview"]');
   await page.waitForTimeout(900);
   {
@@ -305,17 +310,19 @@ try {
     await page.waitForTimeout(900);
     report.moves.back = await pinnedNow();
   }
+}
 
-  /*
-   * GOING DEEPER INTO A DISTRICT THAT HAS A PICTURE OF ITS OWN.
-   *
-   * A district explodes into a ring of chips because a bag of names is the
-   * best a generic card can do with its members. A kind with a lens over it
-   * has something better, and the card draws a ◆ to say so — and going
-   * deeper burst it into chips anyway. Both branches, from the same gesture:
-   * "task" has the week lens over it, "reason" has nothing but the default.
-   */
-  // Rise — the control is a TOGGLE, so ask where it is rather than pressing it.
+/*
+ * GOING DEEPER INTO A DISTRICT THAT HAS A PICTURE OF ITS OWN.
+ *
+ * A district explodes into a ring of chips because a bag of names is the
+ * best a generic card can do with its members. A kind with a lens over it
+ * has something better, and the card draws a ◆ to say so — and going
+ * deeper burst it into chips anyway. Both branches, from the same gesture:
+ * "task" has the week lens over it, "reason" has nothing but the default.
+ */
+// Rise — the control is a TOGGLE, so ask where it is rather than pressing it.
+async function goingDeeperIntoADistrict(page) {
   const rise = async () => {
     const up = await page.evaluate(
       () => document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
@@ -367,14 +374,17 @@ try {
     };
   });
   await listing.close();
-  /*
-   * THE PROBLEM COUNT ON A DISTRICT'S NAME IS A CONTROL. "⚠ 3" on Tasks was
-   * dead text: nothing on the map said what the warning was. It is a button
-   * now, a fingertip tall, named "3 problems in Tasks"; pressed (or Enter on
-   * the keyboard) it chooses the district and brings its problems up beside
-   * the map, the bar's own rows, as many as it said — and Escape gives the
-   * keyboard back to something, never to the page.
-   */
+}
+
+/*
+ * THE PROBLEM COUNT ON A DISTRICT'S NAME IS A CONTROL. "⚠ 3" on Tasks was
+ * dead text: nothing on the map said what the warning was. It is a button
+ * now, a fingertip tall, named "3 problems in Tasks"; pressed (or Enter on
+ * the keyboard) it chooses the district and brings its problems up beside
+ * the map, the bar's own rows, as many as it said — and Escape gives the
+ * keyboard back to something, never to the page.
+ */
+async function theProblemCountIsAControl() {
   const problems = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   problems.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
   await problems.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
@@ -404,13 +414,16 @@ try {
   const closed = await problems.evaluate(() => ({ panel: document.querySelector('[data-testid="district-panel"]') !== null, onBody: document.activeElement === document.body || document.activeElement === null }));
   report.districtProblems = { asButton, opened, closed };
   await problems.close();
-  /*
-   * THE SAME TRUE THING ON THE GROUND. The flat district cards along the foot
-   * of the ground painted the MEMBER count in the warning color with a ⚠ —
-   * "⚠ 12" on a district with two problems. They say the members as a plain
-   * count, with its own title, and the problems as the same button: the same
-   * number, named, and pressing it rises to the map with the problems open.
-   */
+}
+
+/*
+ * THE SAME TRUE THING ON THE GROUND. The flat district cards along the foot
+ * of the ground painted the MEMBER count in the warning color with a ⚠ —
+ * "⚠ 12" on a district with two problems. They say the members as a plain
+ * count, with its own title, and the problems as the same button: the same
+ * number, named, and pressing it rises to the map with the problems open.
+ */
+async function theSameTrueThingOnTheGround() {
   const ground = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   ground.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
   await ground.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
@@ -443,14 +456,17 @@ try {
   }));
   report.districtProblems.onTheGround = onTheGround;
   await ground.close();
-  /*
-   * A DISTRICT'S NAME IS NOT MOVED BY HAND, from altitude. The city is laid
-   * out by the data, and a name stands under its own plot; a name dragged
-   * off its plot and pinned in the address is geometry that compensates for
-   * the layout. A drag that starts on it is the ground's own gesture — it
-   * pans the city, plot and name together — and writes no pin; an old pin in
-   * a bookmark is ignored.
-   */
+}
+
+/*
+ * A DISTRICT'S NAME IS NOT MOVED BY HAND, from altitude. The city is laid
+ * out by the data, and a name stands under its own plot; a name dragged
+ * off its plot and pinned in the address is geometry that compensates for
+ * the layout. A drag that starts on it is the ground's own gesture — it
+ * pans the city, plot and name together — and writes no pin; an old pin in
+ * a bookmark is ignored.
+ */
+async function aDistrictsNameIsNotMovedByHand() {
   const unmoved = await browser.newPage({ viewport: { width: 1560, height: 940 } });
   unmoved.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
   const nameAgainstPlot = () =>
@@ -496,13 +512,16 @@ try {
   const bookmarked = await nameAgainstPlot();
   report.districtName = { resting, dragged, bookmarked };
   await unmoved.close();
-  /*
-   * THE PANEL FLOATS OVER THE MAP; it is not a column beside it. Docked on a
-   * desk (or a sheet on a phone) it is inset from the edges of the picture by
-   * the app's gap, below the bar, with the app's radius on its corners and a
-   * real elevation — and the city is laid out in the room left, so no
-   * district, name or control stands under it.
-   */
+}
+
+/*
+ * THE PANEL FLOATS OVER THE MAP; it is not a column beside it. Docked on a
+ * desk (or a sheet on a phone) it is inset from the edges of the picture by
+ * the app's gap, below the bar, with the app's radius on its corners and a
+ * real elevation — and the city is laid out in the room left, so no
+ * district, name or control stands under it.
+ */
+async function thePanelFloatsOverTheMap() {
   report.mapPanel = {};
   for (const [width, height] of [[1560, 940], [390, 844]]) {
     const floating = await browser.newPage({ viewport: { width, height } });
@@ -560,15 +579,17 @@ try {
     });
     await floating.close();
   }
+}
 
-  /*
-   * TAB NEVER LANDS ON A DISTRICT THE PANEL COVERS. The panel floats over
-   * the scene, and the city's fit keeps every district in the part the
-   * reader sees — until the reader comes closer: zoomed in, the city runs
-   * under the panel, and Tab walked into districts nobody could see, the
-   * focus ring drawn under the panel. A district wholly under it is passed
-   * over; one partly under it is brought into the part that is seen.
-   */
+/*
+ * TAB NEVER LANDS ON A DISTRICT THE PANEL COVERS. The panel floats over
+ * the scene, and the city's fit keeps every district in the part the
+ * reader sees — until the reader comes closer: zoomed in, the city runs
+ * under the panel, and Tab walked into districts nobody could see, the
+ * focus ring drawn under the panel. A district wholly under it is passed
+ * over; one partly under it is brought into the part that is seen.
+ */
+async function tabNeverLandsUnderThePanel() {
   report.coveredTab = {};
   for (const [width, height] of [[1440, 900], [390, 844]]) {
     const covering = await browser.newPage({ viewport: { width, height } });
@@ -713,19 +734,21 @@ try {
     report.coveredTab[width] = { before, landed };
     await covering.close();
   }
+}
 
-  /*
-   * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
-   *
-   * Every stop here is an id in the address, and ordinary acts remove
-   * things. Traveled into a task and dropped it, the focus was an id
-   * nothing resolved: the layout placed nothing, the view host measured its
-   * own kind tag instead of the panel that was no longer there, and moved
-   * it nine pixels up and fourteen right on every render until React gave
-   * up with "Maximum update depth exceeded" and blanked the page. Selecting
-   * a record and dropping it left its pane open, titled with the raw node
-   * id and saying "nothing can be done with this mix of kinds".
-   */
+/*
+ * THE ACT THAT REMOVES WHAT YOU ARE STANDING IN.
+ *
+ * Every stop here is an id in the address, and ordinary acts remove
+ * things. Traveled into a task and dropped it, the focus was an id
+ * nothing resolved: the layout placed nothing, the view host measured its
+ * own kind tag instead of the panel that was no longer there, and moved
+ * it nine pixels up and fourteen right on every render until React gave
+ * up with "Maximum update depth exceeded" and blanked the page. Selecting
+ * a record and dropping it left its pane open, titled with the raw node
+ * id and saying "nothing can be done with this mix of kinds".
+ */
+async function theActThatRemovesWhereYouStand(page) {
   const dropTheFocus = async () => {
     await page.evaluate(() => {
       const up = document.querySelector('[data-testid="overview"]');
@@ -780,16 +803,18 @@ try {
       !(removed.seat ?? "").includes(removed.victim ?? "\u0000") &&
       !(removed.pane ?? "").includes(removed.victim ?? "\u0000"),
   };
+}
 
-  /* --------------- the two doors the back button did not know about */
-  /*
-   * "Show the installation" and the studio are both STOPS: one raises the
-   * installation's own districts into the scene, the other opens the app's
-   * declaration over it. Neither pushed a history entry — the address
-   * changed and the entry was REPLACED — so the arrows stayed gray and one
-   * Back from either left the app entirely. Both live behind the profile
-   * now, which is also where a harness has to go to find them.
-   */
+/* --------------- the two doors the back button did not know about */
+/*
+ * "Show the installation" and the studio are both STOPS: one raises the
+ * installation's own districts into the scene, the other opens the app's
+ * declaration over it. Neither pushed a history entry — the address
+ * changed and the entry was REPLACED — so the arrows stayed gray and one
+ * Back from either left the app entirely. Both live behind the profile
+ * now, which is also where a harness has to go to find them.
+ */
+async function theTwoDoorsAreStops(page) {
   const doorState = () =>
     page.evaluate(() => ({
       hash: decodeURIComponent(window.location.hash),
@@ -850,6 +875,7 @@ try {
       !outOfStudio.hash.includes("in.studio") &&
       backInStudio.studio,
   };
+}
 
 /*
  * A LENS IS A DRIVE-IN. From altitude a kind's named pictures are a
@@ -860,148 +886,150 @@ try {
  * the mid-tween capture asserts: at a hundred milliseconds in, the lens's
  * host is nearer the plot than the canvas center.
  */
-try {
-  const drive = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-  drive.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await drive.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
-  await drive.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await drive.waitForTimeout(1200);
-  const marquee = await drive.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb-press')].map((el) => ({
-      label: el.getAttribute("aria-label"),
-      focusable: el.tabIndex >= 0 && !el.disabled,
-    })),
-  );
-  const noteDriveIn = await drive.evaluate(() => document.querySelector('[data-testid="drive-in-reason"]') !== null);
-  /*
-   * Each place tile on the marquee says its place's whole name in words
-   * (FR-118) and holds exactly one control, its press: the name is text a
-   * person reads, never a second control or a lens drawn small. Counted
-   * per tile, so a marquee with no tiles has nothing to pass on.
-   */
-  const tiles = await drive.evaluate(() =>
-    [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb')].map((tile) => ({
-      name: tile.querySelector(".graview-drive-in-thumb-title")?.textContent?.trim() ?? "",
-      label: tile.querySelector(".graview-drive-in-thumb-press")?.getAttribute("aria-label") ?? "",
-      controls: [...tile.querySelectorAll("button, a, input, select, textarea, [tabindex]")].filter((el) => !el.closest("[inert]")).length,
-      pictures: tile.querySelectorAll("svg, canvas, img, [data-graview-view]").length,
-    })),
-  );
-  /* Switch showings at altitude: focus the tasks' month by the marquee, rise stays. */
-  await drive.evaluate(() => {
-    window.location.hash = "#overview=1&focus=aggregate%3Atask&in.view=the-week";
-  });
-  await drive.waitForTimeout(1200);
-  /*
-   * THE PICTURE OPENS BESIDE THE MAP, at a size a person reads: a panel
-   * docked at the side, the lens in it at its own size — no billboard of
-   * the lens drawn small on its plot, and no line drawn over it.
-   */
-  await drive.waitForSelector('[data-testid="lens-panel"]', { timeout: 10_000 }).catch(() => {});
-  const standing = await drive.evaluate(() => {
-    const panel = document.querySelector('[data-testid="lens-panel"]');
-    const box = panel?.getBoundingClientRect() ?? null;
-    const picks = [...(panel?.querySelectorAll("[data-graview-pick]") ?? [])];
-    const first = picks[0] ?? null;
-    const at = first ? first.getBoundingClientRect() : null;
-    const over = at ? document.elementFromPoint(at.x + at.width / 2, at.y + at.height / 2) : null;
-    return {
-      panel: panel?.getAttribute("data-graview-map-panel") ?? null,
-      title: panel?.querySelector('[data-testid="lens-panel-title"]')?.textContent ?? null,
-      width: box ? Math.round(box.width) : 0,
-      right: box ? Math.round(innerWidth - box.right) : null,
-      font: first ? parseFloat(getComputedStyle(first).fontSize) : null,
-      scaled: first ? Math.abs(first.getBoundingClientRect().width - first.offsetWidth) > 1 : null,
-      onTop: over !== null && panel !== null && panel.contains(over),
-      screens: document.querySelectorAll("[data-graview-screen]").length,
-      url: location.hash,
-    };
-  });
-  await drive.focus('[data-testid="showing-the-month"]');
-  await drive.click('[data-testid="showing-the-month"]');
-  await drive.waitForTimeout(600);
-  const switched = await drive.evaluate(() => ({
-    url: location.hash,
-    up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
-  }));
-  /* Switch KINDS at altitude: the tasks' picture sinks into its village while the lists' rises out of its own.
-     Captured mid-tween, because the fault was two pictures over each other for the length of it. */
-  const panelTitle = () => drive.evaluate(() => document.querySelector('[data-testid="lens-panel-title"]')?.textContent ?? null);
-  const before = await panelTitle();
-  await drive.focus('[data-testid="showing-the-lists"]');
-  await drive.click('[data-testid="showing-the-lists"]');
-  await drive.waitForTimeout(1200);
-  // One panel, now the lists': the tasks' picture gave way rather than standing beside it.
-  const afterSwitch = { title: await panelTitle(), panels: await drive.evaluate(() => document.querySelectorAll('[data-testid="lens-panel"]').length) };
-  // Back to the tasks' month for the descent below.
-  await drive.focus('[data-testid="showing-the-month"]');
-  await drive.click('[data-testid="showing-the-month"]');
-  await drive.waitForTimeout(1200);
-  /* Open: the panel's own control is the way to the place; capture mid-tween. */
-  const centerX = 1560 / 2;
-  const plot = await drive.evaluate(() => {
-    const b = document.querySelector('[data-graview-plot="kind:task"]')?.getBoundingClientRect();
-    return b ? { x: b.x + b.width / 2, y: b.y + b.height / 2 } : null;
-  });
-  /*
-   * WATCHED EVERY FRAME, not read once at a hundred and ten milliseconds.
-   * On the nightly's runner (and under GRAVIEW_SLOW=4) the press took longer
-   * than that to reach the first frame of the tween, so the one reading saw
-   * the lens still on its plot and called a descent that then tweened all
-   * the way a jump. Where the lens stood on each frame for a second after
-   * the press is the question; the claim below asks whether any of those
-   * frames had it between the plot and the middle.
-   */
-  const watching = drive.evaluate(
-    () =>
-      new Promise((done) => {
-        const seen = [];
-        const started = performance.now();
-        const frame = () => {
-          const b = document.querySelector('[data-graview-view="aggregate:task"]')?.getBoundingClientRect();
-          if (b) seen.push({ t: Math.round(performance.now() - started), x: b.x + b.width / 2, y: b.y + b.height / 2, width: b.width });
-          if (performance.now() - started < 1400) requestAnimationFrame(frame);
-          else done(seen);
-        };
-        requestAnimationFrame(frame);
-      }),
-  );
-  await drive.click('[data-testid="lens-panel-open"]');
-  const frames = await watching;
-  await drive.waitForTimeout(300);
-  const landed = await drive.evaluate(() => ({
-    url: location.hash,
-    up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
-  }));
-  const plotX = plot ? plot.x : null;
-  const between = (x) => plotX !== null && Math.min(plotX, centerX) + 20 < x && x < Math.max(plotX, centerX) - 20;
-  // The first frame on its way, else the frame nearest halfway: what the report shows as midway.
-  const midway = frames.find((one) => between(one.x)) ?? frames[Math.floor(frames.length / 2)] ?? null;
-  report.driveIn = {
-    marquee,
-    tiles,
-    leavingBefore: before,
-    afterSwitch,
-    noteDriveIn,
-    standing,
-    switched,
-    midway,
-    frames: frames.length,
-    plot,
-    landed,
+async function aLensIsADriveIn() {
+  try {
+    const drive = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+    drive.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await drive.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+    await drive.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await drive.waitForTimeout(1200);
+    const marquee = await drive.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb-press')].map((el) => ({
+        label: el.getAttribute("aria-label"),
+        focusable: el.tabIndex >= 0 && !el.disabled,
+      })),
+    );
+    const noteDriveIn = await drive.evaluate(() => document.querySelector('[data-testid="drive-in-reason"]') !== null);
     /*
-     * Mid-tween the lens is on its way from the plot: between the plot's
-     * column and the middle it lands in, at neither end. (It was "nearer the
-     * plot than the middle", which held only while the district stood near
-     * the middle; upstream districts now stand at the city's left, and a
-     * tween eased out is past halfway at a hundred milliseconds.) Some frame
-     * after the press, not the frame at a fixed time: a jump has none.
+     * Each place tile on the marquee says its place's whole name in words
+     * (FR-118) and holds exactly one control, its press: the name is text a
+     * person reads, never a second control or a lens drawn small. Counted
+     * per tile, so a marquee with no tiles has nothing to pass on.
      */
-    movedFromThePlot: frames.some((one) => between(one.x)),
-  };
-  await drive.close();
-} catch (error) {
-  report.driveIn = { error: String(error).slice(0, 2000) };
+    const tiles = await drive.evaluate(() =>
+      [...document.querySelectorAll('[data-testid="drive-in-task"] .graview-drive-in-thumb')].map((tile) => ({
+        name: tile.querySelector(".graview-drive-in-thumb-title")?.textContent?.trim() ?? "",
+        label: tile.querySelector(".graview-drive-in-thumb-press")?.getAttribute("aria-label") ?? "",
+        controls: [...tile.querySelectorAll("button, a, input, select, textarea, [tabindex]")].filter((el) => !el.closest("[inert]")).length,
+        pictures: tile.querySelectorAll("svg, canvas, img, [data-graview-view]").length,
+      })),
+    );
+    /* Switch showings at altitude: focus the tasks' month by the marquee, rise stays. */
+    await drive.evaluate(() => {
+      window.location.hash = "#overview=1&focus=aggregate%3Atask&in.view=the-week";
+    });
+    await drive.waitForTimeout(1200);
+    /*
+     * THE PICTURE OPENS BESIDE THE MAP, at a size a person reads: a panel
+     * docked at the side, the lens in it at its own size — no billboard of
+     * the lens drawn small on its plot, and no line drawn over it.
+     */
+    await drive.waitForSelector('[data-testid="lens-panel"]', { timeout: 10_000 }).catch(() => {});
+    const standing = await drive.evaluate(() => {
+      const panel = document.querySelector('[data-testid="lens-panel"]');
+      const box = panel?.getBoundingClientRect() ?? null;
+      const picks = [...(panel?.querySelectorAll("[data-graview-pick]") ?? [])];
+      const first = picks[0] ?? null;
+      const at = first ? first.getBoundingClientRect() : null;
+      const over = at ? document.elementFromPoint(at.x + at.width / 2, at.y + at.height / 2) : null;
+      return {
+        panel: panel?.getAttribute("data-graview-map-panel") ?? null,
+        title: panel?.querySelector('[data-testid="lens-panel-title"]')?.textContent ?? null,
+        width: box ? Math.round(box.width) : 0,
+        right: box ? Math.round(innerWidth - box.right) : null,
+        font: first ? parseFloat(getComputedStyle(first).fontSize) : null,
+        scaled: first ? Math.abs(first.getBoundingClientRect().width - first.offsetWidth) > 1 : null,
+        onTop: over !== null && panel !== null && panel.contains(over),
+        screens: document.querySelectorAll("[data-graview-screen]").length,
+        url: location.hash,
+      };
+    });
+    await drive.focus('[data-testid="showing-the-month"]');
+    await drive.click('[data-testid="showing-the-month"]');
+    await drive.waitForTimeout(600);
+    const switched = await drive.evaluate(() => ({
+      url: location.hash,
+      up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+    }));
+    /* Switch KINDS at altitude: the tasks' picture sinks into its village while the lists' rises out of its own.
+       Captured mid-tween, because the fault was two pictures over each other for the length of it. */
+    const panelTitle = () => drive.evaluate(() => document.querySelector('[data-testid="lens-panel-title"]')?.textContent ?? null);
+    const before = await panelTitle();
+    await drive.focus('[data-testid="showing-the-lists"]');
+    await drive.click('[data-testid="showing-the-lists"]');
+    await drive.waitForTimeout(1200);
+    // One panel, now the lists': the tasks' picture gave way rather than standing beside it.
+    const afterSwitch = { title: await panelTitle(), panels: await drive.evaluate(() => document.querySelectorAll('[data-testid="lens-panel"]').length) };
+    // Back to the tasks' month for the descent below.
+    await drive.focus('[data-testid="showing-the-month"]');
+    await drive.click('[data-testid="showing-the-month"]');
+    await drive.waitForTimeout(1200);
+    /* Open: the panel's own control is the way to the place; capture mid-tween. */
+    const centerX = 1560 / 2;
+    const plot = await drive.evaluate(() => {
+      const b = document.querySelector('[data-graview-plot="kind:task"]')?.getBoundingClientRect();
+      return b ? { x: b.x + b.width / 2, y: b.y + b.height / 2 } : null;
+    });
+    /*
+     * WATCHED EVERY FRAME, not read once at a hundred and ten milliseconds.
+     * On the nightly's runner (and under GRAVIEW_SLOW=4) the press took longer
+     * than that to reach the first frame of the tween, so the one reading saw
+     * the lens still on its plot and called a descent that then tweened all
+     * the way a jump. Where the lens stood on each frame for a second after
+     * the press is the question; the claim below asks whether any of those
+     * frames had it between the plot and the middle.
+     */
+    const watching = drive.evaluate(
+      () =>
+        new Promise((done) => {
+          const seen = [];
+          const started = performance.now();
+          const frame = () => {
+            const b = document.querySelector('[data-graview-view="aggregate:task"]')?.getBoundingClientRect();
+            if (b) seen.push({ t: Math.round(performance.now() - started), x: b.x + b.width / 2, y: b.y + b.height / 2, width: b.width });
+            if (performance.now() - started < 1400) requestAnimationFrame(frame);
+            else done(seen);
+          };
+          requestAnimationFrame(frame);
+        }),
+    );
+    await drive.click('[data-testid="lens-panel-open"]');
+    const frames = await watching;
+    await drive.waitForTimeout(300);
+    const landed = await drive.evaluate(() => ({
+      url: location.hash,
+      up: document.querySelector('[data-testid="overview"]')?.getAttribute("aria-pressed") === "true",
+    }));
+    const plotX = plot ? plot.x : null;
+    const between = (x) => plotX !== null && Math.min(plotX, centerX) + 20 < x && x < Math.max(plotX, centerX) - 20;
+    // The first frame on its way, else the frame nearest halfway: what the report shows as midway.
+    const midway = frames.find((one) => between(one.x)) ?? frames[Math.floor(frames.length / 2)] ?? null;
+    report.driveIn = {
+      marquee,
+      tiles,
+      leavingBefore: before,
+      afterSwitch,
+      noteDriveIn,
+      standing,
+      switched,
+      midway,
+      frames: frames.length,
+      plot,
+      landed,
+      /*
+       * Mid-tween the lens is on its way from the plot: between the plot's
+       * column and the middle it lands in, at neither end. (It was "nearer the
+       * plot than the middle", which held only while the district stood near
+       * the middle; upstream districts now stand at the city's left, and a
+       * tween eased out is past halfway at a hundred milliseconds.) Some frame
+       * after the press, not the frame at a fixed time: a jump has none.
+       */
+      movedFromThePlot: frames.some((one) => between(one.x)),
+    };
+    await drive.close();
+  } catch (error) {
+    report.driveIn = { error: String(error).slice(0, 2000) };
+  }
 }
 
 /*
@@ -1010,225 +1038,227 @@ try {
  * ground pans; the corner controls zoom; and the ground can be dragged as
  * far as the camera reaches even after the camera flew to a village.
  */
-try {
-  const cam = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-  cam.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
-  await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await cam.waitForTimeout(1500);
-  const ground = () =>
-    cam.evaluate(() => {
-      const el = document.querySelector(".graview-ground");
-      const st = el.style;
-      const pan = new URLSearchParams(location.hash.slice(1)).get("pan");
-      return {
-        cell: parseFloat(st.getPropertyValue("--graview-lattice-cell")),
-        latticeX: parseFloat(st.getPropertyValue("--graview-lattice-x")),
-        pan,
-        level: document.querySelector('[data-testid="zoom-level"]')?.textContent ?? null,
-        reach: (el.getAttribute("data-graview-reach") ?? "0 0").split(" ").map(Number),
-      };
-    });
-  const start = await ground();
-  // A pinch in: ctrl+wheel with a negative delta zooms in, about the pointer.
-  const spot = { x: 700, y: 600 };
-  await cam.mouse.move(spot.x, spot.y);
-  await cam.mouse.wheel(0, -120).catch(() => {});
-  await cam.keyboard.down("Control");
-  for (let i = 0; i < 6; i++) await cam.mouse.wheel(0, -40);
-  await cam.keyboard.up("Control");
-  await cam.waitForTimeout(400);
-  const zoomedIn = await ground();
-  /*
-   * The plain wheel over the ground pans. OVER THE GROUND: a fixed point
-   * was (400, 300) until the lists' picture grew over it, and a wheel over
-   * a scrolling list scrolls the list — rightly. So the point is found, not
-   * assumed: the first on a coarse grid with no picture or card under it.
-   */
-  const open = await cam.evaluate(() => {
-    for (let y = 160; y < innerHeight - 60; y += 40) {
-      for (let x = 120; x < innerWidth - 120; x += 40) {
-        const el = document.elementFromPoint(x, y);
-        // On the ground — the element the wheel is heard on — and not on anything drawn over it.
-        if (el?.closest(".graview-ground") && !el.closest("[data-graview-view], .graview-scroll, [data-graview-overlay], .graview-zoom, button, a, input")) return { x, y };
-      }
-    }
-    return { x: 400, y: 300 };
-  });
-  await cam.mouse.move(open.x, open.y);
-  await cam.mouse.wheel(60, 80);
-  await cam.waitForTimeout(400);
-  const wheeled = await ground();
-  // The controls.
-  await cam.click('[data-testid="zoom-out"]');
-  await cam.waitForTimeout(400);
-  const buttonOut = await ground();
-  await cam.click('[data-testid="zoom-in"]');
-  await cam.waitForTimeout(400);
-  const buttonIn = await ground();
-  // Dragging the ground as far as it goes: the whole offset reaches the limit, not the pan alone.
-  // The ground runs under a panel floating over it: the hand takes it where it is bare, left of the panel.
-  const box = await cam.evaluate(() => {
-    const b = document.querySelector(".graview-ground").getBoundingClientRect();
-    const panel = document.querySelector("[data-graview-map-panel=dock]")?.getBoundingClientRect();
-    return { x: b.x, y: b.y, w: (panel ? panel.left : b.right) - b.x, h: b.height };
-  });
-  const dragFrom = { x: box.x + box.w - 60, y: box.y + box.h / 2 };
-  await cam.mouse.move(dragFrom.x, dragFrom.y);
-  await cam.mouse.down();
-  for (let i = 1; i <= 20; i++) await cam.mouse.move(dragFrom.x - i * 90, dragFrom.y, { steps: 2 });
-  await cam.mouse.up();
-  await cam.waitForTimeout(400);
-  const dragged = await ground();
-  /*
-   * AND THE CITY BESIDE AN OPEN PICTURE PANS. A picture chosen from
-   * altitude opens beside the map, which lays itself out in the room left;
-   * the ground there still moves under the hand.
-   */
-  await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
-  /*
-   * A LOAD, NOT A HASH CHANGE: the address differs from the last only after
-   * the #, so without one the camera kept the drag above, already at the
-   * limit of how far the picture goes that way — and a drag the same way
-   * moved nothing. With the left rail gone that limit is where the drag
-   * above leaves it.
-   */
-  await cam.reload({ waitUntil: "load" });
-  await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await cam.waitForTimeout(1500);
-  const before = await ground();
-  /* The picture stands beside the map; the city beside it still pans under the hand. */
-  const city = await cam.$(".graview-ground");
-  let onThePicture = { ok: false, why: "no city drawn" };
-  if (city) {
-    const at = await city.boundingBox();
-    const from = await cam.evaluate(() => {
-      for (let y = 200; y < innerHeight - 80; y += 30) {
-        for (let x = 80; x < innerWidth - 80; x += 30) {
+async function zoomAndPanByHand() {
+  try {
+    const cam = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+    cam.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
+    await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await cam.waitForTimeout(1500);
+    const ground = () =>
+      cam.evaluate(() => {
+        const el = document.querySelector(".graview-ground");
+        const st = el.style;
+        const pan = new URLSearchParams(location.hash.slice(1)).get("pan");
+        return {
+          cell: parseFloat(st.getPropertyValue("--graview-lattice-cell")),
+          latticeX: parseFloat(st.getPropertyValue("--graview-lattice-x")),
+          pan,
+          level: document.querySelector('[data-testid="zoom-level"]')?.textContent ?? null,
+          reach: (el.getAttribute("data-graview-reach") ?? "0 0").split(" ").map(Number),
+        };
+      });
+    const start = await ground();
+    // A pinch in: ctrl+wheel with a negative delta zooms in, about the pointer.
+    const spot = { x: 700, y: 600 };
+    await cam.mouse.move(spot.x, spot.y);
+    await cam.mouse.wheel(0, -120).catch(() => {});
+    await cam.keyboard.down("Control");
+    for (let i = 0; i < 6; i++) await cam.mouse.wheel(0, -40);
+    await cam.keyboard.up("Control");
+    await cam.waitForTimeout(400);
+    const zoomedIn = await ground();
+    /*
+     * The plain wheel over the ground pans. OVER THE GROUND: a fixed point
+     * was (400, 300) until the lists' picture grew over it, and a wheel over
+     * a scrolling list scrolls the list — rightly. So the point is found, not
+     * assumed: the first on a coarse grid with no picture or card under it.
+     */
+    const open = await cam.evaluate(() => {
+      for (let y = 160; y < innerHeight - 60; y += 40) {
+        for (let x = 120; x < innerWidth - 120; x += 40) {
           const el = document.elementFromPoint(x, y);
-          if (el?.closest(".graview-ground") && !el.closest("[data-graview-view], button, a, input, [data-graview-overlay]")) return { x, y };
+          // On the ground — the element the wheel is heard on — and not on anything drawn over it.
+          if (el?.closest(".graview-ground") && !el.closest("[data-graview-view], .graview-scroll, [data-graview-overlay], .graview-zoom, button, a, input")) return { x, y };
         }
       }
-      return null;
-    }) ?? { x: at.x + at.width / 2, y: at.y + at.height / 2 };
-    await cam.mouse.move(from.x, from.y);
+      return { x: 400, y: 300 };
+    });
+    await cam.mouse.move(open.x, open.y);
+    await cam.mouse.wheel(60, 80);
+    await cam.waitForTimeout(400);
+    const wheeled = await ground();
+    // The controls.
+    await cam.click('[data-testid="zoom-out"]');
+    await cam.waitForTimeout(400);
+    const buttonOut = await ground();
+    await cam.click('[data-testid="zoom-in"]');
+    await cam.waitForTimeout(400);
+    const buttonIn = await ground();
+    // Dragging the ground as far as it goes: the whole offset reaches the limit, not the pan alone.
+    // The ground runs under a panel floating over it: the hand takes it where it is bare, left of the panel.
+    const box = await cam.evaluate(() => {
+      const b = document.querySelector(".graview-ground").getBoundingClientRect();
+      const panel = document.querySelector("[data-graview-map-panel=dock]")?.getBoundingClientRect();
+      return { x: b.x, y: b.y, w: (panel ? panel.left : b.right) - b.x, h: b.height };
+    });
+    const dragFrom = { x: box.x + box.w - 60, y: box.y + box.h / 2 };
+    await cam.mouse.move(dragFrom.x, dragFrom.y);
     await cam.mouse.down();
-    for (let i = 1; i <= 10; i++) await cam.mouse.move(from.x - i * 24, from.y, { steps: 2 });
+    for (let i = 1; i <= 20; i++) await cam.mouse.move(dragFrom.x - i * 90, dragFrom.y, { steps: 2 });
     await cam.mouse.up();
     await cam.waitForTimeout(400);
-    const after = await ground();
-    onThePicture = {
-      moved: Math.round((before.latticeX ?? 0) - (after.latticeX ?? 0)),
-      ok: Math.abs((after.latticeX ?? 0) - (before.latticeX ?? 0)) > 100,
-    };
-  }
-  /*
-   * THE GROUND TRAVELS WITH THE CARDS. The lattice, the plots and the roads
-   * were drawn from the live pan and the destination's cell while the cards
-   * rode the tween — so choosing a picture snapped the whole ground to the
-   * new place on one frame and the buildings walked over to join it.
-   */
-  await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
-  await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await cam.waitForTimeout(1500);
-  const travel = await cam.evaluate(async () => {
-    const read = () => {
-      const g = document.querySelector(".graview-ground");
-      return {
-        cell: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-cell")) || 0),
-        x: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-x")) || 0),
-        t: performance.now(),
-      };
-    };
+    const dragged = await ground();
     /*
-     * READ UNTIL IT STANDS STILL, not for forty frames or 900 ms. The
-     * nightly's runner, three harnesses side by side, drew so few frames in
-     * that window that the ground was read four times on its way and not
-     * yet where it was going (-59 of -66): an easing cut short by the
-     * reading, not a leap. Every frame is read until the ground has not
-     * moved for six frames after moving, or for four seconds.
+     * AND THE CITY BESIDE AN OPEN PICTURE PANS. A picture chosen from
+     * altitude opens beside the map, which lays itself out in the room left;
+     * the ground there still moves under the hand.
      */
-    const seen = [];
-    const began = performance.now();
-    const settled = new Promise((done) => {
-      const tick = () => {
-        seen.push(read());
-        const last = seen.slice(-6);
-        const moved = seen.some((one) => one.cell !== seen[0].cell || one.x !== seen[0].x);
-        const still = moved && last.length === 6 && last.every((one) => one.cell === last[0].cell && one.x === last[0].x);
-        if (still || performance.now() - began > 4000) return done();
+    await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1&focus=aggregate%3Alist&in.view=the-lists`, { waitUntil: "load" });
+    /*
+     * A LOAD, NOT A HASH CHANGE: the address differs from the last only after
+     * the #, so without one the camera kept the drag above, already at the
+     * limit of how far the picture goes that way — and a drag the same way
+     * moved nothing. With the left rail gone that limit is where the drag
+     * above leaves it.
+     */
+    await cam.reload({ waitUntil: "load" });
+    await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await cam.waitForTimeout(1500);
+    const before = await ground();
+    /* The picture stands beside the map; the city beside it still pans under the hand. */
+    const city = await cam.$(".graview-ground");
+    let onThePicture = { ok: false, why: "no city drawn" };
+    if (city) {
+      const at = await city.boundingBox();
+      const from = await cam.evaluate(() => {
+        for (let y = 200; y < innerHeight - 80; y += 30) {
+          for (let x = 80; x < innerWidth - 80; x += 30) {
+            const el = document.elementFromPoint(x, y);
+            if (el?.closest(".graview-ground") && !el.closest("[data-graview-view], button, a, input, [data-graview-overlay]")) return { x, y };
+          }
+        }
+        return null;
+      }) ?? { x: at.x + at.width / 2, y: at.y + at.height / 2 };
+      await cam.mouse.move(from.x, from.y);
+      await cam.mouse.down();
+      for (let i = 1; i <= 10; i++) await cam.mouse.move(from.x - i * 24, from.y, { steps: 2 });
+      await cam.mouse.up();
+      await cam.waitForTimeout(400);
+      const after = await ground();
+      onThePicture = {
+        moved: Math.round((before.latticeX ?? 0) - (after.latticeX ?? 0)),
+        ok: Math.abs((after.latticeX ?? 0) - (before.latticeX ?? 0)) > 100,
+      };
+    }
+    /*
+     * THE GROUND TRAVELS WITH THE CARDS. The lattice, the plots and the roads
+     * were drawn from the live pan and the destination's cell while the cards
+     * rode the tween — so choosing a picture snapped the whole ground to the
+     * new place on one frame and the buildings walked over to join it.
+     */
+    await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+    await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await cam.waitForTimeout(1500);
+    const travel = await cam.evaluate(async () => {
+      const read = () => {
+        const g = document.querySelector(".graview-ground");
+        return {
+          cell: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-cell")) || 0),
+          x: Math.round(parseFloat(g.style.getPropertyValue("--graview-lattice-x")) || 0),
+          t: performance.now(),
+        };
+      };
+      /*
+       * READ UNTIL IT STANDS STILL, not for forty frames or 900 ms. The
+       * nightly's runner, three harnesses side by side, drew so few frames in
+       * that window that the ground was read four times on its way and not
+       * yet where it was going (-59 of -66): an easing cut short by the
+       * reading, not a leap. Every frame is read until the ground has not
+       * moved for six frames after moving, or for four seconds.
+       */
+      const seen = [];
+      const began = performance.now();
+      const settled = new Promise((done) => {
+        const tick = () => {
+          seen.push(read());
+          const last = seen.slice(-6);
+          const moved = seen.some((one) => one.cell !== seen[0].cell || one.x !== seen[0].x);
+          const still = moved && last.length === 6 && last.every((one) => one.cell === last[0].cell && one.x === last[0].x);
+          if (still || performance.now() - began > 4000) return done();
+          requestAnimationFrame(tick);
+        };
         requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
+      });
+      document.querySelector('[data-testid="showing-the-week"]')?.click();
+      await settled;
+      const cells = [...new Set(seen.map((one) => one.cell))];
+      /*
+       * A LEAP IS MOST OF THE WAY IN ONE STEP, not more than twenty pixels in
+       * one frame. Twenty per frame assumed sixty frames a second; a runner that
+       * drew eight frames in the same 900 ms moved the ground in steps of thirty
+       * and called each a jump. A cut puts the whole move in one step at any
+       * frame rate; easing never puts more than a share of it in one.
+       */
+      const travel = Math.abs((seen[seen.length - 1]?.cell ?? 0) - (seen[0]?.cell ?? 0));
+      /*
+       * AND IN ONE ORDINARY FRAME. A cut lands in the frame after the press; a
+       * runner that stalled for a third of a second drew most of an easing in
+       * one late frame, which is a starved machine, not a cut — a step counts
+       * as a leap only when it came within 50 ms of the one before.
+       */
+      const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > Math.max(20, travel * 0.6) && one.t - seen[at - 1].t < 50).length;
+      /*
+       * AND WHERE IT STANDS. A picture opens beside the map now, and the city
+       * is laid out again in the room left: at the same cell when the room's
+       * height is what held it, so what travels is where the ground stands.
+       * The same rule for the lattice's origin as for its cell.
+       */
+      const xs = [...new Set(seen.map((one) => one.x))];
+      const shift = Math.abs((seen[seen.length - 1]?.x ?? 0) - (seen[0]?.x ?? 0));
+      const xJumps = seen.filter((one, at) => at > 0 && Math.abs(one.x - seen[at - 1].x) > Math.max(20, shift * 0.6) && one.t - seen[at - 1].t < 50).length;
+      /*
+       * AND HOW LONG IT TOOK: from the first frame that moved to the last. A
+       * cut is over in one frame; an easing on a runner that drew five frames
+       * in it is still most of a second long, with a step or two on the way.
+       */
+      const changed = seen.map((one, at) => (at > 0 && (one.cell !== seen[at - 1].cell || one.x !== seen[at - 1].x) ? one.t : null)).filter((t) => t !== null);
+      const movingMs = changed.length > 0 ? Math.round(changed[changed.length - 1] - (seen[seen.findIndex((one) => one.t === changed[0]) - 1]?.t ?? changed[0])) : 0;
+      /*
+       * AND THE LARGEST SHARE OF THE MOVE ANY ONE STEP CARRIED, whatever the
+       * frame rate: a cut puts all of it in one step; an easing caught in three
+       * frames on a starved runner puts no more than about half in one.
+       */
+      const share = (key, whole) => (whole === 0 ? 0 : Math.max(0, ...seen.map((one, at) => (at > 0 ? Math.abs(one[key] - seen[at - 1][key]) / whole : 0))));
+      return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x, frames: seen.length, movingMs, share: share("cell", travel), xShare: share("x", shift) };
     });
-    document.querySelector('[data-testid="showing-the-week"]')?.click();
-    await settled;
-    const cells = [...new Set(seen.map((one) => one.cell))];
     /*
-     * A LEAP IS MOST OF THE WAY IN ONE STEP, not more than twenty pixels in
-     * one frame. Twenty per frame assumed sixty frames a second; a runner that
-     * drew eight frames in the same 900 ms moved the ground in steps of thirty
-     * and called each a jump. A cut puts the whole move in one step at any
-     * frame rate; easing never puts more than a share of it in one.
+     * Eased: five steps or more, or — where a starved runner drew only a few
+     * frames on the way — a step between the ends and a move that took a
+     * third of a second, which a cut never does.
      */
-    const travel = Math.abs((seen[seen.length - 1]?.cell ?? 0) - (seen[0]?.cell ?? 0));
-    /*
-     * AND IN ONE ORDINARY FRAME. A cut lands in the frame after the press; a
-     * runner that stalled for a third of a second drew most of an easing in
-     * one late frame, which is a starved machine, not a cut — a step counts
-     * as a leap only when it came within 50 ms of the one before.
-     */
-    const jumps = seen.filter((one, at) => at > 0 && Math.abs(one.cell - seen[at - 1].cell) > Math.max(20, travel * 0.6) && one.t - seen[at - 1].t < 50).length;
-    /*
-     * AND WHERE IT STANDS. A picture opens beside the map now, and the city
-     * is laid out again in the room left: at the same cell when the room's
-     * height is what held it, so what travels is where the ground stands.
-     * The same rule for the lattice's origin as for its cell.
-     */
-    const xs = [...new Set(seen.map((one) => one.x))];
-    const shift = Math.abs((seen[seen.length - 1]?.x ?? 0) - (seen[0]?.x ?? 0));
-    const xJumps = seen.filter((one, at) => at > 0 && Math.abs(one.x - seen[at - 1].x) > Math.max(20, shift * 0.6) && one.t - seen[at - 1].t < 50).length;
-    /*
-     * AND HOW LONG IT TOOK: from the first frame that moved to the last. A
-     * cut is over in one frame; an easing on a runner that drew five frames
-     * in it is still most of a second long, with a step or two on the way.
-     */
-    const changed = seen.map((one, at) => (at > 0 && (one.cell !== seen[at - 1].cell || one.x !== seen[at - 1].x) ? one.t : null)).filter((t) => t !== null);
-    const movingMs = changed.length > 0 ? Math.round(changed[changed.length - 1] - (seen[seen.findIndex((one) => one.t === changed[0]) - 1]?.t ?? changed[0])) : 0;
-    /*
-     * AND THE LARGEST SHARE OF THE MOVE ANY ONE STEP CARRIED, whatever the
-     * frame rate: a cut puts all of it in one step; an easing caught in three
-     * frames on a starved runner puts no more than about half in one.
-     */
-    const share = (key, whole) => (whole === 0 ? 0 : Math.max(0, ...seen.map((one, at) => (at > 0 ? Math.abs(one[key] - seen[at - 1][key]) / whole : 0))));
-    return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x, frames: seen.length, movingMs, share: share("cell", travel), xShare: share("x", shift) };
-  });
-  /*
-   * Eased: five steps or more, or — where a starved runner drew only a few
-   * frames on the way — a step between the ends and a move that took a
-   * third of a second, which a cut never does.
-   */
-  // Or a step between the ends and no step carrying most of the move: 2026-10-18's GPU leg drew nine frames and eased 366 px in three steps over 286 ms.
-  const eased = (steps, ms, share) => steps >= 5 || (steps >= 3 && (ms >= 300 || share < 0.6));
-  report.checks = {
-    ...(report.checks ?? {}),
-    theCityPansBesideAnOpenPicture: onThePicture,
-    // Many small steps and no leap: the ground eased from one cell to the other.
-    theGroundTravelsWithTheCards: {
-      ...travel,
-      // Whatever moved — the cell, where the ground stands, or both — eased there in many small steps and no leap, and something moved.
-      ok:
-        travel.jumps === 0 &&
-        travel.xJumps === 0 &&
-        (travel.last !== travel.first || travel.xLast !== travel.xFirst) &&
-        (travel.last === travel.first || eased(travel.steps, travel.movingMs, travel.share)) &&
-        (travel.xLast === travel.xFirst || eased(travel.xSteps, travel.movingMs, travel.xShare)),
-    },
-  };
-  report.camera = { start, zoomedIn, wheelAt: open, wheeled, buttonOut, buttonIn, dragged, onThePicture };
-  await cam.close();
-} catch (error) {
-  report.camera = { error: String(error).slice(0, 2000) };
+    // Or a step between the ends and no step carrying most of the move: 2026-10-18's GPU leg drew nine frames and eased 366 px in three steps over 286 ms.
+    const eased = (steps, ms, share) => steps >= 5 || (steps >= 3 && (ms >= 300 || share < 0.6));
+    report.checks = {
+      ...(report.checks ?? {}),
+      theCityPansBesideAnOpenPicture: onThePicture,
+      // Many small steps and no leap: the ground eased from one cell to the other.
+      theGroundTravelsWithTheCards: {
+        ...travel,
+        // Whatever moved — the cell, where the ground stands, or both — eased there in many small steps and no leap, and something moved.
+        ok:
+          travel.jumps === 0 &&
+          travel.xJumps === 0 &&
+          (travel.last !== travel.first || travel.xLast !== travel.xFirst) &&
+          (travel.last === travel.first || eased(travel.steps, travel.movingMs, travel.share)) &&
+          (travel.xLast === travel.xFirst || eased(travel.xSteps, travel.movingMs, travel.xShare)),
+      },
+    };
+    report.camera = { start, zoomedIn, wheelAt: open, wheeled, buttonOut, buttonIn, dragged, onThePicture };
+    await cam.close();
+  } catch (error) {
+    report.camera = { error: String(error).slice(0, 2000) };
+  }
 }
 
 /*
@@ -1240,129 +1270,158 @@ try {
  * on a phone at a 32px root font the strip is a sheet, nothing scrolls
  * sideways, and nothing in the box is under 24px.
  */
-try {
-  const find = await browser.newPage({ viewport: { width: 1560, height: 940 } });
-  find.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await find.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
-  await find.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await find.waitForTimeout(1200);
-  const history = () => find.evaluate(() => window.history.length);
-  const before = await history();
-  await find.keyboard.press("/");
-  const reached = await find.evaluate(() => document.activeElement?.getAttribute("data-testid"));
-  await find.keyboard.type("deposit", { delay: 40 });
-  await find.waitForTimeout(700);
-  const lit = await find.evaluate(() => {
-    const cards = [...document.querySelectorAll(".graview-kind-card[data-graview-emphasis]")];
-    const box = document.querySelector('[data-testid="find-box"]');
-    return {
+async function aSearchIsAStop() {
+  try {
+    const find = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+    find.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await find.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
+    await find.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await find.waitForTimeout(1200);
+    const history = () => find.evaluate(() => window.history.length);
+    const before = await history();
+    await find.keyboard.press("/");
+    const reached = await find.evaluate(() => document.activeElement?.getAttribute("data-testid"));
+    await find.keyboard.type("deposit", { delay: 40 });
+    await find.waitForTimeout(700);
+    const lit = await find.evaluate(() => {
+      const cards = [...document.querySelectorAll(".graview-kind-card[data-graview-emphasis]")];
+      const box = document.querySelector('[data-testid="find-box"]');
+      return {
+        url: location.hash,
+        lit: cards.filter((el) => el.getAttribute("data-graview-emphasis") === "lit").map((el) => el.closest("[data-graview-view]")?.getAttribute("data-graview-view")),
+        dimmed: cards.filter((el) => el.getAttribute("data-graview-emphasis") === "dimmed").length,
+        hits: [...document.querySelectorAll('[data-testid="find-hit"]')].map((el) => el.getAttribute("data-about")),
+        role: box?.getAttribute("role"),
+        expanded: box?.getAttribute("aria-expanded"),
+        controls: box?.getAttribute("aria-controls") === document.querySelector('[data-testid="find-strip"]')?.id,
+        count: document.querySelector('[data-testid="find-count"]')?.textContent ?? "",
+      };
+    });
+    const typedHistory = await history();
+    await find.keyboard.press("ArrowDown");
+    await find.waitForTimeout(250);
+    const active = await find.evaluate(() => {
+      const id = document.querySelector('[data-testid="find-box"]')?.getAttribute("aria-activedescendant");
+      return id ? document.getElementById(id)?.getAttribute("aria-selected") : null;
+    });
+    // Out of the box, then the lit district's count: into it, narrowed.
+    await find.evaluate(() => document.activeElement?.blur());
+    await find.click('[data-testid="hits-task"]');
+    await find.waitForTimeout(1200);
+    const landed = await find.evaluate(() => ({
       url: location.hash,
-      lit: cards.filter((el) => el.getAttribute("data-graview-emphasis") === "lit").map((el) => el.closest("[data-graview-view]")?.getAttribute("data-graview-view")),
-      dimmed: cards.filter((el) => el.getAttribute("data-graview-emphasis") === "dimmed").length,
-      hits: [...document.querySelectorAll('[data-testid="find-hit"]')].map((el) => el.getAttribute("data-about")),
-      role: box?.getAttribute("role"),
-      expanded: box?.getAttribute("aria-expanded"),
-      controls: box?.getAttribute("aria-controls") === document.querySelector('[data-testid="find-strip"]')?.id,
+      row: document.querySelector('[data-testid="arrange-query"]')?.value ?? null,
+      tasks: [...new Set([...document.querySelectorAll("[data-graview-pick^='t-']")].map((el) => el.getAttribute("data-graview-pick")))],
+    }));
+    await find.goBack();
+    await find.waitForTimeout(900);
+    const back = await find.evaluate(() => ({
+      url: location.hash,
+      box: document.querySelector('[data-testid="find-box"]')?.value,
+      lit: document.querySelectorAll('.graview-kind-card[data-graview-emphasis="lit"]').length,
+    }));
+    await find.evaluate(() => document.activeElement?.blur());
+    await find.keyboard.press("Escape");
+    await find.waitForTimeout(500);
+    const cleared = await find.evaluate(() => ({
+      url: location.hash,
+      lit: document.querySelectorAll(".graview-kind-card[data-graview-emphasis]").length,
+    }));
+    /*
+     * A TYPO FINDS THE RECORD, SAID AS NEAR. "depsoit" is "deposit" with two
+     * letters swapped: the strip names the deposit task and says it is near
+     * the word typed, the count says so, and its district lights.
+     */
+    await find.keyboard.press("/");
+    await find.keyboard.type("depsoit", { delay: 40 });
+    await find.waitForTimeout(700);
+    const typo = await find.evaluate(() => ({
+      rows: [...document.querySelectorAll('[data-testid="find-hit"]')].map((el) => ({
+        near: el.hasAttribute("data-near"),
+        text: el.textContent ?? "",
+      })),
+      said: document.querySelector('[data-testid="find-near"]')?.textContent ?? "",
       count: document.querySelector('[data-testid="find-count"]')?.textContent ?? "",
-    };
-  });
-  const typedHistory = await history();
-  await find.keyboard.press("ArrowDown");
-  await find.waitForTimeout(250);
-  const active = await find.evaluate(() => {
-    const id = document.querySelector('[data-testid="find-box"]')?.getAttribute("aria-activedescendant");
-    return id ? document.getElementById(id)?.getAttribute("aria-selected") : null;
-  });
-  // Out of the box, then the lit district's count: into it, narrowed.
-  await find.evaluate(() => document.activeElement?.blur());
-  await find.click('[data-testid="hits-task"]');
-  await find.waitForTimeout(1200);
-  const landed = await find.evaluate(() => ({
-    url: location.hash,
-    row: document.querySelector('[data-testid="arrange-query"]')?.value ?? null,
-    tasks: [...new Set([...document.querySelectorAll("[data-graview-pick^='t-']")].map((el) => el.getAttribute("data-graview-pick")))],
-  }));
-  await find.goBack();
-  await find.waitForTimeout(900);
-  const back = await find.evaluate(() => ({
-    url: location.hash,
-    box: document.querySelector('[data-testid="find-box"]')?.value,
-    lit: document.querySelectorAll('.graview-kind-card[data-graview-emphasis="lit"]').length,
-  }));
-  await find.evaluate(() => document.activeElement?.blur());
-  await find.keyboard.press("Escape");
-  await find.waitForTimeout(500);
-  const cleared = await find.evaluate(() => ({
-    url: location.hash,
-    lit: document.querySelectorAll(".graview-kind-card[data-graview-emphasis]").length,
-  }));
-  /*
-   * A TYPO FINDS THE RECORD, SAID AS NEAR. "depsoit" is "deposit" with two
-   * letters swapped: the strip names the deposit task and says it is near
-   * the word typed, the count says so, and its district lights.
-   */
-  await find.keyboard.press("/");
-  await find.keyboard.type("depsoit", { delay: 40 });
-  await find.waitForTimeout(700);
-  const typo = await find.evaluate(() => ({
-    rows: [...document.querySelectorAll('[data-testid="find-hit"]')].map((el) => ({
-      near: el.hasAttribute("data-near"),
-      text: el.textContent ?? "",
-    })),
-    said: document.querySelector('[data-testid="find-near"]')?.textContent ?? "",
-    count: document.querySelector('[data-testid="find-count"]')?.textContent ?? "",
-    lit: [...document.querySelectorAll('.graview-kind-card[data-graview-emphasis="lit"]')].map((el) => el.closest("[data-graview-view]")?.getAttribute("data-graview-view")),
-  }));
-  await find.keyboard.press("Escape");
-  await find.close();
+      lit: [...document.querySelectorAll('.graview-kind-card[data-graview-emphasis="lit"]')].map((el) => el.closest("[data-graview-view]")?.getAttribute("data-graview-view")),
+    }));
+    await find.keyboard.press("Escape");
+    await find.close();
 
-  const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  phone.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
-  await phone.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
-  await phone.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
-  await phone.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
-  await phone.waitForTimeout(1200);
-  // A phone's bar keeps Find behind its magnifier, as an embed's does: pressed, the box opens over the row.
-  await phone.click('[data-testid="app-find-open"]');
-  await phone.focus('[data-testid="find-box"]');
-  await phone.keyboard.type("move", { delay: 40 });
-  await phone.waitForTimeout(700);
-  const onAPhone = await phone.evaluate(() => {
-    const strip = document.querySelector('[data-testid="find-strip"]').getBoundingClientRect();
-    const box = document.querySelector('[data-testid="find-box"]').getBoundingClientRect();
-    const small = [...document.querySelectorAll('[data-testid="find-box"], [data-testid="find-hit"]')]
-      .map((el) => el.getBoundingClientRect())
-      .filter((r) => r.width > 0 && (r.height < 23.5 || r.width < 23.5)).length;
-    return {
-      scrollWidth: document.documentElement.scrollWidth,
-      width: innerWidth,
-      strip: { left: Math.round(strip.left), top: Math.round(strip.top), width: Math.round(strip.width) },
-      boxBottom: Math.round(box.bottom),
-      boxWidth: Math.round(box.width),
-      small,
-    };
-  });
-  await phone.close();
+    const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    phone.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+    await phone.goto(`${at("todo")}/?today=2026-09-01`, { waitUntil: "load" });
+    await phone.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
+    await phone.evaluate(() => { document.documentElement.style.fontSize = "32px"; });
+    await phone.waitForTimeout(1200);
+    // A phone's bar keeps Find behind its magnifier, as an embed's does: pressed, the box opens over the row.
+    await phone.click('[data-testid="app-find-open"]');
+    await phone.focus('[data-testid="find-box"]');
+    await phone.keyboard.type("move", { delay: 40 });
+    await phone.waitForTimeout(700);
+    const onAPhone = await phone.evaluate(() => {
+      const strip = document.querySelector('[data-testid="find-strip"]').getBoundingClientRect();
+      const box = document.querySelector('[data-testid="find-box"]').getBoundingClientRect();
+      const small = [...document.querySelectorAll('[data-testid="find-box"], [data-testid="find-hit"]')]
+        .map((el) => el.getBoundingClientRect())
+        .filter((r) => r.width > 0 && (r.height < 23.5 || r.width < 23.5)).length;
+      return {
+        scrollWidth: document.documentElement.scrollWidth,
+        width: innerWidth,
+        strip: { left: Math.round(strip.left), top: Math.round(strip.top), width: Math.round(strip.width) },
+        boxBottom: Math.round(box.bottom),
+        boxWidth: Math.round(box.width),
+        small,
+      };
+    });
+    await phone.close();
 
-  report.search = {
-    reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone, typo,
-    ok:
-      reached === "find-box" &&
-      lit.url.includes("q=deposit") &&
-      lit.lit.includes("kind:task") &&
-      lit.dimmed > 0 &&
-      typedHistory === before &&
-      landed.url.includes("focus=aggregate%3Atask") &&
-      landed.url.includes("in.q=deposit") &&
-      back.url.includes("q=deposit") &&
-      !back.url.includes("focus=aggregate%3Atask") &&
-      back.lit > 0 &&
-      !cleared.url.includes("q="),
-  };
-} catch (error) {
-  report.search = { error: String(error).slice(0, 2000) };
+    report.search = {
+      reached, lit, before, typedHistory, active, landed, back, cleared, onAPhone, typo,
+      ok:
+        reached === "find-box" &&
+        lit.url.includes("q=deposit") &&
+        lit.lit.includes("kind:task") &&
+        lit.dimmed > 0 &&
+        typedHistory === before &&
+        landed.url.includes("focus=aggregate%3Atask") &&
+        landed.url.includes("in.q=deposit") &&
+        back.url.includes("q=deposit") &&
+        !back.url.includes("focus=aggregate%3Atask") &&
+        back.lit > 0 &&
+        !cleared.url.includes("q="),
+    };
+  } catch (error) {
+    report.search = { error: String(error).slice(0, 2000) };
+  }
 }
 
+try {
+  vite = await startVite("todo", portFor("todo"));
+  browser = await launchEngine(ENGINE, { headless: !process.argv.includes("--headed") });
+  const page = await browser.newPage({ viewport: { width: 1560, height: 940 } });
+  /*
+   * A page that throws is not navigating, whatever the addresses say. The
+   * blank screen this file now drives into was an unhandled React error
+   * with a perfectly ordinary-looking hash behind it.
+   */
+  report.pageErrors = [];
+  page.on("pageerror", (error) => report.pageErrors.push(String(error).slice(0, 200)));
+  await walkingThereAndBack(page);
+  await aViewThatDrawsBothEnds(page);
+  await theAltitudeControlIsAToggle(page);
+  await whatYouCanPressIsWhatYouCanSee(page);
+  await aMoveBelongsToTheStopItWasMadeAt(page);
+  await goingDeeperIntoADistrict(page);
+  await theProblemCountIsAControl();
+  await theSameTrueThingOnTheGround();
+  await aDistrictsNameIsNotMovedByHand();
+  await thePanelFloatsOverTheMap();
+  await tabNeverLandsUnderThePanel();
+  await theActThatRemovesWhereYouStand(page);
+  await theTwoDoorsAreStops(page);
+  await aLensIsADriveIn();
+  await zoomAndPanByHand();
+  await aSearchIsAStop();
 } catch (error) {
   report.error = String(error).slice(0, 1800);
 } finally {
@@ -1386,7 +1445,8 @@ const placeOf = (hash) => {
   params.delete("sel");
   return params.toString();
 };
-report.verdict = {
+/** The claims, judged from what the steps wrote, in the order the verdict has always listed them. */
+const theVerdict = () => ({
   /*
    * A RELATION IS CAPTIONED ONCE at every stop walked. A caption per run of
    * the id-sorted frame said "the songs they are featured on" twice over one
@@ -1612,7 +1672,8 @@ report.verdict = {
     typeof report.hitArea?.title === "string" &&
     report.hitArea.title.length > 0 &&
     report.hitArea?.pressedLandsOnIt === true,
-};
+});
+report.verdict = theVerdict();
 report.passed =
   Object.values(report.verdict).every(Boolean) &&
   !report.error &&

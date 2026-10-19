@@ -65,6 +65,7 @@ export function PagesContent<S extends AnySchema>({
             ...(presence ? { presence } : {}),
             ...(brand ? { brand } : {}),
             ...(props.locale ? { locale: props.locale } : {}),
+            ...(props.timeZone ? { timeZone: props.timeZone } : {}),
             ...(props.principal ? { principal: props.principal } : {}),
             ...(props.seats ? { seats: props.seats } : {}),
             ...(props.people ? { people: props.people } : {}),

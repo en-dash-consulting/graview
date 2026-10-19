@@ -5,38 +5,48 @@
 <zone>
 
 Zone: Src 2 (`tools/src-2`)
-Files: 7, Cohesion: 0.28, Coupling: 0.72
-Description: 7 files, primarily TypeScript
-Entry points: packages/tools/src/edit.ts, packages/tools/src/index.ts, packages/tools/src/pins.ts, packages/tools/src/usage.ts
-Lines: 646
+Files: 8, Cohesion: 0.53, Coupling: 0.47
+Description: 8 files, primarily TypeScript
+Entry points: packages/tools/src/capital.ts, packages/tools/src/conversation.ts, packages/tools/src/draft.ts, packages/tools/src/go.ts, packages/tools/src/intelligence.ts, packages/tools/src/keep.ts, packages/tools/src/local.ts, packages/tools/src/seat-model.ts
+Lines: 4328
 
 </zone>
 
 <files>
 
-packages/tools/src/edit.ts (TypeScript, 166 lines, source)
-packages/tools/src/figure.ts (TypeScript, 116 lines, source)
-packages/tools/src/index.ts (TypeScript, 119 lines, source)
-packages/tools/src/pins.ts (TypeScript, 73 lines, source)
-packages/tools/src/providers/lens.ts (TypeScript, 49 lines, source)
-packages/tools/src/space.ts (TypeScript, 65 lines, source)
-packages/tools/src/usage.ts (TypeScript, 58 lines, source)
+packages/tools/src/capital.ts (TypeScript, 2 lines, source)
+packages/tools/src/conversation.ts (TypeScript, 807 lines, source)
+packages/tools/src/draft.ts (TypeScript, 1231 lines, source)
+packages/tools/src/go.ts (TypeScript, 963 lines, source)
+packages/tools/src/intelligence.ts (TypeScript, 516 lines, source)
+packages/tools/src/keep.ts (TypeScript, 112 lines, source)
+packages/tools/src/local.ts (TypeScript, 384 lines, source)
+packages/tools/src/seat-model.ts (TypeScript, 313 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/tools/src/index.ts → packages/tools/src/edit.ts {editableFields}
-  packages/tools/src/index.ts → packages/tools/src/edit.ts {EditableField}
-  packages/tools/src/index.ts → packages/tools/src/figure.ts {drawFigure, FIGURE_STYLE, nearestFigure, onlyTheSvg}
-  packages/tools/src/index.ts → packages/tools/src/figure.ts {DrawnFigure}
-  packages/tools/src/index.ts → packages/tools/src/pins.ts {loadPins, savePins, togglePin, NO_PINS}
-  packages/tools/src/index.ts → packages/tools/src/pins.ts {PinOverrides}
-  packages/tools/src/index.ts → packages/tools/src/providers/lens.ts {lensProvider}
-  packages/tools/src/index.ts → packages/tools/src/providers/lens.ts {LensAction}
-  packages/tools/src/index.ts → packages/tools/src/space.ts {across, inside, within}
-  packages/tools/src/index.ts → packages/tools/src/space.ts {Ring, SpacePoint}
-  packages/tools/src/index.ts → packages/tools/src/usage.ts {usageBoost, usageWeights}
+  packages/tools/src/conversation.ts → packages/tools/src/go.ts {*}
+  packages/tools/src/conversation.ts → packages/tools/src/intelligence.ts {validateProposals}
+  packages/tools/src/conversation.ts → packages/tools/src/intelligence.ts {Completion, ProposedCall}
+  packages/tools/src/conversation.ts → packages/tools/src/seat-model.ts {*}
+  packages/tools/src/draft.ts → packages/tools/src/capital.ts {capitalize}
+  packages/tools/src/draft.ts → packages/tools/src/intelligence.ts {firstJsonObject}
+  packages/tools/src/draft.ts → packages/tools/src/intelligence.ts {Completion}
+  packages/tools/src/go.ts → packages/tools/src/capital.ts {capitalize}
+  packages/tools/src/go.ts → packages/tools/src/conversation.ts {readyRepairsOf}
+  packages/tools/src/go.ts → packages/tools/src/conversation.ts {ChatContext, ChatReply, SeatMove, SeatOffer}
+  packages/tools/src/go.ts → packages/tools/src/intelligence.ts {validateProposals}
+  packages/tools/src/keep.ts → packages/tools/src/draft.ts {lensEditOf, takeBackEditOf}
+  packages/tools/src/keep.ts → packages/tools/src/draft.ts {AddLensEdit, RemoveLensEdit}
+  packages/tools/src/local.ts → packages/tools/src/conversation.ts {graphResponder, llmResponder}
+  packages/tools/src/local.ts → packages/tools/src/conversation.ts {ChatReply, Responder}
+  packages/tools/src/local.ts → packages/tools/src/intelligence.ts {Completion}
+  packages/tools/src/seat-model.ts → packages/tools/src/conversation.ts {ChatContext, ChatReply}
+  packages/tools/src/seat-model.ts → packages/tools/src/go.ts {*}
+  packages/tools/src/seat-model.ts → packages/tools/src/intelligence.ts {droppedProposals, firstJsonObject, resolveProposal, validateProposals}
+  packages/tools/src/seat-model.ts → packages/tools/src/intelligence.ts {Completion, ProposedCall}
 
 </imports>

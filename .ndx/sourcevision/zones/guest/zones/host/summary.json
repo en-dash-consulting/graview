@@ -44,6 +44,7 @@
     "packages/guest/src/host/manifest.ts",
     "packages/guest/src/host/pictures.ts",
     "packages/guest/src/host/press.ts",
+    "packages/guest/src/host/react.tsx",
     "packages/guest/src/host/session.ts",
     "packages/guest/src/host/theme.ts",
     "packages/guest/src/host/view-script.ts",
@@ -61,5 +62,5 @@
   "cohesion": 0.8,
   "coupling": 0.2,
   "fileCount": 30,
-  "lineCount": 5079
+  "lineCount": 5127
 }

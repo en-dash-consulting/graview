@@ -17,7 +17,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ENGINES, launchEngine } from "./lib/engine.mjs";
+import { arriveWithoutWebfonts, ENGINES, launchEngine } from "./lib/engine.mjs";
 import { serving } from "./lib/serve.mjs";
 import { at, portFor } from "./lib/ports.mjs";
 
@@ -169,7 +169,7 @@ try {
       const page = await context.newPage();
       page.on("pageerror", (error) => run.errors.push(String(error).slice(0, 200)));
       // A fresh start, remembered from here so the pages face opens on the same history.
-      await page.goto(SCENE("&fresh=1"), { waitUntil: "load" });
+      await arriveWithoutWebfonts(page, SCENE("&fresh=1"));
       await ready(page);
       run.before = await drawn(page);
       run.grown = await grow(page);
@@ -205,7 +205,7 @@ try {
       run.backToNow = await drawn(page);
 
       // The routed face, on the same history: the list of tasks as it was.
-      await page.goto(PAGES, { waitUntil: "load" });
+      await arriveWithoutWebfonts(page, PAGES);
       await ready(page);
       run.pagesNow = await drawn(page);
       await showOldest(page);

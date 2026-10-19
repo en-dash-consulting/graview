@@ -498,8 +498,12 @@ export function ListPage<S extends AnySchema>({ context, kind, opening, row: own
                * making a task from the keyboard cost six presses more than it
                * had. Beside the heading it is the next press, and its form
                * opens under the head, above the list.
+               *
+               * Each press takes back 4 pixels of the line above and below
+               * it, so wrapped rows of them stand 8 apart: on a phone one
+               * stood over the next, and a press on one landed on the other.
                */
-              <span style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", columnGap: 14 }} data-testid="beginnings-open">
+              <span style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", columnGap: 14, rowGap: 8 }} data-testid="beginnings-open">
                 {creators.map(({ affordance, mutation }) => (
                   <BeginButton
                     key={affordance.id}

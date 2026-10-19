@@ -165,7 +165,17 @@ export interface Brand {
    * The framework's own words stay English.
    */
   readonly locale?: string;
+  /**
+   * THE APP'S TIME ZONE (Roadmap f-app-time-zone): the IANA zone its
+   * instants are said in ("America/New_York") — a time kept as
+   * `2026-10-16T14:47:00Z` reads "10:47 AM" on every list, record page,
+   * act's sentence and view, whatever the reader's or the server's clock.
+   * A person's zone a host passes (`timeZone` on the provider, the embed,
+   * the pages face) wins over it. Absent, each reader's own clock.
+   */
+  readonly timeZone?: string;
 }
+
 
 /**
  * One place text is drawn on a ground, and what contrast it owes there.

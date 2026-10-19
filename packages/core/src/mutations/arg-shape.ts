@@ -69,8 +69,8 @@ export type ArgShape =
    * installation the framework ships.
    */
   | { readonly type: "several"; readonly of: ArgShape }
-  /** A picture or a document the host stores (FR-162), put on the record by its upload (FR-163); `image` where only a picture will do. */
-  | { readonly type: "file"; readonly image?: true }
+  /** A picture, a video or a document the host stores (FR-162), put on the record by its upload (FR-163); `image` where only a picture will do, `video` where only a video will (0.1.37). */
+  | { readonly type: "file"; readonly image?: true; readonly video?: true }
   | { readonly type: "unknown" };
 
 /** Unwraps optional/default/nullable so a wrapped field still describes itself. */
@@ -109,7 +109,7 @@ export function describeArg(schema: unknown): ArgShape {
   if (type === "enum") return { type: "choice", options: Object.keys(def?.entries ?? {}) };
 
   const file = fileKindOf(field);
-  if (file) return file === "image" ? { type: "file", image: true } : { type: "file" };
+  if (file) return file === "image" ? { type: "file", image: true } : file === "video" ? { type: "file", video: true } : { type: "file" };
 
   if (type === "boolean") return { type: "boolean" };
 

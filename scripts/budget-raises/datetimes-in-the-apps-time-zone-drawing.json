@@ -1,0 +1,6 @@
+{
+  "budget": "the guest host, drawing a worker",
+  "minified": 520,
+  "gzipped": 280,
+  "note": "Raised when a view came to be handed the app's time zone and locale (Roadmap f-app-time-zone): every props push carries `locale` and `timeZone`, read from the page's (`localeFor`, `timeZoneFor`), so a view says an instant on the clock the rest of the app says it on. 515 / 271 more than main (19_195 / 7_820). Measured at 19_710 / 8_091."
+}

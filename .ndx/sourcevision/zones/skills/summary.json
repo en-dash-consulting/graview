@@ -1,7 +1,7 @@
 {
   "id": "skills",
   "name": "Skills",
-  "description": "6 files, primarily JavaScript, TypeScript",
+  "description": "6 files, mostly entry points and pages.",
   "files": [
     "apps/discography/src/live.ts",
     "apps/gauntlet/scripts/generate-seed.mjs",
@@ -14,7 +14,7 @@
   "cohesion": 0,
   "coupling": 0,
   "fileCount": 6,
-  "lineCount": 876,
+  "lineCount": 879,
   "riskMetrics": {
     "cohesion": 0,
     "coupling": 0,

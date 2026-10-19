@@ -6,6 +6,7 @@ import {
   defineApp,
   defineMutation,
   defineNode,
+  deriveMutations,
   nodeRef,
   type AnyMutationDefinition,
   type AnySchema,
@@ -331,7 +332,14 @@ describe("what a mutation calls itself", () => {
   });
 });
 
-describe("a relation you can make but never unmake", () => {
+describe("a relation you can make, you can unmake", () => {
+  /*
+   * `edge-without-severer` warned of a relation some act made and none
+   * broke. Every relation is now given its own disconnect where no act
+   * severs it (Roadmap f-relation-acts-derived), so that asymmetry cannot
+   * be declared; `appendOnly` is what says a relation is never unmade, and
+   * it is then given no disconnect.
+   */
   const maker = bound.defineMutation("assign", {
     title: "Assign run",
     description: "Tie a person to a run.",
@@ -340,43 +348,22 @@ describe("a relation you can make but never unmake", () => {
     input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
     apply: () => {},
   });
+  const names = <S extends AnySchema>(app: GraviewApp<S>) => deriveMutations(app.schema, app.mutations ?? []).map((m) => m.name);
 
-  it("warns about an edge kind with a connecting act and no severing one", () => {
+  it("gives a relation with a connecting act and no severing one its derived disconnect, and warns of nothing", () => {
     const app = defineApp({ name: "test", schema, mutations: [maker] });
-    expect(findings(app)).toContain("warning:edge-without-severer");
-    const finding = checkApp(app).findings.find((f) => f.code === "edge-without-severer")!;
-    expect(finding.where).toBe('defineMutation("assign").connects');
-    expect(finding.message).toContain('"assigned-to"');
-    // The fix names both honest ways out: a severer, or the declaration
-    // that says the asymmetry is on purpose.
-    expect(finding.fix).toContain('severs: ["assigned-to"]');
-    expect(finding.fix).toContain('defineNode("person").edges["assigned-to"]');
-    expect(finding.fix).toContain("appendOnly");
+    expect(names(app)).toContain("disconnect-person-assigned-to");
+    expect(names(app)).not.toContain("connect-person-assigned-to");
+    expect(findings(app).filter((code) => code.includes("severer"))).toEqual([]);
   });
 
-  it("stays quiet once any mutation declares the severer", () => {
-    const breaker = bound.defineMutation("unassign", {
-      title: "Take them off it",
-      description: "Break the tie between a person and a run.",
-      subject: { kinds: ["duty"], arg: "dutyId" },
-      severs: ["assigned-to"],
-      input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
-      apply: () => {},
-    });
-    const app = defineApp({ name: "test", schema, mutations: [maker, breaker] });
-    expect(findings(app)).not.toContain("warning:edge-without-severer");
-  });
-
-  it("is suppressed by an explicit appendOnly declaration on the edge", () => {
+  it("gives an appendOnly relation no disconnect", () => {
     const chronicler = defineNode("person", {
       fields: z.object({ label: z.string() }),
-      // The suppression is the documentation: this edge is a record on
-      // purpose, not an oversight.
       edges: { "assigned-to": { to: ["duty"], appendOnly: true } },
     });
     const appendOnlySchema = createSchema([chronicler, duty]);
-    const boundAppendOnly = bindSchema(appendOnlySchema);
-    const historian = boundAppendOnly.defineMutation("assign", {
+    const historian = bindSchema(appendOnlySchema).defineMutation("assign", {
       title: "Assign run",
       description: "Tie a person to a run, for good.",
       subject: { kinds: ["duty"], arg: "dutyId" },
@@ -385,12 +372,10 @@ describe("a relation you can make but never unmake", () => {
       apply: () => {},
     });
     const app = defineApp({ name: "test", schema: appendOnlySchema, mutations: [historian] });
-    expect(findings(app)).not.toContain("warning:edge-without-severer");
+    expect(names(app).filter((name) => name.includes("assigned-to"))).toEqual([]);
   });
 
-  it("keeps warning when only ONE of two kinds sharing the edge name is appendOnly", () => {
-    // Two kinds can declare the same edge-kind name. A suppression on one
-    // must not hide the other's makeable-but-never-unmakeable relation.
+  it("gives the kind whose shared relation is not appendOnly its disconnect still", () => {
     const diarist = defineNode("person", {
       fields: z.object({ label: z.string() }),
       edges: { "assigned-to": { to: ["duty"], appendOnly: true } },
@@ -400,17 +385,8 @@ describe("a relation you can make but never unmake", () => {
       edges: { "assigned-to": { to: ["person"] } },
     });
     const sharedSchema = createSchema([diarist, roster]);
-    const sharedBound = bindSchema(sharedSchema);
-    const maker = sharedBound.defineMutation("assign", {
-      title: "Assign run",
-      description: "Tie a person to a run.",
-      subject: { kinds: ["duty"], arg: "dutyId" },
-      connects: ["assigned-to"],
-      input: z.object({ dutyId: nodeRef(["duty"]), personId: nodeRef(["person"]) }),
-      apply: () => {},
-    });
-    const app = defineApp({ name: "test", schema: sharedSchema, mutations: [maker] });
-    expect(findings(app)).toContain("warning:edge-without-severer");
+    const app = defineApp({ name: "test", schema: sharedSchema, mutations: [] });
+    expect(names(app).filter((name) => name.startsWith("disconnect-"))).toEqual(["disconnect-duty-assigned-to"]);
   });
 });
 

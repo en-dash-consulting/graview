@@ -1,0 +1,19 @@
+{
+  "id": "react/react/picked-presence",
+  "name": "Picked Presence",
+  "description": "3 files, primarily TypeScript",
+  "files": [
+    "packages/react/src/picked.ts",
+    "packages/react/src/presence.ts",
+    "packages/react/src/settings.ts"
+  ],
+  "entryPoints": [
+    "packages/react/src/picked.ts",
+    "packages/react/src/presence.ts",
+    "packages/react/src/settings.ts"
+  ],
+  "cohesion": 0.33,
+  "coupling": 0.67,
+  "fileCount": 3,
+  "lineCount": 360
+}

@@ -164,8 +164,15 @@ export default defineConfig({
 /* ------------------------------------------------------------ manifests */
 
 export function packageJson(ids: Ids, workspace: boolean): string {
+  /*
+   * BY PATH, IN THE WORDS THE PACKAGE MANAGER TAKES: pnpm's `link:`, npm's
+   * `file:` (which npm links for a directory). npm refuses `link:` outright
+   * ("Unsupported URL Type"), so `graview create --link` run by npm wrote a
+   * project nobody could install (the eleventh walk, carried to the twelfth).
+   */
+  const byPath = ids.packageManager === "npm" ? "file:" : "link:";
   const dep = (pkg: string) =>
-    ids.link ? `link:${ids.link}/packages/${pkg}` : ids.range;
+    ids.link ? `${byPath}${ids.link}/packages/${pkg}` : ids.range;
   const graview = Object.fromEntries(GRAVIEW_PACKAGES.map((pkg) => [`@graview/${pkg}`, dep(pkg)]));
   const run = ids.packageManager === "pnpm" ? "pnpm" : "npm run";
   const manifest = {

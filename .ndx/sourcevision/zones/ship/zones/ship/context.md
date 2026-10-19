@@ -7,16 +7,16 @@
 Zone: Ship (`ship/ship`)
 Files: 5, Cohesion: 0.32, Coupling: 0.68
 Description: 5 files, primarily TypeScript
-Entry points: packages/ship/src/browser.ts, packages/ship/src/files-at.ts, packages/ship/src/migrations.ts, packages/ship/src/photos.ts, packages/ship/src/presence.ts
-Lines: 441
+Entry points: packages/ship/src/browser.ts, packages/ship/src/files-at.ts, packages/ship/src/health.ts, packages/ship/src/photos.ts, packages/ship/src/presence.ts
+Lines: 412
 
 </zone>
 
 <files>
 
-packages/ship/src/browser.ts (TypeScript, 45 lines, source)
-packages/ship/src/files-at.ts (TypeScript, 31 lines, source)
-packages/ship/src/migrations.ts (TypeScript, 102 lines, source)
+packages/ship/src/browser.ts (TypeScript, 48 lines, source)
+packages/ship/src/files-at.ts (TypeScript, 43 lines, source)
+packages/ship/src/health.ts (TypeScript, 58 lines, source)
 packages/ship/src/photos.ts (TypeScript, 139 lines, source)
 packages/ship/src/presence.ts (TypeScript, 124 lines, source)
 
@@ -26,8 +26,8 @@ packages/ship/src/presence.ts (TypeScript, 124 lines, source)
 
 Internal:
   packages/ship/src/browser.ts → packages/ship/src/files-at.ts {filesAt}
-  packages/ship/src/browser.ts → packages/ship/src/migrations.ts {migrateSnapshot, pendingMigrations}
-  packages/ship/src/browser.ts → packages/ship/src/migrations.ts {MigrationRun}
+  packages/ship/src/browser.ts → packages/ship/src/health.ts {health}
+  packages/ship/src/browser.ts → packages/ship/src/health.ts {HealthReport}
   packages/ship/src/browser.ts → packages/ship/src/photos.ts {assertPhotoFits, photosUsed, storageBytes, PhotoTooLarge, PHOTO_BUDGET_BYTES, PHOTO_MAX_BYTES}
   packages/ship/src/browser.ts → packages/ship/src/photos.ts {PhotoBudget, PhotoField}
   packages/ship/src/browser.ts → packages/ship/src/presence.ts {createBroadcastPresence, presenceChannelName}

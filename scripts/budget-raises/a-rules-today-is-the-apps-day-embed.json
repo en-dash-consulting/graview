@@ -1,0 +1,6 @@
+{
+  "budget": "embed without the studio",
+  "minified": 450,
+  "gzipped": 170,
+  "note": "Raised when a rule's today() came to be the app's day (Roadmap f-app-time-zone): today() read as the date in the app's zone (`isoToday`, `dayZoneFor`), a store told the zone judged and ticked on that day (`Store.timeZone`), and a document's rules reading its own brand's zone. 449 / 160 more than main (710_336 / 187_937). Measured at 710_785 / 188_097."
+}

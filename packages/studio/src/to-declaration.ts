@@ -4,6 +4,7 @@ import {
   bindsOf,
   fileField,
   imageField,
+  videoField,
   linkedRecordField,
   createSchema,
   defineInvariant,
@@ -118,6 +119,8 @@ export function zodFor(type: FieldType, required: boolean, options?: readonly st
       ? appLinkField()
       : type === "image"
         ? imageField()
+        : type === "video"
+        ? videoField()
         : type === "file"
           ? fileField()
           : type === "number"

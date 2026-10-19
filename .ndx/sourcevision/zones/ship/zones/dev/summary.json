@@ -1,18 +1,21 @@
 {
   "id": "ship/dev",
   "name": "Dev",
-  "description": "3 files, primarily TypeScript",
+  "description": "6 files, primarily TypeScript",
   "files": [
     "packages/ship/src/dev-files.ts",
     "packages/ship/src/dev.ts",
-    "packages/ship/src/door.ts"
+    "packages/ship/src/door.ts",
+    "packages/ship/src/source-edit.ts",
+    "packages/ship/src/studio-door.ts",
+    "packages/ship/src/typecheck.ts"
   ],
   "entryPoints": [
     "packages/ship/src/dev.ts",
-    "packages/ship/src/door.ts"
+    "packages/ship/src/source-edit.ts"
   ],
-  "cohesion": 0.6,
-  "coupling": 0.4,
-  "fileCount": 3,
-  "lineCount": 809
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 6,
+  "lineCount": 1552
 }

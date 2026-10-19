@@ -7,7 +7,7 @@
 Zone: Tests Todo Integration (`tests-todo-integration`)
 Files: 3, Cohesion: 1.00, Coupling: 0.00
 Risk: healthy (score: 0.00)
-Description: 3 files, primarily TypeScript
+Description: Non-source files in apps: acceptance.test.tsx, what-is-left.test.tsx, who-is-here.test.tsx
 Lines: 445
 
 </zone>

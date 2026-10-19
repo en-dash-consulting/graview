@@ -31,8 +31,12 @@ export interface Change {
   /** What it was based on and how sure, in words, when its maker said (FR-172). */
   readonly basis?: string;
   readonly touched: readonly string[];
-  /** What a record this change removed was called, read from the removal: it is no longer in the graph to ask. */
-  readonly removed?: Readonly<Record<string, string>>;
+  /**
+   * What a record it touched was called, read from the records the log
+   * carries — its adding or its removal, in this change or a later one —
+   * since a record taken back or removed is no longer in the graph to ask.
+   */
+  readonly named?: Readonly<Record<string, string>>;
   readonly batch: string;
   /** When it was made. */
   readonly at?: string;
@@ -55,7 +59,7 @@ export interface Change {
 }
 
 /** One batch as a row of Activity. */
-const changeOf = (store: { readonly schema: AnySchema }, batch: Batch): Change => ({
+const changeOf = (store: { readonly schema: AnySchema }, batch: Batch, carried: ReadonlyMap<string, string> = carriedNames(store, [batch])): Change => ({
   intent: batch.intent,
   author: batch.author.kind,
   ...(batch.author.id ? { authorId: batch.author.id } : {}),
@@ -64,7 +68,7 @@ const changeOf = (store: { readonly schema: AnySchema }, batch: Batch): Change =
   ...(batch.lineage ? { basis: lineageWords(batch.lineage) } : {}),
   // What a withheld op touched is not said, even the part this seat may see.
   touched: [...new Set(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes))],
-  ...removedNames(store, batch.ops.filter((op) => !isWithheld(op))),
+  ...namesOf(batch.ops.filter((op) => !isWithheld(op)).flatMap((op) => op.writes), carried),
   batch: batch.id,
   at: batch.at,
   ...(batch.lineage?.interaction ? { interaction: batch.lineage.interaction } : {}),
@@ -96,16 +100,18 @@ export function useRecentChanges(limit = 4): readonly Change[] {
    * rows here; a run of the app's own actor's batches is one row, a digest
    * (`foldDigests`).
    */
-  return useMemo(
-    () =>
-      foldDigests(store.batches(), (id) => store.log.get(id))
+  return useMemo(() => {
+      const batches = store.batches();
+      const carried = carriedNames(store, batches);
+      return foldDigests(batches, (id) => store.log.get(id))
         .reverse()
         .slice(0, limit)
         .map((row): Change => {
-          if ("batch" in row) return changeOf(store, row.batch);
-          const changes = [...row.digest.batches].reverse().map((batch) => changeOf(store, batch));
+          if ("batch" in row) return changeOf(store, row.batch, carried);
+          const changes = [...row.digest.batches].reverse().map((batch) => changeOf(store, batch, carried));
           return {
-            intent: digestWords(row.digest, new Date().toISOString().slice(0, 10)),
+            // Today on the app's clock, as the digest's own day is read: a UTC today called an evening's tidying "on Oct 18" on Oct 18.
+            intent: digestWords(row.digest),
             author: row.digest.author.kind,
             ...(row.digest.author.id ? { authorId: row.digest.author.id } : {}),
             by: row.digest.author,
@@ -115,18 +121,40 @@ export function useRecentChanges(limit = 4): readonly Change[] {
             seq: changes[0]?.seq ?? 0,
             digest: changes,
           };
-        }),
+        });
+    },
     // The log only grows at its end, an undo too: its length says when to read it again.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [store, length, limit],
   );
 }
 
-/** The names of the records a change removed, from the records its removals carry. */
-function removedNames(store: { readonly schema: AnySchema }, ops: readonly { readonly primitives: readonly { readonly op: string; readonly node?: { readonly id: string; readonly kind: string } }[] }[]): { readonly removed?: Record<string, string> } {
-  const removed: Record<string, string> = {};
-  for (const op of ops) for (const primitive of op.primitives) if (primitive.op === "remove-node" && primitive.node) removed[primitive.node.id] = labelOf(store.schema.tryDefinition(primitive.node.kind), primitive.node as never);
-  return Object.keys(removed).length > 0 ? { removed } : {};
+/**
+ * THE NAME OF EVERY RECORD THE LOG CARRIES WHOLE: an add carries the record
+ * it made and a removal the record it took, so a record since taken back
+ * is named by them, never shown by its id. A vendor added and then taken
+ * back left its adding row saying "vendor:scene-way-one" — its removal was
+ * named, its adding was not. The latest carrying wins: the name it last had.
+ * A withheld op says nothing, not even a name.
+ */
+function carriedNames(store: { readonly schema: AnySchema }, batches: readonly Batch[]): ReadonlyMap<string, string> {
+  const names = new Map<string, string>();
+  for (const batch of batches)
+    for (const op of batch.ops)
+      if (!isWithheld(op))
+        for (const primitive of op.primitives as readonly { readonly op: string; readonly node?: { readonly id: string; readonly kind: string } }[])
+          if ((primitive.op === "add-node" || primitive.op === "remove-node") && primitive.node) names.set(primitive.node.id, labelOf(store.schema.tryDefinition(primitive.node.kind), primitive.node as never));
+  return names;
+}
+
+/** The carried names of the records a change touched. */
+function namesOf(touched: readonly string[], carried: ReadonlyMap<string, string>): { readonly named?: Record<string, string> } {
+  const named: Record<string, string> = {};
+  for (const id of touched) {
+    const name = carried.get(id);
+    if (name !== undefined) named[id] = name;
+  }
+  return Object.keys(named).length > 0 ? { named } : {};
 }
 
 /** Who made a change, as Activity says it: "you" for the person at the keyboard, else their name and the channel. */
@@ -182,7 +210,7 @@ function DigestRow({ change, goes }: { readonly change: Change; readonly goes: (
               {one.touched.length > 0 ? (
                 <div data-touched={one.touched.join(" ")} style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                   {one.touched.slice(0, 4).map((id) => (
-                    <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (one.removed?.[id] ?? nameOf(store, id))} go={goes(id)} />
+                    <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (one.named?.[id] ?? nameOf(store, id))} go={goes(id)} />
                   ))}
                 </div>
               ) : null}
@@ -697,7 +725,7 @@ export function ActivityRail({
                     style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
                   >
                     {change.touched.slice(0, 4).map((id) => (
-                      <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.removed?.[id] ?? nameOf(store, id))} go={goes(id)} />
+                      <Named key={id} id={id} label={store.graph.has(id) ? nameOf(store, id) : (change.named?.[id] ?? nameOf(store, id))} go={goes(id)} />
                     ))}
                   </div>
                 </li>

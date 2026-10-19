@@ -1,6 +1,6 @@
 {
   "id": "guest/src",
-  "name": "Src",
+  "name": "Guest Library Entry",
   "description": "4 files, primarily TypeScript",
   "files": [
     "packages/guest/src/client-script.ts",

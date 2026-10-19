@@ -1,5 +1,6 @@
 import {
   brokenWords,
+  isoToday,
   weekdayAsRead,
   kindPath,
   labelOf,
@@ -262,7 +263,7 @@ export function resolveAsk<S extends AnySchema>(store: Store<S>, text: string, c
   const seen = store.seenBy(principal);
   const schema = seen.schema as AnySchema;
   // The day asked about: the one handed in, else the day the store is judged on, else the real one.
-  const today = context.today ?? (store as { today?(): string | undefined }).today?.() ?? new Date().toISOString().slice(0, 10);
+  const today = context.today ?? (store as { today?(): string | undefined }).today?.() ?? isoToday();
   const weekStartsOn = context.weekStartsOn ?? 1;
   const kept = store.kindsKeptFrom(principal);
   const off = store.modules.disabledKinds;

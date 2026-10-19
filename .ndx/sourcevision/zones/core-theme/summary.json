@@ -1,0 +1,42 @@
+{
+  "id": "core-theme",
+  "name": "Core Theme",
+  "description": "Declared zone anchor (11 files).",
+  "files": [
+    "packages/core/src/theme/accent.ts",
+    "packages/core/src/theme/contrast.ts",
+    "packages/core/src/theme/derive.ts",
+    "packages/core/src/theme/fonts.ts",
+    "packages/core/src/theme/identity.ts",
+    "packages/core/src/theme/kit.ts",
+    "packages/core/src/theme/layers.ts",
+    "packages/core/src/theme/look.ts",
+    "packages/core/src/theme/marks.ts",
+    "packages/core/src/theme/palettes.ts",
+    "packages/core/src/theme/types.ts"
+  ],
+  "entryPoints": [
+    "packages/core/src/theme/accent.ts",
+    "packages/core/src/theme/contrast.ts",
+    "packages/core/src/theme/derive.ts",
+    "packages/core/src/theme/fonts.ts",
+    "packages/core/src/theme/identity.ts",
+    "packages/core/src/theme/kit.ts",
+    "packages/core/src/theme/layers.ts",
+    "packages/core/src/theme/look.ts",
+    "packages/core/src/theme/marks.ts",
+    "packages/core/src/theme/palettes.ts",
+    "packages/core/src/theme/types.ts"
+  ],
+  "cohesion": 1,
+  "coupling": 0,
+  "fileCount": 11,
+  "lineCount": 1915,
+  "riskMetrics": {
+    "cohesion": 1,
+    "coupling": 0,
+    "riskScore": 0,
+    "riskLevel": "healthy",
+    "failsThreshold": false
+  }
+}

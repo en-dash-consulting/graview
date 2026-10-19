@@ -229,6 +229,34 @@ describe("address routing under a base path", () => {
   });
 
   /*
+   * PAGES GOES BACK TO THE PAGE BACK LAST LANDED ON (FR-137). Reloaded on the
+   * scene, the embed knew no page, and a page reached by Back is the face's
+   * arrival, which its router reports to nobody: from the board, the scene,
+   * a reload, Back, Forward and Pages went to the home instead of the board.
+   */
+  it("goes back to the page Back last landed on, after a reload on the scene", async () => {
+    window.history.replaceState(null, "", "/apps/a1/tasks");
+    window.history.pushState(null, "", "/apps/a1/places/overview");
+    const { host } = await at("/apps/a1/places/overview", { routing: "address", basePath: "/apps/a1", face: "graview" });
+    expect(face(host)).not.toBe("pages");
+    await back();
+    expect(face(host)).toBe("pages");
+    expect(heading(host)).toBe("Tasks");
+    await act(async () => {
+      const popped = new Promise((resolve) => window.addEventListener("popstate", resolve, { once: true }));
+      window.history.forward();
+      await popped;
+    });
+    await settle();
+    expect(face(host)).not.toBe("pages");
+    await click(host.querySelector('[data-testid="app-face-pages"]'));
+    await settle();
+    expect(face(host)).toBe("pages");
+    expect(window.location.pathname).toBe("/apps/a1/tasks");
+    expect(heading(host)).toBe("Tasks");
+  });
+
+  /*
    * FR-157: SCENE FROM A PAGE THAT IS NOTHING. At an address no route
    * answers, the switch's Scene landed the scene at `/places/overview#`:
    * the empty view, the overview off, the control saying Up, over nothing.

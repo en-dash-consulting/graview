@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 4839,
+  "gzipped": 1767,
+  "note": "Raised when a record came to hold a video (0.1.37): a video field on every face and in the studio's declaration (`videoField`, `{\"type\": \"video\"}`), its player and card in the files' part, and a worker view's `<graview-video>` and full-screen viewer behind their own door. 4_839 / 1_767 more. Measured at 2_227_122 / 740_986 against 2_222_283 / 739_219."
+}

@@ -77,3 +77,21 @@ describe("the studio makes a relation to another app's kind", () => {
     expect(source).toMatch(/import \{[^}]*linkedRecordField[^}]*\} from "@graview\/core"/);
   });
 });
+
+/*
+ * THE STUDIO'S OWN RELATIONS ARE MADE BY ITS NAMED ACTS (0.1.37): every
+ * relation came with a derived connect and disconnect, and the studio's
+ * meta-schema took "Link a kind (creates)" onto a kind's strip, past
+ * "Add a field". What an act creates, connects and severs, and the kind a
+ * computed field is on, are read from the declaration the studio opened.
+ */
+describe("the studio's own relations", () => {
+  it("come with no derived connect or disconnect", async () => {
+    const { Store } = await import("@graview/core");
+    const { studioApp } = await import("../../src/index.js");
+    const app = studioApp();
+    const store = new Store({ schema: app.schema, mutations: app.mutations } as never);
+    const derived = store.allMutations().filter((mutation) => mutation.derived?.act === "connect" || mutation.derived?.act === "disconnect");
+    expect(derived.map((mutation) => mutation.name)).toEqual([]);
+  });
+});

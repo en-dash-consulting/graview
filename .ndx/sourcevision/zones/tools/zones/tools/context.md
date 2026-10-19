@@ -5,44 +5,25 @@
 <zone>
 
 Zone: Tools (`tools/tools`)
-Files: 7, Cohesion: 0.53, Coupling: 0.47
-Description: 7 files, primarily TypeScript
-Entry points: packages/tools/src/capital.ts, packages/tools/src/conversation.ts, packages/tools/src/draft.ts, packages/tools/src/go.ts, packages/tools/src/intelligence.ts, packages/tools/src/keep.ts, packages/tools/src/seat-model.ts
-Lines: 3944
+Files: 3, Cohesion: 0.44, Coupling: 0.56
+Description: 3 files, primarily TypeScript
+Entry points: packages/tools/src/agent/bounds.ts, packages/tools/src/agent/reads.ts, packages/tools/src/agent/untrusted.ts
+Lines: 363
 
 </zone>
 
 <files>
 
-packages/tools/src/capital.ts (TypeScript, 2 lines, source)
-packages/tools/src/conversation.ts (TypeScript, 807 lines, source)
-packages/tools/src/draft.ts (TypeScript, 1231 lines, source)
-packages/tools/src/go.ts (TypeScript, 963 lines, source)
-packages/tools/src/intelligence.ts (TypeScript, 516 lines, source)
-packages/tools/src/keep.ts (TypeScript, 112 lines, source)
-packages/tools/src/seat-model.ts (TypeScript, 313 lines, source)
+packages/tools/src/agent/bounds.ts (TypeScript, 23 lines, source)
+packages/tools/src/agent/reads.ts (TypeScript, 200 lines, source)
+packages/tools/src/agent/untrusted.ts (TypeScript, 140 lines, source)
 
 </files>
 
 <imports>
 
 Internal:
-  packages/tools/src/conversation.ts → packages/tools/src/go.ts {*}
-  packages/tools/src/conversation.ts → packages/tools/src/intelligence.ts {validateProposals}
-  packages/tools/src/conversation.ts → packages/tools/src/intelligence.ts {Completion, ProposedCall}
-  packages/tools/src/conversation.ts → packages/tools/src/seat-model.ts {*}
-  packages/tools/src/draft.ts → packages/tools/src/capital.ts {capitalize}
-  packages/tools/src/draft.ts → packages/tools/src/intelligence.ts {firstJsonObject}
-  packages/tools/src/draft.ts → packages/tools/src/intelligence.ts {Completion}
-  packages/tools/src/go.ts → packages/tools/src/capital.ts {capitalize}
-  packages/tools/src/go.ts → packages/tools/src/conversation.ts {readyRepairsOf}
-  packages/tools/src/go.ts → packages/tools/src/conversation.ts {ChatContext, ChatReply, SeatMove, SeatOffer}
-  packages/tools/src/go.ts → packages/tools/src/intelligence.ts {validateProposals}
-  packages/tools/src/keep.ts → packages/tools/src/draft.ts {lensEditOf, takeBackEditOf}
-  packages/tools/src/keep.ts → packages/tools/src/draft.ts {AddLensEdit, RemoveLensEdit}
-  packages/tools/src/seat-model.ts → packages/tools/src/conversation.ts {ChatContext, ChatReply}
-  packages/tools/src/seat-model.ts → packages/tools/src/go.ts {*}
-  packages/tools/src/seat-model.ts → packages/tools/src/intelligence.ts {droppedProposals, firstJsonObject, resolveProposal, validateProposals}
-  packages/tools/src/seat-model.ts → packages/tools/src/intelligence.ts {Completion, ProposedCall}
+  packages/tools/src/agent/reads.ts → packages/tools/src/agent/bounds.ts {READ_CHARS, READ_LINKS, READ_PAGE, READ_PROBLEMS, READ_TEXT}
+  packages/tools/src/agent/reads.ts → packages/tools/src/agent/untrusted.ts {Authorship, UntrustedText}
 
 </imports>

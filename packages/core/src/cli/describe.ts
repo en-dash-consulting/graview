@@ -294,6 +294,13 @@ export function describeApp<S extends AnySchema>(
     `Days, times and numbers are written for ${locale ?? `${DEFAULT_LOCALE}, the default`}: ${dayAsRead("2023-09-10", locale)}, ${timeAsRead("2023-09-10T15:30", locale)}, ${numberAsRead(1250, locale)}; ` +
       (app.brand?.currency ? `money is said in ${app.brand.currency} (${formatMoney(1250, { currency: app.brand.currency, ...(locale ? { locale } : {}) })}).` : "money is said with no currency."),
   );
+  // THE APP'S TIME ZONE (Roadmap f-app-time-zone): what an instant reads as, on every reader's screen and in every act's sentence.
+  const timeZone = app.brand?.timeZone;
+  lines.push(
+    timeZone
+      ? `Times are said in ${timeZone}: 2023-09-10T19:30:00Z reads ${timeAsRead("2023-09-10T19:30:00Z", locale, timeZone)}, unless a host passes the person's own zone.`
+      : "Times are said on each reader's own clock: brand.timeZone names one zone for everybody.",
+  );
 
   /*
    * WHAT A SEAT CAN DO. A policy with roles and a principal holding none of
@@ -307,6 +314,22 @@ export function describeApp<S extends AnySchema>(
     const noun = (people as { noun?: string }).noun ?? people.kind;
     lines.push("", "## The people", `The people are the ${pluralOf(app.schema, people.kind).toLowerCase()}: ${withArticle(noun)} whose id is a member's principal id is that member.`);
   }
+
+  /*
+   * HOW TWO RECORDS ARE LINKED (Roadmap f-relation-acts-derived): each
+   * relation and the acts that make and break it — the app's own, or the
+   * connect and disconnect every relation is given — so an agent reading
+   * this knows which tool links a moment to its day.
+   */
+  const relationLines = app.schema.definitions.flatMap((definition) =>
+    Object.entries(definition.edges as Readonly<Record<string, { readonly to: readonly string[] | "*"; readonly appendOnly?: boolean }>>).map(([relation, edge]) => {
+      const by = (key: "connects" | "severs") => acts.filter((act) => act[key]?.includes(relation) && (act.derived === undefined || act.derived.kind === definition.kind)).map((act) => `"${act.name}"`);
+      const made = by("connects");
+      const unmade = by("severs");
+      return `  ${capitalize(pluralOf(app.schema, definition.kind))} → ${edge.to === "*" ? "any record" : edge.to.join(" or ")} (${relation}): ${made.length > 0 ? `made by ${list(made)}` : "made by nothing"}, ${unmade.length > 0 ? `unmade by ${list(unmade)}` : edge.appendOnly ? "never unmade (append-only)" : "unmade by nothing"}.`;
+    }),
+  );
+  if (relationLines.length > 0) lines.push("", "## How records are linked", ...relationLines);
 
   /*
    * WHAT IT LINKS IN OTHER APPS (FR-171): a relation to another app's kind is

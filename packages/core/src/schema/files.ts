@@ -30,11 +30,21 @@ export interface FileValue {
   readonly type: string;
   /** Its size in bytes. */
   readonly bytes: number;
-  /** A picture's size in pixels, where the host knows it. */
+  /** A picture's or a video's size in pixels, where the host knows it. */
   readonly width?: number;
   readonly height?: number;
   /** What it shows, in words: a picture's alt text, and what Find matches beside its name. */
   readonly caption?: string;
+  /**
+   * A VIDEO'S FACTS (0.1.37), where the host's upload answered them: the
+   * picture drawn before it plays (a path on the host, as `href` is), its
+   * length in seconds, and its captions (a WebVTT file on the host). Unsaid,
+   * the page draws the video's first frame and reads its length from what
+   * the player loads first (`preload="metadata"`).
+   */
+  readonly poster?: string;
+  readonly duration?: number;
+  readonly captions?: string;
 }
 
 /**
@@ -46,6 +56,12 @@ export interface FileValue {
  * is sent. Without it, the editor says this host takes no files.
  */
 export interface HostFiles {
+  /**
+   * A video (`video/*` in `kinds`, 0.1.37) is sent as it was picked: the
+   * host answers a value a browser plays (an H.264 MP4 made from a phone's
+   * HEVC `.mov`, say) with its `poster`, `duration`, `width` and `height`
+   * where it knows them.
+   */
   upload(file: Blob, name: string): Promise<FileValue>;
   readonly maxBytes: number;
   readonly kinds: readonly string[];
@@ -93,12 +109,38 @@ export function isFileValue(value: unknown): value is FileValue {
     count(v.bytes, 0) &&
     count(v.width) &&
     count(v.height) &&
-    (v.caption === undefined || (typeof v.caption === "string" && v.caption.length < 501))
+    (v.caption === undefined || (typeof v.caption === "string" && v.caption.length < 501)) &&
+    (v.poster === undefined || safeFileHref(v.poster)) &&
+    (v.captions === undefined || safeFileHref(v.captions)) &&
+    (v.duration === undefined || (typeof v.duration === "number" && Number.isFinite(v.duration) && v.duration > 0))
   );
 }
 
 /** Whether a file is a picture a page can draw. */
 export const isImage = (file: { readonly type: string }): boolean => file.type.startsWith("image/");
+
+/** Whether a file is a video a page can play (0.1.37). */
+export const isVideo = (file: { readonly type: string }): boolean => file.type.startsWith("video/");
+
+/** A video's length as a person reads it: "a 45-second video", "a 3-minute video", "a 1-hour 7-minute video"; "a video" where its length is unsaid. */
+export function videoWords(file: { readonly duration?: number }): string {
+  const seconds = file.duration === undefined ? 0 : Math.round(file.duration);
+  if (seconds < 1) return "a video";
+  if (seconds < 60) return `a ${seconds}-second video`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `a ${minutes}-minute video`;
+  const hours = Math.floor(minutes / 60);
+  return `a ${hours}-hour${minutes % 60 > 0 ? ` ${minutes % 60}-minute` : ""} video`;
+}
+
+/** What a file field holds: a picture, a video, or a file of any type. */
+export type FileKind = "image" | "video" | "file";
+
+/** Whether a file is of the sort a field of `as` holds. */
+export const fileOfKind = (file: { readonly type: string }, as: FileKind): boolean => (as === "image" ? isImage(file) : as === "video" ? isVideo(file) : true);
+
+/** What a field of `as` holds, said where a value is refused. */
+export const fileRefusal = (as: FileKind): string => `${as === "image" ? "an image" : as === "video" ? "a video" : "a file"} the host stored, at a path on this host`;
 
 /** The files a value holds: one, a list of them, or none. */
 export const filesOf = (value: unknown): readonly FileValue[] => (Array.isArray(value) ? value : [value]).filter(isFileValue);
@@ -111,12 +153,12 @@ export const filesOf = (value: unknown): readonly FileValue[] => (Array.isArray(
  */
 const FILE = Symbol.for("@graview/core:file");
 
-/** Marks a schema as holding an image or a file. */
-export const markFile = <T extends object>(schema: T, as: "image" | "file"): T => (Object.defineProperty(defOf(schema)!, FILE, { value: as, enumerable: true }), schema);
+/** Marks a schema as holding an image, a video or a file. */
+export const markFile = <T extends object>(schema: T, as: FileKind): T => (Object.defineProperty(defOf(schema)!, FILE, { value: as, enumerable: true }), schema);
 
-/** Whether a field holds an image or a file — under optional, default and nullable — or neither. */
-export function fileKindOf(schema: unknown): "image" | "file" | undefined {
-  const def = defOf(schema) as { [FILE]?: "image" | "file"; innerType?: unknown } | undefined;
+/** Whether a field holds an image, a video or a file — under optional, default and nullable — or none of them. */
+export function fileKindOf(schema: unknown): FileKind | undefined {
+  const def = defOf(schema) as { [FILE]?: FileKind; innerType?: unknown } | undefined;
   return def?.[FILE] ?? (def?.innerType ? fileKindOf(def.innerType) : undefined);
 }
 
@@ -129,9 +171,12 @@ export const fileShape = () => ({
   width: z.optional(z.number()),
   height: z.optional(z.number()),
   caption: z.optional(z.string()),
+  poster: z.optional(z.string()),
+  duration: z.optional(z.number()),
+  captions: z.optional(z.string()),
 });
 
-/** A document's `image` or `file` field, in zod/mini. */
-export function fileSchema(as: "image" | "file"): z.ZodMiniType {
-  return markFile(z.object(fileShape()).check(z.refine((v) => isFileValue(v) && (as === "file" || isImage(v)), `${as === "image" ? "an image" : "a file"} the host stored, at a path on this host`)), as);
+/** A document's `image`, `video` or `file` field, in zod/mini. */
+export function fileSchema(as: FileKind): z.ZodMiniType {
+  return markFile(z.object(fileShape()).check(z.refine((v) => isFileValue(v) && fileOfKind(v, as), fileRefusal(as))), as);
 }

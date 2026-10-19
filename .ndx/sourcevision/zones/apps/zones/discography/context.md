@@ -5,21 +5,61 @@
 <zone>
 
 Zone: Discography (`apps/discography`)
-Files: 8, Cohesion: 0.00, Coupling: 0.00
-Description: 8 files, primarily Python, TypeScript, Shell
-Lines: 706
+Files: 13, Cohesion: 1.00, Coupling: 0.00
+Description: 13 files, primarily TypeScript
+Entry points: apps/discography/src/domain/app.ts, apps/discography/src/ui/seats.ts, apps/discography/src/ui/tracklist.tsx
+Lines: 1689
 
 </zone>
 
 <files>
 
-apps/discography/scripts/musicbrainz/build.py (Python, 110 lines, build)
-apps/discography/scripts/musicbrainz/fetch_guest.py (Python, 24 lines, build)
-apps/discography/scripts/musicbrainz/fetch_own.py (Python, 21 lines, build)
-apps/discography/scripts/musicbrainz/mb.py (Python, 13 lines, build)
-apps/promo/out/ProposalV2.v2.bak.tsx (TypeScript, 382 lines, source)
-apps/promo/remotion.config.ts (TypeScript, 56 lines, config)
-apps/promo/render-style.sh (Shell, 3 lines, source)
-apps/rota/vite.config.ts.timestamp-1791598470980-3067f655ee83a.mjs (JavaScript, 97 lines, source)
+apps/discography/src/domain/app.ts (TypeScript, 89 lines, source)
+apps/discography/src/domain/brand.ts (TypeScript, 41 lines, source)
+apps/discography/src/domain/invariants.ts (TypeScript, 126 lines, source)
+apps/discography/src/domain/mutations.ts (TypeScript, 285 lines, source)
+apps/discography/src/domain/policy.ts (TypeScript, 22 lines, source)
+apps/discography/src/domain/schema.ts (TypeScript, 117 lines, source)
+apps/discography/src/main.tsx (TypeScript, 137 lines, source)
+apps/discography/src/ui/app.tsx (TypeScript, 124 lines, source)
+apps/discography/src/ui/design.tsx (TypeScript, 380 lines, source)
+apps/discography/src/ui/pages.tsx (TypeScript, 189 lines, source)
+apps/discography/src/ui/seats.ts (TypeScript, 19 lines, source)
+apps/discography/src/ui/tracklist.tsx (TypeScript, 131 lines, source)
+apps/discography/src/ui/views.tsx (TypeScript, 29 lines, source)
 
 </files>
+
+<imports>
+
+Internal:
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/brand.ts {discographyBrand}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/invariants.ts {invariants}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/mutations.ts {mutations}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/policy.ts {policy}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/domain/app.ts → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/domain/invariants.ts → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/domain/mutations.ts → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/main.tsx → apps/discography/src/domain/app.ts {discographyApp}
+  apps/discography/src/main.tsx → apps/discography/src/domain/brand.ts {discographyBrand}
+  apps/discography/src/main.tsx → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/main.tsx → apps/discography/src/ui/app.tsx {DiscographyApp}
+  apps/discography/src/main.tsx → apps/discography/src/ui/design.tsx {linerNotes}
+  apps/discography/src/main.tsx → apps/discography/src/ui/seats.ts {openingSeat, SEATS}
+  apps/discography/src/main.tsx → apps/discography/src/ui/views.tsx {views}
+  apps/discography/src/ui/app.tsx → apps/discography/src/domain/app.ts {discographyApp, createStore}
+  apps/discography/src/ui/app.tsx → apps/discography/src/domain/app.ts {DiscographyStore}
+  apps/discography/src/ui/app.tsx → apps/discography/src/domain/brand.ts {discographyBrand}
+  apps/discography/src/ui/app.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/app.tsx → apps/discography/src/ui/seats.ts {openingSeat, SEATS}
+  apps/discography/src/ui/app.tsx → apps/discography/src/ui/views.tsx {views}
+  apps/discography/src/ui/design.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/pages.tsx → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/ui/pages.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/views.tsx → apps/discography/src/domain/app.ts {discographyApp}
+  apps/discography/src/ui/views.tsx → apps/discography/src/domain/schema.ts {discographySchema}
+  apps/discography/src/ui/views.tsx → apps/discography/src/domain/schema.ts {DiscographySchema}
+  apps/discography/src/ui/views.tsx → apps/discography/src/ui/tracklist.tsx {createTracklistLens}
+
+</imports>

@@ -30,7 +30,7 @@ Every view comes with a manifest the host enforces:
 - `reads` lists the other kinds and the edges it is shown. Nothing else is handed to it.
 - `acts` lists the acts it may ask for, by name. An entry with `as` and `constants` is another name for the same act with arguments the view cannot change.
 - A view of one record (`cardinality: "one"`) is drawn above the record's own fields, which stay editable. `replaces: "page"` draws it alone instead; only then is the record changed through the view alone.
-- `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path: `graview-view-drawing` says how a view shows it.
+- `pictures: true` (or `{ width }`) hands each file on a record with an address the host made from its bytes, never its path, and lets the view place a record's video (`<graview-video>`) and open the host's full-screen viewer: `graview-view-drawing` says how a view shows them.
 
 A manifest that names a kind, an edge or an act the app does not declare is
 refused before the view starts.
@@ -57,7 +57,10 @@ view of one finds its record in `node`, never in `nodes`. Then `edges`
 (`{ kind, from, to }` among them), `label` (its title), `acts` (`{ name,
 title }`, those the viewer may run), `places` (`{ as, title }`), and `theme`
 (`scheme`, `accent`, `panel`, `ink`, `fontDisplay`, `radius` …, the app's
-`name`, and its `logo` as a URL the host made). `render` keeps what it can, by
+`name`, and its `logo` as a URL the host made), and `locale` and `timeZone`:
+say a kept instant with `new Intl.DateTimeFormat(props.locale, { timeZone:
+props.timeZone, hour: "numeric", minute: "2-digit" })`, the clock the rest of
+the app says it on, never a zone of your own. `render` keeps what it can, by
 element and by `data-key` or `id`, so give repeated rows a `data-key`: a
 field being typed in keeps its text across a push. An event carries
 `value`, `checked`, `key`, `pressed` for a bound press, and `element`,

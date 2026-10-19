@@ -73,5 +73,36 @@ describe("a lens's width", () => {
     act(() => root.unmount());
     host.remove();
   });
-});
 
+  /*
+   * AN UNCHANGED WIDTH DRAWS NOTHING AT ONCE. The observer reports every
+   * box once as it is first watched, and a flushSync renders whatever else
+   * is waiting too: on the org app's Pages home a board that had just
+   * measured its own room had its new shape drawn inside the browser's
+   * round of resize reports, and Firefox said "ResizeObserver loop
+   * completed with undelivered notifications".
+   */
+  it("does not draw another view's waiting change inside a report of the width it already had", () => {
+    let reshape: (shape: string) => void = () => {};
+    function Board() {
+      const [shape, setShape] = useState("square");
+      reshape = setShape;
+      return <span data-board={shape} />;
+    }
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    act(() => root.render(<><Lens /><Board /></>));
+    act(() => show(true));
+    const box = host.querySelector<HTMLElement>("[data-shape]")!;
+    const observer = observers.find((one) => one.watched.includes(box))!;
+    // The board measured its room and asked to be drawn again; the lens's box is reported, as wide as it was.
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = false;
+    reshape("by-width");
+    observer.callback();
+    expect(host.querySelector("[data-board]")?.getAttribute("data-board"), "drawn later, outside the report").toBe("square");
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    act(() => root.unmount());
+    host.remove();
+  });
+});

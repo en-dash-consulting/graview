@@ -1,0 +1,6 @@
+{
+  "budget": "a worker view's runtime",
+  "minified": 291,
+  "gzipped": 91,
+  "note": "Raised when a record came to hold a video (0.1.37): the runtime telling Remote DOM a `<graview-video>`'s attributes, which it sends for no element whose name has a hyphen unless told, and the open kit's table that now names it. 291 / 91 more. Measured at 60_838 / 20_922 against 60_547 / 20_831."
+}

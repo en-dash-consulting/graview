@@ -1,6 +1,6 @@
 {
   "id": "guest/headless",
-  "name": "Headless",
+  "name": "Headless Guest Runtime",
   "description": "11 files, primarily TypeScript",
   "files": [
     "packages/guest/src/cli.ts",
@@ -25,8 +25,8 @@
     "packages/guest/src/host/links.ts",
     "packages/guest/src/host/where.ts"
   ],
-  "cohesion": 0.61,
-  "coupling": 0.39,
+  "cohesion": 0.6,
+  "coupling": 0.4,
   "fileCount": 11,
-  "lineCount": 1533
+  "lineCount": 1557
 }

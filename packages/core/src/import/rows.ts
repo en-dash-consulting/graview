@@ -545,7 +545,7 @@ function linking<S extends AnySchema>(store: Store<S>, by: Principal): (relation
     if (asked.has(key)) return asked.get(key);
     let answer: string | undefined;
     if (store.policy !== undefined || by.kind === "agent") {
-      const linkers = store.allMutations().filter((mutation) => !mutation.derived && (mutation.connects ?? []).includes(relation));
+      const linkers = store.allMutations().filter((mutation) => (mutation.connects ?? []).includes(relation));
       if (linkers.length === 0) {
         if (store.policy !== undefined) answer = `nothing in this app links ${linkWords(store, relation, farKind)} that way, so none can be imported`;
       } else {

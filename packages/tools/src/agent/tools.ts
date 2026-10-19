@@ -12,6 +12,7 @@ import {
   linkedRelations,
   linkedValue,
   nameOfAuthor,
+  sayingIn,
   sha256Hex,
   type LinkedRecord,
   type LinkedRecords,
@@ -32,6 +33,7 @@ import { answerSeenBy } from "@graview/core/seat";
 import { acceptSuggestion, declineSuggestion, suggestions } from "@graview/core/tidying";
 import { search, type SearchRanker } from "@graview/core/search";
 import { argumentsNeverShown, mutationToolSchema, type JsonSchema } from "@graview/core/json-schema";
+import type { ToolAnnotations, ToolDefinition } from "./tool-definition.js";
 import { authorship, markHits } from "./untrusted.js";
 import { SUBSCRIPTION_TOOLS } from "./subscription-tools.js";
 import { READ_HITS } from "./bounds.js";
@@ -100,39 +102,6 @@ const several = lazily(() => import("../several.js"));
 
 /* Notify me (Roadmap f-notify-subscriptions), fetched with a seat's first subscribe, unsubscribe or list. A literal specifier, as above. */
 const subscribing = lazily(() => import("./subscribe-run.js"));
-
-/**
- * WHAT A TOOL DOES, in the words every MCP directory asks for (FR-10).
- *
- * Derived from the declaration, never written per tool: a read is
- * read-only; an act that removes or severs loses something; an act whose
- * second run changes nothing the first did not is idempotent. Nothing a
- * Graview tool does reaches outside the graph it was derived from.
- */
-export interface ToolAnnotations {
-  readonly title: string;
-  readonly readOnlyHint: boolean;
-  readonly destructiveHint: boolean;
-  readonly idempotentHint: boolean;
-  readonly openWorldHint: false;
-}
-
-export interface ToolDefinition {
-  /**
-   * The name a model calls. MCP-safe — letters, digits, `_` and `-`, at
-   * most 64, starting with a letter or `_` — so every client's tool layer
-   * takes it. An act whose own name is already safe keeps it.
-   */
-  readonly name: string;
-  readonly title: string;
-  readonly description: string;
-  readonly inputSchema: JsonSchema;
-  /** False for the read tools, true for anything that changes the graph. */
-  readonly mutating: boolean;
-  readonly annotations: ToolAnnotations;
-  /** The declared name of the act this tool runs; absent on the read tools. */
-  readonly act?: string;
-}
 
 /** What a name given for a node argument was taken to mean (FR-33). */
 export interface Resolved {
@@ -855,6 +824,14 @@ export function createToolRuntime<S extends AnySchema>(
     options.subscriptions !== undefined,
   );
   const hash = surfaceHash(definitions);
+  /*
+   * WHAT AN ANSWER IS SAID IN: the app's locale and time zone, where the
+   * runtime is handed the app — a server answering an agent has drawn no
+   * provider, and would say a time on its own clock, UTC. On a page the
+   * provider has said them already; a person's zone a host passed still wins.
+   */
+  const saying = { app: options.app?.brand?.locale, appTimeZone: options.app?.brand?.timeZone };
+  const saidForTheApp = <T,>(run: () => T): T => sayingIn(saying, run);
   /** A tool's name, or an act's declared one, as the act it runs. */
   const actNamed = (name: string): string | undefined => {
     if (READ_NAMES.includes(name)) return undefined;
@@ -933,12 +910,16 @@ export function createToolRuntime<S extends AnySchema>(
         const named = resolve(definition.act, args);
         if ("ok" in named) return named;
         // What the act did, as this seat may be told it: an act may touch what its own seat may not see (FR-55).
-        const result = answerSeenBy(
-          store,
-          principal,
-          store.apply(
-            { name: definition.act, args: named.args },
-            { ...(options.author ? { author: options.author } : {}), ...viaNow(options.via) },
+        // Its sentence says a time on the app's clock, not the server's (Roadmap f-app-time-zone).
+        const act = definition.act;
+        const result = saidForTheApp(() =>
+          answerSeenBy(
+            store,
+            principal,
+            store.apply(
+              { name: act, args: named.args },
+              { ...(options.author ? { author: options.author } : {}), ...viaNow(options.via) },
+            ),
           ),
         );
         return {

@@ -11,6 +11,7 @@ import { recordPath } from "../views/types.js";
 import { isoToday } from "../days.js";
 import { columnMoves, columnOf, statusColumns } from "../columns.js";
 import { coverageParts } from "./describe-coverage.js";
+import type { DescribedFact, DescribedItem, DescribedMasthead, DescribedPart, DescribedProblem, DescribePlaceResult, PlaceDescription } from "./described.js";
 import { sortForGrid } from "../grid-sort.js";
 import type { ResolvedBlock } from "./blocks.js";
 import { resolveFor, type ResolveForOptions } from "./resolve-for.js";
@@ -51,85 +52,6 @@ export interface DescribePlaceOptions<S extends AnySchema> {
   readonly today?: string;
 }
 
-/** One record in a list, as its card or row says it. */
-export interface DescribedItem {
-  readonly id: string;
-  readonly kind: string;
-  readonly title: string;
-  /** What its card or row says beyond its title, in order. */
-  readonly parts: readonly DescribedPart[];
-}
-
-export type DescribedPart =
-  | { readonly t: "heading"; readonly level: number; readonly text: string }
-  | { readonly t: "text"; readonly text: string; readonly tone?: string }
-  | { readonly t: "badge"; readonly text: string }
-  /** `long`: prose, drawn the record's width with its lines kept (FR-147); `markdown`: written in Markdown, drawn as prose (FR-180). */
-  | { readonly t: "field"; readonly label: string; readonly text: string; readonly long?: true; readonly markdown?: true }
-  | { readonly t: "figure"; readonly text: string; readonly label?: string }
-  | { readonly t: "progress"; readonly label: string; readonly text: string }
-  | {
-      readonly t: "list";
-      readonly as: "card" | "row" | "name";
-      /** The columns a card list makes at this width; a row list is one. */
-      readonly columns: number;
-      readonly groups: readonly { readonly heading?: string; readonly items: readonly DescribedItem[] }[];
-      /** What it says when it lists nothing. */
-      readonly empty?: string;
-      readonly more?: number;
-    };
-
-export interface DescribedProblem {
-  /** Where: the block's path in the declaration (`views.home.3`, `lenses.1.options.blocks.0`, `views.offer.card.5`), with the record it was about. */
-  readonly at: string;
-  readonly says: string;
-}
-
-/**
- * THE APP'S MASTHEAD, as the home draws it on both faces (FR-124, FR-125):
- * its name, the line under it, and its logo — said by its alt text, and
- * whether it is drawn from SVG written inline or from a path.
- */
-export interface DescribedMasthead {
-  readonly name: string;
-  readonly subtitle?: string;
-  readonly logo?: { readonly alt: string; readonly drawn: "inline SVG" | "image"; readonly src?: string };
-}
-
-/** One fact of the whole graph (a document's top-level `computed`), as this seat's graph works it out. */
-export interface DescribedFact {
-  readonly name: string;
-  readonly label: string;
-  /** Its value as words: yes or no, a number, a record's name, names joined; absent when it could not be worked out. */
-  readonly value?: string;
-  /** Why it could not be worked out. */
-  readonly refused?: string;
-}
-
-export interface PlaceDescription {
-  /** On the home: what its masthead says (FR-125). */
-  readonly masthead?: DescribedMasthead;
-  /**
-   * On the home, which is about no one record: the app's facts of the whole
-   * graph, worked out over what this seat sees — what any block may say
-   * with `fact('<name>')`, whether or not a block on this place does.
-   */
-  readonly facts?: readonly DescribedFact[];
-  readonly place: { readonly slug: string; readonly title: string; readonly kind: string | null; readonly address: string };
-  /** Who it was described for: the seat's roles, or "the system". */
-  readonly seat: string;
-  readonly width: number;
-  readonly variant: "phone" | "wide";
-  /** What draws it: the app's blocks, the framework's derived page, a shipped lens, a record's page, or a worker view run headless (FR-95). */
-  readonly drawnBy: "blocks" | "derived" | "record" | `lens:${string}` | `view:${string}`;
-  readonly parts: readonly DescribedPart[];
-  readonly problems: readonly DescribedProblem[];
-  /** The same, as plain text a chat can quote. */
-  readonly text: string;
-}
-
-export type DescribePlaceResult = { readonly ok: true; readonly description: PlaceDescription } | { readonly ok: false; readonly error: string; readonly places: readonly string[] };
-
 /** Cards are at least 15rem, with 10px between, in a column of the face's width less its gutters. */
 const CARD = 240;
 const GAP = 10;
@@ -149,7 +71,7 @@ const columnsAt = (width: number) => Math.max(1, Math.floor((Math.min(width, FAC
 export function describePlace<S extends AnySchema>(store: Store<S>, principal: Principal, place: string | AppPlace, options: DescribePlaceOptions<S>): DescribePlaceResult {
   const { app } = options;
   const width = options.width ?? 1440;
-  const today = options.today ?? store.today() ?? isoToday();
+  const today = options.today ?? store.today() ?? isoToday(app.brand?.timeZone);
   const seen = store.seenBy(principal);
   const schema = seen.schema as AnySchema;
   const graph = seen.graph as unknown as GraphReader;
@@ -181,7 +103,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     if (as === "row") return { id: node.id, kind: node.kind, title, parts: [] };
     // The default card: its title, and what a glance at it says (FR-39, FR-83).
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, node) : node;
-    const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [title], glance: true, locale: app.brand?.locale });
+    const fields = readableFields(read as Record<string, unknown>, definition, { limit: 3, said: [title], glance: true, locale: app.brand?.locale, timeZone: app.brand?.timeZone });
     return { id: node.id, kind: node.kind, title, parts: fields.map((field) => ({ t: "text", text: field.alone })) };
   };
 
@@ -261,7 +183,7 @@ export function describePlace<S extends AnySchema>(store: Store<S>, principal: P
     if (page) parts.push(...say(resolved(record, { slot: "page" }), 1, `views.${record.kind}.page`));
     const read = (definition as { computed?: object } | undefined)?.computed ? withComputed(schema, graph, record) : record;
     // In the order and the groups its page declares (FR-148), each value as stored: a draft's paragraphs kept (FR-146).
-    for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale }))) {
+    for (const section of pageSections(definition, readableFields(read as Record<string, unknown>, definition, { said: [title], locale: app.brand?.locale, timeZone: app.brand?.timeZone }))) {
       if (section.title) parts.push({ t: "heading", level: 2, text: section.title });
       for (const field of section.fields) parts.push({ t: "field", label: field.label, text: field.value, ...(field.long ? { long: true as const } : {}), ...(field.markdown ? { markdown: true as const } : {}) });
     }

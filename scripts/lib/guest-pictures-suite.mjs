@@ -29,12 +29,26 @@
  * the view. The view's pictures are fetched under the base all the same,
  * and the porch's own page draws its pictures, and links its quote, there.
  */
+import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { deflateSync } from "node:zlib";
 import { resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
 
 export const PHOTOS_MANIFEST = { name: "job-photos", title: "Job photos", attach: "job", cardinality: "many", pictures: { width: 400 } };
+
+/*
+ * A RECORD'S VIDEO IN A VIEW (0.1.37): "Job reel" places the porch's clip
+ * for the host to play, and a button that opens the step's photograph in
+ * the host's full-screen viewer. It draws no <video> and holds no path.
+ */
+export const REEL_MANIFEST = { name: "job-reel", title: "Job reel", attach: "job", cardinality: "many", pictures: true };
+export const REEL_JS = `
+graview.style(\`.reel { display: grid; gap: 8px; padding: 12px; } graview-video { width: 320px; }\`);
+graview.onProps((props) => {
+  graview.render(graview.html\`\${props.nodes.map((job) => graview.html\`<section class="reel" data-key="\${job.id}"><h3>\${job.label}</h3>\${job.clip ? graview.html\`<p data-said>\${job.clip.name} \${job.clip.duration}</p><graview-video data-record="\${job.id}" data-field="clip"></graview-video>\` : ""}<button data-lightbox data-record="\${job.id}" data-field="photos" data-index="1">See the step</button></section>\`)}\`);
+});
+`;
 
 /** The view, as a chat writes one: each job, its pictures by the address the host handed, its papers by name. */
 export const PHOTOS_JS = `
@@ -96,6 +110,9 @@ export async function picturesSuite({ repoRoot, build, browser, claim, report, H
     [files.roof]: { type: "image/png", body: png(40, 20, [160, 20, 20]) },
     [files.plan]: { type: "image/svg+xml", body: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>') },
     [files.quote]: { type: "application/pdf", body: Buffer.from("%PDF-1.4\n%%EOF\n") },
+    /* The porch's clip (0.1.37): a second of one color, as WebM, and its poster. */
+    "/graview/files/clip-5d0a.webm": { type: "video/webm", body: readFileSync(resolve(repoRoot, "scripts/fixtures/files/clip.webm")) },
+    "/graview/files/clip-5d0a.png": { type: "image/png", body: png(32, 32, [58, 123, 213]) },
   };
   const js = (
     await build({
@@ -105,20 +122,23 @@ import { mount } from "@graview/embed";
 import { registerWorkerView } from "@graview/guest/host/views";
 import { recordPath } from "@graview/pages";
 import { filesAt } from "@graview/ship/browser";
-import { ana, jobsApp, jobsSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/jobs-app.ts"))};
+import { ana, FILES, jobsApp, jobsSeed } from ${JSON.stringify(resolve(repoRoot, "scripts/fixtures/jobs-app.ts"))};
 window.__failures = [];
 window.__problems = [];
 /* Served under a base (Graview Cloud's /a/<app>/), the host says where a record's files are: on the view ("file"), or once for the page ("?files", filesAt under the base, as Cloud hands it). */
 const base = location.pathname.startsWith("/a/jobs/") ? "/a/jobs" : "";
 const asked = new URLSearchParams(location.search);
 const once = asked.has("files");
-const definition = { manifest: ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: ${JSON.stringify(PHOTOS_JS)} }, ...(base && !once ? { file: (href) => base + href } : {}), onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
+/* "?reel": the porch holds a clip, and the reel view is drawn in place of the photos (0.1.37). */
+const reel = asked.has("reel");
+const definition = { manifest: reel ? ${JSON.stringify(REEL_MANIFEST)} : ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: reel ? ${JSON.stringify(REEL_JS)} : ${JSON.stringify(PHOTOS_JS)} }, ...(base && !once ? { file: (href) => base + href } : {}), onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
+const clip = { href: FILES.clip, name: "porch.webm", type: "video/webm", bytes: 624, width: 32, height: 32, duration: 1, poster: FILES.clipPoster, caption: "The porch, panned" };
 window.__handle = mount(document.getElementById("app"), {
   app: jobsApp,
-  seed: jobsSeed,
+  seed: reel ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, clip } : node)) } : jobsSeed,
   principal: ana,
   face: "pages",
-  path: asked.has("record") ? recordPath(jobsApp.schema, "job", asked.get("record")) : "/places/job-photos",
+  path: asked.has("record") ? recordPath(jobsApp.schema, "job", asked.get("record")) : reel ? "/places/job-reel" : "/places/job-photos",
   ...(once ? { files: filesAt(base + "/graview/files", { maxBytes: 1000000, kinds: ["image/*", "application/pdf"] }) } : {}),
   scheme: "light",
   label: "Jobs",
@@ -160,7 +180,15 @@ window.__handle = mount(document.getElementById("app"), {
         res.writeHead(401, { "content-type": "text/plain" });
         return res.end("Sign in to see this file.");
       }
-      res.writeHead(200, { "content-type": file.type, "cache-control": "no-store" });
+      /* A video a range at a time, as a player asks for it (WebKit plays nothing without). */
+      const range = file.type.startsWith("video/") ? /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? "") : null;
+      if (range) {
+        const start = Number(range[1]);
+        const end = range[2] ? Math.min(Number(range[2]), file.body.length - 1) : file.body.length - 1;
+        res.writeHead(206, { "content-type": file.type, "accept-ranges": "bytes", "content-range": `bytes ${start}-${end}/${file.body.length}`, "content-length": String(end - start + 1), "cache-control": "no-store" });
+        return res.end(file.body.subarray(start, end + 1));
+      }
+      res.writeHead(200, { "content-type": file.type, "cache-control": "no-store", ...(file.type.startsWith("video/") ? { "accept-ranges": "bytes" } : {}) });
       return res.end(file.body);
     }
     res.writeHead(404);
@@ -270,6 +298,57 @@ window.__handle = mount(document.getElementById("app"), {
       { record, requests: requests.filter((one) => one.url.includes("/graview/files/")).map((one) => one.url) },
     );
     claim("under a base, saying it once, no view failed, and nothing was left out", (await tab.evaluate(() => [...window.__failures, ...window.__problems])).length === 0, await tab.evaluate(() => ({ failures: window.__failures, problems: window.__problems })));
+
+    /* A RECORD'S VIDEO IN A VIEW, AND THE HOST'S FULL-SCREEN VIEWER (0.1.37). */
+    asked.length = 0;
+    requests.length = 0;
+    await tab.goto(`${HOST}/?reel`, { waitUntil: "load" });
+    await until(() => {
+      const root = document.querySelector('[data-worker-view="job-reel"]')?.shadowRoot;
+      const video = root?.querySelector("graview-video")?.shadowRoot?.querySelector("video");
+      return Boolean(video && video.readyState >= 1);
+    }, "the porch's clip, played by the host in the reel view");
+    const player = await tab.evaluate(() => {
+      const root = document.querySelector('[data-worker-view="job-reel"]').shadowRoot;
+      const box = root.querySelector("graview-video");
+      const video = box.shadowRoot.querySelector("video");
+      const named = [...root.querySelectorAll("*")].filter((one) => [...one.attributes].some((attribute) => attribute.value.includes("/graview/files/")) || one.textContent.includes("/graview/files/")).length;
+      return {
+        src: video.getAttribute("src"),
+        poster: video.getAttribute("poster"),
+        controls: video.controls,
+        preload: video.getAttribute("preload"),
+        label: video.getAttribute("aria-label"),
+        duration: Math.round(video.duration),
+        wide: Math.round(box.getBoundingClientRect().width),
+        said: root.querySelector("[data-said]")?.textContent ?? null,
+        videos: root.querySelectorAll("video").length,
+        named,
+      };
+    });
+    claim(
+      "a view places the porch's clip and the host plays it there: its poster first, native controls, only its metadata fetched, said by what it shows and how long",
+      player.src === "/graview/files/clip-5d0a.webm" && player.poster === "/graview/files/clip-5d0a.png" && player.controls && player.preload === "metadata" && player.label === "The porch, panned, a 1-second video" && player.duration === 1 && player.wide === 320,
+      player,
+    );
+    claim("the view is handed the clip's facts, never its path, and its own drawing holds no <video>", player.said === "porch.webm 1" && player.named === 0 && player.videos === 0, { said: player.said, named: player.named, videos: player.videos });
+    claim("the host fetched the clip with the reader's session", asked.some((one) => one.path === "/graview/files/clip-5d0a.webm") && asked.every((one) => one.signed), asked);
+    const opener = tab.locator('[data-worker-view="job-reel"] button[data-lightbox]').first();
+    await opener.click();
+    await until(() => {
+      const image = document.querySelector("dialog[data-graview-lightbox] img");
+      return Boolean(image?.complete && image.naturalWidth > 0);
+    }, "the step's photograph, full screen in the host's viewer");
+    const viewer = await tab.evaluate(() => {
+      const dialog = document.querySelector("dialog[data-graview-lightbox]");
+      return { open: dialog.open, modal: dialog.matches(":modal"), inBody: dialog.parentElement === document.body, src: dialog.querySelector("img").getAttribute("src"), alt: dialog.querySelector("img").getAttribute("alt"), focus: document.activeElement?.textContent ?? null, opener: document.querySelector('[data-worker-view="job-reel"]').shadowRoot.querySelector("button[data-lightbox]").getAttribute("aria-haspopup") };
+    });
+    claim("a press on the view's data-lightbox opens the host's full-screen viewer over the app, the keyboard on its Close", viewer.open && viewer.modal && viewer.inBody && viewer.src === "/graview/files/step-77c1.png" && viewer.alt === "The cracked step" && viewer.focus === "Close" && viewer.opener === "dialog", viewer);
+    await tab.keyboard.press("Escape");
+    await until(() => !document.querySelector("dialog[data-graview-lightbox]"), "the viewer, closed by Escape");
+    const back = await tab.evaluate(() => document.querySelector('[data-worker-view="job-reel"]').shadowRoot.activeElement?.getAttribute("data-lightbox") !== undefined && document.querySelector('[data-worker-view="job-reel"]').shadowRoot.activeElement?.localName === "button");
+    claim("Escape closes the viewer and gives the keyboard back to the view's button", back, { back });
+    claim("the reel view did not fail, and nothing was left out", (await tab.evaluate(() => [...window.__failures, ...window.__problems])).length === 0, await tab.evaluate(() => ({ failures: window.__failures, problems: window.__problems })));
     await context.close();
   } finally {
     server.close();

@@ -1,8 +1,10 @@
 {
   "id": "tests-core-integration",
   "name": "Tests Core Integration",
-  "description": "3 files, primarily TypeScript",
+  "description": "Non-source files in packages: a-connection-is-declared-and-kept-in-step.test.ts, google-calendar-meets-what-google-does.test.ts, persistence.test.ts (+2 more)",
   "files": [
+    "packages/core/tests/integration/a-connection-is-declared-and-kept-in-step.test.ts",
+    "packages/core/tests/integration/google-calendar-meets-what-google-does.test.ts",
     "packages/core/tests/integration/persistence.test.ts",
     "packages/core/tests/integration/sync-holds-to-its-policy.test.ts",
     "packages/core/tests/integration/sync.test.ts"
@@ -10,8 +12,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 3,
-  "lineCount": 1425,
+  "fileCount": 5,
+  "lineCount": 1942,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

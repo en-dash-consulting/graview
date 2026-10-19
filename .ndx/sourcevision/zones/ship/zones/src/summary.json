@@ -1,6 +1,6 @@
 {
   "id": "ship/src",
-  "name": "Src",
+  "name": "Storage Adapters",
   "description": "3 files, primarily TypeScript",
   "files": [
     "packages/ship/src/browser-adapter.ts",

@@ -6,9 +6,11 @@
  * Sam, the office, sees every job; Ana, of the crew, sees only the jobs
  * she is on — the porch, not the roof, whose photograph is therefore never
  * fetched for a view she is reading. Each job holds pictures (a JPEG, a
- * PNG, and an SVG plan, which is handed as a document) and papers (a PDF).
+ * PNG, and an SVG plan, which is handed as a document) and papers (a PDF);
+ * a job may hold a video (`clip`, 0.1.37), which `guest-sandbox
+ * --transport=pictures` puts on the porch to place it in a view.
  */
-import { createSchema, defineApp, defineNode, fileField, imageField, z, type Policy, type Principal } from "@graview/core";
+import { createSchema, defineApp, defineNode, fileField, imageField, videoField, z, type Policy, type Principal } from "@graview/core";
 
 const crew = defineNode("crew", {
   fields: z.object({ label: z.string().min(1).max(60) }),
@@ -16,7 +18,7 @@ const crew = defineNode("crew", {
   label: (node) => node.label,
 });
 const job = defineNode("job", {
-  fields: z.object({ label: z.string().min(1).max(60), photos: z.array(imageField()).max(12), papers: z.array(fileField()).max(12).optional() }),
+  fields: z.object({ label: z.string().min(1).max(60), photos: z.array(imageField()).max(12), papers: z.array(fileField()).max(12).optional(), clip: videoField().optional() }),
   edges: { on: { to: ["crew"], description: "who is on it", inverse: "the jobs they are on" } },
   plural: "Jobs",
   label: (node) => node.label,
@@ -45,6 +47,8 @@ export const FILES = {
   plan: "/graview/files/plan-02bd.svg",
   quote: "/graview/files/quote-9e4f.pdf",
   roof: "/graview/files/roof-b5e0.png",
+  clip: "/graview/files/clip-5d0a.webm",
+  clipPoster: "/graview/files/clip-5d0a.png",
 } as const;
 
 export const jobsSeed = {

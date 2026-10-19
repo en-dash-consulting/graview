@@ -42,7 +42,7 @@ import {
 import { createPointerStore, type PointerStore, type ScenePoint } from "./pointer.js";
 import { HostFilesContext } from "./files.js";
 import { useLinkedReads } from "./linked-reads.js";
-import type { MenuSectionSource } from "./menu-sections.js";
+import type { MenuSectionSource } from "./menu-types.js";
 
 import { createMotionStore, type MotionStore } from "./motion-store.js";
 import { foldRobots, type RobotEvent, type RobotState, type SeatNote } from "./robot.js";
@@ -349,6 +349,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly app?: GraviewApp<S> | undefined;
   /** The reader's locale the host passed (`GraviewProviderProps.locale`, FR-178), or the one it is drawn inside. */
   readonly locale?: string | undefined;
+  /** The person's time zone the host passed (`GraviewProviderProps.timeZone`), or the one it is drawn inside. */
+  readonly timeZone?: string | undefined;
 }
 
 const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
@@ -461,6 +463,15 @@ export interface GraviewProviderProps<S extends AnySchema> {
    * provider drawn last says it for the page.
    */
   readonly locale?: string | undefined;
+  /**
+   * THE PERSON'S TIME ZONE (Roadmap f-app-time-zone): the IANA zone every
+   * instant is said in under this provider — a list, a record's page, a
+   * card, an act's sentence, Activity, the date editor and what a view is
+   * handed. A host passes it where a person chose one (an account
+   * setting); it wins over the app's own `brand.timeZone`, and the
+   * browser's clock is said when neither is.
+   */
+  readonly timeZone?: string | undefined;
   /**
    * WHERE A LENS THE SEAT DREW IS KEPT (`KeepLensHost`): handed the
    * check-clean `add-lens` edit when a reader presses "Keep as a lens", and
@@ -608,6 +619,7 @@ export function GraviewProvider<S extends AnySchema>({
   presence,
   brand,
   locale: readerLocale,
+  timeZone: readerTimeZone,
   onKeepLens,
   providers,
   ai: handedAi,
@@ -693,7 +705,9 @@ export function GraviewProvider<S extends AnySchema>({
    */
   const locale = readerLocale ?? outer?.locale;
   const appLocale = brand?.locale ?? app?.brand?.locale;
-  sayIn({ reader: locale, app: appLocale });
+  // And the clock an instant is said on: the person's a host passed, else the app's `brand.timeZone` (Roadmap f-app-time-zone).
+  const timeZone = readerTimeZone ?? outer?.timeZone;
+  sayIn({ reader: locale, app: appLocale, readerTimeZone: timeZone, appTimeZone: brand?.timeZone ?? app?.brand?.timeZone });
   /*
    * The scene's handle, held in a ref: where things are changes every frame
    * of a tween, and a context value that changed with it would re-render
@@ -1072,6 +1086,7 @@ export function GraviewProvider<S extends AnySchema>({
       ...(keepLens ? { onKeepLens: keepLens } : {}),
       app,
       ...(locale ? { locale } : {}),
+      ...(timeZone ? { timeZone } : {}),
     }),
     [
       store,
@@ -1125,7 +1140,9 @@ export function GraviewProvider<S extends AnySchema>({
       keepLens,
       app,
       locale,
+      timeZone,
     ],
+
   );
 
   return (

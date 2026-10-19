@@ -137,8 +137,8 @@ export const waitFor = defineMutation("wait-for", {
 /**
  * The way back out. `wait-for` could make a dependency and, for a while,
  * nothing could unmake one — a blocker that turned out not to matter blocked
- * for ever. `graview check` now refuses that shape (`edge-without-severer`),
- * and this is the severing act that answers it.
+ * for ever. Every relation is now given a disconnect when no act severs it,
+ * and this is the app's own, in its own words, in place of that one.
  */
 export const stopWaiting = defineMutation("stop-waiting", {
   title: "It no longer has to wait",

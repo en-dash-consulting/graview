@@ -51,7 +51,10 @@ yesterday and now the button is gone.
    take out anybody's, name the act in the grant or say `*`. A grant to
    every role (`roles: "*"`) is a door, not a key: riding only it, even
    the edit reaches just the seat's own records, so "anybody may join"
-   lets each person change or remove their own record, never everybody's. A refusal names who could, so a seat told no learns what
+   lets each person change or remove their own record, never everybody's.
+   A relation's derived `connect-<kind>-<relation>` and
+   `disconnect-<kind>-<relation>` ride the edit's reading, on the kind the
+   relation leaves. A refusal names who could, so a seat told no learns what
    it lacks rather than concluding the capability is missing.
 
 3. **Give the provider a principal.** `<GraviewProvider principal={{ kind:

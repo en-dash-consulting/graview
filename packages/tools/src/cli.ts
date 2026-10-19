@@ -198,7 +198,7 @@ export async function mcp(argv: readonly string[]): Promise<number> {
      * nothing is opened and nothing is written to a folder that may not
      * exist yet.
      */
-    const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.intelligence ? { intelligence: app.intelligence } : {}) });
+    const store = new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(app.intelligence ? { intelligence: app.intelligence } : {}), ...(app.brand?.timeZone ? { timeZone: app.brand.timeZone } : {}) });
     // A served seat keeps subscriptions wherever its store is, so the catalog lists the tools that keep them.
     const adapter = createMcpAdapter(createToolRuntime(store, { author: principal, readOnly, app, places: () => app.views?.places?.() ?? [], subscriptions: memorySubscriptions() }));
     process.stdout.write(`${JSON.stringify({ tools: adapter.listTools() }, null, 2)}\n`);
@@ -324,7 +324,7 @@ async function applyTemplate(argv: readonly string[], where: string): Promise<nu
     await host.refresh();
     const store = host.store;
     const target = preview
-      ? new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: store.graph.snapshot() })
+      ? new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(store.timeZone ? { timeZone: store.timeZone } : {}), snapshot: store.graph.snapshot() })
       : store;
     const plan = planFrom(target, made.setup.map((call) => ({ mutation: call.name, args: call.args, why: call.intent })), { principal, app });
     if (plan.refused.length > 0) {
@@ -428,7 +428,7 @@ export async function apply(argv: readonly string[]): Promise<number> {
      * its earlier ones make and no single preview can say those.
      */
     const target = preview
-      ? new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: store.graph.snapshot() })
+      ? new Store({ schema: app.schema, mutations: app.mutations ?? [], invariants: app.invariants ?? [], ...(app.policy ? { policy: app.policy } : {}), ...(store.timeZone ? { timeZone: store.timeZone } : {}), snapshot: store.graph.snapshot() })
       : store;
     const plan = planFrom(target, calls, { principal, app });
     if (plan.refused.length > 0) {

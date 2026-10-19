@@ -1,5 +1,6 @@
 import type { AnySchema, GraphDiff, NodeOfSchema } from "@graview/core";
-import type { ToolAnnotations, ToolRuntime } from "./tools.js";
+import type { ToolAnnotations } from "./tool-definition.js";
+import type { ToolRuntime } from "./tools.js";
 
 /** The shape an MCP server expects from `tools/list`. */
 export interface McpTool {

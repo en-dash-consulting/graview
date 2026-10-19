@@ -25,11 +25,17 @@ import { fromThisApp, sendJson, type DevServerPlugin } from "./door.js";
  *                          (`content-security-policy: sandbox`). An SVG is a
  *                          picture that can carry a script: an `<img>` never
  *                          runs it, and opened on its own it is sandboxed.
+ *                          A video is inline too, and served a range at a
+ *                          time (`range: bytes=…`, 206), as a player seeks
+ *                          and as WebKit plays nothing without. It is kept
+ *                          as it was sent: making a phone's HEVC `.mov` an
+ *                          MP4 every browser plays, and its poster, are a
+ *                          real host's (Graview Cloud's) to do.
  */
 
 export const DEV_FILES_PATH = "/__graview/files";
-/** What the dev door takes unless told otherwise: pictures, PDFs and plain text, up to 10 MB each. */
-export const DEV_FILES_KINDS: readonly string[] = ["image/*", "application/pdf", "text/plain"];
+/** What the dev door takes unless told otherwise: pictures, videos, PDFs and plain text, up to 10 MB each. */
+export const DEV_FILES_KINDS: readonly string[] = ["image/*", "video/*", "application/pdf", "text/plain"];
 export const DEV_FILES_MAX_BYTES = 10_000_000;
 
 export interface DevFilesOptions {
@@ -41,7 +47,16 @@ export interface DevFilesOptions {
   readonly kinds?: readonly string[];
 }
 
-const ENDINGS: Readonly<Record<string, string>> = { "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp", "image/heic": "heic", "image/svg+xml": "svg", "application/pdf": "pdf", "text/plain": "txt" };
+const ENDINGS: Readonly<Record<string, string>> = { "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp", "image/heic": "heic", "image/svg+xml": "svg", "video/mp4": "mp4", "video/webm": "webm", "video/quicktime": "mov", "application/pdf": "pdf", "text/plain": "txt" };
+
+/** The one range a player asks for (`bytes=2-5`, `bytes=7-`, `bytes=-3`), within `size`; "unsatisfiable" past it; undefined for none, or several. */
+function rangeOf(asked: string | undefined, size: number): { readonly start: number; readonly end: number } | "unsatisfiable" | undefined {
+  const match = /^bytes=(\d*)-(\d*)$/.exec(asked?.trim() ?? "");
+  if (!match || (match[1] === "" && match[2] === "")) return undefined;
+  const start = match[1] === "" ? Math.max(0, size - Number(match[2])) : Number(match[1]);
+  const end = match[1] === "" || match[2] === "" ? size - 1 : Math.min(size - 1, Number(match[2]));
+  return start >= size || start > end ? "unsatisfiable" : { start, end };
+}
 
 const takes = (kinds: readonly string[], type: string) => kinds.length === 0 || kinds.some((kind) => kind === "*" || kind === "*/*" || kind === type || kind === `${type.split("/")[0]}/*`);
 
@@ -81,16 +96,27 @@ export function devFilesHandler(options: DevFilesOptions = {}) {
       if (rest === "" || rest === "/") return sendJson(res, 200, { maxBytes, kinds });
       const file = kept.get(rest.replace(/^\//, ""));
       if (!file) return sendJson(res, 404, { error: "No file is kept at that address." });
-      const shown = file.type.startsWith("image/") || file.type === "application/pdf";
-      res.statusCode = 200;
+      const video = file.type.startsWith("video/");
+      const shown = file.type.startsWith("image/") || video || file.type === "application/pdf";
+      const range = video ? rangeOf(req.headers.range, file.bytes.length) : undefined;
+      if (range === "unsatisfiable") {
+        res.statusCode = 416;
+        res.setHeader("content-range", `bytes */${file.bytes.length}`);
+        res.end();
+        return;
+      }
+      const body = range ? file.bytes.subarray(range.start, range.end + 1) : file.bytes;
+      res.statusCode = range ? 206 : 200;
       res.setHeader("content-type", file.type);
-      res.setHeader("content-length", String(file.bytes.length));
+      res.setHeader("content-length", String(body.length));
+      if (video) res.setHeader("accept-ranges", "bytes");
+      if (range) res.setHeader("content-range", `bytes ${range.start}-${range.end}/${file.bytes.length}`);
       res.setHeader("x-content-type-options", "nosniff");
       // Never run as this app's page if it is opened, an SVG's script least of all: only a PDF's viewer needs to run.
       if (file.type !== "application/pdf") res.setHeader("content-security-policy", "sandbox");
       res.setHeader("cache-control", "private, max-age=31536000, immutable");
       res.setHeader("content-disposition", `${shown ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(file.name)}`);
-      res.end(file.bytes);
+      res.end(body);
       return;
     }
     if (req.method !== "POST") return sendJson(res, 405, { error: "Send a file with POST, or GET one by its address." });

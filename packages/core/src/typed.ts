@@ -129,11 +129,11 @@ export type ValueOf<F> = F extends { readonly type: "enum"; readonly options: re
     ? number
     : F extends { readonly type: "boolean" }
       ? boolean
-      : F extends { readonly type: "image" | "file" }
+      : F extends { readonly type: "image" | "video" | "file" }
         ? FileValue
         : F extends { readonly type: "list"; readonly of: "number" }
           ? readonly number[]
-          : F extends { readonly type: "list"; readonly of: "image" | "file" }
+          : F extends { readonly type: "list"; readonly of: "image" | "video" | "file" }
             ? readonly FileValue[]
             : F extends { readonly type: "list" }
               ? readonly string[]

@@ -1,10 +1,11 @@
 {
   "id": "tests-layout-unit",
   "name": "Tests Layout Unit",
-  "description": "15 files, primarily TypeScript",
+  "description": "Non-source files in packages: a-band-is-named-in-words.test.ts, a-focused-card-begins-below-the-trail.test.ts, a-focused-card-ends-above-the-row-under-it.test.ts (+13 more)",
   "files": [
     "packages/layout/tests/unit/a-band-is-named-in-words.test.ts",
     "packages/layout/tests/unit/a-focused-card-begins-below-the-trail.test.ts",
+    "packages/layout/tests/unit/a-focused-card-ends-above-the-row-under-it.test.ts",
     "packages/layout/tests/unit/a-link-names-no-prototype.test.ts",
     "packages/layout/tests/unit/a-name-that-fits.test.ts",
     "packages/layout/tests/unit/a-thumbnail-is-the-scenes-city.test.ts",
@@ -22,8 +23,8 @@
   "entryPoints": [],
   "cohesion": 1,
   "coupling": 0,
-  "fileCount": 15,
-  "lineCount": 2889,
+  "fileCount": 16,
+  "lineCount": 2938,
   "riskMetrics": {
     "cohesion": 1,
     "coupling": 0,

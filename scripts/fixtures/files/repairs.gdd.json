@@ -14,7 +14,8 @@
         "name": { "type": "string", "required": true },
         "status": { "type": "enum", "options": ["open", "done"], "default": "open", "required": true },
         "photos": { "type": "list", "of": "image", "description": "what it looks like" },
-        "papers": { "type": "list", "of": "file", "description": "the quote, the receipt, the warranty" }
+        "papers": { "type": "list", "of": "file", "description": "the quote, the receipt, the warranty" },
+        "clip": { "type": "video", "description": "what it sounds like" }
       }
     }
   },

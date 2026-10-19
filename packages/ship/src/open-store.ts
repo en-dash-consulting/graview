@@ -78,7 +78,8 @@ export interface OpenStoreOptions<S extends AnySchema> {
   readonly enabledModules?: readonly string[];
   /**
    * THE DAY TURNING (FR-176). The opened store is ticked at each midnight
-   * by the clock the rule language's `today()` reads (UTC), so a rule that
+   * by the clock the rule language's `today()` reads (the app's
+   * `brand.timeZone`, else UTC), so a rule that
    * reads the clock — "overdue" — is judged again with nothing changed and
    * its subscribers hear it, until `close()`. `false` leaves the ticking to
    * the host (`store.tick(now)`): one whose process sleeps through timers.
@@ -258,11 +259,20 @@ export async function openStore<S extends AnySchema>(
    * Read when asked, so a store open past midnight is judged on the new day.
    */
   const judged = storeOptions.invariantOptions;
-  if (!judged?.today && !(judged?.context as { today?: unknown } | undefined)?.today) {
-    const context = { ...judged?.context };
-    Object.defineProperty(context, "today", { enumerable: true, get: () => new Date(Date.now() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 10) });
-    (storeOptions as { invariantOptions?: unknown }).invariantOptions = { ...judged, context };
-  }
+  /*
+   * AN APP THAT SAYS ITS ZONE IS JUDGED ON ITS OWN DAY (Roadmap
+   * f-app-time-zone): the store reads the date in `brand.timeZone`, hands
+   * it to every rule, and ticks at that midnight, wherever the server runs.
+   */
+  const pinned = Boolean(judged?.today || (judged?.context as { today?: unknown } | undefined)?.today);
+  /*
+   * AND ONE THAT SAYS NONE, ON THE HOST'S OWN ZONE: the same day the host's
+   * clock shows, held as a zone rather than a pinned day, so the store ticks
+   * at the host's midnight and its subscribers hear the day turn (a pinned
+   * day never turns, and a served app's overdue loans waited for a restart).
+   */
+  const timeZone = storeOptions.timeZone ?? app.brand?.timeZone ?? (pinned ? undefined : Intl.DateTimeFormat().resolvedOptions().timeZone);
+  if (timeZone) (storeOptions as { timeZone?: string }).timeZone = timeZone;
   const store = new Store<S>({
     schema: app.schema,
     mutations: app.mutations ?? [],

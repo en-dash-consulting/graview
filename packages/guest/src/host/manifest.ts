@@ -1,4 +1,4 @@
-import type { AnySchema, Principal, Store } from "@graview/core";
+import { localeFor, timeZoneFor, type AnySchema, type Principal, type Store } from "@graview/core";
 import type { GuestAct, GuestEdge, GuestPlace, GuestProps, GuestTheme } from "../protocol.js";
 import type { GuestPictures } from "./pictures.js";
 import { plainNode, readAcross, type GuestViewInput } from "./session.js";
@@ -19,7 +19,9 @@ import { plainNode, readAcross, type GuestViewInput } from "./session.js";
  *                them and they stay editable
  *   pictures     true, or { width }: each file on a record it is handed
  *                comes as a `GuestFile`, a picture with an address the
- *                host made from the bytes (FR-175, pictures.ts)
+ *                host made from the bytes (FR-175, pictures.ts); and it
+ *                may place a record's video (`<graview-video>`) and open
+ *                the host's full-screen viewer (`data-lightbox`, media.ts)
  *
  * What it is handed is the viewer's sight — never more — cut down to the
  * kind it is attached to and what it reads. A record the viewer may not see
@@ -180,6 +182,9 @@ export function workerViewProps<S extends AnySchema>(store: Store<S>, principal:
     ...(input.flagged ? { flagged: visible(input.flagged) } : {}),
     acts,
     ...(given.theme ? { theme: given.theme } : {}),
+    // The locale and the clock every other surface says a day and a time in (Roadmap f-app-time-zone).
+    locale: localeFor(),
+    timeZone: timeZoneFor(),
     // A link names a place by its slug, so each slug once: a picture over several kinds is one place to a view.
     ...(given.places ? { places: given.places.filter((place, at, all) => all.findIndex((other) => other.as === place.as) === at).map(({ as, title, kind }) => ({ as, title, kind })) } : {}),
   };

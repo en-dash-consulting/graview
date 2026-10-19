@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
-import { appsNamed, frictionOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
+import { appsNamed, frictionOf, partOf, planJobs, regressionsOf, storeHookInPage } from "../scripts/lib/journeys.mjs";
 // @ts-expect-error — a plain module of the harness, with no types of its own.
 import { portFor } from "../scripts/lib/ports.mjs";
 
@@ -138,5 +138,36 @@ describe("narrowing a list", () => {
     const app = core.defineApp({ name: "Showroom", schema, mutations: [sell] });
     const narrow = planJobs({ app, core }).jobs.find((job: { id: string }) => job.id === "narrow");
     expect(narrow).toMatchObject({ kind: "car", field: "price", label: "Price", says: "Narrowing the cars by price" });
+  });
+});
+
+describe("finding one by part of its name", () => {
+  it("types the whole name where no word and no two words are its own (the twelfth walk)", () => {
+    const others = ["Hollow Daughters", "Hollow Daughters 7", "Hollow Daughters 3", "Small Daughters", "Hollow Harbor"];
+    expect(partOf("Hollow Daughters 7", others)).toBe("hollow daughters 7");
+    expect(partOf("Small Daughters", others)).toBe("small");
+  });
+});
+
+describe("relating two", () => {
+  it("is a job through a relation's derived connect where no act the app declares connects anything (the twelfth walk)", () => {
+    // A festival declared no act that ties a guest to a screening; `connect-guest-introduces` does, and the journeys never walked it.
+    const screening = core.defineNode("screening", { fields: core.z.object({ label: core.z.string() }), plural: "Screenings" });
+    const guest = core.defineNode("guest", {
+      fields: core.z.object({ label: core.z.string() }),
+      plural: "Guests",
+      edges: { introduces: { to: ["screening"], description: "the screenings they introduce", inverse: "who introduces it" } },
+    });
+    const schema = core.createSchema([guest, screening]);
+    const { defineMutation } = core.bindSchema(schema);
+    const invite = defineMutation("invite-guest", {
+      title: "Invite a guest",
+      creates: ["guest"],
+      input: core.z.object({ label: core.z.string() }),
+      apply: (ctx, args) => void ctx.addNode({ id: ctx.freshId(args.label, "guest"), kind: "guest", label: args.label }),
+    });
+    const app = core.defineApp({ name: "Festival", schema, mutations: [invite] });
+    const relate = planJobs({ app, core }).jobs.find((job: { id: string }) => job.id === "relate");
+    expect(relate).toMatchObject({ act: "connect-guest-introduces", kind: "guest", subjectArg: "id", otherArg: "to", otherKinds: ["screening"] });
   });
 });
