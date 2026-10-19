@@ -1,6 +1,6 @@
 import { fieldWords, pluralLabel, type AnySchema, type Place } from "@graview/core";
 import { aggregateId } from "@graview/layout/view";
-import { GhostDoor, Inspector, NotifyDoor, useInlineAiSection, useNotifySection } from "@graview/primitives/pages";
+import { GhostDoor, Inspector, NotifyDoor, PLACE_MENU_EVENT, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
@@ -207,6 +207,23 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     return () => document.removeEventListener("keydown", key);
   }, [root, openAt]);
 
+  /*
+   * THE PLACE MENU FROM THE BAR ABOVE (Roadmap f-place-menu-views): the
+   * place you are on and each place in its drop-down open this face's menu
+   * about the place, asked for with `PLACE_MENU_EVENT` on the face — the
+   * bar is drawn under the embed's provider, this menu under the face's.
+   */
+  useEffect(() => {
+    const face = root.current;
+    if (!face) return;
+    const asked = (event: Event) => {
+      const menu = (event as CustomEvent<PointerMenu>).detail;
+      if (menu) setMenuAt({ ...menu, face: "pages" });
+    };
+    face.addEventListener(PLACE_MENU_EVENT, asked);
+    return () => face.removeEventListener(PLACE_MENU_EVENT, asked);
+  }, [root, setMenuAt]);
+
   /* THE FACE'S OWN ROWS, beside the acts: going there, in a new tab, in the scene, changing the field, Find. */
   const own = useMemo<MenuSectionSource>(
     () => (target: MenuTarget) => {
@@ -259,7 +276,9 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   const inlineAi = useInlineAiSection();
   /* "Notify me…" (Roadmap f-notify-subscriptions), where the reader is somebody the app can tell. */
   const notify = useNotifySection();
-  const sections = useMemo(() => [change, own, ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, own, notify, inlineAi]);
+  /* Hide and Delete for a place this viewer may tidy (Roadmap f-place-menu-views), after the face's own rows. */
+  const tidy = useViewTidyingSection();
+  const sections = useMemo(() => [change, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, own, tidy, notify, inlineAi]);
 
   return (
     <MenuSections sections={sections}>

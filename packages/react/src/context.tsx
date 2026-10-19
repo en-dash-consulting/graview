@@ -18,7 +18,7 @@ import type {
   Store,
   ViewRegistry,
 } from "@graview/core";
-import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, type PagesArrangement, type SubscriptionStore } from "@graview/core";
+import { memorySubscriptions, openingOf, sayIn, tellTheWatchWhatIsUnseen, type Place, TIDIED_FROM, type KeptViews, type PagesArrangement, type SubscriptionStore } from "@graview/core";
 import { NO_AI, type AffordanceProvider, type HostAi } from "@graview/tools/frame";
 import { honorSetting, loadSetting, rememberSetting, type ReaderMemory } from "./settings.js";
 import { createSeatTalk, type KeepLensHost, type SeatTalk } from "./seat-talk.js";
@@ -237,6 +237,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly linkedRecords?: LinkedRecords | undefined;
   /** THE HOST'S SECTIONS OF THE CONTEXT MENU (`menuSections` on the provider, else the provider's around it). */
   readonly menuSections?: readonly MenuSectionSource[] | undefined;
+  /** THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (`keptViews` on the provider, else the provider's around it): read with `useKeptViews`. */
+  readonly keptViews?: KeptViews | undefined;
   /**
    * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): the host's
    * `subscriptions`, else the provider's around it, else this page's own,
@@ -538,6 +540,18 @@ export interface GraviewProviderProps<S extends AnySchema> {
    */
   readonly menuSections?: readonly MenuSectionSource[] | undefined;
   /**
+   * THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (Roadmap
+   * f-place-menu-views): `{ current, onChange, hide, show, remove, restore,
+   * lens? }` (`KeptViews` from `@graview/core`). Given, right-clicking a
+   * place in the bar or its drop-down offers Hide and Delete for a script
+   * view — and, with `lens`, a declared lens — where `current().may` says
+   * this viewer may, and the drop-down's foot lists what is Hidden and
+   * Recently deleted. The views it lists as hidden or deleted are tidied
+   * out of the registry the frame hands its faces (`useTidiedViews`).
+   * Unsaid, the provider around this one's, else nothing is offered.
+   */
+  readonly keptViews?: KeptViews | undefined;
+  /**
    * WHERE "NOTIFY ME" IS KEPT (Roadmap f-notify-subscriptions): a person's
    * subscriptions — made from the context menu, a record's page, after an
    * act, or by the chat — are kept here: `{ list, add, remove, onChange? }`
@@ -628,6 +642,7 @@ export function GraviewProvider<S extends AnySchema>({
   history,
   linkedRecords,
   menuSections,
+  keptViews: hostKeptViews,
   subscriptions: hostSubscriptions,
   signIn: hostSignIn,
   view,
@@ -638,6 +653,7 @@ export function GraviewProvider<S extends AnySchema>({
   const around = useContext(GraviewContext);
   const hostSections = menuSections ?? around?.menuSections;
   const signIn = hostSignIn ?? around?.signIn;
+  const keptViews = hostKeptViews ?? around?.keptViews;
   /* Who is at the keyboard: see "WHO IS AT THE KEYBOARD" below. */
   const [seated, setSeated] = useState<Principal | null>(null);
   const seatNow = seated ?? principal ?? seats[0]?.principal ?? ANONYMOUS;
@@ -1063,6 +1079,7 @@ export function GraviewProvider<S extends AnySchema>({
       resolveApp,
       linkedRecords,
       menuSections: hostSections,
+      ...(keptViews ? { keptViews } : {}),
       subscriptions,
       signIn,
       linkedReads,
@@ -1118,6 +1135,7 @@ export function GraviewProvider<S extends AnySchema>({
       resolveApp,
       linkedRecords,
       hostSections,
+      keptViews,
       subscriptions,
       signIn,
       linkedReads,
@@ -1406,9 +1424,11 @@ export function useScenePointer(): ScenePoint | null {
  */
 const LANDED = new WeakSet<object>();
 /** Whether the visit drawn with these views has already landed where `pages.first` says. */
-export const hasLanded = (views: object): boolean => LANDED.has(views);
+export const hasLanded = (views: object): boolean => LANDED.has(untidied(views));
 /** The visit drawn with these views has landed: `pages.first` is not taken again. */
-export const markLanded = (views: object): void => void LANDED.add(views);
+export const markLanded = (views: object): void => void LANDED.add(untidied(views));
+/** The registry a tidied one is over (`tidyViews`): a view hidden or deleted is not a new visit. */
+const untidied = (views: object): object => (views as { readonly [TIDIED_FROM]?: object })[TIDIED_FROM] ?? views;
 
 /**
  * THE VIEW A DECLARATION OPENS ON (FR-80): `pages.first` as the registry

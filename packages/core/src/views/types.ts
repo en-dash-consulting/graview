@@ -37,6 +37,10 @@ export interface ViewRegistration<V = unknown> {
   readonly over?: readonly string[];
   /** A place kept off the lists (`ViewMeta.hidden`). */
   readonly hidden?: boolean;
+  /** The name the host keeps this view by (`ViewMeta.name`). */
+  readonly name?: string;
+  /** A lens the declaration declares (`ViewMeta.declared`). */
+  readonly declared?: boolean;
 }
 
 /**
@@ -80,6 +84,20 @@ export interface ViewMeta {
    * a person can find.
    */
   readonly hidden?: boolean;
+  /**
+   * THE NAME THE HOST KEEPS THIS VIEW BY: a script view's manifest name
+   * (`registerWorkerView` says it). What the place menu hands the host's
+   * `keptViews` to hide, show, delete and restore it (Roadmap
+   * f-place-menu-views); a view the app's own code registers says none,
+   * and the place menu offers it neither.
+   */
+  readonly name?: string;
+  /**
+   * A LENS THE DECLARATION DECLARES (`app.lenses`), registered by
+   * `registerDeclaredLenses`: hidden and deleted as a change to the
+   * declaration (`set-lens-hidden`, `remove-lens`), by whoever may change it.
+   */
+  readonly declared?: boolean;
 }
 
 /** A named group view: somewhere to go, by name. */
@@ -105,6 +123,10 @@ export interface Place {
   readonly over?: readonly string[];
   /** Kept off the lists (`ViewMeta.hidden`): reached by its address, a link or `navigate`, never offered. */
   readonly hidden?: boolean;
+  /** The name the host keeps it by (`ViewMeta.name`): a script view's. */
+  readonly name?: string;
+  /** A lens the declaration declares (`ViewMeta.declared`). */
+  readonly declared?: boolean;
 }
 
 /** A place as the lists compare it: its name, its kind, and every kind when it is one picture over several. */
@@ -262,7 +284,7 @@ export function createViewRegistry<S extends AnySchema, V = unknown>(
     homeView: () => homeView,
     register(kind, cell, view, meta) {
       // One picture over several kinds says so on each registration and each place it makes; one kept off the lists, likewise.
-      const over = { ...(meta?.over?.[1] ? { over: meta.over } : {}), ...(meta?.hidden ? { hidden: true } : {}) };
+      const over = { ...(meta?.over?.[1] ? { over: meta.over } : {}), ...(meta?.hidden ? { hidden: true } : {}), ...(meta?.name ? { name: meta.name } : {}), ...(meta?.declared ? { declared: true } : {}) };
       const registration: ViewRegistration<V> = {
         kind,
         cardinality: cell.cardinality,

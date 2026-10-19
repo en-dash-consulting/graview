@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page handed a compiled app",
+  "minified": 5177,
+  "gzipped": 1692,
+  "changeset": "a-place-is-tidied-from-its-menu.md",
+  "note": "Raised when the place menu's Hide and Delete for a view (Roadmap f-place-menu-views): the bar's places open the Pages menu by a right-click, Shift+F10, the menu key or a long press (`usePlaceMenu`), the frame's registry tidied as the host's `keptViews` say (`tidyViews`, `useTidiedViews`), and whether the places' foot has a Hidden or Recently deleted to list; the foot itself is fetched with the bar's panes. 5_177 / 1_692 more than before it (531_019 / 183_902): measured at 536_196 / 185_594."
+}

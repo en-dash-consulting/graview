@@ -108,7 +108,8 @@ describe("registering a worker view", () => {
     const before = () => null;
     views.register("package", { cardinality: "many", fidelity: "full" }, before);
     registerWorkerView(views, definition);
-    expect(views.places()).toEqual([{ kind: "package", title: "The packages", as: "the-packages" }]);
+    // Under the name the host keeps it by, which the place menu hands back to hide or delete it (Roadmap f-place-menu-views).
+    expect(views.places()).toEqual([{ kind: "package", title: "The packages", as: "the-packages", name: "packages" }]);
     expect(views.lookup("package", { cardinality: "many", fidelity: "full" })).not.toBe(before);
   });
   it("draws a home view as the home's own view (FR-81) on both faces, over the home the app declared, and on no kind", () => {

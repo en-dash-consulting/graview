@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 9748,
+  "gzipped": 3626,
+  "note": "Raised when the place menu's Hide and Delete for a view (Roadmap f-place-menu-views): the bar's places open the Pages menu by a right-click, Shift+F10, the menu key or a long press (`usePlaceMenu`), the frame's registry tidied as the host's `keptViews` say (`tidyViews`, `useTidiedViews`), and whether the places' foot has a Hidden or Recently deleted to list; the foot itself is fetched with the bar's panes, and both faces' menus offer Hide and Delete for a place. 9_748 / 3_626 more than before it (2_238_063 / 744_879): measured at 2_247_811 / 748_505."
+}

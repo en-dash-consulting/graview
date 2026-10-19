@@ -67,6 +67,7 @@ const NOT_ON_THE_RUNTIME: Readonly<Record<string, string>> = {
   SERVE_USAGE: "the CLI",
   backendFrom: "the CLI",
   subscriptionsFileOf: "the CLI",
+  fileViews: "node:fs",
   syncSeed: "the CLI",
   StoreBackend: "the CLI",
   holdBackend: "the CLI",

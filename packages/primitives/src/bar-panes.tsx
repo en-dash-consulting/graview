@@ -9,6 +9,8 @@ import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.j
 export { Here, sayTheirChange } from "./here.js";
 /* What has happened, on the routed face's bar (FR-152): `BarActivity`. */
 export { ActivityRail } from "./workbench/activity.js";
+/* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): `TidyGroups`. */
+export { TidyGroups } from "./view-tidying.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*

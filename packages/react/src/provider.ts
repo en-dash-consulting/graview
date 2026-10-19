@@ -36,6 +36,8 @@ export type { PointerStore, ScenePoint } from "./pointer.js";
 export { applySettings, honorSetting, loadSetting, rememberSetting } from "./settings.js";
 export type { ReaderMemory } from "./settings.js";
 export { createViews, layerViews } from "./view-registry.js";
+// The host's views as the place menu tidies them (Roadmap f-place-menu-views).
+export { useKeptViews, useKeptViewsState, useTidiedViews } from "./kept-views.js";
 export { DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage } from "./view-marks.js";
 export { DefaultDrawnElsewhere } from "./default-elsewhere.js";
 export type { Cardinality, Fidelity, ReactViewRegistry, ViewCell, ViewComponent, ViewProps } from "./view-registry.js";

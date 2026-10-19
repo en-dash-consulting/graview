@@ -29,6 +29,9 @@ export { openRemote, RemoteRefusedError, seatHeaders } from "./remote.js";
 // Notify me (Roadmap f-notify-subscriptions): the asking seat's subscriptions on a served store.
 export { remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
 export type { RemoteSubscriptionsOptions } from "./remote-subscriptions.js";
+// The views a person tidies from the place menu (Roadmap f-place-menu-views): `keptViews` over a served store.
+export { remoteViews, VIEWS_PATH } from "./remote-views.js";
+export type { RemoteViewsOptions, ViewsPost } from "./remote-views.js";
 // The host's files at an address, for a page's `files` (FR-163): what the dev door answers.
 export { filesAt } from "./files-at.js";
 export { SEAT_HEADERS } from "./seat-headers.js";

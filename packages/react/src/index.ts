@@ -20,6 +20,7 @@ export { applySettings, honorSetting, loadSetting, rememberSetting } from "./set
 export type { ReaderMemory } from "./settings.js";
 
 export { createViews, layerViews } from "./view-registry.js";
+export { useKeptViews, useKeptViewsState, useTidiedViews } from "./kept-views.js";
 export { DEFAULT_VIEW, isDefaultView, markDefaultView, markReplacesPage, REPLACES_PAGE, replacesPage } from "./view-marks.js";
 export { DefaultDrawnElsewhere } from "./default-elsewhere.js";
 export { ErrorReportContext } from "./error-report.js";

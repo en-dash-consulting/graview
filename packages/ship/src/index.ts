@@ -40,6 +40,12 @@ export { remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./remote-subscriptions.
 export type { SubscriptionsAnswer, SubscriptionsPost } from "./subscriptions.js";
 export type { RemoteSubscriptionsOptions } from "./remote-subscriptions.js";
 export { fileSubscriptions } from "./file-subscriptions.js";
+// The views a person tidies from the place menu (Roadmap f-place-menu-views): the route's answer, its client, and the file `graview serve` keeps them in.
+export { answerViews, keepsTheApp, VIEWS_PATH } from "./views.js";
+export type { ViewsAnswer, ViewsPost } from "./views.js";
+export { remoteViews } from "./remote-views.js";
+export type { RemoteViewsOptions } from "./remote-views.js";
+export { fileViews } from "./file-views.js";
 export { GOOGLE_TOKEN_URL, runConnections, sayReport } from "./connections.js";
 export type { ConnectionStates, ConnectionStateStore, ConnectionTokenRequest, RunConnectionsOptions, RunningConnections } from "./connections.js";
 export { fileConnectionState, readEnvFile } from "./connections-file.js";

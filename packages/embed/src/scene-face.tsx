@@ -1,6 +1,6 @@
 import type { AnySchema } from "@graview/core";
 import type { Scheme } from "@graview/core";
-import { DraftDoor, GhostDoor, InlineAiSections, Inspector, LinesKey, MapPanel, NotifyDoor, NotifySections, OverviewButton, PastBar, QuickAskDoor, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, ShowInstallation, useCallLog, viewsCss } from "@graview/primitives/scene";
+import { DraftDoor, GhostDoor, InlineAiSections, Inspector, LinesKey, MapPanel, NotifyDoor, NotifySections, OverviewButton, PastBar, QuickAskDoor, SceneBarTools, SceneTrail, sceneCss, SceneWayBack, ShowInstallation, useCallLog, viewsCss, ViewTidyingSections } from "@graview/primitives/scene";
 import { useBarFind } from "@graview/primitives/frame";
 import { useMemo } from "react";
 import { BesideTheMap, Scene, UrlSync } from "@graview/react";
@@ -53,7 +53,10 @@ export function SceneFace<S extends AnySchema>({ address = false, auto, quickAsk
       {/* The acts at the pointer, and the inline AI's part of the menu where the host gave a model, as on the whole-page Shell. */}
       <NotifySections>
         <InlineAiSections>
-          <Inspector placement="menu" />
+          {/* Hide and Delete for a place, opened from the bar's places (Roadmap f-place-menu-views). */}
+          <ViewTidyingSections>
+            <Inspector placement="menu" />
+          </ViewTidyingSections>
         </InlineAiSections>
       </NotifySections>
       {/* The sheet "Notify me…" opens (Roadmap f-notify-subscriptions). */}

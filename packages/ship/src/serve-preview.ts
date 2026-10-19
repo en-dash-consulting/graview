@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join, normalize, resolve, sep } from "node:path";
-import { createMemoryAdapter, type AnySchema, type GraviewApp, type PersistenceAdapter, type Principal, type Store } from "@graview/core";
+import { createMemoryAdapter, memoryViews, placeSlug, type AnySchema, type GraviewApp, type LensTidyEdit, type PersistenceAdapter, type Principal, type RemovedView, type Store } from "@graview/core";
+import { editDocument } from "@graview/core/document";
 import { compileDocument } from "@graview/core/check";
 import { sayFindings, serializeCompiled } from "@graview/core/compiled";
 import { runConnections, type RunConnectionsOptions, type RunningConnections } from "./connections.js";
@@ -104,7 +105,41 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
   if (!compiled.ok) throw new Error(`The document does not compile:\n${sayFindings(compiled.findings)}`);
   const app = compiled.app as GraviewApp<AnySchema>;
   const principal = options.principal ?? previewPrincipal(options.document);
-  const handed = JSON.stringify({ document: options.document, compiled: serializeCompiled(compiled), principal });
+  let document = options.document;
+  let handed = JSON.stringify({ document, compiled: serializeCompiled(compiled), principal });
+  /*
+   * A DECLARED LENS HIDDEN OR DELETED FROM THE PLACE MENU (Roadmap
+   * f-place-menu-views): the change written into the document this preview
+   * holds, which the page asks for again (`remoteViews`' `onDeclaration`);
+   * a deleted lens kept as it was, so Restore puts it back where it stood.
+   */
+  const removedLenses = new Map<string, { readonly lens: Record<string, unknown>; readonly at: number }>();
+  const lensesOf = (doc: unknown) => ((doc as { lenses?: Record<string, unknown>[] }).lenses ?? []).filter((lens) => typeof lens === "object" && lens !== null);
+  const write = (edits: readonly unknown[]) => {
+    const edited = editDocument(document as never, edits);
+    if (!edited.ok) throw new Error(edited.findings.map((finding) => finding.message).join(" "));
+    const next = compileDocument(edited.document);
+    if (!next.ok) throw new Error(sayFindings(next.findings));
+    document = edited.document;
+    handed = JSON.stringify({ document, compiled: serializeCompiled(next), principal });
+  };
+  const declaration = {
+    change(edit: LensTidyEdit) {
+      if (edit.op === "remove-lens") {
+        const lenses = lensesOf(document);
+        const at = lenses.findIndex((lens) => typeof lens["title"] === "string" && placeSlug(lens["title"]) === placeSlug(edit.title));
+        if (at >= 0) removedLenses.set(edit.title, { lens: lenses[at]!, at });
+      }
+      write([edit]);
+    },
+    restore(removed: RemovedView) {
+      const held = removedLenses.get(removed.title);
+      if (!held) throw new Error(`"${removed.title}" was deleted before this preview started, so it cannot be put back from here.`);
+      const { name, title, on, bindings, options: lensOptions, create } = held.lens as { name?: string; title: string; on?: string; bindings?: unknown; options?: unknown; create?: boolean };
+      write([{ op: "add-lens", title, ...(name ? { lens: name } : {}), ...(on ? { on } : {}), ...(bindings ? { bindings } : {}), ...(lensOptions ? { options: lensOptions } : {}), ...(create === false ? { create } : {}), at: held.at }]);
+      removedLenses.delete(removed.title);
+    },
+  };
   const root = resolve(options.page);
 
   /*
@@ -148,6 +183,9 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     // And only its own page: a page on another site, or one rebinding its own name to this machine, may not sit in that seat.
     ownOrigin: true,
     where: options.where ?? "memory (gone when the preview stops)",
+    // The page's seat may tidy every view, the declaration's lenses among them, which this preview writes into its document.
+    views: memoryViews({ may: { views: true, lenses: true }, declaration }),
+    mayTidyViews: () => ({ views: true, lenses: true }),
     answer,
   });
   opened = served as unknown as ServedStore<AnySchema>;

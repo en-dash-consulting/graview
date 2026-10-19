@@ -1,6 +1,7 @@
 import {
   foldPresence,
   memorySubscriptions,
+  memoryViews,
   nextExpiry,
   PRESENCE_TTL_MS,
   VISITOR_PRESENCE_TTL_MS,
@@ -18,6 +19,8 @@ import {
   type Subscription,
   type SubscriptionMatch,
   type SubscriptionStore,
+  type KeptViews,
+  type KeptViewsMay,
 } from "@graview/core";
 import { judgeWithLines } from "@graview/core/lines";
 import { matchSubscriptions } from "@graview/core/subscriptions";
@@ -44,6 +47,8 @@ import { openStore, type OpenedStore } from "./open-store.js";
 import { SEAT_HEADERS } from "./seat-headers.js";
 import { answerSubscriptions } from "./subscriptions.js";
 import { SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
+import { VIEWS_PATH } from "./remote-views.js";
+import { answerViews, keepsTheApp } from "./views.js";
 import type { GraphSnapshot } from "./snapshot.js";
 
 /**
@@ -106,6 +111,7 @@ export const WIRE = [
   { method: "GET", path: "/graview/who", says: "who is here right now" },
   { method: "POST", path: "/graview/leave", says: "say you have gone — only ever yourself" },
   { method: "GET", path: SUBSCRIPTIONS_PATH, says: "the asking seat's own subscriptions (Notify me); POST `{ add: { when, alsoMine? } }` keeps one for the seat's person, `{ remove: id }` takes one of theirs away; 400 with a sentence when it could never be told anything, 403 for a seat with no id" },
+  { method: "GET", path: VIEWS_PATH, says: "the views the asking seat may tidy from the place menu: what is hidden, what was deleted in the last thirty days, and `may`; POST `{ hide | show | remove | restore: name }` for a script view the host keeps, `{ lens: set-lens-hidden | remove-lens }` for a declared lens where the host writes the declaration; answered with the state after it, 403 with a sentence where the seat may not" },
   { method: "GET", path: LIVE_PATH, says: "the live wire: a WebSocket of hello/welcome, call/undo/ack/refused/conflict/busy, ops and presence, declaration and reload; 426 to a plain request" },
 ] as const;
 
@@ -225,6 +231,19 @@ interface HandlerOptions<S extends AnySchema> {
    * beside the store (`fileSubscriptions`).
    */
   readonly subscriptions?: SubscriptionStore;
+  /**
+   * THE VIEWS A PERSON TIDIES FROM THE PLACE MENU (Roadmap
+   * f-place-menu-views): the host's `KeptViews`, served to each seat at
+   * `/graview/views`. Unsaid, the handler keeps them in memory for as long
+   * as it runs; `graview serve` keeps them in a file beside the store.
+   */
+  readonly views?: KeptViews;
+  /**
+   * WHAT A SEAT MAY TIDY: script views (an owner or an editor) and declared
+   * lenses (the owner). Unsaid, whoever keeps the app (`keepsTheApp`) may
+   * do both — the lenses only where `views` writes the declaration.
+   */
+  readonly mayTidyViews?: (seat: Principal) => KeptViewsMay;
   /**
    * THE HOST'S HOOK: told once per committed batch per subscription it
    * matches, judged as the subscriber may see — what Graview Cloud turns
@@ -536,6 +555,8 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
   let holding: string | undefined;
   /** Where "Notify me" is kept: the host's, else this handler's memory for as long as it runs. */
   const subscriptions = options.subscriptions ?? memorySubscriptions();
+  /** The views a person tidies: the host's, else this handler's memory. */
+  const keptViews = options.views ?? memoryViews();
   let serving = serve(options.app, options.store as unknown as Store<AnySchema>, options.flush, options.migrated ?? []);
   /** Set while the declaration is being changed: every request and message waits for it. */
   let changing: Promise<void> | undefined;
@@ -712,6 +733,14 @@ function storeHandler<S extends AnySchema>(options: HeldStoreHandlerOptions<S>, 
 
     if (url.pathname === SUBSCRIPTIONS_PATH) {
       const answer = await answerSubscriptions(request.method, request.method === "POST" ? await read(request) : undefined, await seat(), { store, app: app.name, subscriptions });
+      return send(answer.status, answer.body);
+    }
+
+    if (url.pathname === VIEWS_PATH) {
+      const asking = await seat();
+      const keeps = keepsTheApp(store as never, asking);
+      const may = options.mayTidyViews?.(asking) ?? { views: keeps, lenses: keeps };
+      const answer = await answerViews(request.method, request.method === "POST" ? await read(request) : undefined, may, keptViews);
       return send(answer.status, answer.body);
     }
 
