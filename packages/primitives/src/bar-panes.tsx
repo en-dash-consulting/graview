@@ -1,6 +1,10 @@
 import { humanizeField, type AnySchema, type AnyGraphNode, type Violation } from "@graview/core";
-import { useGraview } from "@graview/react/provider";
+import { retryingImport } from "@graview/core/retry";
+import { lazyModule, useGraview } from "@graview/react/provider";
+import { hoverChipsOn } from "@graview/tools/frame";
+import { Suspense, type CSSProperties } from "react";
 import { choiceStyle } from "./choice.js";
+import type { BarGo } from "./app-bar.js";
 import type { HostAction } from "./profile.js";
 import { Seats } from "./seats.js";
 import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.js";
@@ -9,7 +13,24 @@ import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.j
 export { Here, sayTheirChange } from "./here.js";
 /* What has happened, on the routed face's bar (FR-152): `BarActivity`. */
 export { ActivityRail } from "./workbench/activity.js";
+/*
+ * The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views),
+ * fetched with the tidying when it is first drawn: the panes are fetched
+ * with the first page, and the tidying with the first right-click.
+ */
+export const TidyFoot = /* @__PURE__ */ lazyModule(retryingImport(() => import("./view-tidying.js"))).part(
+  (tidying, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <tidying.TidyGroups {...props} />,
+  { quiet: true },
+);
+/* What opens the place menu, on the first right-click, key or resting finger on a place (Roadmap f-place-menu-views). */
+export { placeGesture } from "./place-menu.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
+
+/* The reader's switch for hover chips, fetched with them, only where the host offers them: a page whose host did not ask carries neither. */
+const ChipsSwitch = /* @__PURE__ */ lazyModule(retryingImport(() => import("./hover-chips.js"))).part(
+  (module, props: { readonly legend: CSSProperties; readonly style: CSSProperties; readonly choice: (chosen: boolean) => CSSProperties }) => <module.HoverChipsSwitch {...props} />,
+  { quiet: true },
+);
 
 /*
  * WHAT IS BEHIND THE BAR'S TOOLS (FR-131), fetched when one is first reached
@@ -119,7 +140,7 @@ export function ProfilePane<S extends AnySchema>({
   /** A quiet "Built with Graview" at the menu's foot, when the host asks for one. */
   readonly signature?: boolean | undefined;
 }) {
-  const { principal, seats, settings, settingValues, chooseSetting, sharing } = useGraview<S>();
+  const { principal, seats, settings, settingValues, chooseSetting, sharing, ai } = useGraview<S>();
   const roles = principal.roles ?? [];
   const popover = { setOpen: (_open: false) => close() };
   return (
@@ -259,6 +280,12 @@ export function ProfilePane<S extends AnySchema>({
                 </fieldset>
               ))}
             </div>
+          ) : null}
+
+          {hoverChipsOn(ai) ? (
+            <Suspense fallback={null}>
+              <ChipsSwitch legend={eyebrow} style={ruled} choice={choiceStyle} />
+            </Suspense>
           ) : null}
 
           {scheme !== undefined && onScheme !== undefined ? (

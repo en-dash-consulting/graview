@@ -64,8 +64,8 @@ const arrive = async (page, url) => {
 };
 
 const PAGES = [
-  /* The prompt and the recipe it opens on, the rota and the rule, live; the other recipes mount when their tab is chosen. */
-  { file: "index.html", name: "the page", live: 3, skip: "#what" },
+  /* The prompt and the recipe it opens on, the season the asks reshape, the rota and the rule, live; the other recipes mount when their tab is chosen. */
+  { file: "index.html", name: "the page", live: 4, skip: "#what" },
   /* The long tour, moved off the front page: eight feature frames and the first step of the stepper. */
   { file: "tour.html", name: "the tour", live: 9, skip: "#tour" },
   /* Sixteen chapters and the kit's own frame. */
@@ -356,6 +356,47 @@ try {
     return !!box && box.width > 200 && box.height > 150 && (document.getElementById("prompt-text")?.textContent ?? "").includes("start.md");
   });
   await bare.close();
+
+  /*
+   * THE INTERFACE IS GENERATED, THEN ASKED FOR. The hero's run does not stop
+   * at a working app: it ends on the modules redrawn as a departures board,
+   * a worker view the view host runs, with the three docs its repair wrote
+   * reading WRITTEN. And under it each ask redraws the same season: the
+   * list a person asked for has Sign up on the game nobody brings snacks
+   * to, the newspaper has a WANTED ad for it. A view's drawing is in a
+   * shadow root, so its words are read there.
+   */
+  const asked = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await arrive(asked, pageAt("index.html"));
+  const drawnIn = (selector, words) =>
+    asked
+      .waitForFunction(
+        ({ selector, words }) => {
+          const host = document.querySelector(selector);
+          if (!host) return false;
+          const said = [...host.querySelectorAll("*")].map((el) => el.shadowRoot?.textContent ?? "").join(" ");
+          return words.every((word) => said.includes(word));
+        },
+        { selector, words },
+        { timeout: 45_000, polling: 250 },
+      )
+      .then(() => true, () => false);
+  await asked.locator("#stage-docs").scrollIntoViewIfNeeded();
+  report.criteria.theHeroRunEndsOnTheDeparturesBoard =
+    (await drawnIn("#stage-docs", ["DEPARTURES", "WRITTEN", "packages/search"])) &&
+    (await asked.evaluate(() => document.querySelector('#hero-run li[data-step="ask"]')?.classList.contains("now") === true && document.querySelector("#stage-docs [data-graview-face]")?.getAttribute("data-graview-face") === "pages"));
+  await asked.locator("#asks").scrollIntoViewIfNeeded();
+  await asked.waitForFunction(() => document.querySelector('[data-graview-app="season"] [data-graview-embed]') !== null, null, { timeout: 20_000 }).catch(() => {});
+  const generatedSays = await asked
+    .waitForFunction(() => (document.querySelector('[data-graview-app="season"]')?.textContent ?? "").includes("Brookside Bears"), null, { timeout: 20_000 })
+    .then(() => true, () => false);
+  await asked.click('.ask-chips [data-ask="remaining-games"]');
+  const listSays = await drawnIn('[data-graview-app="season"]', ["Brookside Bears", "Sign up", "One still needs snacks."]);
+  await asked.click('.ask-chips [data-ask="courier"]');
+  const paperSays = await drawnIn('[data-graview-app="season"]', ["The Comets Courier", "WANTED", "Brookside Bears game"]);
+  report.asks = { generatedSays, listSays, paperSays };
+  report.criteria.eachAskRedrawsTheSameSeasonWithItsRuleShowing = generatedSays && listSays && paperSays;
+  await asked.close();
 
   /*
    * THE SITE OPENS AS ITS OWN APP, one click from the landing page: the

@@ -163,7 +163,7 @@ export async function launchCanaryGpu({ headless = true, extraArgs = [] } = {}) 
 }
 
 /** Google's webfont hosts, which the apps' pages ask for their faces. */
-const WEBFONTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com\//;
+export const WEBFONTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com\//;
 
 /**
  * ARRIVE WITHOUT ASKING SOMEBODY ELSE'S NETWORK, for a harness that measures

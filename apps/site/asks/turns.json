@@ -1,0 +1,50 @@
+{
+  "about": "The asks graview.dev shows, as they were answered: each the words a person typed, the app they typed them in, and the worker view that came back — its manifest here, its script beside this file. The page replays these; nothing calls a model when the site is built or read. tests/site-asks.test.ts runs each view headless against its app, as the host would, and holds what it draws to what the page says it draws.",
+  "turns": [
+    {
+      "name": "departures",
+      "app": "docs",
+      "ask": "Make the modules page look like an airport departures board.",
+      "answer": "Drew the modules as a split-flap departures board: gate, crew and status off the graph, the docs written today in WRITTEN.",
+      "view": "docs/departures.js",
+      "manifest": {
+        "name": "departures",
+        "title": "Departures",
+        "attach": "module",
+        "cardinality": "many",
+        "reads": { "kinds": ["doc", "person"], "edges": ["documentedIn", "ownedBy"] }
+      },
+      "path": "/places/departures"
+    },
+    {
+      "name": "remaining-games",
+      "app": "season",
+      "ask": "Give me a list view of remaining games and who's bringing snacks",
+      "answer": "Drew the games still to play, soonest first, each with the family bringing snacks, and Sign up on the one nobody has taken.",
+      "view": "season/remaining-games.js",
+      "manifest": {
+        "name": "remaining-games",
+        "title": "Remaining games",
+        "attach": "game",
+        "cardinality": "many",
+        "reads": { "kinds": ["family"], "edges": ["snacksBy"] },
+        "acts": ["bring-snacks"]
+      },
+      "path": "/places/remaining-games"
+    },
+    {
+      "name": "courier",
+      "app": "season",
+      "ask": "Make this app look more like a physical newspaper",
+      "answer": "Drew the front page as a weekly paper: the next game as the lead story, the results, the snack duty, and a WANTED ad for each game nobody brings snacks to.",
+      "view": "season/newspaper.js",
+      "manifest": {
+        "name": "courier",
+        "attach": "home",
+        "cardinality": "many",
+        "reads": { "kinds": ["game", "family"], "edges": ["snacksBy"] }
+      },
+      "path": "/"
+    }
+  ]
+}

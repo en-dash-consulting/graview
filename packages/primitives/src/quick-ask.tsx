@@ -1,5 +1,5 @@
 import { layer, pluralOf, type AnySchema } from "@graview/core";
-import { aiTargetOf, catalogOf, recordsOfTarget, type AiCandidate, type AiTarget } from "@graview/core/catalog";
+import { aiTargetOf, catalogOf, existingViewsOf, recordsOfTarget, type AiCandidate, type AiTarget } from "@graview/core/catalog";
 import { search } from "@graview/core/search";
 import { useAiDeskState, useGraview } from "@graview/react/provider";
 import { applyAffordance, deriveAffordances, previewAffordance } from "@graview/tools/derive";
@@ -8,7 +8,7 @@ import type { Affordance } from "@graview/tools/frame";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { askOf, drawPanel, GhostTray, takeOffer } from "./inline-ai-menu.js";
 import { useInlineEnv } from "./inline-ai-env.js";
-import type { QuickAskOpening } from "./quick-ask-desk.js";
+import { openQuickAsk, type QuickAskOpening } from "./quick-ask-desk.js";
 import { VISUALLY_HIDDEN } from "./primitives/measure.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
@@ -175,6 +175,26 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
         out.push({ id: `act:${affordance.id}`, kind: "act", label: affordance.label, hint: affordance.open.length > 0 ? "asks more" : "do it", take: () => act(affordance) });
       }
     }
+    /*
+     * A VIEW THE APP ALREADY HAS, BEFORE A NEW ONE: the places the words
+     * fit, best first, ahead of a panel drawn new. One that fits in part is
+     * opened with the bar on it, the words asked of it there.
+     */
+    // A question is asked of the model, Enter on it asking: no view stands ahead of its Ask row.
+    const existing = typed && !/\?\s*$/.test(typed) ? existingViewsOf(env.store, target, { principal: env.principal, places: env.places, said: typed }) : [];
+    for (const view of existing) {
+      out.push({
+        id: `place:${view.place}`,
+        kind: "place",
+        label: view.fit === "full" ? `Open ${view.title}` : `Open and adjust ${view.title}`,
+        hint: view.fit === "full" ? "a view you have" : "adjust it",
+        take: () => {
+          close();
+          env.goTo.place(view.place);
+          if (view.fit === "partial") openQuickAsk(env.desk, { target: { on: "lens", place: view.place, ...(view.kind ? { kind: view.kind } : {}) }, asked: typed });
+        },
+      });
+    }
     if (!going) {
       const panels = catalog.candidates.filter((candidate): candidate is Extract<AiCandidate, { type: "panel" }> => candidate.type === "panel");
       for (const panel of panels.filter((one) => fits(`show ${one.label}`, wanted)).slice(0, MOST.show)) {
@@ -191,7 +211,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
       }
     }
     if (!showing) {
-      for (const place of env.places.filter((one) => fits(one.title, wanted)).slice(0, MOST.place)) {
+      for (const place of env.places.filter((one) => fits(one.title, wanted) && !existing.some((view) => view.place === one.as)).slice(0, MOST.place)) {
         out.push({ id: `place:${place.as}`, kind: "place", label: `Go to ${place.title}`, take: () => (close(), env.goTo.place(place.as)) });
       }
       if (wanted.length > 0) {

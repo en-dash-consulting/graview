@@ -1,0 +1,29 @@
+{
+  "nodes": [
+    { "id": "game-rockets", "kind": "game", "opponent": "Riverside Rockets", "date": "2026-09-12", "kickoff": "9:00 AM", "where": "home", "field": "Hillcrest Park, Field 2", "status": "played", "score": "3–1" },
+    { "id": "game-otters", "kind": "game", "opponent": "Oak Park Otters", "date": "2026-09-19", "kickoff": "10:30 AM", "where": "away", "field": "Oak Park, Field 1", "status": "played", "score": "2–2" },
+    { "id": "game-mustangs", "kind": "game", "opponent": "Maple Grove Mustangs", "date": "2026-09-26", "kickoff": "9:00 AM", "where": "home", "field": "Hillcrest Park, Field 2", "status": "played", "score": "1–4" },
+    { "id": "game-lightning", "kind": "game", "opponent": "Lakeside Lightning", "date": "2026-10-03", "kickoff": "11:00 AM", "where": "away", "field": "Lakeside Commons", "status": "played", "score": "2–0" },
+    { "id": "game-cyclones", "kind": "game", "opponent": "Cedar Hill Cyclones", "date": "2026-10-24", "kickoff": "9:00 AM", "where": "home", "field": "Hillcrest Park, Field 2", "status": "upcoming" },
+    { "id": "game-bears", "kind": "game", "opponent": "Brookside Bears", "date": "2026-10-31", "kickoff": "10:00 AM", "where": "away", "field": "Brookside Rec Center", "status": "upcoming" },
+    { "id": "game-panthers", "kind": "game", "opponent": "Pine Valley Panthers", "date": "2026-11-07", "kickoff": "9:00 AM", "where": "home", "field": "Hillcrest Park, Field 2", "status": "upcoming" },
+    { "id": "game-strikers", "kind": "game", "opponent": "Summit Strikers", "date": "2026-11-14", "kickoff": "1:00 PM", "where": "away", "field": "Summit Fields, Field 4", "status": "upcoming" },
+    { "id": "family-okafor", "kind": "family", "name": "The Okafors", "player": "Ada" },
+    { "id": "family-nguyen", "kind": "family", "name": "The Nguyens", "player": "Minh" },
+    { "id": "family-garcia", "kind": "family", "name": "The Garcias", "player": "Sofía" },
+    { "id": "family-patel", "kind": "family", "name": "The Patels", "player": "Riya" },
+    { "id": "family-kowalski", "kind": "family", "name": "The Kowalskis", "player": "Jakub" },
+    { "id": "family-brennan", "kind": "family", "name": "The Brennans", "player": "Liam" },
+    { "id": "family-haddad", "kind": "family", "name": "The Haddads", "player": "Zara" },
+    { "id": "family-lindqvist", "kind": "family", "name": "The Lindqvists", "player": "Elsa" }
+  ],
+  "edges": [
+    { "id": "snacks-rockets", "kind": "snacksBy", "from": "game-rockets", "to": "family-patel" },
+    { "id": "snacks-otters", "kind": "snacksBy", "from": "game-otters", "to": "family-kowalski" },
+    { "id": "snacks-mustangs", "kind": "snacksBy", "from": "game-mustangs", "to": "family-brennan" },
+    { "id": "snacks-lightning", "kind": "snacksBy", "from": "game-lightning", "to": "family-haddad" },
+    { "id": "snacks-cyclones", "kind": "snacksBy", "from": "game-cyclones", "to": "family-okafor" },
+    { "id": "snacks-panthers", "kind": "snacksBy", "from": "game-panthers", "to": "family-nguyen" },
+    { "id": "snacks-strikers", "kind": "snacksBy", "from": "game-strikers", "to": "family-garcia" }
+  ]
+}

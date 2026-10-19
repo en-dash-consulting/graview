@@ -17,13 +17,13 @@ if (location.hostname === "graview.dev" || location.hostname === "www.graview.de
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>What check says — Graview docs</title>
-<meta name="description" content="Every one of the 105 things graview check can tell you, and how loudly.">
+<meta name="description" content="Every one of the 106 things graview check can tell you, and how loudly.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F7F7F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0A0F1F" media="(prefers-color-scheme: dark)">
 <meta property="og:site_name" content="Graview">
 <meta property="og:title" content="What check says — Graview docs">
-<meta property="og:description" content="Every one of the 105 things graview check can tell you, and how loudly.">
+<meta property="og:description" content="Every one of the 106 things graview check can tell you, and how loudly.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://graview.dev/docs/checks.html">
 <meta property="og:image" content="https://graview.dev/og.png">
@@ -62,7 +62,7 @@ img { max-width: 100%; }
    "@type": "TechArticle",
    "@id": "https://graview.dev/docs/checks.html#article",
    "headline": "What check says — Graview docs",
-   "description": "Every one of the 105 things graview check can tell you, and how loudly.",
+   "description": "Every one of the 106 things graview check can tell you, and how loudly.",
    "url": "https://graview.dev/docs/checks.html",
    "inLanguage": "en",
    "image": "https://graview.dev/og.png",
@@ -1346,6 +1346,86 @@ main.page > section.agent-hero {
   .ah-label .dot { forced-color-adjust: none; background: CanvasText; }
 }
 
+/*
+ * THE RUN beside the docs app: what the agent did, then the interface it
+ * never wrote, then the one a sentence asked for. A column at a desk's
+ * width; above the stage on anything narrower, where only the step it is
+ * on is shown, so the page never grows under the reader as the run goes.
+ * Without script every step is listed.
+ */
+.run-stage { display: grid; grid-template-columns: minmax(270px, 0.36fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.run {
+  margin: 0; padding: 14px 16px; list-style: none; display: flex; flex-direction: column; gap: 10px;
+  border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--sunk);
+  font-family: var(--sans); font-size: 13px; line-height: 1.45; color: var(--ink-2); min-width: 0;
+}
+.run li { display: grid; gap: 2px; min-width: 0; }
+.run li > code { font-family: var(--mono); font-size: 12.5px; color: var(--ink); overflow-wrap: anywhere; }
+.run li > code::before { content: "\203A\00a0"; color: var(--ink-3); }
+.run li.warn > span { color: #FFB59E; }
+.run li.said { padding-top: 8px; border-top: 1px solid var(--rule-2); }
+.run li.said b { font-size: 15px; color: var(--mint); font-weight: var(--w-label); }
+.run li.asked { margin-top: auto; }
+.run[data-running] li { display: none; }
+.run[data-running] li.done, .run[data-running] li.now { display: grid; }
+.run[data-running] li.done:not(.said):not(.asked) { color: var(--ink-3); }
+.ask-bar {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 10px 12px;
+  border: 1px solid var(--rule); border-radius: 10px; background: var(--night); color: var(--ink);
+  font-family: var(--sans); font-size: 14px; line-height: 1.45; max-width: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 18%, transparent);
+}
+.ask-bar kbd {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 11.5px; line-height: 1; padding: 4px 6px; margin-top: 1px;
+  border: 1px solid var(--rule); border-radius: 5px; color: var(--ink-3);
+}
+.ask-typed { min-width: 0; overflow-wrap: anywhere; }
+.ask-typed[data-typing]::after { content: ""; display: inline-block; width: 2px; height: 1.05em; margin-left: 1px; vertical-align: -2px; background: var(--mint); }
+.replay {
+  font: inherit; font-weight: var(--w-label); color: var(--pine); background: none; border: 0; padding: 0;
+  min-height: 24px; cursor: pointer;
+}
+.replay:hover { text-decoration: underline; }
+@media (max-width: 1023px) {
+  .run-stage { grid-template-columns: minmax(0, 1fr); }
+  .run { padding: 12px 14px; }
+  .run[data-running] li.done:not(.now) { display: none; }
+  .run li.asked { margin-top: 0; }
+}
+
+/*
+ * THE ASKS: the claim, then one app with the asks to press above it. The
+ * bar is the quick ask's own shape; the presses are the sentences it was
+ * asked, each redrawing the same records.
+ */
+main.page > section.asks { padding-top: clamp(64px, 9vw, 112px); }
+.asks-head { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 20px 48px; align-items: end; }
+.asks-head .claim h2 { max-width: 16ch; }
+.asks-head .lede { font-size: 17.5px; }
+.ask-demo { margin-top: 34px; display: grid; gap: 12px; }
+.ask-line { display: grid; gap: 12px; }
+.ask-bar-big { font-size: 16px; padding: 14px 16px; }
+.ask-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-chips button {
+  font: inherit; font-family: var(--sans); font-size: 14px; line-height: 1.35; text-align: left;
+  color: var(--ink-2); background: var(--panel); border: 1px solid var(--rule); border-radius: 999px;
+  min-height: 38px; padding: 7px 16px; cursor: pointer; max-width: 100%;
+}
+.ask-chips button:hover { color: var(--ink); border-color: var(--ink-3); }
+.ask-chips button[aria-pressed="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.season-live { height: min(680px, 78vh); min-height: 480px; border-radius: var(--radius); box-shadow: 0 0 0 1px var(--rule), 0 18px 40px -30px rgba(0, 23, 105, 0.35); }
+@media (max-width: 900px) {
+  .asks-head { grid-template-columns: minmax(0, 1fr); }
+  .season-live { height: 600px; min-height: 0; }
+}
+@media (max-width: 560px) {
+  .ask-chips button { border-radius: 14px; width: 100%; }
+  .season-live { height: 560px; }
+}
+@media (forced-colors: active) {
+  .ask-chips button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+}
+
 /* The recipes: one row each, the task, what it declared and the proof. */
 main.page > section.recipes { padding-top: 104px; }
 .recipe-list { margin: 40px 0 0; padding: 0; list-style: none; display: grid; gap: 0; }
@@ -1434,11 +1514,11 @@ main.page > section.tour-intro { padding-top: 64px; }
   <main class="col" id="main" tabindex="-1">
     <section id="what" aria-labelledby="h-what" style="padding-top: 6px;">
       <h1 id="h-what">What <code>graview check</code> says</h1>
-      <p class="lede" style="margin-top: 18px;"><code>graview check</code> reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 105 things, read here out of the checker's own source. An <strong>error</strong> should fail your build. A <strong>warning</strong> is a judgment call. A <strong>note</strong> is a question worth answering once.</p>
+      <p class="lede" style="margin-top: 18px;"><code>graview check</code> reads a Graview app's declaration without a browser and reports what is wrong with it, in words. It can say 106 things, read here out of the checker's own source. An <strong>error</strong> should fail your build. A <strong>warning</strong> is a judgment call. A <strong>note</strong> is a question worth answering once.</p>
     </section>
     <section id="error" aria-labelledby="h-error">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-error">69 errors</h2></div>
-      <ul class="names"><li><code>brand-accent-not-a-hue</code></li><li><code>brand-accent-unknown-kind</code></li><li><code>brand-currency</code></li><li><code>brand-emoji</code></li><li><code>brand-locale</code></li><li><code>brand-time-zone</code></li><li><code>creates-unknown-kind</code></li><li><code>edge-claim-unknown-kind</code></li><li><code>edge-target-undeclared</code></li><li><code>field-role-ill-typed</code></li><li><code>field-role-missing-field</code></li><li><code>figure-undrawable</code></li><li><code>figure-unknown-kind</code></li><li><code>fixed-unknown-field</code></li><li><code>glance-unknown-field</code></li><li><code>grant-own-end-without-link</code></li><li><code>grant-unknown-kind</code></li><li><code>grant-unknown-mutation</code></li><li><code>intelligence-decision-cannot-call</code></li><li><code>intelligence-reach-unknown</code></li><li><code>intelligence-unknown-mutation</code></li><li><code>invariant-scope-undeclared</code></li><li><code>kit-contrast-below-aa</code></li><li><code>lens-binding-empty</code></li><li><code>lens-binding-empty-path</code></li><li><code>lens-binding-fieldless-owner</code></li><li><code>lens-binding-missing-field</code></li><li><code>lens-binding-not-a-field</code></li><li><code>lens-binding-path-misses</code></li><li><code>lens-binding-undeclared-edge</code></li><li><code>lens-binding-undeclared-kind</code></li><li><code>lens-role-unbound</code></li><li><code>lifecycle-missing-field</code></li><li><code>lifecycle-never-retires</code></li><li><code>migration-gap</code></li><li><code>migration-not-single-step</code></li><li><code>migration-without-version</code></li><li><code>module-unknown-invariant</code></li><li><code>module-unknown-kind</code></li><li><code>module-unknown-mutation</code></li><li><code>module-unknown-requirement</code></li><li><code>mutation-subject-arg-missing</code></li><li><code>mutation-subject-undeclared</code></li><li><code>mutation-unreachable-by-any-role</code></li><li><code>mutation-untitled</code></li><li><code>node-ref-undeclared</code></li><li><code>page-too-large</code></li><li><code>pages-kind-unknown</code></li><li><code>pages-list-arrangement</code></li><li><code>people-ambiguous</code></li><li><code>people-unsaid</code></li><li><code>plot-overlap</code></li><li><code>plural-slug-collision</code></li><li><code>repair-unknown-mutation</code></li><li><code>repair-wrong-kind</code></li><li><code>setting-name-taken</code></li><li><code>setting-name-unusable</code></li><li><code>setting-not-a-length</code></li><li><code>setting-not-honorable</code></li><li><code>setting-starts-nowhere</code></li><li><code>setting-without-a-choice</code></li><li><code>sight-hides-a-required-field</code></li><li><code>sight-names-an-unknown-field</code></li><li><code>sight-unknown-kind</code></li><li><code>sight-via-misses-people</code></li><li><code>sight-via-unknown-edge</code></li><li><code>theme-contrast-below-aa</code></li><li><code>view-for-undeclared-kind</code></li><li><code>writes-unknown-field</code></li></ul>
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-error">70 errors</h2></div>
+      <ul class="names"><li><code>brand-accent-not-a-hue</code></li><li><code>brand-accent-unknown-kind</code></li><li><code>brand-currency</code></li><li><code>brand-emoji</code></li><li><code>brand-locale</code></li><li><code>brand-time-zone</code></li><li><code>creates-unknown-kind</code></li><li><code>edge-claim-unknown-kind</code></li><li><code>edge-target-undeclared</code></li><li><code>field-role-ill-typed</code></li><li><code>field-role-missing-field</code></li><li><code>figure-undrawable</code></li><li><code>figure-unknown-kind</code></li><li><code>fixed-unknown-field</code></li><li><code>glance-unknown-field</code></li><li><code>grant-own-end-without-link</code></li><li><code>grant-unknown-kind</code></li><li><code>grant-unknown-mutation</code></li><li><code>intelligence-decision-cannot-call</code></li><li><code>intelligence-reach-unknown</code></li><li><code>intelligence-unknown-mutation</code></li><li><code>invariant-scope-undeclared</code></li><li><code>kit-contrast-below-aa</code></li><li><code>lens-binding-empty</code></li><li><code>lens-binding-empty-path</code></li><li><code>lens-binding-fieldless-owner</code></li><li><code>lens-binding-missing-field</code></li><li><code>lens-binding-not-a-field</code></li><li><code>lens-binding-path-misses</code></li><li><code>lens-binding-undeclared-edge</code></li><li><code>lens-binding-undeclared-kind</code></li><li><code>lens-option</code></li><li><code>lens-role-unbound</code></li><li><code>lifecycle-missing-field</code></li><li><code>lifecycle-never-retires</code></li><li><code>migration-gap</code></li><li><code>migration-not-single-step</code></li><li><code>migration-without-version</code></li><li><code>module-unknown-invariant</code></li><li><code>module-unknown-kind</code></li><li><code>module-unknown-mutation</code></li><li><code>module-unknown-requirement</code></li><li><code>mutation-subject-arg-missing</code></li><li><code>mutation-subject-undeclared</code></li><li><code>mutation-unreachable-by-any-role</code></li><li><code>mutation-untitled</code></li><li><code>node-ref-undeclared</code></li><li><code>page-too-large</code></li><li><code>pages-kind-unknown</code></li><li><code>pages-list-arrangement</code></li><li><code>people-ambiguous</code></li><li><code>people-unsaid</code></li><li><code>plot-overlap</code></li><li><code>plural-slug-collision</code></li><li><code>repair-unknown-mutation</code></li><li><code>repair-wrong-kind</code></li><li><code>setting-name-taken</code></li><li><code>setting-name-unusable</code></li><li><code>setting-not-a-length</code></li><li><code>setting-not-honorable</code></li><li><code>setting-starts-nowhere</code></li><li><code>setting-without-a-choice</code></li><li><code>sight-hides-a-required-field</code></li><li><code>sight-names-an-unknown-field</code></li><li><code>sight-unknown-kind</code></li><li><code>sight-via-misses-people</code></li><li><code>sight-via-unknown-edge</code></li><li><code>theme-contrast-below-aa</code></li><li><code>view-for-undeclared-kind</code></li><li><code>writes-unknown-field</code></li></ul>
     </section>
     <section id="warning" aria-labelledby="h-warning">
       <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-warning">26 warnings</h2></div>

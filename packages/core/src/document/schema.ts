@@ -328,7 +328,9 @@ const Year = z.number().check(z.int(), z.minimum(1), z.maximum(9999));
  * a coverage's `sort` and `columnSort` and a status board's `sort` (the
  * order of its rows, columns or cards), and a calendar's `horizon` (its
  * span of years, reaching its records' first and last unless `from` and
- * `to` pin it).
+ * `to` pin it). `search` and `filters` are fields, here only as lists of
+ * names: which ones the kind has is the checker's to say, as is a status
+ * board's `collapsed` and `hidden` columns.
  */
 const LensSpec = z.looseObject({
   create: z.optional(z.boolean()),
@@ -336,6 +338,8 @@ const LensSpec = z.looseObject({
     z.looseObject({
       sort: z.optional(GridSortSpec),
       columnSort: z.optional(GridSortSpec),
+      search: z.optional(some(str(1, 120), undefined, 40)),
+      filters: z.optional(some(str(1, 120), undefined, 40)),
       horizon: z.optional(z.union([z.number().check(z.int(), z.minimum(1), z.maximum(200)), z.looseObject({ years: z.number().check(z.int(), z.minimum(1), z.maximum(200)), title: str(1, 80), from: z.optional(Year), to: z.optional(Year) })])),
     }),
   ),

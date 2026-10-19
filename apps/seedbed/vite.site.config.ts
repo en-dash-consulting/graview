@@ -68,6 +68,7 @@ export default defineConfig({
       "@graview/ship/browser": fileURLToPath(new URL("../../packages/ship/src/browser.ts", import.meta.url)),
       "@graview/ship": pkg("ship"),
       "@graview/embed": pkg("embed"),
+      "@graview/guest/host/views": fileURLToPath(new URL("../../packages/guest/src/host/views.ts", import.meta.url)),
       /*
        * THE ROTA RIDES ALONG. The lenses section's claim is one calendar
        * over two domains — written for the rota, unchanged over the garden
@@ -84,6 +85,13 @@ export default defineConfig({
        * page is the file an agent can fetch beside it.
        */
       "@recipes": fileURLToPath(new URL("../../docs/site/recipes", import.meta.url)),
+      /*
+       * AND THE ASKS: the turns graview.dev replays — a person's words, and
+       * the worker view that came back — with the season app they were
+       * asked of, from apps/site/asks/. The views ride as their own text,
+       * run by the same host a product's views run in.
+       */
+      "@site-asks": fileURLToPath(new URL("../site/asks", import.meta.url)),
     },
   },
   // The app's own favicons are its page's, not the docs site's: the site has its own in brand/.

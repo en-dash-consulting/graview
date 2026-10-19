@@ -1442,6 +1442,86 @@ main.page > section.agent-hero {
   .ah-label .dot { forced-color-adjust: none; background: CanvasText; }
 }
 
+/*
+ * THE RUN beside the docs app: what the agent did, then the interface it
+ * never wrote, then the one a sentence asked for. A column at a desk's
+ * width; above the stage on anything narrower, where only the step it is
+ * on is shown, so the page never grows under the reader as the run goes.
+ * Without script every step is listed.
+ */
+.run-stage { display: grid; grid-template-columns: minmax(270px, 0.36fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.run {
+  margin: 0; padding: 14px 16px; list-style: none; display: flex; flex-direction: column; gap: 10px;
+  border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--sunk);
+  font-family: var(--sans); font-size: 13px; line-height: 1.45; color: var(--ink-2); min-width: 0;
+}
+.run li { display: grid; gap: 2px; min-width: 0; }
+.run li > code { font-family: var(--mono); font-size: 12.5px; color: var(--ink); overflow-wrap: anywhere; }
+.run li > code::before { content: "\203A\00a0"; color: var(--ink-3); }
+.run li.warn > span { color: #FFB59E; }
+.run li.said { padding-top: 8px; border-top: 1px solid var(--rule-2); }
+.run li.said b { font-size: 15px; color: var(--mint); font-weight: var(--w-label); }
+.run li.asked { margin-top: auto; }
+.run[data-running] li { display: none; }
+.run[data-running] li.done, .run[data-running] li.now { display: grid; }
+.run[data-running] li.done:not(.said):not(.asked) { color: var(--ink-3); }
+.ask-bar {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 10px 12px;
+  border: 1px solid var(--rule); border-radius: 10px; background: var(--night); color: var(--ink);
+  font-family: var(--sans); font-size: 14px; line-height: 1.45; max-width: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 18%, transparent);
+}
+.ask-bar kbd {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 11.5px; line-height: 1; padding: 4px 6px; margin-top: 1px;
+  border: 1px solid var(--rule); border-radius: 5px; color: var(--ink-3);
+}
+.ask-typed { min-width: 0; overflow-wrap: anywhere; }
+.ask-typed[data-typing]::after { content: ""; display: inline-block; width: 2px; height: 1.05em; margin-left: 1px; vertical-align: -2px; background: var(--mint); }
+.replay {
+  font: inherit; font-weight: var(--w-label); color: var(--pine); background: none; border: 0; padding: 0;
+  min-height: 24px; cursor: pointer;
+}
+.replay:hover { text-decoration: underline; }
+@media (max-width: 1023px) {
+  .run-stage { grid-template-columns: minmax(0, 1fr); }
+  .run { padding: 12px 14px; }
+  .run[data-running] li.done:not(.now) { display: none; }
+  .run li.asked { margin-top: 0; }
+}
+
+/*
+ * THE ASKS: the claim, then one app with the asks to press above it. The
+ * bar is the quick ask's own shape; the presses are the sentences it was
+ * asked, each redrawing the same records.
+ */
+main.page > section.asks { padding-top: clamp(64px, 9vw, 112px); }
+.asks-head { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 20px 48px; align-items: end; }
+.asks-head .claim h2 { max-width: 16ch; }
+.asks-head .lede { font-size: 17.5px; }
+.ask-demo { margin-top: 34px; display: grid; gap: 12px; }
+.ask-line { display: grid; gap: 12px; }
+.ask-bar-big { font-size: 16px; padding: 14px 16px; }
+.ask-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-chips button {
+  font: inherit; font-family: var(--sans); font-size: 14px; line-height: 1.35; text-align: left;
+  color: var(--ink-2); background: var(--panel); border: 1px solid var(--rule); border-radius: 999px;
+  min-height: 38px; padding: 7px 16px; cursor: pointer; max-width: 100%;
+}
+.ask-chips button:hover { color: var(--ink); border-color: var(--ink-3); }
+.ask-chips button[aria-pressed="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.season-live { height: min(680px, 78vh); min-height: 480px; border-radius: var(--radius); box-shadow: 0 0 0 1px var(--rule), 0 18px 40px -30px rgba(0, 23, 105, 0.35); }
+@media (max-width: 900px) {
+  .asks-head { grid-template-columns: minmax(0, 1fr); }
+  .season-live { height: 600px; min-height: 0; }
+}
+@media (max-width: 560px) {
+  .ask-chips button { border-radius: 14px; width: 100%; }
+  .season-live { height: 560px; }
+}
+@media (forced-colors: active) {
+  .ask-chips button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+}
+
 /* The recipes: one row each, the task, what it declared and the proof. */
 main.page > section.recipes { padding-top: 104px; }
 .recipe-list { margin: 40px 0 0; padding: 0; list-style: none; display: grid; gap: 0; }
@@ -1543,14 +1623,38 @@ main.page > section.tour-intro { padding-top: 64px; }
     </div>
 
     <div class="ah-stage">
-      <div class="stage-panel" id="stage-docs" role="tabpanel" aria-labelledby="rt-docs">
+      <div class="stage-panel run-panel" id="stage-docs" role="tabpanel" aria-labelledby="rt-docs">
+        <div class="run-stage">
+        <!--
+          THE RUN, REPLAYED. What the agent did with the docs prompt, a step
+          at a time, and then the two steps the page is about: the interface
+          it never wrote, and the one a sentence asked for. The repair is
+          applied to the app beside it, the face changes from the city to
+          the pages, and the ask is answered with the departures board an
+          ask came back with (apps/site/asks/turns.json), run by the view
+          host a product's own views run in. Without script it is the whole
+          list beside the city's picture.
+        -->
+        <ol class="run" id="hero-run" aria-label="The agent's run, replayed">
+          <li data-step="declare"><code>graview create &amp;&amp; app.json</code><span>Declared 4 kinds, 18 acts and 5 rules.</span></li>
+          <li data-step="check"><code>graview check</code><span>Compiles and checks clean.</span></li>
+          <li data-step="problem" class="warn"><code>seed.json</code><span>No doc covers packages/search, shared-types or telemetry.</span></li>
+          <li data-step="repair"><code>repair &times; 3</code><span>Wrote a guide for each module.</span></li>
+          <li data-step="preview"><code>graview preview</code><span>The app, from altitude.</span></li>
+          <li data-step="generated" class="said"><b>The interface is generated.</b><span>A list per kind, a page per module, a form per act. The agent wrote none of it.</span></li>
+          <li data-step="ask" class="asked">
+            <span class="ask-bar"><kbd>&#8984;K</kbd><span class="ask-typed" id="hero-ask-typed">Make the modules page look like an airport departures board.</span></span>
+            <span>Answered with a view: the modules, as a departures board.</span>
+          </li>
+        </ol>
         <div class="chapter-live hero-live" data-graview-recipe="docs" data-scheme="dark" data-label="Your docs, as an app" role="region" aria-label="The app the docs prompt made, running on this page">
           <!-- site-poster:start — written by scripts/site-poster.mjs. -->
         <div class="poster" aria-hidden="true"><div class="light"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="-84 -222 468 351" preserveAspectRatio="xMidYMid meet" role="img" data-scheme="light"><title>Larkspur docs from altitude: each kind a plot on its map, a block for each record.</title><g fill-opacity="0.12" stroke-opacity="0.55" stroke-linejoin="round"><g data-kind="decision"><title>decision records: 14</title><polygon fill="#646cc4" stroke="#4952ab" points="300,-150 360,-120 300,-90 240,-120"/></g><g data-kind="doc"><title>docs: 17</title><polygon fill="#c4648f" stroke="#ab4976" points="100,-50 160,-20 100,10 40,-20"/></g><g data-kind="module"><title>modules: 16</title><polygon fill="#c4ac64" stroke="#ab9349" points="200,-100 260,-70 200,-40 140,-70"/></g><g data-kind="person"><title>people: 7</title><polygon fill="#64c471" stroke="#49ab56" points="0,0 60,30 0,60 -60,30"/></g></g><g stroke-opacity="0.75" stroke-linejoin="round"><path fill="#656cb3" d="M291 -149l9 5v6l-9 -5z"/><path fill="#868bcb" d="M300 -144l9 -5v6l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M300 -153l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M276 -145l9 4v10l-9 -4z"/><path fill="#868bcb" d="M285 -141l9 -4v10l-9 4z"/><path fill="#bbbfe7" stroke="#ffffff" d="M285 -150l9 5l-9 4l-9 -4z"/><path fill="#656cb3" d="M306 -143l9 5v8l-9 -5z"/><path fill="#868bcb" d="M315 -138l9 -5v8l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M315 -147l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M261 -133l9 5v5l-9 -5z"/><path fill="#868bcb" d="M270 -128l9 -5v5l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M270 -137l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M321 -137l9 5v9l-9 -5z"/><path fill="#868bcb" d="M330 -132l9 -5v9l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M330 -141l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M246 -127l9 5v7l-9 -5z"/><path fill="#868bcb" d="M255 -122l9 -5v7l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M255 -131l9 4l-9 5l-9 -5z"/><path fill="#656cb3" d="M336 -131l9 5v11l-9 -5z"/><path fill="#868bcb" d="M345 -126l9 -5v11l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M345 -136l9 5l-9 5l-9 -5z"/><path fill="#656cb3" d="M261 -121l9 5v8l-9 -5z"/><path fill="#868bcb" d="M270 -116l9 -5v8l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M270 -126l9 5l-9 5l-9 -5z"/><path fill="#656cb3" d="M321 -118l9 4v6l-9 -4z"/><path fill="#868bcb" d="M330 -114l9 -4v6l-9 4z"/><path fill="#bbbfe7" stroke="#ffffff" d="M330 -123l9 5l-9 4l-9 -4z"/><path fill="#656cb3" d="M276 -115l9 5v10l-9 -5z"/><path fill="#868bcb" d="M285 -110l9 -5v10l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M285 -120l9 5l-9 5l-9 -5z"/><path fill="#656cb3" d="M306 -112l9 5v7l-9 -5z"/><path fill="#868bcb" d="M315 -107l9 -5v7l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M315 -117l9 5l-9 5l-9 -5z"/><path fill="#656cb3" d="M291 -107l9 5v9l-9 -5z"/><path fill="#868bcb" d="M300 -102l9 -5v9l-9 5z"/><path fill="#bbbfe7" stroke="#ffffff" d="M300 -112l9 5l-9 5l-9 -5z"/><path fill="#b3a065" d="M191 -98l9 5v6l-9 -5z"/><path fill="#cbba86" d="M200 -93l9 -5v6l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M200 -103l9 5l-9 5l-9 -5z"/><path fill="#b3a065" d="M176 -95l9 5v10l-9 -5z"/><path fill="#cbba86" d="M185 -90l9 -5v10l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M185 -99l9 4l-9 5l-9 -5z"/><path fill="#b3a065" d="M206 -96l9 5v11l-9 -5z"/><path fill="#cbba86" d="M215 -91l9 -5v11l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M215 -100l9 4l-9 5l-9 -5z"/><path fill="#b3a065" d="M161 -86l9 5v8l-9 -5z"/><path fill="#cbba86" d="M170 -81l9 -5v8l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M170 -90l9 4l-9 5l-9 -5z"/><path fill="#b3a065" d="M221 -86l9 4v9l-9 -4z"/><path fill="#cbba86" d="M230 -82l9 -4v9l-9 4z"/><path fill="#e7dcbb" stroke="#ffffff" d="M230 -91l9 5l-9 4l-9 -4z"/><path fill="#b3a065" d="M146 -76l9 4v6l-9 -4z"/><path fill="#cbba86" d="M155 -72l9 -4v6l-9 4z"/><path fill="#e7dcbb" stroke="#ffffff" d="M155 -81l9 5l-9 4l-9 -4z"/><path fill="#b3a065" d="M236 -77l9 5v7l-9 -5z"/><path fill="#cbba86" d="M245 -72l9 -5v7l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M245 -82l9 5l-9 5l-9 -5z"/><path fill="#b3a065" d="M161 -74l9 5v11l-9 -5z"/><path fill="#cbba86" d="M170 -69l9 -5v11l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M170 -78l9 4l-9 5l-9 -5z"/><path fill="#b3a065" d="M221 -68l9 4v6l-9 -4z"/><path fill="#cbba86" d="M230 -64l9 -4v6l-9 4z"/><path fill="#e7dcbb" stroke="#ffffff" d="M230 -73l9 5l-9 4l-9 -4z"/><path fill="#b3a065" d="M176 -65l9 5v10l-9 -5z"/><path fill="#cbba86" d="M185 -60l9 -5v10l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M185 -70l9 5l-9 5l-9 -5z"/><path fill="#b3a065" d="M206 -65l9 4v10l-9 -4z"/><path fill="#cbba86" d="M215 -61l9 -4v10l-9 4z"/><path fill="#e7dcbb" stroke="#ffffff" d="M215 -70l9 5l-9 4l-9 -4z"/><path fill="#b3a065" d="M191 -54l9 5v6l-9 -5z"/><path fill="#cbba86" d="M200 -49l9 -5v6l-9 5z"/><path fill="#e7dcbb" stroke="#ffffff" d="M200 -59l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M91 -53l9 5v10l-9 -5z"/><path fill="#cb86a5" d="M100 -48l9 -5v10l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M100 -58l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M76 -43l9 5v8l-9 -5z"/><path fill="#cb86a5" d="M85 -38l9 -5v8l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M85 -48l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M106 -44l9 5v9l-9 -5z"/><path fill="#cb86a5" d="M115 -39l9 -5v9l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M115 -48l9 4l-9 5l-9 -5z"/><path fill="#b36588" d="M61 -34l9 5v6l-9 -5z"/><path fill="#cb86a5" d="M70 -29l9 -5v6l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M70 -38l9 4l-9 5l-9 -5z"/><path fill="#b36588" d="M121 -34l9 4v7l-9 -4z"/><path fill="#cb86a5" d="M130 -30l9 -4v7l-9 4z"/><path fill="#e7bbcf" stroke="#ffffff" d="M130 -39l9 5l-9 4l-9 -4z"/><path fill="#b36588" d="M46 -31l9 5v11l-9 -5z"/><path fill="#cb86a5" d="M55 -26l9 -5v11l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M55 -36l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M136 -25l9 4v5l-9 -4z"/><path fill="#cb86a5" d="M145 -21l9 -4v5l-9 4z"/><path fill="#e7bbcf" stroke="#ffffff" d="M145 -30l9 5l-9 4l-9 -4z"/><path fill="#b36588" d="M61 -22l9 5v9l-9 -5z"/><path fill="#cb86a5" d="M70 -17l9 -5v9l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M70 -27l9 5l-9 5l-9 -5z"/><path fill="#b36588" d="M121 -23l9 5v10l-9 -5z"/><path fill="#cb86a5" d="M130 -18l9 -5v10l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M130 -27l9 4l-9 5l-9 -5z"/><path fill="#b36588" d="M76 -13l9 5v8l-9 -5z"/><path fill="#cb86a5" d="M85 -8l9 -5v8l-9 5z"/><path fill="#e7bbcf" stroke="#ffffff" d="M85 -17l9 4l-9 5l-9 -5z"/><path fill="#b36588" d="M106 -11l9 4v6l-9 -4z"/><path fill="#cb86a5" d="M115 -7l9 -4v6l-9 4z"/><path fill="#e7bbcf" stroke="#ffffff" d="M115 -16l9 5l-9 4l-9 -4z"/><path fill="#b36588" d="M91 -6l9 4v9l-9 -4z"/><path fill="#cb86a5" d="M100 -2l9 -4v9l-9 4z"/><path fill="#e7bbcf" stroke="#ffffff" d="M100 -11l9 5l-9 4l-9 -4z"/><path fill="#65b370" d="M-9 1l9 5v7l-9 -5z"/><path fill="#86cb8f" d="M0 6l9 -5v7l-9 5z"/><path fill="#bbe7c1" stroke="#ffffff" d="M0 -4l9 5l-9 5l-9 -5z"/><path fill="#65b370" d="M-24 6l9 5v9l-9 -5z"/><path fill="#86cb8f" d="M-15 11l9 -5v9l-9 5z"/><path fill="#bbe7c1" stroke="#ffffff" d="M-15 1l9 5l-9 5l-9 -5z"/><path fill="#65b370" d="M6 7l9 4v8l-9 -4z"/><path fill="#86cb8f" d="M15 11l9 -4v8l-9 4z"/><path fill="#bbe7c1" stroke="#ffffff" d="M15 2l9 5l-9 4l-9 -4z"/><path fill="#65b370" d="M-39 12l9 4v11l-9 -4z"/><path fill="#86cb8f" d="M-30 16l9 -4v11l-9 4z"/><path fill="#bbe7c1" stroke="#ffffff" d="M-30 7l9 5l-9 4l-9 -4z"/><path fill="#65b370" d="M21 13l9 4v10l-9 -4z"/><path fill="#86cb8f" d="M30 17l9 -4v10l-9 4z"/><path fill="#bbe7c1" stroke="#ffffff" d="M30 8l9 5l-9 4l-9 -4z"/><path fill="#65b370" d="M-54 24l9 5v6l-9 -5z"/><path fill="#86cb8f" d="M-45 29l9 -5v6l-9 5z"/><path fill="#bbe7c1" stroke="#ffffff" d="M-45 20l9 4l-9 5l-9 -5z"/><path fill="#65b370" d="M36 19l9 4v11l-9 -4z"/><path fill="#86cb8f" d="M45 23l9 -4v11l-9 4z"/><path fill="#bbe7c1" stroke="#ffffff" d="M45 14l9 5l-9 4l-9 -4z"/></g></svg></div><div class="dark"><svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="-84 -222 468 351" preserveAspectRatio="xMidYMid meet" role="img" data-scheme="dark"><title>Larkspur docs from altitude: each kind a plot on its map, a block for each record.</title><g fill-opacity="0.2" stroke-opacity="0.55" stroke-linejoin="round"><g data-kind="decision"><title>decision records: 14</title><polygon fill="#434db1" stroke="#777ec5" points="300,-150 360,-120 300,-90 240,-120"/></g><g data-kind="doc"><title>docs: 17</title><polygon fill="#b14375" stroke="#c5779a" points="100,-50 160,-20 100,10 40,-20"/></g><g data-kind="module"><title>modules: 16</title><polygon fill="#b19643" stroke="#c5b177" points="200,-100 260,-70 200,-40 140,-70"/></g><g data-kind="person"><title>people: 7</title><polygon fill="#43b152" stroke="#77c582" points="0,0 60,30 0,60 -60,30"/></g></g><g stroke-opacity="0.14" stroke-linejoin="round"><path fill="#15172e" d="M291 -149l9 5v6l-9 -5z"/><path fill="#20244b" d="M300 -144l9 -5v6l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M300 -153l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M276 -145l9 4v10l-9 -4z"/><path fill="#20244b" d="M285 -141l9 -4v10l-9 4z"/><path fill="#2f3574" stroke="#ffffff" d="M285 -150l9 5l-9 4l-9 -4z"/><path fill="#15172e" d="M306 -143l9 5v8l-9 -5z"/><path fill="#20244b" d="M315 -138l9 -5v8l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M315 -147l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M261 -133l9 5v5l-9 -5z"/><path fill="#20244b" d="M270 -128l9 -5v5l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M270 -137l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M321 -137l9 5v9l-9 -5z"/><path fill="#20244b" d="M330 -132l9 -5v9l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M330 -141l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M246 -127l9 5v7l-9 -5z"/><path fill="#20244b" d="M255 -122l9 -5v7l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M255 -131l9 4l-9 5l-9 -5z"/><path fill="#15172e" d="M336 -131l9 5v11l-9 -5z"/><path fill="#20244b" d="M345 -126l9 -5v11l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M345 -136l9 5l-9 5l-9 -5z"/><path fill="#15172e" d="M261 -121l9 5v8l-9 -5z"/><path fill="#20244b" d="M270 -116l9 -5v8l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M270 -126l9 5l-9 5l-9 -5z"/><path fill="#15172e" d="M321 -118l9 4v6l-9 -4z"/><path fill="#20244b" d="M330 -114l9 -4v6l-9 4z"/><path fill="#2f3574" stroke="#ffffff" d="M330 -123l9 5l-9 4l-9 -4z"/><path fill="#15172e" d="M276 -115l9 5v10l-9 -5z"/><path fill="#20244b" d="M285 -110l9 -5v10l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M285 -120l9 5l-9 5l-9 -5z"/><path fill="#15172e" d="M306 -112l9 5v7l-9 -5z"/><path fill="#20244b" d="M315 -107l9 -5v7l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M315 -117l9 5l-9 5l-9 -5z"/><path fill="#15172e" d="M291 -107l9 5v9l-9 -5z"/><path fill="#20244b" d="M300 -102l9 -5v9l-9 5z"/><path fill="#2f3574" stroke="#ffffff" d="M300 -112l9 5l-9 5l-9 -5z"/><path fill="#2e2715" d="M191 -98l9 5v6l-9 -5z"/><path fill="#4b4020" d="M200 -93l9 -5v6l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M200 -103l9 5l-9 5l-9 -5z"/><path fill="#2e2715" d="M176 -95l9 5v10l-9 -5z"/><path fill="#4b4020" d="M185 -90l9 -5v10l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M185 -99l9 4l-9 5l-9 -5z"/><path fill="#2e2715" d="M206 -96l9 5v11l-9 -5z"/><path fill="#4b4020" d="M215 -91l9 -5v11l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M215 -100l9 4l-9 5l-9 -5z"/><path fill="#2e2715" d="M161 -86l9 5v8l-9 -5z"/><path fill="#4b4020" d="M170 -81l9 -5v8l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M170 -90l9 4l-9 5l-9 -5z"/><path fill="#2e2715" d="M221 -86l9 4v9l-9 -4z"/><path fill="#4b4020" d="M230 -82l9 -4v9l-9 4z"/><path fill="#74632f" stroke="#ffffff" d="M230 -91l9 5l-9 4l-9 -4z"/><path fill="#2e2715" d="M146 -76l9 4v6l-9 -4z"/><path fill="#4b4020" d="M155 -72l9 -4v6l-9 4z"/><path fill="#74632f" stroke="#ffffff" d="M155 -81l9 5l-9 4l-9 -4z"/><path fill="#2e2715" d="M236 -77l9 5v7l-9 -5z"/><path fill="#4b4020" d="M245 -72l9 -5v7l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M245 -82l9 5l-9 5l-9 -5z"/><path fill="#2e2715" d="M161 -74l9 5v11l-9 -5z"/><path fill="#4b4020" d="M170 -69l9 -5v11l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M170 -78l9 4l-9 5l-9 -5z"/><path fill="#2e2715" d="M221 -68l9 4v6l-9 -4z"/><path fill="#4b4020" d="M230 -64l9 -4v6l-9 4z"/><path fill="#74632f" stroke="#ffffff" d="M230 -73l9 5l-9 4l-9 -4z"/><path fill="#2e2715" d="M176 -65l9 5v10l-9 -5z"/><path fill="#4b4020" d="M185 -60l9 -5v10l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M185 -70l9 5l-9 5l-9 -5z"/><path fill="#2e2715" d="M206 -65l9 4v10l-9 -4z"/><path fill="#4b4020" d="M215 -61l9 -4v10l-9 4z"/><path fill="#74632f" stroke="#ffffff" d="M215 -70l9 5l-9 4l-9 -4z"/><path fill="#2e2715" d="M191 -54l9 5v6l-9 -5z"/><path fill="#4b4020" d="M200 -49l9 -5v6l-9 5z"/><path fill="#74632f" stroke="#ffffff" d="M200 -59l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M91 -53l9 5v10l-9 -5z"/><path fill="#4b2033" d="M100 -48l9 -5v10l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M100 -58l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M76 -43l9 5v8l-9 -5z"/><path fill="#4b2033" d="M85 -38l9 -5v8l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M85 -48l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M106 -44l9 5v9l-9 -5z"/><path fill="#4b2033" d="M115 -39l9 -5v9l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M115 -48l9 4l-9 5l-9 -5z"/><path fill="#2e1520" d="M61 -34l9 5v6l-9 -5z"/><path fill="#4b2033" d="M70 -29l9 -5v6l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M70 -38l9 4l-9 5l-9 -5z"/><path fill="#2e1520" d="M121 -34l9 4v7l-9 -4z"/><path fill="#4b2033" d="M130 -30l9 -4v7l-9 4z"/><path fill="#742f4e" stroke="#ffffff" d="M130 -39l9 5l-9 4l-9 -4z"/><path fill="#2e1520" d="M46 -31l9 5v11l-9 -5z"/><path fill="#4b2033" d="M55 -26l9 -5v11l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M55 -36l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M136 -25l9 4v5l-9 -4z"/><path fill="#4b2033" d="M145 -21l9 -4v5l-9 4z"/><path fill="#742f4e" stroke="#ffffff" d="M145 -30l9 5l-9 4l-9 -4z"/><path fill="#2e1520" d="M61 -22l9 5v9l-9 -5z"/><path fill="#4b2033" d="M70 -17l9 -5v9l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M70 -27l9 5l-9 5l-9 -5z"/><path fill="#2e1520" d="M121 -23l9 5v10l-9 -5z"/><path fill="#4b2033" d="M130 -18l9 -5v10l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M130 -27l9 4l-9 5l-9 -5z"/><path fill="#2e1520" d="M76 -13l9 5v8l-9 -5z"/><path fill="#4b2033" d="M85 -8l9 -5v8l-9 5z"/><path fill="#742f4e" stroke="#ffffff" d="M85 -17l9 4l-9 5l-9 -5z"/><path fill="#2e1520" d="M106 -11l9 4v6l-9 -4z"/><path fill="#4b2033" d="M115 -7l9 -4v6l-9 4z"/><path fill="#742f4e" stroke="#ffffff" d="M115 -16l9 5l-9 4l-9 -4z"/><path fill="#2e1520" d="M91 -6l9 4v9l-9 -4z"/><path fill="#4b2033" d="M100 -2l9 -4v9l-9 4z"/><path fill="#742f4e" stroke="#ffffff" d="M100 -11l9 5l-9 4l-9 -4z"/><path fill="#152e18" d="M-9 1l9 5v7l-9 -5z"/><path fill="#204b26" d="M0 6l9 -5v7l-9 5z"/><path fill="#2f7438" stroke="#ffffff" d="M0 -4l9 5l-9 5l-9 -5z"/><path fill="#152e18" d="M-24 6l9 5v9l-9 -5z"/><path fill="#204b26" d="M-15 11l9 -5v9l-9 5z"/><path fill="#2f7438" stroke="#ffffff" d="M-15 1l9 5l-9 5l-9 -5z"/><path fill="#152e18" d="M6 7l9 4v8l-9 -4z"/><path fill="#204b26" d="M15 11l9 -4v8l-9 4z"/><path fill="#2f7438" stroke="#ffffff" d="M15 2l9 5l-9 4l-9 -4z"/><path fill="#152e18" d="M-39 12l9 4v11l-9 -4z"/><path fill="#204b26" d="M-30 16l9 -4v11l-9 4z"/><path fill="#2f7438" stroke="#ffffff" d="M-30 7l9 5l-9 4l-9 -4z"/><path fill="#152e18" d="M21 13l9 4v10l-9 -4z"/><path fill="#204b26" d="M30 17l9 -4v10l-9 4z"/><path fill="#2f7438" stroke="#ffffff" d="M30 8l9 5l-9 4l-9 -4z"/><path fill="#152e18" d="M-54 24l9 5v6l-9 -5z"/><path fill="#204b26" d="M-45 29l9 -5v6l-9 5z"/><path fill="#2f7438" stroke="#ffffff" d="M-45 20l9 4l-9 5l-9 -5z"/><path fill="#152e18" d="M36 19l9 4v11l-9 -4z"/><path fill="#204b26" d="M45 23l9 -4v11l-9 4z"/><path fill="#2f7438" stroke="#ffffff" d="M45 14l9 5l-9 4l-9 -4z"/></g></svg></div></div>
         <!-- site-poster:end -->
           <p class="chapter-loading">The docs recipe, loading…</p>
         </div>
-        <p class="stage-caption"><span class="live">Live</span><span>What the docs prompt made of Larkspur, a made-up repository: its modules, docs and owners, with every module that has no doc or no owner flagged and its repair offered.</span><a href="docs/recipes/docs.html">The recipe &rarr;</a></p>
+        </div>
+        <p class="stage-caption"><span class="live">Live</span><span>What the docs prompt made of Larkspur, a made-up repository: its modules, docs and owners, its problems flagged and repaired, its interface generated and then asked for again.</span><button type="button" class="replay" id="hero-replay" hidden>Replay the run</button><a href="docs/recipes/docs.html">The recipe &rarr;</a></p>
       </div>
       <div class="stage-panel" id="stage-rota" role="tabpanel" aria-labelledby="rt-rota" hidden>
         <div class="chapter-live hero-live" data-later="rota" data-scheme="dark" data-label="A volunteer rota" role="region" aria-label="A volunteer rota built on Graview, running on this page"><p class="chapter-loading">The rota, loading…</p></div>
@@ -1568,11 +1672,50 @@ main.page > section.tour-intro { padding-top: 64px; }
         A rota, a bid, a season&rsquo;s plan, a household&rsquo;s week, your
         repository&rsquo;s docs: anything that is really things and the
         rules between them. Your agent writes one declaration of what the
-        domain is made of, and Graview derives the interface, the rules that
-        repair, the permissions and a typed tool for every act from it, so
-        they can&rsquo;t drift apart. The app above is one such declaration,
-        running.
+        domain is made of. Graview generates the whole interface from it, a
+        list per kind, a page per record, a form per act, and the rules that
+        repair, the permissions and a typed tool for every act with it, so
+        they can&rsquo;t drift apart. Want a different interface? Ask for it.
       </p>
+    </div>
+  </section>
+
+  <!--
+    YOU NEVER BUILD THE UI. The hero ends on a page asked for; this is the
+    same claim with the reader's own hands on it. One small app, a kids'
+    soccer season, opens on what Graview generated from its declaration,
+    and each ask redraws the same records as a view somebody asked for.
+    The asks were answered once and recorded (apps/site/asks/turns.json);
+    pressing one hands that view to the framework's view host over the
+    same store, so a snack signed up for in one view is there in the next.
+    The season's one rule shows through all three: the game nobody brings
+    snacks to is a problem card, a row with Sign up, a WANTED ad.
+  -->
+  <section id="asks" class="asks" aria-labelledby="h-asks">
+    <div class="asks-head">
+      <div class="claim">
+        <p class="eyebrow"><span>The interface</span></p>
+        <h2 id="h-asks">You never build the UI. You ask for the one you want.</h2>
+      </div>
+      <p class="lede">
+        Graview generates the interface from the declaration: a list for
+        every kind, a page for every record, a form for every act. Want it
+        different? Say so. What comes back is a view, a small script the
+        framework runs in a sandbox over the same records, so every rule
+        still holds in it.
+      </p>
+    </div>
+    <div class="ask-demo">
+      <div class="ask-line">
+        <p class="ask-bar ask-bar-big"><kbd>&#8984;K</kbd><span class="ask-typed" id="season-typed">What Graview generated from the declaration</span></p>
+        <div class="ask-chips" role="group" aria-label="Ask the season for another interface">
+          <button type="button" data-ask="" aria-pressed="true" data-says="What Graview generated from the declaration" data-caption="What Graview generated from the declaration alone: the games, the families and a page for each. The Brookside Bears game has nobody on snacks, so the rule puts it on the home as a problem card, with its repair.">What Graview generated</button>
+          <button type="button" data-ask="remaining-games" aria-pressed="false" data-says="Give me a list view of remaining games and who&rsquo;s bringing snacks" data-caption="Asked for a list: the four games still to play and who brings snacks to each. The Bears game is the row with Sign up; press it and the problem is gone from every view.">&ldquo;Give me a list view of remaining games and who&rsquo;s bringing snacks&rdquo;</button>
+          <button type="button" data-ask="courier" aria-pressed="false" data-says="Make this app look more like a physical newspaper" data-caption="Asked for a newspaper: the same games as a weekly paper, the next one as the lead story. A game nobody brings snacks to is a WANTED ad in the classifieds.">&ldquo;Make this app look more like a physical newspaper&rdquo;</button>
+        </div>
+      </div>
+      <div class="chapter-live season-live" data-graview-app="season" data-label="A kids' soccer season" role="region" aria-label="A kids' soccer season built on Graview, running on this page"><p class="chapter-loading">The season, loading…</p></div>
+      <p class="stage-caption"><span class="live">Live</span><span id="season-caption">What Graview generated from the declaration alone: the games, the families and a page for each. The Brookside Bears game has nobody on snacks, so the rule puts it on the home as a problem card, with its repair.</span></p>
     </div>
   </section>
 
@@ -1850,6 +1993,210 @@ main.page > section.tour-intro { padding-top: 64px; }
 })();
 </script>
 
+
+<script>
+/*
+ * THE HERO'S RUN, REPLAYED ON THE APP BESIDE IT. Once the docs app is up
+ * and in view, the run goes a step at a time: the repair it reports is
+ * applied to the app's own store (the three modules with no doc each get
+ * a guide, reviewed today), the face goes from the city to the pages the
+ * declaration generates, and the ask is typed and answered with the view
+ * it came back with, run by the framework's view host over the same
+ * records. It ends on that board. A reader who asked for less motion gets
+ * the last frame at once; a reader who starts using the app stops the run
+ * where it is, with Replay beside the caption.
+ */
+(function () {
+  var run = document.getElementById("hero-run");
+  var host = document.querySelector('#stage-docs [data-graview-recipe="docs"]');
+  var typed = document.getElementById("hero-ask-typed");
+  var replay = document.getElementById("hero-replay");
+  if (!run || !host || !typed || !replay || !("IntersectionObserver" in window)) return;
+  var steps = [].slice.call(run.querySelectorAll("li[data-step]"));
+  var ASK = typed.textContent;
+  var LABEL = host.getAttribute("data-label") || undefined;
+  var GUIDES = [
+    { module: "module-packages-search", id: "doc-guide-search", title: "Search", path: "docs/guides/search.md" },
+    { module: "module-packages-shared-types", id: "doc-guide-shared-types", title: "Shared types", path: "docs/guides/shared-types.md" },
+    { module: "module-packages-telemetry", id: "doc-guide-telemetry", title: "Telemetry", path: "docs/guides/telemetry.md" },
+  ];
+  var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var handle = null;
+  var timers = [];
+  var playing = false;
+  var seen = false;
+  var api = function () { return window.graviewChapters || {}; };
+  var later = function (ms, fn) { timers.push(setTimeout(fn, ms)); };
+  function at(name) {
+    var reached = false;
+    steps.forEach(function (step) {
+      var here = step.getAttribute("data-step") === name;
+      if (here) reached = true;
+      step.classList.toggle("now", here);
+      step.classList.toggle("done", !reached || here);
+    });
+  }
+  /* A face or a remount under the keyboard would drop it on <body>: it goes to the stage instead. */
+  function keepingFocus(change) {
+    var inside = host.contains(document.activeElement);
+    change();
+    if (inside) {
+      host.setAttribute("tabindex", "-1");
+      host.focus({ preventScroll: true });
+    }
+  }
+  function today() {
+    try { return new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
+    catch (error) { return new Date().toISOString().slice(0, 10); }
+  }
+  function repair() {
+    var day = today();
+    GUIDES.forEach(function (guide) {
+      try {
+        handle.store.apply({ name: "add-doc", args: { id: guide.id, title: guide.title, path: guide.path, section: "guide", lastReviewed: day } });
+        handle.store.apply({ name: "document-in", args: { id: guide.module, to: guide.id } });
+      } catch (error) {
+        // Already written, by an earlier pass of the run over this store.
+      }
+    });
+  }
+  function generated() {
+    keepingFocus(function () { handle.setFace("pages"); handle.setPath("/"); });
+  }
+  function answered() {
+    if (typeof api().answer !== "function") return;
+    keepingFocus(function () { handle = api().answer(host, "departures", { label: LABEL, scheme: "dark" }); });
+    typed.removeAttribute("data-typing");
+    typed.textContent = ASK;
+    /* Every step listed at a desk's width; on a phone, the ask alone, over the board it drew. */
+    run.setAttribute("data-running", "");
+    at("ask");
+    playing = false;
+    replay.hidden = false;
+  }
+  function play() {
+    if (!handle || playing) return;
+    playing = true;
+    replay.hidden = true;
+    if (still) {
+      repair();
+      answered();
+      return;
+    }
+    run.setAttribute("data-running", "");
+    typed.textContent = "";
+    at("declare");
+    later(900, function () { at("check"); });
+    later(1900, function () { at("problem"); });
+    later(3300, function () { at("repair"); repair(); });
+    later(4700, function () { at("preview"); });
+    later(6900, function () { at("generated"); generated(); });
+    later(9700, function () {
+      at("ask");
+      typed.setAttribute("data-typing", "");
+      var i = 0;
+      (function key() {
+        i += 1;
+        typed.textContent = ASK.slice(0, i);
+        if (i < ASK.length) later(34, key);
+        else later(700, answered);
+      })();
+    });
+  }
+  function stop() {
+    if (!playing) return;
+    timers.forEach(clearTimeout);
+    timers = [];
+    playing = false;
+    typed.removeAttribute("data-typing");
+    typed.textContent = ASK;
+    steps.forEach(function (step) { step.classList.add("done"); });
+    replay.hidden = false;
+  }
+  /* Before it runs, the run is its first step: the page does not grow when it starts. */
+  if (!still) {
+    run.setAttribute("data-running", "");
+    at("declare");
+  }
+  host.addEventListener("graview:mounted", function (event) {
+    handle = event.detail && event.detail.handle;
+    if (!handle) return;
+    handle.drawn().then(function () { if (seen) later(1600, play); });
+  });
+  new IntersectionObserver(function (entries, observer) {
+    if (!entries.some(function (entry) { return entry.isIntersecting; })) return;
+    seen = true;
+    observer.disconnect();
+    if (handle) later(1600, play);
+  }, { threshold: 0.2 }).observe(host);
+  /* The reader's own hands on the app: the run lets go. */
+  host.addEventListener("pointerdown", stop);
+  host.addEventListener("keydown", stop);
+  replay.addEventListener("click", function () {
+    stop();
+    if (typeof api().mountRecipe !== "function") return;
+    keepingFocus(function () {
+      if (handle) handle.unmount();
+      host.replaceChildren();
+      handle = api().mountRecipe(host, "docs", undefined, undefined, LABEL, "dark");
+    });
+    handle.drawn().then(function () { later(900, play); });
+  });
+})();
+</script>
+<script>
+/*
+ * THE ASKS, PRESSED. Each press types its sentence into the bar and hands
+ * the season the view that sentence came back with (or, for the first,
+ * the interface the declaration alone generates), over the same store:
+ * a family signed up in the list is on snack duty in the newspaper.
+ */
+(function () {
+  var host = document.querySelector('[data-graview-app="season"]');
+  var typed = document.getElementById("season-typed");
+  var caption = document.getElementById("season-caption");
+  var chips = [].slice.call(document.querySelectorAll(".ask-chips [data-ask]"));
+  if (!host || !typed || !caption || chips.length === 0) return;
+  var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var mounted = false;
+  var waiting = null;
+  var turn = 0;
+  function answer(name) {
+    var api = window.graviewChapters || {};
+    if (typeof api.answer !== "function") return;
+    api.answer(host, name || null, { label: host.getAttribute("data-label") || undefined });
+  }
+  function ask(chip) {
+    chips.forEach(function (other) { other.setAttribute("aria-pressed", other === chip ? "true" : "false"); });
+    caption.textContent = chip.getAttribute("data-caption");
+    var words = chip.getAttribute("data-says");
+    var name = chip.getAttribute("data-ask");
+    if (!mounted) { waiting = chip; typed.textContent = words; return; }
+    var mine = ++turn;
+    if (still || !name) {
+      typed.removeAttribute("data-typing");
+      typed.textContent = words;
+      answer(name);
+      return;
+    }
+    typed.setAttribute("data-typing", "");
+    var i = 0;
+    (function key() {
+      if (mine !== turn) return;
+      i += 2;
+      typed.textContent = words.slice(0, i);
+      if (i < words.length) { setTimeout(key, 22); return; }
+      typed.removeAttribute("data-typing");
+      setTimeout(function () { if (mine === turn) answer(name); }, 250);
+    })();
+  }
+  chips.forEach(function (chip) { chip.addEventListener("click", function () { ask(chip); }); });
+  host.addEventListener("graview:mounted", function () {
+    mounted = true;
+    if (waiting) { var chip = waiting; waiting = null; ask(chip); }
+  });
+})();
+</script>
 
   <section id="how" class="how" aria-labelledby="h-how">
     <div class="claim">

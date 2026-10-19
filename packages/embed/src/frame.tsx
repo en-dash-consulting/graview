@@ -1,8 +1,8 @@
 import type { HistoryHost } from "@graview/core/history";
-import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore } from "@graview/core";
+import { faviconHref, Store, type AnySchema, type Brand, type GraviewApp, type HostFiles, type KeptViews, type ResolveApp, type LinkedRecords, type Person, type PresenceChannel, type Principal, type SignIn, type SubscriptionStore } from "@graview/core";
 import type { NavigationHow, PageComponent, PageRegistry } from "@graview/pages";
 import { AppBar, appKeyOf, barPlaceAt, barPlaces, FirstLookDoor, Notices, Profile, registerDeclaredLenses, registerReaderLenses, Standing, themeBaseCss, useFavicon, useScenePlaces, useViewportHeight, type BarFaces, type BarFind, type BarGo, type BarSwitch, type FirstLook, type HostAction, type NoticeBoard } from "@graview/primitives/frame";
-import { layerViews, useGraph, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
+import { layerViews, useGraph, useTidiedViews, useGraview, useTheKeyboardLandsSomewhere, type ErrorReport, type KeepLensHost, type MenuSectionSource, type ReactViewRegistry, type ReaderMemory, type Scheme } from "@graview/react/provider";
 import type { HostAi } from "@graview/tools/frame";
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { fontsLink } from "./fonts.js";
@@ -307,6 +307,20 @@ export interface FrameOptions<S extends AnySchema = AnySchema> {
    */
   readonly subscriptions?: SubscriptionStore;
   /**
+   * THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (Roadmap
+   * f-place-menu-views), on either face: `{ current, onChange, hide, show,
+   * remove, restore, lens? }` (`KeptViews`). Right-clicking a place in the
+   * bar or its drop-down — or Shift+F10, the menu key, a long press — offers
+   * Hide and Delete for a script view (registered with its manifest's
+   * `name`) and, with `lens`, for a declared lens, where `current().may`
+   * says this viewer may; the drop-down's foot lists what is Hidden, with
+   * Show, and Recently deleted, with Restore. A view `current()` lists as
+   * hidden or deleted is tidied out of every face at once. A served store's
+   * host passes `remoteViews` from `@graview/ship/browser`; unsaid, the
+   * place menu offers neither.
+   */
+  readonly keptViews?: KeptViews;
+  /**
    * WHAT A SIGNED-OUT READER COULD GAIN (FR-183), on either face: `{ label,
    * run, roles? }`, handed only while the reader is a visitor. Where every
    * act withheld from them is one a member could take (one of `roles`, the
@@ -370,7 +384,7 @@ export function FrameFirstLook({ rootRef, firstLook, app }: { readonly rootRef: 
  * no views at all (FR-03). Every face draws from it, the pages too (FR-35).
  */
 export function useViews<S extends AnySchema>(
-  props: Pick<FrameOptions<S>, "app" | "views" | "brand">,
+  props: Pick<FrameOptions<S>, "app" | "views" | "brand" | "keptViews">,
   /**
    * The framework's own views for the schema, its defaults with the
    * declaration's specs over them. The whole embed registers them behind
@@ -380,7 +394,7 @@ export function useViews<S extends AnySchema>(
   framework: (schema: S, specs: GraviewApp<S>["viewSpecs"]) => ReactViewRegistry<S>,
 ): ReactViewRegistry<S> {
   const { app } = props;
-  return useMemo(() => {
+  const views = useMemo(() => {
     // The lenses the declaration titles are places of their own (FR-79), and its arrangement goes with them (FR-80).
     const base = registerDeclaredLenses(framework(app.schema, app.viewSpecs), app);
     const views = (props.views ? layerViews(base, props.views(app.schema, base)) : base) as ReactViewRegistry<S>;
@@ -388,6 +402,8 @@ export function useViews<S extends AnySchema>(
     registerReaderLenses(views, app.schema, appKeyOf(props.brand ?? app.brand, app.schema));
     return views;
   }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages, app.home]);
+  // What the host lists as hidden or deleted (Roadmap f-place-menu-views), tidied out of every face at once.
+  return useTidiedViews(views, props.keptViews);
 }
 
 /** A store from a declaration and a seed: the app's own policy, in memory. */
@@ -613,6 +629,7 @@ export function providerProps<S extends AnySchema>(props: FrameOptions<S>, prese
     history: props.history,
     linkedRecords: props.linkedRecords,
     subscriptions: props.subscriptions,
+    keptViews: props.keptViews,
     signIn: props.signIn,
     menuSections: props.menuSections,
     /* The app, so the seat's tools and a host's turn describe its places (`describe_place`), and its

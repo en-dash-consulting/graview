@@ -1352,6 +1352,86 @@ main.page > section.agent-hero {
   .ah-label .dot { forced-color-adjust: none; background: CanvasText; }
 }
 
+/*
+ * THE RUN beside the docs app: what the agent did, then the interface it
+ * never wrote, then the one a sentence asked for. A column at a desk's
+ * width; above the stage on anything narrower, where only the step it is
+ * on is shown, so the page never grows under the reader as the run goes.
+ * Without script every step is listed.
+ */
+.run-stage { display: grid; grid-template-columns: minmax(270px, 0.36fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.run {
+  margin: 0; padding: 14px 16px; list-style: none; display: flex; flex-direction: column; gap: 10px;
+  border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--sunk);
+  font-family: var(--sans); font-size: 13px; line-height: 1.45; color: var(--ink-2); min-width: 0;
+}
+.run li { display: grid; gap: 2px; min-width: 0; }
+.run li > code { font-family: var(--mono); font-size: 12.5px; color: var(--ink); overflow-wrap: anywhere; }
+.run li > code::before { content: "\203A\00a0"; color: var(--ink-3); }
+.run li.warn > span { color: #FFB59E; }
+.run li.said { padding-top: 8px; border-top: 1px solid var(--rule-2); }
+.run li.said b { font-size: 15px; color: var(--mint); font-weight: var(--w-label); }
+.run li.asked { margin-top: auto; }
+.run[data-running] li { display: none; }
+.run[data-running] li.done, .run[data-running] li.now { display: grid; }
+.run[data-running] li.done:not(.said):not(.asked) { color: var(--ink-3); }
+.ask-bar {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 10px 12px;
+  border: 1px solid var(--rule); border-radius: 10px; background: var(--night); color: var(--ink);
+  font-family: var(--sans); font-size: 14px; line-height: 1.45; max-width: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 18%, transparent);
+}
+.ask-bar kbd {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 11.5px; line-height: 1; padding: 4px 6px; margin-top: 1px;
+  border: 1px solid var(--rule); border-radius: 5px; color: var(--ink-3);
+}
+.ask-typed { min-width: 0; overflow-wrap: anywhere; }
+.ask-typed[data-typing]::after { content: ""; display: inline-block; width: 2px; height: 1.05em; margin-left: 1px; vertical-align: -2px; background: var(--mint); }
+.replay {
+  font: inherit; font-weight: var(--w-label); color: var(--pine); background: none; border: 0; padding: 0;
+  min-height: 24px; cursor: pointer;
+}
+.replay:hover { text-decoration: underline; }
+@media (max-width: 1023px) {
+  .run-stage { grid-template-columns: minmax(0, 1fr); }
+  .run { padding: 12px 14px; }
+  .run[data-running] li.done:not(.now) { display: none; }
+  .run li.asked { margin-top: 0; }
+}
+
+/*
+ * THE ASKS: the claim, then one app with the asks to press above it. The
+ * bar is the quick ask's own shape; the presses are the sentences it was
+ * asked, each redrawing the same records.
+ */
+main.page > section.asks { padding-top: clamp(64px, 9vw, 112px); }
+.asks-head { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 20px 48px; align-items: end; }
+.asks-head .claim h2 { max-width: 16ch; }
+.asks-head .lede { font-size: 17.5px; }
+.ask-demo { margin-top: 34px; display: grid; gap: 12px; }
+.ask-line { display: grid; gap: 12px; }
+.ask-bar-big { font-size: 16px; padding: 14px 16px; }
+.ask-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-chips button {
+  font: inherit; font-family: var(--sans); font-size: 14px; line-height: 1.35; text-align: left;
+  color: var(--ink-2); background: var(--panel); border: 1px solid var(--rule); border-radius: 999px;
+  min-height: 38px; padding: 7px 16px; cursor: pointer; max-width: 100%;
+}
+.ask-chips button:hover { color: var(--ink); border-color: var(--ink-3); }
+.ask-chips button[aria-pressed="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.season-live { height: min(680px, 78vh); min-height: 480px; border-radius: var(--radius); box-shadow: 0 0 0 1px var(--rule), 0 18px 40px -30px rgba(0, 23, 105, 0.35); }
+@media (max-width: 900px) {
+  .asks-head { grid-template-columns: minmax(0, 1fr); }
+  .season-live { height: 600px; min-height: 0; }
+}
+@media (max-width: 560px) {
+  .ask-chips button { border-radius: 14px; width: 100%; }
+  .season-live { height: 560px; }
+}
+@media (forced-colors: active) {
+  .ask-chips button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+}
+
 /* The recipes: one row each, the task, what it declared and the proof. */
 main.page > section.recipes { padding-top: 104px; }
 .recipe-list { margin: 40px 0 0; padding: 0; list-style: none; display: grid; gap: 0; }
@@ -1456,9 +1536,9 @@ main.page > section.tour-intro { padding-top: 64px; }
 <p>A part fetched only when it is first drawn is a <code>lazyModule</code> over <code>retryingImport(() =&gt; import("./part.js"))</code> (from <code>@graview/core/retry</code>), drawn with its <code>part(draw, { what })</code>. Until it arrives, its place says so in one line with a "Try again" button (<code>lazy-part-missing</code>, <code>lazy-part-retry</code>) rather than throwing; it is asked for again when the browser is back online, when it is drawn again, on <code>prefetch()</code>, and when the button is pressed (<code>retryLazyParts</code>). Every part the framework fetches as it is drawn — the person's menu, the problems' rows, the faces, the views and lenses, the studio, the assistant — is one.</p>
     </section>
     <section id="api" aria-labelledby="h-api">
-      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (135)</h2></div>
+      <div class="head"><span class="tick" aria-hidden="true"></span><h2 id="h-api">What it exports (138)</h2></div>
       <p class="sm dim">Read off the package's own barrel, so this is what is there today.</p>
-      <ul class="names"><li><code>ACTIVITY_HOLD_MS</code></li><li><code>adjustment</code></li><li><code>altitudeOpacity</code></li><li><code>anchorOf</code></li><li><code>applySettings</code></li><li><code>AUDIENCE_ROW</code></li><li><code>bandRows</code></li><li><code>BesideTheMap</code></li><li><code>channelRoute</code></li><li><code>clipPolyline</code></li><li><code>clipQuadratic</code></li><li><code>connectorStrands</code></li><li><code>createAiDesk</code></li><li><code>createMotionStore</code></li><li><code>createPointerStore</code></li><li><code>createSeatTalk</code></li><li><code>createViews</code></li><li><code>DEFAULT_VIEW</code></li><li><code>DefaultDrawnElsewhere</code></li><li><code>districtOf</code></li><li><code>ErrorReportContext</code></li><li><code>Figure</code></li><li><code>foldRobots</code></li><li><code>GoToContext</code></li><li><code>GraviewProvider</code></li><li><code>hasLanded</code></li><li><code>HEARTBEAT_MS</code></li><li><code>honorSetting</code></li><li><code>HostFilesContext</code></li><li><code>inTopLayer</code></li><li><code>isDefaultView</code></li><li><code>kitConnector</code></li><li><code>landingIn</code></li><li><code>latticePoints</code></li><li><code>layerViews</code></li><li><code>lazyModule</code></li><li><code>loadSetting</code></li><li><code>mapChoice</code></li><li><code>markActivity</code></li><li><code>markDefaultView</code></li><li><code>markLanded</code></li><li><code>markReplacesPage</code></li><li><code>matchWith</code></li><li><code>MenuSections</code></li><li><code>NOTHING_FOUND</code></li><li><code>Occupants</code></li><li><code>onScreen</code></li><li><code>openingView</code></li><li><code>orthogonalPoints</code></li><li><code>participantOf</code></li><li><code>PersonFigure</code></li><li><code>pickedFrom</code></li><li><code>placeOthers</code></li><li><code>placePane</code></li><li><code>PlaybackContext</code></li><li><code>polylineD</code></li><li><code>POPOVER_STYLE</code></li><li><code>POPOVERS</code></li><li><code>prepareAffordances</code></li><li><code>PRESENCE_SETTINGS</code></li><li><code>raiseOverPopovers</code></li><li><code>rememberSetting</code></li><li><code>REPLACES_PAGE</code></li><li><code>replacesPage</code></li><li><code>ResolvedView</code></li><li><code>retryLazyParts</code></li><li><code>RIBBON_WIDTH</code></li><li><code>ribbonSentence</code></li><li><code>ribbonsOf</code></li><li><code>ribbonWidth</code></li><li><code>ROBOT_REST_MS</code></li><li><code>roundedPolylineD</code></li><li><code>routedQuadratic</code></li><li><code>routePoint</code></li><li><code>Scene</code></li><li><code>SeatMarks</code></li><li><code>seatTalkKey</code></li><li><code>selectionFor</code></li><li><code>SHARE_OVER</code></li><li><code>SHARE_WHERE</code></li><li><code>stackOpacity</code></li><li><code>standingFor</code></li><li><code>tabSession</code></li><li><code>tieRoute</code></li><li><code>UrlSync</code></li><li><code>useActivity</code></li><li><code>useAffordances</code></li><li><code>useAiDeskState</code></li><li><code>useAnimatedLayout</code></li><li><code>useApplyAffordance</code></li><li><code>useAttention</code></li><li><code>useBacktrack</code></li><li><code>useDrawnSize</code></li><li><code>useEditableFields</code></li><li><code>useFlagged</code></li><li><code>useFound</code></li><li><code>useGoTo</code></li><li><code>useGraph</code></li><li><code>useGraview</code></li><li><code>useGraviewIfAny</code></li><li><code>useHostFiles</code></li><li><code>useImplicated</code></li><li><code>useJackIn</code></li><li><code>useKit</code></li><li><code>useLiveStore</code></li><li><code>useLocalIntelligence</code></li><li><code>useMarqueeRoom</code></li><li><code>useMenuPrepare</code></li><li><code>useMenuSections</code></li><li><code>useNavigation</code></li><li><code>useNode</code></li><li><code>useOwnPlayback</code></li><li><code>usePlayback</code></li><li><code>usePopover</code></li><li><code>usePresenceState</code></li><li><code>useReached</code></li><li><code>useRobots</code></li><li><code>useScenePointer</code></li><li><code>useSceneStill</code></li><li><code>useSeatTalkState</code></li><li><code>useSeatWork</code></li><li><code>useSelection</code></li><li><code>useTextMeasure</code></li><li><code>useTheKeyboardLandsSomewhere</code></li><li><code>useTheWatchKnowsWhatIsUnseen</code></li><li><code>useTopLayer</code></li><li><code>useTouched</code></li><li><code>useUrlSync</code></li><li><code>useViewMode</code></li><li><code>useViolations</code></li><li><code>useWhereIs</code></li><li><code>ViewBoundary</code></li><li><code>ViewModeProvider</code></li><li><code>VISIT_EACH_UP_TO</code></li><li><code>whereIsIn</code></li></ul>
+      <ul class="names"><li><code>ACTIVITY_HOLD_MS</code></li><li><code>adjustment</code></li><li><code>altitudeOpacity</code></li><li><code>anchorOf</code></li><li><code>applySettings</code></li><li><code>AUDIENCE_ROW</code></li><li><code>bandRows</code></li><li><code>BesideTheMap</code></li><li><code>channelRoute</code></li><li><code>clipPolyline</code></li><li><code>clipQuadratic</code></li><li><code>connectorStrands</code></li><li><code>createAiDesk</code></li><li><code>createMotionStore</code></li><li><code>createPointerStore</code></li><li><code>createSeatTalk</code></li><li><code>createViews</code></li><li><code>DEFAULT_VIEW</code></li><li><code>DefaultDrawnElsewhere</code></li><li><code>districtOf</code></li><li><code>ErrorReportContext</code></li><li><code>Figure</code></li><li><code>foldRobots</code></li><li><code>GoToContext</code></li><li><code>GraviewProvider</code></li><li><code>hasLanded</code></li><li><code>HEARTBEAT_MS</code></li><li><code>honorSetting</code></li><li><code>HostFilesContext</code></li><li><code>inTopLayer</code></li><li><code>isDefaultView</code></li><li><code>KeptViewsProvider</code></li><li><code>kitConnector</code></li><li><code>landingIn</code></li><li><code>latticePoints</code></li><li><code>layerViews</code></li><li><code>lazyModule</code></li><li><code>loadSetting</code></li><li><code>mapChoice</code></li><li><code>markActivity</code></li><li><code>markDefaultView</code></li><li><code>markLanded</code></li><li><code>markReplacesPage</code></li><li><code>matchWith</code></li><li><code>MenuSections</code></li><li><code>NOTHING_FOUND</code></li><li><code>Occupants</code></li><li><code>onScreen</code></li><li><code>openingView</code></li><li><code>orthogonalPoints</code></li><li><code>participantOf</code></li><li><code>PersonFigure</code></li><li><code>pickedFrom</code></li><li><code>PLACE_MENU_EVENT</code></li><li><code>placeOthers</code></li><li><code>placePane</code></li><li><code>PlaybackContext</code></li><li><code>polylineD</code></li><li><code>POPOVER_STYLE</code></li><li><code>POPOVERS</code></li><li><code>prepareAffordances</code></li><li><code>PRESENCE_SETTINGS</code></li><li><code>raiseOverPopovers</code></li><li><code>rememberSetting</code></li><li><code>REPLACES_PAGE</code></li><li><code>replacesPage</code></li><li><code>ResolvedView</code></li><li><code>retryLazyParts</code></li><li><code>RIBBON_WIDTH</code></li><li><code>ribbonSentence</code></li><li><code>ribbonsOf</code></li><li><code>ribbonWidth</code></li><li><code>ROBOT_REST_MS</code></li><li><code>roundedPolylineD</code></li><li><code>routedQuadratic</code></li><li><code>routePoint</code></li><li><code>Scene</code></li><li><code>SeatMarks</code></li><li><code>seatTalkKey</code></li><li><code>selectionFor</code></li><li><code>SHARE_OVER</code></li><li><code>SHARE_WHERE</code></li><li><code>stackOpacity</code></li><li><code>standingFor</code></li><li><code>tabSession</code></li><li><code>tieRoute</code></li><li><code>UrlSync</code></li><li><code>useActivity</code></li><li><code>useAffordances</code></li><li><code>useAiDeskState</code></li><li><code>useAnimatedLayout</code></li><li><code>useApplyAffordance</code></li><li><code>useAttention</code></li><li><code>useBacktrack</code></li><li><code>useDrawnSize</code></li><li><code>useEditableFields</code></li><li><code>useFlagged</code></li><li><code>useFound</code></li><li><code>useGoTo</code></li><li><code>useGraph</code></li><li><code>useGraview</code></li><li><code>useGraviewIfAny</code></li><li><code>useHostFiles</code></li><li><code>useImplicated</code></li><li><code>useJackIn</code></li><li><code>useKit</code></li><li><code>useLiveStore</code></li><li><code>useLocalIntelligence</code></li><li><code>useMarqueeRoom</code></li><li><code>useMenuPrepare</code></li><li><code>useMenuSections</code></li><li><code>useNavigation</code></li><li><code>useNode</code></li><li><code>useOwnPlayback</code></li><li><code>usePlayback</code></li><li><code>usePopover</code></li><li><code>usePresenceState</code></li><li><code>useReached</code></li><li><code>useRobots</code></li><li><code>useScenePointer</code></li><li><code>useSceneStill</code></li><li><code>useSeatTalkState</code></li><li><code>useSeatWork</code></li><li><code>useSelection</code></li><li><code>useTextMeasure</code></li><li><code>useTheKeyboardLandsSomewhere</code></li><li><code>useTheWatchKnowsWhatIsUnseen</code></li><li><code>useTidiedViews</code></li><li><code>useTopLayer</code></li><li><code>useTouched</code></li><li><code>useUrlSync</code></li><li><code>useViewMode</code></li><li><code>useViolations</code></li><li><code>useWhereIs</code></li><li><code>ViewBoundary</code></li><li><code>ViewModeProvider</code></li><li><code>VISIT_EACH_UP_TO</code></li><li><code>whereIsIn</code></li></ul>
     </section>
 
   </main>

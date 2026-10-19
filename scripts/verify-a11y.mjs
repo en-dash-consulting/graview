@@ -26,6 +26,11 @@
  *   keyboard on it; on a phone at twice the text size it still fits; and
  *   Escape ends it with the keyboard given back.
  *
+ *   a status board on Cloud's vendor app (the Pages face, at its place): at
+ *   rest, with a card carried by the keyboard, with its menu's "Move to ›"
+ *   open, and after a card is dragged — a move by the keyboard, the menu
+ *   and a pointer, each scanned (Roadmap f-board-move-without-buttons).
+ *
  *   the example apps (todo, seedbed, rota, discography, the desk), whole:
  *   every node on their pages is this repository's.
  *
@@ -92,6 +97,7 @@ async function buildHost() {
           app: compiled.app,
           seed: { nodes: seed.nodes, edges: seed.edges.map((edge, i) => ({ id: edge.id ?? "e" + i, ...edge })) },
           face: asked.get("face") ?? "graview",
+          ...(asked.get("path") ? { path: asked.get("path") } : {}),
           // A first look, as Cloud turns it on for a new app: shown whatever this browser remembers.
           ...(asked.get("firstLook") ? { firstLook: { seen: false } } : {}),
           principal: { kind: "human", id: "u:owner", roles: ["owner"] },
@@ -140,9 +146,12 @@ const example = (app, paths) =>
   paths.map((path) => ({ name: `${app} · ${path}`, group: app, app, url: () => `${at(app)}${path}${path.includes("?") ? "&" : "?"}today=2026-09-01`, hosted: false }));
 /** The first look's screens: Cloud's vendor app on both faces, each hint opened in turn. */
 const firstLook = ["scene", "pages"].map((face) => ({ name: `vendors · first look · ${face}`, group: "first-look", url: () => `${at("a11y-host")}/?doc=vendors&face=${face}&firstLook=1`, hosted: true, firstLook: true }));
+/** A status board, moved three ways with axe run at each (Roadmap f-board-move-without-buttons). */
+const board = { name: "vendors · a board moved", group: "board", url: () => `${at("a11y-host")}/?doc=vendors&face=pages&path=${encodeURIComponent("/places/vendors-by-status")}`, hosted: true, board: true };
 const SCREENS = [
   ...hosted("vendors"),
   ...firstLook,
+  board,
   ...hosted("workshop"),
   ...example("todo", ["/", "/pages", "/pages/tasks", "/pages/tasks/t-deposit", "/pages/problems", "/pages/search?q=the"]),
   ...example("seedbed", ["/", "/pages"]),
@@ -230,7 +239,59 @@ async function scan(page) {
   );
 }
 
+/**
+ * A CARD MOVED THREE WAYS, axe run at each: at rest; carried by the keyboard
+ * (Space, then Right) with its slot held open; with its menu's "Move to ›"
+ * open; and after a drag onto another column. Says which steps it reached.
+ */
+async function boardMoves(page) {
+  const scans = [...(await scan(page))];
+  const CARD = "#graview-app [data-testid='columns-lens'] [data-graview-listed][draggable='true']";
+  const steps = { card: false, carried: false, dropped: false, menu: false, dragged: false };
+  const link = page.locator(`${CARD} .graview-spec-item-link`).first();
+  if ((await link.count()) === 0) return { scans, steps };
+  steps.card = true;
+  const said = () => page.evaluate(() => document.querySelector('[data-testid="columns-announce"]')?.textContent ?? "");
+  await link.focus();
+  await page.keyboard.press(" ");
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(200);
+  steps.carried = / \d+ of \d+\.$/.test(await said()) && (await page.locator('[data-testid="columns-slot"]').count()) > 0;
+  scans.push(...(await scan(page)));
+  await page.keyboard.press(" ");
+  await page.waitForTimeout(500);
+  steps.dropped = (await said()).includes("dropped in");
+  await page.keyboard.press("Shift+F10");
+  await page.waitForTimeout(800);
+  const row = page.locator('[data-testid="context-menu"] [data-menu-item="move-to"]');
+  if ((await row.count()) > 0) {
+    await row.click();
+    await page.waitForTimeout(200);
+    steps.menu = (await page.locator('[data-testid="context-menu"] [data-move-to]').count()) > 0;
+    scans.push(...(await scan(page)));
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+  }
+  const drag = await page.evaluate((selector) => {
+    const first = document.querySelector(selector);
+    const from = first?.closest("[data-graview-column]")?.getAttribute("data-graview-column");
+    const to = [...document.querySelectorAll("#graview-app [data-graview-column]")].map((column) => column.getAttribute("data-graview-column")).find((value) => value && value !== from);
+    return first && to ? { id: first.getAttribute("data-graview-listed"), to } : null;
+  }, CARD);
+  if (drag) {
+    const before = await page.evaluate(() => document.querySelector('[data-testid="columns-said"]')?.textContent ?? "");
+    await page.dragAndDrop(`#graview-app [data-graview-listed="${drag.id}"]`, `#graview-app [data-graview-column="${drag.to}"]`).catch(() => {});
+    await page.waitForTimeout(500);
+    const after = await page.evaluate(() => document.querySelector('[data-testid="columns-said"]')?.textContent ?? "");
+    steps.dragged = after.startsWith("Moved") && after !== before;
+    scans.push(...(await scan(page)));
+  }
+  return { scans, steps };
+}
+
 const servers = [];
+/** What each board screen reached, step by step. */
+const boards = [];
 /** What each first-look screen found, hint by hint. */
 const hints = [];
 const largeText = [];
@@ -276,7 +337,12 @@ try {
             shown = pressed ? null : await hintNow(page);
           }
         }
-        const violations = screen.firstLook ? scans : await scan(page);
+        if (screen.board) {
+          const moved = await boardMoves(page);
+          scans.push(...moved.scans);
+          boards.push({ screen: label, ...moved.steps });
+        }
+        const violations = screen.firstLook || screen.board ? scans : await scan(page);
         let count = 0;
         for (const v of violations) {
           for (const node of v.nodes) {
@@ -392,6 +458,11 @@ const checks = {
   escapeEndsTheFirstLookAndGivesTheKeyboardBack: {
     escapes,
     ok: SCREENS.every((screen) => !screen.firstLook) || (escapes.length === SCREENS.filter((screen) => screen.firstLook).length && escapes.every((one) => one.gone && one.keyboardInApp)),
+  },
+  aBoardMovedByTheKeyboardItsMenuAndAPointerPassesAxe: {
+    boards,
+    nodes: findings.filter((finding) => finding.screen.includes("a board moved")).length,
+    ok: SCREENS.every((screen) => !screen.board) || (boards.length > 0 && boards.every((one) => one.card && one.carried && one.dropped && one.menu && one.dragged) && findings.every((finding) => !finding.screen.includes("a board moved"))),
   },
   everyScreenWasScanned: { scanned: scanned.length, expected: SCREENS.length * SWEEP.length, ok: scanned.length === SCREENS.length * SWEEP.length },
   noPageThrew: { errors, ok: errors.length === 0 },

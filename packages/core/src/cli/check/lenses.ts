@@ -304,6 +304,32 @@ export function checkDeclaredLenses<S extends AnySchema>(ctx: CheckContext<S>): 
     ctx.add({ severity: finding.severity, code: finding.code, where: finding.path, message: finding.message, fix: finding.fix });
   }
   /*
+   * WHAT A LENS SHOWS OF ITSELF, AND WHAT IT LEFT OUT (Roadmap
+   * f-lens-search-filter): a field Find cannot look in or a chip cannot
+   * filter by, a column the field does not have, a cap that is not a count,
+   * a move that is not yes or no. `declaredLenses` keeps what it can honor;
+   * this says the rest, at its path (here, not there: a page carries that).
+   */
+  for (const lens of declared.drawn) {
+    const given = ctx.app.lenses?.[lens.index]?.options as Record<string, unknown> | undefined;
+    if (!given) continue;
+    for (const key of ["search", "filters", "collapsed", "hidden", "cap", "move"]) {
+      if (!(key in given) || JSON.stringify(given[key]) === JSON.stringify(lens.options[key])) continue;
+      const kept = Array.isArray(lens.options[key]) ? (lens.options[key] as readonly unknown[]) : [];
+      const strays = Array.isArray(given[key]) ? (given[key] as readonly unknown[]).filter((one) => !kept.includes(one)) : [given[key]];
+      const kind = typeof lens.options["rows"] === "string" ? lens.options["rows"] : lens.kinds[0];
+      const what =
+        key === "search" || key === "filters"
+          ? [`${key === "search" ? "searches" : "filters by"} ${strays.map((one) => JSON.stringify(one)).join(", ")}, which ${kind} does not have`, `Name fields of ${kind} as a list${key === "filters" ? " — its relations too" : ""}, "label" for its name.`]
+          : key === "cap"
+            ? [`keeps ${JSON.stringify(given[key])} cards a column, which is not a whole number from 1 to 500`, `Say "cap": 20 to keep each column to its newest twenty, or drop it.`]
+            : key === "move"
+              ? [`says move is ${JSON.stringify(given[key])}, neither true nor false`, `Say "move": true for a Move button under each card, or drop it: a card moves by drag, by the keyboard and from its menu.`]
+              : [`names ${strays.map((one) => JSON.stringify(one)).join(", ")} among its ${key} columns, which the field does not have`, `Name columns by their values, as a list.`];
+      ctx.add({ severity: "warning", code: "lens-option", where: `lenses.${lens.index}.options.${key}`, message: `"${lens.title}" ${what[0]}, so it leaves ${strays.length === 1 ? "it" : "them"} out.`, fix: what[1]! });
+    }
+  }
+  /*
    * TWO PICTURES, ONE NAME, ON DIFFERENT KINDS: each still draws, at an
    * address that says whose (`?of=`), and every list says whose beside the
    * name ("The timetable · talks") — but a person reads two entries alike

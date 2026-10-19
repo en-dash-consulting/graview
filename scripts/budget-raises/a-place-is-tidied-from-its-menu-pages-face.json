@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 3257,
+  "gzipped": 1405,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): the routed face's menu offers Hide and Delete for a place (`useViewTidyingSection`), and the bar's places open it; the foot, the gesture's reading and `tidyViews` are their own chunks. 8_786 / 3_497 more than before it (606_823 / 222_223): measured at 615_609 / 225_720. Then the first load came to ask for nothing it does not draw (first-load-asks-for-nothing-it-does-not-draw.md): the menu's rows decide what they offer as the menu opens and fetch what a press does, the gesture's reading went with the bar's panes, and the face hears the bar's event from `@graview/react/provider`, so view-tidying.tsx and place-menu.ts left what the face loads first: 5_529 / 2_092 fewer, measured at 612_417 / 224_545, so 3_257 / 1_405 more than before the tidying."
+}

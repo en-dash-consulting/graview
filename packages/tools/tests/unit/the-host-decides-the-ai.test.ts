@@ -61,7 +61,8 @@ describe("nothing for a reader to choose", () => {
     }
     // aiVia is the seat's, asked only once a model answered: @graview/tools' alone, never in the frame a page carries up front.
     // aiOff and inlineAiOn are what a face asks before it draws an AI part at all (Roadmap f-ai-candidate-catalog): the host's, never a reader's.
-    expect(Object.keys(frame).sort()).toEqual(["ANSWERED_WITH_AI", "NO_AI", "NO_AI_SAID", "aiOff", "aiTalks", "inlineAiOn"]);
+    // suggestsOnOpen and hoverChipsOn are what the selection bar and the hover chip ask before they are fetched at all: the host's too.
+    expect(Object.keys(frame).sort()).toEqual(["ANSWERED_WITH_AI", "NO_AI", "NO_AI_SAID", "aiOff", "aiTalks", "hoverChipsOn", "inlineAiOn", "suggestsOnOpen"]);
     for (const words of [NO_AI_SAID, ANSWERED_WITH_AI]) expect(words).not.toMatch(/graph-native|Graph only|Onboard|Jev|LLM|rung/);
   });
 });

@@ -1,5 +1,5 @@
 import { layer, type AnySchema, type Store } from "@graview/core";
-import { aiTargetOf, catalogOf, recordsOfTarget, type AiCandidate, type AiInteraction, type AiPanel, type AiTarget } from "@graview/core/catalog";
+import { aiTargetOf, catalogOf, existingViewsOf, recordsOfTarget, type AiCandidate, type AiInteraction, type AiPanel, type AiTarget } from "@graview/core/catalog";
 import { useAiDeskState, useGraview, useLiveStore, type MenuTarget } from "@graview/react/provider";
 import { deriveAffordances } from "@graview/tools/derive";
 import { acceptedEntry, acceptGhost, dismissedEntry, fillHere, ghostOf, interactionId, panelHere, proposalOf, recordHere, suggestHere, suggestsOnOpen, thinkingOf, type InlineAsk, type InlineResult } from "@graview/tools/inline-ai";
@@ -16,7 +16,9 @@ import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, pa
  * suggestions, picked from the catalog (a value to fill, an act that asks
  * nothing, a panel, a place, a record), each taken with one press; "Fill
  * in" for a record whose fields the catalog has values for; "Draw a panel"
- * for whatever has a kind. A proposed change is a ghost, waiting on the
+ * for whatever has a kind — after "Open …" for up to three views the app
+ * already has that fit it, when it has any, and then "Draw a new view". A
+ * proposed change is a ghost, waiting on the
  * tray (`GhostTray`) for Accept, Accept some or Dismiss, and then for its
  * one undo; a panel is drawn where the seat draws a view, where "Keep as a
  * lens" makes it a real one. Every interaction the person takes up is an
@@ -133,7 +135,8 @@ export async function askInline(env: InlineEnv, kind: "suggest" | "fill" | "reco
  * asks nothing. What an entry depends on is the record itself — a record
  * is a new object whenever it changes — or, for a list, a lens or a place,
  * any change to the graph; a change drops the entry. A failure is not
- * kept, so the next opening asks again. Hovering never reaches here.
+ * kept, so the next opening asks again. Hovering reaches here only where
+ * the host asked for hover chips (`hover-chip.tsx`), and shares the entry.
  */
 interface Suggested {
   readonly schema: unknown;
@@ -161,26 +164,36 @@ const dependsOn = (store: Store<AnySchema>, target: AiTarget): readonly unknown[
   const records = recordsOfTarget(target);
   return records.length > 0 ? records.map((id) => store.graph.getNode(id)) : [changesOf(store)];
 };
-const keyOf = (env: InlineEnv, target: AiTarget): string => JSON.stringify({ target, seat: env.principal });
+const keyOf = (env: InlineEnv, target: AiTarget, by: string): string => JSON.stringify({ target, seat: env.principal, by });
+
+/**
+ * WHO ASKS, AND HOW: the menu's own suggestion (`"menu"`) unless said — the
+ * selection bar asks its own question of the same records (`"several"`),
+ * kept apart, by the same rules.
+ */
+export interface SuggestAsker {
+  readonly by: string;
+  readonly ask: () => Promise<InlineResult>;
+}
 const standing = (env: InlineEnv, target: AiTarget, entry: Suggested): boolean => {
   const now = dependsOn(env.store, target);
   return entry.schema === env.store.schema && entry.ai === env.ai && now.length === entry.depends.length && now.every((one, at) => one === entry.depends[at]);
 };
 
 /** What was suggested here before, while nothing it depends on has changed. */
-export function heldSuggestion(env: InlineEnv, target: AiTarget): InlineResult | undefined {
-  const entry = SUGGESTED.get(env.store)?.get(keyOf(env, target));
+export function heldSuggestion(env: InlineEnv, target: AiTarget, by = "menu"): InlineResult | undefined {
+  const entry = SUGGESTED.get(env.store)?.get(keyOf(env, target, by));
   return entry?.result !== undefined && standing(env, target, entry) ? entry.result : undefined;
 }
 
 /** The suggestions here: held, on their way, or asked now — once. */
-export function suggestOnce(env: InlineEnv, target: AiTarget): Promise<InlineResult> {
+export function suggestOnce(env: InlineEnv, target: AiTarget, asker?: SuggestAsker): Promise<InlineResult> {
   let kept = SUGGESTED.get(env.store);
   if (!kept) SUGGESTED.set(env.store, (kept = new Map()));
-  const key = keyOf(env, target);
+  const key = keyOf(env, target, asker?.by ?? "menu");
   const was = kept.get(key);
   if (was && standing(env, target, was)) return was.result ? Promise.resolve(was.result) : was.asked;
-  const asked = askInline(env, "suggest", target);
+  const asked = asker ? asker.ask() : askInline(env, "suggest", target);
   const entry: Suggested = { schema: env.store.schema, ai: env.ai, depends: dependsOn(env.store, target), asked };
   kept.delete(key);
   kept.set(key, entry);
@@ -263,6 +276,17 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
   }, [env, target]);
   const fills = catalog.candidates.some((candidate) => candidate.type === "fill");
   const panels = catalog.candidates.some((candidate) => candidate.type === "panel");
+  /*
+   * A VIEW THE APP ALREADY HAS, BEFORE A NEW ONE (Roadmap
+   * f-menu-suggests-existing-views): where a panel would be drawn, the
+   * places that fit the target — read from the places, asking no model,
+   * once per target with the catalog. With no words asked there is
+   * nothing to rank one view of the kind above another by, so the menu
+   * offers the best one, in a row the suggestions give up: the menu is no
+   * taller than with its three suggestions. The quick ask, which has the
+   * words, offers up to three.
+   */
+  const existing = useMemo(() => (panels ? existingViewsOf(env.store, target, { principal: env.principal, places: env.places, most: 1 }) : []), [panels, env, target]);
   // A record made by an act that asks for words, where a thinking model can write them.
   const makes = useMemo(() => new Set(env.store.allMutations().filter((mutation) => (mutation.creates ?? []).length > 0).map((mutation) => mutation.name)), [env.store]);
   const records = thinkingOf(env.ai) !== undefined && catalog.candidates.some((candidate) => candidate.type === "act" && candidate.asks.length > 0 && makes.has(candidate.mutation));
@@ -293,6 +317,8 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [askedOf, pressed]);
   const suggested = held ?? answered;
+  /* The suggestions and the views it has share the three rows the suggestions had: a place offered already is not offered again. */
+  const offers = (suggested?.offers ?? []).filter((offer) => !(offer.type === "place" && existing.some((view) => view.place === offer.place))).slice(0, Math.max(0, 3 - existing.length));
   const failed = suggested?.interaction.outcome === "failed" ? (suggested.interaction.failed ?? "The AI could not suggest anything here.") : null;
   /* "Suggest…" pressed from the keyboard and gone with the answer: the keyboard goes to the first row after it — never <body>. */
   const keyboardOnSuggest = useRef(false);
@@ -363,7 +389,7 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
         </p>
       ) : null}
       <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 2 }}>
-        {(suggested?.offers ?? []).map((offer) => (
+        {offers.map((offer) => (
           <li key={offer.id}>
             <button type="button" data-menu-item={`ai-offer:${offer.id}`} data-ai-offer={offer.id} data-ai-offer-type={offer.type} onClick={() => run((landing) => takeOffer(env, suggested!, offer, landing))} style={ROW}>
               {offer.label}
@@ -403,10 +429,31 @@ export function InlineAiMenu({ target: menu, close }: InlineAiMenuProps) {
             </button>
           </li>
         ) : null}
+        {existing.map((view) => (
+          <li key={view.place}>
+            {/*
+             * Opened outright where it fits whole. Where it fits in part, opened with the quick ask on it, to say
+             * what to change — asked of the view itself, not of a second one drawn beside it.
+             */}
+            <button
+              type="button"
+              data-menu-item={`ai-open:${view.place}`}
+              data-ai-existing={view.fit}
+              onClick={() => {
+                close();
+                env.goTo.place(view.place);
+                if (view.fit === "partial") openQuickAsk(env.desk, { target: { on: "lens", place: view.place, ...(view.kind ? { kind: view.kind } : {}) } });
+              }}
+              style={ROW}
+            >
+              {view.fit === "full" ? `Open ${view.title}` : `Open and adjust ${view.title}`}
+            </button>
+          </li>
+        ))}
         {panels ? (
           <li>
             <button type="button" data-menu-item="ai-panel" onClick={() => run(async (landing) => failureOf(await askInline(env, "panel", target, "Draw a panel", landing)))} style={ROW}>
-              Draw a panel
+              {existing.length > 0 ? "Draw a new view" : "Draw a panel"}
             </button>
           </li>
         ) : null}

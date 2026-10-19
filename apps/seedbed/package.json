@@ -27,6 +27,7 @@
   "dependencies": {
     "@graview/core": "workspace:*",
     "@graview/embed": "workspace:*",
+    "@graview/guest": "workspace:*",
     "@graview/layout": "workspace:*",
     "@graview/pages": "workspace:*",
     "@graview/primitives": "workspace:*",

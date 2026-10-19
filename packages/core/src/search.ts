@@ -573,9 +573,21 @@ export function matchNode(
   definition: AnyNodeDefinition | undefined,
   node: { id: string; kind: string } & Record<string, unknown>,
   words: string,
+  /** Only these fields (`label` for the name), where a lens names what its Find box looks in. */
+  within?: readonly string[],
 ): Why | undefined {
   const asked = tokensOf(words);
   if (asked.length === 0) return undefined;
+  if (within) {
+    // The name is its own text: a field named here whose value is the name finds by it, as `label` does.
+    const all = textsOf(definition, node);
+    const named = within.includes("label") || within.some((key) => typeof node[key] === "string" && node[key] === all[0]!.text);
+    const texts = all.filter((text, at) => (at === 0 ? named : within.includes(text.field)));
+    const everywhere = (word: string) => (text: Text) => foldedOf(text.text).tokens.some((token) => token.startsWith(word));
+    if (!asked.every((word) => texts.some(everywhere(word)))) return undefined;
+    const field = texts.find(everywhere(asked[0]!))!;
+    return { field: field.field, reading: field.reading, fragment: fragmentOf(field.text, asked), strength: field.field === "label" ? (strengthOf(field.text, asked) ?? "field") : "field" };
+  }
   const texts = textsOf(definition, node);
   const [label, ...rest] = texts;
   const onLabel = strengthOf(label!.text, asked);

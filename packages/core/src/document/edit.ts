@@ -1012,7 +1012,7 @@ class Editor {
       if (e.on === undefined) return this.fail(i, "on", "a lens drawn from blocks says which kind it is a place of", 'say "on": "<kind>"');
       if (!Array.isArray(e.options?.blocks) || e.options.blocks.length === 0) return this.fail(i, "options.blocks", 'a lens drawn from blocks has blocks: "options": {"blocks": [{"headline": "…"}, {"list": "all(\'<kind>\')", "as": "card"}]}');
     }
-    if (name === "columns" && !this.columnsHold(i, e.bindings)) return;
+    if (name === "columns" && !(this.columnsHold(i, e.bindings) && this.boardOptionsHold(i, e.bindings as Doc, e.options))) return;
     if (was) lenses[at] = lens;
     else lenses.splice(e.at === undefined ? lenses.length : Math.min(e.at, lenses.length), 0, lens);
     const index = was ? at : lenses.indexOf(lens);
@@ -1056,6 +1056,40 @@ class Editor {
       const others = Object.keys(roles as Doc).filter((role) => role !== "column");
       if (others.length > 0) return (this.fail(i, `bindings.${kind}.${others[0]}`, `a board binds only "column"`), false);
     }
+    return true;
+  }
+
+  /**
+   * WHAT A BOARD SHOWS OF ITSELF (Roadmap f-lens-search-filter): fields of
+   * its kind for Find and the chips, columns of its field to open shut or
+   * leave off, a count of cards a column keeps, and whether a Move button
+   * stands under each card. Refused here, where a person can still say it
+   * again; the checker says the same of a declaration written by hand.
+   */
+  private boardOptionsHold(i: number, bindings: Doc, options: unknown): boolean {
+    if (options === undefined) return true;
+    if (!isObject(options)) return (this.fail(i, "options", "a board's options are an object", '"options": {"search": ["label"], "filters": ["status"], "collapsed": ["done"]}'), false);
+    const kind = Object.keys(bindings)[0]!;
+    const fields = this.doc.kinds[kind].fields as Record<string, Doc>;
+    const column = fields[(bindings[kind] as Doc)["column"] as string]!;
+    const values = (Array.isArray(column["options"]) ? column["options"] : []) as readonly string[];
+    const relations = Object.keys((this.doc.kinds[kind].edges as Doc | undefined) ?? {});
+    for (const key of ["search", "filters"]) {
+      const given = options[key];
+      if (given === undefined) continue;
+      const known = ["label", ...Object.keys(fields), ...(key === "filters" ? ["is", ...relations] : [])];
+      const stray = Array.isArray(given) ? given.find((one) => typeof one !== "string" || !known.includes(key === "filters" ? one.split(".")[0]! : one)) : given;
+      if (!Array.isArray(given) || stray !== undefined) return (this.fail(i, `options.${key}`, `${kind} has no field ${JSON.stringify(stray)} to ${key === "search" ? "search" : "filter by"}`, `name fields of ${kind}, as a list: ${known.slice(0, 8).join(", ")}`), false);
+    }
+    for (const key of ["collapsed", "hidden"]) {
+      const given = options[key];
+      if (given === undefined) continue;
+      const stray = Array.isArray(given) ? given.find((one) => typeof one !== "string" || !values.includes(one)) : given;
+      if (!Array.isArray(given) || stray !== undefined) return (this.fail(i, `options.${key}`, `${JSON.stringify(stray)} is not one of the board's columns`, `name columns by their values, as a list: ${values.join(", ")}`), false);
+    }
+    const cap = options["cap"];
+    if (cap !== undefined && !(Number.isInteger(cap) && (cap as number) >= 1 && (cap as number) <= 500)) return (this.fail(i, "options.cap", "a board keeps a whole number of cards per column, from 1 to 500", '"cap": 20'), false);
+    if (options["move"] !== undefined && typeof options["move"] !== "boolean") return (this.fail(i, "options.move", "move is true or false", '"move": true puts a Move button under each card'), false);
     return true;
   }
 
@@ -2479,7 +2513,15 @@ class Editor {
           if (blocks.length === 0) draws = false;
           options["blocks"] = blocks;
         }
-        for (const [key, value] of Object.entries(options)) if (key !== "blocks" && value === r.from && (r.t !== "field" || lensStandsOn(lens, r.kind))) delete options[key];
+        for (const [key, value] of Object.entries(options)) {
+          if (key === "blocks") continue;
+          // What Find looks in and the chips filter by lose a field that goes, as the rest of the options do.
+          if (Array.isArray(value) && (key === "search" || key === "filters") && (r.t !== "field" || lensStandsOn(lens, r.kind))) {
+            const kept = value.filter((one) => one !== r.from && !(typeof one === "string" && one.startsWith(`${r.from}.`)));
+            if (kept.length > 0) options[key] = kept;
+            else delete options[key];
+          } else if (value === r.from && (r.t !== "field" || lensStandsOn(lens, r.kind))) delete options[key];
+        }
       }
       if (!draws) leaving.push(index);
     });
@@ -2738,6 +2780,8 @@ function rewriteLens(doc: Doc, lens: Doc, r: Rename): void {
   if (isObject(options)) {
     for (const [key, value] of Object.entries(options)) {
       if (key === "blocks" && Array.isArray(value)) options["blocks"] = mapBlocks(value, (b) => rewriteBlock(doc, b, NONE, r, null));
+      // What Find looks in and the chips filter by follow a field or relation by its new name.
+      else if (Array.isArray(value) && (key === "search" || key === "filters") && (r.t !== "field" || lensStandsOn(lens, r.kind))) options[key] = value.map((one) => (one === r.from ? r.to : typeof one === "string" && one.startsWith(`${r.from}.`) ? `${r.to}${one.slice(r.from.length)}` : one));
       else if (value === r.from && (r.t !== "field" || lensStandsOn(lens, r.kind))) options[key] = r.to;
     }
   }

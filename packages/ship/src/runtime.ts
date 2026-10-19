@@ -15,6 +15,11 @@ export { answerSubscriptions } from "./subscriptions.js";
 export { remoteSubscriptions, SUBSCRIPTIONS_PATH } from "./remote-subscriptions.js";
 export type { SubscriptionsAnswer, SubscriptionsPost } from "./subscriptions.js";
 export type { RemoteSubscriptionsOptions } from "./remote-subscriptions.js";
+// The views a person tidies from the place menu (Roadmap f-place-menu-views): the wire's route, and its client.
+export { answerViews, keepsTheApp, VIEWS_PATH } from "./views.js";
+export type { ViewsAnswer, ViewsPost } from "./views.js";
+export { remoteViews } from "./remote-views.js";
+export type { RemoteViewsOptions } from "./remote-views.js";
 export { announcePresence, authoredBy, isClientBatch, liveProtocol, presenceFrom, seatOfTab, serverBatchIds, visitorPresence, wireRefusalOf } from "./live-protocol.js";
 export type { BatchClaim, LivePeer, LiveProtocol, LiveProtocolOptions, LiveReceived, LiveSocketState, ServedSocket, WireAnswer, WireAsked } from "./live-protocol.js";
 export { GOOGLE_TOKEN_URL, runConnections, sayReport } from "./connections.js";

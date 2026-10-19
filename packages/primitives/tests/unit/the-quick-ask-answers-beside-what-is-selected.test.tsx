@@ -108,6 +108,25 @@ describe("the quick ask", () => {
     expect(rows()).toEqual(["ask: Ask: ‘what is left to do?’"]);
   });
 
+  it("offers a view the app already has first, ahead of a panel drawn new, and to adjust it where it fits in part", async () => {
+    const withBoard = views();
+    withBoard.register("task", { cardinality: "many", fidelity: "full" }, () => null, { title: "Tasks by status", lens: "columns" });
+    await mount(
+      <GraviewProvider store={store()} views={withBoard} initialView={EMPTY_VIEW} initialSelection={["t1"]} ai={AI}>
+        <QuickAskDoor face="scene" on />
+      </GraviewProvider>,
+    );
+    await chord();
+    await until(() => card() !== null);
+    await type("show a board of tasks");
+    expect(rows()[0]).toBe("place: Open Tasks by status · a view you have");
+    await type("a searchable board");
+    expect(rows()[0]).toBe("place: Open and adjust Tasks by status · adjust it");
+    // Nothing it has fits: no such row.
+    await type("what is left to do?");
+    expect(rows()).toEqual(["ask: Ask: ‘what is left to do?’"]);
+  });
+
   it("answers on the card beside it, its change a ghost not made, and a follow-up replaces the answer", async () => {
     const kept = store();
     await mount(app(AI, null, true, kept));

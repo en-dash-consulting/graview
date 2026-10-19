@@ -177,7 +177,7 @@ function matcherFor(ctx: ArrangeContext, query: string): (node: ArrangeNode) => 
     const keys = offered(node.kind);
     const applied = conditions.filter((condition) => keys.has(condition.key));
     if (!applied.every((condition) => conditionHolds(ctx, node, condition))) return false;
-    if (words.length > 0) return matchNode(ctx.schema.tryDefinition(node.kind), asRecord(node), words) !== undefined;
+    if (words.length > 0) return matchNode(ctx.schema.tryDefinition(node.kind), asRecord(node), words, ctx.searchIn) !== undefined;
     return applied.length > 0;
   };
 }

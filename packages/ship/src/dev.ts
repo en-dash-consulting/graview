@@ -618,6 +618,9 @@ export function aiDevProxy(options: AiDevProxyOptions = {}): DevServerPlugin {
 // A dev server's files (FR-163): kept in memory, served back, never in a build.
 export { DEV_FILES_KINDS, DEV_FILES_MAX_BYTES, DEV_FILES_PATH, devFiles, devFilesHandler } from "./dev-files.js";
 export type { DevFilesOptions } from "./dev-files.js";
+// A dev server's views (Roadmap f-place-menu-views): what the place menu hid and deleted, kept in memory, never in a build.
+export { DEV_VIEWS_PATH, devViews, devViewsHandler } from "./dev-views.js";
+export type { DevViewsOptions } from "./dev-views.js";
 export { studioDoor, studioDoorHandler } from "./studio-door.js";
 export type { StudioDoorOptions } from "./studio-door.js";
 export { declaredCode, editDeclaration } from "./source-edit.js";

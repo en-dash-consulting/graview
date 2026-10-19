@@ -1,9 +1,11 @@
 import { allLabel, hueFor, kindPath, MOST_STANDING, onePerPicture, orderKinds, OVERVIEW_SLUG, placeLabel, placePath, pluralLabel, primaryOf, sharesItsName, supportingKinds, type AnySchema, type Brand, type PagesArrangement, type Place, type Principal, type Store } from "@graview/core";
 import { POPOVER_STYLE, useGraviewIfAny, usePopover } from "@graview/react/provider";
 import { useQuickAskDrawn } from "./quick-ask-desk.js";
-import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
 import { barPanes } from "./bar-panes-door.js";
+/* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes, and the tidying with it, once there is something to list and the list is open. */
+const TidyFoot = barPanes.part((panes, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <panes.TidyFoot {...props} />, { quiet: true });
 
 /* Who else is here (FR-155): drawn once somebody is, so a reader alone never fetches it. */
 const Here = barPanes.part((panes, props: { readonly scene: boolean; readonly compact: boolean }) => <panes.Here {...props} />, { quiet: true });
@@ -347,7 +349,7 @@ const BAR_CSS = `
 @media (pointer:coarse){.graview-bar-find-keys{display:none}}
 @container graview-bar (max-width: ${BAR_PHONE - 1}px){
 .graview-bar-row{gap:10px;padding:0 12px}
-.graview-bar-app,.graview-bar-home{max-width:none;flex:1 1 auto;min-width:0}
+.graview-bar-app,.graview-bar-home{max-width:none;flex:1 1 auto;min-width:28px}
 .graview-bar-name,.graview-bar-app-name{min-width:0}
 .graview-bar-mid,.graview-bar-find{display:none}
 .graview-bar-find-open{display:inline-flex}
@@ -355,6 +357,9 @@ const BAR_CSS = `
 .graview-bar-own .graview-activity-word{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .graview-bar[data-finding] :is(.graview-bar-app,.graview-bar-faces,.graview-bar-find-open){display:none}
 .graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;min-width:0}
+}
+@container graview-bar (max-width: 300px){
+.graview-bar-row{gap:4px;padding:0 10px}
 }`;
 
 /** A tool's own box: one size, square, its name in words for whoever cannot see the mark. */
@@ -901,12 +906,25 @@ function Places({ places, current, reach, scene, stands: weighed }: { readonly p
   const held = useRef(weighed);
   if (!popover.open) held.current = weighed;
   const stands = held.current;
-  const said = places.find((place) => place.key === current)?.label ?? "Places";
+  const here = places.find((place) => place.key === current);
+  const said = here?.label ?? "Places";
   const rest = stands ? places.filter((_, at) => !stands.includes(at)) : places;
+  // The place menu (Roadmap f-place-menu-views): each place's Open, and Hide and Delete where the viewer may tidy it.
+  const gestures = usePlaceGestures(places, current, scene);
+  // What the drop-down's foot lists, Hidden and Recently deleted: the list opens for them when every place stands on the row.
+  /*
+   * WHETHER THE PLACES' FOOT MAY HAVE ANYTHING TO LIST — a hidden place, a
+   * deleted view — so the list opens for it when every place stands; what
+   * this viewer may bring back the foot says itself. Read as drawn: what
+   * the host lists changes the registry the provider hands down.
+   */
+  const graview = useGraviewIfAny();
+  const tidied = graview?.keptViews?.current();
+  const tidies = Boolean(tidied && (tidied.removed.length > 0 || graview!.views.places().some((place) => place.hidden)));
   return (
-    <nav className={stands ? "graview-bar-places" : "graview-bar-place-at"} aria-label={scene ? "What the scene shows" : "The app’s places"} {...(stands ? { "data-testid": "app-places-standing" } : {})}>
+    <nav className={stands ? "graview-bar-places" : "graview-bar-place-at"} aria-label={scene ? "What the scene shows" : "The app’s places"} {...(stands ? { "data-testid": "app-places-standing" } : {})} {...gestures}>
       {stands?.map((at) => <PlaceEntry key={places[at]!.key} place={places[at]!} current={current} reach={reach} standing done={() => undefined} />)}
-      {rest.length > 0 ? (
+      {rest.length > 0 || tidies ? (
         <>
           <button
             type="button"
@@ -928,11 +946,44 @@ function Places({ places, current, reach, scene, stands: weighed }: { readonly p
           </button>
           <div {...popover.pane} data-testid="app-places" hidden={!popover.open} className="graview-bar-list" style={POPOVER_STYLE}>
             <PlaceGroups places={rest} current={current} reach={reach} id={popover.pane.id} done={() => popover.setOpen(false)} />
+            {tidies && popover.open ? (
+              <Suspense fallback={null}>
+                <TidyFoot id={popover.pane.id} scene={scene} reach={reach} done={() => popover.setOpen(false)} />
+              </Suspense>
+            ) : null}
           </div>
         </>
       ) : null}
     </nav>
   );
+}
+
+/**
+ * THE PLACE MENU'S GESTURES (Roadmap f-place-menu-views), heard once on the
+ * places: a right-click, Shift+F10 or the menu key, or a finger resting on a
+ * place opens its menu, as on Pages; Shift held keeps the browser's own.
+ * Only the gesture is heard here — a place by its path, or the one control,
+ * which is the place you are on; which place, whether a finger rested, and
+ * the menu itself (`placeGesture`) are fetched with the bar's panes on the
+ * first.
+ */
+function usePlaceGestures(places: readonly BarPlace[], current: string | null, scene: boolean) {
+  const setMenuAt = useGraviewIfAny()?.setMenuAt;
+  const heard = (event: MouseEvent | KeyboardEvent | PointerEvent) => {
+    const element = (event.target as Element).closest?.<HTMLElement>("[data-place-path],[data-testid=app-places-open]");
+    if (!element || !setMenuAt) return;
+    // A finger resting is only a finger until it has rested: when it lifted, for `placeGesture` to tell.
+    const lifted = { at: 0 };
+    if (event.type === "pointerdown") document.addEventListener("pointerup", () => (lifted.at ||= Date.now()), { once: true });
+    else event.preventDefault();
+    const native = event.nativeEvent;
+    void barPanes.load().then((panes) => panes.placeGesture(native, element, places, current, scene, setMenuAt, lifted), String);
+  };
+  return {
+    onContextMenu: (event: MouseEvent) => event.shiftKey || heard(event),
+    onKeyDown: (event: KeyboardEvent) => (event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey)) && heard(event),
+    onPointerDown: (event: PointerEvent) => event.pointerType !== "mouse" && event.isPrimary && heard(event),
+  };
 }
 
 /**

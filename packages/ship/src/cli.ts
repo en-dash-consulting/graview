@@ -5,6 +5,7 @@ import { readSnapshot } from "@graview/core/snapshot";
 import type { GraviewApp, PersistenceAdapter } from "@graview/core";
 import { createFileAdapter } from "./file-adapter.js";
 import { fileSubscriptions } from "./file-subscriptions.js";
+import { fileViews } from "./file-views.js";
 import { LIVE_PATH } from "./live.js";
 import { openStore } from "./open-store.js";
 import { serveStore } from "./serve.js";
@@ -142,6 +143,12 @@ export function subscriptionsFileOf(backend: Pick<StoreBackend, "adapter" | "whe
   return root !== undefined ? join(root, scope, "subscriptions.json") : `${backend.where}.subscriptions.json`;
 }
 
+/** Where `graview serve` keeps the views a person tidied from the place menu (Roadmap f-place-menu-views): beside the store, as the subscriptions are. */
+export function viewsFileOf(backend: Pick<StoreBackend, "adapter" | "where">, scope: string): string {
+  const root = (backend.adapter as { root?: string }).root;
+  return root !== undefined ? join(root, scope, "views.json") : `${backend.where}.views.json`;
+}
+
 /** A seed file in either snapshot format: the line format with its header, or an old `{ nodes, edges }`. */
 function readSeed(file: string): GraphSnapshot {
   try {
@@ -202,6 +209,8 @@ export async function serve(argv: readonly string[]): Promise<number> {
     where: backend.where,
     // Notify me: kept beside the store, and each match said here, where a host would deliver it.
     subscriptions: fileSubscriptions(subscriptionsFileOf(backend, app.name)),
+    // The views a person hid or deleted from the place menu, kept beside the store, thirty days for a deleted one.
+    views: fileViews(viewsFileOf(backend, app.name)),
     onSubscriptionMatch: (match) => {
       process.stdout.write(`graview serve: notify ${match.subscription.who.name ?? match.subscription.who.id}: ${match.said}\n`);
     },

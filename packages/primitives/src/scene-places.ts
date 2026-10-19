@@ -62,15 +62,17 @@ export function scenePlacesOf(input: {
     // A picture over several kinds is drawn on the district in focus when it is one of them, else on the first.
     return withPicture(from, place.over?.find((one) => from.focusId === aggregateId(one)) ?? place.kind, place.as);
   };
-  const places: BarPlace[] = [
-    { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${overviewFragment(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },
-    ...pictures.map((place) => ({ key: keyOf(place), label: placeLabel(place, all, input.schema), path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind })),
-  ];
   // Which picture a district draws when the view names none: the last registered for its kind, as the registry resolves it.
   const showing = view.within?.["view"];
   const drawnBy = (place: Place): boolean => view.focusId === aggregateId(place.kind) && (showing === undefined ? all.filter((one) => one.kind === place.kind).at(-1) === place : showing === place.as);
   const on = all.find((place) => drawnBy(place) && (showing !== undefined || !view.overview));
   const here = on ? pictures.find((place) => samePicture(place, on)) : undefined;
+  // One kept off the lists (`hidden`) — a lens a custom home links to, a view somebody hid from the place menu — only while it is the one shown.
+  const listed = pictures.filter((place) => !place.hidden || place === here);
+  const places: BarPlace[] = [
+    { key: WHOLE_KEY, label: WHOLE_LABEL, path: `${OVERVIEW_PATH}${overviewFragment(to(WHOLE_KEY, EMPTY_VIEW)!)}`, group: "home" },
+    ...listed.map((place) => ({ key: keyOf(place), label: placeLabel(place, all, input.schema), path: `${OVERVIEW_PATH}${overviewFragment(to(keyOf(place), EMPTY_VIEW)!)}`, group: "pictures" as const, kind: place.kind })),
+  ];
   return { places, current: here ? keyOf(here) : WHOLE_KEY, to };
 }
 

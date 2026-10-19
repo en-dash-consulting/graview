@@ -12,7 +12,7 @@
  */
 import { appFromOrCompile, sayFindings } from "@graview/core/compiled";
 import { mount, preload } from "@graview/embed";
-import { openRemote } from "@graview/ship/browser";
+import { openRemote, remoteViews } from "@graview/ship/browser";
 
 const root = document.getElementById("graview-app");
 // The face this page opens on, fetched now beside the document and the store, as Graview Cloud's shell fetches it (FR-57).
@@ -33,8 +33,26 @@ try {
    */
   const remote = await openRemote({ app, url: location.origin, principal, live: true, subprotocol: true, pollMs: 1200, ...(handed.state ? { state: handed.state, openTimeoutMs: 0 } : { openTimeoutMs: 3000 }) });
   document.title = app.name;
-  await facing;
-  const handle = mount(root, {
+  /*
+   * THE VIEWS A PERSON TIDIES FROM THE PLACE MENU (Roadmap f-place-menu-views):
+   * kept by the preview server, as Graview Cloud keeps them. A declared
+   * lens hidden or deleted is written into the server's document; the page
+   * asks for it again and is handed the new app. What they stand at came
+   * with the document, so nothing more is asked before the page draws.
+   */
+  let handle;
+  const keptViews = remoteViews({
+    url: location.origin,
+    principal,
+    ...(handed.views ? { state: handed.views } : {}),
+    onDeclaration: async () => {
+      const again = await (await fetch("/graview/document")).json();
+      const next = await appFromOrCompile(again);
+      if (next.ok) handle?.setApp(next.app, remote);
+    },
+  });
+  await Promise.all([facing, keptViews.ready]);
+  handle = mount(root, {
     app,
     remote,
     principal,
@@ -45,6 +63,7 @@ try {
     height: "100dvh",
     label: app.name,
     heading: 1,
+    keptViews,
   });
   window.__graview = handle;
   void handle.drawn().then(() => {

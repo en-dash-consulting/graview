@@ -88,6 +88,10 @@ export function titleOf(range: CalendarRange, horizon?: CalendarHorizon): string
 
 export interface CalendarOptions {
   readonly bindings: CalendarBindings;
+  /** The fields its Find box looks in (`label` for the name); every readable field when unsaid. */
+  readonly search?: readonly string[];
+  /** What its line offers to filter by, its choice fields standing as chips. */
+  readonly filters?: readonly string[];
   /**
    * The day the calendar opens on and calls "today", as `YYYY-MM-DD`.
    *

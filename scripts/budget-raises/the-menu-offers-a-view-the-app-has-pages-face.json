@@ -1,0 +1,6 @@
+{
+  "budget": "the pages face alone",
+  "minified": 77,
+  "gzipped": 20,
+  "note": "Raised when a place came to say what it is and what it reads (`Place.lens`, `Place.reads`), registered with a declared lens and a worker view so the right-click menu can offer the view an app has before drawing a new one (the Roadmap's f-menu-suggests-existing-views); the matching itself is fetched with the inline AI. 606_823 / 222_224 at feat/0-1-38-additions (bbc820a4), 606_900 / 222_244 with it: 77 / 20 more."
+}

@@ -1,8 +1,8 @@
 import { fieldWords, pluralLabel, type AnySchema, type Place } from "@graview/core";
 import { aggregateId } from "@graview/layout/view";
-import { GhostDoor, Inspector, NotifyDoor, useInlineAiSection, useNotifySection } from "@graview/primitives/pages";
+import { GhostDoor, Inspector, NotifyDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
-import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
+import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
 import type { PageContext } from "./page-context.js";
@@ -207,6 +207,23 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     return () => document.removeEventListener("keydown", key);
   }, [root, openAt]);
 
+  /*
+   * THE PLACE MENU FROM THE BAR ABOVE (Roadmap f-place-menu-views): the
+   * place you are on and each place in its drop-down open this face's menu
+   * about the place, asked for with `PLACE_MENU_EVENT` on the face — the
+   * bar is drawn under the embed's provider, this menu under the face's.
+   */
+  useEffect(() => {
+    const face = root.current;
+    if (!face) return;
+    const asked = (event: Event) => {
+      const menu = (event as CustomEvent<PointerMenu>).detail;
+      if (menu) setMenuAt({ ...menu, face: "pages" });
+    };
+    face.addEventListener(PLACE_MENU_EVENT, asked);
+    return () => face.removeEventListener(PLACE_MENU_EVENT, asked);
+  }, [root, setMenuAt]);
+
   /* THE FACE'S OWN ROWS, beside the acts: going there, in a new tab, in the scene, changing the field, Find. */
   const own = useMemo<MenuSectionSource>(
     () => (target: MenuTarget) => {
@@ -259,7 +276,18 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   const inlineAi = useInlineAiSection();
   /* "Notify me…" (Roadmap f-notify-subscriptions), where the reader is somebody the app can tell. */
   const notify = useNotifySection();
-  const sections = useMemo(() => [change, own, ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, own, notify, inlineAi]);
+  /* "Move to ›" on a card on a status board: the columns it may go to, and the ones withheld with the reason. */
+  const board = useBoardMoveSection();
+  /* Hide and Delete for a place this viewer may tidy (Roadmap f-place-menu-views), after the face's own rows. */
+  /* Deleting the place this page is: to the kind's own place, else home (`placeAfter`), rather than what the address falls back to. */
+  const away = useCallback(
+    (place: Place, after: Place | undefined) => {
+      if (pathname === pathOfPlace(context, place).split("?")[0]) navigate(after ? pathOfPlace(context, after) : "/");
+    },
+    [pathname, context, navigate],
+  );
+  const tidy = useViewTidyingSection(away);
+  const sections = useMemo(() => [change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, board, own, tidy, notify, inlineAi]);
 
   return (
     <MenuSections sections={sections}>

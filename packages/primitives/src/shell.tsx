@@ -1,5 +1,5 @@
-import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type ResolveApp } from "@graview/core";
-import { BesideTheMap, HostFilesContext, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
+import { faviconHref, pagesTitle, sceneTitle, type AnySchema, type HostFiles, type KeptViews, type ResolveApp } from "@graview/core";
+import { BesideTheMap, HostFilesContext, KeptViewsProvider, Scene, useGraview, useNavigation, UrlSync, useTheKeyboardLandsSomewhere, type Scheme, type SceneProps } from "@graview/react";
 import type { ToolCall } from "@graview/tools";
 import { useCallback, useState, type ReactNode, useRef } from "react";
 import { withOverview } from "@graview/layout/view";
@@ -23,6 +23,8 @@ import { ResolveAppContext } from "./resolve-app-context.js";
 import { FirstLookDoor, type FirstLook } from "./first-look-door.js";
 import { GhostDoor, InlineAiSections } from "./inline-ai-door.js";
 import { NotifyDoor, NotifySections } from "./notify-door.js";
+import { BoardMoveSections } from "./board-move-section.js";
+import { ViewTidyingSections } from "./view-tidying-sections.js";
 import { QuickAskDoor } from "./quick-ask-door.js";
 
 /**
@@ -126,9 +128,28 @@ export interface ShellProps {
    * (`FirstLookAnchor`). Off unless given.
    */
   readonly firstLook?: FirstLook;
+  /**
+   * THE HOST'S VIEWS, AS THE PLACE MENU TIDIES THEM (Roadmap
+   * f-place-menu-views), when the provider around the shell was not handed
+   * them — `KeptViews`, as `mount` takes it: a place in the bar's drop-down
+   * opens the scene's menu with Hide and Delete for a view this viewer may
+   * tidy, and the drop-down's foot lists what is Hidden and Recently
+   * deleted.
+   */
+  readonly keptViews?: KeptViews;
 }
 
-export function Shell<S extends AnySchema>({
+export function Shell<S extends AnySchema>({ keptViews, ...props }: ShellProps) {
+  return keptViews ? (
+    <KeptViewsProvider keptViews={keptViews}>
+      <ShellFace<S> {...props} />
+    </KeptViewsProvider>
+  ) : (
+    <ShellFace<S> {...props} />
+  );
+}
+
+function ShellFace<S extends AnySchema>({
   home = null,
   standing = "Everything is in order",
   seat,
@@ -149,7 +170,7 @@ export function Shell<S extends AnySchema>({
   files,
   resolveApp,
   firstLook,
-}: ShellProps) {
+}: Omit<ShellProps, "keptViews">) {
   const { brand, views, store } = useGraview<S>();
   const { view, go } = useNavigation();
   /* The lenses this reader kept from the seat, beside the app's own places, before anything draws them. */
@@ -270,10 +291,16 @@ export function Shell<S extends AnySchema>({
         <MapPanel<S> />
         {/* The acts at the pointer: right-click, or the acts key on a card, is the context menu. */}
         {/* The acts at the pointer, the inline AI's part of the menu where the host gave a model, and "Notify me…" (Roadmap f-notify-subscriptions). */}
+        {/* And "Move to ›" on a card on a status board. */}
         <NotifySections>
-          <InlineAiSections>
-            <Inspector placement="menu" />
-          </InlineAiSections>
+          <BoardMoveSections>
+            <InlineAiSections>
+              {/* Hide and Delete for a place, opened from the bar's places (Roadmap f-place-menu-views). */}
+              <ViewTidyingSections>
+                <Inspector placement="menu" />
+              </ViewTidyingSections>
+            </InlineAiSections>
+          </BoardMoveSections>
         </NotifySections>
         {/* The sheet "Notify me…" opens, already filled in. */}
         <NotifyDoor />

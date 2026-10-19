@@ -1352,6 +1352,86 @@ main.page > section.agent-hero {
   .ah-label .dot { forced-color-adjust: none; background: CanvasText; }
 }
 
+/*
+ * THE RUN beside the docs app: what the agent did, then the interface it
+ * never wrote, then the one a sentence asked for. A column at a desk's
+ * width; above the stage on anything narrower, where only the step it is
+ * on is shown, so the page never grows under the reader as the run goes.
+ * Without script every step is listed.
+ */
+.run-stage { display: grid; grid-template-columns: minmax(270px, 0.36fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.run {
+  margin: 0; padding: 14px 16px; list-style: none; display: flex; flex-direction: column; gap: 10px;
+  border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--sunk);
+  font-family: var(--sans); font-size: 13px; line-height: 1.45; color: var(--ink-2); min-width: 0;
+}
+.run li { display: grid; gap: 2px; min-width: 0; }
+.run li > code { font-family: var(--mono); font-size: 12.5px; color: var(--ink); overflow-wrap: anywhere; }
+.run li > code::before { content: "\203A\00a0"; color: var(--ink-3); }
+.run li.warn > span { color: #FFB59E; }
+.run li.said { padding-top: 8px; border-top: 1px solid var(--rule-2); }
+.run li.said b { font-size: 15px; color: var(--mint); font-weight: var(--w-label); }
+.run li.asked { margin-top: auto; }
+.run[data-running] li { display: none; }
+.run[data-running] li.done, .run[data-running] li.now { display: grid; }
+.run[data-running] li.done:not(.said):not(.asked) { color: var(--ink-3); }
+.ask-bar {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 10px 12px;
+  border: 1px solid var(--rule); border-radius: 10px; background: var(--night); color: var(--ink);
+  font-family: var(--sans); font-size: 14px; line-height: 1.45; max-width: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 18%, transparent);
+}
+.ask-bar kbd {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 11.5px; line-height: 1; padding: 4px 6px; margin-top: 1px;
+  border: 1px solid var(--rule); border-radius: 5px; color: var(--ink-3);
+}
+.ask-typed { min-width: 0; overflow-wrap: anywhere; }
+.ask-typed[data-typing]::after { content: ""; display: inline-block; width: 2px; height: 1.05em; margin-left: 1px; vertical-align: -2px; background: var(--mint); }
+.replay {
+  font: inherit; font-weight: var(--w-label); color: var(--pine); background: none; border: 0; padding: 0;
+  min-height: 24px; cursor: pointer;
+}
+.replay:hover { text-decoration: underline; }
+@media (max-width: 1023px) {
+  .run-stage { grid-template-columns: minmax(0, 1fr); }
+  .run { padding: 12px 14px; }
+  .run[data-running] li.done:not(.now) { display: none; }
+  .run li.asked { margin-top: 0; }
+}
+
+/*
+ * THE ASKS: the claim, then one app with the asks to press above it. The
+ * bar is the quick ask's own shape; the presses are the sentences it was
+ * asked, each redrawing the same records.
+ */
+main.page > section.asks { padding-top: clamp(64px, 9vw, 112px); }
+.asks-head { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 20px 48px; align-items: end; }
+.asks-head .claim h2 { max-width: 16ch; }
+.asks-head .lede { font-size: 17.5px; }
+.ask-demo { margin-top: 34px; display: grid; gap: 12px; }
+.ask-line { display: grid; gap: 12px; }
+.ask-bar-big { font-size: 16px; padding: 14px 16px; }
+.ask-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-chips button {
+  font: inherit; font-family: var(--sans); font-size: 14px; line-height: 1.35; text-align: left;
+  color: var(--ink-2); background: var(--panel); border: 1px solid var(--rule); border-radius: 999px;
+  min-height: 38px; padding: 7px 16px; cursor: pointer; max-width: 100%;
+}
+.ask-chips button:hover { color: var(--ink); border-color: var(--ink-3); }
+.ask-chips button[aria-pressed="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.season-live { height: min(680px, 78vh); min-height: 480px; border-radius: var(--radius); box-shadow: 0 0 0 1px var(--rule), 0 18px 40px -30px rgba(0, 23, 105, 0.35); }
+@media (max-width: 900px) {
+  .asks-head { grid-template-columns: minmax(0, 1fr); }
+  .season-live { height: 600px; min-height: 0; }
+}
+@media (max-width: 560px) {
+  .ask-chips button { border-radius: 14px; width: 100%; }
+  .season-live { height: 560px; }
+}
+@media (forced-colors: active) {
+  .ask-chips button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+}
+
 /* The recipes: one row each, the task, what it declared and the proof. */
 main.page > section.recipes { padding-top: 104px; }
 .recipe-list { margin: 40px 0 0; padding: 0; list-style: none; display: grid; gap: 0; }
@@ -1455,7 +1535,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><code>packages/primitives/src/lens/board.tsx</code> — position given by the domain (discs for codes of three characters, tokens for words; <code>arrange: "shelf"</code> when the x and y are categories rather than coordinates)</li>
 <li><code>packages/primitives/src/lens/plan.tsx</code> — an outline, with points inside it</li>
 </ul>
-<p>(<code>reach.tsx</code> beside them is not one: no factory, no roles to rebind. A view that ships is still a view.)</p>
+<p>(<code>reach.tsx</code> beside them is a view, not a lens: no roles to rebind.)</p>
 <p>Read the plan if yours draws anything: a name is fitted to its shape at a height (<code>fitLabel</code>, <code>spanAt</code> from <code>@graview/layout</code>), names are painted last, what will not fit goes in a key, and <code>useDrawnSize</code> asks whether, at THIS size, a person can read it or press it.</p>
 <p>Start it with the scaffolder — `graview lens grounds-map --roles regions,markers</p>
 <p>--binds entities` — which writes all eight rules below already in place, and the reuse test beside it, red on purpose.</p>
@@ -1467,20 +1547,20 @@ main.page > section.tour-intro { padding-top: 64px; }
 <li><strong>Choose which shape of binding you need.</strong> There are two, and assuming there was one is how the first version of this got it wrong: - <strong>fields</strong> — a kind's own field names onto roles (<code>{ session: { start: "start", end: "end" } }</code>). The timeline. - <strong>entities</strong> — roles onto whole kinds and edges (<code>{ rows: { kind: "skill" }, link: { edge: "develops" } }</code>). The matrix. A relationship that IS a node — a person's strength in a skill — binds <code>link: { path: ["inSkill", "has"] }</code>, column end first; each cell carries the nodes it walked through: choosing it selects its row, its column and them, and <code>describePlace</code> says each row's columns through them.</li>
 </ol>
 <ol>
-<li><strong>Fail loudly on a bad binding.</strong> Throw a named error saying which role and what was missing. A lens that renders empty when misbound costs an hour. Loud means THE PANEL SAYS SO, not the application is gone: every view host sits behind an error boundary, so a throw draws the error's own message in the view's place — named with the kind and the view — and leaves the bar, the districts and every other view standing. Give the error a <code>hint</code> property and the panel prints it under the message, which is where a sentence about what to bind instead belongs.</li>
+<li><strong>Fail loudly on a bad binding.</strong> Throw a named error saying which role and what was missing. A lens that renders empty when misbound costs an hour. Loud means THE PANEL SAYS SO: every view host sits behind an error boundary, so a throw draws its message in the view's place, named with the kind and the view, and the rest stands. Give the error a <code>hint</code> property and the panel prints it under the message, which is where a sentence about what to bind instead belongs.</li>
 </ol>
 <ol>
 <li><strong>Mark every real thing as a target.</strong> Anything standing for a node gets <code>data-graview-pick={id}</code>. That one attribute is the whole contract: the host routes a click on it to that node, gives it a tab stop and a role, and a single click selects it in place while a double click travels. A span you cannot click is the bug this prevents.</li>
 </ol>
-<p><strong>Drawing in SVG? The framework sets the role; you set the <code>aria-label</code>.</strong>    A <code>&lt;g&gt;</code>, <code>&lt;polygon&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;rect&gt;</code>, <code>&lt;path&gt;</code>, <code>&lt;ellipse&gt;</code>,    <code>&lt;polyline&gt;</code>, <code>&lt;line&gt;</code> or <code>&lt;use&gt;</code> carrying the mark becomes a button like    any <code>&lt;span&gt;</code> — but a shape has no text inside it to be named by, so    without a label it is a stop that announces nothing, which is worse for a    keyboard than not being reachable at all. Name it after the thing it    stands for.</p>
+<p><strong>Drawing in SVG? The framework sets the role; you set the <code>aria-label</code>.</strong>    A <code>&lt;g&gt;</code>, <code>&lt;polygon&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;rect&gt;</code>, <code>&lt;path&gt;</code>, <code>&lt;ellipse&gt;</code>,    <code>&lt;polyline&gt;</code>, <code>&lt;line&gt;</code> or <code>&lt;use&gt;</code> carrying the mark becomes a button like    any <code>&lt;span&gt;</code>, but a shape has no text to be named by: unlabeled, it is a    stop that announces nothing. Name it after the thing it stands for.</p>
 <ol>
-<li><strong>Read <code>implicated</code> and <code>flagged</code>.</strong> Empty means "no emphasis", NOT "nothing is related". Expose what you decide as <code>data-graview-emphasis</code> so it can be checked — a claim about a picture that exists only as a color cannot be checked by anything, not a test and not a person reading the tree.</li>
+<li><strong>Read <code>implicated</code> and <code>flagged</code>.</strong> Empty means "no emphasis", NOT "nothing is related". Expose what you decide as <code>data-graview-emphasis</code> so it can be checked — a claim that exists only as a color cannot be checked.</li>
 </ol>
 <ol>
 <li><strong>Render at three fidelities.</strong> <code>glyph</code> is a chip; <code>summary</code> is denser content, not the same content scaled down; <code>full</code> is the picture.</li>
 </ol>
 <ol>
-<li><strong><code>nodes</code> is THE GROUP'S MEMBERS, and nothing else.</strong> A lens mounted over a kind's <code>many</code> cell receives that kind's members in <code>ViewProps.nodes</code> — not the graph. Every interesting lens draws more than one kind (a board has slots and occupants, a matrix has rows and columns, a map has regions and markers), and every other kind comes from <code>store.graph</code>, narrowed back to <code>nodes</code> for the group's own kind so the scene's horizon still applies. Built from <code>nodes</code> alone, a map drew its ground with nothing standing in it: no error, a tidy, wrong picture — the worst failure a lens has.</li>
+<li><strong><code>nodes</code> is THE GROUP'S MEMBERS, and nothing else.</strong> A lens mounted over a kind's <code>many</code> cell receives that kind's members in <code>ViewProps.nodes</code> — not the graph. Every interesting lens draws more than one kind (a board has slots and occupants, a matrix has rows and columns, a map has regions and markers), and every other kind comes from <code>store.graph</code>, narrowed back to <code>nodes</code> for the group's own kind so the scene's horizon still applies. Built from <code>nodes</code> alone, a map drew its ground with nothing on it: a tidy, wrong picture.</li>
 </ol>
 <p><strong><code>budget</code> is the most to draw.</strong> A host may hand a lens a few    members with <code>budget</code> and <code>total</code>: hold what you read from    the store to it too, and say "+N more" (<code>withMore</code> does). A real catalog    is thousands; a lens that draws them all at 6% stalls the city.</p>
 <ol>
@@ -1489,7 +1569,7 @@ main.page > section.tour-intro { padding-top: 64px; }
 <p>``<code>tsx    const { nodes, arranged, bar } = useArranging(props, {      lensAllows: { group: false },        // a board has nowhere to group      allow: options.arranging,            // the app's say: false, or per part      arrangedBy: options.arrangedBy,      // how the picture opens    });    return &lt;&gt;{bar}&lt;Picture nodes={nodes} /&gt;&lt;/&gt;;    </code>``</p>
 <p><code>bar</code> is the framework's own row (<code>ArrangeBar</code>), drawn at full fidelity    unless declined; <code>nodes</code> are the members as arranged; <code>arranged.groups</code>    are there when the picture has a place for headings, as the calendar's    agenda does. Declare <code>arrangedBy</code> on the app's <code>lenses</code> entry too, in the    grammar (<code>{ group: "held-at" }</code>), so <code>graview check</code> holds it to the    bound kind and <code>graview describe</code> can say it. A person who arranged the    list can ask your picture the same thing in the same words.</p>
 <ol>
-<li><strong>Declare a shipped lens; register only your own.</strong> A <code>lenses</code> entry with a <code>title</code> is a PLACE the framework draws with no registration — a tab, a name on its district, a page at <code>/places/&lt;as&gt;</code>: <code>{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }</code>. A status board: `{ name: "columns", title: "The board", bindings: { task: { column: "status" } } }<code>; a card moves only by an act setting </code>status` (<code>book</code> where its <code>allowedWhen</code> holds). <code>on</code> names the kind when the bindings do not (reach; a coverage over its columns), and <code>options</code> are data (<code>SHIPPED_LENSES[name].options</code>): - a calendar's <code>range: "years"</code> with `horizon: { years: 30, title: "The career" }<code> spans its records, first to last, as well as </code>years` from <code>today</code>; <code>from</code> and <code>to</code> (years: 1962, 2023) pin its ends; - a coverage's <code>sort</code> (rows) and <code>columnSort</code>, and a status board's <code>sort</code> (cards): a field or <code>{ by, direction }</code>, <code>label</code> the name, held to the kind (<code>lens-sort</code>); - a coverage with no columns, or no link over its relation, says so ("No genres yet: link songs to genres.") and lists no rows. A lens you wrote is registered with a title as the fourth argument: <code>.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })</code>. Untitled, it is reachable only by focusing the group.</li>
+<li><strong>Declare a shipped lens; register only your own.</strong> A <code>lenses</code> entry with a <code>title</code> is a PLACE the framework draws with no registration — a tab, a name on its district, a page at <code>/places/&lt;as&gt;</code>: <code>{ name: "calendar", title: "The month", bindings: { task: { start: "due" } }, options: { range: "month" } }</code>. A status board: `{ name: "columns", title: "The board", bindings: { task: { column: "status" } } }<code>; a card moves only by an act setting </code>status` (<code>book</code> where its <code>allowedWhen</code> holds): dragged, carried by the keyboard (Space, arrows, Space) or from its menu's "Move to ›". Its options: <code>search</code> (the fields Find looks in; past 20 cards Find shows unasked), <code>filters</code> (chips; a calendar and a coverage take both), <code>collapsed</code> and <code>hidden</code> columns, <code>cap</code> (newest per column), <code>move: true</code> for a button. <code>on</code> names the kind when the bindings do not (reach; a coverage over its columns), and <code>options</code> are data (<code>SHIPPED_LENSES[name].options</code>): - a calendar's <code>range: "years"</code> with `horizon: { years: 30, title: "The career" }<code> spans its records, first to last, as well as </code>years` from <code>today</code>; <code>from</code> and <code>to</code> (years: 1962, 2023) pin its ends; - a coverage's <code>sort</code> (rows) and <code>columnSort</code>, and a status board's <code>sort</code> (cards): a field or <code>{ by, direction }</code>, <code>label</code> the name, held to the kind (<code>lens-sort</code>); - a coverage with no columns, or no link over its relation, says so ("No genres yet: link songs to genres.") and lists no rows. A lens you wrote is registered with a title as the fourth argument: <code>.register("gardener", { cardinality: "many", fidelity: "full" }, View, { title: "Who tends what" })</code>. Untitled, it is reachable only by focusing the group.</li>
 </ol>
 <ol>
 <li><strong>Before writing a picture, try blocks.</strong> `{ name: "blocks", title: "What we heard", on: "signal", options: { blocks: [{ list: "all('signal')", group: "type", as: "row" }] } }` is a place drawn from the closed block set (headline, figure, list — <code>graview-node-kind</code>), each record by its own row or card. Nothing in it runs; a chat can write it. A place read, not written, says <code>create: false</code>: its page drops the forms that add one. Write code only for what blocks cannot say: a grid of cells, positions.</li>
