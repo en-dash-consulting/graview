@@ -24,7 +24,10 @@ import { PagesApp } from "../../src/index.js";
 const tasks = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../../core/tests/document/fixtures/tasks.gdd.json"), "utf8"));
 const compiled = compileDocument(tasks, { today: () => "2026-10-06" });
 if (!compiled.ok) throw new Error("tasks did not compile");
-const app = compiled.app as GraviewApp<AnySchema>;
+const plain = compiled.app as GraviewApp<AnySchema>;
+// A board that asks for a Move button under each card (`move: true`); without it, a card moves by drag, the keyboard and its menu.
+const buttoned = compileDocument({ ...tasks, lenses: [{ ...tasks.lenses[0], options: { move: true } }] }, { today: () => "2026-10-06" });
+if (!buttoned.ok) throw new Error("tasks with a Move button did not compile");
 
 const OWNER: Principal = { kind: "human", id: "p1", roles: ["owner"] };
 const VIEWER: Principal = { kind: "human", id: "p2", roles: ["viewer"] };
@@ -45,7 +48,8 @@ const seed = {
 
 beforeAll(() => fetchDeclaredLenses());
 
-async function rendered(principal: Principal) {
+async function rendered(principal: Principal, withButton = false) {
+  const app = withButton && buttoned.ok ? (buttoned.app as GraviewApp<AnySchema>) : plain;
   const store = new Store<AnySchema>({ schema: app.schema, mutations: app.mutations ?? [], ...(app.policy ? { policy: app.policy } : {}), snapshot: seed as never });
   const host = document.createElement("div");
   document.body.appendChild(host);
@@ -90,8 +94,8 @@ describe("a status board on the routed face", () => {
     await done();
   });
 
-  it("moves a card with the keyboard by running the act as the viewer, and one undo puts it back", async () => {
-    const { host, store, columns, done } = await rendered(OWNER);
+  it("moves a card with the keyboard from the Move button a board asks for, by running the act as the viewer, and one undo puts it back", async () => {
+    const { host, store, columns, done } = await rendered(OWNER, true);
     const button = host.querySelector<HTMLButtonElement>('[data-columns-move="t1"] > button')!;
     button.focus();
     await act(async () => button.click());

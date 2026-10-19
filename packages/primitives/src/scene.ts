@@ -34,6 +34,9 @@ export { PLACE_MENU_EVENT } from "./place-menu.js";
 export { useViewTidyingSection } from "./view-tidying.js";
 export { ViewTidyingSections } from "./view-tidying-sections.js";
 export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
+// "Move to ›" on a card on a status board (Roadmap f-board-move-without-buttons).
+export { BoardMoveSections, holdBoard, useBoardMoveSection } from "./board-move-section.js";
+export type { BoardHere } from "./board-move-section.js";
 export type { NotifyAsk } from "./notify-sheet.js";
 export { OverviewButton } from "./workbench/back-out.js";
 export { Places } from "./places.js";

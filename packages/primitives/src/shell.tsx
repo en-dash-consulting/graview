@@ -23,6 +23,7 @@ import { ResolveAppContext } from "./resolve-app-context.js";
 import { FirstLookDoor, type FirstLook } from "./first-look-door.js";
 import { GhostDoor, InlineAiSections } from "./inline-ai-door.js";
 import { NotifyDoor, NotifySections } from "./notify-door.js";
+import { BoardMoveSections } from "./board-move-section.js";
 import { ViewTidyingSections } from "./view-tidying-sections.js";
 import { QuickAskDoor } from "./quick-ask-door.js";
 
@@ -290,13 +291,16 @@ function ShellFace<S extends AnySchema>({
         <MapPanel<S> />
         {/* The acts at the pointer: right-click, or the acts key on a card, is the context menu. */}
         {/* The acts at the pointer, the inline AI's part of the menu where the host gave a model, and "Notify me…" (Roadmap f-notify-subscriptions). */}
+        {/* And "Move to ›" on a card on a status board. */}
         <NotifySections>
-          <InlineAiSections>
-            {/* Hide and Delete for a place, opened from the bar's places (Roadmap f-place-menu-views). */}
-            <ViewTidyingSections>
-              <Inspector placement="menu" />
-            </ViewTidyingSections>
-          </InlineAiSections>
+          <BoardMoveSections>
+            <InlineAiSections>
+              {/* Hide and Delete for a place, opened from the bar's places (Roadmap f-place-menu-views). */}
+              <ViewTidyingSections>
+                <Inspector placement="menu" />
+              </ViewTidyingSections>
+            </InlineAiSections>
+          </BoardMoveSections>
         </NotifySections>
         {/* The sheet "Notify me…" opens, already filled in. */}
         <NotifyDoor />

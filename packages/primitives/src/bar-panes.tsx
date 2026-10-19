@@ -1,6 +1,7 @@
 import { humanizeField, type AnySchema, type AnyGraphNode, type Violation } from "@graview/core";
 import { useGraview } from "@graview/react/provider";
 import { choiceStyle } from "./choice.js";
+import { useHoverChipsSetting } from "./hover-chips.js";
 import type { HostAction } from "./profile.js";
 import { Seats } from "./seats.js";
 import { ownSentence, problemTitle, RuleLineView, useLined } from "./rule-line.js";
@@ -124,6 +125,7 @@ export function ProfilePane<S extends AnySchema>({
   readonly signature?: boolean | undefined;
 }) {
   const { principal, seats, settings, settingValues, chooseSetting, sharing } = useGraview<S>();
+  const chips = useHoverChipsSetting();
   const roles = principal.roles ?? [];
   const popover = { setOpen: (_open: false) => close() };
   return (
@@ -263,6 +265,21 @@ export function ProfilePane<S extends AnySchema>({
                 </fieldset>
               ))}
             </div>
+          ) : null}
+
+          {chips.offered ? (
+            /* THE READER'S OWN SWITCH FOR HOVER CHIPS, where the host offers them: kept in their browser, as their other choices are. */
+            <fieldset data-testid="setting-hover-chips" style={{ border: 0, margin: 0, padding: 0, display: "grid", gap: 5, ...ruled }}>
+              <legend style={{ ...eyebrow, padding: 0 }}>AI suggestions on hover</legend>
+              <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>A quiet suggestion beside a record the pointer rests on, when the AI is sure of one.</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {([true, false] as const).map((value) => (
+                  <button key={String(value)} type="button" aria-pressed={chips.on === value} data-testid={`setting-hover-chips-${value ? "on" : "off"}`} onClick={() => chips.set(value)} style={choiceStyle(chips.on === value)}>
+                    {value ? "On" : "Off"}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
           ) : null}
 
           {scheme !== undefined && onScheme !== undefined ? (

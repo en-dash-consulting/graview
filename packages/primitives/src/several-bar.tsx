@@ -1,7 +1,10 @@
 import { counted, layer, type AnySchema, type Principal, type Store, type Via } from "@graview/core";
-import { inTopLayer } from "@graview/react/provider";
+import { retryingImport } from "@graview/core/retry";
+import { inTopLayer, lazyModule, useGraviewIfAny } from "@graview/react/provider";
+import { inlineAiOn, suggestsOnOpen } from "@graview/tools/frame";
 import { actOnSeveral, actsForSeveral, type SeveralAct, type SeveralOutcome } from "@graview/tools/several";
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import type { SeveralAiProps } from "./several-ai.js";
 import { FOOT_MOVED, placeAtTheFoot } from "./notice-place.js";
 import { AnswerArgs } from "./workbench/answer-args.js";
 import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
@@ -52,6 +55,25 @@ function outcomeWords(outcome: SeveralOutcome<AnySchema>): string {
   if (outcome.unchanged.length > 0) parts.push(`${outcome.unchanged.length} already so.`);
   if (outcome.allOrNothing) parts.push("None of it was kept.");
   return parts.join(" ");
+}
+
+/*
+ * THE AI'S SUGGESTIONS FOR THE CHOSEN (Roadmap f-inline-ai-framework-finish):
+ * fetched only where AI is on and the host gave a Fast slot that may ask on
+ * its own (`suggestsOnOpen`) — else the bar is its acts alone, and no model
+ * is asked. Hidden, never disabled, with AI off.
+ */
+const SEVERAL_AI = /* @__PURE__ */ lazyModule(retryingImport(() => import("./several-ai.js")));
+const SeveralAiPart = /* @__PURE__ */ SEVERAL_AI.part((module: typeof import("./several-ai.js"), props: SeveralAiProps) => <module.SeveralAi {...props} />, { quiet: true });
+
+function SeveralAiDoor(props: SeveralAiProps) {
+  const ai = useGraviewIfAny()?.ai;
+  if (!inlineAiOn(ai) || !suggestsOnOpen(ai)) return null;
+  return (
+    <Suspense fallback={null}>
+      <SeveralAiPart {...props} />
+    </Suspense>
+  );
 }
 
 export function SeveralBar({ store, chosen, principal, context, via, anchor, of, onChooseAll, onClear, onActed }: SeveralBarProps) {
@@ -215,6 +237,8 @@ export function SeveralBar({ store, chosen, principal, context, via, anchor, of,
           </button>
         </div>
       </div>
+      {/* Several: one chosen is the menu's to suggest for, not the bar's. */}
+      {acts.length > 0 && chosen.length > 1 ? <SeveralAiDoor chosen={chosen} acts={acts} onAct={press} /> : null}
       {moreOpen ? (
         <div id={moreId} role="group" aria-label="More" className="graview-several-acts" data-testid="several-more-acts">
           {more.map(button)}

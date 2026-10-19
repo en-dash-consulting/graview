@@ -1,0 +1,77 @@
+{
+  "format": "graview-document",
+  "formatVersion": 1,
+  "name": "Comets fall season",
+  "description": "A kids' soccer team's fall season: the games, the families, and who brings snacks to each game still to play.",
+  "kinds": {
+    "game": {
+      "noun": "game",
+      "plural": "games",
+      "label": "{opponent}",
+      "description": "One Saturday's game against another team.",
+      "fields": {
+        "opponent": { "type": "string", "required": true, "description": "The team the Comets play." },
+        "date": { "type": "date", "required": true, "description": "The Saturday it is played." },
+        "kickoff": { "type": "string", "description": "When it starts, as the schedule says it." },
+        "where": { "type": "enum", "options": ["home", "away"], "required": true, "description": "Home at Hillcrest Park, or away at theirs." },
+        "field": { "type": "string", "description": "The field, as the league's schedule names it." },
+        "status": { "type": "enum", "options": ["upcoming", "played"], "required": true, "description": "Still to play, or played." },
+        "score": { "type": "string", "description": "The final score, the Comets first." }
+      },
+      "edges": {
+        "snacksBy": {
+          "to": ["family"],
+          "cardinality": "one",
+          "description": "the family bringing the halftime snacks",
+          "inverse": "the games they bring snacks to"
+        }
+      },
+      "fieldRoles": { "when": "date" },
+      "glance": ["date", "kickoff", "status"]
+    },
+    "family": {
+      "noun": "family",
+      "plural": "families",
+      "label": "{name}",
+      "description": "A player's family, who take a turn bringing snacks.",
+      "fields": {
+        "name": { "type": "string", "required": true, "description": "How the team list names them." },
+        "player": { "type": "string", "description": "Their player on the Comets." }
+      }
+    }
+  },
+  "acts": {
+    "add-game": { "creates": "game", "title": "Add a game", "description": "Put a game on the season's schedule." },
+    "add-family": { "creates": "family", "title": "Add a family", "description": "Add a player's family to the team list." },
+    "bring-snacks": {
+      "on": "game",
+      "connects": "snacksBy",
+      "title": "Sign up for snacks",
+      "description": "Say which family brings the halftime snacks to this game.",
+      "fromTheOtherEnd": "Bring snacks to a game"
+    },
+    "drop-snacks": {
+      "on": "game",
+      "severs": "snacksBy",
+      "title": "Take the snacks off a family",
+      "description": "Say this family is no longer bringing the snacks.",
+      "fromTheOtherEnd": "Stop bringing snacks to a game"
+    },
+    "mark-played": {
+      "on": "game",
+      "sets": { "status": "played" },
+      "title": "Mark it played",
+      "description": "Say the game has been played."
+    }
+  },
+  "rules": {
+    "snacks-for-every-game": {
+      "title": "Somebody brings snacks to every game still to play",
+      "over": "game",
+      "when": "status == 'upcoming'",
+      "require": "exists(out('snacksBy'))",
+      "says": "Nobody is bringing snacks to the {opponent} game",
+      "repairs": [{ "act": "bring-snacks", "label": "Sign up for snacks" }]
+    }
+  }
+}

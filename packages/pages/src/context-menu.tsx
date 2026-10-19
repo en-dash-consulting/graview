@@ -1,6 +1,6 @@
 import { fieldWords, pluralLabel, type AnySchema, type Place } from "@graview/core";
 import { aggregateId } from "@graview/layout/view";
-import { GhostDoor, Inspector, NotifyDoor, PLACE_MENU_EVENT, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
+import { GhostDoor, Inspector, NotifyDoor, PLACE_MENU_EVENT, useBoardMoveSection, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
 import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
@@ -276,6 +276,8 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   const inlineAi = useInlineAiSection();
   /* "Notify me…" (Roadmap f-notify-subscriptions), where the reader is somebody the app can tell. */
   const notify = useNotifySection();
+  /* "Move to ›" on a card on a status board: the columns it may go to, and the ones withheld with the reason. */
+  const board = useBoardMoveSection();
   /* Hide and Delete for a place this viewer may tidy (Roadmap f-place-menu-views), after the face's own rows. */
   /* Deleting the place this page is: to the kind's own place, else home (`placeAfter`), rather than what the address falls back to. */
   const away = useCallback(
@@ -285,7 +287,7 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
     [pathname, context, navigate],
   );
   const tidy = useViewTidyingSection(away);
-  const sections = useMemo(() => [change, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, own, tidy, notify, inlineAi]);
+  const sections = useMemo(() => [change, board, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, board, own, tidy, notify, inlineAi]);
 
   return (
     <MenuSections sections={sections}>

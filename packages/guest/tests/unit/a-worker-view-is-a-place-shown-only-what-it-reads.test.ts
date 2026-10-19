@@ -103,13 +103,13 @@ describe("a frame guest, too", () => {
 
 describe("registering a worker view", () => {
   const definition = { manifest: packages, worker: { script: "" } };
-  it("makes a titled view a named place for the kind it attaches to, over what was drawn there", () => {
+  it("makes a titled view a named place for the kind it attaches to, over what was drawn there, saying it is a view and what it reads", () => {
     const views = createViews(offersApp.schema);
     const before = () => null;
     views.register("package", { cardinality: "many", fidelity: "full" }, before);
     registerWorkerView(views, definition);
-    // Under the name the host keeps it by, which the place menu hands back to hide or delete it (Roadmap f-place-menu-views).
-    expect(views.places()).toEqual([{ kind: "package", title: "The packages", as: "the-packages", name: "packages" }]);
+    // What it is and what it reads go with the place, so the menu can offer it before drawing a second view (`existingViewsOf`), and the name the host keeps it by, which the place menu hands back to hide or delete it (Roadmap f-place-menu-views).
+    expect(views.places()).toEqual([{ kind: "package", title: "The packages", as: "the-packages", name: "packages", lens: "view", reads: ["offer"] }]);
     expect(views.lookup("package", { cardinality: "many", fidelity: "full" })).not.toBe(before);
   });
   it("draws a home view as the home's own view (FR-81) on both faces, over the home the app declared, and on no kind", () => {

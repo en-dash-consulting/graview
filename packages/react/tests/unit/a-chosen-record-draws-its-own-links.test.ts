@@ -49,6 +49,26 @@ describe("a chosen record draws its own links", () => {
     expect(links[0]).toMatchObject({ lands: "district", others: features });
   });
 
+  /*
+   * Asking whether the map draws a record measures the page, and a hub's
+   * thousand songs asked one by one held up the rise to the city for a
+   * frame of 70 ms (verify-scale), for a line that went to the district
+   * whatever the answers were.
+   */
+  it("never asks whether the map draws a record whose relation is said as one line into its district", () => {
+    const edges = features.map((id) => ({ kind: "partOf", from: id, to: "a1" }));
+    const asked: string[] = [];
+    linksOfRecords(["a1"], edges, kindOf, (id) => (asked.push(id), true), schema);
+    expect(asked).toEqual([]);
+  });
+
+  it("asks once for each record a line might land on", () => {
+    const edges = features.slice(0, 4).map((id) => ({ kind: "partOf", from: id, to: "a1" }));
+    const asked: string[] = [];
+    linksOfRecords(["a1"], edges, kindOf, (id) => (asked.push(id), id === "f0"), schema);
+    expect(asked).toEqual(["f0", "f1", "f2", "f3"]);
+  });
+
   it("draws nothing between two chosen records twice, and nothing for a link the graph cannot name", () => {
     const links = linksOfRecords(["f1", "a1"], [{ kind: "partOf", from: "f1", to: "a1" }, { kind: "partOf", from: "f2", to: "zz" }], kindOf, () => true, schema);
     expect(links).toEqual([]);

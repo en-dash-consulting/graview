@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 10200,
+  "gzipped": 4800,
+  "note": "Raised when the inline AI's last part landed: the selection bar's door to the Fast slot's suggestions for the records chosen together, the menu's dwell telling the hover chips where the pointer rests, and the host's two answers a face asks before it fetches either (`suggestsOnOpen`, `hoverChipsOn` on @graview/tools/frame). The suggestions, the chips and the reader's switch are fetched only where the host gave a Fast slot (and, for the chips, asked for them). Most of it is in the chunks fetched with them: the bar's AI part, the chips and the chip. Measured at 2_251_720 / 751_003 against 2_241_777 / 746_398: 9_943 / 4_605 more."
+}

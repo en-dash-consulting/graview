@@ -270,6 +270,9 @@ importers:
       '@graview/embed':
         specifier: workspace:*
         version: link:../../packages/embed
+      '@graview/guest':
+        specifier: workspace:*
+        version: link:../../packages/guest
       '@graview/layout':
         specifier: workspace:*
         version: link:../../packages/layout

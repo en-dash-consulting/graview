@@ -40,7 +40,8 @@ async function scene(principal: Principal) {
   await act(async () => new Promise((done) => setTimeout(done, 30)));
   const board = host.querySelector('[data-testid="columns-lens"]');
   const columns = [...(board?.querySelectorAll("[data-graview-column]") ?? [])].map((column) => [column.getAttribute("data-graview-column"), column.querySelector('[data-testid="columns-count"]')?.textContent]);
-  const moves = board?.querySelectorAll('[data-testid="columns-move"]').length ?? 0;
+  // A card that moves is one a pointer drags, the keyboard carries and its menu moves: no button under it (Roadmap f-board-move-without-buttons).
+  const moves = board?.querySelectorAll('[data-graview-listed][draggable="true"]').length ?? 0;
   // A section with a name is a region: the role a screen reader's landmarks list reads.
   const regions = [...(board?.querySelectorAll<HTMLElement>("section[aria-label], [role=region][aria-label]") ?? [])].filter((region) => region.hasAttribute("data-graview-column")).map((region) => region.getAttribute("aria-label"));
   await act(async () => root.unmount());

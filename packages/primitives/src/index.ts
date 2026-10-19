@@ -81,6 +81,9 @@ export { GhostDoor, InlineAiSections, useInlineAiSection } from "./inline-ai-doo
 export type { GhostDoorProps } from "./inline-ai-door.js";
 // Notify me (Roadmap f-notify-subscriptions): its part of the context menu, the sheet, a face's own press and Activity's list, the sheet and list fetched when first drawn.
 export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
+// "Move to ›" on a card on a status board (Roadmap f-board-move-without-buttons).
+export { BoardMoveSections, holdBoard, useBoardMoveSection } from "./board-move-section.js";
+export type { BoardHere } from "./board-move-section.js";
 export { openPlaceMenu, PLACE_MENU_EVENT, placeAim, placeGesture } from "./place-menu.js";
 export type { PlaceAim } from "./place-menu.js";
 export { placeAfter, TidyGroups, tidyingOf, useKeptViews, useKeptViewsState, useTidied, useViewTidyingSection } from "./view-tidying.js";

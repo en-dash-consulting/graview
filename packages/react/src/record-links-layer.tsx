@@ -80,11 +80,33 @@ export function RecordLinks({ frame, width, height, stageRef, tick, store, graph
     const rel = (r: DOMRect): Box => ({ x: r.left - s.left, y: r.top - s.top, width: r.width, height: r.height });
     const own = new Map<string, Box | null>();
     const chosenCards = records.map((id) => `[data-graview-view="${CSS.escape(id)}"]`).join(",");
+    /*
+     * The stage read once, by id: a query per record asked of a city of
+     * thousands of elements was a frame of its own at a hub.
+     */
+    let index: { drawn: Map<string, Element[]>; buildings: Map<string, Element> } | null = null;
+    const indexed = () => {
+      if (index) return index;
+      index = { drawn: new Map(), buildings: new Map() };
+      for (const el of stage.querySelectorAll("[data-graview-pick], [data-graview-view], [data-graview-building]")) {
+        const pick = el.getAttribute("data-graview-pick");
+        const view = el.getAttribute("data-graview-view");
+        for (const id of pick !== null && pick === view ? [pick] : [pick, view]) {
+          if (id === null) continue;
+          const held = index.drawn.get(id);
+          if (held) held.push(el);
+          else index.drawn.set(id, [el]);
+        }
+        const building = el.getAttribute("data-graview-building");
+        if (building !== null && !index.buildings.has(building)) index.buildings.set(building, el);
+      }
+      return index;
+    };
     /* Where a record is drawn on its own: a chip or card in the scene, else its building on the plot. */
     const ownBox = (id: string): Box | null => {
       if (own.has(id)) return own.get(id)!;
       let box: Box | null = null;
-      for (const el of stage.querySelectorAll(`[data-graview-pick="${CSS.escape(id)}"], [data-graview-view="${CSS.escape(id)}"]`)) {
+      for (const el of indexed().drawn.get(id) ?? []) {
         if (el.closest("[data-graview-offstage], [data-graview-screen]")) continue;
         // A chip in a chosen record's own card is the card saying it, not the far record drawn.
         if (!records.includes(id) && el.closest(chosenCards)) continue;
@@ -92,7 +114,7 @@ export function RecordLinks({ frame, width, height, stageRef, tick, store, graph
         if (box) break;
       }
       if (!box) {
-        const building = stage.querySelector(`[data-graview-building="${CSS.escape(id)}"]`);
+        const building = indexed().buildings.get(id);
         if (building) box = rel(building.getBoundingClientRect());
       }
       own.set(id, box);

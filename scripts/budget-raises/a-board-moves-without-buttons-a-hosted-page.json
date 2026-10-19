@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 722,
+  "gzipped": 272,
+  "changeset": "a-board-moves-without-buttons.md",
+  "note": "Raised when a status board came to move without buttons and the shipped lenses came to take search, filter and column options (Roadmap f-board-move-without-buttons, f-lens-search-filter): `declaredLenses`, which a page reads up front, keeps a board's `search`, `filters`, `move`, `collapsed`, `cap` and `hidden` to what the kind and the field can honor; the carrying, the menu's Move to › and what the checker says come with the lens and the checker. Measured at 578_842 against 578_120 minified."
+}

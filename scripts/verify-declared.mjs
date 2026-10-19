@@ -502,7 +502,9 @@ try {
         return {
           present: board !== null,
           columns: board ? [...board.querySelectorAll("[data-graview-column]")].map((column) => [column.getAttribute("data-graview-column"), column.querySelector('[data-testid="columns-count"]')?.textContent?.trim(), [...column.querySelectorAll("[data-graview-listed]")].map((card) => card.getAttribute("data-graview-listed")).sort()]) : [],
-          moves: board ? board.querySelectorAll('[data-testid="columns-move"]').length : 0,
+          // A card that moves is one that drags (Roadmap f-board-move-without-buttons): no Move… button stands under it.
+          moves: board ? board.querySelectorAll('[data-graview-listed][draggable="true"]').length : 0,
+          buttons: board ? board.querySelectorAll('[data-testid="columns-move"]').length : 0,
           spills: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
         };
       }, within);
@@ -527,26 +529,28 @@ try {
             names: await regions.evaluateAll((all) => all.filter((one) => one.hasAttribute("data-graview-column")).map((one) => one.getAttribute("aria-label"))),
             found: await page.locator(within).getByRole("region", { name: "The board · Todo, 2", exact: true }).count(),
           };
-          // The keyboard: the card's Move button, Enter opens the columns it may go to, Enter on the first (Doing) moves it.
-          const button = page.locator(`${within} [data-columns-move="t1"] > button`);
+          // The keyboard carries the card: Space on it picks it up, Right carries it to Doing, Space drops it — the act — each step said.
+          const card = page.locator(`${within} [data-graview-listed="t1"] .graview-spec-item-link`);
           let keyboard = { reached: false };
-          if ((await button.count()) > 0) {
-            await button.focus();
-            await page.keyboard.press("Enter");
+          if ((await card.count()) > 0) {
+            await card.focus();
+            await page.keyboard.press(" ");
             await page.waitForTimeout(150);
-            const offered = await page.evaluate((selector) => [...document.querySelectorAll(`${selector} [data-columns-move="t1"] [role="menuitem"]`)].map((item) => item.textContent), within);
-            const focusedFirst = await page.evaluate(() => document.activeElement?.getAttribute("role") === "menuitem" && document.activeElement?.textContent === "Doing");
-            await page.keyboard.press("Enter");
+            const pickedUp = await page.evaluate((selector) => document.querySelector(`${selector} [data-testid="columns-announce"]`)?.textContent ?? "", within);
+            await page.keyboard.press("ArrowRight");
+            await page.waitForTimeout(150);
+            const carried = await page.evaluate((selector) => document.querySelector(`${selector} [data-testid="columns-announce"]`)?.textContent ?? "", within);
+            await page.keyboard.press(" ");
             await page.waitForTimeout(400);
             const after = await columnsOf(page, within);
-            const kept = await page.evaluate(() => document.activeElement?.closest("[data-columns-move]")?.getAttribute("data-columns-move") ?? document.activeElement?.tagName ?? null);
+            const kept = await page.evaluate(() => document.activeElement?.closest("[data-graview-listed]")?.getAttribute("data-graview-listed") ?? document.activeElement?.tagName ?? null);
             const said = await page.evaluate((selector) => document.querySelector(`${selector} [data-testid="columns-said"]`)?.textContent ?? "", within);
             // Undo, by the keyboard too: the board's own Undo, focused and pressed.
             await page.locator(`${within} [data-testid="columns-undo"]`).focus();
             await page.keyboard.press("Enter");
             await page.waitForTimeout(400);
             const undone = await columnsOf(page, within);
-            keyboard = { reached: true, offered, focusedFirst, after: after.columns, kept, said, undone: undone.columns };
+            keyboard = { reached: true, pickedUp, carried, after: after.columns, kept, said, undone: undone.columns };
           }
           await shoot(page, `board-${face}-${size.width}-${scheme}`);
           await page.close();
@@ -560,19 +564,19 @@ try {
     }
     report.checks.aStatusBoardDrawsOnBothFacesInTheFieldsOrder = {
       boards: Object.fromEntries(Object.entries(boards).map(([at, board]) => [at, board.before])),
-      ok: Object.values(boards).every(({ before }) => before.present && JSON.stringify(before.columns) === STARTS && before.moves === 4 && !before.spills),
+      ok: Object.values(boards).every(({ before }) => before.present && JSON.stringify(before.columns) === STARTS && before.moves === 4 && before.buttons === 0 && !before.spills),
     };
     report.checks.aColumnIsAnnouncedByItsLensFirst = {
       boards: Object.fromEntries(Object.entries(boards).map(([at, board]) => [at, board.named])),
       ok: Object.values(boards).every(({ named }) => JSON.stringify(named.names) === JSON.stringify(["The board · Todo, 2", "The board · Doing, 1", "The board · Done, 1"]) && named.found === 1),
     };
-    report.checks.aCardMovedByTheKeyboardIsTheActAndUndoPutsItBack = {
+    report.checks.aCardCarriedByTheKeyboardIsTheActAndUndoPutsItBack = {
       boards: Object.fromEntries(Object.entries(boards).map(([at, board]) => [at, board.keyboard])),
       ok: Object.values(boards).every(
         ({ keyboard }) =>
           keyboard.reached &&
-          JSON.stringify(keyboard.offered) === JSON.stringify(["Doing", "Done"]) &&
-          keyboard.focusedFirst &&
+          keyboard.pickedUp.startsWith("Write the brief, picked up. Todo, 1 of 2.") &&
+          keyboard.carried === "Doing, 1 of 2." &&
           JSON.stringify(keyboard.after) === MOVED &&
           keyboard.kept === "t1" &&
           keyboard.said.includes("Moved “Write the brief” to Doing.") &&

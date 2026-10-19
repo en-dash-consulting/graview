@@ -38,7 +38,12 @@ export interface ArrangingOptions<S extends AnySchema> {
   readonly subject?: readonly NodeOfSchema<S>[];
   /** The kind whose declaration offers the arrangement. The subject nodes' kind when unsaid. */
   readonly kind?: string;
+  /** Whether the line draws its Find box. On unless declined. */
   readonly query?: boolean;
+  /** The fields Find looks in (`label` for the name): a lens's `options.search`. Every readable field when unsaid. */
+  readonly search?: readonly string[];
+  /** What the line offers to filter by, its choice fields standing as chips: a lens's `options.filters`. */
+  readonly filters?: readonly string[];
 }
 
 export interface Arranging<S extends AnySchema> {
@@ -90,6 +95,7 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
     schema: store.schema,
     graph: store.graph,
     flagged: new Set(props.flagged ?? []),
+    ...(options.search ? { searchIn: options.search } : {}),
   });
 
   /*
@@ -109,6 +115,7 @@ export function useArranging<S extends AnySchema>(props: ViewProps<S>, options: 
         arrangement={arrangement}
         allow={allow}
         query={options.query !== false}
+        {...(options.filters ? { filters: options.filters, chips: { nodes: subject as never, flagged: new Set(props.flagged ?? []) } } : {})}
         onChange={(next) => go(withArrangement(view, next))}
         kept={{ shown: arranged.nodes.length, of: subject.length }}
         {...(retired > 0 ? { past: { count: retired, widen: () => go(withPast(view, true)) } } : {})}

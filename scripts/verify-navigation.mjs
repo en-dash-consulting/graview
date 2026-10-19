@@ -1157,10 +1157,11 @@ async function zoomAndPanByHand() {
      * rode the tween — so choosing a picture snapped the whole ground to the
      * new place on one frame and the buildings walked over to join it.
      */
+    const measureTravel = async () => {
     await cam.goto(`${at("todo")}/?today=2026-09-01#overview=1`, { waitUntil: "load" });
     await cam.waitForFunction(() => "__todoReady" in window, undefined, { timeout: 120_000 });
     await cam.waitForTimeout(1500);
-    const travel = await cam.evaluate(async () => {
+    return cam.evaluate(async () => {
       const read = () => {
         const g = document.querySelector(".graview-ground");
         return {
@@ -1232,6 +1233,7 @@ async function zoomAndPanByHand() {
       const share = (key, whole) => (whole === 0 ? 0 : Math.max(0, ...seen.map((one, at) => (at > 0 ? Math.abs(one[key] - seen[at - 1][key]) / whole : 0))));
       return { steps: cells.length, jumps, first: cells[0], last: cells[cells.length - 1], xSteps: xs.length, xJumps, xFirst: seen[0]?.x, xLast: seen[seen.length - 1]?.x, frames: seen.length, movingMs, share: share("cell", travel), xShare: share("x", shift) };
     });
+    };
     /*
      * Eased: five steps or more, or — where a starved runner drew only a few
      * frames on the way — a step between the ends and a move that took a
@@ -1239,6 +1241,21 @@ async function zoomAndPanByHand() {
      */
     // Or a step between the ends and no step carrying most of the move: 2026-10-18's GPU leg drew nine frames and eased 366 px in three steps over 286 ms.
     const eased = (steps, ms, share) => steps >= 5 || (steps >= 3 && (ms >= 300 || share < 0.6));
+    const traveled = (one) =>
+      one.jumps === 0 &&
+      one.xJumps === 0 &&
+      (one.last !== one.first || one.xLast !== one.xFirst) &&
+      (one.last === one.first || eased(one.steps, one.movingMs, one.share)) &&
+      (one.xLast === one.xFirst || eased(one.xSteps, one.movingMs, one.xShare));
+    /*
+     * AND ASKED AGAIN WHEN A STARVED RUNNER SAW ONLY THE ENDS: an easing read
+     * in two frames looks like a cut (main's 0.1.37 Nightly, GPU leg). A cut
+     * shows no frame between the ends however often it is asked; an easing
+     * shows one on a frame the runner did draw. Three tries at most, and the
+     * report says how many it took.
+     */
+    let travel = await measureTravel();
+    for (let attempt = 2; attempt <= 3 && !traveled(travel); attempt++) travel = { ...(await measureTravel()), attempt };
     report.checks = {
       ...(report.checks ?? {}),
       theCityPansBesideAnOpenPicture: onThePicture,
@@ -1246,12 +1263,7 @@ async function zoomAndPanByHand() {
       theGroundTravelsWithTheCards: {
         ...travel,
         // Whatever moved — the cell, where the ground stands, or both — eased there in many small steps and no leap, and something moved.
-        ok:
-          travel.jumps === 0 &&
-          travel.xJumps === 0 &&
-          (travel.last !== travel.first || travel.xLast !== travel.xFirst) &&
-          (travel.last === travel.first || eased(travel.steps, travel.movingMs, travel.share)) &&
-          (travel.xLast === travel.xFirst || eased(travel.xSteps, travel.movingMs, travel.xShare)),
+        ok: traveled(travel),
       },
     };
     report.camera = { start, zoomedIn, wheelAt: open, wheeled, buttonOut, buttonIn, dragged, onThePicture };

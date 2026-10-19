@@ -76,7 +76,8 @@ jobs:
           - { renderer: dom, shard: "gauntlet", run: "node scripts/verify-all.mjs --serial gauntlet" }
           - { renderer: dom, shard: "audit, survey, create, quick-ask, menu", run: "node scripts/verify-all.mjs --serial audit survey create quick-ask menu" }
           - { renderer: dom, shard: "a11y, lines, pages, navigation", run: "node scripts/verify-all.mjs --serial a11y lines pages navigation" }
-          - { renderer: dom, shard: "rota, calendar, desk, remember, studio, watch, who, seat, rehearsal, renderer", run: "node scripts/verify-all.mjs --serial rota calendar desk remember studio watch who seat rehearsal renderer" }
+          # address joined after it failed on main from 2026-10-15 to 10-19 with no Nightly to say so.
+          - { renderer: dom, shard: "rota, calendar, desk, remember, studio, watch, who, seat, rehearsal, renderer, address", run: "node scripts/verify-all.mjs --serial rota calendar desk remember studio watch who seat rehearsal renderer address" }
           - { renderer: dom, shard: "journeys (gauntlet)", run: "node scripts/verify-journeys.mjs gauntlet" }
           - { renderer: dom, shard: "journeys (todo, seedbed)", run: "node scripts/verify-journeys.mjs todo seedbed" }
           - { renderer: dom, shard: "journeys (rota, discography)", run: "node scripts/verify-journeys.mjs rota discography" }
