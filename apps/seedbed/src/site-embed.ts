@@ -1,6 +1,7 @@
 import { checkKitContrast, resolveKit, type AnySchema, type GraviewApp, type KitOverrides, type Principal } from "@graview/core";
 import { compileDocument } from "@graview/core/check";
 import { mount, mountWhenNear, type EmbedFace, type EmbedHandle } from "@graview/embed";
+import { registerWorkerView, type WorkerViewManifest } from "@graview/guest/host/views";
 import { rotaApp } from "@graview/rota";
 import { rotaViews } from "@graview/rota/views";
 import rotaSeed from "../../rota/src/data/example.json";
@@ -11,6 +12,12 @@ import decisionsApp from "@recipes/decisions/app.json";
 import decisionsSeed from "@recipes/decisions/seed.json";
 import dependenciesApp from "@recipes/dependencies/app.json";
 import dependenciesSeed from "@recipes/dependencies/seed.json";
+import asked from "@site-asks/turns.json";
+import seasonDocument from "@site-asks/season/app.json";
+import seasonSeed from "@site-asks/season/seed.json";
+import departuresSource from "@site-asks/docs/departures.js?raw";
+import remainingGamesSource from "@site-asks/season/remaining-games.js?raw";
+import newspaperSource from "@site-asks/season/newspaper.js?raw";
 import { seedbedBrand as SEEDBED_BRAND } from "./domain/brand.js";
 import { CHAPTERS, type Chapter } from "./domain/chapters.js";
 import { seedbedDesign } from "./ui/design.js";
@@ -34,6 +41,11 @@ declare global {
       mountRota: typeof mountRota;
       mountRecipe: typeof mountRecipe;
       mountDocument: typeof mountDocument;
+      mountSeason: typeof mountSeason;
+      /** Hand the app in an element the view a recorded ask came back with, or (null) the derived interface again. */
+      answer: typeof answer;
+      /** The recorded asks: the words, and the view each came back with. */
+      turns: readonly AskTurn[];
       mountAll: typeof mountAll;
       chapters: readonly Chapter[];
       /** Every embed the page has mounted, by its element, so the page can re-dress or re-seat one. */
@@ -241,6 +253,86 @@ export function mountDocument(element: HTMLElement, documentId: string, seedId: 
   return handle;
 }
 
+/*
+ * THE ASKS, ANSWERED ON THE PAGE.
+ *
+ * graview.dev says the interface is generated from the declaration and
+ * that changing it is a sentence. The sentences it shows were asked, and
+ * what came back each time was a worker view — one plain script and its
+ * manifest — recorded in apps/site/asks/turns.json. Pressing an ask hands
+ * that view to the very host a product's views run in (registerWorkerView:
+ * a hardened worker, the manifest enforced, the drawing judged) over the
+ * same store, so the records, and anything the reader changed in them,
+ * are the ones the new view draws. Nothing here calls a model.
+ */
+interface AskTurn {
+  readonly name: string;
+  readonly app: "docs" | "season";
+  readonly ask: string;
+  readonly answer: string;
+  readonly view: string;
+  readonly manifest: WorkerViewManifest;
+  readonly path: string;
+}
+export const TURNS: readonly AskTurn[] = (asked as { readonly turns: readonly AskTurn[] }).turns;
+const SOURCES: Record<string, string> = { "docs/departures.js": departuresSource, "season/remaining-games.js": remainingGamesSource, "season/newspaper.js": newspaperSource };
+
+let seasonCompiled: GraviewApp<AnySchema> | undefined;
+/** The kids' soccer season the asks section reshapes, compiled once per page. */
+export function seasonApp(): GraviewApp<AnySchema> {
+  if (seasonCompiled) return seasonCompiled;
+  const compiled = compileDocument(seasonDocument);
+  if (!compiled.ok) throw new Error(`The season does not compile: ${compiled.findings.map((f) => f.message).join("; ")}`);
+  seasonCompiled = compiled.app as GraviewApp<AnySchema>;
+  return seasonCompiled;
+}
+
+export function mountSeason(element: HTMLElement, label?: string, scheme?: "light" | "dark"): EmbedHandle {
+  const handle = mount(element, {
+    app: seasonApp(),
+    seed: seasonSeed as never,
+    face: "pages",
+    ...(scheme ? { scheme } : {}),
+    label: label ?? "Comets fall season",
+  });
+  handles.set(element, handle);
+  element.dispatchEvent(new CustomEvent("graview:mounted", { bubbles: true, detail: { app: "season", handle } }));
+  return handle;
+}
+
+/**
+ * THE APP IN THIS ELEMENT, ASKED FOR ANOTHER INTERFACE: the turn's view
+ * registered over the same app and the same store, opened where the view
+ * is drawn. `null` is the interface the declaration alone derives, again.
+ */
+export function answer(element: HTMLElement, turnName: string | null, options: { readonly label?: string; readonly scheme?: "light" | "dark" } = {}): EmbedHandle {
+  const before = handles.get(element);
+  if (!before) throw new Error("Nothing is mounted here to ask.");
+  const turn = turnName === null ? undefined : TURNS.find((one) => one.name === turnName);
+  if (turnName !== null && !turn) throw new Error(`No ask called "${turnName}"; there are ${TURNS.map((one) => one.name).join(", ")}.`);
+  const app = element.dataset["graviewApp"] === "season" ? seasonApp() : recipeApp("docs");
+  const store = before.store;
+  before.unmount();
+  element.replaceChildren();
+  const handle = mount(element, {
+    app,
+    store,
+    face: "pages",
+    path: turn?.path ?? "/",
+    ...(options.scheme ? { scheme: options.scheme } : {}),
+    ...(turn
+      ? {
+          views: (_schema: AnySchema, registry: Parameters<typeof registerWorkerView>[0]) =>
+            registerWorkerView(registry, { manifest: turn.manifest, worker: { source: SOURCES[turn.view]! }, author: "Asked on graview.dev" }),
+        }
+      : {}),
+    label: options.label ?? app.name,
+  });
+  handles.set(element, handle);
+  element.dispatchEvent(new CustomEvent("graview:answered", { bubbles: true, detail: { turn: turnName, handle } }));
+  return handle;
+}
+
 /** Every `[data-graview-chapter]`, `[data-graview-app]`, `[data-graview-recipe]` and `[data-graview-document]` on the page, mounted as the reader comes near. */
 export function mountAll(root: ParentNode = document): void {
   mountWhenNear([...root.querySelectorAll<HTMLElement>("[data-graview-chapter], [data-graview-app], [data-graview-recipe], [data-graview-document]")], (element) => {
@@ -255,6 +347,10 @@ export function mountAll(root: ParentNode = document): void {
       mountRecipe(element, element.dataset["graviewRecipe"], element.dataset["face"] as EmbedFace | undefined, element.dataset["stop"], element.dataset["label"], scheme);
       return;
     }
+    if (element.dataset["graviewApp"] === "season") {
+      mountSeason(element, element.dataset["label"], scheme);
+      return;
+    }
     if (element.dataset["graviewApp"] === "rota") {
       mountRota(element, element.dataset["stop"], element.dataset["label"], element.dataset["face"] as EmbedFace | undefined, scheme);
       return;
@@ -263,6 +359,6 @@ export function mountAll(root: ParentNode = document): void {
   });
 }
 
-window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountDocument, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
+window.graviewChapters = { mount: mountChapter, mountRota, mountRecipe, mountDocument, mountSeason, answer, turns: TURNS, mountAll, chapters: CHAPTERS, handles, dress, kitFindings };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => mountAll());
 else mountAll();

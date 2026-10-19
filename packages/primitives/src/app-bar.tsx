@@ -347,7 +347,7 @@ const BAR_CSS = `
 @media (pointer:coarse){.graview-bar-find-keys{display:none}}
 @container graview-bar (max-width: ${BAR_PHONE - 1}px){
 .graview-bar-row{gap:10px;padding:0 12px}
-.graview-bar-app,.graview-bar-home{max-width:none;flex:1 1 auto;min-width:0}
+.graview-bar-app,.graview-bar-home{max-width:none;flex:1 1 auto;min-width:28px}
 .graview-bar-name,.graview-bar-app-name{min-width:0}
 .graview-bar-mid,.graview-bar-find{display:none}
 .graview-bar-find-open{display:inline-flex}
@@ -355,6 +355,9 @@ const BAR_CSS = `
 .graview-bar-own .graview-activity-word{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .graview-bar[data-finding] :is(.graview-bar-app,.graview-bar-faces,.graview-bar-find-open){display:none}
 .graview-bar[data-finding] .graview-bar-find{display:flex;flex:1 1 auto;min-width:0}
+}
+@container graview-bar (max-width: 300px){
+.graview-bar-row{gap:4px;padding:0 10px}
 }`;
 
 /** A tool's own box: one size, square, its name in words for whoever cannot see the mark. */

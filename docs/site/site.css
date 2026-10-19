@@ -1234,6 +1234,86 @@ main.page > section.agent-hero {
   .ah-label .dot { forced-color-adjust: none; background: CanvasText; }
 }
 
+/*
+ * THE RUN beside the docs app: what the agent did, then the interface it
+ * never wrote, then the one a sentence asked for. A column at a desk's
+ * width; above the stage on anything narrower, where only the step it is
+ * on is shown, so the page never grows under the reader as the run goes.
+ * Without script every step is listed.
+ */
+.run-stage { display: grid; grid-template-columns: minmax(270px, 0.36fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.run {
+  margin: 0; padding: 14px 16px; list-style: none; display: flex; flex-direction: column; gap: 10px;
+  border: 1px solid var(--rule); border-radius: var(--radius-sm); background: var(--sunk);
+  font-family: var(--sans); font-size: 13px; line-height: 1.45; color: var(--ink-2); min-width: 0;
+}
+.run li { display: grid; gap: 2px; min-width: 0; }
+.run li > code { font-family: var(--mono); font-size: 12.5px; color: var(--ink); overflow-wrap: anywhere; }
+.run li > code::before { content: "\203A\00a0"; color: var(--ink-3); }
+.run li.warn > span { color: #FFB59E; }
+.run li.said { padding-top: 8px; border-top: 1px solid var(--rule-2); }
+.run li.said b { font-size: 15px; color: var(--mint); font-weight: var(--w-label); }
+.run li.asked { margin-top: auto; }
+.run[data-running] li { display: none; }
+.run[data-running] li.done, .run[data-running] li.now { display: grid; }
+.run[data-running] li.done:not(.said):not(.asked) { color: var(--ink-3); }
+.ask-bar {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 10px 12px;
+  border: 1px solid var(--rule); border-radius: 10px; background: var(--night); color: var(--ink);
+  font-family: var(--sans); font-size: 14px; line-height: 1.45; max-width: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 18%, transparent);
+}
+.ask-bar kbd {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 11.5px; line-height: 1; padding: 4px 6px; margin-top: 1px;
+  border: 1px solid var(--rule); border-radius: 5px; color: var(--ink-3);
+}
+.ask-typed { min-width: 0; overflow-wrap: anywhere; }
+.ask-typed[data-typing]::after { content: ""; display: inline-block; width: 2px; height: 1.05em; margin-left: 1px; vertical-align: -2px; background: var(--mint); }
+.replay {
+  font: inherit; font-weight: var(--w-label); color: var(--pine); background: none; border: 0; padding: 0;
+  min-height: 24px; cursor: pointer;
+}
+.replay:hover { text-decoration: underline; }
+@media (max-width: 1023px) {
+  .run-stage { grid-template-columns: minmax(0, 1fr); }
+  .run { padding: 12px 14px; }
+  .run[data-running] li.done:not(.now) { display: none; }
+  .run li.asked { margin-top: 0; }
+}
+
+/*
+ * THE ASKS: the claim, then one app with the asks to press above it. The
+ * bar is the quick ask's own shape; the presses are the sentences it was
+ * asked, each redrawing the same records.
+ */
+main.page > section.asks { padding-top: clamp(64px, 9vw, 112px); }
+.asks-head { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 20px 48px; align-items: end; }
+.asks-head .claim h2 { max-width: 16ch; }
+.asks-head .lede { font-size: 17.5px; }
+.ask-demo { margin-top: 34px; display: grid; gap: 12px; }
+.ask-line { display: grid; gap: 12px; }
+.ask-bar-big { font-size: 16px; padding: 14px 16px; }
+.ask-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-chips button {
+  font: inherit; font-family: var(--sans); font-size: 14px; line-height: 1.35; text-align: left;
+  color: var(--ink-2); background: var(--panel); border: 1px solid var(--rule); border-radius: 999px;
+  min-height: 38px; padding: 7px 16px; cursor: pointer; max-width: 100%;
+}
+.ask-chips button:hover { color: var(--ink); border-color: var(--ink-3); }
+.ask-chips button[aria-pressed="true"] { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+.season-live { height: min(680px, 78vh); min-height: 480px; border-radius: var(--radius); box-shadow: 0 0 0 1px var(--rule), 0 18px 40px -30px rgba(0, 23, 105, 0.35); }
+@media (max-width: 900px) {
+  .asks-head { grid-template-columns: minmax(0, 1fr); }
+  .season-live { height: 600px; min-height: 0; }
+}
+@media (max-width: 560px) {
+  .ask-chips button { border-radius: 14px; width: 100%; }
+  .season-live { height: 560px; }
+}
+@media (forced-colors: active) {
+  .ask-chips button[aria-pressed="true"] { forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+}
+
 /* The recipes: one row each, the task, what it declared and the proof. */
 main.page > section.recipes { padding-top: 104px; }
 .recipe-list { margin: 40px 0 0; padding: 0; list-style: none; display: grid; gap: 0; }
