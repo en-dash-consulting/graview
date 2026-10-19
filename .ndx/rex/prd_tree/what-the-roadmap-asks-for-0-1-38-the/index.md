@@ -22,7 +22,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | Title | Status |
 |-------|--------|
 | [0.1.38 · A board moves without buttons, and the shipped lenses take search, filter and column options](./0-1-38-a-board-moves-without-buttons-and.md) | pending |
-| [0.1.38 · Right-click a place to hide, delete and restore a view](./0-1-38-right-click-a-place-to-hide-or.md) | pending |
+| [0.1.38 · Right-click a place to hide, delete and restore a view](./0-1-38-right-click-a-place-to-hide-or.md) | completed |
 | [0.1.38 · The right-click menu offers an existing view or lens before drawing a new one](./0-1-38-the-menu-offers-an-existing-view.md) | pending |
 | [0.1.38 · Inline AI, the framework's last part: a selection bar, one quiet hover chip, and the AI section under 400 ms](./0-1-38-inline-ai-the-frameworks-last.md) | pending |
 | [0.1.38 · graview.dev shows the UI is generated, then reshaped by asking](./0-1-38-graview-dev-shows-the-ui-is.md) | pending |
