@@ -47,6 +47,8 @@ export interface OpenRefusal {
   readonly css?: CssRefusal;
   /** The address an image asked for and was refused, as far as 200 characters: said, so its author knows which. */
   readonly address?: string;
+  /** How long that address was, in characters, where it was refused for its length: a view's own `data:` image past `OPEN_MAX_IMAGE`. */
+  readonly length?: number;
 }
 
 /** An element as the host draws it, or a refusal. */
@@ -121,6 +123,15 @@ export interface JudgeContext {
    * Drawn with no referrer, so the page's own address goes nowhere.
    */
   readonly imageOrigins?: readonly string[];
+  /**
+   * A PICTURE ON A RECORD, AS THE HOST HANDED IT (FR-192): the address the
+   * host draws for a `src` it handed this view for a record's picture
+   * (`GuestPictureHand.drawn`), or undefined where it handed none such. The
+   * host made it from the bytes it fetched, so it is drawn at any size —
+   * a full-size phone photograph as a 9 KB webp — and only as handed: a
+   * `src` the view changed is judged as any image a view makes.
+   */
+  readonly picture?: (value: string) => string | undefined;
 }
 
 /** What a host draws besides `data:` images, as a refusal says it: the origins it lists, and whether it says where the app's own images live. */
@@ -136,11 +147,14 @@ export interface ImageHost {
  * app's own images only where it says where they live, `https:` ones only
  * from the origins it lists. It never offers what the host refuses.
  */
-export function imageRefusedWords(address: string, host: ImageHost = {}): string {
+export function imageRefusedWords(address: string, host: ImageHost = {}, length?: number): string {
   const shown = address.length > 120 ? `${address.slice(0, 119)}…` : address;
   const listed = imageOriginsOf(host.origins);
   const own = APP_IMAGE_AT_END.exec(address.split(/[?#]/)[0]!)?.[0];
-  const why = own
+  /* A view's own `data:` image past the cap: the cap said, and what is drawn at any size (FR-192). */
+  const why = length !== undefined && length > OPEN_MAX_IMAGE
+    ? ` It is a data: image of ${length.toLocaleString("en-US")} characters, more than the ${OPEN_MAX_IMAGE.toLocaleString("en-US")} a view's own data: image may be. A picture on a record is drawn at any size by the src the host hands the view (pictures in its manifest), used as it was handed.`
+    : own
     ? host.assets
       ? ` It is the app's own image only by its path, or under the app's base on this page's origin: write it as its path, ${own}.`
       : " This host has not said where the app's own images live (asset, on the view's definition), so a view here cannot draw one by its path."
@@ -200,7 +214,7 @@ export function judgeAttribute(
   if (namespace === "html" && UNNAMED_ELEMENTS[element]?.includes(found.name)) return { refused: { reason: "attribute", element, name } };
   if (value === null) return { name: found.name, value: null };
   const judged = judgeValue(found.name, found.kind, value, context);
-  if ("refused" in judged) return { refused: { ...judged.refused, element, ...(found.kind === "image" && judged.refused.reason === "url" ? { address: value.slice(0, 200) } : {}) } };
+  if ("refused" in judged) return { refused: { ...judged.refused, element, ...(found.kind === "image" && judged.refused.reason === "url" ? { address: value.slice(0, 200), ...(value.length > OPEN_MAX_IMAGE ? { length: value.length } : {}) } : {}) } };
   /* What the app's chrome and notices speak with stays the app's (ADR 0007: a view never uses the app's bar or notices). */
   if (found.name === "role" && judged.value.split(/\s+/).some((role) => (REFUSED_ROLES as readonly string[]).includes(role.toLowerCase()))) return { refused: { reason: "value", element, name } };
   if (found.name === "aria-live" && !["polite", "off"].includes(judged.value.toLowerCase())) return { refused: { reason: "value", element, name } };
@@ -214,6 +228,9 @@ function judgeValue(name: string, kind: OpenAttribute, value: string, context: J
     return { value };
   }
   if (kind === "image") {
+    /* A record's picture as the host handed it: drawn by the host's own address for it, whatever its size (FR-192). */
+    const handed = context.picture?.(value);
+    if (handed !== undefined) return { value: handed };
     if (value.length > OPEN_MAX_IMAGE) return refused("url");
     if (DATA_IMAGE.test(value)) return { value };
     /* A blob: of the host's own page: it is in the page's memory already, and loading it asks nobody. */

@@ -529,11 +529,13 @@ export function mountWorkerView<S extends AnySchema>(element: HTMLElement, optio
       origin: options.origin ?? window.location.origin,
       ...(options.asset ? { asset: options.asset } : {}),
       ...(options.images ? { imageOrigins: options.images.origins } : {}),
+      /* A record's picture the host handed is drawn as handed, at any size (FR-192). */
+      ...(manifest.pictures ? { picture: (value: string) => pictures?.drawn(value) } : {}),
       /* An image's address refused is said once, with why and what would do — not left to be found in `refused`. */
       onRefused: (refusal) => {
         if (refusal.reason !== "url" || refusal.element !== "img" || refusal.address === undefined || toldImages.has(refusal.address)) return;
         toldImages.add(refusal.address);
-        const said = imageRefusedWords(refusal.address, { ...(options.images ? { origins: options.images.origins } : {}), assets: options.asset !== undefined });
+        const said = imageRefusedWords(refusal.address, { ...(options.images ? { origins: options.images.origins } : {}), assets: options.asset !== undefined }, refusal.length);
         port?.postMessage({ type: "notice", text: said });
         options.onProblem?.(said);
       },

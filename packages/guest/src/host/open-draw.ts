@@ -29,6 +29,8 @@ export interface OpenDrawingOptions {
   readonly asset?: (path: string) => string | undefined;
   /** The origins an image may be loaded from by its `https:` address (JudgeContext.imageOrigins). */
   readonly imageOrigins?: readonly string[];
+  /** What the page draws for a record's picture the host handed the view (JudgeContext.picture). */
+  readonly picture?: (value: string) => string | undefined;
   /** Something the view drew was refused, as it was. */
   readonly onRefused?: (refusal: OpenRefusal) => void;
   readonly maxNodes?: number;
@@ -78,6 +80,7 @@ export function createOpenDrawing(shadow: ShadowRoot, options: OpenDrawingOption
     origin: options.origin,
     ...(options.asset ? { asset: options.asset } : {}),
     ...(options.imageOrigins ? { imageOrigins: options.imageOrigins } : {}),
+    ...(options.picture ? { picture: options.picture } : {}),
     ...(options.onRefused ? { onRefused: options.onRefused } : {}),
     ...(options.maxNodes !== undefined ? { maxNodes: options.maxNodes } : {}),
     ...(options.onOverBudget ? { onOverBudget: options.onOverBudget } : {}),

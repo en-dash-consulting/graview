@@ -59,7 +59,8 @@ An `img`'s `src` is drawn only when it is one of these; any other address
 said once in the view's console and the host's problems, with the address:
 
 - **A `data:` image** the view holds: PNG, GIF, JPEG, WebP, AVIF, BMP or
-  SVG. Keep it small; it is part of the view's source.
+  SVG, at most 512,000 characters as its URL. Keep it small; it is part
+  of the view's source.
 - **The app's logo**: `<img src="${props.theme.logo}">`. The host made it
   from the brand's mark (a `blob:` URL of the page, or a `data:` image
   where the page's policy refuses `blob:`). Absent when the brand has none.
@@ -79,8 +80,9 @@ said once in the view's console and the host's problems, with the address:
   on a record the view is handed is then `{ name, type, bytes, width,
   height, caption, src, left }` in its field, never the host's path to it.
   `src` is the address the host made from the bytes, fetched as the reader
-  and made smaller to `width`; it is absent on the first push, and a push
-  follows when it is ready. `left` says why a picture will never come: past
+  and made smaller to `width`, and drawn at any size as long as you use
+  it as handed; it is absent on the first push, and a push follows when
+  it is ready. `left` says why a picture will never come: past
   one picture's byte budget or the view's, or what the host answered when
   it was not loaded. A host that serves the app under a base says where a
   record's files are (`file` on the view's definition, else the page's
@@ -132,7 +134,8 @@ against its size.
 2. `graview view check view.js --app <app> --manifest manifest.json --seed
    <seed.json> --roles <role>` says what it drew. Headless, a picture comes
    with a stand-in `src` (a blank image), so its `<img>` is drawn and
-   judged; only the page shows its pixels.
+   judged; only the page shows its pixels. A picture the page would
+   leave out comes with `left`, and the run says it among its problems.
 3. Open the place and read the view's `refused` (`WorkerView.refused`, or
    `graview.refused` in its console): every element, attribute and
    address the host left out, and why.

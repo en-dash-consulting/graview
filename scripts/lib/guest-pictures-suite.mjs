@@ -28,6 +28,13 @@
  * (0.1.36): `files: filesAt("/a/jobs/graview/files", …)` and no `file` on
  * the view. The view's pictures are fetched under the base all the same,
  * and the porch's own page draws its pictures, and links its quote, there.
+ *
+ * Then a full-size photograph (FR-192, Maryland Family Weekend's journey
+ * view): a real JPEG of 1 200 × 900 the browser itself encoded, with an
+ * EXIF APP1 segment after its JFIF one, heavier than the 512 000
+ * characters a view's own data: image may be, on a page whose policy
+ * refuses blob: images, as Graview Cloud's does. The view is handed a
+ * short blob: address and the page draws the data: image behind it.
  */
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -36,6 +43,10 @@ import { resolve } from "node:path";
 import { graviewSources } from "./graview-sources.mjs";
 
 export const PHOTOS_MANIFEST = { name: "job-photos", title: "Job photos", attach: "job", cardinality: "many", pictures: { width: 400 } };
+/* The same view at the width a pictures: true view draws one (1 200), for a full-size photograph (FR-192). */
+export const JOURNEY_MANIFEST = { ...PHOTOS_MANIFEST, pictures: true };
+/* Where the full-size photograph is kept on the porch, in place of its own (FR-192). */
+const MOMENT = "/graview/files/harbor-6d1f.jpg";
 
 /*
  * A RECORD'S VIDEO IN A VIEW (0.1.37): "Job reel" places the porch's clip
@@ -95,7 +106,50 @@ function png(width, height, [r, g, b]) {
 
 const SESSION = "graview-session=ana-7c1";
 
+/**
+ * A PHONE'S PHOTOGRAPH, AS IT IS KEPT: the browser's own JPEG of `width` ×
+ * `height` of noise (so it stays heavy), with an EXIF APP1 segment put
+ * after its JFIF APP0, as a camera writes one.
+ */
+async function exifJpeg(browser, width, height) {
+  const context = await browser.newContext();
+  try {
+    const tab = await context.newPage();
+    const base64 = await tab.evaluate(
+      ([w, h]) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const context = canvas.getContext("2d");
+        const pixels = context.createImageData(w, h);
+        let seed = 7;
+        for (let i = 0; i < pixels.data.length; i += 4) {
+          seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+          pixels.data[i] = seed & 0xff;
+          pixels.data[i + 1] = (seed >> 8) & 0xff;
+          pixels.data[i + 2] = (seed >> 16) & 0xff;
+          pixels.data[i + 3] = 255;
+        }
+        context.putImageData(pixels, 0, 0);
+        return canvas.toDataURL("image/jpeg", 0.9).split(",")[1];
+      },
+      [width, height],
+    );
+    const jpeg = Buffer.from(base64, "base64");
+    /* SOI, then APP0 (JFIF) if the encoder wrote one; the APP1 goes after it. */
+    const after = jpeg[2] === 0xff && jpeg[3] === 0xe0 ? 4 + jpeg.readUInt16BE(4) : 2;
+    const tiff = Buffer.from([0x4d, 0x4d, 0x00, 0x2a, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+    const body = Buffer.concat([Buffer.from("Exif\0\0", "latin1"), tiff]);
+    const app1 = Buffer.concat([Buffer.from([0xff, 0xe1, (body.length + 2) >> 8, (body.length + 2) & 0xff]), body]);
+    const app0 = after === 2 ? Buffer.from([0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x02, 0x00, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00]) : jpeg.subarray(2, after);
+    return Buffer.concat([jpeg.subarray(0, 2), app0, app1, jpeg.subarray(after)]);
+  } finally {
+    await context.close();
+  }
+}
+
 export async function picturesSuite({ repoRoot, build, browser, claim, report, HOST, HOST_PORT }) {
+  const moment = await exifJpeg(browser, 1_200, 900);
   /* The paths the fixture's records keep (FILES in scripts/fixtures/jobs-app.ts). */
   const files = {
     porch: "/graview/files/porch-3f9a.png",
@@ -113,6 +167,7 @@ export async function picturesSuite({ repoRoot, build, browser, claim, report, H
     /* The porch's clip (0.1.37): a second of one color, as WebM, and its poster. */
     "/graview/files/clip-5d0a.webm": { type: "video/webm", body: readFileSync(resolve(repoRoot, "scripts/fixtures/files/clip.webm")) },
     "/graview/files/clip-5d0a.png": { type: "image/png", body: png(32, 32, [58, 123, 213]) },
+    [MOMENT]: { type: "image/jpeg", body: moment },
   };
   const js = (
     await build({
@@ -131,11 +186,14 @@ const asked = new URLSearchParams(location.search);
 const once = asked.has("files");
 /* "?reel": the porch holds a clip, and the reel view is drawn in place of the photos (0.1.37). */
 const reel = asked.has("reel");
-const definition = { manifest: reel ? ${JSON.stringify(REEL_MANIFEST)} : ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: reel ? ${JSON.stringify(REEL_JS)} : ${JSON.stringify(PHOTOS_JS)} }, ...(base && !once ? { file: (href) => base + href } : {}), onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
+/* "?moment": the porch holds one full-size EXIF JPEG, drawn by a pictures: true view on a page that refuses blob: images (FR-192). */
+const full = asked.has("moment");
+const moment = { href: ${JSON.stringify(MOMENT)}, name: "IMG_4032.jpg", type: "image/jpeg", bytes: ${moment.length}, width: 1200, height: 900, caption: "The harbor at dusk" };
+const definition = { manifest: reel ? ${JSON.stringify(REEL_MANIFEST)} : full ? ${JSON.stringify(JOURNEY_MANIFEST)} : ${JSON.stringify(PHOTOS_MANIFEST)}, worker: { source: reel ? ${JSON.stringify(REEL_JS)} : ${JSON.stringify(PHOTOS_JS)} }, ...(base && !once ? { file: (href) => base + href } : {}), onFailure: (reason, detail) => window.__failures.push([reason, detail]), onProblem: (said) => window.__problems.push(said) };
 const clip = { href: FILES.clip, name: "porch.webm", type: "video/webm", bytes: 624, width: 32, height: 32, duration: 1, poster: FILES.clipPoster, caption: "The porch, panned" };
 window.__handle = mount(document.getElementById("app"), {
   app: jobsApp,
-  seed: reel ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, clip } : node)) } : jobsSeed,
+  seed: reel ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, clip } : node)) } : full ? { ...jobsSeed, nodes: jobsSeed.nodes.map((node) => (node.id === "job:porch" ? { ...node, photos: [moment], papers: [] } : node)) } : jobsSeed,
   principal: ana,
   face: "pages",
   path: asked.has("record") ? recordPath(jobsApp.schema, "job", asked.get("record")) : reel ? "/places/job-reel" : "/places/job-photos",
@@ -168,7 +226,9 @@ window.__handle = mount(document.getElementById("app"), {
   const server = createServer((req, res) => {
     const page = req.url.split("?")[0];
     if (page === "/" || page === "/a/jobs/") {
-      res.writeHead(200, { "content-type": "text/html", "cache-control": "no-store", "set-cookie": `${SESSION}; Path=/; SameSite=Lax; HttpOnly` });
+      /* "?moment": a page whose policy draws data: images and its own, never blob: ones, as Graview Cloud's (FR-192). */
+      const policy = req.url.includes("moment") ? { "content-security-policy": "img-src 'self' data:" } : {};
+      res.writeHead(200, { "content-type": "text/html", "cache-control": "no-store", "set-cookie": `${SESSION}; Path=/; SameSite=Lax; HttpOnly`, ...policy });
       return res.end(html);
     }
     /* Under the base as at the root: the bytes are the app's, wherever its page is served. */
@@ -349,6 +409,27 @@ window.__handle = mount(document.getElementById("app"), {
     const back = await tab.evaluate(() => document.querySelector('[data-worker-view="job-reel"]').shadowRoot.activeElement?.getAttribute("data-lightbox") !== undefined && document.querySelector('[data-worker-view="job-reel"]').shadowRoot.activeElement?.localName === "button");
     claim("Escape closes the viewer and gives the keyboard back to the view's button", back, { back });
     claim("the reel view did not fail, and nothing was left out", (await tab.evaluate(() => [...window.__failures, ...window.__problems])).length === 0, await tab.evaluate(() => ({ failures: window.__failures, problems: window.__problems })));
+
+    /* A FULL-SIZE EXIF JPEG IN A pictures: true VIEW, ON A PAGE THAT REFUSES blob: IMAGES (FR-192). */
+    asked.length = 0;
+    requests.length = 0;
+    const head = { app1: moment[20] === 0xff && moment[21] === 0xe1 && moment.subarray(24, 28).toString("latin1") === "Exif", bytes: moment.length, base64: Math.ceil(moment.length / 3) * 4 + "data:image/jpeg;base64,".length };
+    claim("the full-size photograph is a real JPEG with JFIF and an EXIF APP1, heavier as a data: image than the 512,000 characters a view's own may be", head.app1 && head.base64 > 512_000, head);
+    await tab.goto(`${HOST}/?moment`, { waitUntil: "load" });
+    await until(() => {
+      const image = document.querySelector('[data-worker-view="job-photos"]')?.shadowRoot?.querySelector("img");
+      return Boolean(image?.complete && image.naturalWidth > 0);
+    }, "the full-size photograph, drawn by the view");
+    await tab.waitForTimeout(300);
+    const full = await tab.evaluate(() => {
+      const root = document.querySelector('[data-worker-view="job-photos"]').shadowRoot;
+      const image = root.querySelector("img");
+      const src = image.getAttribute("src");
+      return { natural: [image.naturalWidth, image.naturalHeight], scheme: src.slice(0, src.indexOf(":")), length: src.length, alt: image.getAttribute("alt"), failures: window.__failures, problems: window.__problems };
+    });
+    claim("on a page that refuses blob: images, a pictures: true view draws the full-size EXIF JPEG on a record, at its own 1200×900, the data: image the host made", full.natural.join("x") === "1200x900" && full.scheme === "data" && full.length > 512_000 && full.alt === "The harbor at dusk", full);
+    claim("the host fetched the photograph once, with the reader's session", asked.length === 1 && asked[0].path === MOMENT && asked[0].signed, asked);
+    claim("the full-size photograph's view did not fail, nothing was refused and nothing was left out", full.failures.length === 0 && full.problems.length === 0, { failures: full.failures, problems: full.problems });
     await context.close();
   } finally {
     server.close();

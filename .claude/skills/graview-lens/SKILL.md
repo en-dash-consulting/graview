@@ -171,8 +171,8 @@ pnpm build && npx graview check ./dist/domain/app.js
 The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`,
 `lens-binding-missing-field` and `lens-binding-undeclared-kind` — and, for a
 titled lens that cannot draw, why, at its path (`lens-cannot-draw`,
-`lens-option-unknown`, `lens-title-taken`); `graview describe` lists the
-places that draw. Report the output.
+`lens-option-unknown`, which `add-lens` refuses, `lens-title-taken`);
+`graview describe` lists the places that draw. Report the output.
 
 **And prove the reuse.** This is the claim a lens exists to support, and the one
 the checker cannot make for you — it NOTES every lens in `lenses` that the
