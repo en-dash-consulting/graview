@@ -112,6 +112,18 @@ export interface HostAi {
    */
   readonly suggestOnOpen?: boolean;
   /**
+   * A QUIET HOVER CHIP: the pointer resting on a record for as long as it
+   * takes the menu to get ready shows, beside it, the Fast slot's one
+   * suggestion there — only when the model is sure of it
+   * (`HOVER_CHIP_CONFIDENCE`), at most one on the screen, asked once per
+   * record until it changes, never on a pointer passing over and never of
+   * the Thinking slot. Off unless the host says `true`: a hover is not a
+   * question the reader asked, and a host that meters every call should
+   * not pay for one it did not choose. Only with a Fast slot; each reader
+   * may turn it off again in the person menu.
+   */
+  readonly hoverChips?: boolean;
+  /**
    * THE QUICK ASK'S ANSWERS (Roadmap f-quick-ask-framework): what answers
    * words asked from the command bar (⌘K) or on an answer card, about the
    * target they were asked on. Handed the words, the target, the state
@@ -232,6 +244,23 @@ export const aiOff = (ai: HostAi | undefined): boolean => ai?.off === true;
 /** Whether the inline AI is drawn: AI is not off, and a fast or thinking model (or the `decide`, `complete` or `turn` that serve them) was given. */
 export const inlineAiOn = (ai: HostAi | undefined): boolean =>
   ai !== undefined && !aiOff(ai) && (ai.fast !== undefined || ai.thinking !== undefined || ai.answer !== undefined || ai.decide !== undefined || ai.complete !== undefined || ai.turn !== undefined);
+
+/** Whether a Fast slot is given (or the `decide` behind it) and AI is not off. */
+export const fastGiven = (ai: HostAi | undefined): boolean => ai !== undefined && !aiOff(ai) && (ai.fast !== undefined || ai.decide !== undefined);
+
+/**
+ * WHETHER A MENU ASKS FOR SUGGESTIONS AS IT OPENS (FR-185): only with a Fast
+ * slot, and only when the host did not say `suggestOnOpen: false`. Else the
+ * menu offers "Suggest…", and asks when that is pressed. The selection bar
+ * asks for the chosen records the same way, or not at all.
+ */
+export const suggestsOnOpen = (ai: HostAi | undefined): boolean => ai?.suggestOnOpen !== false && fastGiven(ai);
+
+/** Whether the host asked for hover chips (`hoverChips: true`) and gave a Fast slot for them. */
+export const hoverChipsOn = (ai: HostAi | undefined): boolean => ai?.hoverChips === true && fastGiven(ai);
+
+/** How sure the Fast slot must be of its first suggestion for a hover chip to say it. */
+export const HOVER_CHIP_CONFIDENCE = 0.6;
 
 /** No AI: the graph answers alone. */
 export const NO_AI: HostAi = {};

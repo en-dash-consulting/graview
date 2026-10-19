@@ -2,7 +2,12 @@ import { retryingImport } from "@graview/core/retry";
 import type { AnySchema } from "@graview/core";
 import { useMenuPrepare } from "@graview/react/drawing";
 import { lazyModule, useGraview, useSelection, type MenuTarget } from "@graview/react/provider";
+import { hoverChipsOn } from "@graview/tools/frame";
 import { Suspense, useEffect, useRef, useState } from "react";
+
+/* THE HOVER CHIPS, fetched only where the host asked for them (`hover-chips.tsx`). */
+const chips = /* @__PURE__ */ lazyModule(/* @__PURE__ */ retryingImport(() => import("../hover-chips.js")));
+const Chips = /* @__PURE__ */ chips.part((module) => <module.HoverChipDoor />, { quiet: true });
 
 /**
  * What is selected, what is true about it, and what can legally be done —
@@ -87,17 +92,34 @@ function sceneAim(element: Element): MenuTarget | null {
  * kept (`prepareActs`), and every section's own `prepare` — the inline AI's
  * chunk, the sheet "Notify me…" opens. Nothing is fetched until then, so a
  * page's first load carries none of it; a pass-over readies nothing; and no
- * model is ever asked from here.
+ * model is asked from here — save the one hover chip, where the host asked
+ * for chips (`ai.hoverChips`) and the reader did not turn them off: the same
+ * dwell tells it where the pointer rests (`hover-chips.tsx`).
  */
 function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
-  const { store, principal, providers } = useGraview<AnySchema>();
+  const { store, principal, providers, ai } = useGraview<AnySchema>();
   const prepareSections = useMenuPrepare();
-  const latest = useRef({ aimAt, store, principal, providers, prepareSections });
-  latest.current = { aimAt, store, principal, providers, prepareSections };
+  const chipsOn = hoverChipsOn(ai);
+  const latest = useRef({ aimAt, store, principal, providers, prepareSections, chipsOn });
+  latest.current = { aimAt, store, principal, providers, prepareSections, chipsOn };
   useEffect(() => {
     if (typeof document === "undefined") return;
     let resting: { readonly element: Element; readonly timer: ReturnType<typeof setTimeout> } | null = null;
     let readied: string | null = null;
+    /* Where a hover chip was told the pointer rests (`hover-chips.tsx`): only a pointer's dwell, never the keyboard or a finger. */
+    let chipped: Element | null = null;
+    const chipOn = (element: Element) => {
+      const now = latest.current;
+      const target = now.chipsOn ? now.aimAt(element) : null;
+      if (!target) return;
+      chipped = element;
+      void chips.load().then(
+        (module) => {
+          if (chipped === element) module.restOn(target, element);
+        },
+        () => undefined,
+      );
+    };
     const cancel = () => {
       if (resting) clearTimeout(resting.timer);
       resting = null;
@@ -128,12 +150,17 @@ function useMenuReady(aimAt: (element: Element) => MenuTarget | null): void {
         timer: setTimeout(() => {
           resting = null;
           ready(element);
+          chipOn(element);
         }, MENU_DWELL_MS),
       };
     };
     const out = (event: PointerEvent) => {
-      if (resting === null) return;
       const to = event.relatedTarget;
+      if (chipped !== null && !(to instanceof Node && chipped.contains(to))) {
+        chipped = null;
+        chips.current?.leaveRest();
+      }
+      if (resting === null) return;
       if (to instanceof Node && resting.element.contains(to)) return;
       cancel();
     };
@@ -171,7 +198,7 @@ export function Inspector({
   /** What a menu opened at an element would be about, where the face says it (the routed face): the pointer resting there gets that menu ready. The scene's pick or card, when unsaid. */
   readonly aimAt?: (element: Element) => MenuTarget | null;
 } = {}) {
-  const { menuAt, setMenuAt, registerActsDoor } = useGraview<AnySchema>();
+  const { menuAt, setMenuAt, registerActsDoor, ai } = useGraview<AnySchema>();
   const { selection } = useSelection();
   useMenuReady(aimAt ?? sceneAim);
   /*
@@ -220,11 +247,19 @@ export function Inspector({
   useEffect(() => {
     if (wanted) setDrawn(true);
   }, [wanted]);
-  if (!drawn && !wanted) return null;
-  return (
+  const chipDoor = hoverChipsOn(ai) ? (
     <Suspense fallback={null}>
-      {/* A face that opens the menu its own way (the routed face) has no chosen record to say "Acts…" for. */}
-      <Pane placement={placement} chosen={openActs === undefined} />
+      <Chips />
     </Suspense>
+  ) : null;
+  if (!drawn && !wanted) return chipDoor;
+  return (
+    <>
+      <Suspense fallback={null}>
+        {/* A face that opens the menu its own way (the routed face) has no chosen record to say "Acts…" for. */}
+        <Pane placement={placement} chosen={openActs === undefined} />
+      </Suspense>
+      {chipDoor}
+    </>
   );
 }

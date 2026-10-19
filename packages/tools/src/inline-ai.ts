@@ -62,14 +62,8 @@ export function fastOf(ai: HostAi): FastProvider | undefined {
   return ai.fast ?? (ai.decide ? { model: ai.name ?? "decide", decide: ai.decide } : undefined);
 }
 
-/**
- * WHETHER A MENU ASKS FOR SUGGESTIONS AS IT OPENS (FR-185): only with a Fast
- * slot, and only when the host did not say `suggestOnOpen: false`. Else the
- * menu offers "Suggest…", and asks when that is pressed.
- */
-export function suggestsOnOpen(ai: HostAi): boolean {
-  return ai.suggestOnOpen !== false && fastOf(ai) !== undefined;
-}
+/** Whether a menu asks for suggestions as it opens (FR-185): `ai.ts`'s, here too for the runner. */
+export { HOVER_CHIP_CONFIDENCE, suggestsOnOpen } from "./ai.js";
 
 /** The Thinking slot as the host filled it, else its `complete` (or its `turn`, with no tools) behind it. */
 export function thinkingOf(ai: HostAi): ThinkingProvider | undefined {
@@ -295,6 +289,59 @@ export async function suggestHere<S extends AnySchema>(ai: HostAi, ask: InlineAs
     offers: picked.map(({ candidate }) => candidate),
   };
 }
+
+// ── several chosen ──────────────────────────────────────────────────────────
+
+/** One act every chosen record shares, as the selection bar offers it (`actsForSeveral`). */
+export interface SharedAct {
+  /** The bar's own id for it. */
+  readonly id: string;
+  readonly label: string;
+  readonly mutation: string;
+  readonly args: Readonly<Record<string, unknown>>;
+}
+
+/** An ask about records chosen together: the acts they share, which the bar runs over every one. */
+export interface SeveralAsk<S extends AnySchema = AnySchema> extends InlineAsk<S> {
+  readonly shared: readonly SharedAct[];
+}
+
+/** The candidate id the selection bar's act is offered as. */
+export const sharedActCandidate = (id: string): string => `several:${id}`;
+
+/**
+ * WHAT TO DO WITH THE RECORDS CHOSEN TOGETHER: the Fast slot's pick among
+ * the acts they all share that ask nothing more (each run over every one by
+ * the bar), the panels of their kind and the places that show them — its
+ * top few, each with how sure it was. ONLY EVER THE FAST SLOT: with none,
+ * nothing is asked, and the bar offers its acts alone. Nothing is changed.
+ */
+export async function suggestForSeveral<S extends AnySchema>(ai: HostAi, ask: SeveralAsk<S>, most = 2): Promise<InlineResult> {
+  const asked = begin(ai, { ...ask, acts: [] });
+  const said = ask.said ?? "Suggest for the chosen";
+  const count = ask.target.on === "selection" ? ask.target.ids.length : 1;
+  const acts: AiCandidate[] = ask.shared.map((act) => ({ type: "act", id: sharedActCandidate(act.id), label: act.label, description: `${act.label}, for all ${count} chosen`, mutation: act.mutation, args: act.args, asks: [] }));
+  const choices = [...acts, ...asked.catalog.candidates.filter((candidate) => candidate.type === "panel" || candidate.type === "place")].slice(0, 24);
+  const fast = fastOf(ai);
+  if (!fast) return failedResult(asked, said, "suggest", NO_MODEL);
+  if (choices.length === 0) return { interaction: { ...asked.entry, ask: { kind: "suggest", said }, offered: [], outcome: "offered", usage: [] }, offers: [] };
+  let picked: { candidate: AiCandidate; confidence: number }[];
+  try {
+    const { question, of } = choiceAmong(choices, `Which of these would the person most likely want to do next with the ${count} records they chose together?`);
+    const answers = await decided(fast, { ...asked.state, candidates: choices.map((candidate) => ({ id: candidate.id, type: candidate.type, says: candidate.description })) }, { next: question }, asked.meter);
+    // The first always; another only where the model gave it a fair chance — the bar is no place for a long shot.
+    picked = ranked(answers["next"], of, most).filter((pick, at) => at === 0 || pick.confidence >= SEVERAL_SECOND);
+  } catch (error) {
+    return failedResult(asked, said, "suggest", error instanceof Error ? error.message : String(error));
+  }
+  return {
+    interaction: { ...asked.entry, ask: { kind: "suggest", said }, offered: picked.map(({ candidate, confidence }) => offeredOf(candidate, confidence)), outcome: "offered", usage: [...asked.usage] },
+    offers: picked.map(({ candidate }) => candidate),
+  };
+}
+
+/** How sure the Fast slot must be of a second suggestion for the selection bar to offer it too. */
+const SEVERAL_SECOND = 0.25;
 
 // ── fills ───────────────────────────────────────────────────────────────────
 
