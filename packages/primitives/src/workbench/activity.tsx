@@ -110,7 +110,8 @@ export function useRecentChanges(limit = 4): readonly Change[] {
           if ("batch" in row) return changeOf(store, row.batch, carried);
           const changes = [...row.digest.batches].reverse().map((batch) => changeOf(store, batch, carried));
           return {
-            intent: digestWords(row.digest, new Date().toISOString().slice(0, 10)),
+            // Today on the app's clock, as the digest's own day is read: a UTC today called an evening's tidying "on Oct 18" on Oct 18.
+            intent: digestWords(row.digest),
             author: row.digest.author.kind,
             ...(row.digest.author.id ? { authorId: row.digest.author.id } : {}),
             by: row.digest.author,
