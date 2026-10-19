@@ -99,11 +99,22 @@ function kindOf(target: MenuTarget): string | undefined {
 }
 
 /**
+ * THE PLACE A KIND FALLS BACK TO when `gone` is deleted: the one its kind
+ * draws when an address names none — the last registered of the kind's
+ * others still listed — or none, and the face goes home.
+ */
+export function placeAfter(places: readonly Place[], gone: Place): Place | undefined {
+  return places.filter((one) => one.as !== gone.as && !one.hidden && (one.kind === gone.kind || one.over?.includes(gone.kind) === true)).at(-1);
+}
+
+/**
  * HIDE AND DELETE IN THE PLACE MENU: a section of the context menu for a
  * target that is a place this viewer may tidy — Show in place of Hide for
- * one already hidden. None where the host keeps no views.
+ * one already hidden. None where the host keeps no views. `away` is told of
+ * a place once it is deleted, so a face on it goes somewhere that stands
+ * (`placeAfter`) rather than drawing what it falls back to.
  */
-export function useViewTidyingSection(): MenuSectionSource | null {
+export function useViewTidyingSection(away?: (place: Place, after: Place | undefined) => void): MenuSectionSource | null {
   const kept = useKeptViews();
   const views = useGraviewIfAny()?.views;
   const board = useContext(NoticeBoardContext);
@@ -122,11 +133,19 @@ export function useViewTidyingSection(): MenuSectionSource | null {
         place.hidden
           ? { id: "show-view", label: "Show", hint: "Back in the places, for everyone", run: () => void setHidden(place, how, keeper, false, board) }
           : { id: "hide-view", label: "Hide", hint: "Off the places and the scene, for everyone", run: () => void setHidden(place, how, keeper, true, board) },
-        { id: "delete-view", label: "Delete", hint: `Kept ${REMOVED_VIEW_DAYS} days under Recently deleted`, run: () => void remove(place, how, keeper, board) },
+        {
+          id: "delete-view",
+          label: "Delete",
+          hint: `Kept ${REMOVED_VIEW_DAYS} days under Recently deleted`,
+          run: () => {
+            const after = placeAfter(views.places(), place);
+            void remove(place, how, keeper, board).then((done) => done && away?.(place, after));
+          },
+        },
       ];
       return { id: "tidy-view", items };
     };
-  }, [keeper, state, views, board]);
+  }, [keeper, state, views, board, away]);
 }
 
 /** What the drop-down's foot lists: the hidden places this viewer may show, and the deleted views they may restore. */

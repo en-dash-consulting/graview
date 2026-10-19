@@ -124,6 +124,25 @@ describe("a view tidied from the place menu", () => {
     expect(pictures(await openPlaces(host))).toContain("Seat chart");
   });
 
+  it("goes to the kind's own place when the place you are on is deleted, rather than leaving you on what it falls back to", async () => {
+    const kept = keeper();
+    const host = await open(kept);
+    await rightClick(host.querySelector('[data-testid="app-place-current"]'));
+    await press(menu()!.querySelector('[data-menu-item="delete-view"]'));
+    expect(kept.current().removed.map((one) => one.name)).toEqual(["seat-chart"]);
+    // The seats' own place, the floor, is what the bar says and what the page draws.
+    expect(host.querySelector('[data-testid="app-place-current"]')?.textContent).toBe("The floor");
+    expect(host.querySelector('[data-testid="seat-chart"]')).toBeNull();
+  });
+
+  it("goes home when the place you are on is deleted and its kind has no other", async () => {
+    const kept = keeper();
+    const host = await open(kept, "/places/the-building");
+    await rightClick(host.querySelector('[data-testid="app-place-current"]'));
+    await press(menu()!.querySelector('[data-menu-item="delete-view"]'));
+    expect(host.querySelector('[data-testid="app-home"]')?.getAttribute("aria-current")).toBe("page");
+  });
+
   it("opens from the keyboard's Shift+F10 and from a resting finger on a drop-down entry", async () => {
     const host = await open(keeper(), "/");
     const list = await openPlaces(host);

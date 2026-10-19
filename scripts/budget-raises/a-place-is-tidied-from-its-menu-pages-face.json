@@ -1,6 +1,6 @@
 {
   "budget": "the pages face alone",
-  "minified": 8522,
-  "gzipped": 3360,
-  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): the routed face's menu offers Hide and Delete for a place (`useViewTidyingSection`), and the bar's places open it; the foot, the gesture's reading and `tidyViews` are their own chunks. 8_522 / 3_360 more than before it (606_823 / 222_223): measured at 615_345 / 225_583."
+  "minified": 8752,
+  "gzipped": 3478,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): the routed face's menu offers Hide and Delete for a place (`useViewTidyingSection`), and the bar's places open it; the foot, the gesture's reading and `tidyViews` are their own chunks. 8_752 / 3_478 more than before it (606_823 / 222_223): measured at 615_575 / 225_701."
 }

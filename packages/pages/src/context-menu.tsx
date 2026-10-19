@@ -277,7 +277,14 @@ function Menu<S extends AnySchema>({ context, root, children }: { readonly conte
   /* "Notify me…" (Roadmap f-notify-subscriptions), where the reader is somebody the app can tell. */
   const notify = useNotifySection();
   /* Hide and Delete for a place this viewer may tidy (Roadmap f-place-menu-views), after the face's own rows. */
-  const tidy = useViewTidyingSection();
+  /* Deleting the place this page is: to the kind's own place, else home (`placeAfter`), rather than what the address falls back to. */
+  const away = useCallback(
+    (place: Place, after: Place | undefined) => {
+      if (pathname === pathOfPlace(context, place).split("?")[0]) navigate(after ? pathOfPlace(context, after) : "/");
+    },
+    [pathname, context, navigate],
+  );
+  const tidy = useViewTidyingSection(away);
   const sections = useMemo(() => [change, own, ...(tidy ? [tidy] : []), ...(notify ? [notify] : []), ...(inlineAi ? [inlineAi] : [])], [change, own, tidy, notify, inlineAi]);
 
   return (

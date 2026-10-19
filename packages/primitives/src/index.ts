@@ -83,7 +83,7 @@ export type { GhostDoorProps } from "./inline-ai-door.js";
 export { askToNotify, NotifiedDoor, NotifyButton, NotifyDoor, NotifySections, useNotifiedCount, useNotifySection } from "./notify-door.js";
 export { openPlaceMenu, PLACE_MENU_EVENT, placeAim, placeGesture } from "./place-menu.js";
 export type { PlaceAim } from "./place-menu.js";
-export { TidyGroups, tidyingOf, useKeptViews, useKeptViewsState, useTidied, useViewTidyingSection } from "./view-tidying.js";
+export { placeAfter, TidyGroups, tidyingOf, useKeptViews, useKeptViewsState, useTidied, useViewTidyingSection } from "./view-tidying.js";
 export { ViewTidyingSections } from "./view-tidying-sections.js";
 export type { NotifyAsk } from "./notify-sheet.js";
 // What AI did on a record, on its page (Roadmap f-activity-ai-entries), fetched with the first entry.
