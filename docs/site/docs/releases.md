@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.38`](https://graview.dev/docs/releases.html#v0-1-38)
 - [`0.1.37`](https://graview.dev/docs/releases.html#v0-1-37)
 - [`0.1.36`](https://graview.dev/docs/releases.html#v0-1-36)
 - [`0.1.35`](https://graview.dev/docs/releases.html#v0-1-35)
@@ -39,9 +40,25 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
-## 0.1.37
+## 0.1.38
 
 Published October 19, 2026 · the current version
+
+Boards without buttons that search and filter, places that hide and restore views, a menu that offers what exists, and the last of inline AI.
+
+- **Boards without buttons.** A card moves by drag, by the keyboard or from its menu's Move to, with no Move button under every card, and a board takes search, filter and column options, showing search by itself once it is big.
+- **Places that tidy their views.** Right-click a place to hide or delete a view; Hidden and Recently deleted (kept 30 days) sit at the foot of the places list.
+- **A menu that offers what exists.** Before drawing a new view, the right-click menu offers the one the app already has.
+- **The last of inline AI.** Several records chosen get suggestions for the set, one quiet hover chip can offer the likeliest next step, and the menu's AI part fills in well under 400 ms.
+- **graview.dev shows the interface is generated, then reshaped by asking.**
+
+**Before you upgrade:** A columns lens draws no Move button unless `move: true`; lenses take `options`; `keptViews` on `mount`, the provider and the Shell, with `/graview/views` and `remoteViews`; `ai.hoverChips` (off by default); places carry `lens`, `reads`, `name` and `declared`. The hosted page carries about 2.7 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.38) · [The full changelog for 0.1.38](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0138)
+
+## 0.1.37
+
+Published October 19, 2026
 
 Times in the app's own time zone, acts for every relation, video on records, and lines that wait for a view that draws late.
 
