@@ -86,8 +86,8 @@ export { BoardMoveSections, holdBoard, useBoardMoveSection } from "./board-move-
 export type { BoardHere } from "./board-move-section.js";
 export { openPlaceMenu, PLACE_MENU_EVENT, placeAim, placeGesture } from "./place-menu.js";
 export type { PlaceAim } from "./place-menu.js";
-export { placeAfter, TidyGroups, tidyingOf, useKeptViews, useKeptViewsState, useTidied, useViewTidyingSection } from "./view-tidying.js";
-export { ViewTidyingSections } from "./view-tidying-sections.js";
+export { TidyGroups, useKeptViewsState, useTidied } from "./view-tidying.js";
+export { placeAfter, useViewTidyingSection, ViewTidyingSections } from "./view-tidying-sections.js";
 export type { NotifyAsk } from "./notify-sheet.js";
 // What AI did on a record, on its page (Roadmap f-activity-ai-entries), fetched with the first entry.
 export { RecordInteractionsDoor } from "./record-interactions-door.js";

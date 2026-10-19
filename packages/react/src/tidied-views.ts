@@ -13,15 +13,27 @@ import type { ReactViewRegistry } from "./view-registry.js";
 
 const tidying = /* @__PURE__ */ lazyModule(retryingImport(() => import("./tidy-views.js")));
 
-/** Follows the host's views with what tidies the registry, once it has arrived; the answer stops following. */
+/**
+ * Follows the host's views with what tidies the registry, fetched the first
+ * time the host lists something hidden or deleted — a page whose host has
+ * tidied nothing never asks for it; the answer stops following.
+ */
 function follow<S extends AnySchema>(views: ReactViewRegistry<S>, keeper: KeptViews, set: (tidied: ReactViewRegistry<S>) => void): () => void {
   let stop: (() => void) | undefined;
   let gone = false;
-  void tidying.load().then((module) => {
-    if (!gone) stop = module.watchTidied(views, keeper, set as never);
-  }, String);
+  const listed = () => {
+    const { hidden, removed } = keeper.current();
+    if (stop || gone || hidden.length + removed.length === 0) return;
+    stop = () => undefined;
+    void tidying.load().then((module) => {
+      if (!gone) stop = module.watchTidied(views, keeper, set as never);
+    }, String);
+  };
+  listed();
+  const unlisten = keeper.onChange?.(listed);
   return () => {
     gone = true;
+    unlisten?.();
     stop?.();
   };
 }

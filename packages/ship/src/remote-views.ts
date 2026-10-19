@@ -36,6 +36,13 @@ export interface RemoteViewsOptions {
    * resolves once it has.
    */
   readonly onDeclaration?: () => void | Promise<void>;
+  /**
+   * What the route would answer now, handed to the page with its document
+   * (`graview preview` hands it beside the store's state): taken as the
+   * first answer, so nothing is asked before the page draws and `ready`
+   * has already resolved.
+   */
+  readonly state?: KeptViewsState;
 }
 
 /** The asking seat's view of the views it may tidy, on a served store; `ready` resolves once the first answer is in. */
@@ -43,7 +50,7 @@ export function remoteViews(options: RemoteViewsOptions): KeptViews & { lens: No
   const doFetch = options.fetch ?? fetch;
   const base = options.url.replace(/\/$/, "");
   const headers = { "content-type": "application/json", ...(options.principal ? seatHeaders(options.principal) : {}), ...(options.headers ?? {}) };
-  let state: KeptViewsState = NO_KEPT_VIEWS;
+  let state: KeptViewsState = options.state ? { hidden: options.state.hidden ?? [], removed: options.state.removed ?? [], may: options.state.may ?? NO_KEPT_VIEWS.may } : NO_KEPT_VIEWS;
   const listeners = new Set<() => void>();
   const take = (next: KeptViewsState) => {
     if (JSON.stringify(next) === JSON.stringify(state)) return;
@@ -57,7 +64,7 @@ export function remoteViews(options: RemoteViewsOptions): KeptViews & { lens: No
     take({ hidden: answer.hidden ?? [], removed: answer.removed ?? [], may: answer.may ?? NO_KEPT_VIEWS.may });
   };
   const refresh = () => call("GET");
-  const ready = refresh().catch(() => undefined);
+  const ready = options.state ? Promise.resolve() : refresh().catch(() => undefined);
   const timer = options.pollMs ? setInterval(() => void refresh().catch(() => undefined), options.pollMs) : undefined;
   return {
     ready,

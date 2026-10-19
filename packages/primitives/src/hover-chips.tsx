@@ -1,7 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import { lazyModule, useGraviewIfAny, type MenuTarget, type ReaderMemory } from "@graview/react/provider";
 import { hoverChipsOn } from "@graview/tools/frame";
-import { Suspense, useCallback, useEffect, useState, useSyncExternalStore, type ComponentType } from "react";
+import { Suspense, useCallback, useEffect, useState, useSyncExternalStore, type ComponentType, type CSSProperties } from "react";
 import type { HoverChipProps } from "./hover-chip.js";
 
 /**
@@ -110,6 +110,25 @@ export function useHoverChipsSetting(): { readonly offered: boolean; readonly on
   const on = useSyncExternalStore(listen, () => hoverChipsWanted(memory), () => false);
   const set = useCallback((next: boolean) => setHoverChipsWanted(next, memory), [memory]);
   return { offered, on: offered && on, set };
+}
+
+/** THE READER'S OWN SWITCH FOR HOVER CHIPS, where the host offers them: kept in their browser, as their other choices are. Drawn in the person's menu, fetched with the chips. */
+export function HoverChipsSwitch({ legend, style, choice }: { readonly legend: CSSProperties; readonly style: CSSProperties; readonly choice: (chosen: boolean) => CSSProperties }) {
+  const chips = useHoverChipsSetting();
+  if (!chips.offered) return null;
+  return (
+    <fieldset data-testid="setting-hover-chips" style={{ border: 0, margin: 0, padding: 0, display: "grid", gap: 5, ...style }}>
+      <legend style={{ ...legend, padding: 0 }}>AI suggestions on hover</legend>
+      <span style={{ fontSize: "0.8125rem", color: "var(--graview-ink-muted)" }}>A quiet suggestion beside a record the pointer rests on, when the AI is sure of one.</span>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+        {([true, false] as const).map((value) => (
+          <button key={String(value)} type="button" aria-pressed={chips.on === value} data-testid={`setting-hover-chips-${value ? "on" : "off"}`} onClick={() => chips.set(value)} style={choice(chips.on === value)}>
+            {value ? "On" : "Off"}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
 }
 
 const chip = /* @__PURE__ */ lazyModule(retryingImport(() => import("./hover-chip.js")));

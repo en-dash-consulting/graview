@@ -1,6 +1,6 @@
 {
   "budget": "embed without the studio",
-  "minified": 1411,
-  "gzipped": 562,
-  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views). Up front only what hears the gesture and what says the places' foot has something to list, and the registry handed the tidied one once it arrives (`useTidiedViews`): which place, whether a finger rested, the menu's rows, the toast, the foot and `tidyViews` itself are fetched on first use. 1_411 / 562 more than before it (715_595 / 189_868): measured at 717_006 / 190_430."
+  "minified": 1734,
+  "gzipped": 768,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views). Up front only what hears the gesture and what says the places' foot has something to list, and the registry handed the tidied one once it arrives (`useTidiedViews`): which place, whether a finger rested, the menu's rows, the toast, the foot and `tidyViews` itself are fetched on first use. 1_411 / 562 more than before it (715_595 / 189_868): measured at 717_006 / 190_430. Then the first load came to ask for nothing it does not draw (first-load-asks-for-nothing-it-does-not-draw.md): `tidyViews` is fetched only once the host lists something hidden or deleted, which the frame now follows itself; the rule for who may tidy a place (`placeTidying`) is on `@graview/core` for the menu's rows and the foot both; the bar's event (`PLACE_MENU_EVENT`) is on `@graview/react/provider`. 323 / 206 more up front, measured at 718_304 / 190_983, so 1_734 / 768 more than before the tidying."
 }

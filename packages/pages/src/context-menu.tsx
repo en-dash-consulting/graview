@@ -1,8 +1,8 @@
 import { fieldWords, pluralLabel, type AnySchema, type Place } from "@graview/core";
 import { aggregateId } from "@graview/layout/view";
-import { GhostDoor, Inspector, NotifyDoor, PLACE_MENU_EVENT, useBoardMoveSection, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
+import { GhostDoor, Inspector, NotifyDoor, useBoardMoveSection, useInlineAiSection, useNotifySection, useViewTidyingSection } from "@graview/primitives/pages";
 import { MenuSections } from "@graview/react/drawing";
-import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
+import { PLACE_MENU_EVENT, useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget, type PointerMenu } from "@graview/react/provider";
 import { useCallback, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
 import { useHref, useLocation, useNavigate } from "react-router-dom";
 import type { PageContext } from "./page-context.js";

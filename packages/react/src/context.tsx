@@ -88,6 +88,13 @@ export interface ActsDoor {
   open(from: HTMLElement): void;
 }
 
+/**
+ * The event the bar asks the routed face's menu to open with, on the face
+ * (Roadmap f-place-menu-views); its `detail` is the menu, placed. Beside the
+ * menu's own shape so the face hears it without fetching what the bar says.
+ */
+export const PLACE_MENU_EVENT = "graview:place-menu";
+
 export interface PointerMenu {
   readonly x: number;
   readonly y: number;

@@ -1,3 +1,4 @@
+import type { Place } from "./types.js";
 
 /*
  * THE VIEWS A PERSON TIDIES FROM THE PLACE MENU (Roadmap f-place-menu-views).
@@ -95,6 +96,13 @@ export const removedLensName = (title: string): string => `lens:${title}`;
 
 /** Nothing hidden, nothing deleted, nothing allowed: a host that keeps no views. */
 export const NO_KEPT_VIEWS: KeptViewsState = { hidden: [], removed: [], may: { views: false, lenses: false } };
+
+/** How a place is tidied: by the host, as a view it keeps; as a change to the declaration; or not by this viewer at all. */
+export function placeTidying(place: Pick<Place, "name" | "declared">, state: KeptViewsState, keeper: KeptViews): "view" | "lens" | null {
+  if (place.name !== undefined && state.may.views) return "view";
+  if (place.declared && state.may.lenses && keeper.lens) return "lens";
+  return null;
+}
 
 export interface MemoryViewsOptions {
   /** What every viewer may tidy. Script views, not declared lenses, unless said. */

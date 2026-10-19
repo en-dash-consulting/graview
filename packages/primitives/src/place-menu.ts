@@ -1,4 +1,4 @@
-import type { PointerMenu } from "@graview/react/provider";
+import { PLACE_MENU_EVENT, type PointerMenu } from "@graview/react/provider";
 
 /*
  * THE PLACE MENU, FROM THE BAR (Roadmap f-place-menu-views): the place you
@@ -12,8 +12,7 @@ import type { PointerMenu } from "@graview/react/provider";
  * bar's); on the scene, the scene's.
  */
 
-/** The event the bar asks the routed face's menu to open with; its `detail` is the menu, placed. */
-export const PLACE_MENU_EVENT = "graview:place-menu";
+export { PLACE_MENU_EVENT };
 
 /** A place's menu, before it is placed: its name, the kind's group, and what it is called. */
 export type PlaceAim = Pick<PointerMenu, "place" | "about" | "title">;

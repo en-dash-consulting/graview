@@ -37,12 +37,14 @@ try {
    * THE VIEWS A PERSON TIDIES FROM THE PLACE MENU (Roadmap f-place-menu-views):
    * kept by the preview server, as Graview Cloud keeps them. A declared
    * lens hidden or deleted is written into the server's document; the page
-   * asks for it again and is handed the new app.
+   * asks for it again and is handed the new app. What they stand at came
+   * with the document, so nothing more is asked before the page draws.
    */
   let handle;
   const keptViews = remoteViews({
     url: location.origin,
     principal,
+    ...(handed.views ? { state: handed.views } : {}),
     onDeclaration: async () => {
       const again = await (await fetch("/graview/document")).json();
       const next = await appFromOrCompile(again);

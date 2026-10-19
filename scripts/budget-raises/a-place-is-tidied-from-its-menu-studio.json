@@ -1,6 +1,6 @@
 {
   "budget": "embed with the studio handed in",
-  "minified": 10645,
-  "gzipped": 4586,
-  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): both faces' menus offer Hide and Delete for a place, the bar's places open them, and the foot, the gesture's reading and `tidyViews` are fetched on first use. 10_645 / 4_586 more than before it (1_840_700 / 586_561): measured at 1_851_345 / 591_147."
+  "minified": 9529,
+  "gzipped": 4143,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): both faces' menus offer Hide and Delete for a place, the bar's places open them, and the foot, the gesture's reading and `tidyViews` are fetched on first use. 10_645 / 4_586 more than before it (1_840_700 / 586_561): measured at 1_851_345 / 591_147. Then the first load came to ask for nothing it does not draw (first-load-asks-for-nothing-it-does-not-draw.md): the menu's rows decide what they offer as the menu opens and fetch what a press does, so the tidying left what the faces load first: 1_116 / 443 fewer, measured at 1_856_824 / 593_184, so 9_529 / 4_143 more than before the tidying."
 }

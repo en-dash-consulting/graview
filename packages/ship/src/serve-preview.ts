@@ -7,6 +7,7 @@ import { sayFindings, serializeCompiled } from "@graview/core/compiled";
 import { runConnections, type RunConnectionsOptions, type RunningConnections } from "./connections.js";
 import { readEnvFile } from "./connections-file.js";
 import { seatHeaders } from "./remote.js";
+import { VIEWS_PATH } from "./remote-views.js";
 import { serveStore, type ServedStore } from "./serve.js";
 
 /** Where the store answers a seat its state. */
@@ -156,13 +157,26 @@ export async function servePreview(options: PreviewOptions): Promise<Preview> {
     const answered = await opened.handle(new Request(`http://localhost${STATE_PATH}`, { headers: seatHeaders(principal) }));
     return answered.ok ? answered.text() : undefined;
   };
+  /*
+   * AND THE VIEWS IT TIDIED, likewise (Roadmap f-place-menu-views): asked
+   * for after the document, they kept the page from drawing for one more
+   * round trip — half a second on a phone. What this seat would be answered
+   * at `/graview/views` comes with the document, and `remoteViews` starts
+   * from it (`state`).
+   */
+  const viewsNow = async (): Promise<string | undefined> => {
+    if (!opened) return undefined;
+    const answered = await opened.handle(new Request(`http://localhost${VIEWS_PATH}`, { headers: seatHeaders(principal) }));
+    return answered.ok ? answered.text() : undefined;
+  };
 
   const answer = async (request: Request): Promise<Response | undefined> => {
     if (request.method !== "GET" && request.method !== "HEAD") return undefined;
     const path = decodeURIComponent(new URL(request.url).pathname);
     if (path === "/graview/document") {
-      const state = await stateNow();
-      return new Response(state === undefined ? handed : `${handed.slice(0, -1)},"state":${state}}`, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
+      const [state, views] = await Promise.all([stateNow(), viewsNow()]);
+      const more = `${state === undefined ? "" : `,"state":${state}`}${views === undefined ? "" : `,"views":${views}`}`;
+      return new Response(more === "" ? handed : `${handed.slice(0, -1)}${more}}`, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
     }
     if (path.startsWith("/graview/")) return undefined;
     const file = normalize(join(root, path));

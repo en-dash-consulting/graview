@@ -1,6 +1,6 @@
 import { createSchema, createViewRegistry, defineNode, z } from "@graview/core";
 import { describe, expect, it } from "vitest";
-import { tidyViews } from "../../src/index.js";
+import { tidyViews } from "../../src/tidy-views.js";
 
 /**
  * A REGISTRY TIDIED AS THE HOST KEEPS ITS VIEWS (Roadmap f-place-menu-views):

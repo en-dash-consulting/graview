@@ -4,8 +4,8 @@ import { useQuickAskDrawn } from "./quick-ask-desk.js";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { AppMark } from "./app-title.js";
 import { barPanes } from "./bar-panes-door.js";
-/* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes once there is something to list. */
-const TidyFoot = barPanes.part((panes, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <panes.TidyGroups {...props} />, { quiet: true });
+/* The places' foot, Hidden and Recently deleted (Roadmap f-place-menu-views): fetched with the panes, and the tidying with it, once there is something to list and the list is open. */
+const TidyFoot = barPanes.part((panes, props: { readonly id: string; readonly scene: boolean; readonly reach: BarGo; readonly done: () => void }) => <panes.TidyFoot {...props} />, { quiet: true });
 
 /* Who else is here (FR-155): drawn once somebody is, so a reader alone never fetches it. */
 const Here = barPanes.part((panes, props: { readonly scene: boolean; readonly compact: boolean }) => <panes.Here {...props} />, { quiet: true });

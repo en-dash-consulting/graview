@@ -17,7 +17,7 @@
  * the boundary, the emphasis sets, the editable fields, the others placed —
  * is `@graview/react/drawing`'s, fetched with the face that draws it.
  */
-export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
+export { GraviewProvider, hasLanded, markLanded, matchWith, openingView, PLACE_MENU_EVENT, ROBOT_REST_MS, useFound, useGraph, useGraview, useGraviewIfAny, useNode, useRobots, useScenePointer, useTheWatchKnowsWhatIsUnseen, useViewMode, useWhereIs, ViewModeProvider } from "./context.js";
 export { GoToContext, useGoTo } from "./go.js";
 // Sections of the context menu beside its acts: a host's are the provider's `menuSections`; a face adds its own with `MenuSections` (`./drawing`).
 export type { MenuItem, MenuSection, MenuSectionSource, MenuTarget } from "./menu-types.js";

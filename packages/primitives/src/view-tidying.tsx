@@ -1,8 +1,9 @@
-import { placePath, REMOVED_VIEW_DAYS, removedLensName, type KeptViews, type KeptViewsState, type Place, type RemovedView } from "@graview/core";
-import { useGraview, useGraviewIfAny, type MenuItem, type MenuSectionSource, type MenuTarget } from "@graview/react/provider";
+import { NO_KEPT_VIEWS, placePath, placeTidying, REMOVED_VIEW_DAYS, removedLensName, type KeptViews, type KeptViewsState, type Place, type RemovedView } from "@graview/core";
+import { useGraview, useGraviewIfAny } from "@graview/react/provider";
 import { useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { NoticeBoardContext, type NoticeBoard } from "./notices.js";
 import type { BarGo, BarPlace } from "./app-bar.js";
+import "./frame.js"; // A door: tied to what the page drew first (TIED DOORS, packages/primitives/src/frame.ts).
 
 /*
  * TIDYING THE VIEWS FROM THE PLACE MENU (Roadmap f-place-menu-views).
@@ -15,31 +16,19 @@ import type { BarGo, BarPlace } from "./app-bar.js";
  * it (`may.lenses`, the owner). Both are app-wide. The drop-down's foot
  * lists what is Hidden, with Show, and what was Recently deleted, with
  * Restore, for as long as the host keeps it.
+ *
+ * This is what a press does and the drop-down's foot: fetched with the
+ * bar's panes, or by the menu's rows (`./view-tidying-sections.tsx`) while
+ * the pointer rests on them, never with the page.
  */
 
 const never = () => () => undefined;
-/** Nothing hidden, deleted or allowed: a host that keeps no views. */
-const NO_KEPT_VIEWS: KeptViewsState = { hidden: [], removed: [], may: { views: false, lenses: false } };
 
 /** What the host's kept views say now, followed as they change; nothing hidden, deleted or allowed without them. */
 export function useKeptViewsState(keeper: KeptViews | undefined): KeptViewsState {
   const subscribe = useMemo(() => (keeper?.onChange ? (listener: () => void) => keeper.onChange!(listener) : never), [keeper]);
   const read = () => keeper?.current() ?? NO_KEPT_VIEWS;
   return useSyncExternalStore(subscribe, read, read);
-}
-
-/** The provider's kept views (`keptViews`) and what they say now: `null` where the host keeps none. */
-export function useKeptViews(): { readonly keeper: KeptViews; readonly state: KeptViewsState } | null {
-  const keeper = useGraviewIfAny()?.keptViews;
-  const state = useKeptViewsState(keeper);
-  return keeper ? { keeper, state } : null;
-}
-
-/** How a place is tidied: by the host, as a view it keeps; as a change to the declaration; or not by this viewer at all. */
-export function tidyingOf(place: Pick<Place, "name" | "declared">, state: KeptViewsState, keeper: KeptViews): "view" | "lens" | null {
-  if (place.name !== undefined && state.may.views) return "view";
-  if (place.declared && state.may.lenses && keeper.lens) return "lens";
-  return null;
 }
 
 /** Whether this viewer may restore a deleted view: a lens is the declaration's, the rest the host's views. */
@@ -90,72 +79,15 @@ export async function remove(place: Place, how: "view" | "lens", keeper: KeptVie
   return done;
 }
 
-/** The kind a menu's target is about, when it is one kind's group. */
-function kindOf(target: MenuTarget): string | undefined {
-  const about = target.about[0];
-  if (target.about.length !== 1 || !about?.startsWith("aggregate:")) return undefined;
-  const kinds = about.slice("aggregate:".length).split("+");
-  return kinds.length === 1 ? kinds[0] : undefined;
-}
-
-/**
- * THE PLACE A KIND FALLS BACK TO when `gone` is deleted: the one its kind
- * draws when an address names none — the last registered of the kind's
- * others still listed — or none, and the face goes home.
- */
-export function placeAfter(places: readonly Place[], gone: Place): Place | undefined {
-  return places.filter((one) => one.as !== gone.as && !one.hidden && (one.kind === gone.kind || one.over?.includes(gone.kind) === true)).at(-1);
-}
-
-/**
- * HIDE AND DELETE IN THE PLACE MENU: a section of the context menu for a
- * target that is a place this viewer may tidy — Show in place of Hide for
- * one already hidden. None where the host keeps no views. `away` is told of
- * a place once it is deleted, so a face on it goes somewhere that stands
- * (`placeAfter`) rather than drawing what it falls back to.
- */
-export function useViewTidyingSection(away?: (place: Place, after: Place | undefined) => void): MenuSectionSource | null {
-  const kept = useKeptViews();
-  const views = useGraviewIfAny()?.views;
-  const board = useContext(NoticeBoardContext);
-  const keeper = kept?.keeper;
-  const state = kept?.state;
-  return useMemo<MenuSectionSource | null>(() => {
-    if (!keeper || !state || !views) return null;
-    return (target: MenuTarget) => {
-      if (target.place === undefined) return null;
-      const kind = kindOf(target);
-      const place = views.places().find((one) => one.as === target.place && (kind === undefined || one.kind === kind || one.over?.includes(kind) === true));
-      if (!place) return null;
-      const how = tidyingOf(place, state, keeper);
-      if (!how) return null;
-      const items: MenuItem[] = [
-        place.hidden
-          ? { id: "show-view", label: "Show", hint: "Back in the places, for everyone", run: () => void setHidden(place, how, keeper, false, board) }
-          : { id: "hide-view", label: "Hide", hint: "Off the places and the scene, for everyone", run: () => void setHidden(place, how, keeper, true, board) },
-        {
-          id: "delete-view",
-          label: "Delete",
-          hint: `Kept ${REMOVED_VIEW_DAYS} days under Recently deleted`,
-          run: () => {
-            const after = placeAfter(views.places(), place);
-            void remove(place, how, keeper, board).then((done) => done && away?.(place, after));
-          },
-        },
-      ];
-      return { id: "tidy-view", items };
-    };
-  }, [keeper, state, views, board, away]);
-}
-
 /** What the drop-down's foot lists: the hidden places this viewer may show, and the deleted views they may restore. */
 export function useTidied(): { readonly keeper: KeptViews; readonly hidden: readonly Place[]; readonly removed: readonly RemovedView[]; readonly how: (place: Place) => "view" | "lens" | null } | null {
-  const kept = useKeptViews();
-  const views = useGraviewIfAny()?.views;
+  const context = useGraviewIfAny();
+  const keeper = context?.keptViews;
+  const state = useKeptViewsState(keeper);
+  const views = context?.views;
   return useMemo(() => {
-    if (!kept || !views) return null;
-    const { keeper, state } = kept;
-    const how = (place: Place) => tidyingOf(place, state, keeper);
+    if (!keeper || !views) return null;
+    const how = (place: Place) => placeTidying(place, state, keeper);
     const seen = new Set<string>();
     // Each picture once, as every list of places names it.
     const hidden = views.places().filter((place) => {
@@ -166,7 +98,7 @@ export function useTidied(): { readonly keeper: KeptViews; readonly hidden: read
       return true;
     });
     return { keeper, hidden, removed: state.removed.filter((one) => mayRestore(one, state)), how };
-  }, [kept?.keeper, kept?.state, views]);
+  }, [keeper, state, views]);
 }
 
 /** A day as the drop-down says it: "Nov 18". */

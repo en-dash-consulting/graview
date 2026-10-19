@@ -5,7 +5,7 @@ import { memoryViews, removedLensName, type LensTidyEdit, type RemovedView } fro
  * A VIEW HIDDEN OR DELETED FROM THE PLACE MENU (Roadmap f-place-menu-views).
  * The host keeps script views; `memoryViews` is the keeping a page, a test
  * or `graview serve` uses: a deleted view kept thirty days, then gone for
- * good (`tidyViews` on `@graview/react` is the registry as it leaves it).
+ * good (`useTidiedViews` on `@graview/react` is the registry as it leaves it).
  */
 describe("a view hidden or deleted from the place menu", () => {
   it("keeps a deleted view thirty days under Recently deleted, restores it, and forgets it after", async () => {
