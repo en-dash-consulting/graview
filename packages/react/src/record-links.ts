@@ -70,12 +70,14 @@ export function linksOfRecords(
   for (const group of groups.values()) {
     const selfKind = kindOf(group.self) ?? "";
     const words = edgeWords(schema, group.direction === "out" ? selfKind : group.kind, group.edge, group.direction);
-    const own = group.others.filter(drawn);
-    const rest = group.others.filter((id) => !drawn(id));
+    // Past the handful the line goes to the district whatever the map draws, so the map is not asked (`drawn` measures the page).
     if (group.others.length > LINKS_TO_EACH) {
       out.push({ ...group, others: group.others, lands: "district", words });
       continue;
     }
+    const own: string[] = [];
+    const rest: string[] = [];
+    for (const other of group.others) (drawn(other) ? own : rest).push(other);
     for (const other of own) out.push({ ...group, others: [other], lands: "record", words });
     if (rest.length > 0) out.push({ ...group, others: rest, lands: "district", words });
   }
