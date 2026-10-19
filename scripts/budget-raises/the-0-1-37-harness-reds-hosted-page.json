@@ -1,0 +1,7 @@
+{
+  "budget": "a hosted page",
+  "minified": 200,
+  "gzipped": 100,
+  "changeset": "pages-goes-back-to-the-page-back-landed-on.md",
+  "note": "Raised when the 0.1.37 harness reds were fixed: the switch's Pages goes back to the page Back landed on (the address bar tells the embed), Activity names a record taken back from the log's adding or removal, a card whose content fits is held still, and two ways to add one wrap apart. Measured at 578_103 / 200_500 against 577_982 / 200_457: 121 / 43 more."
+}
