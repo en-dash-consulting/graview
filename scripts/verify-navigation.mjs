@@ -1241,7 +1241,7 @@ async function zoomAndPanByHand() {
      */
     // Or a step between the ends and no step carrying most of the move: 2026-10-18's GPU leg drew nine frames and eased 366 px in three steps over 286 ms.
     const eased = (steps, ms, share) => steps >= 5 || (steps >= 3 && (ms >= 300 || share < 0.6));
-    const travelled = (one) =>
+    const traveled = (one) =>
       one.jumps === 0 &&
       one.xJumps === 0 &&
       (one.last !== one.first || one.xLast !== one.xFirst) &&
@@ -1255,7 +1255,7 @@ async function zoomAndPanByHand() {
      * report says how many it took.
      */
     let travel = await measureTravel();
-    for (let attempt = 2; attempt <= 3 && !travelled(travel); attempt++) travel = { ...(await measureTravel()), attempt };
+    for (let attempt = 2; attempt <= 3 && !traveled(travel); attempt++) travel = { ...(await measureTravel()), attempt };
     report.checks = {
       ...(report.checks ?? {}),
       theCityPansBesideAnOpenPicture: onThePicture,
@@ -1263,7 +1263,7 @@ async function zoomAndPanByHand() {
       theGroundTravelsWithTheCards: {
         ...travel,
         // Whatever moved — the cell, where the ground stands, or both — eased there in many small steps and no leap, and something moved.
-        ok: travelled(travel),
+        ok: traveled(travel),
       },
     };
     report.camera = { start, zoomedIn, wheelAt: open, wheeled, buttonOut, buttonIn, dragged, onThePicture };
