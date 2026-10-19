@@ -39,10 +39,15 @@
  *   place, with no step Back would have to undo;
  *   the embed in an article never writes `history` and leaves `location` as
  *   it was, a seat change included;
- *   and across a new declaration (`setApp`, FR-116), in an article and at an
+ *   across a new declaration (`setApp`, FR-116), in an article and at an
  *   address: a place open on Pages stays open, the scene keeps its focus on a
  *   record, a reader on a kind the change removed lands on the home, and the
- *   article's history is never written.
+ *   article's history is never written;
+ *   and a record a lens draws as a link answers the menu under the base
+ *   (FR-189): a board's card links to `<base>/tasks/t1`, its menu —
+ *   right-clicked at a desk, a finger resting on it on a phone — has Open,
+ *   the task's acts and Move to ›, which moves it, and "Open in a new tab"
+ *   keeps the base; a blocks lens's card, grouped by status, the same.
  *
  *   node scripts/verify-address.mjs [--engine=chromium|webkit|firefox]   (all three by default)
  */
@@ -64,6 +69,10 @@ const PROPOSAL = resolve(repoRoot, "packages/core/tests/document/fixtures/lifelo
 const PROPOSAL_SEED = resolve(repoRoot, "packages/core/tests/document/fixtures/lifelogics.seed.json");
 /** Where the proposal is served under address routing, for the new declarations (FR-116). */
 const SWAP_BASE = "/apps/a2";
+/** Where the tasks are served with a blocks lens of cards beside the board (FR-189). */
+const CARDS_BASE = "/apps/a3";
+/** Cards grouped by where each task stands, as Cloud's Roadmap draws its features by stage. */
+const BY_STATUS = { name: "blocks", title: "By status", on: "task", options: { blocks: [{ list: "all('task')", group: { by: "status" }, sort: "label", as: "card" }] } };
 const SEED = {
   nodes: [
     { id: "t1", kind: "task", label: "Write the brief", status: "todo" },
@@ -105,7 +114,8 @@ async function buildHost() {
           if (!compiled.ok) throw new Error("the document did not compile");
           return compiled.app;
         };
-        const compiled = { app: compile(tasks) };
+        const cards = location.pathname.startsWith("${CARDS_BASE}");
+        const compiled = { app: compile(cards ? { ...tasks, lenses: [...tasks.lenses, ${JSON.stringify(BY_STATUS)}] } : tasks) };
         const article = location.pathname.startsWith("/article");
         window.__navigated = [];
         /*
@@ -177,7 +187,7 @@ async function buildHost() {
           fonts: false,
           studio: false,
           onNavigate: (path, how) => window.__navigated.push([path, how]),
-          ...(article ? {} : { routing: "address", basePath: "${BASE}/" }),
+          ...(article ? {} : { routing: "address", basePath: cards ? "${CARDS_BASE}/" : "${BASE}/" }),
         });
         window.__handle.drawn().then(() => { window.__ready = true; });
         }`,
@@ -203,7 +213,7 @@ async function buildHost() {
       return;
     }
     // Every address under the base is the one page, as a host that owns the page answers it.
-    if (path === BASE || path.startsWith(`${BASE}/`) || path === SWAP_BASE || path.startsWith(`${SWAP_BASE}/`)) {
+    if ([BASE, SWAP_BASE, CARDS_BASE].some((base) => path === base || path.startsWith(`${base}/`))) {
       response.writeHead(200, { "content-type": "text/html" });
       response.end(APP_PAGE);
       return;
@@ -418,6 +428,80 @@ try {
         one.homeFirst = await state();
       } catch (error) {
         one.error = String(error?.message ?? error);
+      }
+      try {
+        /*
+         * A RECORD DRAWN AS A LINK ANSWERS THE MENU UNDER THE BASE (FR-189).
+         * A card's link is the record's address under the base; its menu is
+         * the record's — Open, its acts, Move to › on a board — opened by a
+         * right-click at a desk and by a finger resting on it on a phone,
+         * where with no Move button the menu is the only way to move a card;
+         * and a new tab opens under the base.
+         */
+        const phone = viewport.width < 768;
+        const card = (id) => `[data-graview-face=pages] [data-graview-listed="${id}"] .graview-spec-item-link`;
+        const menuOf = async (selector) => {
+          await tab.evaluate(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })));
+          await tab.waitForTimeout(200);
+          await tab.locator(selector).first().scrollIntoViewIfNeeded();
+          if (phone) {
+            // A finger resting on the card: a touch's pointerdown, held past the long press, then lifted.
+            const box = await tab.locator(selector).first().boundingBox();
+            const x = box.x + Math.min(24, box.width / 2);
+            const y = box.y + Math.min(16, box.height / 2);
+            const under = await tab.evaluate(
+              ([at, x, y]) => {
+                const target = document.querySelector(at);
+                target.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, pointerType: "touch", isPrimary: true, clientX: x, clientY: y }));
+                const there = document.elementFromPoint(x, y);
+                return there ? `${there.tagName.toLowerCase()}.${there.className}` : null;
+              },
+              [selector, x, y],
+            );
+            await tab.waitForTimeout(800);
+            await tab.evaluate((at) => document.querySelector(at).dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerType: "touch", isPrimary: true })), selector);
+            if (!(await tab.locator('[data-testid="context-menu"]').isVisible().catch(() => false))) throw new Error(`no menu after resting on ${selector} (under the finger: ${under})`);
+          } else {
+            await tab.click(selector, { button: "right", position: { x: 12, y: 8 } });
+          }
+          await tab.waitForSelector('[data-testid="context-menu"]', { timeout: 10_000 });
+          await tab.waitForTimeout(400);
+          return tab.evaluate(() => {
+            const menu = document.querySelector('[data-testid="context-menu"]');
+            return {
+              title: menu?.querySelector("h2, h3, [data-testid='inspector-title']")?.textContent?.trim() ?? null,
+              text: menu?.textContent ?? "",
+              rows: [...(menu?.querySelectorAll("[data-menu-item]") ?? [])].map((row) => row.getAttribute("data-menu-item")),
+              acts: [...(menu?.querySelectorAll("[data-affordance]:not([disabled])") ?? [])].map((button) => button.textContent.replace(/ …$/, "").trim()),
+            };
+          });
+        };
+        const newTab = async () => {
+          await tab.evaluate(() => {
+            window.__opened = null;
+            window.open = (url) => ((window.__opened = String(url)), null);
+          });
+          await tab.click('[data-testid="context-menu"] [data-menu-item="open-in-a-new-tab"]');
+          await tab.waitForTimeout(200);
+          return tab.evaluate(() => window.__opened);
+        };
+        await go(`${BASE}/places/the-board`);
+        const boardCard = { href: await tab.getAttribute(card("t1"), "href") };
+        boardCard.menu = await menuOf(card("t1"));
+        boardCard.opened = await newTab();
+        await menuOf(card("t1"));
+        await tab.click('[data-testid="context-menu"] [data-menu-item="move-to"]');
+        await tab.click('[data-testid="context-menu"] [data-move-to="done"]', { timeout: 10_000 });
+        await tab.waitForTimeout(600);
+        boardCard.movedTo = await tab.evaluate(() => document.querySelector('[data-graview-listed="t1"]')?.closest("[data-graview-column]")?.getAttribute("data-graview-column") ?? null);
+        one.boardCard = boardCard;
+        await go(`${CARDS_BASE}/places/by-status`);
+        const blocksCard = { href: await tab.getAttribute(card("t2"), "href") };
+        blocksCard.menu = await menuOf(card("t2"));
+        blocksCard.opened = await newTab();
+        one.blocksCard = blocksCard;
+      } catch (error) {
+        one.cardsError = String(error?.message ?? error);
       }
       await context.close();
 
@@ -755,6 +839,35 @@ try {
           quiet.writes.length === 0 &&
           [quiet.onRecord, quiet.after, quiet.reseated].every((seen) => seen.href === quiet.before.href && seen.length === quiet.before.length),
       ),
+  };
+  /* FR-189: a record a lens draws as a link is that record to the menu, under the base, at a desk and on a phone. */
+  const pagesAt = Object.entries(results).filter(([name]) => !name.endsWith("article"));
+  const cardsSeen = (key) => Object.fromEntries(pagesAt.map(([name, one]) => [name, one.cardsError ? { error: one.cardsError } : one[key]]));
+  const cardsHold = (test) => pagesAt.length === engines.length * SIZES.length && pagesAt.every(([, one]) => !one.cardsError && test(one));
+  report.checks.aBoardsCardLinksUnderTheBaseAndItsMenuMovesIt = {
+    seen: cardsSeen("boardCard"),
+    ok: cardsHold(
+      ({ boardCard }) =>
+        boardCard.href === `${BASE}/tasks/t1` &&
+        boardCard.menu.text.includes("Write the brief") &&
+        ["open", "open-in-a-new-tab", "move-to"].every((row) => boardCard.menu.rows.includes(row)) &&
+        boardCard.menu.acts.includes("Assign") &&
+        boardCard.movedTo === "done",
+    ),
+  };
+  report.checks.aBlocksLensCardLinksUnderTheBaseAndItsMenuListsItsActs = {
+    seen: cardsSeen("blocksCard"),
+    ok: cardsHold(
+      ({ blocksCard }) =>
+        blocksCard.href === `${CARDS_BASE}/tasks/t2` &&
+        blocksCard.menu.text.includes("Book the hall") &&
+        ["open", "open-in-a-new-tab"].every((row) => blocksCard.menu.rows.includes(row)) &&
+        ["Set the status", "Assign"].every((name) => blocksCard.menu.acts.includes(name)),
+    ),
+  };
+  report.checks.openInANewTabKeepsTheBase = {
+    seen: Object.fromEntries(pagesAt.map(([name, one]) => [name, one.cardsError ? { error: one.cardsError } : { board: one.boardCard?.opened, blocks: one.blocksCard?.opened }])),
+    ok: cardsHold(({ boardCard, blocksCard }) => boardCard.opened === `${BASE}/tasks/t1` && blocksCard.opened === `${CARDS_BASE}/tasks/t2`),
   };
   report.checks.noPageThrew = { errors, ok: errors.length === 0 };
   report.passed = Object.values(report.checks).every((check) => check.ok);

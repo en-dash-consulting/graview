@@ -15,7 +15,7 @@ import { PagesContextMenu } from "./context-menu.js";
 import { DefaultHomePage, DefaultListPage, DefaultMapPage, DefaultPlacePage, DefaultPlacesPage, DefaultProblemsPage, DefaultRecordPage, DefaultSearchPage, DefaultShell, type PageContext } from "./pages.js";
 import { pathOfPlace, placesOf } from "./page-places.js";
 import { createPageRegistry, kindOfSlug, type PageRegistry } from "./registry.js";
-import { useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
+import { useHref, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { appKeyOf, BarFindContext, FirstLookDoor, HeadingsUnder, PastBar, registerReaderLenses, SpecLinks, type BarFind, type FirstLook } from "@graview/primitives/pages";
 
 /** Who reads the face when the host names nobody. */
@@ -53,13 +53,20 @@ function SeeAll<S extends AnySchema>({ list, store }: { readonly list: { readonl
 function RecordLinks<S extends AnySchema>({ context, children }: { readonly context: PageContext<S>; readonly children: ReactNode }) {
   const navigate = useNavigate();
   const schema = context.store.schema;
+  /*
+   * THE ADDRESS CARRIES THE BASE (FR-189): this is an `<a href>`, not a
+   * `<Link>`, so the router's basename (`/a/<app>`) is joined on here — a
+   * card's link under a base that dropped it went outside the app in a new
+   * tab, and the menu read it as a link somewhere else.
+   */
+  const base = useHref("/").replace(/\/$/, "");
   const value = useMemo(
     () => ({
-      href: (node: { readonly id: string; readonly kind: string }) => recordPath(schema, node.kind, node.id),
+      href: (node: { readonly id: string; readonly kind: string }) => `${base}${recordPath(schema, node.kind, node.id)}`,
       go: (node: { readonly id: string; readonly kind: string }) => navigate(recordPath(schema, node.kind, node.id)),
       more: (list: { readonly members: readonly { readonly id: string; readonly kind: string }[]; readonly total: number }) => <SeeAll list={list} store={context.store} />,
     }),
-    [schema, navigate, context.store],
+    [base, schema, navigate, context.store],
   );
   // A view's own headlines are said under the page's title, which is said under the app's name (FR-131).
   return (

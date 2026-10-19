@@ -62,3 +62,20 @@ export function MoveTo({ choices, close }: { readonly choices: readonly MoveChoi
     </div>
   );
 }
+
+/** "Choose several" on a card's menu on a phone (FR-189): chooses this card, and a tap then chooses the next. */
+export function ChooseSeveral({ choose, close }: { readonly choose: () => void; readonly close: () => void }) {
+  return (
+    <button
+      type="button"
+      data-menu-item="choose-several"
+      onClick={() => {
+        close();
+        choose();
+      }}
+      style={ROW}
+    >
+      Choose several
+    </button>
+  );
+}
