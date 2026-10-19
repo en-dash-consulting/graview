@@ -68,7 +68,7 @@ describe("a declared board's options", () => {
   });
 
   it("says a field the kind lacks, a column the field lacks and a cap that is not a count, and leaves each out", () => {
-    const { app, findings } = compiled(withOptions({ search: ["label", "colour"], collapsed: ["later"], cap: 0, move: "yes" }));
+    const { app, findings } = compiled(withOptions({ search: ["label", "shade"], collapsed: ["later"], cap: 0, move: "yes" }));
     expect(findings.filter((f) => f.code === "lens-option").map((f) => f.path).sort()).toEqual(["lenses.0.options.cap", "lenses.0.options.collapsed", "lenses.0.options.move", "lenses.0.options.search"]);
     const drawn = declaredLenses(app).drawn[0]!.options;
     expect(drawn["search"]).toEqual(["label"]);

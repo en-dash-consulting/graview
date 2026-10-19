@@ -1,0 +1,7 @@
+{
+  "budget": "embed without the studio",
+  "minified": 100,
+  "gzipped": 10,
+  "changeset": "the-0-1-38-batch-merged.md",
+  "note": "Raised when the 0.1.38 batch was merged: the boards, the menu's existing views, the inline AI's last part and the hub's links each measured alone; together embed without the studio measured 716_570 against 716_569 minified."
+}
