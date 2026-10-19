@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 2306,
+  "gzipped": 300,
+  "note": "Raised when the 0.1.39 batch's branches were merged (FR-187 to FR-192): each measured every face alone against the branch they started from, and together the guest host's draft registration, the drawn watcher, the based card links and the shared picture hand come to 2_306 / 266 more (gzip held to 300, as it measures a byte or two either side) than the sum of their own raises. Measured at 2_453_359 / 828_090."
+}

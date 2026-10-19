@@ -6,7 +6,7 @@ import { compileDocument } from "../../src/check.js";
 
 /**
  * ADD-LENS REFUSES AN OPTION THE LENS DOES NOT TAKE (FR-190, Roadmap
- * f-lens-option-refused). 0.1.38 applied `options: { colour: "red" }` on a
+ * f-lens-option-refused). 0.1.38 applied a color option spelled as Cloud sent it on a
  * board, and `move: true` on a calendar, with only a warning, and drew the
  * lens without it: a misspelled key applied and did nothing. Now an
  * `add-lens` — and a lens a JSON patch declares, judged by
@@ -18,20 +18,20 @@ import { compileDocument } from "../../src/check.js";
 const tasks = JSON.parse(readFileSync(new URL("./fixtures/tasks.gdd.json", import.meta.url), "utf8")) as GraviewDocument;
 const { lenses: _none, pages: _first, ...bare } = tasks as GraviewDocument & { lenses?: unknown; pages?: unknown };
 /* The key Graview Cloud sent, in its own spelling: built here so the repository's spelling check reads none. */
-const COLOUR = ["colo", "ur"].join("");
+const FOREIGN_KEY = ["colo", "ur"].join("");
 const BOARD = { op: "add-lens", title: "Work", lens: "columns", bindings: { task: { column: "status" } } };
 
 describe("add-lens", () => {
   it("refuses an option a board does not take, in the finding's own words and fix", () => {
-    const refused = editDocument(bare as GraviewDocument, [{ ...BOARD, options: { [COLOUR]: "red" } }]);
+    const refused = editDocument(bare as GraviewDocument, [{ ...BOARD, options: { [FOREIGN_KEY]: "red" } }]);
     expect(refused.ok).toBe(false);
     if (refused.ok) return;
     expect(refused.findings).toEqual([
       expect.objectContaining({
         severity: "error",
         code: "lens-option-unknown",
-        path: `edits.0.options.${COLOUR}`,
-        message: `The columns lens takes no option "${COLOUR}", so "Work" ignores it.`,
+        path: `edits.0.options.${FOREIGN_KEY}`,
+        message: `The columns lens takes no option "${FOREIGN_KEY}", so "Work" ignores it.`,
         fix: "Use one of: sort, search, filters, move, collapsed, cap, hidden.",
       }),
     ]);
@@ -54,19 +54,19 @@ describe("a lens a JSON patch declares", () => {
   const board = { name: "columns", title: "Work", bindings: { task: { column: "status" } } };
 
   it("is refused where it brings an option its lens does not take", () => {
-    const patched = applyPatch(bare as GraviewDocument, [{ op: "add", path: "/lenses", value: [{ ...board, options: { [COLOUR]: "red", search: ["label"] } }] }]);
+    const patched = applyPatch(bare as GraviewDocument, [{ op: "add", path: "/lenses", value: [{ ...board, options: { [FOREIGN_KEY]: "red", search: ["label"] } }] }]);
     expect(lensOptionsRefused(bare as GraviewDocument, patched)).toEqual([
-      expect.objectContaining({ severity: "error", code: "lens-option-unknown", path: `lenses.0.options.${COLOUR}`, message: `The columns lens takes no option "${COLOUR}", so "Work" ignores it.`, fix: "Use one of: sort, search, filters, move, collapsed, cap, hidden." }),
+      expect.objectContaining({ severity: "error", code: "lens-option-unknown", path: `lenses.0.options.${FOREIGN_KEY}`, message: `The columns lens takes no option "${FOREIGN_KEY}", so "Work" ignores it.`, fix: "Use one of: sort, search, filters, move, collapsed, cap, hidden." }),
     ]);
   });
 
   it("is not refused for a key the lens already carried, and the document still compiles with the warning", () => {
-    const carrying = { ...bare, lenses: [{ ...board, options: { [COLOUR]: "red" } }] } as GraviewDocument;
+    const carrying = { ...bare, lenses: [{ ...board, options: { [FOREIGN_KEY]: "red" } }] } as GraviewDocument;
     const searched = applyPatch(carrying, [{ op: "add", path: "/lenses/0/options/search", value: ["label"] }]);
     expect(lensOptionsRefused(carrying, searched)).toEqual([]);
     const compiled = compileDocument(carrying, { today: () => "2026-10-19" });
     expect(compiled.ok).toBe(true);
     if (!compiled.ok) return;
-    expect(compiled.findings).toContainEqual(expect.objectContaining({ severity: "warning", path: `lenses.0.options.${COLOUR}` }));
+    expect(compiled.findings).toContainEqual(expect.objectContaining({ severity: "warning", path: `lenses.0.options.${FOREIGN_KEY}` }));
   });
 });
