@@ -355,7 +355,8 @@ export interface GraviewContextValue<S extends AnySchema> {
   readonly timeZone?: string | undefined;
 }
 
-const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
+/** The provider's value; exported for `KeptViewsProvider` (./tidied-views.ts), never from a barrel. */
+export const GraviewContext = createContext<GraviewContextValue<AnySchema> | null>(null);
 
 /**
  * Which mode the view being rendered right now is in.

@@ -1,6 +1,6 @@
 {
   "budget": "every face",
-  "minified": 11189,
-  "gzipped": 4848,
-  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): both faces' menus offer Hide and Delete for a place, the bar's places open them, and the foot, the gesture's reading and `tidyViews` are fetched on first use. 11_189 / 4_848 more than before it (2_238_063 / 744_879): measured at 2_249_252 / 749_727."
+  "minified": 11223,
+  "gzipped": 4911,
+  "note": "Raised when a place came to be hidden, deleted and restored from its menu (Roadmap f-place-menu-views): both faces' menus offer Hide and Delete for a place, the bar's places open them, and the foot, the gesture's reading and `tidyViews` are fetched on first use. 11_223 / 4_911 more than before it (2_238_063 / 744_879): measured at 2_249_286 / 749_790."
 }

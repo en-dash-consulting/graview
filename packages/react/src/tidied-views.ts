@@ -1,6 +1,7 @@
 import { retryingImport } from "@graview/core/retry";
 import type { AnySchema, KeptViews } from "@graview/core";
-import { useEffect, useState } from "react";
+import { createElement, useEffect, useMemo, useState, type ReactNode } from "react";
+import { GraviewContext, useGraview } from "./context.js";
 import { lazyModule } from "./lazy-part.js";
 import type { ReactViewRegistry } from "./view-registry.js";
 
@@ -35,4 +36,17 @@ export function useTidiedViews<S extends AnySchema>(views: ReactViewRegistry<S>,
   const [tidied, setTidied] = useState<readonly [ReactViewRegistry<S>, ReactViewRegistry<S>]>();
   useEffect(() => (keeper ? follow(views, keeper, (next) => setTidied([views, next])) : undefined), [views, keeper]);
   return tidied?.[0] === views ? tidied[1] : views;
+}
+
+/**
+ * THE HOST'S VIEWS FOR WHAT IS DRAWN INSIDE, over a provider that was not
+ * handed them: every surface under it reads `keptViews` and the registry
+ * tidied as they say. How the whole-page Shell takes `keptViews` as
+ * `mount` does (Roadmap f-place-menu-views).
+ */
+export function KeptViewsProvider({ keptViews, children }: { readonly keptViews: KeptViews; readonly children?: ReactNode }) {
+  const outer = useGraview();
+  const views = useTidiedViews(outer.views as ReactViewRegistry<AnySchema>, keptViews);
+  const value = useMemo(() => ({ ...outer, keptViews, views }), [outer, keptViews, views]);
+  return createElement(GraviewContext.Provider, { value }, children);
 }
