@@ -27,6 +27,15 @@
  *   `onDrawn` is told each place as `where()` says it; and the scene says
  *   it too, once, as its camera settles.
  *
+ * And a page opened on a view proposed and not kept (FR-187, `draftView`,
+ * `?draft=<name>`): a home that revises the kept one, a board of the
+ * features, a card on a feature's page, each pictured where it attaches
+ * once the page says it has drawn, marked "Draft — <title> · Not kept"
+ * where a person sees it, the kept home drawn nowhere beside its draft, a
+ * draft that is stopped saying why in its place, and nothing of any of
+ * them kept: the store unwritten, the host's keeper asked nothing, and the
+ * same address opened again without it drawing none.
+ *
  *   node scripts/verify-drawn.mjs [--engine=chromium|webkit|firefox] [--quick] [--shots=<dir>] [--probe]
  */
 import { createServer } from "node:http";
@@ -82,6 +91,20 @@ graview.onProps((props) => graview.render(graview.html\`<h2 class="lead">What we
 const BROKEN_MANIFEST = { name: "broken-board", title: "Broken board", attach: "feature", cardinality: "many", reads: { kinds: ["feature"] } };
 const BROKEN_SOURCE = `graview.onProps((props) => graview.render(graview.html\`<ul>\${Array.from({ length: 40 }, (_, at) => graview.html\`<li>\${at}</li>\`)}</ul>\`));`;
 
+/*
+ * VIEWS PROPOSED AND NOT KEPT (FR-187), handed as `mount`'s `draftView` by `?draft=<name>`: the home a
+ * chat proposes in place of the kept one of its name, a board of the features at its place, a card on
+ * a feature's page, and a board that draws past what it may and is stopped.
+ */
+const STAGE_SOURCE = `graview.style(".stages{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} .stage{border:1px solid var(--graview-edge);border-radius:8px;padding:8px} h3{margin:0 0 4px;font-size:.875rem}");
+graview.onProps((props) => graview.render(graview.html\`<div class="stages" id="stages">\${["idea", "planned", "building"].map((stage) => graview.html\`<section class="stage"><h3>\${stage}</h3>\${props.nodes.filter((node) => node.stage === stage).map((node) => graview.html\`<p>\${node.label}</p>\`)}</section>\`)}</div>\`));`;
+const DRAFTS = {
+  home: { manifest: HOME_MANIFEST, source: `graview.onProps((props) => graview.render(graview.html\`<h2 id="proposed">The front, proposed</h2><ul>\${props.nodes.map((node) => graview.html\`<li>\${node.label}</li>\`)}</ul>\`));`, words: "The front, proposed", address: "/" },
+  board: { manifest: { name: "stage-board", title: "Stage board", attach: "feature", cardinality: "many", reads: { kinds: ["feature"] } }, source: STAGE_SOURCE, words: "Printable boards", address: "/places/stage-board" },
+  record: { manifest: { name: "feature-card", title: "Feature card", attach: "feature", cardinality: "one", reads: { kinds: ["feature"] } }, source: `graview.onProps((props) => graview.render(graview.html\`<p id="card">\${props.node.label}: \${props.node.stage}</p>\`));`, words: "Printable boards: building", address: "/features/f1" },
+  stopped: { manifest: { name: "stage-board", title: "Stage board", attach: "feature", cardinality: "many", reads: { kinds: ["feature"] } }, source: STAGE_SOURCE, limits: { maxNodes: 4 }, words: null, address: "/places/stage-board" },
+};
+
 const HOST_PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>The roadmap</title>
 <style>
 @font-face{font-family:"Late Face";src:url(/late-face.woff2) format("woff2");font-display:swap}
@@ -134,6 +157,11 @@ async function buildHost() {
         import roadmap from ${JSON.stringify(ROADMAP)};
         const seed = ${JSON.stringify(SEED)};
         window.__drawn = [];
+        const drafts = ${JSON.stringify(DRAFTS)};
+        const asked = drafts[new URLSearchParams(location.search).get("draft") ?? ""];
+        // The host's keeper, writing down every ask: a draft must ask it nothing.
+        window.__keptAsked = [];
+        const keptViews = { current: () => ({ hidden: [], removed: [], may: { views: true, lenses: true } }), hide: (name) => void window.__keptAsked.push("hide " + name), show: (name) => void window.__keptAsked.push("show " + name), remove: (name) => void window.__keptAsked.push("remove " + name), restore: (name) => void window.__keptAsked.push("restore " + name) };
         const home = { manifest: ${JSON.stringify(HOME_MANIFEST)}, worker: { source: ${JSON.stringify(HOME_SOURCE)} }, asset: (path) => path };
         window.__failures = [];
         const broken = { manifest: ${JSON.stringify(BROKEN_MANIFEST)}, worker: { source: ${JSON.stringify(BROKEN_SOURCE)} }, limits: { maxNodes: 10 }, onFailure: (reason) => window.__failures.push(reason) };
@@ -153,6 +181,8 @@ async function buildHost() {
             studio: false,
             views: (schema, registry) => registerWorkerView(registerWorkerView(registry, home), broken),
             onDrawn: (place) => window.__drawn.push({ ...place, at: performance.now() }),
+            keptViews,
+            ...(asked ? { draftView: { manifest: asked.manifest, source: asked.source, author: "Proposed by Claude", ...(asked.limits ? { limits: asked.limits } : {}) } } : {}),
           });`,
       resolveDir: resolve(repoRoot, "packages/embed"),
       loader: "js",
@@ -261,7 +291,7 @@ const movedBetween = (before, after) => {
 const report = { at: new Date().toISOString(), engines, screens: SCREENS, late: { fontMs: FONT_LATE_MS, imageMs: IMAGE_LATE_MS }, checks: {} };
 const host = await buildHost();
 const errors = [];
-const seen = { home: [], still: [], move: [], failed: [], told: [], scene: [] };
+const seen = { home: [], still: [], move: [], failed: [], told: [], scene: [], drafts: [], gone: [] };
 let browser;
 try {
   for (const engine of engines) {
@@ -325,6 +355,46 @@ try {
         await shot(page, "failed");
         await close();
       }
+      for (const [name, draft] of Object.entries(DRAFTS)) {
+        // A view proposed and not kept, pictured where it attaches once the page says it has drawn (FR-187).
+        const { page, close } = await open(`${draft.address}?draft=${name}`);
+        // The place's path with its search, as `where()` says it.
+        const drawn = await said(page, `${draft.address}?draft=${name}`);
+        const ops = await page.evaluate(() => window.__handle.store.log.all().length);
+        const look = await page.evaluate((viewName) => {
+          const root = document.querySelector("[data-graview-embed]");
+          const mark = root?.querySelector(`[data-graview-draft-view="${viewName}"]`);
+          const line = mark?.querySelector('[data-testid="draft-view-line"]');
+          const box = line?.getBoundingClientRect();
+          const region = mark?.querySelector("[data-worker-view]");
+          return {
+            scheme: root?.getAttribute("data-graview-scheme"),
+            marked: Boolean(mark),
+            label: mark?.getAttribute("aria-label") ?? null,
+            line: line?.textContent ?? null,
+            lineShown: Boolean(box && box.height > 0 && box.top >= 0 && box.bottom <= innerHeight),
+            places: root?.querySelectorAll(`[data-worker-view-place="${viewName}"]`).length ?? 0,
+            words: region?.shadowRoot ? [...region.shadowRoot.querySelectorAll("*")].filter((element) => element.localName !== "style" && element.children.length === 0).map((element) => element.textContent).join(" ").replace(/\s+/g, " ").trim().slice(0, 300) : null,
+            stopped: region?.getAttribute("data-worker-view-failed") ?? null,
+            plainFace: Boolean(region?.shadowRoot?.querySelector("[data-graview-fallback]")),
+            keptWords: (root?.querySelector('[data-worker-view="front"]')?.shadowRoot?.textContent ?? "").includes("What we are making"),
+          };
+        }, draft.manifest.name);
+        const picture = await page.screenshot({ type: "png" });
+        if (SHOTS && engine === engines[0]) {
+          mkdirSync(SHOTS, { recursive: true });
+          writeFileSync(join(SHOTS, `${engine}-${screen.name}-draft-${name}.png`), picture);
+        }
+        const asked = await page.evaluate(() => window.__keptAsked);
+        const after = await page.evaluate(() => window.__handle.store.log.all().length);
+        seen.drafts.push({ engine, screen: screen.name, name, address: draft.address, drawn, ...look, pictureBytes: picture.length, keptAsked: asked, wrote: after - ops });
+        await close();
+        // The same address, handed no draft: nothing of it was kept.
+        const next = await open(draft.address);
+        await said(next.page, draft.address);
+        seen.gone.push({ engine, screen: screen.name, name, ...(await next.page.evaluate(() => ({ drafts: document.querySelectorAll("[data-graview-draft-view]").length, keptHome: (document.querySelector('[data-worker-view="front"]')?.shadowRoot?.textContent ?? "").includes("What we are making") }))) });
+        await next.close();
+      }
       if (PROBE) process.stdout.write(`${label}: ${JSON.stringify(Object.fromEntries(Object.entries(seen).map(([key, list]) => [key, list.at(-1)])))}\n`);
     }
     await browser.close();
@@ -365,6 +435,28 @@ report.checks.onDrawnIsToldEachPlaceAsWhereSaysIt = {
 report.checks.theSceneSaysItOnceItsCameraSettles = {
   seen: seen.scene,
   ok: every(seen.scene, (one) => one.drawn && one.afterMs < 8_000 && one.marks.join() === "/places/overview"),
+};
+const drafted = (name) => seen.drafts.filter((one) => one.name === name);
+const everyDraft = (names, held) => names.every((name) => every(drafted(name), held));
+report.checks.aProposedViewIsPicturedWhereItAttachesBeforeItIsKept = {
+  seen: seen.drafts.filter((one) => one.name !== "stopped").map(({ engine, screen, name, address, drawn, scheme, words, pictureBytes }) => ({ engine, screen, name, address, drawn, scheme, words, pictureBytes })),
+  ok: everyDraft(["home", "board", "record"], (one) => one.drawn && one.places === 1 && one.words?.includes(DRAFTS[one.name].words) && one.pictureBytes > 10_000 && one.scheme === SCREENS.find((screen) => screen.name === one.screen).scheme),
+};
+report.checks.theDraftIsMarkedAsADraftWhereAPersonSeesIt = {
+  seen: seen.drafts.map(({ engine, screen, name, marked, label, line, lineShown }) => ({ engine, screen, name, marked, label, line, lineShown })),
+  ok: everyDraft(Object.keys(DRAFTS), (one) => one.marked && one.label === `Draft: ${DRAFTS[one.name].manifest.title}` && one.line === `Draft — ${DRAFTS[one.name].manifest.title}·Not kept` && one.lineShown),
+};
+report.checks.theDraftStandsInForTheKeptViewOfItsName = {
+  seen: drafted("home").map(({ engine, screen, places, keptWords, words }) => ({ engine, screen, places, keptWords, words })),
+  ok: every(drafted("home"), (one) => one.places === 1 && !one.keptWords && one.words?.includes("The front, proposed")),
+};
+report.checks.aDraftThatIsStoppedSaysWhyInItsPlace = {
+  seen: drafted("stopped").map(({ engine, screen, drawn, stopped, plainFace, words }) => ({ engine, screen, drawn, stopped, plainFace, words })),
+  ok: every(drafted("stopped"), (one) => one.drawn && one.stopped === "nodes" && one.plainFace && /This view was stopped/.test(one.words ?? "")),
+};
+report.checks.nothingOfADraftIsKept = {
+  seen: { drafts: seen.drafts.map(({ engine, screen, name, keptAsked, wrote }) => ({ engine, screen, name, keptAsked, wrote })), after: seen.gone },
+  ok: everyDraft(Object.keys(DRAFTS), (one) => one.keptAsked.length === 0 && one.wrote === 0) && seen.gone.length >= runs * Object.keys(DRAFTS).length && seen.gone.every((one) => one.drafts === 0 && (one.name !== "home" || one.keptHome)),
 };
 report.checks.noPageErrors = { errors, ok: errors.length === 0 };
 

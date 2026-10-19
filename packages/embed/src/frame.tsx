@@ -392,18 +392,51 @@ export function useViews<S extends AnySchema>(
    * (FR-57); the pages alone register them outright.
    */
   framework: (schema: S, specs: GraviewApp<S>["viewSpecs"]) => ReactViewRegistry<S>,
+  /** A view proposed and not kept (FR-187), registered over everything else; see `DraftOver`. */
+  draft?: DraftOver,
 ): ReactViewRegistry<S> {
   const { app } = props;
   const views = useMemo(() => {
     // The lenses the declaration titles are places of their own (FR-79), and its arrangement goes with them (FR-80).
     const base = registerDeclaredLenses(framework(app.schema, app.viewSpecs), app);
-    const views = (props.views ? layerViews(base, props.views(app.schema, base)) : base) as ReactViewRegistry<S>;
+    // The host's views, but for the kept one the draft stands in for.
+    const handed = draft ? standingIn(base, draft) : base;
+    const given = props.views ? props.views(app.schema, handed) : base;
+    const views = (given === handed ? base : layerViews(base, given)) as ReactViewRegistry<S>;
     // The lenses this reader kept from the seat, beside the app's own.
     registerReaderLenses(views, app.schema, appKeyOf(props.brand ?? app.brand, app.schema));
-    return views;
-  }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages, app.home]);
+    return (draft ? draft.register(views as never) : views) as ReactViewRegistry<S>;
+  }, [props.views, app.schema, app.viewSpecs, app.lenses, app.pages, app.home, draft]);
   // What the host lists as hidden or deleted (Roadmap f-place-menu-views), tidied out of every face at once.
   return useTidiedViews(views, props.keptViews);
+}
+
+/**
+ * A VIEW PROPOSED AND NOT KEPT, as the frame registers it (FR-187): the
+ * name it goes by, whether it is the home's, and how it is registered.
+ */
+export interface DraftOver {
+  readonly name: string;
+  readonly home: boolean;
+  readonly register: (views: ReactViewRegistry<AnySchema>) => ReactViewRegistry<AnySchema>;
+}
+
+/**
+ * The registry the host's `views` is handed while a draft is drawn: what it
+ * registers under the draft's name — the kept view the draft revises — and,
+ * for a draft of the home, the home it gives, are left out, so the draft is
+ * the one view of its name and nothing kept is drawn beside it.
+ */
+function standingIn<S extends AnySchema>(views: ReactViewRegistry<S>, draft: DraftOver): ReactViewRegistry<S> {
+  const proxy: ReactViewRegistry<S> = {
+    ...views,
+    register(kind, cell, view, meta) {
+      if (meta?.name !== draft.name) views.register(kind, cell, view, meta);
+      return proxy;
+    },
+    ...(views.home ? { home: (view: never) => (draft.home ? proxy : (views.home!(view), proxy)) } : {}),
+  } as ReactViewRegistry<S>;
+  return proxy;
 }
 
 /** A store from a declaration and a seed: the app's own policy, in memory. */

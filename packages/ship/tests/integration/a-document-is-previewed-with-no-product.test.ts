@@ -40,6 +40,19 @@ describe("a document previewed with no product", () => {
     expect(handed.principal.roles).toEqual(ORG.roles);
   });
 
+  it("hands a view proposed and not kept with the document, and hands none unless asked (FR-187)", async () => {
+    const plain = (await (await fetch(`${preview.url}/graview/document`)).json()) as { draftView?: unknown };
+    expect(plain.draftView).toBeUndefined();
+    const draftView = { manifest: { name: "front", attach: "home", cardinality: "many" }, source: "graview.render('drawn');" };
+    const drafted = await servePreview({ document: ORG, seed: ORG_SEED, page, draftView });
+    try {
+      const handed = (await (await fetch(`${drafted.url}/graview/document`)).json()) as { draftView?: unknown };
+      expect(handed.draftView).toEqual(draftView);
+    } finally {
+      await drafted.close();
+    }
+  });
+
   it("hands the store's state with the document, as this seat would be answered it, and a store opened on it asks for no state of its own", async () => {
     const handed = (await (await fetch(`${preview.url}/graview/document`)).json()) as { state: RemoteState; compiled: unknown };
     const asked = (await (await fetch(`${preview.url}/graview/state`, { headers: seatHeaders(preview.principal) })).json()) as RemoteState;

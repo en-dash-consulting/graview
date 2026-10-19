@@ -64,6 +64,8 @@ try {
     label: app.name,
     heading: 1,
     keptViews,
+    // A view proposed and not kept (`--view` and `--manifest`, FR-187), drawn where it attaches and marked as a draft.
+    ...(handed.draftView ? { draftView: handed.draftView } : {}),
   });
   window.__graview = handle;
   void handle.drawn().then(() => {

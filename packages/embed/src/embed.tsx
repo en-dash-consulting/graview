@@ -3,6 +3,7 @@ import { addressOf, OVERVIEW_PATH, pagesTitle, pathWithin, sceneTitle, type AnyS
 import { EMPTY_VIEW, fromUrl, toUrl, withFocus, withOverview, type ViewState } from "@graview/layout/view";
 import { appKeyOf, BarFindContext, descentTarget, fetchFrameworkViews, fetchNotices, frameworkViewDoors, NoticeBoardContext, useWidth, type BarFind } from "@graview/primitives/frame";
 import type { StudioOffered, StudioOnApply, StudioPlace as StudioPlaceType } from "@graview/studio";
+import type { WorkerViewDefinition } from "@graview/guest/host/views";
 import { createNoticeBoard, quickAskOf, type Notice, type NoticeHandle } from "@graview/primitives/frame";
 import { ErrorReportContext, GraviewProvider, lazyModule, markLanded, openingView, useNavigation, type ErrorReport, type Scheme, type ReactViewRegistry } from "@graview/react/provider";
 import { AddressBar, atTheBareHome, faceAtAddress, holdsNothing, landing, placed, stopAtAddress, whereTheSceneOpens } from "./address.js";
@@ -26,6 +27,7 @@ import {
   titleBelow,
   useSteering,
   useViews,
+  type DraftOver,
   type EmbedFace,
   type EmbedHostContext,
   type EmbedRemote,
@@ -262,7 +264,21 @@ export interface EmbedOptions<S extends AnySchema = AnySchema> extends FrameOpti
    * host that must remount on a new declaration hands the old place back here.
    */
   readonly at?: EmbedWhere;
+  /**
+   * A VIEW PROPOSED AND NOT KEPT (FR-187): a worker view's manifest and its
+   * `source` (or `worker`), drawn for the seat at the keyboard where its
+   * manifest attaches — the home, a kind's list, a record — over the app's
+   * own views, and marked "Draft — <title> · Not kept". A kept view of the
+   * same name is the one it stands in for. Nothing of it is kept: it is in
+   * no store and no `keptViews`, the place menu offers it nothing, and it
+   * is gone when the page closes. The worker's host is fetched before the
+   * embed draws, only when a draft is handed.
+   */
+  readonly draftView?: EmbedDraftView;
 }
+
+/** A view proposed and not kept (FR-187): a worker view's definition, its code as `source` — a plain script against the `graview` global — or `worker`. */
+export type EmbedDraftView = Omit<WorkerViewDefinition, "worker" | "draft"> & ({ readonly source: string; readonly worker?: undefined } | { readonly worker: WorkerViewDefinition["worker"]; readonly source?: undefined });
 
 /** The studio an embed offers, for a host that keeps the declaration itself. */
 export interface EmbedStudio {
@@ -351,13 +367,35 @@ export function Embed<S extends AnySchema>(props: EmbedProps<S>) {
   const [, ready] = useState(false);
   const arrived = useCallback(() => ready(true), []);
   // A place handed back is settled before the embed draws: until the rules for it are here, nothing stands in the element.
-  return props.at && !settling ? <Settling onReady={arrived} /> : <Drawing<S> {...props} />;
+  if (props.at && !settling) return <Settling onReady={arrived} fetch={fetchSettling} />;
+  // A draft is drawn with the app's own views from the first frame (FR-187): until the worker's host is here, nothing stands in the element.
+  if (props.draftView && !draftHost) return <Settling onReady={arrived} fetch={fetchDraftHost} />;
+  return <Drawing<S> {...props} />;
+}
+
+/*
+ * THE WORKER'S HOST FOR A DRAFT, fetched only when one is handed (FR-187):
+ * a page that is handed none never loads it for this.
+ */
+let draftHost: typeof import("@graview/guest/host/views") | undefined;
+const draftChunk = retryingImport(() => import("@graview/guest/host/views"));
+const fetchDraftHost = (): Promise<void> => draftChunk().then((module) => void (draftHost = module), () => new Promise<void>((resolve) => setTimeout(resolve, 2_000)).then(fetchDraftHost));
+
+/** How the frame registers the draft over the app's views, kept while the same draft is handed. */
+function useDraft(draft: EmbedDraftView | undefined): DraftOver | undefined {
+  return useMemo(() => {
+    if (!draft || !draftHost) return undefined;
+    const host = draftHost;
+    const { source, worker, ...rest } = draft;
+    const definition: WorkerViewDefinition = { ...rest, worker: worker ?? { source: source! }, draft: true };
+    return { name: draft.manifest.name, home: draft.manifest.attach === "home", register: (views) => host.registerWorkerView(views, definition) };
+  }, [draft]);
 }
 
 function Drawing<S extends AnySchema>(props: EmbedProps<S>) {
   const { app, stop, bar = true, standing = "Everything is in order", principal, heading = 2 } = props;
   const { rootRef, scope, css, scheme, store, presence, brand, auto, height } = useFrame(props);
-  const views = useViews<S>(props, frameworkViewDoors) as never;
+  const views = useViews<S>(props, frameworkViewDoors, useDraft(props.draftView)) as never;
   /*
    * THE FACE IT OPENS ON (FR-136). When the host names none: the home, when
    * the app has a home view and the declaration names no other first place
@@ -710,9 +748,9 @@ const fetchSettling = (): Promise<void> =>
     }).then(fetchSettling),
   );
 
-/** Stands in for the embed while the rules for a handed-back place arrive, then draws it. */
-function Settling({ onReady }: { readonly onReady: () => void }) {
-  useLayoutEffect(() => void fetchSettling().then(onReady), [onReady]);
+/** Stands in for the embed while what it draws with arrives — the rules for a handed-back place, the worker's host for a draft — then draws it. */
+function Settling({ onReady, fetch }: { readonly onReady: () => void; readonly fetch: () => Promise<void> }) {
+  useLayoutEffect(() => void fetch().then(onReady), [onReady, fetch]);
   return null;
 }
 

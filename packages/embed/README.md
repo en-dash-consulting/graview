@@ -235,6 +235,33 @@ handle.unmount();
 handle = mount(root, { app, store, at });
 ```
 
+## A view proposed and not kept
+
+A chat that proposes a worker view can try it headless and be told what it
+drew in words; to see it at a phone's width in dark it had to keep it
+first. `draftView` draws one for the seat at the keyboard without keeping
+it: its manifest and its `source` (or `worker`, and anything else a
+`WorkerViewDefinition` takes but `draft`):
+
+```ts
+mount(root, { app, remote, routing: "address", draftView: { manifest, source, author: "Proposed by Claude" } });
+```
+
+It is drawn where its manifest attaches — the home, a kind's list at the
+place its title names (`/places/<title>`), each record's page — under one
+line, "Draft — <title> · Not kept", in a group named "Draft: <title>"
+(`[data-graview-draft-view="<name>"]`), as the seat's drawn panel is marked
+on `/~draft`. A kept view of the same name is the one it stands in for: the
+host's `views` may register it as ever, and it is drawn nowhere beside the
+draft. A draft that is stopped says why in its place rather than standing
+the kind's own face there. Nothing of it is kept: it is registered under no
+name, so the place menu offers no Hide or Delete and `keptViews` is asked
+nothing; the store is not written; the next page, handed no draft, has
+none. The worker's host is fetched before the embed draws, and only when a
+draft is handed. With `data-graview-drawn`, a host pictures the proposal
+once it has drawn. `graview preview` and `graview shots` take one as
+`--view <view.js> --manifest <manifest.json>`.
+
 ## What stands over what
 
 Every popover, menu and list of suggestions the embed draws — the profile,
