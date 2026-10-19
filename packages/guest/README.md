@@ -568,6 +568,11 @@ under the app's base or by `origin`'s address for it) and `origin` (the
 page's origin). Nothing is loaded in a run. A view whose manifest asks for
 `pictures` is handed each picture with a stand-in `src`, a blank image, so
 its `<img>` is drawn and judged as it will be once the page has the bytes.
+The page draws a picture it handed at any size, as handed; one it would
+leave out before fetching it — heavier than the host fetches, or past the
+view's budget (`pictureBytes`, `picturesBytes` in `limits`) — comes with
+no `src` and the page's sentence in `left`, said among the problems at
+`pictures` (FR-192).
 
 A view never runs in the host's own context. The host supplies the
 isolate: `run` is handed one script and one JSON string (`HeadlessPayload`),

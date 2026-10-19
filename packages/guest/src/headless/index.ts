@@ -27,7 +27,7 @@
 import type { AnySchema, Principal, Store } from "@graview/core";
 import type { PlaceDescription } from "@graview/core/describe";
 import { checkManifest, manifestActs, workerViewProps, type WorkerViewManifest } from "../host/manifest.js";
-import { guestFileOf, handFiles, isGuestPicture, PICTURE_STAND_IN } from "../host/pictures.js";
+import { PICTURE_STAND_IN, standInPictures } from "../host/pictures.js";
 import { judgeDestination, listsOf } from "../host/links.js";
 import { guestPlacesOf, placeNamed } from "../host/links-words.js";
 import type { GuestViewInput } from "../host/session.js";
@@ -81,7 +81,7 @@ export function headlessScript(source: string): string {
 }
 
 /** The limits a headless run holds a view to: a page's (FR-94), and how long the isolate may take at all. */
-export interface HeadlessLimits extends Pick<WorkerViewLimits, "maxSourceBytes" | "maxNodes" | "messages" | "pushMs"> {
+export interface HeadlessLimits extends Pick<WorkerViewLimits, "maxSourceBytes" | "maxNodes" | "messages" | "pushMs" | "pictureBytes" | "picturesBytes"> {
   /** How long the whole run may take in the isolate, loading included, in milliseconds. 5 000 by default. */
   readonly runMs?: number;
 }
@@ -224,8 +224,15 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
    * host's path. Headless, no bytes are fetched, so a picture comes with a
    * stand-in `src` — a blank image — as it comes once the host has made it
    * on the page: the view's `<img>` is drawn and judged as it will be there.
+   * A picture the page would leave out before fetching it — heavier than
+   * the host fetches, or past the view's budget as the page reckons it —
+   * comes with no `src` and the page's sentence, which the run says among
+   * its problems (FR-192).
    */
-  const props = manifest.pictures ? handFiles(shown, (file) => guestFileOf(file, isGuestPicture(file) ? { src: PICTURE_STAND_IN } : {})) : shown;
+  const handed = manifest.pictures
+    ? standInPictures(shown, { view: `"${manifest.title ?? manifest.name}"`, pictures: manifest.pictures, standIn: PICTURE_STAND_IN, limits: { ...(options.limits?.pictureBytes !== undefined ? { pictureBytes: options.limits.pictureBytes } : {}), ...(options.limits?.picturesBytes !== undefined ? { picturesBytes: options.limits.picturesBytes } : {}) } })
+    : { props: shown, left: [] };
+  const props = handed.props;
   const input: HeadlessInput = {
     props,
     acts: manifestActs(manifest).map((one) => one.as ?? one.act),
@@ -285,7 +292,7 @@ export async function runWorkerViewHeadless<S extends AnySchema>(options: RunWor
     const known = "place" in went ? placeNamed(input.places, went.place) !== undefined || (input.lists ?? []).includes(went.place) : true;
     if (!outcome.ok && known) narrowing.push({ at: "navigate", says: outcome.says });
   }
-  const problems = [...judged.problems, ...narrowing];
+  const problems = [...handed.left.map((says) => ({ at: "pictures", says })), ...judged.problems, ...narrowing];
   const title = manifest.title ?? manifest.name;
   const slug = manifest.title ? slugOf(manifest.title) : manifest.name;
   const kind = manifest.attach === "home" ? null : manifest.attach;
