@@ -33,7 +33,7 @@ import {
   type FieldType,
   type GraviewDocument,
 } from "./schema.js";
-import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES } from "../places.js";
+import { SHIPPED_LENSES, isShippedLens, SHIPPED_LENS_NAMES, unknownLensOption } from "../places.js";
 import { placeSlug, type KindList } from "../views/types.js";
 import { documentListFields, kindListFindings, kindListWords, listGroup, listSort, sortTypeOfDocumentField } from "../kind-list.js";
 import { computedOf, validateComputed } from "./computed.js";
@@ -1008,6 +1008,12 @@ class Editor {
     // A title is an address: one lens a title on a kind.
     const clash = lenses.findIndex((other, index) => index !== at && isObject(other) && typeof other["title"] === "string" && placeSlug(other["title"]) === placeSlug(e.title) && (e.on === undefined || other["on"] === undefined || other["on"] === e.on));
     if (clash >= 0) return this.fail(i, "title", `there is already a lens called "${String(lenses[clash]["title"])}"`, 'give it its own title, or say "replace" with the title of the lens it takes the place of');
+    // An option the lens does not take would apply and do nothing: refused in the checker's own words (FR-190).
+    const stray = isObject(e.options) ? Object.keys(e.options).find((key) => !(SHIPPED_LENSES[name].options as readonly string[]).includes(key)) : undefined;
+    if (stray !== undefined) {
+      const said = unknownLensOption(name, stray, e.title);
+      return this.failAs("lens-option-unknown", i, `options.${stray}`, said.message, said.fix);
+    }
     if (name === "blocks") {
       if (e.on === undefined) return this.fail(i, "on", "a lens drawn from blocks says which kind it is a place of", 'say "on": "<kind>"');
       if (!Array.isArray(e.options?.blocks) || e.options.blocks.length === 0) return this.fail(i, "options.blocks", 'a lens drawn from blocks has blocks: "options": {"blocks": [{"headline": "…"}, {"list": "all(\'<kind>\')", "as": "card"}]}');

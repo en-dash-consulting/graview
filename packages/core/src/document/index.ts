@@ -15,6 +15,7 @@ export * from "./expr/index.js";
 export { diffDocuments } from "./diff.js";
 export type { DocumentDiff } from "./diff.js";
 export { applyPatch, PatchError } from "./patch.js";
+export { lensOptionsRefused } from "./lens-options.js";
 export type { PatchOp } from "./patch.js";
 export { planMigration, coerce, losesData } from "./migrate.js";
 export { editDocument, EDIT_OPS, renameIn } from "./edit.js";

@@ -58,6 +58,17 @@ export const SEARCH_UNASKED = 20;
 /** The shipped lenses' names, in the order the table gives them. */
 export const SHIPPED_LENS_NAMES = Object.keys(SHIPPED_LENSES) as readonly ShippedLensName[];
 
+/**
+ * AN OPTION A SHIPPED LENS DOES NOT TAKE, IN WORDS (`lens-option-unknown`):
+ * what the checker warns of a declaration that carries one, and what
+ * `add-lens` and `lensOptionsRefused` refuse a change that brings one with
+ * (FR-190). One sentence and one fix, wherever it is said.
+ */
+export const unknownLensOption = (name: ShippedLensName, key: string, title: string, takes: readonly string[] = SHIPPED_LENSES[name].options): { readonly message: string; readonly fix: string } => ({
+  message: `The ${name} lens takes no option "${key}", so "${title}" ignores it.`,
+  fix: takes.length ? `Use one of: ${takes.join(", ")}.` : `The ${name} lens takes no options; drop it.`,
+});
+
 export const isShippedLens = (name: string): name is ShippedLensName => Object.hasOwn(SHIPPED_LENSES, name);
 
 /** The roles a lens requires: its own declaration's, or the shipped lens's when it names none. */
@@ -182,7 +193,7 @@ export function declaredLenses<S extends AnySchema>(app: GraviewApp<S>): Declare
     }
     for (const key of Object.keys(given)) {
       if (!(shipped.options as readonly string[]).includes(key)) {
-        findings.push({ severity: "warning", code: "lens-option-unknown", path: `${at}.options.${key}`, message: `The ${lens.name} lens takes no option "${key}", so "${title}" ignores it.`, fix: shipped.options.length === 0 ? `The ${lens.name} lens takes no options; drop it.` : `Use one of: ${shipped.options.join(", ")}.` });
+        findings.push({ severity: "warning", code: "lens-option-unknown", path: `${at}.options.${key}`, ...unknownLensOption(lens.name, key, title, shipped.options) });
       }
     }
     const options: Record<string, unknown> = {};

@@ -68,7 +68,7 @@ Start it with the scaffolder — `graview lens grounds-map --roles regions,marke
 pnpm build && npx graview check ./dist/domain/app.js
 ```
 
-The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`, `lens-binding-missing-field` and `lens-binding-undeclared-kind` — and, for a titled lens that cannot draw, why, at its path (`lens-cannot-draw`, `lens-option-unknown`, `lens-title-taken`); `graview describe` lists the places that draw. Report the output.
+The checker reads `lenses` in `defineApp` and reports `lens-role-unbound`, `lens-binding-missing-field` and `lens-binding-undeclared-kind` — and, for a titled lens that cannot draw, why, at its path (`lens-cannot-draw`, `lens-option-unknown`, which `add-lens` refuses, `lens-title-taken`); `graview describe` lists the places that draw. Report the output.
 
 **And prove the reuse.** This is the claim a lens exists to support, and the one the checker cannot make for you — it NOTES every lens in `lenses` that the framework did not ship (`lens-authored-here`) so the question gets asked out loud, and the answer is yours. Write a test that builds it against a domain it was not designed for, then point at it with `provenBy: "tests/lens-reuse.test.ts"` and the note stands down:
 
