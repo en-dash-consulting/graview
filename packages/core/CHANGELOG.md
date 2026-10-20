@@ -1,5 +1,7 @@
 # @graview/core
 
+## 0.1.41
+
 ## 0.1.40
 
 ### Patch Changes

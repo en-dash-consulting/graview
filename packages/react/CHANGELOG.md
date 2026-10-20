@@ -1,5 +1,14 @@
 # @graview/react
 
+## 0.1.41
+
+### Patch Changes
+
+- @graview/core@0.1.41
+  - @graview/layout@0.1.41
+  - @graview/render@0.1.41
+  - @graview/tools@0.1.41
+
 ## 0.1.40
 
 ### Patch Changes

@@ -4,6 +4,7 @@ This is what came in each Graview version, newest first, in a few plain lines fo
 
 Each version links its release and its full changelog. **Before you upgrade** says what breaks or moves for a host; [Stability](https://graview.dev/docs/stability.html) says what a version may change at all.
 
+- [`0.1.41`](https://graview.dev/docs/releases.html#v0-1-41)
 - [`0.1.40`](https://graview.dev/docs/releases.html#v0-1-40)
 - [`0.1.39`](https://graview.dev/docs/releases.html#v0-1-39)
 - [`0.1.38`](https://graview.dev/docs/releases.html#v0-1-38)
@@ -42,9 +43,21 @@ Each version links its release and its full changelog. **Before you upgrade** sa
 - [`0.1.2`](https://graview.dev/docs/releases.html#v0-1-2)
 - [`0.1.0`](https://graview.dev/docs/releases.html#v0-1-0)
 
+## 0.1.41
+
+Published October 21, 2026 · the current version
+
+The app bar holds still at every width.
+
+- **The app bar no longer flickers.** At some widths the places in the bar stood, squeezed the app's name onto two lines, folded, and stood again, over and over. Whether they stand, and whether the Scene and Pages switch shows its words, is now weighed with the name as it stands on one line, and the room before Find is measured as it is drawn.
+
+**Before you upgrade:** A place near the bar's edge may now fold where it stood, because the row is no longer weighed 8 px roomier than it is. About 0.5 KB more up front.
+
+[The release on GitHub](https://github.com/en-dash-consulting/graview/releases/tag/graview%400.1.41) · [The full changelog for 0.1.41](https://github.com/en-dash-consulting/graview/blob/main/packages/core/CHANGELOG.md#0141)
+
 ## 0.1.40
 
-Published October 20, 2026 · the current version
+Published October 20, 2026
 
 Edits kept the moment they are made, labels that keep their space in a focused scene, a keyboard that reaches what it means, and a first draw with no extra round trips.
 
