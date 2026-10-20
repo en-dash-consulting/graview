@@ -320,7 +320,7 @@ export { hidesFrom, logSeenBy, seatLens, seenBy, seesId } from "./seen.js";
 export { keptSubscription, memorySubscriptions, subscriberOf, subscriptionId } from "./subscription-shape.js";
 export type { MatchedRecord, OnSubscriptionMatch, Subscription, SubscriptionDraft, SubscriptionMatch, SubscriptionStore, SubscriptionWhen } from "./subscription-shape.js";
 export { walkKinds } from "./schema/path.js";
-export { tellTheWatchWhatIsUnseen } from "./watched.js";
+export { tellTheWatchOfAPressRefusedByItsInput, tellTheWatchWhatIsUnseen } from "./watched.js";
 
 // Integrity — a fold has a fingerprint, and a store can prove its own (FR-20).
 export { sha256Hex, snapshotHash } from "./integrity.js";

@@ -123,7 +123,7 @@ export function QuickAskCard({ face, opening, close }: QuickAskCardProps) {
         return;
       }
       try {
-        previewAffordance(env.store, affordance, {});
+        previewAffordance(env.store, affordance, {}, { pressed: env.principal ? { author: env.principal } : {} });
         applyAffordance(env.store, affordance, {}, { author: env.principal });
         putAway();
       } catch (error) {

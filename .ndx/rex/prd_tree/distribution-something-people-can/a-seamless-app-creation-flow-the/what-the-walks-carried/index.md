@@ -19,7 +19,7 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 
 | Title | Status |
 |-------|--------|
-| [The scene's strip tells the watch when an act's own input refuses there](./the-scene-strip-tells-the-watch.md) | pending |
+| [The scene's strip tells the watch when an act's own input refuses there](./the-scene-strip-tells-the-watch.md) | completed |
 | [The keyboard reaches a long list's records and a scene's relate and repair in few presses](./the-keyboard-reaches-a-long-list.md) | pending |
 | [graview check warns when a code describe returns a template string](./check-warns-a-template-in-a-code-describe.md) | completed |
 | [The gauntlet has two kinds sharing a field name, and a rule that names both](./the-gauntlet-has-kinds-sharing-a-field.md) | pending |
@@ -31,4 +31,5 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The surfaces Walkthrough XIII had no time for are walked](./the-surfaces-walk-xiii-did-not-reach.md) | pending |
 | [A store too large for Safari's localStorage persists, in IndexedDB](./a-large-store-persists-in-safari.md) | pending |
 | [The watch hears a page whose module rejected before it drew](./the-watch-hears-a-rejected-top-level-await.md) | pending |
+
 
