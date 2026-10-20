@@ -1,0 +1,6 @@
+{
+  "budget": "every face",
+  "minified": 1457,
+  "gzipped": 527,
+  "note": "Raised when the thirteenth walk fixed what a drop and a status board left undone (W-239, W-241): a drop fills a required time from when each file was taken and makes no drop target for an act it would leave asking (`host/drop-plan.ts`, fetched with the first `data-drop`), and the checker every face carries with the studio warns of acts that write a board's column without saying to what (`lens-column-written-unsaid`). Measured at 2_471_597 / 835_633 against 2_470_140 / 835_106: 1_457 / 527 more."
+}

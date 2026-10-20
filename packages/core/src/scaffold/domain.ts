@@ -118,8 +118,11 @@ export const close${ids.KindPascal} = defineMutation("close-${ids.kind}", {
   title: "Close it",
   description: "Mark ${ids.aSpoken} closed. It leaves the picture, never the record.",
   subject: { kinds: ["${ids.kind}"], arg: "id" },
-  // Writes the status without asking for it, and says so.
+  // Writes the status without asking for it, and says to what: a status
+  // board offers it as the move to that column (graview check:
+  // \`lens-column-written-unsaid\` where an act says only \`writes\`).
   writes: ["status"],
+  sets: { status: "closed" },
   input: z.object({ id: nodeRef(["${ids.kind}"]) }),
   describe: (args, graph) => \`Close \${nameOf(graph as Reader, args.id)}\`,
   apply(ctx, args) {

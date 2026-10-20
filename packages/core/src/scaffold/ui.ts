@@ -129,7 +129,8 @@ export function views() {
 }
 
 export function uiAppTsx(ids: Ids): string {
-  return `import { EMPTY_VIEW, type ViewState } from "@graview/layout";
+  return `import type { HostFiles } from "@graview/core";
+import { EMPTY_VIEW, type ViewState } from "@graview/layout";
 import { GraviewProvider, useGraph, useGraview, type Scheme } from "@graview/react";
 import { AgentSeat, Shell } from "@graview/primitives";
 import { StudioPlace } from "@graview/studio";
@@ -156,6 +157,8 @@ export interface ${ids.AppComponent}Props {
   readonly onSchemeChange?: (scheme: Scheme) => void;
   /** Whether the store behind this app is remembered in the browser (see main.tsx). */
   readonly remembers?: boolean;
+  /** Where a picture or a file put on a record goes (see main.tsx). */
+  readonly files?: HostFiles;
 }
 
 /**
@@ -171,6 +174,7 @@ export function ${ids.AppComponent}({
   initialScheme = "light",
   onSchemeChange,
   remembers = false,
+  files,
 }: ${ids.AppComponent}Props) {
   const created = useMemo(() => store ?? createStore(), [store]);
   const registry = useMemo(() => views(), []);
@@ -199,6 +203,7 @@ export function ${ids.AppComponent}({
         studio={<StudioPlace app={${ids.appVar}} />}
         seat={(onCall) => <Starter onCall={onCall} />}
         remembers={remembers}
+        files={files}
         syncUrl={syncUrl}
         scheme={scheme}
         onScheme={(next) => {
@@ -482,7 +487,7 @@ export function pages() {
 export function mainTsx(ids: Ids): string {
   return `import { PagesApp } from "@graview/pages";
 import { themeCss, type Scheme } from "@graview/primitives";
-import { browserStartsFresh, createBrowserAdapter, forgetFreshParam, openStore } from "@graview/ship/browser";
+import { browserStartsFresh, createBrowserAdapter, filesAt, forgetFreshParam, openStore } from "@graview/ship/browser";
 import { createRoot } from "react-dom/client";
 import { ${ids.appVar} } from "./domain/app.js";
 import { ${ids.brandVar} } from "./domain/brand.js";
@@ -537,6 +542,15 @@ const opened = await openStore({
 });
 forgetFreshParam();
 
+/*
+ * WHERE A PICTURE OR A FILE PUT ON A RECORD GOES (an \`imageField()\`, a
+ * \`videoField()\`, a \`fileField()\`). In development, the dev server's door
+ * (\`devFiles\` in vite.config.ts), which keeps them in memory while it runs;
+ * a built page has no door, hands no \`files\`, and the editor says this host
+ * takes none. Deployed, hand your host's own (\`graview-ship\`).
+ */
+const devHostFiles = (import.meta as { env?: { DEV?: boolean } }).env?.DEV ? filesAt("/__graview/files", { maxBytes: 10_000_000, kinds: ["image/*", "video/*", "application/pdf", "text/plain"] }) : undefined;
+
 if (window.location.pathname.startsWith("/pages")) {
   // The routed, responsive face: same store, same ids, one app.
   createRoot(root).render(
@@ -556,6 +570,7 @@ if (window.location.pathname.startsWith("/pages")) {
         views: views(),
         settings: ${ids.appVar}.settings ?? [],
         app: ${ids.appVar},
+        files: devHostFiles,
       }}
       // Your own pages over the derived ones: see ui/pages.tsx.
       registry={pages()}
@@ -563,7 +578,7 @@ if (window.location.pathname.startsWith("/pages")) {
   );
 } else {
   createRoot(root).render(
-    <${ids.AppComponent} store={opened.store} remembers syncUrl initialScheme={scheme} onSchemeChange={applyScheme} />,
+    <${ids.AppComponent} store={opened.store} remembers files={devHostFiles} syncUrl initialScheme={scheme} onSchemeChange={applyScheme} />,
   );
 }
 

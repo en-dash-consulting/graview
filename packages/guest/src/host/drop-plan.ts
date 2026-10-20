@@ -52,7 +52,7 @@ export type DropPlan =
       /** The record they are linked to, and by what. */
       readonly connect?: { readonly relation: string; readonly record: string };
       /** The calls one file's record is made with; the change for several files is these, file after file. */
-      readonly calls: (file: { readonly field: string; readonly value: FileValue }, at: number) => MutationCall[];
+      readonly calls: (file: { readonly field: string; readonly value: FileValue; readonly at?: string }, at: number) => MutationCall[];
       /** What the change is, said: "Add 4 moments to Saturday". */
       readonly intent: (count: number) => string;
       /** What the host says while files are dragged over it: "Drop to add moments to Saturday." */
@@ -105,6 +105,25 @@ function namingArgs(mutation: AnyMutationDefinition<AnySchema>, taken: ReadonlyS
 
 const baseName = (name: string) => name.replace(/\.[a-z0-9]{1,5}$/i, "") || name;
 
+/*
+ * WHEN THE FILE WAS TAKEN (the thirteenth walk): a required time the act
+ * cannot go without — a detection's `takenAt`, a moment's day — is the
+ * instant the file says it was made (its `at`), else the drop's own, as an
+ * instant or as its day, whichever the argument takes.
+ */
+const timeOf = (schema: { safeParse(value: unknown): { success: boolean } }, at: string): string | undefined =>
+  [at, at.replace(/\.\d{3}Z$/, "Z"), at.slice(0, 10)].find((one) => schema.safeParse(one).success);
+const PROBE = "2026-01-01T00:00:00.000Z";
+
+/** The arguments a file fills by its time, and those no file can fill: what a drop would leave the act asking for. */
+function unfilled(mutation: AnyMutationDefinition<AnySchema>, given: ReadonlySet<string>): { readonly timed: readonly string[]; readonly left: readonly string[] } {
+  const shape = shapeOf(mutation);
+  const naming = new Set(namingArgs(mutation, given));
+  const open = Object.keys(shape).filter((arg) => !given.has(arg) && !naming.has(arg) && required(mutation, arg));
+  const timed = open.filter((arg) => timeOf(shape[arg]!, PROBE) !== undefined);
+  return { timed, left: open.filter((arg) => !timed.includes(arg)) };
+}
+
 /** WHAT A DROP ON THIS ELEMENT MAKES, or why it is no drop target. */
 export function planDrop<S extends AnySchema>(store: Store<S>, principal: Principal, manifest: WorkerViewManifest, asked: DropAsked, given: { readonly shown: ReadonlySet<string>; readonly files: HostFiles | undefined }): DropPlan {
   const no = (says: string): DropPlan => ({ ok: false, says });
@@ -142,28 +161,37 @@ export function planDrop<S extends AnySchema>(store: Store<S>, principal: Princi
   const intent = (count: number) => `Add ${counted(count)}`;
   const added = (count: number) => `Added ${counted(count)}.`;
   const invite = `Drop to add ${plural}${label ? ` to ${label}` : ""}.`;
-  const fill = (mutation: AnyMutationDefinition<AnySchema>, args: Record<string, unknown>, file: FileValue) => {
-    for (const arg of namingArgs(mutation, new Set(Object.keys(args)))) args[arg] = baseName(file.name);
+  const fill = (mutation: AnyMutationDefinition<AnySchema>, args: Record<string, unknown>, file: FileValue, at?: string) => {
+    const given = new Set(Object.keys(args));
+    for (const arg of unfilled(mutation, given).timed) args[arg] = timeOf(shapeOf(mutation)[arg]!, at ?? new Date().toISOString());
+    for (const arg of namingArgs(mutation, given)) args[arg] = baseName(file.name);
     return args;
   };
+  /* An act a drop would leave asking for something no file says is no act for a drop: nothing is offered and then refused. */
+  const fileArgs = (mutation: AnyMutationDefinition<AnySchema>, ...more: string[]) => new Set([...taken.map((one) => one.field), ...more, ...refArgsOf(mutation.input).map((ref) => ref.name)]);
+  const asksMore = (mutation: AnyMutationDefinition<AnySchema>, ...more: string[]) => unfilled(mutation, fileArgs(mutation, ...more)).left;
+  const asking = (mutation: AnyMutationDefinition<AnySchema>, left: readonly string[]) => no(`"${mutation.title ?? mutation.name}" asks for ${left.map((arg) => `"${arg}"`).join(" and ")}, which no dropped file says, so nothing dropped here can become a ${noun}.`);
   const value = (one: DropField, file: FileValue) => (one.list ? [file] : file);
   const plan = { ok: true as const, kind, fields: taken, accept: acceptOf(taken, files), ...(connect ? { connect } : {}), intent, invite, added };
 
   if (!connect) {
     const maker = makers.find((mutation) => !mutation.subject && may({ name: mutation.name, args: {} }));
     if (!maker) return no(`This seat may not make a "${kind}" here.`);
-    return { ...plan, calls: (file) => [{ name: maker.name, args: fill(maker, { [file.field]: value(taken.find((one) => one.field === file.field)!, file.value) }, file.value) }] };
+    if (asksMore(maker).length > 0) return asking(maker, asksMore(maker));
+    return { ...plan, calls: (file) => [{ name: maker.name, args: fill(maker, { [file.field]: value(taken.find((one) => one.field === file.field)!, file.value) }, file.value, file.at) }] };
   }
 
   /* One act done to the record dropped on, that makes the kind and links it. */
   const onIt = makers.find((mutation) => mutation.subject && (mutation.subject.kinds === "*" || (mutation.subject.kinds as readonly string[]).includes(target!.kind)) && (mutation.connects ?? []).includes(connect.relation) && may({ name: mutation.name, args: { [mutation.subject.arg]: connect.record } }));
   if (onIt) {
     const arg = onIt.subject!.arg;
-    return { ...plan, calls: (file) => [{ name: onIt.name, args: fill(onIt, { [arg]: connect.record, [file.field]: value(taken.find((one) => one.field === file.field)!, file.value) }, file.value) }] };
+    if (asksMore(onIt, arg).length > 0) return asking(onIt, asksMore(onIt, arg));
+    return { ...plan, calls: (file) => [{ name: onIt.name, args: fill(onIt, { [arg]: connect.record, [file.field]: value(taken.find((one) => one.field === file.field)!, file.value) }, file.value, file.at) }] };
   }
   /* Else one that makes it, and one that links it, naming the record just made. */
   const maker = makers.find((mutation) => !mutation.subject && may({ name: mutation.name, args: {} }));
   if (!maker) return no(`This seat may not make a "${kind}" here.`);
+  if (asksMore(maker).length > 0) return asking(maker, asksMore(maker));
   const linkerKind = fromNew ? kind : target!.kind;
   const farKind = fromNew ? target!.kind : kind;
   const linker = all.find((mutation) => {
@@ -181,7 +209,7 @@ export function planDrop<S extends AnySchema>(store: Store<S>, principal: Princi
   return {
     ...plan,
     calls: (file, at) => [
-      { name: maker.name, args: fill(maker, { [file.field]: value(taken.find((one) => one.field === file.field)!, file.value) }, file.value) },
+      { name: maker.name, args: fill(maker, { [file.field]: value(taken.find((one) => one.field === file.field)!, file.value) }, file.value, file.at) },
       /* The record the call before it makes: two calls a file, so the maker of file `at` is call `2 × at`. */
       { name: linker.name, args: fromNew ? { [subject]: made(at * 2), [to]: connect.record } : { [subject]: connect.record, [to]: made(at * 2) } },
     ],

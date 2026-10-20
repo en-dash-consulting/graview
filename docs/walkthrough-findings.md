@@ -5348,3 +5348,133 @@ Open, carried to the thirteenth walk:
 - the video field, pictures views, `filesAt`, the app's own assets,
   cross-app `add-relation`, `HostFiles.kept`, lazy past declarations and the
   0.1.34 menu, unwalked here.
+
+## The thirteenth walk — a camera-trap survey (2026-10-19)
+
+The thirteenth walk took a wildlife camera-trap survey on a ridge: the
+stations (a camera strapped to a tree, with a site photo, notes for the next
+walker, and the land trust's parcel it stands on as a record of another app,
+`linkedRecordField("@ridgeline/land-trust/parcel")`), the species it counts,
+the detections each trigger makes (an instant, a photograph in an
+`imageField()`, a clip in a `videoField()`), and the volunteers who walk to
+the cameras — under a policy whose visitor never sees a station, two rules
+(a camera nobody visited in five weeks, which reads the clock; a confirmed
+detection that says nothing of what it shows) and two titled lenses, a week
+of "Captures" and a status board, "Review queue", with `move: true`.
+Scaffolded with `graview create <beside the checkout>/walk13 --link .
+--name "Ridgeline Camera-Trap Survey" --kind detection --plural detections
+--port 5770` from `walk/xiii` (on `feat/0-1-39-additions` at 6f6b3b80),
+outside the repository; run by node, it chose npm and wrote `file:`
+dependencies npm linked (W-237's fix held). Seeded through its own acts at
+real size: 64 stations (8 retired), 20 species, 6,648 detections over 600
+days, 140 volunteers and 10,858 links, with real files kept where a host
+keeps them (`/graview/files/<sha256>.<ext>`: six 2400 × 1600 JPEGs, a
+4000 × 3000 one of 700 KB and a 6-second H.264 MP4, on 199 records), 2
+problems on the day.
+
+The walk was time-boxed, and from its first half on it walked only the
+surfaces 0.1.37 to 0.1.39 added, plus `create` to the first page, and
+passes on severity: a **blocker** (a stranger cannot finish the step, or
+gets a wrong result, loses data, or is refused with no way forward) is
+fixed here with a criterion verified failing without the fix; a **minor**
+is logged and not fixed. The app was hosted the way Graview Cloud hosts
+one, by `mount` under a base (`/a/ridgeline`, `routing: "address"`), with
+`filesAt("/a/ridgeline/graview/files")`, an async `HostFiles.kept`,
+`linkedRecordsOver` holding the land trust's parcels, `onDrawn`, and a
+worker view, "Contact sheet" (`pictures: true`, `accepts` the photo and the
+clip, `data-lightbox`, `<graview-video>`, `data-drop`, and the notes as
+`data-save="input"` with `acted`).
+
+As walked, and holding: a station's site photo and the contact sheet's
+pictures drawn under the base (the sheet's at 1,200 wide by the host's
+`blob:` address, the record's at `/a/ridgeline/graview/files/…`), `kept`
+asked once per href; the full-size viewer from `data-lightbox` drawing the
+2,400-wide original, Escape giving the keyboard back to the button; three
+`<graview-video>` placed with `preload="metadata"` at the base's address;
+the notes saved as typed ("Saved" on `acted`, the store holding them); the
+embed's root wearing `data-graview-drawn` with the place's path and
+`onDrawn` told `{ face: "pages", path, stop }`; a board card's link under
+the base, its right-click menu with Move to › at a desk and a resting
+finger's menu with Move to › and "Choose several" at 390 (FR-189); `graview
+shots --view --manifest` drawing "Draft — Station sheet · Not kept" at 390
+in dark (FR-187).
+
+### W-239 · Photographs dropped on a station's contact sheet are offered a drop target and every one is refused: the act cannot go without the time it was taken
+- stage: FR-193 (a view takes files dropped on it) · face: pages, under a base · width: 1280 · scheme: light
+- severity: **blocker** — a card's photographs dropped on a station make no detection, and nothing says how they could: the target was drawn and announced ("Drop to add detections to Bear Wallow."), and the change was refused by `log-detection`'s input, whose `takenAt` is required
+- class: offered-then-refused (also: data-shape-not-in-fixtures)
+- expected: a time the act requires is the file's own (when it was made), or the element is no drop target
+- actual: `planDrop` filled the file and the record's name and nothing else, though every file the host stores for a drop carries its `at`; the family weekend's moment, the only fixture, required no time
+- where it belongs: `packages/guest/src/host/drop-plan.ts`
+- harness that should have caught it: the guest drop tests, whose one kind asked for nothing but a file
+- status: fixed in "walkthrough: FR-193 · a drop fills the time each file was taken, and an act a drop would leave asking is no drop target" · a required instant or day is the file's `at`, else the drop's own moment; an act still asking for something no file says makes no drop target, and the sentence names it. Criterion: `packages/guest/tests/unit/a-drop-says-when-each-file-was-taken.test.ts` (both verified failing without the fix); on walk13 the drop made RCNX09001 on Bear Wallow, "Added a detection to Bear Wallow."
+
+### W-240 · A project `graview create` writes cannot take a picture: "This host doesn't take files, so none can be added here."
+- stage: A (create to the first page) · face: both · width: 1280 · scheme: light
+- severity: **blocker** — following graview-node-kind's first example (`imageField()`) in a new project, a picture cannot be put on a record in development at all; the way forward was in another skill (graview-ship's `devFiles()`)
+- class: what-a-project-copies-is-wrong
+- expected: the dev server the scaffold writes keeps files and both faces are handed them, as `apps/todo` does
+- actual: the scaffold's `vite.config.ts` had `studioDoor()` alone, and `main.tsx` handed neither the scene nor the pages any `files`
+- where it belongs: `packages/core/src/scaffold/project.ts`, `packages/core/src/scaffold/ui.ts`
+- harness that should have caught it: `scaffold.test.ts`, which held the studio door and no files
+- status: fixed in "walkthrough: A · a project graview create writes takes a picture on a record in development: devFiles in its dev server and files handed to both faces" · `devFiles()` beside `studioDoor()`, `filesAt("/__graview/files", …)` handed to both faces while the dev server runs, none in a build. Criterion: "can be put on one in development: the dev server keeps files, and both faces are handed them" in `scaffold.test.ts` (verified failing without the fix); a project scaffolded from the fix typechecks clean
+
+### W-241 · A status board's every "Move to ›" is withheld with "Nothing in this app moves a detection to Confirmed." while three acts set the status
+- stage: FR-189 (a board card's Move to › on a phone) · face: pages, under a base · width: 390 and 1280 · scheme: light
+- severity: **blocker** — a reviewer cannot move a card on the review queue at all, and on a phone Move to › is the only way; the sentence it gives is untrue, and `graview check` was silent
+- class: says-something-untrue (also: what-a-project-copies-is-wrong)
+- expected: an act that sets the status is the move to that column, or the checker says why it is not
+- actual: the acts were written in code as the scaffold wrote its own close act, `writes: ["status"]`, which says the field and not the value, so `columnReach` reached nothing; the checker's `lens-column-unreached` passes over a board nothing moves on at all, taking it for a picture
+- where it belongs: `packages/core/src/cli/check/lenses.ts`, `packages/core/src/scaffold/domain.ts`
+- harness that should have caught it: `graview check`; `a-named-step-is-a-move.test.ts` held documents only, whose steps say their value
+- status: fixed in "walkthrough: FR-189 · graview check says which acts write a status board's column without saying to what, so a board whose Move to is withheld everywhere is told how to move" · a warning, `lens-column-written-unsaid`, names each act and the fix `sets: { status: "<the value it writes>" }`; the scaffold's close act says `sets: { status: "closed" }`. Criterion: `packages/core/tests/unit/a-board-says-which-act-writes-its-column-and-not-to-what.test.ts` (the warning verified failing without the fix); on walk13, with `sets` on its acts, a resting finger's Move to › moved RCNX06558 to Confirmed at 390
+
+### W-242 · `graview view check` runs a view of one record with no record: "No station."
+- stage: FR-192 (a pictures view, headless) · face: — · width: — · scheme: —
+- severity: minor — the headless run cannot judge a view of one; it says what it drew for no record, and the picture budget it reports is spent on every detection of the app, not the station's (166 pictures past 12,000,000 bytes)
+- class: harness-or-setup-itself
+- expected: `--record <id>` (or the first record of the attached kind) for a view whose cardinality is one
+- actual: `graview view check` takes no record, and `workerViewProps` reads across every record of `reads.kinds` when there is no node
+- where it belongs: `packages/guest/src/cli.ts`, `packages/guest/src/host/manifest.ts`
+- status: open (minor, logged for a task)
+
+### W-243 · `graview shots --places "Station sheet"` refuses a draft view's title and does not list it, though the page links "Also as: Station sheet"
+- stage: FR-187 (a page opened on a draft view) · face: — · width: 390 · scheme: dark
+- severity: minor — `--places /places/station-sheet` pictures it; the refusal lists "home, overview, stations" and not the draft's place
+- class: faces-disagree
+- expected: the draft's place among the places `shots` takes by title and lists
+- actual: `shots` reads the places from the document alone
+- where it belongs: `packages/ship/src/shots.ts`
+- status: open (minor, logged for a task)
+
+### W-244 · A status board says "Nothing here." over columns that hold thousands of records behind the horizon
+- stage: FR-189 (the review queue) · face: pages · width: 1280 · scheme: light
+- severity: minor — "False trigger 0 · Nothing here." and "Duplicate 0" while the survey holds about 2,500 such detections, retired by the kind's lifecycle; a card moved there leaves the board with nothing saying where it went
+- class: says-something-untrue
+- expected: a retired column says "+N past", as a district and a list do
+- actual: the board counts current records only, and says so nowhere
+- where it belongs: `packages/primitives` (the columns lens)
+- status: open (minor, logged for a task)
+
+### W-245 · `graview shots` and `graview preview` take a document only, so an app declared in code cannot picture a draft view
+- stage: FR-187 · face: — · width: — · scheme: —
+- severity: minor — "graview shots: a declaration document (a .json file) is required"; walk13's contact sheet, a view of a code app, could be pictured only over a document written for the purpose
+- class: no-way-to-do-a-job
+- where it belongs: `packages/ship/src/shots.ts`, `packages/ship/src/serve-preview.ts`
+- status: open (minor, logged for a task)
+
+### W-246 · A unit test of the pages' resting-pointer chips fails under the full suite's load and passes alone
+- stage: setup (`pnpm test` on a fresh checkout) · face: — · width: — · scheme: —
+- severity: minor — "shows the Fast slot's sure suggestion after the dwell" in `several-chosen-and-a-resting-pointer-ask-only-the-fast-slot.test.tsx` failed once in 6,836 tests and passed three times alone; a timing test under load
+- class: harness-or-setup-itself
+- where it belongs: `packages/pages/tests/unit/several-chosen-and-a-resting-pointer-ask-only-the-fast-slot.test.tsx`
+- status: open (minor, logged for a task)
+
+Three blockers, W-239 to W-241, each fixed with a criterion verified
+failing without its fix, and five minors, W-242 to W-246, logged for tasks.
+No new class. Unwalked in the time box: `add-lens`'s option refusal
+(FR-190), a cross-app link chosen in the record's own edit and opened as a
+viewer the host refuses, `/graview/assets/` images in a view, lazy past
+declarations in playback, the scene strip's preview-first refusals told to
+the watch, the keyboard's costs into long lists, and a code describe
+returning a template.
