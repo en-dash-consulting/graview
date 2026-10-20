@@ -23,6 +23,13 @@
  * than the cheapest way anybody found — is the backlog. Friction does not
  * fail the run. A REGRESSION does: a job that was done in the committed
  * verdict and now is not, or that now costs more than 30% more presses.
+ * And so does a claim of the keyboard's (lib/journeys.mjs: keyboardChecks):
+ * `theKeyboardCostsAtMostTwiceThePointer` — every job done both ways costs
+ * the keyboard at most twice the pointer's presses, or `KEYBOARD_WHY` says
+ * why not and the verdict repeats it — and `theKeyboardSkipsIntoALongList`,
+ * a list's first box reached by its own skip. The keyboard walks as a person
+ * who knows the page: Tab, the arrows in a group that is one stop, a skip,
+ * and the keys a control says it answers.
  *
  *   node scripts/verify-journeys.mjs                 every app
  *   node scripts/verify-journeys.mjs todo rota       only these
@@ -43,7 +50,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { engineName, launchEngine } from "./lib/engine.mjs";
-import { appsNamed, DeadEnd, frictionOf, inStore, JOBS, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey } from "./lib/journeys.mjs";
+import { appsNamed, DeadEnd, frictionOf, inStore, JOBS, keyboardChecks, Person, planJobs, readDeclaration, regressionsOf, storeHookInPage, VARIANTS, variantKey } from "./lib/journeys.mjs";
 import { portFor } from "./lib/ports.mjs";
 import { serving } from "./lib/serve.mjs";
 import { takeViolations } from "./lib/watch.mjs";
@@ -386,6 +393,9 @@ async function main() {
     previous = null;
   }
   report.regressions = regressionsOf(previous, counted);
+  // The keyboard's claims: at most twice the pointer, or named why not; and a long list skipped into.
+  report.checks = keyboardChecks(counted);
+  const missed = Object.entries(report.checks).filter(([, check]) => !check.ok);
   report.took = Math.round((Date.now() - began) / 1000);
   mkdirSync(dirname(OUT), { recursive: true });
   writeFileSync(OUT, `${JSON.stringify(report, null, 2)}\n`);
@@ -421,8 +431,15 @@ async function main() {
     for (const line of report.regressions) process.stdout.write(`  ✗ ${line}\n`);
   }
   if (unbuilt.length > 0) process.stdout.write(`\nnamed and not built here, so not walked: ${unbuilt.join(", ")} (pnpm typecheck builds every app)\n`);
-  process.stdout.write(`\n${report.regressions.length === 0 ? "no regressions" : "regressed"} — docs/journeys.json (${report.took}s)\n`);
-  process.exit(report.regressions.length > 0 || unbuilt.length > 0 ? 1 : 0);
+  /* The claims, said the way every harness says one: `"name": true`, and what broke it. */
+  process.stdout.write("\n");
+  for (const [name, check] of Object.entries(report.checks)) process.stdout.write(`  "${name}": ${check.ok},\n`);
+  for (const line of report.checks.theKeyboardCostsAtMostTwiceThePointer.unnamed.slice(0, 10)) process.stdout.write(`  ✗ more than twice the pointer, and nothing says why: ${line}\n`);
+  for (const one of report.checks.theKeyboardSkipsIntoALongList.lists.filter((list) => list.firstBox?.skip !== "records" || list.firstBox.presses > 5)) {
+    process.stdout.write(`  ✗ ${one.app} at ${one.width}: the first box took ${one.firstBox?.presses ?? "?"} presses${one.firstBox?.skip === "records" ? "" : ", not by the list's skip"}\n`);
+  }
+  process.stdout.write(`\n${report.regressions.length === 0 ? "no regressions" : "regressed"}${missed.length > 0 ? `, ${missed.length} claim${missed.length === 1 ? "" : "s"} missed` : ""} — docs/journeys.json (${report.took}s)\n`);
+  process.exit(report.regressions.length > 0 || unbuilt.length > 0 || missed.length > 0 ? 1 : 0);
 }
 
 const runAt = process.argv.indexOf("--run");
