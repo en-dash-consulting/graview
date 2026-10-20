@@ -11,12 +11,64 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { engineName, launchEngine } from "./lib/engine.mjs";
+import { ENGINES, engineName, launchEngine } from "./lib/engine.mjs";
 import { graviewSources } from "./lib/graview-sources.mjs";
 import { takeViolations } from "./lib/watch.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const engine = engineName();
+
+/*
+ * app-drew-nothing (found fixing the Nightly's engines leg, #330): the
+ * gauntlet's page module awaited openStore at its top level, the await
+ * rejected with QuotaExceededError, and WebKit said nothing — no pageerror,
+ * no error or unhandledrejection on the window, and import() of the same
+ * module resolves — so the watch passed a blank page. The app's root is
+ * what says so in every engine. And nothing where the module's await
+ * resolves and then draws, nor on a harness's own host page whose mount
+ * point waits to be mounted into. In all three engines, since it is
+ * WebKit's silence the rule is for: three tabs side by side, held until the
+ * rule has spoken. The other two engines go first, so the watch's report
+ * keeps this harness's own engine's name (the chain reads it by that name).
+ */
+const modules = {
+  "/rejects.js": `await new Promise((_, reject) => setTimeout(() => reject(new DOMException("The quota has been exceeded.", "QuotaExceededError")), 50));
+document.getElementById("root").textContent = "Loans";`,
+  "/draws.js": `await new Promise((resolve) => setTimeout(resolve, 600));
+document.getElementById("root").innerHTML = "<main><h1>Loans</h1></main>";`,
+};
+const ROOTED = {
+  rejected: `<div id="root"></div><script type="module" src="/rejects.js"></script>`,
+  resolved: `<div id="root"></div><script type="module" src="/draws.js"></script>`,
+  host: `<main><h1>A host page</h1><div id="app"></div></main>`,
+};
+const drewNothingIn = async (launched) => {
+  const tabs = await Promise.all(
+    Object.keys(ROOTED).map(async (which) => {
+      const tab = await launched.newPage();
+      await tab.route("http://drawn.test/**", (route) => {
+        const path = new URL(route.request().url()).pathname;
+        return route.fulfill(
+          modules[path] ? { contentType: "text/javascript", body: modules[path] } : { contentType: "text/html", body: `<!doctype html><html><body>${ROOTED[which]}</body></html>` },
+        );
+      });
+      await tab.goto(`http://drawn.test/${which}`);
+      await tab.waitForLoadState("load");
+      return tab;
+    }),
+  );
+  await tabs[0].waitForTimeout(9000);
+  const found = takeViolations().filter((v) => v.rule === "app-drew-nothing");
+  for (const tab of tabs) await tab.context().close();
+  return Object.fromEntries(Object.keys(ROOTED).map((which) => [which, found.filter((v) => v.at === which).map((v) => v.detail)]));
+};
+const drewNothing = {};
+for (const other of ENGINES.filter((name) => name !== engine)) {
+  const launched = await launchEngine(other);
+  drewNothing[other] = await drewNothingIn(launched);
+  await launched.close();
+}
+
 const browser = await launchEngine(engine);
 const page = await browser.newPage();
 const settle = () => page.waitForTimeout(2800);
@@ -279,6 +331,13 @@ await page.evaluate(() => window.__graviewWatch.refused({ mutation: "close-deal"
 await settle();
 checks.aRefusedPressIsCaught = takeViolations().some((v) => v.rule === "offered-then-refused" && v.detail.includes("close-deal"));
 
+/* app-drew-nothing, judged in every engine (set up above). */
+drewNothing[engine] = await drewNothingIn(browser);
+const everyEngine = (holds) => Object.values(drewNothing).every(holds);
+checks.aPageWhoseModuleRejectedIsCaught = everyEngine((seen) => seen.rejected.length === 1 && seen.rejected[0].includes('id="root"'));
+checks.anAppThatDrewAfterItsAwaitIsNotCaught = everyEngine((seen) => seen.resolved.length === 0);
+checks.aHostPagesEmptyMountIsNotCaught = everyEngine((seen) => seen.host.length === 0);
+
 /* The clean page: focus moves back to the opener, every name is in words. */
 await show(`<main><button id="opener">Open</button><div id="pop"><button id="inside">Close the deal</button></div><p>Deals</p></main>
 <script>document.getElementById("inside").addEventListener("keydown", (e) => { if (e.key === "Escape") { document.getElementById("pop").remove(); document.getElementById("opener").focus(); } });</script>`);
@@ -291,7 +350,7 @@ checks.aCleanPageNamesNothing = clean.length === 0;
 
 await browser.close();
 const passed = Object.values(checks).every(Boolean);
-const report = { at: new Date().toISOString(), engine, checks, ...(clean.length ? { cleanPageSaw: clean } : {}), passed };
+const report = { at: new Date().toISOString(), engine, checks, drewNothing, ...(clean.length ? { cleanPageSaw: clean } : {}), passed };
 mkdirSync(resolve(repoRoot, "docs"), { recursive: true });
 writeFileSync(resolve(repoRoot, "docs/watch-check.json"), `${JSON.stringify(report, null, 2)}\n`);
 for (const [name, ok] of Object.entries(checks)) process.stdout.write(`${ok ? "ok  " : "FAIL"} ${name}\n`);

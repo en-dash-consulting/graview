@@ -30,6 +30,6 @@ lastModifiedBy: "Nick Daniel <nick@endash.us>"
 | [The pages' resting-pointer chips test holds under full-suite load](./the-resting-pointer-chips-test-holds-under-load.md) | completed |
 | [The surfaces Walkthrough XIII had no time for are walked](./the-surfaces-walk-xiii-did-not-reach.md) | pending |
 | [A store too large for Safari's localStorage persists, in IndexedDB](./a-large-store-persists-in-safari.md) | completed |
-| [The watch hears a page whose module rejected before it drew](./the-watch-hears-a-rejected-top-level-await.md) | pending |
+| [The watch hears a page whose module rejected before it drew](./the-watch-hears-a-rejected-top-level-await.md) | completed |
 
 
